@@ -4,6 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.2.1 — 2026-09-23
+
+- `release-watch.js` never reloads a tab that is playing `<video>`/`<audio>` or holds a live
+  camera/microphone stream (viewers look idle while watching; broadcasters must never be cut).
+
 ## 1.2.0 — 2026-09-23
 
 - `navbar.js` loads `release-watch.js` (from the same place it was loaded from) four seconds after

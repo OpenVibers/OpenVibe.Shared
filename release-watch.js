@@ -9,8 +9,8 @@
  *   - the server requires it (min_client_release is the running release) or the new release is older
  *     than the mixed-version window: reload automatically, but ONLY when it is safe — the tab is
  *     hidden or idle for 2 minutes, no text field has focus, and nothing on the page is protected
- *     (a form marked data-dirty="true", an element with data-ov-protected, or window.OVProtected()
- *     returning true for uploads, calls, broadcasts and recordings).
+ *     (a form marked data-dirty="true", an element with data-ov-protected, a playing <video>/<audio>
+ *     or live camera/mic stream, or window.OVProtected() returning true for uploads and calls).
  */
 (function (root) {
     if (typeof document === 'undefined' || root.OVRelease) return;
@@ -33,6 +33,14 @@
         const a = document.activeElement;
         if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName || ''))) return true;
         if (document.querySelector('form[data-dirty="true"], [data-ov-protected]')) return true;
+        // Someone watching or broadcasting: a playing <video>/<audio>, or a live camera/mic stream.
+        try {
+            for (const m of document.querySelectorAll('video, audio')) {
+                if (!m.paused && !m.ended) return true;
+                const so = m.srcObject;
+                if (so && typeof so.getTracks === 'function' && so.getTracks().some((t) => t.readyState === 'live')) return true;
+            }
+        } catch { return true; }
         try { if (typeof root.OVProtected === 'function' && root.OVProtected()) return true; } catch { return true; }
         return !document.hidden && Date.now() - lastInput < IDLE_MS;
     }

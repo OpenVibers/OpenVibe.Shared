@@ -35,6 +35,7 @@ const { createRelease } = require('../release');
                 hidden,
                 activeElement: active,
                 querySelector: (sel) => (sel.startsWith('meta') ? { content: 'aaaaaaa', getAttribute: () => '/release.json' } : null),
+                querySelectorAll: () => [],
                 addEventListener: (t, f) => { docListeners[t] = f; },
             },
         };
@@ -75,6 +76,17 @@ const { createRelease } = require('../release');
     await p.ctx.OVRelease.check();
     assert.strictEqual(p.reloads(), 0, 'never during a protected session (upload, call, broadcast)');
 
+    {
+        const playing = page({ serverRelease: 'bbbbbbb', releasedAt: stale, hidden: true });
+        playing.ctx.document.querySelectorAll = (sel) => (sel === 'video, audio' ? [{ paused: false, ended: false }] : []);
+        await playing.ctx.OVRelease.check();
+        assert.strictEqual(playing.reloads(), 0, 'never while a stream is playing');
+        const capture = page({ serverRelease: 'bbbbbbb', releasedAt: stale, hidden: true });
+        capture.ctx.document.querySelectorAll = () => [{ paused: true, ended: false, srcObject: { getTracks: () => [{ readyState: 'live' }] } }];
+        await capture.ctx.OVRelease.check();
+        assert.strictEqual(capture.reloads(), 0, 'never while the camera/mic is live');
+    }
+
     p = page({ serverRelease: 'bbbbbbb', releasedAt: stale, hidden: false });
     await p.ctx.OVRelease.check();
     assert.strictEqual(p.reloads(), 0, 'a visible tab someone just used is not reloaded');
@@ -88,7 +100,7 @@ const { createRelease } = require('../release');
             location: { reload: () => {} }, addEventListener: (t, f) => { listeners[t] = f; },
             OpenVibeUI: { toast: (msg, o) => toasts.push({ msg, o }) },
             fetch: async () => ({ ok: true, json: async () => ({ release: served, released_at: fresh, min_client_release: null, mixed_version_window_hours: 24 }) }),
-            document: { hidden: true, activeElement: null, querySelector: () => null, addEventListener: () => {} },
+            document: { hidden: true, activeElement: null, querySelector: () => null, querySelectorAll: () => [], addEventListener: () => {} },
         };
         ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
         vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'release-watch.js'), 'utf8'), ctx);
@@ -105,7 +117,7 @@ const { createRelease } = require('../release');
         const ctx = {
             console, Date, JSON, Promise, setInterval: () => 1, clearInterval: () => {}, location: { reload: () => {} }, addEventListener: () => {},
             fetch: async () => { calls++; return { ok: false, json: async () => null }; },
-            document: { hidden: true, activeElement: null, querySelector: () => null, addEventListener: () => {} },
+            document: { hidden: true, activeElement: null, querySelector: () => null, querySelectorAll: () => [], addEventListener: () => {} },
         };
         ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
         vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'release-watch.js'), 'utf8'), ctx);
