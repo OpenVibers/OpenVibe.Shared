@@ -27,8 +27,10 @@ were reconciled first.
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 
-Every module file has an `exports` entry, so `require('openvibe-shared/navbar')`,
-`require.resolve('openvibe-shared/package.json')` and the rest all resolve.
+Every module file has an explicit `exports` entry (no wildcards), so `require('openvibe-shared/navbar')`,
+`require.resolve('openvibe-shared/package.json')` and the rest all resolve. It stays one package with
+subpath exports rather than a set of `@openvibe/*` packages:
+[docs/adr/0001-one-package-subpath-exports.md](docs/adr/0001-one-package-subpath-exports.md).
 
 ## Consuming it
 

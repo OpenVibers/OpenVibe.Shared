@@ -11,6 +11,8 @@ const modules = fs.readdirSync(ROOT).filter((f) => f.endsWith('.js'))
     .concat(fs.readdirSync(path.join(ROOT, 'analytics')).filter((f) => f.endsWith('.js')).map((f) => `analytics/${f}`));
 const targets = new Set(Object.values(pkg.exports).map((t) => t.replace(/^\.\//, '')));
 for (const f of modules) assert.ok(targets.has(f), `${f} is exported`);
+// Shared ADR 0001: the exports map is the public surface, one explicit entry per subpath, no patterns.
+for (const sub of Object.keys(pkg.exports)) assert.ok(!sub.includes('*'), `${sub}: no wildcard subpaths`);
 for (const [sub, target] of Object.entries(pkg.exports)) {
     assert.ok(fs.existsSync(path.join(ROOT, target)), `${sub} -> ${target} exists`);
     assert.strictEqual(require.resolve(sub === '.' ? pkg.name : `${pkg.name}/${sub.slice(2)}`), path.join(ROOT, target), `${sub} resolves`);
