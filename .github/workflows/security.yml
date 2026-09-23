@@ -1,0 +1,145 @@
+name: security
+# Secret and dependency scanning for every OpenVibers repository (roadmap Track Q).
+#
+# Call it from a repository's CI as its own job, pinned to a commit of this repo:
+#
+#   jobs:
+#     security:
+#       uses: OpenVibers/OpenVibe.Shared/.github/workflows/security.yml@<sha>
+#
+# secrets       gitleaks (pinned binary, checksum-verified). A push scans the whole git history,
+#               a pull request scans only its own commits. Findings are redacted in the log: the
+#               repositories and their CI logs are public. Proven false positives (test fixtures,
+#               doc placeholders) go in a narrow [[allowlists]] entry in the repo's .gitleaks.toml
+#               (or .github/gitleaks.toml).
+# dependencies  npm audit for every tracked package-lock.json, pnpm audit for every pnpm-lock.yaml.
+#               High and critical advisories are always reported as warnings; the job fails only at
+#               `audit-fail-level` (default: critical). See the input below for why.
+on:
+  workflow_call:
+    inputs:
+      audit-fail-level:
+        description: >-
+          Severity at which the dependency audit fails the job: "critical" (default), "high", or "none"
+          (report only). High is reported but not enforced: advisories are published continuously, so a
+          new high on a transitive dev dependency would otherwise turn unrelated pushes red across the
+          network. Critical advisories are rare and actionable, so they block. A repository with known
+          criticals it cannot fix yet sets "none" with a comment saying why, until it is clean.
+        type: string
+        default: critical
+      node-version:
+        description: Node.js used to run npm/pnpm audit.
+        type: string
+        default: '22.22.1'
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    name: secrets (gitleaks)
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb   # gitleaks_8.30.1_linux_x64.tar.gz
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: install gitleaks
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -fsSLo gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar xzf gitleaks.tar.gz gitleaks
+          ./gitleaks version
+      - name: scan
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # The repo's .gitleaks.toml, when present, is picked up from the scanned directory;
+          # .github/gitleaks.toml is the alternative for repos that keep CI files under .github/.
+          cfg=()
+          if [ ! -f .gitleaks.toml ] && [ -f .github/gitleaks.toml ]; then cfg=(--config .github/gitleaks.toml); fi
+          if [ "$EVENT" = pull_request ]; then
+            scope="pull request commits ${PR_BASE:0:7}..${PR_HEAD:0:7}"
+            set -- --log-opts="$PR_BASE..$PR_HEAD"
+          else
+            scope="full history"
+            set --
+          fi
+          echo "gitleaks: $scope"
+          rc=0
+          "$RUNNER_TEMP/gitleaks" git "$@" "${cfg[@]}" --no-banner --redact --verbose \
+            --report-format json --report-path "$RUNNER_TEMP/gitleaks.json" . || rc=$?
+          {
+            echo "### gitleaks ($scope)"
+            if [ -s "$RUNNER_TEMP/gitleaks.json" ] && [ "$(jq length "$RUNNER_TEMP/gitleaks.json")" != 0 ]; then
+              echo
+              echo "| rule | file:line | commit | fingerprint |"
+              echo "|---|---|---|---|"
+              jq -r '.[] | "| \(.RuleID) | \(.File):\(.StartLine) | \(.Commit[0:8]) | `\(.Fingerprint)` |"' "$RUNNER_TEMP/gitleaks.json"
+              echo
+              echo "A real secret: rotate it first (it is public), then remove it from the tree."
+              echo "A proven false positive: add a narrow [[allowlists]] entry (path AND value) to .gitleaks.toml."
+            elif [ "$rc" = 0 ]; then
+              echo "No leaks found."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$rc"
+
+  dependencies:
+    name: dependencies (npm/pnpm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: audit
+        env:
+          FAIL_LEVEL: ${{ inputs.audit-fail-level }}
+        run: |
+          case "$FAIL_LEVEL" in critical|high|none) ;; *) echo "::error::audit-fail-level must be critical, high or none (got '$FAIL_LEVEL')"; exit 2 ;; esac
+          mapfile -t lockfiles < <(git ls-files -- '*package-lock.json' '*pnpm-lock.yaml' | grep -E '(^|/)(package-lock\.json|pnpm-lock\.yaml)$')
+          echo "### dependency audit (fails at: $FAIL_LEVEL)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${#lockfiles[@]}" = 0 ]; then
+            echo "::notice::No package-lock.json or pnpm-lock.yaml is tracked; nothing to audit."
+            echo "No lockfile tracked; nothing to audit." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          printf '\n| lockfile | critical | high | moderate | low |\n|---|---|---|---|---|\n' >> "$GITHUB_STEP_SUMMARY"
+          fail=0
+          for lf in "${lockfiles[@]}"; do
+            dir=$(dirname "$lf")
+            if [ "${lf##*/}" = pnpm-lock.yaml ]; then
+              pm=$(jq -r '.packageManager // "pnpm@10" | select(startswith("pnpm@")) | split("+")[0]' "$dir/package.json" 2>/dev/null || true)
+              audit=(npx --yes "${pm:-pnpm@10}" audit)
+              level=(--audit-level high)
+            else
+              audit=(npm audit)
+              level=(--audit-level=high)
+            fi
+            echo "::group::${audit[*]} ($lf)"
+            (cd "$dir" && "${audit[@]}" "${level[@]}") || true
+            echo "::endgroup::"
+            counts=$( (cd "$dir" && "${audit[@]}" --json 2>/dev/null) | jq -c '.metadata.vulnerabilities // empty' 2>/dev/null || true)
+            if [ -z "$counts" ]; then
+              echo "::warning file=$lf::the audit did not return a result (registry unreachable?); nothing was checked for $lf"
+              echo "| $lf | ? | ? | ? | ? |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            fi
+            c=$(jq '.critical // 0' <<<"$counts"); h=$(jq '.high // 0' <<<"$counts")
+            m=$(jq '.moderate // 0' <<<"$counts"); l=$(jq '.low // 0' <<<"$counts")
+            echo "| $lf | $c | $h | $m | $l |" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$c" -gt 0 ] || [ "$h" -gt 0 ]; then
+              echo "::warning file=$lf::$c critical and $h high severity advisories (see the audit log above)"
+            fi
+            if { [ "$FAIL_LEVEL" = critical ] && [ "$c" -gt 0 ]; } || { [ "$FAIL_LEVEL" = high ] && [ $((c + h)) -gt 0 ]; }; then
+              echo "::error file=$lf::dependency audit fails at $FAIL_LEVEL"
+              fail=1
+            fi
+          done
+          exit "$fail"
