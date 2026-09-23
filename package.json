@@ -1,24 +1,58 @@
 {
   "name": "openvibe-shared",
   "version": "1.0.0",
-  "description": "Shared auth, theme, and brand utilities for the OpenVibe",
+  "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "exports": {
     ".": "./index.js",
+    "./package.json": "./package.json",
+    "./files": "./files.js",
+    "./account-switcher": "./account-switcher.js",
     "./analytics": "./analytics.js",
+    "./app-icon": "./app-icon.js",
     "./auth-client": "./auth-client.js",
-    "./theme-sync": "./theme-sync.js",
     "./brand": "./brand.js",
-    "./middleware": "./middleware.js",
-    "./notifications": "./notifications.js",
-    "./url-resolver": "./url-resolver.js",
-    "./seo": "./seo.js",
-    "./icons": "./ov-icons.js",
-    "./legal": "./legal.js",
-    "./footer": "./footer.js",
+    "./builtin-themes": "./builtin-themes.js",
     "./chrome-ssr": "./chrome-ssr.js",
-    "./app-icon": "./app-icon.js"
+    "./footer": "./footer.js",
+    "./history": "./history.js",
+    "./icons": "./ov-icons.js",
+    "./island": "./island.js",
+    "./legal": "./legal.js",
+    "./middleware": "./middleware.js",
+    "./nav-icons": "./nav-icons.js",
+    "./navbar": "./navbar.js",
+    "./notification-ui": "./notification-ui.js",
+    "./notifications": "./notifications.js",
+    "./openvibe-sw": "./openvibe-sw.js",
+    "./ov-icons": "./ov-icons.js",
+    "./ov-mark": "./ov-mark.js",
+    "./panels": "./panels.js",
+    "./seo": "./seo.js",
+    "./sso-client": "./sso-client.js",
+    "./theme-loader": "./theme-loader.js",
+    "./theme-sync": "./theme-sync.js",
+    "./tooltip": "./tooltip.js",
+    "./ui": "./ui.js",
+    "./url-resolver": "./url-resolver.js",
+    "./user-card": "./user-card.js"
   },
+  "files": [
+    "*.js",
+    "scripts/",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node test/run.js",
+    "size": "node scripts/size-report.js",
+    "build:icons": "python3 scripts/build-nav-icons.py",
+    "build:themes": "node scripts/build-theme-loader.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenVibers/OpenVibe.Shared.git"
+  },
+  "homepage": "https://github.com/OpenVibers/OpenVibe.Shared#readme",
   "license": "MIT",
   "dependencies": {
     "jsonwebtoken": "^9.0.0"

@@ -1,0 +1,27 @@
+name: ci
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1   # production runs Node 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - name: size report
+        run: node scripts/size-report.js
+      # The release artifact is GitHub's tarball of the tag (repository root = package root):
+      # install one built the same way into an empty project and load it by its package name.
+      - name: install from a tag-style tarball
+        run: |
+          git archive --format=tar.gz --prefix=OpenVibe.Shared-ci/ -o "$RUNNER_TEMP/openvibe-shared.tgz" HEAD
+          mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer" && npm init -y >/dev/null
+          npm install --no-audit --no-fund "$RUNNER_TEMP/openvibe-shared.tgz"
+          node -e "require('openvibe-shared'); require('openvibe-shared/navbar'); require('openvibe-shared/legal'); const f = require('openvibe-shared/files'); for (const n of f.BROWSER) require('fs').accessSync(f.path(n)); console.log('ok', require('openvibe-shared/package.json').version)"

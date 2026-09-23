@@ -6,8 +6,8 @@
  * theme-loader.js runs in the browser before the first paint and cannot require() the catalog, so
  * it carries a copy. That copy used to be maintained by hand and drifted. Now it is generated:
  *
- *   node packages/openvibe-shared/scripts/build-theme-loader.js          # rewrite
- *   node packages/openvibe-shared/scripts/build-theme-loader.js --check  # exit 1 if stale
+ *   node scripts/build-theme-loader.js          # rewrite
+ *   node scripts/build-theme-loader.js --check  # exit 1 if stale
  *
  * Every entry carries the FULL variable set (the theme's own values over the default theme's), so
  * switching themes replaces every token — a theme that does not name --success no longer keeps the
@@ -46,6 +46,6 @@ const { a, b } = currentBlock(src);
 const next = src.slice(0, a) + render() + src.slice(b);
 const check = process.argv.includes('--check');
 if (next === src) { if (!check) console.log('theme-loader.js is up to date'); process.exit(0); }
-if (check) { console.error('theme-loader.js is stale: run node packages/openvibe-shared/scripts/build-theme-loader.js'); process.exit(1); }
+if (check) { console.error('theme-loader.js is stale: run node scripts/build-theme-loader.js'); process.exit(1); }
 fs.writeFileSync(LOADER, next);
 console.log(`theme-loader.js regenerated (${BUILTIN_THEMES.length} themes)`);
