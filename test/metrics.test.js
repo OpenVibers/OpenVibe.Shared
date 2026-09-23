@@ -98,6 +98,9 @@ const metrics = require('../metrics');
         await get('/boom');
         await get('/sse');
         await get('/nope/9999/secret-path');
+        // The event-loop histogram only reports once it has samples; on a fast CI runner the scrape
+        // could otherwise come before the first sampling interval has elapsed.
+        await new Promise((r) => setTimeout(r, 150));
         const out = await get('/metrics');
         assert.strictEqual(out.status, 200);
         assert.match(out.type, /^text\/plain; version=0\.0\.4/);
