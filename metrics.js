@@ -286,11 +286,16 @@ function processMetrics(registry, { eventLoopResolutionMs = 20 } = {}) {
         cpu.set((c.user + c.system) / 1e6);
         uptime.set(Math.round(process.uptime()));
         if (loop && lag) {
-            // The histogram is in nanoseconds; with no samples yet it reports NaN/huge values.
+            // The histogram is in nanoseconds and each sample includes the sampling interval itself
+            // (an idle loop reads ~resolution), so the interval is subtracted: what is left is lag.
+            // With no samples yet it reports NaN/huge values, so nothing is claimed.
             const ok = loop.count > 0 || loop.max > 0;
-            lag.set({ stat: 'mean' }, ok ? loop.mean / 1e9 : 0);
-            lag.set({ stat: 'p99' }, ok ? loop.percentile(99) / 1e9 : 0);
-            lag.set({ stat: 'max' }, ok ? loop.max / 1e9 : 0);
+            const lagOf = (ns) => Math.max(0, ns / 1e9 - eventLoopResolutionMs / 1000);
+            if (ok) {
+                lag.set({ stat: 'mean' }, lagOf(loop.mean));
+                lag.set({ stat: 'p99' }, lagOf(loop.percentile(99)));
+                lag.set({ stat: 'max' }, lagOf(loop.max));
+            }
             loop.reset();
         }
     });
