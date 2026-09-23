@@ -18,7 +18,7 @@ were reconciled first.
 | Kind | Files |
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics`, `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`; `footer` and `icons` (= `ov-icons.js`) work on both sides |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics`, `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `release`, `metrics`, `ready`; `footer` and `icons` (= `ov-icons.js`) work on both sides |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 
 Every module file has an `exports` entry, so `require('openvibe-shared/navbar')`,
@@ -43,6 +43,29 @@ const legal = require('openvibe-shared/legal');
 const seo = require('openvibe-shared/seo');
 const { AnalyticsTracker } = require('openvibe-shared/analytics');
 ```
+
+### Metrics and readiness (server)
+
+```js
+const release = require('openvibe-shared/release').createRelease({ service: 'community' });
+const m = require('openvibe-shared/metrics').instrument(app, { service: 'community', release: release.release });
+// before any route: HTTP golden signals by route template, process metrics, release_info,
+// and GET /metrics for direct loopback callers only (404 through a proxy)
+m.registry.gauge({ name: 'jobs', help: 'Jobs by state', labelNames: ['state'], collect: () => rows });
+
+const ready = require('openvibe-shared/ready').createReadiness({
+    service: 'community', release: release.release,
+    checks: [
+        { name: 'db', required: true, check: () => db.prepare('SELECT 1 AS ok').get().ok === 1 },
+        { name: 'media', required: false, cacheMs: 30000, check: async () => (await ping()) || 'unreachable' },
+    ],
+});
+app.get('/api/ready', ready.handler);   // 503 only when a required check fails; optional → degraded
+```
+
+A check fails when it throws, times out, returns `false`, a string (the reason) or
+`{ ok: false, error }`. Name a dependency required only when the service really cannot serve
+without it.
 
 ### Browser side: two options
 

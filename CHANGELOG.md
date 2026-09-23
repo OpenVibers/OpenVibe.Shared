@@ -4,6 +4,30 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.3.0 — 2026-09-23
+
+Observability and readiness (roadmap Track O, §15.19). Additive only; both modules are Node-only
+and have no dependencies.
+
+- `openvibe-shared/metrics`: a Prometheus text-format registry (counter, gauge with optional
+  scrape-time `collect()`, histogram with fixed buckets) that caps every metric's label
+  combinations (past `maxSeries` they fold into one `_overflow` series, counted by
+  `metrics_series_overflow_total`). `instrument(app, { service, release })` mounts the golden-signal
+  middleware — `http_requests_total{method,route,status_class}`,
+  `http_request_duration_seconds{method,route}`, `http_requests_in_flight` — keyed by the route
+  TEMPLATE (`req.baseUrl` with id-like segments as `:id` + `req.route.path`, or a caller's
+  `normalize(req)`; unmatched requests are `unmatched`, never the raw URL), process metrics
+  (`process_resident_memory_bytes`, `nodejs_heap_*`, `nodejs_eventloop_lag_seconds{stat}`,
+  `process_cpu_seconds_total`, `process_uptime_seconds`), `release_info{service,release}`, and
+  `GET /metrics`, which answers only a direct loopback caller (127.0.0.1/::1 with no
+  `X-Forwarded-For`, `X-Real-IP`, `Forwarded` or `CF-Connecting-IP`) and 404s everyone else.
+- `openvibe-shared/ready`: `createReadiness({ service, release, checks, details })` → `handler` and
+  `run()`. Each named check reports `status`, `required`, `latency_ms` and `checked_at` (a cached
+  check keeps the time it really ran). `ready` is false (HTTP 503) only when a required check fails;
+  failed optional checks are listed in `degraded` and the service stays ready (`status:
+  "degraded"`). Failure reasons are one line with URL credentials, query strings and
+  `token=`/`key=` values removed.
+
 ## 1.2.1 — 2026-09-23
 
 - `release-watch.js` never reloads a tab that is playing `<video>`/`<audio>` or holds a live

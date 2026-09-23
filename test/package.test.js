@@ -19,7 +19,7 @@ for (const sub of ['analytics', 'app-icon', 'auth-client', 'brand', 'chrome-ssr'
     assert.doesNotThrow(() => require.resolve(`openvibe-shared/${sub}`), `openvibe-shared/${sub}`);
 }
 // Server modules load in Node; the navbar module loads too (UMD, no DOM touched at require time).
-for (const sub of ['analytics', 'app-icon', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons']) require(`openvibe-shared/${sub}`);
+for (const sub of ['analytics', 'app-icon', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons', 'metrics', 'ready']) require(`openvibe-shared/${sub}`);
 assert.strictEqual(typeof require('openvibe-shared/navbar').init, 'function');
 assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'semver version');
 assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes(`## ${pkg.version}`), 'CHANGELOG has an entry for this version');
