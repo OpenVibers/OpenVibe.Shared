@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.5.1 — 2026-09-23
+
+Touch and keyboard feedback in the shared chrome (owner feedback: phones flashed a theme-blind blue
+box over anything tapped). The navbar, its dropdowns, the launcher, the drawer and the footer turn
+off `-webkit-tap-highlight-color`, show a slight press (`scale`, which composes with existing
+transforms) and give keyboard focus one ring in the theme accent. Rules are wrapped in `:where()`
+so they carry zero specificity: the chrome's own `:focus-visible` rules and host pages still win.
+With reduced motion the press is a brief dim instead of a shrink.
+
 ## 1.5.0 — 2026-09-23
 
 Roadmap Track R (D42–D46, ADR-016): release manifests with components, open tabs updated in place,

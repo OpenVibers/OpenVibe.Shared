@@ -294,6 +294,20 @@
                 .openvibe-navbar-links { display: none; }
                 .openvibe-navbar .openvibe-network-badge { display: none; }
             }
+
+            /* Touch and keyboard feedback. Phones flash a square, theme-blind blue box over anything
+               tapped (-webkit-tap-highlight-color); the chrome turns it off and shows a slight press
+               instead, and keyboard focus gets one ring in the theme accent. :where() keeps it at zero
+               specificity, so the chrome's own :focus-visible rules and a host page's rules still win.
+               \`scale\` is its own property, so it composes with any transform already in use. */
+            .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-launcher, .ovnav-drawer { -webkit-tap-highlight-color: transparent; }
+            :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-launcher, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: .96; }
+            :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-launcher, .ovnav-drawer) :where(a, button, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+                outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 2px;
+            }
+            @media (prefers-reduced-motion: reduce) {
+                :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-launcher, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: none; opacity: .82; }
+            }
         `;
         document.head.appendChild(s);
     }
