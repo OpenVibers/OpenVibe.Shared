@@ -408,11 +408,14 @@
     function upgradeIconsWhenFontsReady() { /* icons no longer depend on webfonts */ }
 
     // Release watch (ADR-016): a few seconds after the page settles, load release-watch.js from the
-    // same place as this navbar, so every site that serves /release.json gets update prompts with
-    // no page changes. Opt out with init({ releaseWatch: false }).
+    // same place as this navbar, so every site that serves /release.json keeps open tabs current with
+    // no page changes. Opt out with init({ releaseWatch: false }); an object is its OVReleaseConfig
+    // ({ metricsUrl, url, inPlace }).
     function loadReleaseWatch() {
         try {
-            if (_config.releaseWatch === false || root.OVRelease || document.querySelector('script[src*="release-watch.js"]')) return;
+            const rw = _config.releaseWatch;
+            if (rw === false || root.OVRelease || document.querySelector('script[src*="release-watch.js"]')) return;
+            if (rw && typeof rw === 'object' && !root.OVReleaseConfig) root.OVReleaseConfig = rw;
             const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
             const sc = document.createElement('script'); sc.src = `${m ? m[1] : 'https://openvibe.network/shared/'}release-watch.js`; sc.async = true;
             try { sc.fetchPriority = 'low'; } catch { /* */ }

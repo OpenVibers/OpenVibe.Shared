@@ -29,6 +29,7 @@ const BROWSER = Object.freeze([
     'island.js',            // activity island
     'tooltip.js',
     'release-watch.js',     // keeps open tabs on a supported release (ADR-016), loaded after first paint
+    'release-update.js',    // plans a new release and applies style/content in place; release-watch loads it on demand
     'openvibe-sw.js',       // Web Push service worker
 ]);
 

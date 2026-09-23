@@ -38,7 +38,9 @@
     "./panels": "./panels.js",
     "./ready": "./ready.js",
     "./release": "./release.js",
+    "./release-compat": "./release-compat.js",
     "./release-watch": "./release-watch.js",
+    "./release-update": "./release-update.js",
     "./seo": "./seo.js",
     "./sso-client": "./sso-client.js",
     "./theme-loader": "./theme-loader.js",
@@ -72,6 +74,8 @@
   },
   "devDependencies": {
     "better-sqlite3": "^11.10.0",
-    "express": "^4.22.3"
+    "express": "^4.22.3",
+    "linkedom": "^0.18.13",
+    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.30.2"
   }
 }

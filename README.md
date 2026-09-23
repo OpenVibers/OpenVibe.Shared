@@ -2,8 +2,9 @@
 
 > Versioned UI, chrome, SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha. The `openvibe-shared` package lives here; the latest tag is v1.3.0 (Wave 2, metrics
-and readiness from Track O). Every deployed consumer installs a tagged release and none keeps a
+**Status:** alpha. The `openvibe-shared` package lives here; the latest tag is v1.4.0, and 1.5.0 (Track R:
+release manifests, in-place updates in open tabs, update metrics, the mixed-version harness) is on
+`main`, untagged. Every deployed consumer installs a tagged release and none keeps a
 vendored copy ([docs/migration-plan.md](docs/migration-plan.md) is done): v1.3.0 in Network, Live,
 Media, Community, Tools, Events, Codes, Wiki, Blog, News, Reviews, Deals, Coupons, Trade, VIP and
 Host; v1.2.1 in Tips and OpenRe.Stream; v1.0.0 in Sites. CI failed on the v1.3.0 tag (`1173562`,
@@ -22,8 +23,8 @@ were reconciled first.
 
 | Kind | Files |
 |---|---|
-| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `release`, `metrics`, `ready`; `footer` and `icons` (= `ov-icons.js`) work on both sides |
+| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `openvibe-sw.js` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `release`, `release-compat` (tests), `metrics`, `ready`; `footer` and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 
@@ -74,6 +75,67 @@ app.get('/api/ready', ready.handler);   // 503 only when a required check fails;
 A check fails when it throws, times out, returns `false`, a string (the reason) or
 `{ ok: false, error }`. Name a dependency required only when the service really cannot serve
 without it.
+
+### Releases: `/release.json`, open tabs and the mixed-version test (ADR-016, Track R)
+
+```js
+const release = require('openvibe-shared/release').createRelease({
+    service: 'community',
+    root: path.join(__dirname, '..'),
+    components: {
+        styles: { kind: 'style', assets: ['/css/app.css', '/css/pages.css'] },   // swapped in place
+        pages: { kind: 'content', files: ['server/web/pages'] },                // regions re-fetched in place
+        shell: { kind: 'script', assets: ['/js/app.js'], files: ['server/web/layout.js', 'public/index.html'] },
+    },
+    contracts: { 'community.web-api': { version: '1.4.0', accepts: '^1.0.0' } },   // what the pages call
+    schemaGeneration: () => migrations.generation(),                            // optional
+});
+const m = require('openvibe-shared/metrics').instrument(app, { service: 'community', release: release.release });
+release.mount(app, { registry: m.registry });   // GET /release.json, POST /release-metrics → /metrics
+```
+
+- **Components.** `style` (stylesheets, `assets` are URL paths under `publicDir`, default
+  `root/public`), `content` (server-rendered regions), `script` (code the page runs) and `server`
+  (code only the server runs). A component's version is the hash of its files. `shell` is the
+  catch-all `script` component: list in it **every client-facing file no other component lists**
+  (layout templates, page scripts). An undeclared shell is versioned by the release, so every
+  release reloads, which is the 1.4.0 behaviour. The asset map's URLs are `<path>?v=<12 hex of
+  sha256>`, which matches Live's `server/web/assets.js`; pass `assetUrl(path, hash)` for another
+  scheme.
+- **Contract ranges.** `version` is what this release speaks. `accepts` is the range it still
+  serves from the other side (`^1.0.0` → `>=1.0.0 <2.0.0`); keep it wide enough for the previous
+  release, which is the 24-hour window. `role: 'consumes'` marks another service's contract that
+  this one calls.
+- **What is served** is limited to the fields your installed openvibe-contracts
+  `registry.release-manifest` schema declares: 1.0.0 until you pin openvibe-contracts ≥ v0.31.0.
+  `release.validate()` checks the served manifest with your contracts (put it in a test), and
+  `release.full()` is everything. A static-only release switch without a restart: pass
+  `recheckMs`, or call `release.refresh()`.
+- **Markup for in-place content**: `<main data-ov-content="pages" data-ov-rev="<revision>">…</main>`.
+  The tab re-fetches the page URL (or `data-ov-src`) and takes the element with the same
+  `data-ov-content`. Scripts and inline handlers are dropped, so rebind on `ov:content-updated`.
+  A stylesheet whose URL path is not the asset's logical path needs `data-ov-asset="/css/app.css"`.
+  Mark anything that must not be replaced with `data-ov-protected`.
+- **Metrics (D46)**: `release_client_updates_total{outcome,reason}`, where outcome is `applied`,
+  `reloaded`, `deferred` or `failed`. The tab finds the endpoint in the manifest's `metrics_url`
+  (set by `mount`), the meta tag's `data-metrics`, or `OpenVibeNavbar.init({ releaseWatch:
+  { metricsUrl } })`.
+
+Mixed-version test: capture the previous release's `/release.json` (its `full()` form) and the
+calls its pages make as fixtures, then:
+
+```js
+const compat = require('openvibe-shared/release-compat');
+await compat.assertMixedVersion({ releases: [
+    { name: 'N-1', manifest: require('./fixtures/release-prev.json'), client: compat.replay(require('./fixtures/calls-prev.json')) },
+    { name: 'N', manifest: release.full(), server: async () => ({ url, close }), client: compat.replay(calls) },
+] });
+```
+
+It fails when adjacent releases' ranges don't overlap both ways, when a pair the manifests call
+compatible fails against the real server, and when an incompatible pair would not make the tab
+reload. `compat.openPage({ html, serve })` runs release-watch in a linkedom page (install
+`linkedom` as a devDependency) for in-place tests of your own markup.
 
 ### Analytics (server, ADR-021)
 
@@ -151,7 +213,12 @@ node scripts/build-theme-loader.js
 
 Tests are plain Node with stubbed browser globals. Some tests guard the release:
 
-- **navbar.js size budget**: 29 KB brotli (`test/nav-icons.test.js`).
+- **navbar.js size budget**: 29 KB brotli (`test/nav-icons.test.js`). release-watch.js and
+  release-update.js: 3.5 KB each (`test/release-update.test.js`).
+- **Releases (ADR-016)**: the manifest validates against the installed openvibe-contracts (and
+  the 1.1.0 schema), in-place updates are transactional and never replace a region in use, the
+  reload rules hold, and the mixed-version matrix runs against real servers
+  (`test/release*.test.js`).
 - **Built-in icons**: every icon the default navbar renders must be built in and drawn with no
   fetch.
 - **Generated blocks**: the generated navbar and theme-loader blocks must be up to date.

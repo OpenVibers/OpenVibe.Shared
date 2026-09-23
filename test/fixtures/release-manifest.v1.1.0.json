@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openvibe.network/contracts/registry/release-manifest.v1.json",
+  "title": "ReleaseManifest",
+  "description": "What a running web surface is serving (GET /release.json, ADR-016). Open clients compare it on focus and reconnect. A client outside the supported window is prompted and reloads only when that is safe. Since 1.1.0 the manifest can also say which components changed, so a client can apply style and content changes in place, and which contract versions the server still accepts, so a mixed-version population can be checked.",
+  "type": "object",
+  "required": ["service", "release", "released_at", "contracts_version", "min_client_release", "mixed_version_window_hours"],
+  "additionalProperties": false,
+  "properties": {
+    "service": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,39}$" },
+    "release": { "type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "The deployed commit (short sha)." },
+    "released_at": { "type": "string", "format": "date-time", "description": "Commit time of the release." },
+    "booted_at": { "type": "string", "format": "date-time" },
+    "contracts_version": { "type": ["string", "null"], "description": "openvibe-contracts version the service runs against." },
+    "packages": {
+      "type": "object",
+      "description": "Versions of the platform packages the page loads (openvibe-shared, openvibe-sdk, ...).",
+      "additionalProperties": { "type": "string" }
+    },
+    "min_client_release": { "type": ["string", "null"], "description": "Oldest client release still supported; null while every client in the window is." },
+    "mixed_version_window_hours": { "type": "integer", "minimum": 0 },
+    "components": {
+      "type": "object",
+      "description": "Since 1.1.0. Per-component versions. A client applies a new release in place only when every component that changed is a style, content or server component and the contract ranges still match. Any other change is applied by a reload at a safe moment. The shell component covers every client-facing file that no other component lists.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]{0,39}$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": ["style", "content", "script", "server"],
+            "description": "style: stylesheets, swapped in place. content: server-rendered regions (data-ov-content), re-fetched in place. script: code the page runs, applied by a reload. server: code only the server runs, no client action."
+          },
+          "version": { "type": "string", "pattern": "^[0-9A-Za-z._+-]{1,64}$", "description": "Content hash of the component's files, or a version the service states." }
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "description": "Since 1.1.0. Asset map: each logical URL path the release serves, mapped to its content-addressed URL. HTML from this release references only these URLs.",
+      "propertyNames": { "pattern": "^/[^?#\\s]{0,255}$" },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["url", "component"],
+        "additionalProperties": false,
+        "properties": {
+          "url": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "component": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,39}$" },
+          "integrity": { "type": "string", "pattern": "^sha(256|384|512)-[A-Za-z0-9+/]+={0,2}$" }
+        }
+      }
+    },
+    "schema_generation": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Since 1.1.0. The database schema generation this release migrates to and runs against; null when the service does not track one."
+    },
+    "schema_compatible_from": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "description": "Since 1.1.0. The oldest schema generation whose code still runs against this release's schema, because every migration since then only expanded it. Rolling back to a release whose schema_generation is lower is not data-safe."
+    },
+    "contract_ranges": {
+      "type": "object",
+      "description": "Since 1.1.0. For each contract the service produces (its API, as served to its own pages and clients) or consumes: the version this release speaks and the range of versions it accepts from the other side. A page from release A works against a server on release B when, for every contract A produces, A's version is in B's accepts and B's version is in A's accepts.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9_-]+)+$", "maxLength": 100 },
+      "additionalProperties": {
+        "type": "object",
+        "required": ["version", "accepts"],
+        "additionalProperties": false,
+        "properties": {
+          "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+          "accepts": { "type": "string", "pattern": "^>=\\d+\\.\\d+\\.\\d+ <\\d+\\.\\d+\\.\\d+$", "description": "A half-open range, always written \">=a.b.c <x.y.z\"." },
+          "role": { "enum": ["produces", "consumes"], "description": "produces when absent." }
+        }
+      }
+    },
+    "metrics_url": {
+      "type": ["string", "null"],
+      "maxLength": 512,
+      "description": "Since 1.1.0. Same-origin URL where clients POST their update outcome counts (applied, reloaded, deferred, failed); null or absent when the service does not collect them."
+    }
+  }
+}
