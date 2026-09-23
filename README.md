@@ -5,7 +5,7 @@
 **Status:** alpha. The `openvibe-shared` package lives here, v1.0.0 (Wave 2). Consumers still
 vendor their own copies until they apply [docs/migration-plan.md](docs/migration-plan.md).
 **Plan:** OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026), §3.3 and §16.6.
-**License:** AGPL-3.0 (same as every OpenVibe service).
+**License:** MIT, as the package has always been: it is a client library other sites and developers embed (the OpenVibe services themselves are AGPL-3.0).
 
 This repository **is** the npm package `openvibe-shared`. `package.json` sits at the repository
 root, so GitHub's tarball of a release tag installs as the package with no build step. It was
