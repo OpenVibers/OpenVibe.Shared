@@ -40,7 +40,7 @@ const client3 = compat.replay([{ path: '/api/items', check: hasTitle }]);
 
 // Manifests the way a service makes them (createRelease), and one the way a fixture from production looks.
 const manifest = (sha, version, accepts, extra = {}) => createRelease({
-    service: 'items', root: __dirname, env: { RELEASE_COMMIT: sha, RELEASE_AT: '2026-09-23T10:00:00Z' }, schema: require('./fixtures/release-manifest.v1.1.0.json'),
+    service: 'items', root: __dirname, env: { RELEASE_COMMIT: sha, RELEASE_AT: '2026-09-23T10:00:00Z' }, schema: require('openvibe-contracts/contracts/registry/release-manifest.v1.json'),
     contracts: { 'items.web-api': { version, accepts } }, logger: { warn() {} }, ...extra,
 }).full();
 const R1 = { name: 'R1', manifest: manifest('1111111', '1.0.0', '^1.0.0', { schemaGeneration: 3 }), server: service(v1), client: client1 };

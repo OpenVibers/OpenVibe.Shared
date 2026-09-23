@@ -7,7 +7,7 @@ const { createRegistry } = require('../metrics');
 const { openPage } = require('../release-compat');
 
 const ROOT = path.join(__dirname, '..');
-const FIXTURE = require('./fixtures/release-manifest.v1.1.0.json');
+const FIXTURE = require('openvibe-contracts/contracts/registry/release-manifest.v1.json');
 const Ajv2020 = require(require.resolve('ajv/dist/2020', { paths: [path.dirname(require.resolve('openvibe-contracts/package.json'))] }));
 const addFormats = require(require.resolve('ajv-formats', { paths: [path.dirname(require.resolve('openvibe-contracts/package.json'))] }));
 const contracts = require('openvibe-contracts');
