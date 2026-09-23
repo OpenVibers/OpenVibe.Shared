@@ -2,8 +2,13 @@
 
 > Versioned UI, chrome, SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha. The `openvibe-shared` package lives here, v1.0.0 (Wave 2). Consumers still
-vendor their own copies until they apply [docs/migration-plan.md](docs/migration-plan.md).
+**Status:** alpha. The `openvibe-shared` package lives here; the latest tag is v1.3.0 (Wave 2, metrics
+and readiness from Track O). Every deployed consumer installs a tagged release and none keeps a
+vendored copy ([docs/migration-plan.md](docs/migration-plan.md) is done): v1.3.0 in Network, Live,
+Media, Community, Tools, Events, Codes, Wiki, Blog, News, Reviews, Deals, Coupons, Trade, VIP and
+Host; v1.2.1 in Tips and OpenRe.Stream; v1.0.0 in Sites. CI failed on the v1.3.0 tag (`1173562`,
+a race in the event-loop-lag p99 test, not in the package); `f81e54b` on `main` fixes the test and
+is green, untagged.
 **Plan:** OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026), §3.3 and §16.6.
 **License:** MIT, as the package has always been: it is a client library other sites and developers embed (the OpenVibe services themselves are AGPL-3.0).
 
