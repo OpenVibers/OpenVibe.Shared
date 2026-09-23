@@ -407,6 +407,19 @@
     }
     function upgradeIconsWhenFontsReady() { /* icons no longer depend on webfonts */ }
 
+    // Release watch (ADR-016): a few seconds after the page settles, load release-watch.js from the
+    // same place as this navbar, so every site that serves /release.json gets update prompts with
+    // no page changes. Opt out with init({ releaseWatch: false }).
+    function loadReleaseWatch() {
+        try {
+            if (_config.releaseWatch === false || root.OVRelease || document.querySelector('script[src*="release-watch.js"]')) return;
+            const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
+            const sc = document.createElement('script'); sc.src = `${m ? m[1] : 'https://openvibe.network/shared/'}release-watch.js`; sc.async = true;
+            try { sc.fetchPriority = 'low'; } catch { /* */ }
+            document.head.appendChild(sc);
+        } catch { /* optional */ }
+    }
+
     // ─── Brand from hostname ───────────────────────────────────
     // Every property is <sub?>.openvibe.<tld> (plus openre.stream). The navbar spells the
     // whole name — Pastes.OpenVibe.Tools, not "Paste.OpenVibe" — because the subdomain and
@@ -1457,6 +1470,7 @@
             injectStyles();
             const el = render();
             upgradeIconsWhenFontsReady();
+            if (typeof document !== 'undefined') setTimeout(loadReleaseWatch, 4000);
             // Pages that hand us a resolved user (openvibe.network, the tools
             // gateway hub) keep full control. Everyone else — pages that pass
             // only a token, or nothing at all — gets the user resolved from
