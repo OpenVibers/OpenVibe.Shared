@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openvibe.network/contracts/analytics/event.v1.json",
+  "title": "AnalyticsEvent",
+  "description": "analytics/event.v1: one raw analytics event (ADR-021). Kept by the owning service for at most 30 days, then only its rollups (daily and hourly counts) remain. It never carries an IP address, a user or subject id, a precise location (region or city), a raw user agent, a full referer URL, or a URL with ids or a query string. Requests sent with `Sec-GPC: 1` or `DNT: 1` produce no event. openvibe-shared/analytics stores it as an analytics_events row. For compatibility that row keeps the retired columns ip, user_id and city, always NULL; event.toEvent(row) maps a row to this shape.",
+  "type": "object",
+  "required": ["event", "service", "route", "session_id", "country", "ua_class", "is_bot", "authenticated", "timestamp"],
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "description": "Event name: 'pageview' and 'api_call' for HTTP requests, or a custom name given to trackEvent. Row column: event_type.",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.:-]{0,63}$"
+    },
+    "service": {
+      "description": "The recording service, for example 'live', 'openvibe-network' or 'openvibe-yt'.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "route": {
+      "description": "The route template, such as '/api/vods/:id/comments' or '/@:user'. It is the matched Express route, or else the request path with ids, usernames and slugs replaced by parameters. It has no query or fragment, and it is null for a custom event without a path. Row column: path.",
+      "type": ["string", "null"],
+      "maxLength": 200,
+      "pattern": "^/(([A-Za-z0-9._~-]+|@?:[A-Za-z_][A-Za-z0-9_]*\\??|\\*)(/([A-Za-z0-9._~-]+|@?:[A-Za-z_][A-Za-z0-9_]*\\??|\\*))*)?$"
+    },
+    "method": {
+      "description": "HTTP method, or null for a custom event.",
+      "type": ["string", "null"],
+      "pattern": "^[A-Z][A-Z-]{0,15}$"
+    },
+    "status": {
+      "description": "HTTP status code. Row column: status_code.",
+      "type": ["integer", "null"],
+      "minimum": 100,
+      "maximum": 599
+    },
+    "duration_ms": {
+      "description": "Time from the request's arrival to the finished response, in milliseconds. Row column: response_time_ms.",
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "session_id": {
+      "description": "A rotating session id: 16 random hex characters. It is renewed after 30 minutes idle and at every UTC midnight, and it is never derived from, or equal to, a user id. It is null when no session applies.",
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "country": {
+      "description": "ISO 3166-1 alpha-2 country code taken from the CDN header, or null. This is the only geography kept.",
+      "type": ["string", "null"],
+      "pattern": "^[A-Z]{2}$"
+    },
+    "ua_class": {
+      "description": "User-agent class: '<browser>/<os>/<device>', 'bot:<family>' for a known crawler, or 'none' when there is no user agent. The raw user agent is never stored. Row column: user_agent.",
+      "type": ["string", "null"],
+      "pattern": "^(none|bot:[a-z0-9]+|[a-z]+/[a-z]+/[a-z]+)$"
+    },
+    "device": {
+      "description": "Row column: device_type.",
+      "enum": ["desktop", "mobile", "tablet", "unknown", null]
+    },
+    "browser": {
+      "enum": ["chrome", "firefox", "safari", "edge", "opera", "ie", "other", "unknown", null]
+    },
+    "os": {
+      "enum": ["windows", "macos", "linux", "android", "ios", "other", "unknown", null]
+    },
+    "referer_origin": {
+      "description": "The scheme://host[:port] of an http(s) referer, or null. Never its path or query. Row column: referer.",
+      "type": ["string", "null"],
+      "maxLength": 300,
+      "pattern": "^https?://[^/?#\\s]+$"
+    },
+    "is_bot": {
+      "description": "True for a known crawler, a missing user agent, a honeypot path, or a client over the request-rate threshold.",
+      "type": "boolean"
+    },
+    "bot_type": {
+      "description": "Why the event is a bot hit: known_crawler, no_useragent, honeypot_hit or rate_limit. A custom event may give its own value.",
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9_]{1,32}$"
+    },
+    "authenticated": {
+      "description": "Whether the request was signed in. This is a flag and never says who.",
+      "type": "boolean"
+    },
+    "timestamp": {
+      "description": "UTC time in RFC 3339 form with second precision. Row column: created_at, stored as 'YYYY-MM-DD HH:MM:SS' UTC.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$"
+    }
+  }
+}

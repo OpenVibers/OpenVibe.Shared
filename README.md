@@ -23,7 +23,8 @@ were reconciled first.
 | Kind | Files |
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics`, `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `release`, `metrics`, `ready`; `footer` and `icons` (= `ov-icons.js`) work on both sides |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `release`, `metrics`, `ready`; `footer` and `icons` (= `ov-icons.js`) work on both sides |
+| Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 
 Every module file has an `exports` entry, so `require('openvibe-shared/navbar')`,
@@ -71,6 +72,29 @@ app.get('/api/ready', ready.handler);   // 503 only when a required check fails;
 A check fails when it throws, times out, returns `false`, a string (the reason) or
 `{ ok: false, error }`. Name a dependency required only when the service really cannot serve
 without it.
+
+### Analytics (server, ADR-021)
+
+```js
+const Database = require('better-sqlite3');            // the service's own; Shared has no native dependency
+const { AnalyticsTracker } = require('openvibe-shared/analytics');
+const db = new Database('data/analytics.db');
+db.pragma('journal_mode = WAL');
+const analytics = new AnalyticsTracker(db, 'live', {
+    retention: { days: 30 },                           // nightly prune (the default); false if you schedule it yourself
+    paramPrefixes: ['avatar'],                         // extra words whose next segment is a parameter
+    pathRules: [[/\/by-username\/[^/?#]+/gi, '/by-username/:username']],  // parameters the segment rules can't see
+});
+app.use(analytics.middleware());
+```
+
+A raw event has no IP, user or subject id, or city. It has a route template (never a raw URL), a
+referer origin, a user-agent class, a rotating session id and a country. Raw events are kept for
+30 days, and the rollups for longer. A request with `Sec-GPC: 1` or `DNT: 1` is not recorded at
+all. The row shape is `analytics/event.v1` (`docs/schemas/analytics-event.v1.json`), and
+`require('openvibe-shared/analytics/event').checkRow(row)` checks a stored row against it. The
+prune and one-time scrub command is `openvibe-shared/analytics/prune-cli`: a service wraps it in
+its own `scripts/analytics-prune.js` and passes in its `Database` and default paths.
 
 ### Browser side: two options
 
@@ -131,7 +155,12 @@ Tests are plain Node with stubbed browser globals. Some tests guard the release:
 - **Generated blocks**: the generated navbar and theme-loader blocks must be up to date.
 - **Browser bundles**: browser files must be free of `require()` and Node globals
   (`test/browser-bundles.test.js`).
-- **Exports**: every export must resolve.
+- **Exports**: every export must resolve, and every module file (including `analytics/*.js`) must
+  have one.
+- **Analytics (ADR-021)**: no personal data in any table after real requests, opt-out requests
+  leave nothing, every row is a valid `analytics/event.v1`, prune/scrub keep rollups intact, and
+  the prune CLI's dry run changes nothing (`test/analytics-*.test.js`, with `better-sqlite3` as a
+  dev dependency).
 
 CI runs on Node 22.22.1 and installs a tag-style tarball into an empty project.
 

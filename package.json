@@ -7,7 +7,14 @@
     ".": "./index.js",
     "./package.json": "./package.json",
     "./account-switcher": "./account-switcher.js",
-    "./analytics": "./analytics.js",
+    "./analytics": "./analytics/index.js",
+    "./analytics/event": "./analytics/event.js",
+    "./analytics/privacy": "./analytics/privacy.js",
+    "./analytics/prune-cli": "./analytics/prune-cli.js",
+    "./analytics/retention": "./analytics/retention.js",
+    "./analytics/schema": "./analytics/schema.js",
+    "./analytics/tracker": "./analytics/tracker.js",
+    "./analytics/event.v1.json": "./docs/schemas/analytics-event.v1.json",
     "./app-icon": "./app-icon.js",
     "./auth-client": "./auth-client.js",
     "./brand": "./brand.js",
@@ -43,6 +50,8 @@
   },
   "files": [
     "*.js",
+    "analytics/",
+    "docs/schemas/",
     "scripts/",
     "CHANGELOG.md"
   ],
@@ -62,6 +71,7 @@
     "jsonwebtoken": "^9.0.0"
   },
   "devDependencies": {
+    "better-sqlite3": "^11.10.0",
     "express": "^4.22.3"
   }
 }

@@ -7,7 +7,8 @@ const path = require('path');
 const pkg = require('../package.json');
 
 const ROOT = path.join(__dirname, '..');
-const modules = fs.readdirSync(ROOT).filter((f) => f.endsWith('.js'));
+const modules = fs.readdirSync(ROOT).filter((f) => f.endsWith('.js'))
+    .concat(fs.readdirSync(path.join(ROOT, 'analytics')).filter((f) => f.endsWith('.js')).map((f) => `analytics/${f}`));
 const targets = new Set(Object.values(pkg.exports).map((t) => t.replace(/^\.\//, '')));
 for (const f of modules) assert.ok(targets.has(f), `${f} is exported`);
 for (const [sub, target] of Object.entries(pkg.exports)) {
@@ -20,6 +21,14 @@ for (const sub of ['analytics', 'app-icon', 'auth-client', 'brand', 'chrome-ssr'
 }
 // Server modules load in Node; the navbar module loads too (UMD, no DOM touched at require time).
 for (const sub of ['analytics', 'app-icon', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons', 'metrics', 'ready']) require(`openvibe-shared/${sub}`);
+// analytics is dependency-free: its parts require only Node built-ins and each other.
+for (const f of fs.readdirSync(path.join(ROOT, 'analytics'))) {
+    const src = fs.readFileSync(path.join(ROOT, 'analytics', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    for (const [, dep] of src.matchAll(/require\((['"])([^'"]+)\1\)/g).map((m) => [m[1], m[2]])) {
+        assert.ok(dep.startsWith('.') || ['fs', 'path', 'crypto'].includes(dep), `analytics/${f} requires ${dep}`);
+    }
+}
+assert.strictEqual(require('openvibe-shared/analytics/event.v1.json').$id, 'https://openvibe.network/contracts/analytics/event.v1.json');
 assert.strictEqual(typeof require('openvibe-shared/navbar').init, 'function');
 assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'semver version');
 assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes(`## ${pkg.version}`), 'CHANGELOG has an entry for this version');

@@ -24,7 +24,7 @@ jobs:
           git archive --format=tar.gz --prefix=OpenVibe.Shared-ci/ -o "$RUNNER_TEMP/openvibe-shared.tgz" HEAD
           mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer" && npm init -y >/dev/null
           npm install --no-audit --no-fund "$RUNNER_TEMP/openvibe-shared.tgz"
-          node -e "require('openvibe-shared'); require('openvibe-shared/navbar'); require('openvibe-shared/legal'); require('openvibe-shared/metrics'); require('openvibe-shared/ready'); const f = require('openvibe-shared/files'); for (const n of f.BROWSER) require('fs').accessSync(f.path(n)); console.log('ok', require('openvibe-shared/package.json').version)"
+          node -e "require('openvibe-shared'); require('openvibe-shared/navbar'); require('openvibe-shared/legal'); require('openvibe-shared/metrics'); require('openvibe-shared/ready'); require('openvibe-shared/analytics'); require('openvibe-shared/analytics/prune-cli'); require('openvibe-shared/analytics/event.v1.json'); const f = require('openvibe-shared/files'); for (const n of f.BROWSER) require('fs').accessSync(f.path(n)); console.log('ok', require('openvibe-shared/package.json').version)"
   # Secret scan (gitleaks) and dependency audit, the workflow every OpenVibers repo calls (Track Q).
   security:
     uses: ./.github/workflows/security.yml
