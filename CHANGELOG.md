@@ -4,6 +4,57 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.4.0 — 2026-09-23
+
+`openvibe-shared/analytics` is now the ADR-021 module (roadmap register item 26 and C-80). It
+replaces three hand-copied versions in Live `server/analytics/`, Tools `apps/_shared/analytics/`
+and Network `server/analytics/`. The old `analytics.js` was removed. It stored raw IPs, user ids,
+cities and full user agents, and deleted raw rows only after 90 days. No deployed service still
+used it.
+
+- **Same API, ADR-021 behaviour.** `new AnalyticsTracker(db, service[, opts])`, `middleware()`,
+  `trackEvent()`, `flush()`, `aggregate()`, `getStats()`, `getOverview()`, `getBotAnalysis()` and
+  `destroy()` all keep their shapes. A raw row has a route template, a referer origin, a
+  user-agent class, a rotating session id, a country and a signed-in flag. `ip`, `user_id` and
+  `city` are always NULL. Unique visitors come from day-salted hashes, which are deleted once the
+  day's rollup is final. The rate check keeps its counters in memory only.
+- **Sec-GPC and DNT are honoured on the server.** A request with `Sec-GPC: 1` or `DNT: 1` is not
+  recorded at all: no raw row, visitor hash, session id or rate counter. It is therefore also
+  missing from the rollups, because ADR-021 provides for no separate opted-out count.
+  `trackEvent(name, { headers })` does the same. `privacy.optedOut(headers)` is exported.
+- **`analytics/event.v1`** is the documented raw event shape:
+  `docs/schemas/analytics-event.v1.json`, exported as
+  `openvibe-shared/analytics/event.v1.json`. `openvibe-shared/analytics/event` provides
+  `toEvent(row)`, `validateEvent(ev)` and `checkRow(row)`. `checkRow` rejects a row that has
+  ip/user_id/city set. The validator reads the schema file itself. `trackEvent` now stores NULL for
+  a value outside the schema, and throws a `TypeError` for an event name outside it.
+- **Retention.** The tracker schedules the 30-day raw-event prune by default. Pass
+  `retention: false` if the service runs `retention.pruneRawEvents` itself. The new
+  `retention.schedulePrune(db, opts)` returns `{ run, stop }`. Days above 30 are refused.
+- **Service specifics are options** (formerly Network's `network.js`). `paramPrefixes` adds
+  parameter words to the defaults. `pathRules` is a list of `[RegExp, replacement]` rewrites
+  applied before templating. Both are accepted by the tracker and by
+  `retention.scrubEvents`/`scrubRollups`/`inspect`, so legacy rows are templated like new
+  ones.
+- **`openvibe-shared/analytics/prune-cli`** is the prune and one-time scrub command. Each service
+  wraps it in its own script and passes `Database`, `defaultDb` or a `targets` hook, extra flags
+  and path options. It runs a dry run by default. `--apply` needs `--backup` or `--no-backup`. It
+  backs up one database to a file or several to a directory. Backups are owner-only (0600)
+  because a pre-scrub backup holds the old IPs. It checks that rollup totals are unchanged and
+  can VACUUM.
+- An over-long route template now loses whole segments and ends in `/*`. Before, it was cut at
+  200 characters, possibly mid-segment.
+- The root export (`require('openvibe-shared')`) and `openvibe-shared/analytics` keep the names
+  that 1.x exported: `classifyRequest`, `parseUserAgent`, `ANALYTICS_SCHEMA` and
+  `BOT_USER_AGENTS` now use the ADR-021 code. `SUSPICIOUS_PATTERNS` is a frozen, deprecated
+  object that nothing reads, and it will be removed in 2.0.0.
+- Package shape: [docs/adr/0001-one-package-subpath-exports.md](docs/adr/0001-one-package-subpath-exports.md)
+  (proposed) keeps one package with explicit subpath exports. `exports` gains the `analytics/*`
+  subpaths, and `test/package.test.js` now refuses wildcard subpaths and any module file without
+  an entry.
+- Dev only: `better-sqlite3` is a devDependency for the analytics tests. The package itself has
+  no native dependency.
+
 ## 1.3.0 — 2026-09-23
 
 Observability and readiness (roadmap Track O, §15.19). Additive only; both modules are Node-only
