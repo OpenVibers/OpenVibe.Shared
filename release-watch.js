@@ -1,8 +1,8 @@
 /*
  * openvibe-shared/release-watch.js — keeps open tabs on a supported release (ADR-016).
  *
- * The page declares what it runs: <meta name="ov-release" content="<sha>" data-url="/release.json">
- * (openvibe-shared/release metaTag()). On focus, when the tab becomes visible, when the network
+ * The page's release comes from <meta name="ov-release" content="<sha>" data-url="/release.json">
+ * (openvibe-shared/release metaTag()) or, without it, from /release.json when the script loads. On focus, when the tab becomes visible, when the network
  * comes back and every 10 minutes, this reads /release.json:
  *   - same release: nothing;
  *   - newer release: one quiet "new version" toast with a Reload button, never an automatic reload;
@@ -14,10 +14,11 @@
  */
 (function (root) {
     if (typeof document === 'undefined' || root.OVRelease) return;
+    // The page's release: from <meta name="ov-release"> when the server rendered one, otherwise the
+    // release /release.json reports when this script first runs (a site without the route stops).
     const meta = document.querySelector('meta[name="ov-release"]');
-    if (!meta || !meta.content) return;
-    const current = meta.content;
-    const url = meta.getAttribute('data-url') || '/release.json';
+    let current = meta && meta.content ? meta.content : null;
+    const url = (meta && meta.getAttribute('data-url')) || '/release.json';
     const IDLE_MS = 2 * 60 * 1000;
     const MIN_GAP_MS = 60 * 1000;
     let lastCheck = 0;
@@ -62,6 +63,7 @@
         } catch { return latest; }
         if (!m || typeof m.release !== 'string') return latest;
         latest = m;
+        if (!current) { current = m.release; root.OVRelease.current = current; return m; }
         if (m.release === current) return m;
         const age = now - Date.parse(m.released_at);
         const windowMs = (Number(m.mixed_version_window_hours) || 0) * 3600 * 1000;
@@ -71,10 +73,19 @@
         return m;
     }
 
-    root.addEventListener('focus', () => check(false));
-    root.addEventListener('online', () => check(true));
-    document.addEventListener('visibilitychange', () => { if (document.hidden) maybeReload(); else check(false); });
-    const tick = root.setInterval(() => { check(false); maybeReload(); }, 30 * 1000);
-    const poll = root.setInterval(() => check(true), 10 * 60 * 1000);
-    root.OVRelease = { current, check: () => check(true), state: () => ({ current, latest, mustReload }), stop: () => { root.clearInterval(tick); root.clearInterval(poll); } };
+    let stopped = false;
+    root.addEventListener('focus', () => { if (!stopped) check(false); });
+    root.addEventListener('online', () => { if (!stopped) check(true); });
+    document.addEventListener('visibilitychange', () => { if (stopped) return; if (document.hidden) maybeReload(); else check(false); });
+    const tick = root.setInterval(() => { if (!stopped) { check(false); maybeReload(); } }, 30 * 1000);
+    const poll = root.setInterval(() => { if (!stopped) check(true); }, 10 * 60 * 1000);
+    function stop() { stopped = true; root.clearInterval(tick); root.clearInterval(poll); }
+    root.OVRelease = { current, check: () => check(true), state: () => ({ current, latest, mustReload }), stop };
+    // No server-rendered release: learn it now; a site that serves no /release.json is left alone.
+    if (!current) {
+        root.fetch(url, { cache: 'no-store', credentials: 'omit' })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((m) => { if (m && typeof m.release === 'string') { current = m.release; root.OVRelease.current = current; latest = m; lastCheck = Date.now(); } else stop(); })
+            .catch(stop);
+    }
 })(typeof window !== 'undefined' ? window : globalThis);

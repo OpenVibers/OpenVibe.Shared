@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.1.1 — 2026-09-23
+
+- `release-watch.js` works without the `<meta name="ov-release">` tag: the release `/release.json`
+  reports when the script loads becomes the page's baseline, and a site that serves no
+  `/release.json` is asked once and left alone. Adopting it is a route plus one script tag.
+
 ## 1.1.0 — 2026-09-23
 
 Active-client update safety (ADR-016, contract `registry.release-manifest@1`). Additive only.

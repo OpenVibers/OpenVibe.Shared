@@ -79,5 +79,39 @@ const { createRelease } = require('../release');
     await p.ctx.OVRelease.check();
     assert.strictEqual(p.reloads(), 0, 'a visible tab someone just used is not reloaded');
 
+    // Without a meta tag the first /release.json read is the baseline; a later release prompts.
+    {
+        let served = 'ccccccc';
+        const listeners = {}; const toasts = [];
+        const ctx = {
+            console, Date, JSON, Promise, setInterval: () => 1, clearInterval: () => {},
+            location: { reload: () => {} }, addEventListener: (t, f) => { listeners[t] = f; },
+            OpenVibeUI: { toast: (msg, o) => toasts.push({ msg, o }) },
+            fetch: async () => ({ ok: true, json: async () => ({ release: served, released_at: fresh, min_client_release: null, mixed_version_window_hours: 24 }) }),
+            document: { hidden: true, activeElement: null, querySelector: () => null, addEventListener: () => {} },
+        };
+        ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'release-watch.js'), 'utf8'), ctx);
+        await new Promise((r) => setImmediate(r));
+        assert.strictEqual(ctx.OVRelease.current, 'ccccccc', 'baseline learned from /release.json');
+        await ctx.OVRelease.check();
+        assert.strictEqual(toasts.length, 0);
+        served = 'ddddddd';
+        await ctx.OVRelease.check();
+        assert.strictEqual(toasts.length, 1, 'a later release prompts');
+    }
+    {
+        let calls = 0;
+        const ctx = {
+            console, Date, JSON, Promise, setInterval: () => 1, clearInterval: () => {}, location: { reload: () => {} }, addEventListener: () => {},
+            fetch: async () => { calls++; return { ok: false, json: async () => null }; },
+            document: { hidden: true, activeElement: null, querySelector: () => null, addEventListener: () => {} },
+        };
+        ctx.window = ctx; ctx.globalThis = ctx; vm.createContext(ctx);
+        vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'release-watch.js'), 'utf8'), ctx);
+        await new Promise((r) => setImmediate(r));
+        assert.strictEqual(calls, 1, 'a site without /release.json is asked once, then left alone');
+    }
+
     console.log('release: all checks passed');
 })().catch((e) => { console.error(e); process.exit(1); });
