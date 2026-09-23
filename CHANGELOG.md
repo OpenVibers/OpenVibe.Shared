@@ -4,6 +4,65 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.5.0 — 2026-09-23
+
+Roadmap Track R (D42–D46, ADR-016): release manifests with components, open tabs updated in place,
+update metrics, and a mixed-version test harness. Additive; a service that changes nothing keeps
+serving exactly the manifest it served on 1.4.0.
+
+- **`/release.json` carries the registry.release-manifest 1.1.0 fields** (openvibe-contracts
+  v0.31.0): `components` (`{ id: { kind: style|content|script|server, version } }`), `assets` (logical
+  path → content-addressed URL, component, sha384 integrity), `schema_generation`,
+  `schema_compatible_from`, `contract_ranges` (`{ id: { version, accepts: ">=a.b.c <x.y.z", role? } }`)
+  and `metrics_url`. `createRelease()` takes `components` (`assets` under `publicDir`, `files` under
+  `root`; versions are content hashes), `contracts` (`^`, `~`, `x`, `>=` ranges are normalised),
+  `schemaGeneration`/`schemaCompatibleFrom` (numbers or functions), `assetUrl`, `recheckMs` and
+  `metricsPath`. Without a declared `shell` component its version is the release, so every release
+  still reloads. The package versions are part of the shell's hash, so a Shared bump never applies
+  in place.
+- **The contract filter.** The served manifest keeps only the fields the service's installed
+  openvibe-contracts release-manifest schema declares. Under openvibe-contracts ≤ 0.30.x that is
+  the 1.0.0 set, so `/release.json` keeps validating. `full()` is the unfiltered manifest,
+  `fields()` what is served, `validate()` checks the served one with the service's contracts, and
+  `refresh()` re-reads git, env and files.
+- **`release.mount(app, { registry })`** mounts GET `/release.json` and POST `/release-metrics`.
+  Tabs' reports go into `release_client_updates_total{outcome,reason}` in the service's
+  `openvibe-shared/metrics` registry, and so into `/metrics`. Outcomes are `applied` (by the kinds
+  applied), `reloaded` (`user`, `required`, `window`, `contract`), `deferred` (`typing`, `dirty`,
+  `protected`, `media`, `capture`, `active`) and `failed` (`style`, `style-timeout`, `content`,
+  `origin`, `script`). An unknown reason counts as `other`. A report is at most 4 KB, counts at most
+  50 per reason, and one address sends at most 30 a minute. Sec-GPC/DNT reports are dropped.
+  `collect(registry)` is the POST handler on its own.
+- **release-watch.js** keeps its rules: it prompts once, and reloads by itself only when it must
+  and only when that is safe. Now it also reads the page's own manifest at load, even with the
+  meta tag, and hands a release with components or contract ranges to **release-update.js** (new
+  browser file, loaded on demand from the same directory). The update is applied in place when
+  only style, content or server components changed and the contract ranges still hold. New
+  `<link>`s are matched by path or `data-ov-asset` and load beside the old ones, which are removed
+  only after every new one has loaded. `[data-ov-content="<component>"]` regions are re-fetched
+  (`data-ov-src`, default the page URL) with no scripts, frames or inline handlers. Each region is
+  replaced only when nothing inside it has focus, is protected or plays; otherwise it waits, and an
+  unchanged `data-ov-rev` is skipped. Any failure keeps the old page and falls back to the prompt.
+  Contracts outside the server's range force a reload, but still only when safe. It counts outcomes
+  and beacons them (on hide, after an update, before a reload) to `OVReleaseConfig.metricsUrl`, the
+  meta tag's `data-metrics` or the manifest's `metrics_url`, same origin only. It emits
+  `ov:release-applied`, `ov:styles-updated` and `ov:content-updated`. The new
+  `OVReleaseConfig.inPlace: false` turns in-place updates off.
+- **navbar.js**: `init({ releaseWatch: { … } })` is passed to release-watch as `OVReleaseConfig`.
+- **`openvibe-shared/release-compat`** (new, Node): `runMixedVersion` and `assertMixedVersion` run
+  the page × server matrix from the manifests' contract ranges. Where the manifests say
+  compatible, they call the real server with the other release's client. Where they say
+  incompatible, they require the tab's plan to be a reload. Adjacent releases must be compatible.
+  Also `replay(calls)`, `manifestFor()`, `consumerCompatible()` (service to service),
+  `rollbackSafe()` (schema generations), `plan()`/`compatible()` (the tab's own logic) and
+  `openPage()`, which runs release-watch in a linkedom page for in-place tests.
+- Sizes (brotli q11): release-watch.js 1.7 → 3.1 KB (+1.4 KB; it loads after first paint at low
+  priority). release-update.js is 2.9 KB and loads only when a release lists components. navbar.js
+  is +21 bytes (27.9 KB). Both release files have a 3.5 KB budget test.
+- Dev only: `linkedom` and `openvibe-contracts` (v0.30.2) are devDependencies.
+  `test/fixtures/release-manifest.v1.1.0.json` is Contracts' 1.1.0 schema, used until that
+  devDependency moves to v0.31.0.
+
 ## 1.4.0 — 2026-09-23
 
 `openvibe-shared/analytics` is now the ADR-021 module (roadmap register item 26 and C-80). It
