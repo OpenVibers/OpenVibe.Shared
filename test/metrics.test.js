@@ -62,6 +62,8 @@ const metrics = require('../metrics');
     assert.strictEqual(metrics.routeLabel({ route: { path: '/' }, baseUrl: '' }), '/');
     assert.strictEqual(metrics.routeLabel({ route: { path: /^\/x/ }, baseUrl: '' }), '(regex)');
     assert.strictEqual(metrics.routeLabel({ route: { path: ['/a', '/b'] }, baseUrl: '' }), '/a');
+    assert.strictEqual(metrics.routeLabel({ route: { path: ['/a', '/b'] }, baseUrl: '', path: '/b' }), '/b');
+    assert.strictEqual(metrics.routeLabel({ route: { path: ['/a', '/b/:id'] }, baseUrl: '', path: '/b/7' }), '/a', 'a parameterised member never labels with the raw path');
     assert.strictEqual(metrics.routeLabel({ baseUrl: '/secret/123', originalUrl: '/secret/123?q=1' }), 'unmatched');
 
     // ── Loopback-only guard ──

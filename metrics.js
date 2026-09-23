@@ -219,7 +219,8 @@ function templatePath(p) {
 function routeLabel(req) {
     if (!req.route || req.route.path === undefined) return 'unmatched';
     const rp = req.route.path;
-    const tail = rp instanceof RegExp ? '(regex)' : Array.isArray(rp) ? String(rp[0]) : String(rp);
+    // An array route ('/a', '/b') is labelled by the member that matched when it is a plain path.
+    const tail = rp instanceof RegExp ? '(regex)' : Array.isArray(rp) ? String(rp.find((p) => typeof p === 'string' && p === req.path) || rp[0]) : String(rp);
     const base = req.baseUrl ? templatePath(req.baseUrl) : '';
     const joined = `${base}${tail === '/' && base ? '' : tail}`;
     return (joined || '/').slice(0, MAX_LABEL_VALUE);
