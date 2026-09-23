@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.1.0 — 2026-09-23
+
+Active-client update safety (ADR-016, contract `registry.release-manifest@1`). Additive only.
+
+- `openvibe-shared/release` (server): `createRelease({ service })` → `handler` for
+  `GET /release.json` (deployed commit, commit time, package versions, `MIN_CLIENT_RELEASE`,
+  24 h mixed-version window) and `metaTag()` for the page's own release.
+- `release-watch.js` (browser, served at `/shared/release-watch.js`): on focus, visibility,
+  reconnect and every 10 minutes, compares the page's release with `/release.json`. A newer
+  release shows one Reload toast; a required release or one older than the window reloads the tab
+  only when it is hidden or idle, no text field has focus and nothing is protected
+  (`form[data-dirty="true"]`, `[data-ov-protected]`, `window.OVProtected()`).
+
 ## 1.0.0 — 2026-09-22
 
 First release from its own repository. Imported history-free from
