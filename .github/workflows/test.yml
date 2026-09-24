@@ -1,0 +1,98 @@
+name: test
+# The test job every OpenVibers Node service repository runs (roadmap Track Q): one definition,
+# called from each repository's CI and pinned to a commit of this repo, so the steps, the Node
+# version and the checks do not drift between 30 copies.
+#
+#   jobs:
+#     test:
+#       uses: OpenVibers/OpenVibe.Shared/.github/workflows/test.yml@<sha>
+#       with:
+#         contracts-service: wiki          # runs openvibe-contracts-check --service wiki --src server
+#     security:
+#       uses: OpenVibers/OpenVibe.Shared/.github/workflows/security.yml@<sha>
+#
+# Steps, in order:
+#   install      `install` (default npm ci) with the npm cache
+#   syntax       node --check on every .js/.cjs/.mjs file under `syntax-dirs` (default: server
+#                scripts), node_modules excluded; a directory that does not exist is skipped
+#   test         `test` (default npm test)
+#   contracts    openvibe-contracts-check --service <contracts-service> --src <contracts-src>, when
+#                contracts-service is set: the code's capability and event use against the release
+#   extra        `extra`, when set: any further commands, one per line (e.g. a budget check)
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node version (production runs Node 22).
+        type: string
+        default: 22.22.1
+      working-directory:
+        description: Directory holding package.json.
+        type: string
+        default: .
+      install:
+        description: Install command.
+        type: string
+        default: npm ci --no-audit --no-fund
+      test:
+        description: Test command.
+        type: string
+        default: npm test
+      syntax-dirs:
+        description: Space-separated directories whose JavaScript must pass node --check ("" skips).
+        type: string
+        default: server scripts
+      contracts-service:
+        description: Service id for openvibe-contracts-check ("" skips the check).
+        type: string
+        default: ''
+      contracts-src:
+        description: Source directory openvibe-contracts-check scans.
+        type: string
+        default: server
+      extra:
+        description: Further commands after the tests, one per line ("" skips).
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+      - name: install
+        run: ${{ inputs.install }}
+      - name: syntax
+        if: ${{ inputs.syntax-dirs != '' }}
+        env:
+          DIRS: ${{ inputs.syntax-dirs }}
+        run: |
+          n=0; failed=0
+          for d in $DIRS; do
+            [ -d "$d" ] || continue
+            while IFS= read -r -d '' f; do
+              n=$((n + 1))
+              node --check "$f" || { echo "::error file=$f::node --check failed"; failed=$((failed + 1)); }
+            done < <(find "$d" -type f \( -name '*.js' -o -name '*.cjs' -o -name '*.mjs' \) -not -path '*/node_modules/*' -print0)
+          done
+          echo "node --check: $n files, $failed failed"
+          [ "$failed" -eq 0 ]
+      - name: test
+        run: ${{ inputs.test }}
+      - name: contracts
+        if: ${{ inputs.contracts-service != '' }}
+        run: npx openvibe-contracts-check --service "${{ inputs.contracts-service }}" --src "${{ inputs.contracts-src }}"
+      - name: extra
+        if: ${{ inputs.extra != '' }}
+        run: ${{ inputs.extra }}
