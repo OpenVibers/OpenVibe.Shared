@@ -369,11 +369,18 @@
         Object.assign(NAV_ICONS, set); _iconState = 2;
         return true;
     }
+    /**
+     * A shared browser file next to this navbar.js: the same origin and the same release (a site that
+     * serves its own pinned copy at /shared/ gets its own), else the network's copy.
+     */
+    function sibling(name) {
+        const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
+        return `${m ? m[1] : 'https://openvibe.network/shared/'}${name}`;
+    }
     /** nav-icons.js next to this navbar.js (same origin, same release), else the network's copy. */
     function iconsUrl() {
         if (_config.iconsUrl) return _config.iconsUrl;
-        const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
-        return `${m ? m[1] : 'https://openvibe.network/shared/'}nav-icons.js?v=${NAV_ICONS_REV}`;
+        return `${sibling('nav-icons.js')}?v=${NAV_ICONS_REV}`;
     }
     function iconSlots() {
         const out = new Set();
@@ -433,8 +440,7 @@
             const rw = _config.releaseWatch;
             if (rw === false || root.OVRelease || document.querySelector('script[src*="release-watch.js"]')) return;
             if (rw && typeof rw === 'object' && !root.OVReleaseConfig) root.OVReleaseConfig = rw;
-            const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
-            const sc = document.createElement('script'); sc.src = `${m ? m[1] : 'https://openvibe.network/shared/'}release-watch.js`; sc.async = true;
+            const sc = document.createElement('script'); sc.src = sibling('release-watch.js'); sc.async = true;
             try { sc.fetchPriority = 'low'; } catch { /* */ }
             document.head.appendChild(sc);
         } catch { /* optional */ }
@@ -648,7 +654,7 @@
                 bindDisplayControls(panel.querySelector('.ovl-display'));
                 nav.appendChild(panel);
                 regPanel(panel, 'launcher', close);
-                if (!root.OpenVibeIcons && !document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = 'https://openvibe.network/shared/ov-icons.js'; sc.async = true; document.head.appendChild(sc); }
+                if (!root.OpenVibeIcons && !document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); }
                 let cat = null; paint(null, '');
                 const input = panel.querySelector('.ovl-q');
                 input.addEventListener('input', () => paint(cat, input.value.trim().toLowerCase()));
@@ -728,7 +734,7 @@
         if (root.OpenVibePanels) return root.OpenVibePanels.register(opts);
         _panelQueue.push(opts);
         if (document.getElementById('ov-panels-loader')) return;
-        const sc = document.createElement('script'); sc.id = 'ov-panels-loader'; sc.src = 'https://openvibe.network/shared/panels.js'; sc.async = true;
+        const sc = document.createElement('script'); sc.id = 'ov-panels-loader'; sc.src = sibling('panels.js'); sc.async = true;
         sc.onload = () => { while (_panelQueue.length) root.OpenVibePanels && root.OpenVibePanels.register(_panelQueue.shift()); };
         document.head.appendChild(sc);
     }
@@ -802,7 +808,7 @@
         };
         if (root.OpenVibeNotifications) return go();
         if (document.getElementById('ov-notify-loader')) return;
-        const sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = 'https://openvibe.network/shared/notification-ui.js'; sc.async = true; sc.onload = () => setTimeout(go, 0); document.head.appendChild(sc);
+        const sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = sibling('notification-ui.js'); sc.async = true; sc.onload = () => setTimeout(go, 0); document.head.appendChild(sc);
     }
 
     /** Custom sections for the user menu: [{ label, items: [{ label, icon, href, id, elId, hidden, danger, value, onClick }] }]. */
@@ -1140,7 +1146,7 @@
         if (root.OpenVibeSSO) return Promise.resolve(root.OpenVibeSSO);
         if (_ssoClientLoading) return _ssoClientLoading;
         _ssoClientLoading = new Promise((resolve) => {
-            const sc = document.createElement('script'); sc.async = true; sc.src = `${_config.apiBase}/shared/sso-client.js`;
+            const sc = document.createElement('script'); sc.async = true; sc.src = sibling('sso-client.js');
             sc.onload = () => resolve(root.OpenVibeSSO || null); sc.onerror = () => resolve(null);
             document.head.appendChild(sc);
         });
@@ -1223,7 +1229,7 @@
         if (H && typeof H.record === 'function') { H.record(rec, { token: _config.token, apiBase: _config.apiBase }); return; }
         if (!document.getElementById('ov-history-loader')) {
             const sc = document.createElement('script'); sc.id = 'ov-history-loader'; sc.async = true;
-            sc.src = `${_config.apiBase}/shared/history.js`;
+            sc.src = sibling('history.js');
             sc.onload = () => { try { root.OpenVibeHistory.record(rec, { token: _config.token, apiBase: _config.apiBase }); } catch { /* */ } };
             document.head.appendChild(sc);
         } else {
@@ -1314,7 +1320,7 @@
         if (H && typeof H.recent === 'function') { H.recent({ limit: 4, token: _config.token, apiBase: _config.apiBase }).then(draw).catch(() => draw(null)); return; }
         if (document.getElementById('ov-history-loader')) return;
         const sc = document.createElement('script'); sc.id = 'ov-history-loader'; sc.async = true;
-        sc.src = `${_config.apiBase}/shared/history.js`;
+        sc.src = sibling('history.js');
         sc.onload = () => { try { root.OpenVibeHistory.recent({ limit: 4, token: _config.token, apiBase: _config.apiBase }).then(draw).catch(() => draw(null)); } catch { /* */ } };
         document.head.appendChild(sc);
     }
@@ -1341,7 +1347,7 @@
 
         // The OV brand mark is a self-contained drop-in (mounts every .ov-mark it finds).
         if (!window.__ovMark && !document.getElementById('ov-mark-loader')) {
-            try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = 'https://openvibe.network/shared/ov-mark.js'; sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+            try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = sibling('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
         nav.innerHTML = `
             ${brandHTML(brand)}
@@ -1441,7 +1447,7 @@
             // Avatar click toggles dropdown
             nav.querySelector('#openvibe-avatar-btn').addEventListener('click', () => {
                 dropdown.classList.toggle('open');
-                if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; if (root.OpenVibeIcons) root.OpenVibeIcons.mount(dropdown); else if (!document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = 'https://openvibe.network/shared/ov-icons.js'; sc.async = true; document.head.appendChild(sc); } }
+                if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; if (root.OpenVibeIcons) root.OpenVibeIcons.mount(dropdown); else if (!document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } }
             });
 
             // Close on outside click

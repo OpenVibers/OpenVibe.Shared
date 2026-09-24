@@ -4,6 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.12.0 — 2026-09-24
+
+- **`openvibe-shared/serve`: a site serves its own pinned copy of the shared browser files.** Mount it with `app.use('/shared', serve.handler())` and reference files with `serve.url('navbar.js')`, which gives `/shared/navbar.js?v=<content hash>`. The current hash is cached immutably, anything else for five minutes. ETag is the hash, the files are CORS-open and cross-origin readable, and only the files `openvibe-shared/files` lists are served. A site's pin then decides what its pages run, and the Frame keeps working while openvibe.network is down.
+- The navbar loads its lazy siblings from wherever it was itself loaded: `nav-icons.js`, `release-watch.js`, `ov-icons.js`, `panels.js`, `notification-ui.js`, `ov-mark.js`, `sso-client.js` and `history.js`. Before, several were always fetched from openvibe.network (or the `apiBase`); the network's copy is now only the fallback. The footer already loaded `shipped.js` this way.
+
 ## 1.11.1 — 2026-09-24
 
 Fix: the footer's "shipped X ago" line uses the footer's own `service` (`live`, `wiki`, …). Before, it resolved the page's hostname, so a local or unmapped host showed the whole network. A site id that is not a registry id (a Tools satellite's `dev`) falls back to the hostname rather than to the whole network.
