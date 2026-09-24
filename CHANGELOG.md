@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.11.1 — 2026-09-24
+
+Fix: the footer's "shipped X ago" line uses the footer's own `service` (`live`, `wiki`, …). Before, it resolved the page's hostname, so a local or unmapped host showed the whole network. A site id that is not a registry id (a Tools satellite's `dev`) falls back to the hostname rather than to the whole network.
+
 ## 1.11.0 — 2026-09-24
 
 **The OpenVibe Frame.** The shared navbar, footer and "shipped" views every OpenVibe site sits in were called the "chrome", which was borrowed jargon easily mistaken for the browser. They are now the Frame:

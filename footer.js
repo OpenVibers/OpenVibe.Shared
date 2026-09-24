@@ -191,7 +191,7 @@
         if (c.shipped === false) return '';
         const host = typeof location !== 'undefined' ? location.hostname : '';
         const updates = c.updates || `${NETWORK_URL}/updates?site=${encodeURIComponent(host || c.service || '')}`;
-        return `<a class="ovf-shipped" data-ov-shipped="latest" data-service="auto" href="${esc(updates)}" hidden></a>`;
+        return `<a class="ovf-shipped" data-ov-shipped="latest" data-service="${esc(c.service || 'auto')}" href="${esc(updates)}" hidden></a>`;
     }
     function updatesHref(c) {
         const host = typeof location !== 'undefined' ? location.hostname : '';

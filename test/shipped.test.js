@@ -88,6 +88,15 @@ const data = {
     assert.strictEqual(sf('www.openvibe.live'), 'live');
     assert.strictEqual(sf('example.com'), null);
     assert.strictEqual(sf('live'), 'live');
+    // A footer's own site id wins over the page's host; an id that is not a registry id falls back to the host.
+    globalThis.location = { hostname: 'dev.openvibe.tools' };
+    const own = document.createElement('a');
+    await shipped.latest(own, { service: 'live', api: 'https://example.test/feed' });
+    globalThis.fetch = async (url) => ({ ok: true, json: async () => ({ entries: [{ service: new URL(url).searchParams.get('service') || 'all', subject: 's', deployed_at: new Date().toISOString() }] }) });
+    const sat = document.createElement('a');
+    await shipped.latest(sat, { service: 'dev', api: 'https://example.test/feed2' });
+    assert.ok(sat.textContent.includes('shipped') && !sat.textContent.includes('all shipped'), 'a satellite id resolves to tools by host');
+    delete globalThis.location;
 
     // log(): pages with the cursor, and the "Load more" button disappears on the last page.
     const calls = [];

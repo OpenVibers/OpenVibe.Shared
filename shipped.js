@@ -124,9 +124,11 @@
         const m = /(?:^|\.)openvibe\.([a-z]+)$/.exec(h);
         return m && SITE_NAMES[m[1]] ? m[1] : null;
     }
+    /** 'auto' = this page's host; a site id that is not a registry id (a Tools satellite's 'dev') also falls back to the host; '' = the whole network. */
     function resolveService(s) {
-        if (s === 'auto') return typeof location !== 'undefined' ? serviceFor(location.hostname) : null;
-        return s ? serviceFor(s) : null;
+        const host = () => (typeof location !== 'undefined' ? serviceFor(location.hostname) : null);
+        if (s === 'auto') return host();
+        return s ? (serviceFor(s) || host()) : null;
     }
 
     // One request per feed URL for 30 s, shared by the footer line, the pill and the list on a page.
