@@ -247,9 +247,10 @@ function readBody(req) {
  * POST handler for release-watch beacons: { counts: { applied|reloaded|deferred|failed: { reason: n } } }.
  * Counts go to release_client_updates_total{outcome,reason} in `registry` (openvibe-shared/metrics).
  * Unknown reasons count as "other"; each reason counts at most 50 per report; a report is at most 4 KB;
- * one address sends at most `perMinute` reports a minute. Sec-GPC/DNT requests are not counted.
+ * one client (req.ip, which honours the app's trust proxy; or `keyOf(req)`) sends at most `perMinute`
+ * reports a minute. Sec-GPC/DNT requests are not counted.
  */
-function collector(registry, { perMinute = 30 } = {}) {
+function collector(registry, { perMinute = 30, keyOf = null } = {}) {
     if (!registry || typeof registry.counter !== 'function') throw new TypeError('release: collect() needs an openvibe-shared/metrics registry');
     const counter = updateCounter(registry);
     const seen = new Map(); let windowStart = Date.now();
@@ -259,7 +260,8 @@ function collector(registry, { perMinute = 30 } = {}) {
         if (h['sec-gpc'] === '1' || h.dnt === '1') return done(204);
         const now = Date.now();
         if (now - windowStart > 60000) { seen.clear(); windowStart = now; }
-        const ip = String((req.socket && req.socket.remoteAddress) || req.ip || '');
+        // req.ip first: behind the proxy every socket is 127.0.0.1, and one shared bucket refused everyone.
+        const ip = String((keyOf && keyOf(req)) || req.ip || (req.socket && req.socket.remoteAddress) || '');
         const n = (seen.get(ip) || 0) + 1;
         if (seen.size < 10000 || seen.has(ip)) seen.set(ip, n);
         if (n > perMinute) return done(429);

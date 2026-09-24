@@ -4,6 +4,20 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.6.0 — 2026-09-24
+
+`openvibe-shared/egress`: the one rule for connecting to an address someone else chose. Live
+(`server/net/egress.js`), Events (`server/egress.js`) and Tools (`apps/_shared/egress.js`) each had a
+copy and they had drifted: Live allowed the 3fff::/20 documentation range and 5f00::/16, and only knew
+the /96 NAT64 prefix. This module is the strictest union: `isPublicAddress`, `embeddedV4`, `expandV6`,
+`normalizeHost`, `isInternalName`, a connect-time `safeLookup` (every DNS answer must be public, so there
+is no rebinding window), `createSafeLookup` for tests, `assertPublicUrl` and `EgressDenied`. Node only;
+the three services keep their own fetch, delivery and throttle wrappers on top of it.
+
+Fixed: `release.collect()` counted client beacons per socket address, which behind the proxy is
+127.0.0.1 for everyone, so one 30-a-minute bucket refused the whole site. It now keys by `req.ip`
+(the app's trust-proxy view), or `keyOf(req)` when given.
+
 ## 1.5.1 — 2026-09-23
 
 Touch and keyboard feedback in the shared chrome (owner feedback: phones flashed a theme-blind blue
