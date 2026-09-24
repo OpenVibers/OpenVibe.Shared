@@ -12,12 +12,14 @@ name: test
 #       uses: OpenVibers/OpenVibe.Shared/.github/workflows/security.yml@<sha>
 #
 # Steps, in order:
+#   packages     apt-get install of `apt-packages`, when set (e.g. ffmpeg for media tests)
 #   install      `install` (default npm ci) with the npm cache
 #   syntax       node --check on every .js/.cjs/.mjs file under `syntax-dirs` (default: server
 #                scripts), node_modules excluded; a directory that does not exist is skipped
 #   test         `test` (default npm test)
-#   contracts    openvibe-contracts-check --service <contracts-service> --src <contracts-src>, when
-#                contracts-service is set: the code's capability and event use against the release
+#   contracts    openvibe-contracts-check --service <contracts-service> --src <dir> for each directory
+#                in contracts-src, when contracts-service is set: the code's capability and event use
+#                against the release
 #   extra        `extra`, when set: any further commands, one per line (e.g. a budget check)
 on:
   workflow_call:
@@ -30,6 +32,10 @@ on:
         description: Directory holding package.json.
         type: string
         default: .
+      apt-packages:
+        description: Space-separated Ubuntu packages to install first ("" skips).
+        type: string
+        default: ''
       install:
         description: Install command.
         type: string
@@ -47,7 +53,7 @@ on:
         type: string
         default: ''
       contracts-src:
-        description: Source directory openvibe-contracts-check scans.
+        description: Space-separated source directories openvibe-contracts-check scans.
         type: string
         default: server
       extra:
@@ -71,6 +77,11 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: npm
           cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+      - name: packages
+        if: ${{ inputs.apt-packages != '' }}
+        env:
+          PKGS: ${{ inputs.apt-packages }}
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends $PKGS
       - name: install
         run: ${{ inputs.install }}
       - name: syntax
@@ -92,7 +103,12 @@ jobs:
         run: ${{ inputs.test }}
       - name: contracts
         if: ${{ inputs.contracts-service != '' }}
-        run: npx openvibe-contracts-check --service "${{ inputs.contracts-service }}" --src "${{ inputs.contracts-src }}"
+        env:
+          SERVICE: ${{ inputs.contracts-service }}
+          SRC: ${{ inputs.contracts-src }}
+        run: |
+          args=(); for d in $SRC; do args+=(--src "$d"); done
+          npx openvibe-contracts-check --service "$SERVICE" "${args[@]}"
       - name: extra
         if: ${{ inputs.extra != '' }}
         run: ${{ inputs.extra }}
