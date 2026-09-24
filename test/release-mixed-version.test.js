@@ -43,6 +43,9 @@ const manifest = (sha, version, accepts, extra = {}) => createRelease({
     service: 'items', root: __dirname, env: { RELEASE_COMMIT: sha, RELEASE_AT: '2026-09-23T10:00:00Z' }, schema: require('openvibe-contracts/contracts/registry/release-manifest.v1.json'),
     contracts: { 'items.web-api': { version, accepts } }, logger: { warn() {} }, ...extra,
 }).full();
+// The fixtures are released at 2026-09-23T10:00Z; judge them from inside their 24 h window, not from
+// today's clock (the test turned red once that window passed).
+const NOW = Date.parse('2026-09-23T12:00:00Z');
 const R1 = { name: 'R1', manifest: manifest('1111111', '1.0.0', '^1.0.0', { schemaGeneration: 3 }), server: service(v1), client: client1 };
 const R2 = { name: 'R2', manifest: manifest('2222222', '1.1.0', '^1.0.0', { schemaGeneration: 4, schemaCompatibleFrom: 3 }), server: service(v11), client: client2 };
 const R3 = { name: 'R3', manifest: manifest('3333333', '2.0.0', '^2.0.0', { schemaGeneration: 6 }), server: service(v2), client: client3 };
@@ -50,26 +53,26 @@ const R2x = { name: 'R2x', manifest: manifest('2222333', '1.1.0', '^1.0.0'), ser
 
 (async () => {
     // N-1 and N, both ways: an R1 page on the R2 server and an R2 page on the R1 server (rollback).
-    const rows = await compat.assertMixedVersion({ releases: [R1, R2] });
+    const rows = await compat.assertMixedVersion({ releases: [R1, R2], now: NOW });
     assert.deepStrictEqual(rows.map((r) => [r.page, r.server, r.compatible, r.ran, r.ok]), [['R1', 'R2', true, true, true], ['R2', 'R1', true, true, true]]);
     assert.ok(rows.every((r) => r.action === 'prompt'), 'no declared shell (so it changes every release): a compatible release prompts, never forces a reload');
 
     // A breaking release next to the one before it is refused (ADR-016: N-1 must keep working) …
-    await assert.rejects(compat.assertMixedVersion({ releases: [R2, R3] }), (err) => {
+    await assert.rejects(compat.assertMixedVersion({ releases: [R2, R3], now: NOW }), (err) => {
         assert.match(err.message, /adjacent releases must be compatible/);
         assert.match(err.message, /items\.web-api: the server accepts >=2\.0\.0 <3\.0\.0, the page speaks 1\.1\.0/);
         return true;
     });
     // … and outside the window (not adjacent) the tab is told to reload before it can break.
-    const wide = await compat.runMixedVersion({ releases: [R1, R2, R3] });
+    const wide = await compat.runMixedVersion({ releases: [R1, R2, R3], now: NOW });
     const r1r3 = wide.find((r) => r.page === 'R1' && r.server === 'R3');
     assert.deepStrictEqual([r1r3.compatible, r1r3.action, r1r3.reason, r1r3.ran, r1r3.ok], [false, 'reload', 'contract', false, true]);
     assert.ok(wide.filter((r) => r.adjacent && !r.compatible).every((r) => !r.ok), 'R2 <-> R3 fail as adjacent');
-    const off = await compat.runMixedVersion({ releases: [R2, R3], requireAdjacent: false });
+    const off = await compat.runMixedVersion({ releases: [R2, R3], now: NOW, requireAdjacent: false });
     assert.ok(off.every((r) => r.ok && r.action === 'reload'), 'requireAdjacent: false accepts a reload-only boundary');
 
     // A manifest that claims compatibility its server does not honour is caught by the real calls.
-    await assert.rejects(compat.assertMixedVersion({ releases: [R1, R2x] }), (err) => {
+    await assert.rejects(compat.assertMixedVersion({ releases: [R1, R2x], now: NOW }), (err) => {
         assert.match(err.message, /declared compatible, but the R1 client failed against the R2x server: item\.name/);
         const bad = err.rows.find((r) => !r.ok);
         assert.deepStrictEqual([bad.page, bad.server, bad.ran], ['R1', 'R2x', true]);
