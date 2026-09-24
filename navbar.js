@@ -299,9 +299,9 @@
             }
 
             /* Touch and keyboard feedback. Phones flash a square, theme-blind blue box over anything
-               tapped (-webkit-tap-highlight-color); the chrome turns it off and shows a slight press
+               tapped (-webkit-tap-highlight-color); the Frame turns it off and shows a slight press
                instead, and keyboard focus gets one ring in the theme accent. :where() keeps it at zero
-               specificity, so the chrome's own :focus-visible rules and a host page's rules still win.
+               specificity, so the Frame's own :focus-visible rules and a host page's rules still win.
                \`scale\` is its own property, so it composes with any transform already in use. */
             .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-launcher, .ovnav-drawer { -webkit-tap-highlight-color: transparent; }
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-launcher, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: .96; }
@@ -536,12 +536,12 @@
     }
 
 
-    // ── Shared chrome data (https://openvibe.network/api/chrome) ─────────────────────────────
+    // ── Frame data (https://openvibe.network/api/frame) ─────────────────────────────
     // Sites ordered by real use, footer copy and per-site legal links. Cached per host for 30
     // minutes in localStorage and refreshed in the background, so pages paint from cache and the
     // order never jumps while someone is looking at it. Defined once, shared by navbar + footer.
-    const OVChrome = root.OpenVibeChrome || (root.OpenVibeChrome = (function () {
-        const KEY = 'ov_chrome_v1', TTL = 30 * 60000;
+    const OVFrame = root.OpenVibeFrame || root.OpenVibeChrome || (root.OpenVibeFrame = root.OpenVibeChrome = (function () {
+        const KEY = 'ov_frame_v1', TTL = 30 * 60000;
         let inflight = null;
         const host = () => (typeof location !== 'undefined' ? location.hostname : '');
         const https = (u) => { try { return new URL(u).protocol === 'https:'; } catch { return false; } };
@@ -556,7 +556,7 @@
         function cached() { try { const c = JSON.parse(localStorage.getItem(KEY) || 'null'); return c && c.host === host() && c.data ? c : null; } catch { return null; } }
         function refresh() {
             if (inflight || typeof fetch === 'undefined') return inflight || Promise.resolve(null);
-            inflight = fetch('https://openvibe.network/api/chrome?host=' + encodeURIComponent(host()), { credentials: 'omit' })
+            inflight = fetch('https://openvibe.network/api/frame?host=' + encodeURIComponent(host()), { credentials: 'omit' })
                 .then(r => (r.ok ? r.json() : null)).then(clean)
                 .then(d => { if (d) { try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), host: host(), data: d })); } catch { /* */ } } return d; })
                 .catch(() => null);
@@ -618,7 +618,7 @@
                 // Sites and families always filter locally; tools need the catalog. Without it (offline, blocked),
                 // the last row hands the query to the Tools search page, so typing never does nothing.
                 const hit = (x) => (x.name + ' ' + (x.desc || '')).toLowerCase().includes(q);
-                const siteList = (OVChrome.get() && OVChrome.get().nav.length ? OVChrome.get().nav.map(n => ({ name: n.name, desc: n.tagline, icon: n.icon || n.id, url: n.url })) : LAUNCHER_SITES).filter(hit);
+                const siteList = (OVFrame.get() && OVFrame.get().nav.length ? OVFrame.get().nav.map(n => ({ name: n.name, desc: n.tagline, icon: n.icon || n.id, url: n.url })) : LAUNCHER_SITES).filter(hit);
                 const famList = fams.filter(hit);
                 const tools = cat ? cat.tools.filter(t => t.k.includes(q)).slice(0, 12) : [];
                 const more = `<a class="ovl-fam ovl-all" href="${escapeAttr(TOOLS_SEARCH + encodeURIComponent(q))}"><span class="ov-icon" data-icon="search" data-size="24" data-fx="none"></span><span><b>Search all tools for “${escapeAttr(q)}”</b></span></a>`;
@@ -627,9 +627,9 @@
                     + `<div class="ovl-h">Tools${cat ? '' : ' <span>loading…</span>'}</div><div class="ovl-fams">${tools.map(t => tile(t, 'ovl-fam')).join('')}${more}</div>`;
                 return;
             }
-            const chrome = OVChrome.get();
-            const sites = chrome && chrome.nav.length ? chrome.nav.map(n => ({ name: n.name, desc: n.tagline, icon: n.icon || n.id, url: n.url })) : LAUNCHER_SITES;
-            const soon = chrome ? chrome.soon : [];
+            const frame = OVFrame.get();
+            const sites = frame && frame.nav.length ? frame.nav.map(n => ({ name: n.name, desc: n.tagline, icon: n.icon || n.id, url: n.url })) : LAUNCHER_SITES;
+            const soon = frame ? frame.soon : [];
             // On a tool: every address it answers to (short, search-friendly, mirrors, custom domains), so people
             // can pick the one they will remember.
             const cur = currentHost().toLowerCase();
@@ -676,7 +676,7 @@
         try {
             if (navigator.globalPrivacyControl || navigator.doNotTrack === '1') return;
             if (!/^https:$/.test(location.protocol)) return;
-            const url = 'https://openvibe.network/api/chrome/hit';
+            const url = 'https://openvibe.network/api/frame/hit';
             if (navigator.sendBeacon) navigator.sendBeacon(url);
         } catch { /* */ }
     }
@@ -733,11 +733,11 @@
         document.head.appendChild(sc);
     }
 
-    /** Sites in the user menu: most used first (chrome data), never the one we are on. */
+    /** Sites in the user menu: most used first (Frame data), never the one we are on. */
     function acrossHTML() {
-        const chrome = OVChrome.get();
+        const frame = OVFrame.get();
         const here = currentHost().toLowerCase();
-        const list = (chrome && chrome.nav.length ? chrome.nav.map(n => ({ name: n.name, url: n.url, icon: n.icon || n.id })) : LAUNCHER_SITES)
+        const list = (frame && frame.nav.length ? frame.nav.map(n => ({ name: n.name, url: n.url, icon: n.icon || n.id })) : LAUNCHER_SITES)
             .filter(n => { try { const h = new URL(n.url).hostname; return h !== here && !here.endsWith('.' + h); } catch { return false; } }).slice(0, 5);
         return list.map(n => `<a href="${escapeAttr(n.url)}"><span class="icon"><span class="ov-icon" data-icon="${escapeAttr(n.icon)}" data-size="20" data-fx="none"></span></span> ${escapeAttr(n.name)}</a>`).join('');
     }
@@ -767,12 +767,12 @@
     /** The network's most used sites, after the page's own links (networkLinks: false turns it off). */
     function networkLinksHTML(pageLinks, inDrawer) {
         if (_config.networkLinks === false) return '';
-        const chrome = OVChrome.get((d) => { if (d && _navEl && !_navEl.querySelector('.ovnav-net')) { try { render(); } catch { /* */ } } });
-        if (!chrome) return '';
+        const frame = OVFrame.get((d) => { if (d && _navEl && !_navEl.querySelector('.ovnav-net')) { try { render(); } catch { /* */ } } });
+        if (!frame) return '';
         const here = currentHost().toLowerCase();
         const taken = new Set((pageLinks || []).map(l => { try { return new URL(l.href, location.href).hostname; } catch { return ''; } }));
         const max = inDrawer ? 6 : (typeof _config.networkLinks === 'number' ? _config.networkLinks : 4);
-        const pick = chrome.nav.filter(n => { try { const h = new URL(n.url).hostname; return h !== here && !here.endsWith('.' + h) && !taken.has(h); } catch { return false; } }).slice(0, max);
+        const pick = frame.nav.filter(n => { try { const h = new URL(n.url).hostname; return h !== here && !here.endsWith('.' + h) && !taken.has(h); } catch { return false; } }).slice(0, max);
         if (!pick.length) return '';
         return (inDrawer ? '<div class="ud-label">Across OpenVibe</div>' : `<span class="ovnav-sep" aria-hidden="true"></span>`) + pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
     }

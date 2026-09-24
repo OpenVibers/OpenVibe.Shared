@@ -111,10 +111,10 @@
         // The inline critical style paints a fixed dark canvas before any stylesheet; keep it in step with the theme.
         if (vars['--bg-primary']) el.style.background = vars['--bg-primary'];
         if (vars['--text-primary']) el.style.color = vars['--text-primary'];
-        syncChrome();
+        syncBrowserUi();
     }
 
-    // ── Browser chrome follows the theme ─────────────────────────────────────────────────
+    // ── The browser's own UI (address bar, theme-color) follows the theme ─────────────────────────────────────────────────
     // The tab icon and the browser/OS toolbar colour are repainted from the theme that was just
     // applied, so a violet, light or custom theme gets a matching favicon and address bar. Runs on
     // every apply: first paint, a change on this page, a change in another tab, a server sync.
@@ -132,12 +132,12 @@
             + '<path d="M0,-18 A18,18 0 0,1 17.4,4.6" fill="none" stroke="url(#r)" stroke-width="4.4" stroke-linecap="round"/><path d="M-9.5,-7 L0,10 L9.5,-7" fill="none" stroke="' + (document.documentElement.getAttribute('data-theme-mode') === 'light' ? accent : '#fff') + '" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/>'
             + '<circle cx="17.4" cy="4.6" r="3.2" fill="' + (DOTS[site] || light) + '"/></g></svg>');
     }
-    let _chromeKey = '';
-    function syncChrome() {
+    let _browserUiKey = '';
+    function syncBrowserUi() {
         if (typeof document === 'undefined' || !document.head) return;
         const accent = readColor('--accent', '#3b82f6'), light = readColor('--accent-light', accent), bg = readColor('--bg-secondary', readColor('--bg-primary', '#0a0f1c'));
         const mode = document.documentElement.getAttribute('data-theme-mode') || 'dark';
-        const key = [accent, light, bg, mode].join('|'); if (key === _chromeKey) return; _chromeKey = key;
+        const key = [accent, light, bg, mode].join('|'); if (key === _browserUiKey) return; _browserUiKey = key;
         try {
             let meta = document.querySelector('meta[name="theme-color"]');
             if (!meta) { meta = document.createElement('meta'); meta.name = 'theme-color'; document.head.appendChild(meta); }
@@ -282,7 +282,7 @@
 
     const activeId = resolveAndApply();
     // The icon link may be parsed after this script: repaint once the head is complete.
-    if (typeof document !== 'undefined' && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { _chromeKey = ''; syncChrome(); });
+    if (typeof document !== 'undefined' && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { _browserUiKey = ''; syncBrowserUi(); });
     // A theme picked in another tab (or on another OpenVibe page of this site) applies here at once.
     if (typeof window !== 'undefined') window.addEventListener('storage', function (e) { if (e.key === 'ov_theme') { try { resolveAndApply(); } catch (err) { /* */ } } if (e.key === DISPLAY_KEY) applyDisplay(readDisplay()); });
 

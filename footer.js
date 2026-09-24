@@ -31,12 +31,12 @@
     // Where this file was served from: shipped.js is loaded from the same place (the site's own
     // /shared/ copy, or openvibe.network), so the site's CSP already allows it.
     const OWN_SRC = (function () { try { return document.currentScript && document.currentScript.src ? document.currentScript.src : null; } catch { return null; } })();
-    // ── Shared chrome data (https://openvibe.network/api/chrome) ─────────────────────────────
+    // ── Frame data (https://openvibe.network/api/frame) ─────────────────────────────
     // Sites ordered by real use, footer copy and per-site legal links. Cached per host for 30
     // minutes in localStorage and refreshed in the background, so pages paint from cache and the
     // order never jumps while someone is looking at it. Defined once, shared by navbar + footer.
-    const OVChrome = root.OpenVibeChrome || (root.OpenVibeChrome = (function () {
-        const KEY = 'ov_chrome_v1', TTL = 30 * 60000;
+    const OVFrame = root.OpenVibeFrame || root.OpenVibeChrome || (root.OpenVibeFrame = root.OpenVibeChrome = (function () {
+        const KEY = 'ov_frame_v1', TTL = 30 * 60000;
         let inflight = null;
         const host = () => (typeof location !== 'undefined' ? location.hostname : '');
         const https = (u) => { try { return new URL(u).protocol === 'https:'; } catch { return false; } };
@@ -52,7 +52,7 @@
         function refresh() {
             if (typeof window === 'undefined' || typeof document === 'undefined') return Promise.resolve(null);   // server-side render: never call out
             if (inflight || typeof fetch === 'undefined') return inflight || Promise.resolve(null);
-            inflight = fetch('https://openvibe.network/api/chrome?host=' + encodeURIComponent(host()), { credentials: 'omit' })
+            inflight = fetch('https://openvibe.network/api/frame?host=' + encodeURIComponent(host()), { credentials: 'omit' })
                 .then(r => (r.ok ? r.json() : null)).then(clean)
                 .then(d => { if (d) { try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), host: host(), data: d })); } catch { /* */ } } return d; })
                 .catch(() => null);
@@ -151,9 +151,9 @@
     }
 
     function legalHref(item, cfg) {
-        // Each site answers for itself: the chrome service names this domain's own documents.
-        const chrome = cfg._chrome;
-        if (chrome && chrome.footer.legal && !cfg.legalBase) return chrome.footer.legal[item.key];
+        // Each site answers for itself: the Frame service names this domain's own documents.
+        const frame = cfg._frame;
+        if (frame && frame.footer.legal && !cfg.legalBase) return frame.footer.legal[item.key];
         // Policies live on whichever site owns them; a tool subdomain links out rather than 404ing.
         if (cfg.legalBase) return cfg.legalBase.replace(/\/$/, '') + item.path;
         if (typeof location !== 'undefined' && location.hostname.endsWith('openvibe.live')) return item.path;
@@ -202,14 +202,14 @@
         const c = { ...DEFAULTS, ...(cfg || {}) };
         const service = c.service || detectService();
         const brand = c.brandName || brandFor(service);
-        const chrome = c._chrome = OVChrome.get(() => { try { render(); } catch { /* */ } });
-        // Most used sites first when the chrome service has spoken; the built-in list otherwise.
-        const network = chrome && chrome.nav.length
-            ? chrome.nav.filter(n => n.id !== service && !(typeof location !== 'undefined' && new URL(n.url).hostname === location.hostname)).map(n => ({ name: 'OpenVibe.' + n.name, url: n.url, desc: n.tagline }))
+        const frame = c._frame = OVFrame.get(() => { try { render(); } catch { /* */ } });
+        // Most used sites first when the Frame service has spoken; the built-in list otherwise.
+        const network = frame && frame.nav.length
+            ? frame.nav.filter(n => n.id !== service && !(typeof location !== 'undefined' && new URL(n.url).hostname === location.hostname)).map(n => ({ name: 'OpenVibe.' + n.name, url: n.url, desc: n.tagline }))
             : NETWORK.filter(n => n.id !== service);
-        const tagline = (cfg && cfg.tagline) || (chrome && chrome.footer.blurb) || c.tagline;
-        const popular = chrome ? chrome.footer.popular : [];
-        const discover = chrome ? chrome.footer.discover.filter(d => !network.slice(0, 6).some(n => n.url === d.url)) : [];
+        const tagline = (cfg && cfg.tagline) || (frame && frame.footer.blurb) || c.tagline;
+        const popular = frame ? frame.footer.popular : [];
+        const discover = frame ? frame.footer.discover.filter(d => !network.slice(0, 6).some(n => n.url === d.url)) : [];
         const year = new Date().getFullYear();
 
         if (c.variant === 'compact') {

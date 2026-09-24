@@ -4,6 +4,17 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.11.0 — 2026-09-24
+
+**The OpenVibe Frame.** The shared navbar, footer and "shipped" views every OpenVibe site sits in were called the "chrome", which was borrowed jargon easily mistaken for the browser. They are now the Frame:
+
+- `openvibe-shared/frame` is the server module (formerly `openvibe-shared/chrome-ssr`, which stays as a deprecated alias until 2.0.0).
+- The navbar and footer read `https://openvibe.network/api/frame` (Network keeps `/api/chrome` as an alias for older copies) and send their page-view beacon to `/api/frame/hit`.
+- They share `window.OpenVibeFrame`; `OpenVibeChrome` points at the same object.
+- The browser cache key is `ov_frame_v1`.
+
+No behaviour change.
+
 ## 1.10.0 — 2026-09-24
 
 `openvibe-shared/chrome-ssr` gains the server-side pieces of the shared update system, so every site renders the same markup instead of its own copy:

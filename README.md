@@ -1,6 +1,6 @@
 # OpenVibe.Shared
 
-> Versioned UI, chrome, SEO, legal and release-client packages every OpenVibe site renders.
+> Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
 **Status:** alpha. The `openvibe-shared` package lives here; the latest tag is v1.4.0, and 1.5.0 (Track R:
 release manifests, in-place updates in open tabs, update metrics, the mixed-version harness) is on
@@ -24,7 +24,7 @@ were reconciled first.
 | Kind | Files |
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `chrome-ssr`, `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`; `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `frame` (the OpenVibe Frame on the server; `chrome-ssr` is a deprecated alias), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`; `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 
@@ -277,7 +277,7 @@ immutable versioned artifacts with a CDN-compatible mirror, instead of being ven
 rsynced from Network.
 
 **Owns**
-- `@openvibe/tokens|ui|chrome|auth-ui|seo|legal|icons|release-client|web-runtime|server-web|testing-web`
+- `@openvibe/tokens|ui|frame|auth-ui|seo|legal|icons|release-client|web-runtime|server-web|testing-web`
   (today still one package, `openvibe-shared`)
 - design tokens and theme rendering
 - release manifest client (active-tab update coordinator)

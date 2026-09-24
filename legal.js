@@ -29,7 +29,7 @@ const userContent = (site) => has(site, 'streaming', 'ugc', 'hosting', 'games');
 
 // Clause helpers. Every statement of fact below is backed by code in one of the repositories:
 // retention windows (OpenVibe.Tools apps/*/server/config.js), cookies (server/auth/*), the anonymous
-// page-view count (Network server/chrome), cross-site history (Network server/history), display and
+// page-view count (Network server/frame), cross-site history (Network server/history), display and
 // theme preferences (theme-loader.js), AI site copy (Live server/internal/routes.js).
 const P = (...t) => t.map(x => `<p>${x}</p>`).join('');
 const UL = (items) => `<ul>${items.filter(Boolean).map(i => `<li>${i}</li>`).join('')}</ul>`;
@@ -180,7 +180,7 @@ function page(kind, site) {
 ${head}
 ${require('./app-icon').headTags({ site: site.id })}
 <script src="https://openvibe.network/shared/theme-loader.js" defer></script><style>${CSS}</style></head><body>
-${require('./chrome-ssr').noscriptNav({ name: site.name })}
+${require('./frame').noscriptNav({ name: site.name })}
 <main>${article(kind, site)}</main>${require('./footer').ssr({ service: site.service || site.id || 'network', variant: 'compact' })}
 <script src="https://openvibe.network/shared/navbar.js" defer></script><script src="https://openvibe.network/shared/footer.js" defer></script>
 <script>addEventListener('DOMContentLoaded',function(){var t=null;try{t=(document.cookie.match(/(?:^|; )ov_token=([^;]*)/)||[])[1]||localStorage.getItem('ov_token')}catch(e){}
