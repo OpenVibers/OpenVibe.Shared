@@ -17,6 +17,7 @@ const BROWSER = Object.freeze([
     'nav-icons.js',         // navbar glyphs beyond its own, fetched by navbar.js after first paint
     'theme-loader.js',      // applies the theme before first paint
     'footer.js',            // shared footer (also required on the server by chrome-ssr.js)
+    'shipped.js',           // "Recently shipped" from the network changelog (openvibe.blog)
     'notification-ui.js',   // bell + notification panel
     'account-switcher.js',
     'user-card.js',

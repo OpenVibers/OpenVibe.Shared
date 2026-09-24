@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.8.0 — 2026-09-24
+
+`shipped.js` (browser file, also `openvibe-shared/shipped`): "Recently shipped" for any OpenVibe site.
+`OpenVibeShipped.mount(el, { service, limit, title })` reads the network changelog OpenVibe.Blog keeps
+(`GET https://openvibe.blog/api/v1/changelog`): what each site deployed, newest first, each line
+linked to its commit, and a link to the latest "Patch notes" post that gathers a batch of changes.
+Without `service` it shows the whole network with site labels. DOM nodes only (commit text is never
+parsed as HTML), https links only, hidden when there is nothing or the fetch fails; styles follow
+the theme variables. Additive.
+
 ## 1.7.0 — 2026-09-24
 
 `openvibe-shared/trace` (Track O): one W3C trace across the services a request touches.

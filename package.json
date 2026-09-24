@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "exports": {
@@ -23,6 +23,7 @@
     "./egress": "./egress.js",
     "./files": "./files.js",
     "./footer": "./footer.js",
+    "./shipped": "./shipped.js",
     "./history": "./history.js",
     "./icons": "./ov-icons.js",
     "./island": "./island.js",
