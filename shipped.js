@@ -45,6 +45,8 @@
         `.ov-shipped-latest:hover{border-color:var(--accent,#3b82f6);color:${TEXT}}.ov-shipped-latest svg{flex:none;color:var(--accent,#3b82f6)}`,
         `.ov-shipped-latest b{color:${TEXT};font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0}`,
         '[data-ov-shipped][hidden],.ov-shipped[hidden],.ov-shipped-latest[hidden]{display:none!important}',
+        '.ov-shipped-home{display:grid;gap:12px;justify-items:start;margin:16px 0;min-width:0}.ov-shipped-home>.ov-shipped{justify-self:stretch}',
+        `.ov-updates{min-width:0}.ov-updates h1{margin:.2em 0 .3em}.ov-updates-lede{color:${MUTED};line-height:1.55;margin:0 0 18px}`,
         '.ov-shipped{font-size:.92rem;min-width:0}.ov-shipped h3{font-size:1rem;margin:0 0 .5rem;display:flex;gap:.4rem;align-items:center}',
         '.ov-shipped ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}.ov-shipped li{display:flex;gap:.5rem;align-items:baseline;min-width:0}',
         `.ov-shipped-site{flex:none;font-size:.72rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent);color:${ACCENT};text-decoration:none}`,

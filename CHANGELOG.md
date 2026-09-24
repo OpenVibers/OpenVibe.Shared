@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.10.0 — 2026-09-24
+
+`openvibe-shared/chrome-ssr` gains the server-side pieces of the shared update system, so every site renders the same markup instead of its own copy:
+
+- `shipped({ service, updates, title, limit })`: the home page block (the pill and the recent changes), with a plain link without JavaScript.
+- `updatesBody({ service, siteName })`: the body of a site's `/updates` page. Without JavaScript it falls back to openvibe.network's server-rendered log.
+- `shippedScript()`: the script tag.
+
+`shipped.js` styles both. Additive.
+
 ## 1.9.0 — 2026-09-24
 
 - **One "shipped" and update-log system for every site** (`shipped.js`). There are three views: `latest` (the "🚀 shipped 5m ago: …" pill), `list` (the recent changes plus the latest Patch notes link and an "All updates" link) and `log` (a full `/updates` page: changes grouped by day, "Load more" by cursor, this site or the whole network with a filter per site, and the Patch notes posts). Views mount from markup, `data-ov-shipped="latest|list|log"` with `data-service`, `data-limit`, `data-more` and `data-href`, when the script loads, or from code with `latest()`, `list()` (`mount()`), `log()` and `scan()`. The feed is now `https://openvibe.network/api/v1/changelog`, a cached proxy of OpenVibe.Blog's changelog that every site's CSP already allows. One request is shared per page; the "ago" text stays current; `serviceFor(host)` maps hostnames to registry ids.
