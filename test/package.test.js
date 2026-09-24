@@ -22,7 +22,7 @@ for (const sub of ['analytics', 'app-icon', 'auth-client', 'brand', 'chrome-ssr'
     assert.doesNotThrow(() => require.resolve(`openvibe-shared/${sub}`), `openvibe-shared/${sub}`);
 }
 // Server modules load in Node; the navbar module loads too (UMD, no DOM touched at require time).
-for (const sub of ['analytics', 'app-icon', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons', 'metrics', 'ready', 'egress']) require(`openvibe-shared/${sub}`);
+for (const sub of ['analytics', 'app-icon', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons', 'metrics', 'ready', 'egress', 'trace']) require(`openvibe-shared/${sub}`);
 // analytics is dependency-free: its parts require only Node built-ins and each other.
 for (const f of fs.readdirSync(path.join(ROOT, 'analytics'))) {
     const src = fs.readFileSync(path.join(ROOT, 'analytics', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');

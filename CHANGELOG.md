@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.7.0 — 2026-09-24
+
+`openvibe-shared/trace` (Track O): one W3C trace across the services a request touches.
+`trace.install(app)` (right after openvibe-contracts' `http.middleware()`) runs each request inside
+an AsyncLocalStorage holding its trace and request ids, and wraps `fetch()` once so a call to a
+loopback address or an OpenVibe host carries `traceparent` (the request's trace id, a new span) and
+`X-OpenVibe-Request-Id`, unless it sets its own. Calls to anyone else (payment and AI providers,
+user-chosen URLs) are untouched, so trace ids never leave the network; outside a request nothing is
+added. Also `trace.current()`, `trace.outboundHeaders()`, `trace.run(ctx, fn)`. Additive.
+
 ## 1.6.0 — 2026-09-24
 
 `openvibe-shared/egress`: the one rule for connecting to an address someone else chose. Live
