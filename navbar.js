@@ -4,7 +4,10 @@
 // notification bell, account switcher, and theme-aware styling.
 // Usage: OpenVibeNavbar.init({ service, token, user, apiBase })
 //   Optional: loginUrl (override the Sign In href), sessionUrl (same-origin
-//   endpoint returning { user } — used only when no ov_token exists),
+//   endpoint returning { user } — asked when no usable ov_token exists, including
+//   when a stored token turned out stale), logoutUrl (where Sign out goes, e.g. the
+//   site's '/auth/logout?next={path}', so a server-side session ends too; {url} is
+//   the full return URL, {path} its local path — loginUrl takes both too),
 //   onLogin/onLogout callbacks. When no `user` is passed the navbar resolves
 //   it itself: ov_token cookie → localStorage → token opt → sessionUrl, then
 //   GET {apiBase}/api/auth/me with `Authorization: Bearer <token>`.
@@ -28,7 +31,7 @@
 
     let _config = {
         service: 'network', token: null, user: null, apiBase: 'https://openvibe.network',
-        onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null,
+        onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
         brand: null, brandName: null, brandIcon: null, compact: 'auto',
         links: null, menu: null, recent: true,
         // history: { type: 'tool'|'stream'|'paste'|'page'|…, title, url, icon } — recorded for the
@@ -981,7 +984,7 @@
 
     /** Where "Sign In" goes on this host. */
     function resolveLoginHref(host, returnUrl) {
-        if (_config.loginUrl) return String(_config.loginUrl).replace('{url}', encodeURIComponent(returnUrl || '/'));
+        if (_config.loginUrl) return fillUrl(_config.loginUrl, returnUrl);
         if (onToolsDomain(host)) {
             // Every *.openvibe.tools host signs in through the gateway apex: it
             // holds the OAuth state cookie + redirect_uri (both apex-host-only)
@@ -1040,6 +1043,14 @@
         }
     }
 
+    /** loginUrl/logoutUrl templates: {url} = the full return URL, {path} = its path + query (for sites that only accept local next=). */
+    function fillUrl(template, returnUrl) {
+        const full = returnUrl || (typeof location !== 'undefined' ? location.href : '/');
+        let path = '/';
+        try { const u = new URL(full, typeof location !== 'undefined' ? location.href : 'https://openvibe.network/'); path = u.pathname + u.search; } catch { /* */ }
+        return String(template).replace('{url}', encodeURIComponent(full)).replace('{path}', encodeURIComponent(path));
+    }
+
     /** Same-origin session refresh — mounted by the tools gateway (POST /auth/refresh). */
     async function gatewayRefresh() {
         try {
@@ -1088,10 +1099,15 @@
                     const user = n.user || (await fetchMe(n.token)).user;
                     if (user) { persistToken(n.token); return { user, token: n.token }; }
                 }
+                // A stored token nobody accepts any more: drop it, so it cannot keep hiding a
+                // good session (the site's own below, or the next sign-in).
+                try { if (localStorage.getItem('ov_token') === token) localStorage.removeItem('ov_token'); } catch { /* */ }
             }
-            return null;
+            if (!_config.sessionUrl) return null;
         }
-        // No token anywhere — ask the page's own session endpoint if it has one
+        // No usable token — ask the page's own session endpoint if it has one (a site with a
+        // server-side session, such as openvibe.blog, knows who is signed in even when this
+        // browser's stored token is stale or was never shared with the page).
         if (_config.sessionUrl) {
             try {
                 const res = await fetch(_config.sessionUrl, { credentials: 'include' });
@@ -1451,7 +1467,10 @@
                     _config.token = null;
                     try { root.OpenVibeSSO && root.OpenVibeSSO.preventSilent(); } catch { /* */ }
                     try { localStorage.setItem('ov_sso_hint', 'guest'); } catch { /* */ }
-                    if (onToolsDomain()) {
+                    if (_config.logoutUrl) {
+                        // The site ends its own server-side session too, then sends us back.
+                        window.location.href = fillUrl(_config.logoutUrl, window.location.href);
+                    } else if (onToolsDomain()) {
                         // The gateway also clears the Domain=.openvibe.tools cookie
                         // and the httpOnly refresh cookie, then sends us back here.
                         window.location.href = `https://${TOOLS_APEX}/auth/logout?next=${encodeURIComponent(window.location.href)}`;
@@ -1591,6 +1610,7 @@
             resolveSessionUser,
             clearAuthState,
             persistToken,
+            fillUrl,
         },
     };
 

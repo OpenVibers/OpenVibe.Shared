@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.9.0 — 2026-09-24
+
+- **One "shipped" and update-log system for every site** (`shipped.js`). There are three views: `latest` (the "🚀 shipped 5m ago: …" pill), `list` (the recent changes plus the latest Patch notes link and an "All updates" link) and `log` (a full `/updates` page: changes grouped by day, "Load more" by cursor, this site or the whole network with a filter per site, and the Patch notes posts). Views mount from markup, `data-ov-shipped="latest|list|log"` with `data-service`, `data-limit`, `data-more` and `data-href`, when the script loads, or from code with `latest()`, `list()` (`mount()`), `log()` and `scan()`. The feed is now `https://openvibe.network/api/v1/changelog`, a cached proxy of OpenVibe.Blog's changelog that every site's CSP already allows. One request is shared per page; the "ago" text stays current; `serviceFor(host)` maps hostnames to registry ids.
+- **Footer.** Every footer carries the "shipped X ago" line and an **Updates** link. The link goes to the site's own log (`updates: '/updates'`) or, by default, `openvibe.network/updates?site=<host>`. The footer loads `shipped.js` lazily from its own origin; turn it off with `shipped: false`. `detectService()` now knows the TLD sites (`openvibe.wiki` → `wiki`, `openre.stream` → `openre`).
+- **Fix: an empty bordered bar in the footer.** The signed-in row's `display:flex` beat its `hidden` attribute on sites without a global `[hidden]` rule.
+- **Fix: "Sign In" shown to signed-in people on sites with their own session** (openvibe.blog and the other publishing sites). When a stored token is stale or refused, the navbar now drops it and asks the site's `sessionUrl` instead of giving up. The navbar also takes a new `logoutUrl` (for example `/auth/logout?next={path}`), so Sign out ends the site's server-side session too. `loginUrl` and `logoutUrl` accept `{url}` (the full return URL) and `{path}` (its local path).
+
+Everything is additive.
+
 ## 1.8.0 — 2026-09-24
 
 `shipped.js` (browser file, also `openvibe-shared/shipped`): "Recently shipped" for any OpenVibe site.

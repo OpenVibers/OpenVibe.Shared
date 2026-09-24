@@ -282,6 +282,45 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.strictEqual(user.username, 'vibe');
     }
 
+    // ── 12b. A stale stored token must not hide the site's own session (openvibe.blog) ─
+    {
+        const { navbar, storage } = loadNavbar({
+            hostname: 'openvibe.blog',
+            storage: { ov_token: 'stale-jwt' },
+            fetch: async (url) => {
+                if (url === '/auth/me') return jsonResponse(200, { user: USER });
+                if (String(url).endsWith('/api/auth/me')) return jsonResponse(401, { error: 'expired' });
+                if (String(url).endsWith('/api/auth/refresh')) return jsonResponse(401, { error: 'too old' });
+                return jsonResponse(404, {});
+            },
+        });
+        navbar.init({ service: 'blog', apiBase: 'https://openvibe.network', sessionUrl: '/auth/me', logoutUrl: '/auth/logout?next={url}' });
+        const user = await navbar.refreshAuth();
+        assert.ok(user && user.username === 'vibe', 'the site session answers when the stored token is stale');
+        assert.strictEqual(storage.getItem('ov_token'), null, 'the stale token is dropped');
+    }
+
+    // ── 12b2. {path} and {url} in loginUrl/logoutUrl ─
+    {
+        const { navbar } = loadNavbar({ hostname: 'openvibe.blog', href: 'https://openvibe.blog/@openvibe/post?x=1' });
+        const f = navbar._auth.fillUrl;
+        assert.strictEqual(f('/auth/logout?next={path}', 'https://openvibe.blog/@openvibe/post?x=1'), '/auth/logout?next=%2F%40openvibe%2Fpost%3Fx%3D1');
+        assert.strictEqual(f('/auth/login?next={url}', 'https://openvibe.blog/a'), '/auth/login?next=https%3A%2F%2Fopenvibe.blog%2Fa');
+        navbar.init({ service: 'blog', apiBase: 'https://openvibe.network', loginUrl: '/auth/login?next={path}' });
+        assert.strictEqual(navbar._auth.resolveLoginHref('openvibe.blog', 'https://openvibe.blog/w?y=2'), '/auth/login?next=%2Fw%3Fy%3D2');
+    }
+
+    // ── 12c. Without a sessionUrl a stale token still means signed out ─
+    {
+        const { navbar } = loadNavbar({
+            hostname: 'openvibe.network',
+            storage: { ov_token: 'stale-jwt' },
+            fetch: async () => jsonResponse(401, {}),
+        });
+        navbar.init({ service: 'network', apiBase: 'https://openvibe.network' });
+        assert.strictEqual(await navbar.refreshAuth(), null);
+    }
+
     // ── 13. Explicit user passed → no auth traffic at all ────
     {
         const { navbar, calls } = loadNavbar({

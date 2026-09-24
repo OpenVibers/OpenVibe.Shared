@@ -28,6 +28,9 @@
     'use strict';
 
     const root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : {});
+    // Where this file was served from: shipped.js is loaded from the same place (the site's own
+    // /shared/ copy, or openvibe.network), so the site's CSP already allows it.
+    const OWN_SRC = (function () { try { return document.currentScript && document.currentScript.src ? document.currentScript.src : null; } catch { return null; } })();
     // ── Shared chrome data (https://openvibe.network/api/chrome) ─────────────────────────────
     // Sites ordered by real use, footer copy and per-site legal links. Cached per host for 30
     // minutes in localStorage and refreshed in the background, so pages paint from cache and the
@@ -110,6 +113,8 @@
         showNetwork: true,
         showAccount: true,
         sitemap: '/sitemap.xml',
+        shipped: true,               // the "shipped X ago" line (openvibe-shared/shipped.js)
+        updates: null,               // this site's update log; default: openvibe.network/updates?site=<host>
     };
 
     let _cfg = { ...DEFAULTS };
@@ -121,6 +126,9 @@
         if (h.endsWith('openvibe.live')) return 'live';
         if (h.endsWith('openvibe.network')) return 'network';
         if (h.endsWith('openvibe.games')) return 'games';
+        if (/(^|\.)openre\.stream$/.test(h)) return 'openre';
+        const tld = /(?:^|\.)openvibe\.([a-z]+)$/.exec(h);
+        if (tld && tld[1] !== 'tools' && TLD_LABELS[tld[1]]) return tld[1];
         const sub = h.replace(/\.openvibe\.tools$/, '');
         return sub === h ? 'tools' : (sub || 'tools');
     }
@@ -178,6 +186,18 @@
         return `<a href="${esc(item.url)}"${rel}${onclick}${title}>${esc(item.name)}</a>`;
     }
 
+    /** The "🚀 shipped X ago: …" line, filled by shipped.js from the network changelog; hidden until then. */
+    function shippedLine(c) {
+        if (c.shipped === false) return '';
+        const host = typeof location !== 'undefined' ? location.hostname : '';
+        const updates = c.updates || `${NETWORK_URL}/updates?site=${encodeURIComponent(host || c.service || '')}`;
+        return `<a class="ovf-shipped" data-ov-shipped="latest" data-service="auto" href="${esc(updates)}" hidden></a>`;
+    }
+    function updatesHref(c) {
+        const host = typeof location !== 'undefined' ? location.hostname : '';
+        return c.updates || `${NETWORK_URL}/updates?site=${encodeURIComponent(host || c.service || '')}`;
+    }
+
     function buildHTML(cfg) {
         const c = { ...DEFAULTS, ...(cfg || {}) };
         const service = c.service || detectService();
@@ -198,8 +218,10 @@
                 <nav class="ovf-compact-links" aria-label="Site links">
                     ${(c.links[0] ? c.links[0].items.slice(0, 3) : []).map(linkTag).join('')}
                     <a href="${NETWORK_URL}" target="_blank" rel="noopener">Network</a>
+                    ${c.shipped === false ? '' : `<a href="${esc(updatesHref(c))}">Updates</a>`}
                     ${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name.replace(' of Service', '').replace(' Policy', ''))}</a>`).join('')}
                 </nav>
+                ${shippedLine(c)}
                 <span class="ovf-compact-meta">Open source · ${year}</span>
             </div>`;
         }
@@ -239,7 +261,9 @@
             <div class="ovf-account" id="ovf-account" hidden></div>
             <div class="ovf-bar">
                 <span class="ovf-copy">Open source &amp; community driven · built in the open</span>
+                ${shippedLine(c)}
                 <span class="ovf-legal-inline">
+                    ${c.shipped === false ? '' : `<a href="${esc(updatesHref(c))}">Updates</a>`}
                     ${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name.replace(' of Service', '').replace(' Policy', ''))}</a>`).join('')}
                 </span>
             </div>
@@ -330,6 +354,8 @@
   padding-inline:clamp(0px, calc(84px - (100vw - 1240px) / 2), 84px)}
 .ovf-copy{color:var(--text-muted,#8b93ad);font-size:.78rem}
 .ovf-legal-inline,.ovf-compact-links{display:flex;flex-wrap:wrap;gap:14px}
+.ovf [hidden],.ovf-account[hidden]{display:none!important}
+.ovf .ovf-shipped.ov-shipped-latest{font-size:.76rem;padding:4px 12px;max-width:min(520px,100%);background:transparent}
 .ovf-legal-inline a,.ovf-compact-links a{color:var(--text-muted,#8b93ad);font-size:.78rem;text-decoration:none;transition:color .15s}
 .ovf-legal-inline a:hover,.ovf-compact-links a:hover{color:var(--accent,#60a5fa)}
 .ovf-compact-meta{color:var(--text-muted,#8b93ad);font-size:.74rem}
@@ -364,6 +390,23 @@
         _mounted.innerHTML = buildHTML(_cfg);
         try { if (typeof window !== 'undefined' && typeof window.ovMarkMount === 'function') window.ovMarkMount(_mounted); } catch { /* */ }
         fillAccount(_cfg);
+        if (_cfg.shipped !== false) loadShipped();
+    }
+
+    // shipped.js mounts every [data-ov-shipped] element when it loads; loaded once, lazily, after the footer.
+    let _shippedLoading = false;
+    function loadShipped() {
+        if (typeof document === 'undefined') return;
+        if (root.OpenVibeShipped && typeof root.OpenVibeShipped.scan === 'function') { try { root.OpenVibeShipped.scan(document); } catch { /* */ } return; }
+        if (_shippedLoading || document.querySelector('script[data-ov-shipped-src]')) return;
+        _shippedLoading = true;
+        const sc = document.createElement('script');
+        let src = `${NETWORK_URL}/shared/shipped.js`;
+        try { if (OWN_SRC) src = new URL('shipped.js', OWN_SRC).href; } catch { /* */ }
+        sc.src = src;
+        sc.defer = true;
+        sc.setAttribute('data-ov-shipped-src', '');
+        (document.head || document.documentElement).appendChild(sc);
     }
 
     function init(cfg = {}) {
