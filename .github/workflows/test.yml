@@ -20,6 +20,9 @@ name: test
 #   contracts    openvibe-contracts-check --service <contracts-service> --src <dir> for each directory
 #                in contracts-src, when contracts-service is set: the code's capability and event use
 #                against the release
+#   pin drift    scripts/pin-drift.js from OpenVibe.Shared main over the whole repository: a pin of
+#                openvibe-contracts/-shared/-sdk/-publishing that is not a published tag, or more than one
+#                minor behind the latest release, fails (roadmap WS-C task 5; `pin-drift: false` skips)
 #   extra        `extra`, when set: any further commands, one per line (e.g. a budget check)
 on:
   workflow_call:
@@ -60,6 +63,10 @@ on:
         description: Further commands after the tests, one per line ("" skips).
         type: string
         default: ''
+      pin-drift:
+        description: Fail on drifted openvibe-* library pins (OpenVibe.Shared scripts/pin-drift.js).
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -109,6 +116,10 @@ jobs:
         run: |
           args=(); for d in $SRC; do args+=(--src "$d"); done
           npx openvibe-contracts-check --service "$SERVICE" "${args[@]}"
+      - name: pin drift
+        if: ${{ inputs.pin-drift }}
+        working-directory: .
+        run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - "$GITHUB_WORKSPACE"
       - name: extra
         if: ${{ inputs.extra != '' }}
         run: ${{ inputs.extra }}
