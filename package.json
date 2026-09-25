@@ -81,6 +81,6 @@
     "better-sqlite3": "^11.10.0",
     "express": "^4.22.3",
     "linkedom": "^0.18.13",
-    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.44.0"
+    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.49.0"
   }
 }
