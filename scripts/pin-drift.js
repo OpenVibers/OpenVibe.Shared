@@ -17,7 +17,12 @@
  * Checks openvibe-contracts, openvibe-shared, openvibe-sdk and openvibe-publishing in dependencies,
  * devDependencies, optionalDependencies and peerDependencies; ranges that are not tag URLs (a peer range
  * like ">=1.5.0") are not pins and are skipped. Tags come from `git ls-remote --tags` (no token needed).
- * Exit 0 = no drift, 1 = drift, 2 = could not check (network).
+ * One copy (WS-C task 8, ADR-008 amendment): openvibe-publishing takes openvibe-shared as an optional peer, so a
+ * product must install openvibe-shared exactly once. For every package root with a node_modules tree (after
+ * the install step), every installed openvibe-shared is found (npm nesting and pnpm's .pnpm store, symlinks
+ * resolved); more than one copy fails and names each one's version and path.
+ *
+ * Exit 0 = no drift, 1 = drift or a second copy, 2 = could not check (network).
  */
 const fs = require('fs');
 const path = require('path');
@@ -96,7 +101,50 @@ function main(dir = '.', { tagsOf, datesOf, now = Date.now() } = {}) {
     return results;
 }
 
-module.exports = { judge, pinsIn, main, releaseDates, LIBS, GRACE_DAYS };
+/** Every installed copy of `name` under root/node_modules (nested and pnpm), deduplicated by real path. → [{ dir, version }] */
+function installedCopies(root, name = 'openvibe-shared', maxDepth = 8) {
+    const found = new Map();
+    const seen = new Set();
+    const walk = (nm, depth) => {
+        let real;
+        try { real = fs.realpathSync(nm); } catch { return; }
+        if (seen.has(real) || depth > maxDepth) return;
+        seen.add(real);
+        let entries = [];
+        try { entries = fs.readdirSync(nm); } catch { return; }
+        for (const e of entries) {
+            if (e === '.bin' || e === '.cache') continue;
+            const p = path.join(nm, e);
+            if (e === '.pnpm') { for (const v of fs.readdirSync(p)) walk(path.join(p, v, 'node_modules'), depth + 1); continue; }
+            const pkgs = e.startsWith('@') ? (() => { try { return fs.readdirSync(p).map((x) => path.join(p, x)); } catch { return []; } })() : [p];
+            for (const dir of pkgs) {
+                if (path.basename(dir) === name && fs.existsSync(path.join(dir, 'package.json'))) {
+                    try {
+                        const r = fs.realpathSync(dir);
+                        if (!found.has(r)) found.set(r, { dir: path.relative(root, dir), version: JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')).version });
+                    } catch { /* unreadable */ }
+                }
+                walk(path.join(dir, 'node_modules'), depth + 1);
+            }
+        }
+    };
+    walk(path.join(root, 'node_modules'), 0);
+    return [...found.values()];
+}
+
+/** For each package root under dir that has node_modules: its openvibe-shared copies. → [{ root, copies, ok }] */
+function sharedCopies(dir = '.') {
+    const out = [];
+    for (const file of packageFiles(dir)) {
+        const root = path.dirname(file);
+        if (!fs.existsSync(path.join(root, 'node_modules'))) continue;
+        const copies = installedCopies(root);
+        if (copies.length) out.push({ root, copies, ok: copies.length === 1 });
+    }
+    return out;
+}
+
+module.exports = { judge, pinsIn, main, releaseDates, installedCopies, sharedCopies, LIBS, GRACE_DAYS };
 
 if (require.main === module || !module.parent) {
     let results;
@@ -104,5 +152,9 @@ if (require.main === module || !module.parent) {
     for (const r of results) console.log(`${r.ok ? 'ok  ' : 'FAIL'} ${path.relative(process.cwd(), r.file) || r.file} ${r.name} v${r.pin.join('.')}: ${r.reason}`);
     const bad = results.filter((r) => !r.ok);
     console.log(bad.length ? `pin-drift: ${bad.length} of ${results.length} pin(s) drifted` : `pin-drift: ${results.length} pin(s), no drift`);
-    process.exit(bad.length ? 1 : 0);
+    const copies = sharedCopies(process.argv[2] || '.');
+    for (const c of copies) console.log(`${c.ok ? 'ok  ' : 'FAIL'} ${path.relative(process.cwd(), c.root) || '.'}: openvibe-shared installed ${c.copies.length === 1 ? 'once' : `${c.copies.length} times`} (${c.copies.map((x) => `v${x.version} at ${x.dir}`).join('; ')})`);
+    const twice = copies.filter((c) => !c.ok);
+    if (twice.length) console.log(`pin-drift: ${twice.length} package root(s) install openvibe-shared more than once (one copy: ADR-008 amendment)`);
+    process.exit(bad.length || twice.length ? 1 : 0);
 }
