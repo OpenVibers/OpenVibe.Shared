@@ -12,8 +12,10 @@ name: test
 #       uses: OpenVibers/OpenVibe.Shared/.github/workflows/security.yml@<sha>
 #
 # Steps, in order:
+#   checkout     `fetch-depth` commits (default 1; 0 for a check that needs the release tags)
 #   packages     apt-get install of `apt-packages`, when set (e.g. ffmpeg for media tests)
-#   install      `install` (default npm ci) with the npm cache
+#   install      `install` (default npm ci) with the npm cache (`package-manager: pnpm` sets up pnpm
+#                and caches its store; `cache: false` for a repository without a lockfile)
 #   syntax       node --check on every .js/.cjs/.mjs file under `syntax-dirs` (default: server
 #                scripts), node_modules excluded; a directory that does not exist is skipped
 #   test         `test` (default npm test)
@@ -23,7 +25,8 @@ name: test
 #   pin drift    scripts/pin-drift.js from OpenVibe.Shared main over the whole repository: a pin of
 #                openvibe-contracts/-shared/-sdk/-publishing that is not a published tag, or more than one
 #                minor behind the latest release, fails (roadmap WS-C task 5; `pin-drift: false` skips)
-#   extra        `extra`, when set: any further commands, one per line (e.g. a budget check)
+#   extra        `extra`, when set: any further commands, one per line (e.g. a budget check), with a
+#                read-only GITHUB_TOKEN
 on:
   workflow_call:
     inputs:
@@ -67,6 +70,18 @@ on:
         description: Fail on drifted openvibe-* library pins (OpenVibe.Shared scripts/pin-drift.js).
         type: boolean
         default: true
+      package-manager:
+        description: npm or pnpm (pnpm sets itself up from package.json's packageManager and caches the pnpm store).
+        type: string
+        default: npm
+      cache:
+        description: Cache the package manager's store (off for a repository with no lockfile).
+        type: boolean
+        default: true
+      fetch-depth:
+        description: Git history to check out (0 = everything, e.g. a compat check against the previous release tag).
+        type: number
+        default: 1
 
 permissions:
   contents: read
@@ -79,11 +94,15 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.fetch-depth }}
+      - uses: pnpm/action-setup@v4
+        if: ${{ inputs.package-manager == 'pnpm' }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.node-version }}
-          cache: npm
-          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+          cache: ${{ inputs.cache && inputs.package-manager || '' }}
+          cache-dependency-path: ${{ inputs.working-directory }}/${{ inputs.package-manager == 'pnpm' && 'pnpm-lock.yaml' || 'package-lock.json' }}
       - name: packages
         if: ${{ inputs.apt-packages != '' }}
         env:
@@ -122,4 +141,6 @@ jobs:
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - "$GITHUB_WORKSPACE"
       - name: extra
         if: ${{ inputs.extra != '' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}   # read-only (permissions: contents: read), for a step that asks GitHub
         run: ${{ inputs.extra }}
