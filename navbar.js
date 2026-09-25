@@ -220,10 +220,12 @@
 
             .openvibe-navbar-login {
                 padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
-                background: var(--accent, #3b82f6); color: #fff; border: none; cursor: pointer;
-                transition: background .15s; text-decoration: none; display: inline-flex; align-items: center;
+                /* --accent-strong / --on-accent-strong (builtin-themes.js deriveTokens) read at 4.5:1 or better in
+                   every theme (WCAG AA); the accent itself did not (white on #3b82f6 is 3.67:1). */
+                background: var(--accent-strong, #1d4ed8); color: var(--on-accent-strong, #fff); border: none; cursor: pointer;
+                transition: filter .15s; text-decoration: none; display: inline-flex; align-items: center;
             }
-            .openvibe-navbar-login:hover { background: var(--accent-dark, #2563eb); }
+            .openvibe-navbar-login:hover { filter: brightness(1.12); }
 
             .openvibe-navbar-dropdown {
                 position: absolute; top: 48px; right: 8px;

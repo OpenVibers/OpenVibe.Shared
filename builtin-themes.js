@@ -902,6 +902,10 @@ const RAW_BUILTIN_THEMES = [
 //   --accent-rgb    "r,g,b" of the accent, for rgba(var(--accent-rgb), .3) in older stylesheets
 //   --accent-glow   the accent at 35% for glows and focus rings
 //   --color-scheme  dark|light, so native controls and scrollbars follow the theme
+//   --accent-strong, --on-accent-strong
+//                   a filled button's background and its label at 4.5:1 or better (WCAG AA for
+//                   normal text): the accent, darkened under white or lightened under dark ink just
+//                   enough (the Sign In button; white on #3b82f6 was 3.67:1)
 // A theme may set any of them explicitly; otherwise they are computed here so all 35 themes,
 // and community themes that only define the base palette, stay consistent on every site.
 function hexToRgb(hex) {
@@ -915,10 +919,29 @@ function luminance(rgb) {
     return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
 }
 function contrast(a, b) { const [x, y] = [luminance(a), luminance(b)]; return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+const toHex = (rgb) => '#' + rgb.map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+/**
+ * The accent moved toward black (under white) or white (under dark ink) until the pair reads at 4.5:1.
+ * The label keeps --on-accent's choice (white wherever it reads at 3:1), so a button keeps its look and
+ * only its fill deepens.
+ */
+function strongPair(accent) {
+    const WHITE = [255, 255, 255], INK = [11, 13, 16];
+    const ink = contrast(WHITE, accent) >= 3 ? WHITE : INK;
+    const toward = ink === WHITE ? [0, 0, 0] : [255, 255, 255];
+    let bg = accent;
+    for (let t = 0; t <= 1 && contrast(ink, bg) < 4.5; t += 0.02) bg = accent.map((c, i) => c + (toward[i] - c) * t);
+    return [toHex(bg), toHex(ink)];
+}
 function deriveTokens(vars, mode) {
     const out = { ...vars };
     const accent = hexToRgb(vars['--accent']);
     if (accent) {
+        if (!out['--accent-strong'] || !out['--on-accent-strong']) {
+            const [bg, ink] = strongPair(accent);
+            if (!out['--accent-strong']) out['--accent-strong'] = bg;
+            if (!out['--on-accent-strong']) out['--on-accent-strong'] = ink;
+        }
         // White wherever it reads (>= 3:1, the large-text floor a button label meets); dark ink only
         // on accents too light for it (cyan, lime, amber).
         if (!out['--on-accent']) out['--on-accent'] = contrast([255, 255, 255], accent) >= 3 ? '#ffffff' : '#0b0d10';

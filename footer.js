@@ -177,7 +177,10 @@
     const icon = (name) => `<svg class="ovf-ic" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${(ICONS[name] || ICONS.arrow)}</svg>`;
 
     // ── Markup ─────────────────────────────────────────────────
-    function linkTag(item) {
+    function linkTag(raw) {
+        // Items are { name, url }; { label, href } (the navbar's shape) is read the same, so a site that
+        // passes it does not get empty links.
+        const item = { ...raw, name: raw.name ?? raw.label, url: raw.url ?? raw.href };
         // Our own sites open in this tab (the sign-in hand-off follows the click); the rest of the web in a new one.
         const own = /^https:\/\/([a-z0-9-]+\.)*(openvibe\.[a-z]+|openre\.stream)(\/|$)/i.test(item.url);
         const rel = /^https?:\/\//.test(item.url) && !own ? ' target="_blank" rel="noopener"' : '';

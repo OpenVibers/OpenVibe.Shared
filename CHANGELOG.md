@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.13.0 — 2026-09-25
+
+Accessibility (roadmap WS-T task 3), from an axe survey of every site. The navbar's **Sign In** button read at 3.67:1 (white on #3b82f6) on nine sites: every theme now derives **`--accent-strong` / `--on-accent-strong`**, the accent deepened (under white) or lightened (under dark ink) just enough for 4.5:1, and the button uses them (`test/login-contrast.test.js` checks all 35 themes). The two tokens are in `theme-sync` and the loader's map. The **footer** reads `{ label, href }` items as `{ name, url }`, so a site passing the navbar's shape no longer renders empty links (Media and Games did). Additive.
+
 ## 1.12.0 — 2026-09-24
 
 - **`openvibe-shared/serve`: a site serves its own pinned copy of the shared browser files.** Mount it with `app.use('/shared', serve.handler())` and reference files with `serve.url('navbar.js')`, which gives `/shared/navbar.js?v=<content hash>`. The current hash is cached immutably, anything else for five minutes. ETag is the hash, the files are CORS-open and cross-origin readable, and only the files `openvibe-shared/files` lists are served. A site's pin then decides what its pages run, and the Frame keeps working while openvibe.network is down.

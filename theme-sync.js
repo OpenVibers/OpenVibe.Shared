@@ -16,7 +16,7 @@ const CSS_VARIABLES = [
     '--live-red', '--success', '--warning', '--danger', '--info',
     '--border', '--border-light', '--shadow', '--shadow-lg',
     // Derived on every theme (builtin-themes.js deriveTokens); community themes get them too.
-    '--on-accent', '--accent-rgb', '--accent-glow', '--color-scheme',
+    '--on-accent', '--accent-rgb', '--accent-glow', '--color-scheme', '--accent-strong', '--on-accent-strong',
 ];
 
 const NORMALIZED_DEFAULT_VARS = Object.freeze({ ...DEFAULT_VARS });
