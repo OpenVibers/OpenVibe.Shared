@@ -160,6 +160,34 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
     assert.strictEqual(await post({ counts: {} }), 204);
     assert.strictEqual(await post({ counts: {} }), 429, 'an address sends at most perMinute reports a minute');
 
+    // Sessions by generation (WS-P task 14): a beat with a per-tab id keeps the tab in
+    // release_client_sessions{generation}; current is the release this process serves; ended drops it.
+    {
+        const reg = createRegistry();
+        let serving = 'r2';
+        const c2 = r.collect(reg, { perMinute: 100, currentRelease: () => serving });
+        const send = async (payload) => {
+            const req = Readable.from([Buffer.from(JSON.stringify(payload))]);
+            req.headers = {}; req.socket = { remoteAddress: '10.1.0.1' };
+            const res = { statusCode: 0, setHeader() {}, end() {} };
+            await c2(req, res);
+            return res.statusCode;
+        };
+        const gauge = (g) => { const line = reg.metrics().split('\n').find((l) => l.startsWith(`release_client_sessions{generation="${g}"}`)); return line ? Number(line.split(' ').pop()) : null; };
+        assert.strictEqual(await send({ session: 'a'.repeat(16), release: 'r2' }), 204, 'a beat needs no counts');
+        assert.strictEqual(await send({ session: 'b'.repeat(16), release: 'r1', counts: { prompted: { required: 1 } } }), 204);
+        assert.strictEqual(await send({ session: 'c'.repeat(16), release: 'r1' }), 204);
+        assert.strictEqual(await send({ session: 'not-hex', release: 'r1' }), 400, 'no counts and no valid session');
+        assert.deepStrictEqual([gauge('current'), gauge('older')], [1, 2]);
+        assert.match(reg.metrics(), /release_client_updates_total\{outcome="prompted",reason="required"\} 1/, 'prompts are counted');
+        assert.strictEqual(await send({ session: 'c'.repeat(16), release: 'r1', ended: true }), 204);
+        assert.deepStrictEqual([gauge('current'), gauge('older')], [1, 1], 'an ended tab is gone at once');
+        serving = 'r3';
+        assert.deepStrictEqual([gauge('current'), gauge('older')], [0, 2], 'after a deploy every open tab is older until it moves');
+        const realNow = Date.now;
+        try { Date.now = () => realNow() + 13 * 60 * 1000; assert.deepStrictEqual([gauge('current'), gauge('older')], [0, 0], 'a tab not heard from in 12 minutes is gone'); } finally { Date.now = realNow; }
+    }
+
     // mount(): GET /release.json and POST /release-metrics on a real app, behind express.json(), fed by
     // the text/plain body navigator.sendBeacon sends; the manifest then says where to report.
     {
@@ -207,33 +235,33 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
     assert.ok(!p.document.querySelector('script[src*="release-update.js"]'), 'a manifest without components needs no release-update.js');
     p.toasts[0].o.action.onClick();
     assert.strictEqual(p.reloads, 1, 'Reload reloads');
-    assert.deepStrictEqual(p.beacons.at(-1).body.counts, { reloaded: { user: 1 } }, 'and is counted before the page goes');
+    assert.deepStrictEqual(p.beacons.map((x) => x.body.counts), [{ prompted: { optional: 1 } }, { reloaded: { user: 1 } }], 'the prompt is counted when shown, the reload before the page goes');
 
     p = await tab({ server: 'bbbbbbb', releasedAt: stale });
     assert.strictEqual(p.reloads, 1, 'outside the window and hidden: reloads');
-    assert.deepStrictEqual(p.beacons[0].body.counts, { reloaded: { window: 1 } });
+    assert.deepStrictEqual(p.beacons[0].body.counts, { prompted: { window: 1 }, reloaded: { window: 1 } });
     assert.strictEqual(p.beacons[0].to, '/release-metrics');
 
     p = await tab({ server: 'bbbbbbb', min: 'bbbbbbb' });
     assert.strictEqual(p.reloads, 1, 'server requires the new release: reloads when safe');
-    assert.deepStrictEqual(p.metrics(), { reloaded: { required: 1 } });
+    assert.deepStrictEqual(p.metrics(), { prompted: { required: 1 }, reloaded: { required: 1 } });
 
     p = await tab({ server: 'bbbbbbb', releasedAt: stale, html: HTML('', '<textarea></textarea>'), focus: 'textarea' });
     assert.strictEqual(p.reloads, 0, 'never while a text field has focus');
     p.tick(); p.tick();
-    assert.deepStrictEqual(p.metrics(), { deferred: { typing: 1 } }, 'a deferral is counted once per release and reason');
+    assert.deepStrictEqual(p.metrics(), { prompted: { window: 1 }, deferred: { typing: 1 } }, 'a deferral is counted once per release and reason');
     p.blur(); p.tick();
     assert.strictEqual(p.reloads, 1, 'and reloads once the field lets go');
 
     p = await tab({ server: 'bbbbbbb', releasedAt: stale, protectedFn: () => true });
     assert.strictEqual(p.reloads, 0, 'never during a protected session (upload, call, broadcast)');
-    assert.deepStrictEqual(p.metrics(), { deferred: { protected: 1 } });
+    assert.deepStrictEqual(p.metrics(), { prompted: { window: 1 }, deferred: { protected: 1 } });
 
     p = await tab({ server: 'bbbbbbb', releasedAt: stale, html: HTML('', '<form data-dirty="true"></form>') });
-    assert.deepStrictEqual([p.reloads, p.metrics()], [0, { deferred: { dirty: 1 } }], 'never with unsent form input');
+    assert.deepStrictEqual([p.reloads, p.metrics()], [0, { prompted: { window: 1 }, deferred: { dirty: 1 } }], 'never with unsent form input');
 
     p = await tab({ server: 'bbbbbbb', releasedAt: stale, html: HTML('', '<video></video>') });
-    assert.deepStrictEqual([p.reloads, p.metrics()], [0, { deferred: { media: 1 } }], 'never while a stream is playing (a linkedom <video> is not paused)');
+    assert.deepStrictEqual([p.reloads, p.metrics()], [0, { prompted: { window: 1 }, deferred: { media: 1 } }], 'never while a stream is playing (a linkedom <video> is not paused)');
     {
         // A paused <video> with a live camera track is a capture: served stale, it waits.
         const html = HTML('', '<video></video>');
@@ -242,14 +270,14 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
         const vid = page.document.querySelector('video');
         vid.paused = true; vid.srcObject = { getTracks: () => [{ readyState: 'live' }] };
         await page.settle();
-        assert.deepStrictEqual([page.reloads, page.metrics()], [0, { deferred: { capture: 1 } }], 'never while the camera/mic is live');
+        assert.deepStrictEqual([page.reloads, page.metrics()], [0, { prompted: { window: 1 }, deferred: { capture: 1 } }], 'never while the camera/mic is live');
     }
 
     p = await tab({ server: 'bbbbbbb', releasedAt: stale, hidden: false });
-    assert.deepStrictEqual([p.reloads, p.metrics()], [0, { deferred: { active: 1 } }], 'a visible tab someone just used is not reloaded');
+    assert.deepStrictEqual([p.reloads, p.metrics()], [0, { prompted: { window: 1 }, deferred: { active: 1 } }], 'a visible tab someone just used is not reloaded');
     p.setHidden(true);
     assert.strictEqual(p.reloads, 1, 'hiding it is the safe moment');
-    assert.deepStrictEqual(p.beacons.map((b) => b.body.counts), [{ deferred: { active: 1 } }, { reloaded: { window: 1 } }], 'hiding sends the deferral, the reload its own count');
+    assert.deepStrictEqual(p.beacons.map((b) => b.body.counts), [{ prompted: { window: 1 }, deferred: { active: 1 } }, { reloaded: { window: 1 } }], 'hiding sends the prompt and the deferral, the reload its own count');
 
     // Without a meta tag the first /release.json read is the baseline; a later release prompts.
     {
@@ -275,6 +303,27 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
         const page = await tab({ server: 'bbbbbbb', releasedAt: stale, config: { metricsUrl: 'https://elsewhere.test/collect' } });
         assert.strictEqual(page.reloads, 1);
         assert.strictEqual(page.beacons.length, 0);
+    }
+
+    // The tab beats: once when its manifest is read, then every 5 minutes, and says when it ends.
+    {
+        let now = Date.now();
+        class FakeDate extends Date { static now() { return now; } }
+        const manifest = { service: 'test', release: 'aaaaaaa', released_at: fresh, min_client_release: null, mixed_version_window_hours: 24 };
+        const page = await openPage({ url: 'https://site.test/', html: HTML(), hidden: true, config: { metricsUrl: '/release-metrics' },
+            globals: { crypto: require('crypto').webcrypto, Date: FakeDate }, serve: () => ({ json: manifest }) });
+        await page.settle();
+        assert.strictEqual(page.beacons.length, 1, 'one beat on load');
+        const b = page.beacons[0].body;
+        assert.match(b.session, /^[0-9a-f]{16}$/);
+        assert.deepStrictEqual([b.release, b.counts, b.ended], ['aaaaaaa', undefined, undefined], 'the release it runs, nothing counted');
+        page.tick(); await page.settle();
+        assert.strictEqual(page.beacons.length, 1, 'no second beat within 5 minutes');
+        now += 5 * 60 * 1000; page.tick(); await page.settle();
+        assert.strictEqual(page.beacons.length, 2, 'a beat every 5 minutes');
+        assert.strictEqual(page.beacons[1].body.session, b.session, 'the same tab id');
+        page.window.dispatchEvent(new page.window.Event('pagehide'));
+        assert.deepStrictEqual([page.beacons.length, page.beacons[2].body.ended, page.beacons[2].body.session], [3, true, b.session], 'pagehide says it ended');
     }
 
     console.log('release: all checks passed');

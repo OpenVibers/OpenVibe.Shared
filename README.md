@@ -214,10 +214,13 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
   - **CSP.** The site's CSP `connect-src` must allow `https://events.openvibe.network`. Otherwise the
     browser refuses the stream once, and release-watch stops (state `blocked`) and keeps polling.
   - **State.** `OVRelease.state().realtime` reports `{ state, service, url, events, ignored, checks, failures, lastSeq }`.
-- **Metrics (D46)**: `release_client_updates_total{outcome,reason}`, where outcome is `applied`,
-  `reloaded`, `deferred` or `failed`. The tab finds the endpoint in the manifest's `metrics_url`
-  (set by `mount`), the meta tag's `data-metrics`, or `OpenVibeNavbar.init({ releaseWatch:
-  { metricsUrl } })`.
+- **Metrics (D46)**: `release_client_updates_total{outcome,reason}`, where outcome is `prompted`
+  (reason `optional`, `required`, `window` or `contract`), `applied`, `reloaded`, `deferred` or
+  `failed`. `release_client_sessions{generation}` counts open tabs heard from in the last 12
+  minutes, `current` when they run the release this process serves and `older` otherwise: each tab
+  beats every 5 minutes with a random id it keeps in memory only (never tied to an account) and
+  says when it ends. The tab finds the endpoint in the manifest's `metrics_url` (set by `mount`),
+  the meta tag's `data-metrics`, or `OpenVibeNavbar.init({ releaseWatch: { metricsUrl } })`.
 
 Mixed-version test: capture the previous release's `/release.json` (its `full()` form) and the
 calls its pages make as fixtures, then:

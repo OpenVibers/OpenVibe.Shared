@@ -210,6 +210,7 @@ function deepFreeze(o) {
 // ── /release-metrics: what open tabs report (D46) ──────────────
 
 const OUTCOMES = {
+    prompted: /^(optional|required|window|contract)$/,
     applied: /^(content|server|style)(\+(content|server|style)){0,2}$/,
     reloaded: /^(user|required|window|contract)$/,
     deferred: /^(typing|dirty|protected|media|capture|active)$/,
@@ -218,6 +219,37 @@ const OUTCOMES = {
 const MAX_BODY = 4096;
 const MAX_PER_REASON = 50;
 const counters = new WeakMap();
+// Open tabs by generation (WS-P task 14): each tab beats every 5 minutes with a random per-tab id (never
+// stored in the browser, never tied to an account); a tab not heard from in 12 minutes, or that said it
+// ended, is gone. At most MAX_SESSIONS are tracked per registry.
+const SESSION_TTL_MS = 12 * 60 * 1000;
+const MAX_SESSIONS = 20000;
+const SESSION_RE = /^[0-9a-f]{16,32}$/;
+const sessionStores = new WeakMap();
+
+function sessionStore(registry, currentRelease) {
+    let st = sessionStores.get(registry);
+    if (!st) {
+        st = { map: new Map(), current: null };
+        registry.gauge({
+            name: 'release_client_sessions', help: 'Open tabs heard from in the last 12 minutes, by whether they run the release this process serves (current) or an older one',
+            labelNames: ['generation'],
+            collect: () => {
+                const cutoff = Date.now() - SESSION_TTL_MS;
+                const cur = typeof st.current === 'function' ? st.current() : null;
+                let current = 0; let older = 0;
+                for (const [id, v] of st.map) {
+                    if (v.at < cutoff) { st.map.delete(id); continue; }
+                    if (cur && v.release === cur) current++; else older++;
+                }
+                return [{ labels: { generation: 'current' }, value: current }, { labels: { generation: 'older' }, value: older }];
+            },
+        });
+        sessionStores.set(registry, st);
+    }
+    if (currentRelease) st.current = currentRelease;
+    return st;
+}
 
 function updateCounter(registry) {
     let c = counters.get(registry);
@@ -244,15 +276,18 @@ function readBody(req) {
 }
 
 /**
- * POST handler for release-watch beacons: { counts: { applied|reloaded|deferred|failed: { reason: n } } }.
- * Counts go to release_client_updates_total{outcome,reason} in `registry` (openvibe-shared/metrics).
+ * POST handler for release-watch beacons: { counts: { prompted|applied|reloaded|deferred|failed: { reason: n } },
+ * session, release, ended }. Counts go to release_client_updates_total{outcome,reason} in `registry`
+ * (openvibe-shared/metrics); a session beat (with or without counts) keeps that tab in
+ * release_client_sessions{generation}, current when its release is `currentRelease()`, and `ended` drops it.
  * Unknown reasons count as "other"; each reason counts at most 50 per report; a report is at most 4 KB;
  * one client (req.ip, which honours the app's trust proxy; or `keyOf(req)`) sends at most `perMinute`
  * reports a minute. Sec-GPC/DNT requests are not counted.
  */
-function collector(registry, { perMinute = 30, keyOf = null } = {}) {
+function collector(registry, { perMinute = 30, keyOf = null, currentRelease = null } = {}) {
     if (!registry || typeof registry.counter !== 'function') throw new TypeError('release: collect() needs an openvibe-shared/metrics registry');
     const counter = updateCounter(registry);
+    const sessions = sessionStore(registry, currentRelease);
     const seen = new Map(); let windowStart = Date.now();
     return async function releaseMetrics(req, res) {
         const done = (code) => { res.statusCode = code; res.setHeader('Cache-Control', 'no-store'); res.end(); };
@@ -268,10 +303,16 @@ function collector(registry, { perMinute = 30, keyOf = null } = {}) {
         let body = await readBody(req);
         if (body === null) return done(413);
         if (typeof body === 'string') { try { body = JSON.parse(body); } catch { return done(400); } }
-        const counts = body && typeof body === 'object' ? body.counts : null;
-        if (!counts || typeof counts !== 'object') return done(400);
+        if (!body || typeof body !== 'object') return done(400);
+        const counts = body.counts && typeof body.counts === 'object' ? body.counts : null;
+        const sid = typeof body.session === 'string' && SESSION_RE.test(body.session) ? body.session : null;
+        if (!counts && !sid) return done(400);
+        if (sid) {
+            if (body.ended === true) sessions.map.delete(sid);
+            else if (sessions.map.size < MAX_SESSIONS || sessions.map.has(sid)) sessions.map.set(sid, { release: typeof body.release === 'string' ? body.release.slice(0, 80) : null, at: now });
+        }
         for (const [outcome, re] of Object.entries(OUTCOMES)) {
-            const reasons = counts[outcome];
+            const reasons = counts && counts[outcome];
             if (!reasons || typeof reasons !== 'object') continue;
             for (const [reason, value] of Object.entries(reasons).slice(0, 16)) {
                 const k = Math.min(MAX_PER_REASON, Math.floor(Number(value)));
@@ -373,7 +414,7 @@ function createRelease({
     function mount(app, { registry = null, path: manifestPath = '/release.json', metricsPath: mp = metricsPath || '/release-metrics', perMinute } = {}) {
         app.get(manifestPath, handler);
         if (registry) {
-            app.post(mp, collector(registry, { perMinute }));
+            app.post(mp, collector(registry, { perMinute, currentRelease: () => state.full.release }));
             if (metricsUrl !== mp) { metricsUrl = mp; build(); }
         }
         return api;
@@ -396,7 +437,7 @@ function createRelease({
         handler,
         metaTag,
         mount,
-        collect: (registry, opts) => collector(registry, opts),
+        collect: (registry, opts) => collector(registry, { currentRelease: () => state.full.release, ...opts }),
         refresh,
         validate,
         warnings,

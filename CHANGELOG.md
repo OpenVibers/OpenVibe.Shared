@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.18.0 — 2026-09-26
+
+**Update telemetry** (roadmap WS-P task 14).
+- **Prompts are counted.** `release-watch.js` records `prompted` when it shows the update prompt, with reason `optional`, or `required`, `window` or `contract` when a reload must follow. `release.js` accepts the new outcome into `release_client_updates_total`.
+- **Sessions by generation.** Each tab sends a beat to the metrics URL once its manifest is read and then every 5 minutes, carrying a random 16-hex id kept in memory only and the release it runs. On `pagehide` it sends `ended`. The collector keeps the tabs heard from in the last 12 minutes, at most 20,000 per registry, and exposes the gauge `release_client_sessions{generation="current"|"older"}`. `current` is the release the process serves: `mount` and `collect` pass it, or pass `collect(registry, { currentRelease })` yourself. Sec-GPC/DNT requests are still not counted.
+- **Size.** release-watch stays within its 5 KB brotli budget (4.96 KB); comments were shortened to make room.
+
 ## 1.17.1 — 2026-09-26
 
 Fix: `release-watch.js` acts on a `host.release.published` event only when its `origin` (when present) is the page's own. A service id alone is not unique across the network: Sites' placeholder pages reuse product ids (`ai`, `coupons`, …), so a placeholder's release made the real product's tabs check for nothing.

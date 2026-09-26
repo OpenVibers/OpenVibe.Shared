@@ -5,7 +5,8 @@
  * server changes are applied in place; anything else prompts. It reloads by itself only when it must
  * (min_client_release, the mixed-version window, contracts out of range) and only when safe: hidden or idle
  * 2 minutes, no focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing
- * media, a live camera/mic, window.OVProtected()). Outcomes are beaconed to the metrics URL (D46).
+ * media, a live camera/mic, window.OVProtected()). Outcomes are beaconed to the metrics URL (D46), with a
+ * 5-minute beat (random tab id, release) for sessions by generation.
  * Release notifications (1.17.0, WS-P task 9): one anonymous EventSource on the Events realtime stream
  * (topic host.release.published, public). An event naming this page's service with a release it neither
  * runs nor knows runs check(true) after a 0-20 s jitter, at most once per 30 s. Polling stays the fallback.
@@ -32,6 +33,8 @@
     let busyWith = null;    // the plan/apply in flight
     let pending = null; let waiting = []; let kinds = ''; let failedRelease = null; let lib = null;
     let counts = {}; const totals = {}; const noted = {};
+    let session = null; let lastBeat = 0;
+    try { session = Array.from(root.crypto.getRandomValues(new Uint8Array(8)), (b) => (b | 256).toString(16).slice(1)).join(''); } catch { /* no beats */ }
 
     ['keydown', 'pointerdown', 'input', 'wheel', 'touchstart'].forEach((t) => root.addEventListener(t, () => { lastInput = Date.now(); }, { passive: true, capture: true }));
 
@@ -41,12 +44,17 @@
         if (once) { if (noted[k]) return; noted[k] = 1; }
         for (const o of [counts, totals]) { const r = o[outcome] || (o[outcome] = {}); r[reason] = (r[reason] || 0) + 1; }
     }
-    function flush() {
+    // beat: send even with nothing counted; ended: the tab is going
+    function flush(beat, ended) {
         const to = cfg.metricsUrl || (meta && meta.getAttribute('data-metrics')) || (latest && latest.metrics_url);
-        if (!to || !Object.keys(counts).length) return;
+        const any = Object.keys(counts).length > 0;
+        if (!to || (!any && !(beat === true && session && current))) return;
         try {
             if (new URL(to, root.location.href).origin !== new URL(root.location.href).origin) return;
-            const body = JSON.stringify({ service: latest && latest.service, release: current, to: latest && latest.release, counts });
+            const report = { service: latest && latest.service, release: current, to: latest && latest.release };
+            if (any) report.counts = counts;
+            if (session) { report.session = session; lastBeat = Date.now(); if (ended === true) report.ended = true; }
+            const body = JSON.stringify(report);
             counts = {};
             const n = root.navigator;
             if (!(n && n.sendBeacon && n.sendBeacon(to, body))) root.fetch(to, { method: 'POST', body, keepalive: true, credentials: 'same-origin', headers: { 'Content-Type': 'text/plain' } }).catch(() => {});
@@ -78,6 +86,7 @@
     function prompt() {
         if (prompted) return;
         prompted = true;
+        record('prompted', mustReload ? reloadWhy : 'optional');
         if (root.OpenVibeUI && typeof root.OpenVibeUI.toast === 'function') {
             root.OpenVibeUI.toast('A new version of this page is available.', { type: 'info', title: 'Update ready', ttl: 0, action: { label: 'Reload', onClick: () => reload('user') } });
         }
@@ -167,11 +176,9 @@
         return m;
     }
 
-    // ── Release notifications: OpenVibe.Host publishes host.release.published (public) to OpenVibe.Events ──
-    // One EventSource per tab, without credentials: the events are public, so an account switch changes
-    // nothing (and a second load of this script returns early). Closed after 5 min hidden (the poll and the
-    // visibility check cover a hidden tab), reopened on return with last_event_id; errors back off 30 s to
-    // 15 min, and after 6 failures in a row only polling is left.
+    // ── Release notifications (host.release.published, public, via OpenVibe.Events) ──
+    // One credential-less EventSource per tab (account switches change nothing). Closed after 5 min hidden,
+    // reopened with last_event_id; errors back off 30 s to 15 min; after 6 failures only polling is left.
     const TOPIC = 'host.release.published';
     const HEX = /^[0-9a-f]{7,40}$/;
     const rt = { state: 'off', service: null, url: null, events: 0, ignored: 0, checks: 0, failures: 0, lastSeq: null };
@@ -224,8 +231,7 @@
         if (!p || ev.event_type !== TOPIC) return;
         if (typeof m.seq === 'number') { if (rt.lastSeq != null && m.seq <= rt.lastSeq) return; rt.lastSeq = m.seq; }
         if (p.service !== rt.service || typeof p.release !== 'string') return;
-        // A service id alone is not unique across the network (Sites' placeholder pages reuse product ids),
-        // so when the event names the origin it went live on, it must be this page's.
+        // Service ids repeat across origins (Sites' placeholders): a named origin must be this page's.
         if (p.origin) { try { if (new URL(p.origin).origin !== root.location.origin) { rt.ignored++; return; } } catch { return; } }
         rt.events++;
         if (seen.includes(ev.event_id) || same(p.release, current) || same(p.release, latest && latest.release) || same(p.release, queued)) { rt.ignored++; return; }
@@ -248,7 +254,7 @@
     let stopped = false;
     root.addEventListener('focus', () => { if (!stopped) check(false); });
     root.addEventListener('online', () => { if (stopped) return; if (rt.state === 'failed') { rt.state = 'off'; rt.failures = 0; live(); } check(true); });
-    root.addEventListener('pagehide', flush);
+    root.addEventListener('pagehide', () => flush(true, true));
     document.addEventListener('visibilitychange', () => {
         if (stopped) return;
         if (document.hidden) { flush(); maybeReload(); if (es) later('hide', hide, 5 * 60 * 1000); return; }
@@ -260,6 +266,7 @@
         if (stopped) return;
         if (pending && commitRegions(pending)) adopt(pending);
         check(false); maybeReload();
+        if (Date.now() - lastBeat >= 3e5) flush(true);
     }, 30 * 1000);
     const poll = root.setInterval(() => { if (!stopped) check(true); }, 10 * 60 * 1000);
     function stop() {
@@ -273,8 +280,7 @@
         flush,
         stop,
     };
-    // The page's own manifest, if /release.json still serves the release the page was rendered from. A site
-    // that serves no /release.json and rendered no meta tag is left alone.
+    // The page's own manifest (if still served). No /release.json and no meta tag: left alone.
     lastCheck = Date.now();
     root.fetch(url, { cache: 'no-store', credentials: 'omit' })
         .then((r) => (r.ok ? r.json() : null))
@@ -284,6 +290,7 @@
             if (m.release === current) base = m;
             consider(m);
             live();
+            flush(true);
         })
         .catch(() => { if (!current) stop(); });
 })(typeof window !== 'undefined' ? window : globalThis);

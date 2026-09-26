@@ -67,6 +67,7 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
 // can change something in place. Measured 2026-09-23: 3.2 KB and 3.0 KB brotli (release-watch was 1.7 KB).
 // 2026-09-26 (1.17.0): release-watch 4.7 KB with the release notifications over Events realtime (+1.1 KB of
 // code, +0.4 KB of comments); its budget moved from 3.5 to 5 KB for that, and only for that.
+// 1.18.0: session beats and the prompted count (+0.25 KB) fit by shortening comments: 4.96 KB.
 {
     const fs = require('fs'); const path = require('path'); const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(__dirname, '..', f)));
@@ -212,11 +213,11 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
     {
         const p = await open({ hidden: false });
         await update(p, { ...M2, contract_ranges: api('2.0.0', '^2.0.0') });
-        assert.deepStrictEqual([p.reloads, p.metrics()], [0, { deferred: { active: 1 } }], 'incompatible contracts: a reload, but not under the user');
+        assert.deepStrictEqual([p.reloads, p.metrics()], [0, { prompted: { contract: 1 }, deferred: { active: 1 } }], 'incompatible contracts: a reload (prompted), but not under the user');
         assert.strictEqual(hrefs(p)[0], '/css/app.css?v=111111111111', 'and nothing in place');
         p.setHidden(true);
         assert.strictEqual(p.reloads, 1);
-        assert.deepStrictEqual(counts(p), { deferred: { active: 1 }, reloaded: { contract: 1 } });
+        assert.deepStrictEqual(counts(p), { prompted: { contract: 1 }, deferred: { active: 1 }, reloaded: { contract: 1 } });
     }
     {
         // A page one release behind whose server kept accepting it: in place (the N-1 → N window).
