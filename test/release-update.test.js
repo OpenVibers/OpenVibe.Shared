@@ -91,6 +91,13 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
         const p = await open();
         let applied = 0; p.window.addEventListener('ov:release-applied', () => { applied++; });
         let updated = null; p.document.querySelector('main').addEventListener('ov:content-updated', (e) => { updated = e.detail.component; });
+        // A stateless widget in the region is told to let go first (listeners, timers), then to mount again.
+        const order = [];
+        p.document.querySelector('main').addEventListener('ov:content-dispose', (e) => order.push(['dispose', e.detail.component, e.detail.release, /old text/.test(e.target.textContent)]));
+        p.document.querySelector('main').addEventListener('ov:content-updated', (e) => order.push(['mount', e.detail.component, e.detail.release, /new text/.test(e.target.textContent)]));
+        let stylesEvent = null; p.window.addEventListener('ov:styles-updated', (e) => { stylesEvent = e.detail.release; });
+        // Scroll inside the region is kept across the patch.
+        p.document.querySelector('main').scrollTop = 40;
         assert.strictEqual(p.release.current, A);
         assert.strictEqual(p.requests.length, 1, 'at load: only /release.json');
         await update(p, M2);
@@ -105,6 +112,9 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
         assert.strictEqual(main.querySelector('img').getAttribute('src'), 'data:image/png;base64,AAAA', 'data: images stay');
         assert.match(p.document.querySelector('aside').textContent, /^side$/, 'a region whose component did not change is left alone');
         assert.strictEqual(updated, 'docs');
+        assert.deepStrictEqual(order, [['dispose', 'docs', B, true], ['mount', 'docs', B, true]], 'disposed while the old content is there, mounted with the new');
+        assert.strictEqual(stylesEvent, B, 'ov:styles-updated once the new stylesheets replaced the old');
+        assert.strictEqual(p.document.querySelector('main').scrollTop, 40, 'scroll inside the region is kept');
         assert.strictEqual(applied, 1);
         assert.deepStrictEqual([p.reloads, p.toasts.length], [0, 0], 'no reload, no prompt');
         assert.ok(p.document.querySelector('script[src="https://site.test/shared/release-update.js"]'), 'release-update.js was loaded from next to release-watch.js, on demand');

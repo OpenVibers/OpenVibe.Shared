@@ -9,7 +9,9 @@
  *   styles(ids, next)  new <link>s for the changed style components' assets, loaded beside the old ones
  *   regions(ids)       fresh [data-ov-content="<component>"] HTML (from data-ov-src, default this URL),
  *                      without scripts, frames or inline handlers; unchanged data-ov-rev is skipped
- *   commit(list, next, busy, record)  replaces the regions busy() allows, returns those still waiting
+ *   commit(list, next, busy, record)  replaces the regions busy() allows, returns those still waiting; each
+ *                      gets ov:content-dispose first (a widget's code drops its listeners and timers) and
+ *                      ov:content-updated after (it mounts again), both bubbling with { component, release }
  *   apply(plan, next, busy, record)   all of the above for an in-place plan
  */
 (function (root) {
@@ -127,13 +129,15 @@
             if (why) { record('deferred', why, true); return true; }
             const r = w.el.getBoundingClientRect();
             const st = w.el.scrollTop;
+            const ev = (n) => { try { w.el.dispatchEvent(new root.CustomEvent(n, { bubbles: true, detail: { component: w.id, release: next.release } })); } catch { /* */ } };
+            ev('ov:content-dispose');
             w.el.replaceChildren(...Array.from(w.fresh.childNodes).map((n) => document.importNode(n, true)));
             const rev = w.fresh.getAttribute('data-ov-rev');
             if (rev) w.el.setAttribute('data-ov-rev', rev);
             w.el.scrollTop = st;
             // A region above the viewport that changed height must not move what the reader is looking at.
             if (r.bottom <= 0 && root.scrollBy) root.scrollBy(0, w.el.getBoundingClientRect().bottom - r.bottom);
-            try { w.el.dispatchEvent(new root.CustomEvent('ov:content-updated', { bubbles: true, detail: { component: w.id, release: next.release } })); } catch { /* */ }
+            ev('ov:content-updated');
             return false;
         });
     }

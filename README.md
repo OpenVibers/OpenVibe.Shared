@@ -192,6 +192,18 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
   `data-ov-content`. Scripts and inline handlers are dropped, so rebind on `ov:content-updated`.
   A stylesheet whose URL path is not the asset's logical path needs `data-ov-asset="/css/app.css"`.
   Mark anything that must not be replaced with `data-ov-protected`.
+- **The update matrix (WS-P task 8)**, what an open tab does with each kind of change, each row tested
+  (test/release-update.test.js, test/release.test.js):
+
+  | Change | What the tab does | Events / counts |
+  |---|---|---|
+  | Stylesheet or theme (`style`) | loads the new `<link>` beside the old, swaps when every one loaded; a failure or 15 s timeout keeps the old | `ov:styles-updated`; `applied` or `failed: style/style-timeout` |
+  | Content (`content`) | re-fetches the region, skips an unchanged `data-ov-rev`, keeps its scroll and what the reader sees above it | `ov:content-updated`; `applied` |
+  | A widget inside a region | told to let go before its region is replaced, then to mount again | `ov:content-dispose`, then `ov:content-updated` |
+  | A busy region (focus, unsent form, playing media, live camera/mic, `data-ov-protected`) | waits, and is replaced once it is not busy | `deferred` with the reason, once per release |
+  | Shell, router or any script (`script` and anything not in place) | prompts once; reloads only when it must | `prompted: optional` |
+  | Security minimum (`min_client_release`), mixed-version window over, contracts out of range | reloads when safe (hidden or idle, nothing busy), prompting meanwhile | `prompted` and `reloaded: required/window/contract` |
+  | Server only (`server`) | nothing to do in the tab | `applied: server` |
 - **Release notifications (1.17.0).** When OpenVibe.Host announces a release, it publishes
   `host.release.published` (public, `ovhost deploy` / `ovhost announce`). release-watch opens one
   EventSource per tab, without credentials, on

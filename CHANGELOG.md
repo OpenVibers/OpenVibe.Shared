@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.19.0 — 2026-09-26
+
+**The update matrix, complete** (roadmap WS-P task 8). `release-update.js` sends `ov:content-dispose` (bubbling, `{ component, release }`) on a region just before it is replaced, so a stateless widget inside can drop its listeners and timers; `ov:content-updated` follows as before, to mount it again. Tests now cover every row of the matrix: stylesheet swap and `ov:styles-updated`, revision-aware content with scroll kept, widget disposal and remount, deferral of busy regions, the prompt, and the security minimum. The README "Releases" section lists the rows.
+
 ## 1.18.0 — 2026-09-26
 
 **Update telemetry** (roadmap WS-P task 14).
