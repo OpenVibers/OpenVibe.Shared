@@ -1,0 +1,11 @@
+# gitleaks configuration, used by the shared security workflow (.github/workflows/security.yml).
+# The default rules stay on; every allowlist below is one proven false positive, matched on path AND
+# value so nothing else is hidden.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Made-up secrets in the configuration model's tests (test/config.test.js): they exist to prove secrets are redacted, never logged and never served"
+condition = "AND"
+paths = ['''^test/config\.test\.js$''']
+regexes = ['''^(sk_live_TOPSECRET_9f8e7d6c5b4a|re_abcdef123456)$''']
