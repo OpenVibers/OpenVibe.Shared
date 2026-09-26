@@ -27,6 +27,7 @@ const ROUTES = {
         <script>document.addEventListener('click', (e) => { const a = e.target.closest('a'); if (!a) return; e.preventDefault(); history.pushState(null, '', a.getAttribute('href'));
           const j = document.getElementById('junk'); for (let i = 0; i < 200; i++) j.appendChild(document.createElement('span')); setInterval(() => {}, 100000); });</script></main>`,
     '<link rel="canonical" href="ORIGIN/spa">'),
+    '/private': () => page(`<main><h1>Private</h1><p>${words}</p></main>`),
     '/s.js': () => 'window.__s = (window.__s || 0) + 1;',
 };
 // axe stand-in: one critical violation on /b, none elsewhere.
@@ -39,17 +40,17 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
         const origin = `http://127.0.0.1:${server.address().port}`;
         const route = ROUTES[u.pathname];
         if (!route) { res.writeHead(404, { 'content-type': 'text/html' }); res.end(page(`<h1>Not found</h1><p>${words}</p>`)); return; }
-        res.writeHead(200, { 'content-type': u.pathname.endsWith('.js') ? 'application/javascript' : 'text/html; charset=utf-8' });
+        res.writeHead(200, { 'content-type': u.pathname.endsWith('.js') ? 'application/javascript' : 'text/html; charset=utf-8', ...(u.pathname === '/private' ? { 'x-robots-tag': 'noindex, nofollow' } : {}) });
         res.end(route().replace(/ORIGIN/g, origin));
     });
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
     const base = `http://127.0.0.1:${server.address().port}`;
     const report = await h.run({
-        base, routes: ['/', '/b', { path: '/missing', status: 404 }], widths: [390, 1280], settleMs: 300, idleMs: 1000,
+        base, routes: ['/', '/b', { path: '/missing', status: 404 }, '/private'], widths: [390, 1280], settleMs: 300, idleMs: 1000,
         navigation: { from: '/spa', to: '/spa?b', laps: 4 }, axe: { source: AXE_STUB },
     });
     server.close();
-    const [good, bad, missing] = report.routes;
+    const [good, bad, missing, priv] = report.routes;
     const text = h.format(report);
 
     assert.ok(/^Chrome\/|HeadlessChrome\//.test(report.chrome), report.chrome);
@@ -71,6 +72,9 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
     // The 404 page: the expected status, and its own 404 is not counted as a console error.
     assert.deepStrictEqual([missing.checks.status, missing.checks.errors, missing.widths[0].status], ['pass', 'pass', 404], text);
 
+    // X-Robots-Tag: noindex, so no canonical is needed.
+    assert.deepStrictEqual([priv.checks.canonical, priv.ok], ['skip', true], text);
+
     // In-page navigation (the link is clicked, the document stays), growth caught, idle measured.
     const nav = report.navigation;
     assert.strictEqual(nav.mode, 'in-page');
@@ -82,7 +86,7 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
     assert.deepStrictEqual(nav.idle.animations, { running: 1, infinite: 1, list: ['spin on i.spinner'] }, 'the idle report names what keeps painting');
 
     assert.strictEqual(report.ok, false);
-    assert.deepStrictEqual(report.summary.checks.overflow, { pass: 2, warn: 0, fail: 1, skip: 0 });
+    assert.deepStrictEqual(report.summary.checks.overflow, { pass: 3, warn: 0, fail: 1, skip: 0 });
     assert.ok(text.includes('nodes grew'), text);
     console.log('browser-harness-chrome: ok');
 })().catch((e) => { console.error(e); process.exit(1); });

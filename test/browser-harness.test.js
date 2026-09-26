@@ -107,6 +107,11 @@ const h = require('../browser-harness');
         assert.strictEqual(r.canonical.note, note);
         assert.strictEqual(r.checks.axe, 'skip');
     }
+    // A noindex page (meta robots or X-Robots-Tag) needs no canonical; one it has is still judged.
+    r = h.checkRoute(h.normalizeRoutes(['/p'])[0], { url: 'https://a.example/p', widths: [base], nojs: { ...nojs, canonical: [], robots: 'noindex, nofollow' }, axe: { skipped: true } }, { minText: 200 });
+    assert.deepStrictEqual([r.checks.canonical, r.canonical.note], ['skip', 'noindex page: no canonical needed']);
+    r = h.checkRoute(h.normalizeRoutes(['/p'])[0], { url: 'https://a.example/p', widths: [base], nojs: { ...nojs, canonical: ['/p'], robots: 'noindex' }, axe: { skipped: true } }, { minText: 200 });
+    assert.strictEqual(r.checks.canonical, 'fail');
     // A 404 route: the status is what counts; no crawler checks; a no-JS load that failed fails the status.
     r = h.checkRoute(h.normalizeRoutes([{ path: '/gone', status: 404 }])[0], { url: 'https://a.example/gone', widths: [{ ...base, status: 404 }], nojs: null, axe: { skipped: true } }, { minText: 200 });
     assert.deepStrictEqual([r.checks.status, r.checks.nojs, r.checks.canonical, r.checks.jsonld], ['pass', 'skip', 'skip', 'skip']);

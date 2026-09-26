@@ -17,7 +17,7 @@
  * once per route, with JavaScript disabled (the initial HTML, what a crawler reads):
  *   nojs       at least `minText` (200) characters of visible text
  *   canonical  exactly one <link rel=canonical>, an absolute URL; another origin or a different URL with
- *              JavaScript on is a warning
+ *              JavaScript on is a warning; a noindex page (meta robots or X-Robots-Tag) may have none
  *   jsonld     every application/ld+json block parses, and the headline (else name) of each top-level entity
  *              (of an ItemList: 80 % of its item names) is in the visible text: without JavaScript passes, only
  *              with JavaScript warns, nowhere fails
@@ -240,7 +240,10 @@ async function openPage(browser, context, { width = 1280, height = 900, js = tru
     });
     on('Network.responseReceived', (p) => {
         activity();
-        if (p.type === 'Document' && p.frameId === st.mainFrame) st.doc = { status: p.response.status, url: p.response.url, mimeType: p.response.mimeType };
+        if (p.type === 'Document' && p.frameId === st.mainFrame) {
+            const hdr = Object.fromEntries(Object.entries(p.response.headers || {}).map(([k, v]) => [k.toLowerCase(), v]));
+            st.doc = { status: p.response.status, url: p.response.url, mimeType: p.response.mimeType, xRobots: hdr['x-robots-tag'] || '' };
+        }
     });
     on('Network.dataReceived', (p) => { st.bytes += p.encodedDataLength || 0; });
     on('Network.loadingFinished', (p) => { activity(); st.inflight.delete(p.requestId); });
@@ -333,6 +336,7 @@ const READ_PAGE = `(() => {
     url: location.href, title: document.title, vw, scrollWidth, scrollX,
     offenders: offenders.map((o) => o.desc),
     canonical: [...document.querySelectorAll('link[rel~="canonical" i]')].map((l) => l.getAttribute('href')),
+    robots: [...document.querySelectorAll('meta[name="robots" i]')].map((m) => m.getAttribute('content') || '').join(', '),
     jsonld: [...document.querySelectorAll('script[type="application/ld+json" i]')].map((s) => s.textContent),
     h1: document.querySelectorAll('h1').length, links: document.querySelectorAll('a[href]').length,
     textChars: text.length, text: text.slice(0, 300000),
@@ -470,6 +474,8 @@ function checkRoute(route, r, { minText, ignoreErrors }) {
         const n = r.nojs;
         checks.nojs = !want('nojs') ? 'skip' : n.textChars >= minText ? 'pass' : 'fail';
         if (!want('canonical')) checks.canonical = 'skip';
+        // A page that asks not to be indexed needs no canonical URL (one it has is still checked).
+        else if (!n.canonical.length && /noindex/i.test(n.robots || '')) { checks.canonical = 'skip'; r.canonical = { found: 0, note: 'noindex page: no canonical needed' }; }
         else if (n.canonical.length !== 1) { checks.canonical = 'fail'; r.canonical = { found: n.canonical.length, note: n.canonical.length ? 'more than one canonical link' : 'no canonical link' }; }
         else {
             const href = n.canonical[0];
@@ -672,7 +678,8 @@ async function checkOneRoute(browser, context, route, o) {
         try {
             await page.goto(url, { quietMs: o.settleMs, maxMs: o.maxSettleMs });
             const s = await page.evaluate(READ_PAGE);
-            r.nojs = { status: page.state.doc ? page.state.doc.status : null, textChars: s.textChars, h1: s.h1, links: s.links, canonical: s.canonical, jsonld: s.jsonld, text: s.text, title: s.title };
+            r.nojs = { status: page.state.doc ? page.state.doc.status : null, textChars: s.textChars, h1: s.h1, links: s.links, canonical: s.canonical, jsonld: s.jsonld, text: s.text, title: s.title,
+                robots: [s.robots, page.state.doc && page.state.doc.xRobots].filter(Boolean).join(', ') };
             if (page.state.doc && page.state.doc.error) r.nojs.error = page.state.doc.error;
         } catch (e) { r.nojs = { error: e.message }; } finally { await page.close(); }
     }
