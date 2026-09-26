@@ -65,7 +65,7 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
 
 // Size: release-watch.js loads on every page after first paint; release-update.js only when a release
 // can change something in place. Measured 2026-09-23: 3.2 KB and 3.0 KB brotli (release-watch was 1.7 KB).
-// 2026-09-26 (1.17.0): release-watch 4.6 KB with the release notifications over Events realtime (+1.1 KB of
+// 2026-09-26 (1.17.0): release-watch 4.7 KB with the release notifications over Events realtime (+1.1 KB of
 // code, +0.4 KB of comments); its budget moved from 3.5 to 5 KB for that, and only for that.
 {
     const fs = require('fs'); const path = require('path'); const { brotli } = require('../scripts/size-report');

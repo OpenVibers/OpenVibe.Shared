@@ -176,6 +176,25 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         p.release.stop();
     }
 
+    // ── A page whose CSP connect-src leaves Events out: one refusal, then polling only ──
+    {
+        const p = await open();
+        const s = p.es.all[0];
+        const v = new p.window.Event('securitypolicyviolation');
+        v.blockedURI = 'https://other.example/x';
+        p.document.dispatchEvent(v);
+        assert.strictEqual(p.rt().state, 'connecting', 'another URL\'s violation is not ours');
+        const mine = new p.window.Event('securitypolicyviolation');
+        mine.blockedURI = 'https://events.openvibe.network';
+        p.document.dispatchEvent(mine);
+        s.fail();
+        assert.deepStrictEqual([s.closed, p.rt().state, p.timeouts()], [true, 'blocked', []], 'no retry');
+        p.dispatch('online');
+        assert.strictEqual(p.es.all.length, 1, 'not even when back online');
+        assert.strictEqual(p.intervals.length, 2);
+        p.release.stop();
+    }
+
     // ── A tab hidden for 5 minutes closes its stream; it reopens on return ──
     {
         const p = await open();

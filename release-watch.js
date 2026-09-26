@@ -207,11 +207,17 @@
     function close() { const s = es; es = null; if (s) try { s.close(); } catch { /* */ } }
     function fail() {
         close();
+        if (rt.state === 'blocked') return;
         if (++rt.failures >= 6) { rt.state = 'failed'; return; }
         rt.state = 'backoff';
         later('retry', () => { if (document.hidden) rt.state = 'hidden'; else open(); }, Math.min(9e5, 3e4 * 2 ** (rt.failures - 1)) * (0.5 + Math.random() / 2));
     }
     function hide() { if (document.hidden && es) { close(); rt.state = 'hidden'; } }
+    // A Content-Security-Policy whose connect-src leaves Events out: one refusal, then polling only.
+    document.addEventListener('securitypolicyviolation', (e) => {
+        try { if (!rt.url || String(e.blockedURI || '').indexOf(new URL(rt.url, root.location.href).origin) !== 0) return; } catch { return; }
+        close(); root.clearTimeout(t.retry); t.retry = null; rt.state = 'blocked';
+    });
     function heard(e) {
         let m; try { m = JSON.parse(e.data); } catch { return; }
         const ev = m && m.event; const p = ev && ev.payload;

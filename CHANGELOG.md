@@ -17,9 +17,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **Failures.** An error closes the stream at once, rather than letting the browser retry every 3 s, and it reopens after 30 s, doubling to 15 minutes, with jitter. After 6 failures in a row only polling is left until the browser comes back online.
 - **Polling.** Unchanged throughout (focus, visibility, `online`, every 10 minutes). Without EventSource, or when Events cannot be reached, nothing else changes.
 - **Configuration.** The default URL applies on https pages. `OVReleaseConfig.eventsUrl` or the meta tag's `data-events` sets another URL, and `false` or `"off"` turns it off. Events answers `https://*.openvibe.*` origins and those in its `REALTIME_CORS_ORIGINS`; elsewhere the stream fails and backs off.
+- **CSP.** A site's Content-Security-Policy must allow the Events origin in `connect-src`, as Live and Community already do. Otherwise the browser refuses the stream and logs that refusal once. release-watch sees the `securitypolicyviolation` for its URL, stops (state `blocked`) and stays on polling. Add `https://events.openvibe.network` to `connect-src`, or set `data-events="off"`, when you move a site to this release.
 - **State.** `OVRelease.state().realtime` reports `{ state, service, url, events, ignored, checks, failures, lastSeq }`.
 
-`release-watch.js` is 4.6 KB brotli (was 3.2 KB). Its budget in `test/release-update.test.js` moves from 3.5 KB to 5 KB for this.
+`release-watch.js` is 4.7 KB brotli (was 3.2 KB). Its budget in `test/release-update.test.js` moves from 3.5 KB to 5 KB for this.
 
 `release-compat` `openPage()` also takes `globals` (extra window properties, such as a fake `EventSource` or a `Math` with a fixed `random`). It adds `timeouts()` (the pending delays), `fireTimeouts(filter)`, `dispatch(type)` and `timeoutsSet`.
 

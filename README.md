@@ -211,6 +211,8 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
     tag's `data-events` sets another URL, and `false` or `"off"` turns it off. Polling (focus, visibility,
     every 10 minutes) is unchanged.
   - **Origins.** Events answers `https://*.openvibe.*` origins, plus those in its `REALTIME_CORS_ORIGINS`.
+  - **CSP.** The site's CSP `connect-src` must allow `https://events.openvibe.network`. Otherwise the
+    browser refuses the stream once, and release-watch stops (state `blocked`) and keeps polling.
   - **State.** `OVRelease.state().realtime` reports `{ state, service, url, events, ignored, checks, failures, lastSeq }`.
 - **Metrics (D46)**: `release_client_updates_total{outcome,reason}`, where outcome is `applied`,
   `reloaded`, `deferred` or `failed`. The tab finds the endpoint in the manifest's `metrics_url`
