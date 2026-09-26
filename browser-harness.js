@@ -220,7 +220,7 @@ const PROBE = `(() => {
 })();`;
 
 /** A tab in `context`, with its errors, script requests, document status and network activity recorded. */
-async function openPage(browser, context, { width = 1280, height = 900, js = true, probe = false } = {}) {
+async function openPage(browser, context, { width = 1280, height = 900, js = true, probe = false, block = null } = {}) {
     const { targetId } = await browser.send('Target.createTarget', { url: 'about:blank', browserContextId: context.id });
     const { sessionId } = await browser.send('Target.attachToTarget', { targetId, flatten: true });
     const send = (m, p, t) => browser.send(m, p, sessionId, t);
@@ -278,6 +278,8 @@ async function openPage(browser, context, { width = 1280, height = 900, js = tru
     const ua = width < 700 ? browser.userAgent.replace(/\([^)]*\)/, '(Linux; Android 10; K)').replace(/ Safari\//, ' Mobile Safari/') : browser.userAgent;
     await send('Network.setUserAgentOverride', { userAgent: ua + USER_AGENT_SUFFIX });
     if (!js) await send('Emulation.setScriptExecutionDisabled', { value: true });
+    // Requests matching these patterns fail as if the host were down (checkUnreachable).
+    if (Array.isArray(block) && block.length) await send('Network.setBlockedURLs', { urls: block });
     if (probe) await send('Page.addScriptToEvaluateOnNewDocument', { source: PROBE });
 
     const evaluate = async (expression, timeoutMs) => {
@@ -707,6 +709,40 @@ async function checkOneRoute(browser, context, route, o) {
     return r;
 }
 
+/**
+ * ADR-024 (WS-E task 1): with a host unreachable (by default openvibe.network, where the theme, the frame
+ * and sign-in live), does a page still paint, with the default theme? Loads `url` once per width with the
+ * patterns in `block` failing, then reads the page: visible text, the --accent token, the body's
+ * background, and errors other than the blocked requests themselves.
+ * → { url, ok, blocked, widths: [{ width, status, settled, textChars, accent, background, errors, ok }] }
+ */
+async function checkUnreachable(url, { block = ['*://openvibe.network/*'], widths = [390, 1280], minText = 200, maxMs = 20000, browser: given = null, chrome = {} } = {}) {
+    const browser = given || await launch(chrome);
+    const out = { url, blocked: block, widths: [] };
+    try {
+        for (const width of widths) {
+            const context = await browser.newContext();
+            const page = await openPage(browser, context, { width, block });
+            try {
+                const settled = await page.goto(url, { maxMs });
+                const s = await page.evaluate(`(() => {
+                    const cs = getComputedStyle(document.documentElement);
+                    const clear = (c) => !c || /^rgba\\(0, 0, 0, 0\\)$|^transparent$/.test(c);
+                    const body = document.body ? getComputedStyle(document.body).backgroundColor : '';
+                    return { text: (document.body && document.body.innerText || '').trim().length, accent: cs.getPropertyValue('--accent').trim(),
+                        background: clear(body) ? cs.backgroundColor : body, theme: document.documentElement.getAttribute('data-theme') || '' };
+                })()`);
+                const errors = page.state.errors.filter((e) => !/ERR_BLOCKED_BY_CLIENT|blocked/i.test(e.text || ''));
+                const w = { width, status: page.state.doc ? page.state.doc.status : null, settled, textChars: s.text, accent: s.accent, background: s.background, theme: s.theme, errors };
+                w.ok = w.status === 200 && settled && s.text >= minText && !!s.accent && !/^rgba\(0, 0, 0, 0\)$|^transparent$/.test(s.background);
+                out.widths.push(w);
+            } finally { await page.close(); await context.dispose(); }
+        }
+    } finally { if (!given) await browser.close(); }
+    out.ok = out.widths.every((w) => w.ok);
+    return out;
+}
+
 async function sample(page) {
     await page.send('HeapProfiler.collectGarbage').catch(() => {});
     await sleep(200);
@@ -827,7 +863,7 @@ async function run(opts = {}) {
 }
 
 module.exports = {
-    run, launch, format, summarize, findChrome, axeSource,
+    run, launch, format, summarize, findChrome, axeSource, checkUnreachable,
     // pure helpers, exported for tests and for the Host CLI
     normalizeRoutes, jsonLdEntities, findText, visibleIn, growth, sitemapPaths, checkRoute, splitErrors,
     WIDTHS, CHECKS, BUDGETS, AXE, PROBE,

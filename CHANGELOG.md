@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.21.0 — 2026-09-26
+
+**Browser harness: an unreachable host** (ADR-024, roadmap WS-E task 1).
+- `openPage(…, { block })` makes every request matching a pattern fail, as if the host were down.
+- `checkUnreachable(url, { block, widths, minText })` loads a page that way (by default with `openvibe.network` unreachable, where the theme, the frame and sign-in live). It reports whether the page still paints: status 200, settled, real text, a `--accent` theme token and a background (the body's, or the html's when the body has none). The blocked requests themselves are not counted as errors.
+- Tested in headless Chrome: a page whose theme stylesheet is blocked keeps its inline default.
+
+Host's `browser-check.js --network-down` runs it against every site.
+
 ## 1.20.0 — 2026-09-26
 
 **Release manifest 1.2.0** (roadmap WS-P task 7; openvibe-contracts 0.60.0, ADR-016 amendment 2).

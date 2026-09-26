@@ -29,6 +29,10 @@ const ROUTES = {
     '<link rel="canonical" href="ORIGIN/spa">'),
     '/private': () => page(`<main><h1>Private</h1><p>${words}</p></main>`),
     '/s.js': () => 'window.__s = (window.__s || 0) + 1;',
+    // ADR-024 (checkUnreachable): an inline default theme, then the theme service's stylesheet (blocked in the check).
+    '/themed': () => page(`<main><h1>Themed</h1><p>${words}</p></main>`, '<style>:root{--accent:#5b7cfa}html{background:#0a0f1c}</style><link rel="stylesheet" href="/theme.css">'),
+    '/unstyled': () => page(`<main><h1>Unstyled</h1><p>${words}</p></main>`),
+    '/theme.css': () => ':root{--accent:#ff0000}',
 };
 // axe stand-in: one critical violation on /b, none elsewhere.
 const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: location.pathname === '/b'
@@ -40,7 +44,7 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
         const origin = `http://127.0.0.1:${server.address().port}`;
         const route = ROUTES[u.pathname];
         if (!route) { res.writeHead(404, { 'content-type': 'text/html' }); res.end(page(`<h1>Not found</h1><p>${words}</p>`)); return; }
-        res.writeHead(200, { 'content-type': u.pathname.endsWith('.js') ? 'application/javascript' : 'text/html; charset=utf-8', ...(u.pathname === '/private' ? { 'x-robots-tag': 'noindex, nofollow' } : {}) });
+        res.writeHead(200, { 'content-type': u.pathname.endsWith('.js') ? 'application/javascript' : u.pathname.endsWith('.css') ? 'text/css' : 'text/html; charset=utf-8', ...(u.pathname === '/private' ? { 'x-robots-tag': 'noindex, nofollow' } : {}) });
         res.end(route().replace(/ORIGIN/g, origin));
     });
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
@@ -50,6 +54,15 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
         base, routes: ['/', '/b', { path: '/missing', status: 404 }, '/private'], widths: [390, 1280], settleMs: 300, idleMs: 1000,
         navigation: { from: '/spa', to: '/spa?b', laps: 4 }, axe: { source: AXE_STUB },
     });
+    // ADR-024 (WS-E task 1): with the theme host unreachable the page still paints, with the default theme.
+    const down = await h.checkUnreachable(`${base}/themed`, { block: ['*/theme.css*'], widths: [390], minText: 50, chrome: { tmpDir } });
+    assert.strictEqual(down.ok, true, JSON.stringify(down));
+    assert.strictEqual(down.widths[0].accent, '#5b7cfa', 'the blocked theme did not apply: the inline default stands');
+    assert.deepStrictEqual(down.widths[0].errors, [], 'the blocked request is not counted as a page error');
+    const reached = await h.checkUnreachable(`${base}/themed`, { block: ['*/nothing-matches*'], widths: [390], minText: 50, chrome: { tmpDir } });
+    assert.strictEqual(reached.widths[0].accent, '#ff0000', 'without the block the theme applies (so the block is what made the difference)');
+    const bare = await h.checkUnreachable(`${base}/unstyled`, { block: ['*/theme.css*'], widths: [390], minText: 50, chrome: { tmpDir } });
+    assert.strictEqual(bare.ok, false, 'no theme token at all fails');
     server.close();
     // Chrome is gone and so is its profile (a leftover per run fills a small disk).
     assert.deepStrictEqual(require('fs').readdirSync(tmpDir), [], 'the Chrome profile is removed when run() returns');
