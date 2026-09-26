@@ -19,6 +19,7 @@
     "./auth-client": "./auth-client.js",
     "./brand": "./brand.js",
     "./builtin-themes": "./builtin-themes.js",
+    "./config": "./config.js",
     "./frame": "./frame.js",
     "./serve": "./serve.js",
     "./chrome-ssr": "./chrome-ssr.js",

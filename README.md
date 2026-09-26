@@ -24,7 +24,7 @@ were reconciled first.
 | Kind | Files |
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `frame` (the OpenVibe Frame on the server; `chrome-ssr` is a deprecated alias), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`; `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `frame` (the OpenVibe Frame on the server; `chrome-ssr` is a deprecated alias), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 
@@ -75,6 +75,82 @@ app.get('/api/ready', ready.handler);   // 503 only when a required check fails;
 A check fails when it throws, times out, returns `false`, a string (the reason) or
 `{ ok: false, error }`. Name a dependency required only when the service really cannot serve
 without it.
+
+### Configuration (server, WS-C task 7)
+
+`openvibe-shared/config` keeps one namespace of a service's configuration as immutable revisions
+(`common.config-snapshot@1`) in the service's own SQLite database. No new dependency: pass the
+better-sqlite3 handle. Several namespaces share one database (tables `config_snapshots` and
+`config_keys`).
+
+```js
+const config = require('openvibe-shared/config');
+const settings = config.createConfigStore({
+    db, service: 'live', namespace: 'live.site_settings',
+    schema,                        // JSON Schema subset: type, enum, const, required, properties,
+                                   // additionalProperties, min/max*, pattern, items, uniqueItems, multipleOf
+    validate: (values) => true,    // or false, a message, a list, { valid, errors }; synchronous
+    classify: (key) => (/api_key|secret|token/.test(key) ? 'secret' : undefined),  // or { key: class }; unknown = internal
+    defaults,                      // revision 1 of a new namespace, and under every revision
+    legacy: () => config.fromRows(db.prepare('SELECT * FROM site_settings').all()),  // revision 1 instead
+    onActivate: async (values, previous, { restoring }) => { /* apply it; throw to refuse */ },
+    keep: 50, log: console, now: () => new Date(),
+});
+settings.get();                    // defaults overlaid with the active values: frozen, in memory
+settings.get('max_bitrate_kbps');  // one value; never a database read
+settings.revision();               // the active revision, or null
+settings.propose(values, { actor, reason, merge, unset });   // validated, stored as proposed (redacted snapshot)
+await settings.activate(revision, { actor });
+await settings.apply(values, { actor, reason, merge, unset }); // propose + activate
+await settings.rollback({ actor, reason, to });                 // a new revision copying the previous good one (or `to`)
+settings.lastKnownGood(); settings.history({ limit, before }); settings.snapshot(revision); settings.summary();
+settings.import(legacy);           // revision 1 from a legacy source when the namespace has none
+settings.reload();                 // another process changed it: re-read the active revision
+```
+
+- **Values** are a complete snapshot; `merge: true` starts from the active values and `unset` removes
+  keys (a key with a default falls back to it). A redaction marker sent back (`{ redacted: true,
+  fingerprint }` as the routes show it) keeps the value it stands for, so a form can round-trip
+  secrets; a marker whose fingerprint is not the current value's is refused (422).
+- **Activation** is serialized per store. The switch (new revision active, old superseded) is one
+  transaction; then `onActivate(values, previous)` runs. If it throws, the previous revision is active
+  again in memory and in the database, the new one is `rejected` with the error (scrubbed of secrets),
+  `onActivate` runs once more with the restored values (`{ restoring: true }`), and a
+  `ConfigError` (`config.activation_failed`, 422) is thrown with the original as `cause`. A proposal
+  whose base is no longer active is `config.stale` (409). A process that stopped mid-activation boots
+  on the last-known-good.
+- **Last-known-good** is the newest revision that activated successfully. Pruning keeps the newest
+  `keep` revisions and never the active one or the last-known-good.
+- **Secrets** stay in the row so they can be activated again, but leave only redacted (history,
+  summary, routes, the return values) and never reach the log or a stored error. A redacted value is
+  `{ redacted: true, fingerprint }`: HMAC-SHA256 of its canonical JSON under a random 32-byte key made
+  for the namespace on first use and kept in `config_keys`. The key never leaves the database and is
+  never logged, so equal fingerprints mean an unchanged value while nothing can be guessed offline. A
+  snapshot's `checksum` is the sha256 of its values as shown. Losing the key row only means a new key:
+  older markers stop round-tripping. A key classified secret later is redacted in older revisions too.
+  Errors name the rule, never the value.
+- `config.fromRows(rows, { prefix, type })` reads typed key-value rows (`number`, `boolean`, `json`,
+  anything else a string), as Live's and Network's `site_settings` and Media's `media_settings` keep them.
+
+```js
+config.adminRoutes([settings, other], {
+    requireAdmin,                             // a middleware or a list; guards every handler
+    actor: (req) => ({ type: 'user', id: req.user.subject_id }),  // default: req.actor, req.subject, req.user.subject(_id)
+    authorize: (req, { action, namespace, keys }) => action === 'read' || isOwner(req.user) || !keys.some(isSecret),
+    basePath: '/api/admin/config',
+}).mount(app);                                // or { router }, the handlers, or handle(req, res, next) on plain http
+```
+
+| Route | Answer |
+|---|---|
+| `GET /api/admin/config` | `{ namespaces: [{ service, namespace, revision, values, classification, active, last_known_good }] }`, values redacted |
+| `GET /api/admin/config/:namespace` | one of them |
+| `GET /api/admin/config/:namespace/history?limit&before` | `{ namespace, snapshots, next_before }`, newest first |
+| `POST /api/admin/config/:namespace` `{ values, reason, merge?, unset? }` | the new active snapshot; 422 `config.invalid` with `errors[]`, 422 `config.activation_failed` |
+| `POST /api/admin/config/:namespace/rollback` `{ to?, reason }` | the new active snapshot; 409 `config.no_previous`, `config.not_good` |
+
+Errors are `application/problem+json` (`errors.problem@1`). Mount it after a JSON body parser, or
+let it read the body itself.
 
 ### Releases: `/release.json`, open tabs and the mixed-version test (ADR-016, Track R)
 
