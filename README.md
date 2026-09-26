@@ -23,7 +23,7 @@ were reconciled first.
 
 | Kind | Files |
 |---|---|
-| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `openvibe-sw.js` |
+| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `openvibe-sw.js` |
 | Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `frame` (the OpenVibe Frame on the server; `chrome-ssr` is a deprecated alias), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
@@ -321,6 +321,17 @@ can't load, those icons fall back to `<i class="fa-solid …">`. Two options cha
 
 - `OpenVibeNavbar.init({ iconsUrl })` points navbar.js at another URL.
 - Loading `nav-icons.js` *before* navbar.js puts every glyph in the first frame.
+
+**The notification bell in realtime (1.22.0, off by default).** `OpenVibeNavbar.init({ notificationsRealtime: true })`, or `OpenVibeNotifications.init({ realtime: true })` where a site mounts the bell itself, makes the bell hear the person's new notifications as they happen. It uses Network's `network.notification.created` over OpenVibe.Events' realtime stream (ADR-005 amendment 2).
+- **Loading.** notification-ui.js then loads `notification-live.js` from its own directory, so serve it beside notification-ui.js (it is in `files.js`).
+- **Each (re)connect.** It asks Network for a two-minute ticket (`POST https://openvibe.network/api/v1/realtime/ticket`) with the page's Bearer token, or with the session cookie on openvibe.network itself. It then opens `https://events.openvibe.network/realtime/stream?topics=network.notification.*&ticket=…` without credentials, resuming with `last_event_id`.
+- **What it reacts to.** On an event whose subject is the person, it re-reads the unread count and toasts what is new: one request per burst. On `event: gap` it also reloads the open lists.
+- **Polling stays:** every 15 s without a stream, and every 2 min while the stream is open, as a safety net for reads made on other sites.
+- **Retries and giving up.**
+  - Errors back off from 2 s, with jitter. After ten failures in a row the bell polls only, until the browser comes back `online`.
+  - A tab hidden 5 minutes closes the stream and resumes it when shown.
+  - A Content-Security-Policy refusal, a signed-out 401/403, or Network's `REALTIME_TICKETS=off` (503) stop the stream, and the bell polls.
+- **The site's CSP** needs `connect-src https://events.openvibe.network` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
 
 ## Development
 

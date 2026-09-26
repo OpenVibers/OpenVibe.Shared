@@ -806,7 +806,7 @@
         const mount = nav.querySelector('#openvibe-bell-mount'); if (!mount || mount.childElementCount) return;
         const go = () => {
             const N = root.OpenVibeNotifications; if (!N || mount.childElementCount) return;
-            try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network' }); N.__ovNavInit = true; } N.createBell(mount); } catch { /* */ }
+            try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; } N.createBell(mount); } catch { /* */ }
         };
         if (root.OpenVibeNotifications) return go();
         if (document.getElementById('ov-notify-loader')) return;

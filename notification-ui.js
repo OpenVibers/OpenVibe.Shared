@@ -11,6 +11,9 @@
 //
 // Reads: GET /api/notifications?limit&offset&unread_only&category&q&since
 //        GET /api/notifications/unread-count
+// Realtime (init({ realtime: true }), off by default): notification-live.js, loaded from beside this file, hears the
+//        person's network.notification.created over OpenVibe.Events with a ticket from POST /api/v1/realtime/ticket;
+//        each event or gap re-reads the count. Polling stays: every 15 s without a stream, every 2 min with one.
 // Writes: POST /:id/read, /read-batch, /read-all, /:id/dismiss, /api/push/{subscribe,unsubscribe}
 // ═══════════════════════════════════════════════════════════════
 
@@ -18,6 +21,8 @@
     'use strict';
 
     const POLL_INTERVAL = 15_000;
+    const REALTIME_POLL = 120_000;   // with an open realtime stream the poll is only a safety net (reads made on other sites)
+    const SELF_SRC = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     const PAGE_SIZE = 30;
     const TOAST_DURATION = { low: 0, normal: 4200, high: 6500, critical: 0 }; // 0 = sticky
     const MAX_TOASTS = 3;
@@ -38,6 +43,9 @@
     let _audioCache = {};
     let _preferences = { enabled: true, sound: true, toasts: true, muted_categories: [] };
     let _channel = null;          // BroadcastChannel for same-origin tab sync
+    let _live = null;             // OVNotificationLive feed (realtime on)
+    let _lastPoll = 0;
+    let _soon = null; let _soonAll = false;
     const _views = new Map();     // container → view state (panel + inboxes)
 
     // ── Styles ──────────────────────────────────────────────
@@ -519,6 +527,7 @@
     async function pollUnread() {
         if (_polling || !hasSession()) return;
         _polling = true;
+        _lastPoll = Date.now();
         try {
             const data = await apiJson('/api/notifications/unread-count');
             const prev = _unreadCount;
@@ -545,9 +554,56 @@
         stopPolling();
         if (!hasSession()) return;
         newestCreatedAt().then(c => { _lastSeenAt = c || new Date().toISOString(); pollUnread(); });
-        _pollTimer = setInterval(pollUnread, POLL_INTERVAL);
+        _pollTimer = setInterval(() => { if (!liveOpen() || Date.now() - _lastPoll >= REALTIME_POLL) pollUnread(); }, POLL_INTERVAL);
     }
     function stopPolling() { if (_pollTimer) clearInterval(_pollTimer); _pollTimer = null; }
+
+    // ── Realtime (notification-live.js) ─────────────────────
+    function liveOpen() { return !!(_live && _live.state().state === 'open'); }
+    /** One re-read for a burst of events (a go-live fan-out, a replay after a reconnect); a gap re-reads open lists too. */
+    function soon(all) {
+        _soonAll = _soonAll || all;
+        if (_soon) return;
+        _soon = setTimeout(() => {
+            _soon = null;
+            if (_polling) { soon(false); return; }   // a poll in flight may predate the event: read again after it
+            const lists = _soonAll; _soonAll = false;
+            pollUnread();
+            if (lists) for (const v of _views.values()) reload(v);
+        }, 300);
+    }
+    function liveSrc() {
+        if (_config.liveSrc) return _config.liveSrc;
+        const m = /^(https?:\/\/[^?#]*\/)notification-ui\.js(?:[?#]|$)/.exec(SELF_SRC);
+        return `${m ? m[1] : 'https://openvibe.network/shared/'}notification-live.js`;
+    }
+    let _liveLoading = null;
+    function loadLive() {
+        if (root.OVNotificationLive) return Promise.resolve(root.OVNotificationLive);
+        return _liveLoading || (_liveLoading = new Promise((ok) => {
+            const sc = document.createElement('script');
+            sc.src = liveSrc(); sc.async = true;
+            sc.onload = () => ok(root.OVNotificationLive || null);
+            sc.onerror = () => { _liveLoading = null; ok(null); };
+            document.head.appendChild(sc);
+        }));
+    }
+    function startRealtime() {
+        if (!_config.realtime || !hasSession() || typeof root.EventSource !== 'function') return;
+        if (_live) { _live.restart(); return; }
+        loadLive().then((L) => {
+            if (!L || _live || !_config.realtime || !hasSession()) return;
+            _live = L.create({
+                ticketUrl: `${_config.apiBase}/api/v1/realtime/ticket`,
+                token: () => _config.token,
+                credentials: isCrossOrigin() ? 'omit' : 'include',
+                onNotification: () => soon(false),
+                onGap: () => soon(true),
+            });
+            _live.start();
+        });
+    }
+    function stopRealtime() { if (_live) _live.stop(); }
     document.addEventListener('visibilitychange', () => { if (!document.hidden) pollUnread(); });
 
     // ── Panel ───────────────────────────────────────────────
@@ -652,11 +708,13 @@
             if (opts.preferences) Object.assign(_preferences, opts.preferences);
             channel();
             startPolling();
+            startRealtime();
             // If the user enabled push on this device before, make sure the worker is registered.
             try { if (pushSupported() && localStorage.getItem('ov_push_enabled') === '1') navigator.serviceWorker.register(_config.swPath, { scope: '/' }).catch(() => {}); } catch { /* */ }
         },
         destroy() {
             stopPolling();
+            stopRealtime();
             _toastContainer?.remove(); _panelEl?.remove();
             _toastContainer = null; if (_panelEl) _views.delete(_panelEl); _panelEl = null;
         },
@@ -692,8 +750,10 @@
         setPreferences(prefs) { Object.assign(_preferences, prefs); },
         setToken(token) {
             _config.token = token;
-            if (token || !isCrossOrigin()) startPolling(); else { stopPolling(); setBadge(0, { quiet: true }); }
+            if (token || !isCrossOrigin()) { startPolling(); startRealtime(); } else { stopPolling(); stopRealtime(); setBadge(0, { quiet: true }); }
         },
+        /** The realtime feed's state ({ state: 'off' | 'ticket' | 'connecting' | 'open' | 'backoff' | 'hidden' | 'blocked' | 'failed' | 'signed-out' | 'unavailable', … }), or null when off. */
+        realtimeState() { return _live ? _live.state() : null; },
         togglePanel, closePanel,
         enablePush, disablePush, pushStatus,
         get unreadCount() { return _unreadCount; },

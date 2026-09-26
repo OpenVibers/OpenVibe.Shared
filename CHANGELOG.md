@@ -4,6 +4,22 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.22.0 — 2026-09-26
+
+**The notification bell in realtime** (roadmap WS-E task 3, WS-F task 1; openvibe-contracts 0.61.0, ADR-005 amendment 2). It is off by default. A site turns it on with `OpenVibeNavbar.init({ notificationsRealtime: true })`, or with `OpenVibeNotifications.init({ realtime: true })`.
+- **New browser file `notification-live.js`** (`OVNotificationLive.create({ ticketUrl, token, credentials, onNotification, onGap, onState })`), in `files.js`, 2.4 KB brotli (budget 3 KB). For every (re)connect it asks Network for a realtime ticket (`POST /api/v1/realtime/ticket`), then opens Events' `/realtime/stream?topics=network.notification.*&ticket=…` without credentials, resuming with `last_event_id`.
+  - Only events whose subject is the ticket's person count; another person's, other types and replays are ignored.
+  - `event: gap` is reported.
+  - Errors close the stream (a ticket opens one stream) and back off from 2 s, with jitter. After ten failures in a row it stops, until the browser is `online` again.
+  - Hidden 5 minutes, it closes; shown, it resumes.
+  - A Content-Security-Policy refusal, 401/403 or 503 (`REALTIME_TICKETS=off` on Network) stop it.
+- **`notification-ui.js`** loads it from its own directory when realtime is on. An event re-reads the count and toasts new items, once per burst, and again after a poll already in flight. A gap also reloads the open lists. The 15 s poll runs only every 2 min while the stream is open. `setToken()` restarts the feed for the new person, and `realtimeState()` reports it. notification-ui.js gets a 13 KB brotli budget (12.7 KB).
+- **navbar.js** passes `notificationsRealtime` through.
+
+`test/notification-live.test.js` covers the above in a linkedom page: subscribe, resume from the cursor with a fresh ticket, a gap re-reading the count, CSP-blocked falling back to 15 s polling, a guessed `user:<other>` topic yielding nothing, and the ticket never being kept.
+
+`test/notification-live-chrome.test.js` runs it in headless Chrome, with a real EventSource, against a stand-in for the ticket route and Events' stream. A dropped connection resumes from the cursor with a fresh ticket, with nothing lost or repeated; a retention gap is reported; another person's event is ignored. It is skipped without Chrome. `browser-harness` now exports `openPage` for it.
+
 ## 1.21.0 — 2026-09-26
 
 **Browser harness: an unreachable host** (ADR-024, roadmap WS-E task 1).

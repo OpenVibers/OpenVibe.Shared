@@ -863,7 +863,7 @@ async function run(opts = {}) {
 }
 
 module.exports = {
-    run, launch, format, summarize, findChrome, axeSource, checkUnreachable,
+    run, launch, openPage, format, summarize, findChrome, axeSource, checkUnreachable,
     // pure helpers, exported for tests and for the Host CLI
     normalizeRoutes, jsonLdEntities, findText, visibleIn, growth, sitemapPaths, checkRoute, splitErrors,
     WIDTHS, CHECKS, BUDGETS, AXE, PROBE,

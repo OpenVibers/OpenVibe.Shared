@@ -19,6 +19,7 @@ const BROWSER = Object.freeze([
     'footer.js',            // shared footer (also required on the server by frame.js)
     'shipped.js',           // "Recently shipped" from the network changelog (openvibe.blog)
     'notification-ui.js',   // bell + notification panel
+    'notification-live.js', // the bell's realtime feed over OpenVibe.Events; notification-ui loads it on demand (realtime on)
     'account-switcher.js',
     'user-card.js',
     'ov-mark.js',           // the OV brand mark drop-in
