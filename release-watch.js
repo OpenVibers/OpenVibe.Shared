@@ -1,17 +1,16 @@
 /*
  * openvibe-shared/release-watch.js — keeps open tabs on a supported release (ADR-016, Track R).
- * Reads /release.json on focus, visibility, reconnect and every 10 minutes. A new release with components
- * or contract ranges is planned by release-update.js (loaded then, from this directory): style, content and
- * server changes are applied in place; anything else prompts. It reloads by itself only when it must
- * (min_client_release, the mixed-version window, contracts out of range) and only when safe: hidden or idle
- * 2 minutes, no focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing
- * media, a live camera/mic, window.OVProtected()). Outcomes are beaconed to the metrics URL (D46), with a
- * 5-minute beat (random tab id, release) for sessions by generation.
- * Release notifications (1.17.0, WS-P task 9): one anonymous EventSource on the Events realtime stream
- * (topic host.release.published, public). An event naming this page's service with a release it neither
- * runs nor knows runs check(true) after a 0-20 s jitter, at most once per 30 s. Polling stays the fallback.
+ * Reads /release.json on focus, visibility, reconnect and every 10 min. Changes with components or contract
+ * ranges are planned by release-update.js (loaded on demand from this directory): style, content and server
+ * go in place, anything else prompts. It reloads by itself only when it must (min_client_release or
+ * min_client_generation, the mixed-version window, contracts) and only when safe: hidden or idle 2 min, no
+ * focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing media, a live
+ * camera/mic, OVProtected()). Outcomes and a 5-minute beat go to the metrics URL (D46).
+ * Release notifications (WS-P task 9): one anonymous EventSource on Events' realtime stream
+ * (host.release.published); a new release of this service runs check(true) after a 0-20 s jitter, at
+ * most every 30 s. Polling stays the fallback.
  * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false, service, eventsUrl (false: off) }; the meta
- * tag may carry data-service and data-events. See README "Releases".
+ * tag may carry data-service, data-events and data-generation. See README "Releases".
  */
 (function (root) {
     if (typeof document === 'undefined' || root.OVRelease) return;
@@ -21,6 +20,7 @@
     const updateUrl = cfg.updateUrl || `${SELF_RE.test(self) ? self.replace(SELF_RE, '') : '/shared/'}release-update.js`;
     const meta = document.querySelector('meta[name="ov-release"]');
     let current = (meta && meta.content) || null;
+    const gen = meta && meta.hasAttribute('data-generation') ? +meta.getAttribute('data-generation') : undefined;
     const url = cfg.url || (meta && meta.getAttribute('data-url')) || '/release.json';
     const IDLE_MS = 2 * 60 * 1000;
     const MIN_GAP_MS = 60 * 1000;
@@ -109,9 +109,9 @@
         }));
     }
     /** Without release-update.js: the release id, min_client_release and the window only. */
-    function legacy(m) {
+    function legacy(m, pg) {
         const w = (Number(m.mixed_version_window_hours) || 0) * 3600e3;
-        if (m.min_client_release === m.release) return { action: 'reload', reason: 'required' };
+        if (m.min_client_release === m.release || pg < m.min_client_generation) return { action: 'reload', reason: 'required' };
         return w > 0 && Date.now() - Date.parse(m.released_at) > w ? { action: 'reload', reason: 'window' } : { action: 'prompt' };
     }
     function commitRegions(next) {
@@ -128,8 +128,8 @@
     async function decide(m) {
         let x = null;
         if (m.components || m.contract_ranges) { try { x = await loadUpdate(); } catch { record('failed', 'script'); flush(); } }
-        const page = base || { release: current };
-        let p = x ? x.plan(page, m, Date.now()) : legacy(m);
+        const page = base || { release: current, client_generation: gen };
+        let p = x ? x.plan(page, m, Date.now()) : legacy(m, page.client_generation);
         if (p.action === 'in-place' && (cfg.inPlace === false || failedRelease === m.release)) p = x.plan({ release: current, contract_ranges: page.contract_ranges }, m, Date.now());
         if (p.action === 'none') return;
         if (p.action !== 'in-place') {
@@ -231,7 +231,7 @@
         if (!p || ev.event_type !== TOPIC) return;
         if (typeof m.seq === 'number') { if (rt.lastSeq != null && m.seq <= rt.lastSeq) return; rt.lastSeq = m.seq; }
         if (p.service !== rt.service || typeof p.release !== 'string') return;
-        // Service ids repeat across origins (Sites' placeholders): a named origin must be this page's.
+        // Ids repeat across origins (Sites' placeholders): a named origin must be ours.
         if (p.origin) { try { if (new URL(p.origin).origin !== root.location.origin) { rt.ignored++; return; } } catch { return; } }
         rt.events++;
         if (seen.includes(ev.event_id) || same(p.release, current) || same(p.release, latest && latest.release) || same(p.release, queued)) { rt.ignored++; return; }
@@ -239,7 +239,7 @@
         queued = p.release;
         queue();
     }
-    /** One check after a 0-20 s jitter; whatever arrives meanwhile, or in the 30 s after it, collapses into one more. */
+    /** One check after a 0-20 s jitter; what arrives meanwhile or 30 s after collapses into one more. */
     function queue() {
         if (t.run) return;
         if (t.cool) { again = true; return; }

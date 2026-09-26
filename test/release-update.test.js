@@ -68,6 +68,7 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
 // 2026-09-26 (1.17.0): release-watch 4.7 KB with the release notifications over Events realtime (+1.1 KB of
 // code, +0.4 KB of comments); its budget moved from 3.5 to 5 KB for that, and only for that.
 // 1.18.0: session beats and the prompted count (+0.25 KB) fit by shortening comments: 4.96 KB.
+// 1.20.0: client generations (+0.05 KB) fit by a tighter header comment: 4.94 KB.
 {
     const fs = require('fs'); const path = require('path'); const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(__dirname, '..', f)));
@@ -85,6 +86,12 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
     assert.strictEqual(plan(M1, { ...M2, components: comps({ jobs: { kind: 'server', version: 'j1' } }) }).action, 'in-place', 'a new server component needs nothing from the tab');
     assert.deepStrictEqual(plan(M1, { ...M2, contract_ranges: api('2.0.0', '^2.0.0') }).reason, 'contract');
     assert.strictEqual(plan(M1, M1).action, 'none');
+    // Manifest 1.2.0: generations and the shell.
+    assert.deepStrictEqual(plan({ ...M1, client_generation: 1 }, { ...M2, min_client_generation: 2 }), { action: 'reload', reason: 'required', changed: [] }, 'below the minimum generation: required');
+    assert.strictEqual(plan({ ...M1, client_generation: 2 }, { ...M2, min_client_generation: 2 }).action, 'in-place', 'at the minimum: as before');
+    const sh = (v) => ({ version: v.repeat(12), components: ['shell'] });
+    assert.strictEqual(plan({ ...M1, shell: sh('a') }, { ...M2, shell: sh('b') }).action, 'prompt', 'a changed shell is never in place');
+    assert.strictEqual(plan({ ...M1, shell: sh('a') }, { ...M2, shell: sh('a') }).action, 'in-place', 'the same shell: as before');
 
     // ── Style and content in place ──
     {

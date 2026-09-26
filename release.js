@@ -323,6 +323,20 @@ function collector(registry, { perMinute = 30, keyOf = null, currentRelease = nu
     };
 }
 
+/**
+ * The shell (manifest 1.2.0): the named components that exist, and one version over their ids and
+ * versions (first 12 hex of SHA-256, in id order). Null when none is named or none exists.
+ */
+function shellOf(ids, components, warn) {
+    if (!Array.isArray(ids) || !ids.length) return null;
+    const have = ids.filter((id) => components && components[id]).sort();
+    const missing = ids.filter((id) => !(components && components[id]));
+    if (missing.length) warn(`shell names components that do not exist: ${missing.join(', ')}`);
+    if (!have.length) return null;
+    const version = crypto.createHash('sha256').update(have.map((id) => `${id}@${components[id].version}`).join('\n')).digest('hex').slice(0, 12);
+    return { version, components: have };
+}
+
 // ── createRelease ──────────────────────────────────────────────
 
 function createRelease({
@@ -331,6 +345,7 @@ function createRelease({
     packages = ['openvibe-shared', 'openvibe-sdk'],
     components = null, publicDir = null, assetUrl = (p, h) => `${p}?v=${h}`,
     contracts = null, schemaGeneration = null, schemaCompatibleFrom = null,
+    clientGeneration = null, minClientGeneration = process.env.MIN_CLIENT_GENERATION ?? null, shell = null,
     metricsPath = null, schema, recheckMs = 0,
     env = process.env, now = () => new Date(), logger = console,
 } = {}) {
@@ -381,6 +396,10 @@ function createRelease({
             schema_generation: generation,
             schema_compatible_from: compatibleFrom,
             contract_ranges: ranges,
+            // Manifest 1.2.0 (WS-P task 7): client generations and the shell.
+            client_generation: intOrNull(clientGeneration, 'clientGeneration'),
+            min_client_generation: intOrNull(typeof minClientGeneration === 'string' ? (minClientGeneration.trim() === '' ? null : Number(minClientGeneration)) : minClientGeneration, 'minClientGeneration'),
+            shell: shellOf(shell, built.components, warn),
             metrics_url: metricsUrl,
         });
         const served = deepFreeze(contractSchema ? project(full, contractSchema) : Object.fromEntries(V1_0.map((k) => [k, full[k]])));
@@ -408,7 +427,7 @@ function createRelease({
         res.end(body);
     }
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    const metaTag = (url = '/release.json') => `<meta name="ov-release" content="${esc(state.full.release)}" data-released-at="${esc(state.full.released_at)}" data-url="${esc(url)}"${metricsUrl ? ` data-metrics="${esc(metricsUrl)}"` : ''}>`;
+    const metaTag = (url = '/release.json') => `<meta name="ov-release" content="${esc(state.full.release)}" data-released-at="${esc(state.full.released_at)}" data-url="${esc(url)}"${metricsUrl ? ` data-metrics="${esc(metricsUrl)}"` : ''}${state.full.client_generation != null ? ` data-generation="${state.full.client_generation}"` : ''}>`;
 
     /** GET /release.json and, with a metrics registry, POST <metricsPath> into release_client_updates_total. */
     function mount(app, { registry = null, path: manifestPath = '/release.json', metricsPath: mp = metricsPath || '/release-metrics', perMinute } = {}) {

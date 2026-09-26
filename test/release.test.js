@@ -78,6 +78,21 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
     assert.strictEqual(valid11(full), true, 'the full manifest validates against registry.release-manifest 1.1.0');
     assert.deepStrictEqual(rel.manifest(), full, 'a 1.1.0 schema serves every field');
     assert.deepStrictEqual(Object.keys(full.components).sort(), ['docs', 'server', 'shell', 'styles']);
+    // Manifest 1.2.0 (WS-P task 7): client generations and the shell.
+    {
+        const r2 = createRelease({ ...spec, clientGeneration: 3, minClientGeneration: '2', shell: ['styles', 'shell', 'nope'] });
+        const f2 = r2.full();
+        assert.deepStrictEqual([f2.client_generation, f2.min_client_generation], [3, 2], 'generations (the minimum from an env string)');
+        assert.deepStrictEqual(f2.shell.components, ['shell', 'styles'], 'the shell: named components that exist, in id order');
+        assert.strictEqual(f2.shell.version, sha12(`shell@${f2.components.shell.version}\nstyles@${f2.components.styles.version}`));
+        assert.strictEqual(valid11(f2), true, 'validates against registry.release-manifest 1.2.0');
+        assert.match(r2.metaTag(), /data-generation="3"/, 'the page states its generation');
+        const w = typeof r2.warnings === 'function' ? r2.warnings() : r2.warnings;
+        assert.ok(w.some((x) => /nope/.test(x)), 'a missing shell component is warned about');
+        assert.deepStrictEqual([full.client_generation, full.min_client_generation, full.shell], [null, null, null], 'all three are null by default');
+        assert.ok(!/data-generation/.test(rel.metaTag()));
+        assert.strictEqual(createRelease({ ...spec, minClientGeneration: 'x' }).full().min_client_generation, null, 'a bad minimum is dropped (and warned)');
+    }
     assert.strictEqual(full.components.styles.kind, 'style');
     assert.match(full.components.styles.version, /^[0-9a-f]{12}$/);
     assert.strictEqual(full.components.server.version, '1234567abcde');
@@ -324,6 +339,15 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
         assert.strictEqual(page.beacons[1].body.session, b.session, 'the same tab id');
         page.window.dispatchEvent(new page.window.Event('pagehide'));
         assert.deepStrictEqual([page.beacons.length, page.beacons[2].body.ended, page.beacons[2].body.session], [3, true, b.session], 'pagehide says it ended');
+    }
+
+    // A tab below the server's minimum client generation reloads when safe (manifest 1.2.0); at it, only the prompt.
+    for (const [gen, reloads] of [[1, 1], [2, 0]]) {
+        const manifest = { service: 'test', release: 'bbbbbbb', released_at: fresh, min_client_release: null, mixed_version_window_hours: 24, min_client_generation: 2 };
+        const page = await openPage({ url: 'https://site.test/', html: HTML().replace('data-url="/release.json"', `data-url="/release.json" data-generation="${gen}"`), hidden: true, config: { metricsUrl: '/release-metrics' }, serve: () => ({ json: manifest }) });
+        await page.settle();
+        assert.strictEqual(page.reloads, reloads, `generation ${gen} against a minimum of 2`);
+        assert.deepStrictEqual(page.metrics(), gen < 2 ? { prompted: { required: 1 }, reloaded: { required: 1 } } : { prompted: { optional: 1 } });
     }
 
     console.log('release: all checks passed');

@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.20.0 — 2026-09-26
+
+**Release manifest 1.2.0** (roadmap WS-P task 7; openvibe-contracts 0.60.0, ADR-016 amendment 2).
+- `createRelease({ clientGeneration, minClientGeneration, shell })` serves `client_generation`, `min_client_generation` (also env `MIN_CLIENT_GENERATION`) and `shell: { version, components }`, where the version is the first 12 hex of SHA-256 over the named components' ids and versions.
+- The meta tag carries `data-generation`.
+- A tab below the minimum generation reloads when safe (`required`). A changed shell is never applied in place; it prompts.
+- release-watch stays under its 5 KB brotli budget (4.94 KB) with a tighter header comment.
+
+The Contracts devDependency moves to 0.60.0.
+
 ## 1.19.0 — 2026-09-26
 
 **The update matrix, complete** (roadmap WS-P task 8). `release-update.js` sends `ov:content-dispose` (bubbling, `{ component, release }`) on a region just before it is replaced, so a stateless widget inside can drop its listeners and timers; `ov:content-updated` follows as before, to mount it again. Tests now cover every row of the matrix: stylesheet swap and `ov:styles-updated`, revision-aware content with scroll kept, widget disposal and remount, deferral of busy regions, the prompt, and the security minimum. The README "Releases" section lists the rows.

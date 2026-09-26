@@ -192,6 +192,13 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
   `data-ov-content`. Scripts and inline handlers are dropped, so rebind on `ov:content-updated`.
   A stylesheet whose URL path is not the asset's logical path needs `data-ov-asset="/css/app.css"`.
   Mark anything that must not be replaced with `data-ov-protected`.
+- **Client generations and the shell (manifest 1.2.0, openvibe-contracts ≥ 0.60.0).** Pass
+  `createRelease({ clientGeneration, minClientGeneration, shell })`. `clientGeneration` (an integer, or a
+  function returning one) goes up only when an older client can no longer work against this server; the
+  meta tag then carries `data-generation`. `minClientGeneration` (or env `MIN_CLIENT_GENERATION`) makes
+  every tab below it reload at the next safe moment (`reloaded: required`), without waiting for the
+  window. `shell` names the components that form the page shell (`['shell', 'nav']`); the manifest serves
+  `{ version, components }`, and a tab whose shell version differs is prompted, never updated in place.
 - **The update matrix (WS-P task 8)**, what an open tab does with each kind of change, each row tested
   (test/release-update.test.js, test/release.test.js):
 

@@ -46,6 +46,10 @@
         if (!server || !page || server.release === page.release) return { action: 'none', changed: [] };
         const c = compatible(page, server);
         if (!c.ok) return { action: 'reload', reason: 'contract', changed: [], problems: c.problems };
+        // Manifest 1.2.0: a client generation below the server's minimum reloads (required); a shell change never goes in place.
+        const pg = page.client_generation; const mg = server.min_client_generation;
+        if (Number.isInteger(pg) && Number.isInteger(mg) && pg < mg) return { action: 'reload', reason: 'required', changed: [] };
+        const shellMoved = !!(page.shell || server.shell) && (page.shell && page.shell.version) !== (server.shell && server.shell.version);
         const a = page.components; const b = server.components; let changed = null;
         if (a && b) {
             let ok = true; changed = [];
@@ -56,7 +60,7 @@
                 changed.push({ id, kind });
                 if (!IN_PLACE[kind] || (x && y ? x.kind !== y.kind : kind !== 'server')) ok = false;
             }
-            if (ok) return { action: 'in-place', changed };
+            if (ok && !shellMoved) return { action: 'in-place', changed };
         }
         const windowMs = (Number(server.mixed_version_window_hours) || 0) * 3600e3;
         if (server.min_client_release === server.release) return { action: 'reload', reason: 'required', changed };
