@@ -45,11 +45,15 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
     });
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
     const base = `http://127.0.0.1:${server.address().port}`;
-    const report = await h.run({
+    const tmpDir = require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'ov-harness-test-'));
+    const report = await h.run({ chrome: { tmpDir },
         base, routes: ['/', '/b', { path: '/missing', status: 404 }, '/private'], widths: [390, 1280], settleMs: 300, idleMs: 1000,
         navigation: { from: '/spa', to: '/spa?b', laps: 4 }, axe: { source: AXE_STUB },
     });
     server.close();
+    // Chrome is gone and so is its profile (a leftover per run fills a small disk).
+    assert.deepStrictEqual(require('fs').readdirSync(tmpDir), [], 'the Chrome profile is removed when run() returns');
+    require('fs').rmdirSync(tmpDir);
     const [good, bad, missing, priv] = report.routes;
     const text = h.format(report);
 

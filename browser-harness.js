@@ -122,7 +122,8 @@ function connect(wsUrl, onClose) {
 
 /**
  * Starts headless Chrome (or attaches to one at chrome.browserURL, e.g. through an ssh tunnel) and answers
- * { version, userAgent, send, newContext(), close() }. close() kills only the process it started.
+ * { version, userAgent, send, newContext(), close() }. close() kills only the process it started and resolves once
+ * its temporary profile is removed.
  */
 async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, headless = true } = {}) {
     let proc = null, profile = null, wsUrl;
@@ -139,7 +140,7 @@ async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, hea
             '--disable-background-networking', '--disable-component-update', '--disable-sync', '--disable-default-apps',
             // No back/forward cache: kept pages would count in the navigation check's heap, node and document samples.
             '--mute-audio', '--disk-cache-size=16777216', '--window-size=1280,900', '--disable-features=BackForwardCache', ...args, 'about:blank',
-        ], { stdio: 'ignore' });
+        ], { stdio: 'ignore', detached: true }); // its own process group: close() stops Chrome and its helpers together
         const portFile = path.join(profile, 'DevToolsActivePort');
         for (let i = 0; i < 200 && !wsUrl; i++) {
             if (proc.exitCode != null) break;
@@ -154,11 +155,26 @@ async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, hea
     const conn = connect(wsUrl);
     await conn.opened;
     const version = await conn.send('Browser.getVersion');
-    const close = () => {
+    // Only the Chrome this launch started: its process group (the browser and its renderer/GPU helpers, which
+    // otherwise outlive a killed browser for a moment and keep writing to the profile).
+    const killChrome = () => { if (!proc) return; try { process.kill(-proc.pid, 'SIGKILL'); } catch { try { proc.kill('SIGKILL'); } catch { /* gone */ } } };
+    const removeProfile = () => { if (profile) { try { fs.rmSync(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }); } catch { /* retried by close() */ } } };
+    // A leftover profile per run fills a small disk: if this process ends first, Chrome and the profile go too.
+    const onExit = () => { killChrome(); removeProfile(); };
+    if (proc) process.once('exit', onExit);
+    /** Closes the connection, stops only the Chrome this launch started, and resolves once its profile is gone. */
+    const close = () => new Promise((resolve) => {
         conn.close();
-        if (proc) { proc.kill('SIGKILL'); }
-        if (profile) { const p = profile; setTimeout(() => fs.rmSync(p, { recursive: true, force: true }), 300).unref(); }
-    };
+        if (!proc) { resolve(); return; }
+        const done = async () => {
+            for (let i = 0; i < 30 && profile && fs.existsSync(profile); i++) { removeProfile(); if (fs.existsSync(profile)) await sleep(100); }
+            process.removeListener('exit', onExit);
+            resolve();
+        };
+        if (proc.exitCode != null || proc.signalCode != null) { killChrome(); done(); return; }
+        proc.once('exit', () => { killChrome(); done(); });
+        killChrome();
+    });
     return {
         version: version.product, userAgent: version.userAgent, pid: proc ? proc.pid : null,
         send: conn.send, on: conn.on, off: conn.off, get closed() { return conn.closed; }, close,
@@ -802,7 +818,7 @@ async function run(opts = {}) {
     } catch (e) {
         report.error = e.message;
     } finally {
-        if (own) browser.close();
+        if (own) await browser.close();
     }
     report.finishedAt = new Date().toISOString();
     report.summary = summarize(report);
