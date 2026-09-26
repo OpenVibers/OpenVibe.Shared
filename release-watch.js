@@ -7,7 +7,7 @@
  * 2 minutes, no focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing
  * media, a live camera/mic, window.OVProtected()). Outcomes are beaconed to the metrics URL (D46).
  * Release notifications (1.17.0, WS-P task 9): one anonymous EventSource on the Events realtime stream
- * (topic host.deploy.activated, public). An event naming this page's service with a release it neither
+ * (topic host.release.published, public). An event naming this page's service with a release it neither
  * runs nor knows runs check(true) after a 0-20 s jitter, at most once per 30 s. Polling stays the fallback.
  * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false, service, eventsUrl (false: off) }; the meta
  * tag may carry data-service and data-events. See README "Releases".
@@ -167,12 +167,12 @@
         return m;
     }
 
-    // ── Release notifications: OpenVibe.Host publishes host.deploy.activated (public) to OpenVibe.Events ──
+    // ── Release notifications: OpenVibe.Host publishes host.release.published (public) to OpenVibe.Events ──
     // One EventSource per tab, without credentials: the events are public, so an account switch changes
     // nothing (and a second load of this script returns early). Closed after 5 min hidden (the poll and the
     // visibility check cover a hidden tab), reopened on return with last_event_id; errors back off 30 s to
     // 15 min, and after 6 failures in a row only polling is left.
-    const TOPIC = 'host.deploy.activated';
+    const TOPIC = 'host.release.published';
     const HEX = /^[0-9a-f]{7,40}$/;
     const rt = { state: 'off', service: null, url: null, events: 0, ignored: 0, checks: 0, failures: 0, lastSeq: null };
     let es = null; let queued = null; let again = false; let seen = [];

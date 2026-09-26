@@ -1,6 +1,6 @@
 'use strict';
 // release-watch.js release notifications (1.17.0, WS-P task 9): one anonymous EventSource on the Events
-// realtime stream (topic host.deploy.activated); an event for this page's service with a new release runs
+// realtime stream (topic host.release.published); an event for this page's service with a new release runs
 // the ordinary check after a 0-20 s jitter, bursts collapse into one check per 30 s, the release the tab
 // runs or already knows is ignored, errors back off, hidden tabs close the stream, stop() closes it, and
 // polling is unchanged. A fake EventSource stands in for the browser's.
@@ -30,7 +30,7 @@ function fakeEventSource() {
 
 let n = 0;
 const released = (service, release, extra = {}) => ({
-    event_id: `evt_01JAB2C3D4E5F6G7H8J9K0M${String(++n).padStart(3, '0')}`, event_type: 'host.deploy.activated', version: 1, source: 'host',
+    event_id: `evt_01JAB2C3D4E5F6G7H8J9K0M${String(++n).padStart(3, '0')}`, event_type: 'host.release.published', version: 1, source: 'host',
     visibility: 'public', subject: { type: 'release', id: `${service}:${release}` },
     payload: { service, release, commit: null, origin: 'https://openvibe.live', deployed_at: '2026-09-26T08:00:00.000Z' }, ...extra,
 });
@@ -57,7 +57,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         const p = await open();
         assert.strictEqual(p.es.all.length, 1);
         const s = p.es.all[0];
-        assert.strictEqual(s.url, `${DEFAULT}?topics=host.deploy.activated`);
+        assert.strictEqual(s.url, `${DEFAULT}?topics=host.release.published`);
         assert.strictEqual(s.init, undefined, 'no withCredentials: public events need no account');
         assert.strictEqual(p.rt().state, 'connecting');
         s.opened();
@@ -67,7 +67,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
 
         // Other services, tenant activations, the running release (or a hex prefix of it), other topics.
         s.send(1, released('tools', B));
-        s.send(2, { ...released('live', B), payload: { project_id: 'prj_x', site_id: 'site_x', site: 'x', deploy_id: 'dpl_x', previous_deploy_id: null, rollback: false } });
+        s.send(2, { ...released('live', B), event_type: 'host.deploy.activated', subject: { type: 'deploy', id: 'dpl_x' }, payload: { project_id: 'prj_x', site_id: 'site_x', site: 'x', deploy_id: 'dpl_x', previous_deploy_id: null, rollback: false } });
         s.send(3, released('live', A));
         s.send(4, released('live', 'aaaaaaa'));
         s.send(5, { ...released('live', B), event_type: 'live.stream.started' });
@@ -155,7 +155,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         assert.deepStrictEqual(p.timeouts(), [15000], 'the first retry after 15-30 s');
         p.fireTimeouts();
         assert.strictEqual(p.es.all.length, 2);
-        assert.strictEqual(p.es.all[1].url, `${DEFAULT}?topics=host.deploy.activated&last_event_id=41`, 'resumes after the last seq seen');
+        assert.strictEqual(p.es.all[1].url, `${DEFAULT}?topics=host.release.published&last_event_id=41`, 'resumes after the last seq seen');
         const waits = [];
         for (let i = 1; i < 6; i++) {
             p.es.all[i].fail();
@@ -227,7 +227,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         off.release.stop();
 
         const metaUrl = await open({ html: PAGE(' data-events="https://events.example.test/realtime/stream" data-service="docs"') });
-        assert.strictEqual(metaUrl.es.all[0].url, 'https://events.example.test/realtime/stream?topics=host.deploy.activated');
+        assert.strictEqual(metaUrl.es.all[0].url, 'https://events.example.test/realtime/stream?topics=host.release.published');
         assert.strictEqual(metaUrl.rt().service, 'docs', 'data-service names the service');
         metaUrl.release.stop();
 
@@ -236,7 +236,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         metaOff.release.stop();
 
         const cfgService = await open({ config: { service: 'tools', eventsUrl: '/realtime/stream' } });
-        assert.strictEqual(cfgService.es.all[0].url, 'https://openvibe.live/realtime/stream?topics=host.deploy.activated');
+        assert.strictEqual(cfgService.es.all[0].url, 'https://openvibe.live/realtime/stream?topics=host.release.published');
         cfgService.es.all[0].send(1, released('tools', B));
         assert.deepStrictEqual(cfgService.timeouts(), [10000], 'OVReleaseConfig.service decides which events count');
         cfgService.release.stop();

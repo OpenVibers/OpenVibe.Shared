@@ -193,9 +193,9 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
   A stylesheet whose URL path is not the asset's logical path needs `data-ov-asset="/css/app.css"`.
   Mark anything that must not be replaced with `data-ov-protected`.
 - **Release notifications (1.17.0).** When OpenVibe.Host announces a release, it publishes
-  `host.deploy.activated` (public, `ovhost deploy` / `ovhost announce`). release-watch opens one
+  `host.release.published` (public, `ovhost deploy` / `ovhost announce`). release-watch opens one
   EventSource per tab, without credentials, on
-  `https://events.openvibe.network/realtime/stream?topics=host.deploy.activated`.
+  `https://events.openvibe.network/realtime/stream?topics=host.release.published`.
   - **Which events count.** Only events whose `payload.service` is the page's service: `OVReleaseConfig.service`,
     the meta tag's `data-service`, else the `service` of `/release.json`. The tab ignores the release it runs
     or already knows (a hex prefix counts as the same release) and repeats of an event, and runs its usual
