@@ -6,7 +6,9 @@
  *   npm test                  # everything
  *   npm test -- navbar icons  # only files whose name contains one of the words
  *
- * Plain Node with stubbed browser globals: no browser, no network, no running site.
+ * Plain Node with stubbed browser globals: no network, no running site. The one exception is
+ * browser-harness-chrome.test.js, which starts headless Chrome against a local fixture when Chrome is
+ * installed and skips otherwise (OV_SKIP_BROWSER=1 skips it too).
  */
 'use strict';
 const { spawn } = require('child_process');
