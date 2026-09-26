@@ -224,6 +224,9 @@
         if (!p || ev.event_type !== TOPIC) return;
         if (typeof m.seq === 'number') { if (rt.lastSeq != null && m.seq <= rt.lastSeq) return; rt.lastSeq = m.seq; }
         if (p.service !== rt.service || typeof p.release !== 'string') return;
+        // A service id alone is not unique across the network (Sites' placeholder pages reuse product ids),
+        // so when the event names the origin it went live on, it must be this page's.
+        if (p.origin) { try { if (new URL(p.origin).origin !== root.location.origin) { rt.ignored++; return; } } catch { return; } }
         rt.events++;
         if (seen.includes(ev.event_id) || same(p.release, current) || same(p.release, latest && latest.release) || same(p.release, queued)) { rt.ignored++; return; }
         seen = seen.concat(ev.event_id).slice(-20);

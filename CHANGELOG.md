@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.17.1 — 2026-09-26
+
+Fix: `release-watch.js` acts on a `host.release.published` event only when its `origin` (when present) is the page's own. A service id alone is not unique across the network: Sites' placeholder pages reuse product ids (`ai`, `coupons`, …), so a placeholder's release made the real product's tabs check for nothing.
+
 ## 1.17.0 — 2026-09-26
 
 **Release notifications in `release-watch.js`** (roadmap WS-P task 9, ADR-016 amendment 1). When a release goes live, OpenVibe.Host publishes `host.release.published` to OpenVibe.Events (contract `host.release.published@1`, openvibe-contracts 0.58.0; `ovhost deploy` and `ovhost announce`). The event is public, has subject `release` and carries `service`, `release`, `commit` and `origin`. Tabs now hear about a release within seconds instead of at their next poll:

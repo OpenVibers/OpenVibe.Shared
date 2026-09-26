@@ -71,8 +71,10 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         s.send(3, released('live', A));
         s.send(4, released('live', 'aaaaaaa'));
         s.send(5, { ...released('live', B), event_type: 'live.stream.started' });
+        // The same service id on another origin (Sites' placeholder pages reuse product ids): not this page's.
+        s.send(5.5, { ...released('live', B), payload: { ...released('live', B).payload, origin: 'https://placeholder.openvibe.network' } });
         assert.deepStrictEqual(p.timeouts(), [], 'none of those schedules a check');
-        assert.deepStrictEqual([p.rt().events, p.rt().ignored], [2, 2]);
+        assert.deepStrictEqual([p.rt().events, p.rt().ignored], [2, 3]);
 
         // A new release: one check after the jitter (random 0.5 → 10 s); a burst collapses into it.
         const before = p.fetches();
