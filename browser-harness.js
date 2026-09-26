@@ -19,7 +19,8 @@
  *   canonical  exactly one <link rel=canonical>, an absolute URL; another origin or a different URL with
  *              JavaScript on is a warning
  *   jsonld     every application/ld+json block parses, and the headline (else name) of each top-level entity
- *              is in the visible text: without JavaScript passes, only with JavaScript warns, nowhere fails
+ *              (of an ItemList: 80 % of its item names) is in the visible text: without JavaScript passes, only
+ *              with JavaScript warns, nowhere fails
  * once per route, at the widest width:
  *   axe        axe-core, WCAG 2.0/2.1 A and AA rules: serious and critical violations fail, moderate and
  *              minor are reported
@@ -368,11 +369,16 @@ function findText(text, value) {
 
 const WEBPAGE_TYPES = /(^|,)(WebPage|CollectionPage|AboutPage|ContactPage|ProfilePage|SearchResultsPage|ItemPage|FAQPage|QAPage|CheckoutPage|MedicalWebPage|RealEstateListing)(,|$)/;
 /**
- * Where a JSON-LD entity's headline/name is visible: 'html' (without JavaScript), 'js' (only with it) or null.
+ * Where a JSON-LD entity's headline/name (a list: 80 % of its item names) is visible: 'html' (without JavaScript), 'js' (only with it) or null.
  * A title-style name ("Content — OpenVibe.Live") also matches by its leading part, and a web page's name by
  * the document title.
  */
 function visibleIn(entity, nojs, jsText) {
+    if (entity.items) {
+        // At least 80 % of a list's item names (a stale or truncated one may be missing).
+        const share = (t) => entity.items.filter((x) => findText(t, x)).length / entity.items.length;
+        return share(nojs.text) >= 0.8 ? 'html' : share(jsText) >= 0.8 ? 'js' : null;
+    }
     const parts = entity.value.split(/\s+[—–|·-]\s+/);
     const candidates = [entity.value, ...(parts.length > 1 && parts[0].length >= 3 ? [parts[0]] : [])];
     const inText = (t) => candidates.some((c) => findText(t, c));
@@ -395,6 +401,12 @@ function jsonLdEntities(blocks) {
             if (!n || typeof n !== 'object') continue;
             const types = [].concat(n['@type'] || []).map(String);
             if (types.some((t) => JSONLD_SKIP_TYPES.has(t))) continue;
+            // A list's facts are its items (its own name is a label, often an aria-label): their names are checked.
+            if (types.includes('ItemList') && Array.isArray(n.itemListElement)) {
+                const names = n.itemListElement.map((x) => x && (typeof x.name === 'string' ? x.name : x.item && typeof x.item.name === 'string' ? x.item.name : null))
+                    .filter((x) => x && x.trim()).map((x) => x.trim());
+                if (names.length) { entities.push({ type: types.join(','), field: 'items', value: names.length === 1 ? names[0] : `${names.length} items`, items: names, name: typeof n.name === 'string' ? n.name : undefined }); continue; }
+            }
             const field = typeof n.headline === 'string' && n.headline.trim() ? 'headline' : typeof n.name === 'string' && n.name.trim() ? 'name' : null;
             if (field) entities.push({ type: types.join(',') || '?', field, value: n[field].trim() });
         }
@@ -551,7 +563,10 @@ function format(report, { markdown = false } = {}) {
         if (r.canonical && r.canonical.note) d(`canonical: ${r.canonical.note}${r.canonical.href ? ` (${r.canonical.href})` : ''}`);
         if (r.jsonld) {
             for (const e of r.jsonld.parseErrors) d(`JSON-LD does not parse: ${e}`);
-            for (const e of r.jsonld.entities.filter((x) => x.found !== 'html')) d(`JSON-LD ${e.type} ${e.field} ${JSON.stringify(e.value.slice(0, 90))} ${e.found === 'js' ? 'is only visible with JavaScript' : 'is not in the visible text'}`);
+            for (const e of r.jsonld.entities.filter((x) => x.found !== 'html')) {
+                d(e.items ? `JSON-LD ${e.type}${e.name ? ` ${JSON.stringify(e.name.slice(0, 60))}` : ''}: its ${e.items.length} item names are ${e.found === 'js' ? 'only visible with JavaScript' : 'not in the visible text (80 % needed)'}`
+                    : `JSON-LD ${e.type} ${e.field} ${JSON.stringify(e.value.slice(0, 90))} ${e.found === 'js' ? 'is only visible with JavaScript' : 'is not in the visible text'}`);
+            }
         }
         if (r.axe && r.axe.error) d(`axe: ${r.axe.error}`);
         for (const v of (r.axe && r.axe.violations) || []) {

@@ -46,6 +46,14 @@ const h = require('../browser-harness');
     assert.strictEqual(h.visibleIn({ type: 'ItemList', value: 'Live & recent' }, html, 'LIVE &  Recent'), 'js');
     assert.strictEqual(h.visibleIn({ type: 'Thing', value: 'A - B' }, { text: 'a', title: '' }, ''), null, 'a leading part under 3 characters is not enough');
 
+    // An ItemList is judged by its items (80 % visible), not by its label.
+    const list = h.jsonLdEntities([JSON.stringify({ '@type': 'ItemList', name: 'Tool families', itemListElement: ['Image', 'Audio', 'Video', 'Text', 'Network'].map((name, i) => ({ '@type': 'ListItem', position: i + 1, name })) })]).entities[0];
+    assert.deepStrictEqual([list.field, list.value, list.name, list.items.length], ['items', '5 items', 'Tool families', 5]);
+    assert.strictEqual(h.visibleIn(list, { text: 'image audio video text', title: '' }, ''), 'html', '4 of 5 is enough');
+    assert.strictEqual(h.visibleIn(list, { text: 'image audio', title: '' }, 'image audio video text network'), 'js');
+    assert.strictEqual(h.visibleIn(list, { text: 'image', title: '' }, 'audio'), null);
+    assert.deepStrictEqual(h.jsonLdEntities([JSON.stringify({ '@type': 'ItemList', name: 'Empty list', itemListElement: [] })]).entities, [{ type: 'ItemList', field: 'name', value: 'Empty list' }], 'a list without item names falls back to its name');
+
     // Ignore rules: a RegExp on the message or URL, or { label, text, url } with every given RegExp matching; counted.
     const split = h.splitErrors([
         { source: 'security', text: "Loading the script 'https://static.cloudflareinsights.com/beacon.min.js' violates CSP", url: 'https://a.example/' },
