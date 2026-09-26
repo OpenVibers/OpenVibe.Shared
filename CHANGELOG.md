@@ -4,6 +4,27 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.17.0 — 2026-09-26
+
+**Release notifications in `release-watch.js`** (roadmap WS-P task 9, ADR-016 amendment 1). When a release goes live, OpenVibe.Host publishes `host.deploy.activated` to OpenVibe.Events (contract `host.deploy.activated@1`, openvibe-contracts 0.58.0; `ovhost deploy` and `ovhost announce`). The event is public, has subject `release` and carries `service`, `release`, `commit` and `origin`. Tabs now hear about a release within seconds instead of at their next poll:
+- **One stream per tab.** release-watch opens one EventSource, without credentials, on `https://events.openvibe.network/realtime/stream?topics=host.deploy.activated`, once the page's release and service are known.
+- **Which events count.** Only those for the page's service: `OVReleaseConfig.service`, the meta tag's `data-service`, else `/release.json`'s `service`.
+- **Generations.** The tab ignores the release it runs, the one it already knows from `/release.json` and one already queued (a hex prefix of the other counts as the same release). It also ignores a repeated event id and a seq at or below the last one seen.
+- **Coalescing.** A new release runs the usual `check(true)` after a random 0–20 s delay, so tabs do not all fetch at once. Everything arriving while that check is pending collapses into it, and after a check there are 30 s of quiet, after which whatever arrived meanwhile gets one more check. The update plan, the prompt and the safe-reload rules are unchanged.
+- **Gaps.** An `event: gap` (events missed while away) also runs a coalesced check.
+- **Account switches.** The events are public, so `openvibe-auth-changed` changes nothing, and a second load of the script still returns early, so there is never a second EventSource.
+- **Hidden tabs.** A tab hidden for 5 minutes closes its stream: the poll and the check on becoming visible cover it, and it reopens on return with `last_event_id`.
+- **Failures.** An error closes the stream at once, rather than letting the browser retry every 3 s, and it reopens after 30 s, doubling to 15 minutes, with jitter. After 6 failures in a row only polling is left until the browser comes back online.
+- **Polling.** Unchanged throughout (focus, visibility, `online`, every 10 minutes). Without EventSource, or when Events cannot be reached, nothing else changes.
+- **Configuration.** The default URL applies on https pages. `OVReleaseConfig.eventsUrl` or the meta tag's `data-events` sets another URL, and `false` or `"off"` turns it off. Events answers `https://*.openvibe.*` origins and those in its `REALTIME_CORS_ORIGINS`; elsewhere the stream fails and backs off.
+- **State.** `OVRelease.state().realtime` reports `{ state, service, url, events, ignored, checks, failures, lastSeq }`.
+
+`release-watch.js` is 4.6 KB brotli (was 3.2 KB). Its budget in `test/release-update.test.js` moves from 3.5 KB to 5 KB for this.
+
+`release-compat` `openPage()` also takes `globals` (extra window properties, such as a fake `EventSource` or a `Math` with a fixed `random`). It adds `timeouts()` (the pending delays), `fireTimeouts(filter)`, `dispatch(type)` and `timeoutsSet`.
+
+Tests are in `test/release-watch-realtime.test.js`. Additive.
+
 ## 1.16.1 — 2026-09-26
 
 Fix: the **OV mark** (`ov-mark.js`) no longer animates forever. Its SVG animations restyle and re-lay-out on the main thread every frame, which kept every idle page with the navbar 12–29% busy (the browser check counted 8–19 endless animations per page). A mark now moves for the intro (the first 8 s of a visit in a tab, from the first time a mark is on screen; the next page of a multi-page site finishes that intro rather than starting another), while it or its link is hovered or focused (plus 1.2 s), and while it shows activity (`data-state` busy/ok from `island.js`). Otherwise its CSS animations are paused where they are and its SMIL clock is stopped, so it keeps its look. It never moves while the page is hidden, while it is off-screen (IntersectionObserver), with `data-static`, under `prefers-reduced-motion` or under the network's own reduced-motion setting (`html[data-ov-motion=reduced]`); the V's light sweep, a SMIL animation, used to keep running in all of those. Measured in headless Chrome after five page loads: 12 running animations and 16.5% CPU before, none and 0% after. `test/ov-mark.test.js`. Sites pick it up with their `openvibe-shared` pin (the file is `/shared/ov-mark.js`); pages that load it from openvibe.network get it when Network's pin moves.

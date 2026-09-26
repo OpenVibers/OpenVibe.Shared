@@ -192,6 +192,26 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
   `data-ov-content`. Scripts and inline handlers are dropped, so rebind on `ov:content-updated`.
   A stylesheet whose URL path is not the asset's logical path needs `data-ov-asset="/css/app.css"`.
   Mark anything that must not be replaced with `data-ov-protected`.
+- **Release notifications (1.17.0).** When OpenVibe.Host announces a release, it publishes
+  `host.deploy.activated` (public, `ovhost deploy` / `ovhost announce`). release-watch opens one
+  EventSource per tab, without credentials, on
+  `https://events.openvibe.network/realtime/stream?topics=host.deploy.activated`.
+  - **Which events count.** Only events whose `payload.service` is the page's service: `OVReleaseConfig.service`,
+    the meta tag's `data-service`, else the `service` of `/release.json`. The tab ignores the release it runs
+    or already knows (a hex prefix counts as the same release) and repeats of an event, and runs its usual
+    check once, after a random 0–20 s delay.
+  - **Bursts.** At most one check per 30 s; anything that arrives in between collapses into one more.
+  - **Account changes.** The events are public, so an account switch changes nothing and never opens a
+    second stream.
+  - **Hidden tabs.** A tab hidden for 5 minutes closes its stream, and reopens it on return with
+    `last_event_id`.
+  - **Failures.** Errors back off from 30 s to 15 minutes. After 6 failures in a row only the poll is left,
+    until the browser goes back online.
+  - **Where to connect.** The default applies on https pages only. `OVReleaseConfig.eventsUrl` or the meta
+    tag's `data-events` sets another URL, and `false` or `"off"` turns it off. Polling (focus, visibility,
+    every 10 minutes) is unchanged.
+  - **Origins.** Events answers `https://*.openvibe.*` origins, plus those in its `REALTIME_CORS_ORIGINS`.
+  - **State.** `OVRelease.state().realtime` reports `{ state, service, url, events, ignored, checks, failures, lastSeq }`.
 - **Metrics (D46)**: `release_client_updates_total{outcome,reason}`, where outcome is `applied`,
   `reloaded`, `deferred` or `failed`. The tab finds the endpoint in the manifest's `metrics_url`
   (set by `mount`), the meta tag's `data-metrics`, or `OpenVibeNavbar.init({ releaseWatch:
@@ -211,7 +231,9 @@ await compat.assertMixedVersion({ releases: [
 It fails when adjacent releases' ranges don't overlap both ways, when a pair the manifests call
 compatible fails against the real server, and when an incompatible pair would not make the tab
 reload. `compat.openPage({ html, serve })` runs release-watch in a linkedom page (install
-`linkedom` as a devDependency) for in-place tests of your own markup.
+`linkedom` as a devDependency) for in-place tests of your own markup. `globals` adds window properties,
+such as a fake `EventSource`, and `timeouts()`, `fireTimeouts(filter)` and `dispatch(type)` drive the
+page's timers and events.
 
 ### Analytics (server, ADR-021)
 
@@ -290,7 +312,7 @@ node scripts/build-theme-loader.js
 Tests are plain Node with stubbed browser globals. Some tests guard the release:
 
 - **navbar.js size budget**: 29 KB brotli (`test/nav-icons.test.js`). release-watch.js and
-  release-update.js: 3.5 KB each (`test/release-update.test.js`).
+  release-update.js: 5 KB and 3.5 KB (`test/release-update.test.js`).
 - **Releases (ADR-016)**: the manifest validates against the installed openvibe-contracts (and
   the 1.1.0 schema), in-place updates are transactional and never replace a region in use, the
   reload rules hold, and the mixed-version matrix runs against real servers

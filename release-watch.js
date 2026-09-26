@@ -6,7 +6,11 @@
  * (min_client_release, the mixed-version window, contracts out of range) and only when safe: hidden or idle
  * 2 minutes, no focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing
  * media, a live camera/mic, window.OVProtected()). Outcomes are beaconed to the metrics URL (D46).
- * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false }. See README "Releases".
+ * Release notifications (1.17.0, WS-P task 9): one anonymous EventSource on the Events realtime stream
+ * (topic host.deploy.activated, public). An event naming this page's service with a release it neither
+ * runs nor knows runs check(true) after a 0-20 s jitter, at most once per 30 s. Polling stays the fallback.
+ * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false, service, eventsUrl (false: off) }; the meta
+ * tag may carry data-service and data-events. See README "Releases".
  */
 (function (root) {
     if (typeof document === 'undefined' || root.OVRelease) return;
@@ -158,26 +162,105 @@
         if (!current) current = m.release;
         if (!base && m.release === current) base = m;
         consider(m);
+        live();
         if (busyWith) await busyWith;
         return m;
     }
 
+    // ── Release notifications: OpenVibe.Host publishes host.deploy.activated (public) to OpenVibe.Events ──
+    // One EventSource per tab, without credentials: the events are public, so an account switch changes
+    // nothing (and a second load of this script returns early). Closed after 5 min hidden (the poll and the
+    // visibility check cover a hidden tab), reopened on return with last_event_id; errors back off 30 s to
+    // 15 min, and after 6 failures in a row only polling is left.
+    const TOPIC = 'host.deploy.activated';
+    const HEX = /^[0-9a-f]{7,40}$/;
+    const rt = { state: 'off', service: null, url: null, events: 0, ignored: 0, checks: 0, failures: 0, lastSeq: null };
+    let es = null; let queued = null; let again = false; let seen = [];
+    const t = {};   // timers: run (the jittered check), cool (30 s after it), retry, hide
+    const later = (k, f, ms) => { root.clearTimeout(t[k]); t[k] = root.setTimeout(() => { t[k] = null; f(); }, ms); };
+    const same = (a, b) => !!a && !!b && (a === b || (HEX.test(a) && HEX.test(b) && (a.startsWith(b) || b.startsWith(a))));
+    function eventsUrl() {
+        const v = 'eventsUrl' in cfg ? cfg.eventsUrl : meta && meta.hasAttribute('data-events') ? meta.getAttribute('data-events') : undefined;
+        if (v !== undefined) return v && v !== 'off' ? String(v) : null;
+        try { return new URL(root.location.href).protocol === 'https:' ? 'https://events.openvibe.network/realtime/stream' : null; } catch { return null; }
+    }
+    function live() {
+        if (stopped || es || rt.state !== 'off' || typeof root.EventSource !== 'function') return;
+        const svc = cfg.service || (meta && meta.getAttribute('data-service')) || (base && base.service) || (latest && latest.service);
+        const at = eventsUrl();
+        if (!at || !/^[a-z][a-z0-9-]{1,39}$/.test(String(svc || ''))) return;
+        rt.service = svc; rt.url = at;
+        open();
+        if (document.hidden) later('hide', hide, 5 * 60 * 1000);
+    }
+    function open() {
+        let u;
+        try { u = new URL(rt.url, root.location.href); u.searchParams.set('topics', TOPIC); if (rt.lastSeq != null) u.searchParams.set('last_event_id', rt.lastSeq); } catch { rt.state = 'failed'; return; }
+        rt.state = 'connecting';
+        let s;
+        try { s = es = new root.EventSource(u.href); } catch { es = null; fail(); return; }
+        s.onopen = () => { if (es === s) { rt.state = 'open'; rt.failures = 0; } };
+        s.onmessage = (e) => { if (es === s) heard(e); };
+        s.onerror = () => { if (es === s) fail(); };
+        s.addEventListener('gap', () => { if (es === s) queue(); });   // events were missed: check anyway
+    }
+    function close() { const s = es; es = null; if (s) try { s.close(); } catch { /* */ } }
+    function fail() {
+        close();
+        if (++rt.failures >= 6) { rt.state = 'failed'; return; }
+        rt.state = 'backoff';
+        later('retry', () => { if (document.hidden) rt.state = 'hidden'; else open(); }, Math.min(9e5, 3e4 * 2 ** (rt.failures - 1)) * (0.5 + Math.random() / 2));
+    }
+    function hide() { if (document.hidden && es) { close(); rt.state = 'hidden'; } }
+    function heard(e) {
+        let m; try { m = JSON.parse(e.data); } catch { return; }
+        const ev = m && m.event; const p = ev && ev.payload;
+        if (!p || ev.event_type !== TOPIC) return;
+        if (typeof m.seq === 'number') { if (rt.lastSeq != null && m.seq <= rt.lastSeq) return; rt.lastSeq = m.seq; }
+        if (p.service !== rt.service || typeof p.release !== 'string') return;
+        rt.events++;
+        if (seen.includes(ev.event_id) || same(p.release, current) || same(p.release, latest && latest.release) || same(p.release, queued)) { rt.ignored++; return; }
+        seen = seen.concat(ev.event_id).slice(-20);
+        queued = p.release;
+        queue();
+    }
+    /** One check after a 0-20 s jitter; whatever arrives meanwhile, or in the 30 s after it, collapses into one more. */
+    function queue() {
+        if (t.run) return;
+        if (t.cool) { again = true; return; }
+        later('run', () => {
+            const q = queued;
+            rt.checks++;
+            later('cool', () => { if (again) { again = false; queue(); } }, 30 * 1000);
+            if (!stopped) check(true).then(() => { if (queued === q) queued = null; });
+        }, Math.floor(Math.random() * 20 * 1000));
+    }
+
     let stopped = false;
     root.addEventListener('focus', () => { if (!stopped) check(false); });
-    root.addEventListener('online', () => { if (!stopped) check(true); });
+    root.addEventListener('online', () => { if (stopped) return; if (rt.state === 'failed') { rt.state = 'off'; rt.failures = 0; live(); } check(true); });
     root.addEventListener('pagehide', flush);
-    document.addEventListener('visibilitychange', () => { if (stopped) return; if (document.hidden) { flush(); maybeReload(); } else check(false); });
+    document.addEventListener('visibilitychange', () => {
+        if (stopped) return;
+        if (document.hidden) { flush(); maybeReload(); if (es) later('hide', hide, 5 * 60 * 1000); return; }
+        root.clearTimeout(t.hide); t.hide = null;
+        if (rt.state === 'hidden') open();
+        check(false);
+    });
     const tick = root.setInterval(() => {
         if (stopped) return;
         if (pending && commitRegions(pending)) adopt(pending);
         check(false); maybeReload();
     }, 30 * 1000);
     const poll = root.setInterval(() => { if (!stopped) check(true); }, 10 * 60 * 1000);
-    function stop() { stopped = true; root.clearInterval(tick); root.clearInterval(poll); }
+    function stop() {
+        stopped = true; root.clearInterval(tick); root.clearInterval(poll);
+        close(); Object.keys(t).forEach((k) => { root.clearTimeout(t[k]); t[k] = null; }); rt.state = 'off';
+    }
     root.OVRelease = {
         get current() { return current; },
         check: () => check(true),
-        state: () => ({ current, latest, mustReload, waiting: waiting.length, metrics: totals }),
+        state: () => ({ current, latest, mustReload, waiting: waiting.length, metrics: totals, realtime: { ...rt } }),
         flush,
         stop,
     };
@@ -191,6 +274,7 @@
             if (!current) current = m.release;
             if (m.release === current) base = m;
             consider(m);
+            live();
         })
         .catch(() => { if (!current) stop(); });
 })(typeof window !== 'undefined' ? window : globalThis);

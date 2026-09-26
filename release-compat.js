@@ -167,16 +167,18 @@ function toResponse(out) {
  * A page at `url` rendered from `html`, running release-watch.js. `serve(url, init)` answers every fetch
  * the scripts make (return { json } | { body } | { status } | a Response). Options: config
  * (OVReleaseConfig), updateScript: 'lazy' (default: loaded when release-watch asks) | 'fail', hidden,
- * protectedFn (window.OVProtected).
- * Returns controls to drive it: settle(), settleStyles(ok), focus(el), setHidden(bool), tick(), and what
- * it did: reloads, beacons, toasts, requests.
+ * protectedFn (window.OVProtected), globals (extra window properties, e.g. a fake EventSource or a Math
+ * with a fixed random()).
+ * Returns controls to drive it: settle(), settleStyles(ok), focus(el), setHidden(bool), tick(),
+ * timeouts() (the pending setTimeout delays), fireTimeouts(filter?), dispatch(type), and what it did:
+ * reloads, beacons, toasts, requests, timeoutsSet.
  */
-async function openPage({ url = 'https://site.test/', html, serve, config = null, updateScript = 'lazy', protectedFn = null, hidden: startHidden = false } = {}) {
+async function openPage({ url = 'https://site.test/', html, serve, config = null, updateScript = 'lazy', protectedFn = null, hidden: startHidden = false, globals = null } = {}) {
     let linkedom;
     try { linkedom = require('linkedom'); } catch { throw new Error('openPage needs linkedom (npm i -D linkedom)'); }
     const { window: lw, document } = linkedom.parseHTML(html || '<!doctype html><html><head></head><body></body></html>');
     const origin = new URL(url).origin;
-    const out = { reloads: 0, beacons: [], toasts: [], requests: [], intervals: [] };
+    const out = { reloads: 0, beacons: [], toasts: [], requests: [], intervals: [], timeoutsSet: 0 };
     const timers = new Map(); let tid = 0;
     let focused = null; let hidden = !!startHidden;
     Object.defineProperty(document, 'activeElement', { configurable: true, get: () => focused || document.body });
@@ -191,7 +193,7 @@ async function openPage({ url = 'https://site.test/', html, serve, config = null
         OpenVibeUI: { toast: (msg, o) => out.toasts.push({ msg, o }) },
         setInterval: (f) => { out.intervals.push(f); return out.intervals.length; },
         clearInterval: () => {},
-        setTimeout: (f) => { timers.set(++tid, f); return tid; },
+        setTimeout: (f, ms) => { out.timeoutsSet++; timers.set(++tid, { f, ms: Number(ms) || 0 }); return tid; },
         clearTimeout: (id) => { timers.delete(id); },
         addEventListener: (t, f) => { (listeners[t] = listeners[t] || []).push(f); },
         removeEventListener: () => {},
@@ -205,6 +207,7 @@ async function openPage({ url = 'https://site.test/', html, serve, config = null
     };
     if (config) ctx.OVReleaseConfig = config;
     if (protectedFn) ctx.OVProtected = protectedFn;
+    if (globals) Object.assign(ctx, globals);
     ctx.window = ctx; ctx.globalThis = ctx;
     vm.createContext(ctx);
     // A script element release-watch appends is "loaded": release-update.js runs, then onload fires.
@@ -227,6 +230,8 @@ async function openPage({ url = 'https://site.test/', html, serve, config = null
     const page = {
         window: ctx, document, ...out,
         get reloads() { return out.reloads; },
+        /** How many timeouts the page has set so far. */
+        get timeoutsSet() { return out.timeoutsSet; },
         get release() { return ctx.OVRelease; },
         /** The tab's outcome counts so far (a plain copy). */
         metrics() { return JSON.parse(JSON.stringify(ctx.OVRelease ? ctx.OVRelease.state().metrics : {})); },
@@ -241,8 +246,17 @@ async function openPage({ url = 'https://site.test/', html, serve, config = null
             }
             return n;
         },
-        /** Runs the timeouts still pending (release-update's 15 s stylesheet timeout). */
-        fireTimeouts() { const t = [...timers.values()]; timers.clear(); t.forEach((f) => f()); return t.length; },
+        /** Runs the timeouts still pending (release-update's 15 s stylesheet timeout), or those whose delay `filter(ms)` accepts. */
+        fireTimeouts(filter = null) {
+            const due = [...timers].filter(([, x]) => !filter || filter(x.ms));
+            for (const [id] of due) timers.delete(id);
+            due.forEach(([, x]) => x.f());
+            return due.length;
+        },
+        /** The delays (ms) of the timeouts still pending, in the order they were set. */
+        timeouts() { return [...timers.values()].map((x) => x.ms); },
+        /** Dispatches a plain event of `type` on the window (e.g. openvibe-auth-changed, online). */
+        dispatch(type) { ctx.dispatchEvent(new ctx.Event(type)); },
         focus(el) { focused = el; },
         blur() { focused = null; },
         setHidden(h) { hidden = !!h; document.dispatchEvent(new ctx.Event('visibilitychange')); },
