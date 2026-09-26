@@ -1,5 +1,6 @@
 'use strict';
-// The navbar's Sign In button (navbar.js .openvibe-navbar-login) is --on-accent-strong on --accent-strong:
+// The navbar's Sign In button (navbar.js .openvibe-navbar-login) and the update log's pressed filter chip
+// (shipped.js) are --on-accent-strong on --accent-strong:
 // that pair must read at 4.5:1 or better (WCAG AA, normal text) in every built-in theme. An axe survey
 // found white on the accent (#3b82f6) at 3.67:1 on nine sites (roadmap WS-T task 3).
 const assert = require('assert');
@@ -17,6 +18,10 @@ const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p);
 
 const css = fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8');
 assert.match(css, /\.openvibe-navbar-login \{[^}]*background: var\(--accent-strong, #1d4ed8\); color: var\(--on-accent-strong, #fff\)/, 'the button uses --accent-strong and --on-accent-strong');
+// The same pair on the selected filter chip of the shared update log (shipped.js), which the browser check
+// (openvibe-shared/browser-harness) found at 3.67:1 on every site's /updates page.
+const shipped = fs.readFileSync(path.join(__dirname, '..', 'shipped.js'), 'utf8');
+assert.match(shipped, /\.ov-shipped-chip\[aria-pressed="true"\]\{background:var\(--accent-strong,#1d4ed8\);border-color:var\(--accent-strong,#1d4ed8\);color:var\(--on-accent-strong,#fff\)\}/, 'the pressed chip uses the pair');
 const low = [];
 for (const t of BUILTIN_THEMES) {
     const bg = t.variables['--accent-strong'], fg = t.variables['--on-accent-strong'];
