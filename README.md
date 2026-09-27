@@ -23,7 +23,7 @@ were reconciled first.
 
 | Kind | Files |
 |---|---|
-| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `openvibe-sw.js` |
+| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `openvibe-sw.js` |
 | Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `frame` (the OpenVibe Frame on the server; `chrome-ssr` is a deprecated alias), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
@@ -401,6 +401,31 @@ tag's tree either way.
   its own directory, a versioned navbar always gets the icons of its own release.
 - A new browser file is added to `files.js` in the same release, so sites that serve from
   `node_modules` pick it up.
+
+**Web runtime: a site's feature loader (1.23.0).** `web-runtime.js` (`OVWebRuntime`) is OpenVibe.Live's route loader, made shareable (roadmap WS-P task 6). A site describes its features once and loads each when it is needed:
+
+```js
+const rt = OVWebRuntime.create({
+    features: { player: { fragment: 'player', deps: ['base'], css: ['/css/player.css'], js: ['/js/p1.js', '/js/p2.js'], after: 'initPlayer', stubs: ['openPlayer'], idle: ['ops'] } },
+    routes: [{ path: '^/watch/', features: ['player'] }],   // path: a RegExp or its source
+    versions: { '/js/p1.js': '<hash>' },                     // → /js/p1.js?v=<hash>; or url: (p) => …
+    styleSlot: (href) => node,        // insert a stylesheet before this node (cascade order); default: last in <head>
+    fragmentPath: (name) => `/fragments/${name}.html`,       // loaded into #page-<name> (or `section`) once
+    prefetch: { count: 60, bytes: 3 * 1024 * 1024, sizes: { '/js/p1.js': 12345 } },
+    onStubError: (err, feature) => toast('That part of the site could not load.'),
+    routeError: { icon: 'fa-solid fa-plug-circle-xmark' }, debug: false, eventPrefix: 'ov',
+});
+rt.boot({ initial: ['player'] });     // adopt the server's tags, load these, prefetch on link intent and when idle
+```
+
+- **Loading.** `load(name)` puts in the feature's fragment first, then its dependencies, then its stylesheets and scripts (injected together, run in order), then calls `after` once. It fires `ov:feature` (and `ov:fragment` on the section). One promise per feature; tags already in the document count as loaded. `route(path)` loads every feature its routes name. `loadScript(src, { integrity, crossOrigin })` and `loadStyle(href)` load single files once, another origin's included.
+- **Transactional groups.** A feature is loaded only when every script loaded. When one fails, the attempt's own stylesheets leave the document (unless another feature wants them), the failed tag is removed, no hook runs, and a retry fetches only what is missing. A script that ran is never fetched or run again. A missing stylesheet never blocks: it waits at most 4 s.
+- **Route scopes.** `nextRoute()` starts a generation (`gen()`, `isCurrent(gen)`) and ends the previous route's scope. `scope()` owns `interval`, `timeout`, `listen`, `observe`, `onDispose`, `fetch` (its `signal` aborts when the route ends) and `child()` scopes for one component. Anything registered on an ended scope is refused and counted, never left running (`debug: true` also warns).
+- **Prefetch.** `prefetch(name)` and `prefetchRoute(path)` download without running (`link rel=prefetch`). Hover, focus and touch on in-site links prefetch their route. They skip Save-Data, 2g and devices under 2 GB of memory, and stop at the budget: a count, and bytes where `sizes` are known.
+- **Diagnostics.** `diagnostics()` lists loaded, loading and failed features, failed and rolled-back assets, duplicate tags in the document, late registrations, what the current scope holds and the prefetch budget spent. `leaks()` returns the problems as sentences, or `[]`. Browser smoke tests can compare them across navigations.
+- **Also:** `installStubs()` (global functions that load their feature, then call the real one, for inline handlers) and `showRouteError(pageId, err, retry)` (a retry box built from DOM nodes).
+
+It is 6.1 KB brotli (budget 6.5 KB). Serve it beside the other browser files and load it before the site's own loader. `test/web-runtime.test.js` (linkedom) and `test/web-runtime-chrome.test.js` (headless Chrome: real 404s, ordering, scopes) cover it.
 
 ## Charter
 

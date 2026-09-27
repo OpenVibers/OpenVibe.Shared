@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.23.0 — 2026-09-27
+
+**Web runtime** (roadmap WS-P task 6). New browser file `web-runtime.js` (`OVWebRuntime.create(options)`), in `files.js` and exported as `openvibe-shared/web-runtime`: OpenVibe.Live's feature loader (`public/js/ov-loader.js`), made shareable and extended. 6.1 KB brotli, budget 6.5 KB.
+- **Carried over from Live.** Features from a registry (fragment, deps, css, js, `after` hook, `stubs`, `idle`) and routes; scripts and stylesheets once each, the server's own tags included; versioned URLs; route generations; route scopes (timers, listeners, observers, AbortSignal); intent and idle prefetch; stubs for inline handlers; a retry box for a route that failed.
+- **Transactional asset groups.** A feature commits (hook, event, loaded) only when every script loaded. A failure withdraws the stylesheets that attempt added (unless another feature wants them) and the failed tag; a retry fetches only what is missing, and nothing runs twice.
+- **Scopes refuse late registrations.** An interval, timeout, listener, observer, fetch or child scope registered after its route ended is refused and counted, not left running. `scope.fetch()` uses the route's signal; `scope.child()` scopes one component; `scope.held()` counts what a scope holds. Fired timeouts are released.
+- **A prefetch budget**: a count, and bytes where sizes are known.
+- **Diagnostics**: `diagnostics()` and `leaks()` (duplicate tags, failed and rolled-back assets, late registrations, what the current route holds).
+- **Other changes.** `showRouteError` builds its box from DOM nodes. Assets from another origin are keyed by origin and path, so a CDN file never collides with a local one. The idle prefetch also starts when the page has already loaded.
+
+`test/web-runtime.test.js` covers it in a linkedom page where tags load or fail on cue. `test/web-runtime-chrome.test.js` covers it in headless Chrome against a local site: a slow script still runs in order, a real 404 rolls the group back and the retry completes it, and a route's interval stops and its fetch aborts.
+
 ## 1.22.0 — 2026-09-26
 
 **The notification bell in realtime** (roadmap WS-E task 3, WS-F task 1; openvibe-contracts 0.61.0, ADR-005 amendment 2). It is off by default. A site turns it on with `OpenVibeNavbar.init({ notificationsRealtime: true })`, or with `OpenVibeNotifications.init({ realtime: true })`.
