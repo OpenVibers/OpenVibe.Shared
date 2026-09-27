@@ -69,6 +69,7 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
 // code, +0.4 KB of comments); its budget moved from 3.5 to 5 KB for that, and only for that.
 // 1.18.0: session beats and the prompted count (+0.25 KB) fit by shortening comments: 4.96 KB.
 // 1.20.0: client generations (+0.05 KB) fit by a tighter header comment: 4.94 KB.
+// 1.23.1: the account-switch refetch and the online reconnect (+0.12 KB) fit by shorter comments: 4.99 KB.
 {
     const fs = require('fs'); const path = require('path'); const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(__dirname, '..', f)));

@@ -213,7 +213,7 @@ const OUTCOMES = {
     prompted: /^(optional|required|window|contract)$/,
     applied: /^(content|server|style)(\+(content|server|style)){0,2}$/,
     reloaded: /^(user|required|window|contract)$/,
-    deferred: /^(typing|dirty|protected|media|capture|active)$/,
+    deferred: /^(typing|dirty|protected|media|capture|active|account)$/,
     failed: /^(style|style-timeout|content|origin|script)$/,
 };
 const MAX_BODY = 4096;

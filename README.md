@@ -208,6 +208,7 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
   | Content (`content`) | re-fetches the region, skips an unchanged `data-ov-rev`, keeps its scroll and what the reader sees above it | `ov:content-updated`; `applied` |
   | A widget inside a region | told to let go before its region is replaced, then to mount again | `ov:content-dispose`, then `ov:content-updated` |
   | A busy region (focus, unsent form, playing media, live camera/mic, `data-ov-protected`) | waits, and is replaced once it is not busy | `deferred` with the reason, once per release |
+  | An account switched in place (the page's `openvibe-auth-changed` window event) while a region waits or is being fetched | the region is fetched again with the new session; what was fetched for the previous account is never committed (test/release-account-switch.test.js) | `deferred: account` |
   | Shell, router or any script (`script` and anything not in place) | prompts once; reloads only when it must | `prompted: optional` |
   | Security minimum (`min_client_release`), mixed-version window over, contracts out of range | reloads when safe (hidden or idle, nothing busy), prompting meanwhile | `prompted` and `reloaded: required/window/contract` |
   | Server only (`server`) | nothing to do in the tab | `applied: server` |
@@ -221,11 +222,14 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
     check once, after a random 0–20 s delay.
   - **Bursts.** At most one check per 30 s; anything that arrives in between collapses into one more.
   - **Account changes.** The events are public, so an account switch changes nothing and never opens a
-    second stream.
+    second stream. `/release.json` is read without credentials, so whether a tab updates never depends on
+    who is signed in.
   - **Hidden tabs.** A tab hidden for 5 minutes closes its stream, and reopens it on return with
     `last_event_id`.
   - **Failures.** Errors back off from 30 s to 15 minutes. After 6 failures in a row only the poll is left,
-    until the browser goes back online.
+    until the browser goes back online. Back online (the `online` event), the stream reconnects at once from
+    its cursor, whether it had given up or was still backing off, and one check runs
+    (test/release-offline-resume.test.js).
   - **Where to connect.** The default applies on https pages only. `OVReleaseConfig.eventsUrl` or the meta
     tag's `data-events` sets another URL, and `false` or `"off"` turns it off. Polling (focus, visibility,
     every 10 minutes) is unchanged.

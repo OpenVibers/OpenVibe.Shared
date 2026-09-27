@@ -6,9 +6,6 @@
  * min_client_generation, the mixed-version window, contracts) and only when safe: hidden or idle 2 min, no
  * focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing media, a live
  * camera/mic, OVProtected()). Outcomes and a 5-minute beat go to the metrics URL (D46).
- * Release notifications (WS-P task 9): one anonymous EventSource on Events' realtime stream
- * (host.release.published); a new release of this service runs check(true) after a 0-20 s jitter, at
- * most every 30 s. Polling stays the fallback.
  * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false, service, eventsUrl (false: off) }; the meta
  * tag may carry data-service, data-events and data-generation. See README "Releases".
  */
@@ -31,7 +28,7 @@
     let prompted = false;
     let mustReload = false; let reloadWhy = null;
     let busyWith = null;    // the plan/apply in flight
-    let pending = null; let waiting = []; let kinds = ''; let failedRelease = null; let lib = null;
+    let pending = null; let waiting = []; let kinds = ''; let failedRelease = null; let lib = null; let acct = 0;
     let counts = {}; const totals = {}; const noted = {};
     let session = null; let lastBeat = 0;
     try { session = Array.from(root.crypto.getRandomValues(new Uint8Array(8)), (b) => (b | 256).toString(16).slice(1)).join(''); } catch { /* no beats */ }
@@ -126,6 +123,7 @@
     }
 
     async function decide(m) {
+        const who = acct;
         let x = null;
         if (m.components || m.contract_ranges) { try { x = await loadUpdate(); } catch { record('failed', 'script'); flush(); } }
         const page = base || { release: current, client_generation: gen };
@@ -140,7 +138,9 @@
         }
         try {
             kinds = Array.from(new Set(p.changed.map((c) => c.kind))).sort().join('+');
-            waiting = await x.apply(p, m, busy, record); pending = m;
+            // An account switch meanwhile (openvibe-auth-changed): fetch the regions again.
+            waiting = await x.apply(p, m, (s) => (who !== acct ? 'account' : busy(s)), record); pending = m;
+            if (who !== acct) { waiting = []; pending = null; return decide(m); }
             if (!waiting.length) adopt(m);
         } catch (why) {
             waiting = []; pending = null;
@@ -176,9 +176,9 @@
         return m;
     }
 
-    // ── Release notifications (host.release.published, public, via OpenVibe.Events) ──
-    // One credential-less EventSource per tab (account switches change nothing). Closed after 5 min hidden,
-    // reopened with last_event_id; errors back off 30 s to 15 min; after 6 failures only polling is left.
+    // ── Release notifications (host.release.published, public, via OpenVibe.Events; WS-P task 9) ──
+    // One credential-less EventSource per tab. Closed after 5 min hidden, reopened with last_event_id; errors
+    // back off 30 s to 15 min, after 6 failures only polling is left; online reconnects at once.
     const TOPIC = 'host.release.published';
     const HEX = /^[0-9a-f]{7,40}$/;
     const rt = { state: 'off', service: null, url: null, events: 0, ignored: 0, checks: 0, failures: 0, lastSeq: null };
@@ -220,7 +220,7 @@
         later('retry', () => { if (document.hidden) rt.state = 'hidden'; else open(); }, Math.min(9e5, 3e4 * 2 ** (rt.failures - 1)) * (0.5 + Math.random() / 2));
     }
     function hide() { if (document.hidden && es) { close(); rt.state = 'hidden'; } }
-    // A Content-Security-Policy whose connect-src leaves Events out: one refusal, then polling only.
+    // A CSP whose connect-src leaves Events out: one refusal, then polling only.
     document.addEventListener('securitypolicyviolation', (e) => {
         try { if (!rt.url || String(e.blockedURI || '').indexOf(new URL(rt.url, root.location.href).origin) !== 0) return; } catch { return; }
         close(); root.clearTimeout(t.retry); t.retry = null; rt.state = 'blocked';
@@ -253,7 +253,8 @@
 
     let stopped = false;
     root.addEventListener('focus', () => { if (!stopped) check(false); });
-    root.addEventListener('online', () => { if (stopped) return; if (rt.state === 'failed') { rt.state = 'off'; rt.failures = 0; live(); } check(true); });
+    root.addEventListener('online', () => { if (stopped) return; if (rt.state === 'failed' || rt.state === 'backoff') { root.clearTimeout(t.retry); rt.state = 'off'; rt.failures = 0; live(); } check(true); });
+    root.addEventListener('openvibe-auth-changed', () => { acct++; if (!stopped && pending && !busyWith) { waiting = []; pending = null; consider(latest); } });
     root.addEventListener('pagehide', () => flush(true, true));
     document.addEventListener('visibilitychange', () => {
         if (stopped) return;

@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.23.1 — 2026-09-27
+
+**Two release-watch fixes found by the release-lifecycle acceptance scenarios** (D46, roadmap WS-P task 16; OpenVibe.Host `scripts/release-acceptance.js`). release-watch.js stays within its 5 KB brotli budget (4.99 KB; comments shortened).
+- **An account switch during an update** (scenario 9). An in-place update fetches its regions with the session (`credentials: 'same-origin'`), so a region can be rendered for whoever is signed in. On sites that switch accounts in place (Live: the `openvibe-auth-changed` window event), a region fetched for the previous account and still waiting for focus to leave it, or still in flight when the account changed, was committed as fetched: the new account (or a guest, after signing out) saw what the server had rendered for the previous one. Now `openvibe-auth-changed` drops such regions and fetches them again with the new session, and an answer that arrives after a switch is never committed (counted as `deferred: account`, a new reason `/release-metrics` accepts). The switch itself still reloads nothing, prompts nothing and opens no second stream.
+- **Resuming an offline tab** (scenario 14). Back online, the release stream reconnected at once only when it had given up (6 failures); a tab that came back while still backing off waited out the backoff (up to 8 minutes) before hearing release notifications again. `online` now reconnects at once from the cursor in both cases, like `notification-live.js` does.
+
+New tests: `test/release-account-switch.test.js` and `test/release-offline-resume.test.js` (offline: no prompt, no reload, nothing counted as failed; back online: one `/release.json` read straight to the newest release, in place; a connection lost mid-update leaves the page whole and prompts once; past the window, never reloaded under a focused field; a hidden tab resumes its stream when shown). And `test/release-reading.test.js` (scenario 4, a feed update while reading: a region above the viewport that grows or shrinks moves the page by exactly that, the region keeps its own scroll, a region in view is not compensated; nothing to fix). All three print `[metric] name=value` lines the acceptance runner reads.
+
 ## 1.23.0 — 2026-09-27
 
 **Web runtime** (roadmap WS-P task 6). New browser file `web-runtime.js` (`OVWebRuntime.create(options)`), in `files.js` and exported as `openvibe-shared/web-runtime`: OpenVibe.Live's feature loader (`public/js/ov-loader.js`), made shareable and extended. 6.1 KB brotli, budget 6.5 KB.

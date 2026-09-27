@@ -166,6 +166,8 @@ const valid11 = (m) => { const ok = validate11(m); return ok || JSON.stringify(v
     assert.strictEqual(counter('applied', 'content+style'), 1);
     assert.strictEqual(counter('deferred', 'typing'), 2);
     assert.strictEqual(counter('deferred', 'other'), 1, 'an unknown reason counts as other');
+    assert.strictEqual(await post({ counts: { deferred: { account: 1 } } }, {}, '10.0.0.5'), 204);
+    assert.strictEqual(counter('deferred', 'account'), 1, 'a region fetched again after an account switch (1.23.1)');
     assert.strictEqual(counter('failed', 'style'), 50, 'one report counts at most 50 per reason');
     assert.strictEqual(await post('not json', {}, '10.0.0.2'), 400);
     assert.strictEqual(await post({ counts: { reloaded: { user: 1 } } }, { 'sec-gpc': '1' }, '10.0.0.3'), 204);
