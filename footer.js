@@ -364,8 +364,8 @@
 .ovf-compact-meta{color:var(--text-muted,#8b93ad);font-size:.74rem}
 @media (max-width:900px){.ovf-cols{grid-template-columns:repeat(2,minmax(0,1fr))}.ovf-col--brand{grid-column:1/-1}}
 @media (max-width:560px){
-  .ovf{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
-  .ovf[data-variant="compact"]{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .ovf{padding-bottom:calc(20px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}
+  .ovf[data-variant="compact"]{padding-bottom:calc(14px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}
   .ovf-cols{gap:22px 16px}
   .ovf-bar{justify-content:center;text-align:center;padding-inline:0}
   .ovf-legal-inline{justify-content:center}

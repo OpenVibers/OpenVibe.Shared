@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.28.1 — 2026-09-28
+
+Fixes the owner reported from phones.
+- **Account panel:** the panel scrolls as a whole and its sections keep their height. The panel is a flex column, which let its sections shrink, so on a height-limited phone screen the accounts block ("Switch to Anonymous", "Add another account") collapsed into a sliver with its own scrollbar. The account rows now have the menu rows' size, weight and icon width.
+- **OpenVibe.Codes mark:** a mark at rest (every page after the first of a visit) paused the codes variant's looping V animation at its first frame, where the V is not drawn yet, so the logo showed only the ring and the dot. At rest the V is now fully drawn.
+- **Footer:** phones no longer reserve 84–96 px of empty space under the footer. A page with a fixed bottom bar sets `--ov-footer-clearance` to its height; the default is none.
+
 ## 1.28.0 — 2026-09-28
 
 **`openvibe-shared/config` on PostgreSQL** (ADR-035: Media, Network and Live keep their configuration here). Given an openvibe-sdk/db handle, `createConfigStore` uses the new `config-pg.js`, which is the same store on the async handle. Revisions are immutable, activation is atomic, the last-known-good revision is restored when `onActivate` fails, secret values are redacted with a per-namespace fingerprint key, legacy values are imported, and so on. On this path `createConfigStore` returns a promise of the store: it has read, restored or seeded its active revision when the promise resolves. `get()` and `revision()` stay in memory. The other methods are async. The tables come from the service's migrations: `configSchema()` is their DDL, the SQLite schema converted. `adminRoutes` awaits either kind of store. The better-sqlite3 path is unchanged. `test/config-pg.test.js` runs every scenario of `test/config.test.js` on PGlite (openvibe-sdk v0.20.4, which returns `bytea` as a Buffer, is a dev dependency).

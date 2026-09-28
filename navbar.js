@@ -236,6 +236,10 @@
                 animation: openvibe-slide-down .2s ease;
             }
             .openvibe-navbar-dropdown.open { display: flex; }
+            /* The panel scrolls as a whole; its sections keep their height. A flex column lets children shrink by
+               default, which squeezed the accounts block into a sliver with its own scrollbar when the panel was
+               height-limited (phones). */
+            .openvibe-navbar-dropdown > * { flex-shrink: 0; }
             /* Panels never leave the screen: dvh is the VISIBLE height on phones (100vh reaches behind the address
                bar), the panel scrolls inside itself, and it is never wider than the viewport. */
             .openvibe-navbar-dropdown, .ovnav-launcher {
@@ -260,15 +264,15 @@
                 max-height: 140px; overflow-y: auto;
             }
             .openvibe-navbar-dropdown-accounts .account-item {
-                display: flex; align-items: center; gap: 8px; padding: 6px 8px;
-                border-radius: 6px; cursor: pointer; font-size: 12px;
-                color: var(--text-secondary, #b0b0b8); transition: background .12s;
+                display: flex; align-items: center; gap: 8px; padding: 8px;
+                border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;
+                color: var(--text-primary, #e0e0e0); transition: background .12s;
             }
             .openvibe-navbar-dropdown-accounts .account-item:hover { background: var(--bg-hover, #2f2f3d); }
             .openvibe-navbar-dropdown-accounts .account-item img { width: 24px; height: 24px; border-radius: 50%; }
             .openvibe-navbar-dropdown-accounts .account-item.active { color: var(--accent-light, #60a5fa); font-weight: 600; }
             .openvibe-navbar-dropdown-accounts .add-account {
-                display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+                display: flex; align-items: center; gap: 8px; padding: 8px;
                 border-radius: 6px; cursor: pointer; font-size: 12px;
                 color: var(--text-muted, #707080); transition: background .12s;
                 text-decoration: none;
@@ -1405,11 +1409,11 @@
                         </div>
                     `).join('')}
                     <div class="account-item" data-account-id="anon" style="${isAnon ? 'display:none' : ''}">
-                        <span style="width:24px;text-align:center">${navIcon('fa-user-secret')}</span>
+                        <span style="width:18px;text-align:center">${navIcon('fa-user-secret')}</span>
                         <span>Switch to Anonymous</span>
                     </div>
                     <a class="add-account" id="openvibe-add-account" href="${escapeAttr(addAccountHref)}">
-                        <span style="width:24px;text-align:center">${navIcon('fa-plus')}</span>
+                        <span style="width:18px;text-align:center">${navIcon('fa-plus')}</span>
                         <span>Add another account</span>
                     </a>
                 </div>

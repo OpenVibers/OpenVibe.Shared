@@ -58,7 +58,8 @@
 .ov-mark:hover .c{animation-duration:.9s}
 .ov-mark[data-static] svg,.ov-mark[data-static] .g,.ov-mark[data-static] .c,.ov-mark[data-static] .v,.ov-mark[data-static] .d{animation:none!important}
 .ov-mark[data-static] .o{display:none}
-.ov-mark[data-ov]:not([data-ovm-run]) svg,.ov-mark[data-ov]:not([data-ovm-run]) .g,.ov-mark[data-ov]:not([data-ovm-run]) .c,.ov-mark[data-ov]:not([data-ovm-run]) .d,.ov-mark[data-ov][data-variant=codes]:not([data-ovm-run]) .v{animation-play-state:paused!important}
+.ov-mark[data-ov]:not([data-ovm-run]) svg,.ov-mark[data-ov]:not([data-ovm-run]) .g,.ov-mark[data-ov]:not([data-ovm-run]) .c,.ov-mark[data-ov]:not([data-ovm-run]) .d{animation-play-state:paused!important}
+.ov-mark[data-ov][data-variant=codes]:not([data-ovm-run]) .v{animation:none!important;stroke-dashoffset:0}
 .ov-mark .p{fill:none;stroke:currentColor;stroke-width:4.4;stroke-linecap:round;transform:rotate(-90deg);transform-box:fill-box;transform-origin:center;stroke-dasharray:113.1;stroke-dashoffset:calc(113.1px * (1 - var(--ovm-p,0)));opacity:0;transition:stroke-dashoffset .35s cubic-bezier(.2,.8,.2,1),opacity .2s}
 .ov-mark[data-progress] .p{opacity:1}
 .ov-mark[data-progress] .c,.ov-mark[data-progress] .o{opacity:.25}
