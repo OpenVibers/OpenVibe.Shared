@@ -84,6 +84,7 @@ class AnalyticsTracker {
         this._salt = null;
         this._timers = [];
 
+        if (opts.__pg) return;   // analytics/pg.js: an openvibe-sdk/db handle, its own writes and timers
         ensureSchema(db);
         try { db.pragma('secure_delete = ON'); } catch { /* not fatal */ }
         try { db.pragma('busy_timeout = 250'); } catch { /* not fatal */ }

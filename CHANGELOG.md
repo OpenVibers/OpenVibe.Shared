@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.29.0 — 2026-09-28
+
+**`openvibe-shared/analytics/pg`: request analytics on PostgreSQL** (ADR-035; ADR-021's privacy bounds unchanged). `AnalyticsTrackerPg` is the tracker on an openvibe-sdk/db handle, with the same tables and `getStats`, `getOverview` and `getBotAnalysis` shapes; `analyticsSchema()` is the DDL for the service's migrations; `pruneRawEventsPg` is the 30-day retention in batches. The request path never waits for the database: rows buffer in memory and `flush()` writes them in one transaction every 5 s (or at 100). Unique visitors stay right across processes: the day's salt is shared through `analytics_day_salts`, so the visitor hash is computed at flush, while (address, user agent) wait in memory until then, as the rate counters always did; no address reaches the database. Session ids stay per process, as they were. Every SUM is cast to bigint (numeric comes back as text). `test/analytics-pg.test.js` on PGlite: two trackers count one visitor once, DNT records nothing, rollups, dashboards and retention. Needed by Network's and Live's PostgreSQL passes.
+
 ## 1.28.1 — 2026-09-28
 
 Fixes the owner reported from phones.

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "1.28.1",
+  "version": "1.29.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "exports": {
@@ -10,6 +10,7 @@
     "./analytics/event": "./analytics/event.js",
     "./analytics/event.v1.json": "./docs/schemas/analytics-event.v1.json",
     "./analytics/privacy": "./analytics/privacy.js",
+    "./analytics/pg": "./analytics/pg.js",
     "./analytics/prune-cli": "./analytics/prune-cli.js",
     "./analytics/retention": "./analytics/retention.js",
     "./analytics/schema": "./analytics/schema.js",
