@@ -20,6 +20,13 @@
 // throw or time out. Overall `ready` is false only when a REQUIRED check fails (HTTP 503); a failed
 // optional check keeps the service ready (HTTP 200) and is listed in `degraded`, so a missing optional
 // dependency never reads as "healthy" or as "down".
+//
+// No fake green (roadmap WS-Q task 7): a check that did not verify anything (its feature is not
+// configured, its dependency is switched off) returns `skip('not configured')` ({ skipped: reason })
+// and reports status `skipped` with the reason, never `ok`. Skipped checks are listed in `skipped`.
+// A skipped REQUIRED check is also `degraded` (yellow: the service cannot say it serves that), and a
+// service is `ready` (green) only when at least one check really passed: none, or all skipped, is
+// `degraded`.
 // ═══════════════════════════════════════════════════════════════
 
 const NAME_RE = /^[a-z][a-z0-9_.-]{0,63}$/;
@@ -63,6 +70,11 @@ function createReadiness({ service, release = null, checks = [], details = null,
                 const v = await withTimeout(Promise.resolve().then(() => c.check()), c.timeoutMs);
                 if (v === false) { out.status = 'fail'; out.error = 'check returned false'; }
                 else if (typeof v === 'string') { out.status = 'fail'; out.error = safeReason(v); }
+                else if (v && typeof v === 'object' && !Array.isArray(v) && v.skipped) {
+                    out.status = 'skipped';
+                    out.reason = safeReason(v.skipped === true ? 'not checked' : v.skipped);
+                    if (v.detail !== undefined) out.detail = v.detail;
+                }
                 else if (v && typeof v === 'object' && !Array.isArray(v)) {
                     if (v.ok === false) { out.status = 'fail'; out.error = safeReason(v.error || v.detail || 'failed'); }
                     if (v.detail !== undefined && (v.ok !== false || typeof v.detail === 'object')) out.detail = v.detail;
@@ -84,20 +96,24 @@ function createReadiness({ service, release = null, checks = [], details = null,
     async function run() {
         const results = await Promise.all(list.map(runOne));
         const out = {};
-        const failed = []; const degraded = [];
+        const failed = []; const degraded = []; const skipped = [];
         list.forEach((c, i) => {
             out[c.name] = results[i];
-            if (results[i].status !== 'ok') (c.required ? failed : degraded).push(c.name);
+            if (results[i].status === 'skipped') { skipped.push(c.name); if (c.required) degraded.push(c.name); }
+            else if (results[i].status !== 'ok') (c.required ? failed : degraded).push(c.name);
         });
         const ready = failed.length === 0;
+        // Green is built from checks that passed, never from skipped ones or from none.
+        const verified = results.some((r) => r.status === 'ok');
         const body = {
             ready,
-            status: !ready ? 'not_ready' : degraded.length ? 'degraded' : 'ready',
+            status: !ready ? 'not_ready' : degraded.length || !verified ? 'degraded' : 'ready',
             service,
             release: typeof release === 'function' ? release() : release,
             checked_at: now().toISOString(),
             failed,
             degraded,
+            skipped,
             checks: out,
         };
         if (details) {
@@ -112,7 +128,7 @@ function createReadiness({ service, release = null, checks = [], details = null,
     async function handler(_req, res) {
         let body;
         try { body = await run(); } catch (err) {
-            body = { ready: false, status: 'not_ready', service, checked_at: now().toISOString(), failed: ['readiness'], degraded: [], checks: {}, error: safeReason(err) };
+            body = { ready: false, status: 'not_ready', service, checked_at: now().toISOString(), failed: ['readiness'], degraded: [], skipped: [], checks: {}, error: safeReason(err) };
         }
         res.statusCode = body.ready ? 200 : 503;
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -123,4 +139,9 @@ function createReadiness({ service, release = null, checks = [], details = null,
     return { run, handler, checks: list.map((c) => ({ name: c.name, required: c.required })) };
 }
 
-module.exports = { createReadiness, safeReason };
+/** What a check returns when it verified nothing: status `skipped` with this reason, never `ok`. */
+function skip(reason = 'not checked', detail) {
+    return detail === undefined ? { skipped: String(reason || 'not checked') } : { skipped: String(reason || 'not checked'), detail };
+}
+
+module.exports = { createReadiness, safeReason, skip };

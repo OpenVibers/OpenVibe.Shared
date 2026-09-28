@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.24.0 — 2026-09-28
+
+**No fake green in readiness** (roadmap WS-Q task 7: "skipped counts as yellow; nothing may be marked green by being synthesised from skipped parts"). `ready.js` had only `ok` and `fail`, so a check whose feature was not configured had to claim `ok` (Network's Discord bot, Media's events outbox and News's source pull did) or fail and turn the service yellow for a setting.
+- **`skip(reason, detail?)`**, exported by `openvibe-shared/ready`, or a check returning `{ skipped: reason }`: the check reports status `skipped` with `reason` (and `detail`), never `ok`, and is listed in the new `skipped` array of the body.
+- A skipped **optional** check leaves a service whose other checks passed `ready`. A skipped **required** check is listed in `degraded` too, and the service is `degraded` (still HTTP 200: nothing failed).
+- A service is `ready` only when at least one check really passed: one with no checks, or with every check skipped, is `degraded`. This changes what a service with no checks reports (before: `ready`).
+
 ## 1.23.1 — 2026-09-27
 
 **Two release-watch fixes found by the release-lifecycle acceptance scenarios** (D46, roadmap WS-P task 16; OpenVibe.Host `scripts/release-acceptance.js`). release-watch.js stays within its 5 KB brotli budget (4.99 KB; comments shortened).

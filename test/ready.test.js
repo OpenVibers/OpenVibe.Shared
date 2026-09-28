@@ -1,8 +1,9 @@
 'use strict';
 // ready.js: required vs optional checks, status/latency/checked_at on every check, timeouts,
-// cached checks keep the time they really ran, and failure reasons never leak secrets.
+// cached checks keep the time they really ran, failure reasons never leak secrets, and skipped checks
+// never make a service green (roadmap WS-Q task 7).
 const assert = require('assert');
-const { createReadiness, safeReason } = require('../ready');
+const { createReadiness, safeReason, skip } = require('../ready');
 
 (async () => {
     assert.throws(() => createReadiness({}), /service/);
@@ -75,9 +76,38 @@ const { createReadiness, safeReason } = require('../ready');
     assert.strictEqual(res2.statusCode, 200);
     assert.strictEqual(JSON.parse(res2.body).checks.falsey.error, 'check returned false');
 
+    // No fake green: nothing checked is not green.
     const none = await createReadiness({ service: 'x' }).run();
     assert.strictEqual(none.ready, true);
-    assert.strictEqual(none.status, 'ready');
+    assert.strictEqual(none.status, 'degraded', 'no check ran: not green');
+    assert.deepStrictEqual(none.skipped, []);
+
+    // Skipped checks: status skipped with the reason, never ok; an optional one leaves a verified service green,
+    // a required one is yellow, and a service whose every check was skipped is yellow.
+    const withSkips = createReadiness({ service: 'x', checks: [
+        { name: 'db', check: () => true },
+        { name: 'discord_bot', required: false, check: () => skip('not configured') },
+        { name: 'legacy', required: false, check: () => ({ skipped: true }) },
+    ] });
+    body = await withSkips.run();
+    assert.strictEqual(body.status, 'ready', 'optional skips do not turn a verified service yellow');
+    assert.deepStrictEqual(body.skipped, ['discord_bot', 'legacy']);
+    assert.deepStrictEqual(body.degraded, []);
+    assert.deepStrictEqual([body.checks.discord_bot.status, body.checks.discord_bot.reason], ['skipped', 'not configured']);
+    assert.strictEqual(body.checks.legacy.reason, 'not checked');
+    assert.ok(!('error' in body.checks.discord_bot));
+    const reqSkip = createReadiness({ service: 'x', checks: [
+        { name: 'db', check: () => true },
+        { name: 'storage', check: () => skip('bucket not configured', { bucket: null }) },
+    ] });
+    body = await reqSkip.run();
+    assert.strictEqual(body.ready, true, 'a skip is not a failure');
+    assert.strictEqual(body.status, 'degraded', 'a skipped required check is yellow');
+    assert.deepStrictEqual(body.degraded, ['storage']);
+    assert.deepStrictEqual(body.checks.storage.detail, { bucket: null });
+    body = await createReadiness({ service: 'x', checks: [{ name: 'a', required: false, check: () => skip('off') }] }).run();
+    assert.strictEqual(body.status, 'degraded', 'every check skipped: not green');
+    assert.deepStrictEqual(skip(), { skipped: 'not checked' });
 
     assert.strictEqual(safeReason(Object.assign(new Error('x'), { name: 'AbortError' })), 'timeout');
     assert.strictEqual(safeReason('bad token=abc123&x=1'), 'bad token=…&x=1');

@@ -72,6 +72,12 @@ A check fails when it throws, times out, returns `false`, a string (the reason) 
 `{ ok: false, error }`. Name a dependency required only when the service really cannot serve
 without it.
 
+A check that verified nothing (its feature is not configured, its dependency is switched off)
+returns `skip('not configured')` (`require('openvibe-shared/ready').skip`, or `{ skipped: reason }`),
+never `true`: it reports status `skipped` with the reason and is listed in `skipped`. No fake green
+(roadmap WS-Q task 7): a skipped required check makes the service `degraded`, and a service is
+`ready` only when at least one check really passed.
+
 ### Configuration (server, WS-C task 7)
 
 `openvibe-shared/config` keeps one namespace of a service's configuration as immutable revisions
