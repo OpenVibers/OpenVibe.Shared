@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.27.0 — 2026-09-28
+
+**`openvibe-shared/express-async`: an async handler's rejection no longer ends the process.** Express 4 ignores what a handler returns, so a promise that an `async (req, res) => …` handler rejects (a database error, a thrown problem) became an unhandled rejection, and Node 22 exits on one. The move to PostgreSQL (ADR-035) made most handlers async; nine services had between 5 and 41 such routes. `routeAsyncErrors(app)` patches the app's own Express 4 `Layer` once, so the rejection goes to `next(err)` and the service's error handler answers, exactly as a synchronous throw always did. Error handlers get the same treatment. On Express 5, which handles promises itself, it does nothing. **`instrument()` calls it**, and every service calls `instrument()`, so a pin bump is the whole change. `test/express-async.test.js`.
+
 ## 1.26.0 — 2026-09-28
 
 **Async gauges** (ADR-035: services on PostgreSQL read their counts asynchronously). A gauge's `collect()` may return a promise. The `/metrics` handler (`metricsHandler`, and the `instrument()` middleware that uses it) now calls the new `registry.metricsAsync({ timeoutMs = 2000 })`. It awaits every async collect together. A collect that rejects or runs past its budget is left out of that scrape and is never reported stale, just as a throwing one already was. The synchronous `registry.metrics()` is unchanged, and it leaves an async gauge out. The handler is now an async function; Express and plain `http` callers need no change. `test/metrics.test.js` covers async, rejecting and slow collects. This replaces the "one scrape behind" workaround the first PostgreSQL services used.

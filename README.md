@@ -59,6 +59,8 @@ const m = require('openvibe-shared/metrics').instrument(app, { service: 'communi
 m.registry.gauge({ name: 'jobs', help: 'Jobs by state', labelNames: ['state'], collect: () => rows });
 // collect may be async (a database read): /metrics awaits it, up to 2 s, and leaves out one that fails.
 m.registry.gauge({ name: 'docs', help: 'Documents', collect: async () => (await db.one(sql`SELECT count(*)::int AS n FROM docs`)).n });
+// instrument() also routes an async handler's rejection to next(err) (openvibe-shared/express-async): Express 4
+// would leave it unhandled, and Node 22 ends the process on an unhandled rejection.
 
 const ready = require('openvibe-shared/ready').createReadiness({
     service: 'community', release: release.release,

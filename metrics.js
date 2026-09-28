@@ -381,6 +381,8 @@ function instrument(app, { service, release, path = '/metrics', normalize = null
     releaseInfo(registry, { service, release });
     app.use(http.middleware);
     app.get(path, metricsHandler(registry));
+    // Every service instruments its app: an async handler's rejection reaches next(err) instead of ending the process.
+    require('./express-async').routeAsyncErrors(app);
     return { registry, http, stop: proc.stop };
 }
 
