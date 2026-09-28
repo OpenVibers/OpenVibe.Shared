@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.25.0 — 2026-09-28
+
+**`openvibe-shared/test-runner`: no fake green in `npm test`** (roadmap WS-Q task 7). Every service carried its own copy of `test/run.js`, and each counted a test file that exited 0 as passed, including one that printed `…: skipped (no ffmpeg)` and checked nothing. The runner is now one module: `require('openvibe-shared/test-runner').main({ dir: __dirname, timeoutMs, pad, hide, env })` (`run()` returns the results for a caller that wants them).
+- Same behaviour as the copies: every `*.test.js` in `dir` in its own process, a few at a time, `NODE_ENV=test`, a timeout per file, name filters from the arguments, and the last 40 lines of a failed file (minus `hide` lines).
+- **Skips.** A test prints `<label>: skipped (<why>)` for each thing it could not run (the convention OpenVibe.Host's acceptance runner already reads). Such a file is listed with ○ and its reasons, and is not counted as passed: the summary reads `148/150 test files passed, 2 skipped (…)`, and only a run with nothing skipped says `N/N test files passed`. Skips alone exit 0; `--strict` (or `OV_TEST_STRICT=1`) makes them fail the run.
+- This package's `test/run.js` uses it; `test/test-runner.test.js` covers pass, skip, partial skip, failure, hidden lines, filters and strict.
+
 ## 1.24.0 — 2026-09-28
 
 **No fake green in readiness** (roadmap WS-Q task 7: "skipped counts as yellow; nothing may be marked green by being synthesised from skipped parts"). `ready.js` had only `ok` and `fail`, so a check whose feature was not configured had to claim `ok` (Network's Discord bot, Media's events outbox and News's source pull did) or fail and turn the service yellow for a setting.
