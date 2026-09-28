@@ -97,8 +97,10 @@ function createRegistry({ maxSeries = DEFAULT_MAX_SERIES } = {}) {
         return api;
     }
 
-    // collect(): a number (no labels) or [{ labels, value }] read at scrape time. A throwing collect
-    // leaves the gauge out of that scrape rather than reporting a stale or invented value.
+    // collect(): a number (no labels) or [{ labels, value }] read at scrape time, or a promise of one (a
+    // database read): the /metrics handler awaits it (up to 2 s). A throwing or rejecting collect leaves the
+    // gauge out of that scrape rather than reporting a stale or invented value; so does a promise seen by the
+    // synchronous registry.metrics().
     function gauge(opts) {
         const m = base('gauge', opts);
         const collect = typeof opts.collect === 'function' ? opts.collect : null;
@@ -118,11 +120,14 @@ function createRegistry({ maxSeries = DEFAULT_MAX_SERIES } = {}) {
             },
             get: (labels) => (m.series.get(labelsKey(m.labelNames, labels)) || { value: undefined }).value,
             reset: () => m.series.clear(),
-            render() {
+            /** Collect now; → the value, or a promise of it for an async collect. */
+            collect: collect ? () => collect() : null,
+            render(given) {
                 if (collect) {
-                    let got;
-                    try { got = collect(); } catch { return []; }
+                    let got = given;
+                    if (given === undefined) { try { got = collect(); } catch { return []; } }
                     if (got === undefined || got === null) return [];
+                    if (typeof got.then === 'function') { got.then(() => {}, () => {}); return []; }
                     m.series.clear();
                     if (typeof got === 'number') api.set({}, got);
                     else for (const row of got) api.set(row.labels || {}, row.value);
@@ -190,11 +195,34 @@ function createRegistry({ maxSeries = DEFAULT_MAX_SERIES } = {}) {
         return lines.join('\n') + '\n';
     }
 
+    /** The same text, after awaiting every async collect (together, each within timeoutMs). */
+    async function metricsTextAsync({ timeoutMs = 2000 } = {}) {
+        for (const f of beforeScrape) { try { f(); } catch { /* a sampler never breaks the scrape */ } }
+        const list = [...metrics.values()];
+        const values = await Promise.all(list.map(async (m) => {
+            if (!m.collect) return undefined;
+            let timer;
+            try {
+                const got = m.collect();
+                if (!got || typeof got.then !== 'function') return { got };
+                return { got: await Promise.race([got, new Promise((_, no) => { timer = setTimeout(() => no(new Error('timeout')), timeoutMs); })]) };
+            } catch { return { failed: true }; } finally { clearTimeout(timer); }
+        }));
+        const lines = [];
+        list.forEach((m, i) => {
+            const v = values[i];
+            if (v && v.failed) return;
+            lines.push(...m.render(v ? (v.got === undefined ? null : v.got) : undefined));
+        });
+        return lines.join('\n') + '\n';
+    }
+
     return {
         counter, gauge, histogram,
         getMetric: (name) => metrics.get(name) || null,
         onScrape: (f) => { beforeScrape.push(f); },
         metrics: metricsText,
+        metricsAsync: metricsTextAsync,
         contentType: 'text/plain; version=0.0.4; charset=utf-8',
     };
 }
@@ -323,14 +351,14 @@ function isLoopbackDirect(req) {
 }
 
 function metricsHandler(registry) {
-    return (req, res) => {
+    return async (req, res) => {
         if (!isLoopbackDirect(req)) {
             res.statusCode = 404;
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             return res.end('{"error":"Not found"}');
         }
         let body;
-        try { body = registry.metrics(); } catch (err) {
+        try { body = registry.metricsAsync ? await registry.metricsAsync() : registry.metrics(); } catch (err) {
             res.statusCode = 500;
             res.setHeader('Content-Type', 'text/plain; charset=utf-8');
             return res.end(`# metrics failed: ${String(err && err.message).slice(0, 200)}\n`);

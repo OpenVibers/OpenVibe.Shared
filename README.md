@@ -57,6 +57,8 @@ const m = require('openvibe-shared/metrics').instrument(app, { service: 'communi
 // before any route: HTTP golden signals by route template, process metrics, release_info,
 // and GET /metrics for direct loopback callers only (404 through a proxy)
 m.registry.gauge({ name: 'jobs', help: 'Jobs by state', labelNames: ['state'], collect: () => rows });
+// collect may be async (a database read): /metrics awaits it, up to 2 s, and leaves out one that fails.
+m.registry.gauge({ name: 'docs', help: 'Documents', collect: async () => (await db.one(sql`SELECT count(*)::int AS n FROM docs`)).n });
 
 const ready = require('openvibe-shared/ready').createReadiness({
     service: 'community', release: release.release,

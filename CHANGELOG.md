@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.26.0 — 2026-09-28
+
+**Async gauges** (ADR-035: services on PostgreSQL read their counts asynchronously). A gauge's `collect()` may return a promise. The `/metrics` handler (`metricsHandler`, and the `instrument()` middleware that uses it) now calls the new `registry.metricsAsync({ timeoutMs = 2000 })`. It awaits every async collect together. A collect that rejects or runs past its budget is left out of that scrape and is never reported stale, just as a throwing one already was. The synchronous `registry.metrics()` is unchanged, and it leaves an async gauge out. The handler is now an async function; Express and plain `http` callers need no change. `test/metrics.test.js` covers async, rejecting and slow collects. This replaces the "one scrape behind" workaround the first PostgreSQL services used.
+
 ## 1.25.0 — 2026-09-28
 
 **`openvibe-shared/test-runner`: no fake green in `npm test`** (roadmap WS-Q task 7). Every service carried its own copy of `test/run.js`, and each counted a test file that exited 0 as passed, including one that printed `…: skipped (no ffmpeg)` and checked nothing. The runner is now one module: `require('openvibe-shared/test-runner').main({ dir: __dirname, timeoutMs, pad, hide, env })` (`run()` returns the results for a caller that wants them).

@@ -130,8 +130,24 @@ const metrics = require('../metrics');
     const fakeRes = () => { const o = { headers: {}, statusCode: 0, body: '' }; o.setHeader = (k, v) => { o.headers[k] = v; }; o.end = (b) => { o.body = b; }; return o; };
     let res = fakeRes(); handler(req('192.0.2.1'), res);
     assert.strictEqual(res.statusCode, 404);
-    res = fakeRes(); handler(req('127.0.0.1'), res);
+    res = fakeRes(); await handler(req('127.0.0.1'), res);
     assert.strictEqual(res.statusCode, 200);
     assert.ok(res.body.includes('release_info{service="s",release="r"} 1'));
+
+    // Async collect (a database read): the handler awaits it; the synchronous metrics() leaves it out; a rejecting
+    // or slow one is left out of that scrape, never reported stale.
+    reg.gauge({ name: 'db_rows', help: 'Rows', labelNames: ['table'], collect: async () => [{ labels: { table: 'docs' }, value: 42 }] });
+    reg.gauge({ name: 'db_scalar', help: 'Scalar', collect: () => Promise.resolve(7) });
+    reg.gauge({ name: 'db_broken', help: 'Broken', collect: async () => { throw new Error('down'); } });
+    reg.gauge({ name: 'db_slow', help: 'Slow', collect: () => new Promise((r) => setTimeout(() => r(1), 200)) });
+    assert.ok(!reg.metrics().includes('db_rows{'), 'the synchronous text leaves an async gauge out');
+    res = fakeRes(); await handler(req('127.0.0.1'), res);
+    assert.ok(res.body.includes('db_rows{table="docs"} 42\n'), res.body);
+    assert.ok(res.body.includes('db_scalar 7\n'));
+    assert.ok(!res.body.includes('db_broken'));
+    assert.ok(res.body.includes('db_slow 1\n'), 'within the 2 s budget');
+    const fast = await reg.metricsAsync({ timeoutMs: 20 });
+    assert.ok(!fast.includes('db_slow'), 'past its budget: left out');
+    assert.ok(fast.includes('db_rows{table="docs"} 42\n'));
     console.log('metrics: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });
