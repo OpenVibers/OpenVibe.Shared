@@ -5,7 +5,7 @@
 useDefault = true
 
 [[allowlists]]
-description = "Made-up secrets in the configuration model's tests (test/config.test.js): they exist to prove secrets are redacted, never logged and never served"
+description = "Made-up secrets in the configuration model's tests (test/config.test.js and its PostgreSQL twin test/config-pg.test.js): they exist to prove secrets are redacted, never logged and never served"
 condition = "AND"
-paths = ['''^test/config\.test\.js$''']
+paths = ['''^test/config(-pg)?\.test\.js$''']
 regexes = ['''^(sk_live_TOPSECRET_9f8e7d6c5b4a|re_abcdef123456)$''']

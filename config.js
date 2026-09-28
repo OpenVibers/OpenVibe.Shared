@@ -281,6 +281,8 @@ function fromRows(rows, { prefix = '', type = null } = {}) {
 // ── The store ───────────────────────────────────────────────────
 
 function createConfigStore(opts = {}) {
+    // On an openvibe-sdk/db handle (PostgreSQL, ADR-035): config-pg.js, which returns a promise of the store.
+    if (opts.db && typeof opts.db.tx === 'function') return require('./config-pg').createPgConfigStore(opts);
     const { db, service, namespace, schema = null, validate = null, classify = null, onActivate = null } = opts;
     if (!db || typeof db.prepare !== 'function' || typeof db.transaction !== 'function') throw new TypeError('createConfigStore: db must be a better-sqlite3 handle');
     if (!SERVICE_RE.test(String(service || ''))) throw new TypeError('createConfigStore: service must be a service id (live, media, …)');
@@ -766,20 +768,20 @@ function adminRoutes(stores, o = {}) {
     const handlers = {
         async list(req, res) {
             const namespaces = [];
-            for (const s of list) if (await allowed(req, { action: 'read', namespace: s.namespace, keys: [] })) namespaces.push(s.summary());
+            for (const s of list) if (await allowed(req, { action: 'read', namespace: s.namespace, keys: [] })) namespaces.push(await s.summary());
             send(res, 200, { namespaces });
         },
         async get(req, res) {
             const s = storeFor(req);
             if (!(await allowed(req, { action: 'read', namespace: s.namespace, keys: [] }))) throw new ConfigError('config.forbidden', 'not allowed to read this namespace', { status: 403 });
-            send(res, 200, s.summary());
+            send(res, 200, await s.summary());
         },
         async history(req, res) {
             const s = storeFor(req);
             if (!(await allowed(req, { action: 'read', namespace: s.namespace, keys: [] }))) throw new ConfigError('config.forbidden', 'not allowed to read this namespace', { status: 403 });
             const query = queryOf(req);
             const limit = Math.min(200, Math.max(1, parseInt(query.limit, 10) || 20));
-            const snapshots = s.history({ limit, before: query.before != null && query.before !== '' ? parseInt(query.before, 10) : null });
+            const snapshots = await s.history({ limit, before: query.before != null && query.before !== '' ? parseInt(query.before, 10) : null });
             send(res, 200, { namespace: s.namespace, snapshots, next_before: snapshots.length === limit ? snapshots[snapshots.length - 1].revision : null });
         },
         async apply(req, res) {
@@ -790,7 +792,7 @@ function adminRoutes(stores, o = {}) {
             const actor = await actorOf(req);
             if (!subjectRef(actor)) throw new ConfigError('config.actor_required', 'the request does not name the acting subject', { status: 403 });
             const opts = { merge: body.merge === true, unset: body.unset || [], actor, reason: body.reason };
-            const keys = s.changes(body.values, opts);
+            const keys = await s.changes(body.values, opts);
             if (!(await allowed(req, { action: 'write', namespace: s.namespace, keys }))) throw new ConfigError('config.forbidden', 'not allowed to change these keys', { status: 403 });
             send(res, 200, await s.apply(body.values, opts));
         },
@@ -801,7 +803,7 @@ function adminRoutes(stores, o = {}) {
             if (body.to != null && !Number.isInteger(body.to)) throw new ConfigError('config.bad_request', 'to must be a revision number', { status: 400 });
             const actor = await actorOf(req);
             if (!subjectRef(actor)) throw new ConfigError('config.actor_required', 'the request does not name the acting subject', { status: 403 });
-            const keys = s.changes(null, { revision: s.rollbackTarget(body.to) });
+            const keys = await s.changes(null, { revision: await s.rollbackTarget(body.to) });
             if (!(await allowed(req, { action: 'write', namespace: s.namespace, keys }))) throw new ConfigError('config.forbidden', 'not allowed to change these keys', { status: 403 });
             send(res, 200, await s.rollback({ to: body.to, reason: body.reason, actor }));
         },
@@ -863,4 +865,6 @@ function adminRoutes(stores, o = {}) {
     return { ...out, routes, mount, handle };
 }
 
-module.exports = { createConfigStore, adminRoutes, fromRows, canonical, ConfigError, problem };
+module.exports = { createConfigStore, adminRoutes, fromRows, canonical, ConfigError, problem, configSchema: (...a) => require('./config-pg').configSchema(...a) };
+// The helpers the PostgreSQL store (config-pg.js) shares with this one.
+module.exports._internal = { CLASSES, SERVICE_RE, NAMESPACE_RE, validKey, REASON_MAX, ERROR_MAX, ConfigError, canonical, sha256, isPlainObject, pointer, clone, same, has, deepFreeze, jsonErrors, isMarker, looksRedacted, sameHex, compileSchema, checkSchema, validateResult, subjectRef, scrub, errText, summarize, makeLog, fromRows };

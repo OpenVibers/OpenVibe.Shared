@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "1.27.0",
+  "version": "1.28.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "exports": {
@@ -21,6 +21,7 @@
     "./builtin-themes": "./builtin-themes.js",
     "./chrome-ssr": "./chrome-ssr.js",
     "./config": "./config.js",
+    "./config-pg": "./config-pg.js",
     "./egress": "./egress.js",
     "./files": "./files.js",
     "./footer": "./footer.js",
@@ -85,9 +86,11 @@
     "jsonwebtoken": "^9.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "better-sqlite3": "^11.10.0",
     "express": "^4.22.3",
     "linkedom": "^0.18.13",
-    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.61.0"
+    "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.61.0",
+    "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.20.4"
   }
 }

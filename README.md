@@ -89,6 +89,8 @@ never `true`: it reports status `skipped` with the reason and is listed in `skip
 better-sqlite3 handle. Several namespaces share one database (tables `config_snapshots` and
 `config_keys`).
 
+On PostgreSQL (an openvibe-sdk/db handle, ADR-035) `createConfigStore` returns a promise of the store (`config-pg.js`): `const tiering = await config.createConfigStore({ db, … })`. Its reading and writing methods are async, while `get()` and `revision()` stay in memory. The service's migrations create the tables from `config.configSchema()`.
+
 ```js
 const config = require('openvibe-shared/config');
 const settings = config.createConfigStore({

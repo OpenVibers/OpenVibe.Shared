@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.28.0 — 2026-09-28
+
+**`openvibe-shared/config` on PostgreSQL** (ADR-035: Media, Network and Live keep their configuration here). Given an openvibe-sdk/db handle, `createConfigStore` uses the new `config-pg.js`, which is the same store on the async handle. Revisions are immutable, activation is atomic, the last-known-good revision is restored when `onActivate` fails, secret values are redacted with a per-namespace fingerprint key, legacy values are imported, and so on. On this path `createConfigStore` returns a promise of the store: it has read, restored or seeded its active revision when the promise resolves. `get()` and `revision()` stay in memory. The other methods are async. The tables come from the service's migrations: `configSchema()` is their DDL, the SQLite schema converted. `adminRoutes` awaits either kind of store. The better-sqlite3 path is unchanged. `test/config-pg.test.js` runs every scenario of `test/config.test.js` on PGlite (openvibe-sdk v0.20.4, which returns `bytea` as a Buffer, is a dev dependency).
+
 ## 1.27.0 — 2026-09-28
 
 **`openvibe-shared/express-async`: an async handler's rejection no longer ends the process.** Express 4 ignores what a handler returns, so a promise that an `async (req, res) => …` handler rejects (a database error, a thrown problem) became an unhandled rejection, and Node 22 exits on one. The move to PostgreSQL (ADR-035) made most handlers async; nine services had between 5 and 41 such routes. `routeAsyncErrors(app)` patches the app's own Express 4 `Layer` once, so the rejection goes to `next(err)` and the service's error handler answers, exactly as a synchronous throw always did. Error handlers get the same treatment. On Express 5, which handles promises itself, it does nothing. **`instrument()` calls it**, and every service calls `instrument()`, so a pin bump is the whole change. `test/express-async.test.js`.
