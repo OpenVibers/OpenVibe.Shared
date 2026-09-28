@@ -2,14 +2,10 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha. The `openvibe-shared` package lives here; the latest tag is v1.4.0, and 1.5.0 (Track R:
-release manifests, in-place updates in open tabs, update metrics, the mixed-version harness) is on
-`main`, untagged. Every deployed consumer installs a tagged release and none keeps a
-vendored copy ([docs/migration-plan.md](docs/migration-plan.md) is done): v1.3.0 in Network, Live,
-Media, Community, Tools, Events, Codes, Wiki, Blog, News, Reviews, Deals, Coupons, Trade, VIP and
-Host; v1.2.1 in Tips and OpenRe.Stream; v1.0.0 in Sites. CI failed on the v1.3.0 tag (`1173562`,
-a race in the event-loop-lag p99 test, not in the package); `f81e54b` on `main` fixes the test and
-is green, untagged.
+**Status:** alpha, v1.23.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+consumer installs a tagged release and none keeps a vendored copy
+([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
+the tag it pins.
 **Plan:** OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026), §3.3 and §16.6.
 **License:** MIT, as the package has always been: it is a client library other sites and developers embed (the OpenVibe services themselves are AGPL-3.0).
 
@@ -431,35 +427,71 @@ rt.boot({ initial: ['player'] });     // adopt the server's tags, load these, pr
 
 It is 6.1 KB brotli (budget 6.5 KB). Serve it beside the other browser files and load it before the site's own loader. `test/web-runtime.test.js` (linkedom) and `test/web-runtime-chrome.test.js` (headless Chrome: real 404s, ordering, scopes) cover it.
 
-## Charter
+## Purpose
 
 The canonical home of what was `OpenVibe.Network/packages/openvibe-shared` (navbar, footer,
-themes, icons, legal pages, SEO helpers, notifications UI, panels). It is published as
-immutable versioned artifacts with a CDN-compatible mirror, instead of being vendored or
-rsynced from Network.
+themes, icons, legal pages, SEO helpers, notifications UI, panels): the OpenVibe Frame and the
+server helpers every site uses, published as immutable versioned artifacts instead of being
+vendored or rsynced from Network.
 
-**Owns**
-- `@openvibe/tokens|ui|frame|auth-ui|seo|legal|icons|release-client|web-runtime|server-web|testing-web`
-  (today still one package, `openvibe-shared`)
-- design tokens and theme rendering
-- release manifest client (active-tab update coordinator)
+## Owns
 
-**Does not own**
+- the `openvibe-shared` package (one package with subpath exports; the charter's
+  `@openvibe/tokens|ui|frame|auth-ui|seo|legal|icons|release-client|web-runtime|server-web|testing-web`
+  split was decided against in [docs/adr/0001-one-package-subpath-exports.md](docs/adr/0001-one-package-subpath-exports.md))
+- design tokens and theme rendering, the navbar, footer and panels of the OpenVibe Frame
+- the release manifest client (active-tab update coordinator) and the web runtime (feature loader)
+- server helpers: readiness, metrics, trace, egress, config, analytics, legal, SEO
+
+## Does not own
+
 - theme *authority* (OpenVibe.Network owns the theme API and preferences)
-- identity
+- identity, notifications and the changelog (OpenVibe.Network, OpenVibe.Blog); the browser files
+  only display them
+- any service's data: it has none (artifact repository)
 
-**Planned surfaces**
-- a vanilla-JS-compatible build (no framework rewrite required)
-- pinned versions, selective entry points and content-addressed browser assets
-- local/mirrored serving, so a Network outage doesn't blank every page
+## Depends on
 
-**Data:** none (artifact repository). **Capabilities and events:** package APIs only; release
-manifest notifications (client side). **Depends on:** OpenVibe.Contracts (release manifest
-contract).
+- `jsonwebtoken` (the only runtime dependency, for `auth-client`)
+- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.61.0 is a devDependency
+  the tests validate against)
+- in the browser, at run time: OpenVibe.Network (sessions, notifications and realtime tickets, the
+  changelog feed) and OpenVibe.Events (the realtime stream for the notification bell)
 
-**Acceptance (must be true before "done")**
-- Live, Community, Media, Tools and Sites consume pinned versions with no manual copies
-- old `openvibe.network/shared/*` URLs keep serving version-pinned mirrors during migration
+## Capabilities
+
+None: Shared implements no capability and holds no grant. Browser files call Network and Events as the
+signed-in person (their session cookie or a Network realtime ticket), and server modules call whatever
+their consumer configures with the consumer's own credentials.
+
+## Acceptance
+
+`npm test` runs every `test/*.test.js` (plain Node with stubbed browser globals; the `*-chrome` tests
+need Chrome). What the release-guarding tests prove is listed under [Development](#development): size
+budgets, releases and the mixed-version matrix, built-in icons, generated blocks, browser bundles free of
+Node code, every export resolving, analytics privacy. The charter's two acceptance points hold: Live,
+Community, Media, Tools and Sites consume pinned versions with no manual copies, and
+`openvibe.network/shared/*` keeps serving version-pinned files.
+
+## Security
+
+Reporting a vulnerability: [SECURITY.md](SECURITY.md). Shared's code runs on every site, so:
+
+- browser files carry no secrets and no Node code (`test/browser-bundles.test.js`);
+- `egress` gives services SSRF-safe addresses and connect-time DNS checks for user-chosen hosts
+  (`test/egress.test.js`); `trace` forwards the W3C trace only to loopback and OpenVibe hosts;
+- analytics stores no personal data and honours opt-out (`test/analytics-privacy.test.js`);
+- `/metrics` from `openvibe-shared/metrics` answers direct loopback callers only;
+- tags are immutable, so a consumer's lockfile integrity hash always names the same code.
+
+## Deploy
+
+Nothing runs from this repository. A release is a git tag ([Releasing](#releasing)). OpenVibe.Network
+serves `https://openvibe.network/shared/*` from the tag it pins, so a Network deploy
+(`sudo ovhost deploy network`) publishes a release to every site that loads the Frame from there. A site
+can instead serve its own pinned copy (`openvibe-shared/serve`); either way each consumer pins a tag and
+ships it with its own deploy.
+A bad release is undone by pinning the previous tag; a released tag is never moved.
 
 ---
 

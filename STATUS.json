@@ -6,5 +6,17 @@
   "package": "openvibe-shared",
   "version": "1.23.1",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
-  "updated": "2026-09-27"
+  "deployed": false,
+  "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
+  "contracts": "openvibe-contracts v0.61.0 (devDependency: the release manifest contract)",
+  "features": [
+    "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
+    "themes, design tokens and icons",
+    "release manifest, in-place updates in open tabs and update metrics",
+    "web runtime (feature loader)",
+    "shipped pill, recent list and /updates log",
+    "server helpers: ready, metrics, trace, egress, config, analytics, legal, SEO, frame SSR",
+    "browser harness and perf budgets for tests"
+  ],
+  "updated": "2026-09-28"
 }
