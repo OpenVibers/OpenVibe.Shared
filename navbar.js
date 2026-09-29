@@ -1496,10 +1496,24 @@
         return nav;
     }
 
+    // openvibe-shared/boost swapped the page in place: this is a new page for the history and the
+    // active-link state, and a login from here returns here.
+    let _boostHooked = false;
+    function hookBoost() {
+        if (_boostHooked || typeof document === 'undefined') return;
+        _boostHooked = true;
+        document.addEventListener('ov:boost:load', () => {
+            if (_config.history) _config.history = Object.assign({}, _config.history, { title: document.title, url: location.href });
+            try { render(); } catch { /* keep the old bar */ }
+            if (_config.user) recordHistory();
+        });
+    }
+
     const OpenVibeNavbar = {
         init(opts = {}) {
             Object.assign(_config, opts);
             injectStyles();
+            hookBoost();
             const el = render();
             upgradeIconsWhenFontsReady();
             if (typeof document !== 'undefined') setTimeout(loadReleaseWatch, 4000);

@@ -4,8 +4,7 @@
  *
  *   <meta name="ov-boost" content="<site>@<release>">     on every page that may be swapped (the server's release id)
  *   <main id="main">…</main>                              the part that changes
- *   <script src="/shared/boost.js" defer></script>
- *   <script>addEventListener('DOMContentLoaded', () => OVBoost.start({ main: '#main' }))</script>
+ *   <script src="/shared/boost.js" data-main="#main" defer></script>    starts itself (or call OVBoost.start below)
  *
  * A click on a same-site link (no modifier key, no target, no download, not data-no-boost, not /auth/ or /api/) fetches
  * the next page's HTML (already prefetched on hover, focus or touch), loads its new stylesheets first, swaps <main> with
@@ -22,6 +21,7 @@
     'use strict';
     if (typeof document === 'undefined' || root.OVBoost) return;
     const selfSrc = document.currentScript && document.currentScript.src;
+    const selfData = (document.currentScript && document.currentScript.dataset) || {};
     const HEAD_TAGS = 'meta[name="description"],link[rel="canonical"],meta[property^="og:"],meta[name^="twitter:"],script[type="application/ld+json"],link[rel="alternate"][hreflang],meta[name="robots"]';
     const FILE_EXT = /\.(?:pdf|zip|gz|tgz|png|jpe?g|gif|webp|avif|svg|mp4|webm|mp3|wav|ogg|json|xml|txt|csv|ics)$/i;
 
@@ -97,6 +97,7 @@
             doc.head.querySelectorAll(HEAD_TAGS).forEach((el) => document.head.appendChild(document.importNode(el, true)));
             const lang = doc.documentElement.getAttribute('lang');
             if (lang) document.documentElement.setAttribute('lang', lang);
+            if (doc.body) document.body.className = doc.body.className;   // page-type classes
         }
 
         function runInlineScripts(scope) {
@@ -209,5 +210,14 @@
         };
     }
 
-    root.OVBoost = { start };
+    root.OVBoost = { start, controller: null };
+    // <script src=".../boost.js" data-main="#main" [data-prefix] [data-exclude="/a/,/b/"] defer>: start once the page is parsed.
+    if (selfData.main) {
+        const boot = () => {
+            if (root.OVBoost.controller) return;
+            root.OVBoost.controller = start({ main: selfData.main, prefix: selfData.prefix || 'ov', exclude: (selfData.exclude || '').split(',').map((x) => x.trim()).filter(Boolean) });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+        else boot();
+    }
 })(typeof window !== 'undefined' ? window : globalThis);

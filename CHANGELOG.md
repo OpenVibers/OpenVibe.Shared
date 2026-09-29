@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.2.0 — 2026-09-29
+
+Boost on real sites (plan T11):
+- `boost.js` starts itself from its script tag: `<script src="/shared/boost.js" data-main="#main" defer>` (optional
+  `data-prefix`, `data-exclude="/a/,/b/"`); the controller is `OVBoost.controller`. `OVBoost.start()` still works.
+- A swap also carries the new page's `<body>` class (page-type classes).
+- `navbar.js` follows boost: on `ov:boost:load` the bar re-renders (active links, a sign-in that returns to the new
+  page) and records the new page in the signed-in person's history.
+
 ## 2.1.0 — 2026-09-29
 
 Three new modules for plan T11, plus `serve.js` now taking its cache headers from the shared policy (its own headers are
