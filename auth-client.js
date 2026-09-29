@@ -116,49 +116,6 @@ class OpenVibeAuthClient {
             return null;
         }
     }
-
-    /**
-     * Verify a token via the internal API (server-to-server).
-     * Useful as a fallback or for getting fresh user data.
-     * @param {string} token
-     * @param {string} internalKey - X-Internal-Key header value
-     * @returns {Promise<Object|null>}
-     */
-    async verifyTokenInternal(token, internalKey) {
-        try {
-            const res = await fetch(`${this.internalBase}/internal/verify-token`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Internal-Key': internalKey,
-                },
-                body: JSON.stringify({ token }),
-            });
-            if (!res.ok) return null;
-            return res.json();
-        } catch {
-            return null;
-        }
-    }
-
-    /**
-     * Get fresh user profile data via internal API.
-     * @param {number} userId
-     * @param {string} internalKey
-     * @returns {Promise<Object|null>}
-     */
-    async getUserProfile(userId, internalKey) {
-        try {
-            const res = await fetch(`${this.internalBase}/internal/user/${userId}/sync`, {
-                method: 'POST',
-                headers: { 'X-Internal-Key': internalKey },
-            });
-            if (!res.ok) return null;
-            return res.json();
-        } catch {
-            return null;
-        }
-    }
 }
 
 module.exports = { OpenVibeAuthClient };

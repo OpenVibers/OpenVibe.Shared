@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.0.0 — 2026-09-29
+
+**X-Internal-Key is gone from the shared package** (plan T2: every internal call in the estate uses a service token).
+Breaking, and nothing in the estate used any of it:
+- `internalApiAuth` (the `middleware` export and the index re-export) is removed.
+- `OpenVibeAuthClient#verifyTokenInternal` (Network's `/internal/verify-token`, deleted) and `#getUserProfile` (a route
+  Network never had) are removed; the rest of the client is unchanged.
+- The deprecated `openvibe-shared/chrome-ssr` alias is removed: use `openvibe-shared/frame`.
+
 ## 1.30.1 — 2026-09-28
 
 Page moves, measured on Live with a 400 ms network: the bar runs from the click, "Loading Content…" appears at 150 ms and follows the phase ("starting up"), the styled page fades in, and nothing shows unstyled in between. Fixes to 1.30.0: the first move after a server-rendered page is animated (the "first page" is the first `enter()` before any route change, route generation ≤ 1, not simply the first call); `route-transition.js` is fetched a few seconds after load, so it is ready for the first click; the loading line sits over the page's visible area but outside the section (a page script that re-renders its section while loading can no longer take it away); the file is requested by path, so the site's versions map hashes it.

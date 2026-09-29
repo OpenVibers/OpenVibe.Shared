@@ -69,26 +69,8 @@ function optionalOpenVibeAuth(authClient) {
     };
 }
 
-/**
- * Internal API authentication middleware.
- * Verifies X-Internal-Key header for server-to-server calls.
- *
- * @param {string} internalKey - Expected key value
- * @returns {Function} Express middleware
- */
-function internalApiAuth(internalKey) {
-    return (req, res, next) => {
-        const provided = req.headers['x-internal-key'];
-        if (!provided || provided !== internalKey) {
-            return res.status(403).json({ error: 'Forbidden' });
-        }
-        next();
-    };
-}
-
 module.exports = {
     extractToken,
     requireOpenVibeAuth,
     optionalOpenVibeAuth,
-    internalApiAuth,
 };

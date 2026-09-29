@@ -1,6 +1,6 @@
 'use strict';
 // openvibe-shared/frame — the OpenVibe Frame (the navbar, footer and "shipped" views every OpenVibe site sits
-// in): the parts that can be baked into HTML on the server. (Formerly openvibe-shared/chrome-ssr, still an alias.)
+// in): the parts that can be baked into HTML on the server. (Formerly openvibe-shared/chrome-ssr; the alias was removed in 2.0.0.)
 //   footer(cfg)        the full shared footer (HTML + CSS); the browser's footer.js renders into the same element
 //   noscriptNav(site)  a plain navigation bar inside <noscript>: the JavaScript navbar cannot exist without
 //                      scripts, so visitors who block them (and text browsers) still get the brand and the network

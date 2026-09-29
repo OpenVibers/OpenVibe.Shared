@@ -18,11 +18,11 @@ for (const [sub, target] of Object.entries(pkg.exports)) {
     assert.strictEqual(require.resolve(sub === '.' ? pkg.name : `${pkg.name}/${sub.slice(2)}`), path.join(ROOT, target), `${sub} resolves`);
 }
 // Subpaths in use across Network, Live, Media, Tools, Community and Sites (2026-09-22).
-for (const sub of ['analytics', 'app-icon', 'auth-client', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'theme-sync', 'url-resolver', 'package.json', 'navbar', 'files']) {
+for (const sub of ['analytics', 'app-icon', 'auth-client', 'brand', 'footer', 'icons', 'legal', 'notifications', 'seo', 'theme-sync', 'url-resolver', 'package.json', 'navbar', 'files']) {
     assert.doesNotThrow(() => require.resolve(`openvibe-shared/${sub}`), `openvibe-shared/${sub}`);
 }
 // Server modules load in Node; the navbar module loads too (UMD, no DOM touched at require time).
-for (const sub of ['analytics', 'app-icon', 'brand', 'chrome-ssr', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons', 'metrics', 'ready', 'egress', 'trace', 'config', 'browser-harness']) require(`openvibe-shared/${sub}`);
+for (const sub of ['analytics', 'app-icon', 'brand', 'footer', 'icons', 'legal', 'notifications', 'seo', 'url-resolver', 'files', 'nav-icons', 'metrics', 'ready', 'egress', 'trace', 'config', 'browser-harness']) require(`openvibe-shared/${sub}`);
 // analytics is dependency-free: its parts require only Node built-ins and each other.
 for (const f of fs.readdirSync(path.join(ROOT, 'analytics'))) {
     const src = fs.readFileSync(path.join(ROOT, 'analytics', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
@@ -35,3 +35,12 @@ assert.strictEqual(typeof require('openvibe-shared/navbar').init, 'function');
 assert.ok(/^\d+\.\d+\.\d+$/.test(pkg.version), 'semver version');
 assert.ok(fs.readFileSync(path.join(ROOT, 'CHANGELOG.md'), 'utf8').includes(`## ${pkg.version}`), 'CHANGELOG has an entry for this version');
 console.log(`package: ${Object.keys(pkg.exports).length} exports resolve`);
+
+// 2.0.0: the X-Internal-Key helpers are gone (plan T2), and nothing exported names the key.
+{
+    const shared = require('..');
+    assert.strictEqual(shared.internalApiAuth, undefined, 'internalApiAuth is removed');
+    const { OpenVibeAuthClient } = require('../auth-client');
+    assert.strictEqual(OpenVibeAuthClient.prototype.verifyTokenInternal, undefined, 'verifyTokenInternal is removed');
+    assert.strictEqual(OpenVibeAuthClient.prototype.getUserProfile, undefined, 'getUserProfile is removed');
+}

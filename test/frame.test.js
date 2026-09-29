@@ -3,7 +3,7 @@
 // block for a home page and the body of a site's /updates page (shipped.js fills both).
 const assert = require('assert');
 const frame = require('../frame');
-assert.strictEqual(require('../chrome-ssr'), frame, 'the old name is an alias');
+assert.throws(() => require('../chrome-ssr'), /Cannot find module/, 'the chrome-ssr alias is gone (2.0.0)');
 
 const home = frame.shipped({ service: 'wiki', title: 'Recently shipped on OpenVibe.Wiki <x>' });
 assert.ok(home.includes('data-ov-shipped="latest" data-service="wiki" href="/updates"'));
