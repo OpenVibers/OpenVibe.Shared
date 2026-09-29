@@ -57,11 +57,11 @@ try {
 
     // A better-sqlite3 service: its db calls are synchronous, so db.run() never floats there (fetch still does).
     {
-        const src = ['async function handler() {', '  db.run("x");', '  fetch("u");', '}'].join('\n') + '\n';
+        const src = ['async function handler() {', '  db.run("x");', '  outbox.enqueue(e);', '  db.close();', '  fetch("u");', '}'].join('\n') + '\n';
         const sync = fixture({ 'package.json': JSON.stringify({ dependencies: { 'better-sqlite3': '^11' } }), 'server/s.js': src });
-        assert.deepStrictEqual(callees(scan(sync)), ['fetch'], 'db.run is synchronous with better-sqlite3');
+        assert.deepStrictEqual(callees(scan(sync)), ['fetch'], 'db.run, an outbox enqueue and db.close are synchronous with better-sqlite3');
         const pg = fixture({ 'package.json': JSON.stringify({ dependencies: { pg: '^8' } }), 'server/s.js': src });
-        assert.deepStrictEqual(callees(scan(pg)), ['db.run', 'fetch'], 'db.run is a promise without better-sqlite3');
+        assert.deepStrictEqual(callees(scan(pg)), ['db.close', 'db.run', 'fetch', 'outbox.enqueue'], 'all promises without better-sqlite3');
     }
 
     // Rule b: every known async API.

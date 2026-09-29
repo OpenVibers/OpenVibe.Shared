@@ -101,8 +101,8 @@ function ruleB(callee, args, { asyncDb = true } = {}) {
     if (asyncDb && (objName === 'db' || objName === 'tx') && DB_METHODS.has(prop)) return true;                     // db.run/get/all/exec/query, tx.run/get/all/exec
     if (objName === 'pool' && prop === 'query') return true;
     if (objName === 'client' && prop === 'query') return true;
-    if (prop === 'enqueue') return true;
-    if (prop === 'close' && CLOSE_OBJECTS.has(objName)) return true;                                     // .close() on db/pool/client/server/store
+    if (prop === 'enqueue' && asyncDb) return true;                                                      // an outbox on better-sqlite3 enqueues synchronously
+    if (prop === 'close' && CLOSE_OBJECTS.has(objName) && (asyncDb || objName !== 'db')) return true;  // better-sqlite3's db.close() is synchronous                                     // .close() on db/pool/client/server/store
     return false;
 }
 
