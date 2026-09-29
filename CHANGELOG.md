@@ -4,6 +4,10 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 1.29.2 — 2026-09-28
+
+**Navbar dropdowns open again.** A top link's dropdown (Live's "Go Live" → Dashboard) opened but was cut off: it hangs below the links row, which scrolls sideways (`overflow-x: auto`) and so clips anything below it. The menu is now fixed-positioned under its link whenever it can show (hover, keyboard focus, a tap), measured from the box a filtered or transformed bar makes for fixed children. The usage notes at the top of `navbar.js` moved to the README ("The navbar"), which keeps the file inside its 29 KB brotli budget (28.7 KB).
+
 ## 1.29.1 — 2026-09-28
 
 **Themes repaint the whole page and keep button text readable.** `applyVars` sets the canvas through the variables (`var(--bg-primary, value)`), so a page with its own theme switcher that sets `--bg-primary` later repaints the background too, instead of leaving the first theme's colour behind; `save()` applies the theme it saves, so every token, the canvas and the browser UI follow at once. A theme without its own `--on-accent` (custom colours, older server themes) gets one derived by WCAG relative luminance, near-black on bright accents (a lime green) and white on dark ones; `OpenVibeThemeLoader.onColor(hex)` is exported for pages that paint their own accent surfaces. **Navbar brand, compact:** the mark and the name sit 6px apart with 2px padding, the ".Live" part hugs the name, and the bar's side padding follows the viewport (`clamp(8px, 1.6vw, 16px)`), so narrow screens keep more room for links.

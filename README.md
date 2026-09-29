@@ -345,6 +345,36 @@ can't load, those icons fall back to `<i class="fa-solid …">`. Two options cha
   - A Content-Security-Policy refusal, a signed-out 401/403, or Network's `REALTIME_TICKETS=off` (503) stop the stream, and the bell polls.
 - **The site's CSP** needs `connect-src https://events.openvibe.network` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
 
+### The navbar (`navbar.js`)
+
+```text
+Consistent top bar across all services with logo, navigation,
+notification bell, account switcher, and theme-aware styling.
+Usage: OpenVibeNavbar.init({ service, token, user, apiBase })
+  Optional: loginUrl (override the Sign In href), sessionUrl (same-origin
+  endpoint returning { user } — asked when no usable ov_token exists, including
+  when a stored token turned out stale), logoutUrl (where Sign out goes, e.g. the
+  site's '/auth/logout?next={path}', so a server-side session ends too; {url} is
+  the full return URL, {path} its local path — loginUrl takes both too),
+  onLogin/onLogout callbacks. When no `user` is passed the navbar resolves
+  it itself: ov_token cookie → localStorage → token opt → sessionUrl, then
+  GET {apiBase}/api/auth/me with `Authorization: Bearer <token>`.
+Brand: derived from the hostname — `pastes.openvibe.tools` renders as
+  Pastes · OpenVibe · Tools (three segments, the subdomain first so the
+  context reads left-to-right), `openvibe.live` as OpenVibe · Live. Pass
+  brand: { sub, tld, name, icon, variant } to override any part, or the
+  legacy brandName/brandIcon. compact: 'auto' (default — the brand shortens
+  to the subdomain on narrow viewports), 'always', 'never'.
+Menus are modular: every site keeps the shared account menu and adds its own
+  pieces — links: [{label, href, icon?, active?}] replaces the service's top
+  links; menu: { before: [item], after: [item] } adds dropdown rows
+  ({label, href, icon, onClick, danger, external}); OpenVibeNavbar.addMenuItem()
+  / setLinks() do the same at runtime. Signed-in users also get a
+  "Recently used" row fed by the shared history module when it is loaded.
+```
+
+Dropdowns under a top link (`children`) are fixed-positioned under their link when they show (hover, keyboard focus, a tap), because the links row scrolls sideways and would clip them.
+
 ## Development
 
 ```bash

@@ -1,30 +1,4 @@
-// ═══════════════════════════════════════════════════════════════
-// OpenVibe — Universal Navbar
-// Consistent top bar across all services with logo, navigation,
-// notification bell, account switcher, and theme-aware styling.
-// Usage: OpenVibeNavbar.init({ service, token, user, apiBase })
-//   Optional: loginUrl (override the Sign In href), sessionUrl (same-origin
-//   endpoint returning { user } — asked when no usable ov_token exists, including
-//   when a stored token turned out stale), logoutUrl (where Sign out goes, e.g. the
-//   site's '/auth/logout?next={path}', so a server-side session ends too; {url} is
-//   the full return URL, {path} its local path — loginUrl takes both too),
-//   onLogin/onLogout callbacks. When no `user` is passed the navbar resolves
-//   it itself: ov_token cookie → localStorage → token opt → sessionUrl, then
-//   GET {apiBase}/api/auth/me with `Authorization: Bearer <token>`.
-//
-// Brand: derived from the hostname — `pastes.openvibe.tools` renders as
-//   Pastes · OpenVibe · Tools (three segments, the subdomain first so the
-//   context reads left-to-right), `openvibe.live` as OpenVibe · Live. Pass
-//   brand: { sub, tld, name, icon, variant } to override any part, or the
-//   legacy brandName/brandIcon. compact: 'auto' (default — the brand shortens
-//   to the subdomain on narrow viewports), 'always', 'never'.
-// Menus are modular: every site keeps the shared account menu and adds its own
-//   pieces — links: [{label, href, icon?, active?}] replaces the service's top
-//   links; menu: { before: [item], after: [item] } adds dropdown rows
-//   ({label, href, icon, onClick, danger, external}); OpenVibeNavbar.addMenuItem()
-//   / setLinks() do the same at runtime. Signed-in users also get a
-//   "Recently used" row fed by the shared history module when it is loaded.
-// ═══════════════════════════════════════════════════════════════
+// OpenVibe — the shared navbar (the OpenVibe Frame's top bar). Options and behaviour: README.md, "The navbar".
 
 (function (root) {
     'use strict';
@@ -96,7 +70,7 @@
             @keyframes ovnavPulse { 70% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
             .openvibe-navbar .ovnav-caret { font-size: 10px; opacity: .6; }
             .openvibe-navbar .ovnav-dd { position: relative; display: inline-flex; flex: none; }
-            .openvibe-navbar .ovnav-dd-menu { display: none; position: absolute; top: 100%; left: 0; min-width: 180px; padding: 5px; border-radius: 12px; z-index: 1002; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
+            .openvibe-navbar .ovnav-dd-menu { display: none; position: fixed; top: 56px; left: 0; min-width: 180px; padding: 5px; border-radius: 12px; z-index: 1002; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
             .openvibe-navbar .ovnav-dd:hover .ovnav-dd-menu, .openvibe-navbar .ovnav-dd.open .ovnav-dd-menu, .openvibe-navbar .ovnav-dd:focus-within .ovnav-dd-menu { display: flex; }
             .openvibe-navbar .ovnav-chip { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border-radius: 999px; font: 700 13px/1 inherit; color: var(--chip-c, var(--text-primary, #e6edf7)); background: color-mix(in srgb, var(--chip-c, var(--accent, #3b82f6)) 12%, transparent); border: 1px solid color-mix(in srgb, var(--chip-c, var(--accent, #3b82f6)) 38%, transparent); font-variant-numeric: tabular-nums; }
             .ovnav-chip[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chip[data-tone="green"] { --chip-c: #4ade80; } .ovnav-chip[hidden] { display: none !important; }
@@ -715,7 +689,7 @@
             const item = byId.get(a.getAttribute('data-link-id'));
             // A parent of a dropdown opens it on touch (there is no hover); a second tap follows the link.
             const dd = a.parentElement && a.parentElement.classList.contains('ovnav-dd') ? a.parentElement : null;
-            if (dd && matchMedia('(hover: none)').matches && !dd.classList.contains('open')) { e.preventDefault(); nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); dd.classList.add('open'); return; }
+            if (dd && matchMedia('(hover: none)').matches && !dd.classList.contains('open')) { e.preventDefault(); nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); dd.classList.add('open'); placeDd(dd); return; }
             if (item && typeof item.onClick === 'function') { const r = item.onClick(e); if (r === false) e.preventDefault(); closeDrawer(); if (e.defaultPrevented) return; }
             if (typeof _config.onNavigate === 'function' && a.target !== '_blank') {
                 let same = false; try { same = new URL(a.href, location.href).origin === location.origin; } catch { /* */ }
@@ -724,6 +698,16 @@
             closeDrawer();
         });
         document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('.ovnav-dd')) nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); });
+        // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
+        const placeDd = (dd) => {
+            const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
+            let cb = dd.parentElement, o = { top: 0, left: 0 };
+            for (; cb && cb !== document.body; cb = cb.parentElement) { const c = getComputedStyle(cb); if (c.transform + c.filter + (c.backdropFilter || 'none') !== 'nonenonenone') { o = cb.getBoundingClientRect(); break; } }
+            const r = dd.getBoundingClientRect();
+            m.style.top = `${r.bottom - o.top}px`; m.style.left = `${Math.max(8, Math.min(r.left, innerWidth - 188)) - o.left}px`;
+        };
+        const place = (e) => placeDd(e.target.closest && e.target.closest('.ovnav-dd'));
+        nav.addEventListener('pointerover', place); nav.addEventListener('focusin', place);
         if (burger && drawer) {
             burger.addEventListener('click', (e) => { e.stopPropagation(); const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); });
             document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); });
