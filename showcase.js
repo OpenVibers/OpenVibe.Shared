@@ -5,7 +5,8 @@
  * tokens, so every product's home reads as one family:
  *
  *   const sc = require('openvibe-shared/showcase');
- *   `<style>${sc.CSS}</style>` + sc.hero({ eyebrow, title, accent, lede, actions, note, aside })
+ *   `<link rel="stylesheet" href="${serve.url('showcase.css')}">` (cached; carries the ring icons' CSS too) or
+ *   `<style>${sc.CSS}</style>`, then sc.hero({ eyebrow, title, accent, lede, actions, note, aside })
  *     + sc.features({ id, title, lede, items: [{ icon, title, text, href }] })
  *     + sc.steps({ title, lede, items: [{ title, text, href }] })
  *     + sc.code({ title, lede, samples: [{ label, lang, code }] })
@@ -183,4 +184,4 @@ a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);trans
 @media (prefers-reduced-motion:reduce){.sc-card,.sc-btn{transition:none}}
 `;
 
-module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, cta, CSS, esc };
+module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, cta, CSS, STYLESHEET: 'showcase.css', esc };

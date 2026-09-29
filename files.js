@@ -38,12 +38,19 @@ const BROWSER = Object.freeze([
     'openvibe-sw.js',       // Web Push service worker
 ]);
 
+// Stylesheets sites serve at /shared/<file> beside the scripts (generated from their module, never edited by hand).
+const STYLES = Object.freeze([
+    'showcase.css',         // openvibe-shared/showcase's sections + the ring icons (scripts/build-styles.js)
+]);
+const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name));
+
 module.exports = {
     dir: __dirname,
     BROWSER,
-    isBrowserFile: (name) => BROWSER.includes(String(name)),
+    STYLES,
+    isBrowserFile: served,
     path: (name) => {
-        if (!BROWSER.includes(String(name))) throw new Error(`openvibe-shared: ${name} is not a browser file`);
+        if (!served(name)) throw new Error(`openvibe-shared: ${name} is not a browser file`);
         return path.join(__dirname, name);
     },
 };

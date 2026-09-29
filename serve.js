@@ -38,7 +38,7 @@ function handler() {
         if (!files.isBrowserFile(name)) return next();
         const hash = hashOf(name);
         const v = req.query ? req.query.v : new URL(req.url, 'http://x').searchParams.get('v');
-        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Content-Type', name.endsWith('.css') ? 'text/css; charset=utf-8' : 'application/javascript; charset=utf-8');
         // The estate default is a day's stale-while-revalidate (cache-policy); serve.js has always used a minute,
         // because a stale shared script is the one thing a site's navbar must never run. Kept as it was.
         res.setHeader('Cache-Control', cache.assetHeaders(name, { hashed: v === hash, swr: 60 }));

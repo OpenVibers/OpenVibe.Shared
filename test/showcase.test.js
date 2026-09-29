@@ -31,4 +31,9 @@ assert.ok(code.includes('class="language-js"') && code.includes('&lt;script&gt;x
 const d = sc.demo({ title: 'Try it', iframe: { src: 'https://x.example/?a=1&b=2', height: 5000 } });
 assert.ok(d.includes('loading="lazy"') && d.includes('height:900px') && d.includes('&amp;b=2'), 'a demo frame is lazy and bounded');
 assert.ok(typeof sc.CSS === 'string' && sc.CSS.includes('.sc-card') && sc.CSS.includes('prefers-reduced-motion'));
+const { execFileSync } = require('child_process');
+execFileSync(process.execPath, [require('path').join(__dirname, '..', 'scripts', 'build-styles.js'), '--check'], { stdio: 'inherit' });
+const files = require('../files');
+assert.ok(files.isBrowserFile('showcase.css') && files.STYLES.includes('showcase.css') && !files.BROWSER.includes('showcase.css'), 'served as a stylesheet, not a script');
+assert.strictEqual(sc.STYLESHEET, 'showcase.css');
 console.log('showcase: all checks passed');
