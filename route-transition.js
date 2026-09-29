@@ -12,7 +12,7 @@
 (function (root) {
     'use strict';
     if (typeof document === 'undefined' || root.OVRouteFx) return;
-    const css = `.ovrt-wait{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:12px;padding:24px;color:var(--text-muted,#8a96a8);font:600 .84rem/1.35 system-ui,sans-serif;text-align:center;animation:ovrtIn .25s ease both}
+    const css = `.ovrt-wait{position:fixed;z-index:40;pointer-events:none;display:grid;place-content:center;justify-items:center;gap:12px;padding:24px;color:var(--text-muted,#8a96a8);font:600 .84rem/1.35 system-ui,sans-serif;text-align:center;animation:ovrtIn .25s ease both}
 .ovrt-wait i{display:block;width:min(200px,50vw);height:3px;border-radius:3px;overflow:hidden;position:relative;background:color-mix(in srgb,var(--accent,#3b82f6) 18%,transparent)}
 .ovrt-wait i::after{content:'';position:absolute;inset:0;width:38%;border-radius:3px;background:var(--accent,#3b82f6);animation:ovrtSlide 1.05s cubic-bezier(.45,0,.2,1) infinite}
 .ovrt-wait small{font-weight:500;font-size:.76rem;opacity:.85;min-height:1.2em;transition:opacity .2s}
@@ -51,7 +51,11 @@
             wait.setAttribute('role', 'status');
             wait.innerHTML = '<i></i><span></span><small></small>';
             wait.querySelector('span').textContent = `Loading ${label || 'page'}…`;
-            section.appendChild(wait);
+            // Over the page's visible area, but outside it: a page script that re-renders its section while the
+            // route loads cannot take the line away.
+            const r = section.getBoundingClientRect(), top = Math.max(r.top, 0);
+            Object.assign(wait.style, { left: `${r.left}px`, width: `${r.width}px`, top: `${top}px`, height: `${Math.max(160, Math.min(r.bottom, root.innerHeight) - top)}px` });
+            document.body.appendChild(wait);
         }, 150);
         return {
             status(text) { if (wait) wait.querySelector('small').textContent = String(text || ''); },

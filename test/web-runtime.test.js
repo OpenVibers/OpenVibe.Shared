@@ -135,7 +135,7 @@ const ROUTES = [{ path: '^/player', features: ['player'] }, { path: '^/ops', fea
         await done;
         assert.strictEqual(section.dataset.fragmentLoaded, '1');
         assert.ok(!section.hasAttribute('data-ov-loading'), 'shown once ready');
-        assert.ok(p.document.querySelector('style').textContent.includes('[data-ov-loading]>:not(.ovrt-wait){visibility:hidden}'), 'keeps its space while hidden');
+        assert.ok(p.document.querySelector('style').textContent.includes('[data-ov-loading]>*{visibility:hidden}'), 'keeps its space while hidden');
         assert.ok(phases.includes('player:styles') && phases.includes('player:code'), 'phases for the loading line');
         await assert.rejects(rt.enter(section, Promise.reject(new Error('x'))), /x/);
         assert.ok(!section.hasAttribute('data-ov-loading'), 'a failed route is not left hidden');

@@ -192,10 +192,13 @@
         let enters = 0, fx = null;
         // Its own URL, without web-runtime's ?v= (the site's versions map hashes it, as any asset).
         const fxSrc = selfSrc && assetKey(selfSrc).replace(/web-runtime\.js$/, 'route-transition.js');
+        // Ready before the first click: fetched a few seconds after the page settles.
+        if (fxSrc) root.setTimeout(() => { if (!root.OVRouteFx) loadScript(fxSrc).catch(() => {}); }, 4000);
         function enter(section, work, opts = {}) {
-            const p = Promise.resolve(work), attr = `data-${prefix}-loading`, first = !enters++;
+            // The page that arrived server-rendered: the first enter() before any in-site move (route generation ≤ 1).
+            const p = Promise.resolve(work), attr = `data-${prefix}-loading`, first = !enters++ && generation <= 1;
             if (!section) return p;
-            if (first) { const st = document.createElement('style'); st.textContent = `[${attr}]{position:relative;min-height:40vh}[${attr}]>:not(.ovrt-wait){visibility:hidden}`; document.head.appendChild(st); }
+            if (!document.getElementById(`${prefix}-rt-css`)) { const st = document.createElement('style'); st.id = `${prefix}-rt-css`; st.textContent = `[${attr}]{position:relative;min-height:40vh}[${attr}]>*{visibility:hidden}`; document.head.appendChild(st); }
             section.setAttribute(attr, '');
             let h = null;
             if (!first && fxSrc) (root.OVRouteFx ? p.constructor.resolve() : loadScript(fxSrc)).then(() => { if (section.hasAttribute(attr)) fx = h = root.OVRouteFx.start(section, { label: opts.label, prefix }); }, () => {});
