@@ -17,6 +17,10 @@ jobs:
       - run: npm test
       - name: pin drift (openvibe-* library pins)
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - "$GITHUB_WORKSPACE"
+      - name: install acorn (floating promises check)
+        run: npm i --no-save acorn@8 acorn-walk@8
+      - name: floating promises (unawaited async calls)
+        run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/floating-promises.js | node - "$GITHUB_WORKSPACE"
       - name: size report
         run: node scripts/size-report.js
       # The release artifact is GitHub's tarball of the tag (repository root = package root):
