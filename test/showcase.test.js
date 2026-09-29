@@ -1,0 +1,34 @@
+'use strict';
+// openvibe-shared/showcase: escaping, empty sections, deterministic output, the pieces each section promises.
+const assert = require('assert');
+const sc = require('../showcase');
+
+const hero = sc.hero({ eyebrow: 'E', title: 'Build <on>', accent: 'OpenVibe', lede: 'L', actions: [{ label: 'Go', href: '/go?a=1&b=2', primary: true, icon: 'fa-plus' }], note: 'N' });
+assert.ok(hero.includes('<h1>Build &lt;on&gt;<span class="sc-accent"> OpenVibe</span></h1>'), 'the title is escaped');
+assert.ok(hero.includes('href="/go?a=1&amp;b=2"') && hero.includes('sc-btn sc-primary'), 'actions are links, escaped');
+assert.ok(sc.hero({ title: 'T', aside: { html: '<pre>x</pre>' } }).includes('<div class="sc-hero-aside"><pre>x</pre></div>'), 'aside.html passes through');
+
+for (const [name, out] of Object.entries({
+    features: sc.features({ title: 'F', items: [] }), steps: sc.steps({ title: 'S' }), code: sc.code({ title: 'C', samples: [] }),
+    demo: sc.demo({ title: 'D' }), compare: sc.compare({ title: 'X', columns: ['a'], rows: [] }), pricing: sc.pricing({ title: 'P', tiers: [] }),
+    limits: sc.limits({ title: 'L', columns: [], rows: [{ label: 'r' }] }), stories: sc.stories({ title: 'St' }), cta: sc.cta({}),
+})) assert.strictEqual(out, '', `${name} with nothing to show renders nothing`);
+
+const f = sc.features({ title: 'What you get', items: [{ icon: 'fa-key', title: '<b>', text: 't', href: '/k' }, { icon: 'ov:tools', title: 'Tools' }] });
+assert.ok(f.includes('aria-labelledby="sc-what-you-get"') && f.includes('id="sc-what-you-get"'), 'the heading labels its section');
+assert.ok(f.includes('<a class="sc-card" href="/k">') && f.includes('&lt;b&gt;') && f.includes('<div class="sc-card">'), 'linked and plain cards');
+assert.ok(f.includes('data-icon="tools"'), 'ov: icons render the shared ring icon');
+assert.strictEqual(f, sc.features({ title: 'What you get', items: [{ icon: 'fa-key', title: '<b>', text: 't', href: '/k' }, { icon: 'ov:tools', title: 'Tools' }] }), 'the same input renders the same bytes');
+
+const c = sc.compare({ title: 'Compare', columns: ['Us', 'Them'], rows: [{ label: 'Open', values: [true, false] }, { label: 'Price', values: ['Free', 'Paid'] }] });
+assert.ok(c.includes('aria-label="yes"') && c.includes('aria-label="no"') && c.includes('<td class="sc-us">Free</td>'));
+const p = sc.pricing({ title: 'Plans', tiers: [{ name: 'Free', price: 0, per: 'month', items: ['a'] }, { name: 'Pro', price: '$5', per: 'month', highlight: true, action: { label: 'Buy', href: '/buy' } }] });
+assert.ok(p.includes('<p class="sc-price">Free</p>') && p.includes('$5<small> / month</small>') && p.includes('sc-tier sc-hl'));
+const l = sc.limits({ title: 'Limits', columns: ['Free'], rows: [{ label: 'Requests per minute', values: [60] }], source: 'https://openvibe.network/limits.json' });
+assert.ok(l.includes('<td>60</td>') && l.includes('href="https://openvibe.network/limits.json"'), 'limits cite their source');
+const code = sc.code({ title: 'Code', samples: [{ label: 'Node', lang: 'js', code: '\n<script>x</script>\n' }] });
+assert.ok(code.includes('class="language-js"') && code.includes('&lt;script&gt;x&lt;/script&gt;</code>'), 'code is escaped and trimmed');
+const d = sc.demo({ title: 'Try it', iframe: { src: 'https://x.example/?a=1&b=2', height: 5000 } });
+assert.ok(d.includes('loading="lazy"') && d.includes('height:900px') && d.includes('&amp;b=2'), 'a demo frame is lazy and bounded');
+assert.ok(typeof sc.CSS === 'string' && sc.CSS.includes('.sc-card') && sc.CSS.includes('prefers-reduced-motion'));
+console.log('showcase: all checks passed');

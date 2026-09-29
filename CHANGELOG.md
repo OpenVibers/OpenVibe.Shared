@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.3.0 — 2026-09-29
+
+- `openvibe-shared/showcase` (plan T11, D92): the sections a product's home page is built from — `hero`, `features`,
+  `steps`, `code`, `demo`, `compare`, `pricing`, `limits` (pricing that equals the API's limits, citing its source),
+  `stories`, `cta` — rendered on the server as plain HTML with inline `CSS` on the theme tokens. Every string is
+  escaped (only a field named `html` passes markup through), a section with no items renders nothing, and heading ids
+  come from titles so a page renders the same bytes every time.
+
 ## 2.2.0 — 2026-09-29
 
 Boost on real sites (plan T11):
