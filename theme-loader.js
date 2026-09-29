@@ -98,8 +98,22 @@
     // Every token any built-in theme sets. Applying a theme clears the ones it does not set, so a
     // theme that names no --success cannot inherit the previous theme's --success on <html>.
     const KNOWN_PROPS = (function () { const out = {}; for (const id in THEMES) for (const k in THEMES[id]) out[k] = true; return Object.keys(out); })();
+    /** Readable text on a colour: near-black or white, whichever contrasts more (WCAG relative luminance). */
+    function onColor(c) {
+        const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c || '').trim());
+        if (!m) return null;
+        const h = m[1].length === 3 ? m[1].split('').map((x) => x + x).join('') : m[1];
+        const lin = (i) => { const v = parseInt(h.slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+        const L = 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+        return (L + 0.05) / 0.05 >= 1.05 / (L + 0.05) ? '#0b0d10' : '#ffffff';
+    }
     function applyVars(vars) {
         if (!vars || typeof vars !== 'object') return;
+        // A theme without its own text-on-accent colours (custom and older server themes) gets readable ones derived.
+        if (vars['--accent'] && !vars['--on-accent']) {
+            const on = onColor(vars['--accent']);
+            if (on) vars = Object.assign({}, vars, { '--on-accent': on, '--on-accent-strong': vars['--on-accent-strong'] || onColor(vars['--accent-strong'] || vars['--accent']) || on });
+        }
         const el = document.documentElement;
         for (let i = 0; i < KNOWN_PROPS.length; i++) if (!(KNOWN_PROPS[i] in vars)) el.style.removeProperty(KNOWN_PROPS[i]);
         for (const [prop, val] of Object.entries(vars)) {
@@ -109,8 +123,10 @@
         const scheme = vars['--color-scheme'];
         if (scheme === 'light' || scheme === 'dark') { el.style.colorScheme = scheme; el.setAttribute('data-theme-mode', scheme); }
         // The inline critical style paints a fixed dark canvas before any stylesheet; keep it in step with the theme.
-        if (vars['--bg-primary']) el.style.background = vars['--bg-primary'];
-        if (vars['--text-primary']) el.style.color = vars['--text-primary'];
+        // Through the variables (with the value as fallback): a page that sets --bg-primary later (its own theme
+        // switcher) repaints the canvas too, instead of leaving the first theme's colour behind.
+        if (vars['--bg-primary']) el.style.background = `var(--bg-primary, ${vars['--bg-primary']})`;
+        if (vars['--text-primary']) el.style.color = `var(--text-primary, ${vars['--text-primary']})`;
         syncBrowserUi();
     }
 
@@ -217,6 +233,7 @@
         const base = variables || THEMES[themeId] || {};
         const vars = custom ? Object.assign({}, base, custom) : base;
         if (!vars || !Object.keys(vars).length) return;
+        applyVars(vars);   // saving a theme shows it: every token, the canvas and the browser UI follow at once
         cacheLocally(themeId, vars);
         if (opts && opts.sync === false) return;
         if (typeof fetch === 'undefined') return;
@@ -335,6 +352,7 @@
         display: { get: readDisplay, set: setDisplay, options: DISPLAY_OPTS },
         apply: applyById,
         applyVars: applyVars,
+        onColor: onColor,
         save: save,
         getCurrent: getCurrent,
         resolveAndApply: resolveAndApply,

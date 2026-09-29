@@ -57,7 +57,7 @@
         s.textContent = `
             .openvibe-navbar {
                 position: sticky; top: 0; z-index: 10000;
-                height: 52px; display: flex; align-items: center; padding: 0 16px; gap: 8px;
+                height: 52px; display: flex; align-items: center; padding: 0 clamp(8px, 1.6vw, 16px); gap: 6px;
                 background: var(--bg-secondary, #252530);
                 border-bottom: 1px solid var(--border, #333340);
                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -67,19 +67,19 @@
             /* Brand group: mark + linked wordmark + launcher read as one control. Every property a host
                page might set on bare "nav a" / "a" is reset here, so the brand looks the same everywhere. */
             .openvibe-navbar .openvibe-navbar-brand a, .openvibe-navbar .openvibe-navbar-brand a:hover { all: unset; cursor: pointer; color: inherit; font: inherit; }
-            .openvibe-navbar .openvibe-navbar-brand { gap: 8px; padding: 3px 4px 3px 3px; border-radius: 12px; margin-right: 2px; }
+            .openvibe-navbar .openvibe-navbar-brand { gap: 6px; padding: 2px; border-radius: 12px; margin-right: 0; }
             .openvibe-navbar .openvibe-navbar-brand a.flame { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; transition: background .15s; }
             .openvibe-navbar .openvibe-navbar-brand a.flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
             .openvibe-navbar .openvibe-navbar-brand .name { align-items: center; gap: 0; font-size: 15.5px; letter-spacing: -.25px; }
-            .openvibe-navbar .openvibe-navbar-brand .name a { padding: 3px 2px; border-radius: 6px; transition: color .15s, background .15s; }
+            .openvibe-navbar .openvibe-navbar-brand .name a { padding: 3px 1px; border-radius: 6px; transition: color .15s, background .15s; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-sub { color: var(--text-primary, #e6edf7); font-weight: 750; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-core { color: var(--text-primary, #e6edf7); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 600; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
-            .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0 .5px; opacity: .55; }
+            .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0; opacity: .5; }
             .openvibe-navbar .openvibe-navbar-brand a:focus-visible, .ovnav-launch:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
-            .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 10px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
+            .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
             .ovnav-launch:hover, .ovnav-launch[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--accent-light, var(--accent, #60a5fa)); border-color: color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
             .ovnav-launch svg { display: block; transition: transform .25s cubic-bezier(.2,1.4,.3,1); }
             .ovnav-launch[aria-expanded="true"] svg { transform: rotate(45deg) scale(.92); }
@@ -198,7 +198,7 @@
             .openvibe-navbar-dropdown-header .ud-wallet a { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; color: #fbbf24; background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3); }
             .openvibe-navbar-dropdown-menu .sep { height: 1px; background: var(--border, #333340); margin: 4px -8px; }
 
-            .openvibe-navbar-links { display: flex; align-items: center; gap: 4px; margin-left: 8px; }
+            .openvibe-navbar-links { display: flex; align-items: center; gap: 2px; margin-left: 2px; }
             .openvibe-navbar-links a {
                 padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
                 color: var(--text-secondary, #b0b0b8); text-decoration: none;
