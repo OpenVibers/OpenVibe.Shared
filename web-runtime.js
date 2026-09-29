@@ -1,32 +1,10 @@
-/*
- * openvibe-shared/web-runtime.js — a site's feature loader and route lifecycle (roadmap WS-P task 6), taken out of
- * OpenVibe.Live's public/js/ov-loader.js so every OpenVibe site loads its code the same way.
- *
- *   const rt = OVWebRuntime.create({ features, routes, versions, ... });   // registry: see README "Web runtime"
- *   rt.load('broadcast')      → the feature's markup fragment, its dependencies, stylesheets and scripts (in order), then
- *                               its `after` hook; once, cached; a failed load can be retried.
- *   rt.route(path)            → every feature the path's routes name, as one promise.
- *   rt.prefetch('channel')    → download only (link rel=prefetch), never execute; skipped on Save-Data, 2g and < 2 GB
- *                               of memory, and within a budget (count, and bytes where sizes are known).
- *   rt.nextRoute() / rt.gen() / rt.isCurrent(gen)
- *                             → route generations: a loader that awaited something can tell whether the visitor moved on.
- *   rt.scope()                → timers, listeners, observers, fetches (AbortSignal) and child scopes owned by the current
- *                               route, released by the next nextRoute(). Anything registered on a scope whose route has
- *                               ended is refused (and counted), never left running.
- *   rt.diagnostics(), rt.leaks()
- *                             → loaded, failed and rolled-back features, duplicate tags, late registrations, what the
- *                               current route holds, and the prefetch budget spent.
- *
- * Asset groups are transactional: a feature counts as loaded, runs its hook and fires `<prefix>:feature` only when
- * every script loaded. When one fails, the stylesheets that attempt added (and no other feature wants) are taken out
- * again and the failed script's tag is removed, so a retry fetches exactly what is missing. Scripts that did run are
- * kept, so nothing runs twice.
- * Tags the server already put in the document count as loaded. Global stubs (installStubs) keep inline onclick
- * handlers working before their feature has loaded.
- */
+/* openvibe-shared/web-runtime.js — a site's feature loader and route lifecycle (roadmap WS-P). API and rules: README "Web runtime". */
 (function (root) {
     'use strict';
     if (typeof document === 'undefined' || root.OVWebRuntime) return;
+
+    // Where this file was loaded from: route-transition.js is fetched from next to it.
+    const selfSrc = document.currentScript && document.currentScript.src;
 
     /** The key an asset is known by: its path on this site, origin + path elsewhere; the query (?v=) never counts. */
     function assetKey(src) {
@@ -127,14 +105,18 @@
 
         // ── Markup fragments ─────────────────────────────────────────────────────────────────────
         const fragments = Object.create(null);
-        function loadFragment(name, sectionId) {
+        function loadFragment(name, sectionId, stylesReady) {
             const section = document.getElementById(sectionId);
             if (!section || section.dataset.fragmentLoaded === '1') return Promise.resolve();
             if (fragments[name]) return fragments[name];
             section.setAttribute('aria-busy', 'true');
-            fragments[name] = root.fetch(url(fragmentPath(name)), { credentials: 'same-origin' })
-                .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
-                .then((html) => {
+            // Markup and styles download together; the markup goes in once its styles have loaded (or timed out),
+            // so a page is never shown unstyled for a moment.
+            fragments[name] = Promise.all([
+                root.fetch(url(fragmentPath(name)), { credentials: 'same-origin' }).then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); }),
+                stylesReady || null,
+            ])
+                .then(([html]) => {
                     // Inserted once, never replaced: players, previews and call tiles bind to these exact nodes.
                     if (section.dataset.fragmentLoaded !== '1') {
                         section.innerHTML = html;
@@ -163,11 +145,14 @@
             const css = (f.css || []).map(assetKey);
             css.forEach((k) => (wanted[k] || (wanted[k] = new Set())).add(name));
             const added = [];
-            // The feature's markup goes in before its dependencies and scripts run: modules bind to it when they load.
-            const markup = f.fragment ? loadFragment(f.fragment, f.section || `page-${f.fragment}`) : Promise.resolve();
+            // Every stylesheet the feature and its dependencies need starts at once, with the markup; the markup goes
+            // in once they have loaded, before the dependencies and scripts run (modules bind to it when they load).
+            emit(`${prefix}:phase`, { name, phase: 'styles' });
+            const stylesReady = Promise.all(stylesOf(name).map((p) => loadStyle(p, added)));
+            const markup = f.fragment ? loadFragment(f.fragment, f.section || `page-${f.fragment}`, stylesReady) : stylesReady;
             features[name] = markup
-                .then(() => Promise.all((f.deps || []).map(load)))
-                .then(() => Promise.all((f.css || []).map((p) => loadStyle(p, added)).concat((f.js || []).map((p) => loadScript(p)))))
+                .then(() => { emit(`${prefix}:phase`, { name, phase: 'code' }); return Promise.all((f.deps || []).map(load)); })
+                .then(() => Promise.all((f.js || []).map((p) => loadScript(p))))
                 .then(() => {
                     loaded[name] = true;
                     delete d.failed[name];
@@ -189,6 +174,33 @@
                     throw err;
                 });
             return features[name];
+        }
+
+        /** The stylesheets of a feature and everything it depends on, in order, each once. */
+        function stylesOf(name, seen = new Set(), out = []) {
+            const f = FEATURES[name];
+            if (!f || seen.has(name)) return out;
+            seen.add(name);
+            for (const dep of f.deps || []) stylesOf(dep, seen, out);
+            for (const p of f.css || []) if (!out.includes(p)) out.push(p);
+            return out;
+        }
+
+        // ── Page transitions ─────────────────────────────────────────────────────────────────────
+        // rt.enter(section, work, { label }): the section's content stays hidden (keeping its space) until `work` is done;
+        // route-transition.js (fetched next to this file on the first in-site move) draws the bar, line and fade-in.
+        let enters = 0, fx = null;
+        // Its own URL, without web-runtime's ?v= (the site's versions map hashes it, as any asset).
+        const fxSrc = selfSrc && assetKey(selfSrc).replace(/web-runtime\.js$/, 'route-transition.js');
+        function enter(section, work, opts = {}) {
+            const p = Promise.resolve(work), attr = `data-${prefix}-loading`, first = !enters++;
+            if (!section) return p;
+            if (first) { const st = document.createElement('style'); st.textContent = `[${attr}]{position:relative;min-height:40vh}[${attr}]>:not(.ovrt-wait){visibility:hidden}`; document.head.appendChild(st); }
+            section.setAttribute(attr, '');
+            let h = null;
+            if (!first && fxSrc) (root.OVRouteFx ? p.constructor.resolve() : loadScript(fxSrc)).then(() => { if (section.hasAttribute(attr)) fx = h = root.OVRouteFx.start(section, { label: opts.label, prefix }); }, () => {});
+            const done = () => { section.removeAttribute(attr); if (h) h.done(); };
+            return p.then((v) => { done(); return v; }, (e) => { done(); throw e; });
         }
 
         function featuresFor(path) {
@@ -427,6 +439,7 @@
             gen: () => generation,
             isCurrent: (g) => g === generation,
             scope, nextRoute, installStubs, showRouteError, adoptExisting, watchIntent, idlePrefetch, diagnostics, leaks,
+            enter, status: (t) => fx && fx.status(t), stylesOf,
             isLoaded: (name) => !!features[name],
             /** Adopt the server's tags, load `initial` features, watch link intent, prefetch the idle features. */
             boot(b = {}) {

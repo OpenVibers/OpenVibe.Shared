@@ -345,6 +345,40 @@ can't load, those icons fall back to `<i class="fa-solid …">`. Two options cha
   - A Content-Security-Policy refusal, a signed-out 401/403, or Network's `REALTIME_TICKETS=off` (503) stop the stream, and the bell polls.
 - **The site's CSP** needs `connect-src https://events.openvibe.network` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
 
+### The web runtime (`web-runtime.js`, `route-transition.js`)
+
+```text
+openvibe-shared/web-runtime.js — a site's feature loader and route lifecycle (roadmap WS-P task 6), taken out of
+OpenVibe.Live's public/js/ov-loader.js so every OpenVibe site loads its code the same way.
+
+  const rt = OVWebRuntime.create({ features, routes, versions, ... });   // registry: see README "Web runtime"
+  rt.load('broadcast')      → the feature's stylesheets (its dependencies' too) and markup fragment together, the markup
+                              inserted once the styles are in (never unstyled), then its dependencies and scripts (in
+                              order) and its `after` hook; once, cached; a failed load can be retried.
+  rt.route(path)            → every feature the path's routes name, as one promise.
+  rt.enter(section, work, { label })
+                            → a page while its route loads: hidden (keeping its space) until its styles and code are in;
+                              route-transition.js (loaded on the first move) adds the top bar, a "Loading <label>…" line
+                              after 150 ms with the phase, and the fade-in. rt.status(text) changes that line.
+  rt.prefetch('channel')    → download only (link rel=prefetch), never execute; skipped on Save-Data, 2g and < 2 GB
+                              of memory, and within a budget (count, and bytes where sizes are known).
+  rt.nextRoute() / rt.gen() / rt.isCurrent(gen)
+                            → route generations: a loader that awaited something can tell whether the visitor moved on.
+  rt.scope()                → timers, listeners, observers, fetches (AbortSignal) and child scopes owned by the current
+                              route, released by the next nextRoute(). Anything registered on a scope whose route has
+                              ended is refused (and counted), never left running.
+  rt.diagnostics(), rt.leaks()
+                            → loaded, failed and rolled-back features, duplicate tags, late registrations, what the
+                              current route holds, and the prefetch budget spent.
+
+Asset groups are transactional: a feature counts as loaded, runs its hook and fires `<prefix>:feature` only when
+every script loaded. When one fails, the stylesheets that attempt added (and no other feature wants) are taken out
+again and the failed script's tag is removed, so a retry fetches exactly what is missing. Scripts that did run are
+kept, so nothing runs twice.
+Tags the server already put in the document count as loaded. Global stubs (installStubs) keep inline onclick
+handlers working before their feature has loaded.
+```
+
 ### The navbar (`navbar.js`)
 
 ```text

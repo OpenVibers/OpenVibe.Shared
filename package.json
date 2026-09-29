@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "1.29.2",
+  "version": "1.30.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "exports": {
@@ -62,7 +62,8 @@
     "./ui": "./ui.js",
     "./url-resolver": "./url-resolver.js",
     "./user-card": "./user-card.js",
-    "./web-runtime": "./web-runtime.js"
+    "./web-runtime": "./web-runtime.js",
+    "./route-transition": "./route-transition.js"
   },
   "files": [
     "*.js",

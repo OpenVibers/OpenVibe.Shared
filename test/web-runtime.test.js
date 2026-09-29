@@ -1,6 +1,7 @@
 'use strict';
 // web-runtime.js (roadmap WS-P task 6), in a linkedom page where appended <script>/<link> tags "load" or "fail" on cue:
-//   - a feature loads its fragment first, then deps, stylesheets and scripts (versioned, in order), then its hook, once;
+//   - a feature loads its stylesheets (deps' too) with its fragment, inserts the fragment once they are in, then deps and
+//     scripts (versioned, in order), then its hook, once; enter() hides a page until its route is ready;
 //     tags the server already wrote count as loaded; nothing is added twice;
 //   - asset groups are transactional: a failed script withdraws the stylesheets that attempt added (not one another
 //     feature wants), removes its own tag, runs no hook, and a retry fetches only what is missing;
@@ -115,6 +116,29 @@ const ROUTES = [{ path: '^/player', features: ['player'] }, { path: '^/ops', fea
         assert.strictEqual(p.out.appended.filter((x) => x === '/css/shared.css').length, 1);
         assert.strictEqual(p.RT.assetKey('https://site.example/js/a.js?v=1'), '/js/a.js');
         assert.strictEqual(p.RT.assetKey('https://cdn.example/x/a.js?v=1'), 'https://cdn.example/x/a.js', 'another origin keeps its origin');
+    }
+
+    // ── Never unstyled: the markup waits for the feature's (and its deps') styles; enter() hides until ready ──
+    {
+        const p = page();
+        const rt = p.RT.create({ features: FEATURES, routes: ROUTES });
+        p.behave['/css/base.css'] = 'hold';                    // a dependency's stylesheet is slow
+        const phases = [];
+        p.document.addEventListener('ov:phase', (e) => phases.push(`${e.detail.name}:${e.detail.phase}`));
+        const section = p.document.getElementById('page-player');
+        const done = rt.enter(section, rt.load('player'), { label: 'Player' });
+        assert.ok(section.hasAttribute('data-ov-loading'), 'hidden while it loads');
+        for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r));
+        assert.strictEqual(section.dataset.fragmentLoaded, undefined, 'markup fetched but not inserted before its styles');
+        deq(p.out.appended.slice(0, 3), ['/css/base.css', '/css/player.css', '/css/shared.css'], 'every stylesheet starts with the markup, deps first');
+        p.fire(p.held.shift(), 'load');
+        await done;
+        assert.strictEqual(section.dataset.fragmentLoaded, '1');
+        assert.ok(!section.hasAttribute('data-ov-loading'), 'shown once ready');
+        assert.ok(p.document.querySelector('style').textContent.includes('[data-ov-loading]>:not(.ovrt-wait){visibility:hidden}'), 'keeps its space while hidden');
+        assert.ok(phases.includes('player:styles') && phases.includes('player:code'), 'phases for the loading line');
+        await assert.rejects(rt.enter(section, Promise.reject(new Error('x'))), /x/);
+        assert.ok(!section.hasAttribute('data-ov-loading'), 'a failed route is not left hidden');
     }
 
     // ── Transactional groups: a failed script rolls the attempt back; a retry fetches only what is missing ──
