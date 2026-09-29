@@ -4,6 +4,24 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.1.0 — 2026-09-29
+
+Three new modules for plan T11, plus `serve.js` now taking its cache headers from the shared policy (its own headers are
+unchanged):
+- `openvibe-shared/cache-policy` — `isHashed(path)`, `assetHeaders(path, { hashed })` (immutable for a content-addressed
+  asset, otherwise `public, max-age=300, stale-while-revalidate=86400`), `htmlHeaders({ private, maxAge, swr })` and an
+  `applyHtml()` middleware, so "hashed asset = immutable, HTML = stale-while-revalidate" is one rule instead of one
+  per site.
+- `openvibe-shared/indexnow` — `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile`,
+  `ping(urls)` (one POST, deduped, https-only, own host, ≤10,000 URLs, never throws) and `pingSoon(urls)` (one
+  debounced batch in 30 s). No key means no request.
+- `boost.js` (`OVBoost.start({ main })`, served at `/shared/boost.js`) — smooth same-site page moves for a server-rendered
+  site: a click fetches the next page (prefetched on hover, focus or touch), loads its new stylesheets first, swaps
+  `<main>` in place with the shared transition, updates the title and the head tags that describe the page, runs the new
+  main's inline scripts once, keeps history and scroll, and moves focus to the content. Any doubt (another release
+  marker `<meta name="ov-boost">`, other external scripts, a non-HTML answer, a redirect off the site, an error) is a
+  normal page load. Pages listen for `ov:boost:load` to wire their widgets.
+
 ## 2.0.0 — 2026-09-29
 
 **X-Internal-Key is gone from the shared package** (plan T2: every internal call in the estate uses a service token).

@@ -19,8 +19,8 @@ were reconciled first.
 
 | Kind | Files |
 |---|---|
-| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
+| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 | Checks (CI) | `scripts/pin-drift.js` (every openvibe-* pin is a published tag and not more than one minor behind, and openvibe-shared is installed once) and `scripts/floating-promises.js` (`node scripts/floating-promises.js <dir> [--json]`: an async call whose result nobody awaits — a failure is an unhandled rejection and a transaction commits without it — unless awaited, returned, assigned, `void`-ed, chained with `.then(`/`.catch(`/`.finally(` or opted out with `// floating-ok: <reason>`; exit 1 when found) |
@@ -345,6 +345,27 @@ can't load, those icons fall back to `<i class="fa-solid …">`. Two options cha
   - A tab hidden 5 minutes closes the stream and resumes it when shown.
   - A Content-Security-Policy refusal, a signed-out 401/403, or Network's `REALTIME_TICKETS=off` (503) stop the stream, and the bell polls.
 - **The site's CSP** needs `connect-src https://events.openvibe.network` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
+
+### Boost (`boost.js`): smooth page moves for a server-rendered site
+
+Every page stays a normal page (it works without JavaScript and crawlers read the same HTML); boost only makes a same-site
+move feel like an app. Mark the page and its changing part, then start it:
+
+```html
+<meta name="ov-boost" content="<site>@<release>">   <!-- the release id: a different one means a normal page load -->
+<main id="main">…</main>
+<script src="/shared/boost.js" defer></script>
+<script>addEventListener('DOMContentLoaded', () => OVBoost.start({ main: '#main' }));</script>
+```
+
+A click on a same-site link (no modifier key, no target, no download, not `data-no-boost`, not `/auth/`, `/api/` or a
+file) fetches the page (already prefetched on hover, focus or touch), loads its new stylesheets first, swaps `<main>` in
+place with `route-transition.js`'s bar and fade, updates the title, description, canonical, Open Graph, Twitter and
+JSON-LD tags, runs the new main's inline scripts once, pushes history, restores scroll on back and forward, and focuses
+the new content. Another release marker, other external scripts, a non-HTML answer, a redirect off the site, an error
+or a timeout is a normal load. Listen for `ov:boost:before` and `ov:boost:load` to tear down and wire widgets.
+`OVBoost.start(opts)` returns `{ go(url), stop(), stats() }`; options: `main`, `prefix` (`ov`), `exclude` (path
+prefixes), `timeout` (8000 ms), `prefetch` (true), `fx` (true).
 
 ### The web runtime (`web-runtime.js`, `route-transition.js`)
 

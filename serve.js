@@ -16,6 +16,7 @@
 const fs = require('fs');
 const crypto = require('crypto');
 const files = require('./files');
+const cache = require('./cache-policy');
 
 const hashes = new Map();
 function hashOf(name) {
@@ -38,7 +39,9 @@ function handler() {
         const hash = hashOf(name);
         const v = req.query ? req.query.v : new URL(req.url, 'http://x').searchParams.get('v');
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-        res.setHeader('Cache-Control', v === hash ? 'public, max-age=31536000, immutable' : 'public, max-age=300, stale-while-revalidate=60');
+        // The estate default is a day's stale-while-revalidate (cache-policy); serve.js has always used a minute,
+        // because a stale shared script is the one thing a site's navbar must never run. Kept as it was.
+        res.setHeader('Cache-Control', cache.assetHeaders(name, { hashed: v === hash, swr: 60 }));
         res.setHeader('ETag', `"${hash}"`);
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');

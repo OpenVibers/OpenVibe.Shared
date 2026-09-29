@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "exports": {
@@ -20,6 +20,7 @@
     "./brand": "./brand.js",
     "./browser-harness": "./browser-harness.js",
     "./builtin-themes": "./builtin-themes.js",
+    "./cache-policy": "./cache-policy.js",
     "./config": "./config.js",
     "./config-pg": "./config-pg.js",
     "./egress": "./egress.js",
@@ -28,6 +29,7 @@
     "./frame": "./frame.js",
     "./history": "./history.js",
     "./icons": "./ov-icons.js",
+    "./indexnow": "./indexnow.js",
     "./island": "./island.js",
     "./legal": "./legal.js",
     "./express-async": "./express-async.js",
@@ -62,7 +64,8 @@
     "./url-resolver": "./url-resolver.js",
     "./user-card": "./user-card.js",
     "./web-runtime": "./web-runtime.js",
-    "./route-transition": "./route-transition.js"
+    "./route-transition": "./route-transition.js",
+    "./boost": "./boost.js"
   },
   "files": [
     "*.js",
