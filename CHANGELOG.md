@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## Unreleased
+
+- The SEO kit adds `llmsFull` for full-text AI maps, `pageSummary` for escaped page
+  summaries and WebPage data, `feedXml` for RSS 2.0 and Atom 1.0, and `feedLinkTags`.
+  Product, review, rating, image gallery and VideoObject JSON-LD builders are available
+  through `jsonLd`. The package root now exposes the kit as `seo`.
+
 ## 2.3.1 — 2026-09-29
 
 - `showcase.css` is served at `/shared/showcase.css` (files.js `STYLES`, text/css): the showcase sections and the ring

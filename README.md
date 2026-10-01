@@ -50,6 +50,33 @@ const seo = require('openvibe-shared/seo');
 const { AnalyticsTracker } = require('openvibe-shared/analytics');
 ```
 
+### SEO kit
+
+`openvibe-shared/seo` exports the page head, sitemap, robots and `llms.txt` helpers, plus
+the discovery formats below. The package root also exports them as `seo`.
+
+```js
+const seo = require('openvibe-shared/seo');
+const site = { name: 'Example', url: 'https://example.com/' };
+const full = seo.llmsFull({ site, summary: 'What Example publishes',
+    sections: [{ title: 'Guide', url: '/guide', body: 'The full plain-text guide.' }],
+    maxChars: 20000, maxTotal: 100000 }); // serve as text/plain at /llms-full.txt
+const page = seo.pageSummary({ title: 'Guide', summary: 'A short guide',
+    facts: [['Topic', 'Getting started']], url: 'https://example.com/guide', updated: '2026-10-01' });
+// page.meta is an escaped description attribute value; page.jsonLd is a WebPage object;
+// page.html is an escaped, hidden summary section. Use jsonLdTag(page.jsonLd) in <head>.
+const feed = { title: 'Example', link: site.url, description: 'Recent guides',
+    updated: '2026-10-01T12:00:00Z', items: [{ title: 'Guide', url: '/guide', id: 'guide-1',
+        published: '2026-10-01T12:00:00Z', summary: 'A short guide', author: 'Example' }] };
+seo.feedXml(feed, { format: 'rss' });  // serve as application/rss+xml
+seo.feedXml(feed, { format: 'atom' }); // serve as application/atom+xml
+seo.feedLinkTags({ rss: 'https://example.com/feed.xml', atom: 'https://example.com/atom.xml', title: 'Example' });
+```
+
+`jsonLd` also builds `product`, `review`, `aggregateRating`, `imageGallery` (an ImageObject
+array) and `videoObject` (the same VideoObject shape as `video`). Feed URLs should be absolute,
+or relative to the absolute `link`; `llmsFull` resolves section URLs against `site.url`.
+
 ### Metrics and readiness (server)
 
 ```js

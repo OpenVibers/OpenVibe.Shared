@@ -7,6 +7,7 @@ const { extractToken, requireOpenVibeAuth, optionalOpenVibeAuth } = require('./m
 const { PRIORITY, CATEGORY, TYPES, SOUNDS, EMAIL_ELIGIBLE_CATEGORIES, createNotification, DEFAULT_NOTIFICATION_PREFS } = require('./notifications');
 const { AnalyticsTracker, classifyRequest, parseUserAgent, ANALYTICS_SCHEMA, BOT_USER_AGENTS, SUSPICIOUS_PATTERNS } = require('./analytics');
 const { URL_DEFINITIONS, normalizeValue, validateValue, resolveRegistryValues, formatRegistryEntry } = require('./url-resolver');
+const seo = require('./seo');
 
 module.exports = {
     // Brand
@@ -50,6 +51,8 @@ module.exports = {
     resolveRegistryValues,
     formatRegistryEntry,
     resolveBrandUrls,
+    // SEO kit (also available from openvibe-shared/seo)
+    seo,
     // Client-side modules (browser only — require() for bundlers, <script> tag for direct use)
     // OpenVibeNotifications: require('./notification-ui'),
     // OpenVibeUserCard: require('./user-card'),
