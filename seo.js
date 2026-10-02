@@ -205,29 +205,89 @@ function limitText(value, max) {
     return size ? text.slice(0, size - 1).trimEnd() + '…' : '';
 }
 
-/** /llms-full.txt: the llms.txt header followed by full, plain-text sections. */
-function llmsFull({ site, summary, sections = [], maxChars, maxTotal } = {}) {
+const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+
+/** Plain text from HTML: scripts, styles and comments dropped, block ends kept as line breaks. */
+function htmlText(html) {
+    return String(html == null ? '' : html)
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<(script|style|template)\b[\s\S]*?<\/\1\s*>/gi, '')
+        .replace(/<br\s*\/?>|<\/(li|dt|dd|tr)\s*>/gi, '\n')
+        .replace(/<\/(p|div|section|article|header|footer|main|aside|nav|ul|ol|dl|table|h[1-6]|blockquote|pre|figure)\s*>/gi, '\n\n')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e) => {
+            if (e[0] !== '#') return ENTITIES[e.toLowerCase()] || m;
+            const code = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+            return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m;
+        })
+        .split('\n').map((line) => line.replace(/\s+/g, ' ').trim()).join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
+/** One /llms-full.txt page: `### title`, `URL: …` and its full text (`text`, or `html` stripped to text). */
+function llmsPage(page, base) {
+    const url = absolute(page.url, base);
+    const text = page.text != null ? String(page.text).replace(/\r\n?/g, '\n').trim() : htmlText(page.html);
+    return `\n### ${page.title || ''}\n${url ? `\nURL: ${url}\n` : ''}${text ? `\n${text}\n` : ''}`;
+}
+
+/**
+ * /llms-full.txt: the llms.txt header followed by full, plain-text sections. A section with
+ * `pages: [{ title, url, text | html }]` renders `## title` then every page in input order, never
+ * clipped; `maxBytes` stops before the first page that would pass it and ends with a
+ * `(truncated: N more pages at <base>/llms.txt)` line. A section with `url`/`body` renders as in 2.4.0.
+ */
+function llmsFull({ site, summary, base, sections = [], maxChars, maxTotal, maxBytes } = {}) {
     const name = site && typeof site === 'object' ? site.name || site.title : site;
-    const base = site && typeof site === 'object' ? site.url : site;
+    base = base || (site && typeof site === 'object' ? site.url : site);
     let out = llmsTxt({ name, summary });
+    let left = 0;
     for (const section of sections) {
         if (!section) continue;
+        if (Array.isArray(section.pages)) {
+            let heading = `\n## ${section.title || ''}\n`;
+            for (const page of section.pages) {
+                if (!page) continue;
+                const chunk = heading + llmsPage(page, base);
+                if (left || (maxBytes != null && Buffer.byteLength(out + chunk) > maxBytes)) { left++; continue; }
+                out += chunk;
+                heading = '';
+            }
+            continue;
+        }
+        if (left) continue;
         const url = absolute(section.url, base);
         const body = limitText(String(section.body == null ? '' : section.body).trim(), section.maxChars == null ? maxChars : section.maxChars);
         out += `\n## ${section.title || ''}\n\n${url}\n\n${body}\n`;
     }
+    if (left) out += `\n(truncated: ${left} more page${left === 1 ? '' : 's'} at ${absolute('/llms.txt', base)})\n`;
     return limitText(out, maxTotal);
 }
 
-/** A description value, WebPage data, and a hidden text snapshot for a page. */
+/**
+ * AI-readable page summary. As a string (`${seo.pageSummary(…)}`, `String(…)`) it is the HTML:
+ * `<meta name="ai-summary">` (clipped to 160 like the description), a WebPage JSON-LD tag and, when
+ * `facts` (strings) are given, a `<noscript><section data-ai-summary>` block. `.head` and `.body` hold
+ * the head part and the noscript block on their own; `.meta`, `.jsonLd` and `.html` are the 2.4.0 values.
+ */
 function pageSummary({ title, summary, facts = [], url, updated } = {}) {
     const pageUrl = absolute(url);
     const text = String(summary == null ? '' : summary);
     const jsonLd = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: pageUrl,
         abstract: text, ...(updated ? { dateModified: updated } : {}) };
-    const rows = facts.map(([key, value]) => `<dt>${esc(key)}</dt><dd>${esc(value)}</dd>`).join('');
+    const rows = facts.filter(Array.isArray).map(([key, value]) => `<dt>${esc(key)}</dt><dd>${esc(value)}</dd>`).join('');
     const html = `<section data-ov-summary hidden><h2>${esc(title)}</h2><p>${esc(text)}</p>${rows ? `<dl>${rows}</dl>` : ''}${pageUrl ? `<a href="${esc(pageUrl)}">${esc(pageUrl)}</a>` : ''}${updated ? `<time datetime="${esc(updated)}">${esc(updated)}</time>` : ''}</section>`;
-    return { meta: esc(clip(text, 160)), jsonLd, html };
+    const modified = feedDate(updated, 'iso');
+    const ld = { '@context': 'https://schema.org', '@type': 'WebPage', ...(title != null ? { name: String(title) } : {}),
+        description: text, ...(pageUrl ? { url: pageUrl } : {}), ...(modified ? { dateModified: modified } : {}), abstract: text };
+    const head = [text ? `<meta name="ai-summary" content="${esc(clip(text, 160))}">` : '', jsonLdTag(ld)].filter(Boolean).join('\n');
+    const items = facts.map((f) => (Array.isArray(f) ? f.filter((x) => x != null && x !== '').join(': ') : String(f == null ? '' : f)).trim()).filter(Boolean);
+    const body = items.length ? `<noscript><section data-ai-summary><h2>${esc(title)}</h2><p>${esc(text)}</p><ul>${items.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></section></noscript>` : '';
+    const result = { meta: esc(clip(text, 160)), jsonLd, html };
+    const tags = body ? `${head}\n${body}` : head;
+    Object.defineProperties(result, { head: { value: head }, body: { value: body }, toString: { value: () => tags } });
+    return result;
 }
 
 function feedDate(value, format) {

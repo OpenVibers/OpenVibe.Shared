@@ -39,7 +39,7 @@ npm run create-site -- my-site
 ```
 
 The command creates `./my-site` with a pinned Shared dependency, a small Express server,
-discovery routes, and a smoke test. Set `SITE_URL` to the site's public origin before serving it.
+discovery routes (`/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt`), and a smoke test. Set `SITE_URL` to the site's public origin before serving it.
 
 ### Server side: pin a release tarball
 
@@ -62,18 +62,42 @@ const { AnalyticsTracker } = require('openvibe-shared/analytics');
 ### SEO kit
 
 `openvibe-shared/seo` exports the page head, sitemap, robots and `llms.txt` helpers, plus
-the discovery formats below. The package root also exports them as `seo`.
+the discovery formats below. The package root also exports them as `seo`. A site serves
+`/robots.txt`, `/sitemap.xml`, `/llms.txt` and `/llms-full.txt` (`templates/site` has all four).
+
+`llmsFull({ site, summary, base, sections, maxBytes })` renders `/llms-full.txt`: the `llms.txt`
+header, then `## <section>` and, for each page, `### <title>`, `URL: <absolute url>` and the page's
+full plain text — `text` as given (newlines kept) or `html` stripped to text; a page with neither is
+listed with its URL only. Input order is kept and bodies are never clipped. With `maxBytes` it stops
+before the first page that would pass the limit and ends with
+`(truncated: N more pages at <base>/llms.txt)`. Sections with no pages are left out. (Sections in the
+2.4.0 shape, `{ title, url, body }` with `maxChars`/`maxTotal`, still render as before.)
 
 ```js
 const seo = require('openvibe-shared/seo');
+const full = seo.llmsFull({ site: 'Example', summary: 'What Example publishes', base: 'https://example.com/',
+    sections: [{ title: 'Guides', pages: [{ title: 'Start', url: '/start', text: 'Step one.\nStep two.' },
+        { title: 'API', url: '/api', html: '<h1>API</h1><p>Call get().</p>' }]}],
+    maxBytes: 500000 }); // serve as text/plain at /llms-full.txt
+```
+
+`pageSummary({ title, summary, url, updated, facts })` is the AI-readable summary of a page. As a
+string it is `<meta name="ai-summary">` (the summary clipped to 160 like the description, which
+`headTags` still owns), a WebPage JSON-LD tag (`name`, `description`, `url`, `dateModified` as ISO,
+`abstract`; written with `jsonLdTag`) and, when `facts` (strings) are given, a
+`<noscript><section data-ai-summary>` block with the title, summary and facts. Everything is
+escaped. `.head` is the meta and JSON-LD on their own and `.body` the noscript block, for pages that
+put facts in `<body>`; `.meta`, `.jsonLd` and `.html` are the 2.4.0 values.
+
+```js
+const summary = seo.pageSummary({ title: 'Start', summary: 'How to set up Example in five minutes',
+    url: 'https://example.com/start', updated: '2026-10-01', facts: ['Takes five minutes', 'No account needed'] });
+`<head>${seo.headTags({ title: 'Start', description: 'How to set up Example', canonical: 'https://example.com/start' })}
+${summary.head}</head><body>${summary.body}…`; // or `${summary}` in <head> when there are no facts
+```
+
+```js
 const site = { name: 'Example', url: 'https://example.com/' };
-const full = seo.llmsFull({ site, summary: 'What Example publishes',
-    sections: [{ title: 'Guide', url: '/guide', body: 'The full plain-text guide.' }],
-    maxChars: 20000, maxTotal: 100000 }); // serve as text/plain at /llms-full.txt
-const page = seo.pageSummary({ title: 'Guide', summary: 'A short guide',
-    facts: [['Topic', 'Getting started']], url: 'https://example.com/guide', updated: '2026-10-01' });
-// page.meta is an escaped description attribute value; page.jsonLd is a WebPage object;
-// page.html is an escaped, hidden summary section. Use jsonLdTag(page.jsonLd) in <head>.
 const feed = { title: 'Example', link: site.url, description: 'Recent guides',
     updated: '2026-10-01T12:00:00Z', items: [{ title: 'Guide', url: '/guide', id: 'guide-1',
         published: '2026-10-01T12:00:00Z', summary: 'A short guide', author: 'Example' }] };
@@ -84,7 +108,7 @@ seo.feedLinkTags({ rss: 'https://example.com/feed.xml', atom: 'https://example.c
 
 `jsonLd` also builds `product`, `review`, `aggregateRating`, `imageGallery` (an ImageObject
 array) and `videoObject` (the same VideoObject shape as `video`). Feed URLs should be absolute,
-or relative to the absolute `link`; `llmsFull` resolves section URLs against `site.url`.
+or relative to the absolute `link`; `llmsFull` resolves page URLs against `base` (or `site.url`).
 
 ### Images and responsive pictures (`assets.js`)
 

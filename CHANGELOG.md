@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- `seo.llmsFull` takes `base` and sections of `pages: [{ title, url, text | html }]`: each page
+  renders as `### title`, `URL: …` and its full text (HTML stripped), in input order, and
+  `maxBytes` ends the file with a `(truncated: N more pages at <base>/llms.txt)` line. The
+  2.4.0 `{ url, body }` sections render unchanged. `seo.pageSummary` now converts to an HTML
+  string — `<meta name="ai-summary">`, WebPage JSON-LD and, with string `facts`, a
+  `<noscript><section data-ai-summary>` block — and has `.head`/`.body`; its `meta`, `jsonLd` and
+  `html` are unchanged. `templates/site` serves `/llms-full.txt` and puts the summary in its head.
 - `perf-budget` measures Core Web Vitals (plan T11). `measure({ browser })` opens the page in
   Chrome through `browser-harness` after the byte pass, clicks once, and adds
   `cwv: { lcpMs, inpMs, cls }`. `check()` accepts `lcpMs`, `inpMs` and `cls` budgets and throws
