@@ -98,9 +98,9 @@ ${summary.head}</head><body>${summary.body}…`; // or `${summary}` in <head> wh
 
 ```js
 const site = { name: 'Example', url: 'https://example.com/' };
-const feed = { title: 'Example', link: site.url, description: 'Recent guides',
-    updated: '2026-10-01T12:00:00Z', items: [{ title: 'Guide', url: '/guide', id: 'guide-1',
-        published: '2026-10-01T12:00:00Z', summary: 'A short guide', author: 'Example' }] };
+const feed = { title: 'Example', link: site.url, description: 'Recent guides', language: 'en',
+    selfUrl: '/feed.xml', items: [{ title: 'Guide', link: '/guide', guid: 'guide-1',
+        published: '2026-10-01T12:00:00Z', description: 'A short guide', content: '<p>Full text</p>', author: 'Example' }] };
 seo.feedXml(feed, { format: 'rss' });  // serve as application/rss+xml
 seo.feedXml(feed, { format: 'atom' }); // serve as application/atom+xml
 seo.feedLinkTags({ rss: 'https://example.com/feed.xml', atom: 'https://example.com/atom.xml', title: 'Example' });
@@ -108,7 +108,10 @@ seo.feedLinkTags({ rss: 'https://example.com/feed.xml', atom: 'https://example.c
 
 `jsonLd` also builds `product`, `review`, `aggregateRating`, `imageGallery` (an ImageObject
 array) and `videoObject` (the same VideoObject shape as `video`). Feed URLs should be absolute,
-or relative to the absolute `link`; `llmsFull` resolves page URLs against `base` (or `site.url`).
+or relative to the absolute `link`. `feedXml` throws on a format other than `rss` or `atom`. Without
+`updated`, the feed uses its newest item date, or the current time when there are no items. Without a
+`guid`, an item's link is its RSS guid (`isPermaLink="true"`) and its Atom id. The 2.4.0 item names `url`,
+`id` and `summary` still work. `llmsFull` resolves page URLs against `base` (or `site.url`).
 
 ### Images and responsive pictures (`assets.js`)
 

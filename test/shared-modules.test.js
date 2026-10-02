@@ -10,6 +10,38 @@ assert.ok(seo.robotsTxt({ sitemaps: ['https://x.test/sitemap.xml'] }).includes('
 assert.ok(!seo.sitemapXml([{ loc: '/relative' }, { loc: 'https://ok.test/' }]).includes('/relative'), 'sitemaps hold absolute URLs only');
 assert.ok(seo.llmsTxt({ name: 'X', summary: 's', sections: [] }).startsWith('# X'));
 
+{
+    const feed = { title: `News & <Notes> "A" 'B'`, link: 'https://x.test/', description: `Fresh & <new> "A" 'B'`, language: 'en',
+        selfUrl: '/feed.xml', items: [
+            { title: 'First', link: '/one', description: 'One & <b>', content: '<p>Full & body</p>', author: 'Ada',
+                published: '2026-10-01T12:34:56Z', updated: new Date('2026-10-03T08:00:00Z') },
+            { title: `T & <t> "q" 'a'`, link: `/two?a=1&b="2"'`, guid: 'urn:x:two', published: new Date('2026-10-02T09:00:00Z') },
+        ] };
+    const rss = seo.feedXml(feed);
+    assert.ok(rss.startsWith('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>'));
+    assert.ok(rss.includes(`<title>News &amp; &lt;Notes&gt; &quot;A&quot; &#39;B&#39;</title><link>https://x.test/</link><description>Fresh &amp; &lt;new&gt; &quot;A&quot; &#39;B&#39;</description><language>en</language><lastBuildDate>Sat, 03 Oct 2026 08:00:00 GMT</lastBuildDate><atom:link href="https://x.test/feed.xml" rel="self" type="application/rss+xml"/>`), 'channel elements, updated = newest item');
+    assert.ok(rss.includes('<item><title>First</title><link>https://x.test/one</link><guid isPermaLink="true">https://x.test/one</guid><description>One &amp; &lt;b&gt;</description><pubDate>Thu, 01 Oct 2026 12:34:56 GMT</pubDate><author>Ada</author></item>'), 'guid defaults to the link');
+    assert.ok(rss.includes('<item><title>T &amp; &lt;t&gt; &quot;q&quot; &#39;a&#39;</title><link>https://x.test/two?a=1&amp;b=%222%22%27</link><guid isPermaLink="false">urn:x:two</guid><pubDate>Fri, 02 Oct 2026 09:00:00 GMT</pubDate></item>'), 'explicit guid, escaped title and link');
+    assert.ok(seo.feedXml({ ...feed, items: [{ title: 't', link: `http://a b/<x>&"'` }] }).includes('<link>http://a b/&lt;x&gt;&amp;&quot;&#39;</link>'), 'an unparseable link is still escaped');
+    assert.ok(rss.indexOf('<title>First</title>') < rss.indexOf('urn:x:two'), 'items keep their order');
+    for (const m of rss.match(/<pubDate>[^<]*<\/pubDate>|<lastBuildDate>[^<]*<\/lastBuildDate>/g)) assert.match(m, />[A-Z][a-z]{2}, \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2} GMT</, 'RFC 822');
+
+    const atom = seo.feedXml(feed, { format: 'atom' });
+    assert.ok(atom.includes(`<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><id>https://x.test/</id><title>News &amp; &lt;Notes&gt; &quot;A&quot; &#39;B&#39;</title><subtitle>Fresh &amp; &lt;new&gt; &quot;A&quot; &#39;B&#39;</subtitle><updated>2026-10-03T08:00:00.000Z</updated><link rel="alternate" href="https://x.test/"/><link rel="self" href="https://x.test/feed.xml"/>`), 'feed elements, updated = newest item');
+    assert.ok(atom.includes('<entry><id>https://x.test/one</id><title>First</title><link href="https://x.test/one"/><published>2026-10-01T12:34:56.000Z</published><updated>2026-10-03T08:00:00.000Z</updated><summary>One &amp; &lt;b&gt;</summary><content type="html">&lt;p&gt;Full &amp; body&lt;/p&gt;</content><author><name>Ada</name></author></entry>'));
+    assert.ok(atom.includes(`<entry><id>urn:x:two</id><title>T &amp; &lt;t&gt; &quot;q&quot; &#39;a&#39;</title><link href="https://x.test/two?a=1&amp;b=%222%22%27"/><published>2026-10-02T09:00:00.000Z</published><updated>2026-10-02T09:00:00.000Z</updated></entry>`), 'updated falls back to published');
+    for (const m of atom.match(/<(published|updated)>[^<]*</g)) assert.match(m, />\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z</, 'RFC 3339');
+    assert.ok(seo.feedXml({ ...feed, updated: '2026-09-01T00:00:00Z' }, { format: 'atom' }).includes('<updated>2026-09-01T00:00:00.000Z</updated><link'), 'feed.updated wins');
+
+    const empty = { title: 'E', link: 'https://x.test/', description: 'd', items: [] };
+    assert.match(seo.feedXml(empty), /<channel><title>E<\/title><link>https:\/\/x\.test\/<\/link><description>d<\/description><lastBuildDate>[^<]+GMT<\/lastBuildDate>\n<\/channel><\/rss>\n$/);
+    assert.ok(!seo.feedXml(empty).includes('<item>') && !seo.feedXml(empty).includes('atom:link'));
+    const emptyAtom = seo.feedXml(empty, { format: 'atom' });
+    assert.match(emptyAtom, /<updated>\d{4}-\d{2}-\d{2}T[^<]+Z<\/updated><link rel="alternate" href="https:\/\/x\.test\/"\/>\n<\/feed>\n$/, 'empty feed is updated now');
+    assert.ok(!emptyAtom.includes('<entry>') && !emptyAtom.includes('rel="self"'));
+    assert.throws(() => seo.feedXml(feed, { format: 'json' }), /rss or atom/);
+}
+
 assert.ok(icons.names().length >= 40);
 for (const n of icons.names()) assert.ok(/<(path|circle|rect)/.test(icons.svg(n)), `glyph: ${n}`);
 assert.equal(icons.resolve('yt'), 'youtube');

@@ -296,20 +296,31 @@ function feedDate(value, format) {
     return Number.isNaN(date.getTime()) ? '' : (format === 'rss' ? date.toUTCString() : date.toISOString());
 }
 
-/** One item shape for RSS 2.0 and Atom 1.0. Dates are rendered in each format's required form. */
-function feedXml({ title, link, description, updated, items = [] } = {}, { format = 'rss' } = {}) {
+/**
+ * One feed shape for RSS 2.0 and Atom 1.0; `format` is 'rss' or 'atom', anything else throws.
+ * feed: { title, link, description, language?, updated?, selfUrl?, items }
+ * item: { title, link, guid?, description?, content?, author?, published, updated? } (the 2.4.0
+ * `url`, `id` and `summary` names still work). Dates are Dates or ISO strings: RFC 822 in RSS,
+ * RFC 3339 in Atom. Relative item links resolve against feed.link; items keep their order.
+ */
+function feedXml({ title, link, description, language, updated, selfUrl, items = [] } = {}, { format = 'rss' } = {}) {
     if (format !== 'rss' && format !== 'atom') throw new TypeError('format must be rss or atom');
     const home = absolute(link);
+    const self = absolute(selfUrl, home);
+    const times = items.map((item) => new Date(item.updated || item.published || 0).getTime()).filter((t) => t > 0);
+    const built = feedDate(updated || (times.length ? Math.max(...times) : Date.now()), format);
     const rows = items.map((item) => {
-        const url = absolute(item.url, home);
-        const id = item.id || url;
+        const url = absolute(item.link || item.url, home);
+        const guid = item.guid || item.id;
+        const summary = item.description || item.summary;
         const published = feedDate(item.published || item.updated, format);
         const modified = feedDate(item.updated || item.published, format);
-        if (format === 'rss') return `  <item><title>${xml(item.title)}</title><link>${xml(url)}</link><guid isPermaLink="${item.id ? 'false' : 'true'}">${xml(id)}</guid>${published ? `<pubDate>${xml(published)}</pubDate>` : ''}${item.summary ? `<description>${xml(item.summary)}</description>` : ''}${item.author ? `<author>${xml(item.author)}</author>` : ''}</item>`;
-        return `  <entry><title>${xml(item.title)}</title><link href="${xml(url)}"/><id>${xml(absolute(id, home))}</id>${modified ? `<updated>${xml(modified)}</updated>` : ''}${published ? `<published>${xml(published)}</published>` : ''}${item.summary ? `<summary>${xml(item.summary)}</summary>` : ''}${item.author ? `<author><name>${xml(item.author)}</name></author>` : ''}</entry>`;
+        if (format === 'rss') return `  <item><title>${esc(item.title)}</title><link>${esc(url)}</link><guid isPermaLink="${guid ? 'false' : 'true'}">${esc(guid || url)}</guid>${summary ? `<description>${esc(summary)}</description>` : ''}${published ? `<pubDate>${esc(published)}</pubDate>` : ''}${item.author ? `<author>${esc(item.author)}</author>` : ''}</item>`;
+        return `  <entry><id>${esc(guid ? absolute(guid, home) : url)}</id><title>${esc(item.title)}</title><link href="${esc(url)}"/>${published ? `<published>${esc(published)}</published>` : ''}${modified ? `<updated>${esc(modified)}</updated>` : ''}${summary ? `<summary>${esc(summary)}</summary>` : ''}${item.content ? `<content type="html">${esc(item.content)}</content>` : ''}${item.author ? `<author><name>${esc(item.author)}</name></author>` : ''}</entry>`;
     });
-    if (format === 'rss') return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>${xml(title)}</title><link>${xml(home)}</link><description>${xml(description)}</description>${feedDate(updated, format) ? `<lastBuildDate>${xml(feedDate(updated, format))}</lastBuildDate>` : ''}\n${rows.join('\n')}\n</channel></rss>\n`;
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>${xml(title)}</title><link href="${xml(home)}"/><id>${xml(home)}</id>${description ? `<subtitle>${xml(description)}</subtitle>` : ''}${feedDate(updated, format) ? `<updated>${xml(feedDate(updated, format))}</updated>` : ''}\n${rows.join('\n')}\n</feed>\n`;
+    const body = rows.length ? `\n${rows.join('\n')}` : '';
+    if (format === 'rss') return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"${self ? ' xmlns:atom="http://www.w3.org/2005/Atom"' : ''}><channel><title>${esc(title)}</title><link>${esc(home)}</link><description>${esc(description)}</description>${language ? `<language>${esc(language)}</language>` : ''}<lastBuildDate>${esc(built)}</lastBuildDate>${self ? `<atom:link href="${esc(self)}" rel="self" type="application/rss+xml"/>` : ''}${body}\n</channel></rss>\n`;
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"${language ? ` xml:lang="${esc(language)}"` : ''}><id>${esc(home)}</id><title>${esc(title)}</title>${description ? `<subtitle>${esc(description)}</subtitle>` : ''}<updated>${esc(built)}</updated><link rel="alternate" href="${esc(home)}"/>${self ? `<link rel="self" href="${esc(self)}"/>` : ''}${body}\n</feed>\n`;
 }
 
 function feedLinkTags({ rss, atom, title = 'Feed' } = {}) {
