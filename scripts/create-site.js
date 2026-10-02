@@ -28,6 +28,13 @@ function main(args) {
         }
     }
     replace(target);
+    // Pin the scaffold to the release that generated it, not to the tag typed in the template: the
+    // template must keep naming a published tag (pin drift checks tracked files before a new tag exists).
+    const version = require(path.join(__dirname, '..', 'package.json')).version;
+    const pkgFile = path.join(target, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
+    pkg.dependencies['openvibe-shared'] = pkg.dependencies['openvibe-shared'].replace(/\/v\d+\.\d+\.\d+$/, `/v${version}`);
+    fs.writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n');
     console.log(`Created ${target}`);
 }
 
