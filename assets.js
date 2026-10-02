@@ -38,11 +38,12 @@ const FORMAT_RANK = { 'image/avif': 0, 'image/webp': 1 };
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /** The content hash of bytes (Buffer|string|Uint8Array): sha256, first `HASH_LEN` hex. */
-function hash(data) {
+function hashAsset(data) {
     if (data == null) return '';
     const buf = Buffer.isBuffer(data) || data instanceof Uint8Array ? data : Buffer.from(String(data));
     return crypto.createHash('sha256').update(buf).digest('hex').slice(0, HASH_LEN);
 }
+const hash = hashAsset;
 
 /** Drop an existing `?v=` (and a dangling `?`/`&`) from the path part, keeping its query and fragment. */
 function versionless(src) {
@@ -98,7 +99,8 @@ const formatRank = (type) => (FORMAT_RANK[String(type).toLowerCase()] != null ? 
  *   src, hash          the fallback image (?v= added when hash is given)
  *   alt                alt text (escaped; pass '' only for decorative images)
  *   width, height      intrinsic pixels, so the box is reserved before the image loads
- *   sizes              sizes attribute (given to the <img> only when it also has a srcset)
+ *   sizes              sizes attribute on generated sources and the fallback <img>
+ *   widths             widths of existing <base>-<width>.avif and .webp variants
  *   srcset             fallback entries for the <img>: [{ src, hash?, w? | x? }]
  *   sources            [{ type, src? , hash?, entries? | srcset?, media?, sizes? }] — a source with
  *                      no srcset is dropped; AVIF sorts before WebP before the rest
@@ -108,7 +110,14 @@ const formatRank = (type) => (FORMAT_RANK[String(type).toLowerCase()] != null ? 
 function picture(o = {}) {
     const { src, alt = '', width, height, sizes, className, id, loading = 'lazy', decoding = 'async', fetchpriority, srcset: fallbackEntries } = o;
     if (!src) return '';
-    const built = (Array.isArray(o.sources) ? o.sources : [])
+    const variantWidths = Array.isArray(o.widths) ? [...new Set(o.widths.map(Number))]
+        .filter((w) => Number.isSafeInteger(w) && w > 0) : [];
+    const base = String(src).split(/[?#]/)[0].replace(/\.[^./]+$/, '');
+    const generatedSources = variantWidths.length ? ['avif', 'webp'].map((format) => ({
+        type: `image/${format}`,
+        entries: variantWidths.map((w) => ({ src: `${base}-${w}.${format}`, w })),
+    })) : [];
+    const built = [...generatedSources, ...(Array.isArray(o.sources) ? o.sources : [])]
         .map((s, i) => ({ s, i }))
         .filter(({ s }) => s && s.type && (s.src || s.srcset || s.entries))
         .map(({ s, i }) => {
@@ -128,7 +137,7 @@ function picture(o = {}) {
         height != null ? `height="${esc(height)}"` : '',
         id ? `id="${esc(id)}"` : '',
         className ? `class="${esc(className)}"` : '',
-        sizes && fallback ? `sizes="${esc(sizes)}"` : '',
+        sizes ? `sizes="${esc(sizes)}"` : '',
         loading ? `loading="${esc(loading)}"` : '',
         decoding ? `decoding="${esc(decoding)}"` : '',
         fetchpriority ? `fetchpriority="${esc(fetchpriority)}"` : '',
@@ -137,4 +146,4 @@ function picture(o = {}) {
     return built.length ? `<picture>${built.join('')}${img}</picture>` : img;
 }
 
-module.exports = { hash, url, srcset, picture };
+module.exports = { hash, hashAsset, url, srcset, picture };

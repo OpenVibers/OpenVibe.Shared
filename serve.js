@@ -14,13 +14,13 @@
  * copies on openvibe.network. Only the files openvibe-shared/files lists are served.
  */
 const fs = require('fs');
-const crypto = require('crypto');
 const files = require('./files');
 const cache = require('./cache-policy');
+const { hashAsset } = require('./assets');
 
 const hashes = new Map();
 function hashOf(name) {
-    if (!hashes.has(name)) hashes.set(name, crypto.createHash('sha256').update(fs.readFileSync(files.path(name))).digest('hex').slice(0, 12));
+    if (!hashes.has(name)) hashes.set(name, hashAsset(fs.readFileSync(files.path(name))));
     return hashes.get(name);
 }
 

@@ -6,6 +6,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- The asset pipeline adds `hashAsset(bytes)`, generated AVIF and WebP srcsets from
+  `picture({ src, widths, ... })`, and `openvibe-build-assets` to copy files to
+  hashed names with a `manifest.json` lookup. The builder does not transcode images.
+
 - `openvibe-shared/assets` (plan T11): content-addressed asset URLs and responsive `<picture>` markup for
   a product page. `hash(bytes)` is the estate's sha256 truncated to 12 hex; `url(src, hash)` appends
   `?v=`, replaces an old one and leaves the path unchanged when there is no hash; `srcset(entries)` builds
