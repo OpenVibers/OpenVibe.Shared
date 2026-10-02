@@ -16,6 +16,7 @@
     "./analytics/schema": "./analytics/schema.js",
     "./analytics/tracker": "./analytics/tracker.js",
     "./app-icon": "./app-icon.js",
+    "./assets": "./assets.js",
     "./auth-client": "./auth-client.js",
     "./brand": "./brand.js",
     "./browser-harness": "./browser-harness.js",
