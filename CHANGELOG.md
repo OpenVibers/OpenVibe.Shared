@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## Unreleased
+
+- `openvibe-shared/assets` (plan T11): content-addressed asset URLs and responsive `<picture>` markup for
+  a product page. `hash(bytes)` is the estate's sha256 truncated to 12 hex; `url(src, hash)` appends
+  `?v=`, replaces an old one and leaves the path unchanged when there is no hash; `srcset(entries)` builds
+  a srcset; `picture({ src, hash?, alt, width, height, sizes, sources })` emits AVIF before WebP before
+  the fallback `<img>` (any other type ranks after WebP), renders a plain `<img>` when there is nothing to
+  choose between, and renders nothing without a `src`. Formats come from the caller: this package does not
+  transcode images, so it only emits the AVIF/WebP variants a site's own build produced.
+
 ## 2.4.0 — 2026-10-02
 
 - The SEO kit adds `llmsFull` for full-text AI maps, `pageSummary` for escaped page
