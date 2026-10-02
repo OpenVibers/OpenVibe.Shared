@@ -1,0 +1,14 @@
+{
+  "name": "__NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "test": "node test/smoke.test.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v2.4.0"
+  }
+}
