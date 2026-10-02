@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "express": "^4.22.3",
-    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v2.5.0"
+    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v2.4.0"
   }
 }
