@@ -112,9 +112,21 @@ renders a plain `<img>`, never an empty `<picture>`; with no `src` it renders no
 `srcset`, `sizes`, `media`, `class`, `id`, `loading` (`lazy`), `decoding` (`async`) and `fetchpriority`
 all pass through escaped, and a fixed attribute order means the same input renders the same bytes.
 
-**Formats are the caller's.** Shared does not transcode images and there is no image pipeline in this
-package: pass the AVIF/WebP variants your own build produced, and leave `sources` off when only the
-original exists. This module only emits the sources it is given, in the order a browser needs them.
+For variants named `hero-400.avif`, `hero-800.avif`, and their WebP equivalents, pass
+`widths: [400, 800]` with `src: '/img/hero.jpg'`. `picture()` derives both srcsets and keeps the
+original JPEG as the `<img>` fallback. Supply widths only for variants the site has generated.
+`hashAsset(bytes)` is the same 12-hex content hash used by `serve.hashOf()`; `hash()` remains an alias.
+
+To copy a directory of static files to hashed filenames, run:
+
+```sh
+openvibe-build-assets public/img dist/img
+```
+
+The command writes `dist/img/manifest.json`, mapping paths such as `hero.jpg` to
+`hero.<hash>.jpg` (and preserving subdirectories). `cache-policy.isHashed()` recognises these
+names as immutable. Shared does not transcode images: generate AVIF and WebP variants in the
+site build before using `widths`, or pass existing variants through `sources`.
 
 ### Metrics and readiness (server)
 
