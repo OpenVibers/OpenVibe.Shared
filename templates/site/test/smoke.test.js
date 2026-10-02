@@ -26,6 +26,8 @@ function request(server, path) {
         assert.equal(home.status, 200);
         assert.ok(home.body.includes(`<link rel="canonical" href="${homeUrl}">`));
         assert.ok(home.body.includes(`<meta property="og:url" content="${homeUrl}">`));
+        assert.match(home.body, /<meta name="ai-summary" content="[^"]+">/);
+        assert.match(home.body, /"@type":"WebPage"/);
         assert.match(home.body, /OpenVibeNavbar\.init\(/);
         assert.match(home.body, /OVWebRuntime\.create\(\{ features: \{\}, routes: \[\] \}\)\.boot\(\)/);
         assert.equal(home.headers['cache-control'], 'public, max-age=120, stale-while-revalidate=3600');
@@ -43,6 +45,11 @@ function request(server, path) {
         const llms = await request(server, '/llms.txt');
         assert.equal(llms.status, 200);
         assert.match(llms.headers['content-type'], /^text\/plain/);
+
+        const llmsFull = await request(server, '/llms-full.txt');
+        assert.equal(llmsFull.status, 200);
+        assert.match(llmsFull.headers['content-type'], /^text\/plain/);
+        assert.ok(llmsFull.body.includes(`URL: ${homeUrl}\n`));
 
         const script = await request(server, '/shared/web-runtime.js');
         assert.equal(script.status, 200);

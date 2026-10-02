@@ -29,14 +29,21 @@ app.get('/llms.txt', (req, res) => {
     res.type('text/plain').send(seo.llmsTxt({ name, summary: name, sections: [{ title: 'Pages', links: [{ title: 'Home', url: home }] }] }));
 });
 
+app.get('/llms-full.txt', (req, res) => {
+    res.set('Cache-Control', cache.assetHeaders(req.path));
+    res.type('text/plain').send(seo.llmsFull({ site: name, summary: name, base: home, sections: [{ title: 'Pages', pages: [{ title: 'Home', url: '/', text: name }] }] }));
+});
+
 app.get('/', cache.applyHtml(), (req, res) => {
     const head = seo.headTags({ title: name, siteName: name, description: name, canonical: home });
+    const summary = seo.pageSummary({ title: name, summary: name, url: home });
     res.type('html').send(`<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 ${head}
+${summary}
 <script src="${serve.url('web-runtime.js')}" defer></script>
 <script src="${serve.url('navbar.js')}" defer></script>
 <script src="${serve.url('footer.js')}" defer></script>
