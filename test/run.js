@@ -13,4 +13,4 @@
  * a skipped file is listed with ○ and never counted as passed.
  */
 'use strict';
-require('../test-runner').main({ dir: __dirname, timeoutMs: 60000, pad: 36 });
+require('../test-runner').main({ dir: __dirname, timeoutMs: 60000, pad: 36, serial: /-chrome\.test\.js$/ });

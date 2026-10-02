@@ -57,7 +57,8 @@ function runOne(file, { dir, cwd, env, timeoutMs, nodeArgs }) {
  * opts: dir (required: the test directory), argv (default process.argv.slice(2)), cwd (default dir/..),
  * timeoutMs (60000), parallel (min(4, cpus-1)), env (added to process.env; NODE_ENV=test by default),
  * hide (a RegExp: output lines of a failed file left out, e.g. /^\[DB\] /), pad (file-name column, 44),
- * match (which files, default /\.test\.js$/), nodeArgs ([]), log (console.log).
+ * match (which files, default /\.test\.js$/), serial (files to run alone after parallel files),
+ * nodeArgs ([]), log (console.log).
  */
 async function run(opts = {}) {
     const dir = opts.dir;
@@ -79,7 +80,8 @@ async function run(opts = {}) {
     };
     const parallel = Math.max(1, opts.parallel || Math.min(4, os.cpus().length - 1));
     const pad = opts.pad || 44;
-    const queue = [...files];
+    const queue = [], serial = [];
+    for (const file of files) (opts.serial && opts.serial.test(file) ? serial : queue).push(file);
     const results = [];
     await Promise.all(Array.from({ length: parallel }, async () => {
         while (queue.length) {
@@ -89,6 +91,12 @@ async function run(opts = {}) {
             log(`${mark} ${r.file.padEnd(pad)} ${String(r.ms).padStart(6)}ms${r.state === 'skip' ? `  ${r.skips.join('; ')}` : ''}`);
         }
     }));
+    for (const file of serial) {
+        const r = await runOne(file, cfg);
+        results.push(r);
+        const mark = r.state === 'pass' ? '✓' : r.state === 'skip' ? '○' : '✗';
+        log(`${mark} ${r.file.padEnd(pad)} ${String(r.ms).padStart(6)}ms${r.state === 'skip' ? `  ${r.skips.join('; ')}` : ''}`);
+    }
     results.sort((a, b) => a.file.localeCompare(b.file));
     const failed = results.filter((r) => r.state === 'fail');
     const skipped = results.filter((r) => r.state === 'skip');
