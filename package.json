@@ -78,10 +78,12 @@
     "analytics/",
     "docs/schemas/",
     "scripts/",
+    "templates/",
     "CHANGELOG.md"
   ],
   "scripts": {
     "test": "node test/run.js",
+    "create-site": "node scripts/create-site.js",
     "size": "node scripts/size-report.js",
     "build:icons": "python3 scripts/build-nav-icons.py",
     "build:themes": "node scripts/build-theme-loader.js",

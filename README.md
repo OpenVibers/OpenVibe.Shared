@@ -32,6 +32,15 @@ subpath exports rather than a set of `@openvibe/*` packages:
 
 ## Consuming it
 
+### Start a new site
+
+```sh
+npm run create-site -- my-site
+```
+
+The command creates `./my-site` with a pinned Shared dependency, a small Express server,
+discovery routes, and a smoke test. Set `SITE_URL` to the site's public origin before serving it.
+
 ### Server side: pin a release tarball
 
 ```json
