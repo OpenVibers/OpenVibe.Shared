@@ -117,6 +117,31 @@ const jsonLd = {
     video({ name, url, description, thumbnailUrl, uploadDate, duration, contentUrl, embedUrl } = {}) {
         return { '@context': 'https://schema.org', '@type': 'VideoObject', name, url, description: description || name, thumbnailUrl, uploadDate, ...(duration ? { duration } : {}), ...(contentUrl ? { contentUrl } : {}), ...(embedUrl ? { embedUrl } : {}) };
     },
+    videoObject(options = {}) { return jsonLd.video(options); },
+    product({ name, url, description, image, sku, brand, offers, aggregateRating, review } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'Product', name, url, description,
+            ...(image ? { image } : {}), ...(sku ? { sku } : {}),
+            ...(brand ? { brand: typeof brand === 'string' ? { '@type': 'Brand', name: brand } : brand } : {}),
+            ...(offers ? { offers } : {}), ...(aggregateRating ? { aggregateRating } : {}), ...(review ? { review } : {}) };
+    },
+    review({ name, url, reviewBody, author, datePublished, itemReviewed, rating, bestRating = 5, worstRating = 1 } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'Review', name, url, reviewBody,
+            ...(author ? { author: typeof author === 'string' ? { '@type': 'Person', name: author } : author } : {}),
+            ...(datePublished ? { datePublished } : {}), ...(itemReviewed ? { itemReviewed } : {}),
+            ...(rating != null ? { reviewRating: { '@type': 'Rating', ratingValue: rating, bestRating, worstRating } } : {}) };
+    },
+    aggregateRating({ ratingValue, ratingCount, reviewCount, bestRating = 5, worstRating = 1 } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'AggregateRating', ratingValue,
+            ...(ratingCount != null ? { ratingCount } : {}), ...(reviewCount != null ? { reviewCount } : {}), bestRating, worstRating };
+    },
+    imageGallery(images = []) {
+        return images.map((image) => {
+            const item = typeof image === 'string' ? { url: image } : image;
+            return { '@context': 'https://schema.org', '@type': 'ImageObject', url: item.url,
+                ...(item.name ? { name: item.name } : {}), ...(item.caption ? { caption: item.caption } : {}),
+                ...(item.width != null ? { width: item.width } : {}), ...(item.height != null ? { height: item.height } : {}) };
+        });
+    },
 };
 
 /** urls: [{ loc, lastmod?, changefreq?, priority?, alternates?: [{hreflang, href}], images?: [url] }] — absolute http(s) only. */
@@ -171,4 +196,67 @@ function llmsTxt({ name, summary, details, sections = [] } = {}) {
     return out.join('\n');
 }
 
-module.exports = { headTags, jsonLd, jsonLdTag, sitemapXml, sitemapIndexXml, robotsTxt, llmsTxt, clip, esc, absolute, AI_AND_SEARCH_BOTS };
+/** Preserve full-text paragraphs while enforcing a character limit, including the ellipsis. */
+function limitText(value, max) {
+    const text = String(value == null ? '' : value);
+    if (max == null || !Number.isFinite(max)) return text;
+    const size = Math.max(0, Math.floor(max));
+    if (text.length <= size) return text;
+    return size ? text.slice(0, size - 1).trimEnd() + '…' : '';
+}
+
+/** /llms-full.txt: the llms.txt header followed by full, plain-text sections. */
+function llmsFull({ site, summary, sections = [], maxChars, maxTotal } = {}) {
+    const name = site && typeof site === 'object' ? site.name || site.title : site;
+    const base = site && typeof site === 'object' ? site.url : site;
+    let out = llmsTxt({ name, summary });
+    for (const section of sections) {
+        if (!section) continue;
+        const url = absolute(section.url, base);
+        const body = limitText(String(section.body == null ? '' : section.body).trim(), section.maxChars == null ? maxChars : section.maxChars);
+        out += `\n## ${section.title || ''}\n\n${url}\n\n${body}\n`;
+    }
+    return limitText(out, maxTotal);
+}
+
+/** A description value, WebPage data, and a hidden text snapshot for a page. */
+function pageSummary({ title, summary, facts = [], url, updated } = {}) {
+    const pageUrl = absolute(url);
+    const text = String(summary == null ? '' : summary);
+    const jsonLd = { '@context': 'https://schema.org', '@type': 'WebPage', name: title, url: pageUrl,
+        abstract: text, ...(updated ? { dateModified: updated } : {}) };
+    const rows = facts.map(([key, value]) => `<dt>${esc(key)}</dt><dd>${esc(value)}</dd>`).join('');
+    const html = `<section data-ov-summary hidden><h2>${esc(title)}</h2><p>${esc(text)}</p>${rows ? `<dl>${rows}</dl>` : ''}${pageUrl ? `<a href="${esc(pageUrl)}">${esc(pageUrl)}</a>` : ''}${updated ? `<time datetime="${esc(updated)}">${esc(updated)}</time>` : ''}</section>`;
+    return { meta: esc(clip(text, 160)), jsonLd, html };
+}
+
+function feedDate(value, format) {
+    if (!value) return '';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : (format === 'rss' ? date.toUTCString() : date.toISOString());
+}
+
+/** One item shape for RSS 2.0 and Atom 1.0. Dates are rendered in each format's required form. */
+function feedXml({ title, link, description, updated, items = [] } = {}, { format = 'rss' } = {}) {
+    if (format !== 'rss' && format !== 'atom') throw new TypeError('format must be rss or atom');
+    const home = absolute(link);
+    const rows = items.map((item) => {
+        const url = absolute(item.url, home);
+        const id = item.id || url;
+        const published = feedDate(item.published || item.updated, format);
+        const modified = feedDate(item.updated || item.published, format);
+        if (format === 'rss') return `  <item><title>${xml(item.title)}</title><link>${xml(url)}</link><guid isPermaLink="${item.id ? 'false' : 'true'}">${xml(id)}</guid>${published ? `<pubDate>${xml(published)}</pubDate>` : ''}${item.summary ? `<description>${xml(item.summary)}</description>` : ''}${item.author ? `<author>${xml(item.author)}</author>` : ''}</item>`;
+        return `  <entry><title>${xml(item.title)}</title><link href="${xml(url)}"/><id>${xml(absolute(id, home))}</id>${modified ? `<updated>${xml(modified)}</updated>` : ''}${published ? `<published>${xml(published)}</published>` : ''}${item.summary ? `<summary>${xml(item.summary)}</summary>` : ''}${item.author ? `<author><name>${xml(item.author)}</name></author>` : ''}</entry>`;
+    });
+    if (format === 'rss') return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>${xml(title)}</title><link>${xml(home)}</link><description>${xml(description)}</description>${feedDate(updated, format) ? `<lastBuildDate>${xml(feedDate(updated, format))}</lastBuildDate>` : ''}\n${rows.join('\n')}\n</channel></rss>\n`;
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom"><title>${xml(title)}</title><link href="${xml(home)}"/><id>${xml(home)}</id>${description ? `<subtitle>${xml(description)}</subtitle>` : ''}${feedDate(updated, format) ? `<updated>${xml(feedDate(updated, format))}</updated>` : ''}\n${rows.join('\n')}\n</feed>\n`;
+}
+
+function feedLinkTags({ rss, atom, title = 'Feed' } = {}) {
+    const out = [];
+    if (rss) out.push(`<link rel="alternate" type="application/rss+xml" title="${esc(title)}" href="${esc(absolute(rss))}">`);
+    if (atom) out.push(`<link rel="alternate" type="application/atom+xml" title="${esc(title)}" href="${esc(absolute(atom))}">`);
+    return out.join('\n');
+}
+
+module.exports = { headTags, jsonLd, jsonLdTag, sitemapXml, sitemapIndexXml, robotsTxt, llmsTxt, llmsFull, pageSummary, feedXml, feedLinkTags, clip, esc, absolute, AI_AND_SEARCH_BOTS };
