@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- `perf-budget` measures Core Web Vitals (plan T11). `measure({ browser })` opens the page in
+  Chrome through `browser-harness` after the byte pass, clicks once, and adds
+  `cwv: { lcpMs, inpMs, cls }`. `check()` accepts `lcpMs`, `inpMs` and `cls` budgets and throws
+  when they are used without `cwv`; `format()` prints a `cwv:` line. Without `browser`,
+  measurement is unchanged and needs no Chrome.
+
 - The asset pipeline adds `hashAsset(bytes)`, generated AVIF and WebP srcsets from
   `picture({ src, widths, ... })`, and `openvibe-build-assets` to copy files to
   hashed names with a `manifest.json` lookup. The builder does not transcode images.

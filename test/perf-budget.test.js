@@ -33,6 +33,17 @@ const { measure, check, format, assetsOf } = require('../perf-budget');
     assert.deepStrictEqual(check(m, { jsFiles: 1 }), [{ name: 'jsFiles', value: 2, budget: 1 }]);
     assert.match(format(m, check(m, { jsFiles: 1 })), /over budget: jsFiles 2 > 1/);
     assert.throws(() => check(m, { jsKb: 1 }), /unknown budget/);
+    assert.strictEqual(m.cwv, undefined, 'no browser, no vitals');
+
+    // Core Web Vitals budgets read m.cwv (from measure({ browser }), Chrome-backed in perf-budget-chrome.test.js).
+    for (const name of ['lcpMs', 'inpMs', 'cls']) assert.throws(() => check(m, { [name]: 1 }), new RegExp(`perf-budget: ${name} needs measure\\(\\{ browser \\}\\)`));
+    const v = { ...m, cwv: { lcpMs: 1800, inpMs: 120, cls: 0.05 } };
+    assert.deepStrictEqual(check(v, { lcpMs: 2500, inpMs: 200, cls: 0.1, jsFiles: 2 }), [], 'under every budget');
+    assert.deepStrictEqual(check(v, { lcpMs: 1500, inpMs: 100, cls: 0.01 }), [
+        { name: 'lcpMs', value: 1800, budget: 1500 }, { name: 'inpMs', value: 120, budget: 100 }, { name: 'cls', value: 0.05, budget: 0.01 },
+    ]);
+    assert.match(format(v), /\n {2}cwv: lcp 1800 ms, inp 120 ms, cls 0\.05$/);
+    assert.doesNotMatch(format(m), /cwv/);
 
     // A named asset that is missing fails the measurement (a broken page is not a small page).
     files['/'] = files['/'].replace('/a.js', '/gone.js');

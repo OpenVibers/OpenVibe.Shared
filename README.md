@@ -128,6 +128,35 @@ The command writes `dist/img/manifest.json`, mapping paths such as `hero.jpg` to
 names as immutable. Shared does not transcode images: generate AVIF and WebP variants in the
 site build before using `widths`, or pass existing variants through `sources`.
 
+### Performance budgets (`perf-budget.js`)
+
+`measure({ base, path })` weighs a page's first load from the running server (HTML, same-origin
+scripts and stylesheets, raw and brotli) with no browser. `measure({ ..., browser: true })` then
+opens the page in Chrome through `browser-harness`, clicks once at the viewport centre and adds
+`cwv: { lcpMs, inpMs, cls }`, so `check()` takes Core Web Vitals budgets as well. The shared
+test workflow needs no extra step for this, because `ubuntu-latest` has `/usr/bin/google-chrome`.
+Run the check from `extra`:
+
+```yaml
+jobs:
+  test:
+    uses: OpenVibers/OpenVibe.Shared/.github/workflows/test.yml@<sha>
+    with:
+      extra: node scripts/perf/cwv.js
+```
+
+```js
+// scripts/perf/cwv.js: start the site, measure the home page in Chrome, fail over budget.
+const { measure, check, format } = require('openvibe-shared/perf-budget');
+const server = require('../../server/app').listen(0, '127.0.0.1', async () => {
+    const m = await measure({ base: `http://127.0.0.1:${server.address().port}`, path: '/', browser: true });
+    const over = check(m, { htmlBrotliKB: 30, jsBrotliKB: 90, lcpMs: 2500, inpMs: 200, cls: 0.1 });
+    console.log(format(m, over));
+    server.close();
+    process.exitCode = over.length ? 1 : 0;
+});
+```
+
 ### Metrics and readiness (server)
 
 ```js
