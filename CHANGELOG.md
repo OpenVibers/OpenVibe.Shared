@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- `seo.feedXml(feed, { format })` takes items as `{ title, link, guid?, description?, content?, author?,
+  published, updated? }` and the feed's `language` and `selfUrl`. RSS adds `<language>`, an
+  `atom:link rel="self"` and a `lastBuildDate` that is always present. Atom adds
+  `link rel="alternate"`/`rel="self"`, `xml:lang`, `<content type="html">` and an `<updated>` that is
+  always present. Without `updated`, both use the newest item date, or now when there are no items.
+  Text is escaped with `esc`, so `'` becomes `&#39;`. The 2.4.0 `url`, `id` and `summary` still work.
 - `seo.llmsFull` takes `base` and sections of `pages: [{ title, url, text | html }]`: each page
   renders as `### title`, `URL: …` and its full text (HTML stripped), in input order, and
   `maxBytes` ends the file with a `(truncated: N more pages at <base>/llms.txt)` line. The
