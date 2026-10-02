@@ -4,7 +4,7 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## Unreleased
+## 2.4.0 — 2026-10-02
 
 - The SEO kit adds `llmsFull` for full-text AI maps, `pageSummary` for escaped page
   summaries and WebPage data, `feedXml` for RSS 2.0 and Atom 1.0, and `feedLinkTags`.
