@@ -6,6 +6,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.5.0 — 2026-10-02
+
 - `seo.feedXml(feed, { format })` takes items as `{ title, link, guid?, description?, content?, author?,
   published, updated? }` and the feed's `language` and `selfUrl`. RSS adds `<language>`, an
   `atom:link rel="self"` and a `lastBuildDate` that is always present. Atom adds
