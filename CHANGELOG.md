@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.6.0 — 2026-10-03
+
+- `openvibe-shared/shell` (new): `page(o)` composes a whole server-rendered document — the doctype
+  and `<head>` from `seo.headTags` (plus `seo.pageSummary` when `summary` is given), the theme-loader
+  before the first paint, `web-runtime.js`/`navbar.js`/`footer.js` deferred through `serve.url`, the
+  no-JavaScript nav from `frame.noscriptNav`, the body and `frame.footer`. `scripts(o)` returns just
+  the head scripts and the inline boot: the runtime options as JSON with `<` escaped, so a value can
+  never close the `<script>`. Every interpolated value (title, description, `lang`, body attributes)
+  is escaped. `templates/site/server/app.js` now calls `shell.page` instead of hand-writing the
+  document. Additive: a new subpath export, nothing removed.
+
 ## 2.5.0 — 2026-10-02
 
 - `seo.feedXml(feed, { format })` takes items as `{ title, link, guid?, description?, content?, author?,

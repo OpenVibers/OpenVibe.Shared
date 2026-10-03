@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -57,6 +57,7 @@
     "./release-watch": "./release-watch.js",
     "./seo": "./seo.js",
     "./serve": "./serve.js",
+    "./shell": "./shell.js",
     "./showcase": "./showcase.js",
     "./shipped": "./shipped.js",
     "./sso-client": "./sso-client.js",
