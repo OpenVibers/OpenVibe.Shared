@@ -77,6 +77,7 @@ const TYPES = Object.freeze({
 
     // Service / Cross-platform
     WELCOME:             { category: 'service',     priority: 'normal',   icon: '🔥',  title: 'Welcome to OpenVibe' },
+    WATCH_TRIGGERED:     { category: 'service',     priority: 'normal',   icon: '👁️',  title: 'Watch Triggered' },
     SERVICE_ANNOUNCEMENT:{ category: 'admin',       priority: 'high',     icon: '📢',  title: 'Announcement' },
     MAINTENANCE:         { category: 'admin',       priority: 'critical', icon: '🛠️',  title: 'Scheduled Maintenance' },
 });
