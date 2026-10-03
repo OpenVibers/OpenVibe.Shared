@@ -29,7 +29,7 @@ function request(server, path) {
         assert.match(home.body, /<meta name="ai-summary" content="[^"]+">/);
         assert.match(home.body, /"@type":"WebPage"/);
         assert.match(home.body, /OpenVibeNavbar\.init\(/);
-        assert.match(home.body, /OVWebRuntime\.create\(\{ features: \{\}, routes: \[\] \}\)\.boot\(\)/);
+        assert.match(home.body, /OVWebRuntime\.create\(\{"features":\{\},"routes":\[\]\}\)\.boot\(\)/);
         assert.equal(home.headers['cache-control'], 'public, max-age=120, stale-while-revalidate=3600');
 
         const robots = await request(server, '/robots.txt');

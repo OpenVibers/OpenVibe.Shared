@@ -2,7 +2,7 @@
 
 const express = require('express');
 const serve = require('openvibe-shared/serve');
-const frame = require('openvibe-shared/frame');
+const shell = require('openvibe-shared/shell');
 const seo = require('openvibe-shared/seo');
 const cache = require('openvibe-shared/cache-policy');
 
@@ -35,26 +35,17 @@ app.get('/llms-full.txt', (req, res) => {
 });
 
 app.get('/', cache.applyHtml(), (req, res) => {
-    const head = seo.headTags({ title: name, siteName: name, description: name, canonical: home });
-    const summary = seo.pageSummary({ title: name, summary: name, url: home });
-    res.type('html').send(`<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-${head}
-${summary}
-<script src="${serve.url('web-runtime.js')}" defer></script>
-<script src="${serve.url('navbar.js')}" defer></script>
-<script src="${serve.url('footer.js')}" defer></script>
-<script>window.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: '${name}' }); OVWebRuntime.create({ features: {}, routes: [] }).boot(); });</script>
-</head>
-<body>
-${frame.noscriptNav({ name })}
-<main><h1>${seo.esc(name)}</h1></main>
-${frame.footer({ service: name, variant: 'compact' })}
-</body>
-</html>`);
+    res.type('html').send(shell.page({
+        name,
+        title: name,
+        siteName: name,
+        description: name,
+        canonical: home,
+        summary: name,
+        url: home,
+        body: `<main><h1>${seo.esc(name)}</h1></main>`,
+        footer: { service: name, variant: 'compact' },
+    }));
 });
 
 module.exports = app;

@@ -20,7 +20,7 @@ were reconciled first.
 | Kind | Files |
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 | Checks (CI) | `scripts/pin-drift.js` (every openvibe-* pin is a published tag and not more than one minor behind, and openvibe-shared is installed once) and `scripts/floating-promises.js` (`node scripts/floating-promises.js <dir> [--json]`: an async call whose result nobody awaits — a failure is an unhandled rejection and a transaction commits without it — unless awaited, returned, assigned, `void`-ed, chained with `.then(`/`.catch(`/`.finally(` or opted out with `// floating-ok: <reason>`; exit 1 when found) |
@@ -543,6 +543,53 @@ kept, so nothing runs twice.
 Tags the server already put in the document count as loaded. Global stubs (installStubs) keep inline onclick
 handlers working before their feature has loaded.
 ```
+
+A server-rendered page puts these tags in its `<head>` itself, with the SEO head and the OpenVibe
+Frame around them: `openvibe-shared/shell` (`shell.page(o)`) composes exactly that — see "The page
+shell" below.
+
+### The page shell (`shell.js`)
+
+```text
+openvibe-shared/shell — compose a whole server-rendered page from the pieces a site already ships,
+so a repo's layout.js becomes one call instead of a hand-written <!doctype html> document (the T11
+sweep). It adds no markup of its own.
+
+  const shell = require('openvibe-shared/shell');
+  res.type('html').send(shell.page({
+    name: 'example', service: 'example',
+    title: 'Example', siteName: 'OpenVibe.Example', description: '…',
+    canonical: 'https://example.com/', image: '…', imageAlt: '…', type: 'website',
+    summary: 'One line an AI can read', facts: [['Sites', 12]], url: 'https://example.com/',
+    jsonLd: [seo.jsonLd.website({ … })],
+    body: '<main>…</main>',                 // the page's main content (trusted, already escaped)
+    bodyClass: 'home', bodyAttributes: { 'data-ov-content': 'pages' },
+    navLinks: [{ label: 'Docs', href: '/docs' }], home: '/',
+    footer: { service: 'example', variant: 'compact' },
+    features: { chat: { scripts: ['/js/chat.js'] } },
+    routes: [{ path: '^/chat', features: ['chat'] }],
+  }));
+
+page(o)     → the whole document: doctype, <head>, <body>. The head is seo.headTags (title,
+              description, canonical, robots, Open Graph, Twitter, any jsonLd); when `summary` is
+              given, seo.pageSummary adds its <meta name="ai-summary"> and WebPage JSON-LD to the
+              head and its <noscript> block at the top of the body. Then theme-loader.js eagerly (it
+              applies the theme before the first paint), web-runtime.js/navbar.js/footer.js deferred
+              through serve.url, the frame.noscriptNav no-JavaScript nav, the body and frame.footer
+              (footer.ssr). The runtime boot is inline JSON handed to
+              OVWebRuntime.create(…).boot(), with the navbar init next to it.
+scripts(o)  → just that <head> script block (theme-loader, the deferred runtime, the boot JSON and
+              the inline boot call). `routes[].path` is a string, not a RegExp.
+```
+
+Every interpolated value is escaped: the head through `seo`, `lang` and the body attributes here, and
+the runtime boot with `JSON.stringify(…).replace(/</g, '\\u003c')` so a feature name can never close
+the `<script>`.
+
+Each repo's `layout.js` moves onto `shell.page()` in the T11 sweep; until then the shell and the
+hand-written layouts produce the same document. `templates/site/server/app.js` (the scaffold every
+new site starts from) already calls it. See `docs/migration-plan.md`, "T11: layout.js onto
+openvibe-shared/shell".
 
 ### The navbar (`navbar.js`)
 

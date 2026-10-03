@@ -625,3 +625,28 @@ reason the Network keeps `/shared/<file>` on the v1 line (README, compatibility 
   `find ~/OpenVibers -path '*/vendor/openvibe-shared' -type d` finds nothing.
 - Every future shared change follows the same path: a PR to OpenVibe.Shared, a `vX.Y.Z` tag,
   then a pin bump in Network first and in the other consumers after.
+
+---
+
+## T11: `layout.js` onto `openvibe-shared/shell`
+
+Shared v2.6.0 adds `openvibe-shared/shell` (`page(o)` / `scripts(o)`), the composition every
+server-rendered `server/render/layout.js` repeats by hand: the doctype and `<head>` from
+`seo.headTags` (and `seo.pageSummary` when `summary` is given), the theme-loader before the first
+paint, `web-runtime.js`/`navbar.js`/`footer.js` deferred through `serve.url`, the
+`frame.noscriptNav` no-JavaScript nav, the body and `frame.footer`. It adds no markup of its own, so
+a repo's `renderPage(o)` keeps its document while its body becomes one `shell.page({ … })` call.
+
+The sweep (one PR per repo, after the pin is on v2.6.0):
+
+1. `server/render/layout.js` — require `openvibe-shared/shell`; replace the hand-written
+   `<!doctype html>` document with `shell.page({ name, title, description, canonical, image,
+   jsonLd, summary, body, navLinks, footer, features, routes })`. Keep the per-repo `o` mapping
+   (title suffix, og type, gate decision) and pass its values through.
+2. Drop the local head builders the shell now owns (`seo.metaTags`, `app-icon` head tags, the
+   navbar bootstrap script with its `JSON.stringify(…).replace(/</g, '\\u003c')` guard,
+   `frame.noscriptNav`, the footer call) once every page goes through the shell.
+3. `ov test` in the repo; the SSR tests keep asserting the canonical, the `og:` tags and the
+   no-JS nav, which the shell emits unchanged.
+
+`templates/site/server/app.js` is the reference: it already calls `shell.page`.
