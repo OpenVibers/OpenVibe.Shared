@@ -14,9 +14,10 @@
     "themes, design tokens and icons",
     "release manifest, in-place updates in open tabs and update metrics",
     "web runtime (feature loader)",
+    "page shell: openvibe-shared/shell page(), the shared page shell every web product renders through",
     "shipped pill, recent list and /updates log",
     "server helpers: ready, metrics, trace, egress, config, analytics, legal, SEO, frame SSR",
     "browser harness and perf budgets for tests"
   ],
-  "updated": "2026-09-28"
+  "updated": "2026-10-04"
 }
