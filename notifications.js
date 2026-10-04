@@ -72,6 +72,7 @@ const TYPES = Object.freeze({
     // System / Security
     PASSWORD_CHANGED:    { category: 'system',      priority: 'critical', icon: '🔒',  title: 'Password Changed' },
     NEW_LOGIN:           { category: 'system',      priority: 'high',     icon: '🔐',  title: 'New Login Detected' },
+    CONFIRMATION_REQUESTED: { category: 'system',   priority: 'high',     icon: '🔑',  title: 'Approval needed' },
     EMAIL_VERIFIED:      { category: 'system',      priority: 'normal',   icon: '✅',  title: 'Email Verified' },
     ACCOUNT_LINKED:      { category: 'system',      priority: 'normal',   icon: '🔗',  title: 'Account Linked' },
 
