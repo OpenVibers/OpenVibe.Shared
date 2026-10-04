@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.7.0 — 2026-10-04
+
+- `openvibe-shared/notifications`: a new `CONFIRMATION_REQUESTED` type (category `system`, priority
+  `high`, icon 🔑, title "Approval needed"). OpenVibe.Network sends it to an agent's owner when a
+  confirmation for that agent's sensitive capability use is created and waits for them.
+
 ## 2.6.0 — 2026-10-03
 
 - `openvibe-shared/shell` (new): `page(o)` composes a whole server-rendered document — the doctype
