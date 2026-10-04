@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v2.5.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v2.6.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -40,6 +40,22 @@ npm run create-site -- my-site
 
 The command creates `./my-site` with a pinned Shared dependency, a small Express server,
 discovery routes (`/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/llms-full.txt`), and a smoke test. Set `SITE_URL` to the site's public origin before serving it.
+
+The generated server renders each page with `openvibe-shared/shell`, so the doctype, SEO head and the
+whole OpenVibe Frame come from one call instead of a hand-written layout:
+
+```js
+const shell = require('openvibe-shared/shell');
+res.type('html').send(shell.page({
+    name: 'example', title: 'Example', description: '…', canonical: 'https://example.com/',
+    summary: 'One line an AI can read',
+    body: '<main>…</main>',
+    features: { chat: { scripts: ['/js/chat.js'] } },
+    routes: [{ path: '^/chat', features: ['chat'] }],
+}));
+```
+
+See "The page shell" below for the rest of the options.
 
 ### Server side: pin a release tarball
 
