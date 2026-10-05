@@ -119,6 +119,40 @@ function stories({ id: sid, title, lede, items } = {}) {
     return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-stories">${items.map((s) => `<figure class="sc-story"><blockquote>${esc(s.text)}</blockquote><figcaption>${esc(s.who)}${s.outcome ? `<span>${esc(s.outcome)}</span>` : ''}</figcaption></figure>`).join('')}</div></section>`;
 }
 
+// A next step's target names: the service id → the product name the card says it opens ("on OpenVibe.Media").
+const SERVICE_NAME = (to) => {
+    const t = String(to || '').toLowerCase();
+    if (!/^[a-z][a-z0-9-]{0,31}$/.test(t)) return '';
+    if (t === 'openre') return 'OpenRe.Stream';
+    return `OpenVibe.${t.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
+};
+// Only links a person can follow safely: https anywhere, or a path on this site.
+const safeHref = (h) => { const s = String(h || ''); return /^https:\/\//i.test(s) || /^\/(?!\/)/.test(s) ? s : ''; };
+const withFrom = (href, from) => {
+    if (!from || !/^[a-z][a-z0-9-]{0,31}$/.test(String(from))) return href;
+    const [base, hash = ''] = href.split('#');
+    return `${base}${base.includes('?') ? '&' : '?'}ov_from=${encodeURIComponent(from)}${hash ? `#${hash}` : ''}`;
+};
+
+/**
+ * Next steps on other OpenVibe products (Shared ADR 0002, plan D94): after a person finishes something, up to four
+ * concrete things to do next, each a real link that works signed out. Items: `{ to, what, text?, href, from?, embed? }`
+ * — `to` picks the ring icon and the "on OpenVibe.X" label, `from` adds the referral tag `ov_from=<from>` (never anything
+ * about the person), `embed` adds a secondary link to an embeddable view. Presentation only: each site passes its own
+ * items. An item without `what` or a safe `href` is left out; no items → ''.
+ */
+function nextSteps({ id: sid, title = 'Next steps', lede, items } = {}) {
+    const usable = (items || []).filter((s) => s && s.what && safeHref(s.href)).slice(0, 4);
+    if (!usable.length) return '';
+    const h = `sc-${slug(title)}`;
+    return `<section class="sc-sec sc-next"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<ol class="sc-next-list">${usable.map((s) => {
+        const to = SERVICE_NAME(s.to);
+        const href = withFrom(safeHref(s.href), s.from);
+        const embed = safeHref(s.embed);
+        return `<li class="sc-next-item"><a class="sc-next-main" href="${esc(href)}">${s.to && to ? `<span class="sc-ic sc-ic-ov">${icon(`ov:${String(s.to).toLowerCase()}`, 40)}</span>` : ''}<span class="sc-next-body"><b>${esc(s.what)}</b>${s.text ? `<small>${esc(s.text)}</small>` : ''}${to ? `<span class="sc-next-on">on ${esc(to)}</span>` : ''}</span><span class="sc-next-go" aria-hidden="true">→</span></a>${embed ? `<a class="sc-next-embed" href="${esc(embed)}">Embed it</a>` : ''}</li>`;
+    }).join('')}</ol></section>`;
+}
+
 /** The closing call to action. */
 function cta({ title, text, actions: acts } = {}) {
     if (!title) return '';
@@ -179,12 +213,21 @@ a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);trans
 .sc-story{margin:0;padding:18px;border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
 .sc-story blockquote{margin:0;font-size:15px;line-height:1.55}.sc-story figcaption{margin-top:10px;font-weight:700;font-size:13.5px}
 .sc-story figcaption span{display:block;font-weight:500;color:var(--text-secondary,#96a7c2)}
+.sc-next-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.sc-next-item{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.sc-next-main{flex:1 1 320px;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+.sc-next-main:hover,.sc-next-main:focus-visible{border-color:var(--accent,#3b82f6);transform:translateX(2px);outline:0}
+.sc-next-body{flex:1;min-width:0}.sc-next-body b{display:block;font-size:15.5px}
+.sc-next-body small{display:block;margin-top:2px;color:var(--text-secondary,#96a7c2);font-size:13.5px;line-height:1.45}
+.sc-next-on{display:block;margin-top:4px;font-size:12px;font-weight:700;letter-spacing:.3px;color:var(--accent-light,var(--accent,#60a5fa))}
+.sc-next-go{font-size:20px;color:var(--text-muted,#7386a3);transition:transform .15s}.sc-next-main:hover .sc-next-go{transform:translateX(3px);color:var(--accent-light,#60a5fa)}
+.sc-next-embed{font-size:13px;font-weight:600;color:var(--accent-light,#60a5fa)}
 .sc-cta{margin-top:64px;margin-bottom:24px;text-align:center}
 .sc-cta>div,.sc-cta .sc-actions{justify-content:center}.sc-cta p{color:var(--text-secondary,#96a7c2);margin:6px auto 0;max-width:620px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}}
 @media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn{transition:none}}
+@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go{transition:none}}
 `;
 
-module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, cta, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, nextSteps, cta, CSS, STYLESHEET: 'showcase.css', esc };
