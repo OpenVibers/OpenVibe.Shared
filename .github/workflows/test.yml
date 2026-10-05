@@ -25,6 +25,9 @@ name: test
 #   pin drift    scripts/pin-drift.js from OpenVibe.Shared main over the whole repository: a pin of
 #                openvibe-contracts/-shared/-sdk/-publishing that is not a published tag, or more than one
 #                minor behind the latest release, fails (roadmap WS-C task 5; `pin-drift: false` skips)
+#   docs         scripts/docs-status.js from OpenVibe.Shared main over the whole repository: STATUS.json's
+#                contracts/sdk/shared fields and the README `<!-- versions:start/end -->` block must name the
+#                pinned releases (plan D41; `docs-status: false` skips)
 #   floating     scripts/floating-promises.js from OpenVibe.Shared main over the whole repository: an
 #                async call whose result nobody awaits is listed as a warning for now, and fails the build once
 #                every repository is clean (acorn installed first; plan T0)
@@ -71,6 +74,10 @@ on:
         default: ''
       pin-drift:
         description: Fail on drifted openvibe-* library pins (OpenVibe.Shared scripts/pin-drift.js).
+        type: boolean
+        default: true
+      docs-status:
+        description: Fail when STATUS.json or the README versions block is not current with the openvibe-* pins (OpenVibe.Shared scripts/docs-status.js).
         type: boolean
         default: true
       package-manager:
@@ -142,6 +149,10 @@ jobs:
         if: ${{ inputs.pin-drift }}
         working-directory: .
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - "$GITHUB_WORKSPACE"
+      - name: docs currency
+        if: ${{ inputs.docs-status }}
+        working-directory: .
+        run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/docs-status.js | node - "$GITHUB_WORKSPACE" --check
       - name: install acorn (floating promises check)
         working-directory: .
         run: npm i --no-save acorn@8 acorn-walk@8

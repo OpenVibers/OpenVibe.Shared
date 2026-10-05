@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- `scripts/docs-status.js` (new; plan D41 docs currency): reads a repository's openvibe-contracts/sdk/
+  shared/publishing codeload pins and keeps STATUS.json's `contracts`/`sdk`/`shared`/`updated` fields
+  and the README `<!-- versions:start -->`/`<!-- versions:end -->` block in step with them, preserving
+  every other STATUS key (and any prose after a version). `--check` reports drift and exits 1; a
+  repository that pins nothing omits the block. The reusable test workflow runs it as the "docs
+  currency" step after "pin drift" (`docs-status: false` skips).
+
 ## 2.8.0 — 2026-10-04
 
 - `openvibe-shared/test-runner`: `parallel: 'auto'` resolves to `max(1, min(8, cpus - 1))` (before, any
