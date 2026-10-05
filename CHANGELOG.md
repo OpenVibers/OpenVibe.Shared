@@ -6,6 +6,11 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.9.0 — 2026-10-04
+
+- `openvibe-shared/showcase`: a feature card's ring icon (`icon: 'ov:…'`) now fills the 40 px icon slot
+  (`--ovi-size: 40px`, class `sc-ic-ov`, no second tinted tile behind it). Before, the ring drew at 22 px
+  inside the tile, so its glyph read at about 10 px. Font Awesome icons keep the tinted tile.
 - `scripts/docs-status.js` (new; plan D41 docs currency): reads a repository's openvibe-contracts/sdk/
   shared/publishing codeload pins and keeps STATUS.json's `contracts`/`sdk`/`shared`/`updated` fields
   and the README `<!-- versions:start -->`/`<!-- versions:end -->` block in step with them, preserving

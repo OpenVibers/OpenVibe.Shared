@@ -36,4 +36,12 @@ execFileSync(process.execPath, [require('path').join(__dirname, '..', 'scripts',
 const files = require('../files');
 assert.ok(files.isBrowserFile('showcase.css') && files.STYLES.includes('showcase.css') && !files.BROWSER.includes('showcase.css'), 'served as a stylesheet, not a script');
 assert.strictEqual(sc.STYLESHEET, 'showcase.css');
+// A ring icon fills the 40 px slot with no second tile; a Font Awesome icon keeps the tinted tile at its own size.
+{
+    const ring = sc.features({ items: [{ icon: 'ov:live', title: 'Live' }, { icon: 'fa-code', title: 'Code' }] });
+    assert.ok(ring.includes('<span class="sc-ic sc-ic-ov"><span class="ov-icon sc-ovi" data-icon="live" style="--ovi-size:40px"'), 'the ring icon is 40 px in an untinted slot');
+    assert.ok(ring.includes('<span class="sc-ic"><i class="fa-solid fa-code"'), 'a Font Awesome icon keeps the plain slot');
+    assert.ok(sc.CSS.includes('.sc-ic.sc-ic-ov{background:none'), 'the slot drops its tile for a ring icon');
+}
+
 console.log('showcase: all checks passed');
