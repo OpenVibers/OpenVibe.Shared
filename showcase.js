@@ -126,8 +126,13 @@ const SERVICE_NAME = (to) => {
     if (t === 'openre') return 'OpenRe.Stream';
     return `OpenVibe.${t.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
 };
-// Only links a person can follow safely: https anywhere, or a path on this site.
-const safeHref = (h) => { const s = String(h || ''); return /^https:\/\//i.test(s) || /^\/(?!\/)/.test(s) ? s : ''; };
+// Only links a person can follow safely: https anywhere, or a path on this site. A path may hold no backslash and no
+// tab or newline: the URL parser turns \ into / and drops tab/LF/CR, so "/\evil.example" would leave the site.
+const safeHref = (h) => {
+    const s = String(h || '');
+    if (/^https:\/\//i.test(s)) return s;
+    return /^\/(?!\/)[^\t\n\r\\]*$/.test(s) ? s : '';
+};
 const withFrom = (href, from) => {
     if (!from || !/^[a-z][a-z0-9-]{0,31}$/.test(String(from))) return href;
     const [base, hash = ''] = href.split('#');

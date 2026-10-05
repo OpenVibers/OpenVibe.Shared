@@ -62,6 +62,9 @@ assert.strictEqual(sc.STYLESHEET, 'showcase.css');
     assert.ok(out.includes('on OpenVibe.Media') && out.includes('data-icon="media"'), 'the target product and its ring icon');
     assert.ok(out.includes('href="/tools/convert"'), 'a path on this site is allowed');
     assert.ok(!out.includes('evil.example'), 'a protocol-relative link is left out');
+    for (const sneaky of ['/\\evil.example', '/\t/evil.example', '/\n/evil.example', '/\r/evil.example']) {
+        assert.strictEqual(sc.nextSteps({ items: [{ to: 'tools', what: 'x', href: sneaky }] }), '', `${JSON.stringify(sneaky)} would leave the site`);
+    }
     assert.strictEqual((out.match(/class="sc-next-item"/g) || []).length, 4, 'at most four');
     assert.ok(out.includes('class="sc-next-embed" href="https://openvibe.media/embed/1"'));
     assert.ok(sc.CSS.includes('.sc-next-main{'), 'styled by the kit');
