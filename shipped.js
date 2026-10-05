@@ -34,7 +34,7 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
     const API = 'https://openvibe.network/api/v1/changelog';
-    const SITE_NAMES = { live: 'Live', network: 'Network', tools: 'Tools', media: 'Media', community: 'Community', chat: 'Chat', games: 'Games', blog: 'Blog', wiki: 'Wiki', news: 'News', reviews: 'Reviews', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', codes: 'Codes', host: 'Host', ai: 'AI', search: 'Search', sources: 'Sources', events: 'Events', billing: 'Billing', tips: 'Tips', vip: 'VIP', openre: 'OpenRe', sites: 'Sites', realtime: 'Realtime' };
+    const SITE_NAMES = { live: 'Live', network: 'Network', tools: 'Tools', media: 'Media', community: 'Community', chat: 'Chat', games: 'Games', blog: 'Blog', wiki: 'Wiki', news: 'News', reviews: 'Reviews', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', codes: 'Codes', host: 'Host', ai: 'AI', search: 'Search', sources: 'Sources', events: 'Events', billing: 'Billing', tips: 'Tips', vip: 'VIP', openre: 'OpenRe', bot: 'Bot', sites: 'Sites', realtime: 'Realtime' };
     const STYLE_ID = 'ov-shipped-style';
     const TEXT = 'var(--text-primary,var(--text,inherit))';
     const MUTED = 'var(--text-secondary,var(--text-muted,#8b93ad))';

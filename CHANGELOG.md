@@ -6,6 +6,11 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.10.1 — 2026-10-05
+
+- `openvibe-shared/shipped`: OpenVibe.Bot is a known site (`bot` → "Bot"), so its changelog lines and filter chip
+  read "Bot" rather than the raw id, and `?site=bot` / `openvibe.bot` resolve to it.
+
 ## 2.10.0 — 2026-10-05
 
 - `openvibe-shared/showcase`: `nextSteps({ id, title, lede, items })` renders up to four next steps on other OpenVibe
