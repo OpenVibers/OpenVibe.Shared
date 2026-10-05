@@ -27,7 +27,10 @@ name: test
 #                minor behind the latest release, fails (roadmap WS-C task 5; `pin-drift: false` skips)
 #   docs         scripts/docs-status.js from OpenVibe.Shared main over the whole repository: STATUS.json's
 #                contracts/sdk/shared fields and the README `<!-- versions:start/end -->` block must name the
-#                pinned releases (plan D41; `docs-status: false` skips)
+#                pinned releases (plan D41). Off by default, because a consumer repository does not have the
+#                README versions block yet and a default-on check would fail its CI; a repository turns it on
+#                with `docs-status: true` once its README carries the `<!-- versions:start -->` block and its
+#                STATUS.json contracts/sdk/shared fields match its pins
 #   floating     scripts/floating-promises.js from OpenVibe.Shared main over the whole repository: an
 #                async call whose result nobody awaits is listed as a warning for now, and fails the build once
 #                every repository is clean (acorn installed first; plan T0)
@@ -77,9 +80,9 @@ on:
         type: boolean
         default: true
       docs-status:
-        description: Fail when STATUS.json or the README versions block is not current with the openvibe-* pins (OpenVibe.Shared scripts/docs-status.js).
+        description: Fail when STATUS.json or the README versions block is not current with the openvibe-* pins (OpenVibe.Shared scripts/docs-status.js). Off by default; set true once the repository's README carries the `<!-- versions:start -->` block and its STATUS.json fields match.
         type: boolean
-        default: true
+        default: false
       package-manager:
         description: npm or pnpm (pnpm sets itself up from package.json's packageManager and caches the pnpm store).
         type: string

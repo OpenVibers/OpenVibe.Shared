@@ -165,7 +165,9 @@ function withStatusFields(status, pins, today) {
         out[key] = value;
     }
     if (!placed) for (const f of tracked) if (updates[f] !== undefined) out[f] = updates[f];
-    out.updated = today;
+    // `updated` moves only when a tracked field really changed, so a rerun with no pin change writes nothing.
+    const changed = tracked.some((f) => out[f] !== status[f]);
+    out.updated = changed || status.updated === undefined ? today : status.updated;
     return out;
 }
 

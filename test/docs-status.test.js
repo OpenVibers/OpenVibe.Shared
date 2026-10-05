@@ -66,6 +66,21 @@ assert.strictEqual(applyBlock('a\n\n<!-- versions:start -->\n- openvibe-sdk: v0.
     fs.rmSync(dir, { recursive: true, force: true });
 }
 
+// A rerun with no pin change rewrites nothing, `updated` included.
+{
+    const dir = tmp('rerun');
+    const pins = { 'openvibe-contracts': '0.61.0', 'openvibe-sdk': '0.20.4' };
+    write(dir, 'package.json', JSON.stringify({ dependencies: {
+        'openvibe-contracts': url('OpenVibe.Contracts', 'v0.61.0'),
+        'openvibe-sdk': url('OpenVibe.SDK', 'v0.20.4'),
+    } }));
+    write(dir, 'STATUS.json', JSON.stringify({ repository: 'OpenVibers/W', contracts: 'openvibe-contracts v0.61.0', sdk: 'openvibe-sdk v0.20.4', updated: '2026-10-01' }, null, 2) + '\n');
+    write(dir, 'README.md', `# W\n\n${versionsBlock(pins)}\n`);
+    assert.deepStrictEqual(update(dir, { today: '2026-10-04' }), [], 'a later day with no pin change rewrites nothing');
+    assert.strictEqual(JSON.parse(read(dir, 'STATUS.json')).updated, '2026-10-01', 'the old `updated` is kept');
+    fs.rmSync(dir, { recursive: true, force: true });
+}
+
 // Missing README markers are appended following the pins.
 {
     const dir = tmp('append');
@@ -77,6 +92,30 @@ assert.strictEqual(applyBlock('a\n\n<!-- versions:start -->\n- openvibe-sdk: v0.
     assert.match(read(dir, 'README.md'), /A site\.\n\n<!-- versions:start -->\n- openvibe-contracts: v0\.61\.0\n<!-- versions:end -->\n/);
     assert.strictEqual(JSON.parse(read(dir, 'STATUS.json')).deployed, false, 'untouched keys are preserved');
     assert.strictEqual(cp.spawnSync(process.execPath, [script, dir, '--check'], { encoding: 'utf8' }).status, 0);
+    fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// A README with no versions markers fails --check and names the file.
+{
+    const dir = tmp('readme-missing');
+    write(dir, 'package.json', JSON.stringify({ devDependencies: { 'openvibe-contracts': url('OpenVibe.Contracts', 'v0.61.0') } }));
+    write(dir, 'STATUS.json', JSON.stringify({ repository: 'OpenVibers/M', contracts: 'openvibe-contracts v0.61.0' }));
+    write(dir, 'README.md', '# M\n\nNo versions block here.\n');
+    const cli = cp.spawnSync(process.execPath, [script, dir, '--check'], { encoding: 'utf8' });
+    assert.strictEqual(cli.status, 1, 'a missing README block exits 1');
+    assert.match(cli.stdout, /^FAIL README\.md versions: is missing the/m, 'names the missing README block');
+    fs.rmSync(dir, { recursive: true, force: true });
+}
+
+// A README block naming an old version fails --check and names the file.
+{
+    const dir = tmp('readme-stale');
+    write(dir, 'package.json', JSON.stringify({ devDependencies: { 'openvibe-contracts': url('OpenVibe.Contracts', 'v0.61.0') } }));
+    write(dir, 'STATUS.json', JSON.stringify({ repository: 'OpenVibers/M', contracts: 'openvibe-contracts v0.61.0' }));
+    write(dir, 'README.md', `# M\n\n${versionsBlock({ 'openvibe-contracts': '0.60.0' })}\n`);
+    const cli = cp.spawnSync(process.execPath, [script, dir, '--check'], { encoding: 'utf8' });
+    assert.strictEqual(cli.status, 1, 'a stale README block exits 1');
+    assert.match(cli.stdout, /^FAIL README\.md versions: block is stale for openvibe-contracts/m, 'names the stale README block');
     fs.rmSync(dir, { recursive: true, force: true });
 }
 

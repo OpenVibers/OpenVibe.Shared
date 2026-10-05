@@ -10,8 +10,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   shared/publishing codeload pins and keeps STATUS.json's `contracts`/`sdk`/`shared`/`updated` fields
   and the README `<!-- versions:start -->`/`<!-- versions:end -->` block in step with them, preserving
   every other STATUS key (and any prose after a version). `--check` reports drift and exits 1; a
-  repository that pins nothing omits the block. The reusable test workflow runs it as the "docs
-  currency" step after "pin drift" (`docs-status: false` skips).
+  repository that pins nothing omits the block. In write mode `updated` is rewritten only when one of
+  those fields really changed, so a rerun with no pin change touches nothing.
+- The reusable test workflow's "docs currency" step is **off by default** (`docs-status: false`):
+  consumer repositories do not have the README versions block yet, so a default-on check would fail
+  their CI. A repository turns it on with `docs-status: true` once its README carries the
+  `<!-- versions:start -->` block and its STATUS.json `contracts`/`sdk`/`shared` fields match its pins.
 
 ## 2.8.0 — 2026-10-04
 
