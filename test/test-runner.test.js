@@ -6,7 +6,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { run, skipsIn } = require('../test-runner');
+const { run, skipsIn, resolveParallel } = require('../test-runner');
 
 (async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ov-test-runner-'));
@@ -42,6 +42,19 @@ const { run, skipsIn } = require('../test-runner');
     r = await run({ dir, argv: ['b-skip', 'a-pass', '--strict'], log });
     assert.strictEqual(r.exitCode, 1);
     assert.match(r.summary, /strict: skips fail the run$/);
+
+    // parallel: 'auto' resolves by CPU to a number >= 1 and still runs every matched file; pins and the default hold.
+    const cpus = os.cpus().length;
+    assert.strictEqual(resolveParallel('auto'), Math.max(1, Math.min(8, cpus - 1)));
+    assert.strictEqual(resolveParallel(undefined), Math.max(1, Math.min(4, cpus - 1)));
+    assert.strictEqual(resolveParallel(1), 1);
+    assert.strictEqual(resolveParallel(3), 3);
+    assert.strictEqual(resolveParallel('nonsense'), Math.max(1, Math.min(4, cpus - 1)));
+    r = await run({ dir, argv: ['a-pass', 'e-mention'], log, parallel: 'auto' });
+    assert.ok(Number.isInteger(r.parallel) && r.parallel >= 1);
+    assert.deepStrictEqual([r.results.length, r.summary, r.exitCode], [2, '2/2 test files passed', 0]);
+    r = await run({ dir, argv: ['a-pass', 'e-mention'], log, parallel: 1 });
+    assert.deepStrictEqual([r.parallel, r.results.length], [1, 2]);
 
     r = await run({ dir, argv: ['nothing-matches'], log });
     assert.strictEqual(r.exitCode, 1);

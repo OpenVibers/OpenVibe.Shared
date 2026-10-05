@@ -11,6 +11,11 @@
 //   npm test -- quota cache      # only files whose name contains one of the words
 //   npm test -- --strict         # a skip fails the run too (or OV_TEST_STRICT=1)
 //
+// Each test file runs in its own process and owns its database: openvibe-sdk/testing `createTestDb` gives it its
+// own PGlite, or under `test:pg` its own PostgreSQL schema, roles and port. Files therefore parallelize safely and
+// a repo needs no `parallel: 1` pin. `parallel` is a number (a pin), `'auto'` (min(8, cpus-1), at least 1) or unset
+// (min(4, cpus-1), at least 1).
+//
 // A test that cannot run something (no ffmpeg, no Chrome, no git history) prints one line per thing it
 // skipped, `<label>: skipped (<why>)`, and still exits 0. Such a file is listed with ○ and its reasons,
 // and is NOT counted as passed: the summary reads `148/150 test files passed, 2 skipped (…)`. Only a run
@@ -35,6 +40,15 @@ function skipsIn(output) {
     return out;
 }
 
+/** How many files run at once: a numeric pin as given (at least 1), 'auto' by CPUs (1..8), else the default (1..4). */
+function resolveParallel(parallel) {
+    const cpus = os.cpus().length;
+    if (parallel === 'auto') return Math.max(1, Math.min(8, cpus - 1));
+    const n = Math.floor(Number(parallel));
+    if (Number.isFinite(n) && n >= 1) return n;
+    return Math.max(1, Math.min(4, cpus - 1));
+}
+
 function runOne(file, { dir, cwd, env, timeoutMs, nodeArgs }) {
     return new Promise((resolve) => {
         const started = Date.now();
@@ -55,7 +69,7 @@ function runOne(file, { dir, cwd, env, timeoutMs, nodeArgs }) {
 /**
  * Run the tests; resolves { results, passed, skipped, failed, strict, exitCode, summary } and prints as it goes.
  * opts: dir (required: the test directory), argv (default process.argv.slice(2)), cwd (default dir/..),
- * timeoutMs (60000), parallel (min(4, cpus-1)), env (added to process.env; NODE_ENV=test by default),
+ * timeoutMs (60000), parallel (a number, 'auto' = min(8, cpus-1), default min(4, cpus-1); resolved value returned), env (added to process.env; NODE_ENV=test by default),
  * hide (a RegExp: output lines of a failed file left out, e.g. /^\[DB\] /), pad (file-name column, 44),
  * match (which files, default /\.test\.js$/), serial (files to run alone after parallel files),
  * nodeArgs ([]), log (console.log).
@@ -78,7 +92,7 @@ async function run(opts = {}) {
         dir, cwd: opts.cwd || path.join(dir, '..'), timeoutMs: opts.timeoutMs || 60000, nodeArgs: opts.nodeArgs || [],
         env: { ...process.env, NODE_ENV: 'test', ...(opts.env || {}) },
     };
-    const parallel = Math.max(1, opts.parallel || Math.min(4, os.cpus().length - 1));
+    const parallel = resolveParallel(opts.parallel);
     const pad = opts.pad || 44;
     const queue = [], serial = [];
     for (const file of files) (opts.serial && opts.serial.test(file) ? serial : queue).push(file);
@@ -110,7 +124,7 @@ async function run(opts = {}) {
         : `${passed}/${results.length} test files passed`;
     log(`\n${summary}`);
     const exitCode = failed.length || (strict && skipped.length) ? 1 : 0;
-    return { results, passed, skipped: skipped.length, failed: failed.length, strict, exitCode, summary };
+    return { results, passed, skipped: skipped.length, failed: failed.length, strict, exitCode, summary, parallel };
 }
 
 /** run(), then exit with its status: what a test/run.js calls. */
@@ -118,4 +132,4 @@ function main(opts) {
     run(opts).then((r) => process.exit(r.exitCode), (err) => { console.error(err); process.exit(1); });
 }
 
-module.exports = { run, main, skipsIn, SKIP_RE };
+module.exports = { run, main, skipsIn, resolveParallel, SKIP_RE };
