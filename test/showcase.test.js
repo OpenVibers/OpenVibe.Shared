@@ -44,4 +44,30 @@ assert.strictEqual(sc.STYLESHEET, 'showcase.css');
     assert.ok(sc.CSS.includes('.sc-ic.sc-ic-ov{background:none'), 'the slot drops its tile for a ring icon');
 }
 
+// Next steps (Shared ADR 0002): safe links only, the referral tag, the target's ring icon and name, escaping, at most four.
+{
+    assert.strictEqual(sc.nextSteps({ items: [] }), '', 'no items, no section');
+    assert.strictEqual(sc.nextSteps({ items: [{ to: 'media', what: 'x', href: 'javascript:alert(1)' }] }), '', 'an unsafe link is left out');
+    const out = sc.nextSteps({ title: 'What next', items: [
+        { to: 'media', from: 'live', what: 'Clip the best <minute>', text: 'From the VOD you just watched.', href: 'https://openvibe.media/clips/new?vod=1#start', embed: 'https://openvibe.media/embed/1' },
+        { to: 'tools', what: 'Convert it', href: '/tools/convert' },
+        { to: 'chat', what: 'Tell people', href: '//evil.example/' },
+        { to: 'blog', what: 'Write about it', href: 'https://openvibe.blog/write' },
+        { to: 'news', what: 'Read more', href: 'https://openvibe.news/' },
+        { to: 'wiki', what: 'Look it up', href: 'https://openvibe.wiki/' },
+    ] });
+    assert.ok(out.includes('<section class="sc-sec sc-next"'));
+    assert.ok(out.includes('href="https://openvibe.media/clips/new?vod=1&amp;ov_from=live#start"'), 'the referral tag goes before the fragment');
+    assert.ok(out.includes('Clip the best &lt;minute&gt;'), 'text is escaped');
+    assert.ok(out.includes('on OpenVibe.Media') && out.includes('data-icon="media"'), 'the target product and its ring icon');
+    assert.ok(out.includes('href="/tools/convert"'), 'a path on this site is allowed');
+    assert.ok(!out.includes('evil.example'), 'a protocol-relative link is left out');
+    for (const sneaky of ['/\\evil.example', '/\t/evil.example', '/\n/evil.example', '/\r/evil.example']) {
+        assert.strictEqual(sc.nextSteps({ items: [{ to: 'tools', what: 'x', href: sneaky }] }), '', `${JSON.stringify(sneaky)} would leave the site`);
+    }
+    assert.strictEqual((out.match(/class="sc-next-item"/g) || []).length, 4, 'at most four');
+    assert.ok(out.includes('class="sc-next-embed" href="https://openvibe.media/embed/1"'));
+    assert.ok(sc.CSS.includes('.sc-next-main{'), 'styled by the kit');
+}
+
 console.log('showcase: all checks passed');

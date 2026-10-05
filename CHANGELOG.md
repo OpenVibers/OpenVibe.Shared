@@ -6,6 +6,15 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.10.0 — 2026-10-05
+
+- `openvibe-shared/showcase`: `nextSteps({ id, title, lede, items })` renders up to four next steps on other OpenVibe
+  products (Shared ADR 0002, plan D94, `docs/adr/0002-traffic-between-products.md`). An item is
+  `{ to, what, text?, href, from?, embed? }`: `to` picks the ring icon and the "on OpenVibe.X" label, `from` appends
+  the referral tag `ov_from=<from>` (nothing about the person), `embed` adds an "Embed it" link. Only `https://` URLs
+  or site paths are rendered; an unusable item is left out and no items render ''. Styled in `showcase.css`.
+- `docs/adr/0002-traffic-between-products.md` (proposed): next-step cards, shareable result pages, embeds and badges
+  (live-rendered SVG + a proof page that re-checks the fact), and quests.
 ## 2.9.0 — 2026-10-04
 
 - `openvibe-shared/showcase`: a feature card's ring icon (`icon: 'ov:…'`) now fills the 40 px icon slot
