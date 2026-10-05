@@ -6,6 +6,15 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.8.0 — 2026-10-04
+
+- `openvibe-shared/test-runner`: `parallel: 'auto'` resolves to `max(1, min(8, cpus - 1))` (before, any
+  non-number made the runner start nothing); a numeric pin works as before and no option keeps the
+  `min(4, cpus - 1)` default. `run()` also returns the resolved `parallel`, and `resolveParallel()` is
+  exported. Each test file runs in its own process and owns its database (`createTestDb`: its own PGlite,
+  or under `test:pg` its own PostgreSQL schema, roles and port), so files parallelize safely and a repo
+  no longer needs `parallel: 1`.
+
 ## 2.7.0 — 2026-10-04
 
 - `openvibe-shared/notifications`: a new `CONFIRMATION_REQUESTED` type (category `system`, priority
