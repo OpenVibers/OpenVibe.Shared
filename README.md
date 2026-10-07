@@ -804,5 +804,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 
 <!-- versions:start -->
 - openvibe-contracts: v0.112.0
-- openvibe-sdk: v0.20.4
+- openvibe-sdk: v0.35.0
 <!-- versions:end -->
