@@ -37,7 +37,7 @@ assert.strictEqual(applyBlock('a\n\n<!-- versions:start -->\n- openvibe-sdk: v0.
 // The repository's own pins pass --check, and the two documents describe them.
 {
     const r = inspect(root);
-    assert.deepStrictEqual(r.pins, { 'openvibe-contracts': '0.61.0', 'openvibe-sdk': '0.20.4' });
+    assert.deepStrictEqual(r.pins, { 'openvibe-contracts': '0.112.0', 'openvibe-sdk': '0.20.4' });
     assert.deepStrictEqual(r.findings.filter((f) => !f.ok), [], 'the checked-in STATUS.json and README block are current');
     const cli = cp.spawnSync(process.execPath, [script, root, '--check'], { encoding: 'utf8' });
     assert.strictEqual(cli.status, 0, cli.stdout + cli.stderr);
