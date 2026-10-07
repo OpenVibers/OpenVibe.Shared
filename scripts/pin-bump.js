@@ -72,12 +72,14 @@ function refreshLock(dir, file) {
         run('pnpm', ['install', '--lockfile-only', '--ignore-scripts'], { cwd: dir });
         return 'pnpm-lock.yaml';
     }
-    const pkgDir = path.join(dir, path.dirname(file));
-    if (fs.existsSync(path.join(pkgDir, 'package-lock.json'))) {
-        run('npm', ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: pkgDir });
-        return path.join(path.dirname(file), 'package-lock.json');
+    // The nearest package-lock.json at or above the package: beside it, or the root of an npm workspace.
+    for (let rel = path.dirname(file); ; rel = path.dirname(rel)) {
+        if (fs.existsSync(path.join(dir, rel, 'package-lock.json'))) {
+            run('npm', ['install', '--package-lock-only', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: path.join(dir, rel) });
+            return path.join(rel, 'package-lock.json');
+        }
+        if (rel === '.' || rel === '/' || rel === '') return null;
     }
-    return null;
 }
 
 /**
