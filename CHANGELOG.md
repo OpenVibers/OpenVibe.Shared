@@ -6,6 +6,11 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- `scripts/pin-bump.js` (plan T1, the pin bot): after a release of openvibe-contracts, -shared, -sdk or -publishing,
+  `node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply]` opens one PR per OpenVibers repository that pins
+  the library below the tag: every pin moved, the npm or pnpm lockfile refreshed, STATUS.json and the README versions
+  block rewritten by `scripts/docs-status.js`. A dry run by default; CI tests each PR (full suite and pin drift).
+
 ## 2.13.0 — 2026-10-07
 
 - `release-watch` now connects to `https://openvibe.events` by default; the notification bell follows the stream URL in Network's ticket. A site pinning this release must allow `connect-src https://openvibe.events` in its CSP.
