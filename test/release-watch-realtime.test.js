@@ -11,7 +11,7 @@ const vm = require('vm');
 const { openPage, manifestFor } = require('../release-compat');
 
 const A = 'aaaaaaa1'; const B = 'bbbbbbb2'; const C = 'ccccccc3';
-const DEFAULT = 'https://events.openvibe.network/realtime/stream';
+const DEFAULT = 'https://openvibe.events/realtime/stream';
 const PAGE = (attrs = '') => `<!doctype html><html><head><meta name="ov-release" content="${A}" data-url="/release.json"${attrs}></head><body></body></html>`;
 
 function fakeEventSource() {
@@ -187,7 +187,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         p.document.dispatchEvent(v);
         assert.strictEqual(p.rt().state, 'connecting', 'another URL\'s violation is not ours');
         const mine = new p.window.Event('securitypolicyviolation');
-        mine.blockedURI = 'https://events.openvibe.network';
+        mine.blockedURI = 'https://openvibe.events';
         p.document.dispatchEvent(mine);
         s.fail();
         assert.deepStrictEqual([s.closed, p.rt().state, p.timeouts()], [true, 'blocked', []], 'no retry');

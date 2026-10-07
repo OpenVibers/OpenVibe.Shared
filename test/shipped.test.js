@@ -84,6 +84,7 @@ const data = {
     assert.strictEqual(sf('pdf.openvibe.tools'), 'tools');
     assert.strictEqual(sf('my.openvibe.network'), 'network');
     assert.strictEqual(sf('events.openvibe.network'), 'events');
+    assert.strictEqual(sf('openvibe.events'), 'events');
     assert.strictEqual(sf('ingest.openre.stream'), 'openre');
     assert.strictEqual(sf('openvibe.bot'), 'bot', 'OpenVibe.Bot is a site');
     assert.strictEqual(sf('bot'), 'bot');

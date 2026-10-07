@@ -189,7 +189,7 @@
     function eventsUrl() {
         const v = 'eventsUrl' in cfg ? cfg.eventsUrl : meta && meta.hasAttribute('data-events') ? meta.getAttribute('data-events') : undefined;
         if (v !== undefined) return v && v !== 'off' ? String(v) : null;
-        try { return new URL(root.location.href).protocol === 'https:' ? 'https://events.openvibe.network/realtime/stream' : null; } catch { return null; }
+        try { return new URL(root.location.href).protocol === 'https:' ? 'https://openvibe.events/realtime/stream' : null; } catch { return null; }
     }
     function live() {
         if (stopped || es || rt.state !== 'off' || typeof root.EventSource !== 'function') return;

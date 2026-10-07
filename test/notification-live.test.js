@@ -22,7 +22,7 @@ const UI_SRC = fs.readFileSync(path.join(ROOT, 'notification-ui.js'), 'utf8');
 const ALICE = 'usr_01JAB2C3D4E5F6G7H8J9K0MNPQ';
 const BOB = 'usr_01JAB2C3D4E5F6G7H8J9K0MNPR';
 const API = 'https://openvibe.network';
-const STREAM = 'https://events.openvibe.network/realtime/stream';
+const STREAM = 'https://openvibe.events/realtime/stream';
 
 function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5 } = {}) {
     const { window: lw, document } = linkedom.parseHTML('<!doctype html><html><head></head><body></body></html>');
@@ -205,7 +205,7 @@ const created = (subject, over = {}) => ({
 
         // A Content-Security-Policy refusal of Events: closed, and nothing reopens it.
         const s4 = p.es;
-        p.csp('https://events.openvibe.network/realtime/stream');
+        p.csp('https://openvibe.events/realtime/stream');
         assert.deepStrictEqual([s4.closed, live.state().state], [true, 'blocked']);
         s4.fail(); p.dispatch('online'); await p.settle();
         assert.strictEqual(live.state().state, 'blocked');

@@ -6,6 +6,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.13.0 — 2026-10-07
+
+- `release-watch` now connects to `https://openvibe.events` by default; the notification bell follows the stream URL in Network's ticket. A site pinning this release must allow `connect-src https://openvibe.events` in its CSP.
+
 ## 2.12.0 — 2026-10-07
 
 - `showcase`: the sections (`.sc-hero`, `.sc-sec`, `.sc-cta`) set their own font stack (`--ov-font`, else Inter and
