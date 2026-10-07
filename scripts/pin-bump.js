@@ -81,14 +81,24 @@ function refreshLock(dir, file) {
 }
 
 /**
- * STATUS.json's version fields and the README versions block follow the new pins (scripts/docs-status.js, plan D41):
- * the files docs-status rewrote are returned so they join the commit.
+ * STATUS.json's version fields and the README versions block follow the new pins (scripts/docs-status.js, plan D41),
+ * and so do README prose mentions of the old pinned versions ("`openvibe-sdk` v0.26.0", "openvibe-sdk v0.26.0"): only
+ * the bumped library and only the versions it was pinned at, so a sentence about an older release elsewhere stays.
+ * The files rewritten are returned so they join the commit.
  */
-function updateVersionLines(dir) {
-    const before = Object.fromEntries(['STATUS.json', 'README.md'].filter((f) => fs.existsSync(path.join(dir, f)))
-        .map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')]));
+function updateVersionLines(dir, library, from = [], tag = null) {
+    const files = ['STATUS.json', 'README.md'].filter((f) => fs.existsSync(path.join(dir, f)));
+    const before = Object.fromEntries(files.map((f) => [f, fs.readFileSync(path.join(dir, f), 'utf8')]));
     require('./docs-status').update(dir);
-    return Object.keys(before).filter((f) => fs.readFileSync(path.join(dir, f), 'utf8') !== before[f]);
+    const readme = path.join(dir, 'README.md');
+    if (library && tag && from.length && fs.existsSync(readme)) {
+        const olds = from.map((v) => v.replace(/^v/, '').replace(/\./g, '\\.')).join('|');
+        const re = new RegExp(`(\`?${library}\`? v)(?:${olds})(?![0-9.]*[0-9])`, 'g');
+        const text = fs.readFileSync(readme, 'utf8');
+        const next = text.replace(re, `$1${tag.slice(1)}`);
+        if (next !== text) fs.writeFileSync(readme, next);
+    }
+    return files.filter((f) => fs.readFileSync(path.join(dir, f), 'utf8') !== before[f]);
 }
 
 function repositories(only) {
@@ -126,8 +136,8 @@ function main() {
                 const lock = refreshLock(dir, file);
                 if (lock) changed.add(lock);
             }
-            updateVersionLines(dir).forEach((f) => changed.add(f));
             const from = [...new Set(stale.flatMap((s) => s.from))].sort((a, b) => cmp(parse(a), parse(b)));
+            updateVersionLines(dir, library, from, tag).forEach((f) => changed.add(f));
             const title = `${library} ${tag} (was ${from.join(', ')})`;
             if (!opts.apply) { summary.push(`${repo}: would open "${title}" changing ${[...changed].join(', ')}`); continue; }
             run('git', ['-C', dir, 'checkout', '-q', '-b', branch]);
