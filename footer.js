@@ -317,7 +317,7 @@
 
     // ── Styles (injected once) ─────────────────────────────────
     const CSS = `
-.ovf{background:var(--bg-secondary,#12131c);border-top:1px solid var(--border,rgba(255,255,255,.08));margin-top:40px;
+.ovf{background:var(--bg-secondary,#12131c);border-top:1px solid var(--border,rgba(255,255,255,.08));margin-top:40px;font-family:var(--ov-font,'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif);
   padding:clamp(24px,4vw,40px) clamp(14px,4vw,32px) calc(clamp(20px,3vw,28px) + env(safe-area-inset-bottom,0px));}
 .ovf[data-variant="compact"]{margin-top:24px;padding:14px clamp(12px,3vw,24px) calc(14px + env(safe-area-inset-bottom,0px));}
 .ovf-inner{max-width:1240px;margin:0 auto}

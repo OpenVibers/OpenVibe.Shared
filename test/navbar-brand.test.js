@@ -57,6 +57,17 @@ function load(hostname, opts = {}) {
     assert.strictEqual(navbar.brand().name, 'MergePDF.OpenVibe.Tools');
 }
 {
+    const { navbar } = load('openvibe.space');
+    navbar.init({ service: 'space' });
+    assert.strictEqual(navbar.brand().name, 'OpenVibe.Space');
+    const { navbar: ai } = load('ai.openvibe.services');
+    ai.init({ service: 'ai' });
+    assert.strictEqual(ai.brand().name, 'AI.OpenVibe.Services');
+    const { navbar: off } = load('localhost');
+    off.init({ service: 'space' });
+    assert.strictEqual(off.brand().name, 'OpenVibe.Space', 'off the network the space service keeps its brand');
+}
+{
     const { navbar } = load('openvibe.live');
     navbar.init({ service: 'live' });
     const b = navbar.brand();
