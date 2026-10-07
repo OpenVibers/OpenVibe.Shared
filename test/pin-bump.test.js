@@ -16,8 +16,9 @@ write('apps/a/package.json', { dependencies: { 'openvibe-contracts': url('OpenVi
 write('apps/b/package.json', { dependencies: { 'openvibe-contracts': url('OpenVibe.Contracts', 'v0.90.0') }, peerDependencies: { 'openvibe-shared': '>=2.0.0' } });
 write('node_modules/x/package.json', { dependencies: { 'openvibe-contracts': url('OpenVibe.Contracts', 'v0.1.0') } });
 write('STATUS.json', { repository: 'OpenVibers/Example', contracts: 'openvibe-contracts v0.110.0', sdk: 'openvibe-sdk v0.26.0', updated: '2026-01-01' });
+write('README.md', '- `openvibe-contracts` v0.110.0, `openvibe-sdk` v0.26.0\n\nThe manifest was first released in openvibe-contracts v0.8.0.\n');
 cp.execFileSync('git', ['init', '-q', dir]);
-cp.execFileSync('git', ['-C', dir, 'add', 'package.json', 'apps', 'STATUS.json']);
+cp.execFileSync('git', ['-C', dir, 'add', 'package.json', 'apps', 'STATUS.json', 'README.md']);
 
 // Only tracked package.json files count, and only pins below the tag; a current pin and a range are left alone.
 const stale = stalePins(dir, 'openvibe-contracts', 'v0.112.0').map((s) => s.file).sort();
@@ -29,7 +30,10 @@ assert.deepStrictEqual(stalePins(dir, 'openvibe-shared', 'v2.13.0'), [], 'a peer
 // STATUS.json follows the pins once package.json moves.
 const pkg = path.join(dir, 'package.json');
 fs.writeFileSync(pkg, fs.readFileSync(pkg, 'utf8').replace(url('OpenVibe.Contracts', 'v0.110.0'), pinUrl('openvibe-contracts', 'v0.112.0')));
-assert.deepStrictEqual(updateVersionLines(dir), ['STATUS.json']);
+assert.deepStrictEqual(updateVersionLines(dir, 'openvibe-contracts', ['v0.110.0'], 'v0.112.0'), ['STATUS.json', 'README.md']);
+const readme = fs.readFileSync(path.join(dir, 'README.md'), 'utf8');
+assert.ok(readme.includes('`openvibe-contracts` v0.112.0, `openvibe-sdk` v0.26.0'), 'the pinned version in prose follows; the other library stays');
+assert.ok(readme.includes('first released in openvibe-contracts v0.8.0'), 'a historical version is not a pin and stays');
 const status = JSON.parse(fs.readFileSync(path.join(dir, 'STATUS.json'), 'utf8'));
 assert.match(status.contracts, /v0\.112\.0/);
 assert.match(status.sdk, /v0\.26\.0/, 'the other library is untouched');
