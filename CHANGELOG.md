@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.11.0 — 2026-10-07
+
+- `ov-icons`: a `bot` glyph (a robot head with its antenna, eyes and side lights, in the family's 24-unit stroke
+  style), centred by hand (`OFFSETS.bot` `[0, 0.75]`: its bounds run from y 3.5 to 19) so no other icon's
+  measured offset moves. OpenVibe.Bot's site block (openvibe-contracts 0.106.0) names the icon `bot`; until a
+  site pins this release its navigation shows the OV mark for Bot.
+
 ## 2.10.1 — 2026-10-05
 
 - `openvibe-shared/shipped`: OpenVibe.Bot is a known site (`bot` → "Bot"), so its changelog lines and filter chip
