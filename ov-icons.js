@@ -34,6 +34,7 @@
         community: '<circle cx="9" cy="9" r="2.6"/><circle cx="16.5" cy="10" r="2"/>' + P('M3.8 18.5a5.2 5.2 0 0 1 10.4 0M14.6 14.2a4 4 0 0 1 5.6 3.8'),
         chat: P('M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v7A1.5 1.5 0 0 1 19 16.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 15V8A1.5 1.5 0 0 1 5 6.5zM8 10.5h8M8 13h5'),
         codes: P('M9 8 4.5 12 9 16M15 8l4.5 4-4.5 4M13.2 6l-2.4 12'),
+        bot: '<rect x="5" y="9" width="14" height="10" rx="2.6"/><circle cx="12" cy="4.7" r="1.2"/>' + P('M12 5.9V9M9.5 13.2v1.6M14.5 13.2v1.6M3 12.8v2.6M21 12.8v2.6'),
         code: P('M9 8 4.5 12 9 16M15 8l4.5 4-4.5 4M13.2 6l-2.4 12'),
         blog: P('M5 19l1.2-4.2L16 5l3 3-9.8 9.8zM14 7l3 3'),
         wiki: P('M5 5.5h6a2 2 0 0 1 2 2V19a2 2 0 0 0-2-2H5zM19 5.5h-4a2 2 0 0 0-2 2V19a2 2 0 0 1 2-2h4z'),
@@ -75,7 +76,7 @@
         clip: P('M6 6l12 12M6 18L18 6') ,
     };
     // [dx, dy] in glyph units that move each glyph's drawn bounds onto the centre of the ring. Generated.
-    const OFFSETS = {"ov":[0,-0.5],"network":[0,0.5],"tools":[1.26,0.24],"games":[0,-1.52],"community":[0,-0.45],"chat":[0,-1],"wiki":[0,-0.25],"reviews":[0,0.6],"tips":[0,-0.76],"vip":[0,-0.75],"trade":[0,-1],"deals":[0,-1],"coupons":[0,-0.5],"stream":[0,0.95],"download":[0,0.25],"audio":[0.7,-0.35],"pdf":[-0.25,0],"docs":[-0.25,0],"logo":[-1.25,-0.5],"ssl":[0,-0.25],"whois":[-0.5,-0.5],"search":[-0.5,-0.5],"food":[0.25,0],"account":[0,-0.4],"bell":[0,-1.37],"error":[-0.01,0.25]};
+    const OFFSETS = {"ov":[0,-0.5],"bot":[0,0.75],"network":[0,0.5],"tools":[1.26,0.24],"games":[0,-1.52],"community":[0,-0.45],"chat":[0,-1],"wiki":[0,-0.25],"reviews":[0,0.6],"tips":[0,-0.76],"vip":[0,-0.75],"trade":[0,-1],"deals":[0,-1],"coupons":[0,-0.5],"stream":[0,0.95],"download":[0,0.25],"audio":[0.7,-0.35],"pdf":[-0.25,0],"docs":[-0.25,0],"logo":[-1.25,-0.5],"ssl":[0,-0.25],"whois":[-0.5,-0.5],"search":[-0.5,-0.5],"food":[0.25,0],"account":[0,-0.4],"bell":[0,-1.37],"error":[-0.01,0.25]};
     const ALIASES = { yt: 'youtube', net: 'dns', dev: 'code', img: 'image', sound: 'audio', document: 'pdf', pastes: 'paste', openre: 'stream', maps: 'map', user: 'account', notifications: 'bell' };
     const registry = Object.create(null);
     for (const [k, g] of Object.entries(GLYPHS)) registry[k] = { glyph: g };
