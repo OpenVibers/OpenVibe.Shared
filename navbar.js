@@ -434,7 +434,7 @@
         live: 'Live', tools: 'Tools', network: 'Network', media: 'Media', games: 'Games',
         community: 'Community', chat: 'Chat', codes: 'Codes', blog: 'Blog', wiki: 'Wiki',
         news: 'News', reviews: 'Reviews', tips: 'Tips', vip: 'VIP', trade: 'Trade', host: 'Host',
-        deals: 'Deals', coupons: 'Coupons',
+        deals: 'Deals', coupons: 'Coupons', space: 'Space', services: 'Services', events: 'Events', bot: 'Bot',
     };
     const SUB_LABELS = {
         json: 'JSON', yaml: 'YAML', xml: 'XML', csv: 'CSV', sql: 'SQL', html: 'HTML', jwt: 'JWT',
@@ -457,7 +457,7 @@
         net: 'Net', img: 'Img', pastes: 'Pastes', paste: 'Pastes', maps: 'Maps', food: 'Food',
         text: 'Text', logo: 'Logo', audio: 'Audio', ai: 'AI', cdn: 'CDN', status: 'Status',
     };
-    const SERVICE_TLD = { live: 'live', tools: 'tools', games: 'games', media: 'media', network: 'network', community: 'community' };
+    const SERVICE_TLD = { live: 'live', tools: 'tools', games: 'games', media: 'media', network: 'network', community: 'community', space: 'space' };
     const SERVICE_SUB = { net: 'net', dev: 'dev', paste: 'pastes', maps: 'maps', food: 'food', img: 'img', yt: 'yt', audio: 'audio', text: 'text', logo: 'logo', docs: 'docs' };
 
     function titleCase(w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : ''; }

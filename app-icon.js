@@ -20,6 +20,8 @@ const SITES = {
     community: { accent: ['#34d399', '#2563eb'], dot: '#ffffff' },
     games: { accent: ['#a78bfa', '#2563eb'], dot: '#facc15' },
     media: { accent: ['#fbbf24', '#2563eb'], dot: '#ffffff' },
+    space: { accent: ['#818cf8', '#4f46e5'], dot: '#ffffff' },
+    ai: { accent: ['#22d3ee', '#2563eb'], dot: '#ffffff' },
 };
 const of = (site) => SITES[site] || SITES.network;
 

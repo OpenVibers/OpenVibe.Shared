@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 2.12.0 — 2026-10-07
+
+- `showcase`: the sections (`.sc-hero`, `.sc-sec`, `.sc-cta`) set their own font stack (`--ov-font`, else Inter and
+  the system sans-serif fonts). `shell.page` adds no base stylesheet, so a home built from the shell and the
+  showcase rendered in the browser's default serif face (OpenVibe.Events, Reviews, Deals, Trade, Host).
+- `footer`: the Frame footer sets the same font stack on `.ovf`, as the navbar already does, so it no longer
+  inherits a serif face on pages without a body font.
+- `app-icon`: `space` (indigo, OpenVibe.Space) and `ai` (cyan, OpenVibe.AI) tints.
+- `navbar`: the brand spells `openvibe.space`, `openvibe.services`, `openvibe.events` and `openvibe.bot` with their
+  names (Space, Services, Events, Bot), and the `space` service falls back to the Space brand off the network.
+
 ## 2.11.0 — 2026-10-07
 
 - `ov-icons`: a `bot` glyph (a robot head with its antenna, eyes and side lights, in the family's 24-unit stroke
