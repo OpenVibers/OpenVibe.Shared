@@ -110,7 +110,8 @@ function main() {
         if (repo === LIBS[library]) continue;
         const dir = path.join(work, repo);
         try {
-            run('git', ['clone', '-q', '--depth', '1', `https://github.com/${ORG}/${repo}.git`, dir]);
+            // gh clones with the same authentication it opens the PRs with, so private repositories work too.
+            run('gh', ['repo', 'clone', `${ORG}/${repo}`, dir, '--', '-q', '--depth', '1']);
             const stale = stalePins(dir, library, tag);
             if (!stale.length) { summary.push(`${repo}: current`); continue; }
             if (opts.apply) {
