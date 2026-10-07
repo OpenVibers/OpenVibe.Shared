@@ -383,7 +383,7 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
 - **Release notifications (1.17.0).** When OpenVibe.Host announces a release, it publishes
   `host.release.published` (public, `ovhost deploy` / `ovhost announce`). release-watch opens one
   EventSource per tab, without credentials, on
-  `https://events.openvibe.network/realtime/stream?topics=host.release.published`.
+  `https://openvibe.events/realtime/stream?topics=host.release.published`.
   - **Which events count.** Only events whose `payload.service` is the page's service: `OVReleaseConfig.service`,
     the meta tag's `data-service`, else the `service` of `/release.json`. The tab ignores the release it runs
     or already knows (a hex prefix counts as the same release) and repeats of an event, and runs its usual
@@ -402,7 +402,7 @@ release.mount(app, { registry: m.registry });   // GET /release.json, POST /rele
     tag's `data-events` sets another URL, and `false` or `"off"` turns it off. Polling (focus, visibility,
     every 10 minutes) is unchanged.
   - **Origins.** Events answers `https://*.openvibe.*` origins, plus those in its `REALTIME_CORS_ORIGINS`.
-  - **CSP.** The site's CSP `connect-src` must allow `https://events.openvibe.network`. Otherwise the
+  - **CSP.** The site's CSP `connect-src` must allow `https://openvibe.events`. Otherwise the
     browser refuses the stream once, and release-watch stops (state `blocked`) and keeps polling.
   - **State.** `OVRelease.state().realtime` reports `{ state, service, url, events, ignored, checks, failures, lastSeq }`.
 - **Metrics (D46)**: `release_client_updates_total{outcome,reason}`, where outcome is `prompted`
@@ -496,14 +496,14 @@ can't load, those icons fall back to `<i class="fa-solid …">`. Two options cha
 
 **The notification bell in realtime (1.22.0, off by default).** `OpenVibeNavbar.init({ notificationsRealtime: true })`, or `OpenVibeNotifications.init({ realtime: true })` where a site mounts the bell itself, makes the bell hear the person's new notifications as they happen. It uses Network's `network.notification.created` over OpenVibe.Events' realtime stream (ADR-005 amendment 2).
 - **Loading.** notification-ui.js then loads `notification-live.js` from its own directory, so serve it beside notification-ui.js (it is in `files.js`).
-- **Each (re)connect.** It asks Network for a two-minute ticket (`POST https://openvibe.network/api/v1/realtime/ticket`) with the page's Bearer token, or with the session cookie on openvibe.network itself. It then opens `https://events.openvibe.network/realtime/stream?topics=network.notification.*&ticket=…` without credentials, resuming with `last_event_id`.
+- **Each (re)connect.** It asks Network for a two-minute ticket (`POST https://openvibe.network/api/v1/realtime/ticket`) with the page's Bearer token, or with the session cookie on openvibe.network itself. It then opens the ticket's stream URL (now `https://openvibe.events/realtime/stream?topics=network.notification.*&ticket=…`) without credentials, resuming with `last_event_id`.
 - **What it reacts to.** On an event whose subject is the person, it re-reads the unread count and toasts what is new: one request per burst. On `event: gap` it also reloads the open lists.
 - **Polling stays:** every 15 s without a stream, and every 2 min while the stream is open, as a safety net for reads made on other sites.
 - **Retries and giving up.**
   - Errors back off from 2 s, with jitter. After ten failures in a row the bell polls only, until the browser comes back `online`.
   - A tab hidden 5 minutes closes the stream and resumes it when shown.
   - A Content-Security-Policy refusal, a signed-out 401/403, or Network's `REALTIME_TICKETS=off` (503) stop the stream, and the bell polls.
-- **The site's CSP** needs `connect-src https://events.openvibe.network` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
+- **The site's CSP** needs `connect-src https://openvibe.events` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
 
 ### Boost (`boost.js`): smooth page moves for a server-rendered site
 
