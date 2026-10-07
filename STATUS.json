@@ -21,5 +21,5 @@
     "browser harness and perf budgets for tests",
     "a CONFIRMATION_REQUESTED notification type: an agent owner is told when a sensitive-capability confirmation awaits them"
   ],
-  "updated": "2026-10-04"
+  "updated": "2026-10-07"
 }
