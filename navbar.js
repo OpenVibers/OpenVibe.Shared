@@ -8,17 +8,7 @@
         onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
         brand: null, brandName: null, brandIcon: null, compact: 'auto',
         links: null, menu: null, recent: true,
-        // history: { type: 'tool'|'stream'|'paste'|'page'|…, title, url, icon } — recorded for the
-        // signed-in user once auth resolves (cross-site "Recently used" / History on the Network).
-        history: null,
-        // silentLogin: 'https://site/auth/login?silent=1&next={url}' — when nobody is signed in here
-        // but this browser has signed in to the network before (ov_sso_hint), try one silent
-        // prompt=none round trip per tab so a session on one site becomes a session on all.
-        silentLogin: null,
-        // fedcm: false to opt out; 'optional' (default) shows the browser's native chip the first
-        // time and re-authenticates silently afterwards; 'silent' only re-authenticates.
-        fedcm: 'optional',
-        fedcmLogin: null,           // POST target for the assertion (default: this site's /auth/fedcm)
+        history: null, silentLogin: null, fedcm: 'optional', fedcmLogin: null,   // README.md, "The navbar"
     };
     const _runtimeMenu = { before: [], after: [] };
     let _runtimeLinks = null;
@@ -592,7 +582,7 @@
         } catch { return null; }
     }
 
-    // A render's document listeners; the next render (each boost page move) aborts them, so the old bar can go.
+    // A render's document/window listeners and panels; the next render (each boost page move) aborts them, so the old bar can go.
     let _renderAbort = null;
     const onDocument = () => (_renderAbort ? { signal: _renderAbort.signal } : undefined);
 
@@ -724,7 +714,7 @@
     const _panelQueue = [];
     function regPanel(el, id, close) {
         if (!el) return;
-        const opts = { el, openClass: 'open', id, close };
+        const opts = Object.assign({ el, openClass: 'open', id, close }, onDocument());
         if (root.OpenVibePanels) return root.OpenVibePanels.register(opts);
         _panelQueue.push(opts);
         if (document.getElementById('ov-panels-loader')) return;
@@ -749,7 +739,7 @@
         const LABEL = { text: { 100: 'Default', 112: 'Large', 125: 'Largest' }, motion: { auto: 'On', reduced: 'Calm' } };
         const paint = () => { const d = L.display.get(); rows.forEach(r => { const k = r.getAttribute('data-ov-display'); r.querySelector('.ud-val').textContent = LABEL[k][d[k]] || ''; }); };
         rows.forEach(r => r.addEventListener('click', (e) => { e.stopPropagation(); const k = r.getAttribute('data-ov-display'), o = L.display.options[k], cur = L.display.get()[k]; L.display.set({ [k]: o[(o.indexOf(cur) + 1) % o.length] }); paint(); }));
-        root.addEventListener('ov:display', paint); paint();
+        root.addEventListener('ov:display', paint, onDocument()); paint();
     }
 
     /** OpenCoins balance in the menu header (one request when the menu first opens). */
@@ -788,7 +778,7 @@
             box.hidden = false;
         };
         box.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (!b) return; L.display.set({ [b.dataset.k]: b.dataset.v }); paint(); });
-        root.addEventListener('ov:display', paint);
+        root.addEventListener('ov:display', paint, onDocument());
         paint();
     }
 
@@ -1323,7 +1313,7 @@
         // A site may put state classes on the bar (Live's transparent hero mode). A re-render must not lose them.
         let carried = []; try { carried = Array.from((_navEl && _navEl.classList) || []).filter(c => c !== 'openvibe-navbar'); } catch { carried = []; }
         if (_navEl) _navEl.remove();
-        if (_renderAbort) _renderAbort.abort();
+        if (_renderAbort) { _renderAbort.abort(); _panelQueue.length = 0; }
         _renderAbort = typeof AbortController === 'function' ? new AbortController() : null;
 
         const nav = document.createElement('nav');

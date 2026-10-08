@@ -4,6 +4,27 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.14.0 — 2026-10-08
+
+- A boost page move no longer keeps the old navbar. 2.13.3 removed the render's document listeners, but panels.js
+  still held every panel ever registered (the drawer on each render; signed in, the account menu too) in its list,
+  with a MutationObserver, so each re-render kept the whole removed bar and its listeners alive.
+  `OpenVibePanels.register()` now takes `signal` (an AbortSignal: the registration ends when it aborts, its observer
+  is disconnected) and returns its `unregister()`; `OpenVibePanels.unregister(el)` does the same by element. The
+  navbar registers its panels with the render's signal, gives the display rows' `ov:display` window listeners that
+  signal too, and drops a gone render's queued registrations.
+- browser-harness: the navigation probe forgets a window or document listener when its AbortSignal aborts, as the
+  browser does. It kept every one, and with it whatever the listener closed over, so the growth check also measured
+  its own probe: with 2.13.3's navbar alone it still saw the old bars.
+- Measured with ovhost browser-check's method (probe on, forced GC, lap 2 → 5), the patched files served into the
+  live pages: openvibe.codes +780 nodes, +60 listeners → 0, 0; openvibe.services +852, +60 → 0, 0; openvibe.space
+  +744, +72 → 0, 0; openvibe.community +3324, +72 → 0, 0. Both halves are needed: either one alone still grows.
+- New test boost-navbar-chrome.test.js (real Chrome: navbar, panels and boost over six laps, measured like
+  browser-check; no node or listener growth, no detached bar); panels.test.js and navbar-brand.test.js cover the
+  signal lifecycle.
+- The navbar's notes on `history`, `silentLogin`, `fedcm` and `fedcmLogin` moved to the README (navbar.js 28.8 KB
+  brotli, budget 29 KB).
+
 ## 2.13.3 — 2026-10-08
 
 - The navbar removes the document listeners of its previous render (the outside-click closers of the launcher, the

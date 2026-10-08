@@ -186,7 +186,9 @@ async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, hea
 }
 
 // Installed before any page script (navigation check only): live intervals, pending timeouts, open sockets
-// and window/document listeners as the browser keeps them (re-adding the same listener is a no-op).
+// and window/document listeners as the browser keeps them (re-adding the same listener is a no-op; `once` ones are
+// not counted; one added with an AbortSignal is forgotten when the signal aborts, as the browser forgets it: holding it
+// would keep alive whatever it closes over, and the check would measure its own probe).
 const PROBE = `(() => {
   if (window.__ovProbe) return;
   const w = window; const intervals = new Set(), timeouts = new Set(), sockets = new Set();
@@ -208,11 +210,16 @@ const PROBE = `(() => {
     const add = target.addEventListener, rem = target.removeEventListener; const key = target === w ? 'window' : 'document';
     const reg = new Map(); counts[key] = () => [...reg.values()].reduce((n, m) => n + [...m.values()].reduce((k, s) => k + s.size, 0), 0);
     const cap = (o) => !!(o === true || (o && o.capture));
+    const forget = (t, fn, c) => { const m = reg.get(t); if (m && m.has(fn)) { m.get(fn).delete(c); if (!m.get(fn).size) m.delete(fn); } };
     target.addEventListener = function (t, fn, o) {
-      if (fn && !(o && o.once)) { if (!reg.has(t)) reg.set(t, new Map()); const m = reg.get(t); if (!m.has(fn)) m.set(fn, new Set()); m.get(fn).add(cap(o)); }
+      const sig = o && typeof o === 'object' ? o.signal : null;
+      if (fn && !(o && o.once) && !(sig && sig.aborted)) {
+        if (!reg.has(t)) reg.set(t, new Map()); const m = reg.get(t); if (!m.has(fn)) m.set(fn, new Set());
+        const c = cap(o); if (!m.get(fn).has(c)) { m.get(fn).add(c); if (sig) sig.addEventListener('abort', () => forget(t, fn, c), { once: true }); }
+      }
       return add.call(this, t, fn, o);
     };
-    target.removeEventListener = function (t, fn, o) { const m = reg.get(t); if (m && m.has(fn)) { m.get(fn).delete(cap(o)); if (!m.get(fn).size) m.delete(fn); } return rem.call(this, t, fn, o); };
+    target.removeEventListener = function (t, fn, o) { forget(t, fn, cap(o)); return rem.call(this, t, fn, o); };
   }
   Object.defineProperty(w, '__ovProbe', { value: () => ({ intervals: intervals.size, timeouts: timeouts.size,
     sockets: [...sockets].filter((s) => s.readyState < 2).length, windowListeners: counts.window(), documentListeners: counts.document(),
