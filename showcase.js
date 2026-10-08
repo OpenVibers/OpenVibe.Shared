@@ -73,7 +73,7 @@ function steps({ id: sid, title, lede, items } = {}) {
 function code({ id: sid, title, lede, samples } = {}) {
     if (!has(samples)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-code">${samples.map((c, i) => `<figure><figcaption>${esc(c.label || c.lang || `Sample ${i + 1}`)}</figcaption><pre><code${c.lang ? ` class="language-${esc(c.lang)}"` : ''}>${esc(String(c.code || '').replace(/^\n+|\s+$/g, ''))}</code></pre></figure>`).join('')}</div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-code">${samples.map((c, i) => `<figure><figcaption>${esc(c.label || c.lang || `Sample ${i + 1}`)}</figcaption><pre tabindex="0" aria-label="${esc(c.label || c.lang || `Sample ${i + 1}`)}"><code${c.lang ? ` class="language-${esc(c.lang)}"` : ''}>${esc(String(c.code || '').replace(/^\n+|\s+$/g, ''))}</code></pre></figure>`).join('')}</div></section>`;
 }
 
 /** A live demo: the product itself in a frame, or the caller's own markup. */

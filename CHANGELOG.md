@@ -4,7 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## Unreleased
+## 2.13.1 — 2026-10-08
+
+- `showcase` code samples are a focus stop with a name (`<pre tabindex="0" aria-label="…">`): a sample that scrolls
+  sideways could not be reached from the keyboard (axe `scrollable-region-focusable`, serious; ovhost browser-check
+  on ai.openvibe.services and openvibe.events, 2026-10-08).
 
 - `scripts/pin-bump.js` (plan T1, the pin bot): after a release of openvibe-contracts, -shared, -sdk or -publishing,
   `node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply]` opens one PR per OpenVibers repository that pins
