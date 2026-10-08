@@ -143,6 +143,39 @@ function load(hostname, opts = {}) {
     const latest = docListeners.filter((l) => l.type === 'click').slice(first.length);
     assert.ok(latest.length >= 1 && latest.every((l) => !l.opts.signal.aborted), 'the new render has its own, live');
 }
+// ── a re-render also ends the previous render's panel registrations and window listeners (the panels coordinator
+//    and the display rows' window listener held every old bar: ovhost browser-check, 2026-10-08) ────
+{
+    const { navbar } = load('openvibe.space');
+    const regs = [], winListeners = [];
+    // navbar.js's root is globalThis under node (the window in a browser).
+    global.OpenVibePanels = { register: (o) => { regs.push(o); } };
+    global.OpenVibeThemeLoader = { display: { get: () => ({ text: 100, motion: 'auto' }), set() {}, options: { text: [100], motion: ['auto'] } } };
+    global.addEventListener = (type, fn, opts) => winListeners.push({ type, opts });
+    navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
+    const first = regs.slice(), firstDisplay = winListeners.filter((l) => l.type === 'ov:display');
+    assert.deepStrictEqual(first.map((r) => r.id).sort(), ['nav-drawer', 'user-menu'], 'the drawer and the account menu are registered');
+    assert.ok(first.every((r) => r.signal && !r.signal.aborted), 'each registration carries the render\'s signal');
+    assert.ok(firstDisplay.length === 1 && firstDisplay[0].opts && firstDisplay[0].opts.signal, 'the display rows\' window listener carries it too');
+    navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
+    assert.ok(first.every((r) => r.signal.aborted) && firstDisplay[0].opts.signal.aborted, 'the next render ended them');
+    assert.ok(regs.slice(first.length).every((r) => !r.signal.aborted), 'the new render\'s registrations are live');
+    delete global.OpenVibePanels; delete global.OpenVibeThemeLoader; delete global.addEventListener;
+}
+// ── before panels.js loads, registrations queue; a render that is gone registers nothing when it arrives ────
+{
+    const { navbar, created } = load('openvibe.space');
+    navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
+    navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
+    const loaders = created.filter((e) => e.tag === 'script' && e.id === 'ov-panels-loader');
+    assert.ok(loaders.length >= 1, 'panels.js was requested');
+    const regs = [];
+    global.OpenVibePanels = { register: (o) => { regs.push(o); } };
+    loaders[loaders.length - 1].onload();
+    delete global.OpenVibePanels;
+    assert.deepStrictEqual(regs.map((r) => r.id).sort(), ['nav-drawer', 'user-menu'], 'only the live render\'s panels are registered');
+    assert.ok(regs.every((r) => !r.signal.aborted));
+}
 // ── rendered markup carries the segments, compact attr and the variant ────
 {
     const { navbar, created } = load('pastes.openvibe.tools', { pathname: '/mine' });

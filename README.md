@@ -634,6 +634,19 @@ Menus are modular: every site keeps the shared account menu and adds its own
   ({label, href, icon, onClick, danger, external}); OpenVibeNavbar.addMenuItem()
   / setLinks() do the same at runtime. Signed-in users also get a
   "Recently used" row fed by the shared history module when it is loaded.
+Sign-in and history: history: { type: 'tool'|'stream'|'paste'|'page'|…,
+  title, url, icon } is recorded for the signed-in user once auth resolves
+  (cross-site "Recently used" / History on the Network). silentLogin:
+  'https://site/auth/login?silent=1&next={url}' — when nobody is signed in
+  here but this browser has signed in to the network before (ov_sso_hint),
+  one silent prompt=none round trip per tab, so a session on one site becomes
+  a session on all. fedcm: 'optional' (default) shows the browser's native
+  chip the first time and re-authenticates silently afterwards, 'silent' only
+  re-authenticates, false opts out; fedcmLogin is the POST target for the
+  assertion (default: this site's /auth/fedcm).
+Re-renders (each openvibe-shared/boost page move re-renders the bar) end the
+  previous render's document and window listeners and its panels.js
+  registrations, so the old bar can be collected.
 ```
 
 Dropdowns under a top link (`children`) are fixed-positioned under their link when they show (hover, keyboard focus, a tap), because the links row scrolls sideways and would clip them.
