@@ -120,6 +120,16 @@ function load(hostname, opts = {}) {
     assert.strictEqual(n3.brand().name, 'Custom Name');
     assert.strictEqual(n3.brand().variant, 'games');
 }
+// ── ov-mark.js is loaded once: not when the page already carries its own (async) tag ────
+{
+    const { navbar, created } = load('openvibe.coupons');
+    navbar.init({ service: 'coupons', user: null });
+    assert.strictEqual(created.filter((e) => e.tag === 'script' && e.id === 'ov-mark-loader').length, 1, 'no tag on the page: the navbar loads the mark');
+    const second = load('openvibe.coupons');
+    global.document.querySelector = (sel) => (sel === 'script[src*="/ov-mark.js"]' ? { src: '/shared/ov-mark.js?v=1' } : null);
+    second.navbar.init({ service: 'coupons', user: null });
+    assert.strictEqual(second.created.filter((e) => e.tag === 'script' && e.id === 'ov-mark-loader').length, 0, 'the page\'s own tag: no second copy');
+}
 // ── rendered markup carries the segments, compact attr and the variant ────
 {
     const { navbar, created } = load('pastes.openvibe.tools', { pathname: '/mine' });
