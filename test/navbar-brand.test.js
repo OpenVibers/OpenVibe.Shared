@@ -130,6 +130,19 @@ function load(hostname, opts = {}) {
     second.navbar.init({ service: 'coupons', user: null });
     assert.strictEqual(second.created.filter((e) => e.tag === 'script' && e.id === 'ov-mark-loader').length, 0, 'the page\'s own tag: no second copy');
 }
+// ── a re-render removes the previous render's document listener (it kept the removed bar alive) ────
+{
+    const { navbar } = load('openvibe.space');
+    const docListeners = [];
+    global.document.addEventListener = (type, fn, opts) => docListeners.push({ type, opts });
+    navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
+    const first = docListeners.filter((l) => l.type === 'click');
+    assert.ok(first.length >= 1 && first.every((l) => l.opts && l.opts.signal), 'the outside-click listener carries an abort signal');
+    navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
+    assert.ok(first.every((l) => l.opts.signal.aborted), 'the next render removed it');
+    const latest = docListeners.filter((l) => l.type === 'click').slice(first.length);
+    assert.ok(latest.length >= 1 && latest.every((l) => !l.opts.signal.aborted), 'the new render has its own, live');
+}
 // ── rendered markup carries the segments, compact attr and the variant ────
 {
     const { navbar, created } = load('pastes.openvibe.tools', { pathname: '/mine' });
