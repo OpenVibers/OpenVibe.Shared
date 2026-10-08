@@ -27,6 +27,19 @@
                 font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                 color: var(--text-primary, #e0e0e0);
             }
+            /* At the very top the bar fades into the page (no background, no border); a scroll brings the frosted bar back.
+               A page whose hero runs under the bar opts in with body.ov-nav-overlay: the bar then sits over the hero, with a
+               soft scrim for the text. ovnav-top is kept by the navbar itself on every render and scroll. */
+            .openvibe-navbar { transition: background-color .45s cubic-bezier(.2,.7,.2,1), border-color .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s cubic-bezier(.2,.7,.2,1), -webkit-backdrop-filter .45s, backdrop-filter .45s; }
+            .openvibe-navbar::before { content: ""; position: absolute; inset: 0 0 -28px; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .45s cubic-bezier(.2,.7,.2,1); background: linear-gradient(180deg, rgba(4,7,14,.62), rgba(4,7,14,.28) 55%, rgba(4,7,14,0)); }
+            .openvibe-navbar:not(.ovnav-top) { background-color: color-mix(in srgb, var(--bg-secondary, #252530) 84%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px); box-shadow: 0 12px 32px -14px rgba(0,0,0,.6); }
+            .openvibe-navbar.ovnav-top { background-color: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+            /* The bar is sticky, but a #navbar-mount wrapper exactly its height gave it no room to stick in: the wrapper sticks. */
+            #navbar-mount { position: sticky; top: 0; z-index: 10000; }
+            body.ov-nav-overlay .openvibe-navbar.ovnav-top::before { opacity: 1; }
+            body.ov-nav-overlay > #navbar-mount, body.ov-nav-overlay > .openvibe-navbar { margin-bottom: calc(-1 * var(--ovnav-real-h, 52px)); }
+            body.ov-panel-open .openvibe-navbar.ovnav-top { background-color: var(--bg-secondary, #252530); border-bottom-color: var(--border, #333340); }
+            @media (prefers-reduced-motion: reduce) { .openvibe-navbar, .openvibe-navbar::before { transition: none; } }
             .openvibe-navbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; margin-right: 8px; min-width: 0; }
             /* Brand group: mark + linked wordmark + launcher read as one control. Every property a host
                page might set on bare "nav a" / "a" is reset here, so the brand looks the same everywhere. */
@@ -1489,7 +1502,29 @@
         }
         _navEl = nav;
         attachAvatarFallbacks(nav);
+        hookTop();
         return nav;
+    }
+
+    // The bar's at-the-top state (ovnav-top, see injectStyles), on every render and scroll. One window listener pair for
+    // the page's life, a frame at most per update; --ovnav-real-h is the bar's height for overlay pages.
+    let _topHooked = false;
+    function syncTop() {
+        if (!_navEl) return;
+        _navEl.classList.toggle('ovnav-top', (root.scrollY || (document.documentElement && document.documentElement.scrollTop) || 0) <= 4);
+        // A fixed bar (a site that positions it itself, like Live) takes no room, so an overlay page needs no pull-up.
+        const fixed = root.getComputedStyle && root.getComputedStyle(_navEl).position === 'fixed';
+        const de = document.documentElement;
+        if (de && de.style) de.style.setProperty('--ovnav-real-h', `${fixed ? 0 : (_navEl.offsetHeight || 52)}px`);
+    }
+    function hookTop() {
+        syncTop();
+        if (_topHooked || typeof root.addEventListener !== 'function') return;
+        _topHooked = true;
+        let raf = 0;
+        const later = () => { if (!raf) raf = (root.requestAnimationFrame || setTimeout)(() => { raf = 0; syncTop(); }); };
+        root.addEventListener('scroll', later, { passive: true });
+        root.addEventListener('resize', later, { passive: true });
     }
 
     // openvibe-shared/boost swapped the page in place: this is a new page for the history and the
