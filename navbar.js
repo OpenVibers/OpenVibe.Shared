@@ -1335,8 +1335,9 @@
         const loginHref = resolveLoginHref(currentHost(), window.location.href);
         const addAccountHref = `${_config.apiBase}/login?add_account=1&return=${encodeURIComponent(window.location.href)}`;
 
-        // The OV brand mark is a self-contained drop-in (mounts every .ov-mark it finds).
-        if (!window.__ovMark && !document.getElementById('ov-mark-loader')) {
+        // The OV brand mark is a self-contained drop-in (mounts every .ov-mark it finds). A page may already carry its own
+        // async <script src=".../ov-mark.js?v=…"> that has not run yet: never load a second copy.
+        if (!window.__ovMark && !document.getElementById('ov-mark-loader') && !(document.querySelector && document.querySelector('script[src*="/ov-mark.js"]'))) {
             try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = sibling('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
         nav.innerHTML = `

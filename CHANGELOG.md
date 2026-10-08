@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.13.2 — 2026-10-08
+
+- The navbar loads `ov-mark.js` only when no `<script src=".../ov-mark.js">` is on the page yet: a page carrying its own async
+  tag that had not run when the navbar rendered got a second copy (ovhost browser-check "script requested twice" on
+  openvibe.coupons, .reviews, .services, .vip and openre.stream, 2026-10-08).
+
 ## 2.13.1 — 2026-10-08
 
 - `showcase` code samples are a focus stop with a name (`<pre tabindex="0" aria-label="…">`): a sample that scrolls
