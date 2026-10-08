@@ -26,6 +26,10 @@ const data = {
     assert.strictEqual(node.querySelectorAll('img').length, 0, 'commit text is text, never markup');
     assert.ok(items[0].textContent.includes('<img src=x'));
     assert.strictEqual(items[0].querySelector('.ov-shipped-site').textContent, 'Live', 'network-wide: each line names its site');
+    // Every site reads as its name, never as a lowercase id next to capitalised ones (the owner saw "space", "actor").
+    for (const [id, name] of [['space', 'Space'], ['services', 'Services'], ['actor', 'Actor'], ['vip', 'VIP'], ['openre', 'OpenRe'], ['media-hub', 'Media Hub'], ['brand-new', 'Brand New']]) {
+        assert.strictEqual(shipped.siteName(id), name, id);
+    }
     assert.strictEqual(items[1].querySelector('a'), null, 'a non-https link is not a link');
     assert.ok(items[0].querySelector('time').textContent.endsWith('h ago'));
     assert.strictEqual(node.querySelector('.ov-shipped-notes').getAttribute('href'), data.latest_post.url);
