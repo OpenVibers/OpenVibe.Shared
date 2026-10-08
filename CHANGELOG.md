@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.15.0 — 2026-10-08
+
+- The navbar fades into the page at the very top (no background or border) and brings its frosted bar back with a
+  smooth transition as you scroll; it keeps that state itself (`.ovnav-top`) on every render and scroll, so a page no
+  longer has to. A page whose hero runs under the bar sets `body.ov-nav-overlay`: the bar then sits over the hero with a
+  soft scrim for its text (a fixed bar, like Live's, needs no pull-up; `--ovnav-real-h` is 0 for it).
+- The navbar sticks again on sites that mount it in `#navbar-mount`: the wrapper was exactly the bar's height, so the bar
+  had no room to stick and scrolled away. The wrapper is sticky now.
+- navbar.js brotli budget 29 → 30 KB (29.4 KB with the fade).
+
 ## 2.14.1 — 2026-10-08
 
 - shipped.js names every site (Space, Services, Actor, Run, Watch, Download and the rest): the update log showed

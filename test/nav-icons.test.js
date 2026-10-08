@@ -13,7 +13,7 @@ const { brotli } = require('../scripts/size-report');
 const ROOT = path.join(__dirname, '..');
 const NAVBAR_PATH = path.join(ROOT, 'navbar.js');
 const ICONS = require('../nav-icons');
-const NAVBAR_BROTLI_BUDGET = 29 * 1024;   // measured 27.6 KB on 2026-09-22 (39.0 KB with every glyph inline)
+const NAVBAR_BROTLI_BUDGET = 30 * 1024;   // measured 27.6 KB on 2026-09-22 (39.0 KB with every glyph inline); 29.4 KB with the top-of-page fade (2.15.0)
 
 // ── size budget and generated block ──────────────────────────
 {
