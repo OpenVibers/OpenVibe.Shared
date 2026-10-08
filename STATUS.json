@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.112.0 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.20.4",
+  "sdk": "openvibe-sdk v0.35.0",
   "features": [
     "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
     "themes, design tokens and icons",
