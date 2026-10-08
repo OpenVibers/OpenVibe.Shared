@@ -592,6 +592,10 @@
         } catch { return null; }
     }
 
+    // A render's document listeners; the next render (each boost page move) aborts them, so the old bar can go.
+    let _renderAbort = null;
+    const onDocument = () => (_renderAbort ? { signal: _renderAbort.signal } : undefined);
+
     function bindLauncher(nav) {
         const btn = nav.querySelector('#openvibe-launcher-btn'); if (!btn) return;
         let panel = null;
@@ -646,7 +650,7 @@
                     ev.preventDefault(); const n = i + (ev.key === 'ArrowDown' ? 1 : -1); (links[n] || (n < 0 ? input : links[0])).focus();
                 });
                 panel.addEventListener('click', (ev) => ev.stopPropagation());
-                document.addEventListener('click', close);
+                document.addEventListener('click', close, onDocument());
                 launcherCatalog().then((c) => { if (c) { cat = c; paint(cat, input.value.trim().toLowerCase()); } });
             }
             panel.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
@@ -697,7 +701,7 @@
             }
             closeDrawer();
         });
-        document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('.ovnav-dd')) nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); });
+        document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('.ovnav-dd')) nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); }, onDocument());
         // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
         const placeDd = (dd) => {
             const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
@@ -710,7 +714,7 @@
         nav.addEventListener('pointerover', place); nav.addEventListener('focusin', place);
         if (burger && drawer) {
             burger.addEventListener('click', (e) => { e.stopPropagation(); const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); });
-            document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); });
+            document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); }, onDocument());
             regPanel(drawer, 'nav-drawer', closeDrawer);
         }
     }
@@ -1319,6 +1323,8 @@
         // A site may put state classes on the bar (Live's transparent hero mode). A re-render must not lose them.
         let carried = []; try { carried = Array.from((_navEl && _navEl.classList) || []).filter(c => c !== 'openvibe-navbar'); } catch { carried = []; }
         if (_navEl) _navEl.remove();
+        if (_renderAbort) _renderAbort.abort();
+        _renderAbort = typeof AbortController === 'function' ? new AbortController() : null;
 
         const nav = document.createElement('nav');
         nav.className = 'openvibe-navbar';
@@ -1335,8 +1341,7 @@
         const loginHref = resolveLoginHref(currentHost(), window.location.href);
         const addAccountHref = `${_config.apiBase}/login?add_account=1&return=${encodeURIComponent(window.location.href)}`;
 
-        // The OV brand mark is a self-contained drop-in (mounts every .ov-mark it finds). A page may already carry its own
-        // async <script src=".../ov-mark.js?v=…"> that has not run yet: never load a second copy.
+        // The OV brand mark is a drop-in (mounts every .ov-mark); never a second copy of a page's own tag.
         if (!window.__ovMark && !document.getElementById('ov-mark-loader') && !(document.querySelector && document.querySelector('script[src*="/ov-mark.js"]'))) {
             try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = sibling('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
@@ -1444,7 +1449,7 @@
             // Close on outside click
             document.addEventListener('click', e => {
                 if (!nav.contains(e.target)) dropdown.classList.remove('open');
-            });
+            }, onDocument());
 
             // Account switching
             dropdown.querySelectorAll('[data-account-id]').forEach(el => {

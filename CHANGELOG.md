@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.13.3 — 2026-10-08
+
+- The navbar removes the document listeners of its previous render (the outside-click closers of the launcher, the
+  dropdowns, the drawer and the account menu) with an AbortController per render. Every re-render — each
+  `openvibe-shared/boost` page move re-renders the bar — had left them on document, keeping the removed bar and its
+  listeners alive: ovhost browser-check measured +25–40 listeners and +250–1100 nodes per navigation lap on
+  openvibe.space and openvibe.community (2026-10-08).
+
 ## 2.13.2 — 2026-10-08
 
 - The navbar loads `ov-mark.js` only when no `<script src=".../ov-mark.js">` is on the page yet: a page carrying its own async
