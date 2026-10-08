@@ -34,7 +34,18 @@
 }(typeof globalThis !== 'undefined' ? globalThis : this, function () {
     'use strict';
     const API = 'https://openvibe.network/api/v1/changelog';
-    const SITE_NAMES = { live: 'Live', network: 'Network', tools: 'Tools', media: 'Media', community: 'Community', chat: 'Chat', games: 'Games', blog: 'Blog', wiki: 'Wiki', news: 'News', reviews: 'Reviews', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', codes: 'Codes', host: 'Host', ai: 'AI', search: 'Search', sources: 'Sources', events: 'Events', billing: 'Billing', tips: 'Tips', vip: 'VIP', openre: 'OpenRe', bot: 'Bot', sites: 'Sites', realtime: 'Realtime' };
+    // Every OpenVibe service's display name (openvibe-contracts site.name). A service missing here still reads as a name
+    // (siteName capitalises its id), never as a lowercase id next to capitalised ones.
+    const SITE_NAMES = {
+        live: 'Live', network: 'Network', tools: 'Tools', media: 'Media', community: 'Community', chat: 'Chat', games: 'Games',
+        blog: 'Blog', wiki: 'Wiki', news: 'News', reviews: 'Reviews', deals: 'Deals', coupons: 'Coupons', trade: 'Trade',
+        codes: 'Codes', host: 'Host', ai: 'AI', search: 'Search', sources: 'Sources', events: 'Events', billing: 'Billing',
+        tips: 'Tips', vip: 'VIP', openre: 'OpenRe', bot: 'Bot', sites: 'Sites', realtime: 'Realtime', space: 'Space',
+        services: 'Services', actor: 'Actor', run: 'Run', watch: 'Watch', node: 'Node', zone: 'Zone', download: 'Download',
+        video: 'Video', pics: 'Pics', rent: 'Rent', homes: 'Homes', work: 'Work', food: 'Food', help: 'Help', quest: 'Quest',
+        website: 'Website', fund: 'Fund', 'media-hub': 'Media Hub', extensions: 'Extensions', contracts: 'Contracts', sdk: 'SDK',
+        shared: 'Shared', examples: 'Examples', publishing: 'Publishing',
+    };
     const STYLE_ID = 'ov-shipped-style';
     const TEXT = 'var(--text-primary,var(--text,inherit))';
     const MUTED = 'var(--text-secondary,var(--text-muted,#8b93ad))';
@@ -98,7 +109,7 @@
     function safeUrl(u) { return /^https:\/\//.test(String(u || '')) ? String(u) : null; }
     function localHref(u) { const s = String(u || ''); return /^\/(?!\/)/.test(s) || /^https:\/\//.test(s) ? s : null; }
     function clamp(n, lo, hi, d) { const v = parseInt(n, 10); return Number.isFinite(v) ? Math.min(Math.max(v, lo), hi) : d; }
-    const siteName = (id) => SITE_NAMES[id] || id;
+    const siteName = (id) => SITE_NAMES[id] || String(id || '').replace(/(^|-)([a-z])/g, (m, d, c) => `${d ? ' ' : ''}${c.toUpperCase()}`);
     function timeEl(iso) { const t = el('time', { datetime: iso, 'data-ov-ago': '' }, ago(iso)); t.title = new Date(iso).toLocaleString(); return t; }
     function rocket() {
         const ns = 'http://www.w3.org/2000/svg';
@@ -371,5 +382,5 @@
         return out;
     }
 
-    return { latest, list, mount: list, log, scan, render, renderLatest, appendDays, serviceFor, ago, API, SITE_NAMES };
+    return { latest, list, mount: list, log, scan, render, renderLatest, appendDays, serviceFor, ago, API, SITE_NAMES, siteName };
 }));

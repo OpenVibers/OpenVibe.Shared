@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.14.1 — 2026-10-08
+
+- shipped.js names every site (Space, Services, Actor, Run, Watch, Download and the rest): the update log showed
+  "space", "services" and "actor" in lowercase next to "Host" and "Community". A site missing from the list still reads
+  as a name (its id capitalised), and `siteName` is exported.
+
 ## 2.14.0 — 2026-10-08
 
 - A boost page move no longer keeps the old navbar. 2.13.3 removed the render's document listeners, but panels.js
