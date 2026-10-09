@@ -4,6 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.20.1 — 2026-10-09
+
+- The OpenRestream brand on openre.stream reads as one word: "OpenRe" and "stream" touch, with no padding between the
+  two links (`.openvibe-navbar-brand.joined`). 2.20.0 left about 2 px between them, which read as two words.
+
 ## 2.20.0 — 2026-10-09
 
 - The product at openre.stream is **OpenRestream** (owner, 2026-10-09), not "OpenRe.Stream". The navbar brand there
