@@ -55,9 +55,8 @@
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 600; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
             .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0; opacity: .5; }
-            /* OpenRestream reads as one word: "OpenRe" and "stream" touch, with no padding between the two links. */
-            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-core { padding-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
-            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-tld { padding-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-core { padding-right: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-tld { padding-left: 0; }
             .openvibe-navbar .openvibe-navbar-brand a:focus-visible, .ovnav-launch:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
             .ovnav-launch:hover, .ovnav-launch[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--accent-light, var(--accent, #60a5fa)); border-color: color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
@@ -156,8 +155,8 @@
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-dot { display: none; }
             }
             @media (max-width: 420px) {
-                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub) .b-core,
-                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub) .b-dot { display: none; }
+                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-core,
+                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-dot { display: none; }
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand .b-tag { display: none; }
             }
             .openvibe-navbar-links a .icon { margin-right: 5px; opacity: .8; }
