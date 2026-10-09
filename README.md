@@ -666,7 +666,9 @@ its owner's subject and load both files:
 `OpenVibeItems.decorate(node)` reads Inventory's public `GET /api/v1/equipped?subjects=…` (100 people per request,
 no credentials, each answer kept 60 s) and gives each name its renderers' classes; call it again after adding names
 and only the new ones are read. Renderers: `live.name_effect.css@1` → `ov-fx` + the item's token (Live's 13 name
-effects, `name-fx-rainbow` … `name-fx-divine`). A server that already knows the token writes the class itself. The
+effects, `name-fx-rainbow` … `name-fx-divine`); `live.hat.glyph@1` → the hat's emoji just before the name
+(`ov-hat`, with its motion); `live.particle.css@1` → `ov-px` + the token, and a burst of the item's characters when
+someone points at or focuses the name. Hats and particles read Live's definitions once per page. A server that already knows the token writes the class itself. The
 Calm setting and `prefers-reduced-motion` stop the animation. `window.OpenVibeItemsConfig = { api }` points it at
 another Inventory (development).
 

@@ -3,6 +3,8 @@
  *
  * The renderers OpenVibe.Inventory's kinds name (each kind's `surfaces[].renderer`):
  *   live.name_effect.css@1   the item's art.token is a class on the name: <span class="ov-fx name-fx-rainbow">Ana</span>
+ *   live.hat.glyph@1         the hat's emoji before the name: <span class="ov-hat ov-hat-pulse">👑</span>
+ *   live.particle.css@1      `ov-px` + the token on the name; items.js spawns `.ov-px-p` characters in a burst
  * items.js adds the classes from the person's equipped set; a page that already knows the token (a server-rendered
  * profile) writes the class itself. These are Live's own name effects (OpenVibe.Live public/css/cosmetics.css),
  * unchanged, so a name looks the same in Live's chat and everywhere else. The network's Calm setting
@@ -178,6 +180,34 @@
     50% { background-position: 300% 50%; }
 }
 
+/* Hats (live.hat.glyph@1): the emoji just before the name, Live's float/pulse/warp motions. */
+.ov-hat { display: inline-block; margin-right: 2px; font-size: 0.9em; line-height: 1; vertical-align: -0.05em; }
+.ov-hat-float { animation: ovHatFloat 2s ease-in-out infinite; }
+.ov-hat-pulse { animation: ovHatPulse 1.5s ease-in-out infinite; }
+.ov-hat-warp { animation: ovHatWarp 2s ease-in-out infinite; }
+@keyframes ovHatFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes ovHatPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+@keyframes ovHatWarp { 0%, 100% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg); } 50% { transform: scale(1.1) rotate(5deg); filter: hue-rotate(180deg); } }
+
+/* Particles (live.particle.css@1): characters that float out of the name and fade, Live's colours. They reset the
+   name effect's text fill, so a gradient name still shows them. */
+.ov-px { position: relative; display: inline-block; }
+.ov-px-p {
+    position: absolute; top: 0; pointer-events: none; font-size: 10px; line-height: 1;
+    background: none; -webkit-text-fill-color: currentColor; opacity: 0;
+    animation: ovPxFloat 1.8s ease-out forwards;
+}
+@keyframes ovPxFloat {
+    0% { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--px-dx, 10px), var(--px-dy, -20px)) scale(0.4); }
+}
+.px-sparkle .ov-px-p { color: #ffd700; }
+.px-hearts .ov-px-p { color: #ff6b9d; }
+.px-flames .ov-px-p { color: #ff6600; }
+.px-stars .ov-px-p { color: #fbbf24; }
+.px-void .ov-px-p { color: #9900ff; }
+
 @media (prefers-reduced-motion: reduce) {
-    .ov-fx[class*="name-fx-"] { animation: none !important; }
+    .ov-fx[class*="name-fx-"], .ov-hat { animation: none !important; }
+    .ov-px-p { display: none; }
 }

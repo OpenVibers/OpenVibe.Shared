@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.18.0 — 2026-10-09
+
+- `items.js` draws two more renderers. **Hats** (`live.hat.glyph@1`): the emoji just before the name, with Live's
+  float/pulse/warp motion. **Particles** (`live.particle.css@1`): a short burst of the item's characters when you point
+  at or focus the name, never on its own. Hats and particles take their emoji, motion and characters from Live's
+  definitions: one public read per page, only when someone on it wears one. Elements are made from the name's own
+  document. items.css carries Live's hat motions and particle colours. Reduced motion and the Calm setting stop the
+  hats and hide the bursts.
+
 ## 2.17.0 — 2026-10-09
 
 - `items.js` + `items.css`: what people wear in OpenVibe.Inventory, on any site (plan T21 "equip everywhere"). A name
