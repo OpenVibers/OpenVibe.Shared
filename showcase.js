@@ -123,7 +123,7 @@ function stories({ id: sid, title, lede, items } = {}) {
 const SERVICE_NAME = (to) => {
     const t = String(to || '').toLowerCase();
     if (!/^[a-z][a-z0-9-]{0,31}$/.test(t)) return '';
-    if (t === 'openre') return 'OpenRe.Stream';
+    if (t === 'openre') return 'OpenRestream';
     return `OpenVibe.${t.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`;
 };
 // Only links a person can follow safely: https anywhere, or a path on this site. A path may hold no backslash and no

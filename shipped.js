@@ -40,7 +40,7 @@
         live: 'Live', network: 'Network', tools: 'Tools', media: 'Media', community: 'Community', chat: 'Chat', games: 'Games',
         blog: 'Blog', wiki: 'Wiki', news: 'News', reviews: 'Reviews', deals: 'Deals', coupons: 'Coupons', trade: 'Trade',
         codes: 'Codes', host: 'Host', ai: 'AI', search: 'Search', sources: 'Sources', events: 'Events', billing: 'Billing',
-        tips: 'Tips', vip: 'VIP', openre: 'OpenRe', bot: 'Bot', sites: 'Sites', realtime: 'Realtime', space: 'Space',
+        tips: 'Tips', vip: 'VIP', openre: 'OpenRestream', bot: 'Bot', sites: 'Sites', realtime: 'Realtime', space: 'Space',
         services: 'Services', actor: 'Actor', run: 'Run', watch: 'Watch', node: 'Node', zone: 'Zone', download: 'Download',
         video: 'Video', pics: 'Pics', rent: 'Rent', homes: 'Homes', work: 'Work', food: 'Food', help: 'Help', quest: 'Quest',
         website: 'Website', fund: 'Fund', 'media-hub': 'Media Hub', extensions: 'Extensions', contracts: 'Contracts', sdk: 'SDK',
