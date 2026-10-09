@@ -165,8 +165,16 @@ function withStatusFields(status, pins, today) {
         out[key] = value;
     }
     if (!placed) for (const f of tracked) if (updates[f] !== undefined) out[f] = updates[f];
+    // A `packages` list ("openvibe-shared v2.15.0", …) names the pins too: each entry of a pinned library follows it
+    // (Wiki#19 failed its status-pins check on a stale entry the fields above had already moved past).
+    if (Array.isArray(status.packages)) {
+        out.packages = status.packages.map((entry) => {
+            const m = /^(openvibe-[a-z]+) v\d+\.\d+\.\d+/.exec(String(entry));
+            return m && pins[m[1]] ? statusValue(entry, m[1], pins[m[1]]) : entry;
+        });
+    }
     // `updated` moves only when a tracked field really changed, so a rerun with no pin change writes nothing.
-    const changed = tracked.some((f) => out[f] !== status[f]);
+    const changed = tracked.some((f) => out[f] !== status[f]) || JSON.stringify(out.packages) !== JSON.stringify(status.packages);
     out.updated = changed || status.updated === undefined ? today : status.updated;
     return out;
 }
