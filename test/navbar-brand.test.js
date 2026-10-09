@@ -192,6 +192,7 @@ function load(hostname, opts = {}) {
     const dd = created.find(e => e.tag === 'div' && /openvibe-navbar-dropdown-menu/.test(e.innerHTML));
     assert.ok(dd && dd.innerHTML.includes('data-menu-id="mp"') && dd.innerHTML.includes('My pastes'), 'custom dropdown row rendered');
     assert.ok(dd.innerHTML.includes('/my#history'), 'History link present');
+    assert.ok(dd.innerHTML.includes('href="https://openvibe.network/@x"') && dd.innerHTML.includes('My Profile'), 'the public profile (openvibe.network/@username) is one tap from the account menu');
     const id = navbar.addMenuItem({ label: 'Runtime row', href: '/r', position: 'before' });
     assert.ok(id, 'addMenuItem returns an id');
 }
