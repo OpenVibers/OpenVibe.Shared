@@ -55,6 +55,9 @@
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 600; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
             .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0; opacity: .5; }
+            /* OpenRestream reads as one word: "OpenRe" and "stream" touch, with no padding between the two links. */
+            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-core { padding-right: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-tld { padding-left: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; }
             .openvibe-navbar .openvibe-navbar-brand a:focus-visible, .ovnav-launch:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
             .ovnav-launch:hover, .ovnav-launch[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--accent-light, var(--accent, #60a5fa)); border-color: color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
@@ -522,7 +525,7 @@
         const mark = brand.icon
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
             : `<span class="ov-mark" data-size="28" data-variant="${escapeAttr(brand.variant)}"></span>`;
-        return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}">
+        return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
                 <a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>
                 <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
             </div>
