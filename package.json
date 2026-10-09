@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "2.16.0",
+  "version": "2.17.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -35,6 +35,7 @@
     "./icons": "./ov-icons.js",
     "./indexnow": "./indexnow.js",
     "./island": "./island.js",
+    "./items": "./items.js",
     "./legal": "./legal.js",
     "./express-async": "./express-async.js",
     "./metrics": "./metrics.js",
