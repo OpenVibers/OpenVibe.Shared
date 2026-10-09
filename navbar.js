@@ -156,8 +156,9 @@
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-dot { display: none; }
             }
             @media (max-width: 420px) {
-                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub) .b-core,
-                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub) .b-dot { display: none; }
+                /* A joined brand (OpenRestream) is one word: it stays whole, "stream" alone would not name the site. */
+                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-core,
+                .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-dot { display: none; }
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand .b-tag { display: none; }
             }
             .openvibe-navbar-links a .icon { margin-right: 5px; opacity: .8; }
