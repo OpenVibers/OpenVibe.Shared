@@ -135,4 +135,19 @@ assert.strictEqual(applyBlock('a\n\n<!-- versions:start -->\n- openvibe-sdk: v0.
     assert.strictEqual(cli.status, 0, cli.stdout + cli.stderr);
     fs.rmSync(dir, { recursive: true, force: true });
 }
+// A `packages` list follows the pins too (Wiki's STATUS.json lists them there as well as in the fields).
+{
+    const dir = tmp('packages');
+    write(dir, 'package.json', JSON.stringify({ dependencies: {
+        'openvibe-shared': url('OpenVibe.Shared', 'v2.17.0'),
+        'openvibe-publishing': url('OpenVibe.Publishing', 'v1.3.0'),
+    } }));
+    write(dir, 'STATUS.json', JSON.stringify({ repository: 'OpenVibers/W', shared: 'openvibe-shared v2.15.0', packages: ['openvibe-publishing v1.2.0', 'openvibe-shared v2.15.0', 'openvibe-sdk v0.37.0 (not pinned here)', 'something else'] }));
+    assert.deepStrictEqual(update(dir, { today: '2026-10-09' }), ['STATUS.json']);
+    const status = JSON.parse(read(dir, 'STATUS.json'));
+    assert.strictEqual(status.shared, 'openvibe-shared v2.17.0');
+    assert.deepStrictEqual(status.packages, ['openvibe-publishing v1.3.0', 'openvibe-shared v2.17.0', 'openvibe-sdk v0.37.0 (not pinned here)', 'something else'], 'pinned entries follow, the rest stay');
+    assert.deepStrictEqual(update(dir, { today: '2026-10-10' }), [], 'a rerun writes nothing');
+    fs.rmSync(dir, { recursive: true, force: true });
+}
 console.log('docs-status: all checks passed');
