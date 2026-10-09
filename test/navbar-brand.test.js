@@ -89,7 +89,18 @@ function load(hostname, opts = {}) {
     const { navbar } = load('ingest.openre.stream');
     navbar.init({ service: 'live' });
     const b = navbar.brand();
-    assert.strictEqual(b.name, 'Ingest.OpenRe.Stream');
+    assert.strictEqual(b.name, 'Ingest.OpenRestream');
+    assert.strictEqual(b.variant, 'stream');
+}
+{
+    // openre.stream is OpenRestream: "OpenRe" + "stream" as one word (no dot), both linking to openre.stream.
+    const { navbar } = load('openre.stream');
+    navbar.init({ service: 'openre' });
+    const b = navbar.brand();
+    assert.strictEqual(b.name, 'OpenRestream');
+    assert.strictEqual(b.short, 'OpenRestream');
+    assert.strictEqual(b.core, 'OpenRe');
+    assert.strictEqual(b.tldText, 'stream');
     assert.strictEqual(b.variant, 'stream');
 }
 {

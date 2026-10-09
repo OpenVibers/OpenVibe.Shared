@@ -143,7 +143,7 @@
         const cap = (w) => w ? w.charAt(0).toUpperCase() + w.slice(1) : '';
         let m = h.match(/^(?:(.+)\.)?openvibe\.([a-z]+)$/);
         if (m) { const sub = m[1] && m[1] !== 'www' ? m[1] : null; return [sub ? (sub.length <= 4 ? sub.toUpperCase() : cap(sub)) : null, 'OpenVibe', TLD_LABELS[m[2]] || cap(m[2])].filter(Boolean).join('.'); }
-        if ((m = h.match(/^(?:(.+)\.)?openre\.stream$/))) return 'OpenRe.Stream';
+        if ((m = h.match(/^(?:(.+)\.)?openre\.stream$/))) return 'OpenRestream';
         const found = NETWORK.find(n => n.id === service);
         if (service && TLD_LABELS[service]) return `OpenVibe.${TLD_LABELS[service]}`;
         if (found && found.name !== 'Account & themes' && found.name !== 'The whole network →') return `${cap(service)}.OpenVibe.Tools`;

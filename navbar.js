@@ -478,10 +478,12 @@
     function resolveBrand() {
         const b = Object.assign({}, _config.brand || {});
         const host = currentHost().toLowerCase();
-        let sub = null, tld = null, core = 'OpenVibe';
+        // OpenRestream lives at openre.stream: its brand is one word, "OpenRe" + "stream" with no dot between, so it
+        // reads as OpenRestream while the two colours still show the domain.
+        let sub = null, tld = null, core = 'OpenVibe', joined = false;
         let m = host.match(/^(?:(.+)\.)?openvibe\.([a-z]+)$/);
         if (m) { sub = m[1] && m[1] !== 'www' ? m[1] : null; tld = m[2]; }
-        else if ((m = host.match(/^(?:(.+)\.)?openre\.stream$/))) { sub = m[1] && m[1] !== 'www' ? m[1] : null; core = 'OpenRe'; tld = 'stream'; }
+        else if ((m = host.match(/^(?:(.+)\.)?openre\.stream$/))) { sub = m[1] && m[1] !== 'www' ? m[1] : null; core = 'OpenRe'; tld = 'stream'; joined = true; }
         // Off-network hosts (localhost, previews): fall back to the service id.
         if (!tld) { tld = SERVICE_TLD[_config.service] || (SERVICE_SUB[_config.service] ? 'tools' : 'network'); sub = SERVICE_SUB[_config.service] || null; }
         // Legacy brandName ("Paste.OpenVibe", "OpenVibe.Live") still steers the segments.
@@ -494,27 +496,29 @@
         if (b.sub !== undefined) sub = b.sub ? String(b.sub).toLowerCase() : null;
         if (b.tld) tld = String(b.tld).toLowerCase();
         const subText = b.subLabel || (sub ? subLabel(sub) : null);
-        const tldText = b.tldLabel || TLD_LABELS[tld] || titleCase(tld);
-        const name = b.name || [subText, core, tldText].filter(Boolean).join('.');
+        const tldText = b.tldLabel || (joined ? tld : TLD_LABELS[tld] || titleCase(tld));
+        const site = joined ? `${core}${tldText}` : `${core}.${tldText}`;
+        const name = b.name || [subText, site].filter(Boolean).join('.');
         const icon = b.icon || _config.brandIcon || null;
-        const variant = b.variant || (core === 'OpenRe' ? 'stream' : tld);
-        return { sub, subText, core, tld, tldText, name, short: subText || `${core}.${tldText}`, icon, variant, tag: b.tag || null, href: b.href || '/' };
+        const variant = b.variant || (joined ? 'stream' : tld);
+        return { sub, subText, core, tld, tldText, joined, site, name, short: subText || site, icon, variant, tag: b.tag || null, href: b.href || '/' };
     }
 
     /** Where each brand segment goes: sub → this tool, OpenVibe → the network, TLD → the site's apex. */
     function brandLinks(brand) {
-        const apex = brand.core === 'OpenRe' ? 'https://openre.stream/' : `https://openvibe.${brand.tld}/`;
+        const apex = brand.joined ? 'https://openre.stream/' : `https://openvibe.${brand.tld}/`;
         if (!brand.subText) return { sub: brand.href, core: brand.href, tld: brand.href, apex };
-        return { sub: brand.href, core: 'https://openvibe.network/', tld: apex, apex };
+        return { sub: brand.href, core: brand.joined ? apex : 'https://openvibe.network/', tld: apex, apex };
     }
 
     function brandHTML(brand) {
         const to = brandLinks(brand);
         const seg = (cls, text, href, title) => `<a href="${escapeAttr(href)}"${title ? ` title="${escapeAttr(title)}"` : ''} class="${cls}">${escapeAttr(text)}</a>`;
         const dot = '<span class="b-dot">.</span>';
+        const join = brand.joined ? '' : dot;
         const text = brand.subText
-            ? seg('b-sub', brand.subText, to.sub, brand.name) + dot + seg('b-core', brand.core, to.core, 'OpenVibe Network') + dot + seg('b-tld', brand.tldText, to.tld, `All of ${brand.core}.${brand.tldText}`)
-            : seg('b-core', brand.core, to.core, brand.name) + dot + seg('b-tld', brand.tldText, to.tld, brand.name);
+            ? seg('b-sub', brand.subText, to.sub, brand.name) + dot + seg('b-core', brand.core, to.core, brand.joined ? brand.site : 'OpenVibe Network') + join + seg('b-tld', brand.tldText, to.tld, `All of ${brand.site}`)
+            : seg('b-core', brand.core, to.core, brand.name) + join + seg('b-tld', brand.tldText, to.tld, brand.name);
         const mark = brand.icon
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
             : `<span class="ov-mark" data-size="28" data-variant="${escapeAttr(brand.variant)}"></span>`;

@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.20.0 — 2026-10-09
+
+- The product at openre.stream is **OpenRestream** (owner, 2026-10-09), not "OpenRe.Stream". The navbar brand there
+  reads as one word: "OpenRe" + "stream" with no dot between, in the brand's two colours, both linking to
+  openre.stream (`brand().joined`, `brand().site`; ingest.openre.stream is "Ingest.OpenRestream"). The footer,
+  `shipped.js` and the showcase name it OpenRestream too.
+
 ## 2.19.0 — 2026-10-09
 
 - `items.js` draws **community badges** (`network.badge.image@1`, OpenVibe.Inventory's Workshop): the badge's
