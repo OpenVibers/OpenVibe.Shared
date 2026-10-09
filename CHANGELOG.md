@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.17.0 — 2026-10-09
+
+- `items.js` + `items.css`: what people wear in OpenVibe.Inventory, on any site (plan T21 "equip everywhere"). A name
+  marked `data-ov-subject="usr_…"` gets its owner's name effect (`live.name_effect.css@1`: `ov-fx` + the token) from
+  Inventory's public batch read, 100 people per request with a 60 s cache. items.css holds Live's 13 name effects
+  unchanged, so a name looks the same in Live's chat and everywhere else; reduced motion stops the animation.
+
 ## 2.16.0 — 2026-10-09
 
 - The account menu links your public profile: **My Profile** → `https://openvibe.network/@<username>` (plan T21: the

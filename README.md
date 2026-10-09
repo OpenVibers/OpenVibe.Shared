@@ -651,6 +651,25 @@ Re-renders (each openvibe-shared/boost page move re-renders the bar) end the
 
 Dropdowns under a top link (`children`) are fixed-positioned under their link when they show (hover, keyboard focus, a tap), because the links row scrolls sideways and would clip them.
 
+### What people wear (`items.js`, `items.css`)
+
+The items a person has equipped in OpenVibe.Inventory, drawn the same on every site (plan T21). Mark each name with
+its owner's subject and load both files:
+
+```html
+<link rel="stylesheet" href="/shared/items.css">
+<a href="https://openvibe.network/@ana" data-ov-subject="usr_01…">Ana</a>
+<script src="/shared/items.js" defer></script>
+<script>addEventListener('DOMContentLoaded', () => OpenVibeItems.decorate(document));</script>
+```
+
+`OpenVibeItems.decorate(node)` reads Inventory's public `GET /api/v1/equipped?subjects=…` (100 people per request,
+no credentials, each answer kept 60 s) and gives each name its renderers' classes; call it again after adding names
+and only the new ones are read. Renderers: `live.name_effect.css@1` → `ov-fx` + the item's token (Live's 13 name
+effects, `name-fx-rainbow` … `name-fx-divine`). A server that already knows the token writes the class itself. The
+Calm setting and `prefers-reduced-motion` stop the animation. `window.OpenVibeItemsConfig = { api }` points it at
+another Inventory (development).
+
 ## Development
 
 ```bash

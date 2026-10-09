@@ -1,0 +1,183 @@
+/*
+ * openvibe-shared/items.css — what people wear, drawn the same on every OpenVibe site (plan T21 "equip everywhere").
+ *
+ * The renderers OpenVibe.Inventory's kinds name (each kind's `surfaces[].renderer`):
+ *   live.name_effect.css@1   the item's art.token is a class on the name: <span class="ov-fx name-fx-rainbow">Ana</span>
+ * items.js adds the classes from the person's equipped set; a page that already knows the token (a server-rendered
+ * profile) writes the class itself. These are Live's own name effects (OpenVibe.Live public/css/cosmetics.css),
+ * unchanged, so a name looks the same in Live's chat and everywhere else. The network's Calm setting
+ * (html[data-ov-motion=reduced], theme-loader.js) and prefers-reduced-motion stop the animation and keep the colour.
+ */
+.ov-fx { display: inline-block; }
+
+/* Rainbow — cycling hue */
+.name-fx-rainbow {
+    background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #0088ff, #8800ff, #ff0088);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxRainbow 3s linear infinite;
+}
+@keyframes nameFxRainbow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+
+/* Fire — warm pulse with glow */
+.name-fx-fire {
+    color: #ff6600 !important;
+    text-shadow: 0 0 6px #ff4400, 0 0 12px #ff220088, 0 0 20px #cc110044;
+    animation: nameFxFire 1.5s ease-in-out infinite alternate;
+}
+@keyframes nameFxFire {
+    0% { text-shadow: 0 0 6px #ff4400, 0 0 12px #ff220088; color: #ff6600; }
+    100% { text-shadow: 0 0 10px #ff8800, 0 0 20px #ff440088, 0 0 30px #cc220044; color: #ffaa00; }
+}
+
+/* Ice — cool blue shimmer */
+.name-fx-ice {
+    color: #88ddff !important;
+    text-shadow: 0 0 6px #44bbff88, 0 0 12px #2288cc44;
+    animation: nameFxIce 2s ease-in-out infinite alternate;
+}
+@keyframes nameFxIce {
+    0% { text-shadow: 0 0 4px #44bbff88; color: #88ddff; }
+    100% { text-shadow: 0 0 10px #66eeff, 0 0 20px #44bbff88; color: #bbffff; }
+}
+
+/* Golden — shimmering gold */
+.name-fx-golden {
+    background: linear-gradient(90deg, #ffd700, #ffec80, #ffd700, #ffb800);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxGolden 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px #ffd70066);
+}
+@keyframes nameFxGolden {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Neon — glowing pulse */
+.name-fx-neon {
+    color: #00ff88 !important;
+    text-shadow: 0 0 8px #00ff88, 0 0 16px #00ff8888, 0 0 24px #00cc6644;
+    animation: nameFxNeon 1.2s ease-in-out infinite alternate;
+}
+@keyframes nameFxNeon {
+    0% { text-shadow: 0 0 4px #00ff88, 0 0 8px #00ff8866; }
+    100% { text-shadow: 0 0 12px #00ff88, 0 0 24px #00ff88aa, 0 0 36px #00cc6666; }
+}
+
+/* Galaxy — cosmic swirl */
+.name-fx-galaxy {
+    background: linear-gradient(90deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6);
+    background-size: 400% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxGalaxy 4s linear infinite;
+    filter: drop-shadow(0 0 6px #8b5cf644);
+}
+@keyframes nameFxGalaxy {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 400% 50%; }
+}
+
+/* Void — dark matter warp */
+.name-fx-void {
+    color: #9900ff !important;
+    text-shadow: 0 0 8px #6600cc, 0 0 16px #33006688, 0 0 24px #11003344;
+    animation: nameFxVoid 2s ease-in-out infinite;
+}
+@keyframes nameFxVoid {
+    0%, 100% { text-shadow: 0 0 8px #6600cc, 0 0 16px #33006688; transform: scale(1); }
+    50% { text-shadow: 0 0 12px #9900ff, 0 0 24px #6600ccaa, 0 0 36px #33006666; transform: scale(1.03); }
+}
+
+/* Toxic — green pulse */
+.name-fx-toxic {
+    background: linear-gradient(90deg, #00ff44, #88ff00, #ccff00, #00ff88);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxToxic 1.8s ease-in-out infinite alternate;
+}
+@keyframes nameFxToxic {
+    0% { background-position: 0% 50%; filter: brightness(1); }
+    100% { background-position: 200% 50%; filter: brightness(1.3); }
+}
+
+/* Blood — crimson drip */
+.name-fx-blood {
+    background: linear-gradient(180deg, #ff0000, #880000, #ff2222);
+    background-size: 100% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxBlood 2s ease-in-out infinite;
+}
+@keyframes nameFxBlood {
+    0%, 100% { background-position: 50% 0%; }
+    50% { background-position: 50% 200%; }
+}
+
+/* Shadow — dark mist */
+.name-fx-shadow {
+    color: #aa88cc !important;
+    animation: nameFxShadow 2s ease-in-out infinite;
+}
+@keyframes nameFxShadow {
+    0%, 100% { text-shadow: 0 0 6px rgba(0,0,0,0.8), 0 0 12px rgba(80,0,120,0.6), 2px 2px 4px rgba(0,0,0,0.9); }
+    50% { text-shadow: 0 0 12px rgba(0,0,0,0.9), 0 0 24px rgba(80,0,120,0.8), 4px 4px 8px rgba(0,0,0,1); }
+}
+
+/* Glitch — jittery digital */
+.name-fx-glitch {
+    color: #00ff88 !important;
+    animation: nameFxGlitch 0.15s infinite;
+    text-shadow: 2px 0 #ff0044, -2px 0 #00ccff;
+}
+@keyframes nameFxGlitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-1px, 1px); }
+    40% { transform: translate(1px, -1px); }
+    60% { transform: translate(-1px, 0); }
+    80% { transform: translate(1px, 1px); }
+    100% { transform: translate(0); }
+}
+
+/* Hologram — flickering translucent */
+.name-fx-hologram {
+    background: linear-gradient(90deg, #00ffcc, #00ccff, #8888ff, #00ffaa);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxHoloFlicker 0.12s infinite, nameFxHoloShift 3s linear infinite;
+}
+@keyframes nameFxHoloFlicker { 0%,45%,55%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes nameFxHoloShift { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+
+/* Divine — holy radiance */
+.name-fx-divine {
+    background: linear-gradient(90deg, #ffffff, #ffe066, #ffffff, #ffcc00, #ffffff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: nameFxDivine 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px #ffe06688);
+}
+@keyframes nameFxDivine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 300% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ov-fx[class*="name-fx-"] { animation: none !important; }
+}
