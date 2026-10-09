@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.16.0 — 2026-10-09
+
+- The account menu links your public profile: **My Profile** → `https://openvibe.network/@<username>` (plan T21: the
+  picture, bio, what you wear and the items you own in OpenVibe.Inventory), next to My Account and My Channel. Signed-in
+  accounts only; an anonymous identity has no profile.
+
 ## 2.15.0 — 2026-10-08
 
 - The navbar fades into the page at the very top (no background or border) and brings its frosted bar back with a
