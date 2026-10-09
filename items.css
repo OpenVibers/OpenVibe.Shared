@@ -5,6 +5,7 @@
  *   live.name_effect.css@1   the item's art.token is a class on the name: <span class="ov-fx name-fx-rainbow">Ana</span>
  *   live.hat.glyph@1         the hat's emoji before the name: <span class="ov-hat ov-hat-pulse">👑</span>
  *   live.particle.css@1      `ov-px` + the token on the name; items.js spawns `.ov-px-p` characters in a burst
+ *   network.badge.image@1    <img class="ov-badge"> before the name (a Workshop badge, from OpenVibe.Media)
  * items.js adds the classes from the person's equipped set; a page that already knows the token (a server-rendered
  * profile) writes the class itself. These are Live's own name effects (OpenVibe.Live public/css/cosmetics.css),
  * unchanged, so a name looks the same in Live's chat and everywhere else. The network's Calm setting
@@ -179,6 +180,9 @@
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 300% 50%; }
 }
+
+/* Community badges (network.badge.image@1): the reviewed image, a little larger than the text, just before the name. */
+.ov-badge { display: inline-block; width: 1.15em; height: 1.15em; margin-right: 3px; vertical-align: -0.2em; border-radius: 3px; object-fit: contain; }
 
 /* Hats (live.hat.glyph@1): the emoji just before the name, Live's float/pulse/warp motions. */
 .ov-hat { display: inline-block; margin-right: 2px; font-size: 0.9em; line-height: 1; vertical-align: -0.05em; }

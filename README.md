@@ -668,7 +668,8 @@ no credentials, each answer kept 60 s) and gives each name its renderers' classe
 and only the new ones are read. Renderers: `live.name_effect.css@1` → `ov-fx` + the item's token (Live's 13 name
 effects, `name-fx-rainbow` … `name-fx-divine`); `live.hat.glyph@1` → the hat's emoji just before the name
 (`ov-hat`, with its motion); `live.particle.css@1` → `ov-px` + the token, and a burst of the item's characters when
-someone points at or focuses the name. Hats and particles read Live's definitions once per page. A server that already knows the token writes the class itself. The
+someone points at or focuses the name. Hats and particles read Live's definitions once per page. `network.badge.image@1` → a
+community badge's image (`img.ov-badge`) before the name, from the equipped read's `media_id`. A server that already knows the token writes the class itself. The
 Calm setting and `prefers-reduced-motion` stop the animation. `window.OpenVibeItemsConfig = { api }` points it at
 another Inventory (development).
 

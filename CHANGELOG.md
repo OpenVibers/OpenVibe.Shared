@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.19.0 — 2026-10-09
+
+- `items.js` draws **community badges** (`network.badge.image@1`, OpenVibe.Inventory's Workshop): the badge's
+  reviewed image, from OpenVibe.Media, in an `img.ov-badge` just before the name. The image comes straight from the
+  equipped read's `media_id`, with no extra request, and only ids of the `med_…` shape become a URL. items.css sizes it
+  to the text.
+
 ## 2.18.0 — 2026-10-09
 
 - `items.js` draws two more renderers. **Hats** (`live.hat.glyph@1`): the emoji just before the name, with Live's
