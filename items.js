@@ -12,6 +12,8 @@
  *   live.name_effect.css@1   `ov-fx` + the token (name-fx-rainbow, …) on the name: items.css draws it
  *   live.hat.glyph@1         the hat's emoji just before the name (`ov-hat`, with its float/pulse/warp animation)
  *   live.particle.css@1      a short burst of the item's characters when you point at or focus the name (`ov-px`)
+ *   network.badge.image@1    a community badge (the Workshop): its reviewed image just before the name (`ov-badge`),
+ *                            straight from the equipped read's media_id, served by OpenVibe.Media
  * Hats and particles need their definitions (emoji, animation, characters): one public read of Live's definitions per
  * page, only when someone on it wears one. Anything else is left alone. Inventory unreachable: names stay as they
  * are. Only tokens of the known shape become class names; emoji and characters are text, never markup. A burst never
@@ -22,6 +24,7 @@
     const SUBJECT = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
     const NAME_FX = /^name-fx-[a-z]{2,24}$/;
     const PX = /^px-[a-z]{2,24}$/;
+    const MEDIA_ID = /^med_[0-9A-HJKMNP-TV-Z]{26}$/;
     const HAT_MOTION = ['float', 'pulse', 'warp'];
     const BATCH = 100;
     const TTL_MS = 60 * 1000;
@@ -100,14 +103,25 @@
     /** Give one element what a set of slots draws (removing what an earlier set drew). defs: Map from definitions(). */
     function apply(el, slots, defs) {
         for (const c of [...el.classList]) if (c === 'ov-fx' || NAME_FX.test(c) || c === 'ov-px' || PX.test(c)) el.classList.remove(c);
-        const prev = el.previousElementSibling;
-        if (prev && prev.classList && prev.classList.contains('ov-hat')) prev.remove();
+        for (let prev = el.previousElementSibling; prev && prev.classList && (prev.classList.contains('ov-hat') || prev.classList.contains('ov-badge')); prev = el.previousElementSibling) prev.remove();
         el.removeEventListener('mouseenter', onBurst);
         el.removeEventListener('focusin', onBurst);
         delete el.dataset.ovPxChars;
 
         const fx = slotOf(slots, 'live.name_effect');
         if (fx && NAME_FX.test(String(fx.token || ''))) el.classList.add('ov-fx', fx.token);
+
+        const badge = slotOf(slots, 'network.badge');
+        if (badge && MEDIA_ID.test(String(badge.media_id || '')) && el.parentNode) {
+            const b = el.ownerDocument.createElement('img');
+            b.className = 'ov-badge';
+            b.src = `${String((root.OpenVibeItemsConfig && root.OpenVibeItemsConfig.media) || 'https://openvibe.media').replace(/\/+$/, '')}/o/${badge.media_id}`;
+            b.alt = '';
+            b.width = 16; b.height = 16;
+            b.setAttribute('loading', 'lazy');
+            b.setAttribute('aria-hidden', 'true');
+            el.parentNode.insertBefore(b, el);
+        }
 
         const hat = slotOf(slots, 'live.hat');
         const hatDef = hat && defs && defs.get(hat.definition_id);
