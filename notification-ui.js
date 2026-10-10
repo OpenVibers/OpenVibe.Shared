@@ -78,7 +78,7 @@
             .openvibe-toast.priority-critical { border-left: 3px solid var(--live-red, #e74c3c); background: rgba(231,76,60,0.06); }
             .openvibe-toast-actions { display: flex; gap: 6px; margin-top: 8px; }
             .openvibe-toast-actions button { padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border, #333340); background: var(--bg-hover, #2f2f3d); color: var(--text-primary, #e0e0e0); font-size: 11px; font-weight: 600; cursor: pointer; }
-            .openvibe-toast-actions button.primary { background: var(--accent, #3b82f6); color: #fff; border-color: var(--accent, #3b82f6); }
+            .openvibe-toast-actions button.primary { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); border-color: var(--accent-strong, var(--accent, #3472d8)); }
 
             .openvibe-bell { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
             .openvibe-bell svg { width: 22px; height: 22px; fill: var(--text-secondary, #b0b0b8); transition: fill .2s; }

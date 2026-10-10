@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.20.3 — 2026-10-10
+
+- Filled controls use the theme's readable pair, `--accent-strong` with `--on-accent-strong`, instead of `--accent` with
+  white. White on the default accent (#3b82f6) is 3.68:1, under WCAG AA's 4.5:1 for text this size; the strong pair is
+  4.62:1 in the default theme, and every theme defines it (dark text on the light accents). This covers the primary
+  `ui.js` button, the toast's primary action, the account switcher's add button, the footer's avatar initial (white on
+  #60a5fa was 2.5:1) and the navbar launcher's pressed segment. The release UX check's axe run flagged the same pairing
+  on product sites.
+
 ## 2.20.2 — 2026-10-09
 
 - On a phone (≤ 420 px) the compact navbar keeps a joined brand whole: openre.stream shows "OpenRestream", not "stream"

@@ -41,7 +41,7 @@
 .ovui-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .ovui-btn{appearance:none;border:1px solid var(--border,rgba(255,255,255,.14));background:transparent;color:inherit;font:600 14px/1 system-ui,sans-serif;padding:10px 16px;border-radius:10px;cursor:pointer}
 .ovui-btn:hover{background:rgba(127,127,127,.12)}
-.ovui-btn.is-primary{background:var(--accent,#3b82f6);border-color:transparent;color:var(--on-accent,#fff)}
+.ovui-btn.is-primary{background:var(--accent-strong,var(--accent,#3472d8));border-color:transparent;color:var(--on-accent-strong,var(--on-accent,#fff))}
 .ovui-btn.is-danger{background:var(--danger,#ef4444);border-color:transparent;color:#fff}
 .ovui-btn:focus-visible,.ovui-x:focus-visible,.ovui-act:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}
 .ovui-notices{display:flex;flex-direction:column;gap:8px;max-width:1080px;margin:14px auto 0;padding:0 16px;box-sizing:border-box;width:100%}

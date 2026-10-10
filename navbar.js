@@ -122,7 +122,7 @@
             .ovnav-launcher .ovl-dl { font-weight: 700; letter-spacing: .6px; text-transform: uppercase; font-size: 11px; margin-right: 2px; }
             .ovnav-launcher .ovl-seg { display: inline-flex; border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 9px; overflow: hidden; }
             .ovnav-launcher .ovl-seg button { all: unset; cursor: pointer; padding: 5px 9px; font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
-            .ovnav-launcher .ovl-seg button[aria-pressed="true"] { background: var(--accent, #3b82f6); color: var(--on-accent, #fff); }
+            .ovnav-launcher .ovl-seg button[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .ovnav-launcher .ovl-seg button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
             .ovnav-launcher .ovl-display a { margin-left: auto; color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 600; }
             .ovnav-launcher .ovl-addr a { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
