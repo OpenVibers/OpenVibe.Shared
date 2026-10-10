@@ -344,7 +344,7 @@
 .ovf-account-who{display:inline-flex;align-items:center;gap:8px;font-size:.84rem;color:var(--text-secondary,#b6bdd2)}
 .ovf-account-who strong{color:var(--text-primary,#f1f4fb)}
 .ovf-avatar{width:24px;height:24px;border-radius:50%;overflow:hidden;display:grid;place-items:center;
-  background:var(--accent,#60a5fa);color:#fff;font-size:.7rem;font-weight:800;flex:none}
+  background:var(--accent-strong,var(--accent,#3472d8));color:var(--on-accent-strong,var(--on-accent,#fff));font-size:.7rem;font-weight:800;flex:none}
 .ovf-avatar img{width:100%;height:100%;object-fit:cover}
 .ovf-account-links{display:flex;flex-wrap:wrap;gap:6px}
 .ovf-account-links a{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:.78rem;font-weight:600;

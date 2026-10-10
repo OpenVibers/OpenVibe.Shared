@@ -411,9 +411,9 @@
                 transition: all .15s;
             }
             .openvibe-switcher-actions .btn-add {
-                background: var(--accent, #3b82f6); color: #fff;
+                background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff));
             }
-            .openvibe-switcher-actions .btn-add:hover { background: var(--accent-dark, #a07840); }
+            .openvibe-switcher-actions .btn-add:hover { background: var(--accent-dark, #1d4ed8); }
             .openvibe-switcher-actions .btn-signout {
                 background: rgba(231,76,60,0.1); color: var(--live-red, #e74c3c);
             }
