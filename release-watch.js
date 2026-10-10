@@ -202,7 +202,7 @@
     }
     function open() {
         let u;
-        try { u = new URL(rt.url, root.location.href); u.searchParams.set('topics', TOPIC); if (rt.lastSeq != null) u.searchParams.set('last_event_id', rt.lastSeq); } catch { rt.state = 'failed'; return; }
+        try { u = new URL(rt.url, root.location.href); u.searchParams.set('topics', TOPIC); if (rt.lastId) u.searchParams.set('last_event_id', rt.lastId); } catch { rt.state = 'failed'; return; }
         rt.state = 'connecting';
         let s;
         try { s = es = new root.EventSource(u.href); } catch { es = null; fail(); return; }
@@ -230,6 +230,7 @@
         const ev = m && m.event; const p = ev && ev.payload;
         if (!p || ev.event_type !== TOPIC) return;
         if (typeof m.seq === 'number') { if (rt.lastSeq != null && m.seq <= rt.lastSeq) return; rt.lastSeq = m.seq; }
+        rt.lastId = e.lastEventId || rt.lastId;
         if (p.service !== rt.service || typeof p.release !== 'string') return;
         // Ids repeat across origins (Sites' placeholders): a named origin must be ours.
         if (p.origin) { try { if (new URL(p.origin).origin !== root.location.origin) { rt.ignored++; return; } } catch { return; } }

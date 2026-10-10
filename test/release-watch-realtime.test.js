@@ -1,4 +1,5 @@
 'use strict';
+const cur = (seq) => `c1.0.${Buffer.from(String(seq), 'utf8').toString('base64url')}`;
 // release-watch.js release notifications (1.17.0, WS-P task 9): one anonymous EventSource on the Events
 // realtime stream (topic host.release.published); an event for this page's service with a new release runs
 // the ordinary check after a 0-20 s jitter, bursts collapse into one check per 30 s, the release the tab
@@ -21,7 +22,8 @@ function fakeEventSource() {
         addEventListener(type, f) { (this.listeners[type] = this.listeners[type] || []).push(f); }
         close() { this.closed = true; }
         opened() { if (this.onopen) this.onopen({}); }
-        send(seq, event) { if (this.onmessage) this.onmessage({ data: JSON.stringify({ seq, event }), lastEventId: String(seq) }); }
+        // Events' SSE id is the event's opaque cursor (ADR-042), here made as Events makes it.
+        send(seq, event) { if (this.onmessage) this.onmessage({ data: JSON.stringify({ seq, event }), lastEventId: cur(seq) }); }
         emit(type, data) { (this.listeners[type] || []).forEach((f) => f({ data: JSON.stringify(data) })); }
         fail() { if (this.onerror) this.onerror({}); }
     }
@@ -157,7 +159,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         assert.deepStrictEqual(p.timeouts(), [15000], 'the first retry after 15-30 s');
         p.fireTimeouts();
         assert.strictEqual(p.es.all.length, 2);
-        assert.strictEqual(p.es.all[1].url, `${DEFAULT}?topics=host.release.published&last_event_id=41`, 'resumes after the last seq seen');
+        assert.strictEqual(p.es.all[1].url, `${DEFAULT}?topics=host.release.published&last_event_id=${cur(41)}`, 'resumes from the last SSE id seen (the cursor), not a computed number');
         const waits = [];
         for (let i = 1; i < 6; i++) {
             p.es.all[i].fail();
@@ -212,7 +214,7 @@ async function open({ url = 'https://openvibe.live/', html = PAGE(), config = nu
         assert.deepStrictEqual([s.closed, p.rt().state], [true, 'hidden']);
         p.setHidden(false);
         assert.strictEqual(p.es.all.length, 2);
-        assert.match(p.es.all[1].url, /last_event_id=50$/);
+        assert.ok(p.es.all[1].url.endsWith(`last_event_id=${cur(50)}`));
         p.release.stop();
 
         const bg = await open({ hidden: true });
