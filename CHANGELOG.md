@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.20.4 — 2026-10-10
+
+- Ring icons (`ov-icons.js`, `showcase.css`) no longer put a CSS transform on any element inside the SVG. On a phone,
+  scrolling left some icons unpainted: a glyph missing inside its ring, or a whole chip icon blank. The icons that
+  failed were the ones under the scrolling thumb, plus the cards whose comet spins. Both used CSS transforms on SVG
+  children (`transform-box: view-box` with `transform-origin` on the glyph, a rotated comet circle, a rotated progress
+  circle and a scaled pulse).
+  - The comet is now a dash moving round the ring (`stroke-dashoffset`), and the progress arc is a path that starts at
+    twelve o'clock.
+  - Pulse animates opacity only, and the hover lift scales the whole `<svg>` element.
+  - Hover effects apply only under `(hover: hover)`, so a thumb scrolling over a link starts nothing.
+  - At rest the icons render the same as 2.20.3, comet position included.
+
 ## 2.20.3 — 2026-10-10
 
 - Filled controls use the theme's readable pair, `--accent-strong` with `--on-accent-strong`, instead of `--accent` with

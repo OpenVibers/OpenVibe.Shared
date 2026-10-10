@@ -15,8 +15,11 @@
  *   OpenVibeIcons.set(el, { progress, state, icon })
  *   OpenVibeIcons.svg(name, size)                  markup string, for server-side / templates
  *
- * Effects (data-fx): orbit (default) · pulse · draw · bounce · none. Motion is transform/opacity/
- * stroke only and stops under prefers-reduced-motion. Unknown names fall back to the OV mark "V".
+ * Effects (data-fx): orbit (default) · pulse · draw · bounce · none. Motion is opacity/stroke inside the
+ * SVG and transform on the <svg> element only: no CSS transform ever touches an element inside the SVG
+ * (transform-box/transform-origin on SVG children left glyphs and whole icons unpainted on phones while
+ * scrolling), and hover effects apply only where a pointer can hover, so a thumb scrolling over a link
+ * starts nothing. Motion stops under prefers-reduced-motion. Unknown names fall back to the OV mark "V".
  */
 (function (root) {
     'use strict';
@@ -83,26 +86,25 @@
 
     const CSS = `
 .ov-icon{--ovi-size:32px;display:inline-grid;place-items:center;width:var(--ovi-size);height:var(--ovi-size);flex:none;vertical-align:middle;line-height:0;color:var(--ovi-accent,var(--accent,#3b82f6));position:relative}
-.ov-icon svg{width:100%;height:100%;overflow:visible;display:block}
+.ov-icon svg{width:100%;height:100%;overflow:visible;display:block;transition:transform .25s cubic-bezier(.2,1.4,.3,1)}
 .ov-icon .ovi-bg{fill:currentColor;opacity:.1;transition:opacity .25s}
 .ov-icon .ovi-ring{fill:none;stroke:currentColor;stroke-width:2.4;opacity:.26}
-.ov-icon .ovi-comet{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:26 100;transform-origin:24px 24px;animation:oviSpin 3.6s linear infinite}
-.ov-icon .ovi-prog{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;transform:rotate(-90deg);transform-origin:24px 24px;stroke-dasharray:125.7;stroke-dashoffset:125.7;transition:stroke-dashoffset .35s cubic-bezier(.2,.8,.2,1),opacity .2s;opacity:0}
-.ov-icon .ovi-glyph{fill:none;stroke:var(--ovi-glyph,var(--text-primary,#e6edf7));stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transform-box:view-box;transform-origin:12px 12px;transition:transform .25s cubic-bezier(.2,1.4,.3,1),stroke .2s}
-.ov-icon .ovi-glyph--solid{fill:var(--ovi-glyph,var(--text-primary,#e6edf7));stroke:none;transition:transform .25s cubic-bezier(.2,1.4,.3,1),fill .2s}
+.ov-icon .ovi-comet{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:26 99.66;animation:oviSpin 3.6s linear infinite}
+.ov-icon .ovi-prog{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-dasharray:125.7;stroke-dashoffset:125.7;transition:stroke-dashoffset .35s cubic-bezier(.2,.8,.2,1),opacity .2s;opacity:0}
+.ov-icon .ovi-glyph{fill:none;stroke:var(--ovi-glyph,var(--text-primary,#e6edf7));stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.ov-icon .ovi-glyph--solid{fill:var(--ovi-glyph,var(--text-primary,#e6edf7));stroke:none;transition:fill .2s}
 .ov-icon .ovi-glyph circle[r=".6"],.ov-icon .ovi-glyph circle[r=".7"]{fill:currentColor;stroke:none}
 .ov-icon[style*="--ovi-size:2"] .ovi-glyph,.ov-icon[data-size^="2"] .ovi-glyph{stroke-width:2.3}
 .ov-icon[style*="--ovi-size:2"] .ovi-ring,.ov-icon[data-size^="2"] .ovi-ring{stroke-width:3;opacity:.34}
-.ov-icon:hover .ovi-glyph,a:hover>.ov-icon .ovi-glyph,button:hover>.ov-icon .ovi-glyph{transform:scale(1.1)}
-.ov-icon:hover .ovi-bg,a:hover>.ov-icon .ovi-bg{opacity:.18}
+@media (hover:hover){.ov-icon:hover svg,a:hover>.ov-icon svg,button:hover>.ov-icon svg{transform:scale(1.06)}.ov-icon:hover .ovi-bg,a:hover>.ov-icon .ovi-bg{opacity:.18}}
 .ov-icon[data-fx=none] .ovi-comet{display:none}
 .ov-icon[data-fx=pulse] .ovi-comet{display:none}
-.ov-icon[data-fx=pulse] .ovi-bg{animation:oviPulse 2s ease-in-out infinite;transform-origin:24px 24px}
+.ov-icon[data-fx=pulse] .ovi-bg{animation:oviPulse 2s ease-in-out infinite}
 .ov-icon[data-fx=draw] .ovi-glyph path{stroke-dasharray:80;animation:oviDraw 1.2s cubic-bezier(.2,.8,.2,1) both}
 .ov-icon[data-fx=bounce] svg{animation:oviBounce 1.8s cubic-bezier(.3,1.4,.4,1) infinite}
 .ov-icon[data-progress] .ovi-prog{opacity:1}
 .ov-icon[data-progress] .ovi-comet{opacity:0}
-.ov-icon[data-state=busy] .ovi-comet{animation-duration:1.1s;opacity:1;stroke-dasharray:40 86}
+.ov-icon[data-state=busy] .ovi-comet{animation-duration:1.1s;opacity:1;stroke-dasharray:40 85.66}
 .ov-icon[data-state=busy][data-progress] .ovi-comet{opacity:.35}
 .ov-icon[data-state=ok]{--ovi-accent:var(--success,#22c55e)}
 .ov-icon[data-state=error]{--ovi-accent:var(--danger,#ef4444)}
@@ -110,8 +112,8 @@
 .ov-icon[data-state=ok] .ovi-ring,.ov-icon[data-state=error] .ovi-ring{opacity:.9}
 .ov-icon[data-state=ok] svg{animation:oviPop .5s cubic-bezier(.2,1.6,.3,1)}
 .ov-icon[data-state=error] svg{animation:oviShake .4s ease}
-@keyframes oviSpin{to{transform:rotate(360deg)}}
-@keyframes oviPulse{0%,100%{transform:scale(.9);opacity:.08}50%{transform:scale(1.06);opacity:.22}}
+@keyframes oviSpin{from{stroke-dashoffset:0}to{stroke-dashoffset:-125.66}}
+@keyframes oviPulse{0%,100%{opacity:.08}50%{opacity:.24}}
 @keyframes oviDraw{from{stroke-dashoffset:80}to{stroke-dashoffset:0}}
 @keyframes oviBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6%)}}
 @keyframes oviPop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
@@ -174,11 +176,10 @@
         if (!solid) return forSprite ? def.glyph : `<g class="ovi-glyph">${def.glyph}</g>`;
         const [w, d] = solid; const sc = 18 / 512; const tx = (24 - w * sc) / 2, ty = 3;
         const paint = forSprite ? ' fill="currentColor" stroke="none" style="fill:var(--ovi-glyph,var(--text-primary,#e6edf7))"' : '';
-        // The position/scale transform must live on a plain (unclassed) <g>, not on the .ovi-glyph
-        // element itself: that class sets transform-box/transform-origin for the hover-scale
-        // animation, and browsers resolve a "transform" *attribute* through the same CSS transform
-        // pipeline — so pairing it with a non-default transform-origin pivots the glyph around
-        // (12,12) instead of applying it in place, throwing every solid glyph off-centre.
+        // The position/scale transform lives on a plain (unclassed) <g>, and no stylesheet rule sets a
+        // CSS transform, transform-box or transform-origin on anything inside the SVG: browsers resolve a
+        // "transform" *attribute* through the same CSS transform pipeline, so a styled origin once pivoted
+        // every solid glyph off-centre, and transforms on SVG children left icons unpainted on phones.
         return `<g class="ovi-glyph ovi-glyph--solid"${paint}><g transform="translate(${tx.toFixed(2)} ${ty}) scale(${sc.toFixed(5)})"><path d="${d}"/></g></g>`;
     }
 
@@ -192,7 +193,7 @@
         const key = resolve(name); const def = registry[key];
         const off = def.offset || OFFSETS[key] || [0, 0];   // measured optical centring, see scripts/measure-icons.js
         const s = size ? ` width="${size}" height="${size}"` : '';
-        return `<svg viewBox="0 0 48 48"${s} aria-hidden="true" focusable="false"><circle class="ovi-bg" cx="24" cy="24" r="21"/><circle class="ovi-ring" cx="24" cy="24" r="20"/><circle class="ovi-comet" cx="24" cy="24" r="20"/><circle class="ovi-prog" cx="24" cy="24" r="20"/><g transform="translate(${(13 + off[0] * .9167).toFixed(2)} ${(13 + off[1] * .9167).toFixed(2)}) scale(.9167)">${glyphMarkup(key, def, false)}</g></svg>`;
+        return `<svg viewBox="0 0 48 48"${s} aria-hidden="true" focusable="false"><circle class="ovi-bg" cx="24" cy="24" r="21"/><circle class="ovi-ring" cx="24" cy="24" r="20"/><circle class="ovi-comet" cx="24" cy="24" r="20"/><path class="ovi-prog" d="M24 4a20 20 0 1 1 0 40a20 20 0 1 1 0-40"/><g transform="translate(${(13 + off[0] * .9167).toFixed(2)} ${(13 + off[1] * .9167).toFixed(2)}) scale(.9167)">${glyphMarkup(key, def, false)}</g></svg>`;
     }
 
     // ── Sprite mode (server-rendered lists) ──────────────────────────────────────────────
