@@ -3,10 +3,11 @@
  * ADR-005 amendment 2). notification-ui.js loads it on demand when a site turns it on (navbar notificationsRealtime).
  * For every (re)connect it asks Network for a realtime ticket (POST <api>/api/v1/realtime/ticket: Bearer token, or the
  * cookie on openvibe.network itself) and opens Events' stream with it, without credentials:
- *   <stream_url>?topics=network.notification.*&ticket=<ticket>[&last_event_id=<seq>]
+ *   <stream_url>?topics=network.notification.*&ticket=<ticket>[&last_event_id=<cursor>]
  * Events streams only the person's own network.notification.created events (subject visibility); one whose subject is
  * not the ticket's is ignored all the same. Each calls onNotification(payload); `event: gap` calls onGap.
- * A ticket opens one stream: errors close it and reconnect with a fresh ticket from the cursor, backing off 2 s to 15 min
+ * The cursor is the last SSE id Events sent (opaque, handed back as it came); an event already heard (by event_id) is
+ * skipped. A ticket opens one stream: errors close it and reconnect with a fresh ticket from the cursor, backing off 2 s to 15 min
  * with jitter. Stops (the caller's polling is all there is) after 10 failures in a row, on a Content-Security-Policy
  * refusal, when signed out (401/403) or when Network has realtime off (404/503). Hidden 5 min: closed; shown: resumed.
  * OVNotificationLive.create({ ticketUrl, token, credentials, onNotification, onGap, onState }) → { start, stop, restart, state }
@@ -17,10 +18,12 @@
     const TYPE_RE = /^network\.notification\./;
     const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
     const MAX_FAILURES = 10;   // 2 s, 4 s, … 512 s: about 9 to 17 minutes of retries before polling only
+    const SEEN_MAX = 256;      // event ids remembered for dedupe
 
     function create(o) {
-        const rt = { state: 'off', failures: 0, lastSeq: null, subject: null, origin: null, events: 0, ignored: 0, gaps: 0, tickets: 0 };
+        const rt = { state: 'off', failures: 0, lastId: null, subject: null, origin: null, events: 0, ignored: 0, gaps: 0, tickets: 0 };
         let es = null; let stopped = true; let gen = 0;
+        const seen = new Set();
         const t = {};   // timers: retry, hide
         const later = (k, f, ms) => { root.clearTimeout(t[k]); t[k] = root.setTimeout(() => { t[k] = null; f(); }, ms); };
         const call = (f, ...a) => { try { if (typeof f === 'function') f(...a); } catch { /* the page's handler must not break the feed */ } };
@@ -54,7 +57,7 @@
                 if (!/^https?:$/.test(u.protocol)) throw new Error('url');
                 u.searchParams.set('topics', tk.topics.join(','));
                 u.searchParams.set('ticket', tk.ticket);
-                if (rt.lastSeq != null) u.searchParams.set('last_event_id', String(rt.lastSeq));
+                if (rt.lastId != null) u.searchParams.set('last_event_id', rt.lastId);
             } catch { fail(); return; }
             rt.tickets++; rt.origin = u.origin;
             rt.subject = tk.subject;
@@ -73,9 +76,14 @@
         }
         function heard(e) {
             let m; try { m = JSON.parse(e.data); } catch { return; }
-            const seq = m && typeof m.seq === 'number' ? m.seq : Number(e.lastEventId);
-            if (Number.isFinite(seq)) { if (rt.lastSeq != null && seq <= rt.lastSeq) return; rt.lastSeq = seq; }
             const ev = m && m.event;
+            const id = ev && typeof ev.event_id === 'string' ? ev.event_id : null;
+            if (id) {
+                if (seen.has(id)) return;   // already heard (a replay after a reconnect)
+                seen.add(id);
+                if (seen.size > SEEN_MAX) seen.delete(seen.values().next().value);
+            }
+            if (e.lastEventId) rt.lastId = String(e.lastEventId);
             // Events already sends only this person's own; anything else is never shown.
             if (!ev || !TYPE_RE.test(String(ev.event_type)) || !ev.subject || ev.subject.type !== 'user' || ev.subject.id !== rt.subject) { rt.ignored++; return; }
             rt.events++;
@@ -107,7 +115,7 @@
             start() { if (!stopped) return api; stopped = false; set('off'); open(); return api; },
             stop() { stopped = true; gen++; close(); Object.keys(t).forEach((k) => { root.clearTimeout(t[k]); t[k] = null; }); set('off'); return api; },
             /** Another account (or a new token): forget the cursor and the subject, start again. */
-            restart() { api.stop(); rt.lastSeq = null; rt.subject = null; rt.failures = 0; return api.start(); },
+            restart() { api.stop(); rt.lastId = null; seen.clear(); rt.subject = null; rt.failures = 0; return api.start(); },
             state: () => ({ ...rt }),
         };
         return api;

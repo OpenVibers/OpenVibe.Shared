@@ -5,6 +5,8 @@
 // fresh ticket and nothing is lost or repeated; a gap is reported; an event for another person yields nothing.
 // Events' own refusal of a guessed user:<other> topic and of other people's events is OpenVibe.Events
 // test/realtime-tickets.test.js. Skipped (exit 0) when Chrome is not installed or OV_SKIP_BROWSER=1.
+// Events' opaque cursor for a position (the format Events emits; the client never parses it).
+const cur = (seq) => `c1.0.${Buffer.from(String(seq), 'utf8').toString('base64url')}`;
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -41,7 +43,7 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><title>bell</titl
 
 function sendEvent(res, e) {
     const event = { event_id: `evt_${e.seq}`, event_type: 'network.notification.created', visibility: 'subject', subject: { type: 'user', id: e.subject }, payload: { notification_id: e.id, unread_count: e.seq } };
-    res.write(`id: ${e.seq}\ndata: ${JSON.stringify({ seq: e.seq, event })}\n\n`);
+    res.write(`id: ${cur(e.seq)}\ndata: ${JSON.stringify({ seq: e.seq, event })}\n\n`);
 }
 /** A new notification: stored, then streamed to its person (or, `leak`, to everyone: a misbehaving server). */
 function publish(subject, id, { leak = false } = {}) {
@@ -75,7 +77,8 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
         res.write('retry: 3000\n: connected user\n\n');
         if (last != null) {
-            let cursor = Number(last);
+            let cursor = Number(Buffer.from(String(last).split('.')[2] || '', 'base64url').toString('utf8'));
+            if (cur(cursor) !== last) cursor = log.length;   // not a cursor: no replay, like Events
             if (cursor < oldest - 1) { res.write(`event: gap\ndata: ${JSON.stringify({ reason: 'retention', from_seq: cursor + 1, to_seq: oldest - 1 })}\n\n`); cursor = oldest - 1; }
             for (const e of log) if (e.seq > cursor && e.seq >= oldest && e.subject === subject) sendEvent(res, e);
         }
@@ -117,7 +120,7 @@ const server = http.createServer((req, res) => {
         let v = await until((x) => x.heard.length === 2, 'a1 and a2');
         assert.deepStrictEqual(v.heard, ['a1', 'a2']);
         assert.strictEqual(v.state.ignored, 1, 'another person\'s event yields nothing');
-        assert.strictEqual(v.state.lastSeq, 3);
+        assert.strictEqual(v.state.lastId, cur(3));
 
         // The connection drops (Events restarts); while it is down two more notifications are stored.
         dropAll();
@@ -127,7 +130,7 @@ const server = http.createServer((req, res) => {
         v = await until((x) => x.heard.length === 4 && x.state.state === 'open', 'the resume');
         assert.deepStrictEqual(v.heard, ['a1', 'a2', 'a3', 'a4'], 'the missed ones, in order, nothing twice');
         const resumed = streamRequests[streamRequests.length - 1];
-        assert.deepStrictEqual([resumed.ticket, resumed.last], ['tk-2', '3'], 'a fresh ticket and the cursor');
+        assert.deepStrictEqual([resumed.ticket, resumed.last], ['tk-2', cur(3)], 'a fresh ticket and the cursor');
         assert.strictEqual(new Set(streamRequests.filter((r) => issued.has(r.ticket) === false).map((r) => r.ticket)).size, streamRequests.length, 'a ticket is never used twice');
         publish(ALICE, 'a5');
         await until((x) => x.heard.length === 5, 'live again');

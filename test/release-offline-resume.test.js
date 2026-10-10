@@ -11,6 +11,8 @@
 //   - a tab away past the mixed-version window reloads only when safe (never under a focused field);
 //   - a hidden tab keeps its stream closed until it is shown again, then resumes from the cursor.
 // Lines `[metric] name=value` are read by OpenVibe.Host's release-acceptance runner.
+// Events' opaque cursor for a position (the format Events emits; the client never parses it).
+const cur = (seq) => `c1.0.${Buffer.from(String(seq), 'utf8').toString('base64url')}`;
 const assert = require('assert');
 const { openPage, manifestFor } = require('../release-compat');
 
@@ -36,7 +38,7 @@ function fakeEventSource() {
         addEventListener(type, f) { (this.listeners[type] = this.listeners[type] || []).push(f); }
         close() { this.closed = true; }
         opened() { if (this.onopen) this.onopen({}); }
-        send(seq, event) { if (this.onmessage) this.onmessage({ data: JSON.stringify({ seq, event }), lastEventId: String(seq) }); }
+        send(seq, event) { if (this.onmessage) this.onmessage({ data: JSON.stringify({ seq, event }), lastEventId: cur(seq) }); }
         fail() { if (this.onerror) this.onerror({}); }
     }
     return { FakeEventSource, all };
@@ -90,7 +92,7 @@ const metrics = { 'offline-resume.reloads-while-offline': 0, 'offline-resume.pro
         const s0 = p.es.all[0];
         s0.opened();
         s0.send(7, released('other', B, 1));
-        assert.strictEqual(p.rt().lastSeq, 7);
+        assert.strictEqual(p.rt().lastId, cur(7));
         // The network drops.
         p.state.offline = true;
         s0.fail();
@@ -123,7 +125,7 @@ const metrics = { 'offline-resume.reloads-while-offline': 0, 'offline-resume.pro
         // Not reconnected at once: the stream waits out its backoff, and that wait is the delay.
         if (!reconnected) metrics['offline-resume.stream-reconnect-delay-ms'] = Math.max(metrics['offline-resume.stream-reconnect-delay-ms'], retry);
         assert.ok(reconnected, `back online after ${failures} failures: the release stream reconnects at once`);
-        assert.match(p.es.all[p.es.all.length - 1].url, /last_event_id=7$/, 'from its cursor');
+        assert.ok(p.es.all[p.es.all.length - 1].url.endsWith(`last_event_id=${cur(7)}`), 'from its cursor');
         assert.strictEqual(p.rt().failures, 0);
         p.settleStyles(true); await p.settle();
         metrics['offline-resume.manifest-reads-on-resume'] = Math.max(metrics['offline-resume.manifest-reads-on-resume'], p.manifestReads() - reads);
@@ -188,7 +190,7 @@ const metrics = { 'offline-resume.reloads-while-offline': 0, 'offline-resume.pro
         assert.strictEqual(p.es.all.length, 1, 'online while hidden: no stream yet');
         p.setHidden(false); await p.settle();
         assert.strictEqual(p.es.all.length, 2, 'shown: one stream');
-        assert.match(p.es.all[1].url, /last_event_id=11$/);
+        assert.ok(p.es.all[1].url.endsWith(`last_event_id=${cur(11)}`));
         p.stop();
     }
 

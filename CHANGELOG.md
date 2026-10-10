@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 3.0.1 — 2026-10-10
+
+- `notification-live.js` (the bell's realtime feed) resumes from Events' opaque cursor: `last_event_id` is the last
+  SSE id Events sent, handed back as it came, never a number it read from the message. A replay after a reconnect is
+  dropped by its `event_id` (the last 256 heard), not by position. `state()` reports `lastId` in place of `lastSeq`.
+- `release-watch.js` drops a replayed release message by its `event_id` alone (it already resumed from the cursor).
+- With these, nothing in Shared reads Events' numeric seq as a position, so Events can stop accepting one (plan T7,
+  ADR-042 decision 7). A bell on an older pin keeps working after that; a reconnect then starts at the head, and the
+  count poll fills in.
+
 ## 3.0.0 — 2026-10-10
 
 - Removed the SQLite configuration store. `createConfigStore` now requires an openvibe-sdk/db handle and returns a promise of the ready PostgreSQL store. `fromRows`, `adminRoutes`, `configSchema`, and other non-SQLite exports remain.

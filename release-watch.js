@@ -181,7 +181,7 @@
     // back off 30 s to 15 min, after 6 failures only polling is left; online reconnects at once.
     const TOPIC = 'host.release.published';
     const HEX = /^[0-9a-f]{7,40}$/;
-    const rt = { state: 'off', service: null, url: null, events: 0, ignored: 0, checks: 0, failures: 0, lastSeq: null };
+    const rt = { state: 'off', service: null, url: null, events: 0, ignored: 0, checks: 0, failures: 0, lastId: null };
     let es = null; let queued = null; let again = false; let seen = [];
     const t = {};   // timers: run (the jittered check), cool (30 s after it), retry, hide
     const later = (k, f, ms) => { root.clearTimeout(t[k]); t[k] = root.setTimeout(() => { t[k] = null; f(); }, ms); };
@@ -229,7 +229,6 @@
         let m; try { m = JSON.parse(e.data); } catch { return; }
         const ev = m && m.event; const p = ev && ev.payload;
         if (!p || ev.event_type !== TOPIC) return;
-        if (typeof m.seq === 'number') { if (rt.lastSeq != null && m.seq <= rt.lastSeq) return; rt.lastSeq = m.seq; }
         rt.lastId = e.lastEventId || rt.lastId;
         if (p.service !== rt.service || typeof p.release !== 'string') return;
         // Ids repeat across origins (Sites' placeholders): a named origin must be ours.
