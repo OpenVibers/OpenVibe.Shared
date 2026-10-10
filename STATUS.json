@@ -8,7 +8,7 @@
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.122.1 (devDependency: the release manifest contract)",
+  "contracts": "openvibe-contracts v0.126.0 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.35.0",
   "features": [
     "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
@@ -21,5 +21,5 @@
     "browser harness and perf budgets for tests",
     "a CONFIRMATION_REQUESTED notification type: an agent owner is told when a sensitive-capability confirmation awaits them"
   ],
-  "updated": "2026-10-09"
+  "updated": "2026-10-10"
 }
