@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.21.1 — 2026-10-10
+
+- **The last fallback "V"s go.** A scan of every site's home page found ring icons drawing the "V" for names with no
+  glyph: Quest (page), Rent (db, deploy, gauge, page), Food (location, page) and openvibe.download (db, link, shield).
+  - New glyphs, each a Font Awesome Free solid twin plus a stroke fallback: `gauge`, `link`, `shield` and `plug`.
+  - New aliases onto existing glyphs: `page` → `docs`, `db`/`database` → `zone`, `location` → `ip`, `gamepad` →
+    `games`, `robot` → `bot`, `deploy` → `upload`, `copy` → `paste` and `activity` → `ping`.
+  - The navbar set is unchanged.
+
 ## 2.21.0 — 2026-10-10
 
 - **Every product has its own ring icon.** Ten sites on the openvibe.network home drew the fallback "V": Actor, Help,
