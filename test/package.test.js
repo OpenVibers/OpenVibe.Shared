@@ -1,5 +1,5 @@
 'use strict';
-// Every subpath consumers use, and every module file, resolves through the package's own name
+// Every public subpath resolves through the package's own name
 // (Node self-reference), so require('openvibe-shared/<x>') works the same once installed.
 const assert = require('assert');
 const fs = require('fs');
@@ -10,7 +10,10 @@ const ROOT = path.join(__dirname, '..');
 const modules = fs.readdirSync(ROOT).filter((f) => f.endsWith('.js'))
     .concat(fs.readdirSync(path.join(ROOT, 'analytics')).filter((f) => f.endsWith('.js')).map((f) => `analytics/${f}`));
 const targets = new Set(Object.values(pkg.exports).map((t) => t.replace(/^\.\//, '')));
-for (const f of modules) assert.ok(targets.has(f), `${f} is exported`);
+for (const f of modules) if (!['config-core.js', 'analytics/core.js'].includes(f)) assert.ok(targets.has(f), `${f} is exported`);
+for (const sub of ['analytics/tracker', 'analytics/schema', 'analytics/prune-cli']) assert.ok(!pkg.exports[`./${sub}`], `${sub} was removed`);
+assert.strictEqual(require('openvibe-shared/analytics').AnalyticsTracker, undefined);
+assert.throws(() => require('openvibe-shared/config').createConfigStore({ db: { prepare() {}, transaction() {} } }), /openvibe-sdk\/db/);
 // Shared ADR 0001: the exports map is the public surface, one explicit entry per subpath, no patterns.
 for (const sub of Object.keys(pkg.exports)) assert.ok(!sub.includes('*'), `${sub}: no wildcard subpaths`);
 for (const [sub, target] of Object.entries(pkg.exports)) {

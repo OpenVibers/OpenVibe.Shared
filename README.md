@@ -20,7 +20,7 @@ were reconciled first.
 | Kind | Files |
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,tracker,retention,schema,event,prune-cli}`), `app-icon`, `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js` |
 | Pin bot | `scripts/pin-bump.js` (`node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply]`): after a release, one PR per repository that pins the library below the tag, with the lockfile refreshed and the docs-status fields rewritten; a dry run unless `--apply`; CI tests each PR |
@@ -73,7 +73,7 @@ hand-copy files into `node_modules/` or a `vendor/` directory.
 ```js
 const legal = require('openvibe-shared/legal');
 const seo = require('openvibe-shared/seo');
-const { AnalyticsTracker } = require('openvibe-shared/analytics');
+const { AnalyticsTrackerPg } = require('openvibe-shared/analytics/pg');
 ```
 
 ### SEO kit
@@ -246,35 +246,34 @@ never `true`: it reports status `skipped` with the reason and is listed in `skip
 ### Configuration (server, WS-C task 7)
 
 `openvibe-shared/config` keeps one namespace of a service's configuration as immutable revisions
-(`common.config-snapshot@1`) in the service's own SQLite database. No new dependency: pass the
-better-sqlite3 handle. Several namespaces share one database (tables `config_snapshots` and
-`config_keys`).
-
-On PostgreSQL (an openvibe-sdk/db handle, ADR-035) `createConfigStore` returns a promise of the store (`config-pg.js`): `const tiering = await config.createConfigStore({ db, … })`. Its reading and writing methods are async, while `get()` and `revision()` stay in memory. The service's migrations create the tables from `config.configSchema()`.
+(`common.config-snapshot@1`) in the service's PostgreSQL database. Pass an openvibe-sdk/db handle.
+Several namespaces share the `config_snapshots` and `config_keys` tables, created by the service's
+migrations from `config.configSchema()`. `createConfigStore` returns a promise of the ready store.
+Its database methods are async; `get()` and `revision()` stay in memory.
 
 ```js
 const config = require('openvibe-shared/config');
-const settings = config.createConfigStore({
+const settings = await config.createConfigStore({
     db, service: 'live', namespace: 'live.site_settings',
     schema,                        // JSON Schema subset: type, enum, const, required, properties,
                                    // additionalProperties, min/max*, pattern, items, uniqueItems, multipleOf
     validate: (values) => true,    // or false, a message, a list, { valid, errors }; synchronous
     classify: (key) => (/api_key|secret|token/.test(key) ? 'secret' : undefined),  // or { key: class }; unknown = internal
     defaults,                      // revision 1 of a new namespace, and under every revision
-    legacy: () => config.fromRows(db.prepare('SELECT * FROM site_settings').all()),  // revision 1 instead
+    legacy: async () => config.fromRows(await db.all('SELECT * FROM site_settings')),  // revision 1 instead
     onActivate: async (values, previous, { restoring }) => { /* apply it; throw to refuse */ },
     keep: 50, log: console, now: () => new Date(),
 });
 settings.get();                    // defaults overlaid with the active values: frozen, in memory
 settings.get('max_bitrate_kbps');  // one value; never a database read
 settings.revision();               // the active revision, or null
-settings.propose(values, { actor, reason, merge, unset });   // validated, stored as proposed (redacted snapshot)
+await settings.propose(values, { actor, reason, merge, unset });   // validated, stored as proposed (redacted snapshot)
 await settings.activate(revision, { actor });
 await settings.apply(values, { actor, reason, merge, unset }); // propose + activate
 await settings.rollback({ actor, reason, to });                 // a new revision copying the previous good one (or `to`)
-settings.lastKnownGood(); settings.history({ limit, before }); settings.snapshot(revision); settings.summary();
-settings.import(legacy);           // revision 1 from a legacy source when the namespace has none
-settings.reload();                 // another process changed it: re-read the active revision
+await settings.lastKnownGood(); await settings.history({ limit, before }); await settings.snapshot(revision); await settings.summary();
+await settings.import(legacy);           // revision 1 from a legacy source when the namespace has none
+await settings.reload();                 // another process changed it: re-read the active revision
 ```
 
 - **Values** are a complete snapshot; `merge: true` starts from the active values and `unset` removes
@@ -435,25 +434,22 @@ page's timers and events.
 ### Analytics (server, ADR-021)
 
 ```js
-const Database = require('better-sqlite3');            // the service's own; Shared has no native dependency
-const { AnalyticsTracker } = require('openvibe-shared/analytics');
-const db = new Database('data/analytics.db');
-db.pragma('journal_mode = WAL');
-const analytics = new AnalyticsTracker(db, 'live', {
-    retention: { days: 30 },                           // nightly prune (the default); false if you schedule it yourself
-    paramPrefixes: ['avatar'],                         // extra words whose next segment is a parameter
-    pathRules: [[/\/by-username\/[^/?#]+/gi, '/by-username/:username']],  // parameters the segment rules can't see
+const { AnalyticsTrackerPg, analyticsSchema, pruneRawEventsPg } = require('openvibe-shared/analytics/pg');
+// Put analyticsSchema() in the service's database migrations.
+const analytics = new AnalyticsTrackerPg(db, 'live', {
+    retention: { days: 30 },
+    paramPrefixes: ['avatar'],
+    pathRules: [[/\/by-username\/[^/?#]+/gi, '/by-username/:username']],
 });
 app.use(analytics.middleware());
+// A service may call pruneRawEventsPg(db, { days: 30 }) in its own job runner.
 ```
 
 A raw event has no IP, user or subject id, or city. It has a route template (never a raw URL), a
 referer origin, a user-agent class, a rotating session id and a country. Raw events are kept for
 30 days, and the rollups for longer. A request with `Sec-GPC: 1` or `DNT: 1` is not recorded at
 all. The row shape is `analytics/event.v1` (`docs/schemas/analytics-event.v1.json`), and
-`require('openvibe-shared/analytics/event').checkRow(row)` checks a stored row against it. The
-prune and one-time scrub command is `openvibe-shared/analytics/prune-cli`: a service wraps it in
-its own `scripts/analytics-prune.js` and passes in its `Database` and default paths.
+`require('openvibe-shared/analytics/event').checkRow(row)` checks a stored row against it. PostgreSQL retention uses `pruneRawEventsPg(db, { days })`; `retention.MAX_DAYS` is 30.
 
 ### Browser side: two options
 
@@ -697,12 +693,10 @@ Tests are plain Node with stubbed browser globals. Some tests guard the release:
 - **Generated blocks**: the generated navbar and theme-loader blocks must be up to date.
 - **Browser bundles**: browser files must be free of `require()` and Node globals
   (`test/browser-bundles.test.js`).
-- **Exports**: every export must resolve, and every module file (including `analytics/*.js`) must
-  have one.
-- **Analytics (ADR-021)**: no personal data in any table after real requests, opt-out requests
-  leave nothing, every row is a valid `analytics/event.v1`, prune/scrub keep rollups intact, and
-  the prune CLI's dry run changes nothing (`test/analytics-*.test.js`, with `better-sqlite3` as a
-  dev dependency).
+- **Exports**: every export must resolve, and every public module file must
+  have one. Internal `config-core.js` and `analytics/core.js` are private.
+- **Analytics (ADR-021)**: PostgreSQL tests cover request privacy, opt-out, rollups, and raw-event retention;
+  pure privacy and event helpers have their own tests.
 
 CI runs on Node 22.22.1 and installs a tag-style tarball into an empty project.
 

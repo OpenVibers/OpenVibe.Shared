@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "2.21.2",
+  "version": "3.0.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -14,10 +14,7 @@
     "./analytics/event.v1.json": "./docs/schemas/analytics-event.v1.json",
     "./analytics/privacy": "./analytics/privacy.js",
     "./analytics/pg": "./analytics/pg.js",
-    "./analytics/prune-cli": "./analytics/prune-cli.js",
     "./analytics/retention": "./analytics/retention.js",
-    "./analytics/schema": "./analytics/schema.js",
-    "./analytics/tracker": "./analytics/tracker.js",
     "./app-icon": "./app-icon.js",
     "./assets": "./assets.js",
     "./auth-client": "./auth-client.js",
@@ -102,7 +99,6 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
-    "better-sqlite3": "^11.10.0",
     "express": "^4.22.3",
     "linkedom": "^0.18.13",
     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.127.0",

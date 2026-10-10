@@ -81,7 +81,7 @@ function counting(db) {
     await db.query(configSchema());
 
     // ── Construction ──
-    await assert.rejects(async () => await createConfigStore({}), /better-sqlite3/);
+    await assert.rejects(async () => await createConfigStore({}), /openvibe-sdk\/db/);
     await assert.rejects(async () => await createConfigStore({ db, service: 'Live', namespace: 'live.x' }), /service/);
     await assert.rejects(async () => await createConfigStore({ db, service: 'live', namespace: 'media.x' }), /namespace/);
     await assert.rejects(async () => await createConfigStore({ db, service: 'live', namespace: 'live' }), /namespace/);

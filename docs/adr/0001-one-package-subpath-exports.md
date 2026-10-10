@@ -24,7 +24,7 @@ ships as one package, `openvibe-shared`. The facts behind the decision:
   requires. Browser pages load only the files they name. A split would not reduce what a site
   loads.
 - **The package is small.** Its one runtime dependency is `jsonwebtoken`. The analytics module
-  is dependency-free: the caller passes in `better-sqlite3`.
+  is dependency-free: the caller passes an openvibe-sdk/db handle.
 - **There is one release process.** A split means N changelogs and N tags per change, and a
   compatibility matrix between them. There is no second team or release cadence to justify
   that.
@@ -38,8 +38,8 @@ Keep **one package, `openvibe-shared`, with explicit subpath exports**:
    no entry is private. `test/package.test.js` checks that every module file, including
    `analytics/*.js`, has an entry and that every entry resolves.
 2. **Related modules share a folder and a subpath prefix.** Example: `openvibe-shared/analytics`
-   plus `analytics/privacy`, `analytics/tracker`, `analytics/retention`, `analytics/schema`,
-   `analytics/event`, `analytics/prune-cli` and `analytics/event.v1.json`. Put new families the
+   plus `analytics/privacy`, `analytics/pg`, `analytics/retention`,
+   `analytics/event` and `analytics/event.v1.json`. Put new families the
    same way, for example `openvibe-shared/seo/...`. Existing flat subpaths such as `./navbar`
    and `./legal` stay where they are, because moving them would be a major release.
 3. **The charter's package names become groups of subpaths.** They are not separate packages.
@@ -63,7 +63,7 @@ Keep **one package, `openvibe-shared`, with explicit subpath exports**:
 Split out one part, as its own repository and tag, only if one of these becomes true:
 
 - A module needs a heavy or native runtime dependency that most consumers would not want.
-  Example: analytics bundling `better-sqlite3` instead of receiving it from the caller.
+  Example: analytics bundling a database driver instead of receiving a handle from the caller.
 - A part gains an outside audience that needs its own semver line. Example: a published
   third-party SDK.
 - Shared starts publishing to an npm registry. Scoped packages would then cost little, and a

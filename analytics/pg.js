@@ -1,7 +1,7 @@
 'use strict';
 /**
  * Request analytics on PostgreSQL (ADR-035; ADR-021's privacy bounds unchanged). The same tracker, tables and
- * getStats/getOverview/getBotAnalysis shapes as ./tracker.js, on an openvibe-sdk/db handle:
+ * getStats/getOverview/getBotAnalysis shapes on an openvibe-sdk/db handle:
  *
  *   const { AnalyticsTrackerPg, analyticsSchema } = require('openvibe-shared/analytics/pg');
  *   // migrations/NNNN_analytics.sql holds analyticsSchema()
@@ -9,7 +9,7 @@
  *   app.use(tracker.middleware());
  *   await tracker.flush(); await tracker.aggregate(); await tracker.getStats({ days: 7 });
  *
- * What differs from the SQLite tracker:
+ * PostgreSQL request handling:
  *  - the request path never waits for the database: record() buffers the row in memory, and flush() (every
  *    5 s, and at 100 rows) writes the buffer in one transaction;
  *  - uniques across processes: the visitor hash needs the day's salt that every process of the service shares
@@ -21,7 +21,7 @@
  *  - reads and rollups are async; SUM() over bigint comes back as numeric (exact), so every sum is cast.
  */
 const crypto = require('crypto');
-const { AnalyticsTracker, sqlTime, dayOf, hourOf } = require('./tracker');
+const { AnalyticsTrackerCore, sqlTime, dayOf, hourOf } = require('./core');
 const privacy = require('./privacy');
 
 const MAX_BUFFER = 5000;
@@ -86,15 +86,15 @@ CREATE INDEX IF NOT EXISTS idx_analytics_visitor_days_day ON analytics_visitor_d
 `.trim();
 }
 
-class AnalyticsTrackerPg extends AnalyticsTracker {
+class AnalyticsTrackerPg extends AnalyticsTrackerCore {
     /**
      * @param {object} db       openvibe-sdk/db handle (the service's own database, analyticsSchema() migrated)
      * @param {string} service
-     * @param {object} [opts]   as AnalyticsTracker: paramPrefixes, pathRules, retention ({ days = 30, intervalMs,
+     * @param {object} [opts]   paramPrefixes, pathRules, retention ({ days = 30, intervalMs,
      *                          initialDelayMs } or false), timers, now
      */
     constructor(db, service, opts = {}) {
-        super(db, service, { ...opts, timers: false, __pg: true });
+        super(db, service, opts);
         this._pending = [];            // visitors waiting for the shared salt: { day, hour, ip, ua, authenticated }
         this._localKeys = new Map();   // day → process-local session key
         this._salts = new Map();       // day → shared salt (cached after the first read)
@@ -281,7 +281,7 @@ class AnalyticsTrackerPg extends AnalyticsTracker {
             JSON.stringify(topCountries), JSON.stringify(devices), JSON.stringify(browsers)]);
     }
 
-    // ── Reads (admin dashboards): the SQLite tracker's shapes ──
+    // ── Reads (admin dashboards): dashboard shapes ──
 
     async getStats(options = {}) {
         const { days = 30, hours, service } = options;
