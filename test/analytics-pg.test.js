@@ -1,7 +1,7 @@
 'use strict';
 /**
  * openvibe-shared/analytics/pg on PGlite: request rows reach the database only at flush; the day's salt is shared
- * across trackers (two processes count one visitor once); rollups and dashboards keep the SQLite tracker's shapes;
+ * across trackers (two processes count one visitor once); rollups and dashboards keep their response shapes;
  * opted-out requests record nothing; retention prunes old rows. No IP ever reaches the database.
  */
 const assert = require('assert');

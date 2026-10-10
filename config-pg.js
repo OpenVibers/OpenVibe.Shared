@@ -1,11 +1,11 @@
 'use strict';
-// openvibe-shared/config on PostgreSQL (ADR-035): the same store as config.js, on an openvibe-sdk/db handle. Every
+// openvibe-shared/config on PostgreSQL (ADR-035): the configuration store on an openvibe-sdk/db handle. Every
 // method that reads or writes the database is async; get() and revision() stay in memory. createConfigStore picks this
 // implementation when it is handed an openvibe-sdk/db handle, and then returns a promise of the store (it has read or
 // seeded its active revision when it resolves). The tables come from
 // the service's migrations: configSchema() is their DDL.
 const crypto = require('crypto');
-const { CLASSES, SERVICE_RE, NAMESPACE_RE, validKey, REASON_MAX, ERROR_MAX, ConfigError, canonical, sha256, isPlainObject, pointer, clone, same, has, deepFreeze, jsonErrors, isMarker, looksRedacted, sameHex, compileSchema, checkSchema, validateResult, subjectRef, scrub, errText, summarize, makeLog, fromRows } = require('./config')._internal;
+const { CLASSES, SERVICE_RE, NAMESPACE_RE, validKey, REASON_MAX, ERROR_MAX, ConfigError, canonical, sha256, isPlainObject, pointer, clone, same, has, deepFreeze, jsonErrors, isMarker, looksRedacted, sameHex, compileSchema, checkSchema, validateResult, subjectRef, scrub, errText, summarize, makeLog, fromRows } = require('./config-core');
 
 /** The DDL of config_snapshots and config_keys, for a service's migrations. */
 function configSchema() {

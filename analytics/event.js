@@ -85,7 +85,7 @@ function validateEvent(ev) {
 const nullable = (v) => (v === undefined || v === '' ? null : v);
 const bool = (v) => v === true || v === 1 || v === '1';
 
-/** 'YYYY-MM-DD HH:MM:SS' (SQLite CURRENT_TIMESTAMP, UTC) -> 'YYYY-MM-DDTHH:MM:SSZ'; ISO input passes. */
+/** 'YYYY-MM-DD HH:MM:SS' (UTC database timestamp) -> 'YYYY-MM-DDTHH:MM:SSZ'; ISO input passes. */
 function isoTime(v) {
     if (v == null) return v;
     const s = String(v);

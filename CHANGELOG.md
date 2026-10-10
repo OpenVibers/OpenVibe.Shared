@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 3.0.0 — 2026-10-10
+
+- Removed the SQLite configuration store. `createConfigStore` now requires an openvibe-sdk/db handle and returns a promise of the ready PostgreSQL store. `fromRows`, `adminRoutes`, `configSchema`, and other non-SQLite exports remain.
+- Removed SQLite analytics: `AnalyticsTracker`, `analytics/tracker`, `analytics/schema`, `analytics/prune-cli`, the SQLite retention and scrub functions, and the SQLite `ANALYTICS_SCHEMA` and `ensureSchema` exports. Use `analytics/pg` (`AnalyticsTrackerPg`, `analyticsSchema`, `pruneRawEventsPg`). `analytics/retention` still exports `MAX_DAYS`.
+- Consumers already passing an openvibe-sdk/db handle to `createConfigStore` and using `analytics/pg` need no code changes. Live's `test/shared-pins.test.js` still lists `openvibe-shared/analytics/prune-cli` in `RESOLVE_ONLY`; remove that entry when updating its pin.
+- `better-sqlite3` is gone from devDependencies (and the lockfile).
+
 ## 2.21.2 — 2026-10-10
 
 - `release-watch.js` reopens its release-notification stream with `last_event_id` set to the last SSE id Events sent

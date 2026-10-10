@@ -86,9 +86,8 @@ function ruleA(callee, asyncNamesSet) {
     return false;
 }
 
-// asyncDb: the repository's db handle is asynchronous (no better-sqlite3 dependency): only then are db.run/get/all/exec
-// promises. A better-sqlite3 service's db calls are synchronous and never float.
-function ruleB(callee, args, { asyncDb = true } = {}) {
+// Database handles and outboxes return promises.
+function ruleB(callee, args) {
     if (callee.type === 'Identifier') return callee.name === 'fetch';
     if (callee.type !== 'MemberExpression') return false;
     const obj = callee.object;
@@ -98,11 +97,11 @@ function ruleB(callee, args, { asyncDb = true } = {}) {
     if (obj.type === 'MemberExpression' && obj.object.type === 'Identifier' && obj.object.name === 'fs' && memberProp(obj) === 'promises') return true; // fs.promises.*
     if (prop === 'tx') return true;                                                                      // <anything>.tx(
     if (prop === 'transaction' && args.some(isAsyncFn)) return true;                                     // .transaction(async …)
-    if (asyncDb && (objName === 'db' || objName === 'tx') && DB_METHODS.has(prop)) return true;                     // db.run/get/all/exec/query, tx.run/get/all/exec
+    if ((objName === 'db' || objName === 'tx') && DB_METHODS.has(prop)) return true;                     // db.run/get/all/exec/query, tx.run/get/all/exec
     if (objName === 'pool' && prop === 'query') return true;
     if (objName === 'client' && prop === 'query') return true;
-    if (prop === 'enqueue' && asyncDb) return true;                                                      // an outbox on better-sqlite3 enqueues synchronously
-    if (prop === 'close' && CLOSE_OBJECTS.has(objName) && (asyncDb || objName !== 'db')) return true;  // better-sqlite3's db.close() is synchronous                                     // .close() on db/pool/client/server/store
+    if (prop === 'enqueue') return true;                                                      // outbox enqueue
+    if (prop === 'close' && CLOSE_OBJECTS.has(objName)) return true;                                       // .close() on db/pool/client/server/store
     return false;
 }
 
@@ -142,15 +141,7 @@ function walkTree(dir) {
 const isServerPath = (rel) => { const s = rel.split(path.sep); return s[0] === 'server' || (s[0] === 'apps' && s[2] === 'server'); };
 
 /** Scan a repository directory. → { findings, allowed, files, errors } */
-/** True when the repository's package.json (or an apps/<app>/package.json) depends on better-sqlite3. */
-function usesSyncSqlite(dir) {
-    const has = (p) => { try { const j = JSON.parse(fs.readFileSync(p, 'utf8')); return Boolean((j.dependencies || {})['better-sqlite3']); } catch { return false; } };
-    if (has(path.join(dir, 'package.json'))) return true;
-    try { return fs.readdirSync(path.join(dir, 'apps')).some((a) => has(path.join(dir, 'apps', a, 'package.json'))); } catch { return false; }
-}
-
 function scan(dir = '.') {
-    const asyncDb = !usesSyncSqlite(dir);
     const acorn = load('acorn');
     const walk = load('acorn-walk');
     const findings = [];
@@ -176,7 +167,7 @@ function scan(dir = '.') {
             if (prop === 'then' || prop === 'catch' || prop === 'finally') return;          // rejection is handled
             let rule = null;
             if (ruleA(callee, names)) rule = 'a';
-            else if (ruleB(callee, expr.arguments, { asyncDb })) rule = 'b';
+            else if (ruleB(callee, expr.arguments)) rule = 'b';
             if (!rule) return;
             const inside = ancestors.some((a) => a !== node && isFn(a));
             if (!inside && !server) return;                                                 // top-level script: allowed to exit with the process
