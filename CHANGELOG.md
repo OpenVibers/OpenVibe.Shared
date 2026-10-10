@@ -4,6 +4,21 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.21.0 — 2026-10-10
+
+- **Every product has its own ring icon.** Ten sites on the openvibe.network home drew the fallback "V": Actor, Help,
+  Inventory, MediaHub, Quest, Rent, Services, Space, Watch and Work. They now get Font Awesome Free solid glyphs like
+  the rest: brain, question mark, open box, hard drive, trophy, key, cubes, rocket, eye and briefcase. Glyphs are also
+  added for the products opening next: `events` (bolt), `ai` (chip), `run` (terminal), `billing` (wallet), `feeds`
+  (RSS), `pics` (photos), `homes` (house), `website` (window), `zone` (database) and `fund` (hand with coin). `bot`
+  gets the solid robot. New aliases: `media-hub`/`mediahub` → `drive`, `sources` → `feeds`, `agent` → `actor`,
+  `jobs` → `work`. Each new name also has a stroke glyph.
+- Centring re-measured (`scripts/measure-icons.js`): the solid twins had inherited offsets measured for their old
+  stroke glyphs. Games sat 1.5 units high and Tools 1.3 units right; every glyph is now centred on its measured
+  bounds.
+- `scripts/build-nav-icons.py` draws a ring-only glyph without adding it to `nav-icons.js`. navbar.js's width table and
+  size budget are unchanged.
+
 ## 2.20.4 — 2026-10-10
 
 - Ring icons (`ov-icons.js`, `showcase.css`) no longer put a CSS transform on any element inside the SVG. On a phone,

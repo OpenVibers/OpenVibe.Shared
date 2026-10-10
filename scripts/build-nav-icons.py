@@ -42,6 +42,12 @@ OV_SOLID = {
     'ssl': 'fa-lock', 'ping': 'fa-wave-square', 'whois': 'fa-magnifying-glass', 'search': 'fa-magnifying-glass', 'map': 'fa-map',
     'food': 'fa-utensils', 'paste': 'fa-paste', 'account': 'fa-user', 'bell': 'fa-bell', 'history': 'fa-clock-rotate-left',
     'theme': 'fa-palette', 'check': 'fa-check', 'error': 'fa-triangle-exclamation', 'clip': 'fa-scissors',
+    # Products that had only the "V" (2026-10-10), and the ones opening next.
+    'bot': 'fa-robot', 'work': 'fa-briefcase', 'rent': 'fa-key', 'help': 'fa-circle-question', 'quest': 'fa-trophy',
+    'inventory': 'fa-box-open', 'drive': 'fa-hard-drive', 'services': 'fa-cubes', 'space': 'fa-rocket', 'watch': 'fa-eye',
+    'actor': 'fa-brain', 'events': 'fa-bolt', 'ai': 'fa-microchip', 'run': 'fa-terminal', 'billing': 'fa-wallet',
+    'feeds': 'fa-rss', 'pics': 'fa-images', 'homes': 'fa-house-chimney', 'website': 'fa-window-restore', 'zone': 'fa-database',
+    'fund': 'fa-hand-holding-dollar',
 }
 OVICONS = HERE.parent / 'ov-icons.js'
 OV_START, OV_END = '    // BEGIN generated solid glyphs (scripts/build-nav-icons.py)', '    // END generated solid glyphs'
@@ -59,8 +65,10 @@ def main():
     font = TTFont(a.font)
     cmap = font.getBestCmap(); glyphs = font.getGlyphSet(); hmtx = font['hmtx']
     upm = font['head'].unitsPerEm; asc = font['hhea'].ascent
+    # Outlines for the navbar's set and for the ring icons' twins; nav-icons.js (and so navbar.js's width table) gets
+    # only ICONS: a glyph only the ring icons draw costs the navbar nothing.
     out, missing = {}, []
-    for name in ICONS:
+    for name in dict.fromkeys(ICONS + list(OV_SOLID.values())):
         cp = cps.get(name)
         gname = cmap.get(cp) if cp else None
         if not gname: missing.append(name); continue
@@ -80,7 +88,8 @@ def main():
           "    'use strict';",
           "",
           "    const NAV_ICONS = {"]
-    for k, (w, d) in out.items(): js.append(f"        '{k}': [{w}, '{d}'],")
+    for k, (w, d) in out.items():
+        if k in ICONS: js.append(f"        '{k}': [{w}, '{d}'],")
     js += ["    };",
            "",
            "    if (typeof module !== 'undefined' && module.exports) module.exports = NAV_ICONS;",
@@ -90,7 +99,7 @@ def main():
            ""]
     NAV_ICONS.write_text('\n'.join(js), encoding='utf-8')
     subprocess.run(['node', str(HERE / 'build-navbar-icons.js')], check=True)
-    print(f'wrote {len(out)} icons; missing: {missing or "none"}')
+    print(f'wrote {sum(1 for k in out if k in ICONS)} icons; missing: {missing or "none"}')
     ov = [OV_START, "    // Font Awesome Free 6 solid glyphs (CC BY 4.0) for the ring icons; viewBox 0 0 <w> 512.", "    const SOLID = {"]
     for name, fa in OV_SOLID.items():
         if fa in out: w, d = out[fa]; ov.append(f"        {name}: [{w}, '{d}'],")
