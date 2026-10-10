@@ -4,13 +4,15 @@
 //   - it asks Network for a realtime ticket (Bearer, no cookies across sites) and opens Events' stream with it,
 //     topics=network.notification.*, never with credentials; the ticket is never kept;
 //   - the person's own network.notification.created calls onNotification; another person's (a guessed topic),
-//     other types and replayed seqs do nothing;
+//     other types and a replayed event (its event_id again) do nothing;
 //   - a disconnect reconnects with a fresh ticket and last_event_id; a gap is reported; hidden 5 min closes and
 //     showing resumes; 401/403, 503 and a CSP refusal stop it; ten failures in a row stop it, `online` revives it;
 //   - notification-ui with realtime on loads it from beside itself, re-reads the count on an event (once per burst,
 //     and again when a poll was already in flight), re-reads the lists on a gap, and polls every 2 min while the
 //     stream is open, every 15 s otherwise (CSP-blocked included); with realtime off nothing of it runs.
 const assert = require('assert');
+// Events' opaque cursor for a position (the format Events emits; the client never parses it).
+const cur = (seq) => `c1.0.${Buffer.from(String(seq), 'utf8').toString('base64url')}`;
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
@@ -37,7 +39,7 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
         addEventListener(type, f) { (this.listeners[type] = this.listeners[type] || []).push(f); }
         close() { this.closed = true; }
         opened() { if (this.onopen) this.onopen({}); }
-        send(seq, event) { if (this.onmessage) this.onmessage({ data: JSON.stringify({ seq, event }), lastEventId: String(seq) }); }
+        send(seq, event) { if (this.onmessage) this.onmessage({ data: JSON.stringify({ seq, event }), lastEventId: cur(seq) }); }
         emit(type, data) { (this.listeners[type] || []).forEach((f) => f({ data: JSON.stringify(data) })); }
         fail() { if (this.onerror) this.onerror({}); }
     }
@@ -148,13 +150,14 @@ const created = (subject, over = {}) => ({
         assert.strictEqual(live.state().state, 'open');
 
         // The person's own notification is heard; another person's (a guessed topic), other types and replays are not.
-        s1.send(10, created(ALICE));
+        const first = created(ALICE);
+        s1.send(10, first);
         s1.send(11, created(BOB));
         s1.send(12, { ...created(ALICE), event_type: 'live.stream.started' });
         s1.send(13, { ...created(ALICE), subject: { type: 'stream', id: ALICE } });
-        s1.send(10, created(ALICE));
+        s1.send(10, first);
         assert.deepStrictEqual(heard.map((h) => h[1]), [ALICE]);
-        assert.deepStrictEqual([live.state().events, live.state().ignored, live.state().lastSeq], [1, 3, 13]);
+        assert.deepStrictEqual([live.state().events, live.state().ignored, live.state().lastId], [1, 3, cur(13)], 'the cursor is the last SSE id, as Events sent it');
         assert.ok(!JSON.stringify(live.state()).includes('T1'), 'the ticket is not kept');
 
         // A gap is reported.
@@ -171,7 +174,7 @@ const created = (subject, over = {}) => ({
         assert.strictEqual(p.tickets().length, 2, 'a new ticket for the reconnect');
         const s2 = p.es;
         assert.notStrictEqual(s2, s1);
-        assert.deepStrictEqual([new URL(s2.url).searchParams.get('ticket'), new URL(s2.url).searchParams.get('last_event_id')], ['hdr.T2.sig', '13']);
+        assert.deepStrictEqual([new URL(s2.url).searchParams.get('ticket'), new URL(s2.url).searchParams.get('last_event_id')], ['hdr.T2.sig', cur(13)]);
         s2.opened();
         s2.send(14, created(ALICE));
         assert.deepStrictEqual(heard.map((h) => h[0]).length, 2);
@@ -188,7 +191,7 @@ const created = (subject, over = {}) => ({
         const n = p.out.es.length;
         p.dispatch('online'); await p.settle();
         assert.strictEqual(p.out.es.length, n + 1, 'back online: a new stream');
-        assert.strictEqual(new URL(p.es.url).searchParams.get('last_event_id'), '14', 'from the cursor');
+        assert.strictEqual(new URL(p.es.url).searchParams.get('last_event_id'), cur(14), 'from the cursor');
         p.es.opened();
 
         // Hidden for 5 minutes: closed; shown: resumed from the cursor with a fresh ticket.
@@ -200,7 +203,7 @@ const created = (subject, over = {}) => ({
         const t3 = p.tickets().length;
         p.setHidden(false); await p.settle();
         assert.strictEqual(p.tickets().length, t3 + 1);
-        assert.strictEqual(new URL(p.es.url).searchParams.get('last_event_id'), '14');
+        assert.strictEqual(new URL(p.es.url).searchParams.get('last_event_id'), cur(14));
         p.es.opened();
 
         // A Content-Security-Policy refusal of Events: closed, and nothing reopens it.
