@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 2.21.2 — 2026-10-10
+
+- `release-watch.js` reopens its release-notification stream with `last_event_id` set to the last SSE id Events sent
+  (its opaque cursor, ADR-042), not the numeric seq it computed from the message. It still drops a replayed message
+  by the seq the data carries. This is one of the last consumers of Events' numeric positions (plan T7 retires them).
+
 ## 2.21.1 — 2026-10-10
 
 - **The last fallback "V"s go.** A scan of every site's home page found ring icons drawing the "V" for names with no
