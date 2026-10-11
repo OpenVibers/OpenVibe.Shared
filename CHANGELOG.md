@@ -4,6 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.0.1 — 2026-10-11
+
+- `shell.page()` finds the site's share card from `navbar.service` or `footer.service` when the page itself names no
+  `service` (most sites set it only there), so their pages get `og:image` too.
+
 ## 4.0.0 — 2026-10-11
 
 - **Share cards for every site** (`openvibe-shared/social`, new): a 1200×630 card per service in
