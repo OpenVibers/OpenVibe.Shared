@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## Unreleased
+
+- **Breaking (for a caller relying on it):** `middleware.js` `extractToken` no longer reads Live's legacy `token`
+  cookie: only the bearer, `ov_token` and the WebSocket query parameter. Live stopped setting that cookie and Chat
+  stopped reading it (compatibility register C-05). No OpenVibers service imports this module today.
+
 ## 3.0.1 — 2026-10-10
 
 - `notification-live.js` (the bell's realtime feed) resumes from Events' opaque cursor: `last_event_id` is the last
