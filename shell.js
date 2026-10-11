@@ -28,6 +28,7 @@
 const seo = require('./seo');
 const frame = require('./frame');
 const serve = require('./serve');
+const social = require('./social');
 
 const esc = seo.esc;
 
@@ -83,6 +84,12 @@ function scripts(o = {}) {
  *   footer              `frame.footer` config; defaults to { service: name, variant: 'compact' }
  *   navbar, features, routes, versions   the runtime boot (see `scripts`)
  */
+// A page that names no image shares its site's card (openvibe-shared/social), when the site has one and the page
+// has a canonical URL to make it absolute against; `image: null` opts out.
+function defaultImage(o) {
+    return o.canonical ? social.url(o.service) : null;
+}
+
 function page(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
     const title = o.title || name;
@@ -90,7 +97,7 @@ function page(o = {}) {
         : seo.pageSummary({ title, summary: o.summary, facts: o.facts, url: o.url || o.canonical, updated: o.updated });
     const head = seo.headTags({
         title, siteName: o.siteName || name, description: o.description,
-        canonical: o.canonical, image: o.image, imageAlt: o.imageAlt, type: o.type,
+        canonical: o.canonical, image: o.image === undefined ? defaultImage(o) : o.image, imageAlt: o.imageAlt || (o.image === undefined && defaultImage(o) ? o.siteName || name : undefined), type: o.type,
         robots: o.robots, keywords: o.keywords, author: o.author, themeColor: o.themeColor,
         twitterSite: o.twitterSite, locale: o.locale, titleSuffix: o.titleSuffix,
         alternates: o.alternates, jsonLd: o.jsonLd,
