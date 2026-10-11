@@ -81,5 +81,7 @@ function jpegSize(buf) {
     assert.ok(!/og:image/.test(shell.page({ service: 'news', canonical: 'https://openvibe.news/', image: null })));
     assert.ok(!/og:image/.test(shell.page({ service: 'news' })), 'no canonical, no relative og:image');
     assert.ok(!/og:image/.test(shell.page({ service: 'no-such-site', canonical: 'https://x.example/' })));
+    assert.match(shell.page({ name: 'OpenVibe.Watch', canonical: 'https://openvibe.watch/', navbar: { service: 'watch' } }), /og:image" content="https:\/\/openvibe\.watch\/shared\/social\/watch\.jpg\?v=/, 'the navbar names the service');
+    assert.match(shell.page({ name: 'OpenVibe.Food', canonical: 'https://openvibe.food/', footer: { service: 'food' } }), /social\/food\.jpg/, 'or the footer does');
     console.log('social: ok');
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -85,9 +85,13 @@ function scripts(o = {}) {
  *   navbar, features, routes, versions   the runtime boot (see `scripts`)
  */
 // A page that names no image shares its site's card (openvibe-shared/social), when the site has one and the page
-// has a canonical URL to make it absolute against; `image: null` opts out.
+// has a canonical URL to make it absolute against; the service is the page's, else its navbar's or footer's.
+// `image: null` opts out.
 function defaultImage(o) {
-    return o.canonical ? social.url(o.service) : null;
+    if (!o.canonical) return null;
+    // Most sites name their service on the navbar and footer configs rather than on the page itself.
+    const service = o.service || (o.navbar && o.navbar.service) || (o.footer && o.footer.service);
+    return service ? social.url(service) : null;
 }
 
 function page(o = {}) {
