@@ -4,8 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## Unreleased
+## 4.0.0 — 2026-10-11
 
+- **Share cards for every site** (`openvibe-shared/social`, new): a 1200×630 card per service in
+  `social/<service>.jpg` (about 60 KB each), drawn by `scripts/build-social-cards.js` from the Contracts service
+  manifests' `site` blocks (name, tagline, what, first domain, accent) with the app-icon mark and embedded Inter.
+  `serve.js` answers them at `/shared/social/<service>.jpg?v=<hash>` beside the browser files, and `shell.page()` uses
+  the site's card for `og:image`/`twitter:image` (with `summary_large_image`) when the page names no image and has a
+  canonical; `image: null` opts out. `social.url(service)` gives the URL to pages that build their own head.
 - **Breaking (for a caller relying on it):** `middleware.js` `extractToken` no longer reads Live's legacy `token`
   cookie: only the bearer, `ov_token` and the WebSocket query parameter. Live stopped setting that cookie and Chat
   stopped reading it (compatibility register C-05). No OpenVibers service imports this module today.

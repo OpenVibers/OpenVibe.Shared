@@ -11,16 +11,19 @@
  *
  * A request carrying the file's current hash (?v=) is cached for a year (immutable); anything else
  * for five minutes. ETag = the hash (304 on a match). CORS-open and cross-origin readable, like the
- * copies on openvibe.network. Only the files openvibe-shared/files lists are served.
+ * copies on openvibe.network. Only the files openvibe-shared/files lists are served, and the share cards
+ * (social/<service>.jpg, openvibe-shared/social) that og:image points at.
  */
 const fs = require('fs');
 const files = require('./files');
+const social = require('./social');
 const cache = require('./cache-policy');
 const { hashAsset } = require('./assets');
 
 const hashes = new Map();
+const fileOf = (name) => (social.isCard(name) ? social.path(name) : files.path(name));
 function hashOf(name) {
-    if (!hashes.has(name)) hashes.set(name, hashAsset(fs.readFileSync(files.path(name))));
+    if (!hashes.has(name)) hashes.set(name, hashAsset(fs.readFileSync(fileOf(name))));
     return hashes.get(name);
 }
 
@@ -35,10 +38,10 @@ function handler() {
     return function openvibeShared(req, res, next) {
         if (req.method !== 'GET' && req.method !== 'HEAD') return next();
         const name = String(req.path || '').replace(/^\/+/, '');
-        if (!files.isBrowserFile(name)) return next();
+        if (!files.isBrowserFile(name) && !social.isCard(name)) return next();
         const hash = hashOf(name);
         const v = req.query ? req.query.v : new URL(req.url, 'http://x').searchParams.get('v');
-        res.setHeader('Content-Type', name.endsWith('.css') ? 'text/css; charset=utf-8' : 'application/javascript; charset=utf-8');
+        res.setHeader('Content-Type', name.endsWith('.css') ? 'text/css; charset=utf-8' : name.endsWith('.jpg') ? 'image/jpeg' : 'application/javascript; charset=utf-8');
         // The estate default is a day's stale-while-revalidate (cache-policy); serve.js has always used a minute,
         // because a stale shared script is the one thing a site's navbar must never run. Kept as it was.
         res.setHeader('Cache-Control', cache.assetHeaders(name, { hashed: v === hash, swr: 60 }));
@@ -48,7 +51,7 @@ function handler() {
         res.setHeader('X-Content-Type-Options', 'nosniff');
         if (req.headers['if-none-match'] === `"${hash}"`) { res.statusCode = 304; return res.end(); }
         if (req.method === 'HEAD') return res.end();
-        fs.createReadStream(files.path(name)).on('error', next).pipe(res);
+        fs.createReadStream(fileOf(name)).on('error', next).pipe(res);
     };
 }
 
