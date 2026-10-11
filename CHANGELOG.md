@@ -4,6 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.0.3 — 2026-10-11
+
+- Share cards: `run` (openvibe.run has a site block since openvibe-contracts 0.141.0) and a redrawn `host` (its tagline
+  is now "Hosting, compared honestly").
+
 ## 4.0.2 — 2026-10-11
 
 - `shell.page()` finds the site's share card from `navbar.service` or `footer.service` when the page itself names no
