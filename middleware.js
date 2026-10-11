@@ -19,7 +19,6 @@ function extractToken(req) {
     }
     // 2. Cookie
     if (req.cookies?.ov_token) return req.cookies.ov_token;
-    if (req.cookies?.token) return req.cookies.token;  // legacy compat
     // 3. Query param (WebSocket upgrade)
     if (req.query?.token) return req.query.token;
     return null;
