@@ -113,6 +113,10 @@ function manifestLinks(o) {
     return `<link rel="manifest" href="${esc(manifest)}">\n<link rel="apple-touch-icon" href="${esc(touch)}">`;
 }
 
+// The shared navbar's script is deferred and mounts into the page's #navbar-mount: the mount holds the bar's 52px from
+// the first paint so the page does not drop when it lands (layout shift), and without JavaScript it goes away.
+const NAVBAR_RESERVE = '<style>#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>';
+
 function page(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
     const title = o.title || name;
@@ -136,6 +140,7 @@ function page(o = {}) {
         summary ? summary.head : '',
         o.head || '',
         manifestLinks(o),
+        NAVBAR_RESERVE,
         scripts(o),
         '</head>',
         `<body${attrs(bodyAttributes)}>`,

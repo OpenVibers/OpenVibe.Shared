@@ -4,8 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## Unreleased
+## 4.1.3 — 2026-10-12
 
+- **`shell.page()` holds the navbar's place.** The navbar script is deferred and mounts into the page's `#navbar-mount`;
+  on a slow first paint the 52 px bar arrived after it and pushed the page down (CLS 0.058 on many homes in a phone
+  sweep). The head now reserves `#navbar-mount{min-height:52px}`, and a `<noscript>` style removes the empty mount
+  without JavaScript.
 - **The updates log no longer jumps while it loads.** `shipped.js` log showed "Loading…" inside the days, then the site
   chips and the patch notes arrived above it and pushed it down (CLS 0.17 on openvibe.live/updates on a phone). The
   first load now shows one standalone "Loading…" line, a site's own chips are drawn before the data, and the chips,
