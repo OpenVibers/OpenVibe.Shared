@@ -168,11 +168,23 @@
         if (_ticker.unref) _ticker.unref();
     }
 
+    // ── what a visitor reads ────────────────────────────────────
+    // A library pin bump ("openvibe-shared v4.1.0 (was v4.0.0) (#34)", opened by pin-bump.js on every repo at once)
+    // says nothing to a visitor: the one-liner and the short list pass over them, while the full log keeps every
+    // deployed commit. If nothing else shipped, the newest entry is shown anyway, so a site never looks dead.
+    const PIN_BUMP = /^openvibe-[a-z][a-z0-9-]* v\d+\.\d+\.\d+ \(was v\d+\.\d+\.\d+\)/;
+    function isHousekeeping(e) { return Boolean(e && PIN_BUMP.test(String(e.subject || ''))); }
+    function forVisitors(entries, n) {
+        const all = Array.isArray(entries) ? entries : [];
+        const told = all.filter((e) => !isHousekeeping(e));
+        return (told.length ? told : all).slice(0, n);
+    }
+
     // ── latest: the one-liner ───────────────────────────────────
     /** Render the newest entry into `node` (exported for tests). A node that is an <a> keeps its own href. */
     function renderLatest(node, data, opts) {
         const o = opts || {};
-        const e = data && Array.isArray(data.entries) ? data.entries[0] : null;
+        const e = forVisitors(data && data.entries, 1)[0] || null;
         node.textContent = '';
         if (!e || !e.subject) { node.hidden = true; return node; }
         node.classList.add('ov-shipped-latest');
@@ -195,14 +207,15 @@
         if (!node) return null;
         o.service = resolveService(o.service);
         style();
-        return renderLatest(node, await feed({ service: o.service, limit: 1, api: o.api }), o);
+        // A few more than one, so a run of pin bumps does not hide the newest real change.
+        return renderLatest(node, await feed({ service: o.service, limit: 12, api: o.api }), o);
     }
 
     // ── list: the newest few ────────────────────────────────────
     /** Render a changelog answer into `node` (exported for tests). */
     function render(node, data, opts) {
         const o = opts || {};
-        const entries = (data && Array.isArray(data.entries) ? data.entries : []).slice(0, clamp(o.limit, 1, 20, 5));
+        const entries = forVisitors(data && data.entries, clamp(o.limit, 1, 20, 5));
         node.textContent = '';
         if (!entries.length) { node.hidden = true; return node; }
         node.classList.add('ov-shipped');
@@ -235,7 +248,7 @@
         if (!node) return null;
         o.service = resolveService(o.service);
         style();
-        return render(node, await feed({ service: o.service, limit: clamp(o.limit, 1, 20, 5), api: o.api }), o);
+        return render(node, await feed({ service: o.service, limit: Math.min(50, clamp(o.limit, 1, 20, 5) * 3), api: o.api }), o);
     }
 
     // ── log: the updates page ───────────────────────────────────
@@ -382,5 +395,5 @@
         return out;
     }
 
-    return { latest, list, mount: list, log, scan, render, renderLatest, appendDays, serviceFor, ago, API, SITE_NAMES, siteName };
+    return { latest, list, mount: list, log, scan, render, renderLatest, appendDays, serviceFor, ago, API, SITE_NAMES, siteName, isHousekeeping };
 }));

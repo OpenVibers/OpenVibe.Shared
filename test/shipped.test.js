@@ -45,7 +45,7 @@ const data = {
     let asked = null;
     globalThis.fetch = async (url) => { asked = url; return { ok: true, json: async () => data }; };
     await shipped.mount('#s', { service: 'live', limit: 3 });
-    assert.strictEqual(asked, 'https://openvibe.network/api/v1/changelog?service=live&limit=3', 'the Network proxy every site\'s CSP already allows');
+    assert.strictEqual(asked, 'https://openvibe.network/api/v1/changelog?service=live&limit=9', 'the Network proxy every site\'s CSP already allows (three times the list: pin bumps are passed over)');
     globalThis.fetch = async () => { throw new Error('offline'); };
     const failed = await shipped.mount('#n', {});
     assert.strictEqual(failed.hidden, true);
@@ -136,5 +136,19 @@ const data = {
     assert.ok(auto.hasAttribute('data-ov-shipped-mounted'));
     assert.strictEqual(auto.querySelectorAll('li').length, 2);
     assert.strictEqual(shipped.scan(document).length, 0, 'already mounted: not again');
+    // Library pin bumps say nothing to a visitor: the one-liner and the list pass over them (the log keeps them).
+    const bump = (n, subject) => ({ service: 'wiki', subject, url: `https://github.com/OpenVibers/OpenVibe.Wiki/commit/${n}`, deployed_at: new Date(Date.now() - n * 60e3).toISOString() });
+    const mixed = { entries: [bump(1, 'openvibe-shared v4.1.0 (was v4.0.0) (#44)'), bump(2, 'openvibe-contracts v0.152.0 (was v0.143.0) (#43)'), bump(3, 'Wiki: page history shows who changed what'), bump(4, 'Sitemaps: every entry carries an honest lastmod')] };
+    assert.ok(shipped.isHousekeeping(mixed.entries[0]) && shipped.isHousekeeping(mixed.entries[1]) && !shipped.isHousekeeping(mixed.entries[2]));
+    const pill2 = document.createElement('a');
+    shipped.renderLatest(pill2, mixed, { service: 'wiki' });
+    assert.ok(pill2.textContent.includes('Wiki: page history shows who changed what'), 'the newest real change, not a pin bump');
+    const list2 = document.createElement('section');
+    shipped.render(list2, mixed, { service: 'wiki', limit: 5 });
+    assert.deepStrictEqual([...list2.querySelectorAll('li .ov-shipped-subject')].map((a) => a.textContent), ['Wiki: page history shows who changed what', 'Sitemaps: every entry carries an honest lastmod']);
+    const onlyBumps = { entries: [mixed.entries[0], mixed.entries[1]] };
+    const list3 = document.createElement('section');
+    shipped.render(list3, onlyBumps, { service: 'wiki', limit: 5 });
+    assert.strictEqual(list3.querySelectorAll('li').length, 2, 'only pin bumps shipped: shown anyway, never an empty block');
     console.log('shipped: all checks passed');
 })().catch((e) => { console.error(e); process.exit(1); });
