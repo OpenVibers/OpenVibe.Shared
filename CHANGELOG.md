@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.2 — 2026-10-12
+
+- **"Recently shipped" tells visitors what changed, not which library was bumped.** The one-liner and the short
+  list (`shipped.js` latest and list) pass over library pin bumps ("openvibe-shared v4.1.0 (was v4.0.0)", opened by
+  pin-bump.js on every repo at once): they read three times as many entries and show the newest real changes; when
+  only pin bumps shipped, those are shown rather than an empty block. The full updates log keeps every deployed commit.
+  `isHousekeeping(entry)` is exported.
+
 ## 4.1.1 — 2026-10-12
 
 - **`release.js` reads the commit time on release-layout services.** A release directory belongs to the deploying
