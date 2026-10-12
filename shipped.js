@@ -300,7 +300,10 @@
         const days = el('div', { class: 'ov-shipped-days' });
         days.style.cssText = 'display:flex;flex-direction:column;gap:24px;min-width:0';
         const more = el('button', { type: 'button', class: 'ov-shipped-more', hidden: '' }, 'Load more');
-        node.append(bar, posts, days, more);
+        // The first load shows one "Loading…" line on its own (and a site's own chips, known up front), so the chips,
+        // the patch notes and the days arrive together instead of pushing a visible line down the page (layout shift).
+        const loading = el('p', { class: 'ov-shipped-empty' }, 'Loading…');
+        node.append(bar, posts, loading, days, more);
         let next = null;
         let seq = 0;
 
@@ -342,7 +345,7 @@
             if (reset) {
                 next = null;
                 days.textContent = '';
-                days.appendChild(el('p', { class: 'ov-shipped-empty' }, 'Loading…'));
+                if (!loading.parentNode) days.appendChild(el('p', { class: 'ov-shipped-empty' }, 'Loading…'));
                 for (const b of bar.querySelectorAll('.ov-shipped-chip')) b.setAttribute('aria-pressed', 'false');
             }
             more.disabled = true;
@@ -350,6 +353,7 @@
             if (mine !== seq) return;
             if (reset) {
                 days.textContent = '';
+                loading.remove();
                 if (data && data.sites) sitesSeen = data.sites;
                 if (!own && !sitesSeen) {
                     const all = await feed({ service: null, limit: 1, api: o.api });
@@ -373,6 +377,7 @@
             tick();
         }
         more.addEventListener('click', () => load(false));
+        if (own) drawBar(null);
         await load(true);
         return node;
     }

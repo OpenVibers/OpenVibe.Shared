@@ -123,6 +123,21 @@ const data = {
     assert.ok(logEl.textContent.includes('four'));
     assert.strictEqual(more.hidden, true, 'no next cursor: no button');
 
+    // log()'s first load: one standalone "Loading…" line and the site's own chips up front, nothing inside the days
+    // that the chips and patch notes would push down; all of it lands together.
+    let release;
+    globalThis.fetch = async () => { await new Promise((r) => { release = r; }); return { ok: true, json: async () => page2 }; };
+    const steady = document.createElement('div');
+    const done = shipped.log(steady, { service: 'wiki', api: 'https://example.test/api/v1/changelog-steady' });
+    await new Promise((r) => setTimeout(r, 0));
+    assert.deepStrictEqual([...steady.querySelectorAll('.ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe'], 'own chips before the data');
+    assert.deepStrictEqual([...steady.children].map((c) => c.className), ['ov-shipped-bar', 'ov-shipped-posts', 'ov-shipped-empty', 'ov-shipped-days', 'ov-shipped-more']);
+    assert.strictEqual(steady.querySelector('.ov-shipped-days').children.length, 0, 'the days stay empty while loading');
+    release();
+    await done;
+    assert.strictEqual(steady.querySelectorAll('.ov-shipped-empty').length, 0, 'the loading line is gone once the data is in');
+    assert.ok(steady.textContent.includes('four'));
+
     // scan(): markup mounts once.
     globalThis.fetch = async () => ({ ok: true, json: async () => data });
     const autoEl = document.createElement('section');
