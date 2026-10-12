@@ -51,8 +51,14 @@ const KINDS = ['style', 'content', 'script', 'server'];
 const V1_0 = ['service', 'release', 'released_at', 'booted_at', 'contracts_version', 'packages', 'min_client_release', 'mixed_version_window_hours'];
 const SCHEMA_PATH = 'openvibe-contracts/contracts/registry/release-manifest.v1.json';
 
+// A release directory belongs to the deploying user (root under ovhost) while the service runs as its own user, and
+// git then refuses the repository ("detected dubious ownership"): released_at fell back to the boot time on every
+// release-layout service. These reads are read-only, of this release's own checkout, so the directory is named safe
+// for them on the command line (git honours safe.directory there), resolved through the `current` symlink.
 function git(root, args) {
-    try { return execFileSync('git', args, { cwd: root, stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }).toString().trim(); } catch { return ''; }
+    let real = root;
+    try { real = fs.realpathSync(root); } catch { /* keep root */ }
+    try { return execFileSync('git', ['-c', `safe.directory=${real}`, ...args], { cwd: root, stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }).toString().trim(); } catch { return ''; }
 }
 
 function pkgVersion(name, root) {
