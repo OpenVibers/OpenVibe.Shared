@@ -29,6 +29,7 @@ const seo = require('./seo');
 const frame = require('./frame');
 const serve = require('./serve');
 const social = require('./social');
+const appIcons = require('./app-icons');
 
 const esc = seo.esc;
 
@@ -78,20 +79,38 @@ function scripts(o = {}) {
  *                       and its <noscript> block at the top of <body> (facts/url/updated feed it)
  *   facts, url, updated the `seo.pageSummary` inputs
  *   head                extra <head> markup appended verbatim (already trusted/escaped)
+ *   manifest            the installable web app links (manifest + apple-touch-icon) are added when the
+ *                       page's service has an icon set; `false` opts out
  *   body                the page's main content (trusted markup — the caller escaped it)
  *   bodyAttributes      attributes for <body>, escaped; bodyClass is shorthand for `class`
  *   navLinks, home      the `frame.noscriptNav` no-JavaScript navigation
  *   footer              `frame.footer` config; defaults to { service: name, variant: 'compact' }
  *   navbar, features, routes, versions   the runtime boot (see `scripts`)
  */
+// Most sites name their service on the navbar and footer configs rather than on the page itself.
+function serviceOf(o) {
+    return o.service || (o.navbar && o.navbar.service) || (o.footer && o.footer.service);
+}
+
 // A page that names no image shares its site's card (openvibe-shared/social), when the site has one and the page
-// has a canonical URL to make it absolute against; the service is the page's, else its navbar's or footer's.
-// `image: null` opts out.
+// has a canonical URL to make it absolute against. `image: null` opts out.
 function defaultImage(o) {
     if (!o.canonical) return null;
-    // Most sites name their service on the navbar and footer configs rather than on the page itself.
-    const service = o.service || (o.navbar && o.navbar.service) || (o.footer && o.footer.service);
+    const service = serviceOf(o);
     return service ? social.url(service) : null;
+}
+
+// The installable web app links: the hashed manifest and the 192px touch icon. `manifest: false` opts out (a site
+// that serves its own /manifest.webmanifest), and a page whose `head` already carries a manifest link keeps it.
+function manifestLinks(o) {
+    if (o.manifest === false) return '';
+    const service = serviceOf(o);
+    if (!service || !appIcons.has(service)) return '';
+    if (typeof o.head === 'string' && /rel=["']?manifest/.test(o.head)) return '';
+    const manifest = serve.manifestUrl(service);
+    const touch = appIcons.url(service, 192);
+    if (!manifest || !touch) return '';
+    return `<link rel="manifest" href="${esc(manifest)}">\n<link rel="apple-touch-icon" href="${esc(touch)}">`;
 }
 
 function page(o = {}) {
@@ -116,6 +135,7 @@ function page(o = {}) {
         head,
         summary ? summary.head : '',
         o.head || '',
+        manifestLinks(o),
         scripts(o),
         '</head>',
         `<body${attrs(bodyAttributes)}>`,

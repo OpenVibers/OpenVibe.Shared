@@ -4,6 +4,23 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.0 — 2026-10-12
+
+- **Every `shell.page()` site is an installable web app, with no per-site code.** A new `icons/` directory ships
+  four pre-rendered app icons (192 and 512, any and maskable) per app-icon tint variant — 8 sets, 32 palette PNGs,
+  about 630 KB, since most sites share the network's tint — drawn by `scripts/build-icons.js` from
+  `app-icon.svg({ site: variant, maskable })`; `icons/sites.json` gives each of the 35 services with a share card its
+  name, tagline and variant (`social.iconSite`). The new `openvibe-shared/app-icons` module names them (`has`, `url`,
+  `site`, `isIcon`, `path`), and `serve.js` answers them at `/shared/icons/<variant>[-maskable]-<size>.png` beside the
+  browser files and share cards.
+- `serve.js` now also answers `GET /shared/manifest/<service>.webmanifest` as `application/manifest+json`, built
+  from the service's Contracts `site` block (name and tagline, committed in `icons/sites.json`) with the same
+  hashed icon URLs, `start_url`/`scope` `/`, `display: standalone`, the app-icon background and the navbar's
+  `#0d131d` theme colour. Unknown services 404.
+- `shell.page()` adds `<link rel="manifest">` and `<link rel="apple-touch-icon">` for the page's service when it has
+  icons, using the same service resolution as the share-card default (`service`, else `navbar.service`, else
+  `footer.service`). `manifest: false` opts out, and a page whose `head` already carries a manifest link keeps it.
+
 ## 4.0.3 — 2026-10-11
 
 - Share cards: `run` (openvibe.run has a site block since openvibe-contracts 0.141.0) and a redrawn `host` (its tagline

@@ -1,0 +1,177 @@
+{
+  "actor": {
+    "name": "OpenVibe.Actor",
+    "description": "Your agent for everything",
+    "icon": "network"
+  },
+  "ai": {
+    "name": "OpenVibe.AI",
+    "description": "Many models, one API. Every answer explained.",
+    "icon": "ai"
+  },
+  "blog": {
+    "name": "OpenVibe.Blog",
+    "description": "Long-form, yours to keep",
+    "icon": "network"
+  },
+  "bot": {
+    "name": "OpenVibe.Bot",
+    "description": "An open control panel for robots",
+    "icon": "network"
+  },
+  "chat": {
+    "name": "OpenVibe.Chat",
+    "description": "One chat for the network",
+    "icon": "network"
+  },
+  "codes": {
+    "name": "OpenVibe.Codes",
+    "description": "Code with any agent",
+    "icon": "network"
+  },
+  "community": {
+    "name": "OpenVibe.Community",
+    "description": "Pastes and posts",
+    "icon": "community"
+  },
+  "coupons": {
+    "name": "OpenVibe.Coupons",
+    "description": "Codes that work",
+    "icon": "network"
+  },
+  "deals": {
+    "name": "OpenVibe.Deals",
+    "description": "Deals worth sharing",
+    "icon": "network"
+  },
+  "events": {
+    "name": "OpenVibe.Events",
+    "description": "Events your services can count on.",
+    "icon": "network"
+  },
+  "food": {
+    "name": "OpenVibe.Food",
+    "description": "What should we eat?",
+    "icon": "network"
+  },
+  "games": {
+    "name": "OpenVibe.Games",
+    "description": "Browser games",
+    "icon": "games"
+  },
+  "help": {
+    "name": "OpenVibe.Help",
+    "description": "Answers for every OpenVibe site",
+    "icon": "network"
+  },
+  "host": {
+    "name": "OpenVibe.Host",
+    "description": "Hosting, compared honestly",
+    "icon": "network"
+  },
+  "inventory": {
+    "name": "OpenVibe.Inventory",
+    "description": "Your items, on every OpenVibe site.",
+    "icon": "network"
+  },
+  "live": {
+    "name": "OpenVibe.Live",
+    "description": "Streams, clips and chat",
+    "icon": "live"
+  },
+  "media": {
+    "name": "OpenVibe.Media",
+    "description": "VODs, clips, files",
+    "icon": "media"
+  },
+  "media-hub": {
+    "name": "OpenVibe.Video",
+    "description": "Past streams, clips and your drive",
+    "icon": "media"
+  },
+  "network": {
+    "name": "OpenVibe.Network",
+    "description": "Account and themes",
+    "icon": "network"
+  },
+  "news": {
+    "name": "OpenVibe.News",
+    "description": "Sourced, not spun",
+    "icon": "network"
+  },
+  "openre": {
+    "name": "OpenRestream",
+    "description": "Go live once, stream everywhere",
+    "icon": "network"
+  },
+  "quest": {
+    "name": "OpenVibe.Quest",
+    "description": "Badges for what you really do",
+    "icon": "network"
+  },
+  "rent": {
+    "name": "OpenVibe.Rent",
+    "description": "Find a place, or rent yours out",
+    "icon": "network"
+  },
+  "reviews": {
+    "name": "OpenVibe.Reviews",
+    "description": "Reviews with receipts",
+    "icon": "network"
+  },
+  "run": {
+    "name": "OpenVibe.Run",
+    "description": "Run a job on a node that can",
+    "icon": "network"
+  },
+  "search": {
+    "name": "OpenVibe.Search",
+    "description": "Search the OpenVibe network.",
+    "icon": "network"
+  },
+  "services": {
+    "name": "OpenVibe.Services",
+    "description": "Build on OpenVibe",
+    "icon": "network"
+  },
+  "space": {
+    "name": "OpenVibe.Space",
+    "description": "Static sites, hosted by OpenVibe",
+    "icon": "space"
+  },
+  "tips": {
+    "name": "OpenVibe.Tips",
+    "description": "Support creators",
+    "icon": "network"
+  },
+  "tools": {
+    "name": "OpenVibe.Tools",
+    "description": "Every online tool",
+    "icon": "tools"
+  },
+  "trade": {
+    "name": "OpenVibe.Trade",
+    "description": "Watchlists and alerts",
+    "icon": "network"
+  },
+  "vip": {
+    "name": "OpenVibe.VIP",
+    "description": "Memberships and perks",
+    "icon": "network"
+  },
+  "watch": {
+    "name": "OpenVibe.Watch",
+    "description": "Know the moment it changes",
+    "icon": "network"
+  },
+  "wiki": {
+    "name": "OpenVibe.Wiki",
+    "description": "Knowledge, with sources",
+    "icon": "network"
+  },
+  "work": {
+    "name": "OpenVibe.Work",
+    "description": "Find work, with an agent on your side",
+    "icon": "network"
+  }
+}

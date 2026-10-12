@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.0.3",
+  "version": "4.1.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -16,6 +16,7 @@
     "./analytics/pg": "./analytics/pg.js",
     "./analytics/retention": "./analytics/retention.js",
     "./app-icon": "./app-icon.js",
+    "./app-icons": "./app-icons.js",
     "./assets": "./assets.js",
     "./auth-client": "./auth-client.js",
     "./brand": "./brand.js",
@@ -78,6 +79,7 @@
     "analytics/",
     "docs/schemas/",
     "scripts/",
+    "icons/",
     "social/",
     "templates/",
     "CHANGELOG.md"
