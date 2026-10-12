@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.1 — 2026-10-12
+
+- **`release.js` reads the commit time on release-layout services.** A release directory belongs to the deploying
+  user while the service runs as its own, so git refused it ("detected dubious ownership") and `released_at` fell back
+  to the boot time — on openvibe.live and openre.stream, for example. The read-only git calls now pass
+  `-c safe.directory=<the release's real path>`, so `released_at` is the commit time again (the sitemaps' static
+  `lastmod` and open tabs' release checks use it).
+- **Showcase grids balance five, six or nine cards** in three columns on a wide screen (≥ 900 px), instead of four
+  and a lonely last row (the Wiki and Events homes showed 4 + 2).
+
 ## 4.1.0 — 2026-10-12
 
 - **Every `shell.page()` site is an installable web app, with no per-site code.** A new `icons/` directory ships
