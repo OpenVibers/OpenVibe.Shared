@@ -26,6 +26,9 @@ assert.match(html, /<noscript><nav aria-label="Site"/, 'no-JS nav present');
 assert.match(html, /<footer id="ov-footer"/, 'shared footer present');
 assert.ok(html.includes('<main id="hero">Hello</main>'), 'body kept verbatim');
 assert.ok(html.includes('<script src="/shared/theme-loader.js?v='), 'theme-loader via serve.url');
+// The deferred navbar lands in a #navbar-mount that already holds its height; without JavaScript the mount goes away.
+assert.ok(html.includes('<style>#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>'), 'navbar mount reserved');
+assert.ok(html.indexOf('#navbar-mount{min-height:52px}') < html.indexOf('</head>'), 'in the head, before the first paint');
 
 // ── Script order: theme-loader first (eager); the runtime after it (deferred) ─────────────────────
 const scripts = shell.scripts({ name: 'example' });
