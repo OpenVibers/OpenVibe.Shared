@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## Unreleased
+
+- **The updates log no longer jumps while it loads.** `shipped.js` log showed "Loading…" inside the days, then the site
+  chips and the patch notes arrived above it and pushed it down (CLS 0.17 on openvibe.live/updates on a phone). The
+  first load now shows one standalone "Loading…" line, a site's own chips are drawn before the data, and the chips,
+  patch notes and days land together.
+
 ## 4.1.2 — 2026-10-12
 
 - **"Recently shipped" tells visitors what changed, not which library was bumped.** The one-liner and the short
