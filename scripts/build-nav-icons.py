@@ -47,7 +47,7 @@ OV_SOLID = {
     'inventory': 'fa-box-open', 'drive': 'fa-hard-drive', 'services': 'fa-cubes', 'space': 'fa-rocket', 'watch': 'fa-eye',
     'actor': 'fa-brain', 'events': 'fa-bolt', 'ai': 'fa-microchip', 'run': 'fa-terminal', 'billing': 'fa-wallet',
     'feeds': 'fa-rss', 'pics': 'fa-images', 'homes': 'fa-house-chimney', 'website': 'fa-window-restore', 'zone': 'fa-database',
-    'fund': 'fa-hand-holding-dollar',
+    'fund': 'fa-hand-holding-dollar', 'play': 'fa-ranking-star',
     # Page furniture the product homes name (2.21.1).
     'gauge': 'fa-gauge-high', 'link': 'fa-link', 'shield': 'fa-shield-halved', 'plug': 'fa-plug',
 }

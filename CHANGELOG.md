@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.4 — 2026-10-14
+
+- **A `play` glyph for OpenVibe.Play.** Play (achievements and leaderboards for every OpenVibe game) gets its own icon:
+  a podium under a star in the stroke set (`OpenVibeIcons.svg('play')`), and Font Awesome's ranking star in the solid
+  set. Before it, Play's site could only borrow Games' controller, and the navbar keys a site's entry by its icon, so
+  the two collided.
+
 ## 4.1.3 — 2026-10-12
 
 - **`shell.page()` holds the navbar's place.** The navbar script is deferred and mounts into the page's `#navbar-mount`;
