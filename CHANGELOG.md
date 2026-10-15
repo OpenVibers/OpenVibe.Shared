@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.2.0 — 2026-10-15
+
+- **"Ask Actor" in the account menu.** Signed in, the menu's You section has Ask Actor after Notifications. It opens
+  openvibe.actor's console with the text the person had selected on the page (up to 1000 characters, spaces folded)
+  as the ask, and the page's https address (without its hash, up to 400 characters) as where it came from
+  (`/console?ask=&from=`). With nothing selected it opens the plain console. The selection is read when the avatar is
+  pressed, since the press itself can clear it. Nothing runs until the person presses Run it in Actor. Signed out,
+  the link is not shown. Hidden with the rest of the defaults by `menu: { defaults: false }`.
+- The navbar's brotli budget is 31 KB (was 30): it measures 30.6 KB with Ask Actor and its built-in glyph.
+
 ## 4.1.9 — 2026-10-15
 
 - **Avatars are asked for in the size they are shown.** When a person's picture is an openvibe.media object
