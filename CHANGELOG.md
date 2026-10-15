@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.5 — 2026-10-15
+
+- **Steps line up.** In a row of steps, a step whose text is one line had a gap under its title: the row stretched it to
+  its taller neighbour's height, and its own grid spread the extra space between title and text. `.sc-steps li` now
+  keeps its rows at the top (`align-content:start`).
+- **Four cards never fall three and one.** A section is now a size container (`container-type:inline-size`), and a grid
+  of exactly four cards in a section narrower than four columns (520–1035 px) sits two by two. Wider sections keep four
+  across; phones keep one column.
+
 ## 4.1.4 — 2026-10-14
 
 - **A `play` glyph for OpenVibe.Play.** Play (achievements and leaderboards for every OpenVibe game) gets its own icon:
