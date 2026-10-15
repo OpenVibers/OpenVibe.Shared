@@ -1287,7 +1287,8 @@
     }
 
     function avatarSrc(user, size = 64) {
-        return user?.avatar_url || makeAvatarPlaceholder(user, size);
+        const url = user?.avatar_url;
+        return /^https:\/\/openvibe\.media\/o\/med_\w+$/.test(url || '') ? `${url}?w=${size}&fmt=webp` : url || makeAvatarPlaceholder(user, size);
     }
 
     function avatarImg(user, size = 64, className = 'openvibe-navbar-avatar', id = '') {
