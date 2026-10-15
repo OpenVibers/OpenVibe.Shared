@@ -322,13 +322,14 @@
         'fa-user': [448, 'M224 267Q259 267 288 250Q317 233 335 203Q352 173 352 139Q352 105 335 75Q317 45 288 28Q259 11 224 11Q189 11 160 28Q131 45 113 75Q96 105 96 139Q96 173 113 203Q131 233 160 250Q189 267 224 267ZM178 315Q103 317 52 367Q2 418 0 493Q0 506 9 514Q17 523 30 523H418Q431 523 439 514Q448 506 448 493Q446 418 396 367Q345 317 270 315H178Z'],
         'fa-user-secret': [448, 'M224 27Q215 26 209 21Q208 21 208 21Q201 13 176 11Q153 12 137 39Q120 65 110 100Q74 107 53 117Q32 127 32 139Q35 161 97 175Q96 181 96 187Q96 213 105 235H45Q33 236 32 248Q32 251 33 253L72 350Q39 375 20 412Q0 449 0 493Q0 506 9 514Q17 523 30 523H418Q431 523 439 514Q448 506 448 493Q448 449 428 412Q409 375 376 350L415 253Q416 251 416 248Q415 236 403 235H343Q352 213 352 187Q352 181 351 175Q413 161 416 139Q416 127 395 117Q374 107 338 100Q328 65 311 39Q295 12 272 11Q247 13 240 21Q240 21 240 21Q239 21 239 21Q233 26 224 27ZM280 235H268H280H268Q241 234 231 209Q229 204 224 204Q219 204 217 209Q207 234 181 235H168Q151 235 140 223Q128 212 128 195V181Q171 187 224 187Q277 187 320 181V195Q320 212 308 223Q297 235 280 235ZM192 331 208 363 192 331 208 363 176 491 128 299 192 331ZM320 299 272 491 320 299 272 491 240 363 256 331 320 299Z'],
         'fa-wand-magic-sparkles': [576, 'M235 54 197 68 235 54 197 68Q192 70 192 75Q192 80 197 82L235 96L249 134Q251 139 256 139Q261 139 263 134L277 96L315 82Q320 80 320 75Q320 70 315 68L277 54L263 16Q261 11 256 11Q251 11 249 16L235 54ZM46 406Q32 421 32 440Q32 459 46 474L81 509Q95 523 115 523Q134 523 149 509L530 128Q544 113 544 94Q544 74 530 60L495 25Q481 11 461 11Q442 11 427 25L46 406ZM485 94 380 199 485 94 380 199 356 175 461 70 485 94ZM8 128Q0 131 0 139Q0 147 8 150L64 171L85 228Q88 235 96 235Q104 235 107 228L128 171L185 150Q192 147 192 139Q192 131 185 128L128 107L107 51Q104 43 96 43Q88 43 85 51L64 107L8 128ZM360 384Q352 387 352 395Q352 403 360 406L416 427L437 484Q440 491 448 491Q456 491 459 484L480 427L537 406Q544 403 544 395Q544 387 537 384L480 363L459 307Q456 299 448 299Q440 299 437 307L416 363L360 384Z'],
+        'fa-brain': [512, 'M184 11Q208 12 224 27Q239 43 240 67V467Q239 491 224 507Q208 522 184 523Q162 523 146 509Q131 495 128 473Q120 475 112 475Q85 474 67 456Q49 438 48 411Q48 400 52 390Q29 381 14 361Q0 341 0 315Q0 291 13 272Q25 253 46 243Q32 226 32 203Q32 180 46 163Q60 146 82 140Q80 132 80 123Q80 100 94 83Q107 67 128 61Q131 39 146 25Q162 11 184 11ZM328 11Q350 11 366 25Q381 39 384 61Q405 67 418 83Q432 100 432 123Q432 132 430 140Q452 146 466 163Q480 180 480 203Q480 226 466 243Q487 253 499 272Q512 291 512 315Q512 341 498 361Q483 381 460 390Q464 400 464 411Q463 438 445 456Q427 474 400 475Q392 475 384 473Q381 495 366 509Q350 523 328 523Q304 522 288 507Q273 491 272 467V67Q273 43 288 27Q304 12 328 11Z'],
     };
     // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives).
     const NAV_ICONS_LAZY = {
         320: 'fa-chevron-right',
         384: 'fa-xmark fa-moon fa-arrow-down fa-play fa-plug fa-file-lines fa-location-dot',
         448: 'fa-book fa-hand-fist fa-bars fa-arrow-right fa-check fa-tag fa-bolt fa-font fa-lock fa-utensils',
-        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-wallet fa-arrow-up-right-from-square fa-chevron-down fa-magnifying-glass fa-gear fa-circle-half-stroke fa-sun fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-comment-dots fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-brain fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music',
+        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-wallet fa-arrow-up-right-from-square fa-chevron-down fa-magnifying-glass fa-gear fa-circle-half-stroke fa-sun fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-comment-dots fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music',
         576: 'fa-house fa-video fa-star fa-tower-cell fa-diagram-project fa-money-bill-wave fa-crown fa-ticket fa-map',
         640: 'fa-comments fa-gamepad fa-network-wired fa-people-arrows fa-people-group fa-shirt fa-code fa-robot fa-photo-film fa-wave-square fa-user-shield',
     };
@@ -345,6 +346,12 @@
     const _selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     let _lazyWidth = null;
     let _iconState = 0;     // 0 idle, 1 loading, 2 loaded, 3 unavailable
+    // "Ask Actor": the page's selected text (≤1000) and https address (no hash, ≤400) into Actor's console box.
+    function selectedText() { try { const s = root.getSelection(); return s && !s.isCollapsed ? String(s).replace(/\s+/g, ' ').trim().slice(0, 1000) : ''; } catch { return ''; } }
+    function askActorHref(t) {
+        const c = 'https://openvibe.actor/console', u = new URL(location.href); u.hash = '';
+        return t ? `${c}?ask=${encodeURIComponent(t)}${u.protocol === 'https:' && u.href.length <= 400 ? `&from=${encodeURIComponent(u.href)}` : ''}` : c;
+    }
     function lazyWidth(name) {
         if (!_lazyWidth) { _lazyWidth = {}; for (const w in NAV_ICONS_LAZY) NAV_ICONS_LAZY[w].split(' ').forEach(n => { _lazyWidth[n] = Number(w); }); }
         return _lazyWidth[name] || 0;
@@ -1427,6 +1434,7 @@
                     ${!isAnon && u.username ? `<a href="https://openvibe.network/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-id-card')}</span> My Profile</a>` : ''}
                     ${!isAnon && u.username ? `<a href="https://openvibe.live/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-tower-broadcast')}</span> My Channel</a>` : ''}
                     <a href="https://openvibe.network/my#notifications"><span class="icon">${navIcon('fa-bell')}</span> Notifications</a>
+                    ${!isAnon ? `<a href="https://openvibe.actor/console" data-ov-ask-actor><span class="icon">${navIcon('fa-brain')}</span> Ask Actor</a>` : ''}
                     <div class="sep"></div>`}
                     <div class="ud-label">Display</div>
                     <button type="button" data-ov-display="text"><span class="icon">${navIcon('fa-text-height')}</span> Text size <b class="ud-val"></b></button>
@@ -1452,9 +1460,12 @@
             regPanel(dropdown, 'user-menu');
             if (_config.recent !== false) renderRecent(dropdown.querySelector('#openvibe-recent'));
 
-            // Avatar click toggles dropdown
-            nav.querySelector('#openvibe-avatar-btn').addEventListener('click', () => {
+            // Avatar click toggles dropdown (the selection for Ask Actor is read on pointerdown: the press can clear it)
+            const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
+            avatarBtn.addEventListener('pointerdown', () => { sel = selectedText(); });
+            avatarBtn.addEventListener('click', () => {
                 dropdown.classList.toggle('open');
+                const ask = dropdown.querySelector('[data-ov-ask-actor]'); if (ask) ask.href = askActorHref(sel ?? selectedText()); sel = null;
                 if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; if (root.OpenVibeIcons) root.OpenVibeIcons.mount(dropdown); else if (!document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } }
             });
 
@@ -1662,6 +1673,7 @@
             persistToken,
             fillUrl,
         },
+        _ask: { selectedText, askActorHref },
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;
