@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.7 — 2026-10-15
+
+- **`shell.page()` removes the browser's body margin.** A site with no stylesheet of its own (openvibe.events,
+  openvibe.bot) kept the default 8 px, so the Frame's footer stopped short of the window's edges. The head's reserved
+  style now starts with `body{margin:0}`; sites that set it themselves are unchanged.
+
 ## 4.1.6 — 2026-10-15
 
 - **Play and Inventory show their own "Recently shipped".** `shipped.js` knew no `play` or `inventory` id, so the
