@@ -88,11 +88,15 @@ function demo({ id: sid, title, lede, iframe, html } = {}) {
 
 const cell = (v) => (v === true ? '<span class="sc-yes" aria-label="yes">✓</span>' : v === false || v == null ? '<span class="sc-no" aria-label="no">—</span>' : esc(v));
 
+// A table wider than a phone scrolls inside its wrapper, so the wrapper is a region the keyboard can reach and name
+// (axe scrollable-region-focusable, WCAG 2.1.1): focusable, and labelled by the section's heading.
+const tableWrap = (title, h) => `<div class="sc-table-wrap" tabindex="0" role="region" ${title ? `aria-labelledby="${h}"` : 'aria-label="Table"'}>`;
+
 /** How the product compares, feature by feature. The first column is this product. */
 function compare({ id: sid, title, lede, columns, rows } = {}) {
     if (!has(rows) || !has(columns)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-table-wrap"><table class="sc-table"><thead><tr><th scope="col"><span class="sr-only">Feature</span></th>${columns.map((c, i) => `<th scope="col"${i === 0 ? ' class="sc-us"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td${i === 0 ? ' class="sc-us"' : ''}>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${tableWrap(title, h)}<table class="sc-table"><thead><tr><th scope="col"><span class="sr-only">Feature</span></th>${columns.map((c, i) => `<th scope="col"${i === 0 ? ' class="sc-us"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td${i === 0 ? ' class="sc-us"' : ''}>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
 }
 
 /** Plans side by side. A price of 0 reads "Free". */
@@ -109,7 +113,7 @@ function pricing({ id: sid, title, lede, tiers, note } = {}) {
 function limits({ id: sid, title, lede, columns, rows, source } = {}) {
     if (!has(rows) || !has(columns)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-table-wrap"><table class="sc-table sc-limits"><thead><tr><th scope="col">Limit</th>${columns.map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${source ? `<p class="sc-note">These are the limits the service enforces, read from <a href="${esc(source)}">${esc(source.replace(/^https?:\/\//, ''))}</a>.</p>` : ''}</section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${tableWrap(title, h)}<table class="sc-table sc-limits"><thead><tr><th scope="col">Limit</th>${columns.map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${source ? `<p class="sc-note">These are the limits the service enforces, read from <a href="${esc(source)}">${esc(source.replace(/^https?:\/\//, ''))}</a>.</p>` : ''}</section>`;
 }
 
 /** What people do with it, in their words. Only real uses: the caller passes nothing it cannot stand behind. */

@@ -26,6 +26,9 @@ const p = sc.pricing({ title: 'Plans', tiers: [{ name: 'Free', price: 0, per: 'm
 assert.ok(p.includes('<p class="sc-price">Free</p>') && p.includes('$5<small> / month</small>') && p.includes('sc-tier sc-hl'));
 const l = sc.limits({ title: 'Limits', columns: ['Free'], rows: [{ label: 'Requests per minute', values: [60] }], source: 'https://openvibe.network/limits.json' });
 assert.ok(l.includes('<td>60</td>') && l.includes('href="https://openvibe.network/limits.json"'), 'limits cite their source');
+// A table wider than a phone scrolls in its wrapper: the wrapper is a focusable region named by the section's heading.
+assert.ok(c.includes('<div class="sc-table-wrap" tabindex="0" role="region" aria-labelledby="sc-compare">') && c.includes('id="sc-compare"'), 'compare table region');
+assert.ok(l.includes('<div class="sc-table-wrap" tabindex="0" role="region" aria-labelledby="sc-limits">'), 'limits table region');
 const code = sc.code({ title: 'Code', samples: [{ label: 'Node', lang: 'js', code: '\n<script>x</script>\n' }] });
 // A code sample scrolls sideways, so it is a focus stop with a name (axe scrollable-region-focusable).
 assert.ok(code.includes('<pre tabindex="0" aria-label="Node">'), 'code samples are keyboard-focusable and named');
