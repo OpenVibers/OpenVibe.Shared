@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.6 — 2026-10-15
+
+- **Play and Inventory show their own "Recently shipped".** `shipped.js` knew no `play` or `inventory` id, so the
+  widget fell back to the page's host and play.openvibe.network listed Network's changes. Both ids are in the registry
+  now, and the test checks that every site in `icons/sites.json` resolves to itself.
+- **Share cards and install manifests for Play and Zone.** `social/play.jpg` and `social/zone.jpg` are drawn from their
+  Contracts site blocks (build-social-cards.js), and `icons/sites.json` names both (build-icons.js; 37 services), so their
+  pages get an `og:image` and an installable manifest like every other site.
+
 ## 4.1.5 — 2026-10-15
 
 - **Steps line up.** In a row of steps, a step whose text is one line had a gap under its title: the row stretched it to

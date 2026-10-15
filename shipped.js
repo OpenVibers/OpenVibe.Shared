@@ -44,7 +44,7 @@
         services: 'Services', actor: 'Actor', run: 'Run', watch: 'Watch', node: 'Node', zone: 'Zone', download: 'Download',
         video: 'Video', pics: 'Pics', rent: 'Rent', homes: 'Homes', work: 'Work', food: 'Food', help: 'Help', quest: 'Quest',
         website: 'Website', fund: 'Fund', 'media-hub': 'Media Hub', extensions: 'Extensions', contracts: 'Contracts', sdk: 'SDK',
-        shared: 'Shared', examples: 'Examples', publishing: 'Publishing',
+        shared: 'Shared', examples: 'Examples', publishing: 'Publishing', play: 'Play', inventory: 'Inventory',
     };
     const STYLE_ID = 'ov-shipped-style';
     const TEXT = 'var(--text-primary,var(--text,inherit))';

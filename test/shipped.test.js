@@ -95,6 +95,11 @@ const data = {
     assert.strictEqual(sf('www.openvibe.live'), 'live');
     assert.strictEqual(sf('example.com'), null);
     assert.strictEqual(sf('live'), 'live');
+    // Every site with a share card and app icon (icons/sites.json, from the Contracts site blocks) is a registry id, so its
+    // own feed is the one shown: play.openvibe.network showed Network's changes while 'play' was missing (2026-10-15).
+    for (const id of Object.keys(require('../icons/sites.json'))) assert.strictEqual(sf(id), id, `${id} is a registry id`);
+    assert.strictEqual(sf('play.openvibe.network'), 'play');
+    assert.strictEqual(sf('inventory.openvibe.network'), 'inventory');
     // A footer's own site id wins over the page's host; an id that is not a registry id falls back to the host.
     globalThis.location = { hostname: 'dev.openvibe.tools' };
     const own = document.createElement('a');

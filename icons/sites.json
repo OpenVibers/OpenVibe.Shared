@@ -104,6 +104,11 @@
     "description": "Go live once, stream everywhere",
     "icon": "network"
   },
+  "play": {
+    "name": "OpenVibe.Play",
+    "description": "Achievements and leaderboards for every OpenVibe game.",
+    "icon": "network"
+  },
   "quest": {
     "name": "OpenVibe.Quest",
     "description": "Badges for what you really do",
@@ -172,6 +177,11 @@
   "work": {
     "name": "OpenVibe.Work",
     "description": "Find work, with an agent on your side",
+    "icon": "network"
+  },
+  "zone": {
+    "name": "OpenVibe.Zone",
+    "description": "Private S3-compatible storage for your projects.",
     "icon": "network"
   }
 }
