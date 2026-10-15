@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.9 — 2026-10-15
+
+- **Avatars are asked for in the size they are shown.** When a person's picture is an openvibe.media object
+  (`/o/med_…`), the navbar asks for `?w=<size>&fmt=webp` (64 for the chip, 72 for the menu, 48 for the account
+  switcher, already twice the shown size). The footer's 24 px avatar asks for 64. Media answers a resized WebP (Fabric
+  F4, Media's `/o/:id?w=&fmt=`): a sampled 18.6 KB avatar is under 1 KB at 96 px. Any other picture address is used as
+  it is.
+
 ## 4.1.8 — 2026-10-15
 
 - **Four showcase steps sit two by two below four columns.** In a section narrower than four steps across (under

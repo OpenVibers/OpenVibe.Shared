@@ -162,6 +162,23 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.strictEqual(calls.length, 1, 'exactly one auth call');
     }
 
+    // ── 5b. An openvibe.media object avatar is asked for in the chip's size, as WebP (Media's /o/:id?w=&fmt=) ─
+    for (const [avatar, want] of [
+        ['https://openvibe.media/o/med_01KZK5GRQ088Y3CW1TMEF4Z4RN', 'src="https://openvibe.media/o/med_01KZK5GRQ088Y3CW1TMEF4Z4RN?w=64&amp;fmt=webp"'],
+        ['https://openvibe.media/f/b.png', 'src="https://openvibe.media/f/b.png"'],
+    ]) {
+        const { navbar } = loadNavbar({
+            hostname: 'net.openvibe.tools', href: 'https://net.openvibe.tools/', cookie: 'ov_token=valid-jwt',
+            fetch: async (url) => (url === 'https://openvibe.network/api/auth/me' ? jsonResponse(200, { user: { ...USER, avatar_url: avatar }, preferences: {} }) : jsonResponse(404, {})),
+        });
+        navbar.init({ service: 'net', apiBase: 'https://openvibe.network', token: 'valid-jwt' });
+        await navbar.refreshAuth();
+        assert.ok(navbar.getElement().innerHTML.includes(want), `${avatar}: ${want}`);
+    }
+
+    // The footer's 24 px signed-in avatar asks for 64 px WebP of an object picture too.
+    assert.match(require('fs').readFileSync(require('path').join(__dirname, '..', 'footer.js'), 'utf8'), /\? `\$\{user\.avatar_url\}\?w=64&fmt=webp` : user\.avatar_url;/, 'the footer sizes an object avatar');
+
     // ── 6. No token, no sessionUrl → signed out, zero fetches ─
     {
         const { navbar, calls } = loadNavbar({ hostname: 'maps.openvibe.tools' });

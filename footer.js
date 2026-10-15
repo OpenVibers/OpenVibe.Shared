@@ -276,8 +276,10 @@
     // ── Signed-in row: the same account, wherever you are ──────
     function accountHTML(user, service) {
         const name = esc(user.display_name || user.username || 'you');
+        // An openvibe.media object picture comes in sizes (Media's /o/:id?w=&fmt=): 64 px as WebP for the 24 px avatar.
+        const sized = /^https:\/\/openvibe\.media\/o\/med_[0-9A-Za-z]{10,40}$/.test(user.avatar_url || '') ? `${user.avatar_url}?w=64&fmt=webp` : user.avatar_url;
         const avatar = user.avatar_url
-            ? `<img src="${esc(user.avatar_url)}" alt="">`
+            ? `<img src="${esc(sized)}" alt="">`
             : `<span>${esc(String(name).charAt(0).toUpperCase())}</span>`;
         const quick = [
             service !== 'live' ? { name: 'My channel', url: `https://openvibe.live/@${esc(user.username || '')}`, icon: 'channel' } : { name: 'My dashboard', url: '/dashboard', icon: 'dashboard' },
