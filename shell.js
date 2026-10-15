@@ -114,8 +114,10 @@ function manifestLinks(o) {
 }
 
 // The shared navbar's script is deferred and mounts into the page's #navbar-mount: the mount holds the bar's 52px from
-// the first paint so the page does not drop when it lands (layout shift), and without JavaScript it goes away.
-const NAVBAR_RESERVE = '<style>#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>';
+// the first paint so the page does not drop when it lands (layout shift), and without JavaScript it goes away. The body
+// has no browser margin, so the Frame's navbar and footer meet the window's edges on a page with no stylesheet of its own
+// (openvibe.events and openvibe.bot showed an 8px frame around the footer).
+const NAVBAR_RESERVE = '<style>body{margin:0}#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>';
 
 function page(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
