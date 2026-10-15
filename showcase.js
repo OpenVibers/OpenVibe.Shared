@@ -180,10 +180,11 @@ const CSS = `
 .sc-btn.sc-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .sc-note{margin:14px 0 0;font-size:13.5px;color:var(--text-muted,#7386a3)}
 .sc-note a{color:var(--accent-light,#60a5fa)}
-.sc-sec{margin-top:56px}
+.sc-sec{margin-top:56px;container-type:inline-size}
 .sc-sec>h2,.sc-cta>h2{font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;margin:0 0 6px}
 .sc-lede{color:var(--text-secondary,#96a7c2);margin:0 0 18px;max-width:760px;line-height:1.55}
 .sc-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+@container (min-width:520px) and (max-width:1035px){.sc-grid:has(>:nth-child(4):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:900px){.sc-grid:has(>:nth-child(5):last-child),.sc-grid:has(>:nth-child(6):last-child),.sc-grid:has(>:nth-child(9):last-child){grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sc-card{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
@@ -191,7 +192,7 @@ a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);trans
 .sc-ic.sc-ic-ov{background:none;border-radius:50%}
 .sc-card b{display:block;font-size:15.5px}.sc-card small{display:block;margin-top:3px;color:var(--text-secondary,#96a7c2);font-size:13.5px;line-height:1.45}
 .sc-steps{list-style:none;margin:0;padding:0;counter-reset:sc;display:grid;gap:14px 24px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-.sc-steps li{counter-increment:sc;display:grid;grid-template-columns:34px 1fr;column-gap:12px;align-items:baseline}
+.sc-steps li{counter-increment:sc;display:grid;grid-template-columns:34px 1fr;column-gap:12px;align-items:baseline;align-content:start}
 .sc-steps li::before{content:counter(sc);grid-row:span 2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--accent-light,#60a5fa);border:1px solid var(--border-light,#2c3d5c);background:var(--bg-secondary,#101828)}
 .sc-steps b{font-size:15.5px}.sc-steps b a{color:inherit;text-decoration:underline;text-decoration-color:var(--accent,#3b82f6);text-underline-offset:3px}
 .sc-steps span{color:var(--text-secondary,#96a7c2);font-size:14px;line-height:1.5}
