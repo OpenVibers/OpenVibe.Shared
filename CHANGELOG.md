@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.2.1 — 2026-10-15
+
+- **A showcase table that scrolls is a focusable region.** `compare()` and `limits()` wrap their table in
+  `.sc-table-wrap`, which scrolls sideways on a phone. The wrapper is now `tabindex="0" role="region"`, labelled by the
+  section's heading. An axe scan (WCAG 2.1 AA) of every OpenVibe home at 390 px flagged it on ai.openvibe.services
+  (`scrollable-region-focusable`, serious). Code samples already were.
+
 ## 4.2.0 — 2026-10-15
 
 - **"Ask Actor" in the account menu.** Signed in, the menu's You section has Ask Actor after Notifications. It opens
