@@ -42,6 +42,7 @@ assert.strictEqual(sc.STYLESHEET, 'showcase.css');
 // top), and four cards in a section too narrow for four across sit two by two, never three and one alone.
 assert.ok(/\.sc-steps li\{[^}]*align-content:start/.test(sc.CSS), 'steps do not stretch their rows');
 assert.ok(/\.sc-sec\{[^}]*container-type:inline-size/.test(sc.CSS), 'a section is the container its grid asks about');
+assert.ok(/@container \(min-width:584px\) and \(max-width:1191px\)\{\.sc-steps:has\(>:nth-child\(4\):last-child\)\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/.test(sc.CSS), 'four steps: two by two below four columns (Zone, Download read three and one)');
 assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:has\(>:nth-child\(4\):last-child\)\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/.test(sc.CSS), 'four cards: two by two below four columns');
 // A ring icon fills the 40 px slot with no second tile; a Font Awesome icon keeps the tinted tile at its own size.
 {

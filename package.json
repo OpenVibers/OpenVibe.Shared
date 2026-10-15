@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.1.7",
+  "version": "4.1.8",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {

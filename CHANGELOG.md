@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.1.8 — 2026-10-15
+
+- **Four showcase steps sit two by two below four columns.** In a section narrower than four steps across (under
+  1192 px), `sc-steps` with exactly four items uses two columns instead of `auto-fit`'s three and one, which left
+  step 4 alone on openvibe.zone and openvibe.download. Three, five and more steps are unchanged.
+
 ## 4.1.7 — 2026-10-15
 
 - **`shell.page()` removes the browser's body margin.** A site with no stylesheet of its own (openvibe.events,
