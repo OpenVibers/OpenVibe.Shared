@@ -20,6 +20,10 @@
  */
 const DEFAULT_ENDPOINT = 'https://api.indexnow.org/indexnow';
 const MAX_URL_LIST = 10000;
+// The protocol allows 10,000 URLs a request, but api.indexnow.org answered 403 to a 939-URL list from a host whose key
+// it accepted for one URL (2026-10-16); 100 at a time were all 200. A ping sends CHUNK at a time, CHUNK_GAP_MS apart.
+const CHUNK = 100;
+const CHUNK_GAP_MS = 1000;
 const BATCH_MS = 30000;
 const KEY_RE = /^[A-Za-z0-9]{8,128}$/;
 
@@ -40,7 +44,7 @@ function normaliseHost(host) {
  * @param {Function} [o.log] where a failure is reported once; defaults to console.warn
  * @returns {{keyFile: Function, ping: Function, pingSoon: Function, flush: Function, enabled: boolean}}
  */
-function createIndexNow({ host, key, keyLocation, endpoint = DEFAULT_ENDPOINT, fetch: fetchImpl, log } = {}) {
+function createIndexNow({ host, key, keyLocation, endpoint = DEFAULT_ENDPOINT, fetch: fetchImpl, log, chunkGapMs = CHUNK_GAP_MS } = {}) {
     const theHost = normaliseHost(host);
     const doFetch = fetchImpl || ((...args) => globalThis.fetch(...args));
     const warn = typeof log === 'function' ? log : (...args) => console.warn('[indexnow]', ...args);
@@ -72,9 +76,22 @@ function createIndexNow({ host, key, keyLocation, endpoint = DEFAULT_ENDPOINT, f
      * @returns {Promise<{sent: number, status: number|string, skipped?: string}>}
      */
     async function ping(urls) {
-        const urlList = clean(urls).slice(0, MAX_URL_LIST);
+        const all = clean(urls).slice(0, MAX_URL_LIST);
         if (!theKey) return { sent: 0, status: 0, skipped: 'no key' };
-        if (!urlList.length) return { sent: 0, status: 0, skipped: 'nothing to send' };
+        if (!all.length) return { sent: 0, status: 0, skipped: 'nothing to send' };
+        if (all.length <= CHUNK) return await pingOne(all);
+        // Several requests: the URLs sent, and the first refusal's status (200 when every chunk was taken).
+        let sent = 0; let status = 200;
+        for (let i = 0; i < all.length; i += CHUNK) {
+            if (i) await new Promise((ok) => setTimeout(ok, chunkGapMs));
+            const r = await pingOne(all.slice(i, i + CHUNK));
+            sent += r.sent;
+            if (status === 200 && r.status !== 200 && r.status !== 202) status = r.status;
+        }
+        return { sent, status };
+    }
+
+    async function pingOne(urlList) {
         const body = { host: theHost, key: theKey, keyLocation: location, urlList };
         try {
             const res = await doFetch(endpoint, {
@@ -125,4 +142,4 @@ function createIndexNow({ host, key, keyLocation, endpoint = DEFAULT_ENDPOINT, f
     return { keyFile, ping, pingSoon, flush, enabled: Boolean(theKey) };
 }
 
-module.exports = { createIndexNow, KEY_RE, MAX_URL_LIST, BATCH_MS, DEFAULT_ENDPOINT };
+module.exports = { createIndexNow, KEY_RE, MAX_URL_LIST, CHUNK, BATCH_MS, DEFAULT_ENDPOINT };

@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.2.2 — 2026-10-16
+
+- **IndexNow sends 100 URLs a request.** `ping()` (and the debounced `pingSoon()` flush) splits a list into requests of
+  100 URLs, a second apart, and returns the URLs sent and the first refusal's status. api.indexnow.org answered 403 to
+  a 939-URL list from a host whose key it accepted for one URL; 100 at a time were all 200. `createIndexNow` takes
+  `chunkGapMs` (tests pass 0); `CHUNK` is exported.
+
 ## 4.2.1 — 2026-10-15
 
 - **A showcase table that scrolls is a focusable region.** `compare()` and `limits()` wrap their table in

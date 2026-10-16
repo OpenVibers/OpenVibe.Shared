@@ -95,5 +95,17 @@ function recorder(status = 200) {
     let fell = false;
     inw.keyFile({ url: '/wiki/Mars' }, { setHeader() {}, end() {} }, () => { fell = true; });
     assert.ok(fell, 'a different path is not the key file');
+
+    // A big list goes out 100 URLs a request (api.indexnow.org refused a 939-URL list), the results summed; the first
+    // refusal is the status.
+    const big = recorder(200);
+    const many = Array.from({ length: 250 }, (_, i) => `https://openvibe.wiki/p/${i}`);
+    const bigOut = await createIndexNow({ host: 'openvibe.wiki', key: 'a1b2c3d4', fetch: big.fetch, chunkGapMs: 0 }).ping(many);
+    assert.deepStrictEqual(big.calls.map((c) => c.body.urlList.length), [100, 100, 50]);
+    assert.deepStrictEqual(bigOut, { sent: 250, status: 200 });
+    let n = 0;
+    const mixed = { fetch: async () => ({ status: ++n === 2 ? 403 : 200 }) };
+    const mixedOut = await createIndexNow({ host: 'openvibe.wiki', key: 'a1b2c3d4', fetch: mixed.fetch, chunkGapMs: 0, log: () => {} }).ping(many);
+    assert.deepStrictEqual(mixedOut, { sent: 150, status: 403 });
     console.log('indexnow: all checks passed');
 })().catch((e) => { console.error(e); process.exit(1); });
