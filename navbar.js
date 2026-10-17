@@ -101,17 +101,21 @@
             .ovnav-drawer-net a.ovnav-net { display: flex !important; }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-burger { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links { display: none; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
-            .ovnav-launcher { position: absolute; top: calc(100% + 6px); left: 12px; width: min(440px, calc(100vw - 24px));  background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 12px; z-index: 1000; opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s, transform .2s cubic-bezier(.2,1.2,.3,1); }
+            .ovnav-launcher { position: absolute; top: calc(100% + 6px); left: 12px; width: min(760px, calc(100vw - 24px)); background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 0 12px 12px; z-index: 1000; opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s, transform .2s cubic-bezier(.2,1.2,.3,1); }
             .ovnav-launcher.open { opacity: 1; transform: none; pointer-events: auto; }
+            .ovnav-launcher .ovl-top { position: sticky; top: 0; z-index: 1; margin: 0 -12px; padding: 12px 12px 2px; background: inherit; }
             .ovnav-launcher .ovl-q { width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-primary, #0a0f18); color: var(--text-primary, #e6edf7); font: 500 14px/1.2 inherit; outline: none; }
             .ovnav-launcher .ovl-q:focus { border-color: var(--accent, #3b82f6); }
             .ovnav-launcher .ovl-h { display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); margin: 12px 4px 6px; }
             .ovnav-launcher .ovl-h a { color: var(--accent-light, var(--accent, #60a5fa)); text-decoration: none; text-transform: none; letter-spacing: 0; }
-            .ovnav-launcher .ovl-sites { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-            .ovnav-launcher .ovl-fams { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
-            .ovnav-launcher .ovl-site, .ovnav-launcher .ovl-fam { display: flex; align-items: center; gap: 9px; padding: 8px; border-radius: 10px; color: var(--text-primary, #e6edf7); text-decoration: none; min-width: 0; }
-            .ovnav-launcher .ovl-site { flex-direction: column; text-align: center; gap: 6px; padding: 12px 6px; }
-            .ovnav-launcher .ovl-site:hover, .ovnav-launcher .ovl-fam:hover, .ovnav-launcher a:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); outline: none; }
+            .ovnav-launcher .ovl-apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 2px 4px; }
+            .ovnav-launcher .ovl-fams { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2px 4px; }
+            .ovnav-launcher .ovl-app, .ovnav-launcher .ovl-fam { display: flex; align-items: center; gap: 9px; padding: 8px; border-radius: 10px; color: var(--text-primary, #e6edf7); text-decoration: none; min-width: 0; }
+            .ovnav-launcher .ovl-app { padding: 7px 8px; border: 1px solid transparent; }
+            .ovnav-launcher :is(.ovl-app, .ovl-fam) > span:last-child { min-width: 0; }
+            .ovnav-launcher .ovl-app small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+            .ovnav-launcher .ovl-app.is-here { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .ovnav-launcher .ovl-app:hover, .ovnav-launcher .ovl-fam:hover, .ovnav-launcher a:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); outline: none; }
             .ovnav-launcher b { display: block; font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .ovnav-launcher small { display: block; font-size: 11px; color: var(--text-muted, #7d8aa0); margin-top: 1px; }
             .ovnav-launcher .ovl-soon { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px 4px; }
@@ -130,7 +134,7 @@
             .ovnav-launcher .ovl-all { grid-column: 1 / -1; color: var(--accent-light, var(--accent, #60a5fa)); }
             .ovnav-launcher .ovl-h span { text-transform: none; letter-spacing: 0; font-weight: 500; }
             .ovnav-launcher .ovl-empty { padding: 18px 8px; color: var(--text-secondary, #a8b3c4); font-size: 13px; }
-            @media (max-width: 480px) { .ovnav-launcher { left: 8px; } .ovnav-launcher .ovl-fams { grid-template-columns: 1fr; } }
+            @media (max-width: 480px) { .ovnav-launcher { left: 8px; } .ovnav-launcher :is(.ovl-apps, .ovl-fams) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
             @media (prefers-reduced-motion: reduce) { .ovnav-launcher { transition: none; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
             .openvibe-navbar-brand .name { display: inline-flex; align-items: baseline; font-size: 15px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; line-height: 1; }
@@ -547,15 +551,15 @@
     // minutes in localStorage and refreshed in the background, so pages paint from cache and the
     // order never jumps while someone is looking at it. Defined once, shared by navbar + footer.
     const OVFrame = root.OpenVibeFrame || root.OpenVibeChrome || (root.OpenVibeFrame = root.OpenVibeChrome = (function () {
-        const KEY = 'ov_frame_v1', TTL = 30 * 60000;
+        const KEY = 'ov_frame_v2', TTL = 30 * 60000;   // v2: every site, with its launcher group
         let inflight = null;
         const host = () => (typeof location !== 'undefined' ? location.hostname : '');
         const https = (u) => { try { return new URL(u).protocol === 'https:'; } catch { return false; } };
         function clean(d) {
             if (!d || !Array.isArray(d.nav)) return null;
-            const link = (l) => (l && typeof l.name === 'string' && https(l.url) ? { id: String(l.id || ''), name: l.name.slice(0, 60), url: l.url, icon: String(l.icon || ''), tagline: String(l.tagline || '').slice(0, 80) } : null);
+            const link = (l) => (l && typeof l.name === 'string' && https(l.url) ? { id: String(l.id || ''), name: l.name.slice(0, 60), url: l.url, icon: String(l.icon || ''), tagline: String(l.tagline || '').slice(0, 80), group: String(l.group || '').slice(0, 20) } : null);
             const f = d.footer || {}, lg = f.legal || {};
-            return { nav: d.nav.map(link).filter(Boolean).slice(0, 12), soon: (d.soon || []).map(link).filter(Boolean).slice(0, 24),
+            return { nav: d.nav.map(link).filter(Boolean).slice(0, 60), groups: (Array.isArray(d.groups) ? d.groups : []).filter(g => g && typeof g.id === 'string' && typeof g.name === 'string').slice(0, 10).map(g => ({ id: g.id.slice(0, 20), name: g.name.slice(0, 40) })), soon: (d.soon || []).map(link).filter(Boolean).slice(0, 24),
                 footer: { blurb: String(f.blurb || '').slice(0, 200), discover: (f.discover || []).map(link).filter(Boolean).slice(0, 6), popular: (f.popular || []).map(link).filter(Boolean).slice(0, 10),
                     legal: https(lg.terms) && https(lg.privacy) && https(lg.dmca) ? { terms: lg.terms, privacy: lg.privacy, dmca: lg.dmca } : null } };
         }
@@ -619,7 +623,10 @@
     function bindLauncher(nav) {
         const btn = nav.querySelector('#openvibe-launcher-btn'); if (!btn) return;
         let panel = null;
-        const tile = (it, cls) => `<a class="${cls}" href="${escapeAttr(it.go || it.url)}"><span class="ov-icon" data-icon="${escapeAttr(it.icon)}" data-size="${cls === 'ovl-site' ? 34 : 24}" data-fx="none"></span><span><b>${escapeAttr(it.name)}</b>${it.desc ? `<small>${escapeAttr(it.desc)}</small>` : ''}</span></a>`;
+        const tile = (it, cls, here) => `<a class="${cls}${here ? ' is-here' : ''}" href="${escapeAttr(it.go || it.url)}"${here ? ' aria-current="page"' : ''}${it.desc ? ` title="${escapeAttr(it.desc)}"` : ''}><span class="ov-icon" data-icon="${escapeAttr(it.icon)}" data-size="${cls === 'ovl-app' ? 28 : 24}" data-fx="none"></span><span><b>${escapeAttr(it.name)}</b>${it.desc ? `<small>${escapeAttr(it.desc)}</small>` : ''}</span></a>`;
+        const siteItems = (frame) => (frame && frame.nav.length ? frame.nav.map(n => ({ name: n.name, desc: n.tagline.replace(/\.\s*$/, ''), icon: n.icon || n.id, url: n.url, group: n.group })) : LAUNCHER_SITES);
+        // This page's site: the longest matching host (play.openvibe.network is Play, not Network).
+        const hereOf = (list) => { const h = currentHost().toLowerCase(); let best = null, len = 0; for (const x of list) { let sh = ''; try { sh = new URL(x.url).hostname; } catch { continue; } if ((h === sh || h.endsWith('.' + sh)) && sh.length > len) { best = x; len = sh.length; } } return best; };
         const close = () => { if (panel) panel.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
         function paint(cat, q) {
             const fams = (cat && cat.families.length ? cat.families : LAUNCHER_FAMILIES);
@@ -628,24 +635,28 @@
                 // Sites and families always filter locally; tools need the catalog. Without it (offline, blocked),
                 // the last row hands the query to the Tools search page, so typing never does nothing.
                 const hit = (x) => (x.name + ' ' + (x.desc || '')).toLowerCase().includes(q);
-                const siteList = (OVFrame.get() && OVFrame.get().nav.length ? OVFrame.get().nav.map(n => ({ name: n.name, desc: n.tagline, icon: n.icon || n.id, url: n.url })) : LAUNCHER_SITES).filter(hit);
+                const siteList = siteItems(OVFrame.get()).filter(hit);
                 const famList = fams.filter(hit);
                 const tools = cat ? cat.tools.filter(t => t.k.includes(q)).slice(0, 12) : [];
                 const more = `<a class="ovl-fam ovl-all" href="${escapeAttr(TOOLS_SEARCH + encodeURIComponent(q))}"><span class="ov-icon" data-icon="search" data-size="24" data-fx="none"></span><span><b>Search all tools for “${escapeAttr(q)}”</b></span></a>`;
-                body.innerHTML = (siteList.length ? `<div class="ovl-h">Sites</div><div class="ovl-fams">${siteList.map(x => tile(x, 'ovl-fam')).join('')}</div>` : '')
+                body.innerHTML = (siteList.length ? `<div class="ovl-h">Sites</div><div class="ovl-apps">${siteList.map(x => tile(x, 'ovl-app')).join('')}</div>` : '')
                     + (famList.length ? `<div class="ovl-h">Tool families</div><div class="ovl-fams">${famList.map(x => tile(x, 'ovl-fam')).join('')}</div>` : '')
                     + `<div class="ovl-h">Tools${cat ? '' : ' <span>loading…</span>'}</div><div class="ovl-fams">${tools.map(t => tile(t, 'ovl-fam')).join('')}${more}</div>`;
                 return;
             }
             const frame = OVFrame.get();
-            const sites = frame && frame.nav.length ? frame.nav.map(n => ({ name: n.name, desc: n.tagline, icon: n.icon || n.id, url: n.url })) : LAUNCHER_SITES;
+            const sites = siteItems(frame), hereSite = hereOf(sites);
+            // The Frame's groups in order; a site in no known group goes in the last one.
+            const groups = frame && frame.groups && frame.groups.length ? frame.groups : [{ id: '', name: 'Sites' }];
+            const inGroup = (s, g, i) => !g.id || s.group === g.id || (i === groups.length - 1 && !groups.some(x => x.id === s.group));
+            const siteHtml = groups.map((g, i) => { const list = sites.filter(s => inGroup(s, g, i)); return list.length ? `<div class="ovl-h">${escapeAttr(g.name)}</div><div class="ovl-apps">${list.map(x => tile(x, 'ovl-app', x === hereSite)).join('')}</div>` : ''; }).join('');
             const soon = frame ? frame.soon : [];
             // On a tool: every address it answers to (short, search-friendly, mirrors, custom domains), so people
             // can pick the one they will remember.
             const cur = currentHost().toLowerCase();
             const here = cat ? cat.tools.find(t => t.hosts.indexOf(cur) >= 0) : null;
             const addresses = here && here.hosts.length > 1 ? `<div class="ovl-h">${escapeAttr(here.name)} lives at <a href="https://openvibe.tools/tool/${escapeAttr(here.id)}">About</a></div><div class="ovl-soon ovl-addr">${[...new Set(here.hosts)].filter(h => /^[a-z0-9.-]+$/.test(h)).map(h => `<a href="https://${h}/"${h === cur ? ' class="is-here" aria-current="page"' : ''}>${h}</a>`).join('')}</div>` : '';
-            body.innerHTML = addresses + `<div class="ovl-h">Sites</div><div class="ovl-sites">${sites.map(x => tile(x, 'ovl-site')).join('')}</div>
+            body.innerHTML = addresses + siteHtml + `
                 <div class="ovl-h">Tools <a href="https://openvibe.tools/">See all</a></div><div class="ovl-fams">${fams.map(x => tile(x, 'ovl-fam')).join('')}</div>
                 ${soon.length ? `<div class="ovl-h">Opening soon</div><div class="ovl-soon">${soon.map(x => `<a href="${escapeAttr(x.url)}">${escapeAttr(x.name)}</a>`).join('')}</div>` : ''}`;
         }
@@ -654,7 +665,7 @@
             if (panel && panel.classList.contains('open')) return close();
             if (!panel) {
                 panel = document.createElement('div'); panel.className = 'ovnav-launcher'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'OpenVibe sites and tools');
-                panel.innerHTML = '<input type="search" class="ovl-q" placeholder="Find a tool or site" aria-label="Find a tool or site"><div class="ovl-body"></div><div class="ovl-display" hidden></div>';
+                panel.innerHTML = '<div class="ovl-top"><input type="search" class="ovl-q" placeholder="Find a site or tool" aria-label="Find a site or tool"></div><div class="ovl-body"></div><div class="ovl-display" hidden></div>';
                 bindDisplayControls(panel.querySelector('.ovl-display'));
                 nav.appendChild(panel);
                 regPanel(panel, 'launcher', close);

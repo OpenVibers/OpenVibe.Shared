@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.4.0 — 2026-10-17
+
+- **Every site in the launcher, in groups.** The menu beside the brand showed the first 12 of the network's sites (the
+  owner: "missing tons of sites … needs organization"). It now lists every site the Frame sends (up to 60), under the
+  Frame's `groups` in order (Watch & stream, Create & play, Talk & learn, Shop & everyday, Build & automate, Your
+  OpenVibe), most used first within each, as compact tiles: four across on a computer, two on a phone, with the
+  tagline under each name and the page's own site marked (`aria-current`). The search box stays on top while the menu
+  scrolls. A site in a group the navbar does not know goes in the last group; a Frame without groups (older Network)
+  shows one "Sites" section. Products on their own domain (Pics, Download, Homes) come with Network's frame.
+- The Frame cache key is `ov_frame_v2` (navbar.js and footer.js alike), so a cached 12-site answer is not reused.
+- navbar.js: 31.4 KB brotli (budget 32 KB).
+
 ## 4.3.0 — 2026-10-17
 
 - **Vibes in the account menu on every site.** Next to the OpenCoins chip, the menu header shows the person's Vibes

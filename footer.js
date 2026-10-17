@@ -36,15 +36,15 @@
     // minutes in localStorage and refreshed in the background, so pages paint from cache and the
     // order never jumps while someone is looking at it. Defined once, shared by navbar + footer.
     const OVFrame = root.OpenVibeFrame || root.OpenVibeChrome || (root.OpenVibeFrame = root.OpenVibeChrome = (function () {
-        const KEY = 'ov_frame_v1', TTL = 30 * 60000;
+        const KEY = 'ov_frame_v2', TTL = 30 * 60000;   // v2: every site, with its launcher group
         let inflight = null;
         const host = () => (typeof location !== 'undefined' ? location.hostname : '');
         const https = (u) => { try { return new URL(u).protocol === 'https:'; } catch { return false; } };
         function clean(d) {
             if (!d || !Array.isArray(d.nav)) return null;
-            const link = (l) => (l && typeof l.name === 'string' && https(l.url) ? { id: String(l.id || ''), name: l.name.slice(0, 60), url: l.url, icon: String(l.icon || ''), tagline: String(l.tagline || '').slice(0, 80) } : null);
+            const link = (l) => (l && typeof l.name === 'string' && https(l.url) ? { id: String(l.id || ''), name: l.name.slice(0, 60), url: l.url, icon: String(l.icon || ''), tagline: String(l.tagline || '').slice(0, 80), group: String(l.group || '').slice(0, 20) } : null);
             const f = d.footer || {}, lg = f.legal || {};
-            return { nav: d.nav.map(link).filter(Boolean).slice(0, 12), soon: (d.soon || []).map(link).filter(Boolean).slice(0, 24),
+            return { nav: d.nav.map(link).filter(Boolean).slice(0, 60), groups: (Array.isArray(d.groups) ? d.groups : []).filter(g => g && typeof g.id === 'string' && typeof g.name === 'string').slice(0, 10).map(g => ({ id: g.id.slice(0, 20), name: g.name.slice(0, 40) })), soon: (d.soon || []).map(link).filter(Boolean).slice(0, 24),
                 footer: { blurb: String(f.blurb || '').slice(0, 200), discover: (f.discover || []).map(link).filter(Boolean).slice(0, 6), popular: (f.popular || []).map(link).filter(Boolean).slice(0, 10),
                     legal: https(lg.terms) && https(lg.privacy) && https(lg.dmca) ? { terms: lg.terms, privacy: lg.privacy, dmca: lg.dmca } : null } };
         }
