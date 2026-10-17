@@ -4,7 +4,7 @@
     'use strict';
 
     let _config = {
-        service: 'network', token: null, user: null, apiBase: 'https://openvibe.network',
+        service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', billingBase: null,
         onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
         brand: null, brandName: null, brandIcon: null, compact: 'auto',
         links: null, menu: null, recent: true,
@@ -174,6 +174,9 @@
             .openvibe-navbar-dropdown-menu .icon { display: inline-grid; place-items: center; width: 22px; flex: none; }
             .openvibe-navbar-dropdown-header { background: linear-gradient(180deg, color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent), transparent); }
             .openvibe-navbar-dropdown-header img { border-radius: 50%; box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); }
+            .openvibe-navbar-dropdown-header .ud-wallet { display: inline-block; margin-right: 6px; }
+            .openvibe-navbar-dropdown-header .ud-wallet[hidden] { display: none; }
+            .openvibe-navbar-dropdown-header .ud-vibes a { color: #4ade80; background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.3); }
             .openvibe-navbar-dropdown-header .ud-wallet a { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; text-decoration: none; color: #fbbf24; background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3); }
             .openvibe-navbar-dropdown-menu .sep { height: 1px; background: var(--border, #333340); margin: 4px -8px; }
 
@@ -769,16 +772,22 @@
         root.addEventListener('ov:display', paint, onDocument()); paint();
     }
 
-    /** OpenCoins balance in the menu header (one request when the menu first opens). */
+    /** OpenCoins (Network) and Vibes (OpenVibe.Billing) in the menu header: one request each when the menu first opens. */
     let _walletLoaded = false;
     async function loadWallet(dropdown) {
         if (_walletLoaded || !_config.token || (_config.menu && _config.menu.headerChips)) return; _walletLoaded = true;
-        try {
-            const r = await fetch(`${_config.apiBase}/api/coins/me`, { headers: { Authorization: `Bearer ${_config.token}` }, credentials: 'include' });
+        const auth = { Authorization: `Bearer ${_config.token}` };
+        const chip = (id, html) => { const el = dropdown.querySelector(id); if (el) { el.innerHTML = html; el.hidden = false; } };
+        const coins = fetch(`${_config.apiBase}/api/coins/me`, { headers: auth, credentials: 'include' }).then(async (r) => {
             if (!r.ok) return; const j = await r.json(); const bal = Number(j.balance ?? (j.wallet && j.wallet.balance));
-            const el = dropdown.querySelector('#openvibe-wallet'); if (!el || !isFinite(bal)) return;
-            el.innerHTML = `<a href="https://openvibe.network/my#coins" title="OpenCoins">${navIcon('fa-coins')} ${bal.toLocaleString()}</a>`; el.hidden = false;
-        } catch { /* the chip is optional */ }
+            if (isFinite(bal)) chip('#openvibe-wallet', `<a href="https://openvibe.network/my#coins" title="OpenCoins">${navIcon('fa-coins')} ${bal.toLocaleString()}</a>`);
+        });
+        // Vibes cross-site (the spendable balance Billing keeps). Billing answers 409 until it is the ledger: no chip then.
+        const vibes = fetch(`${_config.billingBase || 'https://billing.openvibe.network'}/api/me/vibes`, { headers: auth, credentials: 'omit' }).then(async (r) => {
+            if (!r.ok) return; const v = Number((await r.json()).credit);
+            if (isFinite(v)) chip('#openvibe-vibes', `<a href="https://openvibe.live/#vibes" title="Your Vibes">${v.toLocaleString()} Vibes</a>`);
+        });
+        await Promise.all([coins.catch(() => {}), vibes.catch(() => {})]);   // both chips are optional
     }
 
     /** The network's most used sites, after the page's own links (networkLinks: false turns it off). */
@@ -1405,7 +1414,7 @@
                     <div class="info">
                         <div class="name">${escapeAttr(u.display_name || u.username)}</div>
                         <div class="email">${isAnon ? '' : '@' + escapeAttr(u.username || '')}</div>
-                        ${menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div>'}
+                        ${menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div><div class="ud-wallet ud-vibes" id="openvibe-vibes" hidden></div>'}
                         ${isAnon ? `<div class="anon-tag">Anonymous #${u.anon_number || '?'}</div>` : ''}
                     </div>
                 </div>
@@ -1674,6 +1683,7 @@
             fillUrl,
         },
         _ask: { selectedText, askActorHref },
+        _wallet: { loadWallet, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;
