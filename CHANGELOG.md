@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.3.0 — 2026-10-17
+
+- **Vibes in the account menu on every site.** Next to the OpenCoins chip, the menu header shows the person's Vibes
+  from OpenVibe.Billing (`GET https://billing.openvibe.network/api/me/vibes`, their token, no cookies; the owner: "make
+  vibes cross site too like opencoins"). Billing answers 409 until it is the money ledger, and then no chip shows,
+  never a shadow number. The chip links to openvibe.live, where Vibes are bought and spent. `billingBase` points
+  elsewhere for a test cell. Both balances load in parallel, once per page, and a site with its own `headerChips`
+  (Live) still asks nothing.
+
 ## 4.2.2 — 2026-10-16
 
 - **IndexNow sends 100 URLs a request.** `ping()` (and the debounced `pingSoon()` flush) splits a list into requests of
