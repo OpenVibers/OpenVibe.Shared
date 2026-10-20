@@ -9,7 +9,9 @@
  *   - is more than one minor behind a release that has been out for more than GRACE_DAYS (14): 0.40 fails
  *     once 0.42 is two weeks old. The grace keeps CI green on the day a library ships and still catches
  *     pins left behind. Release dates come from the library's CHANGELOG.md on main ("## 0.42.0 — 2026-09-25"
- *     or "## 0.9.1 (2026-09-24)"); a release with no date there counts as old.
+ *     or "## 0.9.1 (2026-09-24)"); a release with no date there counts as old, except the newest tag: raw.githubusercontent
+ *     serves a CHANGELOG cached for minutes, so a CI run right after a release read no date for it and failed every
+ *     repository pinned two minors back (SDK v0.55.0, 2026-10-20). The newest tag without a date counts as just out.
  *
  *   node scripts/pin-drift.js [dir]                    every package.json under dir (git-tracked), default .
  *   curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - [dir]
@@ -52,7 +54,8 @@ function judge(pin, published, { dates = new Map(), now = Date.now(), graceDays 
     // The releases two or more minors ahead of the pin that have been out longer than the grace period.
     const old = tags.filter((t) => t[0] === pin[0] && t[1] - pin[1] > 1).filter((t) => {
         const at = dates.get(t.join('.'));
-        return !(Number.isFinite(at) && now - at <= graceDays * 86400000);
+        if (!Number.isFinite(at)) return cmp(t, latest) !== 0;   // the newest tag may be newer than the cached CHANGELOG
+        return now - at > graceDays * 86400000;
     });
     if (old.length) return { ok: false, reason: `v${pin.join('.')} is ${latest[1] - pin[1]} minors behind v${latest.join('.')} (v${old[old.length - 1].join('.')} is over ${graceDays} days old)` };
     if (latest[1] - pin[1] > 1) return { ok: true, reason: `latest v${latest.join('.')}; behind by ${latest[1] - pin[1]} minors, within the ${graceDays}-day grace` };
