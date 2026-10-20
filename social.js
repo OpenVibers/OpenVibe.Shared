@@ -3,8 +3,10 @@
 // openvibe-shared/social — every OpenVibe site's share card (og:image / twitter:image).
 //
 // The cards are 1200×630 JPEGs in social/<service>.jpg, drawn by scripts/build-social-cards.js from the service
-// manifests' `site` blocks (name, tagline, first domain, accent) with the app-icon mark. A site serves its pinned
-// copy at /shared/social/<service>.jpg through openvibe-shared/serve, so a card never depends on another host.
+// manifests' `site` blocks (name, tagline, first domain, accent) with the app-icon mark; a site's big pages have page
+// cards, social/<service>-<page>.jpg (live-rundown, live-content, …), from the script's PAGES list. A site serves
+// its pinned copy at /shared/social/<service>.jpg through openvibe-shared/serve, so a card never depends on another
+// host.
 //
 //   social.has(service)                 is there a card for this service id
 //   social.url(service, base?)          '/shared/social/<service>.jpg?v=<content hash>', or null without a card

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 'use strict';
-// Render the share card (og:image, 1200×630 JPEG) of every OpenVibe site into social/<service>.jpg.
+// Render the share card (og:image, 1200×630 JPEG) of every OpenVibe site into social/<service>.jpg, and the page cards
+// (PAGES below) into social/<service>-<page>.jpg.
 //   node scripts/build-social-cards.js --contracts <OpenVibe.Contracts checkout> [--chrome <path>] [--only <id,id>]
+// --only takes site ids (a site's page cards come with it) or page card ids.
 // Needs Chrome (the drawing) and ImageMagick's `convert` (PNG → a ~60 KB progressive JPEG).
 // The name, tagline, domain and accent come from each service manifest's `site` block (Contracts is the source of
 // truth; this script only draws them). The mark is openvibe-shared/app-icon. Inter is fetched once from Google Fonts
@@ -48,14 +50,36 @@ async function interFaces() {
     return out.join('\n');
 }
 
+// Page cards (social/<service>-<page>.jpg): a site's big pages, shared on their own, get a card that names the page in
+// place of the site, with the site above it and the page's address below. The text is the page's own pitch.
+const PAGES = [
+    { id: 'live-rundown', service: 'live', heading: 'The Rundown', path: '/rundown', tagline: 'What streamers talked about',
+        what: "Topics, takes and episodes from OpenVibe.Live streams, in the streamers' own words, with a link to every moment." },
+    { id: 'live-content', service: 'live', heading: 'Content', path: '/content', tagline: 'Recordings, clips and pastes',
+        what: 'What people made on OpenVibe.Live: recorded streams, the moments viewers clipped, and the code and notes they shared.' },
+    { id: 'live-moments', service: 'live', heading: 'AI Moments', path: '/moments', tagline: 'Highlights the AI picked',
+        what: 'Auto-clips of the moments chat erupted, standout frames and after-show recaps, each one labelled AI-made.' },
+    { id: 'live-chat', service: 'live', heading: 'Chat', path: '/chat', tagline: 'The global chat room',
+        what: 'One chat room for everyone on OpenVibe.Live, across every stream, open to the whole network.' },
+];
+
 function sites() {
     const dir = path.join(contracts, 'manifests', 'services');
     const out = [];
+    const byId = new Map();
     for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort()) {
         const m = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
         if (!m.site || !Array.isArray(m.domains) || !m.domains.length) continue;
+        const site = { id: m.id, name: m.site.name, tagline: m.site.tagline, what: m.site.what || '', domain: m.domains[0], accent: social.accentOf(m.id, m.site.accent) };
+        byId.set(m.id, site);
         if (only && !only.has(m.id)) continue;
-        out.push({ id: m.id, name: m.site.name, tagline: m.site.tagline, what: m.site.what || '', domain: m.domains[0], accent: social.accentOf(m.id, m.site.accent) });
+        out.push(site);
+    }
+    for (const pg of PAGES) {
+        const site = byId.get(pg.service);
+        if (!site) throw new Error(`page card ${pg.id}: no site ${pg.service} in the manifests`);
+        if (only && !only.has(pg.id) && !only.has(pg.service)) continue;
+        out.push({ ...site, id: pg.id, heading: pg.heading, tagline: pg.tagline, what: pg.what, domain: `${site.domain}${pg.path}`, iconId: site.id });
     }
     return out;
 }
@@ -65,10 +89,12 @@ function card(site, fonts) {
     // The product name after "OpenVibe.", unless the product carries its own name: OpenRestream reads "OpenRe" +
     // "stream" as one word, the way the navbar draws it.
     const own = /^Open(Re)(.+)$/.exec(site.name);
-    const brand = own
+    const siteBrand = own
         ? `<span class="w">Open${own[1]}</span><span class="p">${esc(own[2])}</span>`
         : `<span class="w">OpenVibe</span><span class="d">.</span><span class="p">${esc(site.name)}</span>`;
-    const long = site.name.length > 9;
+    // A page card: the page's name is the headline and the site's brand takes the line beside the mark.
+    const brand = site.heading ? `<span class="p">${esc(site.heading)}</span>` : siteBrand;
+    const long = (site.heading || site.name).length > 9;
     return `<!doctype html><html><head><meta charset="utf-8"><style>
 ${fonts}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -87,6 +113,9 @@ body{font-family:'Inter',sans-serif;color:#f8fafc;background:#0a0f1c;position:re
 .icon{width:88px;height:88px;border-radius:22px;overflow:hidden;box-shadow:0 18px 50px -12px ${a2}88, 0 0 0 1px #ffffff1a}
 .icon svg{width:88px;height:88px;display:block}
 .net{font-size:26px;font-weight:600;color:#94a3b8;letter-spacing:.01em}
+.net.site{font-size:34px;font-weight:800;letter-spacing:-.02em}
+.net.site .w{color:#f8fafc}.net.site .d{color:${a1}}
+.net.site .p{background:linear-gradient(100deg, ${a1}, ${a2});-webkit-background-clip:text;background-clip:text;color:transparent}
 .name{margin-top:36px;font-size:${long ? 92 : 108}px;font-weight:800;letter-spacing:-.035em;line-height:1}
 .name .w{color:#f8fafc}.name .d{color:${a1}}
 .name .p{background:linear-gradient(100deg, ${a1}, ${a2});-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -102,7 +131,7 @@ body{font-family:'Inter',sans-serif;color:#f8fafc;background:#0a0f1c;position:re
 </style></head><body>
 <div class="glow"></div><div class="grid"></div><div class="ring"></div><div class="ring2"></div>
 <div class="wrap">
-  <div class="top"><div class="icon">${icon.svg({ site: social.iconSite(site.id), maskable: false })}</div><div class="net">One account. All of OpenVibe.</div></div>
+  <div class="top"><div class="icon">${icon.svg({ site: social.iconSite(site.iconId || site.id), maskable: false })}</div>${site.heading ? `<div class="net site">${siteBrand}</div>` : '<div class="net">One account. All of OpenVibe.</div>'}</div>
   <div class="name">${brand}</div>
   <div class="tag">${esc(site.tagline)}</div>
   ${site.what ? `<div class="what">${esc(site.what)}</div>` : ''}

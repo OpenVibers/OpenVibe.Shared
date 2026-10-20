@@ -35,6 +35,8 @@ function jpegSize(buf) {
     }
 
     assert.ok(social.has('news') && social.has('openre') && social.has('network'));
+    // Page cards: a site's big pages have their own (scripts/build-social-cards.js PAGES), named <service>-<page>.
+    for (const id of ['live-rundown', 'live-content', 'live-moments', 'live-chat']) assert.match(social.url(id), new RegExp(`^/shared/social/${id}\\.jpg\\?v=[0-9a-f]{12}$`), id);
     assert.ok(!social.has('nope') && !social.has('../news') && !social.has('') && !social.has(null));
     assert.match(social.url('news'), /^\/shared\/social\/news\.jpg\?v=[0-9a-f]{12}$/);
     assert.match(social.url('news', 'https://cdn.example/s/'), /^https:\/\/cdn\.example\/s\/social\/news\.jpg\?v=/);
