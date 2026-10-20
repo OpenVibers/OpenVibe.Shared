@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // Render the share card (og:image, 1200×630 JPEG) of every OpenVibe site into social/<service>.jpg, and the page cards
-// (PAGES below) into social/<service>-<page>.jpg.
+// (openvibe-shared/social PAGES) into social/<service>-<page>.jpg.
 //   node scripts/build-social-cards.js --contracts <OpenVibe.Contracts checkout> [--chrome <path>] [--only <id,id>]
 // --only takes site ids (a site's page cards come with it) or page card ids.
 // Needs Chrome (the drawing) and ImageMagick's `convert` (PNG → a ~60 KB progressive JPEG).
@@ -50,19 +50,6 @@ async function interFaces() {
     return out.join('\n');
 }
 
-// Page cards (social/<service>-<page>.jpg): a site's big pages, shared on their own, get a card that names the page in
-// place of the site, with the site above it and the page's address below. The text is the page's own pitch.
-const PAGES = [
-    { id: 'live-rundown', service: 'live', heading: 'The Rundown', path: '/rundown', tagline: 'What streamers talked about',
-        what: "Topics, takes and episodes from OpenVibe.Live streams, in the streamers' own words, with a link to every moment." },
-    { id: 'live-content', service: 'live', heading: 'Content', path: '/content', tagline: 'Recordings, clips and pastes',
-        what: 'What people made on OpenVibe.Live: recorded streams, the moments viewers clipped, and the code and notes they shared.' },
-    { id: 'live-moments', service: 'live', heading: 'AI Moments', path: '/moments', tagline: 'Highlights the AI picked',
-        what: 'Auto-clips of the moments chat erupted, standout frames and after-show recaps, each one labelled AI-made.' },
-    { id: 'live-chat', service: 'live', heading: 'Chat', path: '/chat', tagline: 'The global chat room',
-        what: 'One chat room for everyone on OpenVibe.Live, across every stream, open to the whole network.' },
-];
-
 function sites() {
     const dir = path.join(contracts, 'manifests', 'services');
     const out = [];
@@ -75,7 +62,7 @@ function sites() {
         if (only && !only.has(m.id)) continue;
         out.push(site);
     }
-    for (const pg of PAGES) {
+    for (const pg of social.PAGES) {
         const site = byId.get(pg.service);
         if (!site) throw new Error(`page card ${pg.id}: no site ${pg.service} in the manifests`);
         if (only && !only.has(pg.id) && !only.has(pg.service)) continue;

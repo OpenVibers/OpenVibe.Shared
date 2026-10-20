@@ -4,9 +4,8 @@
 //
 // The cards are 1200×630 JPEGs in social/<service>.jpg, drawn by scripts/build-social-cards.js from the service
 // manifests' `site` blocks (name, tagline, first domain, accent) with the app-icon mark; a site's big pages have page
-// cards, social/<service>-<page>.jpg (live-rundown, live-content, …), from the script's PAGES list. A site serves
-// its pinned copy at /shared/social/<service>.jpg through openvibe-shared/serve, so a card never depends on another
-// host.
+// cards, social/<service>-<page>.jpg (live-rundown, live-content, …), listed in PAGES below. A site serves its pinned
+// copy at /shared/social/<service>.jpg through openvibe-shared/serve, so a card never depends on another host.
 //
 //   social.has(service)                 is there a card for this service id
 //   social.url(service, base?)          '/shared/social/<service>.jpg?v=<content hash>', or null without a card
@@ -14,6 +13,7 @@
 //   social.path(name)                   the file on disk (throws for anything that is not a card)
 //   social.accentOf(service, accent?)   the two accent stops the card uses (build script)
 //   social.iconSite(service)            the app-icon variant for the service's mark (build script)
+//   social.pageOf(id) / social.PAGES     the page cards: which page and site a card id names (null for a site's card)
 //
 // shell.page() uses social.url(o.service) for og:image when the page names no image of its own.
 // ═══════════════════════════════════════════════════════════════
@@ -36,6 +36,22 @@ function cardPath(name) {
     if (!isCard(name)) throw new Error(`openvibe-shared/social: ${name} is not a share card`);
     return path.join(__dirname, name);
 }
+
+// Page cards (social/<service>-<page>.jpg): a site's big pages, shared on their own, get a card that names the page in
+// place of the site, with the site's brand beside the mark and the page's address in the pill. Drawn by
+// scripts/build-social-cards.js from this list; every other card is a site's.
+const PAGES = [
+    { id: 'live-rundown', service: 'live', heading: 'The Rundown', path: '/rundown', tagline: 'What streamers talked about',
+        what: "Topics, takes and episodes from OpenVibe.Live streams, in the streamers' own words, with a link to every moment." },
+    { id: 'live-content', service: 'live', heading: 'Content', path: '/content', tagline: 'Recordings, clips and pastes',
+        what: 'What people made on OpenVibe.Live: recorded streams, the moments viewers clipped, and the code and notes they shared.' },
+    { id: 'live-moments', service: 'live', heading: 'AI Moments', path: '/moments', tagline: 'Highlights the AI picked',
+        what: 'Auto-clips of the moments chat erupted, standout frames and after-show recaps, each one labelled AI-made.' },
+    { id: 'live-chat', service: 'live', heading: 'Chat', path: '/chat', tagline: 'The global chat room',
+        what: 'One chat room for everyone on OpenVibe.Live, across every stream, open to the whole network.' },
+];
+/** The page a card id names ({ id, service, heading, … }), or null for a site's own card. */
+const pageOf = (id) => PAGES.find((pg) => pg.id === id) || null;
 
 const has = (service) => ID_RE.test(String(service || '')) && isCard(`social/${service}.jpg`);
 
@@ -66,4 +82,4 @@ function accentOf(service, accent) {
     return /^#[0-9a-f]{6}$/i.test(accent || '') ? [accent.toLowerCase(), deepen(accent)] : icon.SITES[iconSite(service)].accent;
 }
 
-module.exports = { has, url, isCard, path: cardPath, accentOf, iconSite, DIR };
+module.exports = { has, url, isCard, path: cardPath, accentOf, iconSite, pageOf, PAGES, DIR };
