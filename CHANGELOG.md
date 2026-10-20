@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.7.0 — 2026-10-20
+
+- **The video player** (`player.js`, `player.css`, served at `/shared/`): one look for every `<video>` across the
+  network (the owner asked to "override the default style of video players across all our sites and vods … for a
+  more unified look"). `video[data-ov-player]` gets the network's controls in place of the browser's: a scrubber with
+  the buffered range and the time under the pointer, play, volume, time, captions, speed, picture-in-picture and
+  fullscreen, hidden while playing and idle, with YouTube's keys and touch gestures. Progressive (no script, native
+  controls) and media-element only, so a page's HLS, captions and chapters keep working.
+
 ## 4.6.0 — 2026-10-20
 
 - **Page cards.** A site's big pages get a share card of their own, `social/<service>-<page>.jpg`, drawn like the site

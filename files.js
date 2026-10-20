@@ -33,6 +33,7 @@ const BROWSER = Object.freeze([
     'island.js',            // activity island
     'items.js',             // what people wear (OpenVibe.Inventory name effects, plan T21); draw with items.css
     'tooltip.js',
+    'player.js',            // the network's one video player look: enhances video[data-ov-player]; draw with player.css
     'release-watch.js',     // keeps open tabs on a supported release (ADR-016), loaded after first paint
     'release-update.js',    // plans a new release and applies style/content in place; release-watch loads it on demand
     'web-runtime.js',       // feature loader and route lifecycle (OVWebRuntime), from Live's ov-loader
@@ -43,6 +44,7 @@ const BROWSER = Object.freeze([
 const STYLES = Object.freeze([
     'showcase.css',         // openvibe-shared/showcase's sections + the ring icons (generated: scripts/build-styles.js)
     'items.css',            // Live's name effects for items.js (live.name_effect.css@1)
+    'player.css',           // player.js's controls
 ]);
 const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name));
 

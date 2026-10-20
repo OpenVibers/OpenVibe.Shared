@@ -19,7 +19,7 @@ were reconciled first.
 
 | Kind | Files |
 |---|---|
-| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
+| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `player.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
 | Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `app-icons` (every site's installable app icon set: `has(service)`, `url(service, size, { maskable })`, `isIcon(name)`, `path(name)`; the pre-rendered PNGs are served at `/shared/icons/<service>[-maskable]-<size>.png` and named by the web app manifest `serve.js` serves at `/shared/manifest/<service>.webmanifest`), `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `social` (every site's 1200×630 share card: `url(service)`, served by `serve.js` at `/shared/social/<service>.jpg` and used by `shell.page()` for `og:image` when a page names none), `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js`, `scripts/build-icons.js`, `scripts/build-social-cards.js` (share cards from the Contracts manifests; Chrome + ImageMagick) |
@@ -656,6 +656,24 @@ Re-renders (each openvibe-shared/boost page move re-renders the bar) end the
 ```
 
 Dropdowns under a top link (`children`) are fixed-positioned under their link when they show (hover, keyboard focus, a tap), because the links row scrolls sideways and would clip them.
+
+### The video player (`player.js`, `player.css`)
+
+One look for every `<video>` across the network. Mark the element and load both files; without the script the
+browser's own controls stay:
+
+```html
+<link rel="stylesheet" href="/shared/player.css">
+<video data-ov-player controls src="…" poster="…" preload="metadata" playsinline></video>
+<script src="/shared/player.js" defer></script>
+```
+
+Each `video[data-ov-player]` is wrapped in `.ov-player` with a scrubber (buffered, played, the time under the
+pointer), play, volume (remembered), time, captions (when the video has a captions track), speed, picture-in-picture
+and fullscreen; the controls hide while playing and idle. Keys while the player has focus: Space/K, J/L ±10 s, ←/→ ±5 s,
+↑/↓ volume, M, F, C, 0–9. On touch, a tap shows the controls and a double tap on either side seeks ±10 s. It drives
+only the media element and listens to its events, so a page's own script (HLS, chapters, next-up, view counts) keeps
+working. Colours follow the site's `--accent`. `OpenVibePlayer.enhance(video)` for a video added later.
 
 ### What people wear (`items.js`, `items.css`)
 
