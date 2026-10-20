@@ -9,7 +9,12 @@ const { judge, main, releaseDates, sharedCopies } = require('../scripts/pin-drif
 const tags = ['v0.40.0', 'v0.41.0', 'v0.41.1', 'v0.42.0'];
 assert.strictEqual(judge([0, 42, 0], tags).ok, true);
 assert.strictEqual(judge([0, 41, 1], tags).ok, true, 'one minor behind is allowed');
-assert.match(judge([0, 40, 0], tags).reason, /2 minors behind v0\.42\.0/, 'without dates every release counts as old');
+assert.strictEqual(judge([0, 40, 0], tags).ok, true, 'the newest tag without a date counts as just out (a cached CHANGELOG lags a release)');
+assert.match(judge([0, 40, 0], [...tags, 'v0.43.0']).reason, /3 minors behind v0\.43\.0 \(v0\.42\.0 is over 14 days old\)/, 'the releases before the newest count as old without a date');
+// SDK v0.55.0 on 2026-10-20: the CHANGELOG raw.githubusercontent served had no 0.55.0 entry yet; 0.52-0.54 were days old.
+const sdkTags = ['v0.50.1', 'v0.51.0', 'v0.52.0', 'v0.53.0', 'v0.54.0', 'v0.55.0'];
+const sdkDates = releaseDates('## 0.54.0 (2026-10-20)\n## 0.53.0 (2026-10-20)\n## 0.52.0 (2026-10-20)\n## 0.51.0 (2026-10-17)\n');
+assert.strictEqual(judge([0, 50, 1], sdkTags, { dates: sdkDates, now: Date.parse('2026-10-20T19:33:00Z') }).ok, true, 'a release minutes old does not fail CI');
 const DAY = 86400000, now = Date.parse('2026-10-20T00:00:00Z');
 const dates = releaseDates('## 0.42.0 — 2026-10-15\n...\n## 0.41.1 (2026-09-30)\n## [0.41.0] - 2026-09-20\n');
 assert.strictEqual(dates.get('0.42.0'), Date.parse('2026-10-15T00:00:00Z')); assert.strictEqual(dates.get('0.41.0'), Date.parse('2026-09-20T00:00:00Z'));
