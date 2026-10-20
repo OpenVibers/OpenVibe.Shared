@@ -4,7 +4,7 @@
  *
  *   const seo = require('openvibe-shared/seo');
  *   seo.headTags({ title, description, canonical, image, jsonLd: [seo.jsonLd.website({...})] })
- *   seo.sitemapXml([{ loc, lastmod }])   seo.robotsTxt({ sitemaps })   seo.llmsTxt({...})
+ *   seo.sitemapXml([{ loc, lastmod, videos? }])   seo.robotsTxt({ sitemaps })   seo.llmsTxt({...})
  *
  * Rules it encodes so pages do not have to remember them: one canonical per page, titles cut at
  * 60 characters on a word, descriptions at 160, og/twitter mirrored from the same values, JSON-LD
@@ -144,8 +144,41 @@ const jsonLd = {
     },
 };
 
-/** urls: [{ loc, lastmod?, changefreq?, priority?, alternates?: [{hreflang, href}], images?: [url] }] — absolute http(s) only. */
+const isAbs = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
+
+/**
+ * One <video:video> of a video sitemap (Google's sitemap-video/1.1), or '' when a required part is missing: a thumbnail,
+ * a title, a description and the video itself (content_loc, the file, or player_loc, a page or embed that plays it).
+ * Duration is whole seconds (1–28,800, longer is left out); publication_date an ISO date or date-time.
+ */
+function videoXml(v) {
+    if (!v || !isAbs(v.thumbnail_loc) || !v.title || !v.description || !(isAbs(v.content_loc) || isAbs(v.player_loc))) return '';
+    const parts = [`<video:thumbnail_loc>${xml(v.thumbnail_loc)}</video:thumbnail_loc>`,
+        `<video:title>${xml(String(v.title).slice(0, 100))}</video:title>`,
+        `<video:description>${xml(String(v.description).slice(0, 2048))}</video:description>`];
+    if (isAbs(v.content_loc)) parts.push(`<video:content_loc>${xml(v.content_loc)}</video:content_loc>`);
+    if (isAbs(v.player_loc)) parts.push(`<video:player_loc>${xml(v.player_loc)}</video:player_loc>`);
+    const d = Math.round(Number(v.duration));
+    if (d >= 1 && d <= 28800) parts.push(`<video:duration>${d}</video:duration>`);
+    if (v.view_count != null && Number.isFinite(Number(v.view_count))) parts.push(`<video:view_count>${Math.max(0, Math.floor(Number(v.view_count)))}</video:view_count>`);
+    if (v.publication_date) parts.push(`<video:publication_date>${xml(String(v.publication_date))}</video:publication_date>`);
+    if (v.family_friendly === false) parts.push('<video:family_friendly>no</video:family_friendly>');
+    if (v.uploader) {
+        const info = isAbs(v.uploader_info) ? ` info="${xml(v.uploader_info)}"` : '';
+        parts.push(`<video:uploader${info}>${xml(String(v.uploader).slice(0, 255))}</video:uploader>`);
+    }
+    if (v.live != null) parts.push(`<video:live>${v.live ? 'yes' : 'no'}</video:live>`);
+    return `<video:video>${parts.join('')}</video:video>`;
+}
+
+/**
+ * urls: [{ loc, lastmod?, changefreq?, priority?, alternates?: [{hreflang, href}], images?: [url], videos?: [video] }],
+ * absolute http(s) only. A video is { thumbnail_loc, title, description, content_loc and/or player_loc, duration?,
+ * view_count?, publication_date?, family_friendly?, uploader?, uploader_info?, live? } (see videoXml); the video
+ * namespace is declared only when a video is listed.
+ */
 function sitemapXml(urls = []) {
+    let videos = false;
     const rows = urls.filter((u) => u && /^https?:\/\//i.test(u.loc)).map((u) => {
         const parts = [`<loc>${xml(u.loc)}</loc>`];
         if (u.lastmod) parts.push(`<lastmod>${xml(String(u.lastmod).slice(0, 10))}</lastmod>`);
@@ -153,9 +186,11 @@ function sitemapXml(urls = []) {
         if (u.priority != null) parts.push(`<priority>${Number(u.priority).toFixed(1)}</priority>`);
         for (const a of u.alternates || []) parts.push(`<xhtml:link rel="alternate" hreflang="${xml(a.hreflang)}" href="${xml(a.href)}"/>`);
         for (const img of u.images || []) parts.push(`<image:image><image:loc>${xml(img)}</image:loc></image:image>`);
+        for (const v of u.videos || []) { const x = videoXml(v); if (x) { parts.push(x); videos = true; } }
         return `  <url>${parts.join('')}</url>`;
     });
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${rows.join('\n')}\n</urlset>\n`;
+    const videoNs = videos ? ' xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"' : '';
+    return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"${videoNs}>\n${rows.join('\n')}\n</urlset>\n`;
 }
 
 function sitemapIndexXml(maps = []) {

@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.5.0 — 2026-10-20
+
+- **Video sitemaps.** `seo.sitemapXml` takes `videos` on a URL: `{ thumbnail_loc, title, description, content_loc
+  and/or player_loc, duration?, view_count?, publication_date?, family_friendly?, uploader?, uploader_info?, live? }`,
+  written as Google's `<video:video>` (sitemap-video/1.1). The `xmlns:video` namespace is declared only when a video
+  is listed, so every existing sitemap is byte-for-byte the same. An entry missing a thumbnail, title, description or
+  a file/player is left out (its page stays). Titles are clipped to 100 characters, descriptions to 2,048, and a
+  duration outside 1–28,800 seconds is omitted. First user: openvibe.video, whose recordings and clips had no video
+  sitemap.
+
 ## 4.4.0 — 2026-10-17
 
 - **Every site in the launcher, in groups.** The menu beside the brand showed the first 12 of the network's sites (the
