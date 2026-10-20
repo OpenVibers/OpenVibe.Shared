@@ -71,4 +71,26 @@ assert.deepStrictEqual(seo.jsonLd.imageGallery(['https://example.test/a.jpg', { 
 assert.strictEqual(seo.jsonLd.imageGallery([{ url: 'https://example.test/b.jpg', caption: 'Second' }])[0].caption, 'Second');
 assert.deepStrictEqual(seo.jsonLd.videoObject({ name: 'Demo', thumbnailUrl: 'https://example.test/demo.jpg', uploadDate: '2026-10-01' }), seo.jsonLd.video({ name: 'Demo', thumbnailUrl: 'https://example.test/demo.jpg', uploadDate: '2026-10-01' }));
 
+// Video sitemaps (Google's sitemap-video/1.1): the namespace only when a video is listed; an entry missing a required
+// part (thumbnail, title, description, a file or a player) is left out; text is escaped and clipped.
+const plain = seo.sitemapXml([{ loc: 'https://example.test/' }]);
+assert.ok(!plain.includes('xmlns:video'), 'no video namespace without videos');
+const vmap = seo.sitemapXml([
+    { loc: 'https://example.test/v/1', lastmod: '2026-10-20', videos: [{
+        thumbnail_loc: 'https://cdn.test/1.jpg', title: 'Tom & Jerry <live>', description: 'A "stream" recording', content_loc: 'https://cdn.test/1.mp4',
+        player_loc: 'https://example.test/v/1', duration: 600.4, view_count: 12, publication_date: '2026-10-20T13:26:38.000Z',
+        uploader: 'Ada', uploader_info: 'https://example.test/@ada', live: false }] },
+    { loc: 'https://example.test/v/2', videos: [{ thumbnail_loc: 'https://cdn.test/2.jpg', title: 'No file', description: 'x' }] },
+    { loc: 'https://example.test/v/3', videos: [{ thumbnail_loc: 'https://cdn.test/3.jpg', title: 'Long', description: 'y', player_loc: 'https://example.test/v/3', duration: 40000 }] },
+]);
+assert.ok(vmap.includes('xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"'));
+assert.ok(vmap.includes('<url><loc>https://example.test/v/1</loc><lastmod>2026-10-20</lastmod><video:video><video:thumbnail_loc>https://cdn.test/1.jpg</video:thumbnail_loc>'
+    + '<video:title>Tom &amp; Jerry &lt;live&gt;</video:title><video:description>A &quot;stream&quot; recording</video:description>'
+    + '<video:content_loc>https://cdn.test/1.mp4</video:content_loc><video:player_loc>https://example.test/v/1</video:player_loc>'
+    + '<video:duration>600</video:duration><video:view_count>12</video:view_count><video:publication_date>2026-10-20T13:26:38.000Z</video:publication_date>'
+    + '<video:uploader info="https://example.test/@ada">Ada</video:uploader><video:live>no</video:live></video:video></url>'), vmap);
+assert.ok(vmap.includes('<url><loc>https://example.test/v/2</loc></url>'), 'an entry with no file or player is dropped, the page stays');
+assert.ok(/<loc>https:\/\/example\.test\/v\/3<\/loc><video:video>(?:(?!<video:duration>).)*<\/video:video>/.test(vmap), 'a duration over 8 hours is left out');
+assert.ok(seo.sitemapXml([{ loc: 'https://example.test/', videos: [{ thumbnail_loc: 'https://cdn.test/t.jpg', title: 'T', description: 'D'.repeat(3000), player_loc: 'https://example.test/' }] }]).includes(`${'D'.repeat(2048)}</video:description>`), 'descriptions are clipped to 2,048');
+
 console.log('seo: all checks passed');
