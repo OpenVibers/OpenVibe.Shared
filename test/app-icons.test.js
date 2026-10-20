@@ -20,7 +20,8 @@ function pngSize(buf) {
 
 (async () => {
     // Every service with a share card has its four icons, valid PNGs of the right size.
-    const services = fs.readdirSync(social.DIR).filter((f) => f.endsWith('.jpg')).map((f) => f.slice(0, -4)).sort();
+    // A page card (live-rundown, …) belongs to its site, which has the icons.
+    const services = fs.readdirSync(social.DIR).filter((f) => f.endsWith('.jpg')).map((f) => f.slice(0, -4)).filter((id) => !social.pageOf(id)).sort();
     assert.ok(services.length >= 30, `a card for every site (${services.length})`);
     const variants = new Set();
     for (const service of services) {

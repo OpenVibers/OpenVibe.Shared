@@ -35,6 +35,12 @@ function jpegSize(buf) {
     }
 
     assert.ok(social.has('news') && social.has('openre') && social.has('network'));
+    // Page cards: a site's big pages have their own (scripts/build-social-cards.js PAGES), named <service>-<page>.
+    assert.deepStrictEqual(social.PAGES.map((pg) => pg.id), ['live-rundown', 'live-content', 'live-moments', 'live-chat']);
+    assert.strictEqual(social.pageOf('live-rundown').service, 'live');
+    assert.strictEqual(social.pageOf('live'), null, 'a site card is no page card');
+    for (const pg of social.PAGES) assert.ok(social.has(pg.service), `${pg.id}: its site has a card`);
+    for (const id of ['live-rundown', 'live-content', 'live-moments', 'live-chat']) assert.match(social.url(id), new RegExp(`^/shared/social/${id}\\.jpg\\?v=[0-9a-f]{12}$`), id);
     assert.ok(!social.has('nope') && !social.has('../news') && !social.has('') && !social.has(null));
     assert.match(social.url('news'), /^\/shared\/social\/news\.jpg\?v=[0-9a-f]{12}$/);
     assert.match(social.url('news', 'https://cdn.example/s/'), /^https:\/\/cdn\.example\/s\/social\/news\.jpg\?v=/);

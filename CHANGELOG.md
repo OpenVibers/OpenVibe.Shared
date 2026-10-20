@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.6.0 — 2026-10-20
+
+- **Page cards.** A site's big pages get a share card of their own, `social/<service>-<page>.jpg`, drawn like the site
+  card with the page's name as the headline, the site's brand beside the mark and the page's address in the pill:
+  `live-rundown` (The Rundown), `live-content`, `live-moments` (AI Moments) and `live-chat`. They are listed in
+  `scripts/build-social-cards.js` (`PAGES`); `social.url('live-rundown')` and `/shared/social/live-rundown.jpg` work
+  like a site card. `--only live` renders a site with its page cards.
+- **Live's card re-rendered** from Contracts 0.205.4: "Go live from your browser", with no OBS, no downloads and no
+  follower minimum underneath (it said "Streams, clips and chat").
+
 ## 4.5.0 — 2026-10-20
 
 - **Video sitemaps.** `seo.sitemapXml` takes `videos` on a URL: `{ thumbnail_loc, title, description, content_loc
