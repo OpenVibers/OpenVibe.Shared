@@ -933,9 +933,35 @@ function strongPair(accent) {
     for (let t = 0; t <= 1 && contrast(ink, bg) < 4.5; t += 0.02) bg = accent.map((c, i) => c + (toward[i] - c) * t);
     return [toHex(bg), toHex(ink)];
 }
+/**
+ * Text tokens read at 4.5:1 (WCAG AA for normal text) on every surface a theme defines. Sites write body text,
+ * captions and links in --text-secondary, --text-muted, --accent and --accent-light on --bg-primary, --bg-secondary,
+ * --bg-tertiary, --bg-card, --bg-input and --bg-hover; in the light themes --accent-light is a pale tint (snow's
+ * #38bdf8 on white is 2.1:1) and --text-muted sat at 4.1 to 4.4 on the secondary surfaces, so axe failed 50 to 155
+ * nodes on every site's home in every light theme (2026-10-22). A token below the floor moves toward black (light
+ * themes) or white (dark ones) just far enough; a token that already reads is left exactly as the theme set it.
+ */
+// In the dark themes the accents already read on their surfaces and are the theme's brand colour (the default Vibe
+// blue is #3b82f6), so only the two text tokens are held to the floor there.
+const TEXT_TOKENS = { light: ['--text-secondary', '--text-muted', '--accent', '--accent-light'], dark: ['--text-secondary', '--text-muted'] };
+const SURFACES = ['--bg-primary', '--bg-secondary', '--bg-tertiary', '--bg-card', '--bg-input', '--bg-hover'];
+function readableText(color, surfaces, mode, min = 4.5) {
+    const c0 = hexToRgb(color);
+    if (!c0 || !surfaces.length) return color;
+    const worst = (c) => Math.min(...surfaces.map((b) => contrast(c, b)));
+    if (worst(c0) >= min) return color;
+    const toward = mode === 'light' ? [0, 0, 0] : [255, 255, 255];
+    let c = c0;
+    // Measured on the rounded colour the theme will carry, so the hex itself meets the floor.
+    for (let t = 0.02; t <= 1 && worst(c) < min; t += 0.02) c = hexToRgb(toHex(c0.map((v, i) => v + (toward[i] - v) * t)));
+    return toHex(c);
+}
+
 function deriveTokens(vars, mode) {
     const out = { ...vars };
-    const accent = hexToRgb(vars['--accent']);
+    const surfaces = SURFACES.map((k) => hexToRgb(vars[k])).filter(Boolean);
+    for (const k of TEXT_TOKENS[mode === 'light' ? 'light' : 'dark']) if (out[k]) out[k] = readableText(out[k], surfaces, mode);
+    const accent = hexToRgb(out['--accent']);
     if (accent) {
         if (!out['--accent-strong'] || !out['--on-accent-strong']) {
             const [bg, ink] = strongPair(accent);
@@ -967,6 +993,9 @@ module.exports = {
     DEFAULT_THEME,
     DEFAULT_VARS,
     deriveTokens,
+    readableText,
+    TEXT_TOKENS,
+    SURFACES,
     hexToRgb,
     contrast,
 };
