@@ -4,6 +4,27 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.8.0 — 2026-10-22
+
+- **Text reads at 4.5:1 in every light theme** (WCAG AA; plan 2026-10-22, track H4). axe failed 50 to 155 contrast
+  checks on every site's home in each of the 12 light themes, through three tokens:
+  - `--accent-light` was a pale tint used as link and eyebrow text (snow's `#38bdf8` on white is 2.1:1);
+  - `--text-muted` sat at 4.1 to 4.4 on the secondary surfaces;
+  - `--accent` sat just under the floor in a few light themes.
+
+  `builtin-themes.js` `deriveTokens` now moves a text token below 4.5:1 on any of the theme's surfaces (`--bg-primary`,
+  `-secondary`, `-tertiary`, `-card`, `-input`, `-hover`) toward black, just far enough, measured on the rounded hex.
+  - Light themes: `--text-secondary`, `--text-muted`, `--accent` and `--accent-light`.
+  - Dark themes: the two text tokens only; their accents are the theme's brand colour and already read, so Vibe's
+    `#3b82f6` is unchanged.
+  - A token that already reads is left exactly as set.
+
+  `theme-loader.js` is regenerated. `readableText`, `TEXT_TOKENS` and `SURFACES` are exported. Measured on production
+  pages with the new values applied: snow on openvibe.network went from 50 failures to 0 apart from site-specific
+  colours, Food from 14 to 0.
+- **"Recently shipped"** (`shipped.js`): the site chip's label uses `--text-primary` on its accent tint (the tint cost
+  `--accent-light` about 0.4 of contrast).
+
 ## 4.7.0 — 2026-10-20
 
 - **The video player** (`player.js`, `player.css`, served at `/shared/`): one look for every `<video>` across the

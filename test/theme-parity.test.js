@@ -46,4 +46,19 @@ for (const t of BUILTIN_THEMES) {
     assert.ok(contrast(hexToRgb(v['--on-accent']), hexToRgb(v['--accent'])) >= 3, `${t.id}: --on-accent does not read on --accent`);
     assert.strictEqual(v['--color-scheme'], t.mode === 'light' ? 'light' : 'dark');
 }
+// 6. Text reads at 4.5:1 (WCAG AA) on every surface: muted and secondary text in every theme, and in the light themes
+//    the accents too, which sites use for links and eyebrows (axe failed 50-155 nodes per home in light themes before
+//    2026-10-22). Dark themes keep their accents exactly as designed.
+const { TEXT_TOKENS, SURFACES } = require('../builtin-themes');
+for (const t of BUILTIN_THEMES) {
+    const v = t.variables;
+    const surfaces = SURFACES.map((k) => hexToRgb(v[k])).filter(Boolean);
+    for (const k of TEXT_TOKENS[t.mode === 'light' ? 'light' : 'dark']) {
+        if (!v[k]) continue;
+        const worst = Math.min(...surfaces.map((b) => contrast(hexToRgb(v[k]), b)));
+        assert.ok(worst >= 4.5, `${t.id}: ${k} ${v[k]} reads at ${worst.toFixed(2)}:1 on its darkest/lightest surface`);
+    }
+}
+assert.strictEqual(BUILTIN_THEMES.find((t) => t.id === 'vibe').variables['--accent'], '#3b82f6', 'the default blue is untouched');
+
 console.log('theme parity: all checks passed');
