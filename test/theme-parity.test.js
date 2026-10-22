@@ -59,6 +59,21 @@ for (const t of BUILTIN_THEMES) {
         assert.ok(worst >= 4.5, `${t.id}: ${k} ${v[k]} reads at ${worst.toFixed(2)}:1 on its darkest/lightest surface`);
     }
 }
+// 7. Each status colour has a -text twin that reads at 4.5:1 on every surface.
+const { STATUS_TOKENS } = require('../builtin-themes');
+for (const t of BUILTIN_THEMES) {
+    // What a page carries: the default theme's values under the theme's own (theme-loader merges them that way).
+    const v = { ...DEFAULT_VARS, ...t.variables };
+    const surfaces = SURFACES.map((k) => hexToRgb(t.variables[k] || v[k])).filter(Boolean);
+    for (const k of STATUS_TOKENS) {
+        if (!v[k]) continue;
+        assert.ok(v[`${k}-text`], `${t.id}: ${k} has no -text twin`);
+        const worst = Math.min(...surfaces.map((b) => contrast(hexToRgb(v[`${k}-text`]), b)));
+        assert.ok(worst >= 4.5, `${t.id}: ${k}-text ${v[`${k}-text`]} reads at ${worst.toFixed(2)}:1`);
+    }
+}
+const snow = BUILTIN_THEMES.find((t) => t.id === 'snow');
+assert.ok(snow && snow.variables['--success-text'] && snow.variables['--success-text'] !== DEFAULT_VARS['--success'], 'snow carries Vibe\'s green, too light for text there, so its twin is darker');
 assert.strictEqual(BUILTIN_THEMES.find((t) => t.id === 'vibe').variables['--accent'], '#3b82f6', 'the default blue is untouched');
 
 console.log('theme parity: all checks passed');

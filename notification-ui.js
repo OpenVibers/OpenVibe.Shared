@@ -129,7 +129,7 @@
             .openvibe-notif-item .meta .tag { padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary, #2a2a38); font-weight: 500; }
             .openvibe-notif-item .dismiss { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--text-muted, #707080); cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 4px; opacity: 0; transition: opacity .15s; }
             .openvibe-notif-item:hover .dismiss { opacity: 1; }
-            .openvibe-notif-item .dismiss:hover { color: var(--live-red, #e74c3c); background: var(--bg-tertiary, #2a2a38); }
+            .openvibe-notif-item .dismiss:hover { color: var(--live-red-text, var(--live-red, #e74c3c)); background: var(--bg-tertiary, #2a2a38); }
             .openvibe-nv-empty { text-align: center; padding: 44px 24px; color: var(--text-muted, #707080); font-size: 13px; }
             .openvibe-nv-empty .icon { font-size: 34px; margin-bottom: 8px; display: block; opacity: .5; }
             .openvibe-nv-more { display: flex; justify-content: center; padding: 10px; }

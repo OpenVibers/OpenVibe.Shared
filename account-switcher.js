@@ -385,7 +385,7 @@
             .openvibe-switcher-item .info .name { font-size: 14px; font-weight: 600; color: var(--text-primary, #e0e0e0); }
             .openvibe-switcher-item .info .sub { font-size: 11px; color: var(--text-muted, #707080); }
             .openvibe-switcher-item .remove {
-                opacity: 0; font-size: 14px; color: var(--live-red, #e74c3c);
+                opacity: 0; font-size: 14px; color: var(--live-red-text, var(--live-red, #e74c3c));
                 cursor: pointer; padding: 4px 6px; border-radius: 4px;
                 transition: opacity .15s, background .15s;
             }
@@ -415,7 +415,7 @@
             }
             .openvibe-switcher-actions .btn-add:hover { background: var(--accent-dark, #1d4ed8); }
             .openvibe-switcher-actions .btn-signout {
-                background: rgba(231,76,60,0.1); color: var(--live-red, #e74c3c);
+                background: rgba(231,76,60,0.1); color: var(--live-red-text, var(--live-red, #e74c3c));
             }
             .openvibe-switcher-actions .btn-signout:hover { background: rgba(231,76,60,0.2); }
         `;

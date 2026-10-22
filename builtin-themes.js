@@ -945,6 +945,15 @@ function strongPair(accent) {
 // blue is #3b82f6), so only the two text tokens are held to the floor there.
 const TEXT_TOKENS = { light: ['--text-secondary', '--text-muted', '--accent', '--accent-light'], dark: ['--text-secondary', '--text-muted'] };
 const SURFACES = ['--bg-primary', '--bg-secondary', '--bg-tertiary', '--bg-card', '--bg-input', '--bg-hover'];
+// The status colours stay exactly as each theme set them: they are backgrounds too (a live badge under white text, an
+// amber strip under dark text), and darkening them would spoil those. Each gets a `-text` twin held to the text floor
+// on every surface, for status words, counts and badges written in the colour (axe in snow, 2026-10-22: --success on
+// white read at 2.3:1). CSS writes var(--success-text, var(--success)).
+const STATUS_TOKENS = ['--success', '--warning', '--danger', '--error', '--info', '--live-red'];
+// A theme that sets no status colours carries the default theme's (theme-loader merges DEFAULT_VARS first), so its twin
+// is derived from those, on its own surfaces: snow inherits Vibe's #22c55e and needs a darker green for text.
+const _vibeRaw = (RAW_BUILTIN_THEMES.find((t) => t.slug === 'vibe') || RAW_BUILTIN_THEMES[0]).variables || {};
+const STATUS_DEFAULTS = Object.fromEntries(STATUS_TOKENS.filter((k) => _vibeRaw[k]).map((k) => [k, _vibeRaw[k]]));
 function readableText(color, surfaces, mode, min = 4.5) {
     const c0 = hexToRgb(color);
     if (!c0 || !surfaces.length) return color;
@@ -961,6 +970,10 @@ function deriveTokens(vars, mode) {
     const out = { ...vars };
     const surfaces = SURFACES.map((k) => hexToRgb(vars[k])).filter(Boolean);
     for (const k of TEXT_TOKENS[mode === 'light' ? 'light' : 'dark']) if (out[k]) out[k] = readableText(out[k], surfaces, mode);
+    for (const k of STATUS_TOKENS) {
+        const c = out[k] || STATUS_DEFAULTS[k];
+        if (c && !out[`${k}-text`]) out[`${k}-text`] = readableText(c, surfaces, mode);
+    }
     const accent = hexToRgb(out['--accent']);
     if (accent) {
         if (!out['--accent-strong'] || !out['--on-accent-strong']) {
@@ -995,6 +1008,7 @@ module.exports = {
     deriveTokens,
     readableText,
     TEXT_TOKENS,
+    STATUS_TOKENS,
     SURFACES,
     hexToRgb,
     contrast,

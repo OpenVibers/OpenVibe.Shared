@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.9.0 — 2026-10-23
+
+- **Status colours that read as text** (plan 2026-10-22, track H4). After 4.8.0, axe in the light themes still failed
+  where sites write a status colour as text: `--success` on white reads at 2.3:1 (Games' achievement counts, Work's
+  badges, Food's recall classes). The status colours themselves stay exactly as each theme set them, because they are
+  backgrounds too (a live badge under white text, an amber strip under dark text) and darkening them would spoil those.
+  Instead each gets a `-text` twin held to 4.5:1 on every surface: `--success-text`, `--warning-text`,
+  `--danger-text`, `--error-text`, `--info-text` and `--live-red-text`. A light theme that sets no status colours
+  carries the default theme's (theme-loader merges them first), so its twins are derived from those on its own
+  surfaces: snow's text green is `#167e3c`. Write `color: var(--success-text, var(--success))`; the navbar, user card,
+  notifications and account switcher do so for their red "danger" words. `STATUS_TOKENS` is exported.
+
 ## 4.8.0 — 2026-10-22
 
 - **Text reads at 4.5:1 in every light theme** (WCAG AA; plan 2026-10-22, track H4). axe failed 50 to 155 contrast

@@ -274,7 +274,7 @@
                 transition: background .12s;
             }
             .openvibe-navbar-dropdown-menu a:hover, .openvibe-navbar-dropdown-menu button:hover { background: var(--bg-hover, #2f2f3d); }
-            .openvibe-navbar-dropdown-menu .danger { color: var(--live-red, #e74c3c); }
+            .openvibe-navbar-dropdown-menu .danger { color: var(--live-red-text, var(--live-red, #e74c3c)); }
             .openvibe-navbar-dropdown-menu .icon { width: 18px; text-align: center; font-size: 14px; }
 
             .openvibe-navbar .openvibe-network-badge {
