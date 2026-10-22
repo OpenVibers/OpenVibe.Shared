@@ -4,7 +4,7 @@
   "code": true,
   "wave": "W2",
   "package": "openvibe-shared",
-  "version": "4.0.3",
+  "version": "4.7.0",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
@@ -12,14 +12,19 @@
   "sdk": "openvibe-sdk v0.60.0",
   "features": [
     "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
-    "themes, design tokens and icons",
+    "the launcher beside the brand lists every site of the network, in groups; Ask Actor and the Vibes chip in the account menu",
+    "themes, design tokens, icons and ring icons",
     "release manifest, in-place updates in open tabs and update metrics",
     "web runtime (feature loader)",
-    "page shell: openvibe-shared/shell page(), the shared page shell every web product renders through",
+    "page shell: openvibe-shared/shell page(), the shared page shell every web product renders through, with an installable web-app manifest and icons per site",
+    "showcase sections for product home pages (openvibe-shared/showcase)",
+    "share cards for every site and for its big pages (openvibe-shared/social)",
+    "the shared video player (player.js, player.css): one look for every <video>",
+    "items.js: what people wear from OpenVibe.Inventory (name effects, hats, particles, community badges), drawn the same on every site",
     "shipped pill, recent list and /updates log",
-    "server helpers: ready, metrics, trace, egress, config, analytics, legal, SEO, frame SSR",
+    "server helpers: ready, metrics, trace, egress, config, analytics, legal, SEO (sitemaps with video entries, IndexNow in requests of 100 URLs), frame SSR",
     "browser harness and perf budgets for tests",
     "a CONFIRMATION_REQUESTED notification type: an agent owner is told when a sensitive-capability confirmation awaits them"
   ],
-  "updated": "2026-10-21"
+  "updated": "2026-10-22"
 }
