@@ -93,11 +93,12 @@ const subjectOf = (i) => `usr_01JZ${String(i).padStart(22, '0')}`;
     assert.strictEqual(await items.decorate(d2), 1);
     assert.deepStrictEqual([...d2.getElementById('x').classList], []);
 
-    // The stylesheet: Live's 13 name effects, an inline-block wrapper, and reduced motion.
+    // The stylesheet: Live's 14 name effects (13 and the one-of-a-kind Josh Vegas), an inline-block wrapper, and reduced motion.
     const css = fs.readFileSync(path.join(__dirname, '..', 'items.css'), 'utf8');
     const fx = [...css.matchAll(/^\.(name-fx-[a-z]+) \{/gm)].map((m) => m[1]);
-    assert.strictEqual(fx.length, 13, `13 name effects (${fx.join(', ')})`);
-    assert.ok(fx.includes('name-fx-rainbow') && fx.includes('name-fx-divine'));
+    assert.strictEqual(fx.length, 14, `14 name effects (${fx.join(', ')})`);
+    assert.ok(fx.includes('name-fx-rainbow') && fx.includes('name-fx-divine') && fx.includes('name-fx-vegas'));
+    assert.match(css, /html\[data-ov-motion=reduced\] \.name-fx-vegas::after \{ animation: none !important; \}/, 'the Calm setting stops the reels');
     assert.match(css, /\.ov-fx \{ display: inline-block; \}/);
     assert.match(css, /prefers-reduced-motion: reduce[\s\S]*animation: none !important/);
     assert.match(css, /\.ov-hat-pulse \{ animation: ovHatPulse/);
