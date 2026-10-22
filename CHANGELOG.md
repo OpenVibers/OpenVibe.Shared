@@ -16,8 +16,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   surfaces: snow's text green is `#167e3c`. Write `color: var(--success-text, var(--success))`; the navbar, user card,
   notifications and account switcher do so for their red "danger" words. `STATUS_TOKENS` is exported.
 - **`name-fx-vegas` in items.css**: the one-of-a-kind "Josh Vegas" name effect (OpenVibe.Inventory `fx_vegas`, issued by
-  Live), drawn as Live draws it: casino-gold text under marquee lights between two slot reels that spin and land on 7.
-  The reels are pseudo-elements, so the Calm setting and reduced motion stop them explicitly.
+  Live), drawn as Live draws it: casino-gold text under marquee lights between two slot reels that spin and land on 7,
+  and the name pops like a jackpot as they do. The reels are pseudo-elements, so the Calm setting and reduced motion
+  stop them explicitly. Its set's particles (`px-vegas`: suits, dice and coins) are casino gold.
 
 ## 4.8.0 — 2026-10-22
 
