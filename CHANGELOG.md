@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.10.0 — 2026-10-24
+
+- **items.css draws `name-fx-twofat`, "2fat Bass Drop"**, the one-of-a-kind name effect the owner asked for 2fat on
+  2026-10-23: the name thumps on the beat in club lights, with an equalizer before it and a speaker after it. Its
+  particles (`px-twofat`) are notes, a CD and a tape in club pink. Like Josh Vegas, the Calm setting
+  (`data-ov-motion=reduced`) and the system's reduced motion stop it, so it shows the same on openvibe.chat, Network's
+  pages and every site drawing items as on Live (Live#318, OpenVibe.Inventory#71).
+
 ## 4.9.0 — 2026-10-23
 
 - **Status colours that read as text** (plan 2026-10-22, track H4). After 4.8.0, axe in the light themes still failed
