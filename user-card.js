@@ -70,7 +70,7 @@
                 transition: background .12s;
             }
             .openvibe-usercard-actions button:hover { background: var(--bg-hover, #2f2f3d); }
-            .openvibe-usercard-actions button.danger { color: var(--live-red, #e74c3c); }
+            .openvibe-usercard-actions button.danger { color: var(--live-red-text, var(--live-red, #e74c3c)); }
             .openvibe-usercard-actions button .icon { font-size: 14px; width: 20px; text-align: center; }
 
             /* Name effects (CSS classes applied to usernames) */
