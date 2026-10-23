@@ -319,22 +319,33 @@ class AnalyticsTrackerPg extends AnalyticsTrackerCore {
             FROM analytics_daily WHERE service = $1 AND date >= $2`, [svc, dayOf(nowMs - rangeMs)]);
         const realtime = await get(`SELECT COUNT(*) AS requests, COUNT(DISTINCT session_id) AS visitors, COUNT(*) FILTER (WHERE is_bot = 1) AS bots
             FROM analytics_events WHERE service = $1 AND created_at >= $2`, [svc, sqlTime(nowMs - 300000)]);
-        const topPages = await all(`SELECT path, COUNT(*) AS hits, COUNT(DISTINCT session_id) AS visitors FROM analytics_events
-            WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY path ORDER BY hits DESC LIMIT 20`, human);
+        // Each raw read below scans the range of analytics_events, so related ones share a scan (9 instead of 17: Live's
+        // 30 days of 1.3M rows took several seconds, plan J3). A grouped read is split here, and a distinct count per
+        // group is two GROUP BYs (each session once per group, then counted), which hash instead of sorting. The
+        // numbers and shapes are the ones the separate reads gave.
+        const desc = (key) => (x, y) => y[key] - x[key];
+        const tally = (rows, col, n, out = 'cnt') => {
+            const m = new Map();
+            for (const r of rows) m.set(r[col], (m.get(r[col]) || 0) + r[n]);
+            return [...m].map(([k, v]) => ({ [col]: k, [out]: v })).sort(desc(out));
+        };
+        const topPages = await all(`SELECT path, SUM(c)::bigint AS hits, COUNT(session_id) AS visitors FROM (
+                SELECT path, session_id, COUNT(*) AS c FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0
+                GROUP BY path, session_id) s
+            GROUP BY path ORDER BY hits DESC LIMIT 20`, human);
         const topReferers = await all(`SELECT referer, COUNT(*) AS hits FROM analytics_events WHERE service = $1 AND created_at >= $2
             AND referer IS NOT NULL AND referer != '' AND is_bot = 0 GROUP BY referer ORDER BY hits DESC LIMIT 15`, human);
-        const botBreakdown = await all(`SELECT bot_type, COUNT(*) AS hits FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 1
-            GROUP BY bot_type ORDER BY hits DESC LIMIT 15`, human);
-        const statusCodes = await all(`SELECT CASE WHEN status_code >= 200 AND status_code < 300 THEN '2xx' WHEN status_code >= 300 AND status_code < 400 THEN '3xx'
+        const statusRows = await all(`SELECT is_bot, bot_type, CASE WHEN status_code >= 200 AND status_code < 300 THEN '2xx' WHEN status_code >= 300 AND status_code < 400 THEN '3xx'
                 WHEN status_code >= 400 AND status_code < 500 THEN '4xx' WHEN status_code >= 500 THEN '5xx' ELSE 'other' END AS group_code, COUNT(*) AS cnt
-            FROM analytics_events WHERE service = $1 AND created_at >= $2 GROUP BY group_code ORDER BY cnt DESC`, human);
-        const breakdown = (col) => all(`SELECT ${col}, COUNT(*) AS cnt FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0
-            GROUP BY ${col} ORDER BY cnt DESC`, human);
-        const deviceBreakdown = await breakdown('device_type');
-        const browserBreakdown = await breakdown('browser');
-        const osBreakdown = await breakdown('os');
-        const countryBreakdown = await all(`SELECT country, COUNT(*) AS cnt FROM analytics_events WHERE service = $1 AND created_at >= $2
-            AND country IS NOT NULL AND is_bot = 0 GROUP BY country ORDER BY cnt DESC LIMIT 20`, human);
+            FROM analytics_events WHERE service = $1 AND created_at >= $2 GROUP BY 1, 2, 3`, human);
+        const botBreakdown = tally(statusRows.filter((r) => r.is_bot === 1), 'bot_type', 'cnt', 'hits').slice(0, 15);
+        const statusCodes = tally(statusRows, 'group_code', 'cnt');
+        const dims = await all(`SELECT device_type, browser, os, country, COUNT(*) AS cnt FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0
+            GROUP BY 1, 2, 3, 4`, human);
+        const deviceBreakdown = tally(dims, 'device_type', 'cnt');
+        const browserBreakdown = tally(dims, 'browser', 'cnt');
+        const osBreakdown = tally(dims, 'os', 'cnt');
+        const countryBreakdown = tally(dims.filter((r) => r.country != null), 'country', 'cnt').slice(0, 20);
         const responsePercentiles = await safe(async () => {
             const r = await get(`SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY response_time_ms) AS p50, percentile_disc(0.9) WITHIN GROUP (ORDER BY response_time_ms) AS p90,
                     percentile_disc(0.95) WITHIN GROUP (ORDER BY response_time_ms) AS p95, percentile_disc(0.99) WITHIN GROUP (ORDER BY response_time_ms) AS p99,
@@ -342,36 +353,46 @@ class AnalyticsTrackerPg extends AnalyticsTrackerCore {
                 FROM analytics_events WHERE service = $1 AND created_at >= $2 AND response_time_ms IS NOT NULL AND is_bot = 0`, human);
             return r && r.max != null ? r : {};
         }, {});
-        const bandwidth = await safe(async () => {
-            const bw = await get(`SELECT COUNT(*) AS total_requests, COUNT(*) FILTER (WHERE event_type = 'pageview') AS page_requests,
-                    COUNT(*) FILTER (WHERE event_type = 'api_call') AS api_requests, SUM(CASE WHEN event_type = 'pageview' THEN 50000 ELSE 2000 END)::bigint AS estimated_bytes
-                FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0`, human);
-            return bw && { total_requests: bw.total_requests || 0, page_requests: bw.page_requests || 0, api_requests: bw.api_requests || 0, estimated_bytes: bw.estimated_bytes || 0 };
-        }, {});
-        const authBreakdown = await safe(() => get(`SELECT COUNT(*) FILTER (WHERE authenticated = 1) AS authenticated, COUNT(*) FILTER (WHERE authenticated = 0) AS anonymous,
-                COUNT(DISTINCT session_id) FILTER (WHERE authenticated = 1) AS unique_authenticated_users, COUNT(DISTINCT session_id) FILTER (WHERE session_id IS NOT NULL) AS total_sessions
-            FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0`, human), {});
+        // Requests, signed-in share and sessions: one scan (a session can be anonymous and then signed in, so the
+        // session total counts distinct ids over the per-session rows).
+        const totals = await safe(() => get(`SELECT SUM(c)::bigint AS total_requests, SUM(pv)::bigint AS page_requests, SUM(api)::bigint AS api_requests,
+                SUM(pv * 50000 + (c - pv) * 2000)::bigint AS estimated_bytes,
+                COALESCE(SUM(c) FILTER (WHERE a = 1), 0)::bigint AS authenticated, COALESCE(SUM(c) FILTER (WHERE a = 0), 0)::bigint AS anonymous,
+                COUNT(session_id) FILTER (WHERE a = 1) AS unique_authenticated_users, COUNT(DISTINCT session_id) AS total_sessions
+            FROM (SELECT authenticated AS a, session_id, COUNT(*) AS c, COUNT(*) FILTER (WHERE event_type = 'pageview') AS pv,
+                    COUNT(*) FILTER (WHERE event_type = 'api_call') AS api
+                FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY 1, 2) s`, human), null);
+        const bandwidth = totals ? { total_requests: totals.total_requests || 0, page_requests: totals.page_requests || 0, api_requests: totals.api_requests || 0,
+            estimated_bytes: totals.estimated_bytes || 0 } : {};
+        const authBreakdown = totals ? { authenticated: totals.authenticated, anonymous: totals.anonymous,
+            unique_authenticated_users: totals.unique_authenticated_users, total_sessions: totals.total_sessions } : {};
+        const sessionCount = totals ? totals.total_sessions || 0 : 0;
         const errorTrend = await safe(() => (isSubDay
             ? all(`SELECT ${bucketExpr} AS bucket, COUNT(*) AS total, COUNT(*) FILTER (WHERE status_code >= 400) AS errors,
                     COUNT(*) FILTER (WHERE status_code >= 500) AS server_errors
                 FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY bucket ORDER BY bucket ASC`, human)
             : all('SELECT hour AS bucket, (pageviews + api_calls) AS total, error_count AS errors FROM analytics_hourly WHERE service = $1 AND hour >= $2 ORDER BY hour ASC', [svc, hourlyCutoff])), []);
-        const peakHours = await safe(() => all(`SELECT substr(created_at, 12, 2)::int AS hour_of_day, COUNT(*) AS hits, COUNT(DISTINCT session_id) AS visitors,
-                CAST(AVG(response_time_ms) AS integer) AS avg_ms
-            FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY hour_of_day ORDER BY hour_of_day ASC`, human), []);
-        const topApiEndpoints = await safe(() => all(`SELECT path, method, COUNT(*) AS hits, CAST(AVG(response_time_ms) AS integer) AS avg_ms,
-                COUNT(*) FILTER (WHERE status_code >= 400) AS errors
-            FROM analytics_events WHERE service = $1 AND created_at >= $2 AND event_type = 'api_call' AND is_bot = 0 GROUP BY path, method ORDER BY hits DESC LIMIT 20`, human), []);
-        const sessionCount = await safe(() => this.db.value(`SELECT COUNT(DISTINCT session_id) FROM analytics_events WHERE service = $1 AND created_at >= $2
-            AND session_id IS NOT NULL AND is_bot = 0`, human), 0);
+        const peakHours = await safe(() => all(`SELECT h AS hour_of_day, SUM(c)::bigint AS hits, COUNT(session_id) AS visitors,
+                CAST(SUM(rt)::numeric / NULLIF(SUM(rn), 0) AS integer) AS avg_ms
+            FROM (SELECT substr(created_at, 12, 2)::int AS h, session_id, COUNT(*) AS c, SUM(response_time_ms) AS rt, COUNT(response_time_ms) AS rn
+                FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY 1, 2) s
+            GROUP BY h ORDER BY h ASC`, human), []);
+        // Endpoints: the busiest API calls and the slowest paths (3+ timed requests) from one grouped read.
+        const endpoints = await safe(() => all(`SELECT path, method, COUNT(*) FILTER (WHERE event_type = 'api_call') AS api_hits,
+                CAST(AVG(response_time_ms) FILTER (WHERE event_type = 'api_call') AS integer) AS api_avg_ms,
+                COUNT(*) FILTER (WHERE event_type = 'api_call' AND status_code >= 400) AS api_errors,
+                COUNT(response_time_ms) AS timed, CAST(AVG(response_time_ms) AS integer) AS avg_ms, MAX(response_time_ms) AS max_ms
+            FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY path, method`, human), []);
+        const topApiEndpoints = endpoints.filter((r) => r.api_hits > 0)
+            .map((r) => ({ path: r.path, method: r.method, hits: r.api_hits, avg_ms: r.api_avg_ms, errors: r.api_errors })).sort(desc('hits')).slice(0, 20);
         const visitorTypes = { new_visitors: null, returning_visitors: null, not_collected: 'ADR-021' };
-        const slowestEndpoints = await safe(() => all(`SELECT path, method, COUNT(*) AS hits, CAST(AVG(response_time_ms) AS integer) AS avg_ms, MAX(response_time_ms) AS max_ms
-            FROM analytics_events WHERE service = $1 AND created_at >= $2 AND response_time_ms IS NOT NULL AND is_bot = 0
-            GROUP BY path, method HAVING COUNT(*) >= 3 ORDER BY avg_ms DESC LIMIT 10`, human), []);
-        const authTrend = await safe(() => all(`SELECT ${isSubDay ? bucketExpr : 'substr(created_at, 1, 10)'} AS bucket,
-                COUNT(DISTINCT session_id) FILTER (WHERE authenticated = 1) AS auth_visitors, COUNT(DISTINCT session_id) FILTER (WHERE authenticated = 0) AS anon_visitors,
-                COUNT(*) FILTER (WHERE authenticated = 1) AS auth_hits, COUNT(*) FILTER (WHERE authenticated = 0) AS anon_hits
-            FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY bucket ORDER BY bucket ASC`, human), []);
+        const slowestEndpoints = endpoints.filter((r) => r.timed >= 3)
+            .map((r) => ({ path: r.path, method: r.method, hits: r.timed, avg_ms: r.avg_ms, max_ms: r.max_ms })).sort(desc('avg_ms')).slice(0, 10);
+        const authTrend = await safe(() => all(`SELECT b AS bucket, COUNT(session_id) FILTER (WHERE a = 1) AS auth_visitors, COUNT(session_id) FILTER (WHERE a = 0) AS anon_visitors,
+                COALESCE(SUM(c) FILTER (WHERE a = 1), 0)::bigint AS auth_hits, COALESCE(SUM(c) FILTER (WHERE a = 0), 0)::bigint AS anon_hits
+            FROM (SELECT ${isSubDay ? bucketExpr : 'substr(created_at, 1, 10)'} AS b, authenticated AS a, session_id, COUNT(*) AS c
+                FROM analytics_events WHERE service = $1 AND created_at >= $2 AND is_bot = 0 GROUP BY 1, 2, 3) s
+            GROUP BY b ORDER BY b ASC`, human), []);
         return {
             service: svc, period_days: hours ? hours / 24 : days, period_hours: hours || null, summary: summary || {}, realtime: realtime || {},
             daily, hourly, timeBuckets, topPages, topReferers, botBreakdown, statusCodes, deviceBreakdown, browserBreakdown, osBreakdown,

@@ -14,6 +14,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **Shared's own status text uses the 4.9.0 twins**: the showcase's "yes" cells and the island's action buttons
   (`--ovis-t`: `--success-text`/`--danger-text` by state, the accent otherwise; the status colour stays their fill and
   tint). Shared now writes no status colour as text without its twin (H4's last uses; the 23 sites moved on 10-22/23).
+- **`analytics/pg` `getStats` reads the raw range 9 times instead of 17** (plan J3). On Live's production data
+  (1.3M rows), 30 days took 8 to 12 s and now 2.8 s; 7 days 3.1 s → 1.5 s. Related reads share one grouped scan,
+  split in JS: status codes and bot types; device, browser, OS and country; the busiest API calls and the slowest paths;
+  and requests, the signed-in split and sessions. Each distinct count per group (visitors per page, per hour of the day,
+  per day signed in or not) groups by session first instead of sorting for `COUNT(DISTINCT)`. The numbers and response
+  shapes are unchanged: the old and new reads matched on production inside one snapshot, and
+  `test/analytics-pg.test.js` checks each list on known rows.
 
 ## 4.9.0 — 2026-10-23
 
