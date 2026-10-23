@@ -861,5 +861,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 
 <!-- versions:start -->
 - openvibe-contracts: v0.209.0
-- openvibe-sdk: v0.60.0
+- openvibe-sdk: v0.62.0
 <!-- versions:end -->
