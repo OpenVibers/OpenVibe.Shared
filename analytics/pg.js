@@ -90,7 +90,7 @@ class AnalyticsTrackerPg extends AnalyticsTrackerCore {
     /**
      * @param {object} db       openvibe-sdk/db handle (the service's own database, analyticsSchema() migrated)
      * @param {string} service
-     * @param {object} [opts]   paramPrefixes, pathRules, retention ({ days = 30, intervalMs,
+     * @param {object} [opts]   paramPrefixes, pathRules, retention ({ days = 30, botDays = days, intervalMs,
      *                          initialDelayMs } or false), timers, now
      */
     constructor(db, service, opts = {}) {
@@ -108,7 +108,8 @@ class AnalyticsTrackerPg extends AnalyticsTrackerCore {
             if (opts.retention !== false) {
                 const r = opts.retention && typeof opts.retention === 'object' ? opts.retention : {};
                 const days = r.days || 30;
-                const run = () => { pruneRawEventsPg(db, { days, now: this._now }).catch((err) => console.error(`[Analytics:${service}] prune error:`, err.message)); };
+                const botDays = r.botDays || days;
+                const run = () => { pruneRawEventsPg(db, { days, botDays, now: this._now }).catch((err) => console.error(`[Analytics:${service}] prune error:`, err.message)); };
                 once(run, r.initialDelayMs == null ? 5 * 60e3 : r.initialDelayMs);
                 every(run, r.intervalMs || DAY);
             }
@@ -441,13 +442,23 @@ class AnalyticsTrackerPg extends AnalyticsTrackerCore {
 }
 
 /** ADR-021's raw-event retention on PostgreSQL: rows older than `days` go, in batches; the rollups stay. */
-async function pruneRawEventsPg(db, { days = 30, now = Date.now, batch = 5000 } = {}) {
+async function pruneRawEventsPg(db, { days = 30, botDays = days, now = Date.now, batch = 5000 } = {}) {
     const cutoff = sqlTime(now() - days * DAY);
     let removed = 0;
     for (;;) {
         const n = await db.exec(`DELETE FROM analytics_events WHERE id IN (SELECT id FROM analytics_events WHERE created_at < $1 LIMIT ${batch})`, [cutoff]);
         removed += n;
         if (n < batch) break;
+    }
+    // Bot rows can go sooner (botDays): they are in the hourly and daily rollups once their day closes, and are half or
+    // more of the raw table (Live 1.49M of 2.47M rows on 2026-10-22, Network 1.22M of 2.46M on 10-23).
+    if (botDays < days) {
+        const botCutoff = sqlTime(now() - botDays * DAY);
+        for (;;) {
+            const n = await db.exec(`DELETE FROM analytics_events WHERE id IN (SELECT id FROM analytics_events WHERE is_bot = 1 AND created_at < $1 LIMIT ${batch})`, [botCutoff]);
+            removed += n;
+            if (n < batch) break;
+        }
     }
     const today = dayOf(now());
     await db.exec('DELETE FROM analytics_visitor_days WHERE day < $1', [dayOf(now() - DAY)]);

@@ -20,6 +20,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - The page leaves out the query and the fragment, where a sign-in code or a token can ride.
   - A server-rendered footer links the plain form, and a click fills in the page at that moment, so a single-page
     app's current route is the one reported.
+- **`analytics/pg` keeps bot rows shorter when asked**: `pruneRawEventsPg(db, { days, botDays })` and the tracker's
+  `retention: { days, botDays }` delete `is_bot` rows after `botDays` (default `days`, so nothing changes until a
+  service sets it). Bot rows are in the hourly and daily rollups once their day closes, and were half or more of the raw
+  table: Live 1.49M of 2.47M rows (it prunes them at 7 days itself since 10-22), Network 1.22M of 2.46M (991 MB).
 - **`analytics/pg` `getStats` reads the raw range 9 times instead of 17** (plan J3). On Live's production data
   (1.3M rows), 30 days took 8 to 12 s and now 2.8 s; 7 days 3.1 s → 1.5 s. Related reads share one grouped scan,
   split in JS: status codes and bot types; device, browser, OS and country; the busiest API calls and the slowest paths;

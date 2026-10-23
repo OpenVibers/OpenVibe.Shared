@@ -76,6 +76,13 @@ const res = (status = 200) => ({ statusCode: status });
     now = T0 + 86400000;
     await a.aggregate();
     assert.strictEqual(Number(await db.value('SELECT COUNT(*) FROM analytics_visitor_days')), 0);
+    // botDays: a bot row goes after botDays, a person's after days.
+    const ins = (isBot, at) => db.query(`INSERT INTO analytics_events (service, event_type, path, is_bot, created_at) VALUES ('botdays', 'pageview', '/', $1, $2)`, [isBot, at]);
+    await ins(1, '2026-09-29 12:00:00'); await ins(0, '2026-09-29 12:00:00'); await ins(1, '2026-10-06 12:00:00');
+    const bp = await pruneRawEventsPg(db, { days: 30, botDays: 7, now: () => Date.parse('2026-10-07T00:00:00Z') });
+    assert.strictEqual(bp.removed, 1, 'only the bot row older than 7 days');
+    assert.strictEqual(Number(await db.value("SELECT COUNT(*) FROM analytics_events WHERE service = 'botdays'")), 2);
+    await db.query("DELETE FROM analytics_events WHERE service = 'botdays'");
     now = T0 + 31 * 86400000;
     const r = await pruneRawEventsPg(db, { days: 30, now: () => now });
     assert.strictEqual(r.removed, 3);
