@@ -11,6 +11,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   particles (`px-twofat`) are notes, a CD and a tape in club pink. Like Josh Vegas, the Calm setting
   (`data-ov-motion=reduced`) and the system's reduced motion stop it, so it shows the same on openvibe.chat, Network's
   pages and every site drawing items as on Live (Live#318, OpenVibe.Inventory#71).
+- **Shared's own status text uses the 4.9.0 twins**: the showcase's "yes" cells and the island's action buttons
+  (`--ovis-t`: `--success-text`/`--danger-text` by state, the accent otherwise; the status colour stays their fill and
+  tint). Shared now writes no status colour as text without its twin (H4's last uses; the 23 sites moved on 10-22/23).
 
 ## 4.9.0 — 2026-10-23
 
