@@ -40,6 +40,33 @@ const res = (status = 200) => ({ statusCode: status });
     assert.ok(stats.timeBuckets.length >= 1 && /^2026-09-28 12:\d+$/.test(stats.timeBuckets[0].bucket), JSON.stringify(stats.timeBuckets[0]));
     assert.strictEqual(stats.responsePercentiles.max, 40);
     assert.ok(Array.isArray(stats.peakHours) && stats.peakHours[0].hour_of_day === 12);
+    // The reads that share a scan (4.10.0) give each list its own numbers: a session that signs in counts once in the
+    // session total and once on each side of the signed-in split; no session id counts no visitor; bots stay out.
+    const ev = (path, type, session, auth, status, ms, extra = {}) => db.query(`INSERT INTO analytics_events (service, event_type, path, method,
+            status_code, response_time_ms, session_id, authenticated, is_bot, bot_type, device_type, created_at) VALUES ('probe', $1, $2, 'GET', $3, $4, $5, $6, $7, $8, $9, '2026-09-28 11:30:00')`,
+    [type, path, status, ms, session, auth, extra.bot ? 1 : 0, extra.botType || null, extra.device || 'desktop']);
+    await ev('/a', 'pageview', 's1', 0, 200, 10);
+    await ev('/a', 'pageview', 's1', 1, 200, 20);
+    await ev('/a', 'pageview', 's2', 0, 404, 30);
+    await ev('/api/x', 'api_call', 's2', 0, 500, 40, { device: 'mobile' });
+    await ev('/api/x', 'api_call', 's3', 1, 200, 50);
+    await ev('/api/x', 'api_call', null, 0, 200, null);
+    await ev('/a', 'pageview', 'b1', 0, 200, 5, { bot: true, botType: 'googlebot' });
+    await ev('/robots.txt', 'pageview', 'b2', 0, 301, 5, { bot: true });
+    const p = await a.getStats({ days: 7, service: 'probe' });
+    const byKey = (rows, k) => Object.fromEntries(rows.map((r) => [r[k], r]));
+    assert.deepStrictEqual(p.topPages.map((r) => [r.path, r.hits, r.visitors]).sort(), [['/a', 3, 2], ['/api/x', 3, 2]]);
+    assert.deepStrictEqual(Object.fromEntries(p.statusCodes.map((r) => [r.group_code, r.cnt])), { '2xx': 5, '3xx': 1, '4xx': 1, '5xx': 1 });
+    assert.deepStrictEqual(p.botBreakdown.map((r) => [r.bot_type, r.hits]).sort(), [[null, 1], ['googlebot', 1]]);
+    assert.deepStrictEqual(p.deviceBreakdown, [{ device_type: 'desktop', cnt: 5 }, { device_type: 'mobile', cnt: 1 }]);
+    assert.deepStrictEqual(p.authBreakdown, { authenticated: 2, anonymous: 4, unique_authenticated_users: 2, total_sessions: 3 });
+    assert.strictEqual(p.sessionCount, 3);
+    assert.deepStrictEqual(p.bandwidth, { total_requests: 6, page_requests: 3, api_requests: 3, estimated_bytes: 156000 });
+    assert.deepStrictEqual(p.topApiEndpoints, [{ path: '/api/x', method: 'GET', hits: 3, avg_ms: 45, errors: 1 }]);
+    assert.deepStrictEqual(p.slowestEndpoints, [{ path: '/a', method: 'GET', hits: 3, avg_ms: 20, max_ms: 30 }], 'two timed calls are too few to rank');
+    assert.deepStrictEqual(p.peakHours, [{ hour_of_day: 11, hits: 6, visitors: 3, avg_ms: 30 }]);
+    assert.deepStrictEqual(byKey(p.authTrend, 'bucket')['2026-09-28'], { bucket: '2026-09-28', auth_visitors: 2, anon_visitors: 2, auth_hits: 2, anon_hits: 4 });
+    await db.query("DELETE FROM analytics_events WHERE service = 'probe'");
     const overview = await a.getOverview(7);
     assert.ok(Array.isArray(overview.services));
     const bots = await a.getBotAnalysis(7);
@@ -49,6 +76,13 @@ const res = (status = 200) => ({ statusCode: status });
     now = T0 + 86400000;
     await a.aggregate();
     assert.strictEqual(Number(await db.value('SELECT COUNT(*) FROM analytics_visitor_days')), 0);
+    // botDays: a bot row goes after botDays, a person's after days.
+    const ins = (isBot, at) => db.query(`INSERT INTO analytics_events (service, event_type, path, is_bot, created_at) VALUES ('botdays', 'pageview', '/', $1, $2)`, [isBot, at]);
+    await ins(1, '2026-09-29 12:00:00'); await ins(0, '2026-09-29 12:00:00'); await ins(1, '2026-10-06 12:00:00');
+    const bp = await pruneRawEventsPg(db, { days: 30, botDays: 7, now: () => Date.parse('2026-10-07T00:00:00Z') });
+    assert.strictEqual(bp.removed, 1, 'only the bot row older than 7 days');
+    assert.strictEqual(Number(await db.value("SELECT COUNT(*) FROM analytics_events WHERE service = 'botdays'")), 2);
+    await db.query("DELETE FROM analytics_events WHERE service = 'botdays'");
     now = T0 + 31 * 86400000;
     const r = await pruneRawEventsPg(db, { days: 30, now: () => now });
     assert.strictEqual(r.removed, 3);

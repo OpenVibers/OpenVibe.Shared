@@ -4,6 +4,34 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.10.0 — 2026-10-24
+
+- **items.css draws `name-fx-twofat`, "2fat Bass Drop"**, the one-of-a-kind name effect the owner asked for 2fat on
+  2026-10-23: the name thumps on the beat in club lights, with an equalizer before it and a speaker after it. Its
+  particles (`px-twofat`) are notes, a CD and a tape in club pink. Like Josh Vegas, the Calm setting
+  (`data-ov-motion=reduced`) and the system's reduced motion stop it, so it shows the same on openvibe.chat, Network's
+  pages and every site drawing items as on Live (Live#318, OpenVibe.Inventory#71).
+- **Shared's own status text uses the 4.9.0 twins**: the showcase's "yes" cells and the island's action buttons
+  (`--ovis-t`: `--success-text`/`--danger-text` by state, the accent otherwise; the status colour stays their fill and
+  tint). Shared now writes no status colour as text without its twin (H4's last uses; the 23 sites moved on 10-22/23).
+- **"Report a problem" in every site's footer** (the Legal column, and the compact line). It opens a ticket on
+  openvibe.help with the site and the page filled in (OpenVibe.Help#81):
+  `https://openvibe.help/tickets/new?site=<host without www.>&page=<origin + path>`.
+  - The page leaves out the query and the fragment, where a sign-in code or a token can ride.
+  - A server-rendered footer links the plain form, and a click fills in the page at that moment, so a single-page
+    app's current route is the one reported.
+- **`analytics/pg` keeps bot rows shorter when asked**: `pruneRawEventsPg(db, { days, botDays })` and the tracker's
+  `retention: { days, botDays }` delete `is_bot` rows after `botDays` (default `days`, so nothing changes until a
+  service sets it). Bot rows are in the hourly and daily rollups once their day closes, and were half or more of the raw
+  table: Live 1.49M of 2.47M rows (it prunes them at 7 days itself since 10-22), Network 1.22M of 2.46M (991 MB).
+- **`analytics/pg` `getStats` reads the raw range 9 times instead of 17** (plan J3). On Live's production data
+  (1.3M rows), 30 days took 8 to 12 s and now 2.8 s; 7 days 3.1 s → 1.5 s. Related reads share one grouped scan,
+  split in JS: status codes and bot types; device, browser, OS and country; the busiest API calls and the slowest paths;
+  and requests, the signed-in split and sessions. Each distinct count per group (visitors per page, per hour of the day,
+  per day signed in or not) groups by session first instead of sorting for `COUNT(DISTINCT)`. The numbers and response
+  shapes are unchanged: the old and new reads matched on production inside one snapshot, and
+  `test/analytics-pg.test.js` checks each list on known rows.
+
 ## 4.9.0 — 2026-10-23
 
 - **Status colours that read as text** (plan 2026-10-22, track H4). After 4.8.0, axe in the light themes still failed

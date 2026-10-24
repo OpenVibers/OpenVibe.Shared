@@ -43,7 +43,7 @@ a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);trans
 .sc-table thead th{font-size:12px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted,#7386a3);background:var(--bg-secondary,#101828)}
 .sc-table tbody th{font-weight:600;width:44%}.sc-table tr:last-child>*{border-bottom:0}
 .sc-table .sc-us{background:color-mix(in srgb,var(--accent,#3b82f6) 7%,transparent)}
-.sc-yes{color:var(--success,#22c55e);font-weight:800}.sc-no{color:var(--text-muted,#7386a3)}
+.sc-yes{color:var(--success-text,var(--success,#22c55e));font-weight:800}.sc-no{color:var(--text-muted,#7386a3)}
 .sc-tiers{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .sc-tier{display:flex;flex-direction:column;padding:18px;border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
 .sc-tier.sc-hl{border-color:var(--accent,#3b82f6);box-shadow:0 0 0 1px var(--accent,#3b82f6) inset}

@@ -69,6 +69,18 @@ console.log('shared modules: all checks passed');
     assert.ok(own.includes('href="/updates"') && own.includes('data-ov-shipped="latest"'), 'a site with its own log links to it, compact too');
     const off = ctx.OpenVibeFooter.buildHTML({ service: 'media', variant: 'full', shipped: false });
     assert.ok(!off.includes('data-ov-shipped') && !off.includes('>Updates<'), 'shipped: false leaves it out');
+    // "Report a problem" (4.10.0): a ticket on openvibe.help naming this site and page, the page without its query or
+    // fragment (a sign-in code or a token can ride there); server-rendered, the plain form.
+    assert.ok(html.includes('data-ov-report>Report a problem</a>'), 'the full footer has Report a problem');
+    assert.ok(own.includes('data-ov-report>Report a problem</a>'), 'the compact footer has it too');
+    const rp = vm.createContext({ console, URLSearchParams }); rp.globalThis = rp; rp.window = rp; rp.localStorage = { getItem: () => null, setItem() {} };
+    rp.location = { protocol: 'https:', hostname: 'www.openvibe.live', origin: 'https://www.openvibe.live', pathname: '/@kim', href: 'https://www.openvibe.live/@kim?code=SECRET#t=1' };
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'footer.js'), 'utf8'), rp);
+    const rh = rp.OpenVibeFooter.buildHTML({ service: 'live', variant: 'compact' });
+    assert.ok(rh.includes(`href="https://openvibe.help/tickets/new?site=openvibe.live&amp;page=${encodeURIComponent('https://www.openvibe.live/@kim')}"`), rh.match(/href="[^"]*tickets\/new[^"]*"/));
+    assert.ok(!rh.includes('SECRET'), 'the query never reaches the link');
+    const srv = require('../footer.js').ssr({ service: 'live', variant: 'full' });
+    assert.ok(srv.includes('href="https://openvibe.help/tickets/new" data-ov-report'), 'server-rendered: the plain form');
     for (const [host, id] of [['openvibe.wiki', 'wiki'], ['openvibe.live', 'live'], ['pdf.openvibe.tools', 'pdf'], ['openvibe.tools', 'tools'], ['openre.stream', 'openre']]) {
         const c2 = vm.createContext({ console }); c2.globalThis = c2; c2.window = c2; c2.location = { hostname: host, href: `https://${host}/` }; c2.localStorage = { getItem: () => null, setItem() {} };
         vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'footer.js'), 'utf8'), c2);

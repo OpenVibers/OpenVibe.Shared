@@ -68,6 +68,7 @@
     })());
 
     const NETWORK_URL = 'https://openvibe.network';
+    const REPORT_URL = 'https://openvibe.help/tickets/new';
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     // One place that knows what the network contains. Adding a property here gives every site
@@ -94,6 +95,17 @@
         { key: 'privacy', name: 'Privacy Policy', path: '/privacy', fallback: 'https://openvibe.live/privacy' },
         { key: 'dmca', name: 'DMCA', path: '/dmca', fallback: 'https://openvibe.live/dmca' },
     ];
+
+    // "Report a problem" on every site: a ticket on openvibe.help with this site and page filled in (OpenVibe.Help#81).
+    // The page is the origin and path only, since a query or fragment can carry a sign-in code or a token. Rendered on
+    // the server the page is unknown, so a click fills it in at that moment (a single-page app's route counts).
+    function reportHref() {
+        try {
+            if (typeof location === 'undefined' || !/^https?:$/.test(location.protocol)) return REPORT_URL;
+            return `${REPORT_URL}?${new URLSearchParams({ site: location.hostname.replace(/^www\./, ''), page: (location.origin + location.pathname).slice(0, 500) })}`;
+        } catch { return REPORT_URL; }
+    }
+    const reportLink = () => `<a href="${esc(reportHref())}" data-ov-report>Report a problem</a>`;
 
     const SOCIAL = [
         { name: 'GitHub', icon: 'github', url: 'https://github.com/OpenVibers' },
@@ -223,6 +235,7 @@
                     <a href="${NETWORK_URL}" target="_blank" rel="noopener">Network</a>
                     ${c.shipped === false ? '' : `<a href="${esc(updatesHref(c))}">Updates</a>`}
                     ${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name.replace(' of Service', '').replace(' Policy', ''))}</a>`).join('')}
+                    ${reportLink()}
                 </nav>
                 ${shippedLine(c)}
                 <span class="ovf-compact-meta">Open source · ${year}</span>
@@ -259,6 +272,7 @@
                 <nav class="ovf-col" aria-label="Legal">
                     <h3>Legal</h3>
                     ${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name)}</a>`).join('')}
+                    ${reportLink()}
                 </nav>
             </div>
             <div class="ovf-account" id="ovf-account" hidden></div>
@@ -393,6 +407,12 @@
         _mounted.className = 'ovf ' + (_mounted.dataset.extraClass || '');
         _mounted.setAttribute('data-variant', _cfg.variant);
         _mounted.innerHTML = buildHTML(_cfg);
+        if (!_mounted._ovReport) {
+            _mounted._ovReport = true;
+            const fresh = (e) => { const a = e.target && e.target.closest && e.target.closest('a[data-ov-report]'); if (a) a.href = reportHref(); };
+            _mounted.addEventListener('click', fresh);
+            _mounted.addEventListener('auxclick', fresh);
+        }
         try { if (typeof window !== 'undefined' && typeof window.ovMarkMount === 'function') window.ovMarkMount(_mounted); } catch { /* */ }
         fillAccount(_cfg);
         if (_cfg.shipped !== false) loadShipped();
