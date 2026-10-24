@@ -893,6 +893,72 @@ const RAW_BUILTIN_THEMES = [
             '--info': '#00ffff',
         },
     },
+    // ── Seasonal themes ───────────────────────────────────────────────────────────────────────────
+    // A theme with `season` is also the network's default between `from` and `to` (MM-DD, the visitor's own
+    // calendar, both days included) for everyone on the default theme who has not turned seasonal themes off
+    // (theme-loader.js; display preference `seasonal`). Anyone can also pick one like any other theme, any time.
+    {
+        name: 'Pumpkin Night',
+        slug: 'halloween',
+        mode: 'dark',
+        description: 'Halloween: pumpkin orange on a haunted violet night. On by itself through October.',
+        tags: ['seasonal', 'halloween', 'orange', 'purple'],
+        season: { id: 'halloween', name: 'Halloween', from: '10-01', to: '10-31' },
+        variables: {
+            '--bg-primary': '#0e0a14',
+            '--bg-secondary': '#160f21',
+            '--bg-tertiary': '#20162e',
+            '--bg-card': '#191125',
+            '--bg-hover': '#291d3a',
+            '--bg-input': '#110b1a',
+            '--text-primary': '#f4eef8',
+            '--text-secondary': '#bba9cc',
+            '--text-muted': '#9784ab',
+            '--accent': '#ff7a1a',
+            '--accent-light': '#ffa14f',
+            '--accent-dark': '#d65d00',
+            '--border': '#2d2040',
+            '--border-light': '#3e2c56',
+            '--live-red': '#ef4444',
+            '--success': '#7ee26b',
+            '--warning': '#fbbf24',
+            '--danger': '#f43f5e',
+            '--info': '#b08cff',
+            '--shadow': '0 2px 12px rgba(5,0,12,0.55)',
+            '--shadow-lg': '0 8px 32px rgba(5,0,12,0.7)',
+        },
+    },
+    {
+        name: 'Frost',
+        slug: 'frost',
+        mode: 'dark',
+        description: 'Winter: frosted teal over a cold midnight sky. On by itself through December.',
+        tags: ['seasonal', 'winter', 'teal', 'cool'],
+        season: { id: 'winter', name: 'Winter', from: '12-01', to: '12-31' },
+        variables: {
+            '--bg-primary': '#08111b',
+            '--bg-secondary': '#0d1926',
+            '--bg-tertiary': '#132334',
+            '--bg-card': '#0f1c2b',
+            '--bg-hover': '#18293d',
+            '--bg-input': '#0a1520',
+            '--text-primary': '#eaf4fb',
+            '--text-secondary': '#a3b9cc',
+            '--text-muted': '#7f97ad',
+            '--accent': '#2dd4bf',
+            '--accent-light': '#7ee8da',
+            '--accent-dark': '#0f9e8c',
+            '--border': '#1b2d41',
+            '--border-light': '#294057',
+            '--live-red': '#ef4444',
+            '--success': '#4ade80',
+            '--warning': '#fbbf24',
+            '--danger': '#f87171',
+            '--info': '#93c5fd',
+            '--shadow': '0 2px 12px rgba(0,6,14,0.5)',
+            '--shadow-lg': '0 8px 32px rgba(0,6,14,0.65)',
+        },
+    },
 ];
 
 // ── Derived tokens ──────────────────────────────────────────────────────────────
@@ -906,7 +972,7 @@ const RAW_BUILTIN_THEMES = [
 //                   a filled button's background and its label at 4.5:1 or better (WCAG AA for
 //                   normal text): the accent, darkened under white or lightened under dark ink just
 //                   enough (the Sign In button; white on #3b82f6 was 3.67:1)
-// A theme may set any of them explicitly; otherwise they are computed here so all 35 themes,
+// A theme may set any of them explicitly; otherwise they are computed here so all 37 themes,
 // and community themes that only define the base palette, stay consistent on every site.
 function hexToRgb(hex) {
     const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(hex || '').trim());
@@ -999,10 +1065,20 @@ const BUILTIN_THEMES = RAW_BUILTIN_THEMES.map((theme) => ({
 }));
 
 const DEFAULT_THEME = BUILTIN_THEMES.find((theme) => theme.id === 'vibe') || BUILTIN_THEMES[0];
+// The seasons, in calendar order: { id, name, theme, from: 'MM-DD', to: 'MM-DD' } (theme-loader.js carries a copy).
+const SEASONS = BUILTIN_THEMES.filter((theme) => theme.season).map((theme) => ({ id: theme.season.id, name: theme.season.name, theme: theme.id, from: theme.season.from, to: theme.season.to }))
+    .sort((a, b) => a.from.localeCompare(b.from));
+/** The season `date` falls in (the visitor's local calendar), or null. A season may run over New Year (from > to). */
+function seasonOn(date = new Date()) {
+    const md = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return SEASONS.find((s) => (s.from <= s.to ? md >= s.from && md <= s.to : md >= s.from || md <= s.to)) || null;
+}
 const DEFAULT_VARS = Object.freeze({ ...(DEFAULT_THEME?.variables || {}) });
 
 module.exports = {
     BUILTIN_THEMES,
+    SEASONS,
+    seasonOn,
     DEFAULT_THEME,
     DEFAULT_VARS,
     deriveTokens,

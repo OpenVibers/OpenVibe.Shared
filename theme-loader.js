@@ -56,8 +56,48 @@
         'catppuccin-mocha': { '--bg-primary':'#1e1e2e','--bg-secondary':'#181825','--bg-tertiary':'#313244','--bg-card':'#1e1e2e','--bg-hover':'#313244','--bg-input':'#1a1a2c','--text-primary':'#cdd6f4','--text-secondary':'#bac2de','--text-muted':'#989caf','--accent':'#cba6f7','--accent-light':'#dcc0ff','--accent-dark':'#b07de0','--border':'#313244','--border-light':'#45475a','--live-red':'#f38ba8','--success':'#a6e3a1','--warning':'#fab387','--danger':'#f38ba8','--info':'#89b4fa','--shadow':'0 2px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 8px 32px rgba(0,0,0,0.6)','--success-text':'#a6e3a1','--warning-text':'#fab387','--danger-text':'#f38ba8','--info-text':'#89b4fa','--live-red-text':'#f38ba8','--accent-strong':'#cba6f7','--on-accent-strong':'#0b0d10','--on-accent':'#0b0d10','--accent-rgb':'203,166,247','--accent-glow':'rgba(203,166,247,0.35)','--color-scheme':'dark' },
         'catppuccin-latte': { '--bg-primary':'#eff1f5','--bg-secondary':'#e6e9ef','--bg-tertiary':'#dce0e8','--bg-card':'#eff1f5','--bg-hover':'#dce0e8','--bg-input':'#e8ebf0','--text-primary':'#4c4f69','--text-secondary':'#5c5f77','--text-muted':'#5f6176','--accent':'#7d34dc','--accent-light':'#7a46c2','--accent-dark':'#7028d4','--border':'#ccd0da','--border-light':'#bcc0cc','--live-red':'#d20f39','--success':'#40a02b','--warning':'#fe640b','--danger':'#d20f39','--info':'#1e66f5','--shadow':'0 2px 12px rgba(0,0,0,0.06)','--shadow-lg':'0 8px 32px rgba(0,0,0,0.10)','--success-text':'#2d701e','--warning-text':'#a84207','--danger-text':'#c50e36','--info-text':'#1a5ad8','--live-red-text':'#c50e36','--accent-strong':'#7d34dc','--on-accent-strong':'#ffffff','--on-accent':'#ffffff','--accent-rgb':'125,52,220','--accent-glow':'rgba(125,52,220,0.35)','--color-scheme':'light' },
         'high-contrast': { '--bg-primary':'#000000','--bg-secondary':'#0a0a0a','--bg-tertiary':'#1a1a1a','--bg-card':'#0f0f0f','--bg-hover':'#222222','--bg-input':'#0a0a0a','--text-primary':'#ffffff','--text-secondary':'#f0f0f0','--text-muted':'#aaaaaa','--accent':'#ffd700','--accent-light':'#ffed4a','--accent-dark':'#ccac00','--border':'#444444','--border-light':'#666666','--live-red':'#ff0000','--success':'#00ff00','--warning':'#ffff00','--danger':'#ff0000','--info':'#00ffff','--shadow':'0 2px 12px rgba(0,0,0,0.45)','--shadow-lg':'0 8px 32px rgba(0,0,0,0.6)','--success-text':'#00ff00','--warning-text':'#ffff00','--danger-text':'#ff3d3d','--info-text':'#00ffff','--live-red-text':'#ff3d3d','--accent-strong':'#ffd700','--on-accent-strong':'#0b0d10','--on-accent':'#0b0d10','--accent-rgb':'255,215,0','--accent-glow':'rgba(255,215,0,0.35)','--color-scheme':'dark' },
+        'halloween': { '--bg-primary':'#0e0a14','--bg-secondary':'#160f21','--bg-tertiary':'#20162e','--bg-card':'#191125','--bg-hover':'#291d3a','--bg-input':'#110b1a','--text-primary':'#f4eef8','--text-secondary':'#bba9cc','--text-muted':'#9784ab','--accent':'#ff7a1a','--accent-light':'#ffa14f','--accent-dark':'#d65d00','--border':'#2d2040','--border-light':'#3e2c56','--live-red':'#ef4444','--success':'#7ee26b','--warning':'#fbbf24','--danger':'#f43f5e','--info':'#b08cff','--shadow':'0 2px 12px rgba(5,0,12,0.55)','--shadow-lg':'0 8px 32px rgba(5,0,12,0.7)','--success-text':'#7ee26b','--warning-text':'#fbbf24','--danger-text':'#f54b68','--info-text':'#b08cff','--live-red-text':'#f05353','--accent-strong':'#ff7a1a','--on-accent-strong':'#0b0d10','--on-accent':'#0b0d10','--accent-rgb':'255,122,26','--accent-glow':'rgba(255,122,26,0.35)','--color-scheme':'dark' },
+        'frost': { '--bg-primary':'#08111b','--bg-secondary':'#0d1926','--bg-tertiary':'#132334','--bg-card':'#0f1c2b','--bg-hover':'#18293d','--bg-input':'#0a1520','--text-primary':'#eaf4fb','--text-secondary':'#a3b9cc','--text-muted':'#7f97ad','--accent':'#2dd4bf','--accent-light':'#7ee8da','--accent-dark':'#0f9e8c','--border':'#1b2d41','--border-light':'#294057','--live-red':'#ef4444','--success':'#4ade80','--warning':'#fbbf24','--danger':'#f87171','--info':'#93c5fd','--shadow':'0 2px 12px rgba(0,6,14,0.5)','--shadow-lg':'0 8px 32px rgba(0,6,14,0.65)','--success-text':'#4ade80','--warning-text':'#fbbf24','--danger-text':'#f87171','--info-text':'#93c5fd','--live-red-text':'#f15e5e','--accent-strong':'#2dd4bf','--on-accent-strong':'#0b0d10','--on-accent':'#0b0d10','--accent-rgb':'45,212,191','--accent-glow':'rgba(45,212,191,0.35)','--color-scheme':'dark' },
     };
+    const SEASONS = [
+        { id: 'halloween', name: 'Halloween', theme: 'halloween', from: '10-01', to: '10-31' },
+        { id: 'winter', name: 'Winter', theme: 'frost', from: '12-01', to: '12-31' },
+    ];
     // THEMES:END
+
+    // ── Seasons ──────────────────────────────────────────────
+    // During a season (SEASONS above, the visitor's own calendar) its theme stands in for the default theme for anyone
+    // on the default who has not turned seasonal themes off: the display preference `seasonal` (on|off), saved to the
+    // account and followed on every site like text size. A theme someone picked stays theirs. While one shows, <html>
+    // carries data-ov-season="<id>" and window gets an 'ov:season' event ({ id, name, theme } or null).
+    const DEFAULT_ID = 'vibe';
+    function seasonNow(date) {
+        const d = date || new Date();
+        const md = String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        for (let i = 0; i < SEASONS.length; i++) {
+            const s = SEASONS[i];
+            if (s.from <= s.to ? (md >= s.from && md <= s.to) : (md >= s.from || md <= s.to)) return s;
+        }
+        return null;
+    }
+    let _season = null;
+    let _shown = { id: DEFAULT_ID, vars: null, custom: false };
+    /** Paint the theme `themeId` (its variables `vars`), or the season's theme in its place. → the id painted. */
+    function show(themeId, vars, custom) {
+        _shown = { id: themeId, vars: vars, custom: !!custom };
+        const s = themeId === DEFAULT_ID && !custom && readDisplay().seasonal !== 'off' ? seasonNow() : null;
+        const seasonal = s && THEMES[s.theme] ? s : null;
+        applyVars(seasonal ? THEMES[seasonal.theme] : vars);
+        const changed = (_season && _season.id) !== (seasonal && seasonal.id);
+        _season = seasonal;
+        try {
+            const el = document.documentElement;
+            if (seasonal) el.setAttribute('data-ov-season', seasonal.id); else el.removeAttribute('data-ov-season');
+            el.setAttribute('data-theme', seasonal ? seasonal.theme : themeId);
+        } catch { /* no DOM */ }
+        if (changed) { try { window.dispatchEvent(new CustomEvent('ov:season', { detail: seasonal })); } catch { /* */ } }
+        return seasonal ? seasonal.theme : themeId;
+    }
 
     function getCookie(name) {
         const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '=([^;]*)'));
@@ -177,29 +217,25 @@
             if (raw) {
                 const saved = JSON.parse(raw);
                 if (saved && saved.variables && typeof saved.variables === 'object') {
-                    applyVars(saved.variables);
-                    const cachedId = saved.id || saved.slug || 'vibe';
-                    try { document.documentElement.setAttribute('data-theme', cachedId); } catch { /* no DOM */ }
-                    return cachedId;
+                    return show(saved.id || saved.slug || DEFAULT_ID, saved.variables, saved.custom);
                 }
                 if (saved && (saved.id || saved.slug)) {
                     const id = saved.id || saved.slug;
-                    if (applyById(id)) return id;
+                    if (THEMES[id]) return show(id, THEMES[id]);
                 }
             }
         } catch { /* corrupt localStorage */ }
 
         // 2. Try cross-domain cookie
         const cookieId = getCookie(COOKIE_NAME);
-        if (cookieId && applyById(cookieId)) {
+        if (cookieId && THEMES[cookieId]) {
             // Cache the full variable set so the next load paints from localStorage instantly.
             cacheLocally(cookieId, THEMES[cookieId]);
-            return cookieId;
+            return show(cookieId, THEMES[cookieId]);
         }
 
-        // 3. Default — vibe (already the CSS fallback values, but apply explicitly)
-        applyById('vibe');
-        return 'vibe';
+        // 3. Default — vibe (already the CSS fallback values, but apply explicitly), or the season's theme
+        return show(DEFAULT_ID, THEMES[DEFAULT_ID]);
     }
 
     function authToken() {
@@ -213,14 +249,13 @@
      * including for community/custom themes that aren't in the built-in map — so the next
      * page load can paint the right colours synchronously with no network call and no flash.
      */
-    function cacheLocally(themeId, vars) {
+    function cacheLocally(themeId, vars, custom) {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                id: themeId, slug: themeId, variables: vars, at: Date.now(),
+                id: themeId, slug: themeId, variables: vars, at: Date.now(), ...(custom ? { custom: true } : {}),
             }));
         } catch { /* quota */ }
         setCookie(COOKIE_NAME, themeId, 365);
-        try { document.documentElement.setAttribute('data-theme', themeId); } catch { /* no DOM */ }
     }
 
     /**
@@ -233,8 +268,10 @@
         const base = variables || THEMES[themeId] || {};
         const vars = custom ? Object.assign({}, base, custom) : base;
         if (!vars || !Object.keys(vars).length) return;
-        applyVars(vars);   // saving a theme shows it: every token, the canvas and the browser UI follow at once
-        cacheLocally(themeId, vars);
+        // Picking the default theme while a season's stands in for it means "my normal theme": seasonal themes go off.
+        if (themeId === DEFAULT_ID && !custom && _season && !(opts && opts.keepSeasonal)) setDisplay({ seasonal: 'off' }, { noRepaint: true });
+        cacheLocally(themeId, vars, !!custom);
+        show(themeId, vars, !!custom);   // saving a theme shows it: every token, the canvas and the browser UI follow at once
         if (opts && opts.sync === false) return;
         if (typeof fetch === 'undefined') return;
         const token = authToken();
@@ -266,9 +303,10 @@
     //   OpenVibeThemeLoader.display.set({ motion, text })   applies here, in other tabs, and saves to the account
     // Applied as <html data-ov-motion> and --ov-text-scale before first paint; the shared stylesheet
     // below makes every shared component honour them, and sites can key their own CSS off the same hooks.
-    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'] };
+    //   seasonal: 'on'|'off'   the season's theme in place of the default theme (see Seasons above)
+    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'] };
     function readDisplay() {
-        const out = { motion: 'auto', text: '100' };
+        const out = { motion: 'auto', text: '100', seasonal: 'on' };
         try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(d[k])) >= 0) out[k] = String(d[k]); } catch (e) { /* */ }
         return out;
     }
@@ -286,9 +324,11 @@
     }
     function setDisplay(patch, opts) {
         const d = readDisplay();
+        const wasSeasonal = d.seasonal;
         for (const k in DISPLAY_OPTS) if (patch && DISPLAY_OPTS[k].indexOf(String(patch[k])) >= 0) d[k] = String(patch[k]);
         try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(d)); } catch (e) { /* */ }
         applyDisplay(d);
+        if (d.seasonal !== wasSeasonal && !(opts && opts.noRepaint)) show(_shown.id, _shown.vars || THEMES[_shown.id] || THEMES[DEFAULT_ID], _shown.custom);
         if (!(opts && opts.local) && typeof fetch !== 'undefined') {
             const token = authToken(); const headers = { 'Content-Type': 'application/json' }; if (token) headers.Authorization = 'Bearer ' + token;
             if (token || /(?:^|; )ov_sso_hint=account/.test(document.cookie)) fetch(_config.apiBase + '/api/themes/me/display', { method: 'PUT', headers: headers, credentials: 'include', body: JSON.stringify(d) }).catch(function () {});
@@ -301,7 +341,7 @@
     // The icon link may be parsed after this script: repaint once the head is complete.
     if (typeof document !== 'undefined' && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { _browserUiKey = ''; syncBrowserUi(); });
     // A theme picked in another tab (or on another OpenVibe page of this site) applies here at once.
-    if (typeof window !== 'undefined') window.addEventListener('storage', function (e) { if (e.key === 'ov_theme') { try { resolveAndApply(); } catch (err) { /* */ } } if (e.key === DISPLAY_KEY) applyDisplay(readDisplay()); });
+    if (typeof window !== 'undefined') window.addEventListener('storage', function (e) { if (e.key === 'ov_theme') { try { resolveAndApply(); } catch (err) { /* */ } } if (e.key === DISPLAY_KEY) { applyDisplay(readDisplay()); show(_shown.id, _shown.vars || THEMES[_shown.id] || THEMES[DEFAULT_ID], _shown.custom); } });
 
     // Look up a theme we don't ship in the built-in map (community/custom themes) from the
     // central catalog. Without this, any non-built-in id fell through to the default 'vibe'
@@ -327,7 +367,7 @@
         fetch(_config.apiBase + '/api/themes/me/active', { headers: headers, credentials: 'include' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (data && data.display) { const cur = readDisplay(); if (JSON.stringify({ motion: data.display.motion || cur.motion, text: data.display.text || cur.text }) !== JSON.stringify(cur)) setDisplay(data.display, { local: true }); }
+                if (data && data.display) { const cur = readDisplay(); if (JSON.stringify({ motion: data.display.motion || cur.motion, text: data.display.text || cur.text, seasonal: data.display.seasonal || cur.seasonal }) !== JSON.stringify(cur)) setDisplay(data.display, { local: true }); }
                 if (!data || !data.theme_id) return;
                 const serverId = data.theme_id;
                 const custom = (data.custom_variables && typeof data.custom_variables === 'object'
@@ -336,8 +376,8 @@
                 const settle = function (base) {
                     const vars = custom ? Object.assign({}, base || {}, custom) : (base || null);
                     if (!vars || !Object.keys(vars).length) return;
-                    applyVars(vars);
-                    cacheLocally(serverId, vars);   // cacheLocally, not save() — no write-back loop
+                    cacheLocally(serverId, vars, !!custom);   // cacheLocally, not save() — no write-back loop
+                    show(serverId, vars, !!custom);
                 };
                 if (builtin) return settle(builtin);
                 fetchThemeVars(serverId).then(settle);
@@ -352,6 +392,8 @@
         display: { get: readDisplay, set: setDisplay, options: DISPLAY_OPTS },
         apply: applyById,
         applyVars: applyVars,
+        // Seasons: SEASONS, now() → the season today (or null), showing() → the season whose theme is on screen (or null)
+        seasons: { SEASONS: SEASONS, now: seasonNow, showing: function () { return _season; } },
         onColor: onColor,
         save: save,
         getCurrent: getCurrent,

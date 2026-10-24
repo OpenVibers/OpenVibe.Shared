@@ -4,6 +4,32 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.11.0 — 2026-10-25
+
+- **Seasonal themes.** The owner, 2026-10-24: a Halloween theme and style on every site, as the default during
+  October, part of a seasonal system that turns on by date, with an opt-out for anyone who wants their normal
+  default.
+  - **Two seasonal themes** (`builtin-themes.js`):
+    - Pumpkin Night (`halloween`): pumpkin orange on a violet night, October 1–31;
+    - Frost (`frost`): frosted teal on a midnight sky, December 1–31.
+  - **How they turn on.** A theme with `season: { id, name, from, to }` (MM-DD, both days included, the visitor's own
+    calendar) is also listed in `SEASONS`, and `seasonOn(date)` finds the season for a date. A season may run over New
+    Year.
+  - **What the loader paints** (`theme-loader.js`, Seasons):
+    - Anyone on the default theme sees the season's theme in its place while it runs. A theme someone picked, or a
+      customised default, stays theirs.
+    - `<html>` carries `data-ov-season="<id>"` and `data-theme` names the theme on screen. The saved choice
+      (`getCurrent()`) stays the person's.
+    - `window` gets `ov:season` with `{ id, name, theme }` or `null`.
+    - API: `OpenVibeThemeLoader.seasons.{ SEASONS, now(), showing() }`.
+  - **The opt-out** is a display preference, `seasonal: on|off` (on by default). It repaints at once and in other tabs,
+    and is saved to the account with text size and motion (`PUT /api/themes/me/display`). Network stores it once it
+    accepts the key; until then it stays in the browser. Picking the default theme during a season turns seasonal
+    themes off: "my normal theme".
+  - **The navbar** shows the season's emblem beside the brand while a season runs: a pumpkin, or a snowflake in
+    December. It is pressed while the season's theme shows and faded when seasonal themes are off, and a click flips
+    it. The account menu's Display section and the launcher's display row get a "Seasonal themes" switch.
+
 ## 4.10.0 — 2026-10-24
 
 - **items.css draws `name-fx-twofat`, "2fat Bass Drop"**, the one-of-a-kind name effect the owner asked for 2fat on

@@ -207,4 +207,28 @@ function load(hostname, opts = {}) {
     const id = navbar.addMenuItem({ label: 'Runtime row', href: '/r', position: 'before' });
     assert.ok(id, 'addMenuItem returns an id');
 }
+// ── the season's badge (theme-loader.js Seasons): beside the brand during a season, pressed when its theme shows,
+//    faded once seasonal themes are off; no season, no badge ────
+{
+    const HALLOWEEN = { id: 'halloween', name: 'Halloween', theme: 'halloween' };
+    const loader = (showing, seasonal) => ({
+        seasons: { now: () => HALLOWEEN, showing: () => (showing ? HALLOWEEN : null) },
+        display: { get: () => ({ text: '100', motion: 'auto', seasonal }), set() {}, options: { text: ['100'], motion: ['auto'], seasonal: ['on', 'off'] } },
+    });
+    let { navbar, created } = load('openvibe.live');
+    global.OpenVibeThemeLoader = loader(true, 'on');
+    navbar.init({ service: 'live' });
+    let nav = created.find((e) => e.tag === 'nav');
+    assert.ok(/<button type="button" class="ovnav-season" aria-pressed="true" title="Halloween theme on: select to turn seasonal themes off"/.test(nav.innerHTML), 'the pumpkin, pressed');
+    ({ navbar, created } = load('openvibe.live'));
+    global.OpenVibeThemeLoader = loader(false, 'off');
+    navbar.init({ service: 'live' });
+    nav = created.find((e) => e.tag === 'nav');
+    assert.ok(/class="ovnav-season" aria-pressed="false" title="Seasonal themes off: select to turn them on"/.test(nav.innerHTML), 'faded once turned off');
+    ({ navbar, created } = load('openvibe.live'));
+    global.OpenVibeThemeLoader = { ...loader(false, 'on'), seasons: { now: () => null, showing: () => null } };
+    navbar.init({ service: 'live' });
+    assert.ok(!created.find((e) => e.tag === 'nav').innerHTML.includes('ovnav-season'), 'no season, no badge');
+    delete global.OpenVibeThemeLoader;
+}
 console.log('navbar brand: all checks passed');
