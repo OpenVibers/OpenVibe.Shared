@@ -61,6 +61,10 @@
             .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
             .ovnav-launch:hover, .ovnav-launch[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--accent-light, var(--accent, #60a5fa)); border-color: color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
             .ovnav-launch svg { display: block; transition: transform .25s cubic-bezier(.2,1.4,.3,1); }
+            /* The season's badge (theme-loader.js Seasons): pressed while its theme shows, faded when seasonal themes are off. */
+            .ovnav-season { all: unset; box-sizing: border-box; cursor: pointer; width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; }
+            .ovnav-season:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .ovnav-season[aria-pressed="false"] { opacity: .5; filter: grayscale(1); }
             .ovnav-launch[aria-expanded="true"] svg { transform: rotate(45deg) scale(.92); }
             .ovnav-launcher a { all: unset; cursor: pointer; box-sizing: border-box; }
             .openvibe-navbar .ovnav-sep { width: 1px; height: 18px; background: var(--border, rgba(255,255,255,.12)); margin: 0 6px; flex: none; align-self: center; }
@@ -527,6 +531,30 @@
         return { sub: brand.href, core: brand.joined ? apex : 'https://openvibe.network/', tld: apex, apex };
     }
 
+    // ── The season's badge beside the brand ─────────────────────────────────────────
+    // While a season runs (theme-loader.js SEASONS) the bar shows its emblem; a click flips the `seasonal` display
+    // preference (on a theme of their own, it opens the themes page).
+    const SEASON_ICON = {
+        halloween: '<path d="M12 7c-1.3-1.5-4.7-1.7-6.5.3-1.9 2.1-2 6.8-.2 9.6 1.6 2.4 4.6 2.8 6.7 1.5 2.1 1.3 5.1.9 6.7-1.5 1.8-2.8 1.7-7.5-.2-9.6C17 5.3 13.4 5.5 12 7Z" fill="#ff7a1a"/><path d="M12 7c0-1.7.5-3 2-3.6" stroke="#62b33a" stroke-width="2" fill="none"/>',
+        winter: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" stroke="#7ee8da" stroke-width="2" stroke-linecap="round"/>',
+    };
+    function seasonState() {
+        const L = root.OpenVibeThemeLoader, s = L && L.seasons && L.seasons.now();
+        return s && SEASON_ICON[s.id] ? { s, on: !!L.seasons.showing(), off: L.display.get().seasonal === 'off' } : null;
+    }
+    const seasonTitle = (st) => (st.on ? `${st.s.name} theme on: select to turn seasonal themes off` : `Seasonal themes${st.off ? ' off: select to turn them on' : ': pick the default theme to see them'}`);
+    function seasonBadgeHTML() {
+        const st = seasonState();
+        return st ? `<button type="button" class="ovnav-season" aria-pressed="${st.on}" title="${seasonTitle(st)}" aria-label="${seasonTitle(st)}"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">${SEASON_ICON[st.s.id]}</svg></button>` : '';
+    }
+    function bindSeasonBadge(nav) {
+        if (!seasonState()) return;
+        const btn = nav.querySelector('.ovnav-season'), L = root.OpenVibeThemeLoader;
+        const paint = () => { const st = seasonState(); if (st) { btn.setAttribute('aria-pressed', String(st.on)); btn.title = seasonTitle(st); btn.setAttribute('aria-label', btn.title); } };
+        btn.addEventListener('click', () => { const st = seasonState(); if (st.on || st.off) L.display.set({ seasonal: st.on ? 'off' : 'on' }); else window.location.href = 'https://openvibe.network/themes'; paint(); });
+        if (root.addEventListener) root.addEventListener('ov:season', paint, onDocument());
+    }
+
     function brandHTML(brand) {
         const to = brandLinks(brand);
         const seg = (cls, text, href, title) => `<a href="${escapeAttr(href)}"${title ? ` title="${escapeAttr(title)}"` : ''} class="${cls}">${escapeAttr(text)}</a>`;
@@ -542,6 +570,7 @@
                 <a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>
                 <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
             </div>
+            ${seasonBadgeHTML()}
             ${_config.launcher === false ? '' : '<button type="button" class="ovnav-launch" id="openvibe-launcher-btn" aria-label="All OpenVibe sites and tools" aria-haspopup="true" aria-expanded="false" title="All OpenVibe sites and tools"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></g></svg></button>'}`;
     }
 
@@ -777,7 +806,7 @@
     function bindDisplayRows(dropdown) {
         const L = root.OpenVibeThemeLoader; const rows = dropdown.querySelectorAll('[data-ov-display]');
         if (!L || !L.display) { rows.forEach(r => { r.hidden = true; }); return; }
-        const LABEL = { text: { 100: 'Default', 112: 'Large', 125: 'Largest' }, motion: { auto: 'On', reduced: 'Calm' } };
+        const LABEL = { text: { 100: 'Default', 112: 'Large', 125: 'Largest' }, motion: { auto: 'On', reduced: 'Calm' }, seasonal: { on: 'On', off: 'Off' } };
         const paint = () => { const d = L.display.get(); rows.forEach(r => { const k = r.getAttribute('data-ov-display'); r.querySelector('.ud-val').textContent = LABEL[k][d[k]] || ''; }); };
         rows.forEach(r => r.addEventListener('click', (e) => { e.stopPropagation(); const k = r.getAttribute('data-ov-display'), o = L.display.options[k], cur = L.display.get()[k]; L.display.set({ [k]: o[(o.indexOf(cur) + 1) % o.length] }); paint(); }));
         root.addEventListener('ov:display', paint, onDocument()); paint();
@@ -821,7 +850,7 @@
             const d = L.display.get();
             const seg = (key, val, label, title) => `<button type="button" data-k="${key}" data-v="${val}" aria-pressed="${String(d[key]) === val}" title="${title}">${label}</button>`;
             box.innerHTML = `<span class="ovl-dl">Display</span><span class="ovl-seg" role="group" aria-label="Text size">${seg('text', '100', 'A', 'Default text size')}${seg('text', '112', 'A+', 'Larger text')}${seg('text', '125', 'A++', 'Largest text')}</span>
-                <span class="ovl-seg" role="group" aria-label="Motion">${seg('motion', 'auto', 'Motion', 'Animations on')}${seg('motion', 'reduced', 'Calm', 'Reduce animations')}</span><a href="https://openvibe.network/themes">Themes</a>`;
+                <span class="ovl-seg" role="group" aria-label="Motion">${seg('motion', 'auto', 'Motion', 'Animations on')}${seg('motion', 'reduced', 'Calm', 'Reduce animations')}</span>${seasonState() ? `<span class="ovl-seg" role="group" aria-label="Seasonal themes">${seg('seasonal', 'on', seasonState().s.name, 'Seasonal themes on')}${seg('seasonal', 'off', 'Off', 'Seasonal themes off')}</span>` : ''}<a href="https://openvibe.network/themes">Themes</a>`;
             box.hidden = false;
         };
         box.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (!b) return; L.display.set({ [b.dataset.k]: b.dataset.v }); paint(); });
@@ -1404,6 +1433,7 @@
         bindLinks(nav, links);
         bindChips(nav);
         bindLauncher(nav);
+        bindSeasonBadge(nav);
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
         setTimeout(() => mountBell(nav, u), 0);
@@ -1459,6 +1489,7 @@
                     <div class="ud-label">Display</div>
                     <button type="button" data-ov-display="text"><span class="icon">${navIcon('fa-text-height')}</span> Text size <b class="ud-val"></b></button>
                     <button type="button" data-ov-display="motion"><span class="icon">${navIcon('fa-wand-magic-sparkles')}</span> Animations <b class="ud-val"></b></button>
+                    <button type="button" data-ov-display="seasonal"><span class="icon">${navIcon('fa-palette')}</span> Seasonal themes <b class="ud-val"></b></button>
                     <a href="https://openvibe.network/themes"><span class="icon">${navIcon('fa-palette')}</span> Themes</a>
                     <div class="sep"></div>
                     <div class="ud-label">Across OpenVibe</div>
