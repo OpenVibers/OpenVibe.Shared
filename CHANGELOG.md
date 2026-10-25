@@ -4,6 +4,32 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.12.0 — 2026-10-26
+
+- **The OpenVibe mark wears the season; the pumpkin button is gone.** The owner, 2026-10-25: the badge beside the brand
+  "takes up a lot of space … especially on mobile"; integrate it into the logo instead.
+  - **The mark's look** (`ov-mark.js`): `<html data-ov-season-mark="halloween|winter">` (set by `theme-loader.js` for
+    anyone who has not turned seasonal themes off, whatever their theme) dresses every mark.
+    - October: a pumpkin's stem, leaf and faint ribs, with the V as its grin.
+    - December: a cap of snow on the ring.
+  - **Moments:**
+    - The leaf unfurls when the mark plays its intro.
+    - Every 4 to 8 minutes a mark on screen flickers like a candle for a second.
+    - On the first visit of the day, a few leaves (snowflakes in December) drift down from the first mark seen.
+    - None of this runs under either reduced-motion setting.
+  - **Navbar:** no `.ovnav-season` badge. The switch stays in the account menu ("Seasonal themes") and the display box.
+- **Theme changes follow you between sites without a jolt** (`theme-loader.js`). The owner, 2026-10-25: a seasonal
+  toggle on Live, then Themes in the menu, showed openvibe.network in the old theme until a refresh.
+  - **Saves outlive the page:** both PUTs (`/api/themes/me`, `/api/themes/me/display`) are `keepalive`, so a choice made
+    just before following a link still lands.
+  - **The account is asked again:**
+    - when the page comes back into view (at most every 10 s);
+    - once more 2.5 s after arriving from another site, since that site's save may land after this page first asked.
+  - **Corrections fade:** a theme that changes under someone (the account's answer, another tab) crossfades for 0.4 s
+    instead of jumping. An answer that changes nothing repaints nothing. Calm motion never fades.
+- **Your name in the account menu opens your profile.** The avatar and name at the top of the menu link to
+  `openvibe.network/@username` (an anonymous visitor's to `/my`). They were plain text, and pressing them did nothing.
+
 ## 4.11.0 — 2026-10-25
 
 - **Seasonal themes.** The owner, 2026-10-24: a Halloween theme and style on every site, as the default during

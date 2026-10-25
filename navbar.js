@@ -61,10 +61,6 @@
             .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
             .ovnav-launch:hover, .ovnav-launch[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--accent-light, var(--accent, #60a5fa)); border-color: color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
             .ovnav-launch svg { display: block; transition: transform .25s cubic-bezier(.2,1.4,.3,1); }
-            /* The season's badge (theme-loader.js Seasons): pressed while its theme shows, faded when seasonal themes are off. */
-            .ovnav-season { all: unset; box-sizing: border-box; cursor: pointer; width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; }
-            .ovnav-season:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
-            .ovnav-season[aria-pressed="false"] { opacity: .5; filter: grayscale(1); }
             .ovnav-launch[aria-expanded="true"] svg { transform: rotate(45deg) scale(.92); }
             .ovnav-launcher a { all: unset; cursor: pointer; box-sizing: border-box; }
             .openvibe-navbar .ovnav-sep { width: 1px; height: 18px; background: var(--border, rgba(255,255,255,.12)); margin: 0 6px; flex: none; align-self: center; }
@@ -85,6 +81,9 @@
             .ovnav-chip[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chip[data-tone="green"] { --chip-c: #4ade80; } .ovnav-chip[hidden] { display: none !important; }
             .openvibe-navbar-dropdown .ud-chips { display: flex; gap: 6px; flex-wrap: nowrap; margin-top: 6px; }
             .openvibe-navbar-dropdown-header .info { min-width: 0; flex: 1; }
+            .openvibe-navbar-dropdown-header a.ud-me { color: inherit; text-decoration: none; display: block; line-height: 0; }
+            .openvibe-navbar-dropdown-header a.name.ud-me { line-height: inherit; display: block; }
+            .openvibe-navbar-dropdown-header a.name.ud-me:hover, .openvibe-navbar-dropdown-header a.name.ud-me:focus-visible { text-decoration: underline; }
             .openvibe-navbar-dropdown .ovnav-chip--menu { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font: 700 12px/1.2 inherit; color: var(--chip-c, #fbbf24); background: color-mix(in srgb, var(--chip-c, #fbbf24) 12%, transparent); border: 1px solid color-mix(in srgb, var(--chip-c, #fbbf24) 34%, transparent); }
             .openvibe-navbar .ovnav-burger { all: unset; box-sizing: border-box; cursor: pointer; display: none; width: 38px; height: 38px; border-radius: 11px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: none; }
             .openvibe-navbar .ovnav-burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: currentColor; transition: transform .2s, opacity .2s; }
@@ -531,28 +530,12 @@
         return { sub: brand.href, core: brand.joined ? apex : 'https://openvibe.network/', tld: apex, apex };
     }
 
-    // ── The season's badge beside the brand ─────────────────────────────────────────
-    // While a season runs (theme-loader.js SEASONS) the bar shows its emblem; a click flips the `seasonal` display
-    // preference (on a theme of their own, it opens the themes page).
-    const SEASON_ICON = {
-        halloween: '<path d="M12 7c-1.3-1.5-4.7-1.7-6.5.3-1.9 2.1-2 6.8-.2 9.6 1.6 2.4 4.6 2.8 6.7 1.5 2.1 1.3 5.1.9 6.7-1.5 1.8-2.8 1.7-7.5-.2-9.6C17 5.3 13.4 5.5 12 7Z" fill="#ff7a1a"/><path d="M12 7c0-1.7.5-3 2-3.6" stroke="#62b33a" stroke-width="2" fill="none"/>',
-        winter: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9" stroke="#7ee8da" stroke-width="2" stroke-linecap="round"/>',
-    };
+    // ── The season (theme-loader.js Seasons) ────────────────────────────────────────
+    // The OpenVibe mark wears it (ov-mark.js); the menus carry the switch (the account menu's "Seasonal themes" row and
+    // the display box). → { s, on, off } during a season, else null.
     function seasonState() {
         const L = root.OpenVibeThemeLoader, s = L && L.seasons && L.seasons.now();
-        return s && SEASON_ICON[s.id] ? { s, on: !!L.seasons.showing(), off: L.display.get().seasonal === 'off' } : null;
-    }
-    const seasonTitle = (st) => (st.on ? `${st.s.name} theme on: select to turn seasonal themes off` : `Seasonal themes${st.off ? ' off: select to turn them on' : ': pick the default theme to see them'}`);
-    function seasonBadgeHTML() {
-        const st = seasonState();
-        return st ? `<button type="button" class="ovnav-season" aria-pressed="${st.on}" title="${seasonTitle(st)}" aria-label="${seasonTitle(st)}"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">${SEASON_ICON[st.s.id]}</svg></button>` : '';
-    }
-    function bindSeasonBadge(nav) {
-        if (!seasonState()) return;
-        const btn = nav.querySelector('.ovnav-season'), L = root.OpenVibeThemeLoader;
-        const paint = () => { const st = seasonState(); if (st) { btn.setAttribute('aria-pressed', String(st.on)); btn.title = seasonTitle(st); btn.setAttribute('aria-label', btn.title); } };
-        btn.addEventListener('click', () => { const st = seasonState(); if (st.on || st.off) L.display.set({ seasonal: st.on ? 'off' : 'on' }); else window.location.href = 'https://openvibe.network/themes'; paint(); });
-        if (root.addEventListener) root.addEventListener('ov:season', paint, onDocument());
+        return s ? { s, on: !!L.seasons.showing(), off: L.display.get().seasonal === 'off' } : null;
     }
 
     function brandHTML(brand) {
@@ -570,7 +553,6 @@
                 <a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>
                 <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
             </div>
-            ${seasonBadgeHTML()}
             ${_config.launcher === false ? '' : '<button type="button" class="ovnav-launch" id="openvibe-launcher-btn" aria-label="All OpenVibe sites and tools" aria-haspopup="true" aria-expanded="false" title="All OpenVibe sites and tools"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><g fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></g></svg></button>'}`;
     }
 
@@ -1433,7 +1415,6 @@
         bindLinks(nav, links);
         bindChips(nav);
         bindLauncher(nav);
-        bindSeasonBadge(nav);
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
         setTimeout(() => mountBell(nav, u), 0);
@@ -1445,15 +1426,17 @@
             dropdown.id = 'openvibe-user-dropdown';
 
             const otherAccounts = accounts.filter(a => isAnon ? !a.is_anon : String(a.id) !== String(u.id));
+            // The avatar and name lead to the person's profile (an anonymous visitor's account page): people press them.
+            const meHref = !isAnon && u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
             const menuCfg = _config.menu || {};
             const before = ((_config.menu && _config.menu.before) || []).concat(_runtimeMenu.before);
             const after = ((_config.menu && _config.menu.after) || []).concat(_runtimeMenu.after);
 
             dropdown.innerHTML = `
                 <div class="openvibe-navbar-dropdown-header">
-                    ${avatarImg(u, 72, '', '')}
+                    <a class="ud-me" href="${escapeAttr(meHref)}" tabindex="-1" aria-hidden="true">${avatarImg(u, 72, '', '')}</a>
                     <div class="info">
-                        <div class="name">${escapeAttr(u.display_name || u.username)}</div>
+                        <a class="name ud-me" href="${escapeAttr(meHref)}" title="${isAnon ? 'Your account' : 'Your profile'}">${escapeAttr(u.display_name || u.username)}</a>
                         <div class="email">${isAnon ? '' : '@' + escapeAttr(u.username || '')}</div>
                         ${menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div><div class="ud-wallet ud-vibes" id="openvibe-vibes" hidden></div>'}
                         ${isAnon ? `<div class="anon-tag">Anonymous #${u.anon_number || '?'}</div>` : ''}

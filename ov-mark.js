@@ -16,6 +16,11 @@
  * so it keeps its look. It never moves while the page is hidden, while it is off-screen
  * (IntersectionObserver), with data-static, under prefers-reduced-motion or under the network's
  * own reduced-motion setting (html[data-ov-motion=reduced], theme-loader.js).
+ *
+ * The season (theme-loader.js sets <html data-ov-season-mark="halloween|winter"> for anyone who has not turned seasonal
+ * themes off, on any theme): the mark wears it, a pumpkin's stem, leaf and ribs in October, a cap of snow in December.
+ * Now and then (every 4 to 8 minutes) a mark on screen flickers for a moment, and on the first visit of the day a few
+ * leaves (snowflakes in December) drift down from the first mark seen. Never under either reduced-motion setting.
  */
 (function () {
     'use strict';
@@ -73,15 +78,37 @@
 @keyframes ovmDraw{from{stroke-dashoffset:46}to{stroke-dashoffset:0}}
 @keyframes ovmDot{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.5);opacity:1}}
 @keyframes ovmSpin{from{transform:rotate(0deg) scale(1)}40%{transform:rotate(200deg) scale(1.18)}to{transform:rotate(360deg) scale(1)}}
-@media (prefers-reduced-motion:reduce){.ov-mark svg,.ov-mark .g,.ov-mark .c,.ov-mark .v,.ov-mark .d{animation:none!important}.ov-mark .o{display:none}.ov-mark .c{stroke-dasharray:none;opacity:.9}}`;
+.ov-mark .sh,.ov-mark .sw{display:none}
+html[data-ov-season-mark=halloween] .ov-mark .sh,html[data-ov-season-mark=winter] .ov-mark .sw{display:inline}
+.ov-mark .sr{fill:none;stroke:currentColor;stroke-width:2;opacity:.28}
+.ov-mark .ss{fill:none;stroke:#5fae3c;stroke-width:3.2;stroke-linecap:round}
+.ov-mark .sl{fill:#7fd04e;transform-box:fill-box;transform-origin:0 70%}
+.ov-mark .sc{fill:none;stroke:#f4fbff;stroke-width:5.4;stroke-linecap:round}
+.ov-mark .sd{fill:#f4fbff}
+html[data-ov-season-mark=halloween] .ov-mark .o{fill:#ffc27a}
+html[data-ov-season-mark] .ov-mark[data-ovm-run] .sl{animation:ovmLeaf .9s cubic-bezier(.3,1.6,.5,1) both}
+.ov-mark[data-ovm-flourish] .sr{animation:ovmFlicker 1.6s linear 1}
+.ov-mark[data-ovm-flourish] .sl{animation:ovmWiggle 1.2s ease-in-out 1}
+.ov-mark[data-ovm-flourish] .sd{animation:ovmTwinkle 1.4s ease-in-out 1}
+.ovm-fall{position:fixed;width:0;height:0;pointer-events:none;z-index:2147483000}
+.ovm-fall i{position:absolute;left:-4px;top:-4px;width:9px;height:9px;border-radius:0 70% 0 70%;opacity:0;animation:ovmFall 3s cubic-bezier(.3,.1,.5,1) forwards}
+html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:50%}
+@keyframes ovmLeaf{from{transform:scale(0) rotate(-50deg)}to{transform:none}}
+@keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
+@keyframes ovmFlicker{0%,100%{opacity:.28}12%{opacity:.7}22%{opacity:.2}38%{opacity:.8}55%{opacity:.35}72%{opacity:.65}}
+@keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}80%{opacity:.9}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
+@media (prefers-reduced-motion:reduce){.ov-mark svg,.ov-mark .g,.ov-mark .c,.ov-mark .v,.ov-mark .d,.ov-mark .sl,.ov-mark .sr,.ov-mark .sd{animation:none!important}.ov-mark .o,.ovm-fall{display:none}.ov-mark .c{stroke-dasharray:none;opacity:.9}}`;
     function svg(id) {
         return `<svg viewBox="0 0 48 48" aria-hidden="true"><defs>
 <linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="currentColor"/><stop offset="1" stop-color="currentColor" stop-opacity="0.45"/></linearGradient>
 <linearGradient id="${id}v" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="0.5" stop-color="currentColor"/><stop offset="1" stop-color="#fff" stop-opacity="0.9"/><animateTransform attributeName="gradientTransform" type="translate" from="-1 0" to="1 0" dur="3.2s" repeatCount="indefinite"/></linearGradient>
 <path id="${id}p" d="M24,6 A18,18 0 1,1 23.99,6 Z"/></defs>
 <circle class="g" cx="24" cy="24" r="21"/><circle class="r" cx="24" cy="24" r="18"/><circle class="c" cx="24" cy="24" r="18" stroke="url(#${id}g)"/>
-<circle class="p" cx="24" cy="24" r="18"/>
+<circle class="p" cx="24" cy="24" r="18"/><g class="sh"><path class="sr" d="M24 6.5C16.5 12 16.5 36 24 41.5M24 6.5C31.5 12 31.5 36 24 41.5"/></g>
 <path class="v" d="M14.5,17 L24,34 L33.5,17" stroke="url(#${id}v)"/><circle class="d" cx="24" cy="34" r="2.6"/>
+<g class="sh"><path class="ss" d="M23.4 7.4c.2-2.6 1-4.4 2.6-5.6"/><path class="sl" d="M25.8 3.6c2.2-2.4 5.6-2.6 8-1.2-1.8 2.6-5.2 3.4-8 1.2z"/></g>
+<g class="sw"><path class="sc" d="M12.4 10.2A18 18 0 0 1 35.6 10.2"/><circle class="sd" cx="16.6" cy="9.8" r="1.6"/><circle class="sd" cx="30.6" cy="9.4" r="1.3"/></g>
 <circle class="o" r="2"><animateMotion dur="3.6s" repeatCount="indefinite"><mpath href="#${id}p"/></animateMotion></circle>
 <circle class="o o2" r="1.4"><animateMotion dur="3.6s" begin="0.14s" repeatCount="indefinite"><mpath href="#${id}p"/></animateMotion></circle></svg>`;
     }
@@ -106,7 +133,7 @@
         if (!el.isConnected || !svgEl) { forget(el); return; }
         const now = Date.now();
         const may = !reduced() && !el.hasAttribute('data-static') && !document.hidden && st.onScreen === true;
-        if (may && !st.introEnd) st.introEnd = introDeadline(now);
+        if (may && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
         const s = el.getAttribute('data-state');
         const run = may && (now < st.introEnd || st.hover || st.focus || now < st.lingerEnd || s === 'busy' || s === 'ok');
         if (run !== el.hasAttribute('data-ovm-run')) { if (run) el.setAttribute('data-ovm-run', ''); else el.removeAttribute('data-ovm-run'); }
@@ -132,6 +159,39 @@
         try { el.querySelector('svg').pauseAnimations(); } catch { /* */ }
     }
     function updateAll() { document.querySelectorAll('.ov-mark[data-ov]').forEach(update); }
+    // ── The season ──
+    const season = () => document.documentElement.getAttribute('data-ov-season-mark');
+    let flourishTimer = 0;
+    function scheduleFlourish() {
+        clearTimeout(flourishTimer); flourishTimer = 0;
+        if (!season()) return;
+        flourishTimer = setTimeout(() => {
+            if (season() && !reduced() && !document.hidden) {
+                document.querySelectorAll('.ov-mark[data-ov]:not([data-static])').forEach((el) => {
+                    const st = state.get(el); if (!st || st.onScreen === false) return;
+                    el.setAttribute('data-ovm-flourish', ''); setTimeout(() => el.removeAttribute('data-ovm-flourish'), 1700);
+                });
+            }
+            scheduleFlourish();
+        }, (4 + Math.random() * 4) * 60000);
+    }
+    const FALL_KEY = 'ov-season-fall';
+    function fallOnce(el) {
+        const id = season(); if (!id || reduced() || document.hidden || !el.isConnected) return;
+        const day = id + ':' + new Date().toDateString();
+        try { if (localStorage.getItem(FALL_KEY) === day) return; localStorage.setItem(FALL_KEY, day); } catch { return; }
+        const r = el.getBoundingClientRect(); if (!r.width || !document.body) return;
+        const box = document.createElement('div'); box.className = 'ovm-fall'; box.setAttribute('aria-hidden', 'true');
+        box.style.left = (r.left + r.width / 2) + 'px'; box.style.top = (r.top + r.height * 0.6) + 'px';
+        const colors = id === 'winter' ? ['#f4fbff', '#d8f3ff', '#ffffff'] : ['#ff7a1a', '#f5a524', '#d9481f', '#7fd04e'];
+        for (let i = 0; i < 7; i++) {
+            const s = document.createElement('i');
+            s.style.cssText = `--x:${Math.round((Math.random() - 0.3) * 140)}px;--y:${Math.round(120 + Math.random() * 160)}px;--r:${Math.round(Math.random() * 540 - 270)}deg;animation-delay:${(i * 0.18 + Math.random() * 0.2).toFixed(2)}s;animation-duration:${(2.4 + Math.random() * 1.2).toFixed(2)}s;background:${colors[i % colors.length]}`;
+            box.appendChild(s);
+        }
+        document.body.appendChild(box);
+        setTimeout(() => box.remove(), 5200);
+    }
     const bound = new WeakSet();
     function track(el) {
         state.set(el, { introEnd: 0, lingerEnd: 0, hover: false, focus: false, onScreen: io ? null : true, timer: 0 });
@@ -171,11 +231,12 @@
         try { rm = window.matchMedia('(prefers-reduced-motion: reduce)'); rm.addEventListener('change', updateAll); } catch { rm = null; }
         document.addEventListener('visibilitychange', updateAll);
         mount();
+        scheduleFlourish();
         try {
             new MutationObserver((records) => {
                 let added = false;
                 for (const r of records) {
-                    if (r.type === 'attributes') { if (r.target === document.documentElement) updateAll(); else if (state.has(r.target)) update(r.target); continue; }
+                    if (r.type === 'attributes') { if (r.target === document.documentElement) { updateAll(); if (r.attributeName === 'data-ov-season-mark') scheduleFlourish(); } else if (state.has(r.target)) update(r.target); continue; }
                     if (r.addedNodes.length) added = true;
                     r.removedNodes.forEach((node) => {
                         if (node.nodeType !== 1) return;
@@ -184,7 +245,7 @@
                     });
                 }
                 if (added) mount();
-            }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'data-static', 'data-ov-motion'] });
+            }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'data-static', 'data-ov-motion', 'data-ov-season-mark'] });
         } catch { /* */ }
     }
     window.ovMarkMount = mount;
