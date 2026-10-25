@@ -6,6 +6,22 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## 4.13.0 — unreleased
 
+- **Richer home pages for every site** (`showcase.js`, `showcase.css`, `docs/home-pages.md`). The owner, 2026-10-25:
+  "more rich content and different types… shared code so you can make nice home pages across all our different sites…
+  and other people can reuse too". About 30 sites build their homes from showcase.
+  - New sections:
+    - `stats`: a strip of real numbers.
+    - `cards`: rich content in a grid or a swipeable rail, with lazy images that hold their ratio, a LIVE badge and
+      "See all".
+    - `spotlight`: features shown with a picture or a short muted loop, alternating sides.
+    - `faq`: an accordion that works without JavaScript, plus `faqJsonLd()`.
+    - `network`: "Part of OpenVibe", up to four related products from the curated `RELATED` map, with ring icons
+      and the `ov_from` tag, so the network links together in a readable, crawlable way.
+  - `jsonLd()` writes structured data that cannot close its script early.
+  - The hero gets a soft glow from the theme's accent. Sections rise in on scroll (CSS scroll-driven animations, only
+    without reduced motion).
+  - The same safe-link and escaping rules as the other sections.
+
 - **The player sounds, loads and looks better** (`player.js`, `player.css`). The owner, 2026-10-25: "the volume up and
   down button on mobile will actually unmute… those little color sample type s*** so that it loads that then the
   thumbnail… then the actual video… that background effect… the mute button looks a little weird".
