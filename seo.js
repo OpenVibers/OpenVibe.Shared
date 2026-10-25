@@ -77,8 +77,12 @@ function headTags(o = {}) {
     out.push(`<meta name="twitter:title" content="${esc(title)}">`);
     if (description) out.push(`<meta name="twitter:description" content="${esc(description)}">`);
     if (image) out.push(`<meta name="twitter:image" content="${esc(image)}">`);
-    const ld = o.jsonLd ? (Array.isArray(o.jsonLd) ? o.jsonLd : [o.jsonLd]) : [];
-    for (const item of ld) if (item) out.push(jsonLdTag(item));
+    const ld = o.jsonLd ? (Array.isArray(o.jsonLd) ? o.jsonLd : [o.jsonLd]).filter(Boolean) : [];
+    // A WebSite names its publisher by @id (OpenVibe's Organization). A page with a WebSite but no Organization gets the
+    // node too, so the reference resolves on every site and search engines see one OpenVibe across the network.
+    const types = (x) => [].concat(x && x['@type'] || []);
+    if (ld.some((x) => types(x).includes('WebSite')) && !ld.some((x) => types(x).includes('Organization') || x['@id'] === ORG['@id'])) ld.push(jsonLd.organization());
+    for (const item of ld) out.push(jsonLdTag(item));
     return out.join('\n');
 }
 
@@ -202,7 +206,11 @@ function sitemapIndexXml(maps = []) {
 const AI_AND_SEARCH_BOTS = ['Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', 'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-Web', 'anthropic-ai', 'PerplexityBot', 'CCBot', 'Google-Extended', 'Amazonbot', 'meta-externalagent', 'YouBot', 'Bytespider'];
 
 function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true, block = [], crawlDelay } = {}) {
-    const lines = ['User-agent: *'];
+    const lines = [];
+    // Content signals (contentsignals.org): with allowAI the network says yes to search, AI answers and training in so many
+    // words (owner, 2026-10-25: "fully AI allowed and indexable"), so no crawler has to guess from silence.
+    if (allowAI) lines.push('# Content signals: you may use this site\'s content for search, AI answers (ai-input) and AI training.', 'Content-Signal: search=yes, ai-input=yes, ai-train=yes', '');
+    lines.push('User-agent: *');
     for (const a of allow) lines.push(`Allow: ${a}`);
     for (const d of disallow) lines.push(`Disallow: ${d}`);
     if (crawlDelay) lines.push(`Crawl-delay: ${crawlDelay}`);
