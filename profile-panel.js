@@ -8,7 +8,9 @@
  *   OpenVibeProfilePanel.render(el, 'ana')      or every [data-ov-profile] on the page, by itself, once loaded
  *   <section data-ov-profile="me" hidden>…</section>   whoever is signed in on this site (its own /auth/me, the navbar's
  *                                                      session lookup), so a cached page can show "your stuff"; shown
- *                                                      only once drawn, left as it was for someone signed out
+ *                                                      only once drawn, left as it was for someone signed out;
+ *                                                      a hidden [data-ov-profile-section] around it (a heading and
+ *                                                      a line) is shown with it
  *
  * It reads OpenVibe.Network's public profile (GET https://openvibe.network/api/v1/profiles/:username: profile@1, CORS
  * open, no credentials, cached 60 s by the Network), which gathers Inventory, Quest and Play. The panel replaces the
@@ -78,6 +80,13 @@
         return box;
     }
 
+    /** Show the drawn panel, and the section around it that waits for it ([data-ov-profile-section], hidden until then). */
+    function reveal(target) {
+        target.hidden = false;
+        const section = target.closest && target.closest('[data-ov-profile-section]');
+        if (section) section.hidden = false;
+    }
+
     function draw(target, p) {
         const card = el('section', 'ovpp');
         card.setAttribute('aria-label', `${p.display_name || p.username} on OpenVibe`);
@@ -94,7 +103,7 @@
         if (p.private) {
             card.appendChild(el('p', 'ovpp-note', 'This profile is private.'));
             target.replaceChildren(card);
-            target.hidden = false;
+            reveal(target);
             return card;
         }
         const ach = p.achievements || { total: 0, games: [] };
@@ -147,7 +156,7 @@
         if (p.inventory_url) { foot.appendChild(root.document.createTextNode(' \u00b7 ')); foot.appendChild(link(p.inventory_url, null, 'Inventory')); }
         card.appendChild(foot);
         target.replaceChildren(card);
-        target.hidden = false;
+        reveal(target);
         return card;
     }
 

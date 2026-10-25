@@ -711,7 +711,8 @@ able to see your inventory anywhere"). Put a fallback link in an element and loa
 
 Every `[data-ov-profile]` on the page is drawn once loaded; `OpenVibeProfilePanel.render(el, username)` draws one added
 later. `data-ov-profile="me"` is whoever is signed in on that site (its own `/auth/me`, the navbar's session lookup), so a
-page cached for everyone can still show "your stuff": give the element `hidden` and it appears only once drawn. It reads OpenVibe.Network's public profile (`GET https://openvibe.network/api/v1/profiles/:username`, CORS
+page cached for everyone can still show "your stuff": give the element `hidden` and it appears only once drawn. A
+hidden ancestor marked `data-ov-profile-section` (a heading and a line around the panel) is shown with it. It reads OpenVibe.Network's public profile (`GET https://openvibe.network/api/v1/profiles/:username`, CORS
 open, no credentials), which gathers OpenVibe.Inventory, OpenVibe.Quest and OpenVibe.Play. Values are text, links only
 to OpenVibe's own https hosts, pictures only from openvibe.media and openvibe.network; a private profile shows its name
 and picture; no answer leaves the fallback link. `window.OpenVibeProfilePanelConfig = { api }` points it at another
