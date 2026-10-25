@@ -365,10 +365,10 @@
     const _selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     let _lazyWidth = null;
     let _iconState = 0;     // 0 idle, 1 loading, 2 loaded, 3 unavailable
-    // "Ask Actor": the page's selected text (≤1000) and https address (no hash, ≤400) into Actor's console box.
+    // "Ask Vibe": the page's selected text (≤1000) and https address (no hash, ≤400) into a new chat with Vibe (openvibe.chat).
     function selectedText() { try { const s = root.getSelection(); return s && !s.isCollapsed ? String(s).replace(/\s+/g, ' ').trim().slice(0, 1000) : ''; } catch { return ''; } }
-    function askActorHref(t) {
-        const c = 'https://openvibe.actor/console', u = new URL(location.href); u.hash = '';
+    function askVibeHref(t) {
+        const c = 'https://openvibe.chat/vibe', u = new URL(location.href); u.hash = '';
         return t ? `${c}?ask=${encodeURIComponent(t)}${u.protocol === 'https:' && u.href.length <= 400 ? `&from=${encodeURIComponent(u.href)}` : ''}` : c;
     }
     function lazyWidth(name) {
@@ -1509,7 +1509,7 @@
                     ${!isAnon && u.username ? `<a href="https://openvibe.network/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-id-card')}</span> My Profile</a>` : ''}
                     ${!isAnon && u.username ? `<a href="https://openvibe.live/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-tower-broadcast')}</span> My Channel</a>` : ''}
                     <a href="https://openvibe.network/my#notifications"><span class="icon">${navIcon('fa-bell')}</span> Notifications</a>
-                    ${!isAnon ? `<a href="https://openvibe.actor/console" data-ov-ask-actor><span class="icon">${navIcon('fa-brain')}</span> Ask Actor</a>` : ''}
+                    ${!isAnon ? `<a href="https://openvibe.chat/vibe" data-ov-ask><span class="icon">${navIcon('fa-brain')}</span> Ask Vibe</a>` : ''}
                     <div class="sep"></div>`}
                     <div class="ud-label">Display</div>
                     <div class="ud-scheme" role="group" aria-label="Light or dark" hidden><button type="button" data-ov-scheme="light" aria-pressed="false"><span class="icon">${navIcon('fa-sun')}</span> Light</button><button type="button" data-ov-scheme="dark" aria-pressed="false"><span class="icon">${navIcon('fa-moon')}</span> Dark</button><button type="button" data-ov-scheme="auto" aria-pressed="false" title="Follow this device's light or dark setting"><span class="icon">${navIcon('fa-circle-half-stroke')}</span> Auto</button></div>
@@ -1537,12 +1537,12 @@
             regPanel(dropdown, 'user-menu');
             if (_config.recent !== false) renderRecent(dropdown.querySelector('#openvibe-recent'));
 
-            // Avatar click toggles dropdown (the selection for Ask Actor is read on pointerdown: the press can clear it)
+            // Avatar click toggles dropdown (the selection for Ask Vibe is read on pointerdown: the press can clear it)
             const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
             avatarBtn.addEventListener('pointerdown', () => { sel = selectedText(); });
             avatarBtn.addEventListener('click', () => {
                 dropdown.classList.toggle('open');
-                const ask = dropdown.querySelector('[data-ov-ask-actor]'); if (ask) ask.href = askActorHref(sel ?? selectedText()); sel = null;
+                const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; if (root.OpenVibeIcons) root.OpenVibeIcons.mount(dropdown); else if (!document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } }
             });
 
@@ -1750,7 +1750,7 @@
             persistToken,
             fillUrl,
         },
-        _ask: { selectedText, askActorHref },
+        _ask: { selectedText, askVibeHref },
         _wallet: { loadWallet, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
     };
 
