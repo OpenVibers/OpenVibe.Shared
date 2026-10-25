@@ -90,7 +90,18 @@
         volumeKey(current, e.key);
     });
 
-    /** The average colour of a loaded image (a poster), when the browser lets the page read it. */
+    /** An image, asked for with CORS so its pixels can be read; without CORS it still loads, only unread. */
+    function loadImage(src, done) {
+        if (typeof Image !== 'function') return;
+        const img = new Image();
+        img.decoding = 'async';
+        img.crossOrigin = 'anonymous';
+        img.onload = () => done(img);
+        img.onerror = () => { if (!img.crossOrigin) return; img.crossOrigin = null; img.removeAttribute('crossorigin'); img.src = src; };
+        img.src = src;
+    }
+
+    /** The average colour of a loaded image (a preview or a poster), when the browser lets the page read it. */
     function averageColor(img, done) {
         try {
             const c = document.createElement('canvas'); c.width = 8; c.height = 8;
@@ -163,7 +174,12 @@
         if (/^#[0-9a-f]{3,8}$/i.test(color || '')) root.style.setProperty('--ovp-bg', color);
         const thumb = video.getAttribute('data-ov-thumb');
         const placeholder = el('div', 'ov-player-placeholder', { 'aria-hidden': 'true' });
-        if (/^(data:image\/|https:\/\/)/.test(thumb || '')) { placeholder.style.backgroundImage = `url("${thumb.replace(/"/g, '%22')}")`; root.classList.add('has-thumb'); }
+        if (/^(data:image\/|https:\/\/)/.test(thumb || '')) {
+            placeholder.style.backgroundImage = `url("${thumb.replace(/"/g, '%22')}")`;
+            root.classList.add('has-thumb');
+            // No colour given: the preview's average, which arrives first (a few hundred bytes).
+            if (!/^#[0-9a-f]{3,8}$/i.test(color || '')) loadImage(thumb, (img) => averageColor(img, (c) => root.style.setProperty('--ovp-bg', c)));
+        }
         const posterLayer = el('div', 'ov-player-poster', { 'aria-hidden': 'true' });
         root.insertBefore(placeholder, video);
         root.insertBefore(posterLayer, video);
@@ -203,17 +219,12 @@
         root.append(spinner, big, message, unmute, flash, bar);
         const ambient = video.hasAttribute('data-ov-ambient') || options.ambient ? glow(root, video) : null;
         const poster = video.getAttribute('poster');
-        if (poster && typeof Image === 'function') {
-            const img = new Image();
-            img.decoding = 'async';
-            img.onload = () => {
-                posterLayer.style.backgroundImage = `url("${poster.replace(/"/g, '%22')}")`;
-                root.classList.add('has-poster');
-                if (!color) averageColor(img, (c) => root.style.setProperty('--ovp-bg', c));
-                if (ambient) ambient.still(img);
-            };
-            img.src = poster;
-        }
+        if (poster) loadImage(poster, (img) => {
+            posterLayer.style.backgroundImage = `url("${poster.replace(/"/g, '%22')}")`;
+            root.classList.add('has-poster');
+            if (!color && !thumb) averageColor(img, (c) => root.style.setProperty('--ovp-bg', c));
+            if (ambient) ambient.still(img);
+        });
 
         const pipOk = typeof document !== 'undefined' && document.pictureInPictureEnabled && !video.disablePictureInPicture;
         if (!pipOk) pipBtn.hidden = true;
