@@ -697,6 +697,25 @@ community badge's image (`img.ov-badge`) before the name, from the equipped read
 Calm setting and `prefers-reduced-motion` stop the animation. `window.OpenVibeItemsConfig = { api }` points it at
 another Inventory (development).
 
+### A person's stuff on any site (`profile-panel.js`, `profile-panel.css`)
+
+Steam-style: what someone wears, how many items, badges and achievements they have, their games with the latest
+unlock, and links to their full profile and inventory, on any OpenVibe site (the owner, 2026-10-25: "you should be
+able to see your inventory anywhere"). Put a fallback link in an element and load both files:
+
+```html
+<link rel="stylesheet" href="/shared/profile-panel.css">
+<div data-ov-profile="ana"><a href="https://openvibe.network/@ana">Ana's profile</a></div>
+<script src="/shared/profile-panel.js" defer></script>
+```
+
+Every `[data-ov-profile]` on the page is drawn once loaded; `OpenVibeProfilePanel.render(el, username)` draws one added
+later. It reads OpenVibe.Network's public profile (`GET https://openvibe.network/api/v1/profiles/:username`, CORS
+open, no credentials), which gathers OpenVibe.Inventory, OpenVibe.Quest and OpenVibe.Play. Values are text, links only
+to OpenVibe's own https hosts, pictures only from openvibe.media and openvibe.network; a private profile shows its name
+and picture; no answer leaves the fallback link. `window.OpenVibeProfilePanelConfig = { api }` points it at another
+Network (development).
+
 ## Development
 
 ```bash

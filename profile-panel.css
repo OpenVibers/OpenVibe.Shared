@@ -1,0 +1,39 @@
+/*
+ * openvibe-shared/profile-panel.css — the panel profile-panel.js draws: a person's stuff on any OpenVibe site.
+ * Theme tokens only, so it follows the site's theme and light or dark mode; every list can shrink to a phone.
+ */
+.ovpp { --ovpp-r-common: #94a3b8; --ovpp-r-uncommon: #22c55e; --ovpp-r-rare: #3b82f6; --ovpp-r-epic: #a855f7; --ovpp-r-legendary: #f59e0b;
+    box-sizing: border-box; max-width: 520px; padding: 14px 16px; border: 1px solid var(--border, #1f2d47); border-radius: 16px;
+    background: var(--bg-card, var(--bg-secondary, #101828)); color: var(--text-primary, #e6edf7); font-size: .92rem; line-height: 1.4; }
+.ovpp *, .ovpp *::before, .ovpp *::after { box-sizing: border-box; }
+.ovpp a { color: inherit; }
+.ovpp-head { display: flex; align-items: center; gap: 12px; text-decoration: none; min-width: 0; }
+.ovpp-pic { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: none; background: var(--bg-secondary, #101828); }
+.ovpp-who { display: flex; flex-direction: column; min-width: 0; }
+.ovpp-who b { font-size: 1.05rem; overflow-wrap: anywhere; }
+.ovpp-who small { color: var(--text-secondary, #96a7c2); }
+.ovpp-stats { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.ovpp-stats li { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 10px; background: var(--bg-secondary, #101828); min-width: 0; }
+.ovpp-stats b { font-size: 1.05rem; }
+.ovpp-stats span { font-size: .72rem; color: var(--text-muted, #7386a3); }
+.ovpp-sec { margin-top: 12px; }
+.ovpp-h { margin: 0 0 6px; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
+.ovpp-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ovpp-chip, .ovpp-chip a { display: inline-flex; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.ovpp-chip { padding: 4px 10px 4px 4px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--rc, var(--ovpp-r-common)) 45%, var(--border, #1f2d47)); background: var(--bg-secondary, #101828); }
+.ovpp-chip a { text-decoration: none; }
+.ovpp-chip span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovpp-badge { padding: 4px 10px; --rc: var(--ovpp-r-legendary); }
+.ovpp-art { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; flex: none; overflow: hidden;
+    background: color-mix(in srgb, var(--rc, var(--ovpp-r-common)) 22%, transparent); font-size: 16px; }
+.ovpp-art img { width: 100%; height: 100%; object-fit: cover; }
+.ovpp .r-common { --rc: var(--ovpp-r-common); } .ovpp .r-uncommon { --rc: var(--ovpp-r-uncommon); } .ovpp .r-rare { --rc: var(--ovpp-r-rare); }
+.ovpp .r-epic { --rc: var(--ovpp-r-epic); } .ovpp .r-legendary { --rc: var(--ovpp-r-legendary); }
+.ovpp-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.ovpp-list li { overflow-wrap: anywhere; }
+.ovpp-game { font-weight: 700; text-decoration: none; }
+.ovpp-list small { color: var(--text-muted, #7386a3); }
+.ovpp-latest { display: block; color: var(--text-secondary, #96a7c2); font-size: .85rem; }
+.ovpp-note { margin: 10px 0 0; color: var(--text-secondary, #96a7c2); }
+.ovpp-links { margin: 12px 0 0; font-size: .85rem; color: var(--text-muted, #7386a3); }
+.ovpp-links a { color: var(--accent, #3b82f6); }
