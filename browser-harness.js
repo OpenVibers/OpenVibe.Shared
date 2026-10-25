@@ -142,7 +142,8 @@ async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, hea
             '--mute-audio', '--disk-cache-size=16777216', '--window-size=1280,900', '--disable-features=BackForwardCache', ...args, 'about:blank',
         ], { stdio: 'ignore', detached: true }); // its own process group: close() stops Chrome and its helpers together
         const portFile = path.join(profile, 'DevToolsActivePort');
-        for (let i = 0; i < 200 && !wsUrl; i++) {
+        // Up to 45 s: several Chromes starting at once on a two-core CI runner took longer than 20 s (2026-10-25).
+        for (let i = 0; i < 450 && !wsUrl; i++) {
             if (proc.exitCode != null) break;
             try {
                 const [port, p] = fs.readFileSync(portFile, 'utf8').split('\n');
