@@ -7,6 +7,8 @@ const head = seo.headTags({ title: 'A very long title that certainly goes past t
 assert.ok(/<title>[^<]{1,62}<\/title>/.test(head), 'title is clipped');
 assert.ok(!head.includes('</script><script>alert'), 'JSON-LD cannot close its script tag');
 assert.ok(seo.robotsTxt({ sitemaps: ['https://x.test/sitemap.xml'] }).includes('GPTBot'), 'AI crawlers are named');
+assert.ok(seo.robotsTxt({}).includes('Content-Signal: search=yes, ai-input=yes, ai-train=yes'), 'AI use allowed in so many words');
+assert.ok(!seo.robotsTxt({ allowAI: false }).includes('Content-Signal'), 'and not when a site opts out');
 assert.ok(!seo.sitemapXml([{ loc: '/relative' }, { loc: 'https://ok.test/' }]).includes('/relative'), 'sitemaps hold absolute URLs only');
 assert.ok(seo.llmsTxt({ name: 'X', summary: 's', sections: [] }).startsWith('# X'));
 
@@ -87,4 +89,13 @@ console.log('shared modules: all checks passed');
         assert.strictEqual(c2.OpenVibeFooter.detectService(), id, `detectService on ${host}`);
     }
     console.log('browser bundles evaluate: ok');
+}
+
+// A WebSite's publisher (@id OpenVibe's Organization) resolves on the page: headTags adds the Organization when it is missing.
+{
+    const withSite = seo.headTags({ title: 'Chat', canonical: 'https://openvibe.chat/', jsonLd: [seo.jsonLd.website({ name: 'Chat', url: 'https://openvibe.chat/' })] });
+    assert.strictEqual((withSite.match(/"@type":"Organization"/g) || []).length, 1, 'the Organization joins a WebSite');
+    const both = seo.headTags({ title: 'Live', jsonLd: [seo.jsonLd.website({ name: 'Live', url: 'https://openvibe.live/' }), seo.jsonLd.organization({ description: 'x' })] });
+    assert.strictEqual((both.match(/"@type":"Organization"/g) || []).length, 1, 'never twice');
+    assert.ok(!seo.headTags({ title: 'T', jsonLd: [{ '@type': 'Thing' }] }).includes('Organization'), 'only beside a WebSite');
 }

@@ -21,6 +21,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - The hero gets a soft glow from the theme's accent. Sections rise in on scroll (CSS scroll-driven animations, only
     without reduced motion).
   - The same safe-link and escaping rules as the other sections.
+- **One OpenVibe for search engines and AI crawlers** (`seo.js`):
+  - `headTags` adds OpenVibe's Organization node beside a WebSite that names it as publisher but did not include it.
+    Chat, Video, OpenRestream, Actor and Work had the reference without the node.
+  - `robotsTxt` says yes to search, AI answers and AI training in so many words (`Content-Signal: search=yes,
+    ai-input=yes, ai-train=yes`) unless a site passes `allowAI: false`. The owner, 2026-10-25: "fully AI allowed and
+    indexable".
 
 - **The player sounds, loads and looks better** (`player.js`, `player.css`). The owner, 2026-10-25: "the volume up and
   down button on mobile will actually unmute… those little color sample type s*** so that it loads that then the
