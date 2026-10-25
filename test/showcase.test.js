@@ -81,4 +81,34 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(sc.CSS.includes('.sc-next-main{'), 'styled by the kit');
 }
 
+// ── Rich home sections (2026-10-25: "more rich content and different types… nice effects… reusable") ──
+{
+    const st = sc.stats({ title: 'Today', items: [{ value: '1,284', label: 'streams this week' }, { value: '38', label: 'live now', href: '/browse' }, { value: null, label: 'skipped' }] });
+    assert.ok(st.includes('<dd>1,284</dd>') && st.includes('<a class="sc-stat" href="/browse">') && !st.includes('skipped'), 'stats: real numbers only, linkable');
+    assert.strictEqual(sc.stats({ items: [] }), '');
+    const cd = sc.cards({ title: 'Live now', layout: 'rail', ratio: '1/1', more: { label: 'All', href: '/all' }, items: [
+        { href: '/@a', title: 'A <b>', meta: '42 watching', image: 'https://openvibe.media/t/a.jpg', live: true },
+        { href: 'javascript:alert(1)', title: 'bad' }, { href: '/@c', title: 'C', image: 'http://insecure.example/x.jpg', badge: 'VOD' },
+    ] });
+    assert.ok(cd.includes('class="sc-cards sc-rail" style="--sc-ar:1 / 1"'), 'the rail at the asked ratio');
+    assert.ok(cd.includes('A &lt;b&gt;') && cd.includes('<span class="sc-badge sc-live">LIVE</span>') && cd.includes('loading="lazy"'));
+    assert.ok(!cd.includes('javascript:') && !cd.includes('insecure.example'), 'unsafe links and http images are left out');
+    assert.ok(cd.includes('<a class="sc-more" href="/all">All'));
+    const sp = sc.spotlight({ items: [{ title: 'Clips', text: 'One tap', video: '/v.mp4', image: '/p.jpg', href: '/clips' }, { title: 'Two', image: '/p.jpg' }] });
+    assert.ok(sp.includes('<video src="/v.mp4" muted loop playsinline autoplay preload="none" poster="/p.jpg"'), 'a short muted loop, with its poster');
+    assert.strictEqual((sp.match(/class="sc-spot"/g) || []).length, 2);
+    const fq = sc.faq({ items: [['Do I need OBS?', 'No.'], ['Broken'], ['Free?', 'Yes.']] });
+    assert.ok(fq.includes('<details open><summary>Do I need OBS?</summary>') && (fq.match(/<details/g) || []).length === 2, 'an accordion, the first open');
+    const ld = sc.faqJsonLd([['Q </script>', 'A']]);
+    assert.ok(ld.startsWith('<script type="application/ld+json">') && !ld.slice(35, -9).includes('<'), 'JSON-LD cannot close its script early');
+    assert.ok(JSON.parse(ld.slice(35, -9).replace(/\\u003c/g, '<')).mainEntity[0].name === 'Q </script>');
+    const net = sc.network({ service: 'live' });
+    assert.ok(net.includes('Part of OpenVibe') && net.includes('https://openre.stream/?ov_from=live') && net.includes('data-icon="openre"'), 'related products, with the referral tag and ring icons');
+    assert.ok(!net.includes('https://openvibe.live/'), 'never links a product to itself');
+    assert.ok(sc.network({ service: 'unknown-thing' }).includes('OpenVibe.Live'), 'a product without its own list gets the core ones');
+    assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'));
+    for (const [svc, list] of Object.entries(sc.RELATED)) for (const [to, what, href] of list) assert.ok(to && what && /^https:\/\//.test(href) && to !== svc, `${svc} → ${to}`);
+    assert.ok(sc.CSS.includes('animation-timeline:view()') && sc.CSS.includes('prefers-reduced-motion:no-preference'), 'scroll reveal, only for people who want motion');
+}
+
 console.log('showcase: all checks passed');

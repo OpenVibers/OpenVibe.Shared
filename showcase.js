@@ -15,7 +15,14 @@
  *     + sc.pricing({ title, lede, tiers: [{ name, price, per, items, action, highlight }], note })
  *     + sc.limits({ title, lede, columns, rows: [{ label, values }], source })   pricing that equals the API's limits
  *     + sc.stories({ title, items: [{ who, text, outcome }] })
+ *     + sc.stats({ title, items: [{ value, label, href }] })                 a strip of real numbers
+ *     + sc.cards({ title, lede, items: [{ href, title, text, image, badge, meta, live }], layout: 'grid'|'rail',
+ *                  ratio: '16/9'|'4/3'|'1/1', more: { label, href } })             rich content: videos, streams, posts
+ *     + sc.spotlight({ title, lede, items: [{ title, text, image, video, alt, href, actions }] })   features, shown
+ *     + sc.faq({ title, items: [[question, answer]] })                       an accordion, with FAQPage data (faqJsonLd)
+ *     + sc.network({ service, title, lede, items })                          "Part of OpenVibe": related products
  *     + sc.cta({ title, text, actions })
+ *   sc.jsonLd(obj) is a <script type="application/ld+json"> that cannot end early ('<' escaped).
  *
  * Every string is escaped; the only markup that passes through is a field named `html` (trusted, the caller's own).
  * `icon` is a Font Awesome class ('fa-code') or an openvibe-shared/icons name ('ov:tools'). `actions` are
@@ -162,6 +169,115 @@ function nextSteps({ id: sid, title = 'Next steps', lede, items } = {}) {
     }).join('')}</ol></section>`;
 }
 
+/** A strip of real numbers ("12,400 streams", "184 tools"). The page passes what it measured; nothing is invented here. */
+function stats({ id: sid, title, items } = {}) {
+    const usable = (items || []).filter((x) => x && x.value != null && x.label);
+    if (!usable.length) return '';
+    const h = `sc-${slug(title || 'numbers')}`;
+    return `<section class="sc-sec sc-stats-sec"${id(sid)}${labelled(title, h)}>${title ? `<h2 id="${h}" class="sr-only">${esc(title)}</h2>` : ''}<dl class="sc-stats">${usable.map((x) => {
+        const inner = `<dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd>`;
+        const href = safeHref(x.href);
+        return href ? `<a class="sc-stat" href="${esc(href)}">${inner}</a>` : `<div class="sc-stat">${inner}</div>`;
+    }).join('')}</dl></section>`;
+}
+
+const RATIOS = { '16/9': '16 / 9', '4/3': '4 / 3', '1/1': '1 / 1', '3/4': '3 / 4', '9/16': '9 / 16' };
+/**
+ * Rich content: live streams, videos, posts, products, listings. `layout: 'rail'` is one swipeable row (scroll snap) for
+ * the top of a page; 'grid' (the default) wraps. Images are lazy and hold their space (`ratio`), so nothing jumps.
+ * `live: true` adds the red LIVE badge; `badge` is any short label, `meta` a quiet line under the title.
+ */
+function cards({ id: sid, title, lede, items, layout = 'grid', ratio = '16/9', more } = {}) {
+    const usable = (items || []).filter((c) => c && c.title && safeHref(c.href));
+    if (!usable.length) return '';
+    const h = `sc-${slug(title)}`;
+    const ar = RATIOS[ratio] || RATIOS['16/9'];
+    const moreHref = more && safeHref(more.href);
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${title || moreHref ? `<div class="sc-head-row"><div>${head(title, lede, h)}</div>${moreHref ? `<a class="sc-more" href="${esc(moreHref)}">${esc(more.label || 'See all')} <span aria-hidden="true">→</span></a>` : ''}</div>` : ''}<ul class="sc-cards sc-${layout === 'rail' ? 'rail' : 'wrap'}" style="--sc-ar:${ar}">${usable.map((c) => {
+        const img = /^(https:\/\/|\/(?!\/))/.test(c.image || '') ? `<img src="${esc(c.image)}" alt="${esc(c.alt || '')}" loading="lazy" decoding="async">` : '';
+        const badge = c.live ? '<span class="sc-badge sc-live">LIVE</span>' : c.badge ? `<span class="sc-badge">${esc(c.badge)}</span>` : '';
+        return `<li><a class="sc-tile" href="${esc(safeHref(c.href))}"><span class="sc-thumb">${img}${badge}</span><span class="sc-tile-body"><b>${esc(c.title)}</b>${c.meta ? `<small>${esc(c.meta)}</small>` : ''}${c.text ? `<span class="sc-tile-text">${esc(c.text)}</span>` : ''}</span></a></li>`;
+    }).join('')}</ul></section>`;
+}
+
+/** Features, shown rather than listed: a picture or a short muted loop beside each, alternating sides. */
+function spotlight({ id: sid, title, lede, items } = {}) {
+    const usable = (items || []).filter((x) => x && x.title);
+    if (!usable.length) return '';
+    const h = `sc-${slug(title)}`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-spots">${usable.map((x) => {
+        const video = /^(https:\/\/|\/(?!\/))/.test(x.video || '') ? `<video src="${esc(x.video)}" muted loop playsinline autoplay preload="none"${x.image ? ` poster="${esc(x.image)}"` : ''} aria-label="${esc(x.alt || x.title)}"></video>` : '';
+        const img = !video && /^(https:\/\/|\/(?!\/))/.test(x.image || '') ? `<img src="${esc(x.image)}" alt="${esc(x.alt || '')}" loading="lazy" decoding="async">` : '';
+        const href = safeHref(x.href);
+        return `<article class="sc-spot">${video || img ? `<div class="sc-spot-media">${video || img}</div>` : ''}<div class="sc-spot-body"><h3>${href ? `<a href="${esc(href)}">${esc(x.title)}</a>` : esc(x.title)}</h3>${x.text ? `<p>${esc(x.text)}</p>` : ''}${actions(x.actions, 'sc-actions sc-spot-act')}</div></article>`;
+    }).join('')}</div></section>`;
+}
+
+/** Questions people ask, as an accordion that works without JavaScript. Pair it with faqJsonLd(items) in the head. */
+function faq({ id: sid, title = 'Questions', lede, items } = {}) {
+    const usable = (items || []).filter((q) => Array.isArray(q) && q[0] && q[1]);
+    if (!usable.length) return '';
+    const h = `sc-${slug(title)}`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-faq">${usable.map(([q, a], i) => `<details${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>`;
+}
+/** A JSON-LD block that cannot close its script early. */
+const jsonLd = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+const faqJsonLd = (items) => jsonLd({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (items || []).filter((q) => Array.isArray(q) && q[0] && q[1]).map(([q, a]) => ({ '@type': 'Question', name: String(q), acceptedAnswer: { '@type': 'Answer', text: String(a) } })) });
+
+/**
+ * Where each product leads next on the network: real, crawlable links with descriptive text, chosen per product so a
+ * reader (and a search engine) sees how the sites fit together, not one long list of every domain. [to, what, href].
+ */
+const RELATED = {
+    live: [['openre', 'Stream to every platform at once', 'https://openre.stream/'], ['video', 'Watch past streams and clips', 'https://openvibe.video/'], ['chat', 'Chat rooms and DMs', 'https://openvibe.chat/'], ['tips', 'Tips and alerts for your stream', 'https://openvibe.tips/']],
+    openre: [['live', 'Go live from your browser', 'https://openvibe.live/'], ['video', 'Keep your broadcasts', 'https://openvibe.video/'], ['chat', 'One chat for every platform', 'https://openvibe.chat/']],
+    video: [['live', 'Live streams now', 'https://openvibe.live/'], ['pics', 'Pictures, fast and open', 'https://openvibe.pics/'], ['tools', 'Convert and trim media', 'https://openvibe.tools/video-tools']],
+    media: [['video', 'Videos, clips and VODs', 'https://openvibe.video/'], ['pics', 'Share pictures', 'https://openvibe.pics/'], ['download', 'Your files, anywhere', 'https://openvibe.download/']],
+    chat: [['live', 'Live streams with chat', 'https://openvibe.live/'], ['actor', 'Agents that work while you are away', 'https://openvibe.actor/'], ['community', 'Posts and pastes', 'https://openvibe.community/']],
+    tools: [['codes', 'Build apps with AI', 'https://openvibe.codes/'], ['services', 'APIs and SDK for developers', 'https://openvibe.services/'], ['actor', 'Hand a task to an agent', 'https://openvibe.actor/'], ['space', 'Host a site or an app', 'https://openvibe.space/']],
+    codes: [['run', 'Run jobs on your own machine', 'https://openvibe.run/'], ['services', 'The SDK and APIs', 'https://openvibe.services/'], ['space', 'Publish what you build', 'https://openvibe.space/']],
+    actor: [['tools', 'Hundreds of free tools', 'https://openvibe.tools/'], ['watch', 'Alerts when something changes', 'https://openvibe.watch/'], ['bot', 'Drive a robot from your browser', 'https://openvibe.bot/'], ['codes', 'Coding agents', 'https://openvibe.codes/']],
+    services: [['tools', 'Tools with open APIs', 'https://openvibe.tools/developers'], ['space', 'Host apps on the network', 'https://openvibe.space/'], ['network', 'Sign-in for your app', 'https://openvibe.network/']],
+    space: [['codes', 'Build it with AI', 'https://openvibe.codes/'], ['services', 'The SDK your app calls', 'https://openvibe.services/'], ['host', 'Hosting, compared', 'https://openvibe.host/']],
+    run: [['codes', 'Coding agents', 'https://openvibe.codes/'], ['bot', 'Robots and machines', 'https://openvibe.bot/'], ['actor', 'Agents', 'https://openvibe.actor/']],
+    watch: [['deals', 'Deals worth sharing', 'https://openvibe.deals/'], ['work', 'Job alerts', 'https://openvibe.work/'], ['actor', 'An agent to act on alerts', 'https://openvibe.actor/']],
+    bot: [['live', 'Stream your robot', 'https://openvibe.live/'], ['actor', 'Let an agent drive', 'https://openvibe.actor/'], ['run', 'Your machines', 'https://openvibe.run/']],
+    work: [['watch', 'Alerts for new jobs', 'https://openvibe.watch/'], ['actor', 'An agent on your side', 'https://openvibe.actor/'], ['rent', 'Find a place to live', 'https://openvibe.rent/']],
+    rent: [['homes', 'Homes for sale', 'https://openvibe.homes/'], ['work', 'Jobs nearby', 'https://openvibe.work/'], ['food', 'Food near you', 'https://openvibe.food/']],
+    homes: [['rent', 'Rentals', 'https://openvibe.rent/'], ['deals', 'Deals', 'https://openvibe.deals/'], ['help', 'Help nearby', 'https://openvibe.help/']],
+    food: [['help', 'Help nearby', 'https://openvibe.help/'], ['deals', 'Grocery deals', 'https://openvibe.deals/'], ['coupons', 'Coupons that work', 'https://openvibe.coupons/']],
+    deals: [['coupons', 'Coupons that work', 'https://openvibe.coupons/'], ['reviews', 'Reviews with receipts', 'https://openvibe.reviews/'], ['watch', 'Price alerts', 'https://openvibe.watch/']],
+    coupons: [['deals', 'Deals worth sharing', 'https://openvibe.deals/'], ['reviews', 'Reviews', 'https://openvibe.reviews/'], ['trade', 'Markets and watchlists', 'https://openvibe.trade/']],
+    reviews: [['deals', 'Deals', 'https://openvibe.deals/'], ['coupons', 'Coupons', 'https://openvibe.coupons/'], ['host', 'Hosting reviews', 'https://openvibe.host/']],
+    trade: [['news', 'News, sourced', 'https://openvibe.news/'], ['watch', 'Market alerts', 'https://openvibe.watch/'], ['deals', 'Deals', 'https://openvibe.deals/']],
+    news: [['wiki', 'Knowledge, with sources', 'https://openvibe.wiki/'], ['blog', 'Long-form writing', 'https://openvibe.blog/'], ['community', 'Discuss it', 'https://openvibe.community/']],
+    blog: [['news', 'News', 'https://openvibe.news/'], ['wiki', 'Wiki', 'https://openvibe.wiki/'], ['community', 'Community', 'https://openvibe.community/']],
+    wiki: [['news', 'News', 'https://openvibe.news/'], ['help', 'Help', 'https://openvibe.help/'], ['blog', 'Blog', 'https://openvibe.blog/']],
+    community: [['chat', 'Chat', 'https://openvibe.chat/'], ['blog', 'Blog', 'https://openvibe.blog/'], ['live', 'Live', 'https://openvibe.live/']],
+    help: [['food', 'Food near you', 'https://openvibe.food/'], ['wiki', 'Guides', 'https://openvibe.wiki/'], ['community', 'Ask the community', 'https://openvibe.community/']],
+    games: [['quest', 'Quests and rewards', 'https://openvibe.quest/'], ['live', 'Stream your game', 'https://openvibe.live/'], ['vip', 'Memberships', 'https://openvibe.vip/']],
+    quest: [['games', 'Browser games', 'https://openvibe.games/'], ['vip', 'Memberships', 'https://openvibe.vip/'], ['tips', 'Tips', 'https://openvibe.tips/']],
+    tips: [['live', 'Go live', 'https://openvibe.live/'], ['vip', 'Memberships for creators', 'https://openvibe.vip/'], ['openre', 'Restream', 'https://openre.stream/']],
+    vip: [['tips', 'Tips and paid messages', 'https://openvibe.tips/'], ['live', 'Live', 'https://openvibe.live/'], ['games', 'Games', 'https://openvibe.games/']],
+    host: [['space', 'Host on OpenVibe', 'https://openvibe.space/'], ['reviews', 'Reviews', 'https://openvibe.reviews/'], ['tools', 'Network tools', 'https://openvibe.tools/network-tools']],
+    pics: [['video', 'Videos', 'https://openvibe.video/'], ['tools', 'Image tools', 'https://openvibe.tools/image-tools'], ['community', 'Community', 'https://openvibe.community/']],
+    network: [['live', 'Live', 'https://openvibe.live/'], ['tools', 'Tools', 'https://openvibe.tools/'], ['chat', 'Chat', 'https://openvibe.chat/'], ['actor', 'Agents', 'https://openvibe.actor/']],
+};
+const DEFAULT_RELATED = RELATED.network;
+
+/**
+ * "Part of OpenVibe": up to four related products for this one (RELATED, or the caller's own items in the same
+ * [to, what, href] or { to, what, href } shape), each a ring icon, its name and why to go there.
+ */
+function network({ id: sid, service, title = 'Part of OpenVibe', lede = 'One account across every OpenVibe site. Related places to go next:', items } = {}) {
+    const list = (items || RELATED[String(service || '').toLowerCase()] || DEFAULT_RELATED)
+        .map((x) => (Array.isArray(x) ? { to: x[0], what: x[1], href: x[2] } : x))
+        .filter((x) => x && x.what && safeHref(x.href) && x.to !== service).slice(0, 4);
+    if (!list.length) return '';
+    const h = `sc-${slug(title)}`;
+    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}"><span class="sc-ic sc-ic-ov">${icon(`ov:${String(x.to).toLowerCase()}`, 40)}</span><span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul></section>`;
+}
+
 /** The closing call to action. */
 function cta({ title, text, actions: acts } = {}) {
     if (!title) return '';
@@ -236,10 +352,51 @@ a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);trans
 .sc-next-embed{font-size:13px;font-weight:600;color:var(--accent-light,#60a5fa)}
 .sc-cta{margin-top:64px;margin-bottom:24px;text-align:center}
 .sc-cta>div,.sc-cta .sc-actions{justify-content:center}.sc-cta p{color:var(--text-secondary,#96a7c2);margin:6px auto 0;max-width:620px}
+.sc-head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}.sc-head-row>div{min-width:0}.sc-head-row h2{margin:0 0 6px;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em}
+.sc-more{font-weight:700;font-size:14px;color:var(--accent-light,var(--accent,#60a5fa));text-decoration:none;white-space:nowrap;margin-bottom:18px}.sc-more:hover{text-decoration:underline}
+.sc-stats{display:grid;gap:10px;margin:0;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.sc-stat{display:flex;flex-direction:column-reverse;gap:2px;padding:16px 18px;border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none}
+.sc-stat dd{margin:0;font-size:clamp(24px,3vw,32px);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}.sc-stat dt{font-size:13.5px;color:var(--text-secondary,#96a7c2)}
+a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
+.sc-cards{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.sc-cards.sc-wrap{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.sc-cards.sc-rail{grid-auto-flow:column;grid-auto-columns:minmax(240px,300px);overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:thin}
+.sc-cards.sc-rail>li{scroll-snap-align:start}
+.sc-tile{display:flex;flex-direction:column;height:100%;border-radius:16px;overflow:hidden;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .2s,box-shadow .2s}
+.sc-tile:hover,.sc-tile:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.28);outline:0}
+.sc-thumb{position:relative;display:block;aspect-ratio:var(--sc-ar,16/9);background:linear-gradient(135deg,color-mix(in srgb,var(--accent,#3b82f6) 22%,var(--bg-tertiary,#172238)),var(--bg-tertiary,#172238))}
+.sc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}.sc-tile:hover .sc-thumb img{transform:scale(1.04)}
+.sc-badge{position:absolute;left:10px;top:10px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#fff;background:rgba(0,0,0,.66)}
+.sc-badge.sc-live{background:var(--live-red,#ef4444)}.sc-badge.sc-live::before{content:'';display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#fff;vertical-align:1px;animation:scPulse 1.4s ease-in-out infinite}
+.sc-tile-body{display:block;padding:12px 14px 14px}.sc-tile-body b{display:block;font-size:15px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sc-tile-body small{display:block;margin-top:4px;font-size:12.5px;color:var(--text-muted,#7386a3)}.sc-tile-text{display:block;margin-top:6px;font-size:13.5px;line-height:1.45;color:var(--text-secondary,#96a7c2)}
+.sc-spots{display:grid;gap:28px}
+.sc-spot{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:center}
+.sc-spot:nth-child(even) .sc-spot-media{order:2}
+.sc-spot-media{border-radius:18px;overflow:hidden;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);box-shadow:0 18px 50px color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent)}
+.sc-spot-media img,.sc-spot-media video{display:block;width:100%;height:auto}
+.sc-spot h3{margin:0 0 8px;font-size:clamp(20px,2.2vw,26px);letter-spacing:-.01em}.sc-spot h3 a{color:inherit;text-decoration:none}.sc-spot h3 a:hover{color:var(--accent-light,#60a5fa)}
+.sc-spot p{margin:0;color:var(--text-secondary,#96a7c2);line-height:1.6;font-size:15.5px}.sc-spot-act{margin-top:16px}
+.sc-faq{display:grid;gap:8px;max-width:820px}
+.sc-faq details{border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
+.sc-faq summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:700;position:relative}
+.sc-faq summary::-webkit-details-marker{display:none}
+.sc-faq summary::after{content:'';position:absolute;right:18px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s;opacity:.7}
+.sc-faq details[open] summary::after{transform:rotate(-135deg);margin-top:-2px}
+.sc-faq p{margin:0;padding:0 16px 16px;color:var(--text-secondary,#96a7c2);line-height:1.6}
+.sc-net{list-style:none;margin:0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.sc-net a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+.sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
+.sc-net b{display:block;font-size:15px}.sc-net small{display:block;color:var(--text-secondary,#96a7c2);font-size:13px;line-height:1.4}
+.sc-hero{position:relative;isolation:isolate}
+.sc-hero::before{content:'';position:absolute;z-index:-1;inset:-40px 0 auto;height:340px;pointer-events:none;background:radial-gradient(ellipse at 30% 20%,color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent),transparent 62%),radial-gradient(ellipse at 80% 0%,color-mix(in srgb,var(--secondary,#22d3ee) 14%,transparent),transparent 58%);filter:blur(10px);opacity:.9}
+@keyframes scPulse{50%{opacity:.35}}
+@supports (animation-timeline:view()){@media (prefers-reduced-motion:no-preference){.sc-sec{animation:scRise linear both;animation-timeline:view();animation-range:entry 0% cover 18%}}}
+@keyframes scRise{from{opacity:.001;transform:translateY(18px)}to{opacity:1;transform:none}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-@media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}}
+@media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}.sc-spot{grid-template-columns:1fr;gap:14px}.sc-spot:nth-child(even) .sc-spot-media{order:0}}
 @media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go{transition:none}}
+@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 
-module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, nextSteps, cta, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
