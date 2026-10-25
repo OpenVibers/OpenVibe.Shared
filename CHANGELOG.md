@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## 4.13.0 — unreleased
 
+- **One lit row in the menus on phones** (`navbar.js`). A tap left `:hover` on the row it touched, so the "all sites"
+  launcher showed two highlighted rows: the site you are on and the last one your finger crossed (the owner, 2026-10-25,
+  on openre.stream). The launcher's and the phone drawer's hover backgrounds now apply only under `@media (hover:
+  hover)`; the site you are on and keyboard focus stay lit everywhere. On phones a launcher row's description is one line
+  (OpenVibe.Network sends short menu labels with the regrouped sites), so the list is shorter and easier to scan.
+  `test/navbar-touch-hover.test.js`.
 - **The phone menu always opens on screen** (`navbar.js`). The burger's drawer is anchored to the bar (`position:
   absolute`, right under it) instead of the viewport. On a page wider than the phone (openvibe.chat/messages with a long
   pasted link was 939 px on a 412 px phone), the fixed drawer opened off-screen and the menu looked missing (the owner,

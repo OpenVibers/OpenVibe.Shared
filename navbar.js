@@ -97,7 +97,8 @@
             .ovnav-drawer.open { display: flex; animation: openvibe-slide-down .2s ease; }
             .ovnav-drawer a { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px; color: var(--text-primary, #e6edf7); text-decoration: none; font-size: 14.5px; font-weight: 600; }
             .ovnav-drawer a.ovnav-sublink { padding-left: 34px; font-weight: 500; color: var(--text-secondary, #a8b3c4); }
-            .ovnav-drawer a:hover, .ovnav-drawer a.active { background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .ovnav-drawer a.active { background: var(--accent-glow, rgba(59,130,246,.14)); }
+            @media (hover: hover) { .ovnav-drawer a:hover { background: var(--accent-glow, rgba(59,130,246,.14)); } }
             .ovnav-drawer a[hidden] { display: none; }
             .ovnav-drawer .ud-label { padding: 10px 12px 3px; font-size: 10.5px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); }
             .ovnav-drawer-net:empty { display: none; } .ovnav-drawer-net { border-top: 1px solid var(--border, rgba(255,255,255,.08)); margin-top: 4px; }
@@ -118,7 +119,9 @@
             .ovnav-launcher :is(.ovl-app, .ovl-fam) > span:last-child { min-width: 0; }
             .ovnav-launcher .ovl-app small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
             .ovnav-launcher .ovl-app.is-here { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: var(--accent-glow, rgba(59,130,246,.14)); }
-            .ovnav-launcher .ovl-app:hover, .ovnav-launcher .ovl-fam:hover, .ovnav-launcher a:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); outline: none; }
+            /* Hover only where a pointer hovers: on a phone a tap left its row lit beside the site you are on (the owner, 2026-10-25). */
+            .ovnav-launcher a:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); outline: none; }
+            @media (hover: hover) { .ovnav-launcher :is(.ovl-app, .ovl-fam):hover { background: var(--accent-glow, rgba(59,130,246,.14)); } }
             .ovnav-launcher b { display: block; font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .ovnav-launcher small { display: block; font-size: 11px; color: var(--text-muted, #7d8aa0); margin-top: 1px; }
             .ovnav-launcher .ovl-soon { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px 4px; }
@@ -137,7 +140,7 @@
             .ovnav-launcher .ovl-all { grid-column: 1 / -1; color: var(--accent-light, var(--accent, #60a5fa)); }
             .ovnav-launcher .ovl-h span { text-transform: none; letter-spacing: 0; font-weight: 500; }
             .ovnav-launcher .ovl-empty { padding: 18px 8px; color: var(--text-secondary, #a8b3c4); font-size: 13px; }
-            @media (max-width: 480px) { .ovnav-launcher { left: 8px; } .ovnav-launcher :is(.ovl-apps, .ovl-fams) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+            @media (max-width: 480px) { .ovnav-launcher { left: 8px; } .ovnav-launcher :is(.ovl-apps, .ovl-fams) { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ovnav-launcher .ovl-app small { -webkit-line-clamp: 1; } }
             @media (prefers-reduced-motion: reduce) { .ovnav-launcher { transition: none; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
             .openvibe-navbar-brand .name { display: inline-flex; align-items: baseline; font-size: 15px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; line-height: 1; }
