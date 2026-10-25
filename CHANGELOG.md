@@ -4,6 +4,30 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.13.0 — unreleased
+
+- **The player sounds, loads and looks better** (`player.js`, `player.css`). The owner, 2026-10-25: "the volume up and
+  down button on mobile will actually unmute… those little color sample type s*** so that it loads that then the
+  thumbnail… then the actual video… that background effect… the mute button looks a little weird".
+  - **Sound:**
+    - A video playing muted (autoplay) shows "Tap for sound", and the first tap on it unmutes.
+    - The media volume keys unmute and set the level wherever a browser passes them to the page (`AudioVolumeUp`
+      and the rest; phones keep their hardware buttons to themselves).
+    - The viewer's own mute is remembered; a page's autoplay mute is not.
+    - The Media Session API gives lock screens and headsets play, pause and seek.
+  - **Loading in layers:**
+    - `data-ov-color` paints the average colour at once, and `data-ov-thumb` (a tiny inline image) shows blurred.
+    - The poster sharpens over them, then the first frame fades in.
+    - Without `data-ov-color`, the poster's average colour is used when the browser allows it.
+  - **Ambient glow:** `data-ov-ambient` adds a glow of the picture around the player, as in YouTube's ambient mode: a
+    32×18 sample every 0.7 s while the player plays and is on screen, blurred and crossfaded. It is off for reduced
+    motion and data saver, and softer in light themes.
+  - **Controls:**
+    - One rounded, filled icon set (Material Icons Round). The mute icon was a crude cross.
+    - Buttons press in; the big play button has a soft ring.
+    - A short sign shows a seek (±10 s, on its side) or a volume level.
+    - Touch screens drop the volume slider and keep the mute button; phones get 40 px targets.
+
 ## 4.12.0 — 2026-10-25
 
 - **Avatars show the picture the account has now.** The owner, 2026-10-25: their picture showed on Live but the

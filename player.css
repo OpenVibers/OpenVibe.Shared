@@ -12,7 +12,7 @@
     display: block;
     width: 100%;
     height: 100%;
-    background: #000;
+    background: var(--ovp-bg, #000);
     color: var(--ovp-fg);
     border-radius: inherit;
     overflow: hidden;
@@ -22,7 +22,23 @@
     isolation: isolate;
 }
 .ov-player:focus-visible { box-shadow: 0 0 0 2px var(--ovp-accent) inset; }
-.ov-player .ov-player-video { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.ov-player .ov-player-video { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; opacity: 0; transition: opacity 0.35s ease; }
+/* Loading in layers (player.js): the average colour (--ovp-bg), a tiny preview blurred, the poster, then the first frame. */
+.ov-player.has-frame .ov-player-video, .ov-player:not(.has-thumb):not(.has-poster) .ov-player-video { opacity: 1; }
+.ov-player-placeholder, .ov-player-poster { position: absolute; inset: 0; z-index: 0; background: center / contain no-repeat; pointer-events: none; }
+.ov-player-placeholder { background-size: cover; filter: blur(18px) saturate(1.2); transform: scale(1.12); opacity: 0.9; }
+.ov-player-poster { opacity: 0; transition: opacity 0.35s ease; }
+.ov-player.has-poster .ov-player-poster { opacity: 1; }
+.ov-player.has-frame .ov-player-placeholder, .ov-player.has-poster .ov-player-placeholder { opacity: 0; transition: opacity 0.5s ease; }
+
+/* Ambient glow (data-ov-ambient): the picture, blurred, behind and around the player. */
+.ov-player-host { position: relative; isolation: isolate; }
+.ov-player-host > .ov-player { z-index: 1; }
+.ov-player-ambient { position: absolute; inset: -4% -3%; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 0.8s ease; transform: translateZ(0); }
+.ov-player-ambient.is-on { opacity: 0.62; }
+:root[data-theme-mode="light"] .ov-player-ambient.is-on { opacity: 0.38; }
+.ov-player-ambient canvas { position: absolute; inset: 0; width: 100%; height: 100%; filter: blur(48px) saturate(1.5); opacity: 0; transition: opacity 1.1s ease; border-radius: 24px; }
+.ov-player-ambient canvas.is-front { opacity: 1; }
 .ov-player.is-idle { cursor: none; }
 
 /* The bar: a soft gradient from the bottom; hidden while playing and idle. */
@@ -72,6 +88,9 @@
     opacity: 0.92; transition: background 0.15s, opacity 0.15s;
 }
 .ov-player-btn:hover { opacity: 1; background: rgba(255, 255, 255, 0.14); }
+.ov-player-btn:active { transform: scale(0.9); }
+.ov-player-btn { transition: background 0.15s, opacity 0.15s, transform 0.08s ease; }
+.ov-player-btn svg { width: 24px; height: 24px; }
 .ov-player-btn svg { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); }
 .ov-player-btn:focus-visible { outline: 2px solid var(--ovp-accent); outline-offset: 1px; opacity: 1; }
 .ov-player-btn[hidden] { display: none; }
@@ -104,15 +123,43 @@
 }
 .ov-player-volume-slider::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 0; }
 
+/* Playing muted (autoplay): one tap brings the sound in. */
+.ov-player-unmute {
+    position: absolute; left: 12px; top: 12px; z-index: 5;
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px 8px 10px;
+    border: 0; border-radius: 999px; background: rgba(0, 0, 0, 0.66); color: #fff;
+    font: 650 13px/1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; cursor: pointer;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+    animation: ov-player-pop 0.3s ease-out both;
+}
+.ov-player-unmute svg { width: 18px; height: 18px; }
+.ov-player-unmute:hover, .ov-player-unmute:focus-visible { background: var(--ovp-accent); outline: none; }
+.ov-player-unmute[hidden] { display: none; }
+@keyframes ov-player-pop { from { opacity: 0; transform: translateY(-4px) scale(0.96); } }
+
+/* A seek or a volume level, shown for a moment (double tap, keys). */
+.ov-player-flash {
+    position: absolute; left: 50%; top: 50%; z-index: 4; transform: translate(-50%, -50%) scale(0.9);
+    display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 16px; min-width: 76px;
+    border-radius: 18px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 13px; font-variant-numeric: tabular-nums;
+    opacity: 0; pointer-events: none; transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.ov-player-flash.is-left { left: 22%; }
+.ov-player-flash.is-right { left: 78%; }
+.ov-player-flash.is-on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.ov-player-flash svg { width: 30px; height: 30px; }
+
 /* Paused before the first play, or ended: one large button in the middle. */
 .ov-player-big {
     position: absolute; left: 50%; top: 50%; z-index: 4;   /* above the bar on small players */
     width: 68px; height: 68px; border-radius: 50%;
     transform: translate(-50%, -50%);
     background: color-mix(in srgb, var(--ovp-accent) 88%, transparent);
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 6px color-mix(in srgb, var(--ovp-accent) 22%, transparent);
     opacity: 1;
+    transition: transform 0.15s ease, background 0.15s ease, opacity 0.2s ease;
 }
+.ov-player-big:active { transform: translate(-50%, -50%) scale(0.94); }
 .ov-player-big svg { width: 32px; height: 32px; }
 .ov-player-big:hover { background: var(--ovp-accent); transform: translate(-50%, -50%) scale(1.06); }
 .ov-player:not(.is-start):not(.is-ended) .ov-player-big { opacity: 0; pointer-events: none; }
@@ -126,7 +173,9 @@
 }
 .ov-player.is-waiting:not(.is-paused) .ov-player-spinner { display: block; }
 @keyframes ov-player-spin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .ov-player-spinner { animation-duration: 2.4s; } .ov-player-bar { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ov-player-spinner { animation-duration: 2.4s; } .ov-player-bar, .ov-player-video, .ov-player-poster, .ov-player-flash { transition: none; } .ov-player-unmute { animation: none; } }
+/* Touch screens set the volume with the device: the mute button stays, the slider does not. */
+@media (hover: none) { .ov-player-volume-slider { display: none; } }
 
 .ov-player-message:empty { display: none; }
 .ov-player-message {
@@ -140,6 +189,8 @@
 /* Small players and phones: fewer, larger targets. */
 @media (max-width: 520px) {
     .ov-player-speed, .ov-player-pip { display: none; }
+    .ov-player-btn { min-width: 40px; height: 40px; }
+    .ov-player-unmute { left: 8px; top: 8px; padding: 7px 12px 7px 9px; }
     .ov-player-time { padding: 0 4px; font-size: 12px; }
     .ov-player-big { width: 60px; height: 60px; }
 }

@@ -115,3 +115,60 @@ assert.match(css, /\.ov-player:not\(\.is-start\):not\(\.is-ended\) \.ov-player-b
 const files = require('../files');
 assert.ok(files.isBrowserFile('player.js') && files.isBrowserFile('player.css') && files.BROWSER.includes('player.js') && files.STYLES.includes('player.css'));
 console.log('player: all checks passed');
+
+// ── 4.13: sound, loading layers, feedback (owner, 2026-10-25) ──
+{
+    const { window: w2, document: d2 } = parseHTML(`<!doctype html><html><body><div class="host"><video id="a" data-ov-player data-ov-color="#123456" data-ov-thumb="data:image/webp;base64,AAAA" data-ov-ambient poster="/p.jpg" autoplay muted src="/a.mp4"></video></div></body></html>`);
+    const v = d2.getElementById('a');
+    let p2 = true;
+    const m2 = { currentTime: 0, duration: 120, volume: 0.8, muted: true, playbackRate: 1, ended: false, readyState: 0 };
+    const f2 = (type) => v.dispatchEvent(new w2.Event(type));
+    Object.defineProperties(v, {
+        paused: { get: () => p2 }, ended: { get: () => m2.ended }, readyState: { get: () => m2.readyState },
+        currentTime: { get: () => m2.currentTime, set: (x) => { m2.currentTime = x; f2('timeupdate'); } },
+        duration: { get: () => m2.duration },
+        volume: { get: () => m2.volume, set: (x) => { m2.volume = x; f2('volumechange'); } },
+        muted: { get: () => m2.muted, set: (x) => { m2.muted = x; f2('volumechange'); } },
+        playbackRate: { get: () => m2.playbackRate, set: (x) => { m2.playbackRate = x; f2('ratechange'); } },
+        buffered: { get: () => ({ length: 0 }) },
+        textTracks: { value: Object.assign([], { addEventListener() {} }) },
+        autoplay: { get: () => true },
+    });
+    v.play = () => { p2 = false; f2('play'); f2('playing'); return Promise.resolve(); };
+    v.pause = () => { p2 = true; f2('pause'); };
+    const st2 = {};
+    const c2 = { window: w2, document: d2, console, Promise, setTimeout, clearTimeout, setInterval, clearInterval, Date, Math, Number, String, JSON, Object, Array,
+        localStorage: { getItem: (k) => (k in st2 ? st2[k] : null), setItem: (k, x) => { st2[k] = String(x); } } };
+    w2.OpenVibePlayer = undefined;
+    vm.createContext(c2);
+    vm.runInContext(src, c2);
+    const r2 = v.parentNode;
+    const q = (sel) => r2.querySelector(sel);
+    assert.strictEqual(r2.style.getPropertyValue('--ovp-bg'), '#123456', 'the average colour paints at once');
+    assert.ok(q('.ov-player-placeholder').style.backgroundImage.includes('data:image/webp'), 'the tiny preview, blurred under the poster');
+    assert.ok(r2.classList.contains('has-thumb') && !r2.classList.contains('has-frame'), 'no frame yet');
+    m2.readyState = 2; f2('loadeddata');
+    assert.ok(r2.classList.contains('has-frame'), 'the first frame fades in');
+    // Autoplaying muted: "Tap for sound", and the pill unmutes at the remembered level.
+    v.play();
+    assert.strictEqual(q('.ov-player-unmute').hidden, false, '"Tap for sound" while playing muted');
+    q('.ov-player-unmute').dispatchEvent(new w2.Event('click'));
+    assert.strictEqual(m2.muted, false, 'one tap: sound on');
+    assert.strictEqual(q('.ov-player-unmute').hidden, true);
+    assert.ok(q('.ov-player-flash').className.includes('is-on'), 'the level shows briefly');
+    // A media volume key anywhere on the page drives the player last played.
+    m2.muted = true;
+    const kd = new w2.Event('keydown', { bubbles: true }); kd.key = 'AudioVolumeUp'; d2.body.dispatchEvent(kd);
+    assert.strictEqual(m2.muted, false, 'volume up unmutes a muted video');
+    const kd2 = new w2.Event('keydown', { bubbles: true }); kd2.key = 'AudioVolumeDown'; d2.body.dispatchEvent(kd2);
+    assert.ok(Math.abs(m2.volume - 0.7) < 1e-9, 'volume down lowers it');
+    // Skips say what they did, on their side.
+    v.__ovPlayer.skip(10);
+    assert.ok(q('.ov-player-flash').className.includes('is-right') && q('.ov-player-flash').textContent.includes('+10 s'));
+}
+// The styles, and a mute icon from the one rounded set.
+assert.match(css, /\.ov-player-unmute \{/);
+assert.match(css, /@media \(hover: none\) \{ \.ov-player-volume-slider \{ display: none; \} \}/, 'no hidden slider on touch screens');
+assert.match(css, /\.ov-player\.has-frame \.ov-player-video/);
+assert.match(src, /Material Icons Round/);
+console.log('player: all checks passed (4.13 sound, layers, feedback)');
