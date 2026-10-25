@@ -291,8 +291,10 @@
     function accountHTML(user, service) {
         const name = esc(user.display_name || user.username || 'you');
         // An openvibe.media object picture comes in sizes (Media's /o/:id?w=&fmt=): 64 px as WebP for the 24 px avatar.
-        const sized = /^https:\/\/openvibe\.media\/o\/med_[0-9A-Za-z]{10,40}$/.test(user.avatar_url || '') ? `${user.avatar_url}?w=64&fmt=webp` : user.avatar_url;
-        const avatar = user.avatar_url
+        // Without one in the record, the Network's /avatar/<username>: the picture the account has now (navbar.js, the same rule).
+        const media = /^https:\/\/openvibe\.media\/o\/med_[0-9A-Za-z]{10,40}$/.test(user.avatar_url || '');
+        const sized = media ? `${user.avatar_url}?w=64&fmt=webp` : (user.username && !user.is_anon ? `${NETWORK_URL}/avatar/${encodeURIComponent(user.username)}?s=32` : '');
+        const avatar = sized
             ? `<img src="${esc(sized)}" alt="">`
             : `<span>${esc(String(name).charAt(0).toUpperCase())}</span>`;
         const quick = [
