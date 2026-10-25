@@ -166,6 +166,9 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
     for (const [avatar, want] of [
         ['https://openvibe.media/o/med_01KZK5GRQ088Y3CW1TMEF4Z4RN', 'src="https://openvibe.media/o/med_01KZK5GRQ088Y3CW1TMEF4Z4RN?w=64&amp;fmt=webp"'],
         ['https://openvibe.media/f/b.png', 'src="https://openvibe.media/f/b.png"'],
+        // No picture in the record (or one that is not on openvibe.media): the account's current one, from the Network.
+        [null, 'src="https://openvibe.network/avatar/vibe?s=64"'],
+        ['https://example.com/me.png', 'src="https://openvibe.network/avatar/vibe?s=64"'],
     ]) {
         const { navbar } = loadNavbar({
             hostname: 'net.openvibe.tools', href: 'https://net.openvibe.tools/', cookie: 'ov_token=valid-jwt',
@@ -176,8 +179,29 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.ok(navbar.getElement().innerHTML.includes(want), `${avatar}: ${want}`);
     }
 
-    // The footer's 24 px signed-in avatar asks for 64 px WebP of an object picture too.
-    assert.match(require('fs').readFileSync(require('path').join(__dirname, '..', 'footer.js'), 'utf8'), /\? `\$\{user\.avatar_url\}\?w=64&fmt=webp` : user\.avatar_url;/, 'the footer sizes an object avatar');
+    // A picture that fails to load asks the Network for the current one once, then shows the initial.
+    {
+        const { navbar } = loadNavbar({
+            hostname: 'net.openvibe.tools', href: 'https://net.openvibe.tools/', cookie: 'ov_token=valid-jwt',
+            fetch: async (url) => (url === 'https://openvibe.network/api/auth/me' ? jsonResponse(200, { user: { ...USER, avatar_url: 'https://openvibe.media/o/med_01KZK5GRQ088Y3CW1TMEF4Z4RN' }, preferences: {} }) : jsonResponse(404, {})),
+        });
+        navbar.init({ service: 'net', apiBase: 'https://openvibe.network', token: 'valid-jwt' });
+        await navbar.refreshAuth();
+        assert.ok(navbar.getElement().innerHTML.includes('data-retry-src="https://openvibe.network/avatar/vibe?s=64"'), 'a media picture carries the current-picture retry');
+    }
+    // On the Network itself the current picture is same-origin.
+    {
+        const { navbar } = loadNavbar({ hostname: 'openvibe.network', href: 'https://openvibe.network/updates', cookie: 'ov_token=valid-jwt',
+            fetch: async (url) => (/\/api\/auth\/me$/.test(url) ? jsonResponse(200, { user: USER, preferences: {} }) : jsonResponse(404, {})) });
+        navbar.init({ service: 'network', apiBase: 'https://openvibe.network', token: 'valid-jwt' });
+        await navbar.refreshAuth();
+        assert.ok(navbar.getElement().innerHTML.includes('src="/avatar/vibe?s=64"'), 'same-origin /avatar on openvibe.network');
+    }
+
+    // The footer's 24 px signed-in avatar asks for 64 px WebP of an object picture, and the current picture without one.
+    const footerSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'footer.js'), 'utf8');
+    assert.match(footerSrc, /media \? `\$\{user\.avatar_url\}\?w=64&fmt=webp`/, 'the footer sizes an object avatar');
+    assert.match(footerSrc, /\$\{NETWORK_URL\}\/avatar\/\$\{encodeURIComponent\(user\.username\)\}/, 'the footer asks for the current picture');
 
     // ── 6. No token, no sessionUrl → signed out, zero fetches ─
     {

@@ -4,7 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## 4.12.0 — 2026-10-26
+## 4.12.0 — 2026-10-25
+
+- **Avatars show the picture the account has now.** The owner, 2026-10-25: their picture showed on Live but the
+  navbar on openvibe.network drew their initial. A user record can be older than its picture (a site's session, or a
+  remembered account, from before the picture was set).
+  - The navbar (`navbar.js`) and the footer's account row (`footer.js`) ask the Network's `/avatar/<username>` when a
+    record has no openvibe.media picture. That route redirects to the current picture, or answers an initial.
+  - A picture that fails to load asks `/avatar/<username>` once (`data-retry-src`) before falling back to the initial.
+    That also covers an image that failed before the handler was attached.
+  - On openvibe.network itself the request is same-origin.
+- **The launcher fits a phone.** Its panel was `min(760px, 100vw - 24px)` wide plus its padding and border, so on a page
+  without a global `box-sizing: border-box` it ran 10 px past the screen and the page scrolled sideways. It is now
+  `border-box`.
 
 - **Every theme in light and dark.** The owner, 2026-10-25: "each theme should have a light counterpart instead of … a
   mixed bag", with an easy light and dark switch in the account menu.

@@ -104,7 +104,7 @@
             .ovnav-drawer-net a.ovnav-net { display: flex !important; }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-burger { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links { display: none; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
-            .ovnav-launcher { position: absolute; top: calc(100% + 6px); left: 12px; width: min(760px, calc(100vw - 24px)); background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 0 12px 12px; z-index: 1000; opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s, transform .2s cubic-bezier(.2,1.2,.3,1); }
+            .ovnav-launcher { position: absolute; top: calc(100% + 6px); left: 12px; box-sizing: border-box; width: min(760px, calc(100vw - 24px)); background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 0 12px 12px; z-index: 1000; opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s, transform .2s cubic-bezier(.2,1.2,.3,1); }
             .ovnav-launcher.open { opacity: 1; transform: none; pointer-events: auto; }
             .ovnav-launcher .ovl-top { position: sticky; top: 0; z-index: 1; margin: 0 -12px; padding: 12px 12px 2px; background: inherit; }
             .ovnav-launcher .ovl-q { width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-primary, #0a0f18); color: var(--text-primary, #e6edf7); font: 500 14px/1.2 inherit; outline: none; }
@@ -1350,26 +1350,42 @@
         return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg.replace(/\s+/g, ' ').trim())}`;
     }
 
+    // The account's picture now (the Network's /avatar/<username>): a record can predate its picture (CHANGELOG 4.12.0).
+    function currentAvatarUrl(user, size) {
+        if (!user || user.is_anon || user.id === 'anon' || !user.username) return null;
+        const network = /(^|\.)openvibe\.network$/.test(currentHost()) ? '' : 'https://openvibe.network';
+        return `${network}/avatar/${encodeURIComponent(user.username)}?s=${size}`;
+    }
+
     function avatarSrc(user, size = 64) {
         const url = user?.avatar_url;
-        return /^https:\/\/openvibe\.media\/o\/med_\w+$/.test(url || '') ? `${url}?w=${size}&fmt=webp` : url || makeAvatarPlaceholder(user, size);
+        if (/^https:\/\/openvibe\.media\/o\/med_\w+$/.test(url || '')) return `${url}?w=${size}&fmt=webp`;
+        if (/^https:\/\/openvibe\.media\//.test(url || '')) return url;
+        return currentAvatarUrl(user, size) || makeAvatarPlaceholder(user, size);
     }
 
     function avatarImg(user, size = 64, className = 'openvibe-navbar-avatar', id = '') {
         const fallback = makeAvatarPlaceholder(user, size);
+        const src = avatarSrc(user, size);
+        const current = currentAvatarUrl(user, size);
+        const retry = current && current !== src ? ` data-retry-src="${escapeAttr(current)}"` : '';
         const idAttr = id ? ` id="${escapeAttr(id)}"` : '';
         const alt = escapeAttr(user?.display_name || user?.username || 'Avatar');
-        return `<img class="${escapeAttr(className)}" src="${escapeAttr(avatarSrc(user, size))}" data-fallback-src="${escapeAttr(fallback)}" alt="${alt}"${idAttr}>`;
+        return `<img class="${escapeAttr(className)}" src="${escapeAttr(src)}"${retry} data-fallback-src="${escapeAttr(fallback)}" alt="${alt}"${idAttr}>`;
     }
 
+    // A picture that does not load: the current one once (data-retry-src), then the initial.
     function attachAvatarFallbacks(rootEl) {
         rootEl?.querySelectorAll('img[data-fallback-src]').forEach((img) => {
-            img.addEventListener('error', () => {
+            const onError = () => {
+                const retry = img.dataset.retrySrc;
+                if (retry) { delete img.dataset.retrySrc; img.src = retry; return; }
+                img.removeEventListener('error', onError);
                 const fallback = img.dataset.fallbackSrc;
-                if (fallback && img.src !== fallback) {
-                    img.src = fallback;
-                }
-            }, { once: true });
+                if (fallback && img.src !== fallback) img.src = fallback;
+            };
+            img.addEventListener('error', onError);
+            if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) onError();
         });
     }
 
