@@ -6,6 +6,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## 4.13.0 — unreleased
 
+- **The phone menu always opens on screen** (`navbar.js`). The burger's drawer is anchored to the bar (`position:
+  absolute`, right under it) instead of the viewport. On a page wider than the phone (openvibe.chat/messages with a long
+  pasted link was 939 px on a 412 px phone), the fixed drawer opened off-screen and the menu looked missing (the owner,
+  2026-10-25). `test/navbar-drawer-overflow.test.js`. The navbar's brotli budget is 33.5 KB (was 33; 33.0 KB now).
 - **Ask Vibe from every site** (`navbar.js`). The account menu's "Ask Actor" is now **Ask Vibe**: it opens a new chat
   with Vibe, OpenVibe's assistant, at `openvibe.chat/vibe`, with the text selected on the page and the page's address
   filled in (never sent by itself; OpenVibe.Chat#165). `_ask.askVibeHref` replaces `askActorHref`;
