@@ -1,5 +1,5 @@
 'use strict';
-// "Ask Vibe" in the account menu (the OpenVibe Frame's button): signed in only, it opens a new chat with Vibe (openvibe.chat/vibe)
+// "Ask Vibe" and "Work together" in the account menu (the OpenVibe Frame's button): signed in only, it opens a new chat with Vibe (openvibe.chat/vibe)
 // with the text selected on the page as the ask and the page as where it came from. The link part runs in plain node;
 // the selection part runs in a real headless Chrome (skipped without Chrome or with OV_SKIP_BROWSER=1): text selected,
 // then a real press on the avatar, must reach the link even though the press can clear the selection.
@@ -69,10 +69,13 @@ const server = http.createServer((req, res) => {
         await p.goto(`${base}/out`, { maxMs: 5000 });
         await p.evaluate(ready);
         assert.strictEqual(await p.evaluate(`!!document.querySelector('[data-ov-ask]')`), false, 'signed out: no Ask Vibe');
+        assert.strictEqual(await p.evaluate(`!!document.querySelector('[data-ov-work]')`), false, 'signed out: no Work together');
 
         await p.goto(`${base}/in`, { maxMs: 5000 });
         await p.evaluate(ready);
         assert.strictEqual(await p.evaluate(`document.querySelector('[data-ov-ask]').textContent.trim()`), 'Ask Vibe');
+        // Work together: a new workspace room on OpenVibe.Chat (a team and Vibe, a work queue, a shared screen).
+        assert.strictEqual(await p.evaluate(`document.querySelector('[data-ov-work]').href`), 'https://openvibe.chat/work');
 
         // Nothing selected: the plain console.
         await press();

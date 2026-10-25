@@ -1509,7 +1509,7 @@
                     ${!isAnon && u.username ? `<a href="https://openvibe.network/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-id-card')}</span> My Profile</a>` : ''}
                     ${!isAnon && u.username ? `<a href="https://openvibe.live/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-tower-broadcast')}</span> My Channel</a>` : ''}
                     <a href="https://openvibe.network/my#notifications"><span class="icon">${navIcon('fa-bell')}</span> Notifications</a>
-                    ${!isAnon ? `<a href="https://openvibe.chat/vibe" data-ov-ask><span class="icon">${navIcon('fa-brain')}</span> Ask Vibe</a>` : ''}
+                    ${!isAnon ? `<a href="https://openvibe.chat/vibe" data-ov-ask><span class="icon">${navIcon('fa-brain')}</span> Ask Vibe</a><a href="https://openvibe.chat/work" data-ov-work><span class="icon">${navIcon('fa-plus')}</span> Work together</a>` : ''}
                     <div class="sep"></div>`}
                     <div class="ud-label">Display</div>
                     <div class="ud-scheme" role="group" aria-label="Light or dark" hidden><button type="button" data-ov-scheme="light" aria-pressed="false"><span class="icon">${navIcon('fa-sun')}</span> Light</button><button type="button" data-ov-scheme="dark" aria-pressed="false"><span class="icon">${navIcon('fa-moon')}</span> Dark</button><button type="button" data-ov-scheme="auto" aria-pressed="false" title="Follow this device's light or dark setting"><span class="icon">${navIcon('fa-circle-half-stroke')}</span> Auto</button></div>
