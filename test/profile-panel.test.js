@@ -33,7 +33,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <body style="margin:0;padding:16px"><div id="ana" data-ov-profile="ana"><a href="https://openvibe.network/@ana">Ana</a></div>
 <div id="priv" data-ov-profile="hidden"><a href="https://openvibe.network/@hidden">Hidden</a></div>
 <div id="none" data-ov-profile="nobody"><a href="https://openvibe.network/@nobody">Nobody</a></div>
-<section id="me" data-ov-profile="me" hidden><a href="https://openvibe.network/my">Your stuff</a></section>
+<section id="stuff" data-ov-profile-section hidden><h2>Your stuff</h2><div id="me" data-ov-profile="me" hidden><a href="https://openvibe.network/my">Your stuff</a></div></section>
 <script>window.OpenVibeProfilePanelConfig = { api: location.origin };</script>
 <script src="/shared/profile-panel.js" defer></script></body></html>`;
 const server = http.createServer((req, res) => {
@@ -43,7 +43,7 @@ const server = http.createServer((req, res) => {
     if (u.pathname === '/api/v1/profiles/ana') return json(200, { profile: ANA });
     // Signed in on the main page; signed out on /out (told apart by the page that asks).
     if (u.pathname === '/auth/me') return json(200, { user: /\/out$/.test(req.headers.referer || '') ? null : { id: 7, username: 'ana' } });
-    if (u.pathname === '/out') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE.replace(/<div id="ana"[\s\S]*?<\/section>/, '<section id="me" data-ov-profile="me" hidden><a href="https://openvibe.network/my">Your stuff</a></section>')); }
+    if (u.pathname === '/out') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE.replace(/<div id="ana"[\s\S]*?<\/section>/, '<section id="stuff" data-ov-profile-section hidden><h2>Your stuff</h2><div id="me" data-ov-profile="me" hidden><a href="https://openvibe.network/my">Your stuff</a></div></section>')); }
     if (u.pathname === '/api/v1/profiles/hidden') return json(200, { profile: { username: 'hidden', display_name: 'Hidden', profile_url: 'https://openvibe.network/@hidden', private: true } });
     if (u.pathname.startsWith('/api/v1/profiles/')) return json(404, { error: 'not_found' });
     if (u.pathname.startsWith('/avatar/')) { res.writeHead(204); return res.end(); }
@@ -75,7 +75,7 @@ const server = http.createServer((req, res) => {
                 priv: document.querySelector('#priv .ovpp').textContent,
                 none: document.getElementById('none').innerHTML,
                 wide: document.documentElement.scrollWidth,
-                me: [document.getElementById('me').hidden, document.querySelector('#me .ovpp-who small').textContent],
+                me: [document.getElementById('me').hidden, document.querySelector('#me .ovpp-who small').textContent, document.getElementById('stuff').hidden],
             }));
         }, 100); } }, 30); })`));
         assert.strictEqual(got.name, 'Ana <img src=x onerror=alert(1)>', 'a name with markup stays text');
@@ -89,10 +89,10 @@ const server = http.createServer((req, res) => {
         assert.match(got.priv, /Hidden[\s\S]*This profile is private\./);
         assert.match(got.none, /href="https:\/\/openvibe\.network\/@nobody"/, 'no profile: the fallback link stays');
         assert.ok(got.wide <= 360, `fits a 360 px phone (${got.wide})`);
-        assert.deepStrictEqual(got.me, [false, '@ana'], '"me" is whoever /auth/me names, shown once drawn');
+        assert.deepStrictEqual(got.me, [false, '@ana', false], '"me" is whoever /auth/me names, shown once drawn with the section around it');
         await p.goto(`${base}/out`, { maxMs: 5000 });
-        const out = await p.evaluate(`new Promise((r) => setTimeout(() => r(JSON.stringify([document.getElementById('me').hidden, !!document.querySelector('#me .ovpp')])), 700))`);
-        assert.deepStrictEqual(JSON.parse(out), [true, false], 'signed out: "me" stays hidden and undrawn');
+        const out = await p.evaluate(`new Promise((r) => setTimeout(() => r(JSON.stringify([document.getElementById('me').hidden, !!document.querySelector('#me .ovpp'), document.getElementById('stuff').hidden])), 700))`);
+        assert.deepStrictEqual(JSON.parse(out), [true, false, true], 'signed out: "me" and its section stay hidden, undrawn');
         console.log('profile-panel: ok');
     } finally {
         await browser.close();
