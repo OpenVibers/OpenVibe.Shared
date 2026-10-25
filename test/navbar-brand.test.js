@@ -204,31 +204,23 @@ function load(hostname, opts = {}) {
     assert.ok(dd && dd.innerHTML.includes('data-menu-id="mp"') && dd.innerHTML.includes('My pastes'), 'custom dropdown row rendered');
     assert.ok(dd.innerHTML.includes('/my#history'), 'History link present');
     assert.ok(dd.innerHTML.includes('href="https://openvibe.network/@x"') && dd.innerHTML.includes('My Profile'), 'the public profile (openvibe.network/@username) is one tap from the account menu');
+    assert.ok(dd.innerHTML.includes('<a class="name ud-me" href="https://openvibe.network/@x"'), 'pressing your name in the menu opens your profile');
+    assert.ok(dd.innerHTML.includes('<a class="ud-me" href="https://openvibe.network/@x" tabindex="-1" aria-hidden="true"><img'), 'and so does your picture (one stop for keyboards)');
     const id = navbar.addMenuItem({ label: 'Runtime row', href: '/r', position: 'before' });
     assert.ok(id, 'addMenuItem returns an id');
 }
-// ── the season's badge (theme-loader.js Seasons): beside the brand during a season, pressed when its theme shows,
-//    faded once seasonal themes are off; no season, no badge ────
+// ── the season lives in the mark (ov-mark.js), not in a badge beside the brand; the switch stays in the account menu ────
 {
     const HALLOWEEN = { id: 'halloween', name: 'Halloween', theme: 'halloween' };
-    const loader = (showing, seasonal) => ({
-        seasons: { now: () => HALLOWEEN, showing: () => (showing ? HALLOWEEN : null) },
-        display: { get: () => ({ text: '100', motion: 'auto', seasonal }), set() {}, options: { text: ['100'], motion: ['auto'], seasonal: ['on', 'off'] } },
-    });
-    let { navbar, created } = load('openvibe.live');
-    global.OpenVibeThemeLoader = loader(true, 'on');
+    global.OpenVibeThemeLoader = {
+        seasons: { now: () => HALLOWEEN, showing: () => HALLOWEEN },
+        display: { get: () => ({ text: '100', motion: 'auto', seasonal: 'on' }), set() {}, options: { text: ['100'], motion: ['auto'], seasonal: ['on', 'off'] } },
+    };
+    const { navbar, created } = load('openvibe.live');
     navbar.init({ service: 'live' });
-    let nav = created.find((e) => e.tag === 'nav');
-    assert.ok(/<button type="button" class="ovnav-season" aria-pressed="true" title="Halloween theme on: select to turn seasonal themes off"/.test(nav.innerHTML), 'the pumpkin, pressed');
-    ({ navbar, created } = load('openvibe.live'));
-    global.OpenVibeThemeLoader = loader(false, 'off');
-    navbar.init({ service: 'live' });
-    nav = created.find((e) => e.tag === 'nav');
-    assert.ok(/class="ovnav-season" aria-pressed="false" title="Seasonal themes off: select to turn them on"/.test(nav.innerHTML), 'faded once turned off');
-    ({ navbar, created } = load('openvibe.live'));
-    global.OpenVibeThemeLoader = { ...loader(false, 'on'), seasons: { now: () => null, showing: () => null } };
-    navbar.init({ service: 'live' });
-    assert.ok(!created.find((e) => e.tag === 'nav').innerHTML.includes('ovnav-season'), 'no season, no badge');
+    const nav = created.find((e) => e.tag === 'nav');
+    assert.ok(!nav.innerHTML.includes('ovnav-season'), 'no pumpkin button beside the brand');
+    assert.ok(nav.innerHTML.includes('class="ov-mark"'), 'the mark, which wears the season itself');
     delete global.OpenVibeThemeLoader;
 }
 console.log('navbar brand: all checks passed');

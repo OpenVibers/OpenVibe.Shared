@@ -70,6 +70,8 @@
     // on the default who has not turned seasonal themes off: the display preference `seasonal` (on|off), saved to the
     // account and followed on every site like text size. A theme someone picked stays theirs. While one shows, <html>
     // carries data-ov-season="<id>" and window gets an 'ov:season' event ({ id, name, theme } or null).
+    // The OpenVibe mark (ov-mark.js) wears the season for anyone who has not turned seasonal themes off, on any theme:
+    // <html data-ov-season-mark="<id>">.
     const DEFAULT_ID = 'vibe';
     function seasonNow(date) {
         const d = date || new Date();
@@ -93,6 +95,8 @@
         try {
             const el = document.documentElement;
             if (seasonal) el.setAttribute('data-ov-season', seasonal.id); else el.removeAttribute('data-ov-season');
+            const marked = readDisplay().seasonal !== 'off' ? seasonNow() : null;
+            if (marked) el.setAttribute('data-ov-season-mark', marked.id); else el.removeAttribute('data-ov-season-mark');
             el.setAttribute('data-theme', seasonal ? seasonal.theme : themeId);
         } catch { /* no DOM */ }
         if (changed) { try { window.dispatchEvent(new CustomEvent('ov:season', { detail: seasonal })); } catch { /* */ } }
@@ -168,6 +172,23 @@
         if (vars['--bg-primary']) el.style.background = `var(--bg-primary, ${vars['--bg-primary']})`;
         if (vars['--text-primary']) el.style.color = `var(--text-primary, ${vars['--text-primary']})`;
         syncBrowserUi();
+    }
+
+    // ── A correction fades in ─────────────────────────────────
+    // A theme that changes under someone (the account's answer, another tab) crossfades for 0.4 s instead of jumping;
+    // first paint and their own picks stay instant, and calm motion (either preference) never fades.
+    let _fadeTimer = 0;
+    function fadeNext() {
+        if (typeof document === 'undefined' || !document.head || readDisplay().motion === 'reduced') return;
+        try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) { /* */ }
+        const el = document.documentElement;
+        if (!document.getElementById('ov-theme-fade-css')) {
+            const st = document.createElement('style'); st.id = 'ov-theme-fade-css';
+            st.textContent = 'html.ov-theme-fade,html.ov-theme-fade *,html.ov-theme-fade *::before,html.ov-theme-fade *::after{transition:background-color .4s ease,color .4s ease,border-color .4s ease,fill .4s ease,stroke .4s ease!important}';
+            document.head.appendChild(st);
+        }
+        el.classList.add('ov-theme-fade');
+        clearTimeout(_fadeTimer); _fadeTimer = setTimeout(function () { el.classList.remove('ov-theme-fade'); }, 600);
     }
 
     // ── The browser's own UI (address bar, theme-color) follows the theme ─────────────────────────────────────────────────
@@ -278,7 +299,7 @@
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = 'Bearer ' + token;
         fetch(_config.apiBase + '/api/themes/me', {
-            method: 'PUT', headers: headers, credentials: 'include',
+            method: 'PUT', headers: headers, credentials: 'include', keepalive: true,
             body: JSON.stringify({ theme_id: themeId, custom_variables: custom }),
         }).catch(function () { /* offline / signed out — local cache still holds */ });
     }
@@ -331,7 +352,7 @@
         if (d.seasonal !== wasSeasonal && !(opts && opts.noRepaint)) show(_shown.id, _shown.vars || THEMES[_shown.id] || THEMES[DEFAULT_ID], _shown.custom);
         if (!(opts && opts.local) && typeof fetch !== 'undefined') {
             const token = authToken(); const headers = { 'Content-Type': 'application/json' }; if (token) headers.Authorization = 'Bearer ' + token;
-            if (token || /(?:^|; )ov_sso_hint=account/.test(document.cookie)) fetch(_config.apiBase + '/api/themes/me/display', { method: 'PUT', headers: headers, credentials: 'include', body: JSON.stringify(d) }).catch(function () {});
+            if (token || /(?:^|; )ov_sso_hint=account/.test(document.cookie)) fetch(_config.apiBase + '/api/themes/me/display', { method: 'PUT', headers: headers, credentials: 'include', keepalive: true, body: JSON.stringify(d) }).catch(function () {});
         }
         return d;
     }
@@ -341,7 +362,7 @@
     // The icon link may be parsed after this script: repaint once the head is complete.
     if (typeof document !== 'undefined' && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { _browserUiKey = ''; syncBrowserUi(); });
     // A theme picked in another tab (or on another OpenVibe page of this site) applies here at once.
-    if (typeof window !== 'undefined') window.addEventListener('storage', function (e) { if (e.key === 'ov_theme') { try { resolveAndApply(); } catch (err) { /* */ } } if (e.key === DISPLAY_KEY) { applyDisplay(readDisplay()); show(_shown.id, _shown.vars || THEMES[_shown.id] || THEMES[DEFAULT_ID], _shown.custom); } });
+    if (typeof window !== 'undefined') window.addEventListener('storage', function (e) { if (e.key === 'ov_theme') { try { fadeNext(); resolveAndApply(); } catch (err) { /* */ } } if (e.key === DISPLAY_KEY) { fadeNext(); applyDisplay(readDisplay()); show(_shown.id, _shown.vars || THEMES[_shown.id] || THEMES[DEFAULT_ID], _shown.custom); } });
 
     // Look up a theme we don't ship in the built-in map (community/custom themes) from the
     // central catalog. Without this, any non-built-in id fell through to the default 'vibe'
@@ -360,14 +381,16 @@
     // along via credentials:'include' (openvibe.network allows credentialed CORS per origin),
     // so this now works on sites where the cookie isn't readable from JS — previously the sync
     // silently never ran there and the user's theme appeared to be "lost".
+    let _lastSync = 0;
     function syncFromServer() {
         if (typeof fetch === 'undefined') return;
+        _lastSync = Date.now();
         const token = authToken();
         const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
         fetch(_config.apiBase + '/api/themes/me/active', { headers: headers, credentials: 'include' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (data && data.display) { const cur = readDisplay(); if (JSON.stringify({ motion: data.display.motion || cur.motion, text: data.display.text || cur.text, seasonal: data.display.seasonal || cur.seasonal }) !== JSON.stringify(cur)) setDisplay(data.display, { local: true }); }
+                if (data && data.display) { const cur = readDisplay(); if (JSON.stringify({ motion: data.display.motion || cur.motion, text: data.display.text || cur.text, seasonal: data.display.seasonal || cur.seasonal }) !== JSON.stringify(cur)) { fadeNext(); setDisplay(data.display, { local: true }); } }
                 if (!data || !data.theme_id) return;
                 const serverId = data.theme_id;
                 const custom = (data.custom_variables && typeof data.custom_variables === 'object'
@@ -377,6 +400,8 @@
                     const vars = custom ? Object.assign({}, base || {}, custom) : (base || null);
                     if (!vars || !Object.keys(vars).length) return;
                     cacheLocally(serverId, vars, !!custom);   // cacheLocally, not save() — no write-back loop
+                    if (_shown.id === serverId && !!_shown.custom === !!custom && JSON.stringify(_shown.vars) === JSON.stringify(vars)) return;
+                    fadeNext();
                     show(serverId, vars, !!custom);
                 };
                 if (builtin) return settle(builtin);
@@ -385,6 +410,18 @@
             .catch(function () { /* offline / signed out — keep the cached theme */ });
     }
     syncFromServer();
+    // Every site keeps its own copy, so one visited after a change elsewhere paints its old copy first and the account's
+    // answer corrects it (faded, not a jolt). The account is asked again when the page comes back into view (a change made
+    // in another site's tab), and once more shortly after arriving from another site, since a change saved there just
+    // before following the link may land after this page first asked.
+    if (typeof document !== 'undefined' && document.addEventListener) {
+        const again = function () { if (Date.now() - _lastSync > 10000) syncFromServer(); };
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') again(); });
+        if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('pageshow', function (e) { if (e && e.persisted) again(); });
+        let from = '';
+        try { from = document.referrer ? new URL(document.referrer).hostname : ''; } catch (e) { from = ''; }
+        if (from && typeof location !== 'undefined' && from !== location.hostname) setTimeout(syncFromServer, 2500);
+    }
 
     // ── Public API ───────────────────────────────────────────
     const OpenVibeThemeLoader = {
