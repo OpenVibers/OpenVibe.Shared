@@ -34,6 +34,7 @@
     "./indexnow": "./indexnow.js",
     "./island": "./island.js",
     "./items": "./items.js",
+    "./profile-panel": "./profile-panel.js",
     "./legal": "./legal.js",
     "./express-async": "./express-async.js",
     "./metrics": "./metrics.js",
