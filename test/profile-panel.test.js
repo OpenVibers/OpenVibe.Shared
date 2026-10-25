@@ -2,7 +2,8 @@
 // profile-panel.js in a real headless Chrome at phone width: [data-ov-profile] elements become a person's stuff from
 // the Network's public profile JSON (worn items, counts, achievements by game, badges, links); every value is text
 // (a name with markup stays text), only https links on OpenVibe's own hosts become hrefs, a private profile shows its
-// name only, a missing one leaves the fallback link, and nothing on the panel widens the page past the phone.
+// name only, a missing one leaves the fallback link, "me" is whoever the site's /auth/me names (a hidden element shows
+// once drawn), and nothing on the panel widens the page past the phone.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const fs = require('fs');
@@ -32,6 +33,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <body style="margin:0;padding:16px"><div id="ana" data-ov-profile="ana"><a href="https://openvibe.network/@ana">Ana</a></div>
 <div id="priv" data-ov-profile="hidden"><a href="https://openvibe.network/@hidden">Hidden</a></div>
 <div id="none" data-ov-profile="nobody"><a href="https://openvibe.network/@nobody">Nobody</a></div>
+<section id="me" data-ov-profile="me" hidden><a href="https://openvibe.network/my">Your stuff</a></section>
 <script>window.OpenVibeProfilePanelConfig = { api: location.origin };</script>
 <script src="/shared/profile-panel.js" defer></script></body></html>`;
 const server = http.createServer((req, res) => {
@@ -39,6 +41,9 @@ const server = http.createServer((req, res) => {
     const json = (s, o) => { res.writeHead(s, { 'content-type': 'application/json' }); res.end(JSON.stringify(o)); };
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
     if (u.pathname === '/api/v1/profiles/ana') return json(200, { profile: ANA });
+    // Signed in on the main page; signed out on /out (told apart by the page that asks).
+    if (u.pathname === '/auth/me') return json(200, { user: /\/out$/.test(req.headers.referer || '') ? null : { id: 7, username: 'ana' } });
+    if (u.pathname === '/out') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE.replace(/<div id="ana"[\s\S]*?<\/section>/, '<section id="me" data-ov-profile="me" hidden><a href="https://openvibe.network/my">Your stuff</a></section>')); }
     if (u.pathname === '/api/v1/profiles/hidden') return json(200, { profile: { username: 'hidden', display_name: 'Hidden', profile_url: 'https://openvibe.network/@hidden', private: true } });
     if (u.pathname.startsWith('/api/v1/profiles/')) return json(404, { error: 'not_found' });
     if (u.pathname.startsWith('/avatar/')) { res.writeHead(204); return res.end(); }
@@ -56,7 +61,7 @@ const server = http.createServer((req, res) => {
         const context = await browser.newContext();
         const p = await h.openPage(browser, context, { width: 360, height: 900 });
         await p.goto(`${base}/`, { maxMs: 5000 });
-        const got = JSON.parse(await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (document.querySelector('#ana .ovpp') && document.querySelector('#priv .ovpp')) { clearInterval(t); setTimeout(() => {
+        const got = JSON.parse(await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (document.querySelector('#ana .ovpp') && document.querySelector('#priv .ovpp') && document.querySelector('#me .ovpp')) { clearInterval(t); setTimeout(() => {
             const ana = document.querySelector('#ana .ovpp');
             r(JSON.stringify({
                 name: ana.querySelector('.ovpp-who b').textContent,
@@ -70,6 +75,7 @@ const server = http.createServer((req, res) => {
                 priv: document.querySelector('#priv .ovpp').textContent,
                 none: document.getElementById('none').innerHTML,
                 wide: document.documentElement.scrollWidth,
+                me: [document.getElementById('me').hidden, document.querySelector('#me .ovpp-who small').textContent],
             }));
         }, 100); } }, 30); })`));
         assert.strictEqual(got.name, 'Ana <img src=x onerror=alert(1)>', 'a name with markup stays text');
@@ -83,6 +89,10 @@ const server = http.createServer((req, res) => {
         assert.match(got.priv, /Hidden[\s\S]*This profile is private\./);
         assert.match(got.none, /href="https:\/\/openvibe\.network\/@nobody"/, 'no profile: the fallback link stays');
         assert.ok(got.wide <= 360, `fits a 360 px phone (${got.wide})`);
+        assert.deepStrictEqual(got.me, [false, '@ana'], '"me" is whoever /auth/me names, shown once drawn');
+        await p.goto(`${base}/out`, { maxMs: 5000 });
+        const out = await p.evaluate(`new Promise((r) => setTimeout(() => r(JSON.stringify([document.getElementById('me').hidden, !!document.querySelector('#me .ovpp')])), 700))`);
+        assert.deepStrictEqual(JSON.parse(out), [true, false], 'signed out: "me" stays hidden and undrawn');
         console.log('profile-panel: ok');
     } finally {
         await browser.close();

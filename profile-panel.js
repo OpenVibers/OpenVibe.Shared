@@ -6,6 +6,9 @@
  *   <div data-ov-profile="ana"><a href="https://openvibe.network/@ana">Ana's profile</a></div>
  *   <script src="/shared/profile-panel.js" defer></script>
  *   OpenVibeProfilePanel.render(el, 'ana')      or every [data-ov-profile] on the page, by itself, once loaded
+ *   <section data-ov-profile="me" hidden>…</section>   whoever is signed in on this site (its own /auth/me, the navbar's
+ *                                                      session lookup), so a cached page can show "your stuff"; shown
+ *                                                      only once drawn, left as it was for someone signed out
  *
  * It reads OpenVibe.Network's public profile (GET https://openvibe.network/api/v1/profiles/:username: profile@1, CORS
  * open, no credentials, cached 60 s by the Network), which gathers Inventory, Quest and Play. The panel replaces the
@@ -91,6 +94,7 @@
         if (p.private) {
             card.appendChild(el('p', 'ovpp-note', 'This profile is private.'));
             target.replaceChildren(card);
+            target.hidden = false;
             return card;
         }
         const ach = p.achievements || { total: 0, games: [] };
@@ -143,13 +147,29 @@
         if (p.inventory_url) { foot.appendChild(root.document.createTextNode(' \u00b7 ')); foot.appendChild(link(p.inventory_url, null, 'Inventory')); }
         card.appendChild(foot);
         target.replaceChildren(card);
+        target.hidden = false;
         return card;
     }
 
     /** Draw `username`'s panel into `target`. → the panel, or null (the fallback stays) when there is no answer. */
+    /** The signed-in person's username from this site's own /auth/me (the navbar's session lookup), once a page. */
+    let mePromise = null;
+    function me() {
+        if (!mePromise) {
+            mePromise = fetch('/auth/me', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then((r) => (r.ok ? r.json() : null)).then((b) => {
+                    const u = b && b.user;
+                    const name = u && (u.username || u.name);
+                    return NAME.test(String(name || '')) ? String(name) : null;
+                }).catch(() => null);
+        }
+        return mePromise;
+    }
+
     async function render(target, username) {
-        const name = String(username || '');
-        if (!target || !NAME.test(name)) return null;
+        // "me": whoever is signed in on this site; nobody signed in leaves the element as it was (hidden stays hidden).
+        const name = String(username || '') === 'me' ? await me() : String(username || '');
+        if (!target || !NAME.test(String(name || ''))) return null;
         const p = await load(name);
         return p ? draw(target, p) : null;
     }

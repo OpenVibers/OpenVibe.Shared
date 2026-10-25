@@ -10,7 +10,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   draws someone's worn items, their counts of items, badges, achievements and games, their latest unlock per game and
   links to their profile and inventory, from OpenVibe.Network's public profile (which gathers Inventory, Quest and
   Play since Network#333 and Play#38). Steam-style, so Games, Quest and any site can show it (the owner, 2026-10-25).
-  `test/profile-panel.test.js`.
+  `data-ov-profile="me"` is whoever is signed in on that site (its own `/auth/me`), so a page cached for everyone can
+  show "your stuff" (a `hidden` element appears once drawn). `test/profile-panel.test.js`.
 - **One lit row in the menus on phones** (`navbar.js`). A tap left `:hover` on the row it touched, so the "all sites"
   launcher showed two highlighted rows: the site you are on and the last one your finger crossed (the owner, 2026-10-25,
   on openre.stream). The launcher's and the phone drawer's hover backgrounds now apply only under `@media (hover:
