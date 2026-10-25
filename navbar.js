@@ -278,6 +278,12 @@
             }
             .openvibe-navbar-dropdown-menu a:hover, .openvibe-navbar-dropdown-menu button:hover { background: var(--bg-hover, #2f2f3d); }
             .openvibe-navbar-dropdown-menu .danger { color: var(--live-red-text, var(--live-red, #e74c3c)); }
+            /* Light / Dark / Auto (theme-loader.js scheme): three equal segments, the one in use filled. */
+            .openvibe-navbar-dropdown-menu .ud-scheme { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; margin: 2px 0 6px; padding: 3px; border-radius: 9px; background: var(--bg-tertiary, rgba(255,255,255,.06)); }
+            .openvibe-navbar-dropdown-menu .ud-scheme button { justify-content: center; gap: 6px; padding: 7px 4px; border-radius: 7px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
+            .openvibe-navbar-dropdown-menu .ud-scheme button[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
+            .openvibe-navbar-dropdown-menu .ud-scheme button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+            .openvibe-navbar-dropdown-menu .ud-scheme .icon { width: auto; font-size: 13px; }
             .openvibe-navbar-dropdown-menu .icon { width: 18px; text-align: center; font-size: 14px; }
 
             .openvibe-navbar .openvibe-network-badge {
@@ -332,14 +338,17 @@
         'fa-user': [448, 'M224 267Q259 267 288 250Q317 233 335 203Q352 173 352 139Q352 105 335 75Q317 45 288 28Q259 11 224 11Q189 11 160 28Q131 45 113 75Q96 105 96 139Q96 173 113 203Q131 233 160 250Q189 267 224 267ZM178 315Q103 317 52 367Q2 418 0 493Q0 506 9 514Q17 523 30 523H418Q431 523 439 514Q448 506 448 493Q446 418 396 367Q345 317 270 315H178Z'],
         'fa-user-secret': [448, 'M224 27Q215 26 209 21Q208 21 208 21Q201 13 176 11Q153 12 137 39Q120 65 110 100Q74 107 53 117Q32 127 32 139Q35 161 97 175Q96 181 96 187Q96 213 105 235H45Q33 236 32 248Q32 251 33 253L72 350Q39 375 20 412Q0 449 0 493Q0 506 9 514Q17 523 30 523H418Q431 523 439 514Q448 506 448 493Q448 449 428 412Q409 375 376 350L415 253Q416 251 416 248Q415 236 403 235H343Q352 213 352 187Q352 181 351 175Q413 161 416 139Q416 127 395 117Q374 107 338 100Q328 65 311 39Q295 12 272 11Q247 13 240 21Q240 21 240 21Q239 21 239 21Q233 26 224 27ZM280 235H268H280H268Q241 234 231 209Q229 204 224 204Q219 204 217 209Q207 234 181 235H168Q151 235 140 223Q128 212 128 195V181Q171 187 224 187Q277 187 320 181V195Q320 212 308 223Q297 235 280 235ZM192 331 208 363 192 331 208 363 176 491 128 299 192 331ZM320 299 272 491 320 299 272 491 240 363 256 331 320 299Z'],
         'fa-wand-magic-sparkles': [576, 'M235 54 197 68 235 54 197 68Q192 70 192 75Q192 80 197 82L235 96L249 134Q251 139 256 139Q261 139 263 134L277 96L315 82Q320 80 320 75Q320 70 315 68L277 54L263 16Q261 11 256 11Q251 11 249 16L235 54ZM46 406Q32 421 32 440Q32 459 46 474L81 509Q95 523 115 523Q134 523 149 509L530 128Q544 113 544 94Q544 74 530 60L495 25Q481 11 461 11Q442 11 427 25L46 406ZM485 94 380 199 485 94 380 199 356 175 461 70 485 94ZM8 128Q0 131 0 139Q0 147 8 150L64 171L85 228Q88 235 96 235Q104 235 107 228L128 171L185 150Q192 147 192 139Q192 131 185 128L128 107L107 51Q104 43 96 43Q88 43 85 51L64 107L8 128ZM360 384Q352 387 352 395Q352 403 360 406L416 427L437 484Q440 491 448 491Q456 491 459 484L480 427L537 406Q544 403 544 395Q544 387 537 384L480 363L459 307Q456 299 448 299Q440 299 437 307L416 363L360 384Z'],
+        'fa-circle-half-stroke': [512, 'M448 267Q446 185 392 131Q338 77 256 75V459Q338 457 392 403Q446 349 448 267ZM0 267Q1 197 34 139Q68 81 128 45Q189 11 256 11Q323 11 384 45Q444 81 478 139Q511 197 512 267Q511 337 478 395Q444 453 384 489Q323 523 256 523Q189 523 128 489Q68 453 34 395Q1 337 0 267Z'],
+        'fa-moon': [384, 'M224 43Q161 44 111 74Q60 103 30 154Q1 204 0 267Q1 330 31 380Q60 431 111 460Q161 490 224 491Q317 489 379 428Q387 419 382 409Q377 399 365 400Q351 403 335 403Q261 401 211 351Q162 302 160 227Q160 177 184 137Q209 97 249 74Q259 68 257 56Q254 46 242 44Q233 43 223 43Z'],
+        'fa-sun': [512, 'M362 12Q369 16 371 24L391 132L499 152Q507 154 511 161Q514 169 509 177L447 267L509 357Q514 365 511 373Q507 380 499 382L391 402L371 510Q369 518 362 522Q354 525 346 520L256 458L166 520Q158 525 151 522Q143 518 141 510L121 402L13 382Q5 380 1 373Q-2 365 3 357L65 267L3 177Q-2 169 1 162Q5 154 13 152L121 132L141 24Q143 16 151 12Q158 9 166 14L256 76L346 14Q354 9 362 12ZM160 267Q160 241 173 219Q186 197 208 184Q231 171 256 171Q281 171 304 184Q326 197 339 219Q352 241 352 267Q352 293 339 315Q326 337 304 350Q281 363 256 363Q231 363 208 350Q186 337 173 315Q160 293 160 267ZM384 267Q384 232 367 203Q350 174 320 156Q290 139 256 139Q222 139 192 156Q162 174 145 203Q128 232 128 267Q128 302 145 331Q162 360 192 378Q222 395 256 395Q290 395 320 378Q350 360 367 331Q384 302 384 267Z'],
         'fa-brain': [512, 'M184 11Q208 12 224 27Q239 43 240 67V467Q239 491 224 507Q208 522 184 523Q162 523 146 509Q131 495 128 473Q120 475 112 475Q85 474 67 456Q49 438 48 411Q48 400 52 390Q29 381 14 361Q0 341 0 315Q0 291 13 272Q25 253 46 243Q32 226 32 203Q32 180 46 163Q60 146 82 140Q80 132 80 123Q80 100 94 83Q107 67 128 61Q131 39 146 25Q162 11 184 11ZM328 11Q350 11 366 25Q381 39 384 61Q405 67 418 83Q432 100 432 123Q432 132 430 140Q452 146 466 163Q480 180 480 203Q480 226 466 243Q487 253 499 272Q512 291 512 315Q512 341 498 361Q483 381 460 390Q464 400 464 411Q463 438 445 456Q427 474 400 475Q392 475 384 473Q381 495 366 509Q350 523 328 523Q304 522 288 507Q273 491 272 467V67Q273 43 288 27Q304 12 328 11Z'],
     };
     // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives).
     const NAV_ICONS_LAZY = {
         320: 'fa-chevron-right',
-        384: 'fa-xmark fa-moon fa-arrow-down fa-play fa-plug fa-file-lines fa-location-dot',
+        384: 'fa-xmark fa-arrow-down fa-play fa-plug fa-file-lines fa-location-dot',
         448: 'fa-book fa-hand-fist fa-bars fa-arrow-right fa-check fa-tag fa-bolt fa-font fa-lock fa-utensils',
-        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-wallet fa-arrow-up-right-from-square fa-chevron-down fa-magnifying-glass fa-gear fa-circle-half-stroke fa-sun fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-comment-dots fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music',
+        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-wallet fa-arrow-up-right-from-square fa-chevron-down fa-magnifying-glass fa-gear fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-comment-dots fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music',
         576: 'fa-house fa-video fa-star fa-tower-cell fa-diagram-project fa-money-bill-wave fa-crown fa-ticket fa-map',
         640: 'fa-comments fa-gamepad fa-network-wired fa-people-arrows fa-people-group fa-shirt fa-code fa-robot fa-photo-film fa-wave-square fa-user-shield',
     };
@@ -784,8 +793,19 @@
         return list.map(n => `<a href="${escapeAttr(n.url)}"><span class="icon"><span class="ov-icon" data-icon="${escapeAttr(n.icon)}" data-size="20" data-fx="none"></span></span> ${escapeAttr(n.name)}</a>`).join('');
     }
 
+    /** Light / Dark / Auto: the theme's other half, or the device's (theme-loader.js scheme). */
+    function bindScheme(scope) {
+        const L = root.OpenVibeThemeLoader, box = scope.querySelector('.ud-scheme');
+        if (!box || !L || !L.scheme) return;
+        const paint = () => { const now = L.scheme.get(); box.querySelectorAll('[data-ov-scheme]').forEach((b) => b.setAttribute('aria-pressed', String(b.getAttribute('data-ov-scheme') === now))); };
+        box.addEventListener('click', (e) => { const b = e.target.closest('[data-ov-scheme]'); if (!b) return; e.stopPropagation(); L.scheme.set(b.getAttribute('data-ov-scheme')); paint(); });
+        ['ov:theme', 'ov:display'].forEach((ev) => root.addEventListener(ev, paint, onDocument()));
+        box.hidden = false; paint();
+    }
+
     /** Display rows (text size, animations) cycle their value; state lives in theme-loader.js. */
     function bindDisplayRows(dropdown) {
+        bindScheme(dropdown);
         const L = root.OpenVibeThemeLoader; const rows = dropdown.querySelectorAll('[data-ov-display]');
         if (!L || !L.display) { rows.forEach(r => { r.hidden = true; }); return; }
         const LABEL = { text: { 100: 'Default', 112: 'Large', 125: 'Largest' }, motion: { auto: 'On', reduced: 'Calm' }, seasonal: { on: 'On', off: 'Off' } };
@@ -831,11 +851,17 @@
         const paint = () => {
             const d = L.display.get();
             const seg = (key, val, label, title) => `<button type="button" data-k="${key}" data-v="${val}" aria-pressed="${String(d[key]) === val}" title="${title}">${label}</button>`;
-            box.innerHTML = `<span class="ovl-dl">Display</span><span class="ovl-seg" role="group" aria-label="Text size">${seg('text', '100', 'A', 'Default text size')}${seg('text', '112', 'A+', 'Larger text')}${seg('text', '125', 'A++', 'Largest text')}</span>
+            const sch = L.scheme ? L.scheme.get() : null;
+            const ss = (val, label, title) => `<button type="button" data-s="${val}" aria-pressed="${sch === val}" title="${title}">${label}</button>`;
+            box.innerHTML = `<span class="ovl-dl">Display</span>${sch ? `<span class="ovl-seg" role="group" aria-label="Light or dark">${ss('light', 'Light', 'Light theme')}${ss('dark', 'Dark', 'Dark theme')}${ss('auto', 'Auto', 'Follow this device')}</span>` : ''}<span class="ovl-seg" role="group" aria-label="Text size">${seg('text', '100', 'A', 'Default text size')}${seg('text', '112', 'A+', 'Larger text')}${seg('text', '125', 'A++', 'Largest text')}</span>
                 <span class="ovl-seg" role="group" aria-label="Motion">${seg('motion', 'auto', 'Motion', 'Animations on')}${seg('motion', 'reduced', 'Calm', 'Reduce animations')}</span>${seasonState() ? `<span class="ovl-seg" role="group" aria-label="Seasonal themes">${seg('seasonal', 'on', seasonState().s.name, 'Seasonal themes on')}${seg('seasonal', 'off', 'Off', 'Seasonal themes off')}</span>` : ''}<a href="https://openvibe.network/themes">Themes</a>`;
             box.hidden = false;
         };
-        box.addEventListener('click', (e) => { const b = e.target.closest('button[data-k]'); if (!b) return; L.display.set({ [b.dataset.k]: b.dataset.v }); paint(); });
+        box.addEventListener('click', (e) => {
+            const s2 = e.target.closest('button[data-s]'); if (s2 && L.scheme) { L.scheme.set(s2.dataset.s); paint(); return; }
+            const b = e.target.closest('button[data-k]'); if (!b) return; L.display.set({ [b.dataset.k]: b.dataset.v }); paint();
+        });
+        root.addEventListener('ov:theme', paint, onDocument());
         root.addEventListener('ov:display', paint, onDocument());
         paint();
     }
@@ -1470,6 +1496,7 @@
                     ${!isAnon ? `<a href="https://openvibe.actor/console" data-ov-ask-actor><span class="icon">${navIcon('fa-brain')}</span> Ask Actor</a>` : ''}
                     <div class="sep"></div>`}
                     <div class="ud-label">Display</div>
+                    <div class="ud-scheme" role="group" aria-label="Light or dark" hidden><button type="button" data-ov-scheme="light" aria-pressed="false"><span class="icon">${navIcon('fa-sun')}</span> Light</button><button type="button" data-ov-scheme="dark" aria-pressed="false"><span class="icon">${navIcon('fa-moon')}</span> Dark</button><button type="button" data-ov-scheme="auto" aria-pressed="false" title="Follow this device's light or dark setting"><span class="icon">${navIcon('fa-circle-half-stroke')}</span> Auto</button></div>
                     <button type="button" data-ov-display="text"><span class="icon">${navIcon('fa-text-height')}</span> Text size <b class="ud-val"></b></button>
                     <button type="button" data-ov-display="motion"><span class="icon">${navIcon('fa-wand-magic-sparkles')}</span> Animations <b class="ud-val"></b></button>
                     <button type="button" data-ov-display="seasonal"><span class="icon">${navIcon('fa-palette')}</span> Seasonal themes <b class="ud-val"></b></button>

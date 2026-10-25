@@ -34,8 +34,21 @@ for (const t of BUILTIN_THEMES) {
 
 // 4. Loader: full sets and stale-token clearing are present.
 const loader = require('fs').readFileSync(path.join(__dirname, '..', 'theme-loader.js'), 'utf8');
-assert.ok(loader.includes("'violet-hour': {"), 'loader knows Violet Hour');
-assert.ok(/'arctic': \{[^\n]*'--success'/.test(loader), 'loader entries carry the full token set');
+// The loader writes rows of values against one list of names and expands them at load: run it and compare.
+const vm = require('vm');
+const sandbox = { document: { documentElement: { style: { setProperty() {}, removeProperty() {} }, setAttribute() {}, getAttribute() { return null; }, removeAttribute() {} }, readyState: 'complete', cookie: '', head: null, querySelector: () => null, getElementById: () => null, addEventListener() {} },
+    localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, location: { hostname: 'openvibe.live', protocol: 'https:' }, getComputedStyle: () => ({ getPropertyValue: () => '' }),
+    fetch: () => Promise.resolve({ ok: false }), CustomEvent: class {}, addEventListener() {}, dispatchEvent() {}, setTimeout() {}, URL, JSON, Object, String, Number, Math, Array, Promise, Error, Date };
+sandbox.window = sandbox;
+vm.runInNewContext(loader, sandbox);
+const LT = sandbox.OpenVibeThemeLoader.THEMES;
+assert.ok(LT['violet-hour'], 'loader knows Violet Hour');
+for (const t of BUILTIN_THEMES) {
+    const want = { ...DEFAULT_VARS, ...t.variables };
+    for (const k of Object.keys(want)) assert.strictEqual(LT[t.id][k], String(want[k]), `loader's ${t.id} carries ${k} as the catalog has it`);
+}
+assert.ok(LT.arctic['--success'], 'loader entries carry the full token set');
+assert.ok(loader.length < 60000, `theme-loader.js stays small for first paint (${loader.length} bytes)`);
 assert.ok(loader.includes('KNOWN_PROPS'), 'loader clears tokens the new theme does not set');
 
 // 5. Derived tokens: text on the accent always reads, on every theme.

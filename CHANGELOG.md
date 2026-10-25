@@ -6,6 +6,25 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## 4.12.0 — 2026-10-26
 
+- **Every theme in light and dark.** The owner, 2026-10-25: "each theme should have a light counterpart instead of … a
+  mixed bag", with an easy light and dark switch in the account menu.
+  - **Pairs:** `builtin-themes.js` `PAIRS` gives every theme its other half, and each theme carries `pair`. That makes 25
+    pairs and 50 themes. Thirteen are new light ones: Dawn, Tokyo Day, Alucard, Monokai Light, Shallows, Ash, Vapor
+    Day, Greenbar, Nord Light, Bright, High Contrast Light, Hayride and Snowfall. Cloud is now named "Vibe Light", the
+    default's light half.
+  - **October** (the owner's picks): Midnight Pumpkin (`halloween`), pumpkin orange on OpenVibe's navy, replaces the
+    violet Pumpkin Night, and **Hayride** is its light half. December gets **Snowfall** beside Frost. `SEASONS` entries
+    carry `light`. A season stands in for the default theme in either mode (Vibe or Vibe Light).
+  - **Light / Dark / Auto** (`theme-loader.js`, `OpenVibeThemeLoader.scheme.get()/set()`; the account menu and the
+    launcher's Display box):
+    - Light or Dark saves the picked theme's other half (the default's half when a community theme has none). The
+      season stays as it was.
+    - Auto (the display preference `scheme: auto`, synced like the others) paints the half matching the device, and
+      follows it when it changes.
+    - `pairOf(id)` and `modeOf(id)` are exported too.
+  - **Smaller loader:** the theme map is now rows of values against one list of token names, expanded at load into the
+    same full sets. `theme-loader.js` went from 59.5 KB to 50.7 KB with thirteen more themes.
+
 - **The OpenVibe mark wears the season; the pumpkin button is gone.** The owner, 2026-10-25: the badge beside the brand
   "takes up a lot of space … especially on mobile"; integrate it into the logo instead.
   - **The mark's look** (`ov-mark.js`): `<html data-ov-season-mark="halloween|winter">` (set by `theme-loader.js` for

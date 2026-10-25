@@ -205,6 +205,7 @@ function load(hostname, opts = {}) {
     assert.ok(dd.innerHTML.includes('/my#history'), 'History link present');
     assert.ok(dd.innerHTML.includes('href="https://openvibe.network/@x"') && dd.innerHTML.includes('My Profile'), 'the public profile (openvibe.network/@username) is one tap from the account menu');
     assert.ok(dd.innerHTML.includes('<a class="name ud-me" href="https://openvibe.network/@x"'), 'pressing your name in the menu opens your profile');
+    assert.ok(['light', 'dark', 'auto'].every((m) => dd.innerHTML.includes(`data-ov-scheme="${m}"`)) && dd.innerHTML.includes('aria-label="Light or dark"'), 'Light, Dark and Auto are one press away in the account menu');
     assert.ok(dd.innerHTML.includes('<a class="ud-me" href="https://openvibe.network/@x" tabindex="-1" aria-hidden="true"><img'), 'and so does your picture (one stop for keyboards)');
     const id = navbar.addMenuItem({ label: 'Runtime row', href: '/r', position: 'before' });
     assert.ok(id, 'addMenuItem returns an id');
