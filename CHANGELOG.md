@@ -9,7 +9,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **Ask Vibe from every site** (`navbar.js`). The account menu's "Ask Actor" is now **Ask Vibe**: it opens a new chat
   with Vibe, OpenVibe's assistant, at `openvibe.chat/vibe`, with the text selected on the page and the page's address
   filled in (never sent by itself; OpenVibe.Chat#165). `_ask.askVibeHref` replaces `askActorHref`;
-  `test/navbar-ask-vibe.test.js` replaces `navbar-ask-actor.test.js`.
+  `test/navbar-ask-vibe.test.js` replaces `navbar-ask-actor.test.js`. Beside it, **Work together** starts a workspace
+  room on OpenVibe.Chat (`openvibe.chat/work`): a team and Vibe with a work queue, alerts from other systems and a
+  shared screen (OpenVibe.Chat#163–#168).
 - **Richer home pages for every site** (`showcase.js`, `showcase.css`, `docs/home-pages.md`). The owner, 2026-10-25:
   "more rich content and different types… shared code so you can make nice home pages across all our different sites…
   and other people can reuse too". About 30 sites build their homes from showcase.
