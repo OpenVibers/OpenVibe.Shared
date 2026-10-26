@@ -4,8 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## 4.14.0 — unreleased
+## 4.14.0 — 2026-10-26
 
+- **The navbar's brand is big enough for a finger** (`navbar.js`). On touch screens the wordmark's links were 22 px tall
+  and the mark 30 px. They now reach about 44 px (the navbar's height, and a clear ring around the mark) under
+  `(pointer: coarse)`, without moving anything.
 - **Volume on phones, and a video with no sound says so** (`player.js`, `player.css`; the owner, 2026-10-26, on
   openvibe.video: "Volume seems broken … on mobile can't hear this and also can't easily adjust volume"). Touch screens
   only had the mute button. Now the volume slider shows there too, finger-sized (84 px, an 18 px thumb), wherever the
