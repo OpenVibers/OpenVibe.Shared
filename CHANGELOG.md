@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.14.0 — unreleased
+
+- **Volume on phones, and a video with no sound says so** (`player.js`, `player.css`; the owner, 2026-10-26, on
+  openvibe.video: "Volume seems broken … on mobile can't hear this and also can't easily adjust volume"). Touch screens
+  only had the mute button. Now the volume slider shows there too, finger-sized (84 px, an 18 px thumb), wherever the
+  page can set the volume (`.can-volume`: Android). An iPhone leaves volume to its own buttons, so it keeps the mute
+  button alone. A video with no sound track (that VOD, 5986, was recorded without its microphone) showed a working
+  speaker that did nothing. Now, once the browser can tell, it shows "No sound in this video" once, with a dimmed speaker
+  that says it again when tapped, no slider and no "Tap for sound". Firefox reports this directly (`mozHasAudio`).
+  Chrome and Safari count it: no audio decoded after 2 s of decoded video, which they count muted or not. A new source
+  asks again. `test/player.test.js`.
+
 ## 4.13.0 — 2026-10-26
 
 - **Switching accounts works on every site** (`navbar.js`; the owner, 2026-10-26: "the thing that lets you switch …

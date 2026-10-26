@@ -174,8 +174,18 @@
 .ov-player.is-waiting:not(.is-paused) .ov-player-spinner { display: block; }
 @keyframes ov-player-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ov-player-spinner { animation-duration: 2.4s; } .ov-player-bar, .ov-player-video, .ov-player-poster, .ov-player-flash { transition: none; } .ov-player-unmute { animation: none; } }
-/* Touch screens set the volume with the device: the mute button stays, the slider does not. */
-@media (hover: none) { .ov-player-volume-slider { display: none; } }
+/* Touch screens: the slider shows, finger-sized, wherever the page can set the volume (.can-volume: Android). An iPhone
+   leaves volume to its own buttons, so there the mute button stays alone. */
+@media (hover: none) {
+    .ov-player-volume-slider { display: none; }
+    .ov-player.can-volume .ov-player-volume-slider { display: block; width: 84px; height: 36px; opacity: 1; margin: 0 8px 0 0; }
+    .ov-player.can-volume .ov-player-volume-slider::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -7px; }
+    .ov-player.can-volume .ov-player-volume-slider::-moz-range-thumb { width: 18px; height: 18px; }
+}
+@media (hover: none) and (max-width: 360px) { .ov-player.can-volume .ov-player-volume-slider { width: 64px; } }
+/* No sound track: no slider, a dimmed speaker that says so when tapped. */
+.ov-player.is-silent .ov-player-volume-slider { display: none; }
+.ov-player.is-silent .ov-player-mute { opacity: 0.55; }
 
 .ov-player-message:empty { display: none; }
 .ov-player-message {

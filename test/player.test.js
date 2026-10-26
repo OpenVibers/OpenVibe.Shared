@@ -166,9 +166,73 @@ console.log('player: all checks passed');
     v.__ovPlayer.skip(10);
     assert.ok(q('.ov-player-flash').className.includes('is-right') && q('.ov-player-flash').textContent.includes('+10 s'));
 }
+// ── 4.14: volume on phones, and a video with no sound (owner, 2026-10-26: "Volume seems broken … on mobile can't hear
+// this and also can't easily adjust volume"; VOD 5986 had no sound track) ──
+function player(html, { volumeFixed = false, decoded = null } = {}) {
+    const { window: w, document: d } = parseHTML(`<!doctype html><html><body><div class="host">${html}</div></body></html>`);
+    const v = d.querySelector('video');
+    let p = true;
+    const m = { currentTime: 0, duration: 300, volume: 1, muted: false, playbackRate: 1, ended: false, readyState: 4 };
+    const f = (type) => v.dispatchEvent(new w.Event(type));
+    Object.defineProperties(v, {
+        paused: { get: () => p }, ended: { get: () => m.ended }, readyState: { get: () => m.readyState },
+        currentTime: { get: () => m.currentTime, set: (x) => { m.currentTime = x; f('timeupdate'); } },
+        duration: { get: () => m.duration },
+        // An iPhone's Safari ignores a page setting the volume: it stays 1.
+        volume: { get: () => m.volume, set: (x) => { if (!volumeFixed) m.volume = x; f('volumechange'); } },
+        muted: { get: () => m.muted, set: (x) => { m.muted = x; f('volumechange'); } },
+        playbackRate: { get: () => m.playbackRate, set: (x) => { m.playbackRate = x; f('ratechange'); } },
+        buffered: { get: () => ({ length: 0 }) },
+        textTracks: { value: Object.assign([], { addEventListener() {} }) },
+        ...(decoded ? { webkitAudioDecodedByteCount: { get: () => decoded.audio }, webkitVideoDecodedByteCount: { get: () => decoded.video } } : {}),
+    });
+    v.play = () => { p = false; f('play'); f('playing'); return Promise.resolve(); };
+    v.pause = () => { p = true; f('pause'); };
+    const c = { window: w, document: d, console, Promise, setTimeout, clearTimeout, setInterval, clearInterval, Date, Math, Number, String, JSON, Object, Array,
+        localStorage: { getItem: () => null, setItem() {} } };
+    w.OpenVibePlayer = undefined;
+    vm.createContext(c);
+    vm.runInContext(src, c);
+    return { v, m, f, w, root: v.parentNode, q: (sel) => v.parentNode.querySelector(sel) };
+}
+{
+    // The page can set the volume (desktop, Android): the slider is offered on touch screens too. An iPhone: mute only.
+    assert.ok(root.classList.contains('can-volume'), 'a settable volume marks .can-volume');
+    const ios = player('<video data-ov-player src="/a.mp4"></video>', { volumeFixed: true });
+    assert.ok(!ios.root.classList.contains('can-volume'), 'an iPhone keeps its own volume buttons');
+    assert.strictEqual(ios.m.volume, 1, 'the check leaves the volume as it was');
+
+    // No sound track: after 2 s of decoded video and no audio decoded, the player says so.
+    const decoded = { audio: 0, video: 0 };
+    const quiet = player('<video data-ov-player src="/a.mp4"></video>', { decoded });
+    quiet.v.play();
+    decoded.video = 50000; quiet.m.currentTime = 1; quiet.f('timeupdate');
+    assert.ok(!quiet.root.classList.contains('is-silent'), 'not judged before 2 s of playback');
+    quiet.m.currentTime = 2.5; quiet.f('timeupdate');
+    assert.ok(quiet.root.classList.contains('is-silent'), 'no audio decoded: is-silent');
+    assert.strictEqual(quiet.q('.ov-player-mute').getAttribute('aria-label'), 'No sound in this video');
+    assert.ok(quiet.q('.ov-player-flash').textContent.includes('No sound in this video'), 'and says so once');
+    assert.strictEqual(quiet.q('.ov-player-unmute').hidden, true, 'no "Tap for sound" on a silent video');
+    quiet.q('.ov-player-mute').dispatchEvent(new quiet.w.Event('click'));
+    assert.strictEqual(quiet.m.muted, false, 'its speaker explains instead of muting');
+    // A new source asks again.
+    quiet.f('emptied');
+    assert.ok(!quiet.root.classList.contains('is-silent'));
+
+    // Sound decoded (muted or not): never called silent; a seek restarts the 2 s.
+    const loud = { audio: 0, video: 0 };
+    const withSound = player('<video data-ov-player muted src="/a.mp4"></video>', { decoded: loud });
+    withSound.v.play();
+    withSound.m.currentTime = 120; withSound.f('seeked');
+    loud.video = 40000; withSound.m.currentTime = 121; withSound.f('timeupdate');
+    assert.ok(!withSound.root.classList.contains('is-silent'), 'a seek restarts the count');
+    loud.audio = 9000; withSound.m.currentTime = 123; withSound.f('timeupdate');
+    assert.ok(!withSound.root.classList.contains('is-silent'), 'audio decoded while muted: it has sound');
+}
 // The styles, and a mute icon from the one rounded set.
 assert.match(css, /\.ov-player-unmute \{/);
-assert.match(css, /@media \(hover: none\) \{ \.ov-player-volume-slider \{ display: none; \} \}/, 'no hidden slider on touch screens');
+assert.match(css, /@media \(hover: none\) \{\s*\.ov-player-volume-slider \{ display: none; \}\s*\.ov-player\.can-volume \.ov-player-volume-slider \{ display: block; width: 84px; height: 36px;/, 'on touch screens the slider shows, finger-sized, where the volume can be set');
+assert.match(css, /\.ov-player\.is-silent \.ov-player-volume-slider \{ display: none; \}/);
 assert.match(css, /\.ov-player\.has-frame \.ov-player-video/);
 assert.match(src, /Material Icons Round/);
-console.log('player: all checks passed (4.13 sound, layers, feedback)');
+console.log('player: all checks passed (4.13 sound, layers, feedback; 4.14 volume on phones, no-sound videos)');
