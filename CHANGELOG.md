@@ -4,7 +4,7 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## 4.13.0 — unreleased
+## 4.13.0 — 2026-10-26
 
 - **A person's stuff on any site** (`profile-panel.js`, `profile-panel.css`, new). One tag (`data-ov-profile="name"`)
   draws someone's worn items, their counts of items, badges, achievements and games, their latest unlock per game and
