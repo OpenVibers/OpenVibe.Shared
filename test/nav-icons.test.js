@@ -13,7 +13,7 @@ const { brotli } = require('../scripts/size-report');
 const ROOT = path.join(__dirname, '..');
 const NAVBAR_PATH = path.join(ROOT, 'navbar.js');
 const ICONS = require('../nav-icons');
-const NAVBAR_BROTLI_BUDGET = 33.5 * 1024;   // measured 27.6 KB on 2026-09-22 (39.0 KB with every glyph inline); 29.4 KB with the top-of-page fade (2.15.0); 30.6 KB with Ask Actor and its glyph (4.2.0); 31.4 KB with every site in groups in the launcher (4.4.0); 32.1 KB with the season's badge and switches (4.11.0); 33.0 KB with Work together and the drawer anchored to the bar (4.13.0)
+const NAVBAR_BROTLI_BUDGET = 34 * 1024;   // measured 27.6 KB on 2026-09-22 (39.0 KB with every glyph inline); 29.4 KB with the top-of-page fade (2.15.0); 30.6 KB with Ask Actor and its glyph (4.2.0); 31.4 KB with every site in groups in the launcher (4.4.0); 32.1 KB with the season's badge and switches (4.11.0); 33.0 KB with Work together and the drawer anchored to the bar (4.13.0); 33.6 KB with account switching on every site and finger-sized brand links (4.14.0)
 
 // ── size budget and generated block ──────────────────────────
 {
