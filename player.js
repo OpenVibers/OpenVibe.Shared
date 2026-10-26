@@ -15,6 +15,9 @@
  * Sound: a video playing muted (autoplay) shows "Tap for sound"; the first tap on it unmutes, and so do the media
  * volume keys where a browser passes them to the page (desktop keyboards, TVs; phones keep their hardware buttons to
  * themselves, so no page can see those). Lock screens and headsets get play/pause/seek through the Media Session API.
+ * On a touch screen the volume slider shows, finger-sized, wherever the page can set the volume (Android; an iPhone
+ * leaves volume to its own buttons, so it keeps the mute button alone). A video with no sound track says so ("No sound
+ * in this video", a dimmed speaker) instead of offering a mute button that seems broken.
  *
  * Loading looks like it is already there (owner, 2026-10-25): data-ov-color paints the average colour at once,
  * data-ov-thumb (a tiny inline image) shows blurred, the poster sharpens over it, and the first frame fades in.
@@ -70,6 +73,16 @@
         const b = el('button', `ov-player-btn ${cls}`, { type: 'button', 'aria-label': label, title: label });
         b.innerHTML = icon;
         return b;
+    }
+    /** Whether this browser lets a page set a media element's volume (an iPhone's Safari does not: only muted). */
+    function volumeSettable(video) {
+        const was = video.volume;
+        try {
+            video.volume = was > 0.5 ? was - 0.1 : was + 0.1;
+            const ok = Math.abs(video.volume - was) > 0.01;
+            video.volume = was;
+            return ok;
+        } catch { return false; }
     }
     const captionTrack = (video) => Array.from(video.textTracks || []).find((t) => t.kind === 'captions' || t.kind === 'subtitles') || null;
     const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
@@ -235,6 +248,13 @@
         if (saved && !video.hasAttribute('muted')) { video.volume = Math.min(1, Math.max(0, saved.volume)); video.muted = !!saved.muted; }
         // Muted by the page (autoplay) rather than by the viewer: the first tap or a volume key brings the sound in.
         let pageMuted = video.muted && (video.hasAttribute('muted') || video.autoplay || !saved || !saved.muted);
+        if (volumeSettable(video)) root.classList.add('can-volume');
+        // No sound track (a recording whose microphone never reached the recorder: VOD 5986, 2026-10-25). Only a browser
+        // that can tell says so: Firefox (mozHasAudio), Chrome and Safari (no audio decoded after 2 s of decoded video,
+        // which they count muted or not). A new source asks again.
+        let silent = false;
+        let soundKnown = false;
+        let playedFrom = null;
 
         // ── State → UI ───────────────────────────────────────
         const duration = () => (Number.isFinite(video.duration) ? video.duration : 0);
@@ -266,10 +286,11 @@
         }
         function paintVolume() {
             const v = video.muted ? 0 : video.volume;
-            unmute.hidden = !(video.muted && pageMuted && !video.paused);
+            unmute.hidden = silent || !(video.muted && pageMuted && !video.paused);
             root.classList.toggle('is-muted', video.muted || v === 0);
-            muteBtn.innerHTML = v === 0 ? ICON.muted : v < 0.5 ? ICON.low : ICON.volume;
-            const label = video.muted || v === 0 ? 'Unmute (m)' : 'Mute (m)';
+            root.classList.toggle('is-silent', silent);
+            muteBtn.innerHTML = silent || v === 0 ? ICON.muted : v < 0.5 ? ICON.low : ICON.volume;
+            const label = silent ? 'No sound in this video' : video.muted || v === 0 ? 'Unmute (m)' : 'Mute (m)';
             muteBtn.setAttribute('aria-label', label); muteBtn.title = label;
             volSlider.value = String(v);
             volSlider.style.setProperty('--ovp-fill', `${v * 100}%`);
@@ -331,16 +352,29 @@
 
         // A short sign in the middle: a seek, a volume level (the double tap and the keys).
         let flashTimer = 0;
-        function show(icon, text, side) {
+        function show(icon, text, side, ms = 650) {
             flash.className = `ov-player-flash is-on${side ? ` is-${side}` : ''}`;
             flash.innerHTML = `${icon}<span>${text}</span>`;
             clearTimeout(flashTimer);
-            flashTimer = setTimeout(() => { flash.className = 'ov-player-flash'; }, 650);
+            flashTimer = setTimeout(() => { flash.className = 'ov-player-flash'; }, ms);
+        }
+        function checkSound() {
+            if (soundKnown || video.paused) return;
+            let none = null;
+            if (typeof video.mozHasAudio === 'boolean' && video.readyState >= 2) none = !video.mozHasAudio;
+            else if (typeof video.webkitAudioDecodedByteCount === 'number' && video.webkitVideoDecodedByteCount > 0
+                && playedFrom != null && (video.currentTime || 0) - playedFrom >= 2) none = video.webkitAudioDecodedByteCount === 0;
+            if (none == null) return;
+            soundKnown = true;
+            if (!none) return;
+            silent = true;
+            paintVolume();
+            show(ICON.muted, 'No sound in this video', null, 2600);
         }
         unmute.addEventListener('click', (e) => { e.stopPropagation(); api.unmute(); });
         big.addEventListener('click', () => api.toggle());
         playBtn.addEventListener('click', () => api.toggle());
-        muteBtn.addEventListener('click', () => api.toggleMute());
+        muteBtn.addEventListener('click', () => { if (silent) show(ICON.muted, 'No sound in this video', null, 2600); else api.toggleMute(); });
         volSlider.addEventListener('input', () => api.setVolume(Number(volSlider.value)));
         ccBtn.addEventListener('click', () => api.toggleCaptions());
         speedBtn.addEventListener('click', () => api.nextSpeed());
@@ -424,14 +458,16 @@
         video.addEventListener('play', () => { root.classList.remove('is-start'); paintPlay(); paintVolume(); current = api; session(api, options); if (ambient) ambient.start(); });
         video.addEventListener('pause', () => { paintPlay(); paintVolume(); if (ambient) ambient.stop(); });
         video.addEventListener('ended', paintPlay);
-        video.addEventListener('timeupdate', paintTime);
+        video.addEventListener('timeupdate', () => { paintTime(); checkSound(); });
+        video.addEventListener('emptied', () => { silent = false; soundKnown = false; playedFrom = null; paintVolume(); });
         video.addEventListener('durationchange', paintTime);
         video.addEventListener('loadedmetadata', () => { paintTime(); paintCaptions(); });
         video.addEventListener('progress', paintBuffered);
         video.addEventListener('volumechange', paintVolume);
         video.addEventListener('ratechange', paintSpeed);
         video.addEventListener('waiting', () => root.classList.add('is-waiting'));
-        video.addEventListener('playing', () => { root.classList.remove('is-waiting'); message.textContent = ''; paintPlay(); });
+        video.addEventListener('playing', () => { root.classList.remove('is-waiting'); message.textContent = ''; if (playedFrom == null) playedFrom = video.currentTime || 0; paintPlay(); });
+        video.addEventListener('seeked', () => { if (!soundKnown) playedFrom = video.currentTime || 0; });
         video.addEventListener('canplay', () => root.classList.remove('is-waiting'));
         video.addEventListener('error', () => { root.classList.remove('is-waiting'); message.textContent = 'This video could not be played.'; });
         if (video.textTracks && video.textTracks.addEventListener) {
