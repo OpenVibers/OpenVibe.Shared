@@ -73,6 +73,7 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         const out = html(created);
         for (const name of own) {
             if (name === 'fa-coins') continue;   // wallet chip, drawn when the menu first opens (below)
+            if (name === 'fa-user-secret') continue;   // "Switch to Anonymous": only where openvibe.network's account switcher runs
             assert.ok(out.includes(glyph(name)), `${name} drawn inline by the default navbar`);
         }
         assert.ok(!/data-ovnav-ic|fa-solid/.test(out), 'no lazy slot or icon-font fallback in the default navbar');
