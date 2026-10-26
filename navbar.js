@@ -1010,8 +1010,37 @@
         ],
     };
 
+    // Accounts seen here (no tokens).
+    const SEEN_KEY = 'openvibe_seen_accounts';
+    function readList(key) { try { const v = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } }
     function getAccounts() {
-        try { return JSON.parse(localStorage.getItem('openvibe_accounts') || '[]'); } catch { return []; }
+        const ids = new Set();
+        return readList('openvibe_accounts').concat(readList(SEEN_KEY)).filter((a) => {
+            if (!a || a.id == null || ids.has(String(a.id))) return false;
+            ids.add(String(a.id));
+            return true;
+        });
+    }
+    function rememberAccount(u) {
+        if (!u || u.is_anon || u.id == null || !u.username) return;
+        try {
+            const seen = readList(SEEN_KEY).filter((a) => a && String(a.id) !== String(u.id));
+            seen.unshift({ id: u.id, username: u.username, display_name: u.display_name || u.username, avatar_url: u.avatar_url || null });
+            localStorage.setItem(SEEN_KEY, JSON.stringify(seen.slice(0, 10)));
+        } catch { /* storage unavailable */ }
+    }
+    function signInBack() {
+        if (onNetworkDomain()) return window.location.href;
+        try { return new URL(resolveLoginHref(currentHost(), window.location.href), window.location.href).toString(); }
+        catch { return window.location.href; }
+    }
+    function switchHref(account) {
+        const q = new URLSearchParams({ switch_to: String(account.id), return: signInBack() });
+        if (account.username) q.set('login_hint', String(account.username));
+        return `${_config.apiBase}/login?${q.toString()}`;
+    }
+    function addAccountHref() {
+        return `${_config.apiBase}/login?${new URLSearchParams({ add_account: '1', return: signInBack() }).toString()}`;
     }
 
     // ─── SSO auth resolution ───────────────────────────────────
@@ -1336,6 +1365,9 @@
     function escapeAttr(value) {
         return String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     }
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     function getAvatarInitial(user) {
         const source = user?.display_name || user?.username || 'O';
@@ -1430,10 +1462,11 @@
         const links = currentLinks();
 
         const u = _config.user;
+        rememberAccount(u);
         const accounts = getAccounts();
         const isAnon = u && u.is_anon;
         const loginHref = resolveLoginHref(currentHost(), window.location.href);
-        const addAccountHref = `${_config.apiBase}/login?add_account=1&return=${encodeURIComponent(window.location.href)}`;
+        const switcher = !!root.OpenVibeAccountSwitcher;   // in place on openvibe.network
 
         // The OV brand mark is a drop-in (mounts every .ov-mark); never a second copy of a page's own tag.
         if (!window.__ovMark && !document.getElementById('ov-mark-loader') && !(document.querySelector && document.querySelector('script[src*="/ov-mark.js"]'))) {
@@ -1481,24 +1514,23 @@
                 <div class="openvibe-navbar-dropdown-header">
                     <a class="ud-me" href="${escapeAttr(meHref)}" tabindex="-1" aria-hidden="true">${avatarImg(u, 72, '', '')}</a>
                     <div class="info">
-                        <a class="name ud-me" href="${escapeAttr(meHref)}" title="${isAnon ? 'Your account' : 'Your profile'}">${escapeAttr(u.display_name || u.username)}</a>
-                        <div class="email">${isAnon ? '' : '@' + escapeAttr(u.username || '')}</div>
+                        <a class="name ud-me" href="${escapeAttr(meHref)}" title="${isAnon ? 'Your account' : 'Your profile'}">${escapeHtml(u.display_name || u.username)}</a>
+                        <div class="email">${isAnon ? '' : '@' + escapeHtml(u.username || '')}</div>
                         ${menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div><div class="ud-wallet ud-vibes" id="openvibe-vibes" hidden></div>'}
                         ${isAnon ? `<div class="anon-tag">Anonymous #${u.anon_number || '?'}</div>` : ''}
                     </div>
                 </div>
                 <div class="openvibe-navbar-dropdown-accounts"${_config.accounts === false ? ' hidden' : ''}>
-                    ${otherAccounts.map(a => `
-                        <div class="account-item" data-account-id="${a.id}">
+                    ${otherAccounts.filter(a => switcher || !a.is_anon).map(a => { const t = switcher ? 'div' : 'a'; return `
+                        <${t} class="account-item" ${switcher ? `data-account-id="${escapeAttr(String(a.id))}"` : `href="${escapeAttr(switchHref(a))}"`}>
                             ${avatarImg(a, 48, '', '')}
-                            <span>${a.display_name || a.username}${a.is_anon ? ' (anon)' : ''}</span>
-                        </div>
-                    `).join('')}
-                    <div class="account-item" data-account-id="anon" style="${isAnon ? 'display:none' : ''}">
+                            <span>${escapeHtml(a.display_name || a.username || '')}${a.is_anon ? ' (anon)' : ''}</span>
+                        </${t}>`; }).join('')}
+                    ${switcher ? `<div class="account-item" data-account-id="anon" style="${isAnon ? 'display:none' : ''}">
                         <span style="width:18px;text-align:center">${navIcon('fa-user-secret')}</span>
                         <span>Switch to Anonymous</span>
-                    </div>
-                    <a class="add-account" id="openvibe-add-account" href="${escapeAttr(addAccountHref)}">
+                    </div>` : ''}
+                    <a class="add-account" id="openvibe-add-account" href="${escapeAttr(addAccountHref())}">
                         <span style="width:18px;text-align:center">${navIcon('fa-plus')}</span>
                         <span>Add another account</span>
                     </a>
@@ -1554,7 +1586,6 @@
                 if (!nav.contains(e.target)) dropdown.classList.remove('open');
             }, onDocument());
 
-            // Account switching
             dropdown.querySelectorAll('[data-account-id]').forEach(el => {
                 el.addEventListener('click', () => {
                     const id = el.dataset.accountId;

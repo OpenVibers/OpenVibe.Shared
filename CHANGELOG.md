@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## 4.13.0 — 2026-10-26
 
+- **Switching accounts works on every site** (`navbar.js`; the owner, 2026-10-26: "the thing that lets you switch …
+  between different accounts doesn't work"). On a product site the account menu's other accounts dispatched an event only
+  openvibe.network's account switcher listens to, so a click did nothing, and "Add another account" went to the Network
+  and back to the page without signing the site in. Each other account is now a link through OpenVibe.Network's chooser
+  (`/login?switch_to=<id>&login_hint=<username>`) that comes back through the site's own sign-in (its `loginUrl`, made
+  absolute), so the site ends up signed in as the chosen account whatever its session; "Add another account"
+  (`add_account=1`) does the same for a new one. The list is the accounts this browser used on the site (the account
+  switcher's plus the ones the navbar saw signed in, `openvibe_seen_accounts`: names and pictures, at most ten, never a
+  token). openvibe.network's own pages still switch in place; "Switch to Anonymous" shows only there. Account names in
+  the menu are escaped as text. Needs OpenVibe.Network's chooser of the same night (switch_to, add_account).
+  `test/navbar-switch-account.test.js`.
 - **A person's stuff on any site** (`profile-panel.js`, `profile-panel.css`, new). One tag (`data-ov-profile="name"`)
   draws someone's worn items, their counts of items, badges, achievements and games, their latest unlock per game and
   links to their profile and inventory, from OpenVibe.Network's public profile (which gathers Inventory, Quest and
