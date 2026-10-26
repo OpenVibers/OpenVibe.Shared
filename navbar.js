@@ -58,6 +58,13 @@
             .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-core { padding-right: 0; }
             .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-tld { padding-left: 0; }
             .openvibe-navbar .openvibe-navbar-brand a:focus-visible, .ovnav-launch:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+            /* A finger needs about 44px: on touch screens the wordmark's links reach the navbar's height and the mark
+               gets a clear ring, without moving anything (they were 22px and 30px tall). */
+            @media (pointer: coarse) {
+                .openvibe-navbar .openvibe-navbar-brand .name a { padding-top: 11px; padding-bottom: 11px; margin-top: -8px; margin-bottom: -8px; }
+                .openvibe-navbar .openvibe-navbar-brand a.flame { position: relative; }
+                .openvibe-navbar .openvibe-navbar-brand a.flame::after { content: ''; position: absolute; inset: -7px; }
+            }
             .ovnav-launch { all: unset; box-sizing: border-box; cursor: pointer; color: var(--text-secondary, #a8b3c4); width: 32px; height: 32px; border-radius: 10px; display: inline-grid; place-items: center; flex: none; margin-right: 2px; border: 1px solid transparent; transition: background .15s, color .15s, border-color .15s; }
             .ovnav-launch:hover, .ovnav-launch[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--accent-light, var(--accent, #60a5fa)); border-color: color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
             .ovnav-launch svg { display: block; transition: transform .25s cubic-bezier(.2,1.4,.3,1); }
