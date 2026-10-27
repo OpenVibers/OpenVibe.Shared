@@ -1,8 +1,12 @@
 /**
  * openvibe-shared/footer.js — the cross-site footer, the counterpart to navbar.js.
  *
- *   OpenVibeFooter.init({ service, variant, links, apiBase, mount })
- *   OpenVibeFooter.setVariant('full' | 'compact')      switch at runtime (SPA route changes)
+ *   OpenVibeFooter.init({ service, variant, links, apiBase, mount, pulse })
+ *   OpenVibeFooter.setVariant('full' | 'compact')      the page's own variant (SPA route changes)
+ *   OpenVibeFooter.claim('compact' | 'full', key)      → release(): a part of the page asks for a variant while it needs
+ *                                                       it (Live's channel while its stream is live: compact; offline:
+ *                                                       the page's own full). Compact wins over full, any claim over the
+ *                                                       page's own; releasing a claim brings back what is left.
  *   OpenVibeFooter.buildHTML(cfg)                      markup only — usable from Node for SSR
  *
  * Why this exists: every property was hand-rolling its own footer, so the network links, the
@@ -14,7 +18,13 @@
  * Variants:
  *   full     the multi-column footer, for home and browse pages
  *   compact  one quiet line, for pages where the footer is not the point — a streamer's
- *            channel, a player, a tool someone is mid-task in
+ *            channel, a player, a tool someone is mid-task in. "More from OpenVibe" opens the
+ *            whole footer in place (a <details>: no script needed, and every link stays in the
+ *            page for crawlers, so a player page links the network as a home page does)
+ *
+ * The pulse line (full, and an opened compact one): what is happening on the network right now —
+ * streams live, people watching, open sites, last week's views — from openvibe.network/api/frame/pulse,
+ * read once the footer scrolls into view and every minute while it stays there; numbers only.
  *
  * Signed-in visitors get a cross-site row: their account, their channel, themes and the tools
  * hub, so the network behaves like one product instead of a ring of separate sites. It reads
@@ -126,11 +136,20 @@
         showAccount: true,
         sitemap: '/sitemap.xml',
         shipped: true,               // the "shipped X ago" line (openvibe-shared/shipped.js)
+        pulse: true,                 // the network-right-now line (openvibe.network/api/frame/pulse)
         updates: null,               // this site's update log; default: openvibe.network/updates?site=<host>
     };
 
     let _cfg = { ...DEFAULTS };
     let _mounted = null;
+    const _claims = new Map();   // key → 'compact' | 'full' (claim())
+    /** The variant shown: a compact claim, else a full one, else the page's own. */
+    function shownVariant(base) {
+        const asked = [..._claims.values()];
+        if (asked.includes('compact')) return 'compact';
+        if (asked.includes('full')) return 'full';
+        return base === 'compact' ? 'compact' : 'full';
+    }
 
     function detectService() {
         if (typeof location === 'undefined') return 'network';
@@ -224,7 +243,7 @@
             : NETWORK.filter(n => n.id !== service);
         const tagline = (cfg && cfg.tagline) || (frame && frame.footer.blurb) || c.tagline;
         const popular = frame ? frame.footer.popular : [];
-        const discover = frame ? frame.footer.discover.filter(d => !network.slice(0, 6).some(n => n.url === d.url)) : [];
+        const discover = frame ? frame.footer.discover.filter(d => !network.slice(0, 8).some(n => n.url === d.url)) : [];
         const year = new Date().getFullYear();
 
         if (c.variant === 'compact') {
@@ -239,8 +258,14 @@
                 </nav>
                 ${shippedLine(c)}
                 <span class="ovf-compact-meta">Open source · ${year}</span>
-            </div>`;
+            </div>
+            <details class="ovf-expand"${c._open ? ' open' : ''}><summary>More from OpenVibe</summary>${fullBody(c, { network, popular, discover, brand, tagline, compact: true })}</details>`;
         }
+        return fullBody(c, { network, popular, discover, brand, tagline });
+    }
+
+    /** The multi-column footer: the brand, the site's own links, the network, popular tools, legal, the account row and the bar. */
+    function fullBody(c, { network, popular, discover, brand, tagline, compact = false }) {
 
         const cols = (c.links || []).map(group => `
             <nav class="ovf-col" aria-label="${esc(group.heading)}">
@@ -248,7 +273,8 @@
                 ${group.items.map(linkTag).join('')}
             </nav>`).join('');
 
-        return `<div class="ovf-inner">
+        return `<div class="ovf-inner${compact ? ' ovf-inner--expanded' : ''}">
+            ${c.pulse === false ? '' : '<p class="ovf-pulse" data-ovf-pulse hidden></p>'}
             <div class="ovf-cols">
                 <div class="ovf-col ovf-col--brand">
                     <a class="ovf-brand" href="/"><span class="ov-mark" data-size="26"></span><span>${esc(brand)}</span></a>
@@ -261,7 +287,7 @@
                 ${cols}
                 ${c.showNetwork ? `<nav class="ovf-col" aria-label="The OpenVibe network">
                     <h3>Network</h3>
-                    ${network.slice(0, 6).map(linkTag).join('')}
+                    ${network.slice(0, 8).map(linkTag).join('')}
                     <a class="ovf-more" href="${NETWORK_URL}" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>
                 </nav>` : ''}
                 ${popular.length ? `<nav class="ovf-col" aria-label="Popular tools">
@@ -275,7 +301,7 @@
                     ${reportLink()}
                 </nav>
             </div>
-            <div class="ovf-account" id="ovf-account" hidden></div>
+            ${compact ? '' : `<div class="ovf-account" id="ovf-account" hidden></div>
             <div class="ovf-bar">
                 <span class="ovf-copy">Open source &amp; community driven · built in the open</span>
                 ${shippedLine(c)}
@@ -283,7 +309,7 @@
                     ${c.shipped === false ? '' : `<a href="${esc(updatesHref(c))}">Updates</a>`}
                     ${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name.replace(' of Service', '').replace(' Policy', ''))}</a>`).join('')}
                 </span>
-            </div>
+            </div>`}
         </div>`;
     }
 
@@ -380,6 +406,23 @@
 .ovf-legal-inline a,.ovf-compact-links a{color:var(--text-muted,#8b93ad);font-size:.78rem;text-decoration:none;transition:color .15s}
 .ovf-legal-inline a:hover,.ovf-compact-links a:hover{color:var(--accent,#60a5fa)}
 .ovf-compact-meta{color:var(--text-muted,#8b93ad);font-size:.74rem}
+.ovf-expand{max-width:1240px;margin:8px auto 0}
+.ovf-expand>summary{list-style:none;cursor:pointer;width:fit-content;margin:0 auto;padding:4px 12px;border-radius:999px;font-size:.76rem;font-weight:600;color:var(--text-muted,#8b93ad);border:1px solid var(--border,rgba(255,255,255,.08));transition:color .15s,border-color .15s}
+.ovf-expand>summary::-webkit-details-marker{display:none}
+.ovf-expand>summary::after{content:"";display:inline-block;width:.42em;height:.42em;margin-left:.5em;border:solid currentColor;border-width:0 1.6px 1.6px 0;transform:translateY(-.15em) rotate(45deg);transition:transform .2s}
+.ovf-expand[open]>summary::after{transform:translateY(.05em) rotate(-135deg)}
+.ovf-expand>summary:hover{color:var(--accent,#60a5fa);border-color:var(--accent,#60a5fa)}
+.ovf-expand[open]>summary{margin-bottom:clamp(16px,2.5vw,24px)}
+.ovf-inner--expanded{animation:ovfIn .3s ease-out both}
+.ovf-pulse{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 clamp(18px,2.5vw,24px);padding:9px 14px;border-radius:12px;font-size:.8rem;color:var(--text-secondary,#b6bdd2);
+  background:color-mix(in srgb, var(--accent,#60a5fa) 6%, var(--bg-tertiary,#1a1b28));border:1px solid var(--border,rgba(255,255,255,.08));animation:ovfIn .4s ease-out both}
+.ovf-pulse a{color:inherit;text-decoration:none;font-weight:600}
+.ovf-pulse a:hover{color:var(--accent,#60a5fa)}
+.ovf-pulse .ovf-sep{color:var(--text-muted,#8b93ad)}
+.ovf-pulse-live{display:inline-flex;align-items:center;gap:7px;color:var(--text-primary,#f1f4fb)!important}
+.ovf-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 0 rgba(239,68,68,.6);animation:ovfLive 1.8s ease-out infinite}
+@keyframes ovfLive{0%{box-shadow:0 0 0 0 rgba(239,68,68,.55)}70%{box-shadow:0 0 0 7px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.ovf-pulse-quiet{font-weight:500!important;color:var(--text-muted,#8b93ad)!important}
 @media (max-width:900px){.ovf-cols{grid-template-columns:repeat(2,minmax(0,1fr))}.ovf-col--brand{grid-column:1/-1}}
 @media (max-width:560px){
   .ovf{padding-bottom:calc(20px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}
@@ -389,7 +432,7 @@
   .ovf-legal-inline{justify-content:center}
   .ovf-account{flex-direction:column;align-items:flex-start}
 }
-@media (prefers-reduced-motion:reduce){.ovf-account{animation:none}.ovf-col a:hover,.ovf-social a:hover,.ovf-account-links a:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.ovf-account,.ovf-pulse,.ovf-inner--expanded,.ovf-dot{animation:none}.ovf-col a:hover,.ovf-social a:hover,.ovf-account-links a:hover{transform:none}}
 .ovf{-webkit-tap-highlight-color:transparent}
 :where(.ovf) :where(a,button):active{scale:.97}
 :where(.ovf) :where(a,button):focus-visible{outline:2px solid var(--accent-light,var(--accent,#3b82f6));outline-offset:2px;border-radius:4px}
@@ -406,9 +449,12 @@
     // ── Mount ──────────────────────────────────────────────────
     function render() {
         if (!_mounted) return;
+        const variant = shownVariant(_cfg.variant);
+        // An opened "More from OpenVibe" stays open through a re-render (a claim, the Frame's first answer).
+        const open = !!(_mounted.querySelector && _mounted.querySelector('details.ovf-expand[open]'));
         _mounted.className = 'ovf ' + (_mounted.dataset.extraClass || '');
-        _mounted.setAttribute('data-variant', _cfg.variant);
-        _mounted.innerHTML = buildHTML(_cfg);
+        _mounted.setAttribute('data-variant', variant);
+        _mounted.innerHTML = buildHTML({ ..._cfg, variant, _open: open });
         if (!_mounted._ovReport) {
             _mounted._ovReport = true;
             const fresh = (e) => { const a = e.target && e.target.closest && e.target.closest('a[data-ov-report]'); if (a) a.href = reportHref(); };
@@ -416,8 +462,62 @@
             _mounted.addEventListener('auxclick', fresh);
         }
         try { if (typeof window !== 'undefined' && typeof window.ovMarkMount === 'function') window.ovMarkMount(_mounted); } catch { /* */ }
-        fillAccount(_cfg);
+        fillAccount({ ..._cfg, variant });
         if (_cfg.shipped !== false) loadShipped();
+        watchPulse();
+    }
+
+    // ── The pulse: the network right now ───────────────────────
+    // Read once the footer is in view (nobody who never scrolls there costs a request), then every minute while it is.
+    const PULSE_URL = `${NETWORK_URL}/api/frame/pulse`;
+    const PULSE_MS = 60_000;
+    let _pulse = null;
+    let _pulseAt = 0;
+    let _pulseObserver = null;
+    let _pulseTimer = null;
+    const fmtN = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(n));
+    function pulseHTML(p) {
+        const bits = [];
+        if (p.live_now != null) {
+            bits.push(p.live_now > 0
+                ? `<a class="ovf-pulse-live" href="https://openvibe.live/"><span class="ovf-dot" aria-hidden="true"></span>${fmtN(p.live_now)} live now</a>`
+                : '<a class="ovf-pulse-quiet" href="https://openvibe.live/">Nobody live right now · go live</a>');
+        }
+        if (p.watching > 0) bits.push(`<span>${fmtN(p.watching)} watching</span>`);
+        if (p.sites > 0) bits.push(`<a href="${NETWORK_URL}/#network">${fmtN(p.sites)} sites, one account</a>`);
+        if (p.views_7d > 0) bits.push(`<span>${fmtN(p.views_7d)} page views this week</span>`);
+        return bits.join('<span class="ovf-sep" aria-hidden="true">·</span>');
+    }
+    function paintPulse() {
+        if (!_mounted || !_pulse) return;
+        const html = pulseHTML(_pulse);
+        for (const el of _mounted.querySelectorAll('[data-ovf-pulse]')) { el.innerHTML = html; el.hidden = !html; }
+    }
+    function readPulse() {
+        if (typeof fetch === 'undefined' || (typeof document !== 'undefined' && document.hidden)) return;
+        if (_pulse && Date.now() - _pulseAt < PULSE_MS - 1000) { paintPulse(); return; }
+        fetch(PULSE_URL, { credentials: 'omit' }).then(r => (r.ok ? r.json() : null)).then((p) => {
+            if (!p || typeof p !== 'object') return;
+            const n = (v) => (Number.isFinite(Number(v)) && v !== null ? Math.max(0, Math.floor(Number(v))) : null);
+            _pulse = { live_now: n(p.live_now), watching: n(p.watching), sites: n(p.sites), views_7d: n(p.views_7d) };
+            _pulseAt = Date.now();
+            paintPulse();
+        }).catch(() => { /* a quiet footer is fine */ });
+    }
+    function watchPulse() {
+        if (!_mounted || _cfg.pulse === false || typeof window === 'undefined') return;
+        if (_pulse) paintPulse();
+        if (_pulseObserver) return;
+        if (typeof IntersectionObserver !== 'function') { readPulse(); return; }
+        _pulseObserver = new IntersectionObserver((entries) => {
+            const seen = entries.some(e => e.isIntersecting);
+            clearInterval(_pulseTimer);
+            _pulseTimer = null;
+            if (!seen) return;
+            readPulse();
+            _pulseTimer = setInterval(readPulse, PULSE_MS);
+        }, { rootMargin: '200px 0px' });
+        _pulseObserver.observe(_mounted);
     }
 
     // shipped.js mounts every [data-ov-shipped] element when it loads; loaded once, lazily, after the footer.
@@ -447,11 +547,32 @@
         return el;
     }
 
+    /** The page's own variant (an SPA route's); a claim still wins while it holds. */
     function setVariant(variant) {
         if (variant !== 'full' && variant !== 'compact') return;
         if (_cfg.variant === variant) return;
+        const before = shownVariant(_cfg.variant);
         _cfg.variant = variant;
-        render();
+        if (shownVariant(variant) !== before) render();
+    }
+
+    /**
+     * A part of the page asks for a variant while it needs it: Live's channel claims 'compact' while its stream plays and
+     * releases it when the stream ends or the route changes, and the page's own variant comes back. Same key twice
+     * replaces. → release()
+     */
+    function claim(variant, key = 'default') {
+        if (variant !== 'full' && variant !== 'compact') return () => {};
+        const k = String(key);
+        const before = shownVariant(_cfg.variant);
+        _claims.set(k, variant);
+        if (shownVariant(_cfg.variant) !== before) render();
+        return function release() {
+            if (_claims.get(k) !== variant) return;
+            const was = shownVariant(_cfg.variant);
+            _claims.delete(k);
+            if (shownVariant(_cfg.variant) !== was) render();
+        };
     }
 
     /**
@@ -465,5 +586,5 @@
         return `<style id="ovf-css">${CSS}</style><footer id="${id}" class="ovf" data-variant="${c.variant === 'compact' ? 'compact' : 'full'}">${buildHTML(c)}</footer>`;
     }
 
-    return { init, ssr, setVariant, buildHTML, render, CSS, NETWORK, LEGAL, detectService, get config() { return { ..._cfg }; } };
+    return { init, ssr, setVariant, claim, buildHTML, render, CSS, NETWORK, LEGAL, detectService, pulseHTML, get config() { return { ..._cfg }; }, get variant() { return shownVariant(_cfg.variant); } };
 });
