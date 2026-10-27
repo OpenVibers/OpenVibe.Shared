@@ -4,6 +4,25 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.15.0 — 2026-10-27
+
+- **The footer adapts to what the page is doing, opens up from compact, and shows the network right now** (`footer.js`;
+  the owner, 2026-10-27: "you can use compact footer on the live streamer channel when they are live only … but it
+  should be full mode when not live. make sure thats something the shared footer system can handle … in a modular way
+  … more alive and has some stats … allow user to expand to full even on pages that use compact … ensure maximized SEO").
+  - `OpenVibeFooter.claim('compact' | 'full', key)` → `release()`: a part of the page asks for a variant while it needs
+    it (Live's channel while its stream plays). Compact wins over full, any claim over the page's own; releasing brings
+    back what is left. `setVariant` stays the page's own (an SPA route's); `OpenVibeFooter.variant` is what shows.
+  - The compact footer carries the whole footer in a "More from OpenVibe" disclosure (a `<details>`): opening it needs
+    no script, and its links are in the page, server-rendered too, so a player or channel page links the network the
+    way a home page does (crawlers follow them; nothing is hidden by CSS).
+  - The pulse line, at the top of the full footer (and the opened compact one): streams live now (a pulsing dot),
+    people watching, the open sites and last week's page views, from OpenVibe.Network's `/api/frame/pulse`
+    (OpenVibe.Network#345). It is read when the footer scrolls into view and every minute while it stays there;
+    `pulse: false` leaves it out. Nobody live: "Nobody live right now · go live".
+  - The network column lists eight sites, not six.
+  `test/footer-alive.test.js`.
+
 ## 4.14.0 — 2026-10-26
 
 - **The navbar's brand is big enough for a finger** (`navbar.js`). On touch screens the wordmark's links were 22 px tall
