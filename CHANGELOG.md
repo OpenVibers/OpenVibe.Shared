@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.15.1 — unreleased
+
+- **The compact footer is one line again** (`footer.js`). 4.15.0 put "More from OpenVibe" on a row of its own under the
+  compact line, so every page with the compact footer lost about 25 px: 78 px instead of 53 px at 1400 px wide. That
+  includes players, a live channel and the Games editor, whose canvas shrank and moved its snap control under a click
+  its tests make, so Games#157 failed. The closed pill now ends the line (the compact footer is a wrapping row), and the
+  opened disclosure takes a full-width row below as before. Measured in Chrome: 53 px closed at 1400 px (pill on the
+  links' line), 144 px on a 390 px phone (152 before); opened, unchanged.
+
 ## 4.15.0 — 2026-10-27
 
 - **The footer adapts to what the page is doing, opens up from compact, and shows the network right now** (`footer.js`;
