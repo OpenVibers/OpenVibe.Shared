@@ -138,6 +138,9 @@ async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, hea
             ...(headless ? ['--headless=new'] : []), '--remote-debugging-port=0', `--user-data-dir=${profile}`,
             ...(sandbox ? [] : ['--no-sandbox']), '--no-first-run', '--no-default-browser-check', '--disable-extensions',
             '--disable-background-networking', '--disable-component-update', '--disable-sync', '--disable-default-apps',
+            // Every page draws and runs timers as if in front: on macOS a new page counted as an occluded window, painted
+            // nothing, and the Core Web Vitals test saw no paint and no shift (2026-10-27, the first macOS CI run).
+            '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
             // No back/forward cache: kept pages would count in the navigation check's heap, node and document samples.
             '--mute-audio', '--disk-cache-size=16777216', '--window-size=1280,900', '--disable-features=BackForwardCache', ...args, 'about:blank',
         ], { stdio: 'ignore', detached: true }); // its own process group: close() stops Chrome and its helpers together

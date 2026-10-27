@@ -31,6 +31,22 @@ jobs:
           mkdir "$RUNNER_TEMP/consumer" && cd "$RUNNER_TEMP/consumer" && npm init -y >/dev/null
           npm install --no-audit --no-fund "$RUNNER_TEMP/openvibe-shared.tgz"
           node -e "require('openvibe-shared'); require('openvibe-shared/navbar'); require('openvibe-shared/legal'); require('openvibe-shared/metrics'); require('openvibe-shared/ready'); require('openvibe-shared/release'); require('openvibe-shared/release-compat'); require('openvibe-shared/analytics'); require('openvibe-shared/analytics/pg'); require('openvibe-shared/analytics/event.v1.json'); const f = require('openvibe-shared/files'); for (const n of f.BROWSER) require('fs').accessSync(f.path(n)); console.log('ok', require('openvibe-shared/package.json').version)"
+  # Sites built on these files are developed on every OS (owner, 2026-10-27: "the shared SDK and API … work well across
+  # multi-platform"): the whole suite on Windows and macOS too.
+  other-os:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
   # Secret scan (gitleaks) and dependency audit, the workflow every OpenVibers repo calls (Track Q).
   security:
     uses: ./.github/workflows/security.yml
