@@ -4,7 +4,7 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## 4.15.1 — unreleased
+## 4.15.1 — 2026-10-27
 
 - **The compact footer is one line again** (`footer.js`). 4.15.0 put "More from OpenVibe" on a row of its own under the
   compact line, so every page with the compact footer lost about 25 px: 78 px instead of 53 px at 1400 px wide. That
