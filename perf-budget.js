@@ -97,6 +97,9 @@ async function vitals(url, browser) {
         page = await harness.openPage(b, context, VIEWPORT);
         await page.send('Page.addScriptToEvaluateOnNewDocument', { source: CWV_PROBE });
         await page.goto(url);
+        // The click waits for the first paint: Chrome stops recording LCP at the first input, and a slower machine (the
+        // macOS CI runner, 2026-10-27) could click before anything was painted, so no LCP at all.
+        await page.evaluate(`new Promise((ok) => { const t0 = Date.now(); (function poll() { if (performance.getEntriesByType('paint').some((e) => e.name === 'first-contentful-paint') || Date.now() - t0 > 3000) return ok(true); requestAnimationFrame(() => setTimeout(poll, 16)); })(); })`);
         const at = { x: VIEWPORT.width / 2, y: VIEWPORT.height / 2, button: 'left', clickCount: 1 };
         await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...at });
         await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...at });

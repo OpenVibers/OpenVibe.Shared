@@ -10,6 +10,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   `--disable-renderer-backgrounding` and `--disable-background-timer-throttling`, so every page draws and runs its timers
   as if in front. On macOS a new page counted as an occluded window and painted nothing (the Core Web Vitals test saw no
   paint and no shift). CI now runs the suite on Windows and macOS too.
+- **`perf-budget` vitals wait for the first paint before the click** (`measure({ browser })`): Chrome stops recording
+  LCP at the first input, and a slower machine clicked before anything was painted (no LCP at all on the macOS runner).
 
 ## 4.17.0 — 2026-10-27
 

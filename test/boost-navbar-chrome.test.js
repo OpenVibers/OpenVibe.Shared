@@ -52,6 +52,11 @@ const server = http.createServer((req, res) => {
             ac.abort(); return [added - before, __ovProbe().documentListeners - before]; })()`);
         assert.deepStrictEqual(probe, [1, 0], 'the probe counts a signal listener, then forgets it on abort');
 
+        // The bar's one-time extras load on their own a few seconds in (the release watch at 4 s, the launcher's icons
+        // when idle): let them settle first, so the laps count only what each re-render adds (a slower macOS runner
+        // caught the release watch's window listeners mid-lap, 2026-10-27).
+        await p.evaluate(`new Promise((r) => { const t0 = Date.now(); const t = setInterval(() => { if ((window.OVRelease && window.OpenVibeIcons) || Date.now() - t0 > 9000) { clearInterval(t); setTimeout(r, 300); } }, 100); })`);
+
         const move = (id) => p.evaluate(`new Promise((done) => { document.addEventListener('ov:boost:load', () => done(location.pathname), { once: true }); document.getElementById('${id}').click(); })`);
         const sample = async () => {
             await p.send('HeapProfiler.collectGarbage'); await wait(150); await p.send('HeapProfiler.collectGarbage');
