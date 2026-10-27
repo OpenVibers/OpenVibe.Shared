@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## Unreleased
+
+- **The browser harness on macOS** (`browser-harness.js`): Chrome starts with `--disable-backgrounding-occluded-windows`,
+  `--disable-renderer-backgrounding` and `--disable-background-timer-throttling`, so every page draws and runs its timers
+  as if in front. On macOS a new page counted as an occluded window and painted nothing (the Core Web Vitals test saw no
+  paint and no shift). CI now runs the suite on Windows and macOS too.
+
 ## 4.17.0 — 2026-10-27
 
 - **`wallet: true`: OpenCoins and Vibes in the bar on any site** (`navbar.js`; owner, 2026-10-27: "make that as a
