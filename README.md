@@ -882,5 +882,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 
 <!-- versions:start -->
 - openvibe-contracts: v0.221.0
-- openvibe-sdk: v0.65.0
+- openvibe-sdk: v0.67.0
 <!-- versions:end -->
