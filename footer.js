@@ -407,6 +407,11 @@
 .ovf-legal-inline a:hover,.ovf-compact-links a:hover{color:var(--accent,#60a5fa)}
 .ovf-compact-meta{color:var(--text-muted,#8b93ad);font-size:.74rem}
 .ovf-expand{max-width:1240px;margin:8px auto 0}
+.ovf[data-variant="compact"]{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:18px}
+.ovf[data-variant="compact"]>.ovf-inner--compact{flex:0 1 auto;min-width:0;margin:0}
+.ovf[data-variant="compact"]>.ovf-expand{margin:0}
+.ovf[data-variant="compact"]>.ovf-expand:not([open])>summary{padding:0;border:0;border-radius:0;font-size:.78rem;font-weight:400;line-height:inherit}
+.ovf[data-variant="compact"]>.ovf-expand[open]{flex:1 1 100%;margin:10px auto 0}
 .ovf-expand>summary{list-style:none;cursor:pointer;width:fit-content;margin:0 auto;padding:4px 12px;border-radius:999px;font-size:.76rem;font-weight:600;color:var(--text-muted,#8b93ad);border:1px solid var(--border,rgba(255,255,255,.08));transition:color .15s,border-color .15s}
 .ovf-expand>summary::-webkit-details-marker{display:none}
 .ovf-expand>summary::after{content:"";display:inline-block;width:.42em;height:.42em;margin-left:.5em;border:solid currentColor;border-width:0 1.6px 1.6px 0;transform:translateY(-.15em) rotate(45deg);transition:transform .2s}

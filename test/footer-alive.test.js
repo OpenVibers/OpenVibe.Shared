@@ -83,4 +83,14 @@ function load(host = 'openvibe.live') {
     assert.ok(SRC.includes('.ovf-dot{') && SRC.includes('prefers-reduced-motion:reduce){.ovf-account,.ovf-pulse,.ovf-inner--expanded,.ovf-dot{animation:none}'), 'the live dot pulses, never with reduced motion');
 }
 
+// The compact footer stays one line (4.15.1): the closed "More from OpenVibe" pill ends the compact line (the footer is a
+// wrapping row) and only the opened disclosure takes a row of its own. In 4.15.0 the pill sat on a second row: 78 px
+// instead of 53 px at 1400 px wide, which shrank the Games editor's canvas under its tests' clicks.
+{
+    assert.ok(SRC.includes('.ovf[data-variant="compact"]{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:18px}'), 'the compact footer is one wrapping row');
+    assert.ok(SRC.includes('.ovf[data-variant="compact"]>.ovf-expand{margin:0}'), 'the closed pill sits in the row');
+    assert.ok(SRC.includes('.ovf[data-variant="compact"]>.ovf-expand:not([open])>summary{padding:0;border:0;border-radius:0;font-size:.78rem;font-weight:400;line-height:inherit}'), 'closed, it is a link like the others, so the line is as tall as 4.14.0\'s (46 px)');
+    assert.ok(SRC.includes('.ovf[data-variant="compact"]>.ovf-expand[open]{flex:1 1 100%;margin:10px auto 0}'), 'opened, it takes a full-width row');
+}
+
 console.log('footer: claims, the compact footer opening into the whole one, the pulse line');
