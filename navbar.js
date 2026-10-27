@@ -110,6 +110,39 @@
             .ovnav-drawer .ud-label { padding: 10px 12px 3px; font-size: 10.5px; font-weight: 800; letter-spacing: .9px; text-transform: uppercase; color: var(--text-muted, #7d8aa0); }
             .ovnav-drawer-net:empty { display: none; } .ovnav-drawer-net { border-top: 1px solid var(--border, rgba(255,255,255,.08)); margin-top: 4px; }
             .ovnav-drawer-net a.ovnav-net { display: flex !important; }
+            /* "Across OpenVibe" in the menu (owner, 2026-10-27: icons, and set apart from the site's own links): a tinted
+               section, its own header with "All sites", a grid of the other sites, each with its mark. */
+            .ovnav-drawer-net:not(:empty) { margin: 8px 0 0; padding: 6px; border: 0; border-radius: 13px; background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
+            .ovnav-drawer-net .ovnav-net-head { display: flex; align-items: center; gap: 8px; padding: 6px 6px 8px; }
+            .ovnav-drawer-net .ovnav-net-head .ud-label { padding: 0; flex: 1; }
+            .ovnav-drawer-net .ovnav-net-all { all: unset; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--accent-light, var(--accent, #60a5fa)); padding: 3px 6px; border-radius: 7px; }
+            .ovnav-drawer-net .ovnav-net-all:hover, .ovnav-drawer-net .ovnav-net-all:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .ovnav-drawer-net .ovnav-net-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px; }
+            .ovnav-drawer .ovnav-drawer-net a.ovnav-net { gap: 9px; padding: 8px; font-size: 13.5px; min-width: 0; }
+            .ovnav-drawer .ovnav-drawer-net a.ovnav-net > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            /* Icons have their size and a faint ring before ov-icons.js draws them: nothing moves or pops when they arrive. */
+            :is(.ovnav-launcher, .ovnav-drawer) .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px; border-radius: 50%; }
+            .ovnav-launcher .ovl-app > .ov-icon { width: 28px; height: 28px; }
+            .ovnav-drawer .ov-icon[data-size="22"] { width: 22px; height: 22px; }
+            :is(.ovnav-launcher, .ovnav-drawer) .ov-icon:empty { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            /* Several balance chips fold into one on a phone (owner, 2026-10-27: the two currencies pushed out the site
+               switcher next to the logo); a tap lists each in full. */
+            .openvibe-navbar .ovnav-chip--all { display: none; gap: 8px; padding: 0 10px; --chip-c: var(--text-secondary, #a8b3c4); }
+            .ovnav-chip-mini { display: inline-flex; align-items: center; gap: 4px; color: var(--chip-c, inherit); }
+            .ovnav-chip-mini[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chip-mini[data-tone="green"] { --chip-c: #4ade80; }
+            .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; }
+            .ovnav-chips-pop { position: absolute; top: calc(100% + 6px); right: 8px; z-index: 1002; min-width: 220px; padding: 6px; border-radius: 14px; display: none; flex-direction: column; gap: 2px;
+                background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+            .ovnav-chips-pop.open { display: flex; animation: openvibe-slide-down .18s ease; }
+            .ovnav-chips-pop button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; font-size: 14px; color: var(--text-primary, #e6edf7); }
+            .ovnav-chips-pop button:hover, .ovnav-chips-pop button:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .ovnav-chips-pop button .ovnav-ic { color: var(--chip-c, inherit); width: 16px; height: 16px; }
+            .ovnav-chips-pop button[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chips-pop button[data-tone="green"] { --chip-c: #4ade80; }
+            .ovnav-chips-pop b { margin-left: auto; font-variant-numeric: tabular-nums; }
+            @media (max-width: 560px) {
+                .openvibe-navbar-right.has-chips-all .ovnav-chip[data-chip-id] { display: none; }
+                .openvibe-navbar-right.has-chips-all .ovnav-chip--all { display: inline-flex; }
+            }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-burger { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links { display: none; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             .ovnav-launcher { position: absolute; top: calc(100% + 6px); left: 12px; box-sizing: border-box; width: min(760px, calc(100vw - 24px)); background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 0 12px 12px; z-index: 1000; opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s, transform .2s cubic-bezier(.2,1.2,.3,1); }
@@ -652,6 +685,7 @@
 
     function bindLauncher(nav) {
         const btn = nav.querySelector('#openvibe-launcher-btn'); if (!btn) return;
+        for (const ev of ['pointerenter', 'touchstart', 'focus']) btn.addEventListener(ev, () => loadOvIcons(), { once: true, passive: true });
         let panel = null;
         const tile = (it, cls, here) => `<a class="${cls}${here ? ' is-here' : ''}" href="${escapeAttr(it.go || it.url)}"${here ? ' aria-current="page"' : ''}${it.desc ? ` title="${escapeAttr(it.desc)}"` : ''}><span class="ov-icon" data-icon="${escapeAttr(it.icon)}" data-size="${cls === 'ovl-app' ? 28 : 24}" data-fx="none"></span><span><b>${escapeAttr(it.name)}</b>${it.desc ? `<small>${escapeAttr(it.desc)}</small>` : ''}</span></a>`;
         const siteItems = (frame) => (frame && frame.nav.length ? frame.nav.map(n => ({ name: n.name, desc: n.tagline.replace(/\.\s*$/, ''), icon: n.icon || n.id, url: n.url, group: n.group })) : LAUNCHER_SITES);
@@ -699,7 +733,7 @@
                 bindDisplayControls(panel.querySelector('.ovl-display'));
                 nav.appendChild(panel);
                 regPanel(panel, 'launcher', close);
-                if (!root.OpenVibeIcons && !document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); }
+                loadOvIcons();
                 let cat = null; paint(null, '');
                 const input = panel.querySelector('.ovl-q');
                 input.addEventListener('input', () => paint(cat, input.value.trim().toLowerCase()));
@@ -735,6 +769,63 @@
     /** Status chips beside the bell (balances, counters): [{ id, icon, value, valueId, title, tone, onClick, hidden }]. */
     function chipsHTML(chips, cls) {
         return (Array.isArray(chips) ? chips : []).filter(Boolean).map(c => `<button type="button" class="${cls || 'ovnav-chip'}" data-chip-id="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}${c.title ? ` title="${escapeAttr(c.title)}"` : ''}${c.hidden ? ' hidden' : ''}>${c.icon ? navIcon(c.icon) : ''}<span class="ovnav-chip-v"${c.valueId ? ` id="${escapeAttr((cls ? 'menu-' : '') + c.valueId)}"` : ''}>${escapeAttr(c.value == null ? '' : c.value)}</span></button>`).join('');
+    }
+    /** "160,774" → "161k", for the folded chip; anything that is not a number stays as it is. */
+    function shortValue(v) {
+        const s = v == null ? '' : String(v); const n = Number(s.replace(/[,\s]/g, ''));
+        if (!s || !isFinite(n)) return s;
+        const a = Math.abs(n);
+        if (a >= 1e6) return `${(n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '')}M`;
+        if (a >= 1e4) return `${Math.round(n / 1e3)}k`;
+        if (a >= 1e3) return `${(n / 1e3).toFixed(1).replace(/\.0$/, '')}k`;
+        return String(Math.round(n));
+    }
+    const chipLabel = (c) => c.label || String(c.title || c.id).split(':')[0];
+    /** The chips folded into one (shown instead of them on a phone): each chip's icon and short value. */
+    function chipsAllHTML(chips) {
+        const list = (Array.isArray(chips) ? chips : []).filter((c) => c && !c.hidden);
+        if (list.length < 2) return '';
+        return `<button type="button" class="ovnav-chip ovnav-chip--all" id="openvibe-chips-all" aria-haspopup="true" aria-expanded="false" aria-label="Your balances: ${escapeAttr(list.map((c) => `${chipLabel(c)} ${c.value == null ? '' : c.value}`).join(', '))}">${list.map((c) => `<span class="ovnav-chip-mini" data-chip-mini="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span class="ovnav-chip-mv">${escapeAttr(shortValue(c.value))}</span></span>`).join('')}</button>`;
+    }
+    function bindChipsAll(nav) {
+        const btn = nav.querySelector('#openvibe-chips-all'); if (!btn || typeof btn.addEventListener !== 'function') return;
+        const right = typeof btn.closest === 'function' ? btn.closest('.openvibe-navbar-right') : null;
+        if (right && right.classList) right.classList.add('has-chips-all');
+        let pop = null;
+        const close = () => { if (pop) pop.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (pop && pop.classList.contains('open')) return close();
+            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close); }
+            const list = (_config.chips || []).filter((c) => c && !c.hidden);
+            pop.innerHTML = list.map((c) => `<button type="button" role="menuitem" data-chip-row="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span>${escapeAttr(chipLabel(c))}</span><b>${escapeAttr(c.value == null ? '' : c.value)}</b></button>`).join('');
+            pop.querySelectorAll('[data-chip-row]').forEach((row) => row.addEventListener('click', (ev) => {
+                ev.stopPropagation(); close();
+                const c = list.find((x) => x.id === row.getAttribute('data-chip-row'));
+                if (c && typeof c.onClick === 'function') c.onClick(ev);
+            }));
+            pop.classList.add('open'); btn.setAttribute('aria-expanded', 'true');
+            const first = pop.querySelector('button'); if (first) first.focus();
+        });
+    }
+    /**
+     * ov-icons.js draws every .ov-icon in the launcher, the menu and the drawer. It used to load the first time one of them
+     * opened, so their icons popped in a moment later and the rows moved (owner, 2026-10-27). Now it loads once, quietly,
+     * after the page settles, and at once on intent (a pointer over the launcher, a touch, focus); the slots have their
+     * size meanwhile.
+     */
+    let _iconsQueued = false;
+    function loadOvIcons(scope) {
+        if (root.OpenVibeIcons) { if (scope && root.OpenVibeIcons.mount) root.OpenVibeIcons.mount(scope); return; }
+        if (document.getElementById('ov-icons-loader')) return;
+        try { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+    }
+    function queueIcons() {
+        if (_iconsQueued || root.OpenVibeIcons) return;
+        _iconsQueued = true;
+        const go = () => loadOvIcons();
+        if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 4000 });
+        else { const t = setTimeout(go, 2500); if (t && typeof t.unref === 'function') t.unref(); }
     }
     function bindChips(scope) {
         (_config.chips || []).concat((_config.menu && _config.menu.headerChips) || []).forEach((c) => {
@@ -774,7 +865,12 @@
         const place = (e) => placeDd(e.target.closest && e.target.closest('.ovnav-dd'));
         nav.addEventListener('pointerover', place); nav.addEventListener('focusin', place);
         if (burger && drawer) {
-            burger.addEventListener('click', (e) => { e.stopPropagation(); const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); });
+            burger.addEventListener('click', (e) => { e.stopPropagation(); const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); if (open) loadOvIcons(drawer); });
+            drawer.addEventListener('click', (e) => {
+                const all = e.target.closest && e.target.closest('[data-open-launcher]'); if (!all) return;
+                e.preventDefault(); e.stopPropagation(); closeDrawer();
+                const lb = nav.querySelector('#openvibe-launcher-btn'); if (lb) lb.click();
+            });
             document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); }, onDocument());
             regPanel(drawer, 'nav-drawer', closeDrawer);
         }
@@ -849,10 +945,14 @@
         if (!frame) return '';
         const here = currentHost().toLowerCase();
         const taken = new Set((pageLinks || []).map(l => { try { return new URL(l.href, location.href).hostname; } catch { return ''; } }));
-        const max = inDrawer ? 6 : (typeof _config.networkLinks === 'number' ? _config.networkLinks : 4);
+        const max = inDrawer ? 8 : (typeof _config.networkLinks === 'number' ? _config.networkLinks : 4);
         const pick = frame.nav.filter(n => { try { const h = new URL(n.url).hostname; return h !== here && !here.endsWith('.' + h) && !taken.has(h); } catch { return false; } }).slice(0, max);
         if (!pick.length) return '';
-        return (inDrawer ? '<div class="ud-label">Across OpenVibe</div>' : `<span class="ovnav-sep" aria-hidden="true"></span>`) + pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
+        if (inDrawer) {
+            return `<div class="ovnav-net-head"><span class="ov-icon" data-icon="ov" data-size="22" data-fx="none"></span><span class="ud-label">Across OpenVibe</span>${_config.launcher === false ? '' : '<button type="button" class="ovnav-net-all" data-open-launcher>All sites</button>'}</div>`
+                + `<div class="ovnav-net-grid">${pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}"><span class="ov-icon" data-icon="${escapeAttr(n.icon || n.id)}" data-size="22" data-fx="none"></span><span>${escapeAttr(n.name)}</span></a>`).join('')}</div>`;
+        }
+        return `<span class="ovnav-sep" aria-hidden="true"></span>` + pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
     }
 
     /** Display settings in the launcher, for guests and members alike (theme-loader.js owns the state). */
@@ -1488,7 +1588,7 @@
             </div>
             <div class="openvibe-navbar-spacer"></div>
             <div class="openvibe-navbar-right">
-                ${u ? chipsHTML(_config.chips) : ''}
+                ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 <div id="openvibe-bell-mount"></div>
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}
@@ -1499,6 +1599,8 @@
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
         bindChips(nav);
+        bindChipsAll(nav);
+        queueIcons();
         bindLauncher(nav);
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
@@ -1585,7 +1687,7 @@
             avatarBtn.addEventListener('click', () => {
                 dropdown.classList.toggle('open');
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
-                if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; if (root.OpenVibeIcons) root.OpenVibeIcons.mount(dropdown); else if (!document.getElementById('ov-icons-loader')) { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } }
+                if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; loadOvIcons(dropdown); }
             });
 
             // Close on outside click
@@ -1742,6 +1844,10 @@
             const lists = [_config.chips || [], (_config.menu && _config.menu.headerChips) || []];
             lists.forEach(l => l.forEach(c => { if (c && c.id === id) { c.value = value; if (patch) Object.assign(c, patch); } }));
             document.querySelectorAll(`[data-chip-id="${id}"]`).forEach(el => { const v = el.querySelector('.ovnav-chip-v'); if (v) v.textContent = value == null ? '' : String(value); if (patch && 'hidden' in patch) el.hidden = !!patch.hidden; });
+            document.querySelectorAll(`[data-chip-mini="${id}"] .ovnav-chip-mv`).forEach(el => { el.textContent = shortValue(value); });
+            document.querySelectorAll(`[data-chip-row="${id}"] b`).forEach(el => { el.textContent = value == null ? '' : String(value); });
+            const all = document.getElementById('openvibe-chips-all');
+            if (all) all.setAttribute('aria-label', `Your balances: ${(_config.chips || []).filter((c) => c && !c.hidden).map((c) => `${chipLabel(c)} ${c.value == null ? '' : c.value}`).join(', ')}`);
         },
         /** Patch a top-level or dropdown link by id: updateLink('broadcast', { hidden: false, dot: true, label }). */
         updateLink(id, patch) {

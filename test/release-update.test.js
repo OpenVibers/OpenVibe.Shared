@@ -73,7 +73,9 @@ const counts = (p) => p.beacons.reduce((acc, b) => { for (const [o, rs] of Objec
 {
     const fs = require('fs'); const path = require('path'); const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(__dirname, '..', f)));
-    assert.ok(size('release-watch.js') <= 5 * 1024, `release-watch.js is ${(size('release-watch.js') / 1024).toFixed(1)} KB brotli, budget 5 KB`);
+    // 5.5 KB since 4.16.0 (5.30 KB): an optional release applies itself while the tab is hidden, and a reload keeps the
+    // scroll position: +0.34 KB of code, after shortening the new comments.
+    assert.ok(size('release-watch.js') <= 5.5 * 1024, `release-watch.js is ${(size('release-watch.js') / 1024).toFixed(1)} KB brotli, budget 5.5 KB`);
     assert.ok(size('release-update.js') <= 3.5 * 1024, `release-update.js is ${(size('release-update.js') / 1024).toFixed(1)} KB brotli, budget 3.5 KB`);
 }
 
