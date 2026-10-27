@@ -4,6 +4,22 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.16.0 — 2026-10-27
+
+- **Balance chips fold into one on a phone** (`navbar.js`; owner, 2026-10-27: "the currencies are taking up all the
+  space … compact the two currencies into a single one when on smaller mobile resolutions … so you can still swap
+  between sites on mobile").
+  - With two or more chips at 560 px and narrower, the bar shows one chip with each icon and a short value ("161k · 400").
+  - A tap lists each in full; a row does what its chip does (a chip may now carry a `label`).
+  - `setChip` keeps both up to date. A site can show the site switcher next to its logo again (Live hid it to make room).
+- **"Across OpenVibe" in the menu is a section of its own:**
+  - a tinted block with a header (the OV mark) and **All sites** (it opens the launcher);
+  - the other sites two to a row, each with its mark (up to eight).
+- **Icons no longer pop in.**
+  - `ov-icons.js` loads once when the page settles (`requestIdleCallback`), and at once on intent (a pointer over the
+    launcher, a touch, focus), instead of the first time the launcher, menu or drawer opened.
+  - Every icon slot there has its size and a faint ring until it is drawn, so nothing moves when the glyphs arrive.
+
 ## 4.15.2 — 2026-10-27
 
 - **Showcase sections no longer fade in** (`showcase.js`, `showcase.css`). The scroll reveal animated opacity from

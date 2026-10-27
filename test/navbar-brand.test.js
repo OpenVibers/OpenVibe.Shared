@@ -187,6 +187,33 @@ function load(hostname, opts = {}) {
     assert.deepStrictEqual(regs.map((r) => r.id).sort(), ['nav-drawer', 'user-menu'], 'only the live render\'s panels are registered');
     assert.ok(regs.every((r) => !r.signal.aborted));
 }
+// ── balance chips fold into one on a phone (owner, 2026-10-27): the folded chip, its short values, and setChip ──
+{
+    const { navbar, created } = load('openvibe.live');
+    navbar.init({ service: 'live', user: { id: 1, username: 'x' }, chips: [
+        { id: 'coins', icon: 'fa-coins', tone: 'gold', value: '160,774', label: 'OpenCoins', onClick() {} },
+        { id: 'vibes', icon: 'fa-wallet', tone: 'green', value: '400', title: 'Vibes balance', onClick() {} },
+    ] });
+    const nav = created.find(e => e.tag === 'nav');
+    assert.ok(/class="ovnav-chip ovnav-chip--all" id="openvibe-chips-all"/.test(nav.innerHTML), 'the folded chip');
+    assert.ok(/data-chip-mini="coins" data-tone="gold">.*?<span class="ovnav-chip-mv">161k<\/span>/.test(nav.innerHTML), '160,774 reads 161k');
+    assert.ok(/data-chip-mini="vibes" data-tone="green">.*?<span class="ovnav-chip-mv">400<\/span>/.test(nav.innerHTML));
+    assert.ok(nav.innerHTML.includes('aria-label="Your balances: OpenCoins 160,774, Vibes balance 400"'), 'said in full to a screen reader');
+    assert.ok(/@media \(max-width: 560px\) \{\s*\.openvibe-navbar-right\.has-chips-all \.ovnav-chip\[data-chip-id\] \{ display: none; \}/.test(require('fs').readFileSync(NAVBAR_PATH, 'utf8')), 'the chips fold on a phone');
+    // One chip: nothing to fold.
+    const one = load('openvibe.live');
+    one.navbar.init({ service: 'live', user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
+    assert.ok(!/ovnav-chip--all/.test(one.created.find(e => e.tag === 'nav').innerHTML));
+}
+// ── "Across OpenVibe" in the drawer, and the icon slots that have their size before ov-icons.js arrives ──
+{
+    const src = require('fs').readFileSync(NAVBAR_PATH, 'utf8');
+    assert.ok(src.includes('<span class="ud-label">Across OpenVibe</span>') && src.includes('data-open-launcher>All sites</button>'), 'a header with All sites');
+    assert.ok(/class="ovnav-net-grid">\$\{pick\.map\(n => `<a class="ovnav-net" href="\$\{escapeAttr\(n\.url\)\}" title="\$\{escapeAttr\(n\.tagline\)\}"><span class="ov-icon" data-icon=/.test(src), 'each site with its mark');
+    assert.ok(src.includes(':is(.ovnav-launcher, .ovnav-drawer) .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px;'), 'icon slots are sized before they are drawn');
+    assert.strictEqual((src.match(/function loadIcons\(/g) || []).length, 1, 'one loadIcons (the nav glyphs); the ov-icons loader has its own name');
+    assert.ok(/function queueIcons\(\)[\s\S]*?requestIdleCallback\(go/.test(src), 'ov-icons.js loads when the page settles');
+}
 // ── rendered markup carries the segments, compact attr and the variant ────
 {
     const { navbar, created } = load('pastes.openvibe.tools', { pathname: '/mine' });
