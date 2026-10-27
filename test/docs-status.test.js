@@ -150,4 +150,49 @@ assert.strictEqual(applyBlock('a\n\n<!-- versions:start -->\n- openvibe-sdk: v0.
     assert.deepStrictEqual(update(dir, { today: '2026-10-10' }), [], 'a rerun writes nothing');
     fs.rmSync(dir, { recursive: true, force: true });
 }
+
+// A workspace root that pins nothing itself: its packages' pins are the repository's (Games' apps/server, Tools'
+// apps/*, Examples' examples/*), and one STATUS field may name several libraries (2026-10-27: three repositories kept
+// naming openvibe-contracts v0.214.0 after the v0.214.1 pin round because the root read as "pins nothing").
+{
+    const pkg = (deps) => JSON.stringify({ name: 'x', private: true, dependencies: deps });
+    // npm workspaces (Examples): examples/* packages; the newest pin of a library wins.
+    const npmRoot = tmp('ws-npm');
+    write(npmRoot, 'package.json', JSON.stringify({ name: 'root', private: true, workspaces: ['examples/*'] }));
+    for (const [name, v] of [['a', 'v0.214.1'], ['b', 'v0.214.0']]) {
+        fs.mkdirSync(path.join(npmRoot, 'examples', name), { recursive: true });
+        write(path.join(npmRoot, 'examples', name), 'package.json', pkg({ 'openvibe-contracts': url('OpenVibe.Contracts', v) }));
+    }
+    assert.deepStrictEqual(pinsFor(npmRoot), { 'openvibe-contracts': '0.214.1' });
+    // pnpm (Games): pnpm-workspace.yaml; a composite `contracts` field names every library and the sdk/shared fields
+    // are not demanded beside it; update moves each named version and keeps the prose.
+    const pnpmRoot = tmp('ws-pnpm');
+    write(pnpmRoot, 'package.json', JSON.stringify({ name: 'games', private: true }));
+    write(pnpmRoot, 'pnpm-workspace.yaml', "packages:\n  - 'apps/*'\n  - 'packages/*'\n");
+    fs.mkdirSync(path.join(pnpmRoot, 'apps', 'server'), { recursive: true });
+    write(path.join(pnpmRoot, 'apps', 'server'), 'package.json', pkg({
+        'openvibe-contracts': url('OpenVibe.Contracts', 'v0.214.1'), 'openvibe-sdk': url('OpenVibe.SDK', 'v0.65.0'), 'openvibe-shared': url('OpenVibe.Shared', 'v4.15.2'),
+    }));
+    write(pnpmRoot, 'STATUS.json', JSON.stringify({ repository: 'OpenVibers/OpenVibe.Games',
+        contracts: 'openvibe-contracts v0.214.0, openvibe-sdk v0.62.0, openvibe-shared v4.9.0 (apps/server/package.json)', updated: '2026-10-01' }, null, 2) + '\n');
+    const before = inspect(pnpmRoot).findings.filter((f) => !f.ok).map((f) => f.reason);
+    assert.ok(before.some((r) => /contracts says v0\.214\.0/.test(r)) && before.some((r) => /names v0\.62\.0/.test(r)) && before.some((r) => /names v4\.9\.0/.test(r)), before.join(' | '));
+    assert.ok(!before.some((r) => /has no (sdk|shared) version/.test(r)), 'a library named in the contracts field is not missing its own field');
+    update(pnpmRoot, { today: '2026-10-27' });
+    const st = JSON.parse(read(pnpmRoot, 'STATUS.json'));
+    assert.strictEqual(st.contracts, 'openvibe-contracts v0.214.1, openvibe-sdk v0.65.0, openvibe-shared v4.15.2 (apps/server/package.json)');
+    assert.ok(!('sdk' in st) && !('shared' in st), 'no duplicate fields added');
+    assert.strictEqual(st.updated, '2026-10-27');
+    assert.deepStrictEqual(inspect(pnpmRoot).findings.filter((f) => !f.ok), []);
+    // No declared workspaces (Tools): the conventional apps/* folders.
+    const appsRoot = tmp('ws-apps');
+    write(appsRoot, 'package.json', JSON.stringify({ name: 'tools', private: true }));
+    fs.mkdirSync(path.join(appsRoot, 'apps', 'gateway'), { recursive: true });
+    write(path.join(appsRoot, 'apps', 'gateway'), 'package.json', pkg({ 'openvibe-shared': url('OpenVibe.Shared', 'v4.15.2') }));
+    assert.deepStrictEqual(pinsFor(appsRoot), { 'openvibe-shared': '4.15.2' });
+    // The root's own pins still win over its packages'.
+    write(appsRoot, 'package.json', JSON.stringify({ name: 'tools', private: true, dependencies: { 'openvibe-shared': url('OpenVibe.Shared', 'v4.15.1') } }));
+    assert.deepStrictEqual(pinsFor(appsRoot), { 'openvibe-shared': '4.15.1' });
+    for (const d of [npmRoot, pnpmRoot, appsRoot]) fs.rmSync(d, { recursive: true, force: true });
+}
 console.log('docs-status: all checks passed');
