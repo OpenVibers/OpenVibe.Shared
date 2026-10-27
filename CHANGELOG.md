@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.15.2 — 2026-10-27
+
+- **Showcase sections no longer fade in** (`showcase.js`, `showcase.css`). The scroll reveal animated opacity from
+  nothing, so a section below the fold was half transparent when it was measured. Text in it then failed contrast checks:
+  the post-release browser check (axe) reported color contrast on ten product homes (help, host, inventory, media, rent,
+  run, services, space, vip, zone). VIP's muted text measured #4d5464, its colour at about half opacity. The sections
+  still rise 18 px into place for people who want motion. `test/showcase.test.js` fails if the reveal animates opacity again.
+
 ## 4.15.1 — 2026-10-27
 
 - **The compact footer is one line again** (`footer.js`). 4.15.0 put "More from OpenVibe" on a row of its own under the
