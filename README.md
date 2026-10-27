@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.16.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.17.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -650,6 +650,15 @@ Sign-in and history: history: { type: 'tool'|'stream'|'paste'|'page'|…,
   chip the first time and re-authenticates silently afterwards, 'silent' only
   re-authenticates, false opts out; fedcmLogin is the POST target for the
   assertion (default: this site's /auth/fedcm).
+Balances: chips: [{ id, icon, value, label, tone, title, onClick, hidden }]
+  are status chips beside the bell (Live's OpenCoins and Vibes); setChip(id,
+  value) updates one. Two or more fold into one chip at 560 px and narrower.
+  wallet: true (4.17) puts OpenCoins and Vibes there on any site without
+  writing them: the navbar asks the Network and Billing, keeps the last
+  balances per person so the next page paints them at once, refreshes after a
+  minute away, and hides Vibes while Billing is not the ledger (409). A site's
+  own chips with the ids coins/vibes win. Every site's account menu shows both
+  balances in its header either way.
 Re-renders (each openvibe-shared/boost page move re-renders the bar) end the
   previous render's document and window listeners and its panels.js
   registrations, so the old bar can be collected.
