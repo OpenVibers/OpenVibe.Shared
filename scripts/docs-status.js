@@ -53,11 +53,58 @@ function pinsIn(pkg) {
     return out;
 }
 
-/** The root package.json's pins, or {} when it is absent or unreadable. */
+/**
+ * The workspace packages' directories: the root package.json's `workspaces` (an array, or { packages }) and
+ * pnpm-workspace.yaml's `packages`, with a trailing `/*` read one level deep. Negations and `**` are skipped.
+ */
+function workspaceDirs(dir) {
+    const patterns = [];
+    const root = readJson(path.join(dir, 'package.json'));
+    const ws = root && (Array.isArray(root.workspaces) ? root.workspaces : root.workspaces && root.workspaces.packages);
+    if (Array.isArray(ws)) patterns.push(...ws);
+    const pnpm = path.join(dir, 'pnpm-workspace.yaml');
+    if (fs.existsSync(pnpm)) {
+        for (const m of fs.readFileSync(pnpm, 'utf8').matchAll(/^\s*-\s*['"]?([^'"\n#]+?)['"]?\s*$/gm)) patterns.push(m[1]);
+    }
+    // No declared workspaces (Tools keeps one package per app): the conventional folders.
+    if (!patterns.length) patterns.push('apps/*', 'packages/*');
+    const out = [];
+    for (const pattern of patterns) {
+        if (typeof pattern !== 'string' || pattern.startsWith('!') || pattern.includes('**')) continue;
+        if (pattern.endsWith('/*')) {
+            const base = path.join(dir, pattern.slice(0, -2));
+            try {
+                for (const e of fs.readdirSync(base, { withFileTypes: true })) if (e.isDirectory()) out.push(path.join(base, e.name));
+            } catch { /* no such folder */ }
+        } else out.push(path.join(dir, pattern));
+    }
+    return out;
+}
+
+const newer = (a, b) => {
+    const x = a.split('.').map(Number), y = b.split('.').map(Number);
+    for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
+    return false;
+};
+
+/**
+ * The repository's pins: its workspace packages' (the newest of each library, since a pin round moves them together)
+ * with the root package.json's own over them. A workspace root that pins nothing itself (Games, Tools, Examples) used
+ * to read as "pins nothing", so its STATUS.json kept naming old releases after every pin round.
+ */
 function pinsFor(dir) {
-    const file = path.join(dir, 'package.json');
-    if (!fs.existsSync(file)) return {};
-    try { return pinsIn(JSON.parse(fs.readFileSync(file, 'utf8'))); } catch { return {}; }
+    const out = {};
+    for (const d of workspaceDirs(dir)) {
+        for (const [name, version] of Object.entries(pinsIn(readJson(path.join(d, 'package.json'))))) {
+            if (!out[name] || newer(version, out[name])) out[name] = version;
+        }
+    }
+    return Object.assign(out, pinsIn(readJson(path.join(dir, 'package.json'))));
+}
+
+/** Every "openvibe-<lib> vX.Y.Z" a STATUS string names, moved to that library's pin (one field may name several). */
+function withNamedPins(text, pins) {
+    return String(text).replace(/\b(openvibe-[a-z]+) v(\d+\.\d+\.\d+)/g, (all, name) => (pins[name] ? `${name} v${pins[name]}` : all));
 }
 
 /** The status value for a pin, keeping prose after the version: "openvibe-contracts v0.61.0 (devDependency…)". */
@@ -67,6 +114,12 @@ function statusValue(existing, name, version) {
     return existing.replace(VERSION, version);
 }
 
+/** Whether another tracked STATUS field names this library ("…, openvibe-sdk v0.65.0, …" in `contracts`). */
+function namedElsewhere(status, lib) {
+    const re = new RegExp(`\\b${escapeRe(lib.pkg)} v\\d+\\.\\d+\\.\\d+`);
+    return LIBS.some((l) => l.field && l.field !== lib.field && typeof status[l.field] === 'string' && re.test(status[l.field]));
+}
+
 /** STATUS.json findings for every tracked pin. */
 function statusFindings(status, pins) {
     const out = [];
@@ -74,6 +127,7 @@ function statusFindings(status, pins) {
         if (!lib.field || !(lib.pkg in pins)) continue;
         const want = pins[lib.pkg];
         const existing = status[lib.field];
+        if (existing === undefined && namedElsewhere(status, lib)) continue;   // checked with the field that names it
         if (typeof existing !== 'string' || !VERSION.test(existing)) {
             out.push({ ok: false, file: 'STATUS.json', field: lib.field, reason: `pins ${lib.pkg} v${want} but STATUS.json has no ${lib.field} version` });
             continue;
@@ -81,6 +135,15 @@ function statusFindings(status, pins) {
         const have = VERSION.exec(existing)[1];
         if (have !== want) out.push({ ok: false, file: 'STATUS.json', field: lib.field, reason: `pins ${lib.pkg} v${want} but STATUS.json ${lib.field} says v${have}` });
         else out.push({ ok: true, file: 'STATUS.json', field: lib.field, reason: `${lib.pkg} v${want}` });
+    }
+    // Other libraries a tracked field names ("openvibe-contracts v0.214.0, openvibe-sdk v0.65.0, …" in one field).
+    for (const field of LIBS.filter((l) => l.field).map((l) => l.field)) {
+        if (typeof status[field] !== 'string') continue;
+        for (const [, name, have] of status[field].matchAll(/\b(openvibe-[a-z]+) v(\d+\.\d+\.\d+)/g)) {
+            if (pins[name] && pins[name] !== have && !(byPackage.get(name) && byPackage.get(name).field === field)) {
+                out.push({ ok: false, file: 'STATUS.json', field, reason: `pins ${name} v${pins[name]} but STATUS.json ${field} names v${have}` });
+            }
+        }
     }
     return out;
 }
@@ -151,8 +214,15 @@ function withStatusFields(status, pins, today) {
     const tracked = LIBS.filter((l) => l.field).map((l) => l.field);
     const updates = {};
     for (const lib of LIBS) {
-        if (lib.field && pins[lib.pkg]) updates[lib.field] = statusValue(status[lib.field], lib.pkg, pins[lib.pkg]);
+        if (lib.field && pins[lib.pkg] && !(status[lib.field] === undefined && namedElsewhere(status, lib))) {
+            updates[lib.field] = statusValue(status[lib.field], lib.pkg, pins[lib.pkg]);
+        }
     }
+    for (const field of tracked) {
+        const value = updates[field] !== undefined ? updates[field] : status[field];
+        if (typeof value === 'string') updates[field] = withNamedPins(value, pins);
+    }
+    for (const field of tracked) if (status[field] === undefined && updates[field] === undefined) delete updates[field];
     const out = {};
     let placed = false;
     for (const [key, value] of Object.entries(status)) {
@@ -203,7 +273,7 @@ function main(dir = '.', { check = false } = {}) {
     return { ...inspect(dir), changed };
 }
 
-module.exports = { LIBS, START, END, pinsIn, pinsFor, statusValue, statusFindings, versionsInner, versionsBlock, applyBlock, readmeFindings, inspect, withStatusFields, update, main };
+module.exports = { LIBS, START, END, pinsIn, pinsFor, workspaceDirs, withNamedPins, statusValue, statusFindings, versionsInner, versionsBlock, applyBlock, readmeFindings, inspect, withStatusFields, update, main };
 
 if (require.main === module || !module.parent) {
     const args = process.argv.slice(2);
