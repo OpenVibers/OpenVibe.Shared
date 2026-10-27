@@ -109,6 +109,8 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'));
     for (const [svc, list] of Object.entries(sc.RELATED)) for (const [to, what, href] of list) assert.ok(to && what && /^https:\/\//.test(href) && to !== svc, `${svc} → ${to}`);
     assert.ok(sc.CSS.includes('animation-timeline:view()') && sc.CSS.includes('prefers-reduced-motion:no-preference'), 'scroll reveal, only for people who want motion');
+    const rise = sc.CSS.match(/@keyframes scRise\{[^@]*?\}\}/);
+    assert.ok(rise && !/opacity/.test(rise[0]), 'the reveal only moves: a section that fades in is measured half-transparent, so its text fails contrast checks (axe on every product home)');
 }
 
 console.log('showcase: all checks passed');
