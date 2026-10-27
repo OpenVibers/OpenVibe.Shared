@@ -1552,7 +1552,69 @@
         document.head.appendChild(sc);
     }
 
+    /**
+     * wallet: true — OpenCoins and Vibes as chips in the bar, on any site (owner, 2026-10-27: "make that as a feature in the
+     * shared nav bar … maybe we'll put it on games too"). A site that sets chips of its own with those ids (Live) keeps
+     * them; elsewhere the balances stay in the menu's header. The last balances are kept per person, so the chips paint
+     * at once without moving the bar; they refresh from the Network and Billing in the background, and again when the
+     * tab comes back after a minute. On a phone they fold into one chip like Live's (4.16.0).
+     */
+    const WALLET_CHIPS = [
+        { id: 'coins', icon: 'fa-coins', tone: 'gold', label: 'OpenCoins', title: 'OpenCoins', href: 'https://openvibe.network/my#coins' },
+        { id: 'vibes', icon: 'fa-wallet', tone: 'green', label: 'Vibes', title: 'Your Vibes', href: 'https://openvibe.live/#vibes' },
+    ];
+    let _walletFor = null, _walletAt = 0, _walletWatch = false;
+    const walletKey = (u) => `ov-wallet:${u.subject || u.id || u.username || ''}`;
+    function savedWallet(u) { try { return JSON.parse(localStorage.getItem(walletKey(u)) || '{}') || {}; } catch { return {}; } }
+    function syncWalletChips() {
+        if (!_config.wallet) return;
+        const u = _config.user;
+        let chips = (_config.chips || []).filter((c) => !(c && c.__wallet));
+        if (u && !u.is_anon) {
+            const saved = savedWallet(u), have = new Set(chips.map((c) => c && c.id));
+            chips = WALLET_CHIPS.filter((w) => !have.has(w.id)).map((w) => Object.assign({}, w, {
+                __wallet: true, value: saved[w.id] == null ? '' : saved[w.id], hidden: saved[w.id] == null,
+                onClick: () => { try { root.location.href = w.href; } catch { /* */ } },
+            })).concat(chips);
+        }
+        _config.chips = chips;
+    }
+    function loadWalletChips() {
+        const u = _config.user;
+        if (!_config.wallet || !u || u.is_anon || !_config.token || typeof fetch !== 'function') return;
+        const key = walletKey(u);
+        if (_walletFor === key && Date.now() - _walletAt < 60000) return;
+        _walletFor = key; _walletAt = Date.now();
+        if (!_walletWatch && typeof document !== 'undefined' && document.addEventListener) {
+            _walletWatch = true;
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadWalletChips(); });
+        }
+        const auth = { Authorization: `Bearer ${_config.token}` };
+        const saved = savedWallet(u);
+        let shown = false;
+        const put = (id, n) => {
+            const mine = (_config.chips || []).find((c) => c && c.id === id && c.__wallet);
+            if (!mine) return;
+            if (n == null) { delete saved[id]; if (!mine.hidden) { mine.hidden = true; shown = true; } return; }
+            saved[id] = n.toLocaleString();
+            if (mine.hidden) shown = true;
+            OpenVibeNavbar.setChip(id, saved[id], { hidden: false });
+        };
+        const num = (v) => (isFinite(v) ? v : null);
+        const coins = fetch(`${_config.apiBase}/api/coins/me`, { headers: auth, credentials: 'include' })
+            .then(async (r) => { if (r.ok) { const j = await r.json(); put('coins', num(Number(j.balance ?? (j.wallet && j.wallet.balance)))); } });
+        // Billing answers 409 until it is the ledger: no Vibes chip then.
+        const vibes = fetch(`${_config.billingBase || 'https://billing.openvibe.network'}/api/me/vibes`, { headers: auth, credentials: 'omit' })
+            .then(async (r) => { if (r.ok) put('vibes', num(Number((await r.json()).credit))); else if (r.status === 409) put('vibes', null); });
+        Promise.all([coins.catch(() => {}), vibes.catch(() => {})]).then(() => {
+            try { localStorage.setItem(walletKey(u), JSON.stringify(saved)); } catch { /* */ }
+            // A chip that appeared or went away changes the folded phone chip: draw the bar once more.
+            if (shown && _config.user === u && _navEl) render();
+        });
+    }
+
     function render() {
+        syncWalletChips();
         // A site may put state classes on the bar (Live's transparent hero mode). A re-render must not lose them.
         let carried = []; try { carried = Array.from((_navEl && _navEl.classList) || []).filter(c => c !== 'openvibe-navbar'); } catch { carried = []; }
         if (_navEl) _navEl.remove();
@@ -1743,6 +1805,7 @@
         _navEl = nav;
         attachAvatarFallbacks(nav);
         hookTop();
+        loadWalletChips();
         return nav;
     }
 

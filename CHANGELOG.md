@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.17.0 — 2026-10-27
+
+- **`wallet: true`: OpenCoins and Vibes in the bar on any site** (`navbar.js`; owner, 2026-10-27: "make that as a
+  feature in the shared nav bar … maybe we'll put it on games too").
+  - The navbar asks the Network (`/api/coins/me`) and Billing (`/api/me/vibes`) itself, at most once a minute, and again
+    when the tab comes back.
+  - The last balances are kept per person (`localStorage`), so the next page paints the chips at once: no empty chips,
+    no jump.
+  - Vibes hides while Billing answers 409 (not the ledger yet). A site's own chips with the ids `coins`/`vibes` (Live)
+    win; signed out, nothing is asked.
+  - On a phone they fold into one chip (4.16.0).
+
 ## 4.16.0 — 2026-10-27
 
 - **Balance chips fold into one on a phone** (`navbar.js`; owner, 2026-10-27: "the currencies are taking up all the
