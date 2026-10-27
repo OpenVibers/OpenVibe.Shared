@@ -47,3 +47,12 @@ console.log(`package: ${Object.keys(pkg.exports).length} exports resolve`);
     assert.strictEqual(OpenVibeAuthClient.prototype.verifyTokenInternal, undefined, 'verifyTokenInternal is removed');
     assert.strictEqual(OpenVibeAuthClient.prototype.getUserProfile, undefined, 'getUserProfile is removed');
 }
+
+// STATUS.json and the README status line say which release this is (Contracts' docs-currency check reads both): a
+// release PR that bumps package.json bumps them too. They said 4.10.0 through five releases (4.11-4.15).
+{
+    const status = JSON.parse(fs.readFileSync(path.join(ROOT, 'STATUS.json'), 'utf8'));
+    assert.strictEqual(status.version, pkg.version, `STATUS.json version ${status.version} is not package.json's ${pkg.version}`);
+    const line = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8').split('\n').find((l) => l.startsWith('**Status:**')) || '';
+    assert.ok(line.includes(`v${pkg.version} `), `the README status line names v${pkg.version}: ${line.slice(0, 60)}`);
+}
