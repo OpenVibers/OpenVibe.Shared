@@ -19,6 +19,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - `ov-icons.js` loads once when the page settles (`requestIdleCallback`), and at once on intent (a pointer over the
     launcher, a touch, focus), instead of the first time the launcher, menu or drawer opened.
   - Every icon slot there has its size and a faint ring until it is drawn, so nothing moves when the glyphs arrive.
+- **An open tab stays on the latest version** (`release-watch.js`; owner, 2026-10-27: "make sure people are on the
+  latest version … if the client needs to update or something, it should just be self-aware or intelligently do that").
+  - A release that only prompted ("Update ready · Reload") used to wait for the button forever. Now it applies itself
+    while nobody is looking: after the tab has been hidden for 30 s, unless something is protected (typing, a dirty form,
+    playing media, a live camera or mic, `[data-ov-protected]`, `OVProtected()`).
+  - Any reload comes back at the same scroll position, for the same address, for ten minutes.
+  - A site can opt out with `OVReleaseConfig.autoApply = false`. Style and content releases still apply in place, and
+    required ones reload when safe, as before.
 
 ## 4.15.2 — 2026-10-27
 

@@ -6,7 +6,8 @@
  * min_client_generation, the mixed-version window, contracts) and only when safe: hidden or idle 2 min, no
  * focused field, nothing protected (form[data-dirty="true"], [data-ov-protected], playing media, a live
  * camera/mic, OVProtected()). Outcomes and a 5-minute beat go to the metrics URL (D46).
- * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false, service, eventsUrl (false: off) }; the meta
+ * An optional release applies itself after 30 s hidden with nothing protected, at the same scroll position (4.16.0).
+ * OVReleaseConfig: { url, metricsUrl, updateUrl, inPlace: false, autoApply: false, service, eventsUrl (false: off) }; the meta
  * tag may carry data-service, data-events and data-generation. See README "Releases".
  */
 (function (root) {
@@ -79,7 +80,28 @@
         return !document.hidden && Date.now() - lastInput < IDLE_MS ? 'active' : null;
     }
 
-    function reload(why) { record('reloaded', why); flush(); root.location.reload(); }
+    const SCROLL_KEY = 'ov-release-scroll';
+    const here = () => { try { const u = new URL(root.location.href); return u.pathname + u.search; } catch { return ''; } };
+    function reload(why) {
+        record('reloaded', why); flush();
+        try { root.sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ path: here(), y: Math.round(root.scrollY || 0), at: Date.now() })); } catch { /* */ }
+        root.location.reload();
+    }
+    try {
+        const saved = JSON.parse(root.sessionStorage.getItem(SCROLL_KEY) || 'null');
+        root.sessionStorage.removeItem(SCROLL_KEY);
+        if (saved && saved.y > 0 && saved.path === here() && Date.now() - saved.at < 10 * 60 * 1000) {
+            const back = () => root.scrollTo(0, saved.y);
+            if (document.readyState === 'complete') back(); else root.addEventListener('load', () => root.setTimeout(back, 50), { once: true });
+        }
+    } catch { /* */ }
+    let optional = false;
+    function applyOptional() {
+        if (!optional || mustReload || cfg.autoApply === false || !document.hidden) return;
+        const why = busy();
+        if (why) { record('deferred', why, true); return; }
+        reload('hidden');
+    }
     function prompt() {
         if (prompted) return;
         prompted = true;
@@ -131,7 +153,8 @@
         if (p.action === 'in-place' && (cfg.inPlace === false || failedRelease === m.release)) p = x.plan({ release: current, contract_ranges: page.contract_ranges }, m, Date.now());
         if (p.action === 'none') return;
         if (p.action !== 'in-place') {
-            if (p.action === 'reload') { mustReload = true; reloadWhy = p.reason; }
+            if (p.action === 'reload') { mustReload = true; reloadWhy = p.reason; } else optional = true;
+            if (optional && document.hidden) later('apply', applyOptional, 30 * 1000);
             prompt();
             maybeReload();
             return;
@@ -258,8 +281,9 @@
     root.addEventListener('pagehide', () => flush(true, true));
     document.addEventListener('visibilitychange', () => {
         if (stopped) return;
-        if (document.hidden) { flush(); maybeReload(); if (es) later('hide', hide, 5 * 60 * 1000); return; }
+        if (document.hidden) { flush(); maybeReload(); if (optional) later('apply', applyOptional, 30 * 1000); if (es) later('hide', hide, 5 * 60 * 1000); return; }
         root.clearTimeout(t.hide); t.hide = null;
+        root.clearTimeout(t.apply); t.apply = null;
         if (rt.state === 'hidden') open();
         check(false);
     });
