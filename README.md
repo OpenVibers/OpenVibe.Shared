@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.29.2 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.30.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -501,6 +501,20 @@ can't load, those icons fall back to `<i class="fa-solid …">`. Two options cha
   - A tab hidden 5 minutes closes the stream and resumes it when shown.
   - A Content-Security-Policy refusal, a signed-out 401/403, or Network's `REALTIME_TICKETS=off` (503) stop the stream, and the bell polls.
 - **The site's CSP** needs `connect-src https://openvibe.events` (and `https://openvibe.network` for the ticket, which the bell already calls). `OpenVibeNotifications.realtimeState()` reports the feed's state.
+
+**The bell center (4.30.0).** The bell opens a 420 px popover on desktop and a full-height sheet on phones (a drag handle,
+a × and a scrim; the page underneath does not scroll).
+- **Tabs:** All · Mentions · Live · Deals & alerts · System · Agents. Network defines what each holds
+  (`GET /api/notifications?tab=`) and counts them (`GET /api/notifications/unread-by-tab`). A Network without the
+  counts shows the tabs without numbers. Arrow keys, Home and End move between tabs.
+- **Unread** filters any tab; search still searches.
+- **Rows:** an unread dot on the left; the sender's avatar or the category's line glyph; a thumbnail on the right from
+  `rich_content.image`, `thumbnail_url` or `thumbnail` (https, and not the avatar again); grouped repeats with ×N.
+- **Touch:** a row swipes right to mark it read and left to clear it (Network's dismiss); the buttons on the time line
+  do the same with a mouse or keyboard.
+
+**Quiet hours (4.30.0).** During the person's window (`GET /api/notifications/quiet-hours`, read at start and every ten
+minutes), toasts and sounds wait; the bell and the badge still fill, and a critical notice still shows.
 
 ### Boost (`boost.js`): smooth page moves for a server-rendered site
 

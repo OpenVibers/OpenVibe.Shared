@@ -9,8 +9,8 @@
 //        OpenVibeNotifications.createBell(mountEl)
 //        OpenVibeNotifications.renderInbox(containerEl)      // full-page inbox
 //
-// Reads: GET /api/notifications?limit&offset&unread_only&category&q&since
-//        GET /api/notifications/unread-count
+// Reads: GET /api/notifications?limit&offset&unread_only&tab&q&since
+//        GET /api/notifications/unread-count, /unread-by-tab (the counts on the bell's tabs)
 // Realtime (init({ realtime: true }), off by default): notification-live.js, loaded from beside this file, hears the
 //        person's network.notification.created over OpenVibe.Events with a ticket from POST /api/v1/realtime/ticket;
 //        each event or gap re-reads the count. Polling stays: every 15 s without a stream, every 2 min with one.
@@ -26,7 +26,9 @@
 //   • operator alerts (OPERATOR_ALERT, or rich_content.kind "ops_alert") read as System cards: "Browser check
 //     failed · events · release 80b7955", a status link, and the fix command behind a copy button in the bell —
 //     never raw shell text in the body;
-//   • the bell's list has day headers, category chips, unread dots and grouped repeats.
+//   • the bell (4.30.0) is a 420 px popover on desktop and a full-height sheet on phones: tabs (All · Mentions · Live ·
+//     Deals & alerts · System · Agents) counted by Network's unread-by-tab, an Unread filter, day headers, thumbnails,
+//     unread dots and grouped repeats; on touch screens a row swipes right to read and left to clear.
 // ═══════════════════════════════════════════════════════════════
 
 (function (root) {
@@ -69,6 +71,16 @@
         gold: 'var(--gold, #e3b341)', accent: 'var(--accent, #3b82f6)', muted: 'var(--text-secondary, #a0a0ab)',
     };
     const CATEGORY_TONE = { stream: 'live', social: 'accent', chat: 'accent', game: 'accent', economy: 'gold', achievement: 'gold', moderation: 'warn', system: 'muted', service: 'accent', admin: 'accent' };
+    // The bell's tabs. Network defines what each holds (server/notifications/tabs.js, ?tab= and /unread-by-tab).
+    const TABS = [['all', 'All'], ['mentions', 'Mentions'], ['live', 'Live'], ['alerts', 'Deals & alerts'], ['system', 'System'], ['agents', 'Agents']];
+    const TAB_EMPTY = {
+        all: ['No notifications yet', 'When something happens across OpenVibe, it lands here.'],
+        mentions: ['No mentions yet', 'When someone mentions you, replies to you or messages you, it shows here.'],
+        live: ['Nobody has gone live yet', 'When someone you follow goes live, it shows here.'],
+        alerts: ['No alerts yet', 'Deal, coupon, price and trade watches you set tell you here.'],
+        system: ['Nothing from the system', 'Sign-ins, security notices and announcements show here.'],
+        agents: ['No agent work yet', 'When an agent needs your approval or finishes a task, it shows here.'],
+    };
 
     let _config = { token: null, apiBase: 'https://openvibe.network', soundBase: '/assets/sounds', swPath: '/openvibe-sw.js', onAction: null, inboxUrl: null };
     let _pollTimer = null;
@@ -99,6 +111,7 @@
             @keyframes ovn-badge-pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.22); } }
             @keyframes ovn-bell-ring { 0%{ transform: rotate(0); } 12%{ transform: rotate(13deg); } 24%{ transform: rotate(-12deg); } 36%{ transform: rotate(8deg); } 48%{ transform: rotate(-4deg); } 60%{ transform: rotate(0); } }
             @keyframes ovn-panel-in { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+            @keyframes ovn-sheet-up { from { transform: translateY(48px); opacity: .5; } to { transform: none; opacity: 1; } }
             @keyframes ovn-spin { to { transform: rotate(360deg); } }
 
             /* Toasts. Opaque cards on the theme's raised surface; held (hidden, timers paused) while a menu is open. */
@@ -119,7 +132,7 @@
             .openvibe-toast-body { min-width: 0; }
             .openvibe-toast-title { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 14px; font-weight: 650; line-height: 1.3; }
             .openvibe-toast-title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .openvibe-toast-title .n { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: var(--ovn-tone, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 16%, transparent); }
+            .openvibe-toast-title .n { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 16%, transparent); }
             .openvibe-toast-sub { margin-top: 1px; font-size: 11.5px; color: var(--text-muted, #8b8b96); display: flex; gap: 6px; align-items: center; }
             .openvibe-toast-msg { margin-top: 4px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #b6b6c0); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
             .openvibe-toast-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -135,7 +148,7 @@
 
             /* The glyph (or avatar with a glyph badge), shared by toasts and the list. */
             .ovn-glyph { position: relative; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none;
-                color: var(--ovn-tone, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
+                color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 68%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
             .ovn-glyph svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
             .ovn-glyph.ovn-avatar { border-radius: 50%; background: var(--bg-tertiary, #2a2b33); }
             .ovn-glyph.ovn-avatar img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; display: block; }
@@ -144,7 +157,7 @@
             .ovn-glyph .ovn-badge svg { width: 11px; height: 11px; stroke-width: 2.4; }
             .ovn-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
             .ovn-chip { font-size: 11px; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 999px; color: var(--text-secondary, #b6b6c0); background: var(--bg-tertiary, rgba(255,255,255,.06)); border: 1px solid var(--border, rgba(255,255,255,.08)); }
-            .ovn-chip.sev { color: var(--ovn-tone); background: color-mix(in srgb, var(--ovn-tone) 14%, transparent); border-color: transparent; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
+            .ovn-chip.sev { color: color-mix(in srgb, var(--ovn-tone) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone) 14%, transparent); border-color: transparent; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
 
             .openvibe-bell { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
             .openvibe-bell svg { width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #b0b0b8); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
@@ -163,6 +176,7 @@
                 background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1));
                 border-radius: 18px; box-shadow: 0 24px 60px rgba(0,0,0,.45); animation: ovn-panel-in .2s cubic-bezier(.2,.8,.2,1); font-family: inherit; }
             .openvibe-notif-panel.open { display: flex; }
+            .openvibe-notif-panel, .openvibe-notif-inbox { --ovn-bg: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
             .openvibe-notif-inbox { display: flex; flex-direction: column; overflow: hidden; min-height: 420px; max-height: 78vh; border-radius: 18px;
                 background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1)); font-family: inherit; }
 
@@ -178,38 +192,63 @@
             .openvibe-nv-actions button:disabled { opacity: .4; cursor: default; }
             .openvibe-nv-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-            .openvibe-nv-tools { padding: 0 12px 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
+            .openvibe-nv-tools { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
             .openvibe-nv-search { position: relative; }
             .openvibe-nv-search input { width: 100%; box-sizing: border-box; padding: 9px 30px 9px 34px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-input, var(--bg-tertiary, rgba(255,255,255,.04))); color: var(--text-primary, #ececf1); font: inherit; font-size: 13px; outline: none; }
             .openvibe-nv-search input:focus { border-color: var(--accent, #3b82f6); }
             .openvibe-nv-search > svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: none; stroke: var(--text-muted, #8b8b96); stroke-width: 1.8; stroke-linecap: round; pointer-events: none; }
             .openvibe-nv-search .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #8b8b96); cursor: pointer; font-size: 16px; display: none; }
             .openvibe-nv-search.has-q .clear { display: block; }
-            .openvibe-nv-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 12px; }
-            .openvibe-nv-chips::-webkit-scrollbar { display: none; }
-            .openvibe-nv-chips button { flex: none; border: 1px solid var(--border, rgba(255,255,255,.1)); background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; line-height: 1.1; }
-            .openvibe-nv-chips button:hover { color: var(--text-primary, #ececf1); border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); }
-            .openvibe-nv-chips button.active { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
+            .openvibe-nv-find { display: flex; gap: 8px; align-items: center; }
+            .openvibe-nv-find .openvibe-nv-search { flex: 1; min-width: 0; }
+            .openvibe-nv-unread { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 37px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
+            .openvibe-nv-unread:hover { color: var(--text-primary, #ececf1); }
+            .openvibe-nv-unread[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
+            .openvibe-nv-unread svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+            .openvibe-nv-tabs { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
+            .openvibe-nv-tabs::-webkit-scrollbar { display: none; }
+            .openvibe-nv-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+            .openvibe-nv-tabs button:hover, .openvibe-nv-tabs button[aria-selected="true"] { color: var(--text-primary, #ececf1); }
+            .openvibe-nv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
+            .openvibe-nv-tabs button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -3px; border-radius: 10px; }
+            .openvibe-nv-tabs .n { min-width: 18px; padding: 2px 5px; box-sizing: border-box; border-radius: 999px; font-size: 10.5px; font-weight: 750; line-height: 1.2; text-align: center; font-variant-numeric: tabular-nums;
+                color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 24%, transparent); }
+            .openvibe-nv-tabs .n:empty { display: none; }
+            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
 
             .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
             .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
-            .openvibe-notif-item { display: grid; grid-template-columns: 38px 1fr; gap: 12px; padding: 10px 40px 10px 14px; margin: 0 6px; border-radius: 14px; cursor: pointer; position: relative; transition: background .15s; }
-            .openvibe-notif-item:hover { background: var(--bg-hover, rgba(255,255,255,.05)); }
-            .openvibe-notif-item.unread { background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
+            /* A row: the opaque .ovn-row over .ovn-under, which a swipe uncovers (Read on the left, Clear on the right). */
+            .openvibe-notif-item { position: relative; margin: 0 6px; border-radius: 14px; overflow: hidden; cursor: pointer; }
+            .openvibe-notif-item .ovn-row { position: relative; z-index: 1; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; padding: 10px 14px 10px 16px; border-radius: 14px;
+                background: var(--ovn-bg, var(--bg-elevated, #1d1f27)); transition: background .15s, transform .2s ease; touch-action: pan-y; outline: none; }
+            .openvibe-notif-item .ovn-row.has-thumb { grid-template-columns: 38px minmax(0, 1fr) 56px; }
+            .openvibe-notif-item .ovn-row:focus-visible { box-shadow: inset 0 0 0 2px var(--accent, #3b82f6); }
+            .openvibe-notif-item:hover .ovn-row { background: color-mix(in srgb, var(--text-primary, #ececf1) 5%, var(--ovn-bg, #1d1f27)); }
+            .openvibe-notif-item.unread .ovn-row { background: color-mix(in srgb, var(--accent, #3b82f6) 8%, var(--ovn-bg, #1d1f27)); }
+            .openvibe-notif-item.unread:hover .ovn-row { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, var(--ovn-bg, #1d1f27)); }
+            .openvibe-notif-item.swiping .ovn-row { transition: none; }
+            .openvibe-notif-item .thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; display: block; background: var(--bg-tertiary, #2a2b33); }
+            .openvibe-notif-item .ovn-under { position: absolute; inset: 0; display: none; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 13px; font-weight: 750; }
+            .openvibe-notif-item[data-swipe] .ovn-under { display: flex; }
+            .openvibe-notif-item[data-swipe="read"] .ovn-under { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
+            .openvibe-notif-item[data-swipe="clear"] .ovn-under { background: var(--danger-strong, #c42b30); color: #fff; justify-content: flex-end; }
+            .openvibe-notif-item[data-swipe="read"] .ovn-under .clear, .openvibe-notif-item[data-swipe="clear"] .ovn-under .read { display: none; }
+            .openvibe-notif-item .ovn-under span { display: inline-flex; align-items: center; gap: 6px; }
+            .openvibe-notif-item .ovn-under svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-notif-item .content { min-width: 0; }
             .openvibe-notif-item .title { font-size: 13.5px; font-weight: 550; line-height: 1.32; display: flex; align-items: baseline; gap: 6px; }
             .openvibe-notif-item .title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
             .openvibe-notif-item.unread .title { font-weight: 700; }
-            .openvibe-notif-item .title .count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: var(--ovn-tone, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
+            .openvibe-notif-item .title .count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
             .openvibe-notif-item .msg { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); line-height: 1.42; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
             .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
-            .openvibe-notif-item .unread-dot { position: absolute; right: 16px; top: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent, #3b82f6); }
+            .openvibe-notif-item .unread-dot { position: absolute; left: 5px; top: 26px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); }
             .openvibe-notif-item .row-actions { margin-left: auto; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
             .openvibe-notif-item:hover .row-actions, .openvibe-notif-item:focus-within .row-actions { opacity: 1; }
             /* The row's buttons sit on its time line, never over its text; touch screens always show them. */
             @media (hover: none), (pointer: coarse) { .openvibe-notif-item .row-actions { opacity: 1; } }
-            .openvibe-notif-item:hover .unread-dot { opacity: 0; }
             .openvibe-notif-item .row-actions button { width: 28px; height: 28px; border-radius: 8px; border: none; background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
             .openvibe-notif-item .row-actions button:hover { color: var(--text-primary, #ececf1); background: var(--bg-hover, rgba(255,255,255,.08)); }
             .openvibe-notif-item .row-actions svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -225,13 +264,19 @@
             .openvibe-nv-foot a { color: var(--accent-light, var(--accent, #60a5fa)); text-decoration: none; font-weight: 650; }
             .openvibe-nv-note { font-size: 12px; color: var(--text-secondary, #b6b6c0); padding: 8px 16px; background: color-mix(in srgb, var(--warning, #f5a524) 12%, transparent); }
 
-            /* Phones: the panel is a sheet from under the bar to the bottom inset, edge to edge. */
+            /* Phones: the panel is a full-height sheet over a scrim; its handle drags down to close, as do × and a tap outside. */
+            .openvibe-nv-actions [data-act="close"] { display: none; }
             @media (max-width: 640px) {
-                .openvibe-notif-panel { left: 6px; right: 6px; width: auto; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); max-height: none; border-radius: 20px; }
+                .openvibe-notif-panel { top: calc(env(safe-area-inset-top, 0px) + 10px); left: 0; right: 0; bottom: 0; width: auto; max-height: none; border-radius: 22px 22px 0 0; border-bottom: 0;
+                    padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 0 0 100vmax rgba(0,0,0,.5), 0 -12px 40px rgba(0,0,0,.35); animation-name: ovn-sheet-up; animation-duration: .28s; }
+                .openvibe-notif-panel .openvibe-nv-head { position: relative; padding-top: 20px; touch-action: none; }
+                .openvibe-notif-panel .openvibe-nv-head::before { content: ''; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--border-light, var(--border, rgba(255,255,255,.22))); }
+                .openvibe-notif-panel .openvibe-nv-actions [data-act="close"] { display: grid; }
+                .openvibe-notif-panel .openvibe-nv-actions [data-act="inbox"] { display: none; }
+                .openvibe-nv-actions button, .openvibe-nv-actions a { width: 40px; height: 40px; }
                 .openvibe-notif-item .row-actions { opacity: 1; }
-                .openvibe-notif-item .unread-dot { display: none; }
-                .openvibe-notif-item.unread .title .t::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); margin-right: 6px; vertical-align: 1px; }
             }
+            html.ovn-sheet-open, html.ovn-sheet-open body { overflow: hidden; }
             @media (max-height: 520px) { .openvibe-notif-item .msg { -webkit-line-clamp: 1; } }
             @media (prefers-reduced-motion: reduce) {
                 .openvibe-toast, .ovn-phone .openvibe-toast, .openvibe-notif-panel { animation: none; }
@@ -356,6 +401,13 @@
         const img = n.sender_avatar || rich.thumbnail || (rich.user && rich.user.avatar_url);
         return img && /^https?:\/\//.test(String(img)) ? String(img) : null;
     }
+    /** A picture for the right of a row (rich_content.image, thumbnail_url or thumbnail), unless it is the avatar. */
+    function thumbOf(n) {
+        const rich = richOf(n);
+        const img = rich.image || rich.thumbnail_url || rich.thumbnail;
+        if (!img || !/^https:\/\//.test(String(img))) return null;
+        return String(img) === avatarOf(n) ? null : String(img);
+    }
     function glyphHtml(n, p) {
         const tone = TONE[p.tone] || TONE.accent;
         const img = p.kind === 'ops' ? null : avatarOf(n);
@@ -389,6 +441,31 @@
     }
     function hasSession() { return !!_config.token || !isCrossOrigin(); }
 
+    // Quiet hours (OpenVibe.Network GET /api/notifications/quiet-hours, 4.30.0): during the person's own window, in their
+    // time zone, a toast and its sound wait: the bell and the badge still fill, and a critical notice still shows. Read
+    // once when the layer starts and again every ten minutes; a Network that does not answer means no quiet hours.
+    let _quiet = null, _quietAt = 0;
+    function loadQuiet() {
+        if (!hasSession() || Date.now() - _quietAt < 10 * 60000) return;
+        _quietAt = Date.now();
+        apiJson('/api/notifications/quiet-hours').then((q) => { _quiet = q && typeof q.start === 'string' ? q : null; }).catch(() => { _quiet = null; });
+    }
+    const minutesOf = (s) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '')); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+    function inQuiet() {
+        loadQuiet();
+        const q = _quiet;
+        if (!q || !q.enabled) return false;
+        const a = minutesOf(q.start), b = minutesOf(q.end);
+        if (a == null || b == null || a === b) return false;
+        let now;
+        try {
+            const parts = new Intl.DateTimeFormat('en-GB', { timeZone: q.tz || 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+            now = Number(parts.find((x) => x.type === 'hour').value) * 60 + Number(parts.find((x) => x.type === 'minute').value);
+        } catch { const d = new Date(); now = d.getUTCHours() * 60 + d.getUTCMinutes(); }
+        return a < b ? now >= a && now < b : now >= a || now < b;
+    }
+    const held = (n) => (n && n.priority) !== 'critical' && inQuiet();
+
     // ── Cross-tab sync (same origin) ────────────────────────
     function channel() {
         if (_channel !== null) return _channel || null;
@@ -405,6 +482,7 @@
     // ── Sound ───────────────────────────────────────────────
     function playSound(priority) {
         if (!_preferences.sound) return;
+        if (priority !== 'critical' && inQuiet()) return;
         const file = SOUNDS[priority]; if (!file) return;
         const url = `${_config.soundBase}/${file}`;
         try {
@@ -479,6 +557,7 @@
     const _shownIds = new Set();      // one notification id is one card, however many times a poll or a push brings it
     function showToast(n) {
         if (!_preferences.toasts) return;
+        if (held(n)) return;
         if (_preferences.muted_categories.includes(n.category)) return;
         const id = n && n.id != null ? String(n.id) : null;
         if (id) {
@@ -670,11 +749,13 @@
             if (c) { c.textContent = _unreadCount > 99 ? '99+' : String(_unreadCount); c.classList.toggle('zero', _unreadCount === 0); }
         }
         if (!quiet) broadcast({ type: 'unread', count: _unreadCount });
+        if (_unreadCount !== prev && listShowing()) loadTabCounts();
     }
 
     // ── List views (panel + inbox share this) ───────────────
     const ICON = {
         search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+        filter: '<path d="M4 6.5h16M7 12h10M10 17.5h4"/>',
         checkAll: '<path d="M2.5 12.5l4.5 4.5L17 7"/><path d="M11.5 16.5l.5.5L22 7"/>',
         bellOn: GLYPH.bell,
         bellOff: '<path d="M6.2 16.2V11a5.8 5.8 0 0 1 9.6-4.4M17.8 10.4v5.8l1.6 2H6"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0M3.5 3.5l17 17"/>',
@@ -686,8 +767,7 @@
     };
 
     function buildView(root, { mode }) {
-        const v = { root, mode, tab: 'all', category: '', q: '', items: [], offset: 0, hasMore: false, loading: false, seq: 0, ids: new Set() };
-        const cats = ['stream', 'social', 'chat', 'economy', 'game', 'achievement', 'system', 'admin'];
+        const v = { root, mode, tab: 'all', unread: false, q: '', items: [], offset: 0, hasMore: false, loading: false, seq: 0, ids: new Set() };
         root.innerHTML = `
             <div class="openvibe-nv-head">
                 <h3>Notifications <span class="count zero">0</span></h3>
@@ -695,19 +775,20 @@
                     <button type="button" data-act="read-all" title="Mark all as read">${svg(ICON.checkAll)}<span>Mark all read</span></button>
                     <button type="button" data-act="push" title="Push alerts on this device">${svg(ICON.bellOff)}<span>Push alerts</span></button>
                     <a href="${esc(inboxUrl().replace(/\/notifications$/, '/notifications#prefs'))}" data-act="prefs" title="Notification settings">${svg(ICON.gear)}<span>Settings</span></a>
-                    ${mode === 'panel' ? `<a href="${esc(inboxUrl())}" data-act="inbox" title="Open the full inbox">${svg(ICON.open)}<span>Open inbox</span></a>` : ''}
+                    ${mode === 'panel' ? `<a href="${esc(inboxUrl())}" data-act="inbox" title="Open the full inbox">${svg(ICON.open)}<span>Open inbox</span></a><button type="button" data-act="close" title="Close">${svg(ICON.close)}<span>Close</span></button>` : ''}
                 </div>
             </div>
             <div class="openvibe-nv-note" data-role="note" style="display:none"></div>
             <div class="openvibe-nv-tools">
-                <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
-                <div class="openvibe-nv-chips" role="tablist" aria-label="Show">
-                    <button type="button" role="tab" data-tab="all" class="active" aria-selected="true">All</button>
-                    <button type="button" role="tab" data-tab="unread" aria-selected="false">Unread</button>
-                    ${cats.map(k => `<button type="button" role="tab" data-cat="${k}" aria-selected="false">${esc(CATEGORY_LABELS[k])}</button>`).join('')}
+                <div class="openvibe-nv-find">
+                    <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
+                    <button type="button" class="openvibe-nv-unread" aria-pressed="false" title="Show only unread">${svg(ICON.filter)}Unread</button>
+                </div>
+                <div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
+                    ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}">${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}
                 </div>
             </div>
-            <div class="openvibe-nv-list" data-role="list"></div>
+            <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
             <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'panel' ? `<a href="${esc(inboxUrl())}">Full inbox →</a>` : ''}</div>`;
         const list = root.querySelector('[data-role="list"]');
         const input = root.querySelector('input[type="search"]');
@@ -717,15 +798,33 @@
             clearTimeout(qTimer); qTimer = setTimeout(() => { v.q = input.value.trim(); reload(v); }, 260);
         });
         root.querySelector('.openvibe-nv-search .clear').addEventListener('click', () => { input.value = ''; v.q = ''; root.querySelector('.openvibe-nv-search').classList.remove('has-q'); reload(v); });
-        const chips = root.querySelectorAll('.openvibe-nv-chips button');
-        const select = (btn) => { chips.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); }); };
-        chips.forEach(btn => btn.addEventListener('click', () => {
-            select(btn);
-            if (btn.dataset.cat) { v.tab = 'all'; v.category = btn.dataset.cat; } else { v.tab = btn.dataset.tab; v.category = ''; }
+        // Tabs: a click or the arrow keys (Home, End) pick one; the list reloads with Network's ?tab=.
+        const tabs = [...root.querySelectorAll('.openvibe-nv-tabs [role="tab"]')];
+        const selectTab = (btn, focus) => {
+            tabs.forEach((b) => { const on = b === btn; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+            if (focus) btn.focus();
+            try { btn.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* */ }
+            v.tab = btn.dataset.tab;
+            list.setAttribute('aria-label', (TABS.find(([id]) => id === v.tab) || ['', 'All'])[1]);
             reload(v);
-        }));
+        };
+        tabs.forEach((btn) => btn.addEventListener('click', () => selectTab(btn)));
+        const tabRow = root.querySelector('.openvibe-nv-tabs');
+        const fade = () => { tabRow.classList.toggle('is-more', tabRow.scrollLeft + tabRow.clientWidth < tabRow.scrollWidth - 4); };
+        tabRow.addEventListener('scroll', fade, { passive: true });
+        v.fade = fade;
+        root.querySelector('.openvibe-nv-tabs').addEventListener('keydown', (e) => {
+            const i = tabs.indexOf(document.activeElement);
+            if (i < 0) return;
+            const j = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i - 1 + tabs.length) % tabs.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1;
+            if (j >= 0) { e.preventDefault(); selectTab(tabs[j], true); }
+        });
+        const unreadBtn = root.querySelector('.openvibe-nv-unread');
+        unreadBtn.addEventListener('click', () => { v.unread = !v.unread; unreadBtn.setAttribute('aria-pressed', String(v.unread)); reload(v); });
         root.querySelector('[data-act="read-all"]').addEventListener('click', () => markAllRead());
         root.querySelector('[data-act="push"]').addEventListener('click', () => togglePush(v));
+        const closeBtn = root.querySelector('[data-act="close"]');
+        if (closeBtn) closeBtn.addEventListener('click', () => closePanel());
         // Infinite scroll: load the next page when the user nears the bottom.
         list.addEventListener('scroll', () => {
             if (v.loading || !v.hasMore) return;
@@ -733,7 +832,7 @@
         });
         list.addEventListener('click', (e) => {
             const item = e.target.closest('.openvibe-notif-item');
-            if (!item) return;
+            if (!item || (item.__ovnSwipedAt && Date.now() - item.__ovnSwipedAt < 450)) return;
             const id = item.dataset.id;
             const ids = (item.dataset.ids || id).split(',').filter(Boolean);
             const act = e.target.closest('[data-row]');
@@ -750,9 +849,65 @@
             const u = n && present(n).url;
             if (u) navigateTo(u);
         });
+        list.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('ovn-row')) { e.preventDefault(); e.target.click(); } });
+        // A thumbnail or avatar that does not load leaves its row (no inline handlers: a site's CSP may forbid them).
+        list.addEventListener('error', (e) => {
+            const img = e.target;
+            if (!img || img.tagName !== 'IMG') return;
+            const row = img.closest('.ovn-row');
+            if (img.classList.contains('thumb') && row) row.classList.remove('has-thumb');
+            img.remove();
+        }, true);
+        attachRowSwipe(v, list);
         refreshPushButton(v);
         _views.set(root, v);
+        paintTabCounts();
         return v;
+    }
+    /**
+     * Touch: a row follows the finger sideways. Past a third of its width (at most 96 px), right marks it read and left
+     * clears it (Network's dismiss); short of that it springs back. A vertical move is the list scrolling, not a swipe.
+     */
+    function attachRowSwipe(v, list) {
+        if (typeof root.PointerEvent !== 'function') return;
+        let s = null;
+        list.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'mouse') return;
+            const row = e.target.closest && e.target.closest('.ovn-row');
+            if (!row || e.target.closest('button, a')) return;
+            s = { row, item: row.parentNode, x0: e.clientX, y0: e.clientY, dx: 0, on: false, id: e.pointerId };
+        });
+        list.addEventListener('pointermove', (e) => {
+            if (!s || e.pointerId !== s.id) return;
+            const dx = e.clientX - s.x0, dy = e.clientY - s.y0;
+            if (!s.on) {
+                if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { s = null; return; }
+                if (Math.abs(dx) < 12) return;
+                s.on = true; s.item.classList.add('swiping');
+                try { s.row.setPointerCapture(e.pointerId); } catch { /* */ }
+            }
+            // Already read: a short give to the right, nothing to do.
+            s.dx = dx > 0 && !s.item.classList.contains('unread') ? Math.min(dx, 24) : dx;
+            s.item.dataset.swipe = s.dx > 0 ? 'read' : 'clear';
+            s.row.style.transform = `translateX(${s.dx}px)`;
+        });
+        const end = () => {
+            if (!s) return;
+            const { row, item, dx, on } = s; s = null;
+            item.classList.remove('swiping');
+            if (!on) return;
+            item.__ovnSwipedAt = Date.now();
+            const ids = (item.dataset.ids || item.dataset.id || '').split(',').filter(Boolean);
+            const w = row.offsetWidth || 320;
+            const far = Math.min(96, w / 3);
+            const settle = () => setTimeout(() => { if (!item.classList.contains('swiping')) delete item.dataset.swipe; }, 220);
+            if (dx < -far) { row.style.transform = `translateX(${-w}px)`; setTimeout(() => ids.forEach((x) => dismiss(v, x)), 180); return; }
+            row.style.transform = '';
+            if (dx > far && item.classList.contains('unread')) markRead(ids);
+            settle();
+        };
+        list.addEventListener('pointerup', end);
+        list.addEventListener('pointercancel', end);
     }
     function copyText(text, btn) {
         const done = () => { if (btn) { const was = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = was; }, 1400); } };
@@ -782,24 +937,30 @@
                 lastDay = day;
                 const when = esc(timeAgo(n.created_at));
                 const label = p.label ? `<span class="dot"></span><span>${esc(p.label)}</span>` : '';
-                return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}" tabindex="0">
+                const thumb = p.kind === 'ops' ? null : thumbOf(n);
+                return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">
+                    <div class="ovn-under" aria-hidden="true"><span class="read">${svg(ICON.read)}Read</span><span class="clear">Clear${svg(ICON.close)}</span></div>
+                    <div class="ovn-row${thumb ? ' has-thumb' : ''}" tabindex="0">
+                    ${unread ? '<span class="unread-dot" role="img" aria-label="Unread"></span>' : ''}
                     ${glyphHtml(n, p)}
                     <div class="content">
                         <div class="title"><span class="t">${esc(p.title)}</span>${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}</div>
                         ${p.message ? `<div class="msg">${esc(p.message)}</div>` : ''}
                         ${chipsHtml({ ...p, chips })}
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
-                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}<div class="row-actions">${unread ? `<button type="button" data-row="read" title="Mark as read" aria-label="Mark as read">${svg(ICON.read)}</button>` : ''}<button type="button" data-row="dismiss" title="Dismiss" aria-label="Dismiss">${svg(ICON.close)}</button></div></div>
+                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}<div class="row-actions">${unread ? `<button type="button" data-row="read" title="Mark as read" aria-label="Mark as read">${svg(ICON.read)}</button>` : ''}<button type="button" data-row="dismiss" title="Clear" aria-label="Clear">${svg(ICON.close)}</button></div></div>
                     </div>
-                    ${unread ? '<span class="unread-dot" aria-label="Unread"></span>' : ''}
+                    ${thumb ? `<img class="thumb" src="${esc(thumb)}" alt="" loading="lazy">` : ''}
+                    </div>
                 </div>`;
             } catch { return ''; }
         }).join('');
         v.lastDay = lastDay;
         if (!append) list.innerHTML = '';
         if (!v.items.length) {
-            const title = v.q ? 'Nothing matches that search' : (v.tab === 'unread' ? 'You\'re all caught up' : (v.category ? 'Nothing here yet' : 'No notifications yet'));
-            const sub = v.q ? 'Try other words.' : 'When something happens across OpenVibe, it lands here.';
+            const [t0, s0] = TAB_EMPTY[v.tab] || TAB_EMPTY.all;
+            const title = v.q ? 'Nothing matches that search' : (v.unread ? 'You\'re all caught up' : t0);
+            const sub = v.q ? 'Try other words.' : (v.unread ? 'Nothing unread here.' : s0);
             list.innerHTML = `<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;
         } else {
             const old = list.querySelector('.openvibe-nv-more'); if (old) old.remove();
@@ -808,18 +969,20 @@
             const more = list.querySelector('[data-act="more"]'); if (more) more.addEventListener('click', () => loadMore(v));
         }
         const st = v.root.querySelector('[data-role="status"]');
-        if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.tab === 'unread' ? ' unread' : ''}` : '';
+        if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}` : '';
     }
 
     async function fetchPage(v, offset) {
         const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
-        if (v.tab === 'unread') params.set('unread_only', '1');
-        if (v.category) params.set('category', v.category);
+        if (v.unread) params.set('unread_only', '1');
+        if (v.tab && v.tab !== 'all') params.set('tab', v.tab);
         if (v.q) params.set('q', v.q);
         return apiJson(`/api/notifications?${params}`);
     }
     async function reload(v) {
         const seq = ++v.seq;
+        loadTabCounts();
+        if (v.fade) setTimeout(v.fade, 0);
         v.loading = true; v.offset = 0; v.items = []; v.ids = new Set(); v.hasMore = false; v.total = null; v.lastDay = null;
         const list = v.root.querySelector('[data-role="list"]');
         list.innerHTML = '<div class="openvibe-nv-more"><span class="spinner"></span></div>';
@@ -849,7 +1012,7 @@
             if (fresh.length) { const tail = { ...v, items: fresh }; renderItems(tail, { append: true }); v.lastDay = tail.lastDay; }
             else if (v.hasMore) { const list = v.root.querySelector('[data-role="list"]'); list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>'); list.querySelector('[data-act="more"]').addEventListener('click', () => loadMore(v)); }
             const st = v.root.querySelector('[data-role="status"]');
-            if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.tab === 'unread' ? ' unread' : ''}` : '';
+            if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.unread ? ' unread' : ''}` : '';
         } catch { /* keep what we have */ }
         finally { v.loading = false; }
     }
@@ -861,6 +1024,28 @@
             if (all || elIds.some(x => set.has(x))) { el.classList.remove('unread'); el.querySelector('.unread-dot')?.remove(); el.querySelector('[data-row="read"]')?.remove(); }
         });
     }
+
+    // The counts on the tabs (Network GET /api/notifications/unread-by-tab, 4.30.0): read when a list loads, after a read
+    // or a clear, and when the badge changes with a list showing; a Network without the route shows none.
+    let _tabCounts = null, _tabAt = 0;
+    function loadTabCounts(force) {
+        if (!hasSession() || !_views.size) return;
+        if (!force && Date.now() - _tabAt < 4000) return;
+        _tabAt = Date.now();
+        apiJson('/api/notifications/unread-by-tab').then((d) => { _tabCounts = (d && d.tabs) || null; paintTabCounts(); }).catch(() => { _tabCounts = null; paintTabCounts(); });
+    }
+    function paintTabCounts() {
+        for (const v of _views.values()) {
+            for (const [id, label] of TABS) {
+                const el = v.root.querySelector(`[data-n="${id}"]`);
+                if (!el) continue;
+                const n = id === 'all' || !_tabCounts ? 0 : Math.max(0, Number(_tabCounts[id]) || 0);
+                el.textContent = n ? (n > 99 ? '99+' : String(n)) : '';
+                el.parentNode.setAttribute('aria-label', n ? `${label}, ${n} unread` : label);
+            }
+        }
+    }
+    function listShowing() { return [..._views.values()].some((v) => v.mode !== 'panel' || (_panelEl && _panelEl.classList.contains('open'))); }
 
     // ── Mutations ───────────────────────────────────────────
     async function markRead(ids) {
@@ -875,12 +1060,15 @@
             if (data && typeof data.unread === 'number') setBadge(data.unread, { quiet: true }), broadcast({ type: 'unread', count: data.unread });
             else pollUnread();
         } catch { pollUnread(); }
+        loadTabCounts(true);
     }
     async function markAllRead() {
         for (const v of _views.values()) applyReadLocally(v, [], true);
         setBadge(0);
+        if (_tabCounts) { _tabCounts = Object.fromEntries(Object.keys(_tabCounts).map((k) => [k, 0])); paintTabCounts(); }
         broadcast({ type: 'read', all: true });
         try { await apiJson('/api/notifications/read-all', { method: 'POST', body: {} }); } catch { pollUnread(); }
+        loadTabCounts(true);
     }
     async function dismiss(v, id) {
         const n = v.items.find(x => String(x.id) === String(id));
@@ -895,7 +1083,7 @@
         if (!v.items.length) renderItems(v);
         try {
             await apiJson(`/api/notifications/${encodeURIComponent(id)}/dismiss`, { method: 'POST' });
-            if (n && !isRead(n)) setBadge(Math.max(0, _unreadCount - 1), { quiet: true });
+            if (n && !isRead(n)) { setBadge(Math.max(0, _unreadCount - 1), { quiet: true }); loadTabCounts(true); }
         } catch { /* */ }
     }
 
@@ -992,6 +1180,7 @@
         panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');
         document.body.appendChild(panel);
         buildView(panel, { mode: 'panel' });
+        attachSheetDrag(panel);
         document.addEventListener('click', (e) => {
             if (panel.classList.contains('open') && !panel.contains(e.target) && !(_bellEl && _bellEl.contains(e.target))) closePanel();
         });
@@ -999,7 +1188,34 @@
         _panelEl = panel;
         return panel;
     }
-    function closePanel() { _panelEl?.classList.remove('open'); _bellEl?.classList.remove('open'); syncLayer(); }
+    function closePanel() {
+        if (_panelEl && _panelEl.contains(document.activeElement) && _bellEl) { try { _bellEl.focus({ preventScroll: true }); } catch { /* */ } }
+        _panelEl?.classList.remove('open'); _bellEl?.classList.remove('open'); _bellEl?.setAttribute('aria-expanded', 'false');
+        if (_panelEl) _panelEl.style.transform = '';
+        document.documentElement.classList.remove('ovn-sheet-open');
+        syncLayer();
+    }
+    /** Phones: the sheet's head drags down; past 110 px it closes, short of that it springs back. */
+    function attachSheetDrag(panel) {
+        const head = panel.querySelector('.openvibe-nv-head');
+        if (!head || typeof root.PointerEvent !== 'function') return;
+        let y0 = null, dy = 0;
+        head.addEventListener('pointerdown', (e) => {
+            if (!isPhone() || e.pointerType === 'mouse' || e.target.closest('button, a')) return;
+            y0 = e.clientY; dy = 0; panel.style.transition = 'none';
+            try { head.setPointerCapture(e.pointerId); } catch { /* */ }
+        });
+        head.addEventListener('pointermove', (e) => { if (y0 == null) return; dy = Math.max(0, e.clientY - y0); panel.style.transform = `translateY(${dy}px)`; });
+        const end = () => {
+            if (y0 == null) return;
+            y0 = null;
+            panel.style.transition = 'transform .2s ease';
+            if (dy > 110) closePanel(); else panel.style.transform = '';
+            setTimeout(() => { panel.style.transition = ''; }, 220);
+        };
+        head.addEventListener('pointerup', end);
+        head.addEventListener('pointercancel', end);
+    }
     function togglePanel() {
         if (!_panelEl) createPanel();
         const opening = !_panelEl.classList.contains('open');
@@ -1011,11 +1227,15 @@
             _panelEl.style.setProperty('--ovn-top', Math.max(8, Math.round(bottom) + 6) + 'px');
             if (!_panelEl.__esc) { _panelEl.__esc = (e) => { if (e.key === 'Escape' && _panelEl.classList.contains('open')) togglePanel(); }; document.addEventListener('keydown', _panelEl.__esc); }
         }
-        _panelEl.classList.toggle('open', opening);
-        _bellEl?.classList.toggle('open', opening);
-        _bellEl?.setAttribute('aria-expanded', String(opening));
+        if (!opening) { closePanel(); return; }
+        _panelEl.classList.add('open');
+        _bellEl?.classList.add('open');
+        _bellEl?.setAttribute('aria-expanded', 'true');
+        document.documentElement.classList.toggle('ovn-sheet-open', isPhone());
         syncLayer();
-        if (opening) { reload(_views.get(_panelEl)); refreshPushButton(_views.get(_panelEl)); pollUnread(); }
+        reload(_views.get(_panelEl)); refreshPushButton(_views.get(_panelEl)); pollUnread();
+        // Focus the chosen tab, so the keyboard starts in the panel (Escape and the bell bring it back).
+        setTimeout(() => { try { _panelEl.querySelector('[role="tab"][aria-selected="true"]')?.focus({ preventScroll: true }); } catch { /* */ } }, 0);
     }
 
     // ── Web Push ────────────────────────────────────────────
@@ -1086,6 +1306,7 @@
     const OpenVibeNotifications = {
         init(opts = {}) {
             Object.assign(_config, opts);
+            _quietAt = 0; loadQuiet();   // quiet hours before the first notice can arrive
             injectStyles();
             if (opts.preferences) Object.assign(_preferences, opts.preferences);
             channel();
