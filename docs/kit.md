@@ -11,7 +11,7 @@ theme, and they fit a phone first.
   loads only this one.
 - **`kit.css`**: the look, built on the site's theme tokens.
 - **`appbar.js`**: the phone tab bar. `navbar.js` loads it only for a site that sets `appBar`.
-- **`search.js`**: search across OpenVibe from the navbar's magnifier, loaded on first use.
+- **`search.js`**: the OpenVibe menu (search, every site, every tool) behind the orb beside the brand, loaded on first use.
 - **`loading.js`**: the one loading look (an overlay over the thing's own picture) and skeleton rows.
 
 The package is MIT. Every site serves its own pinned copy at `/shared/kit.css`, `/shared/kit.js`, `/shared/kit-web.js` and
@@ -45,7 +45,7 @@ The same day, a sweep measured the front page of all 38 live sites at 390 px wid
 
 ```
 ┌──────────────────────────────┐
-│ navbar (sticky)              │  OpenVibe Frame: brand, launcher, bell, account
+│ navbar (sticky)              │  OpenVibe Frame: brand + menu orb, balances, bell, account
 ├──────────────────────────────┤
 │ ‹  Title            ⓘ  •••   │  kit.head: back, title, one muted line, icon actions   ┐ sticky under
 │ ( Look ) Privacy  Sound  …   │  kit.tabs: the page's parts, one at a time             ┘ the navbar
@@ -210,10 +210,11 @@ The rules since 4.22.0:
    icons make the phone app bar (`appBar: true`).
 2. **The rest is `more: true`.** Those links fold into one "More" on computers and are listed in the phone drawer:
    guides, sources, "how it works", the API.
-3. **Search is the magnifier**, not a link: `search: { owner, label, page }` points it at the site's own results and
-   search page.
+3. **Search is the orb beside the brand**, not a link: `search: { owner, label, page }` points it at the site's own
+   results and search page.
 4. **"What shipped" lives in the footer** (Updates), which every site has.
-5. **The account menu holds the person's things** (dashboard, settings, admin), and the launcher holds the other sites.
+5. **The account menu holds the person's things** (dashboard, settings, admin), and the OpenVibe menu holds the other
+   sites.
    The bar no longer repeats them (`networkLinks` brings the strip back for a site that really wants it).
 
 ```js
@@ -229,13 +230,39 @@ OpenVibeNavbar.init({ service: 'food', links: [
 **On a phone** the bar keeps the site's name readable and never stacks one control on another (4.22.1):
 - **The name:** the site's word alone ("Games", not "OpenVibe.Games") up to 480 px. When there is still no room, it
   ends with an ellipsis and is never drawn under the buttons.
-- **Signed in:**
-  - the balances fold into one pill showing the first balance, up to 440 px (a tap lists them all);
-  - the launcher steps into the menu, whose "All sites" opens it.
-- **Everyone under 375 px:** the launcher steps into the menu.
-- **Spacing:** the right-hand buttons sit closer together under 400 px.
+- **Signed in:** the balances fold into one pill under 560 px that always shows **both**, OpenCoins and Vibes (4.25.0;
+  a tap lists them in full). Under 440 px the pill tightens; under 350 px the site's word gives way to the mark so the
+  balances keep their icons.
+- **The menu's orb** stays beside the brand at every width.
+- **Spacing:** under 400 px the bar's padding, gaps, picture and buttons tighten.
+- **Reading down a phone** (under 760 px), the bar steps away and comes back on the first scroll up. It never does
+  with one of its menus open or focus inside it. `autoHide: false` keeps it.
+- **The account menu** is a sheet the width of the screen under 560 px. Its tiles never leave one alone on a row.
+
+**Messages** (4.25.0): a site with messages puts them beside the bell instead of a bubble over the page.
+
+```js
+OpenVibeNavbar.init({ …, messages: { onOpen: () => openInbox(), href: '/messages' } })   // href without onOpen: a link
+OpenVibeNavbar.setMessages(3)                                                             // the unread count (0 hides it)
+```
+
+**Routers get paths** (4.25.0): `onNavigate(path, event)` receives `/@name?tab=x#y` for a link on this site, never a
+full address. The account menu's "My channel" is `https://openvibe.live/@name` on every site, and Live's router once
+put it under `/`.
 
 `test/navbar-phone-fit-chrome.test.js` measures the bar from 320 to 430 px, signed in and out.
+
+## The mark
+
+`ov-mark.js` draws the OpenVibe mark (4.25.0, the "open loop"): one stroke, an O opened at the top by the V, so it
+reads OV and "open" at once. The site's dot sits in the opening.
+- **Colour:** the stroke runs from the site's accent towards violet (`--ovm-to`).
+- **Motion:**
+  - it draws itself in on a visit's first view, and a short light runs along it while it moves;
+  - otherwise it rests (the motion budget).
+- **Variants:** each site keeps its own rhythm (`data-variant`). Live's dot is red and on air.
+- **App icons, favicons and share cards** draw the same loop (`app-icon.js`, `scripts/build-icons.js`,
+  `scripts/build-social-cards.js`).
 
 ## The app bar
 
@@ -258,8 +285,15 @@ the site's main verb (go live, post, ask). Settings and the rest live in More.
 
 ## The OpenVibe menu: search, every site, every tool
 
-One control on every site: the navbar's magnifier (or `/`, or Ctrl+K) opens the OpenVibe menu. It used to be two
-panels doing the same job, the launcher's dots (every site) and the magnifier (search). The owner, 2026-10-28:
+One control on every site: the orb beside the brand (or `/`, or Ctrl+K) opens the OpenVibe menu. It used to be two
+panels doing the same job, the launcher's dots (every site) and the magnifier (search).
+
+**The orb** (4.25.0; the owner: "the little diamond thing… an icon that has cool animations and effects… next to the
+logo"): nine dots set as a diamond, the centre in the accent.
+- **Hovered:** a ripple runs out from the centre and the dots take the accent's colours.
+- **While the menu loads:** the dots wave.
+- **While it is open:** the diamond turns into an × that closes it.
+- **At rest it doesn't move**, and reduced motion turns all of it off. The owner, 2026-10-28:
 "combine… a better hierarchy… use this user's history… autocomplete… maybe use tabs". The navbar loads `search.js` the
 first time someone asks, so a page nobody searches pays nothing (and the navbar itself got 15 KB lighter).
 
@@ -284,7 +318,9 @@ completion shows faintly behind the text; Tab or → takes it.
 
 **Keys:** arrows move, Enter opens, Escape closes.
 
-**Layout:** a phone gets the whole screen; a computer gets a panel near the top, with the keys listed at its foot.
+**Layout:** opened from the orb, the menu drops from it under the bar. On a computer it is a panel from the orb's side, with
+the keys listed at its foot. On a phone it is a sheet as tall as its contents. Opened any other way, it is a centred
+panel (a phone gets the whole screen).
 
 ```js
 OpenVibeNavbar.init({ …, search: { owner: 'live', label: 'OpenVibe.Live', page: '/search' } })   // or search: false

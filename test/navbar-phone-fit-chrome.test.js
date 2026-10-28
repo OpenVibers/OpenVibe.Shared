@@ -3,7 +3,8 @@
 // name was drawn under the launcher and the magnifier (the owner's screenshot, 2026-10-28): the right-hand group
 // (magnifier, balances, bell, picture, menu) left the brand ~19px and the name did not clip. Now, from 320px to 430px:
 // nothing in the bar overlaps or runs off the screen, the site's word reads whole from 360px, the folded balances
-// show the first one, and a signed-in phone keeps the launcher in the menu. Skipped without Chrome.
+// show the first one, and a signed-in phone keeps the launcher in the menu. Since 4.25.0 both balances show at every
+// width and the menu's orb sits beside the brand. Skipped without Chrome.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -70,7 +71,9 @@ const MEASURE = `(() => {
                 const last = v.parts[v.parts.length - 1];
                 assert.ok(last[1][1] <= width, `${at}: ${last[0]} runs off the screen`);
                 if (width >= 360) assert.ok(!v.clipped && /Games/.test(v.visibleText), `${at}: the site's word reads whole (${v.visibleText})`);
-                if (who === 'in') assert.strictEqual(v.minis, width <= 440 ? 1 : 2, `${at}: the folded balances show ${width <= 440 ? 'the first one' : 'both'}`);
+                if (who === 'in') assert.strictEqual(v.minis, 2, `${at}: the folded balances show both, OpenCoins and Vibes (4.25.0)`);
+                const orb = v.parts.find(([k]) => k === 'search');
+                assert.ok(orb && orb[1][0] < width / 2, `${at}: the OpenVibe menu's orb sits by the brand, on the left (4.25.0)`);
                 assert.ok(!v.parts.some(([k]) => k === 'launcher'), `${at}: no launcher button: the magnifier opens the one menu (4.23.0)`);
                 await p.close();
             }

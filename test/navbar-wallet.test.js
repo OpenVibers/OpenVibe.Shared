@@ -28,13 +28,15 @@ function dropdown() {
     configure({ token: 'tok', apiBase: 'https://openvibe.network', menu: null });
     let d = dropdown();
     await loadWallet(d);
-    assert.deepStrictEqual(calls.map((c) => c.url), ['https://openvibe.network/api/coins/me', 'https://billing.openvibe.network/api/me/vibes']);
+    // The Network first, for both (4.25.0); an older one answers the coins only, so Billing itself after it.
+    assert.deepStrictEqual(calls.map((c) => c.url), ['https://openvibe.network/api/coins/me?with=vibes', 'https://billing.openvibe.network/api/me/vibes']);
     assert.strictEqual(calls[1].init.headers.Authorization, 'Bearer tok');
     assert.strictEqual(calls[1].init.credentials, 'omit', 'no cookies to Billing');
     assert.strictEqual(d.els['#openvibe-wallet'].hidden, false);
     assert.match(d.els['#openvibe-wallet'].innerHTML, /1,234/);
     assert.strictEqual(d.els['#openvibe-vibes'].hidden, false);
-    assert.match(d.els['#openvibe-vibes'].innerHTML, /5,600 Vibes/);
+    assert.match(d.els['#openvibe-vibes'].innerHTML, /5,600 <small>Vibes<\/small>/);
+    assert.match(d.els['#openvibe-wallet'].innerHTML, /1,234 <small>OpenCoins<\/small>/, 'each balance says what it is');
     assert.match(d.els['#openvibe-vibes'].innerHTML, /href="https:\/\/openvibe\.live\/#vibes"/);
 
     await loadWallet(d);
@@ -60,6 +62,16 @@ function dropdown() {
     configure({ token: null, menu: null });
     await loadWallet(dropdown());
     assert.strictEqual(calls.length, 0);
+
+    // A Network that answers both: one request, Billing never asked.
+    configure({ token: 'tok', menu: null, wallet: false, chips: [] });
+    answer.coins = { status: 200, body: { balance: 1234, vibes: 77 } };
+    calls.length = 0;
+    d = dropdown();
+    await loadWallet(d);
+    assert.deepStrictEqual(calls.map((c) => c.url), ['https://openvibe.network/api/coins/me?with=vibes']);
+    assert.match(d.els['#openvibe-vibes'].innerHTML, /77 <small>Vibes<\/small>/);
+    answer.coins = { status: 200, body: { balance: 1234 } };
 
     // billingBase points elsewhere (a test cell).
     configure({ token: 'tok', billingBase: 'https://billing.example.test' });

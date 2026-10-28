@@ -207,7 +207,12 @@
   .ovs-grid.is-sites { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ovs-tile small { -webkit-line-clamp: 1; }
 }
-@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar { animation: none; } }`;
+/* Dropped from the navbar's orb (4.25.0): under the bar, from the orb's side, the bar still showing. */
+.ovs.ovs-anchored { top: var(--ovs-top, 0px); background: rgba(3, 6, 12, .45); }
+.ovs.ovs-anchored .ovs-panel { top: 8px; left: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); transform: none; transform-origin: 24px 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .22s cubic-bezier(.2,1.15,.3,1); }
+@keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .ovs.ovs-anchored .ovs-panel { top: 0; left: 0; width: 100vw; height: auto; max-height: calc(100dvh - var(--ovs-top, 0px) - 12px); border-radius: 0 0 22px 22px; border-top: 0; } }
+@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel { animation: none; } }`;
         document.head.appendChild(st);
     }
 
@@ -350,7 +355,8 @@
             g.items.forEach((it) => {
                 if (as === 'chips') {
                     const a = option('a', 'ovs-chip', it);
-                    if (ICON[it.icon]) a.insertAdjacentHTML('afterbegin', ICON[it.icon]);
+                    // The place's own icon (the navbar's drawn set, never page text), else the menu's.
+                    if (it.drawn && /^<svg[\s>]/.test(it.drawn)) a.insertAdjacentHTML('afterbegin', it.drawn); else if (ICON[it.icon]) a.insertAdjacentHTML('afterbegin', ICON[it.icon]);
                     const s = document.createElement('span'); s.textContent = it.title; a.appendChild(s);
                     box.appendChild(a);
                     return;
@@ -375,7 +381,7 @@
     function pagesOf(q) {
         const n = q.toLowerCase();
         return (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden && (!n || l.label.toLowerCase().includes(n)))
-            .slice(0, n ? 4 : 8).map((l) => ({ title: l.label, meta: `Go to · ${here()}`, url: safeUrl(l.href), icon: 'go', kind: 'page' })).filter((x) => x.url);
+            .slice(0, n ? 4 : 8).map((l) => ({ title: l.label, meta: `Go to · ${here()}`, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
     }
     function actions(q) {
         const out = [];
@@ -510,6 +516,11 @@
         lastFocus = document.activeElement;
         tab = TABS.some(([id]) => id === opts.tab) ? opts.tab : 'you';
         el.classList.add('is-open');
+        // Opened from the navbar's orb: the menu drops from it, under the bar; otherwise centred.
+        const at = opts.anchor;
+        el.classList.toggle('ovs-anchored', !!at);
+        if (at) { el.style.setProperty('--ovs-top', `${Math.max(0, Math.round(at.top))}px`); el.style.setProperty('--ovs-left', `${Math.max(8, Math.round(at.left))}px`); }
+        try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: true } })); } catch { /* */ }
         document.documentElement.style.overflow = 'hidden';
         input.placeholder = `Search ${here()}, or jump to any site`;
         input.value = opts.q || '';
@@ -526,6 +537,8 @@
         el.classList.remove('is-open');
         document.documentElement.style.overflow = '';
         if (inflight) { inflight.abort(); inflight = null; }
+        if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
+        try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
 

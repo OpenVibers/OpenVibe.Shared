@@ -110,7 +110,7 @@ const hrefs = (html) => [...html.matchAll(/href="([^"]+)"/g)].map((m) => unescap
         await new Promise((r) => setImmediate(r));
         const menu = made.find((e) => e.className === 'openvibe-navbar-dropdown');
         assert.ok(/data-account-id="8"/.test(menu.innerHTML), 'in place');
-        assert.ok(/Switch to Anonymous/.test(menu.innerHTML));
+        assert.ok(/data-account-id="anon"[^>]*title="Browse without your name"[\s\S]*?<span>Anonymous<\/span>/.test(menu.innerHTML), 'the Anonymous pill, whole (4.25.0)');
         const add = new URL(hrefs(menu.innerHTML).find((h) => h.includes('add_account=')));
         assert.strictEqual(add.searchParams.get('return'), 'https://openvibe.network/my', 'on the Network the page itself is the sign-in');
     }

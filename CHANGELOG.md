@@ -6,6 +6,43 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.25.0 — 2026-10-28
+
+The brand bar, from the owner's phone on 2026-10-28.
+
+- **A new mark: the open loop** (`ov-mark.js`, `app-icon.js`): one stroke, an O opened at the top by the V, with the
+  site's dot in the opening. It replaces the ring, comet, white V and orbiting dot.
+  - **Colour:** from the accent towards violet.
+  - **Motion:** it draws itself in, and a short light runs along it.
+  - **Light themes:** the dot follows the text colour, so it shows there.
+  - **Icons and cards:** app icons (`icons/`), favicons and share cards (`social/`) are redrawn with it.
+  - The owner: "the open vibe logo isn't even that great… new ideas… more modern… better effects".
+- **The OpenVibe menu's orb, beside the brand** (`navbar.js`). The magnifier on the right is gone (the owner: "the
+  little diamond thing… cool animations… next to the logo").
+  - **The orb:** nine dots as a diamond. Hovered, a ripple runs from the centre; it waves while the menu loads, and it is
+    an × while the menu is open (a second click closes it). Nothing moves at rest.
+  - **The menu** (`search.js`) drops from the orb under the bar: a panel on a computer, a sheet as tall as its contents
+    on a phone. "On this site" chips carry the place's own icon.
+  - **Events:** `search.js` sends `openvibe-menu` events and calls `onClose`.
+- **Both balances on phones.** The folded pill shows OpenCoins and Vibes at every width (it showed the first one up
+  to 440 px). The bar's padding, gaps, picture and buttons tighten under 400 px; under 350 px the site's word gives
+  way to the mark.
+- **Vibes beside OpenCoins in the account menu.**
+  - **One request:** the navbar asks OpenVibe.Network once, `GET /api/coins/me?with=vibes`, Network#373. Every site's
+    connect-src allows the Network and none allowed Billing, so Vibes never showed. An older Network falls back to
+    Billing.
+  - **Labels:** each balance names itself.
+- **The account menu on a phone** is a sheet the width of the screen.
+  - **Tiles:** they never leave one alone on a row (five share a row, six make two of three).
+  - **Anonymous:** the pill reads whole.
+  - **Footer:** its buttons share the row evenly.
+- **On a phone the bar steps away** while you read down and comes back on the first scroll up. It never does with a
+  menu open or focus inside it. `autoHide: false` keeps it.
+- **Messages beside the bell** (`messages: { onOpen, href }`, `setMessages(n)` for the unread count), for a site
+  that would otherwise float a bubble over the page (the owner: "this DMs button is like buggy as hell on mobile").
+- **Routers get paths.** `onNavigate` (the bar, the account menu and the app bar) receives `/@name?tab=x`, never a
+  full address. On Live, "My channel" (`https://openvibe.live/@name`) had opened `/https://openvibe.live/@name`.
+
 ## 4.24.4 — 2026-10-28
 
 - **`agent-session.js`: no made-up run time.** A finished run mounted without `startedAt` (a replay) showed "0 s"; it

@@ -23,7 +23,8 @@ const OUT = path.join(__dirname, '..', 'icons');
 const SERVICES = path.join(contracts, 'manifests', 'services');
 
 function serviceIds() {
-    return fs.readdirSync(social.DIR).filter((f) => f.endsWith('.jpg')).map((f) => f.slice(0, -4)).sort();
+    // A page card (live-chat, live-rundown, …) belongs to its site, which has the icons and the manifest.
+    return fs.readdirSync(social.DIR).filter((f) => f.endsWith('.jpg')).map((f) => f.slice(0, -4)).filter((id) => !social.pageOf(id)).sort();
 }
 
 function siteOf(id) {

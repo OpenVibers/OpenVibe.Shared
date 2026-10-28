@@ -70,7 +70,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, htm
     {
         const t = setup();
         const css = t.document.getElementById('ov-mark-css').textContent;
-        assert.match(css, /\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) svg,[^{]*\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) \.c,[^{]*\{animation-play-state:paused!important\}/, 'paused rule');
+        assert.match(css, /\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) svg,[^{]*\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) \.sw,[^{]*\{animation-play-state:paused!important\}/, 'paused rule (the running light, 4.25.0)');
         assert.ok(t.mark.querySelector('svg'), 'mounted');
         assert.ok(t.io.targets.has(t.mark), 'observed for visibility');
         // Not yet known to be on screen: still, SMIL parked on the centred V sweep.
