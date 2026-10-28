@@ -69,7 +69,9 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('!!document.getElementById("openvibe-search-btn")'), true, 'the magnifier is in the bar');
         assert.strictEqual(await p.evaluate('typeof window.OpenVibeSearch'), 'undefined', 'search.js is not loaded until asked');
         await p.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true })); 1');
-        await wait(400);
+        // search.js loads on first use: wait for its box, not a fixed time (macOS runners took longer than 400 ms, 4.28.0's CI).
+        for (let i = 0; i < 50 && !(await p.evaluate('!!document.querySelector(".ovs.is-open .ovs-input")')); i++) await wait(100);
+        await wait(150);
         let v = await p.evaluate(`({ open: !!document.querySelector('.ovs.is-open'), focused: document.activeElement && document.activeElement.className,
             tabs: [...document.querySelectorAll('.ovs-tab')].map((t) => t.textContent + (t.getAttribute('aria-selected') === 'true' ? '*' : '')),
             groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), chips: [...document.querySelectorAll('.ovs-chip span')].map((t) => t.textContent),
