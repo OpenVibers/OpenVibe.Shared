@@ -386,63 +386,6 @@ function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq
 }
 
 const CSS = `
-/* Rooms (4.28.0): sc.room() — a room's hero, live proof, motif and scenes, in the room's accent (.ov-room in kit.css:
-   --room-accent, --room-strong, --room-fill, --room-on). */
-.sc-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-:where(.sc-room) .ovk-i{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.sc-room-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(20px,4vw,48px);align-items:center;padding:clamp(20px,5vw,56px) 0 clamp(4px,2vw,16px)}
-.sc-room-hero h1{margin:0;font-size:clamp(2.05rem,5.4vw,3.5rem);font-weight:800;letter-spacing:-.035em;line-height:1.04;text-wrap:balance}
-.sc-room-lede{margin:14px 0 0;max-width:560px;font-size:clamp(1rem,1.6vw,1.13rem);line-height:1.55;color:var(--text-secondary,#96a7c2)}
-.sc-room-box{display:flex;align-items:center;margin-top:22px;max-width:560px;border-radius:999px;background:var(--bg-card,#0f1729);border:1.5px solid color-mix(in srgb,var(--room-accent,#3b82f6) 45%,var(--border,#1f2d47));box-shadow:0 12px 32px -14px color-mix(in srgb,var(--room-accent,#3b82f6) 55%,transparent);transition:border-color .2s,box-shadow .2s}
-.sc-room-box:focus-within{border-color:var(--room-accent,#3b82f6);box-shadow:0 0 0 4px color-mix(in srgb,var(--room-accent,#3b82f6) 22%,transparent),0 12px 32px -14px color-mix(in srgb,var(--room-accent,#3b82f6) 60%,transparent)}
-.sc-room-box input{flex:1;min-width:0;height:56px;padding:0 8px 0 22px;border:0;background:transparent;color:var(--text-primary,#e6edf7);font:inherit;font-size:1.05rem;outline:none}
-.sc-room-box input::placeholder{color:var(--text-muted,#7386a3);opacity:1}
-.sc-room-box input::-webkit-search-cancel-button{display:none}
-.sc-room-box button{flex:none;display:grid;place-items:center;width:44px;height:44px;margin-right:6px;border:0;border-radius:50%;background:var(--room-fill,#3b82f6);color:var(--room-on,#fff);cursor:pointer;font-size:20px;transition:transform .18s}
-.sc-room-box button:hover{transform:translateX(2px)}
-.sc-room-box button:focus-visible{outline:2px solid var(--room-accent,#3b82f6);outline-offset:3px}
-.sc-room-start{background:var(--room-fill,#3b82f6)!important;color:var(--room-on,#fff)!important;border-color:transparent!important}
-.sc-room-chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.sc-room-chips a{display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--border,#1f2d47);background:color-mix(in srgb,var(--room-accent,#3b82f6) 7%,var(--bg-card,#0f1729));color:var(--text-primary,#e6edf7);font-size:.9rem;font-weight:600;text-decoration:none;white-space:nowrap;transition:border-color .15s,color .15s}
-.sc-room-chips a:hover,.sc-room-chips a:focus-visible{border-color:var(--room-accent,#3b82f6);color:var(--room-strong,#60a5fa);outline:0}
-.sc-room-proof{list-style:none;display:flex;flex-wrap:wrap;gap:8px 22px;margin:22px 0 0;padding:0;font-size:.92rem;color:var(--text-secondary,#96a7c2)}
-.sc-room-proof li{display:inline-flex;align-items:baseline;gap:6px}
-.sc-room-proof b{color:var(--text-primary,#e6edf7);font-size:1.18rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.sc-room-proof em{font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted,#7386a3)}
-.sc-room-proof .sc-room-live{display:inline-flex;align-items:center;gap:4px;color:var(--room-strong,#60a5fa)}
-.sc-room-live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:sc-breathe 2s ease-in-out infinite}
-.sc-room-pic{display:flex;justify-content:center;min-width:0}
-.sc-room-motif{position:relative;width:min(100%,340px);aspect-ratio:1;color:var(--room-accent,#3b82f6)}
-.sc-rm-glow{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--room-accent,#3b82f6) 48%,transparent),transparent);filter:blur(10px);animation:sc-breathe 6s ease-in-out infinite}
-.sc-rm-orbit{position:absolute;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--room-accent,#3b82f6) 32%,transparent);animation:sc-spin 26s linear infinite}
-.sc-rm-orbit.o1{inset:15%}
-.sc-rm-orbit.o2{inset:1%;border-style:dashed;animation-duration:52s;animation-direction:reverse;opacity:.7}
-.sc-rm-orbit i{position:absolute;top:-6px;left:calc(50% - 6px);width:12px;height:12px;border-radius:50%;background:currentColor;box-shadow:0 0 18px currentColor}
-.sc-rm-orbit.o2 i:nth-child(2){top:auto;bottom:12%;left:-5px;width:9px;height:9px;opacity:.75}
-.sc-rm-core{position:absolute;inset:33%;display:grid;place-items:center;border-radius:30%;background:color-mix(in srgb,var(--room-accent,#3b82f6) 14%,var(--bg-card,#0f1729));border:1px solid color-mix(in srgb,var(--room-accent,#3b82f6) 42%,transparent);box-shadow:0 22px 52px -18px color-mix(in srgb,var(--room-accent,#3b82f6) 75%,transparent)}
-.sc-rm-core .ovk-i{width:48%;height:48%;stroke-width:1.6}
-.sc-room .ovk-rail{margin-top:clamp(26px,4vw,40px)}
-.sc-room-scenes{display:flex;flex-direction:column;gap:clamp(32px,6vw,76px);margin-top:clamp(40px,6vw,80px)}
-.sc-scene{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(18px,4vw,52px);align-items:center}
-.sc-scene.is-flip .sc-scene-text{order:2}
-.sc-scene-text h2{margin:0 0 8px;font-size:clamp(1.3rem,2.6vw,1.8rem);letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
-.sc-scene-text p{margin:0;color:var(--text-secondary,#96a7c2);line-height:1.6;max-width:460px}
-.sc-scene-go{display:inline-flex;align-items:center;gap:4px;min-height:40px;margin-top:10px;color:var(--room-strong,#60a5fa);font-weight:700;text-decoration:none}
-.sc-scene-go:hover{text-decoration:underline}
-.sc-scene-stage{position:relative;min-width:0;border-radius:20px;padding:clamp(14px,2.4vw,24px);background:radial-gradient(120% 80% at 85% 0%,color-mix(in srgb,var(--room-accent,#3b82f6) 16%,transparent),transparent 62%),var(--bg-card,#0f1729);border:1px solid var(--border,#1f2d47);box-shadow:0 30px 60px -32px rgba(0,0,0,.55);overflow:hidden}
-.sc-room-devlinks{margin:12px 0 0;font-size:.9rem;color:var(--text-muted,#7386a3)}
-.sc-room-devlinks a{color:var(--room-strong,#60a5fa);font-weight:700}
-html.ov-motion [data-ov-reveal]{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
-html.ov-motion [data-ov-reveal].is-in{opacity:1;transform:none}
-@media (max-width:759px){
-.sc-room-hero{grid-template-columns:minmax(0,1fr);margin-inline:-16px;padding-inline:16px;overflow-x:clip}
-.sc-room-pic{position:absolute;z-index:-1;top:-4px;right:-30px;width:168px;opacity:.28;pointer-events:none}
-.sc-scene,.sc-scene.is-flip{grid-template-columns:minmax(0,1fr)}.sc-scene.is-flip .sc-scene-text{order:0}
-}
-@media (max-width:599px){.sc-room-chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding:2px 16px;scrollbar-width:none}.sc-room-chips::-webkit-scrollbar{display:none}.sc-room-box input{height:52px;padding-left:18px}}
-@media (prefers-reduced-motion:reduce){.sc-rm-glow,.sc-rm-orbit,.sc-room-live::before{animation:none}html.ov-motion [data-ov-reveal]{opacity:1;transform:none;transition:none}}
-html[data-ov-motion=reduced] .sc-rm-glow,html[data-ov-motion=reduced] .sc-rm-orbit,html[data-ov-motion=reduced] .sc-room-live::before{animation:none}
-html[data-ov-motion=reduced].ov-motion [data-ov-reveal]{opacity:1;transform:none;transition:none}
 /* The hero's visual (4.26.0): the aura (rings, dots, the mark) or an orbit of the site's places. */
 .sc-vis{position:relative;width:min(100%,380px);aspect-ratio:1;margin:0 auto;container-type:inline-size}
 .sc-aura-glow{position:absolute;inset:28%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent,#3b82f6) 42%,transparent),transparent);filter:blur(8px);animation:sc-breathe 6s ease-in-out infinite}
