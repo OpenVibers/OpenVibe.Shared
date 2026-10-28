@@ -16,6 +16,13 @@
  * OpenVibe.Search (sites they use most first), their recent searches, and "search everywhere" / "Ask Vibe". The box
  * completes what they type from their own searches, history and the site names (Tab or → takes it).
  *
+ * Enter shows every result in the panel (4.29.0, the Search Fabric, plan 2026-10-28 §4.5), unless a row was picked with the
+ * arrows or the text is a place's exact name (live, tools): tabs All · OpenVibe · Web · Video · News · Products (· Yours,
+ * signed in). OpenVibe's results come at once (Network's GET /api/frame/query, scopes network[,mine], depth quick); the
+ * web's arrive on their own (scope web) with skeleton rows meanwhile, each saying where it came from ("via Wikipedia").
+ * A line at the end says what was searched and how long it took. The person's token goes along, so their own results
+ * and the paid web providers are theirs; the query is never written into the page as markup.
+ *
  *   OpenVibeSearch.open({ service, scope: { owner, label, page }, links, q, tab, frame, token, apiBase, user,
  *                         suggestUrl, icons })   navbar.js calls it
  *   OpenVibeSearch.close()
@@ -58,6 +65,10 @@
     const TABS = [['you', 'For you'], ['sites', 'Sites'], ['tools', 'Tools']];
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'you', mine = null, catalog = null, completion = '';
+    // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
+    const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
+    const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
+    let view = 'suggest', rtabsEl = null, rq = '', rtab = 'all', rflight = null, moved = false;
 
     const safeUrl = (u) => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     function siteOf(url) {
@@ -198,6 +209,16 @@
 .ovs-foot { display: flex; gap: 14px; padding: 8px 16px; border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-size: 11.5px; color: var(--text-muted, #93a0b4); }
 .ovs-foot kbd { font: inherit; font-weight: 700; padding: 1px 5px; border-radius: 5px; border: 1px solid var(--border, rgba(255,255,255,.14)); }
 .ovs-busy .ovs-bar { background-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent), transparent); background-size: 40% 2px; background-repeat: no-repeat; background-position: -40% 100%; animation: ovs-scan 1s linear infinite; }
+.ovs-snip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #a8b3c4); white-space: normal; }
+.ovs-results-on .ovs-item a { align-items: flex-start; padding: 9px 10px; }
+.ovs-results-on .ovs-ic { margin-top: 1px; text-transform: lowercase; }
+.ovs-rtabs { overflow-x: auto; scrollbar-width: none; padding-top: 8px; }
+.ovs-rtabs::-webkit-scrollbar { display: none; }
+.ovs-rtabs .ovs-tab[hidden] { display: none; }
+.ovs-skels { display: grid; gap: 6px; padding: 4px 6px 8px; }
+.ovs-skel { display: block; height: 52px; border-radius: 12px; background: linear-gradient(90deg, var(--bg-hover, rgba(255,255,255,.05)) 0%, color-mix(in srgb, var(--bg-hover, rgba(255,255,255,.05)) 40%, transparent) 50%, var(--bg-hover, rgba(255,255,255,.05)) 100%); background-size: 200% 100%; animation: ovs-shimmer 1.3s linear infinite; }
+.ovs-route { padding: 10px 14px 6px; font-size: 12px; color: var(--text-muted, #93a0b4); }
+@keyframes ovs-shimmer { to { background-position: -200% 0; } }
 @keyframes ovs-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ovs-scan { to { background-position: 140% 100%; } }
 @media (hover: none), (max-width: 640px) { .ovs-foot, .ovs-key { display: none; } }
@@ -212,7 +233,7 @@
 .ovs.ovs-anchored .ovs-panel { top: 8px; left: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); transform: none; transform-origin: 24px 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .22s cubic-bezier(.2,1.15,.3,1); }
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .ovs.ovs-anchored .ovs-panel { top: 0; left: 0; width: 100vw; height: auto; max-height: calc(100dvh - var(--ovs-top, 0px) - 12px); border-radius: 0 0 22px 22px; border-top: 0; } }
-@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel { animation: none; } }`;
+@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel { animation: none; } }`;
         document.head.appendChild(st);
     }
 
@@ -234,15 +255,18 @@
         el.setAttribute('aria-label', 'Search and every OpenVibe site');
         el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar">${ICON.search}<div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><button type="button" class="ovs-x">Close</button></div>`
             + `<div class="ovs-tabs" role="tablist" aria-label="Show">${TABS.map(([id, label]) => `<button type="button" class="ovs-tab" role="tab" data-tab="${id}" aria-selected="false">${label}</button>`).join('')}</div>`
+            + `<div class="ovs-tabs ovs-rtabs" role="tablist" aria-label="Results from" hidden>${RTABS.map(([id, label]) => `<button type="button" class="ovs-tab" role="tab" data-rtab="${id}" aria-selected="false">${label}</button>`).join('')}</div>`
             + '<ul class="ovs-list" id="ovs-list" role="listbox"></ul><div class="ovs-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Tab</kbd> complete</span><span><kbd>Esc</kbd> close</span></div></div>';
         input = el.querySelector('.ovs-input');
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
         tabsEl = el.querySelector('.ovs-tabs');
+        rtabsEl = el.querySelector('.ovs-rtabs');
+        rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
         el.addEventListener('mousedown', (e) => { if (e.target === el) close(); });
         el.querySelector('.ovs-x').addEventListener('click', close);
         tabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-tab]'); if (b) { tab = b.getAttribute('data-tab'); render(''); input.focus(); } });
-        input.addEventListener('input', () => { paintGhost(); schedule(input.value); });
+        input.addEventListener('input', () => { moved = false; if (view === 'results') leaveResults(); paintGhost(); schedule(input.value); });
         input.addEventListener('keydown', onKey);
         listEl.addEventListener('click', (e) => {
             const clear = e.target.closest && e.target.closest('[data-ovs-clear]');
@@ -250,7 +274,10 @@
             const to = e.target.closest && e.target.closest('[data-ovs-tab]');
             if (to) { e.preventDefault(); tab = to.getAttribute('data-ovs-tab'); render(''); input.focus(); return; }
             const a = e.target.closest && e.target.closest('a[data-i]');
-            if (a) remember(items[Number(a.getAttribute('data-i'))]);
+            const it = a && items[Number(a.getAttribute('data-i'))];
+            if (it && it.kind === 'results') { e.preventDefault(); showResults(input.value.trim()); input.focus(); return; }
+            if (it && it.kind === 'recent') { e.preventDefault(); input.value = it.title; paintGhost(); showResults(it.title); input.focus(); return; }
+            if (it) remember(it);
         });
         document.body.appendChild(el);
     }
@@ -263,16 +290,23 @@
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             e.preventDefault();
             if (!items.length) return;
+            moved = true;
             active = (active + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
             paintActive();
             return;
         }
         if (e.key === 'Enter') {
             e.preventDefault();
+            const q = input.value.trim();
             const it = items[active >= 0 ? active : 0];
+            // Enter shows every result, unless the person picked a row or typed a place's exact name (live, tools).
+            if (q && !moved && view !== 'results' && !exact(it, q)) { showResults(q); return; }
+            if (it && it.kind === 'results') { showResults(q); return; }
+            if (it && it.kind === 'recent') { input.value = it.title; paintGhost(); showResults(it.title); return; }
             if (it) { remember(it); location.href = it.url; }
         }
     }
+    const exact = (it, q) => !!it && ['site', 'family', 'tool', 'page'].includes(it.kind) && String(it.title).toLowerCase() === q.toLowerCase();
     function remember(it) {
         const q = input && input.value.trim();
         if (q && it && it.kind !== 'recent') recent.add(q);
@@ -327,15 +361,26 @@
     function paint(groups, note) {
         items = [];
         listEl.textContent = '';
-        groups.filter((g) => g.items.length).forEach((g) => {
+        groups.filter((g) => (g.items && g.items.length) || g.as === 'note' || g.as === 'loading' || g.as === 'route').forEach((g) => {
+            if (g.as === 'route') {
+                const r = document.createElement('li'); r.className = 'ovs-route'; r.setAttribute('role', 'presentation'); r.textContent = g.text; listEl.appendChild(r);
+                return;
+            }
             const h = document.createElement('li');
             h.className = 'ovs-group';
             h.setAttribute('role', 'presentation');
             h.appendChild(document.createTextNode(g.title));
             if (g.clear) { const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Clear'; b.setAttribute('data-ovs-clear', ''); h.appendChild(b); }
             if (g.more) { const b = document.createElement('button'); b.type = 'button'; b.textContent = g.more.label; b.setAttribute('data-ovs-tab', g.more.tab); h.appendChild(b); }
-            listEl.appendChild(h);
+            if (g.title) listEl.appendChild(h);
             const as = g.as || 'rows';
+            if (as === 'note' || as === 'loading') {
+                const n = document.createElement('li'); n.setAttribute('role', 'presentation');
+                if (as === 'loading') { n.className = 'ovs-skels'; n.setAttribute('aria-label', g.text || 'Looking'); for (let k = 0; k < (g.rows || 3); k++) { const sk = document.createElement('span'); sk.className = 'ovs-skel'; n.appendChild(sk); } }
+                else { n.className = 'ovs-note'; n.textContent = g.text; }
+                listEl.appendChild(n);
+                return;
+            }
             if (as === 'rows') {
                 g.items.forEach((it) => {
                     const li = document.createElement('li'); li.className = 'ovs-item'; li.setAttribute('role', 'presentation');
@@ -343,8 +388,10 @@
                     const main = document.createElement('span'); main.className = 'ovs-main';
                     const t = document.createElement('span'); t.className = 'ovs-title'; t.textContent = it.title; main.appendChild(t);
                     if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
+                    if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
                     a.append(icon(it), main);
-                    if (items.length === 1 && input.value.trim()) { const k = document.createElement('span'); k.className = 'ovs-key'; k.textContent = 'Enter'; a.appendChild(k); }
+                    const q = input.value.trim();
+                    if (q && view !== 'results' && (it.kind === 'results' || (items.length === 1 && exact(it, q)))) { const k = document.createElement('span'); k.className = 'ovs-key'; k.textContent = 'Enter'; a.appendChild(k); }
                     li.appendChild(a); listEl.appendChild(li);
                 });
                 return;
@@ -371,7 +418,7 @@
             listEl.appendChild(box);
         });
         if (note) { const n = document.createElement('li'); n.className = 'ovs-note'; n.setAttribute('role', 'presentation'); n.textContent = note; listEl.appendChild(n); }
-        active = items.length && input.value.trim() ? 0 : -1;
+        active = items.length && input.value.trim() && view !== 'results' ? 0 : -1;
         paintActive();
         if (typeof ctx.icons === 'function') { try { ctx.icons(listEl); } catch { /* the icons are optional */ } }
     }
@@ -389,7 +436,7 @@
             const u = safeUrl(`${ctx.scope.page}${ctx.scope.page.includes('?') ? '&' : '?'}q=${encodeURIComponent(q)}`);
             if (u) out.push({ title: `Search “${q}” on ${here()}`, meta: 'This site\'s own search', url: u, icon: 'search', kind: 'action' });
         }
-        out.push({ title: `Search “${q}” on all of OpenVibe`, meta: 'Every site, in OpenVibe.Search', url: `${API}/?q=${encodeURIComponent(q)}`, icon: 'search', kind: 'action' });
+        out.push({ title: `All results for “${q}”`, meta: 'Every OpenVibe site and the web, in one list', url: `${API}/?q=${encodeURIComponent(q)}`, icon: 'search', kind: 'results' });
         out.push({ title: `Ask Vibe: “${q}”`, meta: 'OpenVibe\'s assistant searches the web and OpenVibe', url: `https://openvibe.chat/vibe?ask=${encodeURIComponent(q)}`, icon: 'spark', kind: 'action' });
         return out;
     }
@@ -509,6 +556,112 @@
     }
     function schedule(q) { clearTimeout(timer); timer = setTimeout(() => render(q), String(q).trim() ? 140 : 0); }
 
+    // ── Results: OpenVibe.Search's fabric through Network's /api/frame/query (the same connect-src as suggestions) ──
+    /** One fabric question; the person's token goes along (their own results, the paid web providers). null on failure. */
+    function query(q, scopes, { depth = 'standard', limit = 10, signal } = {}) {
+        const base = ctx.suggestUrl && /\/suggest$/.test(ctx.suggestUrl) ? ctx.suggestUrl.replace(/\/suggest$/, '/query') : SUGGEST.replace(/\/suggest$/, '/query');
+        const u = new URL(base);
+        u.searchParams.set('q', q);
+        u.searchParams.set('scopes', scopes.join(','));
+        u.searchParams.set('depth', depth);
+        u.searchParams.set('limit', String(limit));
+        return fetch(u.href, { headers: ctx.token ? { Authorization: `Bearer ${ctx.token}` } : {}, credentials: 'omit', signal })
+            .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    }
+    const SCOPES_OF = { all: ['network'], openvibe: ['network'], video: ['video'], news: ['news'], products: ['products'], mine: ['mine'], web: [] };
+    function showResults(q, which) {
+        q = String(q || '').trim();
+        if (!q) return;
+        rq = q; rtab = RTABS.some(([id]) => id === which) ? which : (which ? 'all' : rtab);
+        if (rtab === 'mine' && !ctx.token) rtab = 'all';
+        view = 'results';
+        recent.add(q);
+        clearTimeout(timer);
+        if (inflight) { inflight.abort(); inflight = null; }
+        if (rflight) rflight.abort();
+        const ac = new AbortController();
+        rflight = ac;
+        el.classList.add('ovs-typing', 'ovs-results-on');
+        tabsEl.hidden = true;
+        rtabsEl.hidden = false;
+        rtabsEl.querySelectorAll('[data-rtab]').forEach((b) => {
+            const id = b.getAttribute('data-rtab');
+            b.hidden = id === 'mine' && !ctx.token;
+            b.setAttribute('aria-selected', String(id === rtab));
+        });
+        const fast = SCOPES_OF[rtab].concat(rtab === 'all' && ctx.token ? ['mine'] : []);
+        const web = rtab === 'all' || rtab === 'web';
+        const st = { q, fast: null, web: null, fastDone: !fast.length, webDone: !web, t0: Date.now(), fastMs: 0, webMs: 0 };
+        const done = () => { if (st.fastDone && st.webDone && rflight === ac) { rflight = null; el.classList.remove('ovs-busy'); } };
+        el.classList.add('ovs-busy');
+        paintResults(st);
+        if (fast.length) query(q, fast, { depth: 'quick', limit: rtab === 'all' ? 8 : 20, signal: ac.signal }).then((d) => {
+            if (ac.signal.aborted) return;
+            st.fast = d; st.fastDone = true; st.fastMs = Date.now() - st.t0; paintResults(st); done();
+        });
+        if (web) query(q, ['web'], { depth: rtab === 'web' ? 'deep' : 'standard', limit: rtab === 'web' ? 15 : 6, signal: ac.signal }).then((d) => {
+            if (ac.signal.aborted) return;
+            st.web = d; st.webDone = true; st.webMs = Date.now() - st.t0; paintResults(st); done();
+        });
+    }
+    function leaveResults() {
+        view = 'suggest';
+        if (rflight) { rflight.abort(); rflight = null; }
+        el.classList.remove('ovs-results-on');
+        rtabsEl.hidden = true;
+    }
+    /** A fabric result as a row: OpenVibe's with the site's own icon, the web's with its host's letters and who found it. */
+    function resultRow(r) {
+        const page = r.kind === 'page';
+        const host = r.site || hostOf(r.url);
+        const meta = page
+            ? [host, PROVIDER[r.provider] ? `via ${PROVIDER[r.provider]}` : '', ago(r.published_at)].filter(Boolean)
+            : [host, TYPE[r.type] || r.type || '', ago(r.published_at)].filter(Boolean);
+        const url = safeUrl(r.url);
+        return url ? { title: r.title || host, meta: meta.join(' · '), snippet: r.snippet || '', url, site: page ? null : siteIcon(url), icon: page ? host.replace(/^www\./, '').slice(0, 2) : (host || '?').slice(0, 2), kind: 'result' } : null;
+    }
+    function paintResults(st) {
+        const owner = ctx.scope && ctx.scope.owner;
+        const all = (d) => (d && Array.isArray(d.results) ? d.results : []);
+        const docs = all(st.fast).filter((r) => r.scope !== 'mine');
+        const yours = all(st.fast).filter((r) => r.scope === 'mine').map(resultRow).filter(Boolean);
+        const hereRows = owner ? docs.filter((r) => r.owner === owner).map(resultRow).filter(Boolean) : [];
+        const rest = docs.filter((r) => !owner || r.owner !== owner).map(resultRow).filter(Boolean);
+        const webRows = all(st.web).map(resultRow).filter(Boolean);
+        const label = (RTABS.find(([id]) => id === rtab) || [])[1];
+        const groups = [];
+        if (rtab === 'all' || rtab === 'mine') groups.push({ title: 'Yours', items: yours });
+        if (!st.fastDone) groups.push({ title: rtab === 'all' ? 'On OpenVibe' : label, as: 'loading', rows: 3, text: 'Searching OpenVibe' });
+        else {
+            if (hereRows.length) groups.push({ title: `On ${here()}`, items: hereRows });
+            groups.push({ title: rtab === 'all' || rtab === 'openvibe' ? (hereRows.length ? 'Across OpenVibe' : 'On OpenVibe') : label, items: rest });
+        }
+        if (rtab === 'all' || rtab === 'web') {
+            if (!st.webDone) groups.push({ title: 'From the web', as: 'loading', rows: rtab === 'web' ? 5 : 2, text: 'Searching the web' });
+            else groups.push({ title: 'From the web', items: webRows });
+        }
+        const any = yours.length + hereRows.length + rest.length + webRows.length;
+        const settled = st.fastDone && st.webDone;
+        if (settled && !any) groups.push({ title: '', as: 'note', text: rtab === 'all' ? 'Nothing on OpenVibe or the web for that yet. Try other words, or ask Vibe.' : `Nothing in ${label} for that yet.` });
+        groups.push({ title: 'More', items: actions(st.q).filter((a) => a.kind !== 'results') });
+        const route = routeLine(st);
+        if (route) groups.push({ as: 'route', text: route, items: [] });
+        paint(groups);
+    }
+    /** What answered, in words: "OpenVibe in 40 ms · the web through DeepSeek and Wikipedia in 1.4 s (kept from earlier)". */
+    function routeLine(st) {
+        const parts = [];
+        const secs = (ms) => (ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`);
+        if (st.fastDone && st.fast) parts.push(`OpenVibe in ${secs(st.fastMs)}`);
+        if (st.webDone && st.web && st.web.route && Array.isArray(st.web.route.explain)) {
+            const ran = st.web.route.explain.filter((x) => x.scope === 'web' && x.ok && x.count > 0);
+            const who = ran.map((x) => PROVIDER[x.step] || x.step).filter((v, i, a) => a.indexOf(v) === i);
+            const cached = ran.length && ran.every((x) => x.cached);
+            if (who.length) parts.push(`the web through ${who.length > 1 ? `${who.slice(0, -1).join(', ')} and ${who[who.length - 1]}` : who[0]} in ${secs(st.webMs)}${cached ? ' (kept from earlier)' : ''}`);
+        }
+        return parts.length ? `Searched ${parts.join(' · ')}` : '';
+    }
+
     function open(opts = {}) {
         if (typeof document === 'undefined') return;
         ctx = opts || {};
@@ -533,6 +686,7 @@
         if (!catalog) loadCatalog().then((c) => { if (c) { catalog = c; if (el.classList.contains('is-open')) render(input.value); } });
     }
     function close() {
+        if (view === 'results' && rtabsEl) leaveResults();
         if (!el) return;
         el.classList.remove('is-open');
         document.documentElement.style.overflow = '';
