@@ -6,6 +6,21 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.32.0 — 2026-10-28
+
+- **The session view** (`agent-session.js`, plan 2026-10-28 §6 decision 4, CODES-3):
+  - its look moves to **`agent-session.css`** (served at /shared/, in `files.js`), so OpenVibe.Design can theme it. The
+    script links it from beside itself unless the page links it in its `<head>` (do that to paint styled from the
+    first line).
+  - a **Files** tab: every file the agents edited or wrote, with its +/− and how many changes; a tap opens its step.
+    `view.files()` answers the same list.
+  - each step keeps its **raw input**, folded under Input, with Copy.
+  - **cost per agent** in the head (from each agent's done line; `summary().costByAgent`) and **per step** when a
+    `tool_result` carries `cost_usd` (and `duration_ms`).
+  - an optional sticky **action bar**: `opts.actions` / `view.actions([{ id, label, kind }], note)` with
+    `opts.onAction(id)` (Approve, Continue, Stop…); the buttons stay disabled until the page's promise settles.
+  - a done line never moves the head's "who is working".
+
 ## 4.31.0 — 2026-10-28
 
 - **The Action Center** (Notifications 2.0, plan 2026-10-28 §3.10): the ✦ beside the bell opens every agent task in one

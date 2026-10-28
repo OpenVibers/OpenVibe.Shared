@@ -22,6 +22,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 const server = http.createServer((req, res) => {
     if (req.url === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
     if (req.url === '/agent-session.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, 'agent-session.js'))); }
+    if (req.url === '/agent-session.css') { res.writeHead(200, { 'content-type': 'text/css' }); return res.end(fs.readFileSync(path.join(ROOT, 'agent-session.css'))); }
     res.writeHead(404); return res.end();
 });
 
@@ -73,14 +74,30 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`window.v.status('succeeded'), 1`);
         v = await p.evaluate(`(() => ({
             nested: !!document.querySelector('.ovas-step[data-id="t"] .ovas-sub .ovas-step[data-id="g"]'),
-            hand: [...document.querySelectorAll('.ovas-handoff .ovas-agent')].map((a) => a.textContent), agents: [...document.querySelectorAll('.ovas-head .ovas-agent')].map((a) => a.textContent),
+            hand: [...document.querySelectorAll('.ovas-handoff .ovas-agent')].map((a) => a.textContent), agents: [...document.querySelectorAll('.ovas-head .ovas-agent')].map((a) => a.firstChild.textContent),
+            agentCost: [...document.querySelectorAll('.ovas-head .ovas-agent-cost')].map((a) => a.textContent),
             done: document.querySelector('.ovas-done b').textContent, pill: document.querySelector('.ovas-pill').textContent, sum: window.v.summary() }))()`);
         assert.ok(v.nested, 'a helper\'s steps nest under it');
         assert.deepStrictEqual(v.hand, ['Claude Code', 'Codex'], 'the hand-off reads agent → agent');
         assert.deepStrictEqual(v.agents, ['Claude Code', 'Codex'], 'and the head lists both');
+        assert.deepStrictEqual(v.agentCost, ['$0.05'], 'each agent\'s cost, from its done line (4.32.0)');
+        assert.deepStrictEqual(v.sum.costByAgent, { Codex: 0.05 });
         assert.strictEqual(v.done, 'Codex finished in 1 min 1 s');
         assert.strictEqual(v.pill, 'Finished');
         assert.deepStrictEqual([v.sum.steps, v.sum.commands, v.sum.files, v.sum.added, v.sum.removed, v.sum.costUsd], [5, 1, 1, 2, 1, 0.05], JSON.stringify(v.sum));
+        // 4.32.0: the look comes from agent-session.css beside the script; each step keeps its raw input; the Files tab.
+        v = await p.evaluate(`(() => ({ link: (document.getElementById('openvibe-agent-session-styles') || {}).href || '', grid: getComputedStyle(document.querySelector('.ovas')).display,
+            raw: (document.querySelector('.ovas-step[data-id="e"] .ovas-raw pre') || {}).textContent || '', chip: document.querySelector('.ovas-chip[data-f="files"]').textContent }))()`);
+        assert.ok(v.link.endsWith('/agent-session.css') && v.grid === 'grid', 'agent-session.css is linked from beside the script and applies');
+        assert.ok(v.raw.includes('"file_path": "src/a.js"'), 'a step keeps its raw input, folded');
+        assert.strictEqual(v.chip, 'Files 1', 'the Files tab counts the files changed');
+        await p.evaluate(`document.querySelector('.ovas-chip[data-f="files"]').click(), 1`);
+        v = await p.evaluate(`(() => ({ feed: document.querySelector('.ovas-feed').hidden, rows: [...document.querySelectorAll('.ovas-file')].map((b) => [b.querySelector('b').textContent, b.querySelector('small').textContent, b.querySelector('.ovas-delta').textContent]), files: window.v.files() }))()`);
+        assert.deepStrictEqual([v.feed, v.rows], [true, [['a.js', 'src/a.js', '+2−1']]], 'one row per file, with its path and +/−');
+        assert.deepStrictEqual(v.files, [{ path: 'src/a.js', added: 2, removed: 1, changes: 1 }]);
+        await p.evaluate(`document.querySelector('.ovas-file').click(), 1`);
+        v = await p.evaluate(`({ feed: document.querySelector('.ovas-feed').hidden, open: document.querySelector('.ovas-step[data-id="e"]').open, all: document.querySelector('.ovas-chip[data-f="all"]').getAttribute('aria-pressed') })`);
+        assert.deepStrictEqual(v, { feed: false, open: true, all: 'true' }, 'a file opens its step in the whole session');
         // Filters.
         await p.evaluate(`document.querySelector('.ovas-chip[data-f="said"]').click(), 1`);
         v = await p.evaluate(`[...document.querySelectorAll('.ovas-feed > li')].filter((li) => !li.hidden).map((li) => li.dataset.k)`);
@@ -114,6 +131,24 @@ const server = http.createServer((req, res) => {
         v = await p.evaluate(`[...document.querySelectorAll('#own .ovas-msg a')].map((a) => a.href)`);
         assert.deepStrictEqual(v, ['https://openvibe.bot/machines/m/screen'], 'only the site\'s own address links');
         assert.ok(await p.evaluate(`document.querySelector('#own .ovas-msg').textContent.includes('https://evil.example/login')`), 'the other stays as text');
+        // The action bar (4.32.0): the page's actions, sticky; a press reports its id and waits for the page's promise.
+        v = await p.evaluate(`(async () => {
+            const d = document.createElement('div'); d.id = 'acts'; document.body.appendChild(d);
+            let release; window.acted = [];
+            const w = OpenVibeAgentSession.mount(d, { title: 'x', status: 'running', actions: [{ id: 'approve', label: 'Approve', kind: 'primary' }, { id: 'stop', label: 'Stop', kind: 'danger' }], actionsNote: 'The agent asks to spend $0.40.',
+                onAction: (id) => { window.acted.push(id); return new Promise((r) => { release = r; }); } });
+            const bar = d.querySelector('.ovas-actions');
+            const before = { hidden: bar.hidden, note: bar.querySelector('p').textContent, labels: [...bar.querySelectorAll('.ovas-act')].map((b) => b.textContent), primary: bar.querySelector('.ovas-act.is-primary').dataset.act };
+            bar.querySelector('[data-act="approve"]').click();
+            await new Promise((r) => setTimeout(r, 0));
+            const during = [...bar.querySelectorAll('.ovas-act')].every((b) => b.disabled);
+            release(); await new Promise((r) => setTimeout(r, 0));
+            const after = [...bar.querySelectorAll('.ovas-act')].every((b) => !b.disabled);
+            w.actions([]);
+            return { before, during, after, acted: window.acted, gone: bar.hidden, sticky: getComputedStyle(bar).position };
+        })()`);
+        assert.deepStrictEqual(v.before, { hidden: false, note: 'The agent asks to spend $0.40.', labels: ['Approve', 'Stop'], primary: 'approve' });
+        assert.deepStrictEqual([v.during, v.after, v.acted, v.gone, v.sticky], [true, true, ['approve'], true, 'sticky'], 'pressed: disabled until the page settles; [] hides the bar');
         // A finished run replayed without a start time shows no made-up time; its done line's duration shows.
         v = await p.evaluate(`(() => { const d = document.createElement('div'); d.id = 'replay'; document.body.appendChild(d); const w = OpenVibeAgentSession.mount(d, { title: 'x', status: 'succeeded' }); w.push({ t: 'text', text: 'Done.' }); const before = { hidden: d.querySelector('[data-m="time"]').hidden, ms: w.summary().durationMs }; w.push({ t: 'done', ok: true, text: 'Done.', duration_ms: 125000 }); return { before, after: d.querySelector('[data-m="time"]').textContent, hidden: d.querySelector('[data-m="time"]').hidden }; })()`);
         assert.deepStrictEqual(v.before, { hidden: true, ms: 0 }, 'no start time and no duration: no time');

@@ -16,6 +16,9 @@
  *                             Command Code, Aider, DeepSeek, OpenVibe.AI, your own model) and every Actor agent speaks one
  *   view.pushAll(events)
  *   view.status('succeeded' | 'failed' | 'cancelled' | 'running' | 'queued' | …, label?)
+ *   view.actions([{ id, label, kind: 'primary' | 'danger' | undefined }], note?)
+ *                             the sticky bar at the bottom (Approve, Continue, Stop…); opts.onAction(id) runs when one is
+ *                             pressed (a returned promise keeps the buttons disabled until it settles); [] hides it
  *   view.summary()            → { agents, steps, commands, files, added, removed, problems, costUsd, durationMs }
  *   view.destroy()
  *   OpenVibeAgentSession.normalize(event) → [line]   the stream-json → line mapping, for servers and other readers
@@ -26,7 +29,8 @@
  *   { t: 'tool', id, name, what, input?, parent? }    a step began: Bash, Read, Edit, Write, Grep, Glob, LS,
  *                                                     WebFetch, WebSearch, Task (a sub-agent), TodoWrite (the plan)
  *   { t: 'tool_progress', id, chunk }                 output while it runs (agents whose steps the harness runs)
- *   { t: 'tool_result', id, ok, output }              how it ended, with its output
+ *   { t: 'tool_result', id, ok, output, cost_usd?, duration_ms? }   how it ended, with its output (and its cost,
+ *                                                     when the agent reports one: shown on the step's row)
  *   { t: 'handoff', from, to?, reason }               one agent stopped and the next took over
  *   { t: 'note', text, level? }                       a warning or an error along the way
  *   { t: 'step', text }                               the job's own progress (cloning, the branch, files changed, pushing)
@@ -36,8 +40,10 @@
  * Any line may carry `agent` (the head then follows who is working); a step without an id gets one, and the next result
  * of the same tool without an id is its result. { t: 'state', state } moves the head (Actor's task states).
  *
- * Everything is text: no line's content ever becomes markup (links are https only). It needs nothing else; the look
- * follows the page's theme tokens (kit.css's), light or dark.
+ * Everything is text: no line's content ever becomes markup (links are https only). The look is agent-session.css
+ * (4.32.0), linked from beside this script unless the page links it; it follows the page's theme tokens, light or dark.
+ * The Files tab lists every file edited or written with its +/−; each step keeps its raw input (folded); the head shows
+ * each agent's cost from its done line.
  */
 (function (root) {
     'use strict';
@@ -221,122 +227,16 @@
         return out;
     }
 
-    // ── Styles (theme tokens; light and dark) ─────────────────
+    // ── Styles: agent-session.css, from beside this script (theme tokens; light and dark) ─────────────────
+    const SELF_SRC = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     function styles() {
-        if (typeof document === 'undefined' || document.getElementById('openvibe-agent-session-styles')) return;
-        const st = document.createElement('style');
-        st.id = 'openvibe-agent-session-styles';
-        st.textContent = `
-.ovas { --ovas-b: var(--border, rgba(255,255,255,.1)); --ovas-s: var(--bg-secondary, #121826); --ovas-t: var(--bg-tertiary, rgba(255,255,255,.05)); --ovas-mut: var(--text-muted, #8b98ad); --ovas-sec: var(--text-secondary, #a8b3c4); --ovas-ok: #4ade80; --ovas-bad: var(--live-red, #f87171); --ovas-add: color-mix(in srgb, #22c55e 18%, transparent); --ovas-del: color-mix(in srgb, #ef4444 18%, transparent); --ovas-code: color-mix(in srgb, var(--bg-primary, #0b1020) 72%, var(--ovas-s));
-  display: grid; gap: 12px; color: var(--text-primary, #e6edf7); font-family: inherit; min-width: 0; }
-.ovas-ic { width: 16px; height: 16px; flex: none; }
-.ovas-head { position: sticky; top: var(--ovnav-real-h, 0px); z-index: 2; display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--ovas-b); background: color-mix(in srgb, var(--ovas-s) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.ovas-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.ovas-pill { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--ovas-t); color: var(--ovas-sec); }
-.ovas-pill[data-s="running"], .ovas-pill[data-s="placed"], .ovas-pill[data-s="verifying"] { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
-.ovas-pill[data-s="succeeded"] { color: var(--ovas-ok); background: color-mix(in srgb, #22c55e 15%, transparent); }
-.ovas-pill[data-s="failed"], .ovas-pill[data-s="expired"] { color: var(--ovas-bad); background: color-mix(in srgb, #ef4444 15%, transparent); }
-.ovas-title { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovas-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ovas-mut); }
-.ovas-meta b { color: var(--ovas-sec); font-weight: 650; font-variant-numeric: tabular-nums; }
-.ovas-agents { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.ovas-agent { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 650; border: 1px solid var(--ovas-b); color: var(--ovas-sec); }
-.ovas-agent.is-now { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); color: var(--text-primary, #e6edf7); }
-.ovas-plan { display: grid; gap: 6px; padding-top: 2px; }
-.ovas-plan > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; }
-.ovas-plan > summary::-webkit-details-marker { display: none; }
-.ovas-plan-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovas-plan-now::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--accent, #3b82f6); vertical-align: 1px; }
-.ovas-plan-n { flex: none; font-size: 12px; color: var(--ovas-mut); font-variant-numeric: tabular-nums; }
-.ovas-plan:not([open]) > ol { display: none; }
-.ovas-plan-bar { height: 4px; border-radius: 4px; background: var(--ovas-t); overflow: hidden; }
-.ovas-plan-bar i { display: block; height: 100%; background: var(--accent, #3b82f6); border-radius: inherit; transition: width .3s; }
-.ovas-plan ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
-.ovas-plan li { display: flex; gap: 8px; align-items: baseline; color: var(--ovas-sec); }
-.ovas-plan li::before { content: ''; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ovas-mut); transform: translateY(1px); }
-.ovas-plan li[data-s="in_progress"] { color: var(--text-primary, #e6edf7); font-weight: 600; }
-.ovas-plan li[data-s="in_progress"]::before { border-color: var(--accent, #3b82f6); border-right-color: transparent; animation: ovas-spin .9s linear infinite; }
-.ovas-plan li[data-s="completed"] { color: var(--ovas-mut); text-decoration: line-through; }
-.ovas-plan li[data-s="completed"]::before { background: var(--ovas-ok); border-color: var(--ovas-ok); }
-.ovas-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.ovas-chip { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovas-b); background: transparent; color: var(--ovas-sec); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
-.ovas-chip[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, #fff); }
-.ovas-chip.ovas-follow { margin-left: auto; }
-.ovas-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
-.ovas-feed > li { min-width: 0; }
-.ovas-msg { padding: 2px 4px; font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
-.ovas-msg p { margin: 0 0 8px; } .ovas-msg p:last-child { margin-bottom: 0; }
-.ovas-msg ul, .ovas-msg ol { margin: 4px 0 8px; padding-left: 22px; } .ovas-msg li { margin: 2px 0; }
-.ovas-msg code, .ovas-detail code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; padding: 1px 5px; border-radius: 6px; background: var(--ovas-t); }
-.ovas-msg a { color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovas-code, .ovas-out, .ovas-diff { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--ovas-code); border: 1px solid var(--ovas-b); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.5; overflow: auto; max-height: 50vh; white-space: pre; }
-.ovas-code code { padding: 0; background: none; }
-.ovas-group, .ovas-step { border: 1px solid var(--ovas-b); border-radius: 14px; background: var(--ovas-s); overflow: hidden; }
-.ovas-group > summary, .ovas-step > summary { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 6px 12px; cursor: pointer; list-style: none; }
-.ovas-group > summary::-webkit-details-marker, .ovas-step > summary::-webkit-details-marker { display: none; }
-.ovas-chev { width: 14px; height: 14px; flex: none; color: var(--ovas-mut); transition: transform .15s; }
-details[open] > summary .ovas-chev { transform: rotate(90deg); }
-.ovas-icons { display: inline-flex; flex: none; }
-.ovas-kind { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 9px; background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovas-icons .ovas-kind { width: 24px; height: 24px; border: 2px solid var(--ovas-s); border-radius: 8px; }
-.ovas-icons .ovas-kind + .ovas-kind { margin-left: -7px; }
-.ovas-kind .ovas-ic { width: 14px; height: 14px; }
-.ovas-kind[data-k="edit"], .ovas-kind[data-k="write"] { color: #4ade80; background: color-mix(in srgb, #22c55e 14%, transparent); }
-.ovas-kind[data-k="web"] { color: #38bdf8; background: color-mix(in srgb, #0ea5e9 14%, transparent); }
-.ovas-kind[data-k="agent"] { color: #c084fc; background: color-mix(in srgb, #a855f7 16%, transparent); }
-.ovas-sum { flex: 1; min-width: 0; display: grid; gap: 1px; }
-.ovas-sum b { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovas-sum small { font-size: 12px; color: var(--ovas-mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-.ovas-delta { flex: none; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.ovas-delta .a { color: var(--ovas-ok); } .ovas-delta .r { color: var(--ovas-bad); margin-left: 4px; }
-.ovas-state { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ovas-mut); font-variant-numeric: tabular-nums; }
-.ovas-state .ovas-ic { width: 15px; height: 15px; }
-.ovas-state[data-s="ok"] .ovas-ic { color: var(--ovas-ok); } .ovas-state[data-s="fail"] { color: var(--ovas-bad); }
-.ovas-spin { width: 13px; height: 13px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: ovas-spin .8s linear infinite; color: var(--accent, #3b82f6); }
-.ovas-group > ol { list-style: none; margin: 0; padding: 0 8px 8px; display: grid; gap: 6px; }
-.ovas-group.is-one { border: 0; background: none; }
-.ovas-group.is-one > summary { display: none; }
-.ovas-group.is-one > ol { padding: 0; }
-.ovas-group.is-one .ovas-step { background: var(--ovas-s); border-color: var(--ovas-b); }
-.ovas-group .ovas-step { background: var(--ovas-t); border-color: transparent; }
-.ovas-detail { display: grid; gap: 10px; padding: 0 12px 12px; }
-.ovas-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ovas-mut); margin-bottom: -4px; }
-.ovas-copy { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--ovas-mut); font: inherit; font-size: 11.5px; font-weight: 650; letter-spacing: 0; text-transform: none; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
-.ovas-copy:hover { color: var(--text-primary, #e6edf7); background: var(--ovas-t); }
-.ovas-copy .ovas-ic { width: 13px; height: 13px; }
-.ovas-out.is-fail { box-shadow: inset 3px 0 0 var(--ovas-bad); }
-.ovas-wait { font-size: 13px; color: var(--ovas-mut); display: flex; align-items: center; gap: 8px; }
-.ovas-diff span { display: block; padding: 0 6px; margin: 0 -6px; }
-.ovas-diff .a { background: var(--ovas-add); } .ovas-diff .r { background: var(--ovas-del); } .ovas-diff .h { color: var(--ovas-mut); }
-.ovas-sub { margin: 0 8px 8px; padding: 8px 0 0 12px; border-left: 2px solid color-mix(in srgb, #a855f7 45%, transparent); display: grid; gap: 8px; }
-.ovas-handoff { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ovas-sec); }
-.ovas-handoff::before, .ovas-handoff::after { content: ''; flex: 1; height: 1px; background: var(--ovas-b); }
-.ovas-hand { display: grid; justify-items: center; gap: 4px; max-width: 82%; text-align: center; }
-.ovas-hand-row { display: inline-flex; align-items: center; gap: 6px; }
-.ovas-hand-row .ovas-ic { color: var(--ovas-mut); }
-.ovas-hand small { font-size: 12.5px; color: var(--ovas-mut); line-height: 1.4; }
-.ovas-note { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; background: color-mix(in srgb, #f59e0b 12%, transparent); color: var(--text-primary, #e6edf7); }
-.ovas-note[data-level="error"] { background: color-mix(in srgb, #ef4444 13%, transparent); }
-.ovas-note[data-level="info"] { background: color-mix(in srgb, #22c55e 10%, transparent); }
-.ovas-note[data-level="info"] .ovas-ic { color: var(--ovas-ok); }
-.ovas-note .ovas-ic { color: #f59e0b; margin-top: 2px; } .ovas-note[data-level="error"] .ovas-ic { color: var(--ovas-bad); }
-.ovas-done { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, #22c55e 40%, transparent); background: color-mix(in srgb, #22c55e 8%, transparent); }
-.ovas-done[data-ok="0"] { border-color: color-mix(in srgb, #ef4444 40%, transparent); background: color-mix(in srgb, #ef4444 8%, transparent); }
-.ovas-done > b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.ovas-line { display: flex; align-items: center; gap: 8px; padding: 0 4px; font-size: 12.5px; color: var(--ovas-mut); }
-.ovas-line::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ovas-mut); opacity: .7; }
-.ovas-empty { padding: 18px; text-align: center; color: var(--ovas-mut); font-size: 13.5px; border: 1px dashed var(--ovas-b); border-radius: 14px; }
-.ovas [hidden] { display: none !important; }
-@keyframes ovas-spin { to { transform: rotate(360deg); } }
-@media (hover: hover) { .ovas-group > summary:hover, .ovas-step > summary:hover { background: var(--bg-hover, rgba(255,255,255,.04)); } }
-@media (max-width: 640px) {
-  .ovas-head { padding: 10px 12px; border-radius: 14px; } .ovas-msg { font-size: 14.5px; }
-  .ovas-code, .ovas-out, .ovas-diff { font-size: 12px; max-height: 45vh; }
-  .ovas-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px; } .ovas-bar::-webkit-scrollbar { display: none; }
-  .ovas-chip { flex: none; } .ovas-icons .ovas-kind + .ovas-kind { display: none; }
-}
-@media (prefers-reduced-motion: reduce) { .ovas-spin, .ovas-plan li::before { animation: none; } }`;
-        document.head.appendChild(st);
+        if (typeof document === 'undefined' || document.getElementById('openvibe-agent-session-styles') || document.querySelector('link[href*="agent-session.css"]')) return;
+        const m = /^(https?:\/\/[^?#]*\/)agent-session\.js(?:[?#]|$)/.exec(SELF_SRC);
+        const link = document.createElement('link');
+        link.id = 'openvibe-agent-session-styles';
+        link.rel = 'stylesheet';
+        link.href = `${m ? m[1] : 'https://openvibe.network/shared/'}agent-session.css`;
+        document.head.appendChild(link);
     }
 
     // ── The view ──────────────────────────────────────────────
@@ -347,15 +247,16 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
         // The clock runs from startedAt, or from now for a run that is live as it mounts; a finished run replayed without
         // a start time shows the time only once its done line says it.
         const clock = Boolean(opts.startedAt) || LIVE.includes(opts.status || 'running');
-        const S = { status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
+        const S = { status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, agentCost: new Map(), durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
         host.textContent = '';
         const box = el('div', 'ovas');
         box.innerHTML = `<div class="ovas-head"><div class="ovas-top"><span class="ovas-pill" data-s="${esc(S.status)}"></span><span class="ovas-title"></span></div><div class="ovas-meta"><span class="ovas-agents"></span><span data-m="time"></span><span data-m="steps"></span><span data-m="files"></span><span data-m="cost"></span></div><details class="ovas-plan" hidden><summary><span class="ovas-plan-now"></span><span class="ovas-plan-n"></span></summary><div class="ovas-plan-bar"><i style="width:0"></i></div><ol></ol></details></div>`
-            + '<div class="ovas-bar" role="toolbar" aria-label="Show"></div><ol class="ovas-feed" aria-live="polite"></ol>';
+            + '<div class="ovas-bar" role="toolbar" aria-label="Show"></div><ol class="ovas-files" hidden></ol><ol class="ovas-feed" aria-live="polite"></ol><div class="ovas-actions" hidden></div>';
         host.appendChild(box);
         const head = box.querySelector('.ovas-head'), feed = box.querySelector('.ovas-feed'), bar = box.querySelector('.ovas-bar');
+        const filesEl = box.querySelector('.ovas-files'), actBar = box.querySelector('.ovas-actions');
         head.querySelector('.ovas-title').textContent = opts.title || 'Agent session';
-        const FILTERS = [['all', 'Everything'], ['said', 'What it said'], ['steps', 'Steps'], ['problems', 'Problems']];
+        const FILTERS = [['all', 'Everything'], ['said', 'What it said'], ['steps', 'Steps'], ['files', 'Files'], ['problems', 'Problems']];
         FILTERS.forEach(([id, label]) => { const b = el('button', 'ovas-chip', label); b.type = 'button'; b.dataset.f = id; b.setAttribute('aria-pressed', String(id === 'all')); bar.appendChild(b); });
         const follow = el('button', 'ovas-chip ovas-follow', 'Follow'); follow.type = 'button'; follow.setAttribute('aria-pressed', String(S.follow)); follow.title = 'Keep the newest step in view'; bar.appendChild(follow);
         bar.addEventListener('click', (e) => {
@@ -373,11 +274,64 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
         const empty = el('li', 'ovas-empty', opts.empty || 'Waiting for the agent to start…'); feed.appendChild(empty);
 
         function applyFilter() {
+            const files = S.filter === 'files';
+            feed.hidden = files; filesEl.hidden = !files;
+            if (files) { paintFiles(); return; }
             feed.querySelectorAll(':scope > li').forEach((li) => {
                 const k = li.dataset.k || '';
                 li.hidden = S.filter === 'all' ? false : S.filter === 'said' ? !(k === 'msg' || k === 'done' || k === 'handoff') : S.filter === 'steps' ? !(k === 'steps' || k === 'handoff') : !(li.dataset.p === '1');
             });
         }
+        // The Files tab: one row per file, newest change last; a tap shows everything and opens that file's last step.
+        function changedFiles() {
+            const by = new Map();
+            for (const st of S.steps.values()) {
+                if (st.hidden || (st.kind !== 'edit' && st.kind !== 'write') || !st.info) continue;
+                const p = st.info.sub || st.info.title;
+                const f = by.get(p) || { path: p, added: 0, removed: 0, n: 0, last: null, wrote: false };
+                f.added += st.info.added || 0; f.removed += st.info.removed || 0; f.n++; f.last = st; f.wrote = f.wrote || st.kind === 'write';
+                by.set(p, f);
+            }
+            return [...by.values()];
+        }
+        function paintFiles() {
+            filesEl.textContent = '';
+            const list = changedFiles();
+            if (!list.length) { filesEl.appendChild(el('li', 'ovas-empty', 'No files changed yet.')); return; }
+            for (const f of list) {
+                const li = el('li');
+                const b = el('button', 'ovas-file'); b.type = 'button'; b.dataset.step = f.last.id;
+                b.innerHTML = `<span class="ovas-kind" data-k="${f.wrote ? 'write' : 'edit'}">${svg(f.wrote ? 'write' : 'edit')}</span><span class="ovas-sum"><b></b><small></small></span><span class="ovas-delta"><span class="a">+${f.added}</span><span class="r">−${f.removed}</span></span><span class="ovas-file-n"></span>`;
+                b.querySelector('b').textContent = base(f.path) || f.path;
+                b.querySelector('small').textContent = f.path;
+                b.querySelector('.ovas-file-n').textContent = f.n > 1 ? `${f.n} changes` : '';
+                li.appendChild(b); filesEl.appendChild(li);
+            }
+        }
+        filesEl.addEventListener('click', (e) => {
+            const b = e.target.closest('.ovas-file'); if (!b) return;
+            const st = S.steps.get(b.dataset.step); if (!st || !st.el) return;
+            S.filter = 'all'; bar.querySelectorAll('[data-f]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.f === 'all'))); applyFilter();
+            for (let p = st.el; p; p = p.parentElement) if (p.tagName === 'DETAILS') p.open = true;
+            if (st.el.scrollIntoView) st.el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        });
+
+        // The action bar: what the person can do now (the page decides; this only draws and reports the press).
+        function paintActions(list, note) {
+            actBar.textContent = '';
+            const acts = (Array.isArray(list) ? list : []).filter((a) => a && a.id && a.label).slice(0, 4);
+            actBar.hidden = !acts.length;
+            if (!acts.length) return;
+            if (note) actBar.appendChild(el('p', '', note));
+            for (const a of acts) { const b = el('button', `ovas-act${a.kind === 'primary' ? ' is-primary' : a.kind === 'danger' ? ' is-danger' : ''}`, a.label); b.type = 'button'; b.dataset.act = a.id; actBar.appendChild(b); }
+        }
+        actBar.addEventListener('click', async (e) => {
+            const b = e.target.closest('.ovas-act'); if (!b || typeof opts.onAction !== 'function') return;
+            const all = [...actBar.querySelectorAll('.ovas-act')]; all.forEach((x) => { x.disabled = true; });
+            try { await opts.onAction(b.dataset.act); } catch { /* the page says what went wrong */ } finally { all.forEach((x) => { x.disabled = false; }); }
+        });
+        if (Array.isArray(opts.actions)) paintActions(opts.actions, opts.actionsNote);
+
         const keep = () => { if (S.follow && S.status === 'running') { const last = feed.lastElementChild; if (last && last.scrollIntoView) last.scrollIntoView({ block: 'end', behavior: 'smooth' }); } };
 
         // A step's element: <details> with the summary row and, once opened, its detail.
@@ -396,6 +350,14 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             if (step.kind === 'command' && info.command) { const pre = el('pre', 'ovas-code'); pre.textContent = info.command; section('Command', pre, true); }
             if (info.diff) { const pre = el('pre', 'ovas-diff'); info.diff.slice(0, 600).forEach(([op, line]) => { const s = el('span', op === '+' ? 'a' : op === '-' ? 'r' : op === '@' ? 'h' : '', `${op === '=' ? ' ' : op === '@' ? '' : op} ${line}`); pre.appendChild(s); }); section(step.kind === 'write' ? 'New file' : 'Change', pre, false); }
             if (step.kind === 'agent' && info.preview) { const p = el('div', 'ovas-msg'); p.appendChild(markdown(info.preview.slice(0, 1600), linkOk)); section('Asked to', p, false); }
+            if (step.kind !== 'plan' && step.input && typeof step.input === 'object' && Object.keys(step.input).length) {
+                const raw = el('details', 'ovas-raw');
+                raw.innerHTML = `<summary>${svg('chevron', 'ovas-chev')}<span>Input</span></summary>`;
+                const l = el('div', 'ovas-label'); l.appendChild(el('span', '', 'What the agent sent')); const c = el('button', 'ovas-copy'); c.type = 'button'; c.innerHTML = `${svg('copy')}<span>Copy</span>`; l.appendChild(c);
+                let text = ''; try { text = JSON.stringify(step.input, null, 2); } catch { text = String(step.input); }
+                const pre = el('pre', 'ovas-code'); pre.textContent = text.length > 8000 ? `${text.slice(0, 8000)}\n…` : text;
+                raw.append(l, pre); detail.appendChild(raw);
+            }
             if (step.kind === 'agent') { const sub = el('div', 'ovas-sub'); step.subEl = sub; d.appendChild(sub); d.open = true; }
             if (step.kind !== 'agent' && step.kind !== 'plan') {
                 const pre = el('pre', 'ovas-out'); pre.hidden = true; step.outEl = pre;
@@ -411,7 +373,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             const t = step.ended ? dur(step.ended - step.started) : dur(Date.now() - step.started);
             if (step.done) {
                 st.dataset.s = step.ok ? 'ok' : 'fail';
-                st.innerHTML = `${svg(step.ok ? 'ok' : 'fail')}<span>${esc(step.ended - step.started > 1500 ? t : '')}</span>`;
+                const c = step.cost > 0 ? `$${step.cost < 0.01 ? step.cost.toFixed(4).replace(/0+$/, '') : step.cost.toFixed(2)}` : '';
+                st.innerHTML = `${c ? `<span class="ovas-cost">${esc(c)}</span>` : ''}${svg(step.ok ? 'ok' : 'fail')}<span>${esc(step.ended - step.started > 1500 ? t : '')}</span>`;
             } else { const tt = st.querySelector('[data-t]'); if (tt && Date.now() - step.started > 2000) tt.textContent = t; }
         }
         // The group a new step goes in: the last item of its feed when that is a group of steps, else a new one.
@@ -453,7 +416,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
         function onLine(x) {
             const target = feedFor(x.parent);
             // Who is working: a line that names a different agent than the last moves the head along.
-            if (x.agent && x.t !== 'agent' && x.t !== 'handoff' && (!S.agents.length || S.agents[S.agents.length - 1].agent !== x.agent)) { S.agents.push({ agent: x.agent }); paintHead(); }
+            // A done line reports an agent's cost and time; it never moves the head.
+            if (x.agent && x.t !== 'agent' && x.t !== 'handoff' && x.t !== 'done' && (!S.agents.length || S.agents[S.agents.length - 1].agent !== x.agent)) { S.agents.push({ agent: x.agent }); paintHead(); }
             if (x.t === 'tool' && !x.id) { x = { ...x, id: `a${S.steps.size + 1}` }; if (!pending.has(x.name)) pending.set(x.name, []); pending.get(x.name).push(x.id); }
             if (x.t === 'tool_result' && !x.id) { const q = pending.get(x.name); x = { ...x, id: q && q.length ? q.shift() : '' }; }
             if (x.t === 'state') { status(x.state); return; }
@@ -483,7 +447,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             }
             if (x.t === 'tool_result') {
                 const step = S.steps.get(String(x.id)); if (!step || step.hidden) return;
-                step.done = true; step.ok = x.ok !== false; step.ended = Date.now();
+                step.done = true; step.ok = x.ok !== false; step.ended = x.duration_ms > 0 ? step.started + Number(x.duration_ms) : Date.now();
+                if (Number(x.cost_usd) > 0) step.cost = Number(x.cost_usd);
                 if (step.outEl) {
                     const out = String(x.output == null ? '' : x.output) || step.out || '';
                     step.waitEl.hidden = true;
@@ -515,6 +480,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             if (x.t === 'done') {
                 if (x.parent) return;
                 S.cost += Number(x.cost_usd) || 0; S.durationMs += Number(x.duration_ms) || 0;
+                const who = x.agent || (S.agents[S.agents.length - 1] || {}).agent;
+                if (who && Number(x.cost_usd) > 0) S.agentCost.set(who, (S.agentCost.get(who) || 0) + Number(x.cost_usd));
                 const li = el('li', 'ovas-done'); li.dataset.k = 'done'; li.dataset.ok = x.ok ? '1' : '0';
                 const b = el('b'); b.innerHTML = svg(x.ok ? 'ok' : 'fail'); b.appendChild(document.createTextNode(`${agentName((S.agents[S.agents.length - 1] || {}).agent)} ${x.ok ? 'finished' : 'stopped'}${x.duration_ms ? ` in ${dur(x.duration_ms)}` : ''}`));
                 li.appendChild(b);
@@ -542,7 +509,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             return {
                 agents: S.agents.map((a) => agentName(a.agent)), steps: steps.length, commands: steps.filter((s) => s.kind === 'command').length, files: files.size,
                 added: steps.reduce((n, s) => n + ((s.info && s.info.added) || 0), 0), removed: steps.reduce((n, s) => n + ((s.info && s.info.removed) || 0), 0),
-                problems: S.problems, costUsd: Math.round(S.cost * 1e4) / 1e4, durationMs: S.durationMs || (clock ? (S.endedAt || Date.now()) - S.startedAt : 0), tokens: { ...S.tokens },
+                problems: S.problems, costUsd: Math.round(S.cost * 1e4) / 1e4, costByAgent: Object.fromEntries([...S.agentCost].map(([k, v]) => [agentName(k), Math.round(v * 1e4) / 1e4])), durationMs: S.durationMs || (clock ? (S.endedAt || Date.now()) - S.startedAt : 0), tokens: { ...S.tokens },
             };
         }
         const LABEL = { queued: 'Waiting', placed: 'Starting', running: 'Running', verifying: 'Checking the answer', succeeded: 'Finished', failed: 'Failed', cancelled: 'Cancelled', expired: 'Expired' };
@@ -553,7 +520,16 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             pill.innerHTML = `${S.status === 'running' || S.status === 'placed' || S.status === 'verifying' ? '<span class="ovas-spin"></span>' : S.status === 'succeeded' ? svg('ok') : S.status === 'failed' || S.status === 'expired' ? svg('fail') : ''}<span></span>`;
             pill.lastChild.textContent = S.label || LABEL[S.status] || S.status;
             const ag = head.querySelector('.ovas-agents'); ag.textContent = '';
-            S.agents.forEach((a, i) => { if (i) ag.appendChild(el('span', '', '→')); const c = el('span', `ovas-agent${i === S.agents.length - 1 ? ' is-now' : ''}`, agentName(a.agent)); if (a.model) c.title = a.model; ag.appendChild(c); });
+            const shown = new Set();
+            S.agents.forEach((a, i) => {
+                if (i) ag.appendChild(el('span', '', '→'));
+                const c = el('span', `ovas-agent${i === S.agents.length - 1 ? ' is-now' : ''}`, agentName(a.agent)); if (a.model) c.title = a.model;
+                // An agent's cost once, on its last chip (an agent may come back after a hand-off).
+                const cost = S.agentCost.get(a.agent);
+                if (cost && !shown.has(a.agent) && !S.agents.slice(i + 1).some((b) => b.agent === a.agent)) { shown.add(a.agent); c.appendChild(el('span', 'ovas-agent-cost', `$${cost < 0.01 ? cost.toFixed(4).replace(/0+$/, '') : cost.toFixed(2)}`)); }
+                ag.appendChild(c);
+            });
+            const fc = bar.querySelector('[data-f="files"]'); if (fc) fc.textContent = sm.files ? `Files ${sm.files}` : 'Files';
             const m = (k, html) => { const n = head.querySelector(`[data-m="${k}"]`); n.innerHTML = html; n.hidden = !html; };
             m('time', sm.durationMs ? `<b>${esc(dur(sm.durationMs))}</b>` : '');
             m('steps', sm.steps ? `<b>${sm.steps}</b> step${sm.steps === 1 ? '' : 's'}${sm.commands ? ` · <b>${sm.commands}</b> command${sm.commands === 1 ? '' : 's'}` : ''}` : '');
@@ -567,7 +543,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
         }
         const tick = setInterval(() => { if (S.status === 'running' || S.status === 'placed') { S.steps.forEach((st) => { if (!st.done) setStepState(st); }); paintHead(); } }, 1000);
         paintHead();
-        return { push, pushAll: (list) => (list || []).forEach(push), status, summary, destroy() { clearInterval(tick); host.textContent = ''; } };
+        return { push, pushAll: (list) => (list || []).forEach(push), status, summary, actions: (list, note) => paintActions(list, note), files: () => changedFiles().map((f) => ({ path: f.path, added: f.added, removed: f.removed, changes: f.n })), destroy() { clearInterval(tick); host.textContent = ''; } };
     }
 
     const api = { mount, normalize, diffLines, kindOf };

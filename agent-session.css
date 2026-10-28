@@ -1,0 +1,138 @@
+/* openvibe-shared/agent-session.css: the look of agent-session.js (4.32.0; it was a string inside the script before).
+   Theme tokens only, light or dark; OpenVibe.Design can restyle it. agent-session.js links it from beside itself when a
+   page has not; a page may link it in its <head> to paint styled from the first line. */
+.ovas { --ovas-b: var(--border, rgba(255,255,255,.1)); --ovas-s: var(--bg-secondary, #121826); --ovas-t: var(--bg-tertiary, rgba(255,255,255,.05)); --ovas-mut: var(--text-muted, #8b98ad); --ovas-sec: var(--text-secondary, #a8b3c4); --ovas-ok: color-mix(in srgb, #22c55e 70%, var(--text-primary, #e6edf7)); --ovas-bad: var(--live-red, #f87171); --ovas-add: color-mix(in srgb, #22c55e 18%, transparent); --ovas-del: color-mix(in srgb, #ef4444 18%, transparent); --ovas-code: color-mix(in srgb, var(--bg-primary, #0b1020) 72%, var(--ovas-s));
+    display: grid; gap: 12px; color: var(--text-primary, #e6edf7); font-family: inherit; min-width: 0; }
+.ovas-ic { width: 16px; height: 16px; flex: none; }
+.ovas-head { position: sticky; top: var(--ovnav-real-h, 0px); z-index: 2; display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--ovas-b); background: color-mix(in srgb, var(--ovas-s) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.ovas-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ovas-pill { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--ovas-t); color: var(--ovas-sec); }
+.ovas-pill[data-s="running"], .ovas-pill[data-s="placed"], .ovas-pill[data-s="verifying"] { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovas-pill[data-s="succeeded"] { color: var(--ovas-ok); background: color-mix(in srgb, #22c55e 15%, transparent); }
+.ovas-pill[data-s="failed"], .ovas-pill[data-s="expired"] { color: var(--ovas-bad); background: color-mix(in srgb, #ef4444 15%, transparent); }
+.ovas-title { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovas-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ovas-mut); }
+.ovas-meta b { color: var(--ovas-sec); font-weight: 650; font-variant-numeric: tabular-nums; }
+.ovas-agents { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ovas-agent { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 650; border: 1px solid var(--ovas-b); color: var(--ovas-sec); }
+.ovas-agent.is-now { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); color: var(--text-primary, #e6edf7); }
+.ovas-plan { display: grid; gap: 6px; padding-top: 2px; }
+.ovas-plan > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; list-style: none; font-size: 13px; font-weight: 600; }
+.ovas-plan > summary::-webkit-details-marker { display: none; }
+.ovas-plan-now { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovas-plan-now::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: var(--accent, #3b82f6); vertical-align: 1px; }
+.ovas-plan-n { flex: none; font-size: 12px; color: var(--ovas-mut); font-variant-numeric: tabular-nums; }
+.ovas-plan:not([open]) > ol { display: none; }
+.ovas-plan-bar { height: 4px; border-radius: 4px; background: var(--ovas-t); overflow: hidden; }
+.ovas-plan-bar i { display: block; height: 100%; background: var(--accent, #3b82f6); border-radius: inherit; transition: width .3s; }
+.ovas-plan ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; font-size: 13px; }
+.ovas-plan li { display: flex; gap: 8px; align-items: baseline; color: var(--ovas-sec); }
+.ovas-plan li::before { content: ''; flex: none; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ovas-mut); transform: translateY(1px); }
+.ovas-plan li[data-s="in_progress"] { color: var(--text-primary, #e6edf7); font-weight: 600; }
+.ovas-plan li[data-s="in_progress"]::before { border-color: var(--accent, #3b82f6); border-right-color: transparent; animation: ovas-spin .9s linear infinite; }
+.ovas-plan li[data-s="completed"] { color: var(--ovas-mut); text-decoration: line-through; }
+.ovas-plan li[data-s="completed"]::before { background: var(--ovas-ok); border-color: var(--ovas-ok); }
+.ovas-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ovas-chip { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovas-b); background: transparent; color: var(--ovas-sec); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
+.ovas-chip[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, #fff); }
+.ovas-chip.ovas-follow { margin-left: auto; }
+.ovas-feed { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+.ovas-feed > li { min-width: 0; }
+.ovas-msg { padding: 2px 4px; font-size: 15px; line-height: 1.55; overflow-wrap: anywhere; }
+.ovas-msg p { margin: 0 0 8px; } .ovas-msg p:last-child { margin-bottom: 0; }
+.ovas-msg ul, .ovas-msg ol { margin: 4px 0 8px; padding-left: 22px; } .ovas-msg li { margin: 2px 0; }
+.ovas-msg code, .ovas-detail code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .88em; padding: 1px 5px; border-radius: 6px; background: var(--ovas-t); }
+.ovas-msg a { color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovas-code, .ovas-out, .ovas-diff { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--ovas-code); border: 1px solid var(--ovas-b); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.5; overflow: auto; max-height: 50vh; white-space: pre; }
+.ovas-code code { padding: 0; background: none; }
+.ovas-group, .ovas-step { border: 1px solid var(--ovas-b); border-radius: 14px; background: var(--ovas-s); overflow: hidden; }
+.ovas-group > summary, .ovas-step > summary { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 6px 12px; cursor: pointer; list-style: none; }
+.ovas-group > summary::-webkit-details-marker, .ovas-step > summary::-webkit-details-marker { display: none; }
+.ovas-chev { width: 14px; height: 14px; flex: none; color: var(--ovas-mut); transition: transform .15s; }
+details[open] > summary .ovas-chev { transform: rotate(90deg); }
+.ovas-icons { display: inline-flex; flex: none; }
+.ovas-kind { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 9px; background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovas-icons .ovas-kind { width: 24px; height: 24px; border: 2px solid var(--ovas-s); border-radius: 8px; }
+.ovas-icons .ovas-kind + .ovas-kind { margin-left: -7px; }
+.ovas-kind .ovas-ic { width: 14px; height: 14px; }
+.ovas-kind[data-k="edit"], .ovas-kind[data-k="write"] { color: #4ade80; background: color-mix(in srgb, #22c55e 14%, transparent); }
+.ovas-kind[data-k="web"] { color: #38bdf8; background: color-mix(in srgb, #0ea5e9 14%, transparent); }
+.ovas-kind[data-k="agent"] { color: #c084fc; background: color-mix(in srgb, #a855f7 16%, transparent); }
+.ovas-sum { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ovas-sum b { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovas-sum small { font-size: 12px; color: var(--ovas-mut); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ovas-delta { flex: none; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ovas-delta .a { color: var(--ovas-ok); } .ovas-delta .r { color: var(--ovas-bad); margin-left: 4px; }
+.ovas-state { flex: none; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ovas-mut); font-variant-numeric: tabular-nums; }
+.ovas-state .ovas-ic { width: 15px; height: 15px; }
+.ovas-state[data-s="ok"] .ovas-ic { color: var(--ovas-ok); } .ovas-state[data-s="fail"] { color: var(--ovas-bad); }
+.ovas-spin { width: 13px; height: 13px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: ovas-spin .8s linear infinite; color: var(--accent, #3b82f6); }
+.ovas-group > ol { list-style: none; margin: 0; padding: 0 8px 8px; display: grid; gap: 6px; }
+.ovas-group.is-one { border: 0; background: none; }
+.ovas-group.is-one > summary { display: none; }
+.ovas-group.is-one > ol { padding: 0; }
+.ovas-group.is-one .ovas-step { background: var(--ovas-s); border-color: var(--ovas-b); }
+.ovas-group .ovas-step { background: var(--ovas-t); border-color: transparent; }
+.ovas-detail { display: grid; gap: 10px; padding: 0 12px 12px; }
+.ovas-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ovas-mut); margin-bottom: -4px; }
+.ovas-copy { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--ovas-mut); font: inherit; font-size: 11.5px; font-weight: 650; letter-spacing: 0; text-transform: none; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+.ovas-copy:hover { color: var(--text-primary, #e6edf7); background: var(--ovas-t); }
+.ovas-copy .ovas-ic { width: 13px; height: 13px; }
+.ovas-out.is-fail { box-shadow: inset 3px 0 0 var(--ovas-bad); }
+.ovas-wait { font-size: 13px; color: var(--ovas-mut); display: flex; align-items: center; gap: 8px; }
+.ovas-diff span { display: block; padding: 0 6px; margin: 0 -6px; }
+.ovas-diff .a { background: var(--ovas-add); } .ovas-diff .r { background: var(--ovas-del); } .ovas-diff .h { color: var(--ovas-mut); }
+.ovas-sub { margin: 0 8px 8px; padding: 8px 0 0 12px; border-left: 2px solid color-mix(in srgb, #a855f7 45%, transparent); display: grid; gap: 8px; }
+.ovas-handoff { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ovas-sec); }
+.ovas-handoff::before, .ovas-handoff::after { content: ''; flex: 1; height: 1px; background: var(--ovas-b); }
+.ovas-hand { display: grid; justify-items: center; gap: 4px; max-width: 82%; text-align: center; }
+.ovas-hand-row { display: inline-flex; align-items: center; gap: 6px; }
+.ovas-hand-row .ovas-ic { color: var(--ovas-mut); }
+.ovas-hand small { font-size: 12.5px; color: var(--ovas-mut); line-height: 1.4; }
+.ovas-note { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; background: color-mix(in srgb, #f59e0b 12%, transparent); color: var(--text-primary, #e6edf7); }
+.ovas-note[data-level="error"] { background: color-mix(in srgb, #ef4444 13%, transparent); }
+.ovas-note[data-level="info"] { background: color-mix(in srgb, #22c55e 10%, transparent); }
+.ovas-note[data-level="info"] .ovas-ic { color: var(--ovas-ok); }
+.ovas-note .ovas-ic { color: #f59e0b; margin-top: 2px; } .ovas-note[data-level="error"] .ovas-ic { color: var(--ovas-bad); }
+.ovas-done { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, #22c55e 40%, transparent); background: color-mix(in srgb, #22c55e 8%, transparent); }
+.ovas-done[data-ok="0"] { border-color: color-mix(in srgb, #ef4444 40%, transparent); background: color-mix(in srgb, #ef4444 8%, transparent); }
+.ovas-done > b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.ovas-line { display: flex; align-items: center; gap: 8px; padding: 0 4px; font-size: 12.5px; color: var(--ovas-mut); }
+.ovas-line::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ovas-mut); opacity: .7; }
+.ovas-empty { padding: 18px; text-align: center; color: var(--ovas-mut); font-size: 13.5px; border: 1px dashed var(--ovas-b); border-radius: 14px; }
+.ovas [hidden] { display: none !important; }
+@keyframes ovas-spin { to { transform: rotate(360deg); } }
+@media (hover: hover) { .ovas-group > summary:hover, .ovas-step > summary:hover { background: var(--bg-hover, rgba(255,255,255,.04)); } }
+@media (max-width: 640px) {
+    .ovas-head { padding: 10px 12px; border-radius: 14px; } .ovas-msg { font-size: 14.5px; }
+    .ovas-code, .ovas-out, .ovas-diff { font-size: 12px; max-height: 45vh; }
+    .ovas-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px; } .ovas-bar::-webkit-scrollbar { display: none; }
+    .ovas-chip { flex: none; } .ovas-icons .ovas-kind + .ovas-kind { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ovas-spin, .ovas-plan li::before { animation: none; } }
+
+/* Files changed (4.32.0): every file the agents edited or wrote, with its +/−; a tap opens its step. */
+.ovas-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ovas-file { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 6px 12px; border-radius: 14px; border: 1px solid var(--ovas-b); background: var(--ovas-s); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovas-file:hover { background: var(--bg-hover, rgba(255,255,255,.04)); }
+.ovas-file:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovas-file-n { flex: none; font-size: 12px; color: var(--ovas-mut); }
+/* A step's raw input, folded. */
+.ovas-raw > summary { display: flex; align-items: center; gap: 6px; cursor: pointer; list-style: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ovas-mut); }
+.ovas-raw > summary::-webkit-details-marker { display: none; }
+.ovas-raw > summary .ovas-chev { width: 12px; height: 12px; }
+.ovas-raw[open] > summary .ovas-chev { transform: rotate(90deg); }
+.ovas-raw .ovas-label { margin: 8px 0 0; }
+.ovas-raw pre { margin-top: 8px; }
+/* Cost: per agent in the head, per step on its row when the agent reports it. */
+.ovas-agent-cost { margin-left: 6px; font-weight: 600; color: var(--ovas-mut); font-variant-numeric: tabular-nums; }
+.ovas-cost { flex: none; font-size: 12px; font-weight: 650; color: var(--ovas-mut); font-variant-numeric: tabular-nums; }
+/* The action bar (Approve / Continue / Stop), sticky at the bottom while it is needed. */
+.ovas-actions { position: sticky; bottom: max(8px, env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 16px; border: 1px solid var(--ovas-b); background: color-mix(in srgb, var(--ovas-s) 94%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.ovas-actions p { flex: 1 1 260px; min-width: 0; margin: 0; font-size: 13px; line-height: 1.4; color: var(--ovas-sec); }
+.ovas-actions { justify-content: flex-end; }
+.ovas-act { min-height: 38px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--ovas-b); background: transparent; color: var(--text-primary, #e6edf7); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.ovas-act.is-primary { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
+.ovas-act.is-danger { color: var(--ovas-bad); border-color: color-mix(in srgb, var(--ovas-bad) 45%, var(--ovas-b)); }
+.ovas-act:disabled { opacity: .55; cursor: default; }
+.ovas-act:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
