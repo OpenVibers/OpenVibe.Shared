@@ -196,6 +196,53 @@ kit.badge(text, 'accent' | 'ok' | 'warn' | 'bad' | 'live') · kit.dot(n) · kit.
 `search`, `gear`, `members`, `invite`, `chat`, `bell`, `home`, `spark`, `live`, `video`, `image`, `tag`, `coin`,
 `trophy`, `map`, `code`, `robot` and `game`.
 
+### Cards and rails (4.28.0)
+
+```js
+kit.card({ href, title, type, ratio, image, alt, video, badge, live, corner, peek, who, avatar,
+           count: [1832, 'views'], when, level, save: { href }, remind: { href }, share, more: [items] })
+kit.rail({ id, title, more: { href, label }, items: [kit.card(…), …], size: 's' | 'm' | 'l' })
+```
+
+One card for every kind of thing (plan 2026-10-28 §3.4):
+
+| Part | What it does |
+| --- | --- |
+| Media | In the type's shape (`kit.CARD_RATIO`): 16:9 streams, clips, runs, maps, cams, events; 1:1 memes, shoes, listings, deals; 4:3 reports, themes, games; 2:1 domains. `ratio` overrides it. Without a picture, the type's icon on a wash of the room's accent |
+| Badge | Top left, one word: NEW, −24 %, WR. `live: true` draws LIVE with a pulse |
+| Corner | Bottom right: a length or a price |
+| Peek | One line over the media on hover or focus |
+| Preview | `video`: a muted loop while the card is hovered. Computers only, never under reduced motion, and the file loads only then |
+| Title | Two lines at most. The card is one link: the title's, stretched over it |
+| Meta | Who (with their picture or letters), one count, when. A count of 0 or none is left out, never shown as 0 |
+| ⋯ | Save and Remind when given, and Share always (the system share sheet, else the link copied, said in the item) |
+
+A rail scrolls sideways and snaps:
+
+| Screen | How it looks |
+| --- | --- |
+| Phone | About 1.2 cards show, and the row bleeds to the screen's edge (the page keeps a 16 px gutter) |
+| Wider | 190 px (`s`), 280 px (`m`) or 400 px (`l`) cards |
+| Pointer | ‹ › buttons, each hidden at its end |
+
+A card's menu inside a rail is placed on the screen, so the scroller never clips it. An empty rail is `''`.
+
+### Rooms (4.28.0)
+
+`require('openvibe-shared/rooms')` (`window.OpenVibeRooms`) holds the fourteen rooms. Each has a neighbourhood, a host,
+a hero line, an icon, a motif and an accent: a dark value (AA on `#0B0D12`) and a light value (AA on white).
+
+Put `rooms.style(id)` on the room's wrapper with the class `ov-room`. Its pieces then use these, in the right one for
+the theme's mode:
+
+| Property | Use |
+| --- | --- |
+| `--room-accent` | Icons, outlines, motifs |
+| `--room-strong` | Text on the page |
+| `--room-fill`, `--room-on` | A filled button and its text |
+
+`sc.room()` does this for a front door.
+
 ## The navbar's links
 
 The 2026-10-28 sweep of all 38 sites' bars found three habits that made them feel crowded and repetitive:

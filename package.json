@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.27.0",
+  "version": "4.28.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -79,7 +79,9 @@
     "./user-card": "./user-card.js",
     "./web-runtime": "./web-runtime.js",
     "./route-transition": "./route-transition.js",
-    "./boost": "./boost.js"
+    "./boost": "./boost.js",
+    "./rooms": "./rooms.js",
+    "./motion": "./motion.js"
   },
   "files": [
     "*.js",

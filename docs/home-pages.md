@@ -47,6 +47,36 @@ ${sc.cta({ title: 'Ready?', actions: [{ label: 'Start', href: '/start', primary:
 | `nextSteps` | What to do next on other products after finishing something | |
 | `cta` | The closing call to action | |
 
+## A room's front door: `sc.room()` (4.28.0)
+
+```js
+sc.room({ room: 'surf',
+  hero: { title, lede, search: { action, name, placeholder, hints }, start: { href, label }, chips, motif },
+  proof: [{ value, label, live: true } | { value, label, asOf }],
+  rails: [{ id, title, more, items: [kit.card(…)], size }],
+  scenes: [{ title, text, html, action }],
+  explore, dev: { title, lede, samples, links }, faq, network, html })
+```
+
+It renders the parts in the order every room shares (plan 2026-10-28 §3.3), wrapped in the room's accent:
+
+| # | Part | What it holds |
+| --- | --- | --- |
+| 1 | Hero | Eight words at most; one box (typed hints) or one Start; five chips at most; the motif beside it (faint in the corner on phones) |
+| 2 | Live proof | Real numbers, each live or dated; a 0 is left out |
+| 3 | Rails | Right now, For you |
+| 4 | Feature scenes | The room's own components in a demo state, alternating sides, revealed as they scroll in |
+| 5 | Explore | Where to go in the room |
+| 6 | For developers | A snippet, with OpenAPI and MCP links |
+| 7 | Questions, the rest of OpenVibe | |
+
+The page loads:
+- `kit.css` and `showcase.css`;
+- `kit-web.js` for rails, menus and share;
+- `motion.js` for the ticker, the typed hints and the reveal.
+
+The server always writes the finished state, so the page is whole without scripts.
+
 ## Rules the kit enforces
 
 - **Escaping:** every string is escaped. Only a field named `html` passes markup through, and it must be the caller's own.
