@@ -333,7 +333,116 @@ function cta({ title, text, actions: acts } = {}) {
     return `<section class="sc-cta"><h2>${esc(title)}</h2>${text ? `<p>${esc(text)}</p>` : ''}${actions(acts)}</section>`;
 }
 
+// ── Rooms (plan 2026-10-28 §3.3): a room's front door, in the order every room shares ──
+let roomsLib = null, kitLib = null;
+const fmtNum = (v) => (typeof v === 'number' ? v.toLocaleString('en-US') : String(v));
+/** The room's motif when it brings none: its icon in an aura of its accent, two slow orbits and their dots. */
+function roomMotif(r) {
+    kitLib = kitLib || require('./kit');
+    return `<div class="sc-room-motif" aria-hidden="true"><span class="sc-rm-glow"></span><span class="sc-rm-orbit o1"><i></i></span><span class="sc-rm-orbit o2"><i></i><i></i></span>`
+        + `<span class="sc-rm-core">${kitLib.icon(r ? r.icon : 'spark')}</span></div>`;
+}
+/**
+ * room({ room, hero, proof, rails, scenes, explore, dev, faq, network, html }) — a room's front door, in the order every
+ * room shares: hero → live proof → rails (Right now, For you…) → feature scenes → explore → for developers → questions →
+ * the rest of OpenVibe. Wrapped in .ov-room with the room's accent (rooms.js); what has nothing to show is left out.
+ *   room: 'surf' (rooms.js id or host; an unknown one keeps the theme's accent)
+ *   hero: { title (≤ 8 words), lede, search: { action, name, placeholder, hints: [typed in turn], label },
+ *           start: { href, label } (when there is no box), chips: [{ label, href }] (≤ 5), motif (trusted HTML) }
+ *   proof: [{ value, label, live: true } | { value, label, asOf: 'Oct 28' }] — real numbers only; 0 or none is left out
+ *   rails: [{ id, title, more, items: [kit.card(...)], size }] — kit.rail
+ *   scenes: [{ title, text, html (trusted: the room's own component in a demo state), action: { href, label } }]
+ *   explore: { title, items: [{ href, title, text, icon }] } — sc.features · dev: sc.code's arguments, with links
+ *   faq: { title, items: [[q, a]] } · network: sc.network's arguments · html: trusted markup after the scenes
+ * Needs kit.css (cards, rails, the room's accent) and showcase.css; motion.js makes the numbers tick and the box type.
+ */
+function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq: q, network: net, html } = {}) {
+    roomsLib = roomsLib || require('./rooms');
+    kitLib = kitLib || require('./kit');
+    const r = roomsLib.get(key);
+    const chips = (h.chips || []).filter((c) => c && c.label && safeHref(c.href)).slice(0, 5);
+    const box = h.search && h.search.action ? `<form class="sc-room-box" role="search" method="get" action="${esc(safeHref(h.search.action) || '#')}">`
+        + `<label class="sc-sr" for="sc-room-q">${esc(h.search.label || h.search.placeholder || 'Search')}</label>`
+        + `<input id="sc-room-q" type="search" name="${esc(h.search.name || 'q')}" placeholder="${esc(h.search.placeholder || '')}" autocomplete="off" enterkeyhint="search"${has(h.search.hints) ? ` data-ov-typed="${esc(h.search.hints.slice(0, 6).join('|'))}"` : ''}>`
+        + `<button type="submit" aria-label="${esc(h.search.button || 'Go')}">${kitLib.icon('forward')}</button></form>` : '';
+    const start = !box && h.start && safeHref(h.start.href) ? `<div class="sc-actions"><a class="sc-btn sc-primary sc-room-start" href="${esc(safeHref(h.start.href))}">${esc(h.start.label || 'Start')}</a></div>` : '';
+    const nums = (proof || []).filter((p) => p && p.label && p.value != null && p.value !== '' && p.value !== 0);
+    const proofHTML = nums.length ? `<ul class="sc-room-proof" aria-label="${esc(r ? `${r.name} right now` : 'Right now')}">${nums.map((p) => `<li>`
+        + `<b${typeof p.value === 'number' ? ` data-ov-ticker="${p.value}"` : ''}>${esc(fmtNum(p.value))}</b> <span>${esc(p.label)}</span>`
+        + `${p.live ? '<em class="sc-room-live">live</em>' : p.asOf ? `<em>${esc(p.asOf)}</em>` : ''}</li>`).join('')}</ul>` : '';
+    const heroHTML = h.title ? `<section class="sc-room-hero" aria-labelledby="sc-room-h">`
+        + `<div class="sc-room-main"><h1 id="sc-room-h">${esc(h.title)}</h1>${h.lede ? `<p class="sc-room-lede">${esc(h.lede)}</p>` : ''}${box}${start}`
+        + `${chips.length ? `<nav class="sc-room-chips" aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
+        + `<div class="sc-room-pic">${h.motif != null ? h.motif : roomMotif(r)}</div></section>` : '';
+    const railsHTML = (rails || []).map((x) => kitLib.rail(x)).join('');
+    const sceneList = (scenes || []).filter((x) => x && x.title && x.html != null);
+    const scenesHTML = sceneList.length ? `<section class="sc-room-scenes" aria-label="What you can do">${sceneList.map((x, i) => `<article class="sc-scene${i % 2 ? ' is-flip' : ''}" data-ov-reveal>`
+        + `<div class="sc-scene-text"><h2>${esc(x.title)}</h2>${x.text ? `<p>${esc(x.text)}</p>` : ''}${x.action && safeHref(x.action.href) ? `<a class="sc-scene-go" href="${esc(safeHref(x.action.href))}">${esc(x.action.label || 'Try it')}${kitLib.icon('chevron')}</a>` : ''}</div>`
+        + `<div class="sc-scene-stage">${x.html}</div></article>`).join('')}</section>` : '';
+    const devLinks = dev && has(dev.links) ? `<p class="sc-room-devlinks">${dev.links.filter((l) => safeHref(l.href)).map((l) => `<a href="${esc(safeHref(l.href))}">${esc(l.label)}</a>`).join(' · ')}</p>` : '';
+    const devHTML = dev ? code(dev).replace(/<\/section>$/, `${devLinks}</section>`) : '';
+    return `<div class="ov-room sc-room"${r ? ` data-room="${esc(r.id)}" style="${roomsLib.style(r.id)}"` : ''}>${heroHTML}${railsHTML}${scenesHTML}${html != null ? html : ''}`
+        + `${explore ? features(explore) : ''}${devHTML}${q ? faq(q) : ''}${net ? network(net) : ''}</div>`;
+}
+
 const CSS = `
+/* Rooms (4.28.0): sc.room() — a room's hero, live proof, motif and scenes, in the room's accent (.ov-room in kit.css:
+   --room-accent, --room-strong, --room-fill, --room-on). */
+.sc-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+:where(.sc-room) .ovk-i{width:1.15em;height:1.15em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sc-room-hero{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:clamp(20px,4vw,48px);align-items:center;padding:clamp(20px,5vw,56px) 0 clamp(4px,2vw,16px)}
+.sc-room-hero h1{margin:0;font-size:clamp(2.05rem,5.4vw,3.5rem);font-weight:800;letter-spacing:-.035em;line-height:1.04;text-wrap:balance}
+.sc-room-lede{margin:14px 0 0;max-width:560px;font-size:clamp(1rem,1.6vw,1.13rem);line-height:1.55;color:var(--text-secondary,#96a7c2)}
+.sc-room-box{display:flex;align-items:center;margin-top:22px;max-width:560px;border-radius:999px;background:var(--bg-card,#0f1729);border:1.5px solid color-mix(in srgb,var(--room-accent,#3b82f6) 45%,var(--border,#1f2d47));box-shadow:0 12px 32px -14px color-mix(in srgb,var(--room-accent,#3b82f6) 55%,transparent);transition:border-color .2s,box-shadow .2s}
+.sc-room-box:focus-within{border-color:var(--room-accent,#3b82f6);box-shadow:0 0 0 4px color-mix(in srgb,var(--room-accent,#3b82f6) 22%,transparent),0 12px 32px -14px color-mix(in srgb,var(--room-accent,#3b82f6) 60%,transparent)}
+.sc-room-box input{flex:1;min-width:0;height:56px;padding:0 8px 0 22px;border:0;background:transparent;color:var(--text-primary,#e6edf7);font:inherit;font-size:1.05rem;outline:none}
+.sc-room-box input::placeholder{color:var(--text-muted,#7386a3);opacity:1}
+.sc-room-box input::-webkit-search-cancel-button{display:none}
+.sc-room-box button{flex:none;display:grid;place-items:center;width:44px;height:44px;margin-right:6px;border:0;border-radius:50%;background:var(--room-fill,#3b82f6);color:var(--room-on,#fff);cursor:pointer;font-size:20px;transition:transform .18s}
+.sc-room-box button:hover{transform:translateX(2px)}
+.sc-room-box button:focus-visible{outline:2px solid var(--room-accent,#3b82f6);outline-offset:3px}
+.sc-room-start{background:var(--room-fill,#3b82f6)!important;color:var(--room-on,#fff)!important;border-color:transparent!important}
+.sc-room-chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.sc-room-chips a{display:inline-flex;align-items:center;min-height:38px;padding:0 15px;border-radius:999px;border:1px solid var(--border,#1f2d47);background:color-mix(in srgb,var(--room-accent,#3b82f6) 7%,var(--bg-card,#0f1729));color:var(--text-primary,#e6edf7);font-size:.9rem;font-weight:600;text-decoration:none;white-space:nowrap;transition:border-color .15s,color .15s}
+.sc-room-chips a:hover,.sc-room-chips a:focus-visible{border-color:var(--room-accent,#3b82f6);color:var(--room-strong,#60a5fa);outline:0}
+.sc-room-proof{list-style:none;display:flex;flex-wrap:wrap;gap:8px 22px;margin:22px 0 0;padding:0;font-size:.92rem;color:var(--text-secondary,#96a7c2)}
+.sc-room-proof li{display:inline-flex;align-items:baseline;gap:6px}
+.sc-room-proof b{color:var(--text-primary,#e6edf7);font-size:1.18rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.sc-room-proof em{font-style:normal;font-size:.7rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted,#7386a3)}
+.sc-room-proof .sc-room-live{display:inline-flex;align-items:center;gap:4px;color:var(--room-strong,#60a5fa)}
+.sc-room-live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:sc-breathe 2s ease-in-out infinite}
+.sc-room-pic{display:flex;justify-content:center;min-width:0}
+.sc-room-motif{position:relative;width:min(100%,340px);aspect-ratio:1;color:var(--room-accent,#3b82f6)}
+.sc-rm-glow{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--room-accent,#3b82f6) 48%,transparent),transparent);filter:blur(10px);animation:sc-breathe 6s ease-in-out infinite}
+.sc-rm-orbit{position:absolute;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--room-accent,#3b82f6) 32%,transparent);animation:sc-spin 26s linear infinite}
+.sc-rm-orbit.o1{inset:15%}
+.sc-rm-orbit.o2{inset:1%;border-style:dashed;animation-duration:52s;animation-direction:reverse;opacity:.7}
+.sc-rm-orbit i{position:absolute;top:-6px;left:calc(50% - 6px);width:12px;height:12px;border-radius:50%;background:currentColor;box-shadow:0 0 18px currentColor}
+.sc-rm-orbit.o2 i:nth-child(2){top:auto;bottom:12%;left:-5px;width:9px;height:9px;opacity:.75}
+.sc-rm-core{position:absolute;inset:33%;display:grid;place-items:center;border-radius:30%;background:color-mix(in srgb,var(--room-accent,#3b82f6) 14%,var(--bg-card,#0f1729));border:1px solid color-mix(in srgb,var(--room-accent,#3b82f6) 42%,transparent);box-shadow:0 22px 52px -18px color-mix(in srgb,var(--room-accent,#3b82f6) 75%,transparent)}
+.sc-rm-core .ovk-i{width:48%;height:48%;stroke-width:1.6}
+.sc-room .ovk-rail{margin-top:clamp(26px,4vw,40px)}
+.sc-room-scenes{display:flex;flex-direction:column;gap:clamp(32px,6vw,76px);margin-top:clamp(40px,6vw,80px)}
+.sc-scene{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(18px,4vw,52px);align-items:center}
+.sc-scene.is-flip .sc-scene-text{order:2}
+.sc-scene-text h2{margin:0 0 8px;font-size:clamp(1.3rem,2.6vw,1.8rem);letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
+.sc-scene-text p{margin:0;color:var(--text-secondary,#96a7c2);line-height:1.6;max-width:460px}
+.sc-scene-go{display:inline-flex;align-items:center;gap:4px;min-height:40px;margin-top:10px;color:var(--room-strong,#60a5fa);font-weight:700;text-decoration:none}
+.sc-scene-go:hover{text-decoration:underline}
+.sc-scene-stage{position:relative;min-width:0;border-radius:20px;padding:clamp(14px,2.4vw,24px);background:radial-gradient(120% 80% at 85% 0%,color-mix(in srgb,var(--room-accent,#3b82f6) 16%,transparent),transparent 62%),var(--bg-card,#0f1729);border:1px solid var(--border,#1f2d47);box-shadow:0 30px 60px -32px rgba(0,0,0,.55);overflow:hidden}
+.sc-room-devlinks{margin:12px 0 0;font-size:.9rem;color:var(--text-muted,#7386a3)}
+.sc-room-devlinks a{color:var(--room-strong,#60a5fa);font-weight:700}
+html.ov-motion [data-ov-reveal]{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
+html.ov-motion [data-ov-reveal].is-in{opacity:1;transform:none}
+@media (max-width:759px){
+.sc-room-hero{grid-template-columns:minmax(0,1fr);margin-inline:-16px;padding-inline:16px;overflow-x:clip}
+.sc-room-pic{position:absolute;z-index:-1;top:-4px;right:-30px;width:168px;opacity:.28;pointer-events:none}
+.sc-scene,.sc-scene.is-flip{grid-template-columns:minmax(0,1fr)}.sc-scene.is-flip .sc-scene-text{order:0}
+}
+@media (max-width:599px){.sc-room-chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding:2px 16px;scrollbar-width:none}.sc-room-chips::-webkit-scrollbar{display:none}.sc-room-box input{height:52px;padding-left:18px}}
+@media (prefers-reduced-motion:reduce){.sc-rm-glow,.sc-rm-orbit,.sc-room-live::before{animation:none}html.ov-motion [data-ov-reveal]{opacity:1;transform:none;transition:none}}
+html[data-ov-motion=reduced] .sc-rm-glow,html[data-ov-motion=reduced] .sc-rm-orbit,html[data-ov-motion=reduced] .sc-room-live::before{animation:none}
+html[data-ov-motion=reduced].ov-motion [data-ov-reveal]{opacity:1;transform:none;transition:none}
 /* The hero's visual (4.26.0): the aura (rings, dots, the mark) or an orbit of the site's places. */
 .sc-vis{position:relative;width:min(100%,380px);aspect-ratio:1;margin:0 auto;container-type:inline-size}
 .sc-aura-glow{position:absolute;inset:28%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent,#3b82f6) 42%,transparent),transparent);filter:blur(8px);animation:sc-breathe 6s ease-in-out infinite}
@@ -501,4 +610,4 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 @media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 
-module.exports = { hero, features, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { room, hero, features, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };

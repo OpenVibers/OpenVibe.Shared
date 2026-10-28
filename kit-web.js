@@ -11,6 +11,10 @@
  *   sliders        input[type=range][data-ovk-unit] say their value
  *   sheets         [data-ovk-sheet="#id"] opens dialog.ovk-sheet; the backdrop, Close and Escape close it
  *   tabs           a sideways-scrolling tab strip keeps the open tab in view
+ *   rails          .ovk-rail: ‹ › scroll a page of cards on devices with a pointer, hidden at either end
+ *   share          [data-ovk-share]: the system share sheet, else the link copied (the menu item says "Link copied")
+ *   card previews  .ovk-card video[data-src]: a muted loop while the card is hovered or focused (pointers only, never
+ *                  under reduced motion; the file loads only then)
  *
  * Idempotent and safe on a page that uses none of it. docs/kit.md describes the pieces.
  */
@@ -39,7 +43,22 @@
         // Menus: one open at a time; a click elsewhere or Escape closes them.
         all('details.ovk-more').forEach((d) => {
             if (!once(d, 'ovkMore')) return;
-            d.addEventListener('toggle', () => { if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; }); });
+            d.addEventListener('toggle', () => {
+                if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; });
+                // Inside a rail (a sideways scroller clips anything that hangs out of it) the menu is placed on the screen.
+                const pop = d.querySelector('.ovk-pop');
+                if (!pop || !d.closest('.ovk-rail-track')) return;
+                pop.classList.toggle('is-fixed', d.open);
+                if (!d.open) { pop.style.left = pop.style.top = ''; return; }
+                const r = d.getBoundingClientRect();
+                const w = pop.offsetWidth, h = pop.offsetHeight;
+                pop.style.left = `${Math.max(8, Math.min(r.right - w, innerWidth - w - 8))}px`;
+                pop.style.top = `${r.bottom + 4 + h > innerHeight - 8 ? Math.max(8, r.top - h - 4) : r.bottom + 4}px`;
+                const shut = () => { d.open = false; };
+                const track = d.closest('.ovk-rail-track');
+                track.addEventListener('scroll', shut, { once: true, passive: true });
+                window.addEventListener('scroll', shut, { once: true, passive: true });
+            });
         });
         if (!document.documentElement.dataset.ovkDoc) {
             document.documentElement.dataset.ovkDoc = '1';
@@ -99,6 +118,54 @@
         });
         // Tabs that scroll sideways keep the open one in view.
         all('.ovk-tabs [aria-current="page"]').forEach((a) => { if (once(a, 'ovkTab') && a.scrollIntoView) a.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+        // Rails: ‹ › move a page of cards where there is a pointer to click them; each hides at its end.
+        const fine = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
+        const still = () => (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) || document.documentElement.getAttribute('data-ov-motion') === 'reduced';
+        all('.ovk-rail').forEach((r) => {
+            if (!once(r, 'ovkRail')) return;
+            const track = r.querySelector('.ovk-rail-track');
+            const prev = r.querySelector('.ovk-rail-prev');
+            const next = r.querySelector('.ovk-rail-next');
+            if (!track || !prev || !next || !fine) return;
+            const update = () => {
+                const max = track.scrollWidth - track.clientWidth;
+                prev.hidden = track.scrollLeft <= 4;
+                next.hidden = track.scrollLeft >= max - 4;
+            };
+            const go = (dir) => track.scrollBy({ left: dir * Math.max(track.clientWidth * 0.85, 200), behavior: still() ? 'auto' : 'smooth' });
+            prev.addEventListener('click', () => go(-1));
+            next.addEventListener('click', () => go(1));
+            track.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+            if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(track); else window.addEventListener('resize', update);
+            update();
+        });
+        // Share: the system sheet where there is one, else the link copied, said in the item itself.
+        all('[data-ovk-share]').forEach((a) => {
+            if (!once(a, 'ovkShare')) return;
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                const link = new URL(a.getAttribute('href'), location.href).href;
+                const title = a.getAttribute('data-ovk-share') || document.title;
+                const done = () => { const d = a.closest('details'); if (d) d.open = false; };
+                if (navigator.share) { navigator.share({ title, url: link }).then(done, () => {}); return; }
+                if (!navigator.clipboard) { location.href = link; return; }
+                navigator.clipboard.writeText(link).then(() => {
+                    const span = a.querySelector('span');
+                    const was = span ? span.textContent : '';
+                    if (span) span.textContent = 'Link copied';
+                    setTimeout(() => { if (span) span.textContent = was; done(); }, 1200);
+                }, () => {});
+            });
+        });
+        // Card previews: a muted loop while hovered or focused, on computers only, never under reduced motion.
+        if (fine) all('.ovk-card').forEach((c) => {
+            const v = c.querySelector('video.ovk-card-video[data-src]');
+            if (!v || !once(c, 'ovkPeek')) return;
+            const on = () => { if (still()) return; if (!v.src) v.src = v.getAttribute('data-src'); c.classList.add('is-playing'); const p = v.play(); if (p && p.catch) p.catch(() => {}); };
+            const off = () => { c.classList.remove('is-playing'); try { v.pause(); } catch (e) { /* not started */ } };
+            c.addEventListener('mouseenter', on); c.addEventListener('mouseleave', off);
+            c.addEventListener('focusin', on); c.addEventListener('focusout', off);
+        });
     }
 
 

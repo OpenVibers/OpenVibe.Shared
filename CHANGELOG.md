@@ -6,6 +6,44 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.28.0 — 2026-10-28
+
+- **The room kit** (plan 2026-10-28 §3.3–§3.5, §3.11): what every new room's pages are built from.
+  - **`rooms.js`** (`openvibe-shared/rooms`, `window.OpenVibeRooms`): the fourteen rooms (Fun, Shoes, Tours, Today,
+    Meme, Domains, Casino, Exchange, Cam, Surf, Report, Website, Vision, Design) with:
+    - their neighbourhood, host, hero line (eight words at most), icon and motif;
+    - an accent every 25° of OKLCH hue: a dark-theme value that passes AA on `#0B0D12`, and a light-theme value
+      (text and filled buttons) that passes AA on white.
+
+    `rooms.style(id)` on a wrapper with the class `ov-room` gives `--room-accent`, `--room-strong`, `--room-fill` and
+    `--room-on`, in the right one for the theme's mode (`:root[data-theme-mode]`). An unknown room keeps the
+    theme's accent.
+  - **`kit.card()`**: one card for every kind of thing.
+    - Media in the type's shape (16:9 streams and runs, 1:1 memes, shoes and deals, 4:3 reports and themes,
+      2:1 domains) with a badge (LIVE pulses) and a corner (a length or a price).
+    - A peek line on hover, and a muted preview loop that loads only while the card is hovered (computers only,
+      never under reduced motion).
+    - The title in two lines at most, then who, one count and when. A count of 0 or none is left out.
+    - A ⋯ menu: Save and Remind when given, and Share always (the system share sheet, else the link copied).
+    - The whole card is one link.
+  - **`kit.rail()`**: a row that snaps.
+    - About 1.2 cards show on a phone, bleeding to the screen's edge.
+    - Fixed widths on wider screens (`s` for square things, `m`, `l`).
+    - ‹ › buttons on devices with a pointer, each hidden at its end.
+    - A card's menu inside a rail is placed on the screen, so the scroller never clips it.
+  - **`sc.room()`**: a room's front door, in the order every room shares: the hero, the rails, the scenes, then
+    explore, for developers, questions and the rest of OpenVibe.
+    - The hero holds up to eight words, one box (with typed hints) or one Start, five chips at most, and the
+      live proof.
+    - Every live-proof number is real and is either live or dated; a 0 is left out.
+    - The room's motif sits beside the hero, and faint in the corner on phones. The default is the room's icon in
+      an aura of its accent; a room can bring its own.
+    - Feature scenes alternate sides and reveal as they scroll in.
+  - **`motion.js`**: reveal on scroll, a number ticker and a typed placeholder.
+    - The server always writes the end state, so a page is complete without the script, under reduced motion
+      (the OS setting or the account's) and for crawlers.
+  - The kit's icons gain `chart`, `swap`, `wave`, `shoe` and `palette`.
+
 ## 4.27.0 — 2026-10-28
 
 - **Notifications 2.0** (`notification-ui.js`). The owner's screenshot on 10-28: three red "Alert:

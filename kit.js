@@ -94,7 +94,11 @@
         cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18Z"/>', server: '<rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/>',
         sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
         moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
-        list: '<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>', robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9.5 16.5h5M3 13v2M21 13v2"/>',
+        list: '<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
+        chart: '<path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-4 3 2.5 5-6"/>', swap: '<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>',
+        wave: '<path d="M2 16c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M5.5 11.5A7 7 0 0 1 18 8.6c-2.3-.5-4.2.4-4.8 2.4"/>',
+        shoe: '<path d="M2.5 17v-5.5l4-.5 3-4 3.2 1.4-.9 2.6 4 2.2 4.7 1a2 2 0 0 1 1.5 1.9V17Z"/><path d="M2.5 20h19"/>',
+        palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9.5 16.5h5M3 13v2M21 13v2"/>',
     };
     const ICONS = Object.freeze(Object.keys(P));
     /** One icon as inline SVG (decorative: aria-hidden); '' for a name the set does not have. */
@@ -227,6 +231,7 @@
             const inner = `${it.icon ? icon(it.icon) : ''}<span>${esc(it.label)}</span>`;
             const cls = `ovk-pop-item${it.danger ? ' ovk-pop-item--danger' : ''}`;
             if (it.action) return `<form method="post" action="${esc(url(it.action))}"${it.confirm ? ` data-ovk-confirm="${esc(it.confirm)}"` : ''}>${Object.keys(it.hidden || {}).map((k) => `<input type="hidden" name="${esc(k)}" value="${esc(it.hidden[k])}">`).join('')}<button type="submit" class="${cls}" role="menuitem">${inner}</button></form>`;
+            if (it.share) return `<a class="${cls}" role="menuitem" href="${esc(url(it.href))}" data-ovk-share="${esc(it.title || '')}">${inner}</a>`;
             return `<a class="${cls}" role="menuitem" href="${esc(url(it.href))}">${inner}</a>`;
         };
         return `<details class="ovk-more"><summary class="ovk-icon-btn" aria-label="${esc(label)}" title="${esc(label)}">${icon(ic)}</summary><div class="ovk-pop" role="menu">${items.filter(Boolean).map(item).join('')}</div></details>`;
@@ -306,8 +311,75 @@
     // markup with these builders loads both and calls enhance() on what it added. A no-op on the server.
     const enhance = (rootEl) => (root.OpenVibeKitWeb ? root.OpenVibeKitWeb.enhance(rootEl) : undefined);
 
+    // ── Cards and rails (plan 2026-10-28 §3.4): one card for every kind of thing, in rows that snap ──
+    // The media's shape by what the card shows; `ratio` overrides it.
+    const CARD_RATIO = {
+        stream: '16/9', clip: '16/9', vod: '16/9', video: '16/9', run: '16/9', map: '16/9', cam: '16/9', tour: '16/9', trip: '16/9',
+        event: '16/9', brief: '16/9', post: '16/9', meme: '1/1', shoe: '1/1', listing: '1/1', deal: '1/1', person: '1/1',
+        toy: '4/3', game: '4/3', simulator: '4/3', report: '4/3', dashboard: '4/3', theme: '4/3', kit: '4/3', benchmark: '4/3', site: '4/3', domain: '2/1',
+    };
+    // What a card without a picture draws in its media, by type.
+    const CARD_ICON = { stream: 'live', clip: 'play', vod: 'play', video: 'play', run: 'wave', map: 'map', cam: 'video', tour: 'map', trip: 'map',
+        event: 'calendar', brief: 'calendar', post: 'file', meme: 'image', shoe: 'shoe', listing: 'tag', deal: 'tag', person: 'user', toy: 'spark',
+        game: 'game', simulator: 'game', report: 'chart', dashboard: 'chart', theme: 'palette', kit: 'palette', benchmark: 'chart', site: 'computer', domain: 'globe' };
+    const media = (u) => /^(https:\/\/|\/(?!\/))/.test(String(u || '').trim());
+    const fmtCount = (n) => (n >= 1e6 ? `${(n / 1e6).toFixed(n < 1e7 ? 1 : 0).replace(/\.0$/, '')}M` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : n >= 1e3 ? `${(n / 1e3).toFixed(1).replace(/\.0$/, '')}k` : String(n));
+    /**
+     * card({ href, title, type, ratio, image, alt, video, badge, live, corner, peek, who, avatar, count: [n, 'watching'],
+     *        when, level, save, remind, share, more: [items] }) — one thing, the same anatomy everywhere:
+     *  - media in the type's shape, a badge top-left (a word: NEW, −24 %, WR; live: true draws LIVE with a pulse) and a
+     *    corner bottom-right (a length or a price); peek: one line over the media on hover or focus; video: a muted
+     *    loop played while it is hovered (computers only, never under reduced motion, loaded only then)
+     *  - the title (two lines at most), then who (with their picture or letters), one count and when; a count of 0 or
+     *    none is left out, never shown as 0
+     *  - ⋯ with Save and Remind when given ({ href } or { action, hidden }), Share (always: the system share sheet, else
+     *    the link copied) and any `more` items (kit.more's)
+     * The card is one link, the title's, stretched over it; ⋯ sits above it. level: the title's heading level (3).
+     */
+    function card({ href = '#', title = '', type = '', ratio = '', image = '', alt = '', video = '', badge: bd = '', live = false, corner = '',
+        peek = '', who = '', avatar = '', count = null, when: at = null, level = 3, save = null, remind = null, share = true, more: extra = null } = {}) {
+        const ar = /^\d{1,2}\/\d{1,2}$/.test(String(ratio)) ? ratio : CARD_RATIO[type] || '16/9';
+        const link = url(href);
+        const pic = media(image)
+            ? `<img src="${esc(image)}" alt="${esc(alt)}" loading="lazy" decoding="async">`
+            : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
+        const loop = media(video) ? `<video class="ovk-card-video" data-src="${esc(video)}" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>` : '';
+        const tag = live ? '<span class="ovk-card-badge is-live">LIVE</span>' : bd ? `<span class="ovk-card-badge">${esc(bd)}</span>` : '';
+        const n = Array.isArray(count) ? Number(count[0]) : Number(count);
+        const counted = Number.isFinite(n) && n > 0 ? `<span>${esc(fmtCount(n))}${Array.isArray(count) && count[1] ? ` ${esc(count[1])}` : ''}</span>` : '';
+        const t = at != null && at !== '' ? when(at) : null;
+        const meta = [who ? `<span class="ovk-card-who">${esc(who)}</span>` : '', counted, t && t.text ? `<time datetime="${esc(t.iso)}">${esc(t.text)}</time>` : ''].filter(Boolean).join('');
+        const items = [
+            save ? { label: 'Save', icon: 'star', ...save } : null,
+            remind ? { label: 'Remind me', icon: 'bell', ...remind } : null,
+            share ? { label: 'Share', icon: 'open', href: link, share: true, title } : null,
+        ].concat(extra || []).filter(Boolean);
+        const h = Math.min(6, Math.max(2, Number(level) || 3));
+        return `<article class="ovk-card${live ? ' is-live' : ''}${type ? ` ovk-card--${esc(type)}` : ''}" style="--ovk-ar:${ar}">`
+            + `<div class="ovk-card-media">${pic}${loop}${tag}${corner ? `<span class="ovk-card-corner">${esc(corner)}</span>` : ''}${peek ? `<span class="ovk-card-peek">${esc(peek)}</span>` : ''}</div>`
+            + `<div class="ovk-card-body">${who || avatar ? mark({ name: who || title, src: avatar, size: 34 }) : ''}<div class="ovk-card-text">`
+            + `<h${h} class="ovk-card-title"><a class="ovk-card-link" href="${esc(link)}">${esc(title)}</a></h${h}>${meta ? `<p class="ovk-card-meta">${meta}</p>` : ''}</div>`
+            + `${items.length ? more({ label: `More: ${title}`, items }) : ''}</div></article>`;
+    }
+    /**
+     * rail({ id, title, more: { href, label }, items: [card html], size: 's'|'m'|'l', label }) — a row that scrolls
+     * sideways and snaps: about 1.2 cards on a phone, as many as fit on a computer, with ‹ › buttons there (kit.enhance).
+     * size: 's' square things (memes, shoes, deals), 'm' (default) pictures 16:9, 'l' wide features. Empty → ''.
+     */
+    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '' } = {}) {
+        const list = (items || []).filter(Boolean);
+        if (!list.length) return '';
+        const hid = id ? `${String(id).replace(/[^a-z0-9_-]/gi, '')}-h` : '';
+        const head = title || m ? `<div class="ovk-rail-head">${title ? `<h2${hid ? ` id="${hid}"` : ''}>${esc(title)}</h2>` : ''}${m && m.href ? `<a class="ovk-rail-more" href="${esc(url(m.href))}">${esc(m.label || 'See all')}${icon('chevron')}</a>` : ''}</div>` : '';
+        const named = hid && title ? ` aria-labelledby="${hid}"` : ` aria-label="${esc(label || title || 'More')}"`;
+        return `<section class="ovk-rail ovk-rail--${size === 's' || size === 'l' ? size : 'm'}"${id ? ` id="${esc(id)}"` : ''}${named}>${head}`
+            + `<div class="ovk-rail-wrap"><ul class="ovk-rail-track" role="list">${list.map((x) => `<li>${x}</li>`).join('')}</ul>`
+            + `<button type="button" class="ovk-rail-btn ovk-rail-prev" aria-label="Scroll back" hidden>${icon('back')}</button>`
+            + `<button type="button" class="ovk-rail-btn ovk-rail-next" aria-label="Scroll on" hidden>${icon('forward')}</button></div></section>`;
+    }
+
     return {
-        esc, url, icon, ICONS, when, hueOf, mark, button, iconButton, action, badge, dot,
+        esc, url, icon, ICONS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 1,
