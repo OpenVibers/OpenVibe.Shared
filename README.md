@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.30.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.31.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -512,6 +512,14 @@ a × and a scrim; the page underneath does not scroll).
   `rich_content.image`, `thumbnail_url` or `thumbnail` (https, and not the avatar again); grouped repeats with ×N.
 - **Touch:** a row swipes right to mark it read and left to clear it (Network's dismiss); the buttons on the time line
   do the same with a mouse or keyboard.
+
+**The Action Center (4.31.0).** The ✦ beside the bell (desktop; on phones, the bell's Agents tab links to it) opens
+every agent task in one place: Running (re-read every 15 s while open), Waiting for you (Approve and Decline right
+there), Scheduled, Done (cost, steps, the page) and Failed (why). It reads Network's `GET /api/v1/me/actions`
+(`network.me-actions-result@1`, contracts 0.229.0) and acts through `POST /api/v1/me/actions/:service/:id/approve|decline`.
+`action-center.js` loads from beside `notification-ui.js` on the first click (serve it there; it is in `files.js`).
+`OpenVibeNotifications.init({ actions: false })` leaves the ✦ out; `OpenVibeNotifications.openActions(anchor)` opens it
+from a site's own control.
 
 **Quiet hours (4.30.0).** During the person's window (`GET /api/notifications/quiet-hours`, read at start and every ten
 minutes), toasts and sounds wait; the bell and the badge still fill, and a critical notice still shows.

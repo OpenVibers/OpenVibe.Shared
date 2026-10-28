@@ -20,6 +20,7 @@ const BROWSER = Object.freeze([
     'shipped.js',           // "Recently shipped" from the network changelog (openvibe.blog)
     'notification-ui.js',   // bell + notification panel
     'notification-live.js', // the bell's realtime feed over OpenVibe.Events; notification-ui loads it on demand (realtime on)
+    'action-center.js',     // the ✦ Action Center; notification-ui loads it on the first click
     'account-switcher.js',
     'user-card.js',
     'ov-mark.js',           // the OV brand mark drop-in

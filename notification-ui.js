@@ -26,6 +26,8 @@
 //   • operator alerts (OPERATOR_ALERT, or rich_content.kind "ops_alert") read as System cards: "Browser check
 //     failed · events · release 80b7955", a status link, and the fix command behind a copy button in the bell —
 //     never raw shell text in the body;
+//   • the ✦ beside the bell (4.31.0, desktop) opens the Action Center (action-center.js, loaded from beside this file
+//     on the first click): every agent task in one place; on phones the bell's Agents tab links to it;
 //   • the bell (4.30.0) is a 420 px popover on desktop and a full-height sheet on phones: tabs (All · Mentions · Live ·
 //     Deals & alerts · System · Agents) counted by Network's unread-by-tab, an Unread filter, day headers, thumbnails,
 //     unread dots and grouped repeats; on touch screens a row swipes right to read and left to clear.
@@ -64,6 +66,7 @@
         check: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
         bell: '<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>',
         key: '<circle cx="8.2" cy="14.8" r="4"/><path d="M11.1 12l8.2-8.2M16.4 6.7l2.3 2.3M14.2 8.9l1.8 1.8"/>',
+        spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
     };
     const CATEGORY_GLYPH = { stream: 'live', social: 'people', chat: 'chat', game: 'game', economy: 'coin', achievement: 'trophy', moderation: 'shield', system: 'gear', service: 'grid', admin: 'bell' };
     const TONE = {
@@ -168,6 +171,15 @@
                 font-variant-numeric: tabular-nums; animation: ovn-badge-pop .36s ease; }
             .openvibe-bell .badge.hidden { display: none; }
             .openvibe-bell.ringing svg { animation: ovn-bell-ring .7s ease; transform-origin: 50% 15%; }
+            /* The ✦ beside the bell: the Action Center (desktop; phones reach it from the bell's Agents tab). */
+            .openvibe-actions-btn { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+            .openvibe-actions-btn svg { width: 21px; height: 21px; fill: none; stroke: var(--text-secondary, #b0b0b8); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
+            .openvibe-actions-btn:hover svg, .openvibe-actions-btn.open svg { stroke: var(--accent-light, var(--accent, #60a5fa)); }
+            .openvibe-actions-btn:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+            @media (max-width: 640px) { .openvibe-actions-btn { display: none; } }
+            .ovn-ac-link { display: flex; align-items: center; gap: 10px; width: calc(100% - 12px); margin: 6px; padding: 10px 14px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--accent, #3b82f6) 45%, var(--border, #333));
+                background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); color: var(--text-primary, #ececf1); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; text-align: left; }
+            .ovn-ac-link svg { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
             /* The panel (desktop popover, phone sheet) and the full inbox share one list view. */
             .openvibe-notif-panel { position: fixed; z-index: 99999; display: none; flex-direction: column; overflow: hidden;
@@ -721,6 +733,37 @@
         setTimeout(() => { el.remove(); flushQueue(); }, 240);
     }
 
+    // ── The ✦: the Action Center, loaded from beside this file on the first click ──
+    let _acLoading = null;
+    function actionCenterSrc() {
+        if (_config.actionCenterSrc) return _config.actionCenterSrc;
+        const m = /^(https?:\/\/[^?#]*\/)notification-ui\.js(?:[?#]|$)/.exec(SELF_SRC);
+        return `${m ? m[1] : 'https://openvibe.network/shared/'}action-center.js`;
+    }
+    function loadActionCenter() {
+        if (root.OpenVibeActionCenter) return Promise.resolve(root.OpenVibeActionCenter);
+        return _acLoading || (_acLoading = new Promise((ok) => {
+            const sc = document.createElement('script');
+            sc.src = actionCenterSrc(); sc.async = true;
+            sc.onload = () => ok(root.OpenVibeActionCenter || null);
+            sc.onerror = () => { _acLoading = null; ok(null); };
+            document.head.appendChild(sc);
+        }));
+    }
+    function openActions(anchor) {
+        loadActionCenter().then((AC) => { if (AC) AC.toggle({ anchor, token: () => _config.token, apiBase: _config.apiBase }); });
+    }
+    function createActionsEl() {
+        const b = document.createElement('div');
+        b.className = 'openvibe-actions-btn';
+        b.setAttribute('role', 'button'); b.setAttribute('aria-label', 'Agents'); b.setAttribute('aria-haspopup', 'dialog'); b.setAttribute('aria-expanded', 'false');
+        b.title = 'Agents: everything your agents are doing'; b.tabIndex = 0;
+        b.innerHTML = svg(GLYPH.spark);
+        b.addEventListener('click', () => openActions(b));
+        b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openActions(b); } });
+        return b;
+    }
+
     // ── Bell / badge ────────────────────────────────────────
     function createBellEl() {
         const bell = document.createElement('div');
@@ -831,6 +874,7 @@
             if (list.scrollTop + list.clientHeight >= list.scrollHeight - 120) loadMore(v);
         });
         list.addEventListener('click', (e) => {
+            if (e.target.closest('[data-act="ac"]')) { const anchor = _bellEl; closePanel(); openActions(anchor); return; }
             const item = e.target.closest('.openvibe-notif-item');
             if (!item || (item.__ovnSwipedAt && Date.now() - item.__ovnSwipedAt < 450)) return;
             const id = item.dataset.id;
@@ -956,12 +1000,13 @@
             } catch { return ''; }
         }).join('');
         v.lastDay = lastDay;
-        if (!append) list.innerHTML = '';
+        if (!append) list.innerHTML = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
         if (!v.items.length) {
             const [t0, s0] = TAB_EMPTY[v.tab] || TAB_EMPTY.all;
+            const acLink = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
             const title = v.q ? 'Nothing matches that search' : (v.unread ? 'You\'re all caught up' : t0);
             const sub = v.q ? 'Try other words.' : (v.unread ? 'Nothing unread here.' : s0);
-            list.innerHTML = `<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;
+            list.innerHTML = `${acLink}<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;
         } else {
             const old = list.querySelector('.openvibe-nv-more'); if (old) old.remove();
             list.insertAdjacentHTML('beforeend', html);
@@ -1325,10 +1370,13 @@
         createBell(container) {
             injectStyles();
             const bell = createBellEl();
+            if (container && _config.actions !== false && !container.querySelector('.openvibe-actions-btn')) container.appendChild(createActionsEl());
             if (container) container.appendChild(bell);
             pollUnread();
             return bell;
         },
+        /** Open the Action Center (the ✦) from a site's own control. */
+        openActions(anchor) { injectStyles(); openActions(anchor || null); },
         /** Full-page inbox (same list, filters, search, infinite scroll) rendered into a container. */
         renderInbox(container, opts = {}) {
             injectStyles();

@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.31.0 — 2026-10-28
+
+- **The Action Center** (Notifications 2.0, plan 2026-10-28 §3.10): the ✦ beside the bell opens every agent task in one
+  place, on every site.
+  - Tabs: Running (re-read every 15 s while open), Waiting for you (Approve and Decline right there), Scheduled, Done
+    (cost, steps and the page) and Failed (why).
+  - A service that did not answer is named.
+  - A 420 px popover on desktop; on phones the bell's Agents tab opens it as a full-height sheet.
+  - It reads Network's `GET /api/v1/me/actions` (Network#396, contracts 0.229.0).
+  - `action-center.js` loads on the first click (8 KB brotli budget); `notification-ui.js` adds only the button.
+  - `init({ actions: false })` leaves the ✦ out; `openActions(anchor)` opens it from a site's own control.
+
 ## 4.30.0 — 2026-10-28
 
 - **The bell center** (Notifications 2.0, plan 2026-10-28 §3.10):

@@ -21,6 +21,7 @@ const linkedom = require('linkedom');
 const ROOT = path.join(__dirname, '..');
 const LIVE_SRC = fs.readFileSync(path.join(ROOT, 'notification-live.js'), 'utf8');
 const UI_SRC = fs.readFileSync(path.join(ROOT, 'notification-ui.js'), 'utf8');
+const AC_SRC = fs.readFileSync(path.join(ROOT, 'action-center.js'), 'utf8');
 const ALICE = 'usr_01JAB2C3D4E5F6G7H8J9K0MNPQ';
 const BOB = 'usr_01JAB2C3D4E5F6G7H8J9K0MNPR';
 const API = 'https://openvibe.network';
@@ -30,7 +31,7 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
     const { window: lw, document } = linkedom.parseHTML('<!doctype html><html><head></head><body></body></html>');
     const origin = new URL(url).origin;
     const out = { requests: [], es: [], timers: new Map(), intervals: [], scripts: [], now: Date.parse('2026-09-26T18:00:00Z') };
-    const state = { ticketStatus: 200, subject: ALICE, count: 0, tickets: 0, newest: '2026-09-26 17:00:00', fresh: [], slow: null, tabs: null, list: [] };
+    const state = { ticketStatus: 200, subject: ALICE, count: 0, tickets: 0, newest: '2026-09-26 17:00:00', fresh: [], slow: null, tabs: null, list: [], actions: null, decided: [] };
     let hidden = false; let tid = 0; let currentSrc = null;
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
     Object.defineProperty(document, 'currentScript', { configurable: true, get: () => (currentSrc ? { src: currentSrc } : null) });
@@ -76,6 +77,8 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
                 return json(200, { ok: true, count: state.count });
             }
             if (p.pathname === '/api/notifications/newest') return json(200, { ok: true, notification: { created_at: state.newest } });
+            if (p.pathname === '/api/v1/me/actions') return state.actions ? json(200, state.actions) : json(401, { title: 'sign in' });
+            if (p.pathname.startsWith('/api/v1/me/actions/') && req.method === 'POST') { state.decided.push(p.pathname); return json(200, { item: {} }); }
             if (p.pathname === '/api/notifications/unread-by-tab') return state.tabs ? json(200, { ok: true, tabs: state.tabs }) : json(404, {});
             if (p.pathname === '/api/notifications') return json(200, { ok: true, notifications: p.searchParams.get('since') ? state.fresh : state.list, has_more: false, total: state.list.length });
             return json(404, {});
@@ -92,6 +95,7 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
         if (src) {
             out.scripts.push(src);
             setImmediate(() => {
+                if (/action-center\.js$/.test(src)) { vm.runInContext(AC_SRC, ctx, { filename: 'action-center.js' }); if (node.onload) node.onload(new ctx.Event('load')); return; }
                 if (!/notification-live\.js$/.test(src)) { if (node.onerror) node.onerror(new ctx.Event('error')); return; }
                 vm.runInContext(LIVE_SRC, ctx, { filename: 'notification-live.js' });
                 if (node.onload) node.onload(new ctx.Event('load'));
@@ -422,10 +426,61 @@ const created = (subject, over = {}) => ({
         N.destroy();
     }
 
+    // ── The ✦ Action Center (4.31.0): beside the bell, loaded on the first click, five buckets, approve here ──
+    {
+        const p = page();
+        p.run(UI_SRC, 'notification-ui.js', 'https://openvibe.live/shared/notification-ui.js');
+        const N = p.ctx.OpenVibeNotifications;
+        const at = '2026-09-26T18:00:00.000Z';
+        const it = (o) => ({ service: 'actor', id: 'tsk_1', kind: 'agent_task', title: 'Find three cheap flights', summary: 'Read 4 pages', bucket: 'running', state: 'running', agent: 'deepseek-flash',
+            cost_usd: 0.004, steps: 6, error: null, created_at: at, updated_at: at, next_run_at: null, href: 'https://openvibe.actor/tasks/tsk_1', actions: ['open', 'cancel'], ...o });
+        p.state.actions = {
+            buckets: { running: [it()], waiting: [it({ id: 'apr_1', kind: 'approval', title: 'Spend <b>$0.40</b> on a desk hour', bucket: 'waiting', state: 'pending', actions: ['approve', 'decline', 'open'] })], scheduled: [], done: [], failed: [] },
+            counts: { running: 1, waiting: 1, scheduled: 0, done: 0, failed: 0 }, sources: { network: 'ok', actor: 'ok', codes: 'timeout', ai: 'ok' }, partial: true, generated_at: at,
+        };
+        N.init({ token: 'jwt-ac', apiBase: API });
+        const mount = p.document.createElement('div');
+        p.document.body.appendChild(mount);
+        N.createBell(mount);
+        const star = mount.querySelector('.openvibe-actions-btn');
+        assert.ok(star && star.nextElementSibling && star.nextElementSibling.classList.contains('openvibe-bell'), 'the ✦ sits just before the bell');
+        assert.ok(!p.out.scripts.some((s) => /action-center/.test(s)), 'nothing is loaded before the first click');
+        star.dispatchEvent(new p.ctx.Event('click', { bubbles: true }));
+        await p.settle(20);
+        assert.ok(p.out.scripts.includes('https://openvibe.live/shared/action-center.js'), 'loaded from beside notification-ui.js');
+        const req = p.out.requests.find((r) => r.url === `${API}/api/v1/me/actions`);
+        assert.ok(req, 'it reads the person\'s actions');
+        assert.deepStrictEqual([req.headers.authorization, req.credentials], ['Bearer jwt-ac', 'omit'], 'cross-site: the token, never cookies');
+        const panel = p.document.querySelector('.ovac');
+        assert.ok(panel && panel.classList.contains('open') && panel.getAttribute('aria-modal') === 'true', 'open, and modal so toasts wait');
+        assert.strictEqual(star.getAttribute('aria-expanded'), 'true');
+        assert.strictEqual(panel.querySelector('[role="tab"][aria-selected="true"]').dataset.tab, 'waiting', 'what needs the person comes first');
+        assert.deepStrictEqual(['running', 'waiting', 'done'].map((b) => panel.querySelector(`[data-n="${b}"]`).textContent), ['1', '1', '']);
+        assert.match(panel.querySelector('.ovac-note').textContent, /Codes did not answer/, 'a source that did not answer is named');
+        const row = panel.querySelector('.ovac-item');
+        assert.strictEqual(row.querySelector('.ovac-title').textContent, 'Spend <b>$0.40</b> on a desk hour', 'text, never markup');
+        row.querySelector('button[data-do="approve"]').dispatchEvent(new p.ctx.Event('click', { bubbles: true }));
+        await p.settle(20);
+        assert.deepStrictEqual(p.state.decided, ['/api/v1/me/actions/actor/apr_1/approve'], 'approve goes to Network for the owning service');
+        panel.querySelector('[data-tab="running"]').dispatchEvent(new p.ctx.Event('click', { bubbles: true }));
+        const meta = panel.querySelector('.ovac-item .ovac-meta').textContent;
+        assert.ok(/Actor · deepseek-flash/.test(meta) && /\$0\.004/.test(meta) && /6 steps/.test(meta), meta);
+        panel.querySelector('[data-act="close"]').dispatchEvent(new p.ctx.Event('click', { bubbles: true }));
+        assert.ok(!panel.classList.contains('open') && star.getAttribute('aria-expanded') === 'false', '× closes it');
+        // Signed out: says so.
+        p.state.actions = null;
+        p.ctx.OpenVibeActionCenter.open({ anchor: star, token: () => 'jwt-ac', apiBase: API });
+        await p.settle(20);
+        assert.match(panel.querySelector('.ovac-empty b').textContent, /Sign in/);
+        N.destroy();
+    }
+
     // ── Size: loaded on demand, after sign-in ──────────────────────────────────────────────
     const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(ROOT, f)));
     assert.ok(size('notification-live.js') <= 3 * 1024, `notification-live.js is ${(size('notification-live.js') / 1024).toFixed(2)} KB brotli, budget 3 KB`);
+    // The Action Center loads on the ✦'s first click only.
+    assert.ok(size('action-center.js') <= 8 * 1024, `action-center.js is ${(size('action-center.js') / 1024).toFixed(2)} KB brotli, budget 8 KB`);
     // 13 → 20 KB on 2026-10-28 (4.27.0, Notifications 2.0: line glyphs, System cards, grouping, layering, priority, the
     // bell's rich list). It loads only after sign-in, when the bell mounts, never on first paint; measured 19.16 KB.
     // 20 → 24 KB on 2026-10-28 (4.30.0, the bell center: tabs with counts, the Unread filter, thumbnails, swipe to read or
