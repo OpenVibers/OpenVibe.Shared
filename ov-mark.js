@@ -90,7 +90,7 @@ html[data-ov-season-mark] .ov-mark[data-ovm-run] .sl{animation:ovmLeaf .9s cubic
 .ov-mark[data-ovm-flourish] .sr{animation:ovmFlicker 1.6s linear 1}
 .ov-mark[data-ovm-flourish] .sl{animation:ovmWiggle 1.2s ease-in-out 1}
 .ov-mark[data-ovm-flourish] .sd{animation:ovmTwinkle 1.4s ease-in-out 1}
-.ovm-fall{position:fixed;width:0;height:0;pointer-events:none;z-index:2147483000}
+.ovm-fall{position:fixed;width:0;height:0;pointer-events:none;z-index:10010}
 .ovm-fall i{position:absolute;left:-4px;top:-4px;width:9px;height:9px;border-radius:0 70% 0 70%;opacity:0;animation:ovmFall 3s cubic-bezier(.3,.1,.5,1) forwards}
 html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:50%}
 @keyframes ovmLeaf{from{transform:scale(0) rotate(-50deg)}to{transform:none}}

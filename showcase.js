@@ -6,7 +6,8 @@
  *
  *   const sc = require('openvibe-shared/showcase');
  *   `<link rel="stylesheet" href="${serve.url('showcase.css')}">` (cached; carries the ring icons' CSS too) or
- *   `<style>${sc.CSS}</style>`, then sc.hero({ eyebrow, title, accent, lede, actions, note, aside })
+ *   `<style>${sc.CSS}</style>`, then sc.hero({ eyebrow, title, accent, lede, actions, note, aside })   (an eyebrow that is
+ *     only the site's name is left out: the navbar shows it; { icon, text } gives it an icon)
  *     + sc.features({ id, title, lede, items: [{ icon, title, text, href }] })
  *     + sc.steps({ title, lede, items: [{ title, text, href }] })
  *     + sc.code({ title, lede, samples: [{ label, lang, code }] })
@@ -15,7 +16,7 @@
  *     + sc.pricing({ title, lede, tiers: [{ name, price, per, items, action, highlight }], note })
  *     + sc.limits({ title, lede, columns, rows: [{ label, values }], source })   pricing that equals the API's limits
  *     + sc.stories({ title, items: [{ who, text, outcome }] })
- *     + sc.stats({ title, items: [{ value, label, href }] })                 a strip of real numbers
+ *     + sc.stats({ title, items: [{ value, label, href, icon }] })           a strip of real numbers (three across on a phone)
  *     + sc.cards({ title, lede, items: [{ href, title, text, image, badge, meta, live }], layout: 'grid'|'rail',
  *                  ratio: '16/9'|'4/3'|'1/1', more: { label, href } })             rich content: videos, streams, posts
  *     + sc.spotlight({ title, lede, items: [{ title, text, image, video, alt, href, actions }] })   features, shown
@@ -52,9 +53,19 @@ function actions(list, cls = 'sc-actions') {
     return `<div class="${cls}">${list.map((a) => `<a class="sc-btn${a.primary ? ' sc-primary' : ''}" href="${esc(a.href)}"${/^https?:/.test(a.href || '') && a.external ? ' rel="noopener"' : ''}>${a.icon ? icon(a.icon, 18) : ''}${esc(a.label)}</a>`).join('')}</div>`;
 }
 
+// A site's own name as the eyebrow repeats the navbar's brand right above it ("OpenVibe.Quest" twice, the owner
+// 2026-10-28): such an eyebrow is left out. An eyebrow that says something else stays ({ icon, text } adds an icon).
+const SITE_NAME_RE = /^(?:OpenVibe\.[A-Za-z]+|OpenRestream|[A-Za-z]+\.OpenVibe\.[A-Za-z]+)$/;
+function eyebrowHTML(eyebrow) {
+    const e = eyebrow && typeof eyebrow === 'object' ? eyebrow : { text: eyebrow };
+    const text = String(e.text || '').trim();
+    if (!text || SITE_NAME_RE.test(text)) return '';
+    return `<p class="sc-eyebrow">${e.icon ? icon(e.icon, 16) : ''}${esc(text)}</p>`;
+}
+
 /** The top of the page: what the product is, in one line, and where to start. */
 function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html } = {}) {
-    return `<section class="sc-hero${aside || html ? ' sc-split' : ''}"><div class="sc-hero-main">${eyebrow ? `<p class="sc-eyebrow">${esc(eyebrow)}</p>` : ''}<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : ''}</section>`;
+    return `<section class="sc-hero${aside || html ? ' sc-split' : ''}"><div class="sc-hero-main">${eyebrowHTML(eyebrow)}<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : ''}</section>`;
 }
 
 /** A grid of what the product does; each card may link to where it starts. */
@@ -175,7 +186,7 @@ function stats({ id: sid, title, items } = {}) {
     if (!usable.length) return '';
     const h = `sc-${slug(title || 'numbers')}`;
     return `<section class="sc-sec sc-stats-sec"${id(sid)}${labelled(title, h)}>${title ? `<h2 id="${h}" class="sr-only">${esc(title)}</h2>` : ''}<dl class="sc-stats">${usable.map((x) => {
-        const inner = `<dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd>`;
+        const inner = `<dt>${esc(x.label)}</dt><dd>${x.icon ? `<span class="sc-stat-ic">${icon(x.icon, 18)}</span>` : ''}${esc(x.value)}</dd>`;
         const href = safeHref(x.href);
         return href ? `<a class="sc-stat" href="${esc(href)}">${inner}</a>` : `<div class="sc-stat">${inner}</div>`;
     }).join('')}</dl></section>`;
@@ -396,6 +407,22 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}.sc-spot{grid-template-columns:1fr;gap:14px}.sc-spot:nth-child(even) .sc-spot-media{order:0}}
 @media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:1fr}}
+.sc-stat dd{display:flex;align-items:center;gap:8px}.sc-stat-ic{display:inline-flex;color:var(--accent-light,var(--accent,#60a5fa))}
+@media (max-width:640px){
+.sc-hero,.sc-sec,.sc-cta{padding-left:16px;padding-right:16px}
+.sc-hero{padding-top:14px}.sc-hero::before{inset:-60px 0 auto;height:280px}
+.sc-eyebrow{margin-bottom:10px;font-size:11.5px}
+.sc-hero h1{font-size:clamp(27px,7.6vw,34px);line-height:1.1;letter-spacing:-.8px}
+.sc-hero-lede{margin-top:10px;font-size:15.5px;line-height:1.5}
+.sc-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:16px}
+.sc-actions .sc-btn{justify-content:center;min-height:46px;padding:10px 12px;font-size:14.5px;text-align:center}
+.sc-note{margin-top:10px;font-size:12px;line-height:1.45}
+.sc-stats-sec{margin-top:14px}
+.sc-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sc-stat{padding:10px 10px 9px;border-radius:13px;gap:1px;justify-content:flex-end}
+.sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
+.sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
 @media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 

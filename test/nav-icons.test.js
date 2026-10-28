@@ -74,6 +74,8 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         for (const name of own) {
             if (name === 'fa-coins') continue;   // wallet chip, drawn when the menu first opens (below)
             if (name === 'fa-user-secret') continue;   // "Switch to Anonymous": only where openvibe.network's account switcher runs
+            if (name === 'fa-chevron-down') continue;   // the account menu's More: only past eight places (4.23.0)
+            if (name === 'fa-bell') continue;   // the Notifications place: only where the bar has no bell (4.23.0)
             assert.ok(out.includes(glyph(name)), `${name} drawn inline by the default navbar`);
         }
         assert.ok(!/data-ovnav-ic|fa-solid/.test(out), 'no lazy slot or icon-font fallback in the default navbar');
