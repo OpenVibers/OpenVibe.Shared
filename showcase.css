@@ -110,6 +110,22 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}.sc-spot{grid-template-columns:1fr;gap:14px}.sc-spot:nth-child(even) .sc-spot-media{order:0}}
 @media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:1fr}}
+.sc-stat dd{display:flex;align-items:center;gap:8px}.sc-stat-ic{display:inline-flex;color:var(--accent-light,var(--accent,#60a5fa))}
+@media (max-width:640px){
+.sc-hero,.sc-sec,.sc-cta{padding-left:16px;padding-right:16px}
+.sc-hero{padding-top:14px}.sc-hero::before{inset:-60px 0 auto;height:280px}
+.sc-eyebrow{margin-bottom:10px;font-size:11.5px}
+.sc-hero h1{font-size:clamp(27px,7.6vw,34px);line-height:1.1;letter-spacing:-.8px}
+.sc-hero-lede{margin-top:10px;font-size:15.5px;line-height:1.5}
+.sc-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:16px}
+.sc-actions .sc-btn{justify-content:center;min-height:46px;padding:10px 12px;font-size:14.5px;text-align:center}
+.sc-note{margin-top:10px;font-size:12px;line-height:1.45}
+.sc-stats-sec{margin-top:14px}
+.sc-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sc-stat{padding:10px 10px 9px;border-radius:13px;gap:1px}
+.sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
+.sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+}
 @media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a{transition:none}.sc-badge.sc-live::before{animation:none}}
 .ov-icon{--ovi-size:32px;display:inline-grid;place-items:center;width:var(--ovi-size);height:var(--ovi-size);flex:none;vertical-align:middle;line-height:0;color:var(--ovi-accent,var(--accent,#3b82f6));position:relative}
 .ov-icon svg{width:100%;height:100%;overflow:visible;display:block;transition:transform .25s cubic-bezier(.2,1.4,.3,1)}

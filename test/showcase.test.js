@@ -113,4 +113,16 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(rise && !/opacity/.test(rise[0]), 'the reveal only moves: a section that fades in is measured half-transparent, so its text fails contrast checks (axe on every product home)');
 }
 
+// The hero on a phone (4.23.0; the owner on openvibe.quest: "why is openvibe.quest twice… empty space at the top"): an
+// eyebrow that is only the site's name is left out (the navbar shows it), any other eyebrow stays, with an icon when
+// given; numbers take an icon; phones start the hero near the bar, put the buttons side by side and the numbers three across.
+{
+    ['OpenVibe.Quest', 'OpenRestream', 'Play.OpenVibe.Network'].forEach((name) => assert.ok(!sc.hero({ eyebrow: name, title: 'T' }).includes('sc-eyebrow'), `${name}: no eyebrow under the navbar's own brand`));
+    assert.ok(/<p class="sc-eyebrow">Free, nothing to install<\/p>/.test(sc.hero({ eyebrow: 'Free, nothing to install', title: 'T' })), 'an eyebrow that says something stays');
+    assert.ok(/<p class="sc-eyebrow"><(i|span)[^>]*>.*<\/(i|span)>New<\/p>/.test(sc.hero({ eyebrow: { icon: 'fa-star', text: 'New' }, title: 'T' })), 'an eyebrow can carry an icon');
+    assert.ok(/<dd><span class="sc-stat-ic">.*<\/span>39<\/dd>/.test(sc.stats({ items: [{ value: 39, label: 'quests', icon: 'fa-star' }] })), 'a number can carry an icon');
+    const phone = sc.CSS.slice(sc.CSS.indexOf('@media (max-width:640px){'));
+    assert.ok(/\.sc-hero\{padding-top:14px\}/.test(phone) && /\.sc-actions\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\)/.test(phone) && /\.sc-stats\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(phone), 'phones: near the bar, buttons side by side, numbers three across');
+}
+
 console.log('showcase: all checks passed');

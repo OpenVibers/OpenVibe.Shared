@@ -329,10 +329,21 @@ button… better use of icons… compactness… data-driven"):
 A site's items can carry `short` (the grid's label: `{ label: 'Streamer setup', short: 'Setup' }`). `menu.sections`
 still render as their own rows.
 
+## Home page heroes (showcase)
+
+`showcase.hero({ eyebrow, title, accent, lede, actions, note })` is the top of most product homes. On a phone (since
+4.23.0):
+- it starts right under the bar;
+- the two buttons sit side by side;
+- the numbers after it (`showcase.stats`) go three across, each with an optional `icon`.
+
+Don't pass the site's own name as the eyebrow: it is left out, because the navbar's brand already says it. Use the
+eyebrow for something worth reading first ("Free, nothing to install"), with `{ icon, text }` for an icon.
+
 ## Balances
 
 `wallet: true` (or a site's own `coins` and `vibes` chips) shows the balances as one calm pill on phones. Each balance
-is a coloured icon and a plain number, with a hairline between them. Up to 380 px only the first balance shows, and a
+is a coloured icon and a plain number, with a hairline between them. Up to 400 px only the first balance shows, and a
 tap lists them all. Computers get one chip per balance in the same style.
 
 ## Loading

@@ -42,15 +42,23 @@ The owner, 2026-10-28, on the phone:
 - **Calm balances.**
   - **The pill:** one pill on the bar's own surface; each balance a coloured icon and a plain number, a hairline between
     them.
-  - **On phones:** both balances show from 381 px up (the launcher's room is free now); the pill is compact at every
-    phone width.
+  - **On phones:** both balances show from 401 px up (the launcher's room is free now; at 390–400 px the site's name
+    comes first); the pill is compact at every phone width.
   - **Computers:** one chip per balance in the same style.
   - **Room:** on phones the bar drops the empty spacer's gap.
+- **The showcase hero on a phone** (the owner on openvibe.quest: "why is there empty space at the top… why is
+  openvibe.quest twice… better visuals… icon usage… reduce wasted space… the same for all the other sites"). Every site
+  built on `showcase` gets:
+  - **No repeated name:** an eyebrow that is only the site's name ("OpenVibe.Quest") is left out, since the navbar shows
+    it; any other eyebrow stays, and `{ icon, text }` gives it an icon.
+  - **Less space and text:** the hero starts 14 px under the bar (was 36), and the title and lede tighten.
+  - **Buttons:** they sit side by side.
+  - **Numbers:** they go three across, and `stats` items take an `icon`.
 - The mark's seasonal leaves fall under the menus, not over them.
 - `docs/kit.md`: the OpenVibe menu, the account menu, balances.
 - Tests: `navbar-launcher` covers the Sites tab and "All sites"; `search-loading-chrome` covers the tabs and the
   completion; `navbar-touch-hover` checks the menu's hover-only rows; `navbar-phone-fit-chrome` checks both balances
-  from 393 px; `navbar-brand` covers the new header and grid.
+  from 412 px; `navbar-brand` covers the new header and grid.
 
 ## 4.22.2 — 2026-10-28
 

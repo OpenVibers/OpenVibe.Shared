@@ -146,12 +146,12 @@
             @media (max-width: 860px) { .openvibe-navbar .ovnav-burger { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
-               in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 380px
+               in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 400px
                the folded balances show the first one only (a tap lists them all). */
             .openvibe-navbar .openvibe-navbar-brand { flex: 0 1 auto; }
             .openvibe-navbar .openvibe-navbar-brand a.flame { flex: none; }
             .openvibe-navbar .openvibe-navbar-brand .name { display: block; min-width: 0; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
-            @media (max-width: 380px) { .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini ~ .ovnav-chip-mini { display: none; } }
+            @media (max-width: 400px) { .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini ~ .ovnav-chip-mini { display: none; } }
             @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 2px; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
             .openvibe-navbar-brand .name { display: inline-flex; align-items: baseline; font-size: 15px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; line-height: 1; }

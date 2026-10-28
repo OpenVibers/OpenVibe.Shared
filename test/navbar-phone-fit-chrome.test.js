@@ -70,7 +70,7 @@ const MEASURE = `(() => {
                 const last = v.parts[v.parts.length - 1];
                 assert.ok(last[1][1] <= width, `${at}: ${last[0]} runs off the screen`);
                 if (width >= 360) assert.ok(!v.clipped && /Games/.test(v.visibleText), `${at}: the site's word reads whole (${v.visibleText})`);
-                if (who === 'in') assert.strictEqual(v.minis, width <= 380 ? 1 : 2, `${at}: the folded balances show ${width <= 380 ? 'the first one' : 'both'}`);
+                if (who === 'in') assert.strictEqual(v.minis, width <= 400 ? 1 : 2, `${at}: the folded balances show ${width <= 400 ? 'the first one' : 'both'}`);
                 assert.ok(!v.parts.some(([k]) => k === 'launcher'), `${at}: no launcher button: the magnifier opens the one menu (4.23.0)`);
                 await p.close();
             }
