@@ -5,12 +5,14 @@ cards that fold, settings rows, a search row, a composer pinned at the bottom, a
 pieces are built on the server or in the page with the same functions. They look the same on every site, in every
 theme, and they fit a phone first.
 
-- **`kit.js`**: the builders (`require('openvibe-shared/kit')` on the server, `window.OpenVibeKit` in the page) and
-  the behaviour (`OpenVibeKit.enhance()`, which runs by itself in the page).
+- **`kit.js`**: the builders (`require('openvibe-shared/kit')` on the server, `window.OpenVibeKit` in the page).
+- **`kit-web.js`**: the behaviour in the page (copy buttons, menus that close, Enter to send, confirms, sheets), about
+  7 KB. It runs by itself, and again on new markup through `OpenVibeKit.enhance(container)`. A server-rendered site
+  loads only this one.
 - **`kit.css`**: the look, built on the site's theme tokens.
 - **`appbar.js`**: the phone tab bar. `navbar.js` loads it only for a site that sets `appBar`.
 
-The package is MIT. Every site serves its own pinned copy at `/shared/kit.css`, `/shared/kit.js` and
+The package is MIT. Every site serves its own pinned copy at `/shared/kit.css`, `/shared/kit.js`, `/shared/kit-web.js` and
 `/shared/appbar.js` (`openvibe-shared/serve`), so a page keeps working when another site is down.
 
 ## Why
@@ -218,20 +220,21 @@ the site's main verb (go live, post, ask). Settings and the rest live in More.
 ```js
 const kit = require('openvibe-shared/kit');
 const serve = require('openvibe-shared/serve');
-// <link rel="stylesheet" href="${serve.url('kit.css')}">  <script src="${serve.url('kit.js')}" defer></script>
+// <link rel="stylesheet" href="${serve.url('kit.css')}">  <script src="${serve.url('kit-web.js')}" defer></script>
 res.send(layout({ body: kit.head({ title: 'Rooms', actions: [kit.iconButton({ href: '/rooms?new=1', icon: 'plus', label: 'Start a room' })] })
     + kit.list(rooms.map((r) => kit.row({ href: `/r/${r.slug}`, mark: kit.mark({ name: r.name }), title: r.name, sub: r.topic }))) }));
 ```
 
-**A site that draws its own pages (Live's single-page app):** load `/shared/kit.js` and call the same builders on
-`window.OpenVibeKit`. After inserting markup, call `OpenVibeKit.enhance(container)`.
+**A site that draws its own pages (Live's single-page app):** load `/shared/kit.js` and `/shared/kit-web.js`, and call
+the same builders on `window.OpenVibeKit`. After inserting markup, call `OpenVibeKit.enhance(container)`.
 
 **An app built on the OpenVibe SDK:** the Frame (`openvibe-sdk/frame`) loads the kit with the navbar and footer:
 `mountFrame({ …, kit: true, appBar: true })` in the page, or `frameTags({ …, kit: true })` for a server-rendered
 page. The files come from openvibe.network's copy of this release.
 
 **Anyone else's project:** install the release (`"openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.20.0"`)
-and serve `kit.css` and `kit.js` from it, or copy the two files: they need nothing else. Without OpenVibe's theme,
+and serve `kit.css`, `kit-web.js` (and `kit.js` to build in the page) from it, or copy the files: they need nothing
+else. Without OpenVibe's theme,
 set the `--bg-*`, `--text-*` and `--accent` variables yourself, or keep the fallbacks.
 
 ## Seeing it

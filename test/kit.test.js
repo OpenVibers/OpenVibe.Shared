@@ -99,6 +99,14 @@ const kit = require('../kit');
     assert.strictEqual(kit.when(now, now).text, '15:00', 'a number');
     assert.deepStrictEqual(kit.when('not a time', now), { iso: '', text: '' });
     assert.doesNotThrow(() => kit.enhance(), 'enhance is a no-op without a document');
+    const web = require('../kit-web');
+    assert.strictEqual(typeof web.enhance, 'function', 'kit-web.js carries the behaviour');
+    assert.doesNotThrow(() => web.enhance(), 'and does nothing without a document');
+    let seen = null;
+    globalThis.OpenVibeKitWeb = { enhance: (el) => { seen = el; } };
+    kit.enhance('container');
+    assert.strictEqual(seen, 'container', 'kit.enhance() hands the page\'s markup to kit-web.js');
+    delete globalThis.OpenVibeKitWeb;
 }
 
 console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons and time ok');

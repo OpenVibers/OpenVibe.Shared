@@ -6,6 +6,15 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.20.1 — 2026-10-28
+
+- **The kit's behaviour is its own small file, `kit-web.js`** (about 7 KB, 2 KB compressed): copy buttons, menus that
+  close, Enter to send, confirms, sliders and sheets.
+  - A server-rendered site loads only `kit-web.js`. Its markup comes from `kit.js`'s builders on the server.
+  - A page that draws itself loads `kit.js` too; `OpenVibeKit.enhance()` now calls `OpenVibeKitWeb.enhance()`.
+  - Loading all of `kit.js` (33 KB) on every page pushed a site's home over its JavaScript budget (Coupons: 328 KB raw
+    against 292).
+
 ## 4.20.0 — 2026-10-28
 
 - **The OpenVibe Kit** (`kit.js`, `kit.css`; `require('openvibe-shared/kit')`, `window.OpenVibeKit`). One set of app
