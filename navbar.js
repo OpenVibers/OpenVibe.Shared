@@ -450,13 +450,13 @@
     // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives).
     const NAV_ICONS_LAZY = {
         320: 'fa-chevron-right',
-        384: 'fa-xmark fa-arrow-down fa-play fa-plug fa-file-lines fa-location-dot',
-        448: 'fa-book fa-hand-fist fa-user fa-bars fa-arrow-right fa-check fa-tag fa-bolt fa-font fa-lock fa-utensils',
-        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-arrow-up-right-from-square fa-magnifying-glass fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music',
-        576: 'fa-house fa-id-card fa-video fa-star fa-tower-cell fa-diagram-project fa-money-bill-wave fa-crown fa-ticket fa-map',
-        640: 'fa-comments fa-gamepad fa-link fa-network-wired fa-people-arrows fa-shirt fa-code fa-robot fa-photo-film fa-wave-square fa-user-shield',
+        384: 'fa-xmark fa-arrow-down fa-play fa-plug fa-file-lines fa-location-dot fa-microphone',
+        448: 'fa-book fa-hand-fist fa-user fa-bars fa-arrow-right fa-check fa-tag fa-bolt fa-font fa-lock fa-utensils fa-hashtag fa-flag-checkered',
+        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-arrow-up-right-from-square fa-magnifying-glass fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-gauge fa-pen fa-earth-americas fa-inbox fa-folder fa-puzzle-piece fa-shield fa-list fa-compass',
+        576: 'fa-house fa-id-card fa-video fa-star fa-tower-cell fa-diagram-project fa-money-bill-wave fa-crown fa-ticket fa-map fa-display',
+        640: 'fa-comments fa-gamepad fa-link fa-network-wired fa-people-arrows fa-shirt fa-code fa-robot fa-photo-film fa-wave-square fa-user-shield fa-infinity fa-tv',
     };
-    const NAV_ICONS_REV = 'bb866b6e2cf3';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // Icons are solid filled paths generated from the Font Awesome Free solid font, so every OpenVibe
     // page gets the same crisp glyphs with no dependency on Font Awesome CSS. The glyphs the navbar
