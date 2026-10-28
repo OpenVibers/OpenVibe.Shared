@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.24.4 — 2026-10-28
+
+- **`agent-session.js`: no made-up run time.** A finished run mounted without `startedAt` (a replay) showed "0 s"; it
+  now shows no time until its done line says how long it took. A live run, or one given `startedAt`, still counts
+  from then. `summary().durationMs` is 0 when the time is not known.
+
 ## 4.24.3 — 2026-10-28
 
 - **`agent-session.js`: web steps read as lookups.** A tool whose name speaks of the web (`web_search`, `web_fetch`) is

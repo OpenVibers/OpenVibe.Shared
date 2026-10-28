@@ -114,6 +114,10 @@ const server = http.createServer((req, res) => {
         v = await p.evaluate(`[...document.querySelectorAll('#own .ovas-msg a')].map((a) => a.href)`);
         assert.deepStrictEqual(v, ['https://openvibe.bot/machines/m/screen'], 'only the site\'s own address links');
         assert.ok(await p.evaluate(`document.querySelector('#own .ovas-msg').textContent.includes('https://evil.example/login')`), 'the other stays as text');
+        // A finished run replayed without a start time shows no made-up time; its done line's duration shows.
+        v = await p.evaluate(`(() => { const d = document.createElement('div'); d.id = 'replay'; document.body.appendChild(d); const w = OpenVibeAgentSession.mount(d, { title: 'x', status: 'succeeded' }); w.push({ t: 'text', text: 'Done.' }); const before = { hidden: d.querySelector('[data-m="time"]').hidden, ms: w.summary().durationMs }; w.push({ t: 'done', ok: true, text: 'Done.', duration_ms: 125000 }); return { before, after: d.querySelector('[data-m="time"]').textContent, hidden: d.querySelector('[data-m="time"]').hidden }; })()`);
+        assert.deepStrictEqual(v.before, { hidden: true, ms: 0 }, 'no start time and no duration: no time');
+        assert.deepStrictEqual([v.after, v.hidden], ['2 min 5 s', false], 'the done line\'s duration');
         const errors = p.state.errors.filter((e) => !/Failed to load resource/.test(e.text));
         assert.deepStrictEqual(errors, [], JSON.stringify(errors));
         console.log('agent-session-chrome: groups, live output, failures, helpers, hand-offs, filters and safe text ok');
