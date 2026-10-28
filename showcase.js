@@ -64,8 +64,41 @@ function eyebrowHTML(eyebrow) {
 }
 
 /** The top of the page: what the product is, in one line, and where to start. */
-function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html } = {}) {
-    return `<section class="sc-hero${aside || html ? ' sc-split' : ''}"><div class="sc-hero-main">${eyebrowHTML(eyebrow)}<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : ''}</section>`;
+/**
+ * The hero's visual (4.26.0; the owner, 2026-10-28: the heroes were "ugly af… boring… not easy to understand… nice
+ * animated visuals"). An orbit when the site names its places ({ inner: [{ icon, label, href }], outer: [...], center:
+ * { title, sub, href }, label }): the main ones turn on the inner ring with their names, more on the outer ring, every icon
+ * upright. Otherwise the aura: the site's mark in three slowly turning rings with accent dots. Transforms only, still
+ * under either reduced-motion setting. On a phone an orbit sits small above the words, the aura faintly behind them.
+ */
+function visualHTML(orbit) {
+    const mark = '<span class="ov-mark sc-vis-mark" data-size="72" style="width:72px;height:72px"></span>';
+    if (!orbit) {
+        return `<div class="sc-vis sc-aura" aria-hidden="true"><span class="sc-aura-glow"></span><span class="sc-ring r3"><i></i></span><span class="sc-ring r2"><i></i><i></i></span><span class="sc-ring r1"><i></i></span>${mark}</div>`;
+    }
+    const inner = (orbit.inner || []).filter((it) => it && it.icon).slice(0, 8);
+    const outer = (orbit.outer || []).filter((it) => it && it.icon).slice(0, 12);
+    const node = (it, i, n, big) => {
+        const href = safeHref(it.href);
+        const face = `<span class="sc-orb-face">${icon(it.icon, big ? 24 : 18)}${big && it.label ? `<span class="sc-orb-name">${esc(it.label)}</span>` : ''}</span>`;
+        const attrs = ` style="--i:${i};--n:${n}"${it.label ? ` title="${esc(it.label)}"` : ''}`;
+        return href ? `<a class="sc-orb-node${big ? ' is-big' : ''}" href="${esc(href)}"${attrs}${it.label ? ` aria-label="${esc(it.label)}"` : ''}>${face}</a>` : `<span class="sc-orb-node${big ? ' is-big' : ''}"${attrs} aria-hidden="true">${face}</span>`;
+    };
+    const c = orbit.center || {};
+    const core = `${mark}${c.title ? `<b>${esc(c.title)}</b>` : ''}${c.sub ? `<small>${esc(c.sub)}</small>` : ''}`;
+    const coreHref = safeHref(c.href);
+    return `<div class="sc-vis sc-orbit" role="group" aria-label="${esc(orbit.label || c.title || 'What is here')}"><span class="sc-aura-glow" aria-hidden="true"></span>`
+        + `${outer.length ? `<div class="sc-orb-ring o2">${outer.map((it, i) => node(it, i, outer.length, false)).join('')}</div>` : ''}`
+        + `${inner.length ? `<div class="sc-orb-ring o1">${inner.map((it, i) => node(it, i, inner.length, true)).join('')}</div>` : ''}`
+        + `${coreHref ? `<a class="sc-orb-core" href="${esc(coreHref)}">${core}</a>` : `<span class="sc-orb-core">${core}</span>`}</div>`;
+}
+
+function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html, orbit, visual } = {}) {
+    // Without an aside of its own the hero gets a visual (4.26.0): an orbit of the site's places when it names them, else
+    // the aura. visual: false keeps it plain.
+    const vis = !aside && html == null && visual !== false;
+    const hasOrbit = vis && orbit && (has(orbit.inner) || has(orbit.outer));
+    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main">${eyebrowHTML(eyebrow)}<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
 }
 
 /** A grid of what the product does; each card may link to where it starts. */
@@ -296,6 +329,43 @@ function cta({ title, text, actions: acts } = {}) {
 }
 
 const CSS = `
+/* The hero's visual (4.26.0): the aura (rings, dots, the mark) or an orbit of the site's places. */
+.sc-vis{position:relative;width:min(100%,380px);aspect-ratio:1;margin:0 auto;container-type:inline-size}
+.sc-aura-glow{position:absolute;inset:28%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent,#3b82f6) 42%,transparent),transparent);filter:blur(8px);animation:sc-breathe 6s ease-in-out infinite}
+.sc-ring{position:absolute;border-radius:50%;border:1px dashed color-mix(in srgb,var(--accent-light,#60a5fa) 34%,transparent);animation:sc-spin 70s linear infinite}
+.sc-ring.r1{inset:24%}.sc-ring.r2{inset:12%;animation-duration:105s;animation-direction:reverse;opacity:.8}.sc-ring.r3{inset:1%;animation-duration:150s;opacity:.55}
+.sc-ring i{position:absolute;top:-5px;left:calc(50% - 5px);width:10px;height:10px;border-radius:50%;background:var(--accent,#3b82f6);box-shadow:0 0 14px var(--accent,#3b82f6)}
+.sc-ring i+i{top:auto;bottom:-4px;left:calc(30% - 4px);width:8px;height:8px;background:var(--accent-light,#60a5fa)}
+.sc-vis-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2}
+.sc-orb-ring{position:absolute;inset:0;border-radius:50%;animation:sc-spin 90s linear infinite}
+.sc-orb-ring::before{content:"";position:absolute;border-radius:50%;border:1px dashed color-mix(in srgb,var(--accent-light,#60a5fa) 30%,transparent)}
+.sc-orb-ring.o1{--R:30cqw;z-index:2}.sc-orb-ring.o1::before{inset:20%}
+.sc-orb-ring.o2{--R:44cqw;animation-duration:140s;animation-direction:reverse}.sc-orb-ring.o2::before{inset:6%;opacity:.55}
+.sc-orb-node{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px;transform:rotate(calc(360deg / var(--n) * var(--i))) translateY(calc(-1 * var(--R))) rotate(calc(-360deg / var(--n) * var(--i)));color:var(--text-primary,#e6edf7);text-decoration:none}
+.sc-orb-node.is-big{width:54px;height:54px;margin:-27px}
+.sc-orb-face{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;height:100%;animation:sc-spin 90s linear infinite reverse}
+.o2 .sc-orb-face{animation-duration:140s;animation-direction:normal}
+.sc-orb-face>.ov-icon,.sc-orb-face>svg,.sc-orb-face>i{display:grid;place-items:center;flex:none;width:100%;height:100%;border-radius:50%;background:color-mix(in srgb,var(--bg-secondary,#101828) 88%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent-light,#60a5fa) 30%,transparent),0 8px 22px rgba(0,0,0,.35);transition:transform .3s cubic-bezier(.2,1.4,.3,1)}
+.sc-orb-name{font-size:11.5px;font-weight:700;color:var(--text-secondary,#96a7c2);white-space:nowrap;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--bg-primary,#0a0f1c) 78%,transparent)}
+a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-orb-face>*:first-child{transform:scale(1.15)}
+.sc-orb-core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text-primary,#e6edf7);text-decoration:none;text-align:center}
+.sc-orb-core .sc-vis-mark{position:static;transform:none}
+.sc-orb-core b{margin-top:6px;font-size:14px;font-weight:800}.sc-orb-core small{font-size:12px;color:var(--text-muted,#7386a3)}
+@keyframes sc-spin{to{transform:rotate(360deg)}}
+@keyframes sc-breathe{0%,100%{opacity:.7;transform:scale(.95)}50%{opacity:1;transform:scale(1.05)}}
+@media (prefers-reduced-motion:reduce){.sc-ring,.sc-aura-glow,.sc-orb-ring,.sc-orb-face{animation:none}}
+html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow,html[data-ov-motion=reduced] .sc-orb-ring,html[data-ov-motion=reduced] .sc-orb-face{animation:none}
+@media (max-width:860px){
+.sc-hero.sc-has-vis{display:block}
+.sc-hero.sc-has-vis .sc-hero-vis{position:absolute;z-index:-1;top:-26px;right:-54px;width:180px;opacity:.36;pointer-events:none}
+.sc-hero.sc-has-vis .sc-aura .sc-vis-mark{width:46px!important;height:46px!important}
+.sc-hero.sc-has-orbit{display:flex;flex-direction:column}
+.sc-hero.sc-has-orbit .sc-hero-vis{order:-1;position:static;width:auto;opacity:1;pointer-events:auto;margin:0 0 6px}
+.sc-hero.sc-has-orbit .sc-vis{width:min(70vw,250px)}
+.sc-hero.sc-has-orbit .sc-orb-core .sc-vis-mark{width:50px!important;height:50px!important}
+.sc-orb-node{width:32px;height:32px;margin:-16px}.sc-orb-node.is-big{width:42px;height:42px;margin:-21px}.sc-orb-name{font-size:10.5px}
+}
+
 .sc-hero,.sc-sec,.sc-cta{max-width:1080px;margin:0 auto;padding:0 24px;font-family:var(--ov-font,'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif)}
 .sc-hero{padding-top:56px;padding-bottom:8px}
 .sc-hero.sc-split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px;align-items:center}

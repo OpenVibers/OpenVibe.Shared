@@ -125,4 +125,22 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(/\.sc-hero\{padding-top:14px\}/.test(phone) && /\.sc-actions\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\)/.test(phone) && /\.sc-stats\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(phone), 'phones: near the bar, buttons side by side, numbers three across');
 }
 
+// The hero's visual (4.26.0; the owner, 2026-10-28: heroes "ugly af, boring… nice animated visuals"): without an aside of its
+// own a hero gets the aura (the mark in turning rings); with orbit, the site's places turn around it, linked and named;
+// visual: false keeps it plain; an aside of the page's own still wins.
+{
+    const plain = sc.hero({ title: 'T' });
+    assert.ok(/class="sc-hero sc-split sc-has-vis"/.test(plain) && /<div class="sc-vis sc-aura" aria-hidden="true">/.test(plain), 'a hero gets the aura');
+    assert.ok(/class="ov-mark sc-vis-mark"/.test(plain), 'the site\'s mark in the middle');
+    assert.ok(!/sc-vis/.test(sc.hero({ title: 'T', visual: false })), 'visual: false keeps it plain');
+    assert.ok(!/sc-vis/.test(sc.hero({ title: 'T', aside: 'mine' })), 'an aside of its own wins');
+    const o = sc.hero({ title: 'T', orbit: { center: { title: 'Quests', sub: 'every site', href: '/' }, inner: [{ icon: 'ov:live', label: 'Live', href: 'https://openvibe.live/' }, { icon: 'ov:chat', label: '<Chat>' }], outer: [{ icon: 'ov:wiki', label: 'Wiki', href: 'javascript:alert(1)' }] } });
+    assert.ok(/sc-has-orbit/.test(o) && /role="group" aria-label="Quests"/.test(o), 'an orbit, labelled');
+    assert.ok(/<a class="sc-orb-node is-big" href="https:\/\/openvibe\.live\/" style="--i:0;--n:2"/.test(o), 'inner places link and know their slot');
+    assert.ok(/&lt;Chat&gt;/.test(o) && !/<Chat>/.test(o), 'names are escaped');
+    assert.ok(!/javascript:/.test(o) && /<span class="sc-orb-node" style="--i:0;--n:1"/.test(o), 'an unsafe link is no link');
+    assert.ok(/<b>Quests<\/b><small>every site<\/small>/.test(o), 'the centre says what it is');
+    assert.ok(/@media \(prefers-reduced-motion:reduce\)\{\.sc-ring,\.sc-aura-glow,\.sc-orb-ring,\.sc-orb-face\{animation:none\}\}/.test(sc.CSS), 'still under reduced motion');
+}
+
 console.log('showcase: all checks passed');
