@@ -21,6 +21,7 @@ assert.deepStrictEqual(['Bash', 'run_command', 'Read', 'Grep', 'Edit', 'write_fi
     ['command', 'command', 'read', 'search', 'edit', 'write', 'web', 'agent', 'plan', 'command', 'tool'], 'every agent\'s tools map to the same kinds');
 assert.deepStrictEqual(as.diffLines('a\nb\nc', 'a\nB\nc'), [['=', 'a'], ['-', 'b'], ['+', 'B'], ['=', 'c']], 'a changed line is a removal and an addition');
 assert.deepStrictEqual(as.diffLines('', 'x'), [['-', ''], ['+', 'x']]);
+assert.deepStrictEqual(['web_search', 'web_fetch', 'search_files'].map(as.kindOf), ['web', 'web', 'search'], 'the web before files (4.24.3)');
 // OpenVibe.Actor's task events (actor.task-event@1) read like the rest (4.24.1).
 assert.deepStrictEqual(as.normalize({ kind: 'state', state: 'running', seq: 2 }), [{ t: 'state', state: 'running' }]);
 assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'plan', agent: 'deepseek', text: 'DeepSeek takes it' }), [{ t: 'step', text: 'DeepSeek takes it', agent: 'deepseek' }]);

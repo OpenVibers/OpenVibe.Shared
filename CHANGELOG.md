@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.24.3 — 2026-10-28
+
+- **`agent-session.js`: web steps read as lookups.** A tool whose name speaks of the web (`web_search`, `web_fetch`) is
+  a web step before a file search, and a query given as its description reads "Looked up …". An address reads
+  "Opened …". OpenVibe.Actor's web searches showed as "Listed …".
+
 ## 4.24.2 — 2026-10-28
 
 - **`agent-session.js` takes `link(url)`**, which decides which https addresses in an agent's text become links; the
