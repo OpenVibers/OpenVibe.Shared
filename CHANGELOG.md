@@ -6,6 +6,15 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.22.2 — 2026-10-28
+
+- **In-page links scroll instead of reloading** (`boost.js`). A link to a part of the page (`href="#the-quests"`) made
+  Chrome fire `popstate` with no state. boost answered every state-less `popstate` with `location.reload()`, so the page
+  loaded again and landed at the top (openvibe.quest's "See the quests", on every boosted site).
+  - boost now knows which page it is showing. A `popstate` on that same page (a part link, or Back and Forward between
+    parts) is left to the browser: the part scrolls into view, and Back returns to where the person was.
+  - `test/boost-chrome.test.js` covers both.
+
 ## 4.22.1 — 2026-10-28
 
 - **Search suggestions reach every site.** `search.js` asked `search.openvibe.network` from the page, and the

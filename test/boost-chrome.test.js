@@ -23,7 +23,7 @@ ${scripts.map((s) => `<script src="${s}"></script>`).join('')}<script src="/boos
 <body class="page-${title.replace(/\W+/g, '-').toLowerCase()}"><header>header</header><main id="main" data-page="${title}">${body}</main><footer>footer</footer></body></html>`;
 const LINKS = '<a id="to-a" href="/a">A</a> <a id="to-b" href="/b">B</a> <a id="to-x" href="/x">X</a> <a id="to-y" href="/y">Y</a> <a id="to-api" href="/api/thing">api</a> <a id="to-new" href="/a" target="_blank">new</a>';
 const PAGES = {
-    '/': page({ title: 'Home', canonical: '/', body: `<h1>Home</h1><div style="height:3000px">${LINKS}</div><p id="bottom">bottom</p>` }),
+    '/': page({ title: 'Home', canonical: '/', body: `<h1>Home</h1><a id="to-part" href="#part">part</a><div style="height:3000px">${LINKS}</div><p id="bottom">bottom</p><div style="height:900px"></div><p id="part">part</p><div style="height:900px"></div>` }),
     '/a': page({ title: 'Page A', canonical: '/a', css: ['/css/a.css'], body: `<h1>A</h1>${LINKS}<script>window.inlineRuns = (window.inlineRuns || 0) + 1;</script><script type="application/ld+json">{"@type":"WebPage","name":"A"}</script>` }),
     '/b': page({ title: 'Page B', canonical: '/b', body: `<h1>B</h1>${LINKS}` }),
     '/x': page({ title: 'Page X', canonical: '/x', marker: 'site@r2', body: `<h1>X</h1>${LINKS}` }),
@@ -80,6 +80,22 @@ const server = http.createServer((req, res) => {
         v = await p.evaluate(`new Promise((done) => { document.addEventListener('ov:boost:load', () => done({ alive: window.alive, page: document.getElementById('main').dataset.page, y: scrollY, path: location.pathname }), { once: true }); history.back(); })`);
         assert.deepStrictEqual([v.alive, v.page, v.path], [1, 'Home', '/']);
         assert.ok(Math.abs(v.y - startY) < 5, `back restores the scroll (${v.y} vs ${startY})`);
+
+        // A link to a part of this page scrolls to it, and Back returns to where the person was: no page load. Chrome fires
+        // popstate (with no state) for both, and boost used to answer it with a reload, landing at the top
+        // (openvibe.quest's "See the quests", 2026-10-28).
+        await p.evaluate('window.alive = 3; window.scrollTo(0, 40); 1');
+        await p.evaluate('document.getElementById("to-part").click(); 1');
+        await wait(600);
+        v = await p.evaluate('({ alive: window.alive, hash: location.hash, top: Math.round(document.getElementById("part").getBoundingClientRect().top), y: scrollY, h: document.documentElement.scrollHeight, ih: innerHeight })');
+        assert.deepStrictEqual([v.alive, v.hash], [3, '#part'], 'an in-page link does not load the page again');
+        assert.ok(v.y > 1000 && v.top >= -5 && v.top < v.ih, `and the page scrolled to the part (y ${v.y}, part at ${v.top} of ${v.ih})`);
+        await p.evaluate('history.back(); 1');
+        await wait(600);
+        v = await p.evaluate('({ alive: window.alive, hash: location.hash, y: scrollY })');
+        assert.deepStrictEqual([v.alive, v.hash], [3, ''], 'Back from the part stays on the page');
+        assert.ok(Math.abs(v.y - 40) < 5, `and returns to where the person was (${v.y})`);
+        await p.evaluate('window.alive = 1; 1');
 
         // Not swappable: an excluded path and a new tab are left to the browser; another release or other scripts load normally.
         // Did boost claim the click? A window listener runs after boost's document listener: it records the answer and
