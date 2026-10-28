@@ -159,8 +159,9 @@
             /* Both balances on every phone (the owner, 2026-10-28: "you can only see one… use the full space"): the pill
                tightens instead of folding to one. */
             @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
-            @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 2px; } .ovnav-chip-mini { padding: 0 4px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
-                .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; } }
+            @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
+                .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 14px; letter-spacing: -.3px; } .openvibe-navbar .openvibe-navbar-brand a.flame { width: 28px; height: 28px; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
@@ -242,7 +243,7 @@
             @media (prefers-reduced-motion: reduce) { .ovnav-orb .ovo-g, .ovnav-orb .ovo-d, .ovnav-orb::before { transition: none; animation: none !important; } }
             html[data-ov-motion="reduced"] .ovnav-orb .ovo-d { animation: none !important; }
             .openvibe-navbar .openvibe-navbar-brand .ovnav-orb { margin-left: 1px; }
-            @media (max-width: 400px) { .openvibe-navbar .ovnav-orb { width: 30px; height: 32px; } }
+            @media (max-width: 400px) { .openvibe-navbar .ovnav-orb { width: 28px; height: 32px; } }
             /* Messages (4.25.0; the owner, 2026-10-28: the floating DM button was "buggy as hell on mobile… app style"): a
                site that has messages puts them in the bar beside the bell, with the unread count, instead of a bubble
                over the page. */
