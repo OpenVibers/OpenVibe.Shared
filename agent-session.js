@@ -55,8 +55,9 @@
         if (KIND[name]) return KIND[name];
         const w = new Set(String(name || '').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().split(/[^a-z]+/).filter(Boolean));
         const any = (...xs) => xs.some((x) => w.has(x));
-        return any('bash', 'shell', 'command', 'exec', 'run', 'terminal') ? 'command' : any('edit', 'patch', 'replace') ? 'edit' : any('write', 'create') ? 'write'
-            : any('read', 'cat', 'view', 'open') ? 'read' : any('grep', 'glob', 'find', 'search', 'list', 'ls') ? 'search' : any('web', 'fetch', 'http', 'browse', 'url') ? 'web' : 'tool';
+        // The web first: web_search and web_fetch are looking things up, not searching files.
+        return any('web', 'fetch', 'http', 'browse', 'url', 'internet') ? 'web' : any('bash', 'shell', 'command', 'exec', 'run', 'terminal') ? 'command' : any('edit', 'patch', 'replace') ? 'edit'
+            : any('write', 'create') ? 'write' : any('read', 'cat', 'view', 'open') ? 'read' : any('grep', 'glob', 'find', 'search', 'list', 'ls') ? 'search' : 'tool';
     }
     const NOUN = { command: ['command', 'commands'], read: ['read', 'reads'], search: ['search', 'searches'], edit: ['edit', 'edits'], write: ['new file', 'new files'], web: ['lookup', 'lookups'], agent: ['helper', 'helpers'], plan: ['plan', 'plan'], tool: ['tool', 'tools'] };
     const VERB = {
@@ -208,7 +209,11 @@
             if (edits.length) { out.diff = []; edits.forEach((e, n) => { if (n) out.diff.push(['@', '…']); out.diff.push(...diffLines(e.old_string, e.new_string)); }); }
             else if (typeof i.content === 'string') { out.preview = i.content; out.diff = i.content.split('\n').map((l) => ['+', l]); }
             if (out.diff) out.diff.forEach(([op]) => { if (op === '+') out.added++; else if (op === '-') out.removed++; });
-        } else if (k === 'web') { out.title = i.query ? `Looked up ${i.query}` : `Opened ${String(i.url || step.what || '').replace(/^https?:\/\//, '').slice(0, 60)}`; out.sub = String(i.url || ''); }
+        } else if (k === 'web') {
+            const asked = i.query || (!i.url && !/^https?:\/\//.test(String(i.description || step.what || '')) ? i.description || step.what : '');
+            const url = i.url || (/^https?:\/\//.test(String(i.description || step.what || '')) ? i.description || step.what : '');
+            out.title = asked ? `Looked up ${asked}` : `Opened ${String(url).replace(/^https?:\/\//, '').slice(0, 60)}`; out.sub = asked ? '' : String(url);
+        }
         else if (k === 'agent') { out.title = String(i.description || 'A helper agent'); out.sub = i.subagent_type ? `${i.subagent_type} helper` : 'helper'; out.preview = String(i.prompt || ''); }
         else if (k === 'plan') { out.title = 'Updated the plan'; }
         else { out.title = String(step.name || 'Tool'); out.sub = String(step.what || ''); }
