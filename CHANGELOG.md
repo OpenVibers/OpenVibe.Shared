@@ -6,6 +6,30 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.21.0 — 2026-10-28
+
+- **Search on every site** (`search.js`; navbar `search`, `openSearch()`).
+  - The owner, 2026-10-28: "a magnifying glass button that's more compact, shared across the sites… intelligent… lazy
+    loading and autocomplete… reused in the SDK and API".
+  - Every navbar has a magnifier; `/` and Ctrl+K open it too. `search.js` loads on first use.
+  - It shows this site's pages and your recent searches, then OpenVibe.Search's suggestions as you type (the older
+    request cancelled). This site's results come first, then the rest of OpenVibe.
+  - It always offers the site's own search page, "Search all of OpenVibe" and "Ask Vibe".
+  - Keyboard and screen-reader friendly; full screen on phones. `search: false` hides it.
+  - `OpenVibeSearch.suggest()` serves a page's own box.
+  - The navbar's budget is 37.5 KB (37.05 with the button).
+- **Loading, redesigned and shared** (`loading.js`, `OpenVibeLoading`).
+  - The owner, 2026-10-28, of Live's stream loader: "old and outdated… consider the latest frames of the stream…
+    minimalistic… reusable and shared across the sites".
+  - An edge-to-edge overlay with no card: the thing's own picture blurred and drifting, a thin ring, one status line,
+    and a two-pixel progress line.
+  - `update` / `slow` (a hint and actions) / `fail` (Retry) / `done` (fades out); skeleton rows for lists.
+- `shipped.js` labels OpenRestream "Restream" among the short names (the launcher did the same in Network #367).
+- `test/search-loading-chrome.test.js`:
+  - Search: lazy, scoped, cancelled, text-only titles, script links dropped, keyboard.
+  - Loading: steps, slow, fail, done, skeleton.
+  - No sideways scroll at 390 px.
+
 ## 4.20.1 — 2026-10-28
 
 - **The kit's behaviour is its own small file, `kit-web.js`** (about 7 KB, 2 KB compressed): copy buttons, menus that

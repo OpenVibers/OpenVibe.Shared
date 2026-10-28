@@ -11,6 +11,8 @@ theme, and they fit a phone first.
   loads only this one.
 - **`kit.css`**: the look, built on the site's theme tokens.
 - **`appbar.js`**: the phone tab bar. `navbar.js` loads it only for a site that sets `appBar`.
+- **`search.js`**: search across OpenVibe from the navbar's magnifier, loaded on first use.
+- **`loading.js`**: the one loading look (an overlay over the thing's own picture) and skeleton rows.
 
 The package is MIT. Every site serves its own pinned copy at `/shared/kit.css`, `/shared/kit.js`, `/shared/kit-web.js` and
 `/shared/appbar.js` (`openvibe-shared/serve`), so a page keeps working when another site is down.
@@ -212,6 +214,53 @@ OpenVibeNavbar.setAppBar(spec | false)
 
 Pick the places people go every visit: the home or feed, search, what is theirs (messages, saved, their page), and
 the site's main verb (go live, post, ask). Settings and the rest live in More.
+
+## Search, on every site
+
+The navbar has a magnifier on every site. `/` or Ctrl+K opens it too. The first time someone asks, the navbar loads
+`search.js` (about 17 KB), so pages that are never searched pay nothing.
+
+What it does:
+- **Before typing:** the site's own pages, and what you searched before on this device.
+- **While typing:** suggestions from OpenVibe.Search for every site (`GET /api/v1/suggest`, anonymous, the older
+  request cancelled when you type on), this site's results first.
+- **Always offered:** the site's own search page (when it has one), "Search all of OpenVibe" and "Ask Vibe".
+- **Keys:** arrows move, Enter opens, Escape closes.
+- **Layout:** a phone gets the whole screen; a computer gets a panel near the top.
+
+```js
+OpenVibeNavbar.init({ …, search: { owner: 'live', label: 'OpenVibe.Live', page: '/search' } })   // or search: false
+OpenVibeNavbar.openSearch('seattle')                     // open it from anything on the page
+OpenVibeSearch.suggest('sea', { owner: 'live' })          // the same suggestions for a page's own box
+```
+
+Search answers any origin (anonymous, never with credentials). So the same suggestions work from anyone's page, and
+from the SDK: `openvibe-sdk/search`'s `search.suggest(text, { owner, type, limit })` and
+`search.query(text, { owner, type })`.
+
+## Loading
+
+`loading.js` is the network's one loading look, on Live's player and anywhere something takes a moment. It covers
+what is loading edge to edge, with no card:
+- the thing's own picture behind it, blurred and drifting (a stream's latest frame, a video's poster);
+- a thin turning ring around a soft dot;
+- one word of status, and one quiet line under it;
+- a two-pixel line along the bottom that fills step by step, or sweeps while the progress is unknown.
+
+When it's slow, a hint and its actions appear. When it fails, it says what happened and offers Retry. When it's done,
+it fades away.
+
+```js
+const l = OpenVibeLoading.mount(playerEl, { poster: stream.thumbnail_url, label: 'Connecting', sub: 'Getting your viewer ready', steps: 5 })
+l.update({ step: 2, label: 'Opening secure link', sub: 'Almost there' })
+l.slow({ hint: 'This is taking longer than usual.', actions: [{ label: 'Try again', onClick }, { label: 'Copy details', onClick }] })
+l.fail({ title: 'Could not connect', detail: 'The stream stopped answering.', actions: [{ label: 'Retry', onClick }] })
+l.done()
+OpenVibeLoading.skeleton(listEl, { rows: 3 })            // shimmering rows while a list loads → .done()
+```
+
+The element it mounts into should be positioned. Motion stops under `prefers-reduced-motion`, and the status is
+announced to screen readers (`role=status`, or `alert` when it fails).
 
 ## Using it
 

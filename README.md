@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.20.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.21.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -622,7 +622,8 @@ cards that fold, settings rows, a search row, a composer pinned at the bottom, a
 (`window.OpenVibeKit`); text is escaped, and every piece works without JavaScript. `kit-web.js` is the behaviour alone
 (about 7 KB), all a server-rendered page loads. [docs/kit.md](docs/kit.md) has every
 piece, the sizes, the colours, and how to use it in an OpenVibe site or anyone's project;
-`node scripts/kit-gallery.js --shots <dir>` shows them all at 390, 768 and 1280 px.
+`node scripts/kit-gallery.js --shots <dir>` shows them all at 390, 768 and 1280 px. Every navbar also has search across OpenVibe
+(`search.js`, loaded on first use), and `loading.js` is the one loading look (docs/kit.md#loading).
 
 ```js
 const kit = require('openvibe-shared/kit');

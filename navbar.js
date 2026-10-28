@@ -242,6 +242,8 @@
             .openvibe-navbar-spacer { flex: 1; }
 
             .openvibe-navbar-right { display: flex; align-items: center; gap: 6px; }
+            .openvibe-navbar .ovnav-search { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 11px; cursor: pointer; flex: none; }
+            .openvibe-navbar .ovnav-search:hover, .openvibe-navbar .ovnav-search:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); }
 
             .openvibe-navbar-avatar {
                 width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
@@ -1649,6 +1651,7 @@
             </div>
             <div class="openvibe-navbar-spacer"></div>
             <div class="openvibe-navbar-right">
+                ${_config.search === false ? '' : '<button type="button" class="ovnav-search" id="openvibe-search-btn" aria-label="Search (/)" title="Search (/)"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>'}
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 <div id="openvibe-bell-mount"></div>
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
@@ -1659,6 +1662,7 @@
         `;
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
+        hookSearch(nav);
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
@@ -1808,6 +1812,27 @@
     // ── The phone app bar (appbar.js, loaded only when the site sets appBar): its main places as a bottom tab bar ──
     let _appBarLoading = false;
     const rawLinks = () => _runtimeLinks || _config.links || SERVICE_LINKS[_config.service] || [];
+
+    // Search (search.js, loaded on first use). _config.search: false, or { owner, label, page }.
+    let _searchLoading = false;
+    function openSearch(q) {
+        const go = () => root.OpenVibeSearch && root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q });
+        if (root.OpenVibeSearch) return go();
+        if (_searchLoading) return;
+        _searchLoading = true;
+        try { const sc = document.createElement('script'); sc.src = sibling('search.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _searchLoading = false; }; document.head.appendChild(sc); } catch { _searchLoading = false; }
+    }
+    let _searchKeys = false;
+    function hookSearch(nav) {
+        const b = nav.querySelector('#openvibe-search-btn');
+        if (b) b.addEventListener('click', () => openSearch());
+        if (_searchKeys || _config.search === false || typeof document === 'undefined') return;
+        _searchKeys = true;
+        document.addEventListener('keydown', (e) => {
+            const t = e.target, typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+            if ((e.key === '/' && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) || ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K'))) { e.preventDefault(); openSearch(); }
+        });
+    }
     function renderAppBar() {
         if (typeof document === 'undefined' || !document.body) return;
         const ab = root.OpenVibeAppBar;
@@ -1885,6 +1910,9 @@
 
         /** Replace this site's top links at runtime ([{label, href, icon?, active?, external?}]). */
         setLinks(links) { _runtimeLinks = Array.isArray(links) ? links : null; if (_navEl) render(); },
+
+        /** Open the search panel (search.js), with an optional query already in it. */
+        openSearch(q) { openSearch(q); },
 
         /** The phone app bar: true (from the links that have icons), a list of { label, href, icon, id, page, dot }, or false. */
         setAppBar(spec) { _config.appBar = spec; renderAppBar(); },
