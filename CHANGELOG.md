@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.19.0 — 2026-10-28
+
+- **Footer `variant: 'auto'`** (`footer.js`). The owner, 2026-10-28: "the full-size footer on the chat pages might be a
+  little much … if we want to have that app-like design … make it a little more sleeker across sites".
+  - It shows the full footer on the site's front page (and the paths in `fullOn`, default `['/']`), and the one quiet
+    line (`compact`, with "More from OpenVibe" to open the rest) everywhere else.
+  - On the server, `ssr({ variant: 'auto', path })` picks from the request's path; with no path it is compact.
+  - In the browser it reads `location.pathname`, follows back and forward on a single-page site, and
+    `setVariant('auto')` is a variant like the others.
+  - A claim still wins over it (Live's channel while live).
+  - `autoFor(path, fullOn)` is exported.
+
 ## 4.18.0 — 2026-10-28
 
 - **The account menu, reviewed** (`navbar.js`). The owner, 2026-10-28: "duplicated things … could just be organized
