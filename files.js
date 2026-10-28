@@ -43,6 +43,7 @@ const BROWSER = Object.freeze([
     'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
     'search.js',            // search everything from the navbar's magnifier, / or Ctrl+K; navbar.js loads it on first use
     'loading.js',           // the one loading look: a poster-backed overlay with status and progress, and skeleton rows
+    'agent-session.js',     // a coding agent's session as people read it: steps grouped, live output, diffs, helpers, hand-offs
     'openvibe-sw.js',       // Web Push service worker
 ]);
 
