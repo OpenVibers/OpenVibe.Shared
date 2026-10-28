@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.33.0 — 2026-10-28
+
+- **Navbar icons:** 15 more Font Awesome solid glyphs are drawn inline (`nav-icons.js`, loaded after first paint):
+  `fa-gauge`, `fa-pen`, `fa-earth-americas`, `fa-hashtag`, `fa-inbox`, `fa-folder`, `fa-puzzle-piece`, `fa-shield`,
+  `fa-display`, `fa-microphone`, `fa-infinity`, `fa-list`, `fa-flag-checkered`, `fa-tv` and `fa-compass`.
+  - Sites already named them in their links and phone app bars, so they used to show **empty** wherever the page
+    loads no icon font (Actor, Blog, Chat, Codes, Coupons, Deals, Live, News, Services, Trade, Surf).
+
 ## 4.32.0 — 2026-10-28
 
 - **The session view** (`agent-session.js`, plan 2026-10-28 §6 decision 4, CODES-3):

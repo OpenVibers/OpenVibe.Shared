@@ -30,7 +30,9 @@ fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-cod
 fa-tower-cell fa-diagram-project fa-toolbox fa-comment-dots fa-money-bill-wave fa-crown fa-server fa-newspaper
 fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-brain fa-microchip
 fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square
-fa-map fa-utensils fa-user-shield""".split()
+fa-map fa-utensils fa-user-shield
+fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone
+fa-infinity fa-list fa-flag-checkered fa-tv fa-compass""".split()
 # ov-icons.js glyph name -> Font Awesome solid icon (names without a twin keep their stroke glyph)
 OV_SOLID = {
     'network': 'fa-circle-nodes', 'live': 'fa-tower-broadcast', 'tools': 'fa-screwdriver-wrench', 'media': 'fa-photo-film',
