@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.19.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.20.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -613,6 +613,23 @@ Each repo's `layout.js` moves onto `shell.page()` in the T11 sweep; until then t
 hand-written layouts produce the same document. `templates/site/server/app.js` (the scaffold every
 new site starts from) already calls it. See `docs/migration-plan.md`, "T11: layout.js onto
 openvibe-shared/shell".
+
+### The OpenVibe Kit (`kit.js`, `kit.css`, `appbar.js`)
+
+The pieces an app page is made of, one look on every site, phone first: a sticky head with its tabs, lists of rows,
+cards that fold, settings rows, a search row, a composer pinned at the bottom, and a bottom tab bar on phones
+(`appBar` on the navbar). The same builders run on the server (`require('openvibe-shared/kit')`) and in the page
+(`window.OpenVibeKit`); text is escaped, and every piece works without JavaScript. [docs/kit.md](docs/kit.md) has every
+piece, the sizes, the colours, and how to use it in an OpenVibe site or anyone's project;
+`node scripts/kit-gallery.js --shots <dir>` shows them all at 390, 768 and 1280 px.
+
+```js
+const kit = require('openvibe-shared/kit');
+kit.head({ title: 'Settings', back: { href: '/', label: 'Home' }, tabs: kit.tabs({ base: '/settings', items, active }) })
+  + kit.list(rooms.map((r) => kit.row({ href: `/r/${r.slug}`, mark: kit.mark({ name: r.name }), title: r.name, sub: r.topic })))
+  + kit.dock({ action: '/r/x', placeholder: 'Message #general' });
+OpenVibeNavbar.init({ …, appBar: true });   // phones: the links with icons as a bottom tab bar
+```
 
 ### The navbar (`navbar.js`)
 
