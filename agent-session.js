@@ -224,7 +224,7 @@
 .ovas-head { position: sticky; top: var(--ovnav-real-h, 0px); z-index: 2; display: grid; gap: 8px; padding: 12px 14px; border-radius: 16px; border: 1px solid var(--ovas-b); background: color-mix(in srgb, var(--ovas-s) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .ovas-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ovas-pill { display: inline-flex; align-items: center; gap: 6px; flex: none; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--ovas-t); color: var(--ovas-sec); }
-.ovas-pill[data-s="running"], .ovas-pill[data-s="placed"] { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovas-pill[data-s="running"], .ovas-pill[data-s="placed"], .ovas-pill[data-s="verifying"] { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
 .ovas-pill[data-s="succeeded"] { color: var(--ovas-ok); background: color-mix(in srgb, #22c55e 15%, transparent); }
 .ovas-pill[data-s="failed"], .ovas-pill[data-s="expired"] { color: var(--ovas-bad); background: color-mix(in srgb, #ef4444 15%, transparent); }
 .ovas-title { flex: 1; min-width: 0; font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -531,12 +531,12 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
                 problems: S.problems, costUsd: Math.round(S.cost * 1e4) / 1e4, durationMs: S.durationMs || ((S.endedAt || Date.now()) - S.startedAt), tokens: { ...S.tokens },
             };
         }
-        const LABEL = { queued: 'Waiting', placed: 'Starting', running: 'Running', succeeded: 'Finished', failed: 'Failed', cancelled: 'Cancelled', expired: 'Expired' };
+        const LABEL = { queued: 'Waiting', placed: 'Starting', running: 'Running', verifying: 'Checking the answer', succeeded: 'Finished', failed: 'Failed', cancelled: 'Cancelled', expired: 'Expired' };
         function paintHead() {
             const sm = summary();
             const pill = head.querySelector('.ovas-pill');
             pill.dataset.s = S.status;
-            pill.innerHTML = `${S.status === 'running' || S.status === 'placed' ? '<span class="ovas-spin"></span>' : S.status === 'succeeded' ? svg('ok') : S.status === 'failed' || S.status === 'expired' ? svg('fail') : ''}<span></span>`;
+            pill.innerHTML = `${S.status === 'running' || S.status === 'placed' || S.status === 'verifying' ? '<span class="ovas-spin"></span>' : S.status === 'succeeded' ? svg('ok') : S.status === 'failed' || S.status === 'expired' ? svg('fail') : ''}<span></span>`;
             pill.lastChild.textContent = S.label || LABEL[S.status] || S.status;
             const ag = head.querySelector('.ovas-agents'); ag.textContent = '';
             S.agents.forEach((a, i) => { if (i) ag.appendChild(el('span', '', '→')); const c = el('span', `ovas-agent${i === S.agents.length - 1 ? ' is-now' : ''}`, agentName(a.agent)); if (a.model) c.title = a.model; ag.appendChild(c); });
@@ -548,7 +548,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
         }
         function status(s, label) {
             S.status = s; S.label = label || '';
-            if (!['running', 'placed', 'queued'].includes(s)) { S.endedAt = S.endedAt || Date.now(); empty.textContent = 'Nothing was recorded for this run.'; }
+            if (!['running', 'placed', 'queued', 'verifying'].includes(s)) { S.endedAt = S.endedAt || Date.now(); empty.textContent = 'Nothing was recorded for this run.'; }
             paintHead();
         }
         const tick = setInterval(() => { if (S.status === 'running' || S.status === 'placed') { S.steps.forEach((st) => { if (!st.done) setStepState(st); }); paintHead(); } }, 1000);
