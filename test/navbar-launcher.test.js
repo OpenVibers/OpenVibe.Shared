@@ -75,8 +75,9 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(r.small, 'Live things', 'taglines without a closing period');
         // Typing goes to a site by its name, first.
         await p.evaluate(`(() => { const q = document.querySelector('.ovs-input'); q.value = 'pic'; q.dispatchEvent(new Event('input')); return true; })()`);
-        await wait(500);
-        const f = await read();
+        // The list redraws after a short debounce: wait for it (up to 5 s; macOS runners are slower than 500 ms).
+        let f = await read();
+        for (let i = 0; i < 50 && f.heads[0] !== 'Go to'; i++) { await wait(100); f = await read(); }
         assert.strictEqual(f.heads[0], 'Go to', JSON.stringify(f));
         assert.strictEqual(f.rows[0], 'Pics', 'the site whose name starts so is the first answer');
         console.log('navbar-launcher: all checks passed');
