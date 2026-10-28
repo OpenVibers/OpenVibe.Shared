@@ -41,6 +41,8 @@ const BROWSER = Object.freeze([
     'appbar.js',            // the phone app bar; navbar.js loads it only for a site that sets appBar
     'kit.js',               // the OpenVibe Kit's builders in the page (for pages that draw themselves; with kit-web.js)
     'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
+    'search.js',            // search everything from the navbar's magnifier, / or Ctrl+K; navbar.js loads it on first use
+    'loading.js',           // the one loading look: a poster-backed overlay with status and progress, and skeleton rows
     'openvibe-sw.js',       // Web Push service worker
 ]);
 
