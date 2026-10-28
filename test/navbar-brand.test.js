@@ -210,7 +210,7 @@ function load(hostname, opts = {}) {
     const src = require('fs').readFileSync(NAVBAR_PATH, 'utf8');
     assert.ok(src.includes('<span class="ud-label">Across OpenVibe</span>') && src.includes('data-open-launcher>All sites</button>'), 'a header with All sites');
     assert.ok(/class="ovnav-net-grid">\$\{pick\.map\(n => `<a class="ovnav-net" href="\$\{escapeAttr\(n\.url\)\}" title="\$\{escapeAttr\(n\.tagline\)\}"><span class="ov-icon" data-icon=/.test(src), 'each site with its mark');
-    assert.ok(src.includes(':is(.ovnav-launcher, .ovnav-drawer) .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px;'), 'icon slots are sized before they are drawn');
+    assert.ok(src.includes('.ovnav-drawer .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px;'), 'icon slots are sized before they are drawn');
     assert.strictEqual((src.match(/function loadIcons\(/g) || []).length, 1, 'one loadIcons (the nav glyphs); the ov-icons loader has its own name');
     assert.ok(/function queueIcons\(\)[\s\S]*?requestIdleCallback\(go/.test(src), 'ov-icons.js loads when the page settles');
 }
@@ -234,7 +234,12 @@ function load(hostname, opts = {}) {
     // The account menu, reviewed (the owner, 2026-10-28: "duplicated things … so many icons sizes that aren't consistent"):
     // no row says what another says, the seasonal switch is on the Themes page, and every icon sits in one box.
     ['Seasonal themes', 'Linked Services', 'Switch account'].forEach((gone) => assert.ok(!dd.innerHTML.includes(gone), `no "${gone}" row`));
-    assert.ok(dd.innerHTML.includes('Account &amp; settings') && dd.innerHTML.includes(' Themes <b class="ud-val ud-go"'), 'one row for the account, one for the themes');
+    // 4.23.0 (the owner: "a plus button… better use of icons… compactness"): + and the gear beside the name, your places
+    // as a grid of icons, and one row at the foot for light/dark, text size, motion and themes; Sign out by the gear.
+    assert.ok(/class="ud-hbtn add-account" id="openvibe-add-account"[^>]*aria-label="Add another account"/.test(dd.innerHTML), 'Add another account is a + beside the name');
+    assert.ok(dd.innerHTML.includes('aria-label="Account &amp; settings"') && dd.innerHTML.includes('aria-label="Themes"') && /id="openvibe-logout-btn"[^>]*aria-label="Sign out"/.test(dd.innerHTML), 'the gear, Themes and Sign out are icon buttons');
+    assert.ok(/<div class="ud-grid">/.test(dd.innerHTML) && /class="ud-tile"[^>]*data-menu-id="mp"/.test(dd.innerHTML), 'the places are a grid of tiles, the site\'s own first');
+    assert.ok(!dd.innerHTML.includes('Recently used'), 'the places you went are the search menu\'s');
     assert.ok(!dd.innerHTML.includes('Across OpenVibe'), 'the other sites are the launcher\'s and the drawer\'s, not the account menu\'s');
     assert.ok(/\.openvibe-navbar-dropdown-menu \.icon \.ovnav-ic \{ width: 1\.25em !important; height: 1em; \}/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'navbar.js'), 'utf8')), 'every menu icon in one fixed-width box');
     assert.ok(dd.innerHTML.includes('<a class="name ud-me" href="https://openvibe.network/@x"'), 'pressing your name in the menu opens your profile');

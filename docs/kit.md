@@ -256,33 +256,84 @@ OpenVibeNavbar.setAppBar(spec | false)
 Pick the places people go every visit: the home or feed, search, what is theirs (messages, saved, their page), and
 the site's main verb (go live, post, ask). Settings and the rest live in More.
 
-## Search, on every site
+## The OpenVibe menu: search, every site, every tool
 
-The navbar has a magnifier on every site. `/` or Ctrl+K opens it too. The first time someone asks, the navbar loads
-`search.js` (about 17 KB), so pages that are never searched pay nothing.
+One control on every site: the navbar's magnifier (or `/`, or Ctrl+K) opens the OpenVibe menu. It used to be two
+panels doing the same job, the launcher's dots (every site) and the magnifier (search). The owner, 2026-10-28:
+"combine… a better hierarchy… use this user's history… autocomplete… maybe use tabs". The navbar loads `search.js` the
+first time someone asks, so a page nobody searches pays nothing (and the navbar itself got 15 KB lighter).
 
-What it does:
-- **Before typing:** the site's own pages, and what you searched before on this device.
-- **While typing:** suggestions from OpenVibe.Search for every site, this site's results first. They are anonymous, and
-  the older request is cancelled when you type on.
-- **Always offered:** the site's own search page (when it has one), "Search all of OpenVibe" and "Ask Vibe".
-- **Keys:** arrows move, Enter opens, Escape closes.
-- **Layout:** a phone gets the whole screen; a computer gets a panel near the top.
+**Before typing**, three tabs:
+
+| Tab | What it shows |
+| --- | --- |
+| For you | **Jump back in**: the places this person went lately anywhere on OpenVibe (their Network history, signed in). **On this site**: the site's own pages as chips. **Recent searches** (this device, can be cleared). **Your sites**: the sites they use most, or, for a guest, the most used across OpenVibe (the Frame's analytics ranking). |
+| Sites | Every open site by what people come to do (the Frame's groups), the one you are on marked. The phone drawer's "All sites" opens this tab. |
+| Tools | **Your tools** (from their history), **Most used on OpenVibe** (the Frame's analytics), the tool families, and every tool. |
+
+**Typing** makes one ranked list:
+1. **Go to**: sites, tool families and tools whose *name* matches. Tools the person used before come first.
+2. **On this site**: OpenVibe.Search's results for this site, and its matching pages.
+3. **Your history**: pages they visited whose title matches.
+4. **Across OpenVibe**: the rest of Search's suggestions, the sites they use most first.
+5. **Tools for it**: tools whose description mentions it.
+6. **Your searches**, then **Search**: this site's own search page, all of OpenVibe, and Ask Vibe.
+
+The box also completes what you type, from your searches, your history, the sites and this site's pages. The
+completion shows faintly behind the text; Tab or → takes it.
+
+**Keys:** arrows move, Enter opens, Escape closes.
+
+**Layout:** a phone gets the whole screen; a computer gets a panel near the top, with the keys listed at its foot.
 
 ```js
 OpenVibeNavbar.init({ …, search: { owner: 'live', label: 'OpenVibe.Live', page: '/search' } })   // or search: false
-OpenVibeNavbar.openSearch('seattle')                     // open it from anything on the page
+OpenVibeNavbar.openSearch('seattle')                     // open it on a search
+OpenVibeNavbar.openMenu('sites')                         // or on a tab: 'you' | 'sites' | 'tools'
 OpenVibeSearch.suggest('sea', { owner: 'live' })          // the same suggestions for a page's own box
 ```
 
-The suggestions come through OpenVibe.Network: `GET https://openvibe.network/api/frame/suggest?q=&owner=&limit=`
-asks OpenVibe.Search's `GET /api/v1/suggest` and keeps answers for 30 seconds. A site's Content-Security-Policy
-already lets the navbar reach `openvibe.network`, so a site needs nothing new in its `connect-src`.
+**Where the data comes from:**
 
-Both paths answer any origin (anonymous, never with credentials). So the same suggestions work from anyone's page:
-pass `{ url: 'https://search.openvibe.network/api/v1/suggest' }` where your `connect-src` allows Search itself. The
-SDK has them too: `openvibe-sdk/search`'s `search.suggest(text, { owner, type, limit })` and
+| Data | Source |
+| --- | --- |
+| Suggestions | OpenVibe.Network's `GET https://openvibe.network/api/frame/suggest?q=&owner=&limit=`, which asks OpenVibe.Search's `GET /api/v1/suggest` and keeps answers 30 s. |
+| History | `GET https://openvibe.network/api/history?limit=60` with the person's own token, read once per opening and kept two minutes. Anonymous sessions keep none. |
+| Sites and the ranking | The Frame (`/api/frame`, which the navbar already holds). |
+| Tools | `https://openvibe.network/api/catalog.json`, kept 30 minutes. |
+
+Every one of those is on `openvibe.network`, which every site's Content-Security-Policy already allows, so a site
+needs nothing new in its `connect-src`.
+
+Search answers any origin (anonymous, never with credentials), so the same suggestions work from anyone's page. Pass
+`{ url: 'https://search.openvibe.network/api/v1/suggest' }` where your `connect-src` allows Search itself. The SDK
+has them too: `openvibe-sdk/search`'s `search.suggest(text, { owner, type, limit })` and
 `search.query(text, { owner, type })`.
+
+## The account menu
+
+Pressing your picture opens a compact menu (4.23.0; the owner: "a lot of this is just not even really needed… a plus
+button… better use of icons… compactness… data-driven"):
+
+- **The header:** your picture and name (both open your profile). Beside them, **+** (add another account), the
+  **gear** (account and settings) and **sign out**. Other accounts, and Anonymous where the switcher runs, are a row of
+  small pills under the name.
+- **Your places:** a grid of icons, four across, with the site's own items first (`menu.before` / `menu.after`) and then
+  My channel, History, Ask Vibe, Work together and Admin. Notifications appear only where the bar has no bell. The
+  grid shows eight; the rest are under **More**.
+- **The order follows use:** a place opened twice moves up. It is counted on this device only, in `ov-menu-use`, and
+  never sent anywhere.
+- **One row at the foot:** Light, Dark, Auto, text size, animations and themes. Guests find the same controls at the
+  foot of the phone drawer.
+
+A site's items can carry `short` (the grid's label: `{ label: 'Streamer setup', short: 'Setup' }`). `menu.sections`
+still render as their own rows.
+
+## Balances
+
+`wallet: true` (or a site's own `coins` and `vibes` chips) shows the balances as one calm pill on phones. Each balance
+is a coloured icon and a plain number, with a hairline between them. Up to 380 px only the first balance shows, and a
+tap lists them all. Computers get one chip per balance in the same style.
 
 ## Loading
 

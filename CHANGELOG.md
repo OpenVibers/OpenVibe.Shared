@@ -6,6 +6,52 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.23.0 — 2026-10-28
+
+The owner, 2026-10-28, on the phone:
+- the launcher and the magnifier "kind of accomplish the same exact thing… combine… a better hierarchy… use this user's
+  history… autocomplete… maybe use tabs";
+- the account menu: "a lot of this is just not even really needed… a plus button… better use of icons… compactness…
+  data-driven";
+- the balances "look a little weird… polish… use the space".
+
+- **One OpenVibe menu** (`search.js`). The magnifier, `/` or Ctrl+K opens search, every site and every tool together.
+  - **Before typing**, three tabs:
+    - *For you*: jump back in from the person's Network history, this site's pages, recent searches, and their sites
+      (or the most used across OpenVibe);
+    - *Sites*: every site in the Frame's groups;
+    - *Tools*: your tools, the most used tools from the Frame's analytics, and the families.
+  - **Typing** makes one ranked list: go to (name matches; tools you used first), this site's results and pages, your
+    history, the rest of OpenVibe (the sites you use first), tools for it, your searches, then search everywhere and
+    Ask Vibe.
+  - **Completion:** the box completes from your searches, history, the sites and this site's pages; Tab or → takes it.
+  - Results carry their site's icon.
+  - `OpenVibeNavbar.openMenu(tab)` opens it on a tab.
+  - The drawer's "All sites" opens the Sites tab.
+- **The launcher button is gone.** Its panel, catalog and site lists moved into `search.js`, which loads on first use,
+  so `navbar.js` is 15 KB smaller (161 → 146 KB raw, 37.4 → 33.8 KB brotli). Guests' display controls moved to the
+  foot of the phone drawer.
+- **A compact account menu.**
+  - **Header:** + (add an account), the gear and sign out sit beside the name; other accounts are small pills.
+  - **Your places:** a grid of icons, four across, the site's own first, eight shown and the rest under More. The order
+    follows what this person opens: counted on this device only, a place opened twice moves up.
+  - **Foot:** one row for light, dark, auto, text size, motion and themes.
+  - **Gone from it:** Notifications (the bell has them; the row stays where there is no bell), "Recently used" (the
+    menu's Jump back in) and the long list.
+  - Items take `short` for the grid's label.
+- **Calm balances.**
+  - **The pill:** one pill on the bar's own surface; each balance a coloured icon and a plain number, a hairline between
+    them.
+  - **On phones:** both balances show from 381 px up (the launcher's room is free now); the pill is compact at every
+    phone width.
+  - **Computers:** one chip per balance in the same style.
+  - **Room:** on phones the bar drops the empty spacer's gap.
+- The mark's seasonal leaves fall under the menus, not over them.
+- `docs/kit.md`: the OpenVibe menu, the account menu, balances.
+- Tests: `navbar-launcher` covers the Sites tab and "All sites"; `search-loading-chrome` covers the tabs and the
+  completion; `navbar-touch-hover` checks the menu's hover-only rows; `navbar-phone-fit-chrome` checks both balances
+  from 393 px; `navbar-brand` covers the new header and grid.
+
 ## 4.22.2 — 2026-10-28
 
 - **In-page links scroll instead of reloading** (`boost.js`). A link to a part of the page (`href="#the-quests"`) made
