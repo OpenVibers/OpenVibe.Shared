@@ -86,7 +86,18 @@ function headTags(o = {}) {
     return out.join('\n');
 }
 
-const ORG = { '@type': 'Organization', '@id': 'https://openvibe.network/#org', name: 'OpenVibe', url: 'https://openvibe.network/', logo: 'https://openvibe.network/assets/logo-512.png', sameAs: ['https://github.com/OpenVibers', 'https://discord.gg/M6MuRUaeJj'] };
+// OpenVibe, said so search engines and AI cannot take it for something else (the owner, 2026-10-28: Google's AI Overview
+// for "whois openvibe" described an unrelated "Openvibe" mobile app): what it is, its other names, what it is not, and its
+// sites. Network's home page carries the same Organization (#org); every site's pages name it as their publisher.
+const ORG = {
+    '@type': 'Organization', '@id': 'https://openvibe.network/#org', name: 'OpenVibe', alternateName: ['OpenVibe Network', 'OpenVibers'],
+    url: 'https://openvibe.network/', logo: 'https://openvibe.network/assets/logo-512.png',
+    description: 'OpenVibe is an open-source, community-run network of websites that share one free account: live streaming from the browser (OpenVibe.Live), more than 180 online tools (OpenVibe.Tools), chat and the Vibe assistant (OpenVibe.Chat), games, a wiki, news, reviews, deals and an open developer platform.',
+    disambiguatingDescription: 'The open-source network of websites at openvibe.network, made by OpenVibers; not the Openvibe mobile social-media aggregator app.',
+    sameAs: ['https://github.com/OpenVibers', 'https://discord.gg/M6MuRUaeJj', 'https://openvibe.live', 'https://openvibe.tools', 'https://openvibe.chat', 'https://openvibe.games',
+        'https://openvibe.media', 'https://openvibe.video', 'https://openvibe.community', 'https://openvibe.space', 'https://openvibe.wiki', 'https://openvibe.blog',
+        'https://openvibe.news', 'https://openvibe.services', 'https://openre.stream'],
+};
 
 const jsonLd = {
     organization(extra = {}) { return { '@context': 'https://schema.org', ...ORG, ...extra }; },

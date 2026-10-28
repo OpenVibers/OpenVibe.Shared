@@ -20,7 +20,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - **"What shipped" and "Search" as main places.** docs/kit.md ("The navbar's links") sets the rules: four or five
     places with icons, `more` for the rest, Search as the magnifier, Updates in the footer, the account menu for the
     person's things.
-- `test/navbar-more.test.js`.
+- **Who OpenVibe is, in every site's structured data** (`seo.jsonLd.organization()`, the publisher every page names).
+  - The Organization gains a description, `alternateName` (OpenVibe Network, OpenVibers), a
+    `disambiguatingDescription` ("…not the Openvibe mobile social-media aggregator app"), and fifteen sites in `sameAs`.
+  - Why: Google's AI Overview for "whois openvibe" described an unrelated "Openvibe" app (the owner, 2026-10-28).
+  - Network's home page and llms.txt say the same (Network #368).
+- `test/navbar-more.test.js`; `test/seo-org.test.js`; `perf-budget-chrome` gives a loaded runner three tries to report
+  the late block's shift (it failed macOS CI twice on 2026-10-28).
 
 ## 4.21.0 — 2026-10-28
 
