@@ -42,8 +42,8 @@ The owner, 2026-10-28, on the phone:
 - **Calm balances.**
   - **The pill:** one pill on the bar's own surface; each balance a coloured icon and a plain number, a hairline between
     them.
-  - **On phones:** both balances show from 401 px up (the launcher's room is free now; at 390–400 px the site's name
-    comes first); the pill is compact at every phone width.
+  - **On phones:** the pill shows the first balance up to 440 px, so the site's name always reads whole, with Apple's
+    wider system font too; a tap lists both. Wider screens show both. The pill is compact at every phone width.
   - **Computers:** one chip per balance in the same style.
   - **Room:** on phones the bar drops the empty spacer's gap.
 - **The showcase hero on a phone** (the owner on openvibe.quest: "why is there empty space at the top… why is
@@ -57,8 +57,8 @@ The owner, 2026-10-28, on the phone:
 - The mark's seasonal leaves fall under the menus, not over them.
 - `docs/kit.md`: the OpenVibe menu, the account menu, balances.
 - Tests: `navbar-launcher` covers the Sites tab and "All sites"; `search-loading-chrome` covers the tabs and the
-  completion; `navbar-touch-hover` checks the menu's hover-only rows; `navbar-phone-fit-chrome` checks both balances
-  from 412 px; `navbar-brand` covers the new header and grid.
+  completion; `navbar-touch-hover` checks the menu's hover-only rows; `navbar-phone-fit-chrome` checks the bar
+  from 320 to 430 px; `navbar-brand` covers the new header and grid.
 
 ## 4.22.2 — 2026-10-28
 

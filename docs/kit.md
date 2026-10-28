@@ -343,7 +343,7 @@ eyebrow for something worth reading first ("Free, nothing to install"), with `{ 
 ## Balances
 
 `wallet: true` (or a site's own `coins` and `vibes` chips) shows the balances as one calm pill on phones. Each balance
-is a coloured icon and a plain number, with a hairline between them. Up to 400 px only the first balance shows, and a
+is a coloured icon and a plain number, with a hairline between them. Up to 440 px only the first balance shows, and a
 tap lists them all. Computers get one chip per balance in the same style.
 
 ## Loading

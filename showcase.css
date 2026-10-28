@@ -122,7 +122,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-note{margin-top:10px;font-size:12px;line-height:1.45}
 .sc-stats-sec{margin-top:14px}
 .sc-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-.sc-stat{padding:10px 10px 9px;border-radius:13px;gap:1px}
+.sc-stat{padding:10px 10px 9px;border-radius:13px;gap:1px;justify-content:flex-end}
 .sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
 .sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
