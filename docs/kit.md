@@ -226,6 +226,17 @@ OpenVibeNavbar.init({ service: 'food', links: [
 ], appBar: true, search: { owner: 'food', label: 'OpenVibe.Food' } })
 ```
 
+**On a phone** the bar keeps the site's name readable and never stacks one control on another (4.22.1):
+- **The name:** the site's word alone ("Games", not "OpenVibe.Games") up to 480 px. When there is still no room, it
+  ends with an ellipsis and is never drawn under the buttons.
+- **Signed in:**
+  - the balances fold into one pill showing the first balance, up to 440 px (a tap lists them all);
+  - the launcher steps into the menu, whose "All sites" opens it.
+- **Everyone under 375 px:** the launcher steps into the menu.
+- **Spacing:** the right-hand buttons sit closer together under 400 px.
+
+`test/navbar-phone-fit-chrome.test.js` measures the bar from 320 to 430 px, signed in and out.
+
 ## The app bar
 
 ```js
@@ -252,8 +263,8 @@ The navbar has a magnifier on every site. `/` or Ctrl+K opens it too. The first 
 
 What it does:
 - **Before typing:** the site's own pages, and what you searched before on this device.
-- **While typing:** suggestions from OpenVibe.Search for every site (`GET /api/v1/suggest`, anonymous, the older
-  request cancelled when you type on), this site's results first.
+- **While typing:** suggestions from OpenVibe.Search for every site, this site's results first. They are anonymous, and
+  the older request is cancelled when you type on.
 - **Always offered:** the site's own search page (when it has one), "Search all of OpenVibe" and "Ask Vibe".
 - **Keys:** arrows move, Enter opens, Escape closes.
 - **Layout:** a phone gets the whole screen; a computer gets a panel near the top.
@@ -264,8 +275,13 @@ OpenVibeNavbar.openSearch('seattle')                     // open it from anythin
 OpenVibeSearch.suggest('sea', { owner: 'live' })          // the same suggestions for a page's own box
 ```
 
-Search answers any origin (anonymous, never with credentials). So the same suggestions work from anyone's page, and
-from the SDK: `openvibe-sdk/search`'s `search.suggest(text, { owner, type, limit })` and
+The suggestions come through OpenVibe.Network: `GET https://openvibe.network/api/frame/suggest?q=&owner=&limit=`
+asks OpenVibe.Search's `GET /api/v1/suggest` and keeps answers for 30 seconds. A site's Content-Security-Policy
+already lets the navbar reach `openvibe.network`, so a site needs nothing new in its `connect-src`.
+
+Both paths answer any origin (anonymous, never with credentials). So the same suggestions work from anyone's page:
+pass `{ url: 'https://search.openvibe.network/api/v1/suggest' }` where your `connect-src` allows Search itself. The
+SDK has them too: `openvibe-sdk/search`'s `search.suggest(text, { owner, type, limit })` and
 `search.query(text, { owner, type })`.
 
 ## Loading

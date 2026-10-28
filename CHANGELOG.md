@@ -6,6 +6,23 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.22.1 — 2026-10-28
+
+- **Search suggestions reach every site.** `search.js` asked `search.openvibe.network` from the page, and the
+  `connect-src` of 33 sites refused it (Live among them): the magnifier opened but suggested nothing. Suggestions now
+  come through OpenVibe.Network's `GET /api/frame/suggest`. That route asks Search, keeps answers 30 s and keeps
+  Search's limit per person; every site already allows `openvibe.network` for the navbar.
+  `OpenVibeSearch.suggest(q, { url })` takes either address.
+- **The navbar fits a phone, signed in.** On openvibe.games the site's name was drawn under the launcher and the
+  magnifier: the right-hand group (magnifier, balances, bell, picture, menu) left the brand about 19 px, and the name
+  never clipped. The changes:
+  - **The name:** it gives way with an ellipsis, and only the site's word shows up to 480 px (was 420).
+  - **Balances:** up to 440 px the folded balances show the first one; a tap lists all.
+  - **The launcher:** a signed-in phone (and every phone under 375 px) keeps it in the menu's "All sites".
+  - **Spacing:** the right-hand buttons sit 2 px apart under 400 px.
+
+  New `test/navbar-phone-fit-chrome.test.js` covers 320–430 px, signed in and out.
+
 ## 4.22.0 — 2026-10-28
 
 - **A tidier navbar** (the owner, 2026-10-28: "reanalyze all the nav bars across all the sites… redundant feeling
