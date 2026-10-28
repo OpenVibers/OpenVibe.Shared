@@ -44,6 +44,8 @@ const BROWSER = Object.freeze([
     'search.js',            // search everything from the navbar's magnifier, / or Ctrl+K; navbar.js loads it on first use
     'loading.js',           // the one loading look: a poster-backed overlay with status and progress, and skeleton rows
     'agent-session.js',     // a coding agent's session as people read it: steps grouped, live output, diffs, helpers, hand-offs
+    'motion.js',            // reveal on scroll, number ticker, typed hints (4.28.0; the server writes the end state)
+    'rooms.js',             // the rooms' accents, lines and motifs (OpenVibeRooms; 4.28.0)
     'openvibe-sw.js',       // Web Push service worker
 ]);
 
@@ -54,6 +56,7 @@ const STYLES = Object.freeze([
     'profile-panel.css',    // the panel profile-panel.js draws
     'player.css',           // player.js's controls
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
+    'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
 ]);
 const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name));
 

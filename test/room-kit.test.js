@@ -98,9 +98,13 @@ const sc = require('../showcase');
 
 // ── The CSS is served and carries the room accent rules; motion.js keeps the server's end state ──
 {
+    const rcss = fs.readFileSync(path.join(__dirname, '..', 'room.css'), 'utf8');
     const kcss = fs.readFileSync(path.join(__dirname, '..', 'kit.css'), 'utf8');
-    assert.ok(kcss.includes(':root[data-theme-mode="light"] .ov-room[style*="--room-light"]'), 'light themes take the light accent');
-    assert.ok(kcss.includes('.ovk-rail-btn { display: none; }'), 'phones swipe rails');
+    assert.ok(rcss.includes(':root[data-theme-mode="light"] .ov-room[style*="--room-light"]'), 'light themes take the light accent');
+    assert.ok(rcss.includes('.ovk-rail-btn { display: none; }'), 'phones swipe rails');
+    assert.ok(!/ovk-card|ovk-rail|ov-room/.test(kcss), 'kit.css stays the controls only: cards, rails and accents are room.css (4.29.1)');
+    const files = require('../files');
+    for (const f of ['motion.js', 'rooms.js', 'room.css']) assert.ok(files.isBrowserFile(f), `${f} is served at /shared/`);
     const scss = fs.readFileSync(path.join(__dirname, '..', 'showcase.css'), 'utf8');
     assert.ok(scss.includes('.sc-room-hero{') && scss.includes('html.ov-motion [data-ov-reveal]'), 'showcase.css is rebuilt (npm run build:styles)');
     const motion = fs.readFileSync(path.join(__dirname, '..', 'motion.js'), 'utf8');

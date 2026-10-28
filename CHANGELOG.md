@@ -6,6 +6,29 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.29.1 — 2026-10-28
+
+- **`room.css`**: the room kit's cards, rails and room accents leave `kit.css` for a stylesheet of their own.
+  - `kit.css` stays the controls only, so sites that use the kit's controls are not charged for components they
+    never draw. 4.28.0 had made 18 sites' CSS budgets fail on the pin round.
+  - Pages with `kit.card`, `kit.rail` or `sc.room()` load `room.css` after `kit.css`.
+- **`motion.js`, `rooms.js` and `room.css` are served at `/shared/`** (they were missing from `files.js`'s lists in
+  4.28.0, so `/shared/motion.js` answered 404).
+- **The new rooms have ring icons:** each room id resolves to the nearest existing glyph until it gets its own, so the
+  menu never draws the fallback mark. The mapping:
+  - domains: globe;
+  - design: palette;
+  - today: clock;
+  - report: gauge;
+  - surf and casino: games;
+  - fun: quest;
+  - meme: image;
+  - exchange: trade;
+  - cam: video;
+  - tours: map;
+  - vision: AI;
+  - shoes: deals.
+
 ## 4.29.0 — 2026-10-28
 
 - **Every result, in the OpenVibe menu** (the Search Fabric, plan 2026-10-28 §4.5; Contracts 0.225.0

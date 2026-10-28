@@ -227,6 +227,8 @@ A rail scrolls sideways and snaps:
 
 A card's menu inside a rail is placed on the screen, so the scroller never clips it. An empty rail is `''`.
 
+Cards, rails and a room's accent are drawn by `room.css` (4.29.1), loaded after `kit.css` on the pages that use them, so a page with only the kit's controls does not pay for them.
+
 ### Rooms (4.28.0)
 
 `require('openvibe-shared/rooms')` (`window.OpenVibeRooms`) holds the fourteen rooms. Each has a neighbourhood, a host,
