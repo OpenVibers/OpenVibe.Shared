@@ -252,6 +252,14 @@ put it under `/`.
 
 `test/navbar-phone-fit-chrome.test.js` measures the bar from 320 to 430 px, signed in and out.
 
+## The hero's visual
+
+`sc.hero()` draws a visual beside the words (4.26.0):
+- **The aura:** the site's mark in turning rings. A hero gets it with nothing to pass.
+- **The orbit:** `orbit: { center, inner, outer }` puts the site's own places around the mark, linked and named.
+- **Opting out and overriding:** `visual: false` keeps a hero plain, and an `aside` of your own takes the slot instead.
+- **On a phone:** the orbit sits small above the words, and the aura faintly in the corner.
+
 ## The mark
 
 `ov-mark.js` draws the OpenVibe mark (4.25.0, the "open loop"): one stroke, an O opened at the top by the V, so it

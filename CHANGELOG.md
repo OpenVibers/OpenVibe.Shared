@@ -6,6 +6,20 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.26.0 — 2026-10-28
+
+- **Every showcase hero gets a visual** (`showcase.js` `hero`; the owner, 2026-10-28: the heroes were "ugly af,
+  boring… not easy to understand… nice animated visuals"). The 32 sites whose home starts with `sc.hero` get it on this
+  pin, with no change of their own.
+  - **The aura:** with no aside of its own, a hero shows the site's mark in three slowly turning rings with accent
+    dots and a breathing glow, beside the words on a computer and faintly in the top corner on a phone, where it takes
+    no space.
+  - **The orbit:** `hero({ …, orbit: { center: { title, sub, href }, inner: [{ icon, label, href }], outer: [...] } })`.
+    The site's main places turn on the inner ring with their names, and more on the outer ring, every icon upright and
+    linked. On a phone it sits small above the words. Network's front door has the same orbit.
+  - **Opting out and overriding:** `visual: false` keeps a hero plain, and an `aside` of the page's own still wins.
+  - **Motion:** transforms only, still under either reduced-motion setting.
+
 ## 4.25.0 — 2026-10-28
 
 The brand bar, from the owner's phone on 2026-10-28.
