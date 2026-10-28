@@ -28,6 +28,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
   window.fetch = async (u, init) => {
     const url = new URL(String(u), location.href);
     if (url.hostname === 'openvibe.network' && url.pathname === '/api/frame/suggest') return window.__realFetch('/suggest' + url.search, init);
+    if (url.hostname === 'openvibe.network' && url.pathname === '/api/frame/query') return window.__realFetch('/query' + url.search, init);
     if (url.hostname === 'search.openvibe.network') throw new TypeError('refused by connect-src');
     if (url.hostname === 'openvibe.network') return new Response('{}', { status: 404 });   // the Frame and the catalog: offline here
     return window.__realFetch(u, init);
@@ -48,6 +49,19 @@ const server = http.createServer((req, res) => {
         ] });
         const send = () => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(body); };
         return q === 'slow' ? setTimeout(send, 600) : send();
+    }
+    if (u.pathname === '/query') {
+        // The fabric through Network (4.29.0): OpenVibe's documents at once, the web a moment later.
+        const scopes = u.searchParams.get('scopes');
+        asked.push(`query:${scopes}`);
+        const web = scopes === 'web';
+        const body = JSON.stringify(web
+            ? { results: [{ scope: 'web', kind: 'page', title: 'Night owls <i>forum</i>', url: 'https://example.org/owls', snippet: 'People who stay up.', site: 'example.org', provider: 'wikipedia' }, { scope: 'web', kind: 'page', title: 'bad', url: 'javascript:alert(1)', provider: 'deepseek' }],
+                groups: { web: 2 }, answer: null, citations: [], route: { explain: [{ scope: 'web', step: 'wikipedia', ok: true, count: 1, ms: 300 }], cost_usd: 0 }, next_cursor: null }
+            : { results: [{ scope: 'network', kind: 'document', title: 'night room', url: 'https://openvibe.chat/r/night-owls', owner: 'chat', type: 'room', snippet: 'Late chats.' }, { scope: 'network', kind: 'document', title: 'night stream', url: 'https://openvibe.video/v/1', owner: 'live', type: 'vod' }],
+                groups: { network: 2 }, answer: null, citations: [], route: { explain: [{ scope: 'network', step: 'index', ok: true, count: 2 }], cost_usd: 0 }, next_cursor: null });
+        const send = () => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(body); };
+        return web ? setTimeout(send, 300) : send();
     }
     const name = u.pathname.slice(1);
     if (/^[a-z-]+\.js$/.test(name) && fs.existsSync(path.join(ROOT, name))) { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, name))); }
@@ -73,7 +87,7 @@ const server = http.createServer((req, res) => {
         for (let i = 0; i < 50 && !(await p.evaluate('!!document.querySelector(".ovs.is-open .ovs-input")')); i++) await wait(100);
         await wait(150);
         let v = await p.evaluate(`({ open: !!document.querySelector('.ovs.is-open'), focused: document.activeElement && document.activeElement.className,
-            tabs: [...document.querySelectorAll('.ovs-tab')].map((t) => t.textContent + (t.getAttribute('aria-selected') === 'true' ? '*' : '')),
+            tabs: [...document.querySelectorAll('.ovs-tab[data-tab]')].map((t) => t.textContent + (t.getAttribute('aria-selected') === 'true' ? '*' : '')),
             groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), chips: [...document.querySelectorAll('.ovs-chip span')].map((t) => t.textContent),
             sites: [...document.querySelectorAll('.ovs-tile b')].map((t) => t.textContent), placeholder: document.querySelector('.ovs-input').placeholder })`);
         assert.ok(v.open && v.focused === 'ovs-input', '"/" opened the panel and focused the box');
@@ -101,10 +115,30 @@ const server = http.createServer((req, res) => {
         assert.ok(!v.bold, 'no markup from a title reached the page');
         assert.ok(!v.rows.some(([, u]) => /^javascript:/.test(u)), 'a script link is dropped');
         assert.ok(v.rows.some(([t, u]) => t === 'Search “night” on OpenVibe.Chat' && u.endsWith('/search?q=night')), 'this site\'s own search page');
-        assert.ok(v.rows.some(([t, u]) => t === 'Search “night” on all of OpenVibe' && u === 'https://search.openvibe.network/?q=night'));
+        assert.ok(v.rows.some(([t, u]) => t === 'All results for “night”' && u === 'https://search.openvibe.network/?q=night'), 'every result, in this panel (the link for a new tab)');
         assert.ok(v.rows.some(([t, u]) => t === 'Ask Vibe: “night”' && u === 'https://openvibe.chat/vibe?ask=night'));
         assert.strictEqual(v.active, 'night room', 'the first row is ready for Enter');
         assert.ok(asked.includes('night'), 'Search was asked');
+        // Enter (no row picked, not a place's exact name): every result here, OpenVibe's first, the web as it answers.
+        await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })); 1');
+        await wait(150);
+        v = await p.evaluate(`({ rtabs: !document.querySelector('.ovs-rtabs').hidden, tabs: [...document.querySelectorAll('.ovs-rtabs .ovs-tab:not([hidden])')].map((t) => t.textContent + (t.getAttribute('aria-selected') === 'true' ? '*' : '')),
+            groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), loading: !!document.querySelector('.ovs-skel'), open: !!document.querySelector('.ovs.is-open') })`);
+        assert.ok(v.open && v.rtabs, 'Enter shows the results view in the panel');
+        assert.deepStrictEqual(v.tabs, ['All*', 'OpenVibe', 'Web', 'Video', 'News', 'Products'], 'scope tabs; Yours only for a signed-in person');
+        assert.deepStrictEqual(v.groups.slice(0, 2), ['On OpenVibe.Chat', 'Across OpenVibe'], 'this site first');
+        assert.ok(v.loading && v.groups.includes('From the web'), 'the web is still coming: skeleton rows, OpenVibe already shown');
+        await wait(500);
+        v = await p.evaluate(`({ rows: [...document.querySelectorAll('.ovs-item a')].map((a) => [a.querySelector('.ovs-title').textContent, a.getAttribute('href'), (a.querySelector('.ovs-meta') || {}).textContent || '']),
+            route: (document.querySelector('.ovs-route') || {}).textContent, markup: !!document.querySelector('.ovs-list i') })`);
+        assert.ok(v.rows.some(([t, u, m]) => t === 'Night owls <i>forum</i>' && u === 'https://example.org/owls' && m === 'example.org · via Wikipedia'), 'a web result says where it came from');
+        assert.ok(!v.markup && !v.rows.some(([, u]) => /^javascript:/.test(u)), 'titles are text and script links are dropped');
+        assert.ok(/^Searched OpenVibe in \d+ ms · the web through Wikipedia in /.test(v.route), `the route in words: ${v.route}`);
+        assert.ok(asked.includes('query:network') && asked.includes('query:web'), 'two questions: OpenVibe quickly, the web on its own');
+        await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'nigh'; i.dispatchEvent(new Event('input')); return 1; })()`);
+        assert.strictEqual(await p.evaluate('document.querySelector(".ovs-rtabs").hidden'), true, 'typing goes back to suggestions');
+        await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'night'; i.dispatchEvent(new Event('input')); return 1; })()`);
+        await wait(400);
         await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })); 1');
         assert.notStrictEqual(await p.evaluate('document.querySelector(".ovs-opt.is-active .ovs-title").textContent'), 'night room', 'arrows move');
         await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); 1');

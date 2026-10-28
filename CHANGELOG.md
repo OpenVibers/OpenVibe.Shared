@@ -6,6 +6,27 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.29.0 — 2026-10-28
+
+- **Every result, in the OpenVibe menu** (the Search Fabric, plan 2026-10-28 §4.5; Contracts 0.225.0
+  `search.fabric.query`). Pressing Enter in the menu's search box now shows every result in the panel itself.
+  - **Exceptions:** a row picked with the arrows opens that row, and a place's exact name (`live`, `tools`) still
+    goes to the place. "All results for …" and a recent search open the results too.
+  - **Tabs:** All · OpenVibe · Web · Video · News · Products, and Yours for a signed-in person.
+  - **OpenVibe's results** come at once: this site's first ("On OpenVibe.Live"), then across OpenVibe. They are
+    fetched with Network's `GET /api/frame/query` (scopes network and, signed in, mine; depth quick), through the same
+    connect-src as suggestions.
+  - **The web's results** arrive on their own request, with skeleton rows meanwhile. Each says its host and who
+    found it ("en.wikipedia.org · via Wikipedia").
+  - **Snippets** run two lines.
+  - **A closing line** says what was searched and how long it took ("Searched OpenVibe in 40 ms · the web through
+    DeepSeek and Wikipedia in 1.4 s").
+  - **Your own results and paid providers:** the person's token goes along, so their own results and the paid web
+    providers are theirs.
+  - **Safety:** titles are text and script links are dropped, as everywhere in the menu.
+  - Typing again returns to suggestions.
+- The menu's browser test waits for the lazily loaded box instead of a fixed 400 ms (a macOS runner was slower).
+
 ## 4.28.0 — 2026-10-28
 
 - **The room kit** (plan 2026-10-28 §3.3–§3.5, §3.11): what every new room's pages are built from.
