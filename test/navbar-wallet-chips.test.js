@@ -36,14 +36,14 @@ function load(store, answers) {
     const calls = [];
     global.fetch = async (url) => {
         calls.push(url);
-        const a = /\/api\/me\/vibes$/.test(url) ? answers.vibes : /\/api\/coins\/me$/.test(url) ? answers.coins : { status: 404, body: {} };
+        const a = /\/api\/me\/vibes$/.test(url) ? answers.vibes : /\/api\/coins\/me(\?|$)/.test(url) ? answers.coins : { status: 404, body: {} };
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
     };
     delete require.cache[require.resolve(NAVBAR_PATH)];
     return { navbar: require(NAVBAR_PATH), navs, calls };
 }
 const settle = () => new Promise((r) => setTimeout(r, 20));
-const wallet = (calls) => calls.filter((u) => /\/api\/(coins\/me|me\/vibes)$/.test(u));
+const wallet = (calls) => calls.filter((u) => /\/api\/(coins\/me|me\/vibes)(\?|$)/.test(u));
 const chip = (html, id) => (new RegExp(`<button[^>]*data-chip-id="${id}"[^>]*>`).exec(html) || [''])[0];
 const user = { id: 7, subject: 'usr_7', username: 'maya' };
 const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.network', user, token: 'tok', wallet: true };
@@ -57,7 +57,8 @@ const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.ne
     navbar.init(base);
     assert.match(chip(navs[0].innerHTML, 'coins'), /hidden/, 'nothing to show before the balances arrive');
     await settle();
-    assert.deepStrictEqual(wallet(calls).sort(), ['https://billing.openvibe.network/api/me/vibes', 'https://openvibe.network/api/coins/me']);
+    // An older Network answers the coins only: Vibes come from Billing itself (4.25.0 asks the Network for both first).
+    assert.deepStrictEqual(wallet(calls).sort(), ['https://billing.openvibe.network/api/me/vibes', 'https://openvibe.network/api/coins/me?with=vibes']);
     const last = navs[navs.length - 1].innerHTML;
     assert.ok(navs.length >= 2, 'drawn again once the chips appeared');
     assert.doesNotMatch(chip(last, 'coins'), /hidden/);
@@ -66,6 +67,20 @@ const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.ne
     assert.match(last, /id="openvibe-chips-all"/, 'one folded chip for phones');
     assert.match(last, /aria-label="Your balances: OpenCoins 160,774, Vibes 2,500"/);
     assert.deepStrictEqual(JSON.parse(store['ov-wallet:usr_7']), { coins: '160,774', vibes: '2,500' });
+
+    // A Network that answers both (4.25.0): one request, Billing never asked (no site's connect-src allowed it).
+    {
+        const store2 = {};
+        const both = { coins: { status: 200, body: { balance: 160774, vibes: 2500 } }, vibes: { status: 500, body: {} } };
+        const r = load(store2, both);
+        r.navbar.init(base);
+        await settle();
+        assert.deepStrictEqual(wallet(r.calls), ['https://openvibe.network/api/coins/me?with=vibes'], 'one request for both balances');
+        assert.match(r.navs[r.navs.length - 1].innerHTML, /data-chip-id="vibes"[^>]*>[\s\S]*?2,500/);
+    }
+    ({ navbar, navs, calls } = load(store, answers));
+    navbar.init(base);
+    await settle();
 
     // Drawn again on the same page within a minute: no second request.
     const before = wallet(calls).length;

@@ -90,7 +90,7 @@
             if (e.defaultPrevented) return;
             if (typeof ctx.config.onNavigate === 'function') {
                 let same = false; try { same = new URL(a.href, location.href).origin === location.origin; } catch { /* */ }
-                if (same && ctx.config.onNavigate(a.getAttribute('href'), e) === false) e.preventDefault();
+                if (same && ctx.config.onNavigate((() => { try { const u = new URL(a.href, location.href); return `${u.pathname}${u.search}${u.hash}`; } catch { return a.getAttribute('href'); } })(), e) === false) e.preventDefault();
             }
         });
         document.body.appendChild(bar);

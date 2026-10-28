@@ -1,7 +1,7 @@
 {
   "actor": {
     "name": "OpenVibe.Actor",
-    "description": "Your agent for everything",
+    "description": "Agents that work while you are away",
     "icon": "network"
   },
   "ai": {
@@ -16,17 +16,17 @@
   },
   "bot": {
     "name": "OpenVibe.Bot",
-    "description": "An open control panel for robots",
+    "description": "Drive any robot from your browser",
     "icon": "network"
   },
   "chat": {
     "name": "OpenVibe.Chat",
-    "description": "One chat for the network",
+    "description": "Chat with Vibe, friends and groups",
     "icon": "network"
   },
   "codes": {
     "name": "OpenVibe.Codes",
-    "description": "Code with any agent",
+    "description": "Build and fix apps with AI",
     "icon": "network"
   },
   "community": {
@@ -56,7 +56,7 @@
   },
   "games": {
     "name": "OpenVibe.Games",
-    "description": "Browser games",
+    "description": "Browser games, and games you make",
     "icon": "games"
   },
   "help": {
@@ -76,7 +76,7 @@
   },
   "live": {
     "name": "OpenVibe.Live",
-    "description": "Streams, clips and chat",
+    "description": "Go live from your browser",
     "icon": "live"
   },
   "media": {
@@ -86,7 +86,7 @@
   },
   "media-hub": {
     "name": "OpenVibe.Video",
-    "description": "Past streams, clips and your drive",
+    "description": "Videos, pictures and your files",
     "icon": "media"
   },
   "network": {
@@ -106,7 +106,7 @@
   },
   "play": {
     "name": "OpenVibe.Play",
-    "description": "Achievements and leaderboards for every OpenVibe game.",
+    "description": "Achievements, leaderboards and cloud saves for every game.",
     "icon": "network"
   },
   "quest": {
@@ -116,7 +116,7 @@
   },
   "rent": {
     "name": "OpenVibe.Rent",
-    "description": "Find a place, or rent yours out",
+    "description": "Every rental site, one search",
     "icon": "network"
   },
   "reviews": {
@@ -126,7 +126,7 @@
   },
   "run": {
     "name": "OpenVibe.Run",
-    "description": "Run a job on a node that can",
+    "description": "Run jobs on machines that can.",
     "icon": "network"
   },
   "search": {
@@ -141,12 +141,12 @@
   },
   "space": {
     "name": "OpenVibe.Space",
-    "description": "Static sites, hosted by OpenVibe",
+    "description": "Make a space: an app on your account",
     "icon": "space"
   },
   "tips": {
     "name": "OpenVibe.Tips",
-    "description": "Support creators",
+    "description": "Tips, paid messages and alerts for any stream",
     "icon": "network"
   },
   "tools": {
@@ -161,7 +161,7 @@
   },
   "vip": {
     "name": "OpenVibe.VIP",
-    "description": "Memberships and perks",
+    "description": "Memberships for creators and their software",
     "icon": "network"
   },
   "watch": {

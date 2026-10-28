@@ -2,7 +2,7 @@
 // ═══════════════════════════════════════════════════════════════
 // openvibe-shared/app-icon — one app icon design for every OpenVibe site.
 //
-// The icon is the OV mark as it appears in the navbar (ring, comet, white V, dot) on the network's
+// The icon is the OV mark as it appears in the navbar (the open loop and the site's dot) on the network's
 // deep navy, tinted per site. No text: a home-screen icon is a few millimetres wide.
 //   svg({ site, maskable })   full-bleed square SVG. maskable keeps the mark inside the 40 % radius
 //                             safe zone, so round, squircle and teardrop masks never clip it.
@@ -26,19 +26,18 @@ const SITES = {
 const of = (site) => SITES[site] || SITES.network;
 
 function mark(site, scale) {
-    // Drawn in a 48-unit box centred on 0,0 (same geometry as ov-mark.js), then scaled.
+    // Drawn in a 48-unit box centred on 0,0 (ov-mark.js's open loop moved by -24,-24), then scaled.
     const c = of(site);
     return `<g transform="scale(${scale})">
-<circle r="21" fill="url(#glow)"/>
-<circle r="18" fill="none" stroke="url(#ring)" stroke-width="4" opacity=".38"/>
-<path d="M0,-18 A18,18 0 0,1 17.4,4.6" fill="none" stroke="url(#ring)" stroke-width="4.4" stroke-linecap="round"/>
-<path d="M-9.5,-7 L0,10 L9.5,-7" fill="none" stroke="#fff" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="17.4" cy="4.6" r="3.2" fill="${c.dot}"/></g>`;
+<circle r="22" fill="url(#glow)"/>
+<path d="M-8.8,-15.2 A17.5,17.5 0 1,0 8.8,-15.2 L0,6.5 Z" fill="none" stroke="url(#ring)" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cy="-16.6" r="3" fill="${c.dot}"/></g>`;
 }
 
 function defs(site) {
     const [a, b] = of(site).accent;
-    return `<defs><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>
+    // The stroke runs from the site's accent towards violet, as the navbar's mark does.
+    return `<defs><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".65" stop-color="${b}"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
 <radialGradient id="glow"><stop offset="0" stop-color="${a}" stop-opacity=".34"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></radialGradient>
 <radialGradient id="bg" cx=".5" cy=".38" r=".8"><stop offset="0" stop-color="#16223a"/><stop offset=".6" stop-color="${BG}"/><stop offset="1" stop-color="${BG_EDGE}"/></radialGradient></defs>`;
 }
