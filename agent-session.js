@@ -343,6 +343,10 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
     function mount(host, opts = {}) {
         styles();
         const linkOk = typeof opts.link === 'function' ? (u) => { try { return !!opts.link(u); } catch { return false; } } : null;
+        const LIVE = ['running', 'placed', 'queued', 'verifying'];
+        // The clock runs from startedAt, or from now for a run that is live as it mounts; a finished run replayed without
+        // a start time shows the time only once its done line says it.
+        const clock = Boolean(opts.startedAt) || LIVE.includes(opts.status || 'running');
         const S = { status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
         host.textContent = '';
         const box = el('div', 'ovas');
@@ -538,7 +542,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             return {
                 agents: S.agents.map((a) => agentName(a.agent)), steps: steps.length, commands: steps.filter((s) => s.kind === 'command').length, files: files.size,
                 added: steps.reduce((n, s) => n + ((s.info && s.info.added) || 0), 0), removed: steps.reduce((n, s) => n + ((s.info && s.info.removed) || 0), 0),
-                problems: S.problems, costUsd: Math.round(S.cost * 1e4) / 1e4, durationMs: S.durationMs || ((S.endedAt || Date.now()) - S.startedAt), tokens: { ...S.tokens },
+                problems: S.problems, costUsd: Math.round(S.cost * 1e4) / 1e4, durationMs: S.durationMs || (clock ? (S.endedAt || Date.now()) - S.startedAt : 0), tokens: { ...S.tokens },
             };
         }
         const LABEL = { queued: 'Waiting', placed: 'Starting', running: 'Running', verifying: 'Checking the answer', succeeded: 'Finished', failed: 'Failed', cancelled: 'Cancelled', expired: 'Expired' };
@@ -551,14 +555,14 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             const ag = head.querySelector('.ovas-agents'); ag.textContent = '';
             S.agents.forEach((a, i) => { if (i) ag.appendChild(el('span', '', '→')); const c = el('span', `ovas-agent${i === S.agents.length - 1 ? ' is-now' : ''}`, agentName(a.agent)); if (a.model) c.title = a.model; ag.appendChild(c); });
             const m = (k, html) => { const n = head.querySelector(`[data-m="${k}"]`); n.innerHTML = html; n.hidden = !html; };
-            m('time', `<b>${esc(dur(sm.durationMs))}</b>`);
+            m('time', sm.durationMs ? `<b>${esc(dur(sm.durationMs))}</b>` : '');
             m('steps', sm.steps ? `<b>${sm.steps}</b> step${sm.steps === 1 ? '' : 's'}${sm.commands ? ` · <b>${sm.commands}</b> command${sm.commands === 1 ? '' : 's'}` : ''}` : '');
             m('files', sm.files ? `<b>${sm.files}</b> file${sm.files === 1 ? '' : 's'} <span style="color:var(--ovas-ok)">+${sm.added}</span> <span style="color:var(--ovas-bad)">−${sm.removed}</span>` : '');
             m('cost', sm.costUsd ? `<b>$${sm.costUsd.toFixed(sm.costUsd < 1 ? 3 : 2)}</b>` : '');
         }
         function status(s, label) {
             S.status = s; S.label = label || '';
-            if (!['running', 'placed', 'queued', 'verifying'].includes(s)) { S.endedAt = S.endedAt || Date.now(); empty.textContent = 'Nothing was recorded for this run.'; }
+            if (!LIVE.includes(s)) { S.endedAt = S.endedAt || Date.now(); empty.textContent = 'Nothing was recorded for this run.'; }
             paintHead();
         }
         const tick = setInterval(() => { if (S.status === 'running' || S.status === 'placed') { S.steps.forEach((st) => { if (!st.done) setStepState(st); }); paintHead(); } }, 1000);
