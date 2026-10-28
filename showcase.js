@@ -56,10 +56,15 @@ function actions(list, cls = 'sc-actions') {
 // A site's own name as the eyebrow repeats the navbar's brand right above it ("OpenVibe.Quest" twice, the owner
 // 2026-10-28): such an eyebrow is left out. An eyebrow that says something else stays ({ icon, text } adds an icon).
 const SITE_NAME_RE = /^(?:OpenVibe\.[A-Za-z]+|OpenRestream|[A-Za-z]+\.OpenVibe\.[A-Za-z]+)$/;
+// "OpenVibe.Food · What should we eat?": the name repeats the navbar's, so the eyebrow keeps only what follows it
+// (4.26.1; the owner, 2026-10-28: "why is [the name] twice… in the navbar and then right after it").
+const SITE_NAME_LEAD_RE = /^(?:OpenVibe\.[A-Za-z]+|OpenRestream|[A-Za-z]+\.OpenVibe\.[A-Za-z]+)\s*[·•|—–:-]\s*/;
 function eyebrowHTML(eyebrow) {
     const e = eyebrow && typeof eyebrow === 'object' ? eyebrow : { text: eyebrow };
-    const text = String(e.text || '').trim();
+    let text = String(e.text || '').trim();
     if (!text || SITE_NAME_RE.test(text)) return '';
+    text = text.replace(SITE_NAME_LEAD_RE, '');
+    text = text.charAt(0).toUpperCase() + text.slice(1);
     return `<p class="sc-eyebrow">${e.icon ? icon(e.icon, 16) : ''}${esc(text)}</p>`;
 }
 
