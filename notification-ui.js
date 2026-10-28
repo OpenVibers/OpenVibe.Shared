@@ -389,6 +389,31 @@
     }
     function hasSession() { return !!_config.token || !isCrossOrigin(); }
 
+    // Quiet hours (OpenVibe.Network GET /api/notifications/quiet-hours, 4.30.0): during the person's own window, in their
+    // time zone, a toast and its sound wait: the bell and the badge still fill, and a critical notice still shows. Read
+    // once when the layer starts and again every ten minutes; a Network that does not answer means no quiet hours.
+    let _quiet = null, _quietAt = 0;
+    function loadQuiet() {
+        if (!hasSession() || Date.now() - _quietAt < 10 * 60000) return;
+        _quietAt = Date.now();
+        apiJson('/api/notifications/quiet-hours').then((q) => { _quiet = q && typeof q.start === 'string' ? q : null; }).catch(() => { _quiet = null; });
+    }
+    const minutesOf = (s) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '')); return m ? Number(m[1]) * 60 + Number(m[2]) : null; };
+    function inQuiet() {
+        loadQuiet();
+        const q = _quiet;
+        if (!q || !q.enabled) return false;
+        const a = minutesOf(q.start), b = minutesOf(q.end);
+        if (a == null || b == null || a === b) return false;
+        let now;
+        try {
+            const parts = new Intl.DateTimeFormat('en-GB', { timeZone: q.tz || 'UTC', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+            now = Number(parts.find((x) => x.type === 'hour').value) * 60 + Number(parts.find((x) => x.type === 'minute').value);
+        } catch { const d = new Date(); now = d.getUTCHours() * 60 + d.getUTCMinutes(); }
+        return a < b ? now >= a && now < b : now >= a || now < b;
+    }
+    const held = (n) => (n && n.priority) !== 'critical' && inQuiet();
+
     // ── Cross-tab sync (same origin) ────────────────────────
     function channel() {
         if (_channel !== null) return _channel || null;
@@ -405,6 +430,7 @@
     // ── Sound ───────────────────────────────────────────────
     function playSound(priority) {
         if (!_preferences.sound) return;
+        if (priority !== 'critical' && inQuiet()) return;
         const file = SOUNDS[priority]; if (!file) return;
         const url = `${_config.soundBase}/${file}`;
         try {
@@ -479,6 +505,7 @@
     const _shownIds = new Set();      // one notification id is one card, however many times a poll or a push brings it
     function showToast(n) {
         if (!_preferences.toasts) return;
+        if (held(n)) return;
         if (_preferences.muted_categories.includes(n.category)) return;
         const id = n && n.id != null ? String(n.id) : null;
         if (id) {
@@ -1086,6 +1113,7 @@
     const OpenVibeNotifications = {
         init(opts = {}) {
             Object.assign(_config, opts);
+            _quietAt = 0; loadQuiet();   // quiet hours before the first notice can arrive
             injectStyles();
             if (opts.preferences) Object.assign(_preferences, opts.preferences);
             channel();

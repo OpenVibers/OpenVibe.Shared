@@ -339,6 +339,9 @@ const created = (subject, over = {}) => ({
         const c = p.counts();
         p.tick(15000); await p.settle();
         assert.strictEqual(p.counts(), c + 1, 'polling every 15 s as before');
+        const quiet = p.out.requests.filter((r) => r.url.endsWith('/api/notifications/quiet-hours'));
+        assert.strictEqual(quiet.length, 1, 'quiet hours are read once when the layer starts (4.30.0), not per notice');
+        assert.strictEqual(quiet[0].headers.Authorization, 'Bearer jwt', 'with the person\'s token');
     }
     {
         const p = page({ eventSource: false });
