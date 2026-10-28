@@ -8,9 +8,10 @@
  * between all agents… in a smart way… way better than this idea."
  *
  *   const view = OpenVibeAgentSession.mount(el, { title, status: 'running', startedAt })
- *   view.push(event)          one event: a Codes job line ({ t: 'tool', … }) or any Claude Code stream-json event
- *                             ({ type: 'assistant', … }); every OpenVibe.Codes harness adapter (Claude Code, Codex,
- *                             OpenCode, Command Code, Aider, DeepSeek, OpenVibe.AI, your own model) speaks one of them
+ *   view.push(event)          one event: a Codes job line ({ t: 'tool', … }), any Claude Code stream-json event
+ *                             ({ type: 'assistant', … }) or an OpenVibe.Actor task event ({ kind: 'output', step, … },
+ *                             actor.task-event@1); every OpenVibe.Codes harness adapter (Claude Code, Codex, OpenCode,
+ *                             Command Code, Aider, DeepSeek, OpenVibe.AI, your own model) and every Actor agent speaks one
  *   view.pushAll(events)
  *   view.status('succeeded' | 'failed' | 'cancelled' | 'running' | 'queued' | …, label?)
  *   view.summary()            → { agents, steps, commands, files, added, removed, problems, costUsd, durationMs }
@@ -30,6 +31,8 @@
  *   { t: 'usage', input_tokens, output_tokens }
  *   { t: 'done', ok, text, duration_ms, cost_usd, turns }
  * A line from a sub-agent carries `parent`: the id of the Task step that started it, so it nests under that step.
+ * Any line may carry `agent` (the head then follows who is working); a step without an id gets one, and the next result
+ * of the same tool without an id is its result. { t: 'state', state } moves the head (Actor's task states).
  *
  * Everything is text: no line's content ever becomes markup (links are https only). It needs nothing else; the look
  * follows the page's theme tokens (kit.css's), light or dark.
@@ -85,9 +88,25 @@
         if (Array.isArray(content)) return content.map((c) => (c && typeof c.text === 'string' ? c.text : '')).join('\n');
         return content == null ? '' : String(content);
     }
+    // OpenVibe.Actor's task events (actor.task-event@1): { kind: 'state' | 'end', state } and { kind: 'output', step, agent,
+    // text, tool, input, is_error }, step one of plan, text, handoff, check, tool_call, tool_result.
+    function fromActor(e) {
+        const agent = e.agent ? { agent: String(e.agent) } : {};
+        if (e.kind === 'state' || e.kind === 'end') return e.state ? [{ t: 'state', state: String(e.state), ...agent }] : [];
+        if (e.kind !== 'output') return [];
+        const text = cut(e.text, MAX_TEXT);
+        if (e.step === 'text') return [e.is_error ? { t: 'note', level: 'error', text, ...agent } : { t: 'text', text, ...agent }];
+        if (e.step === 'plan') return [{ t: 'step', text, ...agent }];
+        if (e.step === 'handoff') return [{ t: 'handoff', from: null, to: e.agent || null, reason: text, ...agent }];
+        if (e.step === 'check') return [{ t: 'note', level: /^checked/i.test(text) ? 'info' : 'warning', text, ...agent }];
+        if (e.step === 'tool_call') return [{ t: 'tool', name: String(e.tool || 'tool'), what: typeof e.input === 'string' ? cut(e.input, 300) : '', input: e.input && typeof e.input === 'object' ? e.input : { description: typeof e.input === 'string' ? cut(e.input, 300) : '' }, ...agent }];
+        if (e.step === 'tool_result') return [{ t: 'tool_result', name: String(e.tool || 'tool'), ok: !e.is_error, output: cut(e.text, 8000), ...agent }];
+        return text ? [{ t: 'text', text, ...agent }] : [];
+    }
     function normalize(e) {
         if (!e || typeof e !== 'object') return [];
         if (e.t) return [e];
+        if (e.kind) return fromActor(e);
         const parent = e.parent_tool_use_id || null;
         if (e.type === 'system' && e.subtype === 'init') return [{ t: 'agent', agent: e.agent || 'claude', model: e.model || null }];
         if (e.type === 'system' && e.subtype === 'handoff') return [{ t: 'handoff', from: e.from, to: e.to || null, reason: cut(e.reason, 600) }];
@@ -289,6 +308,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 .ovas-hand small { font-size: 12.5px; color: var(--ovas-mut); line-height: 1.4; }
 .ovas-note { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; background: color-mix(in srgb, #f59e0b 12%, transparent); color: var(--text-primary, #e6edf7); }
 .ovas-note[data-level="error"] { background: color-mix(in srgb, #ef4444 13%, transparent); }
+.ovas-note[data-level="info"] { background: color-mix(in srgb, #22c55e 10%, transparent); }
+.ovas-note[data-level="info"] .ovas-ic { color: var(--ovas-ok); }
 .ovas-note .ovas-ic { color: #f59e0b; margin-top: 2px; } .ovas-note[data-level="error"] .ovas-ic { color: var(--ovas-bad); }
 .ovas-done { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, #22c55e 40%, transparent); background: color-mix(in srgb, #22c55e 8%, transparent); }
 .ovas-done[data-ok="0"] { border-color: color-mix(in srgb, #ef4444 40%, transparent); background: color-mix(in srgb, #ef4444 8%, transparent); }
@@ -414,10 +435,17 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
         function feedFor(parent) { const p = parent && S.steps.get(parent); return p && p.subEl ? p.subEl : feed; }
         function appendLi(target, li) { if (target === feed) { if (empty.parentNode) empty.remove(); feed.appendChild(li); } else target.appendChild(li); }
 
+        const pending = new Map();   // tool name → ids of its steps still waiting for a result (events without ids)
         function onLine(x) {
             const target = feedFor(x.parent);
+            // Who is working: a line that names a different agent than the last moves the head along.
+            if (x.agent && x.t !== 'agent' && x.t !== 'handoff' && (!S.agents.length || S.agents[S.agents.length - 1].agent !== x.agent)) { S.agents.push({ agent: x.agent }); paintHead(); }
+            if (x.t === 'tool' && !x.id) { x = { ...x, id: `a${S.steps.size + 1}` }; if (!pending.has(x.name)) pending.set(x.name, []); pending.get(x.name).push(x.id); }
+            if (x.t === 'tool_result' && !x.id) { const q = pending.get(x.name); x = { ...x, id: q && q.length ? q.shift() : '' }; }
+            if (x.t === 'state') { status(x.state); return; }
             if (x.t === 'agent') {
-                S.agents.push({ agent: x.agent, model: x.model });
+                const last = S.agents[S.agents.length - 1];
+                if (last && last.agent === x.agent) { if (x.model) last.model = x.model; } else S.agents.push({ agent: x.agent, model: x.model });
                 paintHead(); return;
             }
             if (x.t === 'text') {
@@ -455,13 +483,16 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
                 const li = el('li', 'ovas-handoff'); li.dataset.k = 'handoff'; li.dataset.p = '1';
                 const s = el('div', 'ovas-hand');
                 const row = el('div', 'ovas-hand-row');
-                row.appendChild(el('span', 'ovas-agent', agentName(x.from))); row.insertAdjacentHTML('beforeend', svg('handoff')); row.appendChild(el('span', 'ovas-agent is-now', x.to ? agentName(x.to) : 'the next agent'));
+                const from = x.from || (S.agents.length ? S.agents[S.agents.length - 1].agent : '');
+                if (x.to && (!S.agents.length || S.agents[S.agents.length - 1].agent !== x.to)) S.agents.push({ agent: x.to });
+                row.appendChild(el('span', 'ovas-agent', agentName(from))); row.insertAdjacentHTML('beforeend', svg('handoff')); row.appendChild(el('span', 'ovas-agent is-now', x.to ? agentName(x.to) : 'the next agent'));
                 s.appendChild(row); if (x.reason) s.appendChild(el('small', '', x.reason));
                 li.appendChild(s); appendLi(feed, li); S.problems++; paintHead(); return;
             }
             if (x.t === 'note') {
-                const li = el('li', 'ovas-note'); li.dataset.k = 'note'; li.dataset.p = '1'; li.dataset.level = x.level === 'warning' ? 'warning' : 'error';
-                li.innerHTML = svg('warn'); li.appendChild(el('span', '', x.text)); appendLi(target, li); S.problems++; paintHead(); return;
+                const li = el('li', 'ovas-note'); li.dataset.k = 'note'; li.dataset.level = x.level === 'warning' || x.level === 'info' ? x.level : 'error';
+                if (li.dataset.level !== 'info') li.dataset.p = '1';
+                li.innerHTML = svg(li.dataset.level === 'info' ? 'ok' : 'warn'); li.appendChild(el('span', '', x.text)); appendLi(target, li); if (li.dataset.level !== 'info') S.problems++; paintHead(); return;
             }
             if (x.t === 'step') {
                 const li = el('li', 'ovas-line'); li.dataset.k = 'line'; li.appendChild(el('span', '', x.text)); appendLi(feed, li); return;

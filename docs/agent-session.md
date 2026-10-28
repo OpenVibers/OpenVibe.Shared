@@ -59,7 +59,7 @@ agents… in a smart way… way better than this idea."
 
 **Theme:** the colours come from the page's theme tokens, so it reads in light and dark.
 
-## The two shapes it reads
+## The shapes it reads
 
 **1. Claude Code's stream-json**, the shape every Codes harness adapter emits. See OpenVibe.Codes' `harness/events.js`:
 `system/init`, `assistant` text and `tool_use`, `user` `tool_result`, `system` warning/error/handoff/usage, and one
@@ -81,4 +81,16 @@ agents… in a smart way… way better than this idea."
 | `{ t: 'usage', input_tokens, output_tokens }` | |
 | `{ t: 'done', ok, text, duration_ms, cost_usd, turns }` | the end |
 
-A line with `parent` belongs to the helper whose Task step has that id.
+A line with `parent` belongs to the helper whose Task step has that id. Any line may carry `agent`; the head follows
+who is working. `{ t: 'state', state }` moves the head.
+
+**3. OpenVibe.Actor's task events** (`actor.task-event@1`, since 4.24.1):
+
+| Event | Shown as |
+| --- | --- |
+| `{ kind: 'state' \| 'end', state }` | the head's state |
+| `{ kind: 'output', step: 'plan', text }` | a quiet line |
+| `{ kind: 'output', step: 'text', text, is_error? }` | what it said (an error as a note) |
+| `{ kind: 'output', step: 'handoff', agent, text }` | a divider to `agent` |
+| `{ kind: 'output', step: 'check', text }` | a note ("Checked…" is good news) |
+| `{ kind: 'output', step: 'tool_call' \| 'tool_result', tool, input / text }` | steps, paired by tool |

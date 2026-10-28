@@ -88,6 +88,27 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`document.querySelector('.ovas-chip[data-f="problems"]').click(), 1`);
         v = await p.evaluate(`[...document.querySelectorAll('.ovas-feed > li')].filter((li) => !li.hidden).map((li) => li.dataset.k)`);
         assert.deepStrictEqual(v, ['steps', 'handoff'], 'Problems: the group with the failed step and the hand-off');
+        // OpenVibe.Actor's task events: a step and its result pair by tool (no ids), the head follows the agents, a check
+        // that passed is good news (not a problem), and the task's states move the head.
+        await p.evaluate(`(() => { const d = document.createElement('div'); d.id = 'actor'; document.body.appendChild(d); window.a = OpenVibeAgentSession.mount(d, { title: 'Find the ferry', status: 'queued' }); return 1; })()`);
+        const pa = (e) => p.evaluate(`window.a.push(${JSON.stringify(e)}), 1`);
+        await pa({ kind: 'state', state: 'running' });
+        await pa({ kind: 'output', step: 'plan', agent: 'deepseek', text: 'DeepSeek takes it' });
+        await pa({ kind: 'output', step: 'tool_call', agent: 'deepseek', tool: 'web_search', input: 'ferry times' });
+        await pa({ kind: 'output', step: 'tool_result', agent: 'deepseek', tool: 'web_search', text: '3 results' });
+        await pa({ kind: 'output', step: 'check', agent: 'deepseek', text: 'Checked by another model' });
+        await pa({ kind: 'output', step: 'handoff', agent: 'claude', text: 'Claude takes it: a longer answer' });
+        await pa({ kind: 'output', step: 'text', agent: 'claude', text: 'The ferry leaves at 8:40.' });
+        await pa({ kind: 'end', state: 'succeeded' });
+        v = await p.evaluate(`(() => { const r = document.getElementById('actor'); return { state: r.querySelector('.ovas-step summary .ovas-state').dataset.s, out: r.querySelector('.ovas-out').textContent,
+            agents: [...r.querySelectorAll('.ovas-head .ovas-agent')].map((x) => x.textContent), hand: [...r.querySelectorAll('.ovas-handoff .ovas-agent')].map((x) => x.textContent),
+            info: r.querySelector('.ovas-note').dataset.level, pill: r.querySelector('.ovas-pill').textContent, problems: window.a.summary().problems } })()`);
+        assert.deepStrictEqual([v.state, v.out], ['ok', '3 results'], 'the result found its step');
+        assert.deepStrictEqual(v.agents, ['DeepSeek', 'Claude Code'], 'the head follows who is working');
+        assert.deepStrictEqual(v.hand, ['DeepSeek', 'Claude Code'], 'a hand-off without a from: the agent that was working');
+        assert.strictEqual(v.info, 'info');
+        assert.strictEqual(v.pill, 'Finished');
+        assert.strictEqual(v.problems, 1, 'only the hand-off counts as a problem, not the passed check');
         const errors = p.state.errors.filter((e) => !/Failed to load resource/.test(e.text));
         assert.deepStrictEqual(errors, [], JSON.stringify(errors));
         console.log('agent-session-chrome: groups, live output, failures, helpers, hand-offs, filters and safe text ok');

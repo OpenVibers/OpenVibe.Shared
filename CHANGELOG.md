@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.24.1 — 2026-10-28
+
+- **`agent-session.js` reads OpenVibe.Actor's task events** (`actor.task-event@1`), so Actor's agents show in the same
+  view as every coding agent. The owner asked that it "handle that between all agents… in a smart way".
+  - **Mapping:** plan is a quiet line, text what it said (an error a note), a hand-off a divider, a check a note (a passed
+    check is good news, not a problem), and `tool_call`/`tool_result` are steps. A result without an id finds its step
+    by tool.
+  - **Agents:** any line may name its `agent`, and the head follows who is working. A hand-off without a `from` is the
+    agent that was working.
+  - **States:** `{ t: 'state' }` lines (Actor's task states) move the head.
+  - **No duplicates:** an agent's start after its hand-off no longer lists it twice.
+
 ## 4.24.0 — 2026-10-28
 
 - **`agent-session.js`: a coding agent's session, as people read it.** Asked for by the owner, 2026-10-28, showing

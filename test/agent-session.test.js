@@ -21,4 +21,13 @@ assert.deepStrictEqual(['Bash', 'run_command', 'Read', 'Grep', 'Edit', 'write_fi
     ['command', 'command', 'read', 'search', 'edit', 'write', 'web', 'agent', 'plan', 'command', 'tool'], 'every agent\'s tools map to the same kinds');
 assert.deepStrictEqual(as.diffLines('a\nb\nc', 'a\nB\nc'), [['=', 'a'], ['-', 'b'], ['+', 'B'], ['=', 'c']], 'a changed line is a removal and an addition');
 assert.deepStrictEqual(as.diffLines('', 'x'), [['-', ''], ['+', 'x']]);
+// OpenVibe.Actor's task events (actor.task-event@1) read like the rest (4.24.1).
+assert.deepStrictEqual(as.normalize({ kind: 'state', state: 'running', seq: 2 }), [{ t: 'state', state: 'running' }]);
+assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'plan', agent: 'deepseek', text: 'DeepSeek takes it' }), [{ t: 'step', text: 'DeepSeek takes it', agent: 'deepseek' }]);
+assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'tool_call', agent: 'deepseek', tool: 'web_search', input: 'ferry times' }),
+    [{ t: 'tool', name: 'web_search', what: 'ferry times', input: { description: 'ferry times' }, agent: 'deepseek' }], 'a tool call without an id');
+assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'tool_result', tool: 'web_search', text: '3 results', is_error: false }), [{ t: 'tool_result', name: 'web_search', ok: true, output: '3 results' }]);
+assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'check', text: 'Checked by another model' }), [{ t: 'note', level: 'info', text: 'Checked by another model' }]);
+assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'text', text: 'stopped', is_error: true }), [{ t: 'note', level: 'error', text: 'stopped' }]);
+assert.deepStrictEqual(as.normalize({ kind: 'output', step: 'handoff', agent: 'claude', text: 'Claude takes it' }), [{ t: 'handoff', from: null, to: 'claude', reason: 'Claude takes it', agent: 'claude' }]);
 console.log('agent-session: lines, kinds and diffs ok');
