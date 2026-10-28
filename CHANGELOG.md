@@ -6,6 +6,25 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.24.0 — 2026-10-28
+
+- **`agent-session.js`: a coding agent's session, as people read it.** Asked for by the owner, 2026-10-28, showing
+  the Claude app's session view whose running command said "Output unavailable": "OpenVibe.Codes should… actually show
+  the output from the agent… more user friendly… handle that between all agents… in a smart way".
+  - **Steps:** steps in a row fold into one group ("1 command · 1 edit · 2 reads", with +/− and a running, done or
+    failed mark).
+  - **Inside a step:** its command and diff, and its output, live while it runs; a failed step opens by itself.
+  - **Helpers:** a helper's steps nest under it.
+  - **Hand-offs:** they read "Claude Code → Codex", with the reason.
+  - **The head** stays in view: state, agents, time, steps, files changed, cost, and the plan (TodoWrite) as one line
+    that opens.
+  - **Filters:** Everything, What it said, Steps, Problems; Follow keeps the newest step in view.
+  - **Formats:** it reads Claude Code's stream-json (every OpenVibe.Codes harness adapter's shape) and Codes' job lines
+    (protocol 1.1).
+  - **Safety:** the agent's text is never markup, and only https addresses link.
+  - **For servers:** `normalize`, `kindOf` and `diffLines` work in Node.
+  - Docs: `docs/agent-session.md`. Tests: `agent-session` (node) and `agent-session-chrome`.
+
 ## 4.23.0 — 2026-10-28
 
 The owner, 2026-10-28, on the phone:
