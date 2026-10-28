@@ -2,7 +2,7 @@
  * openvibe-shared/footer.js — the cross-site footer, the counterpart to navbar.js.
  *
  *   OpenVibeFooter.init({ service, variant, links, apiBase, mount, pulse })
- *   OpenVibeFooter.setVariant('full' | 'compact')      the page's own variant (SPA route changes)
+ *   OpenVibeFooter.setVariant('full' | 'compact' | 'auto')  the page's own variant (SPA route changes)
  *   OpenVibeFooter.claim('compact' | 'full', key)      → release(): a part of the page asks for a variant while it needs
  *                                                       it (Live's channel while its stream is live: compact; offline:
  *                                                       the page's own full). Compact wins over full, any claim over the
@@ -16,6 +16,10 @@
  * property or changing a policy link updates every site at once.
  *
  * Variants:
+ *   auto     full on the site's front page (and the paths in fullOn), compact everywhere else: a site looks like an app
+ *            once someone is in it (the owner, 2026-10-28: "the full-size footer on the chat pages might be a little
+ *            much … if we want to have that app-like design … make it a little more sleeker across sites"). On the
+ *            server, ssr({ variant: 'auto', path }) picks with the request's path (no path: compact).
  *   full     the multi-column footer, for home and browse pages
  *   compact  one quiet line, for pages where the footer is not the point — a streamer's
  *            channel, a player, a tool someone is mid-task in. "More from OpenVibe" opens the
@@ -126,7 +130,8 @@
         service: null,               // 'live' | 'tools' | 'dev' | … (auto-detected when omitted)
         brandName: null,
         tagline: 'Open source and community run. Built in the open by the people using it.',
-        variant: 'full',
+        variant: 'full',             // 'full' | 'compact' | 'auto'
+        fullOn: ['/'],               // with variant 'auto': the paths that get the full footer
         mount: '#ov-footer',
         links: [],                   // [{ heading, items: [{ name, url, onclick? }] }]
         legalBase: null,             // origin that hosts /tos, /privacy, /dmca for this site
@@ -143,11 +148,19 @@
     let _cfg = { ...DEFAULTS };
     let _mounted = null;
     const _claims = new Map();   // key → 'compact' | 'full' (claim())
-    /** The variant shown: a compact claim, else a full one, else the page's own. */
+    /** 'auto' for a path: full on the front page and the paths in fullOn, compact elsewhere (no path: compact). */
+    function autoFor(path, fullOn) {
+        if (typeof path !== 'string' || !path) return 'compact';
+        const p = path.replace(/[?#].*$/, '').replace(/(.)\/+$/, '$1') || '/';
+        return (Array.isArray(fullOn) && fullOn.length ? fullOn : ['/']).includes(p) ? 'full' : 'compact';
+    }
+    const herePath = () => (typeof location !== 'undefined' && location.pathname) || '/';
+    /** The variant shown: a compact claim, else a full one, else the page's own ('auto' read from where the page is). */
     function shownVariant(base) {
         const asked = [..._claims.values()];
         if (asked.includes('compact')) return 'compact';
         if (asked.includes('full')) return 'full';
+        if (base === 'auto') return autoFor(herePath(), _cfg.fullOn);
         return base === 'compact' ? 'compact' : 'full';
     }
 
@@ -549,12 +562,19 @@
         if (!el) return null;
         _mounted = el;
         render();
+        // 'auto' on a single-page site follows its routes: back and forward re-read the path (a route the site pushes
+        // itself calls setVariant or render).
+        if (_cfg.variant === 'auto' && !_routeWatch && typeof window !== 'undefined' && window.addEventListener) {
+            _routeWatch = true;
+            window.addEventListener('popstate', () => { if (_cfg.variant === 'auto' && _mounted) render(); });
+        }
         return el;
     }
+    let _routeWatch = false;
 
     /** The page's own variant (an SPA route's); a claim still wins while it holds. */
     function setVariant(variant) {
-        if (variant !== 'full' && variant !== 'compact') return;
+        if (variant !== 'full' && variant !== 'compact' && variant !== 'auto') return;
         if (_cfg.variant === variant) return;
         const before = shownVariant(_cfg.variant);
         _cfg.variant = variant;
@@ -587,9 +607,10 @@
      */
     function ssr(cfg = {}) {
         const c = { ...DEFAULTS, ...cfg };
+        if (c.variant === 'auto') c.variant = autoFor(cfg.path, c.fullOn);   // the request's path, on the server
         const id = String(cfg.mountId || 'ov-footer').replace(/[^\w-]/g, '');
         return `<style id="ovf-css">${CSS}</style><footer id="${id}" class="ovf" data-variant="${c.variant === 'compact' ? 'compact' : 'full'}">${buildHTML(c)}</footer>`;
     }
 
-    return { init, ssr, setVariant, claim, buildHTML, render, CSS, NETWORK, LEGAL, detectService, pulseHTML, get config() { return { ..._cfg }; }, get variant() { return shownVariant(_cfg.variant); } };
+    return { init, ssr, setVariant, claim, buildHTML, render, CSS, NETWORK, LEGAL, detectService, pulseHTML, autoFor, get config() { return { ..._cfg }; }, get variant() { return shownVariant(_cfg.variant); } };
 });
