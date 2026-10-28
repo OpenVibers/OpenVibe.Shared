@@ -6,6 +6,27 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.18.0 — 2026-10-28
+
+- **The account menu, reviewed** (`navbar.js`). The owner, 2026-10-28: "duplicated things … could just be organized
+  better … so many icons sizes that aren't consistent … needs a full review". The changes:
+  - **Nothing twice.**
+    - The balances are left out of the menu's header when the bar shows them (a site's `coins`/`vibes` chips, or
+      `wallet: true`).
+    - "My Profile" is gone: the name and picture are the profile link.
+    - "Seasonal themes" is gone: its switch is on openvibe.network/themes, beside the themes.
+    - "Linked Services" is gone (it is in the account page), and so is "Across OpenVibe": the other sites are the
+      launcher's and the drawer's.
+  - **One order on every site.**
+    - First the site's own rows (`before`, its `sections`, then `after`, which now sits with them).
+    - Then **You**: Account & settings, Notifications, My channel, History, Ask Vibe, Work together, and Admin for an
+      admin or the owner.
+    - Then **Display**: Light / Dark / Auto, text size, animations, and Themes ›.
+    - Then Sign out.
+  - **One icon box.** Every row's glyph keeps its height and sits centred in the same 20 px box, whatever its width
+    (an id card is wider than a bell).
+  - Rows are 13 px text in 32 px rows, and a link row no longer overflows the menu by its padding.
+
 - **The browser harness on macOS** (`browser-harness.js`): Chrome starts with `--disable-backgrounding-occluded-windows`,
   `--disable-renderer-backgrounding` and `--disable-background-timer-throttling`, so every page draws and runs its timers
   as if in front. On macOS a new page counted as an occluded window and painted nothing (the Core Web Vitals test saw no
