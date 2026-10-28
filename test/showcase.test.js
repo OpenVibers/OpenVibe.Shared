@@ -143,4 +143,13 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(/@media \(prefers-reduced-motion:reduce\)\{\.sc-ring,\.sc-aura-glow,\.sc-orb-ring,\.sc-orb-face\{animation:none\}\}/.test(sc.CSS), 'still under reduced motion');
 }
 
+// The site's name leading an eyebrow is left out, the rest kept (4.26.1): 14 homes said "OpenVibe.X · …" under a navbar
+// that already says it.
+{
+    assert.ok(/<p class="sc-eyebrow">What should we eat\?<\/p>/.test(sc.hero({ eyebrow: 'OpenVibe.Food · What should we eat?', title: 'T' })), 'the name leaves, the phrase stays');
+    assert.ok(/<p class="sc-eyebrow">Open restreaming<\/p>/.test(sc.hero({ eyebrow: 'OpenRestream · open restreaming', title: 'T' })), 'and starts with a capital');
+    assert.ok(/<p class="sc-eyebrow">Alpha<\/p>/.test(sc.hero({ eyebrow: 'OpenVibe.Bot · alpha', title: 'T' })));
+    assert.ok(/<p class="sc-eyebrow">Free for OpenVibe\.Live streamers<\/p>/.test(sc.hero({ eyebrow: 'Free for OpenVibe.Live streamers', title: 'T' })), 'a name later in the phrase stays');
+}
+
 console.log('showcase: all checks passed');

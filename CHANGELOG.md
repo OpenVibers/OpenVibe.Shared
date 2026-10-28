@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.26.1 — 2026-10-28
+
+- **No site name twice:**
+  - **The problem:** 14 homes opened with "OpenVibe.X · …" under a navbar that already says the name.
+  - **The fix:** an eyebrow led by the site's name ("OpenVibe.Food · What should we eat?") now keeps only what follows it ("What should we eat?"), starting with a capital.
+  - **Unchanged:** a name later in the phrase stays. An eyebrow that is only the name was already left out (4.23.0).
+
 ## 4.26.0 — 2026-10-28
 
 - **Every showcase hero gets a visual** (`showcase.js` `hero`; the owner, 2026-10-28: the heroes were "ugly af,
