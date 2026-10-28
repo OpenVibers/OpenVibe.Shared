@@ -30,7 +30,7 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
     const { window: lw, document } = linkedom.parseHTML('<!doctype html><html><head></head><body></body></html>');
     const origin = new URL(url).origin;
     const out = { requests: [], es: [], timers: new Map(), intervals: [], scripts: [], now: Date.parse('2026-09-26T18:00:00Z') };
-    const state = { ticketStatus: 200, subject: ALICE, count: 0, tickets: 0, newest: '2026-09-26 17:00:00', fresh: [], slow: null };
+    const state = { ticketStatus: 200, subject: ALICE, count: 0, tickets: 0, newest: '2026-09-26 17:00:00', fresh: [], slow: null, tabs: null, list: [] };
     let hidden = false; let tid = 0; let currentSrc = null;
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
     Object.defineProperty(document, 'currentScript', { configurable: true, get: () => (currentSrc ? { src: currentSrc } : null) });
@@ -76,7 +76,8 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
                 return json(200, { ok: true, count: state.count });
             }
             if (p.pathname === '/api/notifications/newest') return json(200, { ok: true, notification: { created_at: state.newest } });
-            if (p.pathname === '/api/notifications') return json(200, { ok: true, notifications: p.searchParams.get('since') ? state.fresh : [], has_more: false, total: 0 });
+            if (p.pathname === '/api/notifications/unread-by-tab') return state.tabs ? json(200, { ok: true, tabs: state.tabs }) : json(404, {});
+            if (p.pathname === '/api/notifications') return json(200, { ok: true, notifications: p.searchParams.get('since') ? state.fresh : state.list, has_more: false, total: state.list.length });
             return json(404, {});
         },
     };
@@ -360,13 +361,76 @@ const created = (subject, over = {}) => ({
         assert.strictEqual(p.tickets()[0].headers.Authorization, undefined);
     }
 
+    // ── The bell's tabs (4.30.0): Network's ?tab=, the Unread filter, counts from /unread-by-tab, thumbnails ──
+    {
+        const p = page();
+        p.run(UI_SRC, 'notification-ui.js', 'https://openvibe.live/shared/notification-ui.js');
+        const N = p.ctx.OpenVibeNotifications;
+        p.state.count = 4;
+        p.state.tabs = { all: 4, mentions: 3, live: 0, alerts: 120, system: 1, agents: 0 };
+        p.state.list = [
+            { id: 'm1', type: 'MENTION', category: 'social', title: 'ana mentioned you', created_at: '2026-09-26 18:00:00', is_read: 0, sender_avatar: 'https://openvibe.media/a.png',
+              rich_content: { thumbnail: 'https://openvibe.media/a.png' } },
+            { id: 'd1', type: 'DEAL_WATCH_MATCH', category: 'service', title: 'Deal watch matched', created_at: '2026-09-26 17:59:00', is_read: 1,
+              rich_content: { image: 'https://openvibe.deals/i/shoe.jpg' } },
+        ];
+        N.init({ token: 'jwt', apiBase: API });
+        N.createBell(p.document.body);
+        await p.settle();
+        const lists = () => p.out.requests.filter((r) => r.url.startsWith(`${API}/api/notifications?`)).map((r) => new URL(r.url).searchParams);
+        N.togglePanel(); await p.settle();
+        const panel = p.document.querySelector('.openvibe-notif-panel');
+        const tabs = [...panel.querySelectorAll('[role="tab"]')];
+        assert.deepStrictEqual(tabs.map((t) => t.dataset.tab), ['all', 'mentions', 'live', 'alerts', 'system', 'agents'], 'six tabs, All first');
+        assert.strictEqual(lists().pop().get('tab'), null, 'All asks for no tab');
+        const n = (id) => panel.querySelector(`[data-n="${id}"]`).textContent;
+        assert.deepStrictEqual(['all', 'mentions', 'live', 'alerts', 'system'].map(n), ['', '3', '', '99+', '1'], 'counts on the tabs, none on All (the head has it), 99+ at most');
+        assert.strictEqual(tabs[1].getAttribute('aria-label'), 'Mentions, 3 unread');
+        const rows = [...panel.querySelectorAll('.openvibe-notif-item .ovn-row')];
+        assert.strictEqual(rows.length, 2);
+        assert.strictEqual(rows[0].classList.contains('has-thumb'), false, 'a thumbnail that is the avatar is not shown twice');
+        assert.strictEqual(rows[1].querySelector('img.thumb').getAttribute('src'), 'https://openvibe.deals/i/shoe.jpg', 'rich_content.image is the row\'s thumbnail');
+        assert.ok(rows[0].querySelector('.unread-dot') && !rows[1].querySelector('.unread-dot'), 'the unread row has its dot');
+
+        tabs[1].dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
+        assert.strictEqual(lists().pop().get('tab'), 'mentions', 'a tab asks Network for that tab');
+        assert.deepStrictEqual(tabs.map((t) => t.getAttribute('aria-selected')), ['false', 'true', 'false', 'false', 'false', 'false']);
+        panel.querySelector('.openvibe-nv-unread').dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
+        const last = lists().pop();
+        assert.deepStrictEqual([last.get('tab'), last.get('unread_only')], ['mentions', '1'], 'the Unread filter combines with the tab');
+
+        p.state.list = [];
+        tabs[5].dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
+        assert.match(panel.querySelector('.openvibe-nv-empty b').textContent, /caught up/, 'Unread on an empty tab: all caught up');
+        panel.querySelector('.openvibe-nv-unread').dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
+        assert.strictEqual(panel.querySelector('.openvibe-nv-empty b').textContent, 'No agent work yet', 'each tab says what would be there');
+
+        panel.querySelector('[data-act="close"]').dispatchEvent(new p.ctx.Event('click', { bubbles: true }));
+        assert.strictEqual(panel.classList.contains('open'), false, 'the sheet\'s × closes it');
+        N.destroy();
+    }
+    {
+        // A Network without /unread-by-tab: the tabs work, with no counts.
+        const p = page();
+        p.run(UI_SRC, 'notification-ui.js', 'https://openvibe.live/shared/notification-ui.js');
+        const N = p.ctx.OpenVibeNotifications;
+        N.init({ token: 'jwt', apiBase: API });
+        N.createBell(p.document.body);
+        N.togglePanel(); await p.settle();
+        const counts = [...p.document.querySelectorAll('.openvibe-notif-panel [data-n]')].map((x) => x.textContent);
+        assert.deepStrictEqual(counts, ['', '', '', '', '', ''], 'no route, no counts');
+        N.destroy();
+    }
+
     // ── Size: loaded on demand, after sign-in ──────────────────────────────────────────────
     const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(ROOT, f)));
     assert.ok(size('notification-live.js') <= 3 * 1024, `notification-live.js is ${(size('notification-live.js') / 1024).toFixed(2)} KB brotli, budget 3 KB`);
     // 13 → 20 KB on 2026-10-28 (4.27.0, Notifications 2.0: line glyphs, System cards, grouping, layering, priority, the
     // bell's rich list). It loads only after sign-in, when the bell mounts, never on first paint; measured 19.16 KB.
-    assert.ok(size('notification-ui.js') <= 20 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 20 KB`);
+    // 20 → 24 KB on 2026-10-28 (4.30.0, the bell center: tabs with counts, the Unread filter, thumbnails, swipe to read or
+    // clear, the phone sheet; quiet hours); measured 22.56 KB.
+    assert.ok(size('notification-ui.js') <= 24 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 24 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

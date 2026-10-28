@@ -6,6 +6,21 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.30.0 — 2026-10-28
+
+- **The bell center** (Notifications 2.0, plan 2026-10-28 §3.10):
+  - a 420 px popover on desktop, and a full-height sheet on phones with a drag handle, a × and a scrim;
+  - tabs: All · Mentions · Live · Deals & alerts · System · Agents, with unread counts from Network's
+    `/api/notifications/unread-by-tab` (Network#392; none without it), and an Unread filter for any tab;
+  - each tab says what would be there when it is empty;
+  - rows carry a thumbnail from `rich_content` (image, thumbnail_url or thumbnail, never the avatar twice), an unread
+    dot on the left, and swipe right to read or left to clear on touch screens.
+- **Quiet hours:** in the person's window (Network `GET /api/notifications/quiet-hours`, Network#390) toasts and sounds
+  wait; the bell still fills, and critical notices still show.
+- **Readable tones:** severity chips, ×N counts and glyphs mix their tone toward the text colour (the orange WARNING
+  chip was about 2:1 on Daylight).
+- `notification-ui.js` loads only after sign-in; its size budget is 24 KB brotli (measured 22.6 KB).
+
 ## 4.29.2 — 2026-10-28
 
 - **`sc.room()`'s look moves to `room.css`** too: 4.28.0 had put it in `showcase.css`, which every product home loads,
