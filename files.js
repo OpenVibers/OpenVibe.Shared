@@ -38,6 +38,8 @@ const BROWSER = Object.freeze([
     'release-watch.js',     // keeps open tabs on a supported release (ADR-016), loaded after first paint
     'release-update.js',    // plans a new release and applies style/content in place; release-watch loads it on demand
     'web-runtime.js',       // feature loader and route lifecycle (OVWebRuntime), from Live's ov-loader
+    'appbar.js',            // the phone app bar; navbar.js loads it only for a site that sets appBar
+    'kit.js',               // the OpenVibe Kit: app pieces (head, tabs, rows, folds, dock…) built in the page, and their behaviour
     'openvibe-sw.js',       // Web Push service worker
 ]);
 
@@ -47,6 +49,7 @@ const STYLES = Object.freeze([
     'items.css',            // Live's name effects for items.js (live.name_effect.css@1)
     'profile-panel.css',    // the panel profile-panel.js draws
     'player.css',           // player.js's controls
+    'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
 ]);
 const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name));
 

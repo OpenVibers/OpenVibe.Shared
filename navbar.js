@@ -1801,7 +1801,20 @@
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
+        renderAppBar();
         return nav;
+    }
+
+    // ── The phone app bar (appbar.js, loaded only when the site sets appBar): its main places as a bottom tab bar ──
+    let _appBarLoading = false;
+    const rawLinks = () => _runtimeLinks || _config.links || SERVICE_LINKS[_config.service] || [];
+    function renderAppBar() {
+        if (typeof document === 'undefined' || !document.body) return;
+        const ab = root.OpenVibeAppBar;
+        if (ab) { ab.render({ config: _config, links: rawLinks(), activePage: _activePage, nav: _navEl, navIcon, escapeAttr, escapeHtml, flatLinks }); return; }
+        if (!_config.appBar || _appBarLoading) return;
+        _appBarLoading = true;
+        try { const sc = document.createElement('script'); sc.src = sibling('appbar.js'); sc.async = true; sc.onload = () => renderAppBar(); document.head.appendChild(sc); } catch { /* no bar */ }
     }
 
     // The bar's at-the-top state (ovnav-top, see injectStyles), on every render and scroll. One window listener pair for
@@ -1873,6 +1886,9 @@
         /** Replace this site's top links at runtime ([{label, href, icon?, active?, external?}]). */
         setLinks(links) { _runtimeLinks = Array.isArray(links) ? links : null; if (_navEl) render(); },
 
+        /** The phone app bar: true (from the links that have icons), a list of { label, href, icon, id, page, dot }, or false. */
+        setAppBar(spec) { _config.appBar = spec; renderAppBar(); },
+
         /** Add a row to the account dropdown: {label, href|onClick, icon, danger, external, position:'before'|'after'}. */
         addMenuItem(item) {
             if (!item || !item.label) return;
@@ -1896,7 +1912,7 @@
         /** The signed-in user changed (sites with auth: 'external'). Pass null for signed out. */
         setUser(user, token) { _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; return render(); },
         /** Single-page apps: mark the link whose `page` matches as active. */
-        setActive(page) { _activePage = page || null; if (!_navEl) return; _navEl.querySelectorAll('.ovnav-link[data-page]').forEach(a => a.classList.toggle('active', a.getAttribute('data-page') === _activePage)); },
+        setActive(page) { _activePage = page || null; renderAppBar(); if (!_navEl) return; _navEl.querySelectorAll('.ovnav-link[data-page]').forEach(a => a.classList.toggle('active', a.getAttribute('data-page') === _activePage)); },
         /** Change a status chip's text (navbar and menu header): setChip('coins', '1,234'). */
         setChip(id, value, patch) {
             const lists = [_config.chips || [], (_config.menu && _config.menu.headerChips) || []];

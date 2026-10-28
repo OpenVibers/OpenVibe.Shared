@@ -6,6 +6,34 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.20.0 — 2026-10-28
+
+- **The OpenVibe Kit** (`kit.js`, `kit.css`; `require('openvibe-shared/kit')`, `window.OpenVibeKit`). One set of app
+  pieces for every site and anyone's, phone first.
+  - The owner, 2026-10-28: "the pages are so dang long… use tabs or collapsible areas… on a phone it should act more
+    like an app… one app ecosystem across all our systems… part of the SDK and the API… explained in Markdown and on
+    the wiki… reusable for other people's projects."
+  - **The pieces:** a sticky head (back, title, one line, icon actions) with link tabs (`tabs`, `tabOf`), rows and
+    lists, sections, folds and a "more" menu; switch, range, select, segmented and chip rows with a save bar; a find
+    row and a dock (the composer pinned at the bottom); a numbers strip; empty states, notices, copyable snippets,
+    bottom sheets; buttons, icon buttons, one-button forms with a confirm; 78 line icons; `when()` and `mark()`.
+  - **How it runs:** the same builders on the server and in the page, every text escaped and unsafe URLs dropped.
+    `enhance()` adds copy buttons, menus that close, Enter to send, confirms, sliders that speak and sheets, and runs
+    by itself in the page.
+  - **The look:** `kit.css` on the site's theme tokens (`--ovk-*` from `--bg-*`, `--text-*`, `--accent-strong`…).
+    44 px touch targets, a sticky head and dock, layouts for phones (< 600 px), tablets and computers (≥ 1024 px,
+    `.ovk-split`).
+  - **Docs and gallery:** docs/kit.md (the why, with the 38-site phone sweep; the shape of a page; every builder;
+    adoption) and `scripts/kit-gallery.js` (one page with every piece, screenshots at 390/768/1280 and a sideways-scroll
+    check).
+- **The phone app bar** (`appbar.js`; navbar `appBar`, `setAppBar()`).
+  - A site's main places as a bottom tab bar under 760 px: `appBar: true` takes the links that carry an icon (four and
+    More, which opens the drawer), or a list of five.
+  - The open page is marked, a link's dot shows on its tab, and clicks go through `onClick` and `onNavigate`.
+  - It steps aside for the keyboard and open panels, and keeps the page's last line above it (`html.ov-has-appbar`,
+    `--ovnav-appbar-h`).
+  - `navbar.js` loads it only for a site that sets `appBar`, so the navbar's own size is unchanged.
+
 ## 4.19.0 — 2026-10-28
 
 - **Footer `variant: 'auto'`** (`footer.js`). The owner, 2026-10-28: "the full-size footer on the chat pages might be a
