@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.29.2 — 2026-10-28
+
+- **`sc.room()`'s look moves to `room.css`** too: 4.28.0 had put it in `showcase.css`, which every product home loads,
+  and that is what failed 22 sites' CSS budgets (cssRawKB 39.8 > 37 on Help). `showcase.css` is back to its size
+  before the room kit; `room.css` holds the rooms' accents, cards, rails and front door. A room's pages load
+  `kit.css`, `room.css` and `showcase.css`.
+
 ## 4.29.1 — 2026-10-28
 
 - **`room.css`**: the room kit's cards, rails and room accents leave `kit.css` for a stylesheet of their own.
