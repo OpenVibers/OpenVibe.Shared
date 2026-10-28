@@ -196,6 +196,36 @@ kit.badge(text, 'accent' | 'ok' | 'warn' | 'bad' | 'live') · kit.dot(n) · kit.
 `search`, `gear`, `members`, `invite`, `chat`, `bell`, `home`, `spark`, `live`, `video`, `image`, `tag`, `coin`,
 `trophy`, `map`, `code`, `robot` and `game`.
 
+## The navbar's links
+
+The 2026-10-28 sweep of all 38 sites' bars found three habits that made them feel crowded and repetitive:
+- other sites repeated after every site's own links ("Live · Tools · Space · Community", twice on some);
+- "What shipped" and "Search" as main places;
+- up to twelve entries.
+
+The rules since 4.22.0:
+
+1. **Four or five main places, with icons**, in the order people use them: the site's home or feed, finding (browse,
+   categories), what is theirs (watches, tickets, saved), and the site's main verb (post, go live, write). The same
+   icons make the phone app bar (`appBar: true`).
+2. **The rest is `more: true`.** Those links fold into one "More" on computers and are listed in the phone drawer:
+   guides, sources, "how it works", the API.
+3. **Search is the magnifier**, not a link: `search: { owner, label, page }` points it at the site's own results and
+   search page.
+4. **"What shipped" lives in the footer** (Updates), which every site has.
+5. **The account menu holds the person's things** (dashboard, settings, admin), and the launcher holds the other sites.
+   The bar no longer repeats them (`networkLinks` brings the strip back for a site that really wants it).
+
+```js
+OpenVibeNavbar.init({ service: 'food', links: [
+    { label: 'Food near you', href: '/near', icon: 'fa-location-dot' },
+    { label: 'Food boxes', href: '/boxes', icon: 'fa-utensils' },
+    { label: 'Meal plan', href: '/plan', icon: 'fa-list-check' },
+    { label: 'Cupboard', href: '/pantry', icon: 'fa-house' },
+    { label: 'Food list', href: '/foods', more: true },
+], appBar: true, search: { owner: 'food', label: 'OpenVibe.Food' } })
+```
+
 ## The app bar
 
 ```js

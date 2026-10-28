@@ -852,6 +852,7 @@
             const item = byId.get(a.getAttribute('data-link-id'));
             // A parent of a dropdown opens it on touch (there is no hover); a second tap follows the link.
             const dd = a.parentElement && a.parentElement.classList.contains('ovnav-dd') ? a.parentElement : null;
+            if (dd && a.getAttribute('data-link-id') === 'ovnav-more') { e.preventDefault(); const o = !dd.classList.contains('open'); nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); if (o) { dd.classList.add('open'); placeDd(dd); } return; }
             if (dd && matchMedia('(hover: none)').matches && !dd.classList.contains('open')) { e.preventDefault(); nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); dd.classList.add('open'); placeDd(dd); return; }
             if (item && typeof item.onClick === 'function') { const r = item.onClick(e); if (r === false) e.preventDefault(); closeDrawer(); if (e.defaultPrevented) return; }
             if (typeof _config.onNavigate === 'function' && a.target !== '_blank') {
@@ -946,7 +947,8 @@
         if (!frame) return '';
         const here = currentHost().toLowerCase();
         const taken = new Set((pageLinks || []).map(l => { try { return new URL(l.href, location.href).hostname; } catch { return ''; } }));
-        const max = inDrawer ? 8 : (typeof _config.networkLinks === 'number' ? _config.networkLinks : 4);
+        const max = inDrawer ? 8 : (typeof _config.networkLinks === 'number' ? _config.networkLinks : _config.networkLinks === true ? 4 : 0);
+        if (!max) return '';
         const pick = frame.nav.filter(n => { try { const h = new URL(n.url).hostname; return h !== here && !here.endsWith('.' + h) && !taken.has(h); } catch { return false; } }).slice(0, max);
         if (!pick.length) return '';
         if (inDrawer) {
@@ -1645,7 +1647,7 @@
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">
-                ${links.map(l => linkHTML(l, false)).join('')}
+                ${links.filter(l => !l.more).map(l => linkHTML(l, false)).join('')}${links.some(l => l.more && !l.hidden) ? linkHTML({ id: 'ovnav-more', label: 'More', href: '#', children: links.filter(l => l.more) }, false) : ''}
                 ${networkLinksHTML(links)}
                 ${u && u.role === 'admin' && _config.adminLink !== false && !flatLinks(links).some(l => l.id === 'admin') ? `<a href="https://openvibe.network/admin">${navIcon('fa-shield-halved')} Admin</a>` : ''}
             </div>

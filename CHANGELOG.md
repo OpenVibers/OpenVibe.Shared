@@ -6,6 +6,28 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.22.0 — 2026-10-28
+
+- **A tidier navbar** (the owner, 2026-10-28: "reanalyze all the nav bars across all the sites… redundant feeling
+  options… awkward… not front-facing of what the important stuff is"). A sweep of the 38 sites' bars found three
+  problems:
+  - **Other sites repeated** after every site's own links ("Live · Tools · Space · Community"), twice on Codes and
+    News.
+    - The bar no longer repeats them: the launcher lists every site, and the phone drawer keeps "Across OpenVibe".
+    - `networkLinks: <n>` (or `true` for four) brings the strip back for a site that wants it.
+  - **Long bars**, up to twelve entries. Links marked `more: true` now fold into one "More" dropdown, and the drawer
+    lists them like the others. Clicking More opens it; it never follows a link.
+  - **"What shipped" and "Search" as main places.** docs/kit.md ("The navbar's links") sets the rules: four or five
+    places with icons, `more` for the rest, Search as the magnifier, Updates in the footer, the account menu for the
+    person's things.
+- **Who OpenVibe is, in every site's structured data** (`seo.jsonLd.organization()`, the publisher every page names).
+  - The Organization gains a description, `alternateName` (OpenVibe Network, OpenVibers), a
+    `disambiguatingDescription` ("…not the Openvibe mobile social-media aggregator app"), and fifteen sites in `sameAs`.
+  - Why: Google's AI Overview for "whois openvibe" described an unrelated "Openvibe" app (the owner, 2026-10-28).
+  - Network's home page and llms.txt say the same (Network #368).
+- `test/navbar-more.test.js`; `test/seo-org.test.js`; `perf-budget-chrome` gives a loaded runner three tries to report
+  the late block's shift (it failed macOS CI twice on 2026-10-28).
+
 ## 4.21.0 — 2026-10-28
 
 - **Search on every site** (`search.js`; navbar `search`, `openSearch()`).
