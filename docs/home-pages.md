@@ -71,7 +71,7 @@ It renders the parts in the order every room shares (plan 2026-10-28 §3.3), wra
 | 7 | Questions, the rest of OpenVibe | |
 
 The page loads:
-- `kit.css` and `showcase.css`;
+- `kit.css`, `room.css` (cards, rails, the room's accent) and `showcase.css`;
 - `kit-web.js` for rails, menus and share;
 - `motion.js` for the ticker, the typed hints and the reveal.
 

@@ -354,7 +354,7 @@ function roomMotif(r) {
  *   scenes: [{ title, text, html (trusted: the room's own component in a demo state), action: { href, label } }]
  *   explore: { title, items: [{ href, title, text, icon }] } — sc.features · dev: sc.code's arguments, with links
  *   faq: { title, items: [[q, a]] } · network: sc.network's arguments · html: trusted markup after the scenes
- * Needs kit.css (cards, rails, the room's accent) and showcase.css; motion.js makes the numbers tick and the box type.
+ * Needs kit.css, room.css (cards, rails, the room's accent) and showcase.css; motion.js makes the numbers tick and the box type.
  */
 function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq: q, network: net, html } = {}) {
     roomsLib = roomsLib || require('./rooms');
