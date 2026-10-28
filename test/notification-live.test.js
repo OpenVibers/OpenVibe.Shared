@@ -361,7 +361,9 @@ const created = (subject, over = {}) => ({
     const { brotli } = require('../scripts/size-report');
     const size = (f) => brotli(fs.readFileSync(path.join(ROOT, f)));
     assert.ok(size('notification-live.js') <= 3 * 1024, `notification-live.js is ${(size('notification-live.js') / 1024).toFixed(2)} KB brotli, budget 3 KB`);
-    assert.ok(size('notification-ui.js') <= 13 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 13 KB`);
+    // 13 → 20 KB on 2026-10-28 (4.27.0, Notifications 2.0: line glyphs, System cards, grouping, layering, priority, the
+    // bell's rich list). It loads only after sign-in, when the bell mounts, never on first paint; measured 19.16 KB.
+    assert.ok(size('notification-ui.js') <= 20 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 20 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

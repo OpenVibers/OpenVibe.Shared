@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // OpenVibe — Notification UI Client (shared across every OpenVibe site)
 //
-// One store (openvibe.network) → one bell everywhere. This file renders the bell +
-// dropdown panel, toasts, a full-page inbox, and handles Web Push subscription.
+// One store (openvibe.network) → one bell everywhere. This file renders the bell + its panel, toasts, a full-page
+// inbox, and handles Web Push subscription.
 //
 // Usage: <script src="https://openvibe.network/shared/notification-ui.js"></script>
 //        OpenVibeNotifications.init({ token, apiBase, swPath, onAction })
@@ -15,6 +15,18 @@
 //        person's network.notification.created over OpenVibe.Events with a ticket from POST /api/v1/realtime/ticket;
 //        each event or gap re-reads the count. Polling stays: every 15 s without a stream, every 2 min with one.
 // Writes: POST /:id/read, /read-batch, /read-all, /:id/dismiss, /api/push/{subscribe,unsubscribe}
+//
+// Notifications 2.0 (2026-10-28, the owner's screenshot of three alert toasts drawn over the open menu):
+//   • a toast is an opaque, themed card: a line glyph for its category (never an emoji) or the sender's avatar with
+//     the glyph as a badge, a one-line title, at most two lines of text, chips, up to two actions, a timeout bar;
+//   • toasts never draw over an open menu, panel or dialog: they wait (timers paused) and show when it closes;
+//   • phones show one at a time under the bar (with "+N more" and swipe to dismiss), desktops up to three at the
+//     bottom right;
+//   • the same notice arriving again within 15 minutes joins the card that is showing (a count, site chips);
+//   • operator alerts (OPERATOR_ALERT, or rich_content.kind "ops_alert") read as System cards: "Browser check
+//     failed · events · release 80b7955", a status link, and the fix command behind a copy button in the bell —
+//     never raw shell text in the body;
+//   • the bell's list has day headers, category chips, unread dots and grouped repeats.
 // ═══════════════════════════════════════════════════════════════
 
 (function (root) {
@@ -24,14 +36,39 @@
     const REALTIME_POLL = 120_000;   // with an open realtime stream the poll is only a safety net (reads made on other sites)
     const SELF_SRC = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     const PAGE_SIZE = 30;
-    const TOAST_DURATION = { low: 0, normal: 4200, high: 6500, critical: 0 }; // 0 = sticky
-    const MAX_TOASTS = 3;
+    const TOAST_DURATION = { low: 0, normal: 5200, high: 8000, critical: 0 }; // 0 = sticky
+    const MAX_TOASTS = 3;            // desktop; phones show one and count the rest
+    const GROUP_WINDOW = 15 * 60 * 1000;
     const SOUNDS = { normal: 'notification.mp3', high: 'notification-high.mp3', critical: 'notification-alarm.mp3' };
     const CATEGORY_LABELS = {
-        social: 'Social', chat: 'Chat', game: 'Game', stream: 'Streams', economy: 'Economy',
-        achievement: 'Achievements', moderation: 'Moderation', system: 'System', service: 'Services', admin: 'Announcements',
+        stream: 'Live', social: 'Social', chat: 'Chat', game: 'Games', economy: 'Money & deals',
+        achievement: 'Achievements', service: 'Services', moderation: 'Moderation', system: 'System', admin: 'Announcements',
     };
-    const SERVICE_LABELS = { live: 'Live', tools: 'Tools', games: 'Games', media: 'Media', network: 'Network' };
+    const SERVICE_LABELS = { live: 'Live', tools: 'Tools', games: 'Games', media: 'Media', network: 'Network', host: 'Host', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', chat: 'Chat' };
+
+    // Line glyphs (24×24, stroked like the open-loop mark): one per kind of notice.
+    const GLYPH = {
+        live: '<circle cx="12" cy="12" r="2.6"/><path d="M6.4 6.4a8 8 0 0 0 0 11.2M17.6 6.4a8 8 0 0 1 0 11.2M9.2 9.2a4 4 0 0 0 0 5.6M14.8 9.2a4 4 0 0 1 0 5.6"/>',
+        people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><circle cx="17.2" cy="9.4" r="2.4"/><path d="M15.6 14.4a4.5 4.5 0 0 1 5.4 4.6"/>',
+        chat: '<path d="M4.5 5.5h15v10.5H10l-5.5 4z"/>',
+        game: '<path d="M6.5 8.5h11a3.5 3.5 0 0 1 3.5 3.5v2.6a2.9 2.9 0 0 1-5.1 1.9L14.2 14.6H9.8L8.1 16.5A2.9 2.9 0 0 1 3 14.6V12a3.5 3.5 0 0 1 3.5-3.5z"/><path d="M8.3 10.6v3M6.8 12.1h3"/><path d="M15.6 11.4h.01M17.2 12.9h.01"/>',
+        coin: '<circle cx="12" cy="12" r="8.2"/><path d="M14.6 9.6c-.6-.9-1.5-1.3-2.6-1.3-1.5 0-2.6.8-2.6 1.9s1.1 1.6 2.6 1.9 2.6.8 2.6 2-1.1 1.9-2.6 1.9c-1.1 0-2.1-.5-2.6-1.3M12 6.6v1.7M12 15.7v1.7"/>',
+        tag: '<path d="M4 4.5h7.2l8.8 8.8-6.7 6.7-8.8-8.8z"/><circle cx="8.4" cy="8.9" r="1.3"/>',
+        trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5.2a3 3 0 0 0 3 3.6M16 6h2.8a3 3 0 0 1-3 3.6M12 13v3.6M8.6 20h6.8"/>',
+        shield: '<path d="M12 3.2l7 3v5.2c0 4.3-2.9 7.8-7 9.6-4.1-1.8-7-5.3-7-9.6V6.2z"/>',
+        gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4L18 18M6 18l1.6-1.6M16.4 7.6L18 6"/>',
+        grid: '<rect x="4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="4" y="13.4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="13.4" width="6.6" height="6.6" rx="1.6"/>',
+        pulse: '<path d="M3 12.5h4.2l2.3-5.5 4.2 10.5 2.3-5h4.9"/>',
+        check: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
+        bell: '<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>',
+        key: '<circle cx="8.2" cy="14.8" r="4"/><path d="M11.1 12l8.2-8.2M16.4 6.7l2.3 2.3M14.2 8.9l1.8 1.8"/>',
+    };
+    const CATEGORY_GLYPH = { stream: 'live', social: 'people', chat: 'chat', game: 'game', economy: 'coin', achievement: 'trophy', moderation: 'shield', system: 'gear', service: 'grid', admin: 'bell' };
+    const TONE = {
+        live: 'var(--live-red, #e5484d)', danger: 'var(--live-red, #e5484d)', warn: 'var(--warning, #f5a524)', ok: 'var(--success, #30a46c)',
+        gold: 'var(--gold, #e3b341)', accent: 'var(--accent, #3b82f6)', muted: 'var(--text-secondary, #a0a0ab)',
+    };
+    const CATEGORY_TONE = { stream: 'live', social: 'accent', chat: 'accent', game: 'accent', economy: 'gold', achievement: 'gold', moderation: 'warn', system: 'muted', service: 'accent', admin: 'accent' };
 
     let _config = { token: null, apiBase: 'https://openvibe.network', soundBase: '/assets/sounds', swPath: '/openvibe-sw.js', onAction: null, inboxUrl: null };
     let _pollTimer = null;
@@ -47,6 +84,8 @@
     let _lastPoll = 0;
     let _soon = null; let _soonAll = false;
     const _views = new Map();     // container → view state (panel + inboxes)
+    const _queue = [];            // toast cards waiting for a free screen (a menu open, or a phone already showing one)
+    let _menuOpen = false;        // the OpenVibe menu (search.js) says so through its 'openvibe-menu' event
 
     // ── Styles ──────────────────────────────────────────────
     function injectStyles() {
@@ -54,106 +93,151 @@
         const style = document.createElement('style');
         style.id = 'openvibe-notif-styles';
         style.textContent = `
-            @keyframes openvibe-toast-in { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-            @keyframes openvibe-toast-out { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
-            @keyframes openvibe-badge-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.25); } }
-            @keyframes openvibe-bell-ring { 0%{ transform: rotate(0); } 10%{ transform: rotate(14deg); } 20%{ transform: rotate(-14deg); } 30%{ transform: rotate(10deg); } 40%{ transform: rotate(-6deg); } 50%{ transform: rotate(0); } }
-            @keyframes openvibe-slide-down { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-            @keyframes openvibe-spin { to { transform: rotate(360deg); } }
+            @keyframes ovn-in-up { from { transform: translateY(14px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+            @keyframes ovn-in-down { from { transform: translateY(-14px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
+            @keyframes ovn-out { to { transform: translateX(24px); opacity: 0; } }
+            @keyframes ovn-badge-pop { 0%,100% { transform: scale(1); } 50% { transform: scale(1.22); } }
+            @keyframes ovn-bell-ring { 0%{ transform: rotate(0); } 12%{ transform: rotate(13deg); } 24%{ transform: rotate(-12deg); } 36%{ transform: rotate(8deg); } 48%{ transform: rotate(-4deg); } 60%{ transform: rotate(0); } }
+            @keyframes ovn-panel-in { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+            @keyframes ovn-spin { to { transform: rotate(360deg); } }
 
-            .openvibe-toast-container { position: fixed; top: 82px; right: 14px; z-index: 100000; display: flex; flex-direction: column; gap: 6px; pointer-events: none; max-width: 340px; width: 100%; }
-            .openvibe-toast { pointer-events: all; background: color-mix(in srgb, var(--bg-card, #22222c) 94%, transparent); border: 1px solid color-mix(in srgb, var(--border, #333340) 82%, transparent); border-radius: 10px; padding: 11px 12px; display: flex; gap: 10px; align-items: flex-start; box-shadow: 0 10px 24px rgba(0,0,0,0.28); animation: openvibe-toast-in .24s cubic-bezier(.34,1.56,.64,1); cursor: pointer; position: relative; overflow: hidden; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-primary, #e0e0e0); transition: border-color .2s; }
-            .openvibe-toast:hover { border-color: var(--accent, #3b82f6); }
-            .openvibe-toast.removing { animation: openvibe-toast-out .3s ease forwards; }
-            .openvibe-toast-icon { font-size: 18px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
-            .openvibe-toast-icon img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: block; }
-            .openvibe-toast-body { flex: 1; min-width: 0; }
-            .openvibe-toast-title { font-weight: 600; font-size: 12px; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
-            .openvibe-toast-title .service-badge { font-size: 9px; padding: 1px 6px; border-radius: 3px; background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, #60a5fa); font-weight: 500; }
-            .openvibe-toast-msg { font-size: 11px; color: var(--text-secondary, #b0b0b8); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-            .openvibe-toast-close { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text-muted, #707080); cursor: pointer; font-size: 14px; padding: 2px; line-height: 1; }
-            .openvibe-toast-close:hover { color: var(--text-primary, #e0e0e0); }
-            .openvibe-toast-progress { position: absolute; bottom: 0; left: 0; height: 2px; background: var(--accent, #3b82f6); }
-            .openvibe-toast.priority-high { border-left: 3px solid var(--warning, #f39c12); }
-            .openvibe-toast.priority-critical { border-left: 3px solid var(--live-red, #e74c3c); background: rgba(231,76,60,0.06); }
-            .openvibe-toast-actions { display: flex; gap: 6px; margin-top: 8px; }
-            .openvibe-toast-actions button { padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border, #333340); background: var(--bg-hover, #2f2f3d); color: var(--text-primary, #e0e0e0); font-size: 11px; font-weight: 600; cursor: pointer; }
-            .openvibe-toast-actions button.primary { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); border-color: var(--accent-strong, var(--accent, #3472d8)); }
+            /* Toasts. Opaque cards on the theme's raised surface; held (hidden, timers paused) while a menu is open. */
+            .openvibe-toast-container { position: fixed; z-index: 2147482600; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+                right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); width: min(380px, calc(100vw - 32px));
+                font-family: inherit; transition: opacity .18s ease; }
+            .openvibe-toast-container.ovn-held { opacity: 0; visibility: hidden; }
+            .openvibe-toast-container.ovn-phone { top: var(--ovn-top, 64px); bottom: auto; left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); width: auto; }
+            .openvibe-toast { pointer-events: auto; position: relative; overflow: hidden; display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: start;
+                padding: 12px 34px 12px 12px; border-radius: 16px; cursor: pointer; touch-action: pan-y;
+                background: var(--bg-elevated, var(--bg-card, #1f2129)); color: var(--text-primary, #ececf1);
+                border: 1px solid var(--border, rgba(255,255,255,.1)); box-shadow: 0 18px 40px rgba(0,0,0,.34), 0 2px 6px rgba(0,0,0,.2);
+                animation: ovn-in-up .26s cubic-bezier(.2,.8,.2,1); }
+            .ovn-phone .openvibe-toast { animation-name: ovn-in-down; }
+            .openvibe-toast::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--ovn-tone, var(--accent, #3b82f6)); }
+            .openvibe-toast:hover, .openvibe-toast:focus-visible { border-color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 55%, var(--border, #333)); outline: none; }
+            .openvibe-toast.removing { animation: ovn-out .24s ease forwards; }
+            .openvibe-toast-body { min-width: 0; }
+            .openvibe-toast-title { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: 14px; font-weight: 650; line-height: 1.3; }
+            .openvibe-toast-title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .openvibe-toast-title .n { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: var(--ovn-tone, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 16%, transparent); }
+            .openvibe-toast-sub { margin-top: 1px; font-size: 11.5px; color: var(--text-muted, #8b8b96); display: flex; gap: 6px; align-items: center; }
+            .openvibe-toast-msg { margin-top: 4px; font-size: 13px; line-height: 1.4; color: var(--text-secondary, #b6b6c0); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+            .openvibe-toast-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+            .openvibe-toast-actions button, .openvibe-toast-actions a { font: inherit; font-size: 12.5px; font-weight: 650; padding: 7px 13px; border-radius: 999px; cursor: pointer; text-decoration: none; line-height: 1;
+                border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-primary, #ececf1); }
+            .openvibe-toast-actions .primary { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
+            .openvibe-toast-close { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; font-size: 16px; line-height: 1; }
+            .openvibe-toast-close:hover { background: var(--bg-hover, rgba(255,255,255,.06)); color: var(--text-primary, #ececf1); }
+            .openvibe-toast-progress { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; background: var(--ovn-tone, var(--accent, #3b82f6)); opacity: .7; }
+            .openvibe-toast-more { margin-left: auto; flex: none; font: inherit; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px; cursor: pointer;
+                border: 1px solid color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 40%, var(--border, #333)); background: transparent; color: var(--text-secondary, #b6b6c0); }
+            .openvibe-toast.priority-critical { border-color: color-mix(in srgb, var(--ovn-tone) 60%, var(--border, #333)); }
 
-            .openvibe-bell { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; }
-            .openvibe-bell svg { width: 22px; height: 22px; fill: var(--text-secondary, #b0b0b8); transition: fill .2s; }
-            .openvibe-bell:hover svg, .openvibe-bell.open svg { fill: var(--accent-light, #60a5fa); }
-            .openvibe-bell .badge { position: absolute; top: 0; right: 0; min-width: 16px; height: 16px; padding: 0 4px; background: var(--live-red, #e74c3c); color: #fff; border-radius: 8px; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; line-height: 1; pointer-events: none; animation: openvibe-badge-pulse .4s ease; }
+            /* The glyph (or avatar with a glyph badge), shared by toasts and the list. */
+            .ovn-glyph { position: relative; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none;
+                color: var(--ovn-tone, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
+            .ovn-glyph svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            .ovn-glyph.ovn-avatar { border-radius: 50%; background: var(--bg-tertiary, #2a2b33); }
+            .ovn-glyph.ovn-avatar img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; display: block; }
+            .ovn-glyph .ovn-badge { position: absolute; right: -3px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
+                background: var(--ovn-tone, var(--accent, #3b82f6)); color: var(--bg-elevated, var(--bg-card, #1f2129)); box-shadow: 0 0 0 2px var(--bg-elevated, var(--bg-card, #1f2129)); }
+            .ovn-glyph .ovn-badge svg { width: 11px; height: 11px; stroke-width: 2.4; }
+            .ovn-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+            .ovn-chip { font-size: 11px; font-weight: 600; line-height: 1; padding: 4px 8px; border-radius: 999px; color: var(--text-secondary, #b6b6c0); background: var(--bg-tertiary, rgba(255,255,255,.06)); border: 1px solid var(--border, rgba(255,255,255,.08)); }
+            .ovn-chip.sev { color: var(--ovn-tone); background: color-mix(in srgb, var(--ovn-tone) 14%, transparent); border-color: transparent; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
+
+            .openvibe-bell { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
+            .openvibe-bell svg { width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #b0b0b8); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
+            .openvibe-bell:hover svg, .openvibe-bell.open svg { stroke: var(--accent-light, var(--accent, #60a5fa)); }
+            .openvibe-bell:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+            .openvibe-bell .badge { position: absolute; top: 1px; right: 0; min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; background: var(--live-red, #e5484d); color: #fff; border-radius: 999px;
+                font-size: 10px; font-weight: 750; display: flex; align-items: center; justify-content: center; line-height: 1; pointer-events: none; box-shadow: 0 0 0 2px var(--bg-primary, #111);
+                font-variant-numeric: tabular-nums; animation: ovn-badge-pop .36s ease; }
             .openvibe-bell .badge.hidden { display: none; }
-            .openvibe-bell.ringing svg { animation: openvibe-bell-ring .6s ease; }
+            .openvibe-bell.ringing svg { animation: ovn-bell-ring .7s ease; transform-origin: 50% 15%; }
 
-            .openvibe-notif-panel { position: fixed; top: 62px; right: 16px; width: 400px; max-height: calc(100vh - 86px); background: var(--bg-secondary, #252530); border: 1px solid var(--border, #333340); border-radius: 12px; box-shadow: var(--shadow-lg, 0 8px 32px rgba(0,0,0,0.5)); z-index: 99999; display: none; flex-direction: column; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-primary, #e0e0e0); animation: openvibe-slide-down .2s ease; overflow: hidden; }
+            /* The panel (desktop popover, phone sheet) and the full inbox share one list view. */
+            .openvibe-notif-panel { position: fixed; z-index: 99999; display: none; flex-direction: column; overflow: hidden;
+                top: var(--ovn-top, 62px); right: max(8px, env(safe-area-inset-right, 0px)); width: min(420px, calc(100vw - 16px));
+                max-height: calc(100vh - var(--ovn-top, 62px) - 12px); max-height: calc(100dvh - var(--ovn-top, 62px) - 12px - env(safe-area-inset-bottom, 0px));
+                background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1));
+                border-radius: 18px; box-shadow: 0 24px 60px rgba(0,0,0,.45); animation: ovn-panel-in .2s cubic-bezier(.2,.8,.2,1); font-family: inherit; }
             .openvibe-notif-panel.open { display: flex; }
-            .openvibe-notif-inbox { display: flex; flex-direction: column; background: var(--bg-secondary, #252530); border: 1px solid var(--border, #333340); border-radius: 12px; overflow: hidden; color: var(--text-primary, #e0e0e0); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; min-height: 420px; max-height: 78vh; }
+            .openvibe-notif-inbox { display: flex; flex-direction: column; overflow: hidden; min-height: 420px; max-height: 78vh; border-radius: 18px;
+                background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1)); font-family: inherit; }
 
-            .openvibe-nv-head { padding: 12px 14px; border-bottom: 1px solid var(--border, #333340); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-            .openvibe-nv-head h3 { font-size: 15px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 8px; }
-            .openvibe-nv-head h3 .count { font-size: 11px; font-weight: 600; background: var(--live-red, #e74c3c); color: #fff; border-radius: 9px; padding: 1px 7px; }
+            .openvibe-nv-head { padding: 14px 14px 10px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+            .openvibe-nv-head h3 { font-size: 17px; font-weight: 750; letter-spacing: -.01em; margin: 0; display: flex; align-items: center; gap: 8px; }
+            .openvibe-nv-head h3 .count { font-size: 11px; font-weight: 750; background: var(--live-red, #e5484d); color: #fff; border-radius: 999px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
             .openvibe-nv-head h3 .count.zero { display: none; }
-            .openvibe-nv-actions { display: flex; gap: 4px; align-items: center; }
-            .openvibe-nv-actions button, .openvibe-nv-actions a { background: none; border: 1px solid transparent; color: var(--text-muted, #707080); cursor: pointer; font-size: 12px; padding: 5px 8px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; line-height: 1; }
-            .openvibe-nv-actions button:hover, .openvibe-nv-actions a:hover { background: var(--bg-hover, #2f2f3d); color: var(--text-primary, #e0e0e0); }
-            .openvibe-nv-actions button.on { color: var(--accent-light, #60a5fa); border-color: color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent); }
-            .openvibe-nv-actions button:disabled { opacity: .45; cursor: default; }
-            .openvibe-nv-actions svg { width: 14px; height: 14px; fill: currentColor; }
+            .openvibe-nv-actions { display: flex; gap: 2px; align-items: center; }
+            .openvibe-nv-actions button, .openvibe-nv-actions a { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; border: none; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; text-decoration: none; }
+            .openvibe-nv-actions button > span, .openvibe-nv-actions a > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+            .openvibe-nv-actions button:hover, .openvibe-nv-actions a:hover { background: var(--bg-hover, rgba(255,255,255,.06)); color: var(--text-primary, #ececf1); }
+            .openvibe-nv-actions button.on { color: var(--accent-light, var(--accent, #60a5fa)); }
+            .openvibe-nv-actions button:disabled { opacity: .4; cursor: default; }
+            .openvibe-nv-actions svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
-            .openvibe-nv-tools { padding: 8px 12px; border-bottom: 1px solid var(--border, #333340); display: flex; flex-direction: column; gap: 8px; }
+            .openvibe-nv-tools { padding: 0 12px 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
             .openvibe-nv-search { position: relative; }
-            .openvibe-nv-search input { width: 100%; box-sizing: border-box; padding: 7px 28px 7px 30px; border-radius: 8px; border: 1px solid var(--border, #333340); background: var(--bg-input, var(--bg-tertiary, #1e1e28)); color: var(--text-primary, #e0e0e0); font-size: 12px; outline: none; }
+            .openvibe-nv-search input { width: 100%; box-sizing: border-box; padding: 9px 30px 9px 34px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-input, var(--bg-tertiary, rgba(255,255,255,.04))); color: var(--text-primary, #ececf1); font: inherit; font-size: 13px; outline: none; }
             .openvibe-nv-search input:focus { border-color: var(--accent, #3b82f6); }
-            .openvibe-nv-search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; fill: var(--text-muted, #707080); pointer-events: none; }
-            .openvibe-nv-search .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #707080); cursor: pointer; font-size: 14px; display: none; }
+            .openvibe-nv-search > svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; fill: none; stroke: var(--text-muted, #8b8b96); stroke-width: 1.8; stroke-linecap: round; pointer-events: none; }
+            .openvibe-nv-search .clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted, #8b8b96); cursor: pointer; font-size: 16px; display: none; }
             .openvibe-nv-search.has-q .clear { display: block; }
-            .openvibe-nv-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-            .openvibe-nv-chips button { border: 1px solid var(--border, #333340); background: transparent; color: var(--text-secondary, #b0b0b8); font-size: 11px; padding: 4px 10px; border-radius: 999px; cursor: pointer; line-height: 1.2; }
-            .openvibe-nv-chips button:hover { border-color: var(--accent, #3b82f6); color: var(--text-primary, #e0e0e0); }
-            .openvibe-nv-chips button.active { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); border-color: var(--accent, #3b82f6); color: var(--accent-light, #60a5fa); }
-            .openvibe-nv-chips select { margin-left: auto; border: 1px solid var(--border, #333340); background: var(--bg-input, var(--bg-tertiary, #1e1e28)); color: var(--text-secondary, #b0b0b8); font-size: 11px; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
+            .openvibe-nv-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 12px; }
+            .openvibe-nv-chips::-webkit-scrollbar { display: none; }
+            .openvibe-nv-chips button { flex: none; border: 1px solid var(--border, rgba(255,255,255,.1)); background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; line-height: 1.1; }
+            .openvibe-nv-chips button:hover { color: var(--text-primary, #ececf1); border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); }
+            .openvibe-nv-chips button.active { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, var(--on-accent, #fff)); }
 
-            .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 4px 0; overscroll-behavior: contain; }
-            .openvibe-notif-item { padding: 10px 12px 10px 14px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: background .15s; border-left: 3px solid transparent; position: relative; }
-            .openvibe-notif-item:hover { background: var(--bg-hover, #2f2f3d); }
-            .openvibe-notif-item.unread { background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); border-left-color: var(--accent, #3b82f6); }
-            .openvibe-notif-item .icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; width: 32px; text-align: center; }
-            .openvibe-notif-item .icon img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: block; }
-            .openvibe-notif-item .content { flex: 1; min-width: 0; }
-            .openvibe-notif-item .title { font-size: 13px; font-weight: 500; margin-bottom: 2px; padding-right: 18px; }
-            .openvibe-notif-item.unread .title { font-weight: 650; }
-            .openvibe-notif-item .msg { font-size: 12px; color: var(--text-secondary, #b0b0b8); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-            .openvibe-notif-item .meta { font-size: 10px; color: var(--text-muted, #707080); margin-top: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-            .openvibe-notif-item .meta .tag { padding: 1px 5px; border-radius: 3px; background: var(--bg-tertiary, #2a2a38); font-weight: 500; }
-            .openvibe-notif-item .dismiss { position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--text-muted, #707080); cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 4px; opacity: 0; transition: opacity .15s; }
-            .openvibe-notif-item:hover .dismiss { opacity: 1; }
-            .openvibe-notif-item .dismiss:hover { color: var(--live-red-text, var(--live-red, #e74c3c)); background: var(--bg-tertiary, #2a2a38); }
-            .openvibe-nv-empty { text-align: center; padding: 44px 24px; color: var(--text-muted, #707080); font-size: 13px; }
-            .openvibe-nv-empty .icon { font-size: 34px; margin-bottom: 8px; display: block; opacity: .5; }
-            .openvibe-nv-more { display: flex; justify-content: center; padding: 10px; }
-            .openvibe-nv-more button { border: 1px solid var(--border, #333340); background: transparent; color: var(--text-secondary, #b0b0b8); font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer; }
-            .openvibe-nv-more .spinner { width: 16px; height: 16px; border: 2px solid var(--border, #333340); border-top-color: var(--accent, #3b82f6); border-radius: 50%; animation: openvibe-spin .8s linear infinite; }
-            .openvibe-nv-foot { padding: 8px 12px; border-top: 1px solid var(--border, #333340); font-size: 11px; color: var(--text-muted, #707080); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-            .openvibe-nv-foot a { color: var(--accent-light, #60a5fa); text-decoration: none; }
-            .openvibe-nv-note { font-size: 11px; color: var(--text-muted, #707080); padding: 6px 12px; background: color-mix(in srgb, var(--warning, #f39c12) 10%, transparent); border-bottom: 1px solid var(--border, #333340); }
+            .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
+            .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
+            .openvibe-notif-item { display: grid; grid-template-columns: 38px 1fr; gap: 12px; padding: 10px 40px 10px 14px; margin: 0 6px; border-radius: 14px; cursor: pointer; position: relative; transition: background .15s; }
+            .openvibe-notif-item:hover { background: var(--bg-hover, rgba(255,255,255,.05)); }
+            .openvibe-notif-item.unread { background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
+            .openvibe-notif-item .content { min-width: 0; }
+            .openvibe-notif-item .title { font-size: 13.5px; font-weight: 550; line-height: 1.32; display: flex; align-items: baseline; gap: 6px; }
+            .openvibe-notif-item .title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+            .openvibe-notif-item.unread .title { font-weight: 700; }
+            .openvibe-notif-item .title .count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: var(--ovn-tone, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
+            .openvibe-notif-item .msg { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); line-height: 1.42; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+            .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+            .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
+            .openvibe-notif-item .unread-dot { position: absolute; right: 16px; top: 16px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent, #3b82f6); }
+            .openvibe-notif-item .row-actions { margin-left: auto; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+            .openvibe-notif-item:hover .row-actions, .openvibe-notif-item:focus-within .row-actions { opacity: 1; }
+            /* The row's buttons sit on its time line, never over its text; touch screens always show them. */
+            @media (hover: none), (pointer: coarse) { .openvibe-notif-item .row-actions { opacity: 1; } }
+            .openvibe-notif-item:hover .unread-dot { opacity: 0; }
+            .openvibe-notif-item .row-actions button { width: 28px; height: 28px; border-radius: 8px; border: none; background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
+            .openvibe-notif-item .row-actions button:hover { color: var(--text-primary, #ececf1); background: var(--bg-hover, rgba(255,255,255,.08)); }
+            .openvibe-notif-item .row-actions svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+            .openvibe-notif-item .copy { font: inherit; font-size: 11.5px; font-weight: 650; margin-top: 7px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+            .openvibe-notif-item .copy:hover { color: var(--text-primary, #ececf1); }
+            .openvibe-nv-empty { text-align: center; padding: 48px 24px 56px; color: var(--text-muted, #8b8b96); font-size: 13.5px; }
+            .openvibe-nv-empty svg { width: 64px; height: 64px; display: block; margin: 0 auto 12px; fill: none; stroke: var(--accent, #3b82f6); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .75; }
+            .openvibe-nv-empty b { display: block; font-size: 15px; color: var(--text-primary, #ececf1); margin-bottom: 4px; }
+            .openvibe-nv-more { display: flex; justify-content: center; padding: 12px; }
+            .openvibe-nv-more button { border: 1px solid var(--border, rgba(255,255,255,.1)); background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; padding: 7px 16px; border-radius: 999px; cursor: pointer; }
+            .openvibe-nv-more .spinner { width: 18px; height: 18px; border: 2px solid var(--border, rgba(255,255,255,.12)); border-top-color: var(--accent, #3b82f6); border-radius: 50%; animation: ovn-spin .8s linear infinite; }
+            .openvibe-nv-foot { padding: 10px 16px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); font-size: 12px; color: var(--text-muted, #8b8b96); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+            .openvibe-nv-foot a { color: var(--accent-light, var(--accent, #60a5fa)); text-decoration: none; font-weight: 650; }
+            .openvibe-nv-note { font-size: 12px; color: var(--text-secondary, #b6b6c0); padding: 8px 16px; background: color-mix(in srgb, var(--warning, #f5a524) 12%, transparent); }
 
-            /* The panel hangs under whatever navbar the site has (its top is measured when it opens) and never
-               leaves the visible viewport: dvh instead of vh, room for the home indicator, list scrolls inside. */
-            .openvibe-notif-panel { top: var(--ovn-top, 62px); right: max(8px, env(safe-area-inset-right, 0px)); width: min(420px, calc(100vw - 16px));
-                max-height: calc(100vh - var(--ovn-top, 62px) - 12px); max-height: calc(100dvh - var(--ovn-top, 62px) - 12px - env(safe-area-inset-bottom, 0px)); border-radius: 16px; }
-            .openvibe-notif-item .title .count { display: inline-block; margin-left: 4px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); vertical-align: 1px; }
-            /* Phones and narrow windows: a sheet from edge to edge under the bar, down to the bottom inset. */
+            /* Phones: the panel is a sheet from under the bar to the bottom inset, edge to edge. */
             @media (max-width: 640px) {
-                .openvibe-notif-panel { left: 8px; right: 8px; width: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); max-height: none; }
-                .openvibe-notif-panel [data-act] > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }   /* icon-only actions, labels stay for screen readers */
-                .openvibe-notif-panel [data-act] { min-width: 36px; min-height: 36px; justify-content: center; }
-                .openvibe-notif-item { padding-top: 10px; padding-bottom: 10px; }
+                .openvibe-notif-panel { left: 6px; right: 6px; width: auto; bottom: calc(6px + env(safe-area-inset-bottom, 0px)); max-height: none; border-radius: 20px; }
+                .openvibe-notif-item .row-actions { opacity: 1; }
+                .openvibe-notif-item .unread-dot { display: none; }
+                .openvibe-notif-item.unread .title .t::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); margin-right: 6px; vertical-align: 1px; }
             }
-            @media (max-height: 520px) { .openvibe-notif-item .msg { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; } }
-            @media (max-width: 460px) {
-                .openvibe-toast-container { right: 8px; left: 8px; max-width: none; }
+            @media (max-height: 520px) { .openvibe-notif-item .msg { -webkit-line-clamp: 1; } }
+            @media (prefers-reduced-motion: reduce) {
+                .openvibe-toast, .ovn-phone .openvibe-toast, .openvibe-notif-panel { animation: none; }
+                .openvibe-toast.removing { animation: none; opacity: 0; }
+                .openvibe-bell.ringing svg, .openvibe-bell .badge { animation: none; }
+                .openvibe-toast-progress { display: none; }
             }
         `;
         document.head.appendChild(style);
@@ -183,20 +267,25 @@
         const d = parseDate(v); if (!d) return '';
         const diff = (Date.now() - d.getTime()) / 1000;
         if (diff < 45) return 'just now';
-        if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))}m ago`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-        if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+        if (diff < 3600) return `${Math.max(1, Math.floor(diff / 60))} min ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
+        if (diff < 604800) return `${Math.floor(diff / 86400)} d ago`;
         return d.toLocaleDateString();
+    }
+    /** "Today", "Yesterday", a weekday this week, else the date: the list's day headers. */
+    function dayLabel(v) {
+        const d = parseDate(v); if (!d) return 'Earlier';
+        const start = new Date(); start.setHours(0, 0, 0, 0);
+        const day = new Date(d.getTime()); day.setHours(0, 0, 0, 0);
+        const days = Math.round((start - day) / 86400000);
+        if (days <= 0) return 'Today';
+        if (days === 1) return 'Yesterday';
+        if (days < 7) { try { return d.toLocaleDateString(undefined, { weekday: 'long' }); } catch { return 'This week'; } }
+        try { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); } catch { return 'Earlier'; }
     }
     function inboxUrl() {
         if (_config.inboxUrl) return _config.inboxUrl;
         try { return new URL('/notifications', _config.apiBase).toString(); } catch { return 'https://openvibe.network/notifications'; }
-    }
-    function iconHtml(n) {
-        const rich = richOf(n);
-        const img = n.sender_avatar || rich.thumbnail || (rich.user && rich.user.avatar_url);
-        if (img && /^https?:\/\//.test(String(img))) return `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${esc(n.icon || '🔔')}'))">`;
-        return esc(n.icon || '🔔');
     }
     function navigateTo(url) {
         if (!url) return;
@@ -204,6 +293,79 @@
             const u = new URL(url, window.location.href);
             window.location.href = u.toString();
         } catch { window.location.href = url; }
+    }
+    const svg = (paths) => `<svg viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+    function isPhone() {
+        try { return !!(root.matchMedia && root.matchMedia('(max-width: 640px)').matches); } catch { return false; }
+    }
+
+    // ── What a notification says (one presentation for toasts and the list) ─────
+    /** OpenVibeBrowserCheckFailed → "Browser check failed". */
+    function humanize(name) {
+        const s = String(name || '').replace(/^OpenVibe(?=[A-Z])/, '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[_-]+/g, ' ').trim();
+        return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : 'Alert';
+    }
+    function isOpsAlert(n, rich) { return !!n && (n.type === 'OPERATOR_ALERT' || rich.kind === 'ops_alert'); }
+    /**
+     * An operator alert, from its structured fields (rich_content.kind "ops_alert": name, state, severity, sites,
+     * release, summary, command) or, for older notices, read out of its title and message.
+     */
+    function presentOps(n, rich) {
+        const title = String(n.title || '');
+        const m = /^(Alert|Still firing|Resolved):\s*(.+)$/i.exec(title);
+        const state = rich.state || (m ? (m[1].toLowerCase() === 'resolved' ? 'resolved' : (m[1].toLowerCase() === 'still firing' ? 'reminded' : 'firing')) : 'firing');
+        const name = rich.name || (m ? m[2] : title);
+        const raw = String(n.message || '');
+        const command = rich.command || ((/run:\s*(sudo [^;]+?)(?:\.\s|;|\.$|$)/.exec(raw) || [])[1]) || null;
+        const sites = Array.isArray(rich.sites) && rich.sites.length ? rich.sites.slice(0, 6)
+            : [...new Set(((raw.match(/(?:^|\.\s+)([a-z0-9][a-z0-9.-]{1,30}):\s/g) || []).map(s => s.replace(/^\.\s+/, '').replace(/:\s$/, ''))))].slice(0, 6);
+        const release = rich.release || ((/release ([0-9a-f]{7,40})/i.exec(raw) || [])[1] || null);
+        const failing = (/\((\d+) failing check/i.exec(raw) || [])[1];
+        let summary = rich.summary || raw
+            .replace(/run:\s*sudo [^;]+?(?:\.\s|;|\.$|$)/g, '')
+            .replace(/Firing since [^.]+\.?/g, '')
+            .replace(/(?:^|\.\s+)[a-z0-9][a-z0-9.-]{1,30}:\s/g, ' ')
+            .replace(/\s+/g, ' ').trim();
+        if (release || failing) summary = [release ? `Release ${String(release).slice(0, 7)}` : null, failing ? `${failing} failing check${failing === '1' ? '' : 's'}` : null].filter(Boolean).join(' · ');
+        const severity = rich.severity || (n.priority === 'critical' ? 'critical' : n.priority === 'high' ? 'warning' : 'info');
+        const tone = state === 'resolved' ? 'ok' : severity === 'critical' ? 'danger' : 'warn';
+        return {
+            kind: 'ops', key: `ops:${name}:${state === 'resolved' ? 'resolved' : 'open'}`, tone, glyph: state === 'resolved' ? 'check' : 'pulse',
+            title: (state === 'resolved' ? 'Resolved: ' : state === 'reminded' ? 'Still failing: ' : '') + humanize(name),
+            message: summary.slice(0, 220), chips: sites, severity: state === 'resolved' ? 'resolved' : severity, command,
+            label: 'System', url: rich.runbook_url || urlOf(n), actionLabel: 'Open status',
+        };
+    }
+    function present(n) {
+        const rich = richOf(n);
+        if (isOpsAlert(n, rich)) return presentOps(n, rich);
+        const cat = n.category || 'system';
+        const t = String(n.type || '');
+        const glyph = /DEAL|COUPON|PRICE|TRADE/.test(t) ? 'tag' : /CONFIRM|APPROV|SECUR|SIGN/.test(t) ? 'key' : (CATEGORY_GLYPH[cat] || 'bell');
+        const tone = n.priority === 'critical' ? 'danger' : (CATEGORY_TONE[cat] || 'accent');
+        const chips = Array.isArray(rich.chips) ? rich.chips.filter(c => typeof c === 'string').slice(0, 4) : [];
+        return {
+            kind: 'plain', key: [t, n.title || '', n.service || '', cat].join('\u0001'), tone, glyph,
+            title: String(n.title || ''), message: String(n.message || ''), chips, severity: null, command: null,
+            label: SERVICE_LABELS[n.service] || (n.service && n.service !== 'network' ? n.service : '') || CATEGORY_LABELS[cat] || '',
+            url: urlOf(n), actionLabel: null,
+        };
+    }
+    function avatarOf(n) {
+        const rich = richOf(n);
+        const img = n.sender_avatar || rich.thumbnail || (rich.user && rich.user.avatar_url);
+        return img && /^https?:\/\//.test(String(img)) ? String(img) : null;
+    }
+    function glyphHtml(n, p) {
+        const tone = TONE[p.tone] || TONE.accent;
+        const img = p.kind === 'ops' ? null : avatarOf(n);
+        if (img) return `<span class="ovn-glyph ovn-avatar" style="--ovn-tone:${tone}"><img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()"><span class="ovn-badge">${svg(GLYPH[p.glyph] || GLYPH.bell)}</span></span>`;
+        return `<span class="ovn-glyph" style="--ovn-tone:${tone}">${svg(GLYPH[p.glyph] || GLYPH.bell)}</span>`;
+    }
+    function chipsHtml(p, extra = []) {
+        const sev = p.severity ? [`<span class="ovn-chip sev" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">${esc(p.severity)}</span>`] : [];
+        const all = sev.concat((p.chips || []).concat(extra).map(c => `<span class="ovn-chip">${esc(c)}</span>`));
+        return all.length ? `<div class="ovn-chips">${all.join('')}</div>` : '';
     }
 
     // ── API ─────────────────────────────────────────────────
@@ -251,59 +413,233 @@
         } catch { /* */ }
     }
 
+    // ── Layers: toasts never draw over an open menu, panel or dialog ─────────
+    // What counts as open, read from the page itself: this file loads late (after the bell mounts), so an
+    // 'openvibe-menu' event fired before it is missed; the menu's own class and every bar toggle's aria-expanded are not.
+    const OPEN_LAYERS = '.ovs.is-open, .openvibe-navbar [aria-expanded="true"], .openvibe-notif-panel.open, dialog[open], [aria-modal="true"]:not([hidden])';
+    function layerBusy() {
+        if (_menuOpen) return true;
+        try { if (root.OpenVibePanels && typeof root.OpenVibePanels.anyOpen === 'function' && root.OpenVibePanels.anyOpen()) return true; } catch { /* */ }
+        if (document.body && document.body.classList && document.body.classList.contains('ov-panel-open')) return true;
+        // Only what is drawn counts: a closed menu may keep aria-modal while it sits at display: none.
+        try { for (const el of document.querySelectorAll(OPEN_LAYERS)) if (el.getClientRects().length) return true; } catch { /* */ }
+        return false;
+    }
+    let _layerWatch = false;
+    function watchLayers() {
+        if (_layerWatch || typeof document === 'undefined') return;
+        _layerWatch = true;
+        document.addEventListener('openvibe-menu', (e) => { _menuOpen = !!(e && e.detail && e.detail.open); syncLayer(); });
+        try {
+            // aria-expanded and open change only when something opens or closes, so watching them page-wide is cheap.
+            if (typeof root.MutationObserver === 'function' && document.body) new root.MutationObserver(() => syncLayer()).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['aria-expanded', 'open', 'aria-modal'] });
+            if (typeof root.MutationObserver === 'function' && document.body) new root.MutationObserver(() => syncLayer()).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        } catch { /* */ }
+        // Without an observer, any click may have opened or closed something: check right after it.
+        document.addEventListener('click', () => Promise.resolve().then(syncLayer), true);
+    }
+    function syncLayer() {
+        if (!_toastContainer) return;
+        const busy = layerBusy();
+        const was = _toastContainer.classList.contains('ovn-held');
+        if (busy === was) return;
+        _toastContainer.classList.toggle('ovn-held', busy);
+        for (const el of _toastContainer.querySelectorAll('.openvibe-toast')) busy ? pauseToast(el) : resumeToast(el);
+        if (!busy) flushQueue();
+    }
+
     // ── Toasts ──────────────────────────────────────────────
     function ensureToastContainer() {
         if (_toastContainer) return;
         _toastContainer = document.createElement('div');
         _toastContainer.className = 'openvibe-toast-container';
+        _toastContainer.setAttribute('role', 'region');
+        _toastContainer.setAttribute('aria-label', 'Notifications');
+        _toastContainer.setAttribute('aria-live', 'polite');
         document.body.appendChild(_toastContainer);
+        watchLayers();
     }
+    function placeContainer() {
+        const phone = isPhone();
+        _toastContainer.classList.toggle('ovn-phone', phone);
+        if (phone) {
+            // Under whatever bar the site has; above it when the bar is hidden on scroll.
+            const bar = document.querySelector('nav.openvibe-navbar, nav.navbar, header.navbar, .navbar');
+            const r = bar && bar.getBoundingClientRect ? bar.getBoundingClientRect() : null;
+            const top = r && r.bottom > 0 ? Math.round(r.bottom) + 8 : 10;
+            _toastContainer.style.setProperty('--ovn-top', top + 'px');
+        }
+    }
+    function visibleToasts() { return _toastContainer ? [..._toastContainer.querySelectorAll('.openvibe-toast:not(.removing)')] : []; }
+    function maxVisible() { return isPhone() ? 1 : MAX_TOASTS; }
+
+    // Urgent first: a full stack makes room by letting a lower-priority card go, never a higher one.
+    const RANK = { critical: 3, high: 2, normal: 1, low: 0 };
+    const rank = (n) => RANK[(n && n.priority) || 'normal'] ?? 1;
+    const _shownIds = new Set();      // one notification id is one card, however many times a poll or a push brings it
     function showToast(n) {
         if (!_preferences.toasts) return;
         if (_preferences.muted_categories.includes(n.category)) return;
+        const id = n && n.id != null ? String(n.id) : null;
+        if (id) {
+            if (_shownIds.has(id)) return;
+            _shownIds.add(id);
+            if (_shownIds.size > 500) _shownIds.delete(_shownIds.values().next().value);
+        }
         ensureToastContainer();
-        while (_toastContainer.children.length >= MAX_TOASTS) _toastContainer.firstChild.remove();
-        const rich = richOf(n);
+        const p = present(n);
+        // The same notice again within the window joins the card already showing (or waiting).
+        const now = Date.now();
+        const live = visibleToasts().find(el => el.__ovn && el.__ovn.key === p.key && now - el.__ovn.at < GROUP_WINDOW);
+        if (live) { mergeToast(live, n, p); return; }
+        const queued = _queue.find(q => q.p.key === p.key);
+        if (queued) { queued.count += 1; queued.n = rank(n) >= rank(queued.n) ? n : queued.n; queued.chips = [...new Set(queued.chips.concat(p.chips))]; return; }
+        _queue.push({ n, p, count: 1, chips: p.chips.slice() });
+        _queue.sort((a, b) => rank(b.n) - rank(a.n));   // stable: arrival order within a priority
+        flushQueue();
+    }
+    function flushQueue() {
+        if (!_toastContainer || layerBusy()) { if (_toastContainer) _toastContainer.classList.toggle('ovn-held', layerBusy()); updateMore(); return; }
+        placeContainer();
+        while (_queue.length) {
+            const vis = visibleToasts();
+            if (vis.length < maxVisible()) { renderToast(_queue.shift()); continue; }
+            const lowest = vis.reduce((a, el) => (rank(el.__ovn.n) < rank(a.__ovn.n) ? el : a), vis[0]);
+            if (rank(_queue[0].n) > rank(lowest.__ovn.n)) { dismissToast(lowest); continue; }
+            break;
+        }
+        updateMore();
+    }
+    /** "+N more" lives inside the card that is showing (a phone shows one at a time), never floating over the page. */
+    function updateMore() {
+        if (!_toastContainer) return;
+        const waiting = _queue.length;
+        const first = visibleToasts()[0];
+        _toastContainer.querySelectorAll('.openvibe-toast-more').forEach((m) => { if (!waiting || !isPhone() || !first || !first.contains(m)) m.remove(); });
+        if (!waiting || !isPhone() || !first) return;
+        let more = first.querySelector('.openvibe-toast-more');
+        if (!more) {
+            more = document.createElement('button');
+            more.type = 'button'; more.className = 'openvibe-toast-more';
+            more.addEventListener('click', (e) => { e.stopPropagation(); const f = visibleToasts()[0]; if (f) dismissToast(f); else flushQueue(); });
+            const sub = first.querySelector('.openvibe-toast-sub');
+            (sub || first.querySelector('.openvibe-toast-body') || first).appendChild(more);
+        }
+        more.textContent = `+${waiting} more`;
+        more.setAttribute('aria-label', `${waiting} more notification${waiting === 1 ? '' : 's'}: show the next`);
+    }
+    function renderToast(q) {
+        const { n, p } = q;
         const toast = document.createElement('div');
         toast.className = `openvibe-toast priority-${esc(n.priority || 'normal')}`;
         toast.dataset.notifId = n.id || '';
-        const serviceLabel = n.service && n.service !== 'network' ? `<span class="service-badge">${esc(SERVICE_LABELS[n.service] || n.service)}</span>` : '';
-        const actions = Array.isArray(rich.actions) ? rich.actions.filter(a => a && a.type !== 'input') : [];
+        toast.tabIndex = 0;
+        toast.style.setProperty('--ovn-tone', TONE[p.tone] || TONE.accent);
+        if (n.priority === 'critical') toast.setAttribute('role', 'alert');
+        toast.__ovn = { key: p.key, at: Date.now(), count: q.count, chips: q.chips.slice(), ids: n.id ? [n.id] : [], n };
+        const rich = richOf(n);
+        const custom = Array.isArray(rich.actions) ? rich.actions.filter(a => a && a.type !== 'input' && a.label).slice(0, 2) : [];
+        const actions = custom.length ? custom : (p.url ? [{ id: 'open', label: p.actionLabel || 'View', url: p.url, style: 'primary' }] : []);
         toast.innerHTML = `
-            <div class="openvibe-toast-icon">${iconHtml(n)}</div>
+            ${glyphHtml(n, p)}
             <div class="openvibe-toast-body">
-                <div class="openvibe-toast-title">${esc(n.title)}${serviceLabel}</div>
-                <div class="openvibe-toast-msg">${esc(n.message || '')}</div>
-                ${actions.length ? `<div class="openvibe-toast-actions">${actions.map(a => `<button data-action="${esc(a.id)}" class="${a.style === 'primary' ? 'primary' : ''}">${esc(a.label)}</button>`).join('')}</div>` : ''}
+                <div class="openvibe-toast-title"><span class="t">${esc(p.title)}</span><span class="n" data-role="n"${q.count > 1 ? '' : ' hidden'}>×${q.count}</span></div>
+                <div class="openvibe-toast-sub">${esc(p.label || '')}${p.label ? '<span aria-hidden="true">·</span>' : ''}<span>now</span></div>
+                ${p.message ? `<div class="openvibe-toast-msg" data-role="msg">${esc(p.message)}</div>` : ''}
+                <div data-role="chips">${chipsHtml({ ...p, chips: q.chips })}</div>
+                ${actions.length ? `<div class="openvibe-toast-actions">${actions.map(a => a.url
+                    ? `<a href="${esc(a.url)}" data-action="${esc(a.id || 'open')}" class="${a.style === 'primary' ? 'primary' : ''}">${esc(a.label)}</a>`
+                    : `<button type="button" data-action="${esc(a.id)}" class="${a.style === 'primary' ? 'primary' : ''}">${esc(a.label)}</button>`).join('')}</div>` : ''}
             </div>
-            <button class="openvibe-toast-close" aria-label="Dismiss">&times;</button>`;
-        const duration = TOAST_DURATION[n.priority] ?? 5000;
+            <button type="button" class="openvibe-toast-close" aria-label="Dismiss">&times;</button>`;
+        const duration = TOAST_DURATION[n.priority] ?? 5200;
+        toast.__ovnDuration = duration;
         if (duration > 0) {
             const bar = document.createElement('div');
-            bar.className = 'openvibe-toast-progress'; bar.style.width = '100%'; bar.style.transition = `width ${duration}ms linear`;
+            bar.className = 'openvibe-toast-progress';
             toast.appendChild(bar);
-            requestAnimationFrame(() => { bar.style.width = '0%'; });
-            setTimeout(() => dismissToast(toast), duration);
+            startTimer(toast, duration);
         }
         toast.querySelector('.openvibe-toast-close').addEventListener('click', (e) => { e.stopPropagation(); dismissToast(toast); });
-        toast.addEventListener('click', () => {
-            if (n.id) markRead([n.id]);
+        toast.addEventListener('click', (e) => {
+            if (e.target.closest && e.target.closest('[data-action]')) return;
+            const ids = toast.__ovn.ids; if (ids.length) markRead(ids);
             dismissToast(toast);
-            const u = urlOf(n); if (u) navigateTo(u);
+            if (p.url) navigateTo(p.url);
         });
+        toast.addEventListener('keydown', (e) => { if (e.key === 'Escape') dismissToast(toast); });
         toast.querySelectorAll('[data-action]').forEach(btn => btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const a = actions.find(x => String(x.id) === btn.dataset.action);
-            if (a && a.url) { navigateTo(a.url); return; }
+            const ids = toast.__ovn.ids; if (ids.length) markRead(ids);
+            const a = actions.find(x => String(x.id || 'open') === btn.dataset.action);
+            if (a && a.url) { e.preventDefault(); dismissToast(toast); navigateTo(a.url); return; }
             if (_config.onAction) _config.onAction(n.id, btn.dataset.action, n);
             dismissToast(toast);
         }));
+        // Hover or focus holds the timer; a swipe sideways (or up, on a phone) dismisses.
+        toast.addEventListener('mouseenter', () => pauseToast(toast));
+        toast.addEventListener('mouseleave', () => resumeToast(toast));
+        toast.addEventListener('focusin', () => pauseToast(toast));
+        toast.addEventListener('focusout', () => resumeToast(toast));
+        attachSwipe(toast);
         _toastContainer.appendChild(toast);
     }
+    function mergeToast(el, n, p) {
+        const st = el.__ovn;
+        if (n.id && st.ids.includes(n.id)) return;
+        st.count += 1; st.at = Date.now(); st.n = rank(n) >= rank(st.n) ? n : st.n;
+        if (n.id) st.ids.push(n.id);
+        st.chips = [...new Set(st.chips.concat(p.chips))].slice(0, 8);
+        const c = el.querySelector('[data-role="n"]'); if (c) { c.textContent = `×${st.count}`; c.hidden = false; }
+        const m = el.querySelector('[data-role="msg"]'); if (m && p.message) m.textContent = p.message;
+        const ch = el.querySelector('[data-role="chips"]'); if (ch) ch.innerHTML = chipsHtml({ ...p, chips: st.chips });
+        if (el.__ovnDuration > 0) startTimer(el, el.__ovnDuration);
+    }
+    function startTimer(el, ms) {
+        clearTimeout(el.__ovnTimer);
+        el.__ovnRemaining = ms; el.__ovnStarted = Date.now();
+        const bar = el.querySelector('.openvibe-toast-progress');
+        if (bar) { bar.style.transition = 'none'; bar.style.transform = 'scaleX(1)'; const go = () => { bar.style.transition = `transform ${ms}ms linear`; bar.style.transform = 'scaleX(0)'; }; (root.requestAnimationFrame || ((f) => f()))(go); }
+        if (_toastContainer && _toastContainer.classList.contains('ovn-held')) { pauseToast(el); return; }
+        el.__ovnTimer = setTimeout(() => dismissToast(el), ms);
+    }
+    function pauseToast(el) {
+        if (!el || !el.__ovnTimer) return;
+        clearTimeout(el.__ovnTimer); el.__ovnTimer = null;
+        el.__ovnRemaining = Math.max(800, (el.__ovnRemaining || 0) - (Date.now() - (el.__ovnStarted || Date.now())));
+        const bar = el.querySelector('.openvibe-toast-progress');
+        if (bar && root.getComputedStyle) { try { const t = root.getComputedStyle(bar).transform; bar.style.transition = 'none'; bar.style.transform = t && t !== 'none' ? t : 'scaleX(1)'; } catch { /* */ } }
+    }
+    function resumeToast(el) {
+        if (!el || el.__ovnTimer || !(el.__ovnDuration > 0) || el.classList.contains('removing')) return;
+        if (_toastContainer && _toastContainer.classList.contains('ovn-held')) return;
+        startTimer(el, el.__ovnRemaining || el.__ovnDuration);
+    }
+    function attachSwipe(el) {
+        if (typeof root.PointerEvent !== 'function') return;
+        let x0 = null, y0 = null, dx = 0, dy = 0;
+        el.addEventListener('pointerdown', (e) => { x0 = e.clientX; y0 = e.clientY; dx = dy = 0; });
+        el.addEventListener('pointermove', (e) => {
+            if (x0 == null) return;
+            dx = e.clientX - x0; dy = e.clientY - y0;
+            if (Math.abs(dx) > 8 || dy < -8) { el.style.transition = 'none'; el.style.transform = Math.abs(dx) >= Math.abs(dy) ? `translateX(${dx}px)` : `translateY(${Math.min(0, dy)}px)`; el.style.opacity = String(Math.max(0.2, 1 - Math.max(Math.abs(dx), -dy) / 220)); }
+        });
+        const end = () => {
+            if (x0 == null) return;
+            const gone = Math.abs(dx) > 90 || (isPhone() && dy < -40);
+            x0 = y0 = null;
+            if (gone) { el.__ovnSwiped = true; dismissToast(el); return; }
+            el.style.transition = 'transform .2s ease, opacity .2s ease'; el.style.transform = ''; el.style.opacity = '';
+        };
+        el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+        // A swipe is not a click on the card.
+        el.addEventListener('click', (e) => { if (el.__ovnSwiped) { e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    }
     function dismissToast(el) {
-        if (!el || !el.parentNode) return;
+        if (!el || !el.parentNode || el.classList.contains('removing')) return;
+        clearTimeout(el.__ovnTimer);
         el.classList.add('removing');
-        setTimeout(() => el.remove(), 300);
+        setTimeout(() => { el.remove(); flushQueue(); }, 240);
     }
 
     // ── Bell / badge ────────────────────────────────────────
@@ -311,7 +647,7 @@
         const bell = document.createElement('div');
         bell.className = 'openvibe-bell';
         bell.setAttribute('role', 'button'); bell.setAttribute('aria-label', 'Notifications'); bell.tabIndex = 0;
-        bell.innerHTML = `<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg><span class="badge hidden">0</span>`;
+        bell.innerHTML = `${svg(GLYPH.bell)}<span class="badge hidden">0</span>`;
         bell.addEventListener('click', () => togglePanel());
         bell.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanel(); } });
         _bellEl = bell;
@@ -325,8 +661,9 @@
             if (_unreadCount > 0) {
                 badge.textContent = _unreadCount > 99 ? '99+' : String(_unreadCount);
                 badge.classList.remove('hidden');
-                if (!quiet && _unreadCount > prev) { _bellEl.classList.add('ringing'); setTimeout(() => _bellEl.classList.remove('ringing'), 600); }
+                if (!quiet && _unreadCount > prev) { _bellEl.classList.add('ringing'); setTimeout(() => _bellEl.classList.remove('ringing'), 700); }
             } else badge.classList.add('hidden');
+            _bellEl.setAttribute('aria-label', _unreadCount ? `Notifications, ${_unreadCount} unread` : 'Notifications');
         }
         for (const v of _views.values()) {
             const c = v.root.querySelector('.openvibe-nv-head .count');
@@ -336,37 +673,42 @@
     }
 
     // ── List views (panel + inbox share this) ───────────────
-    const SVG = {
-        search: '<svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>',
-        check: '<svg viewBox="0 0 24 24"><path d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/></svg>',
-        bellOn: '<svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>',
-        bellOff: '<svg viewBox="0 0 24 24"><path d="M20 18.69L7.84 6.14 5.27 3.49 4 4.76l2.8 2.8v.01c-.52.99-.8 2.16-.8 3.42v5l-2 2v1h13.73l2 2L21 19.72l-1-1.03zM12 22c1.11 0 2-.89 2-2h-4c0 1.11.89 2 2 2zm6-7.32V11c0-3.08-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68c-.15.03-.29.08-.42.12-.1.03-.2.07-.3.11h-.01c-.01 0-.01 0-.02.01-.23.09-.46.2-.68.31 0 0-.01 0-.01.01L18 14.68z"/></svg>',
-        gear: '<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>',
-        open: '<svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>',
+    const ICON = {
+        search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+        checkAll: '<path d="M2.5 12.5l4.5 4.5L17 7"/><path d="M11.5 16.5l.5.5L22 7"/>',
+        bellOn: GLYPH.bell,
+        bellOff: '<path d="M6.2 16.2V11a5.8 5.8 0 0 1 9.6-4.4M17.8 10.4v5.8l1.6 2H6"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0M3.5 3.5l17 17"/>',
+        gear: GLYPH.gear,
+        open: '<path d="M14 4h6v6M20 4l-9 9M19 14v5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H10"/>',
+        read: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
+        close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+        empty: '<path d="M18 37V26a14 14 0 0 1 28 0v11l4 5H14z"/><path d="M27 49a5 5 0 0 0 10 0"/><path d="M50 14l4-4M53 22h5M44 8l1-5"/>',
     };
 
     function buildView(root, { mode }) {
         const v = { root, mode, tab: 'all', category: '', q: '', items: [], offset: 0, hasMore: false, loading: false, seq: 0, ids: new Set() };
+        const cats = ['stream', 'social', 'chat', 'economy', 'game', 'achievement', 'system', 'admin'];
         root.innerHTML = `
             <div class="openvibe-nv-head">
                 <h3>Notifications <span class="count zero">0</span></h3>
                 <div class="openvibe-nv-actions">
-                    <button type="button" data-act="read-all" title="Mark all as read">${SVG.check}<span>Mark all read</span></button>
-                    <button type="button" data-act="push" title="Desktop / mobile push alerts on this device">${SVG.bellOff}</button>
-                    ${mode === 'panel' ? `<a href="${esc(inboxUrl())}" data-act="inbox" title="Open inbox">${SVG.open}</a>` : `<a href="${esc(inboxUrl().replace(/\/notifications$/, '/notifications#prefs'))}" data-act="prefs" title="Notification preferences">${SVG.gear}</a>`}
+                    <button type="button" data-act="read-all" title="Mark all as read">${svg(ICON.checkAll)}<span>Mark all read</span></button>
+                    <button type="button" data-act="push" title="Push alerts on this device">${svg(ICON.bellOff)}<span>Push alerts</span></button>
+                    <a href="${esc(inboxUrl().replace(/\/notifications$/, '/notifications#prefs'))}" data-act="prefs" title="Notification settings">${svg(ICON.gear)}<span>Settings</span></a>
+                    ${mode === 'panel' ? `<a href="${esc(inboxUrl())}" data-act="inbox" title="Open the full inbox">${svg(ICON.open)}<span>Open inbox</span></a>` : ''}
                 </div>
             </div>
             <div class="openvibe-nv-note" data-role="note" style="display:none"></div>
             <div class="openvibe-nv-tools">
-                <div class="openvibe-nv-search">${SVG.search}<input type="search" placeholder="Search notifications…" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
-                <div class="openvibe-nv-chips">
-                    <button type="button" data-tab="all" class="active">All</button>
-                    <button type="button" data-tab="unread">Unread</button>
-                    <select data-role="category"><option value="">All categories</option>${Object.entries(CATEGORY_LABELS).map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
+                <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
+                <div class="openvibe-nv-chips" role="tablist" aria-label="Show">
+                    <button type="button" role="tab" data-tab="all" class="active" aria-selected="true">All</button>
+                    <button type="button" role="tab" data-tab="unread" aria-selected="false">Unread</button>
+                    ${cats.map(k => `<button type="button" role="tab" data-cat="${k}" aria-selected="false">${esc(CATEGORY_LABELS[k])}</button>`).join('')}
                 </div>
             </div>
             <div class="openvibe-nv-list" data-role="list"></div>
-            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'panel' ? `<a href="${esc(inboxUrl())}">Open full inbox →</a>` : ''}</div>`;
+            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'panel' ? `<a href="${esc(inboxUrl())}">Full inbox →</a>` : ''}</div>`;
         const list = root.querySelector('[data-role="list"]');
         const input = root.querySelector('input[type="search"]');
         let qTimer = null;
@@ -375,11 +717,13 @@
             clearTimeout(qTimer); qTimer = setTimeout(() => { v.q = input.value.trim(); reload(v); }, 260);
         });
         root.querySelector('.openvibe-nv-search .clear').addEventListener('click', () => { input.value = ''; v.q = ''; root.querySelector('.openvibe-nv-search').classList.remove('has-q'); reload(v); });
-        root.querySelectorAll('[data-tab]').forEach(btn => btn.addEventListener('click', () => {
-            root.querySelectorAll('[data-tab]').forEach(b => b.classList.remove('active')); btn.classList.add('active');
-            v.tab = btn.dataset.tab; reload(v);
+        const chips = root.querySelectorAll('.openvibe-nv-chips button');
+        const select = (btn) => { chips.forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-selected', String(b === btn)); }); };
+        chips.forEach(btn => btn.addEventListener('click', () => {
+            select(btn);
+            if (btn.dataset.cat) { v.tab = 'all'; v.category = btn.dataset.cat; } else { v.tab = btn.dataset.tab; v.category = ''; }
+            reload(v);
         }));
-        root.querySelector('[data-role="category"]').addEventListener('change', (e) => { v.category = e.target.value; reload(v); });
         root.querySelector('[data-act="read-all"]').addEventListener('click', () => markAllRead());
         root.querySelector('[data-act="push"]').addEventListener('click', () => togglePush(v));
         // Infinite scroll: load the next page when the user nears the bottom.
@@ -388,50 +732,75 @@
             if (list.scrollTop + list.clientHeight >= list.scrollHeight - 120) loadMore(v);
         });
         list.addEventListener('click', (e) => {
-            const dismissBtn = e.target.closest('.dismiss');
             const item = e.target.closest('.openvibe-notif-item');
             if (!item) return;
             const id = item.dataset.id;
             const ids = (item.dataset.ids || id).split(',').filter(Boolean);
-            if (dismissBtn) { e.stopPropagation(); ids.forEach(x => dismiss(v, x)); return; }
+            const act = e.target.closest('[data-row]');
+            if (act) {
+                e.stopPropagation();
+                if (act.dataset.row === 'dismiss') ids.forEach(x => dismiss(v, x));
+                else if (act.dataset.row === 'read') markRead(ids);
+                else if (act.dataset.row === 'copy') copyText(act.dataset.cmd || '', act);
+                return;
+            }
             const n = v.items.find(x => String(x.id) === id);
             const unreadIds = ids.filter(x => { const it = v.items.find(y => String(y.id) === x); return it && !isRead(it); });
             if (unreadIds.length) markRead(unreadIds);
-            const u = urlOf(n);
+            const u = n && present(n).url;
             if (u) navigateTo(u);
         });
         refreshPushButton(v);
         _views.set(root, v);
         return v;
     }
+    function copyText(text, btn) {
+        const done = () => { if (btn) { const was = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = was; }, 1400); } };
+        try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(done, () => {}); return; } } catch { /* */ }
+        done();
+    }
 
     function renderItems(v, { append = false } = {}) {
         const list = v.root.querySelector('[data-role="list"]');
-        // The same event repeated back to back ("X is live!" six times) reads as one row with a count.
+        // The same notice repeated back to back ("X is live!" six times; three browser checks failing) reads as one
+        // row with a count and the sites it covers.
         const groups = [];
         for (const n of v.items) {
-            const key = [n.title, n.message || '', n.service || '', n.category || ''].join('\u0001');
+            const p = present(n);
             const g = groups[groups.length - 1];
-            if (g && g.key === key) { g.ids.push(String(n.id)); if (!isRead(n)) g.unread = true; } else groups.push({ key, n, ids: [String(n.id)], unread: !isRead(n) });
+            if (g && g.p.key === p.key) {
+                g.ids.push(String(n.id)); if (!isRead(n)) g.unread = true;
+                g.chips = [...new Set(g.chips.concat(p.chips))].slice(0, 8);
+                if (!g.cmd && p.command) g.cmd = p.command;
+            } else groups.push({ n, p, ids: [String(n.id)], unread: !isRead(n), chips: p.chips.slice(), cmd: p.command });
         }
-        const html = groups.map(({ n, ids, unread }) => {
+        let lastDay = append ? v.lastDay : null;
+        const html = groups.map(({ n, p, ids, unread, chips, cmd }) => {
             try {
-                const cat = CATEGORY_LABELS[n.category] || n.category || '';
-                const service = n.service && n.service !== 'network' ? `<span class="tag">${esc(SERVICE_LABELS[n.service] || n.service)}</span>` : '';
-                return `<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" title="${esc(urlOf(n) ? 'Open' : '')}">
-                    <span class="icon">${iconHtml(n)}</span>
+                const day = dayLabel(n.created_at);
+                const head = day !== lastDay ? `<div class="openvibe-nv-day">${esc(day)}</div>` : '';
+                lastDay = day;
+                const when = esc(timeAgo(n.created_at));
+                const label = p.label ? `<span class="dot"></span><span>${esc(p.label)}</span>` : '';
+                return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}" tabindex="0">
+                    ${glyphHtml(n, p)}
                     <div class="content">
-                        <div class="title">${esc(n.title)}${ids.length > 1 ? ` <span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}</div>
-                        ${n.message ? `<div class="msg">${esc(n.message)}</div>` : ''}
-                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${esc(timeAgo(n.created_at))}</span>${service}${cat ? `<span class="tag">${esc(cat)}</span>` : ''}</div>
+                        <div class="title"><span class="t">${esc(p.title)}</span>${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}</div>
+                        ${p.message ? `<div class="msg">${esc(p.message)}</div>` : ''}
+                        ${chipsHtml({ ...p, chips })}
+                        ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
+                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}<div class="row-actions">${unread ? `<button type="button" data-row="read" title="Mark as read" aria-label="Mark as read">${svg(ICON.read)}</button>` : ''}<button type="button" data-row="dismiss" title="Dismiss" aria-label="Dismiss">${svg(ICON.close)}</button></div></div>
                     </div>
-                    <button type="button" class="dismiss" title="Dismiss" aria-label="Dismiss">&times;</button>
+                    ${unread ? '<span class="unread-dot" aria-label="Unread"></span>' : ''}
                 </div>`;
             } catch { return ''; }
         }).join('');
+        v.lastDay = lastDay;
         if (!append) list.innerHTML = '';
         if (!v.items.length) {
-            list.innerHTML = `<div class="openvibe-nv-empty"><span class="icon">${v.q ? '🔎' : '🔔'}</span>${v.q ? 'Nothing matches that search' : (v.tab === 'unread' ? 'You\'re all caught up' : 'No notifications yet')}</div>`;
+            const title = v.q ? 'Nothing matches that search' : (v.tab === 'unread' ? 'You\'re all caught up' : (v.category ? 'Nothing here yet' : 'No notifications yet'));
+            const sub = v.q ? 'Try other words.' : 'When something happens across OpenVibe, it lands here.';
+            list.innerHTML = `<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;
         } else {
             const old = list.querySelector('.openvibe-nv-more'); if (old) old.remove();
             list.insertAdjacentHTML('beforeend', html);
@@ -451,7 +820,7 @@
     }
     async function reload(v) {
         const seq = ++v.seq;
-        v.loading = true; v.offset = 0; v.items = []; v.ids = new Set(); v.hasMore = false; v.total = null;
+        v.loading = true; v.offset = 0; v.items = []; v.ids = new Set(); v.hasMore = false; v.total = null; v.lastDay = null;
         const list = v.root.querySelector('[data-role="list"]');
         list.innerHTML = '<div class="openvibe-nv-more"><span class="spinner"></span></div>';
         try {
@@ -462,7 +831,7 @@
             renderItems(v);
         } catch (e) {
             if (seq !== v.seq) return;
-            list.innerHTML = `<div class="openvibe-nv-empty"><span class="icon">⚠️</span>${e.status === 401 ? 'Sign in to see your notifications' : 'Could not load notifications'}</div>`;
+            list.innerHTML = `<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${e.status === 401 ? 'Sign in to see your notifications' : 'Could not load notifications'}</b>${e.status === 401 ? '' : 'Check your connection and try again.'}</div>`;
         } finally { if (seq === v.seq) v.loading = false; }
     }
     async function loadMore(v) {
@@ -477,7 +846,7 @@
             v.items = v.items.concat(fresh); v.hasMore = !!data.has_more; v.offset += (data.notifications || []).length; v.total = data.total ?? v.total;
             // Re-render only the tail to keep the scroll position.
             const old = v.root.querySelector('.openvibe-nv-more'); if (old) old.remove();
-            if (fresh.length) renderItems({ ...v, items: fresh }, { append: true });
+            if (fresh.length) { const tail = { ...v, items: fresh }; renderItems(tail, { append: true }); v.lastDay = tail.lastDay; }
             else if (v.hasMore) { const list = v.root.querySelector('[data-role="list"]'); list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-more"><button type="button" data-act="more">Load more</button></div>'); list.querySelector('[data-act="more"]').addEventListener('click', () => loadMore(v)); }
             const st = v.root.querySelector('[data-role="status"]');
             if (st) st.textContent = v.total != null ? `${v.items.length} of ${v.total}${v.tab === 'unread' ? ' unread' : ''}` : '';
@@ -487,7 +856,10 @@
     function applyReadLocally(v, ids, all) {
         const set = new Set((ids || []).map(String));
         for (const n of v.items) if (all || set.has(String(n.id))) n.is_read = 1;
-        v.root.querySelectorAll('.openvibe-notif-item.unread').forEach(el => { if (all || set.has(el.dataset.id)) el.classList.remove('unread'); });
+        v.root.querySelectorAll('.openvibe-notif-item.unread').forEach(el => {
+            const elIds = (el.dataset.ids || el.dataset.id || '').split(',');
+            if (all || elIds.some(x => set.has(x))) { el.classList.remove('unread'); el.querySelector('.unread-dot')?.remove(); el.querySelector('[data-row="read"]')?.remove(); }
+        });
     }
 
     // ── Mutations ───────────────────────────────────────────
@@ -513,7 +885,12 @@
     async function dismiss(v, id) {
         const n = v.items.find(x => String(x.id) === String(id));
         v.items = v.items.filter(x => String(x.id) !== String(id));
-        v.root.querySelector(`.openvibe-notif-item[data-id="${CSS.escape(String(id))}"]`)?.remove();
+        const row = v.root.querySelector(`.openvibe-notif-item[data-id="${CSS.escape(String(id))}"]`);
+        if (row) {
+            const rest = (row.dataset.ids || '').split(',').filter(x => x && x !== String(id));
+            if (rest.length) { row.dataset.ids = rest.join(','); row.dataset.id = rest[0]; const c = row.querySelector('.title .count'); if (c) { if (rest.length > 1) c.textContent = `×${rest.length}`; else c.remove(); } }
+            else row.remove();
+        }
         if (v.total != null) v.total = Math.max(0, v.total - 1);
         if (!v.items.length) renderItems(v);
         try {
@@ -537,7 +914,9 @@
                 // Something new arrived: fetch what's newer than the last thing we saw.
                 const params = new URLSearchParams({ unread_only: '1', limit: '5', since: _lastSeenAt });
                 const nd = await apiJson(`/api/notifications?${params}`);
-                const fresh = (nd.notifications || []).slice().reverse();
+                // Only what is unread and newer than the last thing seen, whatever the server answered.
+                const since = _lastSeenAt;
+                const fresh = (nd.notifications || []).filter(n => n && !n.is_read && (!since || String(n.created_at || '') > since)).slice().reverse();
                 for (const n of fresh) { showToast(n); playSound(n.priority); }
                 // Any open list should reflect the new items too.
                 for (const v of _views.values()) if (v.mode === 'inbox' || (_panelEl && _panelEl.classList.contains('open'))) reload(v);
@@ -610,6 +989,7 @@
     function createPanel() {
         const panel = document.createElement('div');
         panel.className = 'openvibe-notif-panel';
+        panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Notifications');
         document.body.appendChild(panel);
         buildView(panel, { mode: 'panel' });
         document.addEventListener('click', (e) => {
@@ -619,7 +999,7 @@
         _panelEl = panel;
         return panel;
     }
-    function closePanel() { _panelEl?.classList.remove('open'); _bellEl?.classList.remove('open'); }
+    function closePanel() { _panelEl?.classList.remove('open'); _bellEl?.classList.remove('open'); syncLayer(); }
     function togglePanel() {
         if (!_panelEl) createPanel();
         const opening = !_panelEl.classList.contains('open');
@@ -633,6 +1013,8 @@
         }
         _panelEl.classList.toggle('open', opening);
         _bellEl?.classList.toggle('open', opening);
+        _bellEl?.setAttribute('aria-expanded', String(opening));
+        syncLayer();
         if (opening) { reload(_views.get(_panelEl)); refreshPushButton(_views.get(_panelEl)); pollUnread(); }
     }
 
@@ -685,8 +1067,8 @@
         if (!st.supported) { btn.style.display = 'none'; return; }
         btn.style.display = '';
         btn.classList.toggle('on', st.subscribed);
-        btn.innerHTML = st.subscribed ? `${SVG.bellOn}<span>Push on</span>` : `${SVG.bellOff}<span>Enable push</span>`;
-        btn.title = st.subscribed ? 'Push alerts are on for this device — click to turn off' : (st.permission === 'denied' ? 'Notifications are blocked in your browser settings' : 'Get desktop / mobile alerts on this device even when the tab is closed');
+        btn.innerHTML = st.subscribed ? `${svg(ICON.bellOn)}<span>Push on</span>` : `${svg(ICON.bellOff)}<span>Enable push</span>`;
+        btn.title = st.subscribed ? 'Push alerts are on for this device: select to turn off' : (st.permission === 'denied' ? 'Notifications are blocked in your browser settings' : 'Get alerts on this device even when the site is closed');
         btn.disabled = st.permission === 'denied' && !st.subscribed;
     }
     async function togglePush(v) {
@@ -694,8 +1076,8 @@
         const say = (msg, ms = 4000) => { if (!note) return; note.textContent = msg; note.style.display = ''; clearTimeout(note._t); note._t = setTimeout(() => { note.style.display = 'none'; }, ms); };
         try {
             const st = await pushStatus();
-            if (st.subscribed) { await disablePush(); say('Push alerts turned off for this device.'); }
-            else { await enablePush(); say('Push alerts enabled — you\'ll get alerts here even when this site is closed.'); }
+            if (st.subscribed) { await disablePush(); say('Push alerts are off for this device.'); }
+            else { await enablePush(); say('Push alerts are on: you\'ll get them here even when this site is closed.'); }
         } catch (e) { say(e.message || 'Could not change push setting', 6000); }
         for (const view of _views.values()) refreshPushButton(view);
     }
@@ -716,7 +1098,7 @@
             stopPolling();
             stopRealtime();
             _toastContainer?.remove(); _panelEl?.remove();
-            _toastContainer = null; if (_panelEl) _views.delete(_panelEl); _panelEl = null;
+            _toastContainer = null; if (_panelEl) _views.delete(_panelEl); _panelEl = null; _queue.length = 0;
         },
         /** Create and inject the bell icon. Returns the DOM element. */
         createBell(container) {
@@ -732,7 +1114,7 @@
             if (!container) return null;
             container.classList.add('openvibe-notif-inbox');
             const v = buildView(container, { mode: 'inbox' });
-            if (opts.tab) { v.tab = opts.tab; container.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === opts.tab)); }
+            if (opts.tab) { v.tab = opts.tab; container.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === opts.tab); b.setAttribute('aria-selected', String(b.dataset.tab === opts.tab)); }); }
             reload(v);
             return v;
         },
@@ -754,6 +1136,8 @@
         },
         /** The realtime feed's state ({ state: 'off' | 'ticket' | 'connecting' | 'open' | 'backoff' | 'hidden' | 'blocked' | 'failed' | 'signed-out' | 'unavailable', … }), or null when off. */
         realtimeState() { return _live ? _live.state() : null; },
+        /** How a notification reads (title, message, chips, tone, glyph, group key): the same for toasts and the list. */
+        present,
         togglePanel, closePanel,
         enablePush, disablePush, pushStatus,
         get unreadCount() { return _unreadCount; },

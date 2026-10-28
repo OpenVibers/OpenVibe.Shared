@@ -6,6 +6,37 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.27.0 — 2026-10-28
+
+- **Notifications 2.0** (`notification-ui.js`). The owner's screenshot on 10-28: three red "Alert:
+  OpenVibeBrowserCheckFailed" toasts drawn over the open menu, translucent and overlapping, a siren emoji, raw
+  "run: sudo ovhost …" text, a badge of 67.
+  - **Toasts:**
+    - an opaque, themed card with a line glyph for the kind of notice (never an emoji), or the sender's avatar with
+      the glyph as a badge;
+    - a one-line title, up to two lines of text, chips, up to two actions and a timeout bar;
+    - phones show one at a time under the bar, with "+N more" inside the card and swipe to dismiss;
+    - desktops show up to three at the bottom right.
+  - **Layering:**
+    - a toast **never draws over an open menu, sheet, panel or dialog**: it waits, timers paused, and shows when the
+      layer closes;
+    - open layers are read from the page itself (the menu's `is-open`, any bar toggle's `aria-expanded`, a drawn
+      `aria-modal`, `dialog[open]`), so a lazily loaded bell still sees a menu opened before it loaded.
+  - **Grouping and priority:**
+    - the same notice within 15 minutes joins the card that is showing ("Browser check failed ×3" with the sites as
+      chips);
+    - one notification id is one card, however often a poll or a push brings it;
+    - critical first: a full stack lets a lower-priority card go, never a higher one.
+  - **Operator alerts** read as System cards: "Browser check failed · Release 80b7955 · 1 failing check", the
+    severity, the sites, "Open status", and the fix command behind **Copy fix command** in the bell, never in the
+    body.
+  - **The bell:**
+    - day headers, category chips, unread dots and grouped repeats, plus search;
+    - the row's read and dismiss buttons sit on its time line, never over its text, and are always shown on touch
+      screens;
+    - polling toasts only what is unread and newer than the last thing seen.
+- **Budget:** `notification-ui.js` 13 → 20 KB brotli. It loads only after sign-in, when the bell mounts.
+
 ## 4.26.1 — 2026-10-28
 
 - **No site name twice:**
