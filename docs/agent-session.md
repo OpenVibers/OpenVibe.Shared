@@ -77,6 +77,7 @@ agents… in a smart way… way better than this idea."
 | `{ t: 'tool_result', id, ok, output }` | how it ended |
 | `{ t: 'handoff', from, to?, reason }` | one agent stopped and the next took over |
 | `{ t: 'note', text, level? }` | a warning or an error |
+| `{ t: 'step', text }` | the job's own progress: cloning, the branch, files changed, pushing |
 | `{ t: 'usage', input_tokens, output_tokens }` | |
 | `{ t: 'done', ok, text, duration_ms, cost_usd, turns }` | the end |
 

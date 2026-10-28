@@ -34,6 +34,8 @@ const server = http.createServer((req, res) => {
         const context = await browser.newContext();
         const p = await h.openPage(browser, context, { width: 390 });
         await p.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 5000 });
+        await push(p, { t: 'step', text: 'Cloning https://github.com/o/r' });
+        assert.strictEqual(await p.evaluate(`document.querySelector('.ovas-line').textContent`), 'Cloning https://github.com/o/r', 'the job\'s own progress is a quiet line');
         await push(p, { type: 'system', subtype: 'init', agent: 'claude', model: 'm' });
         await push(p, { type: 'assistant', message: { content: [{ type: 'text', text: 'I <b>will</b> fix it, see https://openvibe.codes/x and javascript:alert(1) and `code`.' }] } });
         await push(p, { type: 'assistant', message: { content: [{ type: 'tool_use', id: 'p', name: 'TodoWrite', input: { todos: [{ content: 'Read', status: 'completed' }, { content: 'Fix', status: 'in_progress', activeForm: 'Fixing' }] } }] } });

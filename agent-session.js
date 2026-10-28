@@ -26,6 +26,7 @@
  *   { t: 'tool_result', id, ok, output }              how it ended, with its output
  *   { t: 'handoff', from, to?, reason }               one agent stopped and the next took over
  *   { t: 'note', text, level? }                       a warning or an error along the way
+ *   { t: 'step', text }                               the job's own progress (cloning, the branch, files changed, pushing)
  *   { t: 'usage', input_tokens, output_tokens }
  *   { t: 'done', ok, text, duration_ms, cost_usd, turns }
  * A line from a sub-agent carries `parent`: the id of the Task step that started it, so it nests under that step.
@@ -292,6 +293,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 .ovas-done { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, #22c55e 40%, transparent); background: color-mix(in srgb, #22c55e 8%, transparent); }
 .ovas-done[data-ok="0"] { border-color: color-mix(in srgb, #ef4444 40%, transparent); background: color-mix(in srgb, #ef4444 8%, transparent); }
 .ovas-done > b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.ovas-line { display: flex; align-items: center; gap: 8px; padding: 0 4px; font-size: 12.5px; color: var(--ovas-mut); }
+.ovas-line::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ovas-mut); opacity: .7; }
 .ovas-empty { padding: 18px; text-align: center; color: var(--ovas-mut); font-size: 13.5px; border: 1px dashed var(--ovas-b); border-radius: 14px; }
 .ovas [hidden] { display: none !important; }
 @keyframes ovas-spin { to { transform: rotate(360deg); } }
@@ -459,6 +462,9 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             if (x.t === 'note') {
                 const li = el('li', 'ovas-note'); li.dataset.k = 'note'; li.dataset.p = '1'; li.dataset.level = x.level === 'warning' ? 'warning' : 'error';
                 li.innerHTML = svg('warn'); li.appendChild(el('span', '', x.text)); appendLi(target, li); S.problems++; paintHead(); return;
+            }
+            if (x.t === 'step') {
+                const li = el('li', 'ovas-line'); li.dataset.k = 'line'; li.appendChild(el('span', '', x.text)); appendLi(feed, li); return;
             }
             if (x.t === 'usage') { S.tokens.in += Number(x.input_tokens) || 0; S.tokens.out += Number(x.output_tokens) || 0; return; }
             if (x.t === 'done') {
