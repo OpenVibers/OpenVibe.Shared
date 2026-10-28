@@ -5,14 +5,18 @@
  * the SDK and API… intelligent and aware").
  *
  * What it knows: the site it is on (its pages come first, its own search page when it has one), what you searched
- * before (on this device), and everything OpenVibe.Search holds across the sites, suggested as you type (the public
- * GET /api/v1/suggest, anonymous, one request in flight, the older one cancelled). Every row is a link: a result, a
+ * before (on this device), and everything OpenVibe.Search holds across the sites, suggested as you type (anonymous,
+ * one request in flight, the older one cancelled). The suggestions come through OpenVibe.Network's
+ * GET /api/frame/suggest (OpenVibe.Search's /api/v1/suggest, kept 30 s): every site's Content-Security-Policy already
+ * lets the navbar reach openvibe.network, and most refuse search.openvibe.network. Every row is a link: a result, a
  * page of this site, "Search all of OpenVibe" and "Ask Vibe". Arrows move, Enter opens, Escape closes. A phone gets
  * the whole screen; a computer a panel near the top.
  *
- *   OpenVibeSearch.open({ service, scope: { owner, label, page }, links, q })   navbar.js calls it
+ *   OpenVibeSearch.open({ service, scope: { owner, label, page }, links, q, suggestUrl })   navbar.js calls it
  *   OpenVibeSearch.close()
- *   OpenVibeSearch.suggest(q, { owner, limit, signal }) → [{ owner, type, id, title, url, site }]   for any page's own box
+ *   OpenVibeSearch.suggest(q, { owner, limit, signal, url }) → [{ owner, type, id, title, url, site }]   for any page's own box
+ *     (url: https://openvibe.network/api/frame/suggest, or https://search.openvibe.network/api/v1/suggest where the
+ *     page's connect-src allows it; both answer any origin)
  *
  * Text is always set with textContent; links are https or same-site paths only. Recent searches live in localStorage
  * (ov_search_recent, eight at most) and can be cleared from the panel.
@@ -20,6 +24,7 @@
 (function (root) {
     'use strict';
     const API = 'https://search.openvibe.network';
+    const SUGGEST = 'https://openvibe.network/api/frame/suggest';
     const RECENT_KEY = 'ov_search_recent';
     const SITE = { 'openre.stream': 'Restream', 'search.openvibe.network': 'Search', 'ai.openvibe.services': 'AI' };
     const TYPE = { vod: 'Recording', clip: 'Clip', job: 'Job', story: 'Story', page: 'Page', thread: 'Thread', paste: 'Paste', post: 'Post', stream: 'Live', channel: 'Channel', deal: 'Deal', coupon: 'Code', review: 'Review', entity: 'Reviews', recipe: 'Recipe', game: 'Game', tool: 'Tool', listing: 'Listing', wiki: 'Wiki' };
@@ -41,8 +46,8 @@
         clear() { try { localStorage.removeItem(RECENT_KEY); } catch { /* */ } },
     };
 
-    async function suggest(q, { owner = null, limit = 8, signal } = {}) {
-        const u = new URL('/api/v1/suggest', API);
+    async function suggest(q, { owner = null, limit = 8, signal, url = SUGGEST } = {}) {
+        const u = new URL(url || SUGGEST);
         u.searchParams.set('q', String(q).slice(0, 100));
         if (owner) u.searchParams.set('owner', owner);
         u.searchParams.set('limit', String(limit));
@@ -217,7 +222,7 @@
         const ac = new AbortController();
         inflight = ac;
         el.classList.add('ovs-busy');
-        suggest(q, { limit: 10, signal: ac.signal }).then((found) => {
+        suggest(q, { limit: 10, signal: ac.signal, url: ctx.suggestUrl }).then((found) => {
             if (ac.signal.aborted) return;
             const owner = ctx.scope && ctx.scope.owner;
             const row = (s) => ({ title: s.title, meta: [s.site, TYPE[s.type] || s.type].filter(Boolean).join(' · '), url: s.url, icon: (s.site || '?').slice(0, 2), kind: 'result' });

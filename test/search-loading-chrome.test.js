@@ -22,11 +22,13 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 <body><div id="navbar-mount"></div><main><div id="player" style="position:relative;width:360px;height:202px"></div><div id="list"></div></main>
 <script src="/navbar.js"></script><script src="/loading.js"></script>
 <script>
-  // search.js asks the real Search; this page answers instead (same shape), slowly for "slow".
+  // search.js asks Search through Network's /api/frame/suggest (every site's connect-src allows openvibe.network); this
+  // page answers instead (same shape), slowly for "slow". Asking search.openvibe.network itself is a failure here.
   window.__realFetch = window.fetch;
   window.fetch = async (u, init) => {
     const url = new URL(String(u), location.href);
-    if (url.hostname === 'search.openvibe.network') return window.__realFetch('/suggest' + url.search, init);
+    if (url.hostname === 'openvibe.network' && url.pathname === '/api/frame/suggest') return window.__realFetch('/suggest' + url.search, init);
+    if (url.hostname === 'search.openvibe.network') throw new TypeError('refused by connect-src');
     return window.__realFetch(u, init);
   };
   OpenVibeNavbar.init({ service: 'chat', user: null, links: [{ label: 'Rooms', href: '/rooms', icon: 'fa-people-group' }, { label: 'Servers', href: '/servers', icon: 'fa-server' }],

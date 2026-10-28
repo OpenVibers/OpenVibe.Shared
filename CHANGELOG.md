@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.22.1 — 2026-10-28
+
+- **Search suggestions reach every site.** `search.js` asked `search.openvibe.network` from the page, and the
+  `connect-src` of 33 sites refused it (Live among them): the magnifier opened but suggested nothing. Suggestions now
+  come through OpenVibe.Network's `GET /api/frame/suggest`. That route asks Search, keeps answers 30 s and keeps
+  Search's limit per person; every site already allows `openvibe.network` for the navbar.
+  `OpenVibeSearch.suggest(q, { url })` takes either address.
+
 ## 4.22.0 — 2026-10-28
 
 - **A tidier navbar** (the owner, 2026-10-28: "reanalyze all the nav bars across all the sites… redundant feeling
