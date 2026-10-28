@@ -7,7 +7,9 @@
  * unavailable"): "OpenVibe.Codes should… actually show the output from the agent… more user friendly… handle that
  * between all agents… in a smart way… way better than this idea."
  *
- *   const view = OpenVibeAgentSession.mount(el, { title, status: 'running', startedAt })
+ *   const view = OpenVibeAgentSession.mount(el, { title, status: 'running', startedAt, link })
+ *                             link(url) → boolean: which https addresses in the agents' text become links (default:
+ *                             all; a site whose agents read untrusted pages links only its own, e.g. a person's desk)
  *   view.push(event)          one event: a Codes job line ({ t: 'tool', … }), any Claude Code stream-json event
  *                             ({ type: 'assistant', … }) or an OpenVibe.Actor task event ({ kind: 'output', step, … },
  *                             actor.task-event@1); every OpenVibe.Codes harness adapter (Claude Code, Codex, OpenCode,
@@ -141,8 +143,9 @@
     }
     const base = (p) => String(p || '').split('/').filter(Boolean).pop() || String(p || '');
 
-    /** Light Markdown, text-safe: paragraphs, bullet and numbered lists, `code`, ```blocks```, **bold**, https links. */
-    function markdown(text) {
+    /** Light Markdown, text-safe: paragraphs, bullet and numbered lists, `code`, ```blocks```, **bold**, https links (only
+     *  those `linkOk(url)` allows; the others stay text). */
+    function markdown(text, linkOk) {
         const frag = document.createDocumentFragment();
         const inline = (s, into) => {
             const re = /(`[^`]+`|\*\*[^*]+\*\*|https:\/\/[^\s<>()]+[^\s<>().,;:!?'"])/g;
@@ -152,6 +155,7 @@
                 const tok = m[0];
                 if (tok[0] === '`') into.appendChild(el('code', '', tok.slice(1, -1)));
                 else if (tok.startsWith('**')) into.appendChild(el('strong', '', tok.slice(2, -2)));
+                else if (linkOk && !linkOk(tok)) into.appendChild(document.createTextNode(tok));
                 else { const a = el('a', '', tok); a.href = tok; a.target = '_blank'; a.rel = 'noopener noreferrer'; into.appendChild(a); }
                 at = m.index + tok.length;
             }
@@ -333,6 +337,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
     // ── The view ──────────────────────────────────────────────
     function mount(host, opts = {}) {
         styles();
+        const linkOk = typeof opts.link === 'function' ? (u) => { try { return !!opts.link(u); } catch { return false; } } : null;
         const S = { status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
         host.textContent = '';
         const box = el('div', 'ovas');
@@ -381,7 +386,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
             const section = (label, node, copy) => { const l = el('div', 'ovas-label'); l.appendChild(el('span', '', label)); if (copy) { const c = el('button', 'ovas-copy'); c.type = 'button'; c.innerHTML = `${svg('copy')}<span>Copy</span>`; l.appendChild(c); } detail.append(l, node); };
             if (step.kind === 'command' && info.command) { const pre = el('pre', 'ovas-code'); pre.textContent = info.command; section('Command', pre, true); }
             if (info.diff) { const pre = el('pre', 'ovas-diff'); info.diff.slice(0, 600).forEach(([op, line]) => { const s = el('span', op === '+' ? 'a' : op === '-' ? 'r' : op === '@' ? 'h' : '', `${op === '=' ? ' ' : op === '@' ? '' : op} ${line}`); pre.appendChild(s); }); section(step.kind === 'write' ? 'New file' : 'Change', pre, false); }
-            if (step.kind === 'agent' && info.preview) { const p = el('div', 'ovas-msg'); p.appendChild(markdown(info.preview.slice(0, 1600))); section('Asked to', p, false); }
+            if (step.kind === 'agent' && info.preview) { const p = el('div', 'ovas-msg'); p.appendChild(markdown(info.preview.slice(0, 1600), linkOk)); section('Asked to', p, false); }
             if (step.kind === 'agent') { const sub = el('div', 'ovas-sub'); step.subEl = sub; d.appendChild(sub); d.open = true; }
             if (step.kind !== 'agent' && step.kind !== 'plan') {
                 const pre = el('pre', 'ovas-out'); pre.hidden = true; step.outEl = pre;
@@ -449,7 +454,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
                 paintHead(); return;
             }
             if (x.t === 'text') {
-                const li = el('li', 'ovas-msg'); li.dataset.k = 'msg'; li.appendChild(markdown(x.text)); appendLi(target, li); return;
+                const li = el('li', 'ovas-msg'); li.dataset.k = 'msg'; li.appendChild(markdown(x.text, linkOk)); appendLi(target, li); return;
             }
             if (x.t === 'tool') {
                 const kind = kindOf(x.name);
@@ -504,7 +509,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
                 const li = el('li', 'ovas-done'); li.dataset.k = 'done'; li.dataset.ok = x.ok ? '1' : '0';
                 const b = el('b'); b.innerHTML = svg(x.ok ? 'ok' : 'fail'); b.appendChild(document.createTextNode(`${agentName((S.agents[S.agents.length - 1] || {}).agent)} ${x.ok ? 'finished' : 'stopped'}${x.duration_ms ? ` in ${dur(x.duration_ms)}` : ''}`));
                 li.appendChild(b);
-                if (x.text) { const m = el('div', 'ovas-msg'); m.appendChild(markdown(x.text)); li.appendChild(m); }
+                if (x.text) { const m = el('div', 'ovas-msg'); m.appendChild(markdown(x.text, linkOk)); li.appendChild(m); }
                 if (!x.ok) li.dataset.p = '1';
                 appendLi(feed, li); paintHead();
             }
