@@ -48,10 +48,15 @@ function dropdown() {
     assert.strictEqual(d.els['#openvibe-wallet'].hidden, false);
     assert.strictEqual(d.els['#openvibe-vibes'].hidden, true, 'no shadow balance');
 
-    // A site with its own header chips (Live) and a signed-out page ask nothing.
+    // A site with its own header chips (Live), a bar that shows the balances already, and a signed-out page ask nothing.
     calls.length = 0;
     configure({ token: 'tok', menu: { headerChips: [] } });
     await loadWallet(dropdown());
+    configure({ token: 'tok', menu: null, wallet: true });
+    await loadWallet(dropdown());
+    configure({ token: 'tok', menu: null, wallet: false, chips: [{ id: 'coins', value: '1' }] });
+    await loadWallet(dropdown());
+    configure({ chips: [] });
     configure({ token: null, menu: null });
     await loadWallet(dropdown());
     assert.strictEqual(calls.length, 0);

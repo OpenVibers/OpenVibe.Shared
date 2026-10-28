@@ -230,7 +230,13 @@ function load(hostname, opts = {}) {
     const dd = created.find(e => e.tag === 'div' && /openvibe-navbar-dropdown-menu/.test(e.innerHTML));
     assert.ok(dd && dd.innerHTML.includes('data-menu-id="mp"') && dd.innerHTML.includes('My pastes'), 'custom dropdown row rendered');
     assert.ok(dd.innerHTML.includes('/my#history'), 'History link present');
-    assert.ok(dd.innerHTML.includes('href="https://openvibe.network/@x"') && dd.innerHTML.includes('My Profile'), 'the public profile (openvibe.network/@username) is one tap from the account menu');
+    assert.ok(dd.innerHTML.includes('href="https://openvibe.network/@x"') && !dd.innerHTML.includes('My Profile'), 'the public profile (openvibe.network/@username) is one tap away: the name and picture, not a row that repeats them');
+    // The account menu, reviewed (the owner, 2026-10-28: "duplicated things … so many icons sizes that aren't consistent"):
+    // no row says what another says, the seasonal switch is on the Themes page, and every icon sits in one box.
+    ['Seasonal themes', 'Linked Services', 'Switch account'].forEach((gone) => assert.ok(!dd.innerHTML.includes(gone), `no "${gone}" row`));
+    assert.ok(dd.innerHTML.includes('Account &amp; settings') && dd.innerHTML.includes(' Themes <b class="ud-val ud-go"'), 'one row for the account, one for the themes');
+    assert.ok(!dd.innerHTML.includes('Across OpenVibe'), 'the other sites are the launcher\'s and the drawer\'s, not the account menu\'s');
+    assert.ok(/\.openvibe-navbar-dropdown-menu \.icon \.ovnav-ic \{ width: 1\.25em !important; height: 1em; \}/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'navbar.js'), 'utf8')), 'every menu icon in one fixed-width box');
     assert.ok(dd.innerHTML.includes('<a class="name ud-me" href="https://openvibe.network/@x"'), 'pressing your name in the menu opens your profile');
     assert.ok(['light', 'dark', 'auto'].every((m) => dd.innerHTML.includes(`data-ov-scheme="${m}"`)) && dd.innerHTML.includes('aria-label="Light or dark"'), 'Light, Dark and Auto are one press away in the account menu');
     assert.ok(dd.innerHTML.includes('<a class="ud-me" href="https://openvibe.network/@x" tabindex="-1" aria-hidden="true"><img'), 'and so does your picture (one stop for keyboards)');

@@ -313,8 +313,8 @@
 
             .openvibe-navbar-dropdown-menu { padding: 6px 8px; }
             .openvibe-navbar-dropdown-menu a, .openvibe-navbar-dropdown-menu button {
-                display: flex; align-items: center; gap: 8px; width: 100%;
-                padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 500;
+                display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;
+                padding: 7px 8px; border-radius: 8px; font-size: 13px; font-weight: 500;
                 background: none; border: none; color: var(--text-primary, #e0e0e0);
                 cursor: pointer; text-align: left; text-decoration: none;
                 transition: background .12s;
@@ -327,7 +327,13 @@
             .openvibe-navbar-dropdown-menu .ud-scheme button[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .openvibe-navbar-dropdown-menu .ud-scheme button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             .openvibe-navbar-dropdown-menu .ud-scheme .icon { width: auto; font-size: 13px; }
-            .openvibe-navbar-dropdown-menu .icon { width: 18px; text-align: center; font-size: 14px; }
+            /* One box for every icon in the menu: a glyph keeps its height and is centred, whatever its width (an id card
+               is wider than a bell), so the rows' icons line up and read as one set. */
+            .openvibe-navbar-dropdown-menu .icon { width: 20px; height: 16px; font-size: 15px; color: var(--text-secondary, #a8b3c4); }
+            .openvibe-navbar-dropdown-menu .icon .ovnav-ic { width: 1.25em !important; height: 1em; }
+            .openvibe-navbar-dropdown-menu a:hover .icon, .openvibe-navbar-dropdown-menu button:hover .icon { color: var(--text-primary, #e0e0e0); }
+            .openvibe-navbar-dropdown-menu .danger .icon { color: inherit; }
+            .openvibe-navbar-dropdown-menu .ud-go { font-size: 16px; font-weight: 700; color: var(--text-muted, #7d8aa0); }
 
             .openvibe-navbar .openvibe-network-badge {
                 font-size: 10px; padding: 2px 8px; border-radius: 4px;
@@ -891,14 +897,6 @@
     }
 
     /** Sites in the user menu: most used first (Frame data), never the one we are on. */
-    function acrossHTML() {
-        const frame = OVFrame.get();
-        const here = currentHost().toLowerCase();
-        const list = (frame && frame.nav.length ? frame.nav.map(n => ({ name: n.name, url: n.url, icon: n.icon || n.id })) : LAUNCHER_SITES)
-            .filter(n => { try { const h = new URL(n.url).hostname; return h !== here && !here.endsWith('.' + h); } catch { return false; } }).slice(0, 5);
-        return list.map(n => `<a href="${escapeAttr(n.url)}"><span class="icon"><span class="ov-icon" data-icon="${escapeAttr(n.icon)}" data-size="20" data-fx="none"></span></span> ${escapeAttr(n.name)}</a>`).join('');
-    }
-
     /** Light / Dark / Auto: the theme's other half, or the device's (theme-loader.js scheme). */
     function bindScheme(scope) {
         const L = root.OpenVibeThemeLoader, box = scope.querySelector('.ud-scheme');
@@ -923,7 +921,9 @@
     /** OpenCoins (Network) and Vibes (OpenVibe.Billing) in the menu header: one request each when the menu first opens. */
     let _walletLoaded = false;
     async function loadWallet(dropdown) {
-        if (_walletLoaded || !_config.token || (_config.menu && _config.menu.headerChips)) return; _walletLoaded = true;
+        // The bar's chips (a site's own, or wallet: true) show the balances already: the menu does not ask twice.
+        const inBar = !!_config.wallet || (Array.isArray(_config.chips) && _config.chips.some(c => c && (c.id === 'coins' || c.id === 'vibes')));
+        if (_walletLoaded || !_config.token || inBar || (_config.menu && _config.menu.headerChips)) return; _walletLoaded = true;
         const auth = { Authorization: `Bearer ${_config.token}` };
         const chip = (id, html) => { const el = dropdown.querySelector(id); if (el) { el.innerHTML = html; el.hidden = false; } };
         const coins = fetch(`${_config.apiBase}/api/coins/me`, { headers: auth, credentials: 'include' }).then(async (r) => {
@@ -1680,6 +1680,9 @@
             const menuCfg = _config.menu || {};
             const before = ((_config.menu && _config.menu.before) || []).concat(_runtimeMenu.before);
             const after = ((_config.menu && _config.menu.after) || []).concat(_runtimeMenu.after);
+            // The bar shows the balances (a site's chips, or wallet: true): the menu does not repeat them.
+            const barWallet = !!_config.wallet || (Array.isArray(_config.chips) && _config.chips.some(c => c && (c.id === 'coins' || c.id === 'vibes')));
+            const admin = u.role === 'admin' || !!(u.capabilities && (u.capabilities.is_owner || u.capabilities.admin_panel));
 
             dropdown.innerHTML = `
                 <div class="openvibe-navbar-dropdown-header">
@@ -1687,7 +1690,7 @@
                     <div class="info">
                         <a class="name ud-me" href="${escapeAttr(meHref)}" title="${isAnon ? 'Your account' : 'Your profile'}">${escapeHtml(u.display_name || u.username)}</a>
                         <div class="email">${isAnon ? '' : '@' + escapeHtml(u.username || '')}</div>
-                        ${menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div><div class="ud-wallet ud-vibes" id="openvibe-vibes" hidden></div>'}
+                        ${barWallet ? '' : menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div><div class="ud-wallet ud-vibes" id="openvibe-vibes" hidden></div>'}
                         ${isAnon ? `<div class="anon-tag">Anonymous #${u.anon_number || '?'}</div>` : ''}
                     </div>
                 </div>
@@ -1710,27 +1713,20 @@
                 <div class="openvibe-navbar-dropdown-menu">
                     ${before.length ? `<div class="ud-label">${escapeAttr((_config.menu && _config.menu.label) || brand.short || 'This site')}</div>${before.map(menuItemHTML).join('')}<div class="sep"></div>` : ''}
                     ${sectionsHTML(menuCfg.sections)}
+                    ${after.length ? `${after.map(menuItemHTML).join('')}<div class="sep"></div>` : ''}
                     ${menuCfg.defaults === false ? '' : `<div class="ud-label">You</div>
-                    <a href="https://openvibe.network/my"><span class="icon">${navIcon('fa-user')}</span> My Account</a>
-                    ${!isAnon && u.username ? `<a href="https://openvibe.network/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-id-card')}</span> My Profile</a>` : ''}
-                    ${!isAnon && u.username ? `<a href="https://openvibe.live/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-tower-broadcast')}</span> My Channel</a>` : ''}
+                    <a href="https://openvibe.network/my"><span class="icon">${navIcon('fa-gear')}</span> Account &amp; settings</a>
                     <a href="https://openvibe.network/my#notifications"><span class="icon">${navIcon('fa-bell')}</span> Notifications</a>
-                    ${!isAnon ? `<a href="https://openvibe.chat/vibe" data-ov-ask><span class="icon">${navIcon('fa-brain')}</span> Ask Vibe</a><a href="https://openvibe.chat/work" data-ov-work><span class="icon">${navIcon('fa-plus')}</span> Work together</a>` : ''}
+                    ${!isAnon && u.username ? `<a href="https://openvibe.live/@${escapeAttr(u.username)}"><span class="icon">${navIcon('fa-tower-broadcast')}</span> My channel</a>` : ''}
+                    <a href="https://openvibe.network/my#history"><span class="icon">${navIcon('fa-clock-rotate-left')}</span> History</a>
+                    ${!isAnon ? `<a href="https://openvibe.chat/vibe" data-ov-ask><span class="icon">${navIcon('fa-brain')}</span> Ask Vibe</a><a href="https://openvibe.chat/work" data-ov-work><span class="icon">${navIcon('fa-people-group')}</span> Work together</a>` : ''}
+                    ${admin ? `<a href="https://openvibe.network/admin"><span class="icon">${navIcon('fa-shield-halved')}</span> Admin</a>` : ''}
                     <div class="sep"></div>`}
                     <div class="ud-label">Display</div>
                     <div class="ud-scheme" role="group" aria-label="Light or dark" hidden><button type="button" data-ov-scheme="light" aria-pressed="false"><span class="icon">${navIcon('fa-sun')}</span> Light</button><button type="button" data-ov-scheme="dark" aria-pressed="false"><span class="icon">${navIcon('fa-moon')}</span> Dark</button><button type="button" data-ov-scheme="auto" aria-pressed="false" title="Follow this device's light or dark setting"><span class="icon">${navIcon('fa-circle-half-stroke')}</span> Auto</button></div>
                     <button type="button" data-ov-display="text"><span class="icon">${navIcon('fa-text-height')}</span> Text size <b class="ud-val"></b></button>
                     <button type="button" data-ov-display="motion"><span class="icon">${navIcon('fa-wand-magic-sparkles')}</span> Animations <b class="ud-val"></b></button>
-                    <button type="button" data-ov-display="seasonal"><span class="icon">${navIcon('fa-palette')}</span> Seasonal themes <b class="ud-val"></b></button>
-                    <a href="https://openvibe.network/themes"><span class="icon">${navIcon('fa-palette')}</span> Themes</a>
-                    <div class="sep"></div>
-                    <div class="ud-label">Across OpenVibe</div>
-                    ${acrossHTML()}
-                    ${menuCfg.defaults === false ? '' : `
-                    <a href="https://openvibe.network/my#history"><span class="icon">${navIcon('fa-clock-rotate-left')}</span> History</a>
-                    <a href="https://openvibe.network/my#linked"><span class="icon">${navIcon('fa-link')}</span> Linked Services</a>
-                    ${u.role === 'admin' ? `<a href="https://openvibe.network/admin"><span class="icon">${navIcon('fa-shield-halved')}</span> Admin Panel</a>` : ''}`}
-                    ${after.length ? '<div class="sep"></div>' : ''}${after.map(menuItemHTML).join('')}
+                    <a href="https://openvibe.network/themes" title="Every theme, and the season's own"><span class="icon">${navIcon('fa-palette')}</span> Themes <b class="ud-val ud-go" aria-hidden="true">›</b></a>
                     <div class="sep"></div>
                     <button id="openvibe-logout-btn" class="danger"><span class="icon">${navIcon('fa-right-from-bracket')}</span> Sign Out</button>
                 </div>
