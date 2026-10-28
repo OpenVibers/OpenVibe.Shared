@@ -1,0 +1,112 @@
+/**
+ * openvibe-shared/kit-web.js — the OpenVibe Kit's behaviour in the page, on its own: what a server-rendered site needs
+ * (kit.js's builders already made its markup on the server). About 5 KB; it runs by itself when it loads and again for
+ * markup added later through OpenVibeKitWeb.enhance(container) (kit.js's OpenVibeKit.enhance() calls it too).
+ *
+ *   copy buttons   [data-ovk-copy="#id"] are shown where the clipboard works and copy the target's text
+ *   menus          details.ovk-more: one open at a time; a click elsewhere or Escape closes them
+ *   the head       html.ovk-scrolled once the page scrolls (the sticky head's shadow)
+ *   the composer   textarea[data-ovk-enter]: Enter sends (Shift+Enter, or a phone's own Enter, is a new line); it grows
+ *   confirms       form[data-ovk-confirm]: asked first (OpenVibeUI.confirm when the page has it)
+ *   sliders        input[type=range][data-ovk-unit] say their value
+ *   sheets         [data-ovk-sheet="#id"] opens dialog.ovk-sheet; the backdrop, Close and Escape close it
+ *   tabs           a sideways-scrolling tab strip keeps the open tab in view
+ *
+ * Idempotent and safe on a page that uses none of it. docs/kit.md describes the pieces.
+ */
+(function (root) {
+    'use strict';
+    const CHECK = '<svg class="ovk-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+
+    function enhance(rootEl) {
+        if (typeof document === 'undefined') return;
+        const scope = rootEl || document;
+        const all = (sel) => Array.prototype.slice.call(scope.querySelectorAll ? scope.querySelectorAll(sel) : []);
+        const once = (el, key) => { if (el.dataset[key]) return false; el.dataset[key] = '1'; return true; };
+        // Copy buttons: shown only where the clipboard works; the icon turns into a check for a moment.
+        all('[data-ovk-copy]').forEach((b) => {
+            if (!once(b, 'ovkCopy') || !navigator.clipboard) return;
+            b.hidden = false;
+            b.addEventListener('click', () => {
+                const t = document.querySelector(b.getAttribute('data-ovk-copy'));
+                if (!t) return;
+                navigator.clipboard.writeText(t.value != null && t.tagName !== 'PRE' ? t.value : t.textContent).then(() => {
+                    const was = b.innerHTML; b.innerHTML = CHECK; b.classList.add('is-done');
+                    setTimeout(() => { b.innerHTML = was; b.classList.remove('is-done'); }, 1400);
+                }, () => {});
+            });
+        });
+        // Menus: one open at a time; a click elsewhere or Escape closes them.
+        all('details.ovk-more').forEach((d) => {
+            if (!once(d, 'ovkMore')) return;
+            d.addEventListener('toggle', () => { if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; }); });
+        });
+        if (!document.documentElement.dataset.ovkDoc) {
+            document.documentElement.dataset.ovkDoc = '1';
+            document.addEventListener('click', (e) => {
+                Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { if (!d.contains(e.target)) d.open = false; });
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { d.open = false; const s = d.querySelector('summary'); if (s) s.focus(); });
+            });
+            // The head casts a shadow once the page has scrolled under it.
+            let ticking = false;
+            const mark = () => { ticking = false; document.documentElement.classList.toggle('ovk-scrolled', (window.scrollY || 0) > 4); };
+            window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(mark); } }, { passive: true });
+            mark();
+        }
+        // The composer: Enter sends (Shift+Enter, or a phone's own Enter key, is a new line); the box grows with the text.
+        const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+        all('textarea[data-ovk-enter]').forEach((ta) => {
+            if (!once(ta, 'ovkEnter')) return;
+            const grow = () => { if (CSS && CSS.supports && CSS.supports('field-sizing', 'content')) return; ta.style.height = 'auto'; ta.style.height = `${Math.min(ta.scrollHeight, Math.round(innerHeight * 0.4))}px`; };
+            ta.addEventListener('input', grow);
+            ta.addEventListener('keydown', (e) => {
+                if (e.key !== 'Enter' || e.shiftKey || e.isComposing || coarse) return;
+                e.preventDefault();
+                const f = ta.form; if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); }
+            });
+        });
+        // A form that asks first (delete, leave): the network's confirm dialog when the page has it.
+        all('form[data-ovk-confirm]').forEach((f) => {
+            if (!once(f, 'ovkConfirm')) return;
+            f.addEventListener('submit', (e) => {
+                if (f.dataset.ovkConfirmed) { delete f.dataset.ovkConfirmed; return; }
+                e.preventDefault();
+                const msg = f.getAttribute('data-ovk-confirm');
+                const ask = window.OpenVibeUI && window.OpenVibeUI.confirm ? window.OpenVibeUI.confirm({ title: msg, danger: true }) : Promise.resolve(window.confirm(msg));
+                ask.then((ok) => { if (ok) { f.dataset.ovkConfirmed = '1'; if (f.requestSubmit) f.requestSubmit(e.submitter || undefined); else f.submit(); } });
+            });
+        });
+        // Sliders say their value.
+        all('input[type=range][data-ovk-unit]').forEach((r) => {
+            if (!once(r, 'ovkRange')) return;
+            const u = r.getAttribute('data-ovk-unit');
+            r.addEventListener('input', () => r.setAttribute('aria-valuetext', `${r.value}${u === '%' ? ' percent' : ` ${u}`}`));
+        });
+        // Sheets: a button opens its dialog; the backdrop, Close and Escape close it.
+        all('[data-ovk-sheet]').forEach((b) => {
+            if (!once(b, 'ovkSheet')) return;
+            b.addEventListener('click', () => {
+                const d = document.querySelector(b.getAttribute('data-ovk-sheet'));
+                if (d && d.showModal && !d.open) d.showModal();
+            });
+        });
+        all('dialog.ovk-sheet').forEach((d) => {
+            if (!once(d, 'ovkDialog')) return;
+            d.addEventListener('click', (e) => { if (e.target === d || (e.target.closest && e.target.closest('[data-ovk-close]'))) d.close(); });
+        });
+        // Tabs that scroll sideways keep the open one in view.
+        all('.ovk-tabs [aria-current="page"]').forEach((a) => { if (once(a, 'ovkTab') && a.scrollIntoView) a.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+    }
+
+
+    const api = { enhance };
+    root.OpenVibeKitWeb = api;
+    if (typeof module === 'object' && module.exports) { module.exports = api; return; }
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => enhance(document));
+        else enhance(document);
+    }
+})(typeof globalThis !== 'undefined' ? globalThis : this);

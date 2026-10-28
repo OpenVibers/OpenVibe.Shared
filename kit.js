@@ -10,8 +10,9 @@
  *
  * The same file runs on the server (require('openvibe-shared/kit'): builders return HTML strings, every text escaped,
  * so pages are complete without JavaScript) and in the browser (window.OpenVibeKit: the same builders for pages that
- * draw themselves, plus enhance(), which adds copy buttons, menus that close, Enter to send, sheets and confirms to
- * whatever markup is already there; it runs by itself when the script loads).
+ * draw themselves). The behaviour (copy buttons, menus that close, Enter to send, sheets, confirms) is kit-web.js, a
+ * small file of its own: a server-rendered site loads only that; a page that draws itself loads both and calls
+ * OpenVibeKit.enhance(container) after adding markup.
  *
  *   const kit = require('openvibe-shared/kit');
  *   kit.head({ title: 'Settings', sub: 'Saved to your account', back: { href: '/', label: 'Home' },
@@ -32,14 +33,10 @@
  * trusted markup (usually another builder's output). URLs are kept only when they are http(s) or same-site paths.
  */
 (function (root, factory) {
-    const api = factory();
+    const api = factory(root);
     if (typeof module === 'object' && module.exports) { module.exports = api; return; }
     root.OpenVibeKit = api;
-    if (typeof document !== 'undefined') {
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => api.enhance(document));
-        else api.enhance(document);
-    }
-})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
     'use strict';
 
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -305,89 +302,9 @@
         ? `<button type="button" class="ovk-icon-btn" data-ovk-sheet="#${esc(sid)}" aria-label="${esc(label)}" title="${esc(label)}">${icon(ic)}</button>`
         : `<button type="button" class="ovk-btn ovk-btn--quiet ovk-btn--small" data-ovk-sheet="#${esc(sid)}">${icon(ic)}<span>${esc(label)}</span></button>`);
 
-    // ── In the browser: behaviour for the markup above (idempotent; safe on pages that use none of it) ──
-    function enhance(rootEl) {
-        if (typeof document === 'undefined') return;
-        const scope = rootEl || document;
-        const all = (sel) => Array.prototype.slice.call(scope.querySelectorAll ? scope.querySelectorAll(sel) : []);
-        const once = (el, key) => { if (el.dataset[key]) return false; el.dataset[key] = '1'; return true; };
-        // Copy buttons: shown only where the clipboard works; the icon turns into a check for a moment.
-        all('[data-ovk-copy]').forEach((b) => {
-            if (!once(b, 'ovkCopy') || !navigator.clipboard) return;
-            b.hidden = false;
-            b.addEventListener('click', () => {
-                const t = document.querySelector(b.getAttribute('data-ovk-copy'));
-                if (!t) return;
-                navigator.clipboard.writeText(t.value != null && t.tagName !== 'PRE' ? t.value : t.textContent).then(() => {
-                    const was = b.innerHTML; b.innerHTML = icon('check'); b.classList.add('is-done');
-                    setTimeout(() => { b.innerHTML = was; b.classList.remove('is-done'); }, 1400);
-                }, () => {});
-            });
-        });
-        // Menus: one open at a time; a click elsewhere or Escape closes them.
-        all('details.ovk-more').forEach((d) => {
-            if (!once(d, 'ovkMore')) return;
-            d.addEventListener('toggle', () => { if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; }); });
-        });
-        if (!document.documentElement.dataset.ovkDoc) {
-            document.documentElement.dataset.ovkDoc = '1';
-            document.addEventListener('click', (e) => {
-                Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { if (!d.contains(e.target)) d.open = false; });
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key !== 'Escape') return;
-                Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { d.open = false; const s = d.querySelector('summary'); if (s) s.focus(); });
-            });
-            // The head casts a shadow once the page has scrolled under it.
-            let ticking = false;
-            const mark = () => { ticking = false; document.documentElement.classList.toggle('ovk-scrolled', (window.scrollY || 0) > 4); };
-            window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(mark); } }, { passive: true });
-            mark();
-        }
-        // The composer: Enter sends (Shift+Enter, or a phone's own Enter key, is a new line); the box grows with the text.
-        const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
-        all('textarea[data-ovk-enter]').forEach((ta) => {
-            if (!once(ta, 'ovkEnter')) return;
-            const grow = () => { if (CSS && CSS.supports && CSS.supports('field-sizing', 'content')) return; ta.style.height = 'auto'; ta.style.height = `${Math.min(ta.scrollHeight, Math.round(innerHeight * 0.4))}px`; };
-            ta.addEventListener('input', grow);
-            ta.addEventListener('keydown', (e) => {
-                if (e.key !== 'Enter' || e.shiftKey || e.isComposing || coarse) return;
-                e.preventDefault();
-                const f = ta.form; if (f) { if (f.requestSubmit) f.requestSubmit(); else f.submit(); }
-            });
-        });
-        // A form that asks first (delete, leave): the network's confirm dialog when the page has it.
-        all('form[data-ovk-confirm]').forEach((f) => {
-            if (!once(f, 'ovkConfirm')) return;
-            f.addEventListener('submit', (e) => {
-                if (f.dataset.ovkConfirmed) { delete f.dataset.ovkConfirmed; return; }
-                e.preventDefault();
-                const msg = f.getAttribute('data-ovk-confirm');
-                const ask = window.OpenVibeUI && window.OpenVibeUI.confirm ? window.OpenVibeUI.confirm({ title: msg, danger: true }) : Promise.resolve(window.confirm(msg));
-                ask.then((ok) => { if (ok) { f.dataset.ovkConfirmed = '1'; if (f.requestSubmit) f.requestSubmit(e.submitter || undefined); else f.submit(); } });
-            });
-        });
-        // Sliders say their value.
-        all('input[type=range][data-ovk-unit]').forEach((r) => {
-            if (!once(r, 'ovkRange')) return;
-            const u = r.getAttribute('data-ovk-unit');
-            r.addEventListener('input', () => r.setAttribute('aria-valuetext', `${r.value}${u === '%' ? ' percent' : ` ${u}`}`));
-        });
-        // Sheets: a button opens its dialog; the backdrop, Close and Escape close it.
-        all('[data-ovk-sheet]').forEach((b) => {
-            if (!once(b, 'ovkSheet')) return;
-            b.addEventListener('click', () => {
-                const d = document.querySelector(b.getAttribute('data-ovk-sheet'));
-                if (d && d.showModal && !d.open) d.showModal();
-            });
-        });
-        all('dialog.ovk-sheet').forEach((d) => {
-            if (!once(d, 'ovkDialog')) return;
-            d.addEventListener('click', (e) => { if (e.target === d || (e.target.closest && e.target.closest('[data-ovk-close]'))) d.close(); });
-        });
-        // Tabs that scroll sideways keep the open one in view.
-        all('.ovk-tabs [aria-current="page"]').forEach((a) => { if (once(a, 'ovkTab') && a.scrollIntoView) a.scrollIntoView({ block: 'nearest', inline: 'center' }); });
-    }
+    // ── In the browser: the behaviour lives in kit-web.js (a server-rendered site loads only that); a page that draws
+    // markup with these builders loads both and calls enhance() on what it added. A no-op on the server.
+    const enhance = (rootEl) => (root.OpenVibeKitWeb ? root.OpenVibeKitWeb.enhance(rootEl) : undefined);
 
     return {
         esc, url, icon, ICONS, when, hueOf, mark, button, iconButton, action, badge, dot,

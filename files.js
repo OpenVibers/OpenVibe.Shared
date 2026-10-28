@@ -39,7 +39,8 @@ const BROWSER = Object.freeze([
     'release-update.js',    // plans a new release and applies style/content in place; release-watch loads it on demand
     'web-runtime.js',       // feature loader and route lifecycle (OVWebRuntime), from Live's ov-loader
     'appbar.js',            // the phone app bar; navbar.js loads it only for a site that sets appBar
-    'kit.js',               // the OpenVibe Kit: app pieces (head, tabs, rows, folds, dock…) built in the page, and their behaviour
+    'kit.js',               // the OpenVibe Kit's builders in the page (for pages that draw themselves; with kit-web.js)
+    'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
     'openvibe-sw.js',       // Web Push service worker
 ]);
 
