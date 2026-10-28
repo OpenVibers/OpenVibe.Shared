@@ -226,6 +226,17 @@ OpenVibeNavbar.init({ service: 'food', links: [
 ], appBar: true, search: { owner: 'food', label: 'OpenVibe.Food' } })
 ```
 
+**On a phone** the bar keeps the site's name readable and never stacks one control on another (4.22.1):
+- **The name:** the site's word alone ("Games", not "OpenVibe.Games") up to 480 px. When there is still no room, it
+  ends with an ellipsis and is never drawn under the buttons.
+- **Signed in:**
+  - the balances fold into one pill showing the first balance, up to 440 px (a tap lists them all);
+  - the launcher steps into the menu, whose "All sites" opens it.
+- **Everyone under 375 px:** the launcher steps into the menu.
+- **Spacing:** the right-hand buttons sit closer together under 400 px.
+
+`test/navbar-phone-fit-chrome.test.js` measures the bar from 320 to 430 px, signed in and out.
+
 ## The app bar
 
 ```js

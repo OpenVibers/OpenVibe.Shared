@@ -145,6 +145,17 @@
             }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-burger { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links { display: none; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
+            /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
+               in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis; up to 440px the
+               folded balances show the first one only (a tap lists them all), and a signed-in bar (balances, bell, picture) lets
+               the launcher step into the menu, whose "All sites" opens it (everyone's under 375px). */
+            .openvibe-navbar .openvibe-navbar-brand { flex: 0 1 auto; }
+            .openvibe-navbar .openvibe-navbar-brand a.flame { flex: none; }
+            .openvibe-navbar .openvibe-navbar-brand .name { display: block; min-width: 0; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
+            @media (max-width: 440px) { .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini ~ .ovnav-chip-mini { display: none; } }
+            @media (max-width: 440px) { .openvibe-navbar:has(#openvibe-avatar-btn) .ovnav-launch { display: none; } }
+            @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 2px; } }
+            @media (max-width: 374px) { .openvibe-navbar .ovnav-launch { display: none; } }
             .ovnav-launcher { position: absolute; top: calc(100% + 6px); left: 12px; box-sizing: border-box; width: min(760px, calc(100vw - 24px)); background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); border-radius: 16px; box-shadow: 0 24px 60px rgba(0,0,0,.5); padding: 0 12px 12px; z-index: 1000; opacity: 0; transform: translateY(-6px) scale(.98); transform-origin: top left; pointer-events: none; transition: opacity .16s, transform .2s cubic-bezier(.2,1.2,.3,1); }
             .ovnav-launcher.open { opacity: 1; transform: none; pointer-events: auto; }
             .ovnav-launcher .ovl-top { position: sticky; top: 0; z-index: 1; margin: 0 -12px; padding: 12px 12px 2px; background: inherit; }
@@ -204,7 +215,7 @@
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-tld,
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-dot { display: none; }
             }
-            @media (max-width: 420px) {
+            @media (max-width: 480px) {
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-core,
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-dot { display: none; }
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand .b-tag { display: none; }
