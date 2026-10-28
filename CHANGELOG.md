@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.24.2 — 2026-10-28
+
+- **`agent-session.js` takes `link(url)`**, which decides which https addresses in an agent's text become links; the
+  rest stay text. OpenVibe.Actor's agents browse untrusted pages, so its task page links only the person's own desk, as
+  its server-drawn timeline always did. Without `link`, every https address links, as before.
+
 ## 4.24.1 — 2026-10-28
 
 - **`agent-session.js` reads OpenVibe.Actor's task events** (`actor.task-event@1`), so Actor's agents show in the same

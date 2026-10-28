@@ -59,6 +59,9 @@ agents… in a smart way… way better than this idea."
 
 **Theme:** the colours come from the page's theme tokens, so it reads in light and dark.
 
+**Links:** `mount(el, { link: (url) => … })` decides which https addresses in the agents' text become links; the rest
+stay text. A site whose agents read untrusted pages should link only its own (Actor links only the person's desk).
+
 ## The shapes it reads
 
 **1. Claude Code's stream-json**, the shape every Codes harness adapter emits. See OpenVibe.Codes' `harness/events.js`:
