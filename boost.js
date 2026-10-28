@@ -34,6 +34,8 @@
         const scrolls = Object.create(null);      // history key → y
         const s = { moves: 0, fallbacks: 0, prefetches: 0, last: null };
         let inflight = null, stopped = false, key = 0;
+        // The page whose <main> is shown (path and query) and where it was scrolled before a link to one of its parts.
+        let shown = root.location.pathname + root.location.search, partFromY = null;
         const emit = (type, detail) => document.dispatchEvent(new root.CustomEvent(`${prefix}:boost:${type}`, { bubbles: true, detail }));
         const marker = (doc) => { const m = doc.querySelector('meta[name="ov-boost"]'); return m ? m.getAttribute('content') : null; };
         const externalScripts = (doc) => [...doc.querySelectorAll('script[src]')].map((t) => { try { const u = new URL(t.getAttribute('src'), root.location.href); return u.origin + u.pathname; } catch { return ''; } }).sort().join('\n');
@@ -151,6 +153,8 @@
                 for (const at of [...mainEl.attributes]) if (!imported.hasAttribute(at.name)) mainEl.removeAttribute(at.name);
                 for (const at of [...imported.attributes]) mainEl.setAttribute(at.name, at.value);
                 mainEl.replaceChildren(...imported.childNodes);
+                try { const shownUrl = new URL(page.url, root.location.href); shown = shownUrl.pathname + shownUrl.search; } catch { shown = root.location.pathname + root.location.search; }
+                partFromY = null;
                 const fresh = mainEl;
                 updateHead(doc);
                 runInlineScripts(fresh);
@@ -173,6 +177,7 @@
 
         function onClick(ev) {
             const a = ev.target && ev.target.closest && ev.target.closest('a[href]');
+            if (a && !ev.defaultPrevented && a.hash) { try { const t = new URL(a.href, root.location.href); if (t.origin === root.location.origin && t.pathname + t.search === shown) partFromY = root.scrollY; } catch { /* */ } }
             const u = boostable(a, ev);
             if (!u) return;
             ev.preventDefault();
@@ -181,6 +186,15 @@
         function onIntent(ev) { const a = ev.target && ev.target.closest && ev.target.closest('a[href]'); const u = boostable(a); if (u) prefetch(u); }
         function onPop(ev) {
             const st = ev.state;
+            // A link to a part of this page (#id), and Back or Forward between its parts, fire popstate too (with no state
+            // in Chrome): that is the browser moving within the page it shows, not a page change. Every in-page link used
+            // to reload the page and land at the top (openvibe.quest's "See the quests", 2026-10-28).
+            if (root.location.pathname + root.location.search === shown && (!st || st.ovBoost == null || st.ovBoost === key)) {
+                const part = root.location.hash && document.getElementById(decodeURIComponent(root.location.hash.slice(1)));
+                if (part) part.scrollIntoView();
+                else if (!root.location.hash && partFromY != null) root.scrollTo(0, partFromY);
+                return;
+            }
             if (!st || st.ovBoost == null) { root.location.reload(); return; }
             const y = scrolls[st.ovBoost];
             scrolls[key] = root.scrollY;
