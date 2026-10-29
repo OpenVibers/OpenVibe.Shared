@@ -84,7 +84,8 @@
     "./boost": "./boost.js",
     "./rooms": "./rooms.js",
     "./motion": "./motion.js",
-    "./agent-layer": "./agent-layer.js"
+    "./agent-layer": "./agent-layer.js",
+    "./crawler-contract": "./crawler-contract.js"
   },
   "files": [
     "*.js",

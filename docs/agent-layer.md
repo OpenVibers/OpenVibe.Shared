@@ -138,3 +138,118 @@ exists: verify each in its service before advertising it. Bench's reported MCP e
 
 No browser files or browser allowlist entries are added. `npm run size` measures the
 existing browser assets; this module and parser run only on the server.
+
+## The crawler contract: `/agent-policy.json` and `/crawlers.json`
+
+`openvibe-shared/crawler-contract` is the same idea for crawlers. One rules object is the
+source of **robots.txt**, **`/agent-policy.json`** (what agents may do here) and
+**`/crawlers.json`** (the crawlers this site welcomes or refuses, and why). Mount it beside
+the agent layer:
+
+```js
+const contract = require('openvibe-shared/crawler-contract');
+const seo = require('openvibe-shared/seo');
+const descriptor = require('./agent-descriptor');
+
+// One rules object. robots.txt and the two JSON files are written from it.
+const rules = contract.rules({
+    sitemaps: ['https://example.com/sitemap.xml'],
+    disallow: ['/admin'],
+    block: ['EvilBot'],
+    crawlDelay: 10,
+});
+
+app.get('/robots.txt', (req, res) => res.type('text/plain').send(seo.robotsTxt(rules)));
+contract.mount(app, { descriptor, rules });
+```
+
+`contract.rules(options)` normalises the options `seo.robotsTxt` has always taken
+(`sitemaps`, `allow`, `disallow`, `block`, `allowAI`, `crawlDelay`); normalising again
+changes nothing. **`seo.robotsTxt` is unchanged and still writes exactly the same bytes** —
+it now reads the same rules through the contract, so the three files cannot drift apart.
+Pass the rules object (not a second set of options) to both, or the two will disagree.
+
+`contract.mount(app, { descriptor, rules })` serves two paths, GET and HEAD only, with a
+one-hour public cache; anything else falls through to the site's own routes:
+
+| Path | What it is |
+| --- | --- |
+| `/agent-policy.json` | The site's agent policy: identity, the API and its OpenAPI document, the auth schemes, the rate limit, and what must not be crawled |
+| `/crawlers.json` | The crawlers this site welcomes or refuses, each with the reason, beside robots.txt |
+
+Nothing in either file is hand-kept per site. The policy half is the site's **own agent
+descriptor** — the same object `/.well-known/agent.json` is built from — so the API, the auth
+and the rate limit cannot disagree with the manifest. The crawl half is the rules object
+above, the same one robots.txt is written from.
+
+`/agent-policy.json`:
+
+```json
+{
+  "network": "OpenVibe",
+  "site": "example.com",
+  "id": "example",
+  "name": "Example",
+  "purpose": "Public examples",
+  "home": "https://example.com/",
+  "api": "https://example.com/api",
+  "openapi": "https://example.com/openapi.json",
+  "docs": "https://example.com/docs",
+  "mcp": { "transport": "streamable-http", "url": "https://example.com/mcp" },
+  "policy": {
+    "robots": "https://openvibe.network/bot.json",
+    "auth": ["none", "Network OIDC", "bearer"],
+    "rateLimit": "60 requests/minute",
+    "crawl": {
+      "allow": ["/"],
+      "disallow": ["/admin"],
+      "block": ["EvilBot"],
+      "crawlDelay": 10,
+      "aiAllowed": true,
+      "contentSignal": { "search": true, "aiInput": true, "aiTrain": true }
+    }
+  },
+  "links": {
+    "manifest": "https://example.com/.well-known/agent.json",
+    "policy": "https://example.com/agent-policy.json",
+    "crawlers": "https://example.com/crawlers.json",
+    "robots": "https://example.com/robots.txt"
+  }
+}
+```
+
+`/crawlers.json`:
+
+```json
+{
+  "site": "example.com",
+  "home": "https://example.com/",
+  "robots": "/robots.txt",
+  "policy": "/agent-policy.json",
+  "rules": { "allow": ["/"], "disallow": ["/admin"], "block": ["EvilBot"], "crawlDelay": 10 },
+  "contentSignal": { "search": true, "aiInput": true, "aiTrain": true },
+  "default": { "userAgent": "*", "welcome": true, "reason": "The default group: anything not disallowed here may be crawled." },
+  "crawlers": [
+    { "name": "Googlebot", "kind": "search", "purpose": "Search indexing", "welcome": true, "reason": "Named and welcomed by robots.txt; it comes for Search indexing." },
+    { "name": "GPTBot", "kind": "ai", "purpose": "AI training", "welcome": true, "reason": "Named and welcomed by robots.txt; it comes for AI training." },
+    { "name": "EvilBot", "kind": "blocked", "purpose": null, "welcome": false, "reason": "Refused by this site: robots.txt disallows it entirely." }
+  ]
+}
+```
+
+The crawler names are the ones robots.txt greets, in the same order, from one table
+(`contract.CRAWLERS`): the search and AI crawlers the network welcomes by name, with what
+each one comes for. A crawler in `block` is refused; where a site publishes no AI content
+signal (`allowAI: false`), the named crawlers are still covered by the default group, and
+the file says so instead of claiming an endorsement the site never made.
+
+A site may add the two paths to its robots.txt as comments, the way it already names the
+agent manifest:
+
+```text
+# Agent policy: https://YOUR-HOST/agent-policy.json
+# Crawlers: https://YOUR-HOST/crawlers.json
+```
+
+Comments change no directive and no crawler's behaviour. This module is server-only: no
+browser file, no browser allowlist entry, no version bump.

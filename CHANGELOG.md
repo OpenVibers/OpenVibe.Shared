@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- **The crawler contract, as one shared module.** `openvibe-shared/crawler-contract` serves
+  `/agent-policy.json` (what agents may do here: the API, the auth, the rate limit, what must
+  not be crawled) and `/crawlers.json` (the crawlers this site welcomes or refuses, and why,
+  next to robots.txt). One rules object is the source of all three: `contract.rules(...)`
+  normalises the options `seo.robotsTxt` has always taken, `seo.robotsTxt` writes exactly the
+  same bytes as before, and the two JSON files are derived from the same rules and from the
+  site's own agent descriptor — no second, hand-kept copy. A site mounts it in one line
+  (`contract.mount(app, { descriptor, rules })`); see
+  [the crawler contract guide](docs/agent-layer.md). Server-only: no browser file, no version
+  bump.
+
 ## 4.38.0 — 2026-10-29
 
 - **`showcase.apps`: a launcher.** A set of apps or sites as a phone's home screen shows them: icon tiles three or four

@@ -63,6 +63,10 @@ See "The page shell" below for the rest of the options.
 `openvibe-shared/agent-layer` mounts the agent manifest and public Markdown twins from
 the same server renderer as HTML. See [the three-line mount and service descriptor guide](docs/agent-layer.md).
 
+`openvibe-shared/crawler-contract` serves `/agent-policy.json` and `/crawlers.json` from one
+crawler rules object — the same one robots.txt is written from, and the site's own agent
+descriptor. See [the crawler contract guide](docs/agent-layer.md).
+
 ### Server side: pin a release tarball
 
 ```json

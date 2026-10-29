@@ -16,6 +16,10 @@
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const xml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]));
 
+// The crawler rules live in crawler-contract, which also serves /agent-policy.json and
+// /crawlers.json from the same rules; robots.txt and those two files cannot drift apart.
+const { robotsTxt, AI_AND_SEARCH_BOTS } = require('./crawler-contract');
+
 /** Cut on a word boundary with an ellipsis; never mid-word, never longer than `max`. */
 function clip(text, max) {
     const t = String(text == null ? '' : text).replace(/\s+/g, ' ').trim();
@@ -250,28 +254,7 @@ function sitemapIndexXml(maps = []) {
 }
 
 // Crawlers that build search and AI indexes — welcomed by name so a generic Disallow never hits them.
-const AI_AND_SEARCH_BOTS = ['Googlebot', 'Bingbot', 'DuckDuckBot', 'Applebot', 'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-Web', 'anthropic-ai', 'PerplexityBot', 'CCBot', 'Google-Extended', 'Amazonbot', 'meta-externalagent', 'YouBot', 'Bytespider'];
-
-function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true, block = [], crawlDelay } = {}) {
-    const lines = [];
-    // Content signals (contentsignals.org): with allowAI the network says yes to search, AI answers and training in so many
-    // words (owner, 2026-10-25: "fully AI allowed and indexable"), so no crawler has to guess from silence.
-    if (allowAI) lines.push('# Content signals: you may use this site\'s content for search, AI answers (ai-input) and AI training.', 'Content-Signal: search=yes, ai-input=yes, ai-train=yes', '');
-    lines.push('User-agent: *');
-    for (const a of allow) lines.push(`Allow: ${a}`);
-    for (const d of disallow) lines.push(`Disallow: ${d}`);
-    if (crawlDelay) lines.push(`Crawl-delay: ${crawlDelay}`);
-    if (allowAI) {
-        lines.push('');
-        for (const bot of AI_AND_SEARCH_BOTS) lines.push(`User-agent: ${bot}`);
-        lines.push('Allow: /');
-        for (const d of disallow) lines.push(`Disallow: ${d}`);
-    }
-    for (const b of block) { lines.push('', `User-agent: ${b}`, 'Disallow: /'); }
-    lines.push('');
-    for (const s of sitemaps) lines.push(`Sitemap: ${s}`);
-    return lines.join('\n') + '\n';
-}
+// Their names and their order are crawler-contract's table, the one /crawlers.json describes.
 
 /** /llms.txt (llmstxt.org): a markdown map of the site for language-model crawlers. */
 function llmsTxt({ name, summary, details, sections = [], markdown = false, optional = [] } = {}) {
