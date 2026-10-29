@@ -254,6 +254,17 @@ built under the same rules as the rest of the kit: plain HTML that works without
 tokens, and phone first. `node scripts/kit-gallery.js --shots <dir> --kit2` draws every piece at 320, 390, 768 and 1280
 px wide, light and dark.
 
+Kit 2 is two files of its own, served at `/shared/` like the rest: **`kit-data.css`** (load it after `kit.css`) and
+**`kit-data-web.js`** (the chart readout, scatter labels and drop zones; steps, tables, rankings, meters and receipts need
+no script). A page that draws none of them loads neither, so `kit.css` and `kit-web.js` weigh what they did before
+Kit 2 (split in 4.37.0).
+
+```html
+<link rel="stylesheet" href="${ovServe.url('kit.css')}">
+<link rel="stylesheet" href="${ovServe.url('kit-data.css')}">
+<script src="${ovServe.url('kit-data-web.js')}" defer></script>
+```
+
 | Builder | What it is for | On a phone |
 | --- | --- | --- |
 | `steps({ items, current })` | A flow of a few steps: opt in, verify, choose, live. Done steps link back; later ones never link ahead. | Dots joined by a line, and "Step 2 of 4 · Verify the domain" |
@@ -278,7 +289,7 @@ How the charts are drawn, so they read on a phone: the lines and areas are an SV
 (`preserveAspectRatio="none"`, and the stroke keeps its width with `vector-effect`), while every tick label, legend,
 point and bar is real HTML placed by percent. Text stays its real size from 320 px to 1280 px, points and bars are
 focusable and say their values, ticks fall on round numbers (1, 2 or 5 × 10ⁿ) and on round moments (hours, days, weeks,
-months), and a table with the same numbers sits behind each chart for screen readers. kit-web.js adds the readout on
+months), and a table with the same numbers sits behind each chart for screen readers. kit-data-web.js adds the readout on
 lines and areas (under the pointer, a tap, or ← → Home End) and hides a scatter label that would sit on one already
 shown, best points first. Colours: `--ovk-c1` is the theme's accent, then `--ovk-c2` … `--ovk-c5` (cyan, amber,
 violet, green), with deeper tones in light themes.

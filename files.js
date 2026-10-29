@@ -42,6 +42,7 @@ const BROWSER = Object.freeze([
     'appbar.js',            // the phone app bar; navbar.js loads it only for a site that sets appBar
     'kit.js',               // the OpenVibe Kit's builders in the page (for pages that draw themselves; with kit-web.js)
     'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
+    'kit-data-web.js',      // Kit 2's behaviour: chart readouts, scatter labels, drop zones (4.37.0; with kit-data.css)
     'search.js',            // search everything from the navbar's magnifier, / or Ctrl+K; navbar.js loads it on first use
     'loading.js',           // the one loading look: a poster-backed overlay with status and progress, and skeleton rows
     'agent-session.js',     // a coding agent's session as people read it: steps grouped, live output, diffs, helpers, hand-offs
@@ -58,6 +59,7 @@ const STYLES = Object.freeze([
     'player.css',           // player.js's controls
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
     'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
+    'kit-data.css',         // Kit 2's look: steps, tables, charts, rankings, meters, drop zones, receipts (4.37.0; after kit.css)
     'agent-session.css',    // agent-session.js's look (4.32.0; the script links it from beside itself unless the page does)
 ]);
 const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name));
