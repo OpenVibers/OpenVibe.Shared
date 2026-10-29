@@ -93,4 +93,26 @@ assert.ok(vmap.includes('<url><loc>https://example.test/v/2</loc></url>'), 'an e
 assert.ok(/<loc>https:\/\/example\.test\/v\/3<\/loc><video:video>(?:(?!<video:duration>).)*<\/video:video>/.test(vmap), 'a duration over 8 hours is left out');
 assert.ok(seo.sitemapXml([{ loc: 'https://example.test/', videos: [{ thumbnail_loc: 'https://cdn.test/t.jpg', title: 'T', description: 'D'.repeat(3000), player_loc: 'https://example.test/' }] }]).includes(`${'D'.repeat(2048)}</video:description>`), 'descriptions are clipped to 2,048');
 
+// Rich-result nodes for the content surfaces that already exist: only the properties a page really has are written.
+const ev = seo.jsonLd.event({ name: 'A channel went live', startDate: '2026-10-29T10:00:00.000Z', url: 'https://example.test/#event-live.stream.started', organizer: 'OpenVibe.Live' });
+assert.strictEqual(ev['@type'], 'Event');
+assert.strictEqual(ev.name, 'A channel went live');
+assert.strictEqual(ev.startDate, '2026-10-29T10:00:00.000Z');
+assert.deepStrictEqual(ev.organizer, { '@type': 'Organization', name: 'OpenVibe.Live' });
+assert.ok(!('endDate' in ev) && !('eventStatus' in ev) && !('location' in ev), 'fields the page lacks are left out');
+
+const job = seo.jsonLd.jobPosting({ title: 'Engineer', url: 'https://example.test/jobs/1', description: 'Build things', datePosted: '2026-10-01', hiringOrganization: 'Acme', jobLocationType: 'TELECOMMUTE' });
+assert.deepStrictEqual([job['@type'], job.title, job.datePosted, job.jobLocationType], ['JobPosting', 'Engineer', '2026-10-01', 'TELECOMMUTE']);
+assert.deepStrictEqual(job.hiringOrganization, { '@type': 'Organization', name: 'Acme' });
+assert.ok(!('jobLocation' in job) && !('baseSalary' in job));
+
+const recipe = seo.jsonLd.recipe({ name: 'Beans', recipeIngredient: ['Beans', 'Rice'], recipeInstructions: ['Cook.', { '@type': 'HowToStep', text: 'Eat.' }], image: 'https://example.test/beans.jpg' });
+assert.deepStrictEqual([recipe['@type'], recipe.name, recipe.recipeIngredient, recipe.image], ['Recipe', 'Beans', ['Beans', 'Rice'], 'https://example.test/beans.jpg']);
+assert.deepStrictEqual(recipe.recipeInstructions, [{ '@type': 'HowToStep', text: 'Cook.' }, { '@type': 'HowToStep', text: 'Eat.' }]);
+
+const dataset = seo.jsonLd.dataset({ name: 'Design page arena', description: 'Blind votes', creator: 'OpenVibe.Bench', distribution: { '@type': 'DataDownload', contentUrl: 'https://example.test/d.jsonl' } });
+assert.deepStrictEqual([dataset['@type'], dataset.name, dataset.creator.name], ['Dataset', 'Design page arena', 'OpenVibe.Bench']);
+assert.ok(!('license' in dataset), 'no license claim when the site states none');
+assert.strictEqual(seo.headTags({ title: 'T', canonical: 'https://example.test/', jsonLd: [ev, job, recipe, dataset] }).match(/application\/ld\+json/g).length, 4, 'one script per node');
+
 console.log('seo: all checks passed');

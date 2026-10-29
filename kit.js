@@ -378,10 +378,284 @@
             + `<button type="button" class="ovk-rail-btn ovk-rail-next" aria-label="Scroll on" hidden>${icon('forward')}</button></div></section>`;
     }
 
+    // ── Kit 2 (4.36.0): the pieces data and tool pages need — steps, tables, charts, rankings, a drop zone, a result
+    // with its receipt, a meter, and the page's whole shape in one call. Same rules: plain HTML that works without
+    // JavaScript, escaped text, theme tokens, phone first (docs/kit.md "Kit 2").
+
+    /** A number the way a reader wants it: fmt 'int' | 'compact' | 'money' | 'percent' (0–100) | 'ms' | 'auto'. */
+    function num(v, fmt = 'auto') {
+        const n = Number(v);
+        if (v == null || v === '' || !Number.isFinite(n)) return '–';
+        if (typeof fmt === 'function') return String(fmt(n));
+        if (fmt === 'compact') return fmtCount(Math.round(n));
+        if (fmt === 'int') return Math.round(n).toLocaleString('en-US');
+        if (fmt === 'percent') return `${Math.abs(n) < 10 && n % 1 ? n.toFixed(1) : Math.round(n)}%`;
+        if (fmt === 'ms') return n < 1000 ? `${Math.round(n)} ms` : `${(n / 1000).toFixed(n < 1e4 ? 1 : 0)} s`;
+        if (fmt === 'money') {
+            // Exact enough to compare: cents from ten cents up ($0.10, $12.50), two significant figures below ($0.027, $0.0041).
+            const a = Math.abs(n);
+            const s = a === 0 ? '0.00' : a >= 0.1 ? a.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(Number(a.toPrecision(2)));
+            return `${n < 0 ? '−' : ''}$${s}`;
+        }
+        return n.toLocaleString('en-US', { maximumFractionDigits: Math.abs(n) < 10 ? 2 : Math.abs(n) < 100 ? 1 : 0 });
+    }
+
+    /**
+     * steps({ items: [{ label, href, note }], current: index, label }) — where someone is in a flow of a few steps.
+     * Done steps link back (when they have an href), the current one says aria-current="step", later ones are plain.
+     * A phone shows the dots and "Step 2 of 4 · Verify"; a tablet or computer shows every label.
+     */
+    function steps({ items = [], current = 0, label = 'Steps' } = {}) {
+        const list = (items || []).filter(Boolean);
+        if (!list.length) return '';
+        const at = Math.min(Math.max(0, Number(current) || 0), list.length - 1);
+        const li = list.map((s, i) => {
+            const state = i < at ? 'is-done' : i === at ? 'is-current' : 'is-next';
+            const inner = `<span class="ovk-steps-n" aria-hidden="true">${i < at ? icon('check') : i + 1}</span><span class="ovk-steps-l">${esc(s.label)}${s.note ? `<small>${esc(s.note)}</small>` : ''}</span>`;
+            const sr = i < at ? '<span class="ovk-sr"> (done)</span>' : '';
+            return `<li class="${state}"${i === at ? ' aria-current="step"' : ''}>${i < at && s.href ? `<a href="${esc(url(s.href))}">${inner}${sr}</a>` : `<span class="ovk-steps-item">${inner}${sr}</span>`}</li>`;
+        }).join('');
+        return `<nav class="ovk-steps" aria-label="${esc(label)}" style="--ovk-steps:${list.length}"><p class="ovk-steps-now"><span>Step ${at + 1} of ${list.length}</span> <strong>${esc(list[at].label)}</strong></p><ol>${li}</ol></nav>`;
+    }
+
+    /**
+     * table({ columns: [{ key, label, num, fmt, primary, hide: 'sm', html }], rows: [{…}], caption, label, empty, stack })
+     * A real table on wide screens. Under 600 px each row becomes a card (stack, the default): the primary column is its
+     * title and every other cell says its column's name. A cell is text (escaped), { text, href } (a link), or trusted
+     * markup when its column says html: true. num: right-aligned, tabular figures, formatted with fmt (kit.num).
+     */
+    function table({ columns = [], rows = [], caption = '', label = '', empty: none = '', stack = true, id = null } = {}) {
+        const cols = (columns || []).filter((c) => c && c.key != null);
+        if (!rows || !rows.length) return none ? `<p class="ovk-table-empty">${esc(none)}</p>` : '';
+        const primary = cols.find((c) => c.primary) || cols[0];
+        const cell = (c, v) => {
+            if (c.html) return v == null ? '' : String(v);
+            if (v && typeof v === 'object' && v.href) return `<a href="${esc(url(v.href))}">${esc(v.text != null ? v.text : v.href)}</a>`;
+            if (c.num) return esc(num(v, c.fmt || 'auto'));
+            return esc(v == null ? '' : v);
+        };
+        const cls = (c) => [c.num ? 'is-num' : '', c === primary ? 'is-primary' : '', c.hide === 'sm' ? 'is-hide-sm' : ''].filter(Boolean).join(' ');
+        const head = `<thead><tr>${cols.map((c) => `<th scope="col"${cls(c) ? ` class="${cls(c)}"` : ''}>${esc(c.label)}</th>`).join('')}</tr></thead>`;
+        const body = `<tbody>${rows.map((r) => `<tr>${cols.map((c) => {
+            const tag = c === primary ? 'th scope="row"' : 'td';
+            return `<${tag}${cls(c) ? ` class="${cls(c)}"` : ''} data-label="${esc(c.label)}">${cell(c, r[c.key])}</${tag.split(' ')[0]}>`;
+        }).join('')}</tr>`).join('')}</tbody>`;
+        const named = caption ? '' : ` aria-label="${esc(label || 'Table')}"`;
+        return `<div class="ovk-table-wrap${stack ? ' ovk-table--stack' : ''}" role="region" tabindex="0"${named}${id ? ` id="${esc(id)}"` : ''}><table class="ovk-table">${caption ? `<caption>${esc(caption)}</caption>` : ''}${head}${body}</table></div>`;
+    }
+
+    /** Three to six round ticks between lo and hi (1, 2, 5 × 10ⁿ). */
+    function niceTicks(lo, hi, count = 4) {
+        if (!(hi > lo)) { hi = lo === 0 ? 1 : lo + Math.abs(lo) * 0.1; }
+        const raw = (hi - lo) / count;
+        const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        const f = raw / mag;
+        const step = (f >= 7 ? 10 : f >= 3 ? 5 : f >= 1.5 ? 2 : 1) * mag;
+        const a = Math.floor(lo / step + 1e-9) * step, b = Math.ceil(hi / step - 1e-9) * step;
+        const ticks = [];
+        for (let v = a; v <= b + step / 2; v += step) ticks.push(Number(v.toPrecision(12)));
+        return { lo: a, hi: b, ticks };
+    }
+    const HOUR = 3600000;
+    const toMs = (x) => (x instanceof Date ? x.getTime() : typeof x === 'number' ? x : Date.parse(String(x)));
+    /** Ticks on a time axis at round moments (hours, days, weeks, months), with labels that say only what changes. */
+    function timeTicks(lo, hi) {
+        const span = hi - lo;
+        const steps = [HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 7 * DAY, 14 * DAY];
+        const out = [];
+        const d2 = (n) => String(n).padStart(2, '0');
+        if (span <= 70 * DAY) {
+            const step = steps.find((s) => span / s <= 5) || 14 * DAY;
+            const day = step >= DAY;
+            for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) {
+                const d = new Date(t);
+                out.push([t, day ? `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}` : `${d2(d.getUTCHours())}:00`]);
+            }
+            return out;
+        }
+        const months = span <= 200 * DAY ? 1 : span <= 400 * DAY ? 3 : span <= 800 * DAY ? 6 : 12;
+        const s = new Date(lo);
+        let y = s.getUTCFullYear(), m = Math.ceil((s.getUTCMonth() + (s.getUTCDate() > 1 ? 1 : 0)) / months) * months;
+        for (;;) {
+            while (m >= 12) { m -= 12; y += 1; }
+            const t = Date.UTC(y, m, 1);
+            if (t > hi) break;
+            out.push([t, m === 0 || months === 12 ? `${MONTHS[m]} ${y}` : MONTHS[m]]);
+            m += months;
+        }
+        return out;
+    }
+    const pct = (v) => `${(Math.round(v * 100) / 100)}%`;
+
+    /**
+     * chart({ type: 'line' | 'area' | 'bar' | 'scatter', series, points, x: { time, label, fmt }, y: { label, fmt, zero },
+     *         title, note, height, label })
+     *  - line/area: series: [{ name, points: [[x, y], …] }] (y null = a gap). x.time: x is a time (ms, ISO or Date).
+     *  - bar: series: [{ name, points: [[label or time, value], …] }], one bar per point (counts per day, per kind).
+     *  - scatter: points: [{ x, y, label, href, mark: true }] — every point is focusable and says its values; mark:
+     *    true writes its label beside it. frontier: true draws the line through the points marked best.
+     * The picture is an SVG stretched to the box (strokes keep their width); every word and number is real text at its
+     * real size, so a phone reads it as well as a computer. A table with the same numbers is there for screen readers;
+     * kit-web.js adds the hover and arrow-key readout on lines and areas.
+     */
+    function chart({ type = 'line', series = [], points = [], x: xo = {}, y: yo = {}, title = '', note = '', height = 220, label = '', id = null } = {}) {
+        const kind = ['line', 'area', 'bar', 'scatter'].includes(type) ? type : 'line';
+        const isTime = !!xo.time;
+        const fx = (v) => (isTime ? (() => { const d = new Date(toMs(v)); return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}${xo.hours ? ` ${String(d.getUTCHours()).padStart(2, '0')}:00` : ''}`; })() : xo.fmt ? num(v, xo.fmt) : String(v));
+        const fy = (v) => num(v, yo.fmt || 'auto');
+        const name = title || label || 'Chart';
+        let plot = '', table = '', legend = '', data = null, yl = [];
+
+        if (kind === 'scatter') {
+            const ps = (points || []).filter((p) => p && Number.isFinite(Number(p.x)) && Number.isFinite(Number(p.y)));
+            if (!ps.length) return '';
+            const xs = niceTicks(Math.min(...ps.map((p) => +p.x)) * (xo.zero === false ? 1 : 0), Math.max(...ps.map((p) => +p.x)));
+            const ys = niceTicks(yo.zero === false ? Math.min(...ps.map((p) => +p.y)) : Math.min(0, ...ps.map((p) => +p.y)), Math.max(...ps.map((p) => +p.y)));
+            const X = (v) => ((v - xs.lo) / (xs.hi - xs.lo)) * 100, Y = (v) => ((v - ys.lo) / (ys.hi - ys.lo)) * 100;
+            const best = ps.filter((p) => p.best).sort((a, b) => a.x - b.x);
+            const line = best.length > 1 ? `<svg class="ovk-chart-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="ovk-chart-front" d="M${best.map((p) => `${(X(p.x) * 10).toFixed(1)},${(1000 - Y(p.y) * 10).toFixed(1)}`).join('L')}"/></svg>` : '';
+            const dots = ps.map((p) => {
+                const say = `${p.label ? `${p.label}: ` : ''}${yo.label || 'y'} ${fy(p.y)}, ${xo.label || 'x'} ${fx(p.x)}`;
+                const tag = p.href ? `a href="${esc(url(p.href))}"` : 'span tabindex="0"';
+                const right = X(+p.x) > 70;
+                return `<${tag} class="ovk-chart-dot${p.best ? ' is-best' : ''}${right ? ' is-right' : ''}" style="left:${pct(X(+p.x))};bottom:${pct(Y(+p.y))}" aria-label="${esc(say)}">`
+                    + `${p.mark && p.label ? `<span class="ovk-chart-name" aria-hidden="true">${esc(p.label)}</span>` : ''}<span class="ovk-chart-pop" aria-hidden="true"><b>${esc(p.label || '')}</b>${esc(fy(p.y))} · ${esc(fx(p.x))}</span></${tag.split(' ')[0]}>`;
+            }).join('');
+            yl = ys.ticks.map(fy);
+            plot = axes(xs.ticks.map((t) => [X(t), fx(t)]), ys.ticks.map((t) => [Y(t), fy(t)])) + line + dots;
+            table = `<thead><tr><th scope="col">${esc(xo.label ? 'Name' : '')}</th><th scope="col">${esc(xo.label || 'x')}</th><th scope="col">${esc(yo.label || 'y')}</th></tr></thead><tbody>${ps.map((p) => `<tr><th scope="row">${esc(p.label || '')}</th><td>${esc(fx(p.x))}</td><td>${esc(fy(p.y))}</td></tr>`).join('')}</tbody>`;
+        } else {
+            const ss = (series || []).filter((s) => s && Array.isArray(s.points) && s.points.length);
+            if (!ss.length) return '';
+            if (kind === 'bar') {
+                const s = ss[0];
+                const val = (p) => (p[1] == null || p[1] === '' ? NaN : Number(p[1]));   // missing is not 0
+                const vals = s.points.map(val).filter(Number.isFinite);
+                const ys = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals));
+                const Y = (v) => ((v - ys.lo) / (ys.hi - ys.lo)) * 100;
+                const every = Math.max(1, Math.ceil(s.points.length / 6));
+                const bars = s.points.map((p, i) => {
+                    const v = val(p);
+                    const lab = isTime ? fx(p[0]) : String(p[0]);
+                    return `<span class="ovk-chart-bar${Number.isFinite(v) ? '' : ' is-none'}" tabindex="0" style="--h:${pct(Number.isFinite(v) ? Y(v) - Y(Math.max(0, ys.lo)) : 0)}" aria-label="${esc(`${lab}: ${fy(v)}`)}"><span class="ovk-chart-pop" aria-hidden="true"><b>${esc(lab)}</b>${esc(fy(v))}</span>${i % every === 0 ? `<span class="ovk-chart-blab" aria-hidden="true">${esc(lab)}</span>` : ''}</span>`;
+                }).join('');
+                yl = ys.ticks.map(fy);
+                plot = axes([], ys.ticks.map((t) => [Y(t), fy(t)])) + `<div class="ovk-chart-bars" style="--n:${s.points.length}">${bars}</div>`;
+                table = `<thead><tr><th scope="col">${esc(xo.label || '')}</th><th scope="col">${esc(s.name || yo.label || '')}</th></tr></thead><tbody>${s.points.map((p) => `<tr><th scope="row">${esc(isTime ? fx(p[0]) : p[0])}</th><td>${esc(fy(p[1]))}</td></tr>`).join('')}</tbody>`;
+            } else {
+                const all = ss.flatMap((s) => s.points);
+                const xv = all.map((p) => (isTime ? toMs(p[0]) : Number(p[0]))).filter(Number.isFinite);
+                const yNum = all.map((p) => (p[1] == null ? NaN : Number(p[1]))).filter(Number.isFinite);
+                if (!xv.length || !yNum.length) return '';
+                const x0 = Math.min(...xv), x1 = Math.max(...xv);
+                const ys = niceTicks(yo.zero === false ? Math.min(...yNum) : Math.min(0, ...yNum), Math.max(...yNum));
+                const X = (v) => (x1 > x0 ? ((v - x0) / (x1 - x0)) * 100 : 50), Y = (v) => ((v - ys.lo) / (ys.hi - ys.lo)) * 100;
+                const xt = isTime ? timeTicks(x0, x1).map(([t, l]) => [X(t), l]) : niceTicks(x0, x1).ticks.filter((t) => t >= x0 && t <= x1).map((t) => [X(t), fx(t)]);
+                const paths = ss.map((s, i) => {
+                    const pts = s.points.map((p) => [X(isTime ? toMs(p[0]) : Number(p[0])), p[1] == null ? null : Y(Number(p[1]))]);
+                    let d = '', open = false;
+                    for (const [px, py] of pts) { if (py == null || !Number.isFinite(py)) { open = false; continue; } d += `${open ? 'L' : 'M'}${(px * 10).toFixed(1)},${(1000 - py * 10).toFixed(1)}`; open = true; }
+                    const firstX = pts.find((p) => p[1] != null), lastX = [...pts].reverse().find((p) => p[1] != null);
+                    const area = kind === 'area' && firstX && lastX && !pts.some((p) => p[1] == null) ? `<path class="ovk-chart-area" d="${d}L${(lastX[0] * 10).toFixed(1)},${(1000 - Y(Math.max(ys.lo, 0)) * 10).toFixed(1)}L${(firstX[0] * 10).toFixed(1)},${(1000 - Y(Math.max(ys.lo, 0)) * 10).toFixed(1)}Z"/>` : '';
+                    return `<g class="ovk-chart-s${(i % 5) + 1}">${area}<path class="ovk-chart-line" d="${d}"/></g>`;
+                }).join('');
+                yl = ys.ticks.map(fy);
+                plot = axes(xt, ys.ticks.map((t) => [Y(t), fy(t)])) + `<svg class="ovk-chart-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false">${paths}</svg>`;
+                // The readout's data (kit-web.js): x positions and labels, and per series its y positions and values.
+                const xsAll = [...new Set(ss[0].points.map((p) => (isTime ? toMs(p[0]) : Number(p[0]))))];
+                data = { x: xsAll.map((v) => [Math.round(X(v) * 100) / 100, fx(v)]),
+                    s: ss.map((s, i) => ({ n: s.name || '', c: (i % 5) + 1, v: xsAll.map((xv0) => { const p = s.points.find((q) => (isTime ? toMs(q[0]) : Number(q[0])) === xv0); return p && p[1] != null ? [Math.round(Y(Number(p[1])) * 100) / 100, fy(p[1])] : null; }) })) };
+                const last = (s) => [...s.points].reverse().find((p) => p[1] != null);
+                legend = `<ul class="ovk-chart-legend">${ss.map((s, i) => `<li class="ovk-chart-s${(i % 5) + 1}"><i aria-hidden="true"></i>${esc(s.name || '')}${last(s) ? ` <b>${esc(fy(last(s)[1]))}</b>` : ''}</li>`).join('')}</ul>`;
+                table = `<thead><tr><th scope="col">${esc(xo.label || '')}</th>${ss.map((s) => `<th scope="col">${esc(s.name || '')}</th>`).join('')}</tr></thead><tbody>${xsAll.map((xv0) => `<tr><th scope="row">${esc(fx(xv0))}</th>${ss.map((s) => { const p = s.points.find((q) => (isTime ? toMs(q[0]) : Number(q[0])) === xv0); return `<td>${esc(p ? fy(p[1]) : '–')}</td>`; }).join('')}</tr>`).join('')}</tbody>`;
+            }
+        }
+        // The left gutter fits the longest y label (about 7 px a character at the axis's size).
+        const gutter = Math.min(72, 14 + 7 * Math.max(2, ...yl.map((t) => String(t).length)));
+        const cap = title || note ? `<figcaption>${title ? `<strong>${esc(title)}</strong>` : ''}${note ? `<span>${esc(note)}</span>` : ''}</figcaption>` : '';
+        const axisNames = yo.label ? `<span class="ovk-chart-yname" aria-hidden="true">${esc(yo.label)}</span>` : '';
+        return `<figure class="ovk-chart ovk-chart--${kind}"${id ? ` id="${esc(id)}"` : ''} style="--ovk-chart-h:${Math.max(120, Math.min(600, Number(height) || 220))}px;--ovk-chart-g:${gutter}px">${cap}${legend}${axisNames}`
+            + `<div class="ovk-chart-plot"${data ? ` tabindex="0" role="img" aria-label="${esc(name)}" data-ovk-chart="${esc(JSON.stringify(data))}"` : ` role="group" aria-label="${esc(name)}"`}>${plot}${data ? '<span class="ovk-chart-rule" hidden></span><span class="ovk-chart-tip" hidden></span>' : ''}</div>`
+            + `${xo.label ? `<p class="ovk-chart-xname" aria-hidden="true">${esc(xo.label)}</p>` : ''}<table class="ovk-sr"><caption>${esc(name)}</caption>${table}</table></figure>`;
+    }
+    /** The grid and the tick labels: x [[pos%, text]], y [[pos%, text]] — real text, placed by percent. */
+    function axes(xt, yt) {
+        return yt.map(([p, t]) => `<span class="ovk-chart-grid" style="bottom:${pct(p)}" aria-hidden="true"></span><span class="ovk-chart-yt" style="bottom:${pct(p)}" aria-hidden="true">${esc(t)}</span>`).join('')
+            + xt.map(([p, t]) => `<span class="ovk-chart-xt" style="left:${pct(p)}" aria-hidden="true">${esc(t)}</span>`).join('');
+    }
+
+    /**
+     * rank({ items: [{ name, href, mark, value, fmt, interval, delta, note, badge }], fmt, base, label, start })
+     * A leaderboard: the place, the name, the value (± its interval), the change since last time, and a bar in
+     * proportion (from `base`, 0 by default — give the floor for a rating that never nears 0, e.g. an Elo).
+     */
+    function rank({ items = [], fmt = 'auto', base = 0, label = 'Ranking', start = 1, unit = '' } = {}) {
+        const list = (items || []).filter((x) => x && x.name != null);
+        if (!list.length) return '';
+        const top = Math.max(...list.map((x) => Number(x.value)).filter(Number.isFinite), base + 1e-9);
+        return `<ol class="ovk-rank" aria-label="${esc(label)}" start="${Number(start) || 1}">${list.map((x, i) => {
+            const v = Number(x.value);
+            const share = Number.isFinite(v) ? Math.max(0, Math.min(1, (v - base) / (top - base))) : 0;
+            const d = Number(x.delta);
+            const delta = Number.isFinite(d) && d !== 0 ? `<span class="ovk-rank-delta ${d > 0 ? 'is-up' : 'is-down'}" aria-label="${d > 0 ? 'up' : 'down'} ${Math.abs(d)}">${icon(d > 0 ? 'up' : 'down')}${Math.abs(d)}</span>` : x.delta === 'new' ? '<span class="ovk-rank-delta is-new">new</span>' : '';
+            const nameHtml = x.href ? `<a class="ovk-rank-link" href="${esc(url(x.href))}">${esc(x.name)}</a>` : `<strong>${esc(x.name)}</strong>`;
+            return `<li class="ovk-rank-row${i < 3 && start === 1 ? ' is-top' : ''}"><span class="ovk-rank-n" aria-hidden="true">${(Number(start) || 1) + i}</span>${x.mark || ''}`
+                + `<span class="ovk-rank-main"><span class="ovk-rank-name">${nameHtml}${x.badge || ''}</span>${x.note ? `<small>${esc(x.note)}</small>` : ''}</span>`
+                + `<span class="ovk-rank-val"><b>${esc(x.display != null ? x.display : num(v, x.fmt || fmt))}${unit ? ` <small>${esc(unit)}</small>` : ''}</b>${x.interval != null ? `<small>± ${esc(num(x.interval, x.fmt || fmt))}</small>` : ''}</span>${delta}`
+                + `<span class="ovk-rank-bar" style="--v:${share.toFixed(3)}" aria-hidden="true"></span></li>`;
+        }).join('')}</ol>`;
+    }
+
+    /**
+     * meter({ value, max, label, text, tone }) — how full something is. tone 'ok' | 'warn' | 'bad', or 'auto' for use of
+     * a limit (a quota, a budget, a disk): amber from 75 %, red from 90 %. Without a tone it is the accent, which suits
+     * a level where more is better (a confidence, a progress).
+     */
+    function meter({ value = 0, max = 100, label = '', text = '', tone = '' } = {}) {
+        const v = Math.max(0, Math.min(Number(max) || 100, Number(value) || 0));
+        const share = v / (Number(max) || 100);
+        const t = tone === 'auto' ? (share >= 0.9 ? 'bad' : share >= 0.75 ? 'warn' : '') : tone;
+        return `<span class="ovk-meter${t ? ` ovk-meter--${esc(t)}` : ''}" role="meter" aria-valuemin="0" aria-valuemax="${Number(max) || 100}" aria-valuenow="${v}" aria-label="${esc(label)}"${text ? ` aria-valuetext="${esc(text)}"` : ''}><span style="--v:${share.toFixed(3)}"></span></span>`;
+    }
+
+    /**
+     * drop({ name, accept, label, hint, multiple, camera, required, id, auto }) — the place a file goes: a real file input
+     * (it works without JavaScript), with drag and drop, paste and, on phones, the camera added by kit-web.js. auto:
+     * the form is sent as soon as a file is chosen. Put it inside the form that receives the file.
+     */
+    function drop({ name = 'file', accept = '', label = 'Choose a file', hint = '', multiple = false, camera = false, required = false, id = null, auto = false } = {}) {
+        const fid = id || `ovk-drop-${esc(name)}`;
+        const cam = camera ? `<label class="ovk-btn ovk-btn--quiet ovk-btn--small ovk-drop-cam" hidden>${icon('image')}<span>Take a photo</span><input type="file" accept="image/*" capture="environment" class="ovk-sr" data-ovk-drop-cam></label>` : '';
+        return `<div class="ovk-drop" data-ovk-drop${auto ? ' data-ovk-auto' : ''}><input type="file" class="ovk-drop-input" id="${esc(fid)}" name="${esc(name)}"${accept ? ` accept="${esc(accept)}"` : ''}${multiple ? ' multiple' : ''}${required ? ' required' : ''}>`
+            + `<label for="${esc(fid)}" class="ovk-drop-zone">${icon('upload')}<strong>${esc(label)}</strong>${hint ? `<small>${esc(hint)}</small>` : ''}<span class="ovk-drop-name" aria-live="polite"></span></label>${cam}</div>`;
+    }
+
+    /**
+     * receipt({ title, body, facts: [[label, value]], actions: [html], tone }) — a result and what it cost: the answer
+     * first, then one quiet line of facts (model, cost, time, confidence, how long it is kept). A value can be
+     * { html } (trusted markup, e.g. a kit.meter).
+     */
+    function receipt({ title = '', body = '', facts = [], actions = [], tone = '', id = null } = {}) {
+        const fs2 = (facts || []).filter((f) => f && f[1] != null && f[1] !== '');
+        const acts = (actions || []).filter(Boolean).join('');
+        return `<section class="ovk-receipt${tone ? ` ovk-receipt--${esc(tone)}` : ''}"${id ? ` id="${esc(id)}"` : ''}${title ? '' : ' aria-label="Result"'}>`
+            + `${title || acts ? `<div class="ovk-receipt-head">${title ? `<h2>${esc(title)}</h2>` : '<span></span>'}${acts ? `<span class="ovk-receipt-acts">${acts}</span>` : ''}</div>` : ''}`
+            + `<div class="ovk-receipt-body">${body}</div>`
+            + `${fs2.length ? `<dl class="ovk-receipt-facts">${fs2.map(([l, v]) => `<div><dt>${esc(l)}</dt><dd>${v && typeof v === 'object' && v.html != null ? v.html : esc(v)}</dd></div>`).join('')}</dl>` : ''}</section>`;
+    }
+
+    /**
+     * page({ head, body, side, dock, wide, id }) — the app page's whole shape in one call: the sticky head (with its tabs),
+     * the content, a side panel beside it on a computer (under it on a phone), and the dock.
+     */
+    const page = ({ head: h = '', body = '', side = '', dock: d = '', wide = false, id = 'main' } = {}) =>
+        `<main class="ovk-page${wide ? ' ovk-page--wide' : ''}" id="${esc(id)}">${h}${side ? `<div class="ovk-split"><div class="ovk-main">${body}</div><aside class="ovk-side">${side}</aside></div>` : body}${d}</main>`;
+
     return {
         esc, url, icon, ICONS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
-        enhance, VERSION: 1,
+        enhance, VERSION: 2,
+        num, steps, table, chart, rank, meter, drop, receipt, page,
     };
 });
