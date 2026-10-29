@@ -296,7 +296,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-table { width: 100%; border-collapse: collapse; font-size: .92rem; line-height: 1.4; }
 .ovk-table caption { padding: 12px 14px 6px; color: var(--ovk-muted); font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; text-align: left; }
 .ovk-table thead th { padding: 10px 14px; color: var(--ovk-muted); font-size: .72rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--ovk-line); }
-.ovk-table td, .ovk-table tbody th { padding: 11px 14px; text-align: left; vertical-align: top; border-top: 1px solid var(--ovk-line); }
+.ovk-table td, .ovk-table tbody th { padding: 11px 14px; text-align: left; vertical-align: top; border-top: 1px solid var(--ovk-line); overflow-wrap: anywhere; }
 .ovk-table tbody tr:first-child > * { border-top: 0; }
 .ovk-table tbody th { font-weight: 700; }
 .ovk-table .is-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -312,6 +312,7 @@ div.ovk-set-row { cursor: default; }
     .ovk-table--stack tbody tr { padding: 12px 14px; border-top: 1px solid var(--ovk-line); }
     .ovk-table--stack tbody tr:first-child { border-top: 0; }
     .ovk-table--stack tbody tr:hover > * { background: none; }
+    .ovk-table--stack td > *, .ovk-table--stack td { min-width: 0; }
     .ovk-table--stack td, .ovk-table--stack tbody th { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 3px 0; border: 0; text-align: right; }
     .ovk-table--stack td::before { content: attr(data-label); flex: none; max-width: 50%; color: var(--ovk-muted); font-size: .8rem; text-align: left; }
     .ovk-table--stack .is-primary { display: block; padding: 0 0 4px; font-size: 1rem; font-weight: 800; text-align: left; }
