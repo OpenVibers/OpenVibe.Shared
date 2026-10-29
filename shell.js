@@ -92,6 +92,9 @@ function serviceOf(o) {
     return o.service || (o.navbar && o.navbar.service) || (o.footer && o.footer.service);
 }
 
+// The site's id as theme-loader.js reads it from <html data-ov-service>: a short lowercase name (live, chat, bot…), else none.
+const siteId = (o) => { const s = String(serviceOf(o) || '').toLowerCase(); return /^[a-z][a-z0-9-]{1,31}$/.test(s) ? s : ''; };
+
 // A page that names no image shares its site's card (openvibe-shared/social), when the site has one and the page
 // has a canonical URL to make it absolute against. `image: null` opts out.
 function defaultImage(o) {
@@ -134,7 +137,8 @@ function page(o = {}) {
     const bodyAttributes = { ...(o.bodyClass ? { class: o.bodyClass } : {}), ...(o.bodyAttributes || {}) };
     return [
         '<!doctype html>',
-        `<html lang="${esc(o.lang || 'en')}">`,
+        // data-ov-service: which site this is, so theme-loader.js can ask for the person's theme for this site (4.43.0).
+        `<html lang="${esc(o.lang || 'en')}"${siteId(o) ? ` data-ov-service="${siteId(o)}"` : ''}>`,
         '<head>',
         '<meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
