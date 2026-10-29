@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.36.1 — 2026-10-29
+
+- **Kit 2 charts:** a scatter label right of centre could run past the chart and widen a phone page (a 390 px
+  phone laid the page out at 601 px). The chart clips to its own box, and kit-web.js moves a label that would cross the
+  right edge to the left of its dot. The real cause on Report was the screen-reader copy of the numbers: a table
+  cannot shrink below its content, so even visually hidden it set the page's width; it now sits in a hidden box.
+- **Kit headings hold their look on every site:** a site rule such as `.rp h2` had the same specificity as the kit's
+  `.ovk-section > h2` and loads later, so it restyled kit headings (Report showed a section title at display size).
+  The kit's heading and paragraph rules now double their class (`.ovk-section.ovk-section > h2`, `.ovk-card .ovk-card-title`),
+  which outranks any one-class site rule. No markup changed.
+
 ## 4.36.0 — 2026-10-29
 
 - **Kit 2:** the pieces data and tool pages need, in `kit.js`/`kit.css` (`kit-web.js` adds their behaviour):

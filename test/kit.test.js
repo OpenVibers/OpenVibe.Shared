@@ -155,7 +155,7 @@ const kit = require('../kit');
     assert.ok(line.includes('class="ovk-chart-yt"') && line.includes('$12.00'), 'y ticks are real text, formatted');
     assert.ok(line.includes('>Sep 1<') || line.includes('>Sep 2<'), 'x ticks fall on days');
     assert.ok(line.includes('Price &lt;x&gt; <b>$9.99</b>'), 'the legend says the latest value, escaped');
-    assert.ok(line.includes('<table class="ovk-sr"><caption>Price</caption>'), 'a table with the same numbers for screen readers');
+    assert.ok(line.includes('<div class="ovk-sr"><table><caption>Price</caption>'), 'a table with the same numbers for screen readers, in a box that can be 1 px wide (a table cannot)');
     const raw = line.match(/data-ovk-chart="([^"]*)"/)[1].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
     const data = JSON.parse(raw);
     assert.strictEqual(data.x.length, 4);
