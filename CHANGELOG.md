@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.44.0 — 2026-10-29
+
+- **`showcase.fold({ id, title, hint, html, open })`** folds read-once material (how it works, the code samples, what
+  every page shows) under its own heading. The heading stays visible in the summary and keeps its id, so links still
+  land and the outline does not change; other showcase sections nest inside and drop their own width and padding. It
+  takes the sections' width and font, which the eleven local folds written on 2026-10-29 had to repeat (three of them
+  missed: one rendered in the browser's serif, edge to edge).
+- **`.sc-row`** on any list makes it one sideways row on a phone (scroll snap, the next card peeking, every item still in
+  the HTML) and leaves it as the page made it on wider screens. `--sc-row-w` sets the card width (82% by default). It
+  wins over a page's own grid and never inherits a `flex-wrap` (the video home's figures wrapped into 2×2).
+
 ## 4.43.0 — 2026-10-29
 
 - **A theme for one site.** `shell.page` writes `<html data-ov-service="<site>">` (the page's service id, when it is a short
