@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.36.0 — 2026-10-29
+
+- **Kit 2:** the pieces data and tool pages need, in `kit.js`/`kit.css` (`kit-web.js` adds their behaviour):
+  `steps` (a flow of a few steps), `table` (a real table that turns into labelled cards under 600 px), `chart`
+  (`line`, `area`, `bar`, `scatter` with a frontier; an SVG stretched to the box with every label as real text,
+  focusable points and bars, a screen-reader table, a hover and arrow-key readout), `rank` (a leaderboard),
+  `meter`, `drop` (a file input with drag, paste and the phone camera), `receipt` (a result and what it took),
+  `page` (the app page's whole shape) and `num` (money, compact, percent, ms). `kit.VERSION` is 2. Additive: no
+  existing class or builder changed. See docs/kit.md, "Kit 2".
+- **SEO:** `seo.jsonLd` gains `event`, `jobPosting`, `recipe` and `dataset` builders (the shapes Events, Today, Work,
+  Food and Bench shipped by hand on 2026-10-29), so the next site to need one uses the shared, tested shape.
+
 ## 4.35.0 — 2026-10-29
 
 - **Showcase:** the page root clips the horizontal axis (`html { overflow-x: clip }`), so a narrow page whose

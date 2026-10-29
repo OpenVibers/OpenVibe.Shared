@@ -245,6 +245,44 @@ the theme's mode:
 
 `sc.room()` does this for a front door.
 
+### Kit 2: data and tool pages (4.36.0)
+
+The first kit was built for apps you live in: a conversation, a list, your settings. Most OpenVibe pages are something
+else: a price over time, a leaderboard, a table of plans, a picture to read, a few steps to verify a domain. Before
+4.36 every site drew those itself, about 10-90 KB of its own CSS each, and no two looked alike. Kit 2 is those pieces,
+built under the same rules as the rest of the kit: plain HTML that works without JavaScript, escaped text, the theme's
+tokens, and phone first. `node scripts/kit-gallery.js --shots <dir> --kit2` draws every piece at 320, 390, 768 and 1280
+px wide, light and dark.
+
+| Builder | What it is for | On a phone |
+| --- | --- | --- |
+| `steps({ items, current })` | A flow of a few steps: opt in, verify, choose, live. Done steps link back; later ones never link ahead. | Dots joined by a line, and "Step 2 of 4 · Verify the domain" |
+| `table({ columns, rows, caption })` | Plans, endpoints, prices: anything you compare across columns. | Each row is a card: the `primary` column is its title, and every other cell names its column |
+| `chart({ type, series \| points, x, y })` | `line` and `area` (history: a price, a count, a rating over time), `bar` (one bar per day or kind), `scatter` (quality against cost, with a dashed `frontier` through the best points) | The same chart, with its words at their real size |
+| `rank({ items, base, fmt })` | A leaderboard: the place, the name, the value ± its interval, the change since last time, and a bar in proportion | The bar runs under the name |
+| `meter({ value, max, tone })` | How full something is. `tone: 'auto'` for use of a limit (amber from 75 %, red from 90 %). Without a tone, more is simply more (a confidence) | |
+| `drop({ name, accept, camera, auto })` | Where a file goes: a real file input, plus drag and drop, paste and the phone's camera (kit-web.js). `auto` sends the form when a file is chosen | A "Take a photo" button |
+| `receipt({ title, body, facts, actions })` | A result and what it took: the answer first, then one quiet line of facts (model, cost, time, confidence, what is kept) | The facts wrap |
+| `page({ head, body, side, dock })` | The whole shape of an app page in one call; `side` sits beside the content from 1024 px and under it below that | |
+| `num(v, fmt)` | Numbers the way a reader wants them: `'money'` ($12.50, $0.10, $0.027), `'compact'` (1.2M), `'percent'`, `'ms'` (840 ms, 2.4 s), `'int'`. A missing value is "–", never 0 | |
+
+```js
+const kit = require('openvibe-shared/kit');
+kit.chart({ type: 'line', title: 'Price over 90 days', x: { time: true }, y: { fmt: 'money', zero: false },
+    series: [{ name: 'Price', points: rows.map((r) => [r.seen_at, r.price]) }] });
+kit.rank({ base: 900, fmt: 'int', items: models.map((m) => ({ name: m.name, href: `/m/${m.id}`, value: m.elo, interval: m.ci, delta: m.moved })) });
+kit.steps({ current: 1, items: [{ label: 'Opt in', href: '/merchant' }, { label: 'Verify the domain' }, { label: 'Live' }] });
+```
+
+How the charts are drawn, so they read on a phone: the lines and areas are an SVG stretched to the box
+(`preserveAspectRatio="none"`, and the stroke keeps its width with `vector-effect`), while every tick label, legend,
+point and bar is real HTML placed by percent. Text stays its real size from 320 px to 1280 px, points and bars are
+focusable and say their values, ticks fall on round numbers (1, 2 or 5 × 10ⁿ) and on round moments (hours, days, weeks,
+months), and a table with the same numbers sits behind each chart for screen readers. kit-web.js adds the readout on
+lines and areas (under the pointer, a tap, or ← → Home End) and hides a scatter label that would sit on one already
+shown, best points first. Colours: `--ovk-c1` is the theme's accent, then `--ovk-c2` … `--ovk-c5` (cyan, amber,
+violet, green), with deeper tones in light themes.
+
 ## The navbar's links
 
 The 2026-10-28 sweep of all 38 sites' bars found three habits that made them feel crowded and repetitive:

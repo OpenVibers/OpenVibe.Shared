@@ -109,4 +109,89 @@ const kit = require('../kit');
     delete globalThis.OpenVibeKitWeb;
 }
 
-console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons and time ok');
+// ── Kit 2: numbers ──
+{
+    assert.deepStrictEqual(['0.1', '0.027', '0.0041', '12.5', '1234.5'].map((v) => kit.num(Number(v), 'money')), ['$0.10', '$0.027', '$0.0041', '$12.50', '$1,234.50'], 'money keeps cents, and two figures under a dime');
+    assert.strictEqual(kit.num(840, 'ms'), '840 ms');
+    assert.strictEqual(kit.num(2400, 'ms'), '2.4 s');
+    assert.strictEqual(kit.num(1234567, 'compact'), '1.2M');
+    assert.strictEqual(kit.num(92, 'percent'), '92%');
+    assert.strictEqual(kit.num(null), '–', 'nothing is a dash, never 0');
+    assert.strictEqual(kit.num('x', 'int'), '–');
+}
+
+// ── Kit 2: steps ──
+{
+    const s = kit.steps({ current: 1, items: [{ label: 'Opt in', href: '/m/1' }, { label: 'Verify <it>', note: 'a DNS record' }, { label: 'Live', href: '/m/3' }] });
+    assert.ok(s.startsWith('<nav class="ovk-steps" aria-label="Steps"'));
+    assert.ok(s.includes('Step 2 of 3') && s.includes('<strong>Verify &lt;it&gt;</strong>'), 'the phone line says where you are, escaped');
+    assert.ok(s.includes('<li class="is-done"><a href="/m/1">') && s.includes('(done)'), 'a done step links back and says it is done');
+    assert.ok(s.includes('<li class="is-current" aria-current="step">'));
+    assert.ok(!s.includes('href="/m/3"'), 'a later step never links ahead');
+    assert.ok(kit.steps({ current: 9, items: [{ label: 'A' }, { label: 'B' }] }).includes('Step 2 of 2'), 'current is clamped');
+    assert.strictEqual(kit.steps({ items: [] }), '');
+}
+
+// ── Kit 2: tables ──
+{
+    const t = kit.table({ caption: 'Plans', columns: [{ key: 'name', label: 'Plan', primary: true }, { key: 'price', label: 'Per month', num: true, fmt: 'money' }, { key: 'site', label: 'Site', hide: 'sm' }, { key: 'raw', label: 'Raw', html: true }],
+        rows: [{ name: 'CX22 <b>', price: 4.5, site: { text: 'hetzner.com', href: 'https://hetzner.com' }, raw: '<code>x</code>' }, { name: 'Bad', price: null, site: { text: 'x', href: 'javascript:alert(1)' } }] });
+    assert.ok(t.includes('ovk-table--stack') && t.includes('<caption>Plans</caption>'));
+    assert.ok(t.includes('<th scope="row" class="is-primary" data-label="Plan">CX22 &lt;b&gt;</th>'), 'the primary cell heads its row, escaped');
+    assert.ok(t.includes('<td class="is-num" data-label="Per month">$4.50</td>'), 'numbers are formatted and right-aligned');
+    assert.ok(t.includes('<a href="https://hetzner.com">hetzner.com</a>') && !t.includes('javascript:'), 'links are checked');
+    assert.ok(t.includes('class="is-hide-sm"') && t.includes('<code>x</code>'), 'html columns pass trusted markup');
+    assert.ok(t.includes('data-label="Per month">–</td>'), 'a missing number is a dash');
+    assert.strictEqual(kit.table({ columns: [{ key: 'a', label: 'A' }], rows: [], empty: 'Nothing yet' }), '<p class="ovk-table-empty">Nothing yet</p>');
+}
+
+// ── Kit 2: charts ──
+{
+    const day = 86400000, t0 = Date.UTC(2026, 8, 1);
+    const line = kit.chart({ type: 'line', title: 'Price', x: { time: true }, y: { fmt: 'money', zero: false }, series: [{ name: 'Price <x>', points: [[t0, 12], [t0 + day, null], [t0 + 2 * day, 10.5], [t0 + 30 * day, 9.99]] }] });
+    assert.ok(line.startsWith('<figure class="ovk-chart ovk-chart--line"'));
+    assert.ok(/<path class="ovk-chart-line" d="M[^"]*M/.test(line), 'a null breaks the line in two');
+    assert.ok(line.includes('preserveAspectRatio="none"'), 'the picture stretches; strokes keep their width in CSS');
+    assert.ok(line.includes('class="ovk-chart-yt"') && line.includes('$12.00'), 'y ticks are real text, formatted');
+    assert.ok(line.includes('>Sep 1<') || line.includes('>Sep 2<'), 'x ticks fall on days');
+    assert.ok(line.includes('Price &lt;x&gt; <b>$9.99</b>'), 'the legend says the latest value, escaped');
+    assert.ok(line.includes('<table class="ovk-sr"><caption>Price</caption>'), 'a table with the same numbers for screen readers');
+    const raw = line.match(/data-ovk-chart="([^"]*)"/)[1].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+    const data = JSON.parse(raw);
+    assert.strictEqual(data.x.length, 4);
+    assert.strictEqual(data.s[0].v[1], null, 'the readout knows the gap');
+    assert.strictEqual(data.x[0][0], 0);
+    assert.strictEqual(data.x[3][0], 100);
+    const sc = kit.chart({ type: 'scatter', x: { label: 'Cost', fmt: 'money' }, y: { label: 'Elo', fmt: 'int', zero: false }, points: [{ label: 'a', x: 0.1, y: 1000, best: true, mark: true }, { label: 'b <i>', x: 0.4, y: 1080, best: true, href: '/m/b' }, { label: 'c', x: 0.2, y: 990 }] });
+    assert.ok(sc.includes('class="ovk-chart-front"'), 'the frontier is drawn through the best points');
+    assert.ok(sc.includes('<a href="/m/b" class="ovk-chart-dot is-best is-right"'), 'a point can link; one on the right opens its label leftwards');
+    assert.ok(sc.includes('aria-label="b &lt;i&gt;: Elo 1,080, Cost $0.40"'), 'every point says its values');
+    const bar = kit.chart({ type: 'bar', y: { fmt: 'int' }, series: [{ name: 'Clips', points: [['Mon', 4], ['Tue', 8], ['Wed', null]] }] });
+    assert.strictEqual((bar.match(/class="ovk-chart-bar[ "]/g) || []).length, 3);
+    assert.ok(bar.includes('is-none') && bar.includes('aria-label="Tue: 8"'));
+    assert.strictEqual(kit.chart({ series: [] }), '', 'no data, no chart');
+}
+
+// ── Kit 2: rank, meter, drop, receipt, page ──
+{
+    const r = kit.rank({ base: 900, fmt: 'int', items: [{ name: 'gpt <x>', href: '/m/1', value: 1086, interval: 14, delta: 2, note: '4,812 votes' }, { name: 'b', value: 1000, delta: -1 }, { name: 'c', value: 900, delta: 'new' }] });
+    assert.ok(r.includes('<ol class="ovk-rank"') && r.includes('<a class="ovk-rank-link" href="/m/1">gpt &lt;x&gt;</a>'));
+    assert.ok(r.includes('<b>1,086</b><small>± 14</small>') && r.includes('aria-label="up 2"') && r.includes('is-new'));
+    assert.ok(r.includes('--v:1.000') && r.includes('--v:0.000'), 'bars run from the base to the top value');
+    assert.ok(kit.meter({ value: 95, label: 'Disk', tone: 'auto' }).includes('ovk-meter--bad'), 'auto: red near a limit');
+    assert.ok(!kit.meter({ value: 95, label: 'Confidence' }).includes('ovk-meter--'), 'without a tone, more is just more');
+    assert.ok(kit.meter({ value: 150, max: 100 }).includes('aria-valuenow="100"'), 'clamped');
+    const d = kit.drop({ name: 'image', accept: 'image/*', label: 'Drop <a> picture', camera: true, auto: true });
+    assert.ok(d.includes('type="file" class="ovk-drop-input" id="ovk-drop-image" name="image" accept="image/*"') && d.includes('data-ovk-auto'));
+    assert.ok(d.includes('<label for="ovk-drop-image" class="ovk-drop-zone">') && d.includes('Drop &lt;a&gt; picture'));
+    assert.ok(d.includes('capture="environment"') && d.includes('ovk-drop-cam" hidden'), 'the camera waits for kit-web on a phone');
+    assert.ok(!/data-ovk-drop-cam[^>]*name=/.test(d) && !/name="[^"]*"[^>]*data-ovk-drop-cam/.test(d), 'the camera input has no name, so an unused one never posts an empty file');
+    const rc = kit.receipt({ title: 'Read', body: '<p>Hi</p>', facts: [['Model', 'ocr <2>'], ['Cost', '$0.002'], ['Empty', ''], ['Confidence', { html: '<span class="x"></span>' }]] });
+    assert.ok(rc.includes('<dt>Model</dt><dd>ocr &lt;2&gt;</dd>') && rc.includes('<span class="x"></span>') && !rc.includes('Empty'), 'facts: escaped, trusted html when asked, blanks left out');
+    const pg = kit.page({ head: '<header>h</header>', body: 'B', side: 'S', wide: true });
+    assert.ok(pg.startsWith('<main class="ovk-page ovk-page--wide" id="main"><header>h</header><div class="ovk-split"><div class="ovk-main">B</div><aside class="ovk-side">S</aside>'));
+    assert.strictEqual(kit.page({ body: 'B' }), '<main class="ovk-page" id="main">B</main>');
+    assert.strictEqual(kit.VERSION, 2);
+}
+
+console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page) ok');
