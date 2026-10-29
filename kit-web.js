@@ -280,5 +280,7 @@
     if (typeof document !== 'undefined') {
         if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => enhance(document));
         else enhance(document);
+        // A boosted page swap (boost.js) brings new markup without a load: enhance it too (enhance is idempotent).
+        document.addEventListener('ov:boost:load', () => enhance(document));
     }
 })(typeof globalThis !== 'undefined' ? globalThis : this);

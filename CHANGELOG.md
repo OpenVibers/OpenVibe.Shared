@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.36.2 — 2026-10-29
+
+- **kit-web.js on boosted sites:** a page reached through boost.js (a swap of `#main`, no page load) now gets the kit's
+  behaviour too — copy buttons, menus, sheets, rails, drop zones, chart readouts. kit-web listens for `ov:boost:load`;
+  enhance() was already idempotent.
+- **Tables:** a long value (a DNS name, a model id, a URL) wraps inside its cell instead of widening the table, on wide
+  screens and in the stacked phone cards.
+
 ## 4.36.1 — 2026-10-29
 
 - **Kit 2 charts:** a scatter label right of centre could run past the chart and widen a phone page (a 390 px
