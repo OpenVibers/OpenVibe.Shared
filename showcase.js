@@ -527,6 +527,10 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
 .sc-net b{display:block;font-size:15px}.sc-net small{display:block;color:var(--text-secondary,#96a7c2);font-size:13px;line-height:1.4}
 .sc-hero{position:relative;isolation:isolate}
+/* The hero's aura is drawn past its right edge (right:-54px below), so a narrow page that uses it was wider than
+   the screen and a phone scrolled sideways. Clip the viewport's horizontal axis in the kit itself: nothing that
+   fits is cut, and the page's own horizontal scrollers (tables, rails) keep working (2026-10-29). */
+html{overflow-x:clip}
 .sc-hero::before{content:'';position:absolute;z-index:-1;inset:-40px 0 auto;height:340px;pointer-events:none;background:radial-gradient(ellipse at 30% 20%,color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent),transparent 62%),radial-gradient(ellipse at 80% 0%,color-mix(in srgb,var(--secondary,#22d3ee) 14%,transparent),transparent 58%);filter:blur(10px);opacity:.9}
 @keyframes scPulse{50%{opacity:.35}}
 @supports (animation-timeline:view()){@media (prefers-reduced-motion:no-preference){.sc-sec{animation:scRise linear both;animation-timeline:view();animation-range:entry 0% cover 18%}}}
