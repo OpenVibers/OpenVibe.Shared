@@ -6,6 +6,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.40.0 — 2026-10-29
+
+- **OpenVibe Tokens (`openvibe-shared/tokens`, also `/shared/tokens.js` as `window.OpenVibeTokens`).** A theme as a W3C Design Tokens (DTCG) document of semantic tokens (`color.bg.base`, `color.accent.strong`, `color.status.ok.text` … plus the kit's radius, space, size, type and motion scales), compiled to CSS variables (with the network's names as aliases), Tailwind, Jetpack Compose (tokens and a Material 3 colour scheme), SwiftUI, Flutter, Figma variables and DTCG JSON. A theme's dark and light halves compile into one file. Values are validated (colours and shadows only) and names become identifiers, so nothing typed in the studio reaches generated code. This is the first piece of making the design system native-ready: real Android and iOS apps wear the same theme, without a web view. docs/tokens.md.
+
 ## 4.39.1 — 2026-10-29
 
 - **room.css stands on its own.** A front page that loads room.css without kit.css (Media's, to skip kit.css's 25 KB)
