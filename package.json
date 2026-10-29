@@ -82,7 +82,8 @@
     "./route-transition": "./route-transition.js",
     "./boost": "./boost.js",
     "./rooms": "./rooms.js",
-    "./motion": "./motion.js"
+    "./motion": "./motion.js",
+    "./agent-layer": "./agent-layer.js"
   },
   "files": [
     "*.js",
@@ -93,7 +94,8 @@
     "icons/",
     "social/",
     "templates/",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "docs/agent-layer.md"
   ],
   "scripts": {
     "test": "node test/run.js",
@@ -110,12 +112,12 @@
   "homepage": "https://github.com/OpenVibers/OpenVibe.Shared#readme",
   "license": "MIT",
   "dependencies": {
-    "jsonwebtoken": "^9.0.0"
+    "jsonwebtoken": "^9.0.0",
+    "linkedom": "^0.18.13"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "express": "^4.22.3",
-    "linkedom": "^0.18.13",
     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.222.0",
     "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.67.0"
   }

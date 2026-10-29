@@ -58,6 +58,11 @@ res.type('html').send(shell.page({
 
 See "The page shell" below for the rest of the options.
 
+### Agent discovery and Markdown twins
+
+`openvibe-shared/agent-layer` mounts the agent manifest and public Markdown twins from
+the same server renderer as HTML. See [the three-line mount and service descriptor guide](docs/agent-layer.md).
+
 ### Server side: pin a release tarball
 
 ```json

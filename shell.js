@@ -139,6 +139,7 @@ function page(o = {}) {
         '<meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
         head,
+        o.agentLayer && o.canonical ? require('./agent-layer').linkHeaderTags(o.canonical, o.llms).head : '',
         summary ? summary.head : '',
         o.head || '',
         manifestLinks(o),

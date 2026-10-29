@@ -238,13 +238,13 @@ function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true
 }
 
 /** /llms.txt (llmstxt.org): a markdown map of the site for language-model crawlers. */
-function llmsTxt({ name, summary, details, sections = [] } = {}) {
+function llmsTxt({ name, summary, details, sections = [], markdown = false, optional = [] } = {}) {
     const out = [`# ${name}`, '', `> ${String(summary || '').replace(/\s+/g, ' ').trim()}`, ''];
     if (details) out.push(String(details).trim(), '');
-    for (const sec of sections) {
+    for (const sec of [...sections, ...(optional.length ? [{ title: 'Optional', links: optional }] : [])]) {
         if (!sec || !sec.links || !sec.links.length) continue;
         out.push(`## ${sec.title}`, '');
-        for (const l of sec.links) out.push(`- [${l.title}](${l.url})${l.note ? `: ${String(l.note).replace(/\s+/g, ' ').trim()}` : ''}`);
+        for (const l of sec.links) out.push(`- [${l.title}](${markdown && !l.html ? require('./agent-layer').twinUrl(l.url) : l.url})${l.html ? ' (HTML)' : ''}${l.note ? `: ${String(l.note).replace(/\s+/g, ' ').trim()}` : ''}`);
         out.push('');
     }
     return out.join('\n');
@@ -385,3 +385,8 @@ function feedLinkTags({ rss, atom, title = 'Feed' } = {}) {
 }
 
 module.exports = { headTags, jsonLd, jsonLdTag, sitemapXml, sitemapIndexXml, robotsTxt, llmsTxt, llmsFull, pageSummary, feedXml, feedLinkTags, clip, esc, absolute, AI_AND_SEARCH_BOTS };
+
+// Lazy server-only agent helpers; ordinary SEO rendering need not load the HTML parser.
+for (const name of ['agentManifest', 'markdownTwin', 'linkHeaderTags']) {
+    module.exports[name] = (...args) => require('./agent-layer')[name](...args);
+}
