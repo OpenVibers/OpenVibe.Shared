@@ -88,6 +88,11 @@ const sc = require('../showcase');
     const kitCss = fs.readFileSync(path.join(__dirname, '..', 'kit.css'), 'utf8');
     assert.match(kitCss, /\.ovk-tabs a, \.ovk-list-head a \{ min-height: 44px; \}/, 'tab pills and list links are 44 px to the touch');
     assert.match(kitCss, /\.ovk-stats dt a \{ color: inherit; text-decoration: none; \}/, 'a stats label that is a link is not underlined');
+    // 4.39.1: room.css stands alone (Media's front page loads it without kit.css): the same tokens and numbers strip.
+    const tok = (css) => { const at = css.search(/^(:root|:where\(:root\)) \{/m); return at < 0 ? '' : css.slice(css.indexOf('{', at), css.indexOf('}', at) + 1); };
+    assert.ok(tok(kitCss).length > 500 && tok(room) === tok(kitCss) && /^:where\(:root\) \{/m.test(room), 'room.css carries kit.css\'s tokens, identical, at zero specificity');
+    const strip = (css) => css.split('\n').filter((l) => /^\.ovk-stats?[\s:>-]|^\.ovk-stat--link|^ {4}\.ovk-stats \{ display: grid;/.test(l)).join('\n');
+    assert.ok(strip(kitCss).length > 400 && strip(room) === strip(kitCss), 'and the same numbers strip');
 }
 
 // ── sc.room: the front door's order, the accent, nothing invented ──
