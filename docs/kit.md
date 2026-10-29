@@ -494,6 +494,20 @@ that fills its rows; four tiles are four across on a phone, two by two from 600 
 Don't pass the site's own name as the eyebrow: it is left out, because the navbar's brand already says it. Use the
 eyebrow for something worth reading first ("Free, nothing to install"), with `{ icon, text }` for an icon.
 
+### Folds and phone rows (4.44.0)
+
+A product home is "a taste and a door": on a phone it shows a little of everything and links to the rest. Two pieces
+do most of that:
+
+- `showcase.fold({ title: 'How it works', hint: 'four steps', html: showcase.steps({…}) + showcase.code({…}) })` for
+  what is read once. The heading stays visible (and its id with it); the steps, facts or code open on a tap.
+- `class="sc-row"` on a card list (`<ul class="my-cards sc-row">`) for anything with more than four cards: on a phone
+  it is one sideways row with the next card peeking, so twenty listings cost one card's height and none is dropped.
+  Small tiles set `style="--sc-row-w:46%"`.
+
+Lists that are text (questions, chips, table rows) are cut on phones instead, with `nth-child` and a link to the whole
+list; a closing call that repeats the hero, or a "find your way around" grid that repeats the nav, is left out.
+
 ## Balances
 
 `wallet: true` (or a site's own `coins` and `vibes` chips) shows the balances as one calm pill on phones. Each balance

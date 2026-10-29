@@ -20,6 +20,16 @@ assert.ok(f.includes('<a class="sc-card" href="/k">') && f.includes('&lt;b&gt;')
 assert.ok(f.includes('data-icon="tools"'), 'ov: icons render the shared ring icon');
 assert.strictEqual(f, sc.features({ title: 'What you get', items: [{ icon: 'fa-key', title: '<b>', text: 't', href: '/k' }, { icon: 'ov:tools', title: 'Tools' }] }), 'the same input renders the same bytes');
 
+// A fold: its heading stays visible and keeps its id; nothing to fold renders nothing.
+const fo = sc.fold({ id: 'how', title: 'How it <works>', hint: 'four steps', html: sc.steps({ title: 'Steps', items: [{ title: 'One', text: 't' }] }) });
+assert.ok(fo.startsWith('<section class="sc-sec sc-fold-sec" id="how" aria-labelledby="sc-how-it-works">'), 'the fold is a labelled section');
+assert.ok(fo.includes('<details class="sc-fold"><summary><h2 id="sc-how-it-works">How it &lt;works&gt;</h2><span class="sc-fold-hint">four steps</span></summary>'), 'the heading is in the summary, escaped');
+assert.ok(fo.includes('<div class="sc-fold-body"><section class="sc-sec"'), 'other sections nest inside');
+assert.ok(sc.fold({ title: 'T', html: '<p>x</p>', open: true }).includes('<details class="sc-fold" open>'), 'open on request');
+assert.strictEqual(sc.fold({ title: 'T', html: '' }), '', 'nothing to fold renders nothing');
+assert.strictEqual(sc.fold({ html: '<p>x</p>' }), '', 'a fold needs a heading');
+assert.ok(sc.CSS.includes('.sc-row.sc-row{display:flex;flex-wrap:nowrap'), 'the phone row does not inherit a wrap');
+
 const c = sc.compare({ title: 'Compare', columns: ['Us', 'Them'], rows: [{ label: 'Open', values: [true, false] }, { label: 'Price', values: ['Free', 'Paid'] }] });
 assert.ok(c.includes('aria-label="yes"') && c.includes('aria-label="no"') && c.includes('<td class="sc-us">Free</td>'));
 const p = sc.pricing({ title: 'Plans', tiers: [{ name: 'Free', price: 0, per: 'month', items: ['a'] }, { name: 'Pro', price: '$5', per: 'month', highlight: true, action: { label: 'Buy', href: '/buy' } }] });

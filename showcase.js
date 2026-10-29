@@ -142,6 +142,18 @@ function demo({ id: sid, title, lede, iframe, html } = {}) {
     return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-demo">${body}</div></section>`;
 }
 
+/**
+ * Read-once material — how it works, the code samples, what every page shows — folded under its own heading. The
+ * heading stays visible and keeps its id, so a link to it still lands and the page outline does not change; `hint` is a
+ * short line beside it on wide screens. `html` is the caller's markup (other showcase sections nest: they lose their
+ * own width and padding inside). Closed by default; `open: true` for a fold the reader should see first.
+ */
+function fold({ id: sid, title, hint, html, open = false } = {}) {
+    if (!title || html == null || html === '') return '';
+    const h = `sc-${slug(title)}`;
+    return `<section class="sc-sec sc-fold-sec"${id(sid)} aria-labelledby="${h}"><details class="sc-fold"${open ? ' open' : ''}><summary><h2 id="${h}">${esc(title)}</h2>${hint ? `<span class="sc-fold-hint">${esc(hint)}</span>` : ''}</summary><div class="sc-fold-body">${html}</div></details></section>`;
+}
+
 const cell = (v) => (v === true ? '<span class="sc-yes" aria-label="yes">✓</span>' : v === false || v == null ? '<span class="sc-no" aria-label="no">—</span>' : esc(v));
 
 // A table wider than a phone scrolls inside its wrapper, so the wrapper is a region the keyboard can reach and name
@@ -542,6 +554,26 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-faq summary::after{content:'';position:absolute;right:18px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s;opacity:.7}
 .sc-faq details[open] summary::after{transform:rotate(-135deg);margin-top:-2px}
 .sc-faq p{margin:0;padding:0 16px 16px;color:var(--text-secondary,#96a7c2);line-height:1.6}
+.sc-fold{border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
+.sc-fold>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:0 48px 0 18px;cursor:pointer;list-style:none;position:relative}
+.sc-fold>summary::-webkit-details-marker{display:none}
+.sc-fold>summary::after{content:'';position:absolute;right:22px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s;opacity:.7}
+.sc-fold[open]>summary::after{transform:rotate(-135deg);margin-top:-2px}
+.sc-fold>summary:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:-2px;border-radius:16px}
+.sc-fold>summary h2{margin:0;font-size:clamp(18px,2.2vw,22px)}
+.sc-fold-hint{color:var(--text-muted,#7386a3);font-size:14px;font-weight:600;text-align:right}
+.sc-fold-body{padding:0 18px 18px}
+.sc-fold-body .sc-sec{max-width:none;margin:0;padding:0}
+.sc-fold-body .sc-sec+.sc-sec{margin-top:22px}
+/* A list that is one sideways row on a phone (scroll snap, the next card peeking) and whatever the page made it on wide
+   screens. Every item stays in the HTML. --sc-row-w sets a card's width (82% by default; 46% for small tiles). */
+@media (max-width:599px){
+.sc-row.sc-row{display:flex;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;gap:10px;margin-left:-16px;margin-right:-16px;padding:0 16px 4px;grid-template-columns:none}
+.sc-row.sc-row::-webkit-scrollbar{display:none}
+.sc-row.sc-row>*{flex:0 0 var(--sc-row-w,82%);min-width:0;scroll-snap-align:start}
+.sc-fold-hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){.sc-fold>summary::after{transition:none}}
 /* apps(): a launcher. Phones: icon tiles, name under the icon; from 600 px: rows with a one-line tagline. */
 .sc-apps-group{margin:18px 0 8px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary,#96a7c2)}
 .sc-apps-sec .sc-apps-group:first-of-type{margin-top:6px}
@@ -601,4 +633,4 @@ html{overflow-x:clip}
 @media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a,.sc-apps a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 
-module.exports = { room, hero, features, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
