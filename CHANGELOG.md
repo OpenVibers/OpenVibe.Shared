@@ -6,6 +6,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.41.0 — 2026-10-29
+
+- **Try a theme on any OpenVibe page: `?ov-try=<theme>`** (theme-loader.js). It paints a catalog theme on the site without saving it: built-in themes at once, gallery themes from Network's catalog. The try is kept for the tab (sessionStorage) as the person moves around, and every repaint wears the tried theme (the account's sync, another tab, the device's light/dark). A bar at the bottom, above the app bar and 44 px to the touch, says "Trying <name>" with **Use it** (saves to the account, as the studio does) and **Stop** (back to the account's theme; `?ov-try=off` does the same). Only a catalog name is read from the URL, never colours, and nothing is saved until Use it. `OpenVibeThemeLoader.try.start(id)` / `.stop()` / `.current()` do the same from a page. OpenVibe.Design links to it ("Try it on Live"). test/theme-try.test.js.
+
 ## 4.40.0 — 2026-10-29
 
 - **OpenVibe Tokens (`openvibe-shared/tokens`, also `/shared/tokens.js` as `window.OpenVibeTokens`).** A theme as a W3C Design Tokens (DTCG) document of semantic tokens (`color.bg.base`, `color.accent.strong`, `color.status.ok.text` … plus the kit's radius, space, size, type and motion scales), compiled to CSS variables (with the network's names as aliases), Tailwind, Jetpack Compose (tokens and a Material 3 colour scheme), SwiftUI, Flutter, Figma variables and DTCG JSON. A theme's dark and light halves compile into one file. Values are validated (colours and shadows only) and names become identifiers, so nothing typed in the studio reaches generated code. This is the first piece of making the design system native-ready: real Android and iOS apps wear the same theme, without a web view. docs/tokens.md.

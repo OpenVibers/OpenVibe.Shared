@@ -109,6 +109,7 @@
     }
     let _season = null;
     let _shown = { id: DEFAULT_ID, vars: null, custom: false };
+    let _trying = null;   // { id, name, vars } while a theme is tried on this tab (?ov-try=, 4.41.0)
     /** Paint the theme `themeId` (its variables `vars`), or the season's theme in its place. → the id painted. */
     // ── Light, dark and Auto ─────────────────────────────────
     // Every built-in theme has a light and a dark half (PAIRS above). The display preference `scheme` is 'manual' (the
@@ -133,6 +134,9 @@
 
     function show(themeId, vars, custom) {
         _shown = { id: themeId, vars: vars, custom: !!custom };
+        // While a theme is being tried on this tab (?ov-try=), every repaint paints it: the account's sync, another tab,
+        // the device switching light and dark. _shown still follows the real theme, so Stop goes back to it.
+        if (_trying && _trying.vars) return paintTry();
         const half = halfFor(themeId, vars, !!custom);
         const s = isDefault(half.id) && !half.custom && readDisplay().seasonal !== 'off' ? seasonNow() : null;
         const seasonTheme = s ? (modeOf(half.id) === 'light' && s.light ? s.light : s.theme) : null;
@@ -424,7 +428,109 @@
     }
     applyDisplay(readDisplay());
 
+    // ── Try a theme on this page (4.41.0) ──
+    // ?ov-try=<theme> paints that catalog theme on this site without saving it (OpenVibe.Design's "Try it on Live"), and
+    // keeps it for the tab (sessionStorage) while the person moves around the site; ?ov-try=off ends it. A bar at the
+    // bottom says so: Use it saves it to the account, as the studio's Use does; Stop goes back to the account's theme. Only
+    // a catalog name is read from the URL, never colours, and nothing is saved until Use it.
+    const TRY_KEY = 'ov_try';
+    const TRY_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
+    const tryName = function (id) { return String(id).split('-').map(function (w) { return w ? w[0].toUpperCase() + w.slice(1) : w; }).join(' '); };
+    function paintTry() {
+        applyVars(_trying.vars);
+        try {
+            const el = document.documentElement;
+            el.setAttribute('data-theme', _trying.id);
+            el.setAttribute('data-ov-trying', _trying.id);
+            el.removeAttribute('data-ov-season');
+        } catch { /* no DOM */ }
+        syncBrowserUi();
+        return _trying.id;
+    }
+    function readTry() {
+        let id = '';
+        try {
+            const p = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('ov-try') : null;
+            if (p === 'off') { sessionStorage.removeItem(TRY_KEY); return null; }
+            if (p && TRY_ID.test(p)) sessionStorage.setItem(TRY_KEY, p);
+            id = sessionStorage.getItem(TRY_KEY) || '';
+        } catch { id = ''; }
+        return TRY_ID.test(id) ? id : null;
+    }
+    function startTry(id, name) {
+        if (!id || !TRY_ID.test(id)) return;
+        try { sessionStorage.setItem(TRY_KEY, id); } catch { /* private mode: this page only */ }
+        const begin = function (vars, label) {
+            if (!vars || !Object.keys(vars).length) { stopTry(false); return; }
+            _trying = { id: id, name: label || tryName(id), vars: vars };
+            fadeNext();
+            paintTry();
+            whenReady(tryBar);
+        };
+        if (THEMES[id]) return begin(THEMES[id], name);
+        if (typeof fetch === 'undefined') return;
+        // A gallery theme comes from the catalog, once the page has run init({ apiBase }) (the script tag after this one).
+        whenReady(function () {
+            fetch(_config.apiBase + '/api/themes/' + encodeURIComponent(id))
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (d) { begin(d && d.theme && d.theme.variables, d && d.theme && d.theme.name); })
+                .catch(function () { stopTry(false); });
+        });
+    }
+    function stopTry(repaint) {
+        _trying = null;
+        try { sessionStorage.removeItem(TRY_KEY); } catch { /* */ }
+        try {
+            document.documentElement.removeAttribute('data-ov-trying');
+            const bar = document.getElementById('ov-try-bar');
+            if (bar) bar.remove();
+            const u = new URL(location.href);
+            if (u.searchParams.has('ov-try')) { u.searchParams.delete('ov-try'); history.replaceState(history.state, '', u.pathname + (u.search || '') + u.hash); }
+        } catch { /* no DOM */ }
+        if (repaint !== false) { fadeNext(); resolveAndApply(); }
+    }
+    function whenReady(fn) {
+        if (typeof document === 'undefined') return;
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn, { once: true }); else fn();
+    }
+    function tryBar() {
+        if (!_trying || document.getElementById('ov-try-bar') || !document.body) return;
+        const t = _trying;
+        const bar = document.createElement('div');
+        bar.id = 'ov-try-bar';
+        bar.setAttribute('role', 'status');
+        bar.style.cssText = 'position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(var(--ovnav-appbar-h,0px) + 12px);z-index:2147483000;display:flex;align-items:center;gap:6px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:4px 4px 4px 16px;border-radius:999px;border:1px solid var(--border-light,var(--border,#2c3d5c));background:var(--bg-card,#131c2e);color:var(--text-primary,#e6edf7);box-shadow:0 10px 30px rgba(0,0,0,.35);font:600 14px/1.3 var(--ov-font,system-ui,sans-serif)';
+        const label = document.createElement('span');
+        label.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0';
+        label.textContent = 'Trying ' + t.name;
+        const btn = function (text, strong) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.textContent = text;
+            b.style.cssText = 'flex:none;min-height:44px;padding:0 16px;border-radius:999px;cursor:pointer;font:inherit;' + (strong
+                ? 'border:0;background:var(--accent-strong,var(--accent,#3b82f6));color:var(--on-accent-strong,#fff)'
+                : 'border:1px solid var(--border-light,var(--border,#2c3d5c));background:transparent;color:inherit');
+            return b;
+        };
+        const use = btn('Use it', true);
+        const stop = btn('Stop', false);
+        use.addEventListener('click', function () {
+            stopTry(false);
+            save(t.id, t.vars);
+            const done = document.createElement('div');
+            done.setAttribute('role', 'status');
+            done.style.cssText = bar.style.cssText + ';padding:12px 18px';
+            done.textContent = t.name + ' is your theme now, on every OpenVibe site.';
+            document.body.appendChild(done);
+            setTimeout(function () { done.remove(); }, 3500);
+        });
+        stop.addEventListener('click', function () { stopTry(true); });
+        bar.append(label, use, stop);
+        document.body.appendChild(bar);
+    }
+
     const activeId = resolveAndApply();
+    startTry(readTry());
     // The icon link may be parsed after this script: repaint once the head is complete.
     if (typeof document !== 'undefined' && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { _browserUiKey = ''; syncBrowserUi(); });
     // A theme picked in another tab (or on another OpenVibe page of this site) applies here at once.
@@ -511,6 +617,8 @@
         modeOf: function (id) { return MODES[id] || null; },
         onColor: onColor,
         save: save,
+        // Try a theme on this tab without saving it (?ov-try=): start(id), stop(), current() → the id being tried, or null.
+        try: { start: function (id) { startTry(String(id || '')); }, stop: function () { stopTry(true); }, current: function () { return _trying ? _trying.id : null; } },
         getCurrent: getCurrent,
         resolveAndApply: resolveAndApply,
         init: function (opts) {
