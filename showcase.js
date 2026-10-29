@@ -332,14 +332,17 @@ function network({ id: sid, service, title = 'Part of OpenVibe', lede = 'One acc
  * way a phone's home screen shows them: each item { icon ('ov:live' or 'fa-…'), name, text, href }. Phones see icon
  * tiles three or four to a row with the name under the icon (the one-line text is for screen readers and wider
  * screens); from 600 px each tile is a row: icon, name, the text in one line. groups put a small heading over each
- * set (the network's neighbourhoods); items without groups is one grid. Empty → ''.
+ * set (the network's neighbourhoods); items without groups is one grid. A set of two to four, or of eight, twelve…,
+ * gets a column count that fills its rows (four tiles: four across on a phone, two by two from 600 px, four from
+ * 960 px), so no tile sits alone on a row. Empty → ''.
  */
 function apps({ id: sid, title = '', lede = '', groups = null, items = null, more = null } = {}) {
     const sets = (groups || [{ name: '', items: items || [] }]).map((g) => ({ name: g.name || '', items: (g.items || []).filter((x) => x && x.name && safeHref(x.href)) })).filter((g) => g.items.length);
     if (!sets.length) return '';
     const h = `sc-${slug(title || 'apps')}`;
     const tile = (x) => `<li><a href="${esc(safeHref(x.href))}"><span class="sc-ic sc-ic-ov">${icon(x.icon || 'ov:spark', 40)}</span><span class="sc-app-t"><b>${esc(x.name)}</b>${x.text ? `<small>${esc(x.text)}</small>` : ''}</span></a></li>`;
-    const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps">${g.items.map(tile).join('')}</ul>`).join('');
+    const cols = (n) => (n >= 2 && n <= 4 ? n : n % 4 === 0 ? 4 : 0);
+    const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps${cols(g.items.length) ? ` sc-apps--c${cols(g.items.length)}` : ''}">${g.items.map(tile).join('')}</ul>`).join('');
     const end = more && safeHref(more.href) ? `<p class="sc-apps-more"><a href="${esc(safeHref(more.href))}">${esc(more.label || 'See all')} →</a></p>` : '';
     return `<section class="sc-sec sc-apps-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${body}${end}</section>`;
 }
@@ -550,14 +553,19 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-apps b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
 .sc-apps small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .sc-apps-more{margin:14px 0 0;font-weight:700}
-.sc-apps-more a{color:var(--accent-light,#60a5fa);text-decoration:none}
+.sc-apps-more a{display:inline-flex;align-items:center;min-height:44px;color:var(--accent-light,#60a5fa);text-decoration:none}
+.sc-apps-more a:hover{text-decoration:underline}
+@media (max-width:599px){.sc-apps--c2{grid-template-columns:repeat(2,minmax(0,1fr))}.sc-apps--c3{grid-template-columns:repeat(3,minmax(0,1fr))}.sc-apps--c4{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (min-width:600px){
 .sc-apps{gap:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .sc-apps a{flex-direction:row;align-items:center;gap:12px;padding:10px 12px;text-align:left;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
 .sc-apps a:hover,.sc-apps a:focus-visible{border-color:var(--accent,#3b82f6);background:var(--bg-secondary,#101828)}
 .sc-apps b{font-size:15px}
 .sc-apps small{position:static;width:auto;height:auto;clip:auto;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary,#96a7c2);font-size:13px}
+.sc-apps--c2,.sc-apps--c4{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sc-apps--c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+@media (min-width:960px){.sc-apps--c4{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .sc-net{list-style:none;margin:0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .sc-net a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 .sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}

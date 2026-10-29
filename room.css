@@ -34,6 +34,9 @@
 .ovk-card-link:focus-visible::after { outline: 2px solid var(--room-accent, var(--ovk-accent)); outline-offset: 3px; }
 .ovk-card-meta { margin: 0; display: flex; flex-wrap: wrap; color: var(--ovk-muted); font-size: 13px; line-height: 1.45; min-width: 0; }
 .ovk-card-meta > * + *::before { content: "·"; margin: 0 6px; }
+.ovk-card-sub { margin: 0; overflow: hidden; color: var(--text-secondary, var(--ovk-muted)); font-size: 13px; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+/* preview: a text thing's first lines in its media, fading out at the bottom. */
+.ovk-card-pre { position: absolute; inset: 0; margin: 0; padding: 12px 14px; overflow: hidden; color: var(--ovk-text); background: var(--ovk-panel-2); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; -webkit-mask-image: linear-gradient(#000 60%, transparent); mask-image: linear-gradient(#000 60%, transparent); }
 .ovk-card-who { font-weight: 600; color: var(--text-secondary, var(--ovk-muted)); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovk-card .ovk-more { position: relative; z-index: 2; margin: -6px -8px 0 0; }
 @media (hover: hover) {
@@ -51,6 +54,7 @@
 .ovk-rail-head.ovk-rail-head h2 { margin: 0; font-size: 1.15rem; font-weight: 800; letter-spacing: -.01em; }
 .ovk-rail-more { display: inline-flex; align-items: center; gap: 2px; min-height: 32px; color: var(--room-strong, var(--ovk-accent)); font-weight: 700; font-size: .9rem; text-decoration: none; white-space: nowrap; }
 .ovk-rail-more:hover { text-decoration: underline; }
+@media (pointer: coarse), (max-width: 759px) { .ovk-rail-more { min-height: 44px; } }
 .ovk-rail-wrap { position: relative; }
 .ovk-rail-track { list-style: none; margin: 0 calc(-1 * var(--ovk-rail-bleed)); padding: 2px var(--ovk-rail-bleed) 10px; display: grid; grid-auto-flow: column; grid-auto-columns: var(--ovk-rail-w); gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--ovk-rail-bleed); overscroll-behavior-x: contain; scrollbar-width: none; }
 .ovk-rail-track::-webkit-scrollbar { display: none; }
@@ -72,6 +76,13 @@
 }
 @media (min-width: 600px) {
     .ovk-rail--m { --ovk-rail-w: 280px; } .ovk-rail--s { --ovk-rail-w: 190px; } .ovk-rail--l { --ovk-rail-w: 400px; }
+}
+/* rail({ wrap: true }): phones swipe; from 760 px every item shows in a grid, so a mouse needs no arrows. */
+@media (min-width: 760px) {
+    .ovk-rail--wrap .ovk-rail-track { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: repeat(auto-fill, minmax(var(--ovk-rail-min, 220px), 1fr)); overflow: visible; margin: 0; padding: 2px 0 10px; }
+    .ovk-rail--wrap.ovk-rail--s { --ovk-rail-min: 160px; }
+    .ovk-rail--wrap.ovk-rail--l { --ovk-rail-min: 320px; }
+    .ovk-rail--wrap .ovk-rail-btn { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ovk-card-media > img, .ovk-card-peek, .ovk-card-video { transition: none; } .ovk-card-badge.is-live::before { animation: none; } }
 html[data-ov-motion=reduced] .ovk-card-badge.is-live::before { animation: none; }

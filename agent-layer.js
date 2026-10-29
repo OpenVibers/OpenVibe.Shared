@@ -43,8 +43,15 @@ function markdownTwin({ html, title, canonical, updated = null }) {
         if (node.nodeType === 3) return md(node.textContent.replace(/\s+/g, ' '));
         if (node.nodeType !== 1) return '';
         const tag = node.localName;
-        if (['script', 'style', 'template', 'nav', 'footer'].includes(tag) || node.hasAttribute('hidden') || node.getAttribute('aria-hidden') === 'true') return '';
-        const inside = () => Array.from(node.childNodes).map(walk).join('');
+        // Controls are not content: buttons, inputs, icons, players, and a card's ⋯ menu (Save, Share) say nothing to a reader.
+        if (['script', 'style', 'template', 'nav', 'footer', 'button', 'svg', 'select', 'input', 'textarea', 'video', 'audio', 'dialog'].includes(tag)
+            || node.hasAttribute('hidden') || node.getAttribute('aria-hidden') === 'true' || (tag === 'details' && /\bovk-more\b/.test(node.getAttribute('class') || ''))) return '';
+        // Pieces the page sets side by side with no space between them (a card's who · count · when, a tile's name and
+        // line) keep a space between them, so "Maticus12 viewsTue" reads "Maticus 12 views Tue".
+        const inside = () => Array.from(node.childNodes).reduce((out, child) => {
+            const piece = walk(child);
+            return out && piece && child.nodeType === 1 && !['sup', 'sub', 'mark', 'wbr', 'abbr'].includes(child.localName) && !/\s$/.test(out) && !/^\s/.test(piece) && !/[([]$/.test(out) ? `${out} ${piece}` : out + piece;
+        }, '');
         if (/^h[1-6]$/.test(tag)) return `\n\n${'#'.repeat(Number(tag[1]))} ${inside().trim()}\n\n`;
         if (tag === 'a') return node.hasAttribute('href') ? `[${inside()}](${destination(node.getAttribute('href'))})` : inside();
         if (tag === 'img') return `![${md(node.getAttribute('alt') || '')}](${destination(node.getAttribute('src') || '')})`;
@@ -67,8 +74,20 @@ function markdownTwin({ html, title, canonical, updated = null }) {
             const line = row => '| ' + Array.from({ length: width }, (_, i) => row[i] || '').join(' | ') + ' |';
             return '\n\n' + [line(rows[0]), line(Array(width).fill('---')), ...rows.slice(1).map(line)].join('\n') + '\n\n';
         }
+        if (tag === 'dl') {
+            // A strip of numbers (kit.stats) or a definition list: one "- label: value" line each.
+            const pairs = [];
+            for (const n of node.querySelectorAll('dt')) {
+                let dd = n.nextElementSibling;
+                while (dd && dd.localName !== 'dd') dd = dd.nextElementSibling;
+                if (!dd) dd = n.previousElementSibling && n.previousElementSibling.localName === 'dd' ? n.previousElementSibling : null;
+                const k = walk(n).trim(), v = dd ? walk(dd).trim() : '';
+                if (k || v) pairs.push(`- ${k}${v ? `: ${v}` : ''}`);
+            }
+            return pairs.length ? `\n\n${pairs.join('\n')}\n\n` : '';
+        }
         const content = inside();
-        return /^(p|div|section|article|main|blockquote|dl|dt|dd)$/.test(tag) ? `\n\n${content}\n\n` : content;
+        return /^(p|div|section|article|main|blockquote|dt|dd)$/.test(tag) ? `\n\n${content}\n\n` : content;
     };
     const destination = value => String(value).replace(/[\s()<>]/g, c => encodeURIComponent(c).replace(/\(/g, '%28').replace(/\)/g, '%29'));
     const content = walk(document.querySelector('main') || document.body).replace(/\n[ \t]+\n/g, '\n\n').replace(/\n{3,}/g, '\n\n').trim();

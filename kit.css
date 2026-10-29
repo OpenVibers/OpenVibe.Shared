@@ -94,7 +94,9 @@
 /* ── Lists: rows that read like a phone's (a mark, the name and time on one line, one line under it) ── */
 .ovk-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 8px; }
 .ovk-list-head.ovk-list-head h2 { margin: 0; color: var(--ovk-muted); font-family: inherit; font-size: .76rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
-.ovk-list-head a { color: var(--ovk-accent); font-size: .84rem; font-weight: 700; text-decoration: none; }
+.ovk-list-head a { display: inline-flex; align-items: center; min-height: 32px; color: var(--ovk-accent); font-size: .84rem; font-weight: 700; text-decoration: none; }
+/* 44 px to the touch: tab pills (36 px) and list links grow on touch screens and narrow windows. */
+@media (pointer: coarse), (max-width: 759px) { .ovk-tabs a, .ovk-list-head a { min-height: 44px; } }
 .ovk-list { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); margin: 0 0 14px; padding: 0; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); overflow: hidden; }
 .ovk-list--flush { margin: 0; border: 0; border-radius: 0; border-top: 1px solid var(--ovk-line); background: transparent; }
 .ovk-row { margin: 0; color: var(--ovk-text); }
@@ -211,7 +213,13 @@ div.ovk-set-row { cursor: default; }
 .ovk-stats::-webkit-scrollbar { display: none; }
 .ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: 12px; background: var(--ovk-panel); }
 .ovk-stats dt { margin: 0; color: var(--ovk-muted); font-size: .76rem; line-height: 1.25; }
-.ovk-stats dt a { color: inherit; }
+.ovk-stats dt a { color: inherit; text-decoration: none; }
+/* A number that is a link: the whole tile is the target (the label's link stretched over it), never an underline. */
+.ovk-stat--link { position: relative; transition: border-color .15s; }
+.ovk-stat--link dt a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ovk-stat--link:hover { border-color: var(--ovk-accent); }
+.ovk-stat--link dt a:focus-visible { outline: none; }
+.ovk-stat--link:focus-within { outline: 2px solid var(--ovk-accent); outline-offset: -2px; }
 .ovk-stats dd { margin: 0; color: var(--ovk-text); font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .ovk-empty { display: grid; justify-items: center; gap: 8px; margin: 0 0 14px; padding: 24px 16px; border: 1px dashed var(--ovk-line); border-radius: var(--ovk-radius); color: var(--ovk-muted); text-align: center; }
 .ovk-empty > .ovk-i { width: 28px; height: 28px; }
