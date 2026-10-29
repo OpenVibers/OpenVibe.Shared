@@ -473,6 +473,12 @@ still render as their own rows.
 
 ## Home page heroes (showcase)
 
+**`sc.apps({ title, lede, groups: [{ name, items: [{ icon, name, text, href }] }], more })`** (4.38.0) shows a set of
+apps as a launcher, the way a phone's home screen does: icon tiles three or four to a row with the name under the icon
+on a phone, rows with a one-line tagline from 600 px. Use it where a page lists sites or products to jump to (the
+network's front door, /sites, a directory); it replaces a stack of feature cards, which on a phone is one screen per
+four sites.
+
 `showcase.hero({ eyebrow, title, accent, lede, actions, note })` is the top of most product homes. On a phone (since
 4.23.0):
 - it starts right under the bar;
