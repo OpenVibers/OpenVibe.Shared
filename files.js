@@ -43,6 +43,7 @@ const BROWSER = Object.freeze([
     'kit.js',               // the OpenVibe Kit's builders in the page (for pages that draw themselves; with kit-web.js)
     'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
     'kit-data-web.js',      // Kit 2's behaviour: chart readouts, scatter labels, drop zones (4.37.0; with kit-data.css)
+    'tokens.js',            // OpenVibe Tokens: a theme as DTCG tokens, compiled to CSS, Tailwind, Compose, SwiftUI, Flutter, Figma (4.40.0)
     'search.js',            // search everything from the navbar's magnifier, / or Ctrl+K; navbar.js loads it on first use
     'loading.js',           // the one loading look: a poster-backed overlay with status and progress, and skeleton rows
     'agent-session.js',     // a coding agent's session as people read it: steps grouped, live output, diffs, helpers, hand-offs

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.39.1",
+  "version": "4.40.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -63,6 +63,7 @@
     "./kit": "./kit.js",
     "./kit-web": "./kit-web.js",
     "./kit-data-web": "./kit-data-web.js",
+    "./tokens": "./tokens.js",
     "./appbar": "./appbar.js",
     "./search": "./search.js",
     "./agent-session": "./agent-session.js",

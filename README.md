@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.39.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.40.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -651,6 +651,10 @@ cards that fold, settings rows, a search row, a composer pinned at the bottom, a
 piece, the sizes, the colours, and how to use it in an OpenVibe site or anyone's project;
 `node scripts/kit-gallery.js --shots <dir>` shows them all at 390, 768 and 1280 px. Every navbar also has search across OpenVibe
 (`search.js`, loaded on first use), and `loading.js` is the one loading look (docs/kit.md#loading).
+
+**OpenVibe Tokens** (`openvibe-shared/tokens`, 4.40.0) is any theme as a W3C Design Tokens document, compiled to CSS,
+Tailwind, Jetpack Compose, SwiftUI, Flutter and Figma variables, so native apps wear the same theme as the web, without a
+web view ([docs/tokens.md](docs/tokens.md)).
 
 ```js
 const kit = require('openvibe-shared/kit');
