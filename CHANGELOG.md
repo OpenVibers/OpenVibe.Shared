@@ -6,6 +6,22 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.45.0 — 2026-10-29
+
+- **Comfort settings beside the theme.** Four display preferences join motion, text size, seasonal and scheme in
+  theme-loader.js (`OpenVibeThemeLoader.display`), and follow the account the same way:
+  - `contrast: 'more'`: secondary and muted text and the borders move toward the text colour, links in running text are
+    underlined, and focus rings are thicker;
+  - `font: 'readable'`: Atkinson Hyperlegible where it is installed, else Verdana or Tahoma, with a little more letter,
+    word and line spacing;
+  - `colors: 'cb-safe'`: success, warning and danger in Okabe-Ito blue, yellow and vermillion (with a light half), so
+    red and green never carry a meaning alone;
+  - `oled: 'on'`: true black backgrounds on dark themes.
+  Each sets one attribute on `<html>` (`data-ov-contrast`, `data-ov-font`, `data-ov-colors`, `data-ov-oled`). The rules are
+  `!important` custom properties, because the theme's own values are inline. Nothing is fetched (no font file). They
+  change how any theme reads, never which theme it is. OpenVibe.Design's "Your look" sets them; OpenVibe.Network keeps
+  them on the account.
+
 ## 4.44.0 — 2026-10-29
 
 - **`showcase.fold({ id, title, hint, html, open })`** folds read-once material (how it works, the code samples, what

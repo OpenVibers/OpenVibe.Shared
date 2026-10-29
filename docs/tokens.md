@@ -73,6 +73,22 @@ Status: the generated Kotlin, Swift and Dart are checked against the Compose Mat
 review and by the tests' expected lines. This host has no Kotlin, Swift or Dart toolchain to compile them; a native
 CI job is the next step.
 
+## Comfort settings (4.45.0)
+
+A theme says what the network looks like; comfort settings say how it should read for this person, on every site and
+on top of any theme. They are display preferences (`OpenVibeThemeLoader.display.set({ contrast: 'more' })`), saved on the
+device and on the account:
+
+| Setting | Values | What changes |
+|---|---|---|
+| `contrast` | `normal`, `more` | secondary and muted text and the borders toward the text colour; links in running text underlined; thicker focus rings |
+| `font` | `default`, `readable` | Atkinson Hyperlegible or Verdana or Tahoma, with more letter, word and line spacing |
+| `colors` | `default`, `cb-safe` | success, warning and danger in Okabe-Ito blue, yellow and vermillion (light and dark halves) |
+| `oled` | `off`, `on` | true black backgrounds when the theme is dark |
+
+A native app reads the same object from `GET /api/themes/me/active` (`display`) and applies the same rules to its own
+tokens: the settings are data, not CSS.
+
 ## Why this shape (native apps, not web views)
 
 The owner, 2026-10-29: "translate it to official and optimized Android and iOS apps in the future that aren't just web
