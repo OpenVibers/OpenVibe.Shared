@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.39.1 — 2026-10-29
+
+- **room.css stands on its own.** A front page that loads room.css without kit.css (Media's, to skip kit.css's 25 KB)
+  had no `--ovk-*` tokens: cards lost their corners and colours, a card without a picture had no background, and its
+  `kit.stats` strip was a bare list. room.css now carries the same tokens (as `:where(:root)`, so kit.css's and a
+  site's own values always win) and the numbers strip. The copies are identical, so loading both files changes nothing, and
+  test/room-kit.test.js keeps them that way. room.css: +2.8 KB raw.
+
 ## 4.39.0 — 2026-10-29
 
 What the front-page passes of 10-29 (Media, Quest, Actor, Rent, Services, Community) each had to add locally:

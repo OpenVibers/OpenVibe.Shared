@@ -1,6 +1,48 @@
 /* openvibe-shared/room.css — the room kit's look (4.29.1; before, in kit.css): a room's accent (rooms.js), kit.card and
  * kit.rail. A page that shows cards or rails, or wears a room's accent (sc.room() does all three), loads it after
- * kit.css; pages that use only the kit's controls do not pay for it. Uses kit.css's tokens (--ovk-*). */
+ * kit.css, or alone on a front page that draws only cards, rails and a numbers strip (it carries the tokens and the
+ * strip since 4.39.1); pages that use only the kit's controls do not pay for it. */
+
+/* ── The kit's tokens and its numbers strip, the same as kit.css's (4.39.1): a front page that loads room.css without
+ *    kit.css (cards, rails and a kit.stats strip, nothing else) still has them. Identical copies, so loading both files
+ *    changes nothing (the tokens are :where(:root), so kit.css's and a site's own values always win);
+ *    test/room-kit.test.js keeps them identical. ── */
+:where(:root) {
+    --ovk-bg: var(--bg-primary, #0b0f17);
+    --ovk-panel: var(--bg-card, var(--bg-secondary, #121826));
+    --ovk-panel-2: var(--bg-hover, var(--bg-tertiary, #1a2233));
+    --ovk-input: var(--bg-input, var(--bg-tertiary, #0f1522));
+    --ovk-line: var(--border, rgba(255, 255, 255, .1));
+    --ovk-text: var(--text-primary, #e8ecf3);
+    --ovk-muted: var(--text-muted, var(--text-secondary, #93a0b4));
+    --ovk-accent: var(--accent, #3b82f6);
+    --ovk-fill: var(--accent-strong, var(--accent, #3b82f6));
+    --ovk-on-fill: var(--on-accent-strong, var(--on-accent, #fff));
+    --ovk-ok: var(--success, #22c55e);
+    --ovk-warn: var(--warning, #f59e0b);
+    --ovk-bad: var(--danger, var(--error, #ef4444));
+    --ovk-live: var(--live-red, #ef4444);
+    --ovk-radius: 14px;
+    --ovk-radius-sm: 10px;
+    --ovk-tap: 44px;
+    --ovk-top: var(--ovnav-real-h, 52px);          /* the navbar's height: sticky things stop under it */
+    --ovk-bottom: var(--ovnav-appbar-h, 0px);      /* the app bar's height on phones (navbar.js sets it) */
+    --ovk-font: var(--ov-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
+}
+.ovk-stats { display: flex; gap: 8px; margin: 12px -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.ovk-stats::-webkit-scrollbar { display: none; }
+.ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: 12px; background: var(--ovk-panel); }
+.ovk-stats dt { margin: 0; color: var(--ovk-muted); font-size: .76rem; line-height: 1.25; }
+.ovk-stats dt a { color: inherit; text-decoration: none; }
+.ovk-stat--link { position: relative; transition: border-color .15s; }
+.ovk-stat--link dt a::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.ovk-stat--link:hover { border-color: var(--ovk-accent); }
+.ovk-stat--link dt a:focus-visible { outline: none; }
+.ovk-stat--link:focus-within { outline: 2px solid var(--ovk-accent); outline-offset: -2px; }
+.ovk-stats dd { margin: 0; color: var(--ovk-text); font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
+@media (min-width: 600px) {
+    .ovk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin-left: 0; margin-right: 0; padding: 0; overflow: visible; }
+}
 
 /* ── Rooms (rooms.js): the room's accent in the theme's mode. rooms.style(id) sets --room-dark/--room-light on .ov-room;
  *    without them the theme's accent stays. --room-accent: icons, outlines, motifs; --room-strong: text on the page;
