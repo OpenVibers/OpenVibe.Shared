@@ -73,4 +73,11 @@ assert.match(withSummary, /"@type":"WebPage"/, 'WebPage JSON-LD with the summary
 assert.match(withSummary, /<noscript><section data-ai-summary>/, 'noscript summary in the body');
 assert.ok(withSummary.indexOf('</head>') < withSummary.indexOf('<noscript><section data-ai-summary>'), 'summary body sits after </head>');
 
+// 4.43.0: the page says which site it is, for theme-loader's per-site theme.
+{
+    const shellLib = require('../shell');
+    assert.match(shellLib.page({ name: 'OpenVibe.Bot', service: 'bot', body: '' }), /<html lang="en" data-ov-service="bot">/);
+    assert.match(shellLib.page({ name: 'X', navbar: { service: 'games' }, body: '' }), /data-ov-service="games"/);
+    assert.doesNotMatch(shellLib.page({ name: 'OpenVibe.Design', body: '' }), /data-ov-service/, 'a display name is not an id');
+}
 console.log('shell: all checks passed');

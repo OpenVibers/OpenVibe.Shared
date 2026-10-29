@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.43.0 — 2026-10-29
+
+- **A theme for one site.** `shell.page` writes `<html data-ov-service="<site>">` (the page's service id, when it is a short
+  lowercase name), and theme-loader.js asks the account for `/api/themes/me/active?service=<site>`. When the person has
+  set an exception for that site in OpenVibe.Design ("Games in Neon Tokyo", OpenVibe.Network#419), the site wears it;
+  everywhere else, and on a Network that does not know the parameter yet, the account's theme as before.
+  `OpenVibeThemeLoader.site()` names the site.
+
 ## 4.42.0 — 2026-10-29
 
 - **OpenVibe components (`openvibe-shared/components`, also `/shared/components.js` as `window.OpenVibeComponents`).** The kit's components as a contract that is not HTML. Eleven components (button, card, rail, row, list, section, fold, tabs, numbers, notice, empty state), each described by its anatomy and the tokens every part wears, its typed props, variants, states, accessibility and phone/tablet/computer behaviour, with a reference view for Jetpack Compose and for SwiftUI on the same tokens. **Kit documents**: a screen as a JSON tree of components, validated strictly (types, enums, required props, children, depth, size, https or same-site links) and rendered through kit.js exactly as the direct builder calls would. The server-driven UI shape a native app can render with its own views. docs/components.md.

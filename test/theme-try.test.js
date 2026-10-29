@@ -83,4 +83,30 @@ assert.strictEqual(p.session.get('ov_try'), 'daylight');
 p.L.try.start('<b>');
 assert.strictEqual(painted(p), 'daylight', 'a bad name changes nothing');
 
+// 6. 4.43.0: the account's sync asks for this site's exception (<html data-ov-service>); a bad id asks for none.
+{
+    const urls = [];
+    const run = (svc) => {
+        const attrs = new Map(svc ? [['data-ov-service', svc]] : []);
+        const html = { style: { setProperty() {}, removeProperty() {} }, setAttribute: (k, v) => attrs.set(k, String(v)), getAttribute: (k) => (attrs.has(k) ? attrs.get(k) : null), removeAttribute: (k) => attrs.delete(k) };
+        const sandbox = { Date, JSON, Object, String, Number, Math, Array, Promise, Error, URL, URLSearchParams, setTimeout() {}, clearTimeout() {},
+            document: { documentElement: html, readyState: 'complete', cookie: '', head: null, body: null, querySelector: () => null, getElementById: () => null, referrer: '', visibilityState: 'visible', addEventListener() {} },
+            localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, sessionStorage: { getItem: () => null, setItem() {}, removeItem() {} },
+            location: { hostname: 'openvibe.games', protocol: 'https:', search: '', href: 'https://openvibe.games/' }, history: { replaceState() {} },
+            getComputedStyle: () => ({ getPropertyValue: () => '' }), matchMedia: () => ({ matches: true, addEventListener() {} }),
+            fetch: (url) => { urls.push(url); return Promise.resolve({ ok: false, json: () => Promise.resolve(null) }); },
+            CustomEvent: class {}, addEventListener() {}, dispatchEvent() {} };
+        sandbox.window = sandbox;
+        sandbox.globalThis = sandbox;
+        vm.runInNewContext(SRC, sandbox);
+        return sandbox.OpenVibeThemeLoader;
+    };
+    const L = run('games');
+    assert.ok(urls.some((u) => /\/api\/themes\/me\/active\?service=games$/.test(u)), urls.join(' '));
+    assert.strictEqual(L.site(), 'games');
+    urls.length = 0;
+    run('Games<script>');
+    assert.ok(urls.some((u) => /\/api\/themes\/me\/active$/.test(u)) && !urls.some((u) => /service=/.test(u)), 'a bad id asks for the account theme only');
+}
+
 console.log('theme try: paints without saving, follows the tab, survives repaints, Stop restores, only catalog names');

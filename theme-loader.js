@@ -562,12 +562,19 @@
     // so this now works on sites where the cookie isn't readable from JS — previously the sync
     // silently never ran there and the user's theme appeared to be "lost".
     let _lastSync = 0;
+    /** This site's id from <html data-ov-service> (openvibe-shared/shell writes it), or '' (4.43.0). */
+    function siteService() {
+        try { const s = document.documentElement.getAttribute('data-ov-service') || ''; return /^[a-z][a-z0-9-]{1,31}$/.test(s) ? s : ''; } catch { return ''; }
+    }
     function syncFromServer() {
         if (typeof fetch === 'undefined') return;
         _lastSync = Date.now();
         const token = authToken();
         const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-        fetch(_config.apiBase + '/api/themes/me/active', { headers: headers, credentials: 'include' })
+        // The site's own exception, when the person set one in OpenVibe.Design ("Games in Neon Tokyo"): Network answers it
+        // for ?service=<this site> and the account's theme otherwise (4.43.0).
+        const site = siteService();
+        fetch(_config.apiBase + '/api/themes/me/active' + (site ? '?service=' + encodeURIComponent(site) : ''), { headers: headers, credentials: 'include' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
                 if (data && data.display) { const cur = readDisplay(); if (JSON.stringify({ motion: data.display.motion || cur.motion, text: data.display.text || cur.text, seasonal: data.display.seasonal || cur.seasonal, scheme: data.display.scheme || cur.scheme }) !== JSON.stringify(cur)) { fadeNext(); setDisplay(data.display, { local: true }); } }
@@ -620,6 +627,8 @@
         // Try a theme on this tab without saving it (?ov-try=): start(id), stop(), current() → the id being tried, or null.
         try: { start: function (id) { startTry(String(id || '')); }, stop: function () { stopTry(true); }, current: function () { return _trying ? _trying.id : null; } },
         getCurrent: getCurrent,
+        // This site's id (<html data-ov-service>), the key of its theme exception on the account (4.43.0).
+        site: function () { return siteService(); },
         resolveAndApply: resolveAndApply,
         init: function (opts) {
             if (opts && typeof opts.apiBase === 'string' && opts.apiBase.trim()) {
