@@ -4,7 +4,7 @@
   "code": true,
   "wave": "W2",
   "package": "openvibe-shared",
-  "version": "4.34.0",
+  "version": "4.35.0",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
@@ -26,5 +26,5 @@
     "browser harness and perf budgets for tests",
     "a CONFIRMATION_REQUESTED notification type: an agent owner is told when a sensitive-capability confirmation awaits them"
   ],
-  "updated": "2026-10-27"
+  "updated": "2026-10-29"
 }
