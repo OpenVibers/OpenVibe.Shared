@@ -291,21 +291,22 @@
             const obj = `${name}${docs.length > 1 ? (m.mode === 'light' ? 'Light' : 'Dark') : ''}Tokens`;
             parts.push(`/** ${commentText(doc.$description)} */`, `object ${obj} {`);
             for (const t of colorTokens(doc)) parts.push(`    val ${pascal(t.path)} = Color(${argb(t.c)})`);
-            if (doc === docs[0]) {
-                for (const t of flatten(doc).filter((x) => x.type === 'dimension')) {
-                    const n = num(t.value);
-                    if (n != null) parts.push(`    val ${pascal(t.path)} = ${n}.${t.path[0] === 'type' ? 'sp' : 'dp'}`);
-                }
-                for (const t of flatten(doc).filter((x) => x.type === 'duration' || x.type === 'fontWeight')) {
-                    const n = num(t.value);
-                    if (n != null) parts.push(`    const val ${pascal(t.path)} = ${Math.round(n)}`);
-                }
-            }
             parts.push('}', '');
             const fn = m.mode === 'light' ? 'lightColorScheme' : 'darkColorScheme';
             const roles = M3_ROLES.filter(([, path]) => pick(doc, path)).map(([role, path]) => `    ${role} = ${obj}.${pascal(path.split('.'))},`);
             parts.push(`/** Material 3 roles: MaterialTheme(colorScheme = ${name}${m.mode === 'light' ? 'Light' : 'Dark'}ColorScheme) { … } */`, `val ${name}${m.mode === 'light' ? 'Light' : 'Dark'}ColorScheme: ColorScheme = ${fn}(`, ...roles, ')', '');
         }
+        // The kit's scales: the same on every theme (openvibe-shared/components' reference views use OvScale).
+        parts.push('/** The OpenVibe kit\'s radius, space, size, type and motion scales: the same in every theme. */', 'object OvScale {');
+        for (const t of flatten(docs[0]).filter((x) => x.type === 'dimension')) {
+            const n = num(t.value);
+            if (n != null) parts.push(`    val ${pascal(t.path)} = ${n}.${t.path[0] === 'type' ? 'sp' : 'dp'}`);
+        }
+        for (const t of flatten(docs[0]).filter((x) => x.type === 'duration' || x.type === 'fontWeight')) {
+            const n = num(t.value);
+            if (n != null) parts.push(`    const val ${pascal(t.path)} = ${Math.round(n)}`);
+        }
+        parts.push('}', '');
         return parts.join('\n');
     }
 
@@ -319,18 +320,18 @@
             const en = `${name}${docs.length > 1 ? (m.mode === 'light' ? 'Light' : 'Dark') : ''}Tokens`;
             parts.push(`/// ${commentText(doc.$description)}`, `public enum ${en} {`, `    public static let colorScheme: ColorScheme = .${m.mode === 'light' ? 'light' : 'dark'}`);
             for (const t of colorTokens(doc)) parts.push(`    public static let ${camel(t.path)} = Color(.sRGB, red: ${f(t.c.r)}, green: ${f(t.c.g)}, blue: ${f(t.c.b)}, opacity: ${t.c.a})`);
-            if (doc === docs[0]) {
-                for (const t of flatten(doc).filter((x) => x.type === 'dimension')) {
-                    const n = num(t.value);
-                    if (n != null) parts.push(`    public static let ${camel(t.path)}: CGFloat = ${n}`);
-                }
-                for (const t of flatten(doc).filter((x) => x.type === 'duration')) {
-                    const n = num(t.value);
-                    if (n != null) parts.push(`    public static let ${camel(t.path)}: Double = ${n / 1000}`);
-                }
-            }
             parts.push('}', '');
         }
+        parts.push('/// The OpenVibe kit\'s radius, space, size, type and motion scales: the same in every theme.', 'public enum OvScale {');
+        for (const t of flatten(docs[0]).filter((x) => x.type === 'dimension')) {
+            const n = num(t.value);
+            if (n != null) parts.push(`    public static let ${camel(t.path)}: CGFloat = ${n}`);
+        }
+        for (const t of flatten(docs[0]).filter((x) => x.type === 'duration')) {
+            const n = num(t.value);
+            if (n != null) parts.push(`    public static let ${camel(t.path)}: Double = ${n / 1000}`);
+        }
+        parts.push('}', '');
         return parts.join('\n');
     }
 
@@ -343,11 +344,13 @@
             const cls = `${name}${docs.length > 1 ? (m.mode === 'light' ? 'Light' : 'Dark') : ''}Tokens`;
             parts.push(`/// ${commentText(doc.$description)}`, `class ${cls} {`, `  ${cls}._();`);
             for (const t of colorTokens(doc)) parts.push(`  static const ${camel(t.path)} = Color(${argb(t.c)});`);
-            if (doc === docs[0]) for (const t of flatten(doc).filter((x) => x.type === 'dimension')) { const n = num(t.value); if (n != null) parts.push(`  static const double ${camel(t.path)} = ${n};`); }
             parts.push('}', '');
             const roles = M3_ROLES.filter(([role, path]) => pick(doc, path) && role !== 'surfaceVariant').map(([role, path]) => `  ${role}: ${cls}.${camel(path.split('.'))},`);
             parts.push(`const ${name[0].toLowerCase() + name.slice(1)}${m.mode === 'light' ? 'Light' : 'Dark'}Scheme = ColorScheme(`, `  brightness: Brightness.${m.mode === 'light' ? 'light' : 'dark'},`, ...roles, ');', '');
         }
+        parts.push('/// The OpenVibe kit\'s radius, space, size and type scales: the same in every theme.', 'class OvScale {', '  OvScale._();');
+        for (const t of flatten(docs[0]).filter((x) => x.type === 'dimension')) { const n = num(t.value); if (n != null) parts.push(`  static const double ${camel(t.path)} = ${n};`); }
+        parts.push('}', '');
         return parts.join('\n');
     }
 

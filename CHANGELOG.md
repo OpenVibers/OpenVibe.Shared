@@ -6,6 +6,11 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.42.0 — 2026-10-29
+
+- **OpenVibe components (`openvibe-shared/components`, also `/shared/components.js` as `window.OpenVibeComponents`).** The kit's components as a contract that is not HTML. Eleven components (button, card, rail, row, list, section, fold, tabs, numbers, notice, empty state), each described by its anatomy and the tokens every part wears, its typed props, variants, states, accessibility and phone/tablet/computer behaviour, with a reference view for Jetpack Compose and for SwiftUI on the same tokens. **Kit documents**: a screen as a JSON tree of components, validated strictly (types, enums, required props, children, depth, size, https or same-site links) and rendered through kit.js exactly as the direct builder calls would. The server-driven UI shape a native app can render with its own views. docs/components.md.
+- **tokens:** the Compose, SwiftUI and Flutter files put the kit's scales (radius, space, size, type, motion) in one theme-independent `OvScale`; the theme objects carry the colours.
+
 ## 4.41.0 — 2026-10-29
 
 - **Try a theme on any OpenVibe page: `?ov-try=<theme>`** (theme-loader.js). It paints a catalog theme on the site without saving it: built-in themes at once, gallery themes from Network's catalog. The try is kept for the tab (sessionStorage) as the person moves around, and every repaint wears the tried theme (the account's sync, another tab, the device's light/dark). A bar at the bottom, above the app bar and 44 px to the touch, says "Trying <name>" with **Use it** (saves to the account, as the studio does) and **Stop** (back to the account's theme; `?ov-try=off` does the same). Only a catalog name is read from the URL, never colours, and nothing is saved until Use it. `OpenVibeThemeLoader.try.start(id)` / `.stop()` / `.current()` do the same from a page. OpenVibe.Design links to it ("Try it on Live"). test/theme-try.test.js.
