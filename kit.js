@@ -576,7 +576,7 @@
         const axisNames = yo.label ? `<span class="ovk-chart-yname" aria-hidden="true">${esc(yo.label)}</span>` : '';
         return `<figure class="ovk-chart ovk-chart--${kind}"${id ? ` id="${esc(id)}"` : ''} style="--ovk-chart-h:${Math.max(120, Math.min(600, Number(height) || 220))}px;--ovk-chart-g:${gutter}px">${cap}${legend}${axisNames}`
             + `<div class="ovk-chart-plot"${data ? ` tabindex="0" role="img" aria-label="${esc(name)}" data-ovk-chart="${esc(JSON.stringify(data))}"` : ` role="group" aria-label="${esc(name)}"`}>${plot}${data ? '<span class="ovk-chart-rule" hidden></span><span class="ovk-chart-tip" hidden></span>' : ''}</div>`
-            + `${xo.label ? `<p class="ovk-chart-xname" aria-hidden="true">${esc(xo.label)}</p>` : ''}<table class="ovk-sr"><caption>${esc(name)}</caption>${table}</table></figure>`;
+            + `${xo.label ? `<p class="ovk-chart-xname" aria-hidden="true">${esc(xo.label)}</p>` : ''}<div class="ovk-sr"><table><caption>${esc(name)}</caption>${table}</table></div></figure>`;
     }
     /** The grid and the tick labels: x [[pos%, text]], y [[pos%, text]] — real text, placed by percent. */
     function axes(xt, yt) {

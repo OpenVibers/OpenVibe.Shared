@@ -201,7 +201,10 @@
             const names = Array.prototype.slice.call(plot.querySelectorAll('.ovk-chart-name'));
             if (names.length < 2) return;
             const place = () => {
-                names.forEach((n) => n.classList.remove('is-hidden'));
+                names.forEach((n) => { n.classList.remove('is-hidden'); n.parentNode.classList.remove('is-flip'); });
+                // A label that would run past the plot's right edge goes to the left of its dot.
+                const edge = plot.getBoundingClientRect().right + 4;
+                names.forEach((n) => { if (!n.parentNode.classList.contains('is-right') && n.getBoundingClientRect().right > edge) n.parentNode.classList.add('is-flip'); });
                 const order = names.slice().sort((a, b) => (b.parentNode.classList.contains('is-best') - a.parentNode.classList.contains('is-best')) || (parseFloat(b.parentNode.style.bottom) - parseFloat(a.parentNode.style.bottom)));
                 const kept = [];
                 order.forEach((n) => {

@@ -33,6 +33,9 @@
     --ovk-font: var(--ov-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 }
 
+/* Heading and paragraph rules double their class (.ovk-section.ovk-section > h2): a site's own ".site h2" has the same
+ * specificity as ".ovk-section > h2" and loads later, so it used to restyle the kit's headings (Report, 2026-10-29). */
+
 /* ── Basics ── */
 .ovk-i { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -.2em; }
 .ovk-sr { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
@@ -76,7 +79,7 @@
 .ovk-head-row { display: flex; align-items: center; gap: 6px; min-height: 48px; padding-bottom: 6px; }
 .ovk-head-row > .ovk-back { margin-left: -8px; }
 .ovk-head-id { flex: 1; min-width: 0; }
-.ovk-head-id h1, .ovk-head-id h2 { margin: 0; color: var(--ovk-text); font-family: var(--ovk-font); font-size: clamp(1.15rem, 4.2vw, 1.5rem); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovk-head-id.ovk-head-id h1, .ovk-head-id.ovk-head-id h2 { margin: 0; color: var(--ovk-text); font-family: var(--ovk-font); font-size: clamp(1.15rem, 4.2vw, 1.5rem); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovk-sub { margin: 2px 0 0; color: var(--ovk-muted); font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovk-head-tools { display: flex; align-items: center; gap: 2px; margin-right: -8px; }
 .ovk-head-tools form { margin: 0; }
@@ -90,7 +93,7 @@
 
 /* ── Lists: rows that read like a phone's (a mark, the name and time on one line, one line under it) ── */
 .ovk-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 8px; }
-.ovk-list-head h2 { margin: 0; color: var(--ovk-muted); font-family: inherit; font-size: .76rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.ovk-list-head.ovk-list-head h2 { margin: 0; color: var(--ovk-muted); font-family: inherit; font-size: .76rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .ovk-list-head a { color: var(--ovk-accent); font-size: .84rem; font-weight: 700; text-decoration: none; }
 .ovk-list { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr); margin: 0 0 14px; padding: 0; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); overflow: hidden; }
 .ovk-list--flush { margin: 0; border: 0; border-radius: 0; border-top: 1px solid var(--ovk-line); background: transparent; }
@@ -117,7 +120,7 @@
 
 /* ── Sections (settings groups, a page's parts) and folds ── */
 .ovk-section { margin: 0 0 12px; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); overflow: hidden; color: var(--ovk-text); }
-.ovk-section > h2 { display: flex; align-items: center; gap: 6px; margin: 0; padding: 12px 14px 6px; color: var(--ovk-muted); font-family: inherit; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.ovk-section.ovk-section > h2 { display: flex; align-items: center; gap: 6px; margin: 0; padding: 12px 14px 6px; color: var(--ovk-muted); font-family: inherit; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .ovk-count { color: var(--ovk-text); font-weight: 800; letter-spacing: 0; }
 .ovk-note { margin: 0; padding: 0 14px 10px; color: var(--ovk-muted); font-size: .86rem; }
 .ovk-section > .ovk-form, .ovk-section > form:not(.ovk-find):not(.ovk-inline) { padding: 4px 14px 14px; }
@@ -171,7 +174,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-form input:not([type=checkbox]):not([type=radio]):not([type=range]), .ovk-form select, .ovk-form textarea { width: 100%; box-sizing: border-box; min-height: var(--ovk-tap); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--ovk-line); background: var(--ovk-input); color: var(--ovk-text); font: inherit; font-size: 1rem; }
 .ovk-form textarea { min-height: 96px; resize: vertical; }
 .ovk-form input:focus-visible, .ovk-form select:focus-visible, .ovk-form textarea:focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 0; border-color: transparent; }
-.ovk-form > p { margin: 0; }
+.ovk-form.ovk-form > p { margin: 0; }
 /* A settings row inside a form stays a row: the label on the left, its control (not stretched) on the right. */
 .ovk-form label.ovk-set-row { display: flex; color: var(--ovk-text); font-size: 1rem; }
 .ovk-form .ovk-set-row select { width: auto; min-height: 0; padding: 7px 8px; font-size: .9rem; }
@@ -212,7 +215,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-stats dd { margin: 0; color: var(--ovk-text); font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .ovk-empty { display: grid; justify-items: center; gap: 8px; margin: 0 0 14px; padding: 24px 16px; border: 1px dashed var(--ovk-line); border-radius: var(--ovk-radius); color: var(--ovk-muted); text-align: center; }
 .ovk-empty > .ovk-i { width: 28px; height: 28px; }
-.ovk-empty p { margin: 0; max-width: 46ch; }
+.ovk-empty.ovk-empty p { margin: 0; max-width: 46ch; }
 .ovk-empty .ovk-empty-title { color: var(--ovk-text); font-weight: 750; }
 .ovk-notice { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--ovk-line); background: var(--ovk-panel); color: var(--ovk-text); font-size: .92rem; }
 .ovk-notice > .ovk-i { margin-top: 2px; }
@@ -229,7 +232,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-sheet::backdrop { background: rgba(0, 0, 0, .55); }
 .ovk-sheet[open] { display: flex; flex-direction: column; }
 .ovk-sheet-head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 16px; border-bottom: 1px solid var(--ovk-line); }
-.ovk-sheet-head h2 { flex: 1; margin: 0; font-size: 1.05rem; }
+.ovk-sheet-head.ovk-sheet-head h2 { flex: 1; margin: 0; font-size: 1.05rem; }
 .ovk-sheet-body { padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)); overflow-y: auto; }
 
 /* ── Phones (< 600 px): bottom sheets, full-width forms ── */
@@ -317,7 +320,7 @@ div.ovk-set-row { cursor: default; }
 }
 
 /* Charts: the lines are an SVG stretched to the box; every label is real text at its real size */
-.ovk-chart { margin: 0 0 14px; padding: 14px 14px 10px; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); color: var(--ovk-text); font-family: var(--ovk-font); }
+.ovk-chart { overflow: clip; margin: 0 0 14px; padding: 14px 14px 10px; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); color: var(--ovk-text); font-family: var(--ovk-font); }
 .ovk-chart figcaption { display: grid; gap: 2px; margin: 0 0 8px; }
 .ovk-chart figcaption strong { font-size: 1rem; font-weight: 800; }
 .ovk-chart figcaption span { color: var(--ovk-muted); font-size: .84rem; }
@@ -353,7 +356,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-chart-dot.is-right .ovk-chart-pop { left: auto; right: -6px; transform: none; }
 .ovk-chart-name.is-hidden { visibility: hidden; }
 .ovk-chart-name { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ovk-text); font-size: .74rem; font-weight: 600; white-space: nowrap; pointer-events: none; text-shadow: 0 0 3px var(--ovk-panel), 0 0 3px var(--ovk-panel); }
-.ovk-chart-dot.is-right .ovk-chart-name { left: auto; right: 14px; }
+.ovk-chart-dot.is-right .ovk-chart-name, .ovk-chart-dot.is-flip .ovk-chart-name { left: auto; right: 14px; }
 .ovk-chart-bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: clamp(1px, calc(12% / var(--n, 10)), 6px); }
 .ovk-chart-bar { position: relative; flex: 1 1 0; min-width: 2px; height: var(--h, 0%); border-radius: 3px 3px 0 0; background: var(--ovk-c1); outline: none; }
 .ovk-chart-bar:hover, .ovk-chart-bar:focus-visible { filter: brightness(1.15); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ovk-accent) 45%, transparent); }
@@ -414,7 +417,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-receipt--ok { border-color: color-mix(in srgb, var(--ovk-ok) 45%, var(--ovk-line)); }
 .ovk-receipt--bad { border-color: color-mix(in srgb, var(--ovk-bad) 45%, var(--ovk-line)); }
 .ovk-receipt-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 8px 0 14px; min-height: 44px; }
-.ovk-receipt-head h2 { margin: 0; font-size: 1rem; font-weight: 800; }
+.ovk-receipt-head.ovk-receipt-head h2 { margin: 0; font-size: 1rem; font-weight: 800; }
 .ovk-receipt-acts { display: inline-flex; gap: 2px; }
 .ovk-receipt-body { padding: 10px 14px 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .ovk-receipt-body > :first-child { margin-top: 0; } .ovk-receipt-body > :last-child { margin-bottom: 0; }
