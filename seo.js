@@ -157,6 +157,42 @@ const jsonLd = {
                 ...(item.width != null ? { width: item.width } : {}), ...(item.height != null ? { height: item.height } : {}) };
         });
     },
+    /** An event that really is happening at a time the page shows. Only the parts the page has are written. */
+    event({ name, startDate, endDate, url, description, organizer, location, eventStatus, eventAttendanceMode, image } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'Event', name, startDate,
+            ...(endDate ? { endDate } : {}), ...(description ? { description } : {}),
+            ...(eventStatus ? { eventStatus } : {}), ...(eventAttendanceMode ? { eventAttendanceMode } : {}),
+            ...(location ? { location } : {}),
+            ...(organizer ? { organizer: typeof organizer === 'string' ? { '@type': 'Organization', name: organizer } : organizer } : {}),
+            ...(image ? { image } : {}), ...(url ? { url } : {}) };
+    },
+    /** A public job listing. `description` is the page's own excerpt; nothing is invented for the fields it omits. */
+    jobPosting({ title, url, description, datePosted, validThrough, hiringOrganization, jobLocationType, employmentType, jobLocation, baseSalary, identifier, directApply } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'JobPosting', title,
+            ...(description ? { description } : {}), ...(datePosted ? { datePosted } : {}), ...(validThrough ? { validThrough } : {}),
+            ...(hiringOrganization ? { hiringOrganization: typeof hiringOrganization === 'string' ? { '@type': 'Organization', name: hiringOrganization } : hiringOrganization } : {}),
+            ...(jobLocationType ? { jobLocationType } : {}), ...(employmentType ? { employmentType } : {}),
+            ...(jobLocation ? { jobLocation } : {}), ...(baseSalary ? { baseSalary } : {}),
+            ...(identifier ? { identifier } : {}), ...(directApply != null ? { directApply } : {}), ...(url ? { url } : {}) };
+    },
+    /** A recipe page's own ingredients and steps. Steps may be strings or ready HowToStep objects. */
+    recipe({ name, url, description, image, recipeIngredient, recipeInstructions, recipeYield, totalTime, author, datePublished } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'Recipe', name,
+            ...(description ? { description } : {}), ...(image ? { image } : {}),
+            ...(recipeIngredient ? { recipeIngredient } : {}),
+            ...(recipeInstructions ? { recipeInstructions: recipeInstructions.map((s) => (typeof s === 'string' ? { '@type': 'HowToStep', text: s } : s)) } : {}),
+            ...(recipeYield ? { recipeYield } : {}), ...(totalTime ? { totalTime } : {}),
+            ...(author ? { author: typeof author === 'string' ? { '@type': 'Organization', name: author } : author } : {}),
+            ...(datePublished ? { datePublished } : {}), ...(url ? { url } : {}) };
+    },
+    /** An open dataset a page publishes. `license` only when the site names one. */
+    dataset({ name, url, description, license, creator, keywords, distribution } = {}) {
+        return { '@context': 'https://schema.org', '@type': 'Dataset', name,
+            ...(description ? { description } : {}), ...(license ? { license } : {}),
+            ...(creator ? { creator: typeof creator === 'string' ? { '@type': 'Organization', name: creator } : creator } : {}),
+            ...(keywords ? { keywords: Array.isArray(keywords) ? keywords.join(', ') : keywords } : {}),
+            ...(distribution ? { distribution } : {}), ...(url ? { url } : {}) };
+    },
 };
 
 const isAbs = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
