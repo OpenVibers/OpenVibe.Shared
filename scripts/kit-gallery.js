@@ -51,12 +51,14 @@ function page(body, title) {
 <title>${title}</title>
 <script src="theme-loader.js"></script>
 <link rel="stylesheet" href="kit.css">
+<link rel="stylesheet" href="kit-data.css">
 <style>body { margin: 0; background: var(--bg-primary, #0b0f17); color: var(--text-primary, #e8ecf3); font-family: 'Inter', system-ui, sans-serif; }</style>
 </head><body>
 <div id="navbar-mount"></div>
 <main class="ovk-page">${body}</main>
 <script src="navbar.js"></script>
 <script src="kit-web.js"></script>
+<script src="kit-data-web.js"></script>
 <script>OpenVibeNavbar.init({ service: 'chat', user: null, links: [
   { label: 'Vibe', href: '/vibe', icon: 'fa-wand-magic-sparkles' }, { label: 'Chat', href: '/', icon: 'fa-comments' },
   { label: 'Rooms', href: '/rooms', icon: 'fa-people-group' }, { label: 'Settings', href: '/kit', icon: 'fa-gear' },

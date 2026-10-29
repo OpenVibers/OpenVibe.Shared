@@ -6,6 +6,16 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.37.0 — 2026-10-29
+
+- **Kit 2 has its own files: `kit-data.css` and `kit-data-web.js`.** Its look and behaviour moved out of `kit.css` and
+  `kit-web.js`, which weigh what they did before Kit 2 again (kit.css 44 → 25.6 KB, kit-web.js 20 → 12.4 KB). A page that
+  draws steps, a table, a chart, a ranking, a meter, a drop zone or a receipt adds `kit-data.css` after `kit.css`, and
+  `kit-data-web.js` for chart readouts and drop zones. Why: Media's front page needed only cards and rails, and the
+  44 KB kit.css took its stylesheets from 28 KB to 63 KB; every site in the pin round would have paid the same. The
+  builders (`kit.js`) are unchanged. Breaking only for a page that used Kit 2 on 4.36.x without the new files (Report,
+  Vision, Sources and Codes, updated alongside).
+
 ## 4.36.2 — 2026-10-29
 
 - **kit-web.js on boosted sites:** a page reached through boost.js (a swap of `#main`, no page load) now gets the kit's
