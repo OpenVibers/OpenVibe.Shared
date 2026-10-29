@@ -6,6 +6,15 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.35.0 — 2026-10-29
+
+- **Showcase:** the page root clips the horizontal axis (`html { overflow-x: clip }`), so a narrow page whose
+  hero aura is drawn past the right edge never scrolls sideways on a phone. Vertical scrolling and sticky
+  positioning are untouched — unlike `overflow-x: hidden`, `clip` does not create a scroll container. Four
+  sites had patched this in their own stylesheets on 2026-10-29; the kit now owns it for every site that
+  includes `showcase.css`.
+
+
 ## 4.34.0 — 2026-10-29
 
 - **Agent discovery:** the server-only `agent-layer` module serves `/.well-known/agent.json`
