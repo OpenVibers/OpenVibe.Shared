@@ -389,15 +389,25 @@
 
     // ── Auto-apply on load (synchronous, prevents FOUC) ─────
     // ── Display preferences: motion + text size, one setting for every OpenVibe site ─────────────
-    //   OpenVibeThemeLoader.display.get() → { motion: 'auto'|'reduced', text: '100'|'112'|'125' }
+    //   OpenVibeThemeLoader.display.get() → { motion: 'auto'|'reduced', text: '100'|'112'|'125', seasonal, scheme,
+    //     contrast: 'normal'|'more', font: 'default'|'readable', colors: 'default'|'cb-safe', oled: 'off'|'on' }
     //   OpenVibeThemeLoader.display.set({ motion, text })   applies here, in other tabs, and saves to the account
     // Applied as <html data-ov-motion> and --ov-text-scale before first paint; the shared stylesheet
     // below makes every shared component honour them, and sites can key their own CSS off the same hooks.
     //   seasonal: 'on'|'off'   the season's theme in place of the default theme (see Seasons above)
     //   scheme: 'manual'|'auto'   the picked theme as it is, or its half that matches the device (see Light, dark and Auto)
-    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'] };
+    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'] };
+    // Comfort (4.45.0): an attribute on <html> each; !important because the theme is inline (applyVars). contrast=more,
+    // font=readable (Atkinson Hyperlegible/Verdana), colors=cb-safe (Okabe-Ito), oled=on (black on dark themes).
+    const COMFORT_CSS = 'html[data-ov-contrast=more]{--text-secondary:color-mix(in srgb,var(--text-primary) 88%,var(--bg-primary))!important;--text-muted:color-mix(in srgb,var(--text-primary) 76%,var(--bg-primary))!important;--border:color-mix(in srgb,var(--text-primary) 40%,var(--bg-primary))!important;--border-light:color-mix(in srgb,var(--text-primary) 55%,var(--bg-primary))!important}'
+        + 'html[data-ov-contrast=more] :is(p,dd,td) a:not([class]){text-decoration-line:underline;text-underline-offset:2px}html[data-ov-contrast=more] :focus-visible{outline:3px solid var(--accent-strong,var(--accent))!important;outline-offset:2px}'
+        + 'html[data-ov-font=readable]{--ov-font:"Atkinson Hyperlegible",Verdana,Tahoma,"Segoe UI",system-ui,sans-serif!important}html[data-ov-font=readable] body{font-family:var(--ov-font)!important;letter-spacing:.02em;word-spacing:.06em}html[data-ov-font=readable] :is(p,li,dd){line-height:1.7}'
+        + 'html[data-ov-colors=cb-safe]{--success:#56b4e9!important;--success-text:#7cc6ef!important;--warning:#f0e442!important;--warning-text:#f0e442!important;--danger:#e8743b!important;--danger-text:#f0985f!important}'
+        + 'html[data-ov-colors=cb-safe][data-theme-mode=light]{--success:#0072b2!important;--success-text:#005a8c!important;--warning:#e69f00!important;--warning-text:#8a6100!important;--danger:#d55e00!important;--danger-text:#a84400!important}'
+        + 'html[data-ov-oled=on][data-theme-mode=dark]{--bg-primary:#000!important;--bg-secondary:#050608!important;--bg-tertiary:#0b0d12!important;--bg-card:#0a0c10!important;--bg-input:#0b0d12!important;--bg-hover:#12151c!important}';
+    const COMFORT_ATTRS = { contrast: ['data-ov-contrast', 'normal'], font: ['data-ov-font', 'default'], colors: ['data-ov-colors', 'default'], oled: ['data-ov-oled', 'off'] };
     function readDisplay() {
-        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual' };
+        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off' };
         try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(d[k])) >= 0) out[k] = String(d[k]); } catch (e) { /* */ }
         return out;
     }
@@ -406,9 +416,10 @@
         const el = document.documentElement;
         if (d.motion === 'reduced') el.setAttribute('data-ov-motion', 'reduced'); else el.removeAttribute('data-ov-motion');
         if (d.text === '100') { el.style.removeProperty('--ov-text-scale'); el.removeAttribute('data-ov-text'); } else { el.style.setProperty('--ov-text-scale', String(parseInt(d.text, 10) / 100)); el.setAttribute('data-ov-text', d.text); }
+        for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-mark .o,html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}';
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-mark .o,html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + COMFORT_CSS;
             document.head.appendChild(st);
         }
         try { window.dispatchEvent(new CustomEvent('ov:display', { detail: d })); } catch (e) { /* */ }
@@ -577,7 +588,7 @@
         fetch(_config.apiBase + '/api/themes/me/active' + (site ? '?service=' + encodeURIComponent(site) : ''), { headers: headers, credentials: 'include' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (data && data.display) { const cur = readDisplay(); if (JSON.stringify({ motion: data.display.motion || cur.motion, text: data.display.text || cur.text, seasonal: data.display.seasonal || cur.seasonal, scheme: data.display.scheme || cur.scheme }) !== JSON.stringify(cur)) { fadeNext(); setDisplay(data.display, { local: true }); } }
+                if (data && data.display) { const cur = readDisplay(); const next = {}; for (const k in DISPLAY_OPTS) next[k] = data.display[k] || cur[k]; if (JSON.stringify(next) !== JSON.stringify(cur)) { fadeNext(); setDisplay(data.display, { local: true }); } }
                 if (!data || !data.theme_id) return;
                 const serverId = data.theme_id;
                 const custom = (data.custom_variables && typeof data.custom_variables === 'object'
