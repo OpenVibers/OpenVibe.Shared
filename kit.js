@@ -202,14 +202,15 @@
     }
     /**
      * One row: its mark, the title (with a badge) and the time on one line, one muted line under it, a trailing control.
-     * href makes the whole row a link; without it the row is static and trail can hold its own forms.
+     * href makes the whole row a link; without it the row is static and trail can hold its own forms. rel: the link's
+     * rel ('nofollow ugc' for links people posted, 'noopener' off-site).
      */
-    function row({ href = null, mark: markHtml = '', title = '', titleHtml = null, badge: badgeHtml = '', meta = '', metaIso = '', sub = '', subHtml = null, trail = '', unread = 0, attrs: extra = null } = {}) {
+    function row({ href = null, rel = '', mark: markHtml = '', title = '', titleHtml = null, badge: badgeHtml = '', meta = '', metaIso = '', sub = '', subHtml = null, trail = '', unread = 0, attrs: extra = null } = {}) {
         const top = `<span class="ovk-row-top"><strong>${titleHtml != null ? titleHtml : esc(title)}</strong>${badgeHtml || ''}${meta ? (metaIso ? `<time datetime="${esc(metaIso)}">${esc(meta)}</time>` : `<span class="ovk-row-meta">${esc(meta)}</span>`) : ''}</span>`;
         const subLine = subHtml != null || sub || unread ? `<span class="ovk-row-sub"><span>${subHtml != null ? subHtml : esc(sub)}</span>${dot(unread)}</span>` : '';
         const main = `${markHtml || ''}<span class="ovk-row-main">${top}${subLine}</span>`;
         const cls = `ovk-row${unread ? ' ovk-row--unread' : ''}`;
-        if (href != null) return `<li class="${cls}"${attrs(extra)}><a href="${esc(url(href))}">${main}${trail ? `<span class="ovk-row-trail">${trail}</span>` : ''}</a></li>`;
+        if (href != null) return `<li class="${cls}"${attrs(extra)}><a href="${esc(url(href))}"${rel ? ` rel="${esc(rel)}"` : ''}>${main}${trail ? `<span class="ovk-row-trail">${trail}</span>` : ''}</a></li>`;
         return `<li class="${cls} ovk-row--static"${attrs(extra)}>${main}${trail ? `<span class="ovk-row-trail">${trail}</span>` : ''}</li>`;
     }
 
@@ -330,25 +331,31 @@
      *  - media in the type's shape, a badge top-left (a word: NEW, −24 %, WR; live: true draws LIVE with a pulse) and a
      *    corner bottom-right (a length or a price); peek: one line over the media on hover or focus; video: a muted
      *    loop played while it is hovered (computers only, never under reduced motion, loaded only then)
-     *  - the title (two lines at most), then who (with their picture or letters), one count and when; a count of 0 or
-     *    none is left out, never shown as 0
+     *  - the title (two lines at most); sub: one plain muted line under it (a city, a kind, a language); then who (with
+     *    their picture or letters), one count and when; a count of 0 or none is left out, never shown as 0. whoHtml: the
+     *    name as markup the caller escaped (a name with its decorations); who stays the plain name for the letters
+     *  - preview: for a thing without a picture whose text is the point (a code paste, a note), its first lines drawn in
+     *    the media instead of the type's icon
      *  - ⋯ with Save and Remind when given ({ href } or { action, hidden }), Share (always: the system share sheet, else
      *    the link copied) and any `more` items (kit.more's)
      * The card is one link, the title's, stretched over it; ⋯ sits above it. level: the title's heading level (3).
      */
     function card({ href = '#', title = '', type = '', ratio = '', image = '', alt = '', video = '', badge: bd = '', live = false, corner = '',
-        peek = '', who = '', avatar = '', count = null, when: at = null, level = 3, save = null, remind = null, share = true, more: extra = null } = {}) {
+        peek = '', who = '', whoHtml = null, avatar = '', count = null, when: at = null, level = 3, save = null, remind = null, share = true,
+        more: extra = null, sub = '', preview = '' } = {}) {
         const ar = /^\d{1,2}\/\d{1,2}$/.test(String(ratio)) ? ratio : CARD_RATIO[type] || '16/9';
         const link = url(href);
+        const first = String(preview || '').split('\n').slice(0, 9).join('\n').slice(0, 480).trimEnd();
         const pic = media(image)
             ? `<img src="${esc(image)}" alt="${esc(alt)}" loading="lazy" decoding="async">`
-            : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
+            : first ? `<pre class="ovk-card-pre" aria-hidden="true">${esc(first)}</pre>`
+                : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
         const loop = media(video) ? `<video class="ovk-card-video" data-src="${esc(video)}" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>` : '';
         const tag = live ? '<span class="ovk-card-badge is-live">LIVE</span>' : bd ? `<span class="ovk-card-badge">${esc(bd)}</span>` : '';
         const n = Array.isArray(count) ? Number(count[0]) : Number(count);
         const counted = Number.isFinite(n) && n > 0 ? `<span>${esc(fmtCount(n))}${Array.isArray(count) && count[1] ? ` ${esc(count[1])}` : ''}</span>` : '';
         const t = at != null && at !== '' ? when(at) : null;
-        const meta = [who ? `<span class="ovk-card-who">${esc(who)}</span>` : '', counted, t && t.text ? `<time datetime="${esc(t.iso)}">${esc(t.text)}</time>` : ''].filter(Boolean).join('');
+        const meta = [whoHtml != null && whoHtml !== '' ? `<span class="ovk-card-who">${whoHtml}</span>` : who ? `<span class="ovk-card-who">${esc(who)}</span>` : '', counted, t && t.text ? `<time datetime="${esc(t.iso)}">${esc(t.text)}</time>` : ''].filter(Boolean).join('');
         const items = [
             save ? { label: 'Save', icon: 'star', ...save } : null,
             remind ? { label: 'Remind me', icon: 'bell', ...remind } : null,
@@ -358,21 +365,22 @@
         return `<article class="ovk-card${live ? ' is-live' : ''}${type ? ` ovk-card--${esc(type)}` : ''}" style="--ovk-ar:${ar}">`
             + `<div class="ovk-card-media">${pic}${loop}${tag}${corner ? `<span class="ovk-card-corner">${esc(corner)}</span>` : ''}${peek ? `<span class="ovk-card-peek">${esc(peek)}</span>` : ''}</div>`
             + `<div class="ovk-card-body">${who || avatar ? mark({ name: who || title, src: avatar, size: 34 }) : ''}<div class="ovk-card-text">`
-            + `<h${h} class="ovk-card-title"><a class="ovk-card-link" href="${esc(link)}">${esc(title)}</a></h${h}>${meta ? `<p class="ovk-card-meta">${meta}</p>` : ''}</div>`
+            + `<h${h} class="ovk-card-title"><a class="ovk-card-link" href="${esc(link)}">${esc(title)}</a></h${h}>${sub ? `<p class="ovk-card-sub">${esc(sub)}</p>` : ''}${meta ? `<p class="ovk-card-meta">${meta}</p>` : ''}</div>`
             + `${items.length ? more({ label: `More: ${title}`, items }) : ''}</div></article>`;
     }
     /**
      * rail({ id, title, more: { href, label }, items: [card html], size: 's'|'m'|'l', label }) — a row that scrolls
      * sideways and snaps: about 1.2 cards on a phone, as many as fit on a computer, with ‹ › buttons there (kit.enhance).
-     * size: 's' square things (memes, shoes, deals), 'm' (default) pictures 16:9, 'l' wide features. Empty → ''.
+     * size: 's' square things (memes, shoes, deals), 'm' (default) pictures 16:9, 'l' wide features. wrap: from 760 px
+     * the row becomes a grid that shows every item (no arrows, no kit-web.js needed); phones still swipe. Empty → ''.
      */
-    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '' } = {}) {
+    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '', wrap = false } = {}) {
         const list = (items || []).filter(Boolean);
         if (!list.length) return '';
         const hid = id ? `${String(id).replace(/[^a-z0-9_-]/gi, '')}-h` : '';
         const head = title || m ? `<div class="ovk-rail-head">${title ? `<h2${hid ? ` id="${hid}"` : ''}>${esc(title)}</h2>` : ''}${m && m.href ? `<a class="ovk-rail-more" href="${esc(url(m.href))}">${esc(m.label || 'See all')}${icon('chevron')}</a>` : ''}</div>` : '';
         const named = hid && title ? ` aria-labelledby="${hid}"` : ` aria-label="${esc(label || title || 'More')}"`;
-        return `<section class="ovk-rail ovk-rail--${size === 's' || size === 'l' ? size : 'm'}"${id ? ` id="${esc(id)}"` : ''}${named}>${head}`
+        return `<section class="ovk-rail ovk-rail--${size === 's' || size === 'l' ? size : 'm'}${wrap ? ' ovk-rail--wrap' : ''}"${id ? ` id="${esc(id)}"` : ''}${named}>${head}`
             + `<div class="ovk-rail-wrap"><ul class="ovk-rail-track" role="list">${list.map((x) => `<li>${x}</li>`).join('')}</ul>`
             + `<button type="button" class="ovk-rail-btn ovk-rail-prev" aria-label="Scroll back" hidden>${icon('back')}</button>`
             + `<button type="button" class="ovk-rail-btn ovk-rail-next" aria-label="Scroll on" hidden>${icon('forward')}</button></div></section>`;

@@ -56,6 +56,20 @@ const sc = require('../showcase');
     assert.ok(kit.card({ title: 'x', live: true }).includes('ovk-card-badge is-live">LIVE'), 'live says LIVE');
     assert.ok(kit.card({ title: 'x', video: '/v.mp4' }).includes('data-src="/v.mp4"') && !kit.card({ title: 'x', video: '/v.mp4' }).includes(' src="/v.mp4"'), 'the preview loads only when hovered');
     assert.ok(kit.card({ title: 'x', level: 2 }).includes('<h2 class="ovk-card-title">'));
+    // 4.39.0: a plain sub-line, a text preview in place of the icon, a decorated name.
+    const s = kit.card({ title: 'Loft', sub: 'Lisbon · <2 rooms>', who: 'ann' });
+    assert.ok(s.includes('<p class="ovk-card-sub">Lisbon · &lt;2 rooms&gt;</p>') && s.indexOf('ovk-card-sub') < s.indexOf('ovk-card-meta'), 'sub: one escaped line between the title and the meta');
+    assert.ok(!kit.card({ title: 'x' }).includes('ovk-card-sub'), 'no sub, no line');
+    const p = kit.card({ title: 'paste', type: 'post', preview: Array.from({ length: 20 }, (_, i) => `line ${i} <x>`).join('\n') });
+    assert.ok(p.includes('<pre class="ovk-card-pre" aria-hidden="true">line 0 &lt;x&gt;') && !p.includes('line 9 ') && !p.includes('ovk-card-noimg'), 'preview: the first nine lines, escaped, instead of the icon');
+    assert.ok(kit.card({ title: 'x', image: '/a.jpg', preview: 'code' }).includes('<img src="/a.jpg"') && !kit.card({ title: 'x', image: '/a.jpg', preview: 'code' }).includes('ovk-card-pre'), 'a picture wins over a preview');
+    const w = kit.card({ title: 'x', who: 'ann', whoHtml: '<span class="deco">ann</span>' });
+    assert.ok(w.includes('<span class="ovk-card-who"><span class="deco">ann</span></span>') && w.includes('ovk-mark'), 'whoHtml shows the decorated name; who still gives the letters');
+}
+// ── kit.row: rel ──
+{
+    assert.ok(kit.row({ href: 'https://x.example/', title: 't', rel: 'nofollow ugc' }).includes('href="https://x.example/" rel="nofollow ugc"'));
+    assert.ok(!kit.row({ href: '/a', title: 't' }).includes(' rel='), 'no rel unless asked');
 }
 
 // ── kit.rail ──
@@ -66,6 +80,14 @@ const sc = require('../showcase');
     assert.strictEqual((r.match(/<li>/g) || []).length, 2);
     assert.ok(r.includes('ovk-rail-prev') && r.includes('ovk-rail-next') && r.includes(' hidden>'), 'arrows start hidden (kit-web shows them)');
     assert.ok(kit.rail({ items: ['x'], size: 'huge' }).includes('ovk-rail--m'), 'an unknown size is medium');
+    assert.ok(kit.rail({ items: ['x'], wrap: true }).includes('class="ovk-rail ovk-rail--m ovk-rail--wrap"'), 'wrap: a grid from 760 px');
+    assert.ok(!kit.rail({ items: ['x'] }).includes('ovk-rail--wrap'), 'rails swipe unless told to wrap');
+    const room = fs.readFileSync(path.join(__dirname, '..', 'room.css'), 'utf8');
+    assert.match(room, /@media \(min-width: 760px\) \{\s*\.ovk-rail--wrap \.ovk-rail-track \{ grid-auto-flow: row;/, 'room.css wraps the rail from 760 px');
+    assert.match(room, /@media \(pointer: coarse\), \(max-width: 759px\) \{ \.ovk-rail-more \{ min-height: 44px; \} \}/, 'See all is 44 px to the touch');
+    const kitCss = fs.readFileSync(path.join(__dirname, '..', 'kit.css'), 'utf8');
+    assert.match(kitCss, /\.ovk-tabs a, \.ovk-list-head a \{ min-height: 44px; \}/, 'tab pills and list links are 44 px to the touch');
+    assert.match(kitCss, /\.ovk-stats dt a \{ color: inherit; text-decoration: none; \}/, 'a stats label that is a link is not underlined');
 }
 
 // ── sc.room: the front door's order, the accent, nothing invented ──

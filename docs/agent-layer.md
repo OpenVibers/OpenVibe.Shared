@@ -61,7 +61,10 @@ adds the tags (only enable where twins are mounted).
 
 `markdownTwin({ html, title?, canonical, updated? })` uses the existing LinkeDOM parser,
 now a runtime dependency. It reads `<main>` (or the body), ignores scripts, styles, templates,
-navigation, footers and explicitly hidden elements, and requires no client JavaScript.
+navigation, footers and explicitly hidden elements, and requires no client JavaScript. Controls are not content:
+buttons, form fields, icons (svg), players, dialogs and a card's ⋯ menu are left out (4.39.0). Pieces a page sets side by
+side with no space between them (a card's who · count · when, a launcher tile's name and line) keep a space, and a
+definition list or a kit.stats strip becomes one `- label: value` line each.
 It emits YAML `title`, `canonical`, `updated`, a title heading, and an HTML backlink.
 Unknown update times are `null`, never the request time. Real headings remain in order
 (including a page's own h1), links and image alt text come from the rendered page, missing

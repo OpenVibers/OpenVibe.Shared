@@ -45,13 +45,38 @@ ${k.dock({ action: '#send', placeholder: 'Message #general' })}`;
     return page(body, 'OpenVibe Kit');
 }
 
-function page(body, title) {
+// The pieces of a product's front page (4.39.0): cards with a sub-line, a text preview and a decorated name, a rail that
+// swipes and one that wraps from 760 px, numbers that are links, and the launcher at 4 tiles (no tile alone) and 15.
+function galleryRooms() {
+    const k = kit;
+    const sc = require('../showcase');
+    const code = 'const sdk = require(\'openvibe-sdk\');\nconst ov = sdk.createClient();\n\nconst { results } = await ov.search\n  .query(\'go live\');\nconsole.log(results.length);';
+    const cards = [
+        k.card({ href: '#1', title: 'A sunny loft by the river, two rooms', type: 'listing', sub: 'Lisbon · Apartment', corner: '€1,240', who: 'Ana', count: [312, 'views'], when: new Date(Date.now() - 86400e3).toISOString() }),
+        k.card({ href: '#2', title: 'search.js', type: 'post', preview: code, corner: 'JavaScript', who: 'Maticus', whoHtml: '<span style="color:var(--ovk-accent)">Maticus ✦</span>', count: [12, 'views'] }),
+        k.card({ href: '#3', title: 'Release notes for the node, with a much longer title that wraps', type: 'post', sub: 'Markdown', who: 'OpenVibe', count: [48, 'views'] }),
+        k.card({ href: '#4', title: 'Beach-side loading chaos', type: 'clip', corner: '0:24', live: false, who: 'OpenVibe AI', badge: 'AI' }),
+        k.card({ href: '#5', title: 'Garden studio, quiet street', type: 'listing', sub: 'Porto · Room', corner: '€640' }),
+    ];
+    const tiles = (n) => Array.from({ length: n }, (_, i) => ({ icon: ['ov:live', 'ov:chat', 'ov:media', 'ov:tools', 'ov:games'][i % 5], name: ['Live', 'Chat', 'Media', 'Tools', 'Games', 'Search', 'Pay', 'Events'][i % 8], text: 'One line about it', href: `/app/${i}` }));
+    const body = `<h1 class="ovk-title">Front page pieces</h1>
+${k.stats([[26, 'services you can call', '#svc'], [106, 'capabilities an app can request', '#caps'], [239, 'event types'], [70, 'SDK modules']])}
+${k.rail({ id: 'latest', title: 'Latest', more: { href: '#all', label: 'See all' }, items: cards })}
+${k.rail({ id: 'wrapped', title: 'Wraps from 760 px', more: { href: '#all', label: 'See all' }, items: cards, wrap: true })}
+${k.list([k.row({ href: 'https://example.com/', rel: 'nofollow ugc', title: 'A link someone posted', sub: 'example.com', meta: '17:29' })], { title: 'Across OpenVibe', more: { href: '#pulse', label: 'All of Pulse' } })}
+${sc.apps({ id: 'four', title: 'Four tiles', items: tiles(4), more: { href: '/apps', label: 'All apps' } })}
+${sc.apps({ id: 'many', title: 'Fifteen tiles', items: tiles(15) })}`;
+    return page(body, 'OpenVibe Kit: rooms', ['room.css', 'showcase.css']);
+}
+
+function page(body, title, extra = []) {
     return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${title}</title>
 <script src="theme-loader.js"></script>
 <link rel="stylesheet" href="kit.css">
 <link rel="stylesheet" href="kit-data.css">
+${extra.map((x) => `<link rel="stylesheet" href="${x}">`).join('\n')}
 <style>body { margin: 0; background: var(--bg-primary, #0b0f17); color: var(--text-primary, #e8ecf3); font-family: 'Inter', system-ui, sans-serif; }</style>
 </head><body>
 <div id="navbar-mount"></div>
@@ -109,7 +134,7 @@ ${k.section({ title: 'Your quota', body: `<div class="ovk-set-row"><span class="
 
 async function shots(dir, chromePath) {
     const root = path.join(__dirname, '..');
-    const pages = { kit: gallery(), kit2: gallery2() };
+    const pages = { kit: gallery(), kit2: gallery2(), rooms: galleryRooms() };
     const server = http.createServer((req, res) => {
         const name = decodeURIComponent(new URL(req.url, 'http://x').pathname.slice(1));
         if (!name || pages[name]) { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(pages[name || 'kit']); }
@@ -123,7 +148,7 @@ async function shots(dir, chromePath) {
     const { chromium } = require(require.resolve('playwright', { paths: [process.cwd(), '/home/workstation/openvibe/work/OpenVibe.Games'] }));
     const browser = await chromium.launch(chromePath ? { executablePath: chromePath } : {});
     fs.mkdirSync(dir, { recursive: true });
-    const only = process.argv.includes('--kit2') ? ['kit2'] : ['kit', 'kit2'];
+    const only = process.argv.includes('--kit2') ? ['kit2'] : process.argv.includes('--rooms') ? ['rooms'] : ['kit', 'kit2', 'rooms'];
     for (const name of only) for (const scheme of ['dark', 'light']) for (const [w, h, mobile] of [[320, 700, true], [390, 844, true], [768, 1024, true], [1280, 900, false]]) {
         if (name === 'kit' && (scheme === 'light' || w === 320)) continue;
         const ctx = await browser.newContext({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile, colorScheme: scheme });
@@ -149,6 +174,6 @@ if (require.main === module) {
     const a = process.argv.slice(2);
     const i = a.indexOf('--shots');
     if (i >= 0) shots(a[i + 1] || 'kit-shots', a.includes('--chrome') ? a[a.indexOf('--chrome') + 1] : null).catch((e) => { console.error(e); process.exit(1); });
-    else process.stdout.write(a.includes('--kit2') ? gallery2() : gallery());
+    else process.stdout.write(a.includes('--kit2') ? gallery2() : a.includes('--rooms') ? galleryRooms() : gallery());
 }
-module.exports = { gallery };
+module.exports = { gallery, gallery2, galleryRooms };

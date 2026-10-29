@@ -166,6 +166,12 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(h.includes('<p class="sc-apps-more"><a href="/sites">All 48 sites →</a></p>'), 'See all');
     assert.strictEqual(sc.apps({ items: [] }), '', 'nothing to show, no section');
     assert.ok(sc.apps({ items: [{ name: 'A', href: '/a' }] }).includes('<ul class="sc-apps">'), 'items without groups is one grid');
+    // 4.39.0: no tile alone on a row. Four go four across on a phone and two by two from 600 px; eight like four.
+    const n = (k) => sc.apps({ items: Array.from({ length: k }, (_, i) => ({ name: `A${i}`, href: `/a${i}` })) });
+    assert.ok(n(4).includes('<ul class="sc-apps sc-apps--c4">') && n(3).includes('sc-apps--c3') && n(2).includes('sc-apps--c2') && n(8).includes('sc-apps--c4'));
+    assert.ok(n(7).includes('<ul class="sc-apps">') && n(15).includes('<ul class="sc-apps">'), 'other counts keep the auto grid');
+    assert.match(sc.CSS, /@media \(max-width:599px\)\{\.sc-apps--c2\{[^}]*\}\.sc-apps--c3\{[^}]*\}\.sc-apps--c4\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)\}\}/);
+    assert.match(sc.CSS, /\.sc-apps-more a\{display:inline-flex;align-items:center;min-height:44px;/, 'the launcher\'s See all is 44 px');
     const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'showcase.css'), 'utf8');
     assert.ok(css.includes('.sc-apps{') && css.includes('grid-template-columns:repeat(auto-fill,minmax(88px,1fr))'), 'phones: icon tiles');
 }

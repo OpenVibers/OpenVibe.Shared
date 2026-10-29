@@ -130,7 +130,7 @@ reset.
 ```js
 kit.list(rows, { title: 'Your rooms', more: { href: '/rooms', label: 'All' }, flush, empty: 'No rooms yet.' })
 kit.row({ href, mark: kit.mark({ name, src, square }), title, badge: kit.badge('live', 'live'),
-          meta: kit.when(ts).text, metaIso: kit.when(ts).iso, sub, unread, trail })
+          meta: kit.when(ts).text, metaIso: kit.when(ts).iso, sub, unread, trail, rel: 'nofollow ugc' })
 ```
 
 A row has a mark (a picture, or up to two letters on a colour from the name; `square` for places), the title with a
@@ -174,7 +174,7 @@ phone's own Enter, makes a new line), and a round send button.
 ### Numbers, empty states, notices, code, sheets
 
 ```js
-kit.stats([[1234, 'messages this week'], [48, 'people chatting']])   // zero and unknown values are left out
+kit.stats([[1234, 'messages this week'], [48, 'people chatting', '/people']])   // zero and unknown values are left out; a third item makes the whole tile a link (never underlined)
 kit.empty({ icon: 'chat', title, text, action: { href, label, icon } })
 kit.notice({ kind: 'ok' | 'error' | 'warn' | 'info', text })
 kit.snippet({ code, id })                       // a copy button in the corner
@@ -199,9 +199,9 @@ kit.badge(text, 'accent' | 'ok' | 'warn' | 'bad' | 'live') · kit.dot(n) · kit.
 ### Cards and rails (4.28.0)
 
 ```js
-kit.card({ href, title, type, ratio, image, alt, video, badge, live, corner, peek, who, avatar,
+kit.card({ href, title, type, ratio, image, alt, video, badge, live, corner, peek, who, whoHtml, avatar, sub, preview,
            count: [1832, 'views'], when, level, save: { href }, remind: { href }, share, more: [items] })
-kit.rail({ id, title, more: { href, label }, items: [kit.card(…), …], size: 's' | 'm' | 'l' })
+kit.rail({ id, title, more: { href, label }, items: [kit.card(…), …], size: 's' | 'm' | 'l', wrap }))
 ```
 
 One card for every kind of thing (plan 2026-10-28 §3.4):
@@ -213,8 +213,10 @@ One card for every kind of thing (plan 2026-10-28 §3.4):
 | Corner | Bottom right: a length or a price |
 | Peek | One line over the media on hover or focus |
 | Preview | `video`: a muted loop while the card is hovered. Computers only, never under reduced motion, and the file loads only then |
+| Text preview | `preview` (4.39.0): for a thing whose text is the point (a code paste, a note), its first nine lines drawn in the media instead of the icon. A picture wins |
 | Title | Two lines at most. The card is one link: the title's, stretched over it |
-| Meta | Who (with their picture or letters), one count, when. A count of 0 or none is left out, never shown as 0 |
+| Sub | `sub` (4.39.0): one plain muted line under the title: a city and a kind, a language. Not a badge, and not only on hover |
+| Meta | Who (with their picture or letters), one count, when. A count of 0 or none is left out, never shown as 0. `whoHtml` shows the name as markup you escaped (with its Inventory decorations); `who` stays the plain name for the letters |
 | ⋯ | Save and Remind when given, and Share always (the system share sheet, else the link copied, said in the item) |
 
 A rail scrolls sideways and snaps:
@@ -224,6 +226,9 @@ A rail scrolls sideways and snaps:
 | Phone | About 1.2 cards show, and the row bleeds to the screen's edge (the page keeps a 16 px gutter) |
 | Wider | 190 px (`s`), 280 px (`m`) or 400 px (`l`) cards |
 | Pointer | ‹ › buttons, each hidden at its end |
+| `wrap: true` (4.39.0) | Phones still swipe; from 760 px every item shows in a grid (220 px columns, 160 for `s`, 320 for `l`), with no arrows and no kit-web.js. For a front page that shows a handful of things and links to the rest |
+
+The rail's See all, tab pills and a list's heading link are 44 px tall on touch screens and below 760 px.
 
 A card's menu inside a rail is placed on the screen, so the scroller never clips it. An empty rail is `''`.
 
@@ -477,7 +482,8 @@ still render as their own rows.
 apps as a launcher, the way a phone's home screen does: icon tiles three or four to a row with the name under the icon
 on a phone, rows with a one-line tagline from 600 px. Use it where a page lists sites or products to jump to (the
 network's front door, /sites, a directory); it replaces a stack of feature cards, which on a phone is one screen per
-four sites.
+four sites. Since 4.39.0 no tile sits alone on a row: a set of two to four (or eight, twelve…) gets a column count
+that fills its rows; four tiles are four across on a phone, two by two from 600 px and four from 960 px.
 
 `showcase.hero({ eyebrow, title, accent, lede, actions, note })` is the top of most product homes. On a phone (since
 4.23.0):

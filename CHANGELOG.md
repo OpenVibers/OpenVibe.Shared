@@ -6,6 +6,25 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.39.0 — 2026-10-29
+
+What the front-page passes of 10-29 (Media, Quest, Actor, Rent, Services, Community) each had to add locally:
+
+- **`kit.rail({ wrap: true })`**: phones still swipe; from 760 px every item shows in a grid, with no arrows and no
+  kit-web.js. Media and Quest drew this with their own rules.
+- **`kit.card({ sub, preview, whoHtml })`**: one plain muted line under the title (Rent showed the city as a badge and the
+  kind only on hover); a text thing's first nine lines in the media instead of an icon (Community's code pastes); the
+  name as escaped markup with its decorations. **`kit.row({ rel })`** for links people posted.
+- **No tile alone on a row in `showcase.apps`**: two to four tiles (or eight, twelve…) get a column count that fills
+  their rows. Four are four across on a phone, two by two from 600 px and four from 960 px (Actor had local rules).
+- **44 px to the touch**: the rail's See all (32 px), tab pills (36 px), a list's heading link and the launcher's See
+  all, on touch screens and below 760 px.
+- **A number that is a link is not underlined**: the whole stats tile is the target, with a hover border and a focus ring.
+- **The Markdown twin reads kit markup as a person sees it**: a card's who, count and time keep their spaces
+  ("Maticus12 viewsTue" was what agents read), buttons, icons, players and the ⋯ menu are left out, and a stats strip
+  is `- label: value` lines.
+- `scripts/kit-gallery.js --rooms`: a gallery page of front-page pieces (cards, both rails, stats links, launchers).
+
 ## 4.38.0 — 2026-10-29
 
 - **`showcase.apps`: a launcher.** A set of apps or sites as a phone's home screen shows them: icon tiles three or four

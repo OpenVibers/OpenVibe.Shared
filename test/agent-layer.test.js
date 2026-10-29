@@ -62,6 +62,17 @@ app.use((err, req, res, next) => res.status(500).send(err.message));
         assert.equal((await fetch(base + '/guide.md', { method: 'POST' })).status, 404);
         assert.match((await fetch(base + '/guide', { headers: { Accept: 'text/html, text/markdown;q=0' } })).headers.get('content-type'), /text\/html/);
         assert.match(seo.llmsTxt({ name: 'Example', markdown: true, sections: [{ title: 'Pages', links: [{ title: 'Home', url: descriptor.home }] }], optional: [{ title: 'External', url: 'https://other.example/', html: true }] }), /index.md\)[\s\S]*## Optional[\s\S]*\(HTML\)/);
+        // 4.39.0: kit markup reads as a person sees it: a card's who · count · when keep their spaces, its ⋯ menu and
+        // buttons are not content, and a stats strip is "- label: value" lines.
+        {
+            const cards = '<main>' + kit.rail({ title: 'Latest', items: [kit.card({ href: '/p/1', title: 'Release notes', who: 'Maticus', count: [12, 'views'], sub: 'Markdown' })] })
+                + kit.stats([[26, 'services you can call', '/docs/api'], [106, 'capabilities']]) + '</main>';
+            const t = agent.markdownTwin({ html: cards, title: 'Home', canonical: 'https://example.com/' });
+            assert.match(t, /Maticus 12 views/, t);
+            assert.ok(!/Maticus12/.test(t) && !/Share|Scroll back|Scroll on/.test(t), 'no run-together text, no menu or arrow buttons');
+            assert.match(t, /- \[services you can call\]\(\/docs\/api\): 26\n- capabilities: 106/);
+            assert.match(agent.markdownTwin({ html: '<main><p>H<sub>2</sub>O and x<sup>2</sup></p></main>', title: 't', canonical: '/' }), /H2O and x2/, 'sub and sup stay inside the word');
+        }
         console.log('agent-layer: manifest, real Frame/Kit twins, discovery, methods, errors and llms checks passed');
     } finally { await new Promise(resolve => server.close(resolve)); }
 })().catch(err => { console.error(err); process.exitCode = 1; });
