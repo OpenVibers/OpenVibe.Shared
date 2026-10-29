@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.33.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.34.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -57,6 +57,11 @@ res.type('html').send(shell.page({
 ```
 
 See "The page shell" below for the rest of the options.
+
+### Agent discovery and Markdown twins
+
+`openvibe-shared/agent-layer` mounts the agent manifest and public Markdown twins from
+the same server renderer as HTML. See [the three-line mount and service descriptor guide](docs/agent-layer.md).
 
 ### Server side: pin a release tarball
 

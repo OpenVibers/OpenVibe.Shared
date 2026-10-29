@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.34.0 — 2026-10-29
+
+- **Agent discovery:** the server-only `agent-layer` module serves `/.well-known/agent.json`
+  from a service descriptor and Markdown twins from the same public renderer as HTML.
+  Frame discovery links, Link headers, and optional Markdown links in `llms.txt` accompany
+  the three-line mount; see [the adoption guide](docs/agent-layer.md). Browser assets are unchanged.
+
 ## 4.33.0 — 2026-10-28
 
 - **Navbar icons:** 15 more Font Awesome solid glyphs are drawn inline (`nav-icons.js`, loaded after first paint):
