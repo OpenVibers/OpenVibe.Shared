@@ -152,4 +152,22 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(/<p class="sc-eyebrow">Free for OpenVibe\.Live streamers<\/p>/.test(sc.hero({ eyebrow: 'Free for OpenVibe.Live streamers', title: 'T' })), 'a name later in the phrase stays');
 }
 
+// ── apps(): the launcher ──
+{
+    const sc = require('../showcase');
+    const h = sc.apps({ id: 'network', title: 'Every site', lede: 'One account.', more: { href: '/sites', label: 'All 48 sites' }, groups: [
+        { name: 'Watch <and> stream', items: [{ icon: 'ov:live', name: 'Live <x>', text: 'Go live from your browser', href: 'https://openvibe.live/' }, { name: 'Bad', href: 'javascript:alert(1)' }] },
+        { name: 'Empty', items: [] },
+    ] });
+    assert.ok(h.startsWith('<section class="sc-sec sc-apps-sec" id="network" aria-labelledby="sc-every-site">'), 'a labelled section');
+    assert.ok(h.includes('<h3 class="sc-apps-group">Watch &lt;and&gt; stream</h3>') && !h.includes('>Empty<'), 'groups are escaped; an empty one is left out');
+    assert.ok(h.includes('<b>Live &lt;x&gt;</b><small>Go live from your browser</small>') && h.includes('href="https://openvibe.live/"'), 'a tile: icon, name, text');
+    assert.ok(!h.includes('javascript:') && !h.includes('>Bad<'), 'a tile with an unsafe link is dropped');
+    assert.ok(h.includes('<p class="sc-apps-more"><a href="/sites">All 48 sites →</a></p>'), 'See all');
+    assert.strictEqual(sc.apps({ items: [] }), '', 'nothing to show, no section');
+    assert.ok(sc.apps({ items: [{ name: 'A', href: '/a' }] }).includes('<ul class="sc-apps">'), 'items without groups is one grid');
+    const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'showcase.css'), 'utf8');
+    assert.ok(css.includes('.sc-apps{') && css.includes('grid-template-columns:repeat(auto-fill,minmax(88px,1fr))'), 'phones: icon tiles');
+}
+
 console.log('showcase: all checks passed');

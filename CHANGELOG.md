@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.38.0 — 2026-10-29
+
+- **`showcase.apps`: a launcher.** A set of apps or sites as a phone's home screen shows them: icon tiles three or four
+  to a row with the name under the icon on a phone, rows with a one-line tagline from 600 px, optional groups and a
+  See all link. The network's front door listed its 47 sites as feature cards, 8,459 px on a phone; as a launcher it is
+  about a fifth of that.
+
 ## 4.37.0 — 2026-10-29
 
 - **Kit 2 has its own files: `kit-data.css` and `kit-data-web.js`.** Its look and behaviour moved out of `kit.css` and

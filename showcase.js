@@ -327,6 +327,23 @@ function network({ id: sid, service, title = 'Part of OpenVibe', lede = 'One acc
     return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}"><span class="sc-ic sc-ic-ov">${icon(`ov:${String(x.to).toLowerCase()}`, 40)}</span><span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul></section>`;
 }
 
+/**
+ * apps({ id, title, lede, groups: [{ name, items }], items, more: { href, label } }) — a set of apps as a launcher, the
+ * way a phone's home screen shows them: each item { icon ('ov:live' or 'fa-…'), name, text, href }. Phones see icon
+ * tiles three or four to a row with the name under the icon (the one-line text is for screen readers and wider
+ * screens); from 600 px each tile is a row: icon, name, the text in one line. groups put a small heading over each
+ * set (the network's neighbourhoods); items without groups is one grid. Empty → ''.
+ */
+function apps({ id: sid, title = '', lede = '', groups = null, items = null, more = null } = {}) {
+    const sets = (groups || [{ name: '', items: items || [] }]).map((g) => ({ name: g.name || '', items: (g.items || []).filter((x) => x && x.name && safeHref(x.href)) })).filter((g) => g.items.length);
+    if (!sets.length) return '';
+    const h = `sc-${slug(title || 'apps')}`;
+    const tile = (x) => `<li><a href="${esc(safeHref(x.href))}"><span class="sc-ic sc-ic-ov">${icon(x.icon || 'ov:spark', 40)}</span><span class="sc-app-t"><b>${esc(x.name)}</b>${x.text ? `<small>${esc(x.text)}</small>` : ''}</span></a></li>`;
+    const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps">${g.items.map(tile).join('')}</ul>`).join('');
+    const end = more && safeHref(more.href) ? `<p class="sc-apps-more"><a href="${esc(safeHref(more.href))}">${esc(more.label || 'See all')} →</a></p>` : '';
+    return `<section class="sc-sec sc-apps-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${body}${end}</section>`;
+}
+
 /** The closing call to action. */
 function cta({ title, text, actions: acts } = {}) {
     if (!title) return '';
@@ -522,6 +539,25 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-faq summary::after{content:'';position:absolute;right:18px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s;opacity:.7}
 .sc-faq details[open] summary::after{transform:rotate(-135deg);margin-top:-2px}
 .sc-faq p{margin:0;padding:0 16px 16px;color:var(--text-secondary,#96a7c2);line-height:1.6}
+/* apps(): a launcher. Phones: icon tiles, name under the icon; from 600 px: rows with a one-line tagline. */
+.sc-apps-group{margin:18px 0 8px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary,#96a7c2)}
+.sc-apps-sec .sc-apps-group:first-of-type{margin-top:6px}
+.sc-apps{list-style:none;margin:0;padding:0;display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(88px,1fr))}
+.sc-apps a{display:flex;flex-direction:column;align-items:center;gap:6px;min-height:44px;padding:10px 4px;border-radius:14px;color:inherit;text-decoration:none;text-align:center;transition:background .15s}
+.sc-apps a:hover,.sc-apps a:focus-visible{background:color-mix(in srgb,var(--accent,#3b82f6) 10%,transparent);outline:0}
+.sc-apps a:focus-visible{box-shadow:0 0 0 2px var(--accent,#3b82f6)}
+.sc-app-t{min-width:0;max-width:100%}
+.sc-apps b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
+.sc-apps small{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sc-apps-more{margin:14px 0 0;font-weight:700}
+.sc-apps-more a{color:var(--accent-light,#60a5fa);text-decoration:none}
+@media (min-width:600px){
+.sc-apps{gap:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.sc-apps a{flex-direction:row;align-items:center;gap:12px;padding:10px 12px;text-align:left;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
+.sc-apps a:hover,.sc-apps a:focus-visible{border-color:var(--accent,#3b82f6);background:var(--bg-secondary,#101828)}
+.sc-apps b{font-size:15px}
+.sc-apps small{position:static;width:auto;height:auto;clip:auto;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary,#96a7c2);font-size:13px}
+}
 .sc-net{list-style:none;margin:0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .sc-net a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 .sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
@@ -554,7 +590,7 @@ html{overflow-x:clip}
 .sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
 .sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
-@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a{transition:none}.sc-badge.sc-live::before{animation:none}}
+@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a,.sc-apps a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 
-module.exports = { room, hero, features, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { room, hero, features, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
