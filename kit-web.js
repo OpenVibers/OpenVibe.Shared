@@ -26,7 +26,9 @@
         if (typeof document === 'undefined') return;
         const scope = rootEl || document;
         const all = (sel) => Array.prototype.slice.call(scope.querySelectorAll ? scope.querySelectorAll(sel) : []);
-        const once = (el, key) => { if (el.dataset[key]) return false; el.dataset[key] = '1'; return true; };
+        // Marks an element as wired. The mark has its own name (…Wired): `data-ovk-copy="#id"` is dataset.ovkCopy, so a mark
+        // under that same name was already set by the markup, and copy, sheets, confirms and titled shares never wired.
+        const once = (el, key) => { const k = `${key}Wired`; if (el.dataset[k]) return false; el.dataset[k] = '1'; return true; };
         // Copy buttons: shown only where the clipboard works; the icon turns into a check for a moment.
         all('[data-ovk-copy]').forEach((b) => {
             if (!once(b, 'ovkCopy') || !navigator.clipboard) return;

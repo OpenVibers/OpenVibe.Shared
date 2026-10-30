@@ -29,6 +29,11 @@
  *   kit.button({ href | type, label, icon, kind }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
  *   kit.mark({ name, src, hue, square }) · kit.when(ts) → { iso, text } · kit.esc(text) · kit.ICONS (names)
  *
+ * The tool frame, one order for every tool page: kit.tool({ head: kit.toolHead({ icon, hue, crumb, title, task }),
+ *   input: kit.toolInput({ name, label, placeholder, button, tries: { items } }) | kit.drop(…) | an editor,
+ *   answer: kit.answer({ title, badge, rows: [[label, value, note]], next }), family: kit.family({ title, more, items }),
+ *   folds: [kit.fold(…)], related: kit.list(…) })
+ *
  * Text arguments are escaped; arguments named body, html, before, after, actions, trail, badge, extra and mark take
  * trusted markup (usually another builder's output). URLs are kept only when they are http(s) or same-site paths.
  */
@@ -652,6 +657,105 @@
             + `${fs2.length ? `<dl class="ovk-receipt-facts">${fs2.map(([l, v]) => `<div><dt>${esc(l)}</dt><dd>${v && typeof v === 'object' && v.html != null ? v.html : esc(v)}</dd></div>`).join('')}</dl>` : ''}</section>`;
     }
 
+    // ── The tool frame (4.55.0, owner ask 11): one order for every tool page on every site ──
+    // What it does, the box you type in, the answer and its next step, the family's other tools, then the rest folded
+    // away. Phone first; from 1024 px the family sits in a column beside the tool. docs/kit.md "The tool frame".
+
+    /** A family's tint as a hue (0–360): a number, or a key hashed the way kit.mark hashes names. */
+    const hueFor = (h, key) => (h != null && h !== '' && Number.isFinite(Number(h)) ? ((Math.round(Number(h)) % 360) + 360) % 360 : hueOf(key || ''));
+
+    /**
+     * toolHead({ icon, iconHtml, hue, family, crumb: { href, label }, title, task, level }) — the tool's name and the one
+     * sentence saying what it does. The icon sits on a tile in the family's tint (hue, else one hashed from family or the
+     * crumb); buttons keep the site's own accent.
+     */
+    function toolHead({ icon: ic = 'grid', iconHtml = null, hue = null, family: fam = '', crumb = null, title = '', task = '', level = 1 } = {}) {
+        const lv = Math.min(3, Math.max(1, Number(level) || 1));
+        const cr = crumb && crumb.label ? (crumb.href ? `<a class="ovk-tool-crumb" href="${esc(url(crumb.href))}">${esc(crumb.label)}${icon('chevron')}</a>` : `<span class="ovk-tool-crumb">${esc(crumb.label)}</span>`) : '';
+        return `<header class="ovk-tool-head${cr ? '' : ' ovk-tool-head--solo'}" style="--ovk-tint-h:${hueFor(hue, fam || (crumb && crumb.label) || title)}">`
+            + `<span class="ovk-tool-tile" aria-hidden="true">${iconHtml != null ? iconHtml : (icon(ic) || icon('grid'))}</span>${cr}`
+            + `<h${lv} class="ovk-tool-title">${esc(title)}</h${lv}>${task ? `<p class="ovk-tool-task">${esc(task)}</p>` : ''}</header>`;
+    }
+
+    /**
+     * tries({ name, target, run, items: [{ label, value, href }] }) — "Try" examples under the box: a tap fills it and
+     * runs the tool (kit-web.js). Without JavaScript each is a link to ?<name>=<value>, so a tool page runs the tool its
+     * query names. target: the box (a selector; default the [name] field in the same form); run: a button to press when
+     * the box is in no form.
+     */
+    function tries({ name = 'q', target = '', run = '', items = [], label = 'Try' } = {}) {
+        const its = (items || []).filter((it) => it && (it.value != null || it.href));
+        if (!its.length) return '';
+        return `<p class="ovk-try"><span>${esc(label)}</span>${its.map((it) => {
+            const v = it.value == null ? '' : String(it.value);
+            const href = it.href ? url(it.href) : `?${encodeURIComponent(name)}=${encodeURIComponent(v)}`;
+            return `<a href="${esc(href)}"${it.value != null ? ` data-ovk-try="${esc(v)}" data-ovk-name="${esc(name)}"` : ''}${target ? ` data-ovk-for="${esc(target)}"` : ''}${run ? ` data-ovk-run="${esc(run)}"` : ''}>${esc(it.label || v)}</a>`;
+        }).join('')}</p>`;
+    }
+
+    /**
+     * toolInput({ action, method, name, label, placeholder, value, button, icon, type, inputmode, id, required, pattern,
+     * maxlength, hidden, tries }) — the one box most tools need: a big field (17 px, so phones do not zoom in), a clear
+     * button, and the tool's button under it on a phone and beside it on a computer.
+     */
+    function toolInput({ action: to = '', method = 'get', name = 'q', label = '', placeholder = '', value = '', button: btn = 'Go', icon: ic = 'search', type = 'text', inputmode = null, id = null, required = true, pattern = null, maxlength = null, hidden = {}, tries: tr = null, autocomplete = 'off' } = {}) {
+        const fid = id || `ovk-tool-${String(name).replace(/[^a-z0-9_-]/gi, '')}`;
+        const t = ['text', 'search', 'url', 'email', 'number', 'tel'].includes(type) ? type : 'text';
+        return `<form class="ovk-tool-form" method="${method === 'post' ? 'post' : 'get'}" action="${esc(url(to || '?'))}">`
+            + Object.keys(hidden || {}).map((k) => `<input type="hidden" name="${esc(k)}" value="${esc(hidden[k])}">`).join('')
+            + `${label ? `<label class="ovk-tool-label" for="${esc(fid)}">${esc(label)}</label>` : ''}`
+            + `<div class="ovk-tool-row"><span class="ovk-tool-field"><input id="${esc(fid)}" name="${esc(name)}" type="${t}" value="${esc(value)}"${label ? '' : ` aria-label="${esc(placeholder || btn)}"`} placeholder="${esc(placeholder)}" autocomplete="${esc(autocomplete)}" spellcheck="false" autocapitalize="off"${inputmode ? ` inputmode="${esc(inputmode)}"` : ''}${required ? ' required' : ''}${pattern ? ` pattern="${esc(pattern)}"` : ''}${maxlength ? ` maxlength="${Number(maxlength)}"` : ''}>`
+            + `<button type="button" class="ovk-tool-clear" data-ovk-clear="#${esc(fid)}" aria-label="Clear" title="Clear"${value ? '' : ' hidden'}>${icon('close')}</button></span>`
+            + `<button type="submit" class="ovk-btn ovk-btn--primary ovk-tool-go">${ic ? icon(ic) : ''}<span>${esc(btn)}</span></button></div>`
+            + (tr ? tries({ name, target: `#${fid}`, ...tr }) : '') + '</form>';
+    }
+
+    /**
+     * answer({ title, badge: { text, tone }, actions: [html], rows: [[label, value, note]], body, next: [html], tone, id })
+     * — a tool's answer: labelled rows with the fact that matters marked (note: text or { text, tone }, a small pill),
+     * then the next step (watch it for changes, look up the same name's DNS, compress the picture just made). A value
+     * can be { html } (trusted markup). tone 'bad' draws an error answer.
+     */
+    function answer({ title = '', badge: bd = null, actions = [], rows = [], body = '', next = [], tone = '', id = null, live = true } = {}) {
+        const rs = (rows || []).filter((r) => r && r[1] != null && r[1] !== '');
+        const acts = (actions || []).filter(Boolean).join('');
+        const nx = (next || []).filter(Boolean).join('');
+        const pill = (n) => { if (n == null || n === '') return ''; const o = typeof n === 'object' ? n : { text: n }; return ` <span class="ovk-pill${o.tone ? ` ovk-pill--${esc(o.tone)}` : ''}">${esc(o.text)}</span>`; };
+        const val = (v) => (v && typeof v === 'object' && v.html != null ? v.html : esc(v));
+        return `<section class="ovk-answer${tone ? ` ovk-answer--${esc(tone)}` : ''}"${id ? ` id="${esc(id)}"` : ''}${live ? ' aria-live="polite"' : ''}${title ? '' : ' aria-label="Answer"'}>`
+            + (title || (bd && bd.text) || acts ? `<div class="ovk-answer-head">${title ? `<h2>${esc(title)}</h2>` : '<span></span>'}${bd && bd.text ? badge(bd.text, bd.tone || '') : ''}${acts ? `<span class="ovk-answer-acts">${acts}</span>` : ''}</div>` : '')
+            + (rs.length ? `<dl class="ovk-answer-rows">${rs.map(([l, v, n]) => `<div><dt>${esc(l)}</dt><dd>${val(v)}${pill(n)}</dd></div>`).join('')}</dl>` : '')
+            + (body ? `<div class="ovk-answer-body">${body}</div>` : '')
+            + (nx ? `<div class="ovk-answer-next">${nx}</div>` : '') + '</section>';
+    }
+
+    /**
+     * family({ title, more: { href, label }, items: [{ href, label, short, current }] }) — the family's other tools: one
+     * row that scrolls sideways on a phone (short names), a list beside the tool on a computer (full names).
+     */
+    function family({ title = '', more: m = null, items = [], label = '' } = {}) {
+        const its = (items || []).filter((it) => it && it.label);
+        if (!its.length) return '';
+        return `<nav class="ovk-family" aria-label="${esc(label || title || 'More tools')}">`
+            + `<div class="ovk-family-head">${title ? `<h2>${esc(title)}</h2>` : '<span></span>'}${m && m.href ? `<a href="${esc(url(m.href))}">${esc(m.label || 'All')}</a>` : ''}</div>`
+            + `<div class="ovk-family-items">${its.map((it) => `<a href="${esc(url(it.href))}"${it.current ? ' aria-current="page"' : ''}>${it.short && it.short !== it.label ? `<span class="ovk-family-short">${esc(it.short)}</span><span class="ovk-family-full">${esc(it.label)}</span>` : esc(it.label)}</a>`).join('')}</div></nav>`;
+    }
+
+    /**
+     * tool({ head, input, answer, family, folds: [html], related, id }) — the whole frame. input: the card's markup
+     * (kit.toolInput, kit.drop, an editor); answer: '' until there is one (the .ovk-tool-out slot stays, so a page that
+     * draws its answer later fills it); folds: kit.fold()s joined into one card (About, Questions, Use it from code);
+     * related: a kit.list of tools people also use. Folded text stays in the page for search engines.
+     */
+    function tool({ head: h = '', input = '', answer: a = '', family: f = '', folds = [], related = '', id = null } = {}) {
+        const fl = (Array.isArray(folds) ? folds : [folds]).filter(Boolean).join('');
+        return `<div class="ovk-tool"${id ? ` id="${esc(id)}"` : ''}>${h}`
+            + (input ? `<div class="ovk-tool-card">${input}</div>` : '')
+            + `<div class="ovk-tool-out">${a || ''}</div>${f}`
+            + (fl ? `<div class="ovk-tool-folds">${fl}</div>` : '')
+            + (related ? `<div class="ovk-tool-related">${related}</div>` : '') + '</div>';
+    }
+
     /**
      * page({ head, body, side, dock, wide, id }) — the app page's whole shape in one call: the sticky head (with its tabs),
      * the content, a side panel beside it on a computer (under it on a phone), and the dock.
@@ -665,5 +769,6 @@
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,
         num, steps, table, chart, rank, meter, drop, receipt, page,
+        toolHead, toolInput, tries, answer, family, tool,
     };
 });

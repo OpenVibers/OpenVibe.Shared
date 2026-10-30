@@ -4,10 +4,12 @@
  *   charts         .ovk-chart-plot[data-ovk-chart]: the values under the pointer, a tap, or ← → Home End
  *   scatter labels a label that would cover another, or cross the right edge, is hidden or moved
  *   drop zones     [data-ovk-drop]: drag and drop, paste, the camera on phones, the file's name and picture
+ *   tool frame     [data-ovk-clear] shows while its box has text and empties it; a[data-ovk-try] fills the box and runs
+ *                  the tool (its form's submit, else the [data-ovk-run] button); without this it is a ?name=value link
  *
  * It runs by itself when it loads, again on a boosted page swap (ov:boost:load), and for markup added later through
  * OpenVibeKitData.enhance(container). Idempotent and safe on a page that uses none of it. Load it on a page that draws
- * kit.chart or kit.drop (kit.steps, table, rank, meter and receipt need no script).
+ * kit.chart, kit.drop or the tool frame (kit.steps, table, rank, meter and receipt need no script).
  */
 (function (root) {
     'use strict';
@@ -15,7 +17,8 @@
         if (typeof document === 'undefined') return;
         const scope = rootEl || document;
         const all = (sel) => Array.prototype.slice.call(scope.querySelectorAll ? scope.querySelectorAll(sel) : []);
-        const once = (el, key) => { if (el.dataset[key]) return false; el.dataset[key] = '1'; return true; };
+        // The mark has a name of its own (…Wired), apart from the data-ovk-* attribute that asks for the behaviour (4.55.0).
+        const once = (el, key) => { const k = `${key}Wired`; if (el.dataset[k]) return false; el.dataset[k] = '1'; return true; };
         // Charts (Kit 2): a rule, a dot per series and the values under the pointer or the arrow keys, on lines and areas.
         all('.ovk-chart-plot[data-ovk-chart]').forEach((plot) => {
             if (!once(plot, 'ovkChart')) return;
@@ -118,6 +121,31 @@
                 cam.hidden = false;
                 camInput.addEventListener('change', () => { take(camInput.files); camInput.value = ''; });
             }
+        });
+        // The tool frame: a clear button shows while its box has text; a "Try" example fills the box and runs the tool
+        // (its form's submit, else the run button it names). Without this, the example is a link to ?name=value.
+        all('[data-ovk-clear]').forEach((b) => {
+            const f = document.querySelector(b.getAttribute('data-ovk-clear'));
+            if (!f || !once(b, 'ovkClear')) return;
+            const sync = () => { b.hidden = !f.value; };
+            f.addEventListener('input', sync); sync();
+            b.addEventListener('click', () => { f.value = ''; sync(); f.dispatchEvent(new Event('input', { bubbles: true })); f.focus(); });
+        });
+        all('a[data-ovk-try]').forEach((a) => {
+            if (!once(a, 'ovkTry')) return;
+            a.addEventListener('click', (e) => {
+                const sel = a.getAttribute('data-ovk-for');
+                const form = a.closest('form');
+                const f = (sel && document.querySelector(sel)) || (form && form.elements.namedItem(a.getAttribute('data-ovk-name') || 'q'));
+                if (!f || !('value' in f)) return;
+                e.preventDefault();
+                f.value = a.getAttribute('data-ovk-try');
+                f.dispatchEvent(new Event('input', { bubbles: true }));
+                const run = a.getAttribute('data-ovk-run');
+                const btn = run && document.querySelector(run);
+                if (btn) btn.click();
+                else if (f.form) { if (f.form.requestSubmit) f.form.requestSubmit(); else f.form.submit(); }
+            });
         });
     }
 

@@ -299,6 +299,56 @@ lines and areas (under the pointer, a tap, or ← → Home End) and hides a scat
 shown, best points first. Colours: `--ovk-c1` is the theme's accent, then `--ovk-c2` … `--ovk-c5` (cyan, amber,
 violet, green), with deeper tones in light themes.
 
+### The tool frame (4.55.0)
+
+A tool page has one job: a person types or drops something in and gets an answer. Before 4.55 every OpenVibe tool drew
+its own page. A whois lookup had a centred cyan icon over a wall of sibling-tool chips, the JSON tools were purple, and
+the converters orange. On a phone the box you type in was often below the first screen. The tool frame puts every
+tool page in the same order:
+
+1. **The head.** A crumb back to the family ("Network tools ›"), the tool's name, and one sentence saying what it does.
+   The icon tile carries the family's tint; nothing else does.
+2. **The box.** A big field (17 px, so phones do not zoom in), its clear button, and the tool's one button: under the
+   field on a phone, beside it from 600 px. Under the box are two or three real **Try** examples; a tap fills the box
+   and runs the tool.
+3. **The answer**, when there is one. It shows labelled rows with the fact that matters marked ("in 10 months"), then
+   the **next step**: watch it for changes, look up the same name's DNS, compress the picture just made. A tool that
+   finds something wrong says what and where (`tone: 'bad'`).
+4. **The family.** The other tools of the same kind. On a phone they are one row that scrolls sideways, with short
+   names; from 1024 px they are a column beside the tool, with full names and the open tool marked.
+5. **The folds**, closed: About, the questions, "Use it from code". Their text stays in the page for search engines.
+6. **People also use**: a short list.
+
+Buttons and links keep the site's own accent, so a tool looks like the site it is on.
+
+| Builder | What it draws |
+| --- | --- |
+| `toolHead({ icon, iconHtml, hue, family, crumb: { href, label }, title, task, level })` | The head. `hue` is the family's tint (0–360); without it, a hue is hashed from `family` or the crumb, so a family always gets the same one |
+| `toolInput({ name, label, placeholder, value, button, icon, type, inputmode, action, method, hidden, tries })` | The box as a GET form (`?q=…` runs the tool without JavaScript); `tries: { items: [{ value, label }] }` adds the examples |
+| `tries({ name, items, target, run })` | Examples for a box the page draws itself (an editor, a box outside a form): `target` is its selector, and `run` is the button to press when there is no form |
+| `answer({ title, badge, actions, rows: [[label, value, note]], body, next, tone })` | The answer. A value can be `{ html }`; a note is a pill (`'1 year ago'`, or `{ text, tone: 'warn' }`); `aria-live` announces it when it arrives |
+| `family({ title, more: { href, label }, items: [{ href, label, short, current }] })` | The family row or column |
+| `tool({ head, input, answer, family, folds, related })` | All of it, in order. `input` is any markup: `toolInput`, `drop`, or a `textarea.ovk-tool-editor` with its button. The answer slot `.ovk-tool-out` is always there (hidden while empty), so a page that draws its answer in the browser fills it |
+
+```js
+const kit = require('openvibe-shared/kit');
+kit.tool({
+    head: kit.toolHead({ icon: 'globe', family: 'network', crumb: { href: '/network', label: 'Network tools' },
+        title: 'Whois Lookup', task: 'Who registered a domain, when it was made and when it runs out.' }),
+    input: kit.toolInput({ name: 'q', label: 'Domain or IP address', placeholder: 'example.com or 1.1.1.1', button: 'Look up',
+        inputmode: 'url', tries: { items: [{ value: 'openvibe.network' }, { value: '1.1.1.1' }] } }),
+    answer: result ? kit.answer({ title: result.domain, badge: { text: 'Registered', tone: 'ok' },
+        rows: [['Registrar', result.registrar], ['Expires', result.expires, { text: result.expiresIn, tone: 'warn' }]],
+        next: [kit.button({ href: watchUrl, label: 'Watch for changes', icon: 'bell', kind: 'quiet', small: true })] }) : '',
+    family: kit.family({ title: 'Network tools', more: { href: '/network', label: 'All 22' }, items }),
+    folds: [kit.fold({ title: 'About Whois Lookup', body }), kit.fold({ title: 'Use it from code', meta: 'API', body: kit.snippet({ code }) })],
+    related: kit.list(rows, { title: 'People also use' }),
+});
+```
+
+The frame is part of Kit 2: its look is in `kit-data.css` and its behaviour (the clear button and the examples) in
+`kit-data-web.js`. A page that draws no tool loads neither, so `kit.css` and `kit-web.js` weigh what they did.
+
 ## The navbar's links
 
 The 2026-10-28 sweep of all 38 sites' bars found three habits that made them feel crowded and repetitive:

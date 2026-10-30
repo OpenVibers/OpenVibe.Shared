@@ -6,9 +6,36 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
-- **The Dock keeps "in a window" to the page.** The pop-out window belongs to one page in one browser, closes with it,
-  and no other device can open it again (the browser wants a click), so the Dock no longer sends `popped` to the
-  Network. That also ends the refused PUT and its retry that 4.54.0 made on every pop-out, since the Network's
+## 4.55.0 — 2026-10-30
+
+- **The tool frame: one order for every tool page** (owner ask 11). It has six new kit builders: `kit.toolHead`,
+  `toolInput`, `tries`, `answer`, `family` and `tool` (docs/kit.md, "The tool frame").
+  - **The order:**
+    - the head, with a crumb to the family, the name, and one sentence saying what the tool does;
+    - the box you type in, on the first phone screen, at 17 px so phones do not zoom in, with its clear button and
+      the tool's one button;
+    - two or three **Try** examples: a tap fills the box and runs the tool, and without JavaScript each one is a
+      `?q=` link;
+    - the answer, as labelled rows with the fact that matters marked, then the next step;
+    - the family's other tools: one sideways row on a phone, a column beside the tool from 1024 px;
+    - the About, questions and API folds, then "People also use".
+  - **One look.** The family's tint is only on the icon tile, as a hue number that never reaches the style attribute
+    as raw text; buttons keep the site's own accent. That ends the cyan, purple and orange tool pages.
+  - Everything is plain HTML with escaped text, so it works without JavaScript. It is part of Kit 2: the look is in
+    `kit-data.css`, and the clear button and the examples are in `kit-data-web.js`. `kit.css` and `kit-web.js` weigh
+    what they did.
+- **Fixed: kit-web.js never wired copy buttons, sheet buttons, confirms or titled share links.** Its `once()` marked
+  an element under the same dataset name as the attribute that asks for the behaviour: `data-ovk-copy="#id"` is
+  `dataset.ovkCopy`. The markup had therefore already "marked" every one of them:
+  - copy buttons stayed hidden;
+  - a sheet button opened nothing;
+  - a kit form with `data-ovk-confirm` ("Delete it?") was sent **without asking**.
+
+  The mark now has a name of its own (`…Wired`), in `kit-web.js` and in `kit-data-web.js`.
+  `test/kit-web-chrome.test.js` checks each one in Chrome; it fails on 4.54.0.
+- **The Dock keeps "in a window" to the page.** The pop-out window belongs to one page in one browser and closes with
+  it, and no other device can open it again (the browser wants a click). So the Dock no longer sends `popped` to the
+  Network. That also ends the refused PUT, and its retry, that 4.54.0 made on every pop-out: the Network's
   `network.dock-state@1` contract has no such key.
 
 ## 4.54.0 — 2026-10-30
