@@ -6,6 +6,19 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.46.0 — 2026-10-29
+
+- **Touch targets from the fleet audit** (effective hit areas at 390 px: a 7x7 grid of `elementFromPoint` probes over
+  the 44 px square around each target, `research-2026-10-29/tap-targets.md`). On touch screens (`pointer: coarse`)
+  only:
+  - navbar: Sign In, the menu button and the orb get an invisible 44 px hit area (drawn as before). The brand mark's grows
+    to 44. The site's name is 44 tall. The orb grows only 4 px sideways, so the name 8 px away keeps its own taps;
+  - footer: column links are rows of 32 px (the footer is ~180 px taller on a phone; WCAG 2.5.8 AA asks 24). The social
+    links are 44 px, and the legal links in the bar get a taller hit area;
+  - the shipped strip's lines get a taller hit box with no layout change (padding in, margin out);
+  - kit: `.ovk-btn--small` is 44 px tall, `.ovk-go` reaches 44 px invisibly, and the find bar's field and select are
+    44 px tall.
+
 ## 4.45.1 — 2026-10-29
 
 - **The generated native code is compiled now, not just read.** `scripts/native-check.js` writes the theme's Compose
