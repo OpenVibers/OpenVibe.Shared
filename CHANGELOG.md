@@ -6,6 +6,31 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.51.0 — 2026-10-30
+
+- **The Dock** (`dock.js`; the Dock plan of 2026-10-30, K-D1; master plan L13). The owner, 10-30: your agent and your
+  chats "more accessible across sites … sleek, modern, minimal". It is one surface at the edge of every OpenVibe page.
+  - **The pill:** the mark (busy while an agent works), a word and a dot (amber, with a ping, when something needs
+    you). It shows only while an agent works, one needs you, or the person pinned it, in the corner the Dock sits in,
+    above a phone's app bar.
+  - **The Dock:** a floating card on a desktop and a sheet on a phone, with two tabs. **Agents** is what needs you,
+    then what runs, with Approve and Decline in place. **Activity** is the bell's list.
+  - **On a desktop:** it is not modal; the head (or a tab, after 6 px) drags it to a corner and the free corner
+    resizes it.
+  - **State:** it is the Network's, so it follows the person between sites:
+    - `GET /api/v1/me/dock`, then one debounced `PUT` per burst of changes;
+    - this site's copy paints it first;
+    - an open Dock reopens on a desktop, never on a phone;
+    - a 404 keeps it away for a day.
+  - **Weight:** navbar.js grows by 0.6 KB brotli (the loader, the account menu's Dock tile, `openDock`; its budget
+    is now 41 KB). The pill and the Dock are `dock.js`, 8.6 KB brotli, loaded for signed-in people only.
+  - **Test:** `test/dock-chrome.test.js` covers when the pill shows, both tabs, the PUTs, drag and resize within the
+    limits, restore on desktops only, the 404, signed out, and 320 px.
+- **`OpenVibeActionCenter.mount(container, { token, apiBase, buckets, onCounts })`:** the Action Center's rows in
+  another surface's container, with their own data and timer.
+- **`OpenVibeNotifications.renderDock(container)`:** the bell's list without a frame, with Mark all read in its foot.
+- **Desktop toasts** stack above the Dock's pill in the bottom-right corner (`--ov-dock-clear`).
+
 ## 4.50.1 — 2026-10-30
 
 - **The seasonal fall lands on the bar.** Once a day the mark's leaves (snow in winter) fell 120-280 px from the brand,

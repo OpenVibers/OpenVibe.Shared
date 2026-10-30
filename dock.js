@@ -1,0 +1,484 @@
+// ═══════════════════════════════════════════════════════════════
+// OpenVibe — the Dock (Dock plan 2026-10-30, K-D1): your agents and your activity at the edge of every OpenVibe page
+//
+// navbar.js loads this file from beside itself for a signed-in person, after the bell, and mounts it:
+//   OpenVibeDock.mount({ token: () => jwt, apiBase, sibling })   the pill; mount(null) takes it away (signed out)
+//   OpenVibeDock.open({ tab }) · close() · isOpen()
+//
+// The pill (the mark, a word and a dot) shows only while an agent works, one needs you, or the person pinned it, in the
+// corner the Dock sits in. It paints at once from this site's copy (localStorage ov-dock), then from the Network, and
+// re-reads every 30 s while something runs and when the page comes back. A 404 (Network without the route yet) keeps
+// { off } for a day, and navbar.js does not load this file until then.
+//
+// State: GET/PUT <apiBase>/api/v1/me/dock (network.dock-result@1, network.dock-state@1): open, tab, pinned and where it
+// sits for each device class, so it follows the person from site to site. A change shows at once (onChange paints the
+// pill and the site's copy) and reaches the Network a beat later; before Network has the route the copy stands.
+// Tabs: Agents (action-center.js mount(): what needs you, then what runs, approve or decline in place) and Activity
+// (notification-ui.js renderDock(): the bell's list). Chats join in K-D2, the agent's live screen in K-D3.
+// Desktop: a floating card at the pill's corner. Drag its head to move it (it snaps to the nearest corner), drag the
+// free corner to resize (320-720 × 360-900 px). It is not modal: the page stays usable. Phones: a sheet from the
+// bottom over a scrim; drag the head down, ×, Escape or a tap outside closes it. Motion is transform and opacity only.
+// ═══════════════════════════════════════════════════════════════
+(function (root) {
+    'use strict';
+    if (typeof document === 'undefined' || root.OpenVibeDock) return;
+
+    const W = [320, 720], H = [360, 900], DEF = { width: 400, height: 560 };
+    const CORNERS = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
+    const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+    const G = {
+        spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
+        bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
+        pin: '<path d="M14.5 3.5l6 6-3 1.5-3.5 3.5.5 4-1.5 1.5-4-4-4.5 4.5M9 15l-4-4 1.5-1.5 4 .5L14 6.5z"/>',
+        close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+        open: '<path d="M13.5 5.5h5v5M18.5 5.5l-8 8M16.5 13.5v4a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h4"/>',
+    };
+    const TABS = [['agent', 'Agents', G.spark], ['activity', 'Activity', G.bell]];
+    const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
+
+    let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null;
+    const mounts = {};
+
+    const phone = () => { try { return root.matchMedia('(max-width: 640px)').matches; } catch { return false; } };
+    const reduced = () => { try { return root.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced'; } catch { return false; } };
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const state = () => (doc && doc.state) || DEFAULT_STATE;
+    const counts = () => (doc && doc.counts) || {};
+    const kind = () => (phone() ? 'phone' : 'desktop');
+    const place = () => ({ ...DEFAULT_STATE.place[kind()], ...((state().place || {})[kind()] || {}) });
+    const sibling = (name) => (typeof o.sibling === 'function' ? o.sibling(name) : `https://openvibe.network/shared/${name}`);
+
+    function call(path, init = {}) {
+        const base = String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '');
+        const t = typeof o.token === 'function' ? o.token() : o.token;
+        const headers = { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
+        return fetch(base + path, { ...init, headers, credentials: 'omit' }).then((r) => (r.ok ? r.json() : null));
+    }
+    const notify = () => { store(doc); paintPill(); };
+
+    /** A change to the state: painted now, sent to the Network a beat later (several changes go as one PUT). */
+    function save(patch) {
+        const st = state();
+        const next = { ...st, ...patch, place: patch.place ? { ...st.place, ...patch.place } : st.place };
+        doc = { ...(doc || {}), state: next, counts: counts() };
+        pending = { ...pending, ...patch, ...(patch.place ? { place: { ...(pending.place || {}), ...patch.place } } : {}) };
+        notify();
+        clearTimeout(saveT);
+        saveT = setTimeout(flush, 700);
+    }
+    async function flush() {
+        const body = pending; pending = {};
+        if (!Object.keys(body).length) return;
+        try {
+            const r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(body) });
+            if (r && r.state && !Object.keys(pending).length) { doc = { ...doc, state: r.state, counts: r.counts || counts() }; notify(); badges(); }
+        } catch { /* offline, or no route yet: the copy stands and the next change tries again */ }
+    }
+
+    function load(src, test) {
+        return new Promise((ok) => {
+            if (test()) return ok(true);
+            const id = `ov-dock-${src.replace(/\W/g, '')}`;
+            let sc = document.getElementById(id);
+            if (!sc) { sc = document.createElement('script'); sc.id = id; sc.src = sibling(src); sc.async = true; document.head.appendChild(sc); }
+            sc.addEventListener('load', () => ok(test()));
+            sc.addEventListener('error', () => ok(false));
+        });
+    }
+
+    function styles() {
+        if (document.getElementById('ovdk-styles')) return;
+        const st = document.createElement('style');
+        st.id = 'ovdk-styles';
+        st.textContent = `
+            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: 9995; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
+                display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 18px 0 9px; border-radius: 99px; border: 1px solid var(--border, #333340); background: var(--bg); color: var(--text-primary, #e0e0e0);
+                font: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: -.005em; box-shadow: 0 14px 34px -14px rgba(0,0,0,.6); cursor: pointer; -webkit-tap-highlight-color: transparent; animation: ovdk-in .3s cubic-bezier(.2,.9,.25,1.2); }
+            .ovdk-pill[hidden] { display: none; }
+            .ovdk-pill[data-corner$="left"] { right: auto; left: max(16px, env(safe-area-inset-left, 0px)); }
+            .ovdk-pill[data-corner^="top"] { bottom: auto; top: calc(66px + env(safe-area-inset-top, 0px)); }
+            .ovdk-pill[data-tone="waiting"] { --t: var(--warning, #f5a524); }
+            .ovdk-pill:hover { border-color: color-mix(in srgb, var(--t) 45%, var(--border, #333340)); }
+            .ovdk-pill:active { scale: .96; }
+            .ovdk-pill:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 3px; }
+            .ovdk-m { position: relative; display: grid; place-items: center; width: 30px; height: 30px; }
+            .ovdk-m::before, .ovdk-m::after { content: ''; position: absolute; top: -1px; right: -2px; width: 9px; height: 9px; border-radius: 50%; background: var(--t); }
+            .ovdk-m::after { box-shadow: 0 0 0 2.5px var(--bg); }
+            .ovdk-pill[data-tone="waiting"] .ovdk-m::before { animation: ovdk-ping 1.8s ease-out infinite; }
+            .ovdk-pill[data-tone="idle"] .ovdk-m::before, .ovdk-pill[data-tone="idle"] .ovdk-m::after, .ovdk-t:empty { display: none; }
+            .ovdk-pill:has(.ovdk-t:empty) { padding-right: 8px; }
+            @keyframes ovdk-in { from { opacity: 0; transform: translateY(10px) scale(.9); } }
+            @keyframes ovdk-ping { to { transform: scale(2.6); opacity: 0; } }
+            @media (prefers-reduced-motion: reduce) { .ovdk-pill, .ovdk-m::before { animation: none !important; } }
+            html[data-ov-motion="reduced"] .ovdk-pill, html[data-ov-motion="reduced"] .ovdk-m::before { animation: none; }
+            .ovdk { --ovdk-gap: 16px; position: fixed; z-index: 9996; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
+                right: max(var(--ovdk-gap), env(safe-area-inset-right, 0px)); bottom: calc(max(var(--ovdk-gap), env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
+                width: ${DEF.width}px; height: ${DEF.height}px; max-width: calc(100vw - 32px); max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px);
+                background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1));
+                border-radius: 22px; box-shadow: 0 30px 80px -24px rgba(0,0,0,.62), 0 2px 10px -2px rgba(0,0,0,.25); font-family: inherit; transform-origin: 100% 100%; }
+            .ovdk[hidden] { display: none; }
+            .ovdk[data-corner$="left"] { right: auto; left: max(var(--ovdk-gap), env(safe-area-inset-left, 0px)); }
+            .ovdk[data-corner^="top"] { bottom: auto; top: calc(66px + env(safe-area-inset-top, 0px)); }
+            .ovdk[data-corner="bottom-left"] { transform-origin: 0 100%; }
+            .ovdk[data-corner="top-right"] { transform-origin: 100% 0; }
+            .ovdk[data-corner="top-left"] { transform-origin: 0 0; }
+            .ovdk.is-in { animation: ovdk-grow .3s cubic-bezier(.2,.9,.25,1.08); }
+            .ovdk.is-moving { transition: none !important; box-shadow: 0 40px 90px -20px rgba(0,0,0,.7); cursor: grabbing; }
+            @keyframes ovdk-grow { from { opacity: 0; transform: scale(.82); } }
+            @keyframes ovdk-rise { from { transform: translateY(100%); } }
+            .ovdk svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            .ovdk-head { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 8px 8px 10px; cursor: grab; touch-action: none; user-select: none; }
+            .ovdk-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); min-width: 0; }
+            .ovdk-tabs button { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 11px; border: 0; border-radius: 999px; background: transparent;
+                color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+            .ovdk-tabs button svg { width: 17px; height: 17px; flex: none; }
+            .ovdk-tabs button:hover { color: var(--text-primary, #ececf1); }
+            .ovdk-tabs button[aria-selected="true"] { background: var(--bg-primary, #12141b); color: var(--text-primary, #ececf1); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+            .ovdk-tabs button[aria-selected="true"] svg { color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-tabs button:focus-visible, .ovdk-acts button:focus-visible, .ovdk-foot :focus-visible { outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 1px; }
+            .ovdk-tabs .n { min-width: 18px; padding: 1px 6px; box-sizing: border-box; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 1.35; text-align: center; font-variant-numeric: tabular-nums;
+                color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
+            .ovdk-tabs .n[data-tone="waiting"] { background: color-mix(in srgb, var(--warning, #f5a524) 34%, transparent); }
+            .ovdk-tabs .n:empty { display: none; }
+            .ovdk-acts { display: flex; gap: 2px; margin-left: auto; }
+            .ovdk-acts button { width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
+            .ovdk-acts button:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .ovdk-acts button svg { width: 19px; height: 19px; }
+            .ovdk-acts [data-act="pin"][aria-pressed="true"] { color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-acts [data-act="pin"][aria-pressed="true"] svg { fill: color-mix(in srgb, currentColor 22%, transparent); }
+            .ovdk-body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; border-top: 1px solid var(--border, rgba(255,255,255,.08)); }
+            .ovdk-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+            .ovdk-panel[hidden] { display: none; }
+            .ovdk-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+            .ovdk-foot { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); font-size: 12.5px; }
+            .ovdk-foot a, .ovdk-foot button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-foot button { color: var(--text-secondary, #b6b6c0); }
+            .ovdk-foot button:hover { color: var(--text-primary, #ececf1); }
+            .ovdk-foot svg { width: 15px; height: 15px; }
+            .ovdk-wait { display: flex; justify-content: center; padding: 36px; }
+            .ovdk-wait span { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border, rgba(255,255,255,.12)); border-top-color: var(--accent, #3b82f6); animation: ovdk-spin .8s linear infinite; }
+            @keyframes ovdk-spin { to { transform: rotate(360deg); } }
+            .ovdk-none { padding: 40px 24px; text-align: center; color: var(--text-muted, #8b8b96); font-size: 13.5px; line-height: 1.45; }
+            .ovdk-size { position: absolute; z-index: 2; width: 22px; height: 22px; top: 0; left: 0; cursor: nwse-resize; touch-action: none; }
+            .ovdk-size::after { content: ''; position: absolute; top: 9px; left: 9px; width: 7px; height: 7px; border-top: 2px solid var(--text-muted, #8b8b96); border-left: 2px solid var(--text-muted, #8b8b96); border-top-left-radius: 3px; opacity: 0; transition: opacity .15s; }
+            .ovdk:hover .ovdk-size::after, .ovdk-size:active::after { opacity: .75; }
+            .ovdk[data-corner="bottom-left"] .ovdk-size { left: auto; right: 0; cursor: nesw-resize; }
+            .ovdk[data-corner="bottom-left"] .ovdk-size::after { left: auto; right: 9px; border-left: 0; border-right: 2px solid var(--text-muted, #8b8b96); border-top-left-radius: 0; border-top-right-radius: 3px; }
+            .ovdk[data-corner="top-right"] .ovdk-size { top: auto; bottom: 0; cursor: nesw-resize; }
+            .ovdk[data-corner="top-right"] .ovdk-size::after { top: auto; bottom: 9px; border-top: 0; border-bottom: 2px solid var(--text-muted, #8b8b96); border-top-left-radius: 0; border-bottom-left-radius: 3px; }
+            .ovdk[data-corner="top-left"] .ovdk-size { top: auto; bottom: 0; left: auto; right: 0; }
+            .ovdk[data-corner="top-left"] .ovdk-size::after { top: auto; bottom: 9px; left: auto; right: 9px; border: 0; border-bottom: 2px solid var(--text-muted, #8b8b96); border-right: 2px solid var(--text-muted, #8b8b96); border-radius: 0 0 3px 0; }
+            @media (pointer: coarse) { .ovdk-acts button { width: 44px; height: 44px; } .ovdk-tabs button { height: 40px; } }
+            @media (max-width: 640px) {
+                .ovdk, .ovdk[data-corner] { left: 0; right: 0; top: auto; bottom: 0; width: auto !important; height: min(86vh, 720px) !important; height: min(86dvh, 720px) !important; max-width: none; max-height: none;
+                    border-radius: 24px 24px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 0 0 100vmax rgba(0,0,0,.5), 0 -12px 40px rgba(0,0,0,.35); transform-origin: 50% 100%; }
+                .ovdk.is-in { animation-name: ovdk-rise; animation-duration: .3s; }
+                .ovdk-head { padding-top: 22px; cursor: default; }
+                .ovdk-head::before { content: ''; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--border-light, var(--border, rgba(255,255,255,.22))); }
+                .ovdk-size { display: none; }
+                .ovdk-tabs { flex: 1; } .ovdk-tabs button { flex: 1; justify-content: center; }
+            }
+            html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }
+            @media (prefers-reduced-motion: reduce) { .ovdk.is-in, .ovdk-wait span { animation: none; } }
+            html[data-ov-motion="reduced"] .ovdk.is-in { animation: none; }
+        `;
+        document.head.appendChild(st);
+    }
+
+    function build() {
+        styles();
+        el = document.createElement('section');
+        el.className = 'ovdk';
+        el.setAttribute('role', 'dialog');
+        el.setAttribute('aria-label', 'Dock');
+        el.hidden = true;
+        el.innerHTML = `
+            <header class="ovdk-head">
+                <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
+                <div class="ovdk-acts">
+                    <button type="button" data-act="pin" aria-pressed="false" title="Keep the Dock's button on every page" aria-label="Keep the Dock's button on every page">${svg(G.pin)}</button>
+                    <button type="button" data-act="close" title="Close" aria-label="Close the Dock">${svg(G.close)}</button>
+                </div>
+            </header>
+            <div class="ovdk-body">${TABS.map(([id]) => `<div class="ovdk-panel" role="tabpanel" id="ovdk-panel-${id}" aria-labelledby="ovdk-tab-${id}" data-panel="${id}" hidden></div>`).join('')}</div>
+            <span class="ovdk-size" aria-hidden="true"></span>`;
+        document.body.appendChild(el);
+
+        const tabs = [...el.querySelectorAll('[role="tab"]')];
+        tabs.forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab, true)));
+        el.querySelector('.ovdk-tabs').addEventListener('keydown', (e) => {
+            const i = tabs.indexOf(document.activeElement); if (i < 0) return;
+            const j = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i - 1 + tabs.length) % tabs.length : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1;
+            if (j >= 0) { e.preventDefault(); setTab(tabs[j].dataset.tab, true); tabs[j].focus(); }
+        });
+        el.querySelector('[data-act="close"]').addEventListener('click', () => close());
+        el.querySelector('[data-act="pin"]').addEventListener('click', () => { save({ pinned: !state().pinned }); paintPin(); });
+        el.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
+        document.addEventListener('click', (e) => { if (isOpen() && phone() && !el.contains(e.target) && !(pill && pill.contains(e.target))) close(); });
+        root.addEventListener('resize', () => { if (isOpen()) layout(); });
+        bindMove();
+        bindSize();
+    }
+
+    // ── Where it sits ────────────────────────────────────────
+    function layout() {
+        const p = place();
+        el.dataset.corner = CORNERS.includes(p.corner) ? p.corner : 'bottom-right';
+        if (phone()) { el.style.width = ''; el.style.height = ''; clear(0); return; }
+        const w = clamp(p.width || DEF.width, W[0], Math.max(W[0], Math.min(W[1], root.innerWidth - 32)));
+        const h = clamp(p.height || DEF.height, H[0], Math.max(H[0], Math.min(H[1], root.innerHeight - 96)));
+        el.style.width = `${w}px`; el.style.height = `${h}px`;
+        // Desktop toasts (bottom right) stack above the card when there is room, so neither hides the other.
+        clear(el.dataset.corner === 'bottom-right' && root.innerHeight - h > 320 ? h + 12 : 0);
+    }
+    const clear = (px) => document.documentElement.style.setProperty('--ov-dock-clear', `${px}px`);
+
+    /**
+     * The head drags the card, the tabs too once the pointer has moved 6 px (a tap still picks the tab; pin and close
+     * never drag). On release it snaps to the nearest corner (a FLIP, so it glides there).
+     */
+    function bindMove() {
+        const head = el.querySelector('.ovdk-head');
+        let s = null, swallow = false;
+        // Armed on the press; the window hears the moves, so a quick drag that leaves the head before 6 px still counts.
+        const move = (e) => {
+            if (!s || e.pointerId !== s.id) return;
+            s.dx = e.clientX - s.x; s.dy = e.clientY - s.y;
+            if (!s.live) {
+                if (Math.abs(s.dx) + Math.abs(s.dy) < 6) return;
+                s.live = true;
+                if (!phone()) el.classList.add('is-moving');
+            }
+            if (phone()) { if (e.pointerType !== 'mouse') el.style.transform = `translateY(${Math.max(0, s.dy)}px)`; return; }
+            el.style.transform = `translate(${s.dx}px, ${s.dy}px)`;
+        };
+        const end = (e) => {
+            if (!s || (e && e.pointerId !== s.id)) return;
+            const { r, dx, dy, live } = s; s = null;
+            root.removeEventListener('pointermove', move); root.removeEventListener('pointerup', end); root.removeEventListener('pointercancel', end);
+            if (!live) return;
+            swallow = true; setTimeout(() => { swallow = false; }, 0);
+            el.classList.remove('is-moving');
+            if (phone()) {
+                el.style.transition = 'transform .2s ease';
+                if (dy > 110) close(); else el.style.transform = '';
+                setTimeout(() => { el.style.transition = ''; }, 220);
+                return;
+            }
+            const cx = r.left + dx + r.width / 2, cy = r.top + dy + r.height / 2;
+            const corner = `${cy < root.innerHeight / 2 ? 'top' : 'bottom'}-${cx < root.innerWidth / 2 ? 'left' : 'right'}`;
+            const from = { x: r.left + dx, y: r.top + dy };
+            el.style.transform = '';
+            save({ place: { desktop: { ...place(), corner } } });
+            layout();
+            const to = el.getBoundingClientRect();
+            if (reduced()) return;
+            el.style.transform = `translate(${from.x - to.left}px, ${from.y - to.top}px)`;
+            el.getBoundingClientRect();
+            el.style.transition = 'transform .28s cubic-bezier(.2,.9,.25,1.05)';
+            el.style.transform = '';
+            setTimeout(() => { el.style.transition = ''; }, 300);
+        };
+        head.addEventListener('pointerdown', (e) => {
+            if (e.button || e.target.closest('.ovdk-acts')) return;
+            s = { x: e.clientX, y: e.clientY, r: el.getBoundingClientRect(), dx: 0, dy: 0, id: e.pointerId, live: false };
+            root.addEventListener('pointermove', move); root.addEventListener('pointerup', end); root.addEventListener('pointercancel', end);
+        });
+        // A drag that began on a tab is a drag, not a pick.
+        head.addEventListener('click', (e) => { if (swallow) { swallow = false; e.preventDefault(); e.stopPropagation(); } }, true);
+    }
+
+    /** The free corner (the one away from the anchor) resizes the card. */
+    function bindSize() {
+        const grip = el.querySelector('.ovdk-size');
+        let s = null;
+        grip.addEventListener('pointerdown', (e) => {
+            if (e.button || phone()) return;
+            e.preventDefault();
+            const r = el.getBoundingClientRect();
+            s = { x: e.clientX, y: e.clientY, w: r.width, h: r.height, id: e.pointerId, c: el.dataset.corner };
+            try { grip.setPointerCapture(e.pointerId); } catch { /* */ }
+        });
+        grip.addEventListener('pointermove', (e) => {
+            if (!s || e.pointerId !== s.id) return;
+            const dx = e.clientX - s.x, dy = e.clientY - s.y;
+            const w = clamp(s.w + (s.c.endsWith('right') ? -dx : dx), W[0], Math.min(W[1], root.innerWidth - 32));
+            const h = clamp(s.h + (s.c.startsWith('bottom') ? -dy : dy), H[0], Math.min(H[1], root.innerHeight - 96));
+            el.style.width = `${Math.round(w)}px`; el.style.height = `${Math.round(h)}px`;
+            s.nw = Math.round(w); s.nh = Math.round(h);
+        });
+        const end = (e) => {
+            if (!s || (e && e.pointerId !== s.id)) return;
+            const { nw, nh } = s; s = null;
+            if (nw && nh) { save({ place: { desktop: { ...place(), width: nw, height: nh } } }); layout(); }
+        };
+        grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
+    }
+
+    // ── Tabs ─────────────────────────────────────────────────
+    function badges() {
+        if (!el) return;
+        const c = counts();
+        const agent = (c.waiting || 0) + (c.running || 0);
+        const n = (k, v, tone) => { const b = el.querySelector(`[data-n="${k}"]`); b.textContent = v ? (v > 99 ? '99+' : String(v)) : ''; b.dataset.tone = tone || ''; };
+        n('agent', agent, c.waiting ? 'waiting' : '');
+        n('activity', c.unread || 0);
+        el.querySelector('#ovdk-tab-agent').setAttribute('aria-label', [`Agents`, c.waiting ? `${c.waiting} need${c.waiting === 1 ? 's' : ''} you` : '', c.running ? `${c.running} working` : ''].filter(Boolean).join(', '));
+        el.querySelector('#ovdk-tab-activity').setAttribute('aria-label', c.unread ? `Activity, ${c.unread} unread` : 'Activity');
+    }
+    function paintPin() {
+        const b = el.querySelector('[data-act="pin"]'), on = !!state().pinned;
+        b.setAttribute('aria-pressed', String(on));
+        const t = on ? "The Dock's button stays on every page" : "Keep the Dock's button on every page";
+        b.title = t; b.setAttribute('aria-label', t);
+    }
+    function setTab(id, remember) {
+        tab = TABS.some(([t]) => t === id) ? id : 'activity';
+        el.querySelectorAll('[role="tab"]').forEach((b) => { const on = b.dataset.tab === tab; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+        el.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== tab; });
+        if (remember && state().tab !== tab) save({ tab });
+        fill(tab);
+    }
+
+    async function fill(id) {
+        const panel = el.querySelector(`[data-panel="${id}"]`);
+        if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); return; }
+        mounts[id] = { refresh: null };
+        panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
+        if (id === 'agent') {
+            const ok = await load('action-center.js', () => !!(root.OpenVibeActionCenter && root.OpenVibeActionCenter.mount));
+            if (!ok) return failed(panel, id);
+            panel.innerHTML = `<div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            const m = root.OpenVibeActionCenter.mount(panel.firstChild, {
+                token: o.token, apiBase: o.apiBase, buckets: ['waiting', 'running'],
+                onCounts: (c) => { doc = { ...(doc || {}), state: state(), counts: { ...counts(), running: c.running || 0, waiting: c.waiting || 0 } }; badges(); notify(); },
+            });
+            mounts[id] = m;
+            panel.querySelector('[data-act="all"]').addEventListener('click', (e) => {
+                const anchor = e.currentTarget;
+                close();
+                try { root.OpenVibeActionCenter.open({ token: o.token, apiBase: o.apiBase, anchor: (pill && !pill.hidden) ? pill : anchor }); } catch { /* */ }
+            });
+            return;
+        }
+        const ok = await load('notification-ui.js', () => !!(root.OpenVibeNotifications && root.OpenVibeNotifications.renderDock));
+        if (!ok) return failed(panel, id);
+        const N = root.OpenVibeNotifications;
+        if (!N.__ovNavInit) { try { N.init({ token: typeof o.token === 'function' ? o.token() : o.token, apiBase: o.apiBase || 'https://openvibe.network' }); N.__ovNavInit = true; } catch { /* */ } }
+        panel.innerHTML = '';
+        N.renderDock(panel);
+        mounts[id] = { refresh: () => { try { N.refresh(); } catch { /* */ } } };
+    }
+    function failed(panel, id) {
+        mounts[id] = null;
+        panel.innerHTML = `<div class="ovdk-none">That part of the Dock did not load. Check your connection, then open it again.</div>`;
+    }
+
+    // ── The pill ─────────────────────────────────────────────
+    let pill = null, readT = 0, bound = false;
+    function store(v) {
+        try { if (v === undefined) return JSON.parse(localStorage.getItem('ov-dock') || 'null'); localStorage.setItem('ov-dock', JSON.stringify(v)); } catch { /* */ }
+        return null;
+    }
+    function paintPill() {
+        if (!pill) return;
+        const c = counts(), st = state(), w = c.waiting || 0, r = c.running || 0;
+        const corner = place().corner;
+        const show = !isOpen() && !!(w || r || st.pinned);
+        pill.hidden = !show;
+        pill.dataset.corner = CORNERS.includes(corner) ? corner : 'bottom-right';
+        pill.dataset.tone = w ? 'waiting' : r ? 'running' : 'idle';
+        pill.querySelector('.ov-mark').setAttribute('data-state', r && !w ? 'busy' : '');
+        pill.querySelector('.ovdk-t').textContent = w ? 'Needs you' : r ? (r > 1 ? `${r} working` : 'Working') : '';
+        pill.setAttribute('aria-label', [w ? `${w} need${w > 1 ? '' : 's'} you` : '', r ? `${r} working` : ''].filter(Boolean).join(', ') || 'Open the Dock');
+        // Desktop toasts (bottom right, notification-ui.js) stack above a pill in their corner; an open Dock sets its own.
+        if (!isOpen()) clear(show && pill.dataset.corner === 'bottom-right' && !phone() ? 58 : 0);
+    }
+    function read() {
+        clearTimeout(readT);
+        if (!pill || document.hidden) return;
+        const t = typeof o.token === 'function' ? o.token() : o.token;
+        if (!t) return;
+        fetch(`${String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '')}/api/v1/me/dock`, { headers: { authorization: `Bearer ${t}`, accept: 'application/json' }, credentials: 'omit' })
+            .then((r) => { if (r.status !== 404) return r.ok ? r.json() : null; store({ off: Date.now() + 864e5 }); if (pill) pill.hidden = true; return null; })
+            .then((next) => {
+                if (!next || !next.state || !pill) return;
+                update(next);
+                if (!isOpen() && next.state.open && !phone()) open();
+                const c = next.counts || {};
+                if (c.running || c.waiting) readT = setTimeout(read, 30000);
+            }).catch(() => { /* offline: the copy stands */ });
+    }
+    /** The pill for a signed-in person (navbar.js), or none (null: signed out, or the site turned the Dock off). */
+    function mount(opts) {
+        if (!opts) {
+            clearTimeout(readT);
+            if (pill) { pill.remove(); pill = null; }
+            if (isOpen()) close();
+            doc = null;
+            return;
+        }
+        o = { ...o, ...opts };
+        styles();
+        if (!pill) {
+            const kept = store();
+            if (kept && kept.off > Date.now()) return;
+            if (kept && kept.state && !doc) doc = kept;
+            pill = document.createElement('button');
+            pill.type = 'button'; pill.id = 'ovdk-pill'; pill.className = 'ovdk-pill'; pill.hidden = true;
+            pill.innerHTML = '<span class="ovdk-m"><span class="ov-mark" data-size="26"></span></span><span class="ovdk-t"></span>';
+            pill.addEventListener('click', () => open());
+            document.body.appendChild(pill);
+            paintPill();
+        }
+        if (!bound) { bound = true; document.addEventListener('visibilitychange', () => { if (!document.hidden) read(); }); }
+        read();
+    }
+
+    // ── Open and close ───────────────────────────────────────
+    function isOpen() { return !!(el && !el.hidden); }
+    function open(opts = {}) {
+        o = { ...o, ...opts };
+        if (opts.doc) doc = opts.doc;
+        if (!el) build();
+        lastFocus = document.activeElement;
+        const c = counts();
+        const want = opts.tab || (c.waiting || c.running ? 'agent' : state().tab || 'activity');
+        layout();
+        badges();
+        paintPin();
+        el.hidden = false;
+        el.classList.remove('is-in'); void el.offsetWidth; el.classList.add('is-in');
+        if (phone()) { el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open'); } else el.removeAttribute('aria-modal');
+        setTab(want, false);
+        if (!state().open || state().tab !== tab) save({ open: true, tab }); else notify();
+        setTimeout(() => { try { el.querySelector('[role="tab"][aria-selected="true"]').focus({ preventScroll: true }); } catch { /* */ } }, 0);
+    }
+    function close() {
+        if (!isOpen()) return;
+        const inside = el.contains(document.activeElement);
+        el.hidden = true;
+        el.style.transform = '';
+        el.removeAttribute('aria-modal');
+        document.documentElement.classList.remove('ovdk-sheet-open');
+        clear(0);
+        save({ open: false });
+        if (inside) {
+            const back = pill && !pill.hidden ? pill : (lastFocus && lastFocus.isConnected ? lastFocus : null);
+            try { if (back) back.focus({ preventScroll: true }); } catch { /* */ }
+        }
+    }
+    /** A fresh copy from the Network (navbar.js reads it while something runs): counts and anything changed elsewhere. */
+    function update(next) {
+        if (!next || !next.state) return;
+        doc = Object.keys(pending).length ? { ...next, state: state() } : next;
+        store(doc);
+        paintPill();
+        if (!el) return;
+        badges();
+        paintPin();
+        if (isOpen()) layout();
+    }
+
+    root.OpenVibeDock = { mount, open, close, isOpen, update, _state: () => ({ doc, tab, pending }) };
+})(typeof window !== 'undefined' ? window : globalThis);
