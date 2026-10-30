@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.51.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.52.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -543,7 +543,9 @@ Network's, so it follows the person from site to site:
 
 The account menu has a Dock tile. A site can call `OpenVibeNavbar.openDock('agent' | 'activity')`, pass `dock: false`
 to leave it out, or pass `dockApiBase` for tests and staging. Desktop toasts stack above the pill (`--ov-dock-clear`).
-Chats join in K-D2 and the agent's live screen in K-D3.
+**Chats** (4.52.0) is the person's conversations and DMs from OpenVibe.Chat's API
+(`/api/dm/conversations`, read and answered in place, unread counts on the tab; `dockChatBase` overrides Chat's origin).
+The agent's live screen joins in K-D3.
 
 **Quiet hours (4.30.0).** During the person's window (`GET /api/notifications/quiet-hours`, read at start and every ten
 minutes), toasts and sounds wait; the bell and the badge still fill, and a critical notice still shows.
