@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.45.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.45.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -24,7 +24,7 @@ were reconciled first.
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js`, `scripts/build-icons.js`, `scripts/build-social-cards.js` (share cards from the Contracts manifests; Chrome + ImageMagick) |
 | Pin bot | `scripts/pin-bump.js` (`node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply]`): after a release, one PR per repository that pins the library below the tag, with the lockfile refreshed and the docs-status fields rewritten; a dry run unless `--apply`; CI tests each PR |
-| Checks (CI) | `scripts/pin-drift.js` (every openvibe-* pin is a published tag and not more than one minor behind, and openvibe-shared is installed once), `scripts/docs-status.js` (`node scripts/docs-status.js <dir> [--check]`: STATUS.json's contracts/sdk/shared fields and the README `<!-- versions:start/end -->` block must name the pinned releases; `--check` exits 1 on drift) and `scripts/floating-promises.js` (`node scripts/floating-promises.js <dir> [--json]`: an async call whose result nobody awaits — a failure is an unhandled rejection and a transaction commits without it — unless awaited, returned, assigned, `void`-ed, chained with `.then(`/`.catch(`/`.finally(` or opted out with `// floating-ok: <reason>`; exit 1 when found) |
+| Checks (CI) | `scripts/pin-drift.js` (every openvibe-* pin is a published tag and not more than one minor behind, and openvibe-shared is installed once), `scripts/docs-status.js` (`node scripts/docs-status.js <dir> [--check]`: STATUS.json's contracts/sdk/shared fields and the README `<!-- versions:start/end -->` block must name the pinned releases; `--check` exits 1 on drift) and `scripts/floating-promises.js` (`node scripts/floating-promises.js <dir> [--json]`: an async call whose result nobody awaits — a failure is an unhandled rejection and a transaction commits without it — unless awaited, returned, assigned, `void`-ed, chained with `.then(`/`.catch(`/`.finally(` or opted out with `// floating-ok: <reason>`; exit 1 when found). The native code is compiled too: `scripts/native-check.js` writes the generated Compose and SwiftUI sources out, and `.github/workflows/native.yml` compiles the Kotlin against the Compose artifacts and type-checks the Swift against SwiftUI |
 
 Every module file has an explicit `exports` entry (no wildcards), so `require('openvibe-shared/navbar')`,
 `require.resolve('openvibe-shared/package.json')` and the rest all resolve. It stays one package with
