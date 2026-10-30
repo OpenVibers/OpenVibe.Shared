@@ -49,9 +49,12 @@
             /* Brand group: mark + linked wordmark + launcher read as one control. Every property a host
                page might set on bare "nav a" / "a" is reset here, so the brand looks the same everywhere. */
             .openvibe-navbar .openvibe-navbar-brand a, .openvibe-navbar .openvibe-navbar-brand a:hover { all: unset; cursor: pointer; color: inherit; font: inherit; }
+            :where(.openvibe-navbar-brand) button.flame { all: unset; cursor: pointer; color: inherit; font: inherit; }
+            .openvibe-navbar .openvibe-navbar-brand .flame[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.18)); }
+            .openvibe-navbar .openvibe-navbar-brand button.flame:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             .openvibe-navbar .openvibe-navbar-brand { gap: 6px; padding: 2px; border-radius: 12px; margin-right: 0; }
-            .openvibe-navbar .openvibe-navbar-brand a.flame { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; transition: background .15s; }
-            .openvibe-navbar .openvibe-navbar-brand a.flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .openvibe-navbar .openvibe-navbar-brand .flame { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; transition: background .15s; }
+            .openvibe-navbar .openvibe-navbar-brand .flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
             .openvibe-navbar .openvibe-navbar-brand .name { align-items: center; gap: 0; font-size: 15.5px; letter-spacing: -.25px; }
             .openvibe-navbar .openvibe-navbar-brand .name a { padding: 3px 1px; border-radius: 6px; transition: color .15s, background .15s; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-sub { color: var(--text-primary, #e6edf7); font-weight: 750; }
@@ -67,8 +70,8 @@
                gets a clear ring, without moving anything (they were 22px and 30px tall). */
             @media (pointer: coarse) {
                 .openvibe-navbar .openvibe-navbar-brand .name a { padding-top: 14px; padding-bottom: 14px; margin-top: -11px; margin-bottom: -11px; }
-                .openvibe-navbar .openvibe-navbar-brand a.flame { position: relative; }
-                .openvibe-navbar .openvibe-navbar-brand a.flame::after { content: ''; position: absolute; inset: -8px; }
+                .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
+                .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px; }
                 /* 4.46.0 (the fleet tap audit): Sign In, the menu and the orb reach 44px to a finger, still drawn as before. */
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
                 .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -6px 0; }
@@ -160,14 +163,14 @@
                in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 440px
                the folded balances show the first one only (a tap lists them all). */
             .openvibe-navbar .openvibe-navbar-brand { flex: 0 1 auto; }
-            .openvibe-navbar .openvibe-navbar-brand a.flame { flex: none; }
+            .openvibe-navbar .openvibe-navbar-brand .flame { flex: none; }
             .openvibe-navbar .openvibe-navbar-brand .name { display: block; min-width: 0; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
             /* Both balances on every phone (the owner, 2026-10-28: "you can only see one… use the full space"): the pill
                tightens instead of folding to one. */
             @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
             @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
                 .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
-                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 14px; letter-spacing: -.3px; } .openvibe-navbar .openvibe-navbar-brand a.flame { width: 28px; height: 28px; } }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 14px; letter-spacing: -.3px; } .openvibe-navbar .openvibe-navbar-brand .flame { width: 28px; height: 28px; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
@@ -669,7 +672,9 @@
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
             : `<span class="ov-mark" data-size="28" data-variant="${escapeAttr(brand.variant)}"></span>`;
         return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
-                <a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>
+                ${_config.switcher === false
+        ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>`
+        : `<button type="button" class="flame" id="openvibe-switch-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Switch to another OpenVibe site" title="Every OpenVibe site">${mark}</button>`}
                 <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
                 ${_config.search === false ? '' : orbHTML()}
             </div>`;
@@ -1656,6 +1661,7 @@
         bindLinks(nav, links);
         bindMessages(nav);
         hookSearch(nav);
+        hookSwitcher(nav);
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
@@ -1833,6 +1839,51 @@
         try { const sc = document.createElement('script'); sc.src = sibling('search.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _searchLoading = false; if (orb) orb.classList.remove('is-busy'); }; document.head.appendChild(sc); } catch { _searchLoading = false; }
     }
     const menuOpen = () => !!(typeof document !== 'undefined' && document.querySelector && document.querySelector('.ovs.is-open'));
+
+    // ── The site switcher (site-switcher.js, 4.48.0): the OpenVibe mark opens a compact grid of every site ──
+    // Recent and pinned follow the account (Network /api/themes/me/sites) when signed in; the name stays the home link.
+    let _switcherLoading = false;
+    function openSwitcher() {
+        const btn = _navEl && _navEl.querySelector('#openvibe-switch-btn');
+        const anchor = () => {
+            if (!_navEl || !btn || !btn.getBoundingClientRect) return null;
+            const bar = _navEl.getBoundingClientRect(), at = btn.getBoundingClientRect();
+            return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6 } : null;
+        };
+        const go = () => {
+            const S = root.OpenVibeSiteSwitcher;
+            if (!S) return;
+            if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close();
+            if (_navEl) _navEl.classList.remove('ovnav-hide');
+            S.open({ service: _config.service, frame: OVFrame.get((d) => S.update(d)), token: _config.token, apiBase: 'https://openvibe.network', user: _config.user,
+                icons: (scope) => loadOvIcons(scope), anchor: anchor(),
+                onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-switch-btn'); if (b) b.setAttribute('aria-expanded', 'false'); } });
+            const b = _navEl && _navEl.querySelector('#openvibe-switch-btn'); if (b) b.setAttribute('aria-expanded', 'true');
+        };
+        if (root.OpenVibeSiteSwitcher) return go();
+        if (_switcherLoading) return;
+        _switcherLoading = true;
+        try { const sc = document.createElement('script'); sc.src = sibling('site-switcher.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _switcherLoading = false; }; document.head.appendChild(sc); } catch { _switcherLoading = false; }
+    }
+    // A signed-in person's visit moves this site to the front of their Recent, at most once in 30 minutes, and never
+    // under Global Privacy Control or Do Not Track (as the page-view beacon).
+    let _visitSent = false;
+    function recordVisit() {
+        if (_visitSent || !_config.token || !_config.service || typeof fetch === 'undefined' || typeof navigator === 'undefined') return;
+        if (navigator.globalPrivacyControl || navigator.doNotTrack === '1') return;
+        _visitSent = true;
+        const key = 'ov_sw_visit_' + _config.service;
+        try { if (Date.now() - Number(localStorage.getItem(key) || 0) < 30 * 60000) return; localStorage.setItem(key, String(Date.now())); } catch { /* storage off: still record */ }
+        fetch('https://openvibe.network/api/themes/me/sites/visit', { method: 'POST', headers: { Authorization: `Bearer ${_config.token}`, 'Content-Type': 'application/json' }, credentials: 'include', keepalive: true, body: JSON.stringify({ site: _config.service }) }).catch(() => {});
+    }
+    function hookSwitcher(nav) {
+        const b = nav.querySelector('#openvibe-switch-btn');
+        if (!b) return;
+        b.addEventListener('click', () => { if (root.OpenVibeSiteSwitcher && root.OpenVibeSiteSwitcher.isOpen()) root.OpenVibeSiteSwitcher.close(); else openSwitcher(); });
+        for (const ev of ['pointerenter', 'touchstart', 'focus']) b.addEventListener(ev, () => { loadOvIcons(); OVFrame.get(); }, { once: true, passive: true });
+        if (root.OpenVibeSiteSwitcher && root.OpenVibeSiteSwitcher.isOpen()) b.setAttribute('aria-expanded', 'true');
+        recordVisit();
+    }
     let _orbIntro = false;
     let _searchKeys = false;
     function hookSearch(nav) {
@@ -1947,6 +1998,7 @@
         /** Open the search panel (search.js), with an optional query already in it. */
         openSearch(q, tab) { openSearch(q, tab); },
         openMenu(tab) { openSearch('', tab || 'you'); },
+        openSwitcher() { openSwitcher(); },
 
         /** The phone app bar: true (from the links that have icons), a list of { label, href, icon, id, page, dot }, or false. */
         setAppBar(spec) { _config.appBar = spec; renderAppBar(); },
