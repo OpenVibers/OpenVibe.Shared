@@ -44,6 +44,7 @@ function png(w, h, rgb) {
         chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
 }
 const SHOT = png(240, 150, [64, 132, 214]);
+const SHOT2 = png(240, 150, [46, 160, 96]);
 const NOTES = '# Proof\n\n<script>window.__pwned = 1</script>\n\n<img src=x onerror="window.__pwned=2">\n\n| a | b |\n';
 const CODE = 'const a = "<script>alert(1)</script>";\n// a comment\n';
 const CSV = 'name,size\nshot.png,12\nother.png,34\n';
@@ -59,6 +60,7 @@ const server = http.createServer((req, res) => {
     if (u === '/agent-session.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, 'agent-session.js'))); }
     if (u === '/agent-session.css') { res.writeHead(200, { 'content-type': 'text/css' }); return res.end(fs.readFileSync(path.join(ROOT, 'agent-session.css'))); }
     if (u === '/shot.png') { res.writeHead(200, { 'content-type': 'image/png' }); return res.end(SHOT); }
+    if (u === '/shot2.png') { res.writeHead(200, { 'content-type': 'image/png' }); return res.end(SHOT2); }
     if (u === '/broken.png') { res.writeHead(404, { 'content-type': 'text/plain' }); return res.end('no'); }
     if (u === '/notes.md') { res.writeHead(200, { 'content-type': 'text/markdown' }); return res.end(NOTES); }
     if (u === '/code.js') { res.writeHead(200, { 'content-type': 'text/javascript' }); return res.end(CODE); }
@@ -102,6 +104,22 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
             return { text: (para && para.textContent || '').trim(), img: !!img, after: !!(strip && para && kids.indexOf(strip) > kids.indexOf(para)) } })()`);
         assert.ok(v.img && v.after, "a message's attachment shows under its text");
 
+        // The images in one row, the other files as chips in a row under them.
+        await push(p, { t: 'text', text: 'Two kinds', attachments: [
+            att('/shot.png', 'one.png', 'image', 'read', 'image/png'), att('/shot2.png', 'two.png', 'image', 'read', 'image/png'),
+            att('/data.json', 'three.json', 'text', 'read', 'application/json')] });
+        v = await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); const rows = m.querySelectorAll('.ovas-att-row');
+            return { rows: rows.length, imgs: rows[0] ? rows[0].querySelectorAll('.ovas-att-img').length : 0, chips: rows[1] ? rows[1].querySelectorAll('.ovas-att-chip').length : 0 } })()`);
+        assert.deepStrictEqual([v.rows, v.imgs, v.chips], [2, 2, 1], 'the images in one row, the chips in a row under them');
+
+        // A line of a type the component does not know still shows: its label or summary, then its attachments.
+        await push(p, { t: 'proof', kind: 'screenshots', label: 'screenshots', ok: true, summary: '2 screenshots of 1 page at 390px, clean',
+            attachments: [att('/shot.png', 'proof.png', 'image', 'output', 'image/png')] });
+        v = await p.evaluate(`(() => { const row = document.querySelector('.ovas-extra'); return {
+            there: !!row, text: row ? row.textContent : '', img: !!(row && row.querySelector('.ovas-att-img')) } })()`);
+        assert.ok(v.there && v.img, 'an unknown line shows its attachments');
+        assert.ok(v.text.includes('screenshots') && v.text.includes('390px'), 'and says what it is');
+
         // A tap opens the preview sheet.
         await p.evaluate(`document.querySelector('.ovas-msg .ovas-att-img').click(), 1`);
         v = await p.evaluate(`(() => { const s = document.querySelector('.ovas-sheet'); return {
@@ -125,10 +143,10 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
             att('/shot.png', 'shot.png', 'image', 'read', 'image/png'), att('/movie.mp4', 'movie.mp4', 'video', 'output', 'video/mp4'),
             att('/sound.mp3', 'sound.mp3', 'audio', 'output', 'audio/mpeg'), att('/doc.pdf', 'doc.pdf', 'pdf', 'output', 'application/pdf'),
             att('/code.js', 'code.js', 'text', 'wrote', 'text/javascript')] });
-        const kinds = await p.evaluate(`(() => { const gs = document.querySelectorAll('.ovas-group'); const g = gs[gs.length - 1]; const tiles = g.querySelectorAll('.ovas-att > *'); return [...tiles].map((t) => t.dataset.kind) })()`);
+        const kinds = await p.evaluate(`(() => { const gs = document.querySelectorAll('.ovas-group'); const g = gs[gs.length - 1]; const tiles = g.querySelectorAll('.ovas-att [data-kind]'); return [...tiles].map((t) => t.dataset.kind) })()`);
         assert.deepStrictEqual(kinds, ['image', 'video', 'audio', 'pdf', 'text'], 'every kind of file is a tile of its own');
         const openBy = async (name) => {
-            await p.evaluate(`(() => { const t = [...document.querySelectorAll('.ovas-att > *')].find((n) => n.querySelector('.ovas-att-cap').textContent === ${JSON.stringify(name)}); if (!t) throw new Error('no tile ' + ${JSON.stringify(name)}); t.click(); return 1 })()`);
+            await p.evaluate(`(() => { const t = [...document.querySelectorAll('.ovas-att [data-kind]')].find((n) => n.querySelector('.ovas-att-cap').textContent === ${JSON.stringify(name)}); if (!t) throw new Error('no tile ' + ${JSON.stringify(name)}); t.click(); return 1 })()`);
             // A text file is fetched, so the sheet fills a moment later.
             for (let i = 0; i < 30; i++) {
                 const loading = await p.evaluate(`(() => { const b = document.querySelector('.ovas-sheet-body'); return !b || b.textContent.indexOf('Loading') === 0; })()`);
@@ -169,7 +187,7 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
         // A third-party address the model printed never loads.
         await push(p, { t: 'text', text: 'Not mine', attachments: [att('https://evil.example.com/x.png', 'x.png', 'image', 'output', 'image/png')] });
         v = await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); return {
-            tiles: m.querySelectorAll('.ovas-att > *').length, srcs: [...document.querySelectorAll('.ovas-att img')].map((i) => i.getAttribute('src')) } })()`);
+            tiles: m.querySelectorAll('.ovas-att [data-kind]').length, srcs: [...document.querySelectorAll('.ovas-att img')].map((i) => i.getAttribute('src')) } })()`);
         assert.strictEqual(v.tiles, 0, "a third-party address is not shown");
         assert.ok(!v.srcs.includes('https://evil.example.com/x.png'), 'and never loaded');
 
@@ -179,7 +197,7 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
         let gone = false;
         for (let i = 0; i < 60 && !gone; i++) {
             await p.evaluate(`new Promise((r) => setTimeout(r, 100)), 1`);
-            gone = await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); const b = m.querySelector('.ovas-att > *'); return !!(b && b.hidden && !b.querySelector('img')); })()`);
+            gone = await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); const b = m.querySelector('.ovas-att [data-kind]'); return !!(b && b.hidden && !b.querySelector('img')); })()`);
         }
         assert.ok(gone, 'a broken image hides itself');
 
@@ -187,7 +205,21 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
         v = await p.evaluate(`(() => { const doc = document.documentElement; const chips = [...document.querySelectorAll('.ovas-att-chip')]; return {
             wide: doc.scrollWidth, chips: chips.map((c) => Math.round(c.getBoundingClientRect().height)) } })()`);
         assert.ok(v.wide <= 390, 'nothing scrolls sideways at 390 px (' + v.wide + ')');
+        const sticky = await p.evaluate(`getComputedStyle(document.querySelector('.ovas-head')).position`);
+        assert.strictEqual(sticky, 'static', 'the head does not stick on a phone, so it never covers the steps');
         assert.ok(v.chips.every((h) => h >= 44), 'a chip is a 44 px target on a phone');
+
+        // At 320 the filter row scrolls inside its own box, and the page does not scroll sideways.
+        const narrow = await h.openPage(browser, context, { width: 320, height: 800 });
+        await narrow.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 8000 });
+        await narrow.evaluate(`window.v.push(${JSON.stringify({ t: 'text', text: 'A line of text.' })}), 1`);
+        const nv = await narrow.evaluate(`(() => { const bar = document.querySelector('.ovas-bar'); return {
+            wide: document.documentElement.scrollWidth, bar: Math.round(bar.getBoundingClientRect().width),
+            box: Math.round(document.querySelector('.ovas').getBoundingClientRect().width),
+            scrolls: bar.scrollWidth > bar.clientWidth } })()`);
+        assert.ok(nv.wide <= 320, 'nothing scrolls sideways at 320 px (' + nv.wide + ')');
+        assert.ok(nv.bar <= nv.box + 1, 'the filter row stays inside the session (' + nv.bar + ' in ' + nv.box + ')');
+        await narrow.close();
 
         await p.close();
         console.log('agent-session-embeds-chrome: attachments, previews and safety ok');

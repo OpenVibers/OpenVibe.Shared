@@ -38,7 +38,9 @@
  *   { t: 'done', ok, text, duration_ms, cost_usd, turns }
  * A step or a message may carry the images and files the agent read, wrote or produced:
  *   attachments: [{ url, name, mime, size?, kind: 'image'|'video'|'audio'|'pdf'|'text'|'file', role: 'read'|'wrote'|'output' }]
- * The product supplies the URLs; the component never builds one from a local path. A step's attachments show in its
+ * The product supplies the URLs; the component never builds one from a local path. Any line may carry attachments,
+ * and the component shows them for every line it draws. A line of a type it does not know (Codes' proof lines) is
+ * drawn as a minimal row: its label or summary, then its attachments. A step's attachments show in its
  * group's header, visible while the group is folded; a message's show under its text. A tap opens a preview sheet: the
  * image at full width (pinch to zoom), video and audio in their players, a PDF in a frame, text as code, Markdown, a CSV
  * table or pretty JSON, plus Open and Download. An attachment loads only from the product's own origin or Media's,
@@ -225,9 +227,11 @@
         }
         return false;
     }
-    /** The row of tiles: an image as a thumbnail with its name, everything else as a chip with an icon. */
+    /** The tiles of a line: the images in one row, the other files as chips in a row under them. */
     function attStrip(list, onOpen) {
         const strip = el('div', 'ovas-att');
+        const imgs = el('div', 'ovas-att-row');
+        const chips = el('div', 'ovas-att-row');
         for (const a of list) {
             const b = el('button', a.kind === 'image' ? 'ovas-att-img' : 'ovas-att-chip');
             b.type = 'button';
@@ -241,13 +245,16 @@
                 img.loading = 'lazy'; img.decoding = 'async'; img.alt = a.name; img.src = a.url;
                 img.addEventListener('error', () => { img.remove(); b.hidden = true; });
                 b.appendChild(img);
+                imgs.appendChild(b);
             } else {
                 b.insertAdjacentHTML('beforeend', svg(ATT_ICON[a.kind] || 'file'));
+                chips.appendChild(b);
             }
             b.appendChild(el('span', 'ovas-att-cap', a.name));
             b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onOpen(a); });
-            strip.appendChild(b);
         }
+        if (imgs.childNodes.length) strip.appendChild(imgs);
+        if (chips.childNodes.length) strip.appendChild(chips);
         return strip;
     }
 
@@ -679,8 +686,23 @@
         function appendLi(target, li) { if (target === feed) { if (empty.parentNode) empty.remove(); feed.appendChild(li); } else target.appendChild(li); }
 
         const pending = new Map();   // tool name → ids of its steps still waiting for a result (events without ids)
+        // Any line may carry attachments, and a line of a type this component does not know still shows: a minimal
+        // row with its label or summary, then its attachments (Codes' proof lines, for one).
+        const KNOWN = new Set(['agent', 'text', 'tool', 'tool_progress', 'tool_result', 'handoff', 'note', 'step', 'usage', 'done', 'state']);
+        function extraLine(x, target) {
+            const li = el('li', 'ovas-extra');
+            li.dataset.k = 'steps';   // it is part of the work, so the Steps filter keeps it
+            const label = String(x.label || x.kind || '');
+            const summary = String(x.summary || x.text || '');
+            const text = label && summary && label !== summary ? label + ' — ' + summary : (summary || label);
+            if (text) li.appendChild(el('span', '', text));
+            const atts = safeAtts(x.attachments);
+            if (atts.length) li.appendChild(attStrip(atts, openSheet));
+            appendLi(target, li);
+        }
         function onLine(x) {
             const target = feedFor(x.parent);
+            if (!KNOWN.has(x.t)) { extraLine(x, target); return; }
             // Who is working: a line that names a different agent than the last moves the head along.
             // A done line reports an agent's cost and time; it never moves the head.
             if (x.agent && x.t !== 'agent' && x.t !== 'handoff' && x.t !== 'done' && (!S.agents.length || S.agents[S.agents.length - 1].agent !== x.agent)) { S.agents.push({ agent: x.agent }); paintHead(); }
@@ -741,15 +763,23 @@
                 if (x.to && (!S.agents.length || S.agents[S.agents.length - 1].agent !== x.to)) S.agents.push({ agent: x.to });
                 row.appendChild(el('span', 'ovas-agent', agentName(from))); row.insertAdjacentHTML('beforeend', svg('handoff')); row.appendChild(el('span', 'ovas-agent is-now', x.to ? agentName(x.to) : 'the next agent'));
                 s.appendChild(row); if (x.reason) s.appendChild(el('small', '', x.reason));
+                const handAtts = safeAtts(x.attachments);
+                if (handAtts.length) s.appendChild(attStrip(handAtts, openSheet));
                 li.appendChild(s); appendLi(feed, li); S.problems++; paintHead(); return;
             }
             if (x.t === 'note') {
                 const li = el('li', 'ovas-note'); li.dataset.k = 'note'; li.dataset.level = x.level === 'warning' || x.level === 'info' ? x.level : 'error';
                 if (li.dataset.level !== 'info') li.dataset.p = '1';
-                li.innerHTML = svg(li.dataset.level === 'info' ? 'ok' : 'warn'); li.appendChild(el('span', '', x.text)); appendLi(target, li); if (li.dataset.level !== 'info') S.problems++; paintHead(); return;
+                li.innerHTML = svg(li.dataset.level === 'info' ? 'ok' : 'warn'); li.appendChild(el('span', '', x.text));
+                const noteAtts = safeAtts(x.attachments);
+                if (noteAtts.length) li.appendChild(attStrip(noteAtts, openSheet));
+                appendLi(target, li); if (li.dataset.level !== 'info') S.problems++; paintHead(); return;
             }
             if (x.t === 'step') {
-                const li = el('li', 'ovas-line'); li.dataset.k = 'line'; li.appendChild(el('span', '', x.text)); appendLi(feed, li); return;
+                const li = el('li', 'ovas-line'); li.dataset.k = 'line'; li.appendChild(el('span', '', x.text));
+                const lineAtts = safeAtts(x.attachments);
+                if (lineAtts.length) li.appendChild(attStrip(lineAtts, openSheet));
+                appendLi(feed, li); return;
             }
             if (x.t === 'usage') { S.tokens.in += Number(x.input_tokens) || 0; S.tokens.out += Number(x.output_tokens) || 0; return; }
             if (x.t === 'done') {

@@ -32,7 +32,7 @@
 .ovas-plan li[data-s="in_progress"]::before { border-color: var(--accent, #3b82f6); border-right-color: transparent; animation: ovas-spin .9s linear infinite; }
 .ovas-plan li[data-s="completed"] { color: var(--ovas-mut); text-decoration: line-through; }
 .ovas-plan li[data-s="completed"]::before { background: var(--ovas-ok); border-color: var(--ovas-ok); }
-.ovas-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ovas-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
 .ovas-chip { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovas-b); background: transparent; color: var(--ovas-sec); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
 .ovas-chip[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); border-color: transparent; color: var(--on-accent-strong, #fff); }
 .ovas-chip.ovas-follow { margin-left: auto; }
@@ -89,7 +89,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 .ovas-hand-row { display: inline-flex; align-items: center; gap: 6px; }
 .ovas-hand-row .ovas-ic { color: var(--ovas-mut); }
 .ovas-hand small { font-size: 12.5px; color: var(--ovas-mut); line-height: 1.4; }
-.ovas-note { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; background: color-mix(in srgb, #f59e0b 12%, transparent); color: var(--text-primary, #e6edf7); }
+.ovas-note { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 12px; font-size: 13.5px; background: color-mix(in srgb, #f59e0b 12%, transparent); color: var(--text-primary, #e6edf7); }
 .ovas-note[data-level="error"] { background: color-mix(in srgb, #ef4444 13%, transparent); }
 .ovas-note[data-level="info"] { background: color-mix(in srgb, #22c55e 10%, transparent); }
 .ovas-note[data-level="info"] .ovas-ic { color: var(--ovas-ok); }
@@ -97,8 +97,9 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 .ovas-done { display: grid; gap: 6px; padding: 12px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, #22c55e 40%, transparent); background: color-mix(in srgb, #22c55e 8%, transparent); }
 .ovas-done[data-ok="0"] { border-color: color-mix(in srgb, #ef4444 40%, transparent); background: color-mix(in srgb, #ef4444 8%, transparent); }
 .ovas-done > b { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.ovas-line { display: flex; align-items: center; gap: 8px; padding: 0 4px; font-size: 12.5px; color: var(--ovas-mut); }
+.ovas-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 0 4px; font-size: 12.5px; color: var(--ovas-mut); }
 .ovas-line::before { content: ''; flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ovas-mut); opacity: .7; }
+.ovas-extra { display: grid; gap: 8px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--ovas-b); background: var(--ovas-s); font-size: 13.5px; color: var(--ovas-sec); }
 .ovas-empty { padding: 18px; text-align: center; color: var(--ovas-mut); font-size: 13.5px; border: 1px dashed var(--ovas-b); border-radius: 14px; }
 .ovas [hidden] { display: none !important; }
 @keyframes ovas-spin { to { transform: rotate(360deg); } }
@@ -106,7 +107,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 @media (max-width: 640px) {
     .ovas-head { padding: 10px 12px; border-radius: 14px; } .ovas-msg { font-size: 14.5px; }
     .ovas-code, .ovas-out, .ovas-diff { font-size: 12px; max-height: 45vh; }
-    .ovas-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; padding: 0 14px; } .ovas-bar::-webkit-scrollbar { display: none; }
+    .ovas-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 0 2px; } .ovas-bar::-webkit-scrollbar { display: none; }
     .ovas-chip { flex: none; } .ovas-icons .ovas-kind + .ovas-kind { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .ovas-spin, .ovas-plan li::before { animation: none; } }
@@ -143,7 +144,8 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 .ovas-group > summary, .ovas-step > summary { flex-wrap: wrap; row-gap: 8px; }
 .ovas-att-slot { flex-basis: 100%; order: 9; display: block; min-width: 0; }
 .ovas-att-slot:empty { display: none; }
-.ovas-att { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-width: 0; max-width: 100%; }
+.ovas-att { display: grid; gap: 8px; width: 100%; min-width: 0; max-width: 100%; }
+.ovas-att-row { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-width: 0; }
 .ovas-att-img { box-sizing: border-box; display: block; width: 136px; flex: none; padding: 0; border: 1px solid var(--ovas-b); border-radius: 12px; overflow: hidden; background: var(--ovas-t); color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ovas-att-img img { display: block; width: 136px; height: 92px; object-fit: cover; background: var(--ovas-t); }
 .ovas-att-chip { box-sizing: border-box; display: inline-flex; align-items: center; gap: 7px; flex: none; max-width: 220px; min-height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--ovas-b); background: var(--ovas-t); color: var(--ovas-sec); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
@@ -158,7 +160,7 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 /* The preview sheet: one attachment, opened by a tap. */
 .ovas-sheet { box-sizing: border-box; position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--bg-primary, #0b1020) 80%, transparent); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .ovas-sheet[hidden] { display: none; }
-.ovas-sheet-panel { box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; width: min(980px, 100%); max-height: min(92vh, 920px); padding: 14px; border-radius: 18px; border: 1px solid var(--ovas-b); background: var(--ovas-s); color: var(--text-primary, #e6edf7); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
+.ovas-sheet-panel { box-sizing: border-box; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; width: min(960px, 92vw); max-height: min(92vh, 920px); padding: 14px; border-radius: 18px; border: 1px solid var(--ovas-b); background: var(--ovas-s); color: var(--text-primary, #e6edf7); box-shadow: 0 24px 70px rgba(0,0,0,.45); }
 .ovas-sheet-bar { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .ovas-sheet-bar b { flex: 1; min-width: 0; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovas-sheet-x { width: 40px; height: 40px; flex: none; border-radius: 999px; border: 1px solid var(--ovas-b); background: transparent; color: inherit; font: inherit; font-size: 15px; line-height: 1; cursor: pointer; }
@@ -185,6 +187,10 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
 .ovas-tok-kw { color: #c084fc; }
 .ovas-tok-com { color: var(--ovas-mut); font-style: italic; }
 
+@media (max-width: 760px) {
+    /* A phone: the head does not stick, so it never floats over the steps it sits above. */
+    .ovas-head { position: static; }
+}
 @media (max-width: 640px) {
     /* Phones: bigger tap targets, and the preview sheet takes the whole screen. */
     .ovas-att-chip { min-height: 44px; padding: 0 14px; }

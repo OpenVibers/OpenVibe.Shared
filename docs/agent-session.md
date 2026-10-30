@@ -73,9 +73,12 @@ attachments: [{ url, name, mime, size?, kind: 'image'|'video'|'audio'|'pdf'|'tex
 The product supplies the URLs; the component never builds one from a local path. `kind` may be left out — the mime type
 and the name's ending decide. `role` says what the agent did with it (`read`, `wrote`, `output`).
 
+- **Any line may carry them.** The component shows a line's attachments for every line it draws.
 - A **step's** attachments show in its group's header row, so they are visible while the group is folded. Images are
   136 × 92 thumbnails with their name; everything else is a chip with an icon.
-- A **message's** attachments show under its text.
+- A **message's** attachments show under its text: the images in one row, the other files as chips in a row under them.
+- A line of a **type the component does not know** (Codes' `t: 'proof'`) is drawn as a minimal row: its label or
+  summary, then its attachments, instead of being dropped.
 - A tap opens a **preview sheet**: the image at full width (pinch to zoom on a phone), video and audio in their
   players, a PDF in a frame, and text as code, Markdown, a CSV table or pretty JSON, highlighted. There are Open and
   Download links too.
