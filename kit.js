@@ -29,7 +29,7 @@
  *   kit.button({ href | type, label, icon, kind }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
  *   kit.mark({ name, src, hue, square }) · kit.when(ts) → { iso, text } · kit.esc(text) · kit.ICONS (names)
  *
- * The tool frame, one order for every tool page: kit.tool({ head: kit.toolHead({ icon, hue, crumb, title, task }),
+ * The tool frame, one order for every tool page: kit.tool({ head: kit.toolHead({ icon, hue, crumb, title, task, facts }),
  *   input: kit.toolInput({ name, label, placeholder, button, tries: { items } }) | kit.drop(…) | an editor,
  *   answer: kit.answer({ title, badge, rows: [[label, value, note]], next }), family: kit.family({ title, more, items }),
  *   folds: [kit.fold(…)], related: kit.list(…) })
@@ -661,20 +661,29 @@
     // What it does, the box you type in, the answer and its next step, the family's other tools, then the rest folded
     // away. Phone first; from 1024 px the family sits in a column beside the tool. docs/kit.md "The tool frame".
 
+    /** The tool's terms as a short list: text, or { text, icon }; blanks are left out. */
+    function factsList(facts) {
+        const fs = (Array.isArray(facts) ? facts : [facts]).map((f) => (f && typeof f === 'object' ? f : { text: f })).filter((f) => f.text != null && String(f.text).trim());
+        return fs.length ? `<ul class="ovk-tool-facts">${fs.map((f) => `<li>${f.icon ? icon(f.icon) : ''}${esc(f.text)}</li>`).join('')}</ul>` : '';
+    }
     /** A family's tint as a hue (0–360): a number, or a key hashed the way kit.mark hashes names. */
     const hueFor = (h, key) => (h != null && h !== '' && Number.isFinite(Number(h)) ? ((Math.round(Number(h)) % 360) + 360) % 360 : hueOf(key || ''));
 
     /**
-     * toolHead({ icon, iconHtml, hue, family, crumb: { href, label }, title, task, level }) — the tool's name and the one
-     * sentence saying what it does. The icon sits on a tile in the family's tint (hue, else one hashed from family or the
-     * crumb); buttons keep the site's own accent.
+     * toolHead({ icon, iconHtml, hue, family, crumb: { href, label }, title, task, facts, level }) — the tool's name and the
+     * one sentence saying what it does. The icon sits on a tile in the family's tint (hue, else one hashed from family or
+     * the crumb); buttons keep the site's own accent. facts: the plain terms, in a short line under the sentence ('Free',
+     * 'Runs in your browser: nothing is uploaded', 'Files up to 50 MB', 'Deleted after 1 hour'); the market research's
+     * first ask of a tool page is to say its limits, where the work happens and what it costs (4.56.0). A fact is text,
+     * or { text, icon } with a kit icon name.
      */
-    function toolHead({ icon: ic = 'grid', iconHtml = null, hue = null, family: fam = '', crumb = null, title = '', task = '', level = 1 } = {}) {
+    function toolHead({ icon: ic = 'grid', iconHtml = null, hue = null, family: fam = '', crumb = null, title = '', task = '', facts = [], level = 1 } = {}) {
         const lv = Math.min(3, Math.max(1, Number(level) || 1));
         const cr = crumb && crumb.label ? (crumb.href ? `<a class="ovk-tool-crumb" href="${esc(url(crumb.href))}">${esc(crumb.label)}${icon('chevron')}</a>` : `<span class="ovk-tool-crumb">${esc(crumb.label)}</span>`) : '';
         return `<header class="ovk-tool-head${cr ? '' : ' ovk-tool-head--solo'}" style="--ovk-tint-h:${hueFor(hue, fam || (crumb && crumb.label) || title)}">`
             + `<span class="ovk-tool-tile" aria-hidden="true">${iconHtml != null ? iconHtml : (icon(ic) || icon('grid'))}</span>${cr}`
-            + `<h${lv} class="ovk-tool-title">${esc(title)}</h${lv}>${task ? `<p class="ovk-tool-task">${esc(task)}</p>` : ''}</header>`;
+            + `<h${lv} class="ovk-tool-title">${esc(title)}</h${lv}>${task ? `<p class="ovk-tool-task">${esc(task)}</p>` : ''}`
+            + factsList(facts) + '</header>';
     }
 
     /**

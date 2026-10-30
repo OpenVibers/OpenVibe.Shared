@@ -323,7 +323,7 @@ Buttons and links keep the site's own accent, so a tool looks like the site it i
 
 | Builder | What it draws |
 | --- | --- |
-| `toolHead({ icon, iconHtml, hue, family, crumb: { href, label }, title, task, level })` | The head. `hue` is the family's tint (0–360); without it, a hue is hashed from `family` or the crumb, so a family always gets the same one |
+| `toolHead({ icon, iconHtml, hue, family, crumb: { href, label }, title, task, facts, level })` | The head. `hue` is the family's tint (0–360); without it, a hue is hashed from `family` or the crumb, so a family always gets the same one. `facts` (4.56.0) is the tool's terms in one short line: what it costs, where the work happens, its limits and how long a file is kept (`['Free', 'Runs in your browser: nothing is uploaded', 'Files up to 50 MB']`). Say them from the tool's real configuration, never from a guess |
 | `toolInput({ name, label, placeholder, value, button, icon, type, inputmode, action, method, hidden, tries })` | The box as a GET form (`?q=…` runs the tool without JavaScript); `tries: { items: [{ value, label }] }` adds the examples |
 | `tries({ name, items, target, run })` | Examples for a box the page draws itself (an editor, a box outside a form): `target` is its selector, and `run` is the button to press when there is no form |
 | `answer({ title, badge, actions, rows: [[label, value, note]], body, next, tone })` | The answer. A value can be `{ html }`; a note is a pill (`'1 year ago'`, or `{ text, tone: 'warn' }`); `aria-live` announces it when it arrives |
