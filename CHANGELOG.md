@@ -6,6 +6,20 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.50.0 — 2026-10-30
+
+- **Rich embeds in the agent session.** The owner, 2026-10-30: "When it generates or reads or analyzed images or visuals
+  or files it should show a rich embed in chat for them like in Claude, Codex, ChatGPT." A step or a message may now
+  carry `attachments: [{ url, name, mime, size?, kind, role }]`; the component draws them and never builds a URL itself.
+  - A step's attachments show in its group's header, visible while the group is folded: images as 136 × 92 thumbnails
+    with their name, everything else as a chip with an icon. A message's show under its text.
+  - A tap opens a preview sheet: the image at full width (pinch to zoom on a phone), video and audio in their players,
+    a PDF in a frame, and text as code, Markdown, a CSV table or pretty JSON, highlighted — plus Open and Download.
+  - The thumbnails load lazily, a broken image hides itself, and the sheet is keyboard reachable (Escape closes it).
+  - Safety: an attachment loads only from the product's own origin or Media's, never from a third-party address the
+    model printed; SVG is only ever an `<img>`; text is set as text, never as markup.
+  - `test/agent-session-embeds-chrome.test.js` covers it in a real Chrome.
+
 ## 4.49.0 — 2026-10-30
 
 - **Shared motion tokens for production patterns.** Adds standard and back easing curves plus fast, base, slow, and reduced durations (180, 260, 360, and 0 ms).
