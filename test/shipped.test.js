@@ -79,8 +79,28 @@ const data = {
     assert.strictEqual(box.querySelectorAll('.ov-shipped-day').length, 1, 'the same day continues');
     assert.strictEqual(box.querySelectorAll('.ov-shipped-entry').length, 2);
     assert.strictEqual(box.querySelectorAll('.ov-shipped-site').length, 2);
-    assert.ok(box.querySelector('.ov-shipped-meta').textContent.startsWith('OpenVibers · '));
+    assert.ok(!box.querySelector('.ov-shipped-meta').textContent.includes('OpenVibers'), 'the account every commit shares is not named on each row (4.47.2)');
     assert.strictEqual(box.querySelectorAll('.ov-shipped-hash')[1].textContent, 'bbbbbbb', 'short sha from the full sha');
+
+    // 4.47.2: the same change on many sites is one row, across "Load more" pages too.
+    const g = document.createElement('div');
+    const pin = (svc, n, h) => ({ service: svc, sha: String(n).repeat(40).slice(0, 40), subject: `openvibe-shared v4.45.0 (was v4.43.0) (#${n})`, author: 'OpenVibers', deployed_at: at(h), url: `https://github.com/x/${svc}/commit/${n}` });
+    shipped.appendDays(g, [pin('fun', 9, 17), { service: 'trade', sha: 'c'.repeat(40), subject: 'Touch targets on phones (fleet audit) (#141)', author: 'Someone', deployed_at: at(17), url: 'https://github.com/x/t/commit/c' }, pin('chat', 252, 17)], true);
+    shipped.appendDays(g, [pin('cam', 7, 16), { service: 'search', sha: 'd'.repeat(40), subject: 'Touch targets on phones (fleet audit) (#139)', deployed_at: at(16), url: 'https://github.com/x/s/commit/d' }], true);
+    const rows = g.querySelectorAll('.ov-shipped-entries > .ov-shipped-entry');
+    assert.strictEqual(g.querySelectorAll('.ov-shipped-day > .ov-shipped-entries > .ov-shipped-entry').length, 2, 'five commits, two changes');
+    assert.strictEqual(g.querySelector('.ov-shipped-group .ov-shipped-text').firstChild.textContent, 'Shared 4.45.0 reached 3 sites');
+    assert.strictEqual(g.querySelector('.ov-shipped-group .ov-shipped-count').textContent, '3');
+    assert.strictEqual(g.querySelector('.ov-shipped-notes').getAttribute('href'), 'https://github.com/OpenVibers/OpenVibe.Shared/blob/v4.45.0/CHANGELOG.md');
+    assert.strictEqual(g.querySelectorAll('.ov-shipped-group .ov-shipped-fold .ov-shipped-entry').length, 5, 'every commit is still one tap away');
+    assert.ok(rows.length >= 2 && [...g.querySelectorAll('.ov-shipped-group .ov-shipped-text')].some((t) => t.textContent === 'Touch targets on phones (fleet audit)'), 'the same subject on two sites is one row, without its PR number');
+    assert.ok([...g.querySelectorAll('.ov-shipped-fold .ov-shipped-meta')].some((m) => m.textContent.startsWith('Someone · ')), 'another author is still named');
+    const ge = shipped.groupEntries([pin('a', 1, 10), pin('b', 2, 10), { service: 'c', subject: 'Other' }], () => 'd');
+    assert.deepStrictEqual(ge.map((x) => x.entries.length), [2, 1]);
+    assert.strictEqual(shipped.groupTitle(ge[0]), 'Shared 4.45.0 reached 2 sites');
+    const pre = shipped.groupEntries([{ service: 'play', subject: 'Play: sign-in on openvibe-sdk/sso 0.73.0 (#86)' }, { service: 'media-hub', subject: 'MediaHub: sign-in on openvibe-sdk/sso 0.73.0 (#197)' }, { service: 'help', subject: 'Fix: sign-in on openvibe-sdk/sso 0.73.0' }]);
+    assert.deepStrictEqual(pre.map((x) => x.entries.length), [2, 1], "a leading name of the entry's own site is not part of the change; any other prefix is");
+    assert.strictEqual(shipped.groupTitle(pre[0]), 'Sign-in on openvibe-sdk/sso 0.73.0');
 
     // serviceFor: hosts to registry ids.
     const sf = shipped.serviceFor;
