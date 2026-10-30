@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.47.2 — 2026-10-30
+
+- **The updates log reads as changes, not commits.** `shipped.js`'s log folds the entries of one day that are the same
+  change into one row: a pin bump by package and version ("Shared 4.45.0 reached 31 sites", with a link to what's in
+  it), anything else by its subject without the PR number or a leading name of the entry's own site ("Touch targets on
+  phones (fleet audit)" on fourteen sites). The row shows how many sites, the time span and the sites by name; every
+  commit is one tap away in its fold. Groups continue across "Load more". openvibe.network/updates went from 50 rows
+  to 9 with the same 50 commits.
+- The OpenVibers account every commit shares is no longer named on each row; any other author still is.
+- `groupEntries(entries, dayKey)`, `groupTitle(g)` and `groupNotes(g)` are exported, so a server-rendered page groups
+  the same way.
+
 ## 4.47.1 — 2026-10-30
 
 - **No page is wider than a phone.** A sideways row (`.sc-row`, `.ovk-tabs`, `.ovk-stats`) is `position: relative`, so a

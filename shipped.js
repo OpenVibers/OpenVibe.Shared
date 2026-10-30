@@ -81,6 +81,12 @@
         `.ov-shipped-posts{border:1px solid ${BORDER};border-radius:12px;padding:12px 16px}.ov-shipped-posts h3{font-size:.95rem;margin:0 0 8px}.ov-shipped-posts ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}`,
         `.ov-shipped-posts a{color:${ACCENT};text-decoration:none;font-weight:600}.ov-shipped-posts a:hover{text-decoration:underline}.ov-shipped-posts small{color:${MUTED};margin-left:6px}`,
         `.ov-shipped-empty{color:${MUTED};text-align:center;padding:24px 0;margin:0}`,
+        // 4.47.2: the same change on many sites is one row (a pin round was 31 rows of the same line).
+        '.ov-shipped-group{flex-wrap:wrap}',
+        `.ov-shipped-count{flex:none;min-width:2em;text-align:center;font-size:.72rem;font-weight:800;padding:.12rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent);color:${TEXT}}`,
+        `.ov-shipped-notes{color:${ACCENT};font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap}.ov-shipped-notes:hover{text-decoration:underline}`,
+        `.ov-shipped-fold{flex-basis:100%;min-width:0;font-size:.82rem;color:${MUTED}}.ov-shipped-fold summary{cursor:pointer;padding:3px 0;overflow-wrap:anywhere}`,
+        `.ov-shipped-fold .ov-shipped-entries{margin:4px 0 2px;padding-left:10px;border-left:2px solid ${BORDER}}.ov-shipped-fold .ov-shipped-entry{padding:5px 8px}`,
         '@media (max-width:600px){.ov-shipped-entry{flex-wrap:wrap;gap:4px 8px}.ov-shipped-meta{width:100%}}',
     ].join('');
     const ROCKET = 'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2zM9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5';
@@ -253,6 +259,50 @@
         return render(node, await feed({ service: o.service, limit: Math.min(50, clamp(o.limit, 1, 20, 5) * 3), api: o.api }), o);
     }
 
+    // ── grouping (4.47.2): one row for the same change on many sites ──
+    // A pin round lands the same commit line on thirty sites within a minute, and a fleet fix ("Touch targets on
+    // phones") on a dozen: shown one by one they bury everything else. Entries of one day with the same change fold
+    // into one row: a pin bump by package and version, anything else by its subject without the PR number.
+    const PIN_KEY = /^(openvibe-[a-z][a-z0-9-]*) v(\d+\.\d+\.\d+)(?: \(was v\d+\.\d+\.\d+\))?/;
+    const PKG = { 'openvibe-shared': ['Shared', 'OpenVibe.Shared'], 'openvibe-sdk': ['SDK', 'OpenVibe.SDK'], 'openvibe-contracts': ['Contracts', 'OpenVibe.Contracts'] };
+    // The subject without its PR number, and without a leading "Play: " naming the entry's own site, so "Play: sign-in
+    // on …" and "Help: sign-in on …" are the same change.
+    const squash = (x) => String(x || '').replace(/[\s.-]/g, '').toLowerCase();
+    function plainSubject(e) {
+        let s = String((e && e.subject) || '').replace(/\s*\(#\d+\)\s*$/, '').trim();
+        const m = /^([A-Za-z][\w .-]{0,24}):\s+(.+)$/.exec(s);
+        if (m && e) {
+            const p = squash(m[1]).replace(/^openvibe/, '');
+            if (p && (p === squash(e.service) || p === squash(siteName(e.service)))) s = m[2].charAt(0).toUpperCase() + m[2].slice(1);
+        }
+        return s;
+    }
+    function pinOf(e) {
+        const m = PIN_KEY.exec(plainSubject(e));
+        if (!m) return null;
+        const k = PKG[m[1]] || [m[1].replace(/^openvibe-/, ''), null];
+        return { pkg: m[1], version: m[2], name: k[0], repo: k[1] };
+    }
+    function groupKey(e) { const p = pinOf(e); return p ? `pin:${p.pkg}@${p.version}` : `s:${plainSubject(e).toLowerCase()}`; }
+    /** Entries in their order, the same change on many sites folded into one group (exported: the server page uses it). */
+    function groupEntries(entries, dayKey) {
+        const out = [], at = new Map();
+        for (const e of entries || []) {
+            const k = `${dayKey ? dayKey(e) : ''}|${groupKey(e)}`;
+            const g = at.get(k);
+            if (g) g.entries.push(e);
+            else { const ng = { key: k, entries: [e], pin: pinOf(e) }; at.set(k, ng); out.push(ng); }
+        }
+        return out;
+    }
+    /** What a group's row says: "Shared 4.45.0 reached 31 sites", or the shared subject. */
+    function groupTitle(g) {
+        const sites = new Set(g.entries.map((e) => e.service)).size;
+        if (g.pin) return `${g.pin.name} ${g.pin.version} reached ${sites} ${sites === 1 ? 'site' : 'sites'}`;
+        return plainSubject(g.entries[0]);
+    }
+    function groupNotes(g) { return g.pin && g.pin.repo ? `https://github.com/OpenVibers/${g.pin.repo}/blob/v${g.pin.version}/CHANGELOG.md` : null; }
+
     // ── log: the updates page ───────────────────────────────────
     function dayOf(iso) { return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); }
     function entryRow(e, showSite) {
@@ -263,8 +313,30 @@
         row.appendChild(el('span', { class: `ov-shipped-text${e.major ? ' ov-shipped-major' : ''}` }, e.subject));
         const meta = el('span', { class: 'ov-shipped-meta' });
         const time = new Date(e.deployed_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-        meta.textContent = `${e.author ? `${e.author} · ` : ''}${time}`;
+        // Every commit is the OpenVibers account's: naming it on each row says nothing.
+        meta.textContent = `${e.author && e.author !== 'OpenVibers' ? `${e.author} · ` : ''}${time}`;
         row.appendChild(meta);
+        return row;
+    }
+    const hhmm = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    function groupRow(g, open) {
+        const row = el('div', { class: 'ov-shipped-entry ov-shipped-group' });
+        const sites = [...new Set(g.entries.map((e) => e.service))];
+        row.appendChild(el('span', { class: 'ov-shipped-count', title: `${g.entries.length} changes` }, String(sites.length)));
+        const text = el('span', { class: 'ov-shipped-text' }, groupTitle(g));
+        const notes = groupNotes(g);
+        if (notes) { text.appendChild(document.createTextNode(' ')); text.appendChild(el('a', { class: 'ov-shipped-notes', href: notes, target: '_blank', rel: 'noopener' }, "What's in it")); }
+        row.appendChild(text);
+        const first = hhmm(g.entries[g.entries.length - 1].deployed_at), last = hhmm(g.entries[0].deployed_at);
+        row.appendChild(el('span', { class: 'ov-shipped-meta' }, first === last ? last : `${first}–${last}`));
+        const fold = el('details', { class: 'ov-shipped-fold' });
+        if (open) fold.open = true;
+        const names = sites.map(siteName);
+        fold.appendChild(el('summary', {}, names.length > 7 ? `${names.slice(0, 6).join(', ')} and ${names.length - 6} more` : names.join(', ')));
+        const list = el('div', { class: 'ov-shipped-entries' });
+        for (const e of g.entries) list.appendChild(entryRow(e, true));
+        fold.appendChild(list);
+        row.appendChild(fold);
         return row;
     }
     /** Append entries under day headings, continuing the last day already shown (exported for tests). */
@@ -278,7 +350,20 @@
                 day.appendChild(el('div', { class: 'ov-shipped-entries' }));
                 box.appendChild(day);
             }
-            day.lastElementChild.appendChild(entryRow(e, showSite));
+            // The same change again on this day: it joins that row (across "Load more" pages too).
+            if (!day._groups) day._groups = new Map();
+            const k = groupKey(e), hit = day._groups.get(k);
+            if (hit) {
+                hit.g.entries.push(e);
+                const det = hit.node.querySelector && hit.node.querySelector('details');
+                const fresh = groupRow(hit.g, Boolean(det && det.open));
+                hit.node.replaceWith(fresh);
+                hit.node = fresh;
+            } else {
+                const node = entryRow(e, showSite);
+                day._groups.set(k, { g: { key: k, entries: [e], pin: pinOf(e) }, node });
+                day.lastElementChild.appendChild(node);
+            }
         }
     }
     async function log(target, opts) {
@@ -402,5 +487,5 @@
         return out;
     }
 
-    return { latest, list, mount: list, log, scan, render, renderLatest, appendDays, serviceFor, ago, API, SITE_NAMES, siteName, isHousekeeping };
+    return { latest, list, mount: list, log, scan, render, renderLatest, appendDays, groupEntries, groupTitle, groupNotes, serviceFor, ago, API, SITE_NAMES, siteName, isHousekeeping };
 }));
