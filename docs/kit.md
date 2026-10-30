@@ -508,6 +508,24 @@ do most of that:
 Lists that are text (questions, chips, table rows) are cut on phones instead, with `nth-child` and a link to the whole
 list; a closing call that repeats the hero, or a "find your way around" grid that repeats the nav, is left out.
 
+### Scrolling on touch screens (4.47.1)
+
+A finger drag must always move something. The rules every site follows:
+
+- A short list flows in the page. It has no box of its own.
+- A long or live list (chat, a transcript, chapters on a phone) keeps a box no taller than 60% of the screen
+  (`max-height: min(60svh, 26rem)`) with `overscroll-behavior-y: auto`. At the box's end the drag carries on into
+  the page. `contain` there traps the finger (openvibe.video's chapters, 10-29).
+- Sheets, menus and dialogs keep `overscroll-behavior: contain` and lock the page behind them.
+- A sideways row (`.sc-row`, `.ovk-tabs`, a site's own card strip) is `position: relative` as well as `overflow-x: auto`.
+  Without that, a hidden label (`.sr-only`, `position: absolute`) inside a card past the edge is placed outside the
+  row and widens the whole page: openvibe.coupons was 2208 px wide on a 390 px phone and search.openvibe.network
+  3407 px.
+- Decoration (a hero's watermark, a turning ring) stays inside its section, or the section sets `overflow-x: clip`.
+
+Check a page with `document.documentElement.scrollWidth`, which must equal the screen width at 320, 360 and 390 px,
+with and without touch.
+
 ## Balances
 
 `wallet: true` (or a site's own `coins` and `vibes` chips) shows the balances as one calm pill on phones. Each balance

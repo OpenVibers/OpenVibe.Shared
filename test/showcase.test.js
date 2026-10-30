@@ -28,7 +28,8 @@ assert.ok(fo.includes('<div class="sc-fold-body"><section class="sc-sec"'), 'oth
 assert.ok(sc.fold({ title: 'T', html: '<p>x</p>', open: true }).includes('<details class="sc-fold" open>'), 'open on request');
 assert.strictEqual(sc.fold({ title: 'T', html: '' }), '', 'nothing to fold renders nothing');
 assert.strictEqual(sc.fold({ html: '<p>x</p>' }), '', 'a fold needs a heading');
-assert.ok(sc.CSS.includes('.sc-row.sc-row{display:flex;flex-wrap:nowrap'), 'the phone row does not inherit a wrap');
+assert.ok(sc.CSS.includes('.sc-row.sc-row{position:relative;display:flex;flex-wrap:nowrap'), 'the phone row does not inherit a wrap, and holds what it clips (4.47.1)');
+assert.ok(/\.sc-hero\.sc-has-vis \.sc-hero-vis\{[^}]*right:0[;}]/.test(sc.CSS), 'the phone hero watermark stays inside the screen (4.47.1)');
 
 // A set of six or nine apps is three a row; eight is four; seven keeps the grid's own columns.
 const appsN = (n) => sc.apps({ items: Array.from({ length: n }, (_, i) => ({ name: `App ${i}`, href: `/a${i}` })) });
