@@ -4,7 +4,7 @@
   "code": true,
   "wave": "W2",
   "package": "openvibe-shared",
-  "version": "4.53.1",
+  "version": "4.54.0",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
@@ -24,7 +24,8 @@
     "shipped pill, recent list and /updates log",
     "server helpers: ready, metrics, trace, egress, config, analytics, legal, SEO (sitemaps with video entries, IndexNow in requests of 100 URLs), frame SSR",
     "browser harness and perf budgets for tests",
-    "a CONFIRMATION_REQUESTED notification type: an agent owner is told when a sensitive-capability confirmation awaits them"
+    "a CONFIRMATION_REQUESTED notification type: an agent owner is told when a sensitive-capability confirmation awaits them",
+    "the Dock pops out into a window of its own (Document Picture-in-Picture): the same panel, the same tabs, the page's pill saying where the Dock went"
   ],
-  "updated": "2026-10-29"
+  "updated": "2026-10-30"
 }

@@ -6,6 +6,23 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.54.0 — 2026-10-30
+
+- **The Dock pops out into a window of its own** (Dock plan K-D4). On a desktop browser that can (Chromium's Document
+  Picture-in-Picture), the Dock's header carries a "pop out" button: the panel moves into a window of about 360 × 520
+  with its tabs and its styles, and the page keeps its pill, which now reads "In a window" — press it and the panel
+  comes back. Close the window and the panel returns to the page.
+  - **Where the browser cannot open such a window, nothing changes**: no button, no new behaviour.
+  - **The window opens only from a click.** A Dock that opened a window by itself would be a window nobody asked for.
+  - **The Network is told where the Dock is** (`open`, `tab`, `popped`), as it is today. A Network whose state
+    contract does not know `popped` yet refuses the body; the Dock asks again without that one key, so the rest of
+    the state still reaches it.
+  - **The same Dock, the same look.** The panel's own DOM and styles go with it, along with the page's theme colours.
+- `test/dock-chrome.test.js`: the pop-out button only where the browser can open a window, the panel moving into it
+  and back, the page's pill saying where the Dock went, and the state reaching the Network.
+- `test/dock-size.test.js`: the new size budget for `dock.js` (13.77 KB brotli: 12.27 KB on 2026-10-30 plus 1.5 KB
+  for the pop-out).
+
 ## 4.53.1 — 2026-10-30
 
 - **The patch-notes link under "Recently shipped" wraps on a narrow screen.** It carries a whole post title ("Patch

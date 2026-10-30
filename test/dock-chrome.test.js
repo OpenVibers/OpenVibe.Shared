@@ -10,7 +10,10 @@
 //   • desktop toasts are told to stack above the pill; nothing runs off a 320 px screen;
 //   • Chats (K-D2): the person's conversations from Chat's API with their unread counts, a thread opened in place (theirs
 //     and mine), Enter sends, the thread is marked read, the open chat is the Dock's state, and opening one on a phone
-//     never reads as a tap outside the sheet.
+//     never reads as a tap outside the sheet;
+//   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
+//     its tabs and its styles, the page keeps the pill saying where the Dock went, and closing the window brings the
+//     panel back; the Network is told.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const fs = require('fs');
@@ -116,6 +119,21 @@ const PILL = `(() => { const p = document.getElementById('ovdk-pill'); if (!p ||
 const CARD = `(() => { const c = document.querySelector('.ovdk'); if (!c || c.hidden) return null; const b = c.getBoundingClientRect();
     return { corner: c.dataset.corner, w: Math.round(b.width), h: Math.round(b.height), l: b.left, t: b.top, tab: (c.querySelector('[role=tab][aria-selected=true]') || {}).dataset?.tab,
         groups: [...c.querySelectorAll('.ovac-group')].map((g) => g.dataset.bucket), items: c.querySelectorAll('.ovac-item').length, notes: c.querySelectorAll('.openvibe-notif-item').length }; })()`;
+
+// A stand-in for the browser's Document Picture-in-Picture window: a same-origin frame with a real document, so the
+// Dock can move into it (K-D4) and be seen coming back. `__pip.close()` is the person closing that window.
+const PIP = `(() => {
+    const f = document.createElement('iframe');
+    f.id = 'pip-stub';
+    f.style.cssText = 'position:fixed;right:16px;bottom:16px;width:360px;height:520px;border:0;z-index:99999;background:#0d0d12';
+    document.body.appendChild(f);
+    const w = f.contentWindow;
+    const shut = () => { try { w.dispatchEvent(new w.Event('pagehide')); } catch (e) { } try { f.remove(); } catch (e) { } };
+    w.close = shut;
+    window.__pip = { win: w, frame: f, close: shut };
+    window.documentPictureInPicture = { requestWindow: async (o) => { window.__pip.opts = o || null; return w; } };
+    return true;
+})()`;
 
 async function drag(p, from, to) {
     await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: from[0], y: from[1] });
@@ -256,6 +274,46 @@ async function drag(p, from, to) {
             await p.close();
         }
 
+        // ── Pop out (K-D4): the button only where the browser can open a window; the panel goes there and comes back. ──
+        {
+            scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
+            puts.length = 0;
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            // Where the browser cannot open a window of its own, there is nothing to press.
+            await p.evaluate("(() => { Object.defineProperty(window, 'documentPictureInPicture', { value: undefined, writable: true, configurable: true }); return true; })()");
+            await until(p, PILL, 'the pill');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, CARD, 'the card');
+            const POP = "document.querySelector('.ovdk [data-act=pop]')";
+            assert.strictEqual(await p.evaluate(`!!${POP}`), true, 'the header carries a pop-out button');
+            assert.strictEqual(await p.evaluate(`${POP}.hidden`), true, 'hidden where the browser cannot open a window of its own');
+            // The browser can: the button appears.
+            await p.evaluate(PIP);
+            await p.evaluate("document.querySelector('.ovdk [data-act=close]').click()");
+            await until(p, PILL, 'the pill again');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, `(() => { const b = ${POP}; return b && !b.hidden ? true : null; })()`, 'the pop-out button');
+            // The panel moves into the window: the same DOM, the same tabs, the styles come with it.
+            await p.evaluate(`${POP}.click()`);
+            await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the panel in the window');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk')"), false, 'and not in the page any more');
+            assert.strictEqual(await p.evaluate("window.__pip.win.document.querySelectorAll('.ovdk [role=tab]').length"), 3, 'the same three tabs');
+            assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovdk-styles')"), true, "the Dock's styles come with it");
+            assert.deepStrictEqual(await p.evaluate("window.__pip.opts"), { width: 360, height: 520 }, 'a window of about 360 × 520');
+            const inWindow = await until(p, PILL, 'the pill stays');
+            assert.strictEqual(inWindow.text, 'In a window', 'the page keeps the pill, and it says where the Dock went');
+            await wait(900);
+            assert.ok(puts.some((b) => b.popped === true && b.open === true), `the Network is told the Dock is in a window (${JSON.stringify(puts)})`);
+            // The window is closed: the panel comes back to the page.
+            await p.evaluate("window.__pip.close()");
+            await until(p, "!!document.querySelector('.ovdk')", 'the panel back on the page');
+            assert.strictEqual(await p.evaluate("!!window.__pip.win.document.querySelector('.ovdk')"), false, 'and out of the window');
+            await wait(900);
+            assert.ok(puts.some((b) => b.popped === false), `and told it is back (${JSON.stringify(puts)})`);
+            await p.close();
+        }
+
         // ── Network without the route yet (404): no pill, and the site stops asking for a day. Signed out: none. ──
         {
             scenario = { missing: true };
@@ -272,7 +330,7 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all');
             await p.close();
         }
-        console.log('dock-chrome: the pill only when it matters, Agents, Chats and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean');
+        console.log('dock-chrome: the pill only when it matters, Agents, Chats and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
     } finally {
         await browser.close();
         server.close();
