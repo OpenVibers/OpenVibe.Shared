@@ -38,8 +38,9 @@ The kit's scales are the same on every theme:
 - `type.family.base` · `mono`
 - `type.size.caption` … `display`
 - `type.weight.*`
-- `motion.duration.fast` · `base` · `slow`
-- `motion.easing.standard`
+- `motion.duration.fast` · `base` · `slow` (180 / 260 / 360 ms) · `reduced` (0 ms)
+- `motion.easing.standard` (`cubic-bezier(.2,.7,.2,1)`) · `back` (`cubic-bezier(.34,1.56,.64,1)`)
+- Native and web components also respect the system reduced-motion preference; the `reduced` duration is the token fallback.
 
 ## Targets
 

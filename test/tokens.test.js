@@ -18,7 +18,7 @@ for (const theme of BUILTIN_THEMES) {
     for (const [css] of tokens.SHADOW_MAP) if (theme.variables[css] && tokens.parseShadow(theme.variables[css])) assert.ok(back.variables[css], `${theme.slug} ${css} survives`);
     assert.strictEqual(back.mode, theme.mode === 'light' ? 'light' : 'dark');
     assert.strictEqual(doc['color'].bg.base.$type, 'color');
-    assert.ok(doc.radius.md.$value === '14px' && doc.motion.duration.fast.$value === '150ms' && doc.size.tap.$value === '44px', 'the kit scales ride along');
+    assert.ok(doc.radius.md.$value === '14px' && doc.motion.duration.fast.$value === '180ms' && doc.motion.duration.base.$value === '260ms' && doc.motion.duration.slow.$value === '360ms' && doc.motion.duration.reduced.$value === '0ms' && doc.motion.easing.back.$value.join(',') === '0.34,1.56,0.64,1' && doc.size.tap.$value === '44px', 'the kit scales ride along');
 }
 console.log(`✓ ${BUILTIN_THEMES.length} built-in themes round-trip`);
 
@@ -51,7 +51,7 @@ assert.match(swift, /^import SwiftUI$/m);
 assert.match(swift, /public enum VibeTokens \{/);
 assert.match(swift, /public static let colorScheme: ColorScheme = \.dark/);
 assert.match(swift, /public static let colorAccentBase = Color\(\.sRGB, red: 0\.231, green: 0\.51, blue: 0\.965, opacity: 1\)/);
-assert.match(swift, /public enum OvScale \{[\s\S]*public static let motionDurationFast: Double = 0\.15/);
+assert.match(swift, /public enum OvScale \{[\s\S]*public static let motionDurationFast: Double = 0\.18/);
 const dart = tokens.compile(vibe, 'flutter');
 assert.match(dart, /static const colorBgBase = Color\(0xFF0A0F1C\);/);
 assert.match(dart, /const vibeDarkScheme = ColorScheme\(\n {2}brightness: Brightness\.dark,/);
