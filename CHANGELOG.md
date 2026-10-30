@@ -6,6 +6,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.49.0 — 2026-10-30
+
+- **Shared motion tokens for production patterns.** Adds standard and back easing curves plus fast, base, slow, and reduced durations (180, 260, 360, and 0 ms).
+
 ## 4.48.0 — 2026-10-30
 
 - **The OpenVibe mark opens a site switcher.** The owner: "clicking the icon … its own drop-down … all the sites, so

@@ -83,8 +83,12 @@
             weight: { $type: 'fontWeight', regular: 400, medium: 600, bold: 700, heavy: 800 },
         },
         motion: {
-            duration: { $type: 'duration', fast: 150, base: 250, slow: 400 },
-            easing: { $type: 'cubicBezier', standard: [0.2, 0.7, 0.2, 1] },
+            duration: { $type: 'duration', fast: 180, base: 260, slow: 360, reduced: 0 },
+            easing: {
+                $type: 'cubicBezier',
+                standard: [0.2, 0.7, 0.2, 1],
+                back: [0.34, 1.56, 0.64, 1],
+            },
         },
     };
 
