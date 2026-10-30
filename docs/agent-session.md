@@ -62,6 +62,35 @@ agents… in a smart way… way better than this idea."
 **Links:** `mount(el, { link: (url) => … })` decides which https addresses in the agents' text become links; the rest
 stay text. A site whose agents read untrusted pages should link only its own (Actor links only the person's desk).
 
+## Attachments
+
+A step or a message may carry the images and files the agent read, wrote or produced:
+
+```js
+attachments: [{ url, name, mime, size?, kind: 'image'|'video'|'audio'|'pdf'|'text'|'file', role: 'read'|'wrote'|'output' }]
+```
+
+The product supplies the URLs; the component never builds one from a local path. `kind` may be left out — the mime type
+and the name's ending decide. `role` says what the agent did with it (`read`, `wrote`, `output`).
+
+- A **step's** attachments show in its group's header row, so they are visible while the group is folded. Images are
+  136 × 92 thumbnails with their name; everything else is a chip with an icon.
+- A **message's** attachments show under its text.
+- A tap opens a **preview sheet**: the image at full width (pinch to zoom on a phone), video and audio in their
+  players, a PDF in a frame, and text as code, Markdown, a CSV table or pretty JSON, highlighted. There are Open and
+  Download links too.
+- The thumbnails load lazily, and a broken image hides itself.
+- The sheet is keyboard reachable: a button opens it, Escape closes it, and the focus stays inside it.
+
+**Safety.** An attachment loads only from the product's own origin or from Media's — never from a third-party address
+the model printed. A product that serves files from another host says so: `mount(el, { origins: ['files.openvibe.codes'] })`.
+SVG is only ever an `<img>`, never inline. Text is fetched and set as text, never as markup, so a file can never run
+code in the page.
+
+The lines that carry them: a Codes job line `{ t: 'tool', …, attachments }` (the step), `{ t: 'text', …, attachments }`
+(the message), `{ t: 'tool_result', …, attachments }` (added to the step it ends), `{ t: 'done', …, attachments }` (the
+end card); and an Actor task event `{ kind: 'output', step: 'text' | 'tool_call' | 'tool_result', …, attachments }`.
+
 ## The shapes it reads
 
 **1. Claude Code's stream-json**, the shape every Codes harness adapter emits. See OpenVibe.Codes' `harness/events.js`:

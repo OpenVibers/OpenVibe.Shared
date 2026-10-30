@@ -36,6 +36,13 @@
  *   { t: 'step', text }                               the job's own progress (cloning, the branch, files changed, pushing)
  *   { t: 'usage', input_tokens, output_tokens }
  *   { t: 'done', ok, text, duration_ms, cost_usd, turns }
+ * A step or a message may carry the images and files the agent read, wrote or produced:
+ *   attachments: [{ url, name, mime, size?, kind: 'image'|'video'|'audio'|'pdf'|'text'|'file', role: 'read'|'wrote'|'output' }]
+ * The product supplies the URLs; the component never builds one from a local path. A step's attachments show in its
+ * group's header, visible while the group is folded; a message's show under its text. A tap opens a preview sheet: the
+ * image at full width (pinch to zoom), video and audio in their players, a PDF in a frame, text as code, Markdown, a CSV
+ * table or pretty JSON, plus Open and Download. An attachment loads only from the product's own origin or Media's,
+ * never a third-party address the model printed; SVG is only ever an <img>, and text is set as text, never as markup.
  * A line from a sub-agent carries `parent`: the id of the Task step that started it, so it nests under that step.
  * Any line may carry `agent` (the head then follows who is working); a step without an id gets one, and the next result
  * of the same tool without an id is its result. { t: 'state', state } moves the head (Actor's task states).
@@ -84,6 +91,12 @@
         ok: '<path d="m5 12.5 4.5 4.5L19 7.5"/>', fail: '<path d="M6 6l12 12M18 6 6 18"/>', copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
         handoff: '<path d="M4 12h13"/><path d="m13 7 5 5-5 5"/>', warn: '<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>',
         chevron: '<path d="m9 6 6 6-6 6"/>',
+        img: '<rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.5 3.5 3.5 3-3L20 17"/>',
+        video: '<rect x="3" y="5" width="13" height="14" rx="2"/><path d="m16 10 5-3v10l-5-3z"/>',
+        audio: '<path d="M9 17V6l10-2v11"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/>',
+        doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12.5h6M9 16h6"/>',
+        code: '<path d="m9 8-5 4 5 4M15 8l5 4-5 4"/>',
+        file: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/>',
     };
     const svg = (name, cls) => `<svg class="${cls || 'ovas-ic'}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name] || ICON.tool}</svg>`;
     const AGENT_NAME = { claude: 'Claude Code', 'claude-code': 'Claude Code', codex: 'Codex', opencode: 'OpenCode', 'command-code': 'Command Code', cmd: 'Command Code', aider: 'Aider', deepseek: 'DeepSeek', 'openvibe-ai': 'OpenVibe.AI', ai: 'OpenVibe.AI', own: 'Your model' };
@@ -104,12 +117,13 @@
         if (e.kind === 'state' || e.kind === 'end') return e.state ? [{ t: 'state', state: String(e.state), ...agent }] : [];
         if (e.kind !== 'output') return [];
         const text = cut(e.text, MAX_TEXT);
-        if (e.step === 'text') return [e.is_error ? { t: 'note', level: 'error', text, ...agent } : { t: 'text', text, ...agent }];
+        const att = e.attachments ? { attachments: e.attachments } : {};
+        if (e.step === 'text') return [e.is_error ? { t: 'note', level: 'error', text, ...agent } : { t: 'text', text, ...att, ...agent }];
         if (e.step === 'plan') return [{ t: 'step', text, ...agent }];
         if (e.step === 'handoff') return [{ t: 'handoff', from: null, to: e.agent || null, reason: text, ...agent }];
         if (e.step === 'check') return [{ t: 'note', level: /^checked/i.test(text) ? 'info' : 'warning', text, ...agent }];
-        if (e.step === 'tool_call') return [{ t: 'tool', name: String(e.tool || 'tool'), what: typeof e.input === 'string' ? cut(e.input, 300) : '', input: e.input && typeof e.input === 'object' ? e.input : { description: typeof e.input === 'string' ? cut(e.input, 300) : '' }, ...agent }];
-        if (e.step === 'tool_result') return [{ t: 'tool_result', name: String(e.tool || 'tool'), ok: !e.is_error, output: cut(e.text, 8000), ...agent }];
+        if (e.step === 'tool_call') return [{ t: 'tool', name: String(e.tool || 'tool'), what: typeof e.input === 'string' ? cut(e.input, 300) : '', input: e.input && typeof e.input === 'object' ? e.input : { description: typeof e.input === 'string' ? cut(e.input, 300) : '' }, ...att, ...agent }];
+        if (e.step === 'tool_result') return [{ t: 'tool_result', name: String(e.tool || 'tool'), ok: !e.is_error, output: cut(e.text, 8000), ...att, ...agent }];
         return text ? [{ t: 'text', text, ...agent }] : [];
     }
     function normalize(e) {
@@ -149,6 +163,183 @@
         return m < 60 ? `${m} min ${s % 60 ? `${s % 60} s` : ''}`.trim() : `${Math.floor(m / 60)} h ${m % 60} min`;
     }
     const base = (p) => String(p || '').split('/').filter(Boolean).pop() || String(p || '');
+
+    // ── Attachments: the images and files a step read, wrote or produced (4.50.0) ──────────
+    // The shape a step or a message carries:
+    //   attachments: [{ url, name, mime, size?, kind: 'image'|'video'|'audio'|'pdf'|'text'|'file', role: 'read'|'wrote'|'output' }]
+    // The product supplies the URLs; the component never builds one from a local path.
+    const ATT_KINDS = new Set(['image', 'video', 'audio', 'pdf', 'text', 'file']);
+    const ATT_ROLES = new Set(['read', 'wrote', 'output']);
+    const ATT_ROLE_LABEL = { read: 'read', wrote: 'wrote', output: 'produced' };
+    const ATT_ICON = { image: 'img', video: 'video', audio: 'audio', pdf: 'doc', text: 'code', file: 'file' };
+    const ATT_EXT = {
+        image: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'bmp', 'ico'],
+        video: ['mp4', 'webm', 'mov', 'm4v', 'ogv'],
+        audio: ['mp3', 'wav', 'ogg', 'oga', 'flac', 'm4a', 'aac'],
+        pdf: ['pdf'],
+        text: ['md', 'markdown', 'txt', 'json', 'jsonl', 'csv', 'tsv', 'log', 'yaml', 'yml', 'html', 'css', 'js', 'mjs', 'cjs',
+            'ts', 'tsx', 'jsx', 'py', 'go', 'rs', 'sh', 'sql', 'xml', 'toml', 'ini', 'env', 'conf'],
+    };
+    const attExt = (name) => (String(name || '').split('?')[0].split('#')[0].split('.').pop() || '').toLowerCase();
+    /** What kind of thing an attachment is: what it says, or what its name ends in. */
+    function attKind(mime, name, kind) {
+        if (ATT_KINDS.has(kind)) return kind;
+        const m = String(mime || '').toLowerCase().split(';')[0].trim();
+        if (m.startsWith('image/')) return 'image';
+        if (m.startsWith('video/')) return 'video';
+        if (m.startsWith('audio/')) return 'audio';
+        if (m === 'application/pdf') return 'pdf';
+        if (m.startsWith('text/')) return 'text';
+        if (m === 'application/json' || m === 'application/xml' || m === 'application/x-yaml') return 'text';
+        const ext = attExt(name);
+        for (const k of Object.keys(ATT_EXT)) if (ATT_EXT[k].includes(ext)) return k;
+        return 'file';
+    }
+    /** The attachments of a step or a message, in the shape the component draws them. */
+    function normAttachments(list) {
+        const out = [], seen = new Set();
+        for (const a of Array.isArray(list) ? list : []) {
+            if (!a || typeof a !== 'object') continue;
+            const url = String(a.url || '').trim();
+            if (!url || seen.has(url)) continue;
+            seen.add(url);
+            const name = String(a.name || '').trim() || base(String(url).split('?')[0]) || 'file';
+            out.push({ url, name, mime: String(a.mime || ''), size: Number(a.size) || 0, kind: attKind(a.mime, name, a.kind), role: ATT_ROLES.has(a.role) ? a.role : 'output' });
+        }
+        return out;
+    }
+    /** The page's own origin, or Media's: an attachment loads from there and nowhere else. */
+    function attAllowed(url, extra) {
+        const raw = String(url || '').trim();
+        if (!raw) return false;
+        if (/^(blob:|data:image\/(png|jpe?g|gif|webp);)/i.test(raw)) return true;   // the page made it itself
+        if (raw.startsWith('/') && !raw.startsWith('//')) return true;             // the product's own origin
+        const here = (typeof location !== 'undefined' && location && location.hostname) ? String(location.hostname).toLowerCase() : '';
+        let host = '';
+        try { host = new URL(raw, here ? 'https://' + here : 'https://openvibe.network/').hostname.toLowerCase(); } catch { return false; }
+        if (here && host === here) return true;
+        if (host === 'openvibe.media' || host.endsWith('.openvibe.media')) return true;
+        for (const o of Array.isArray(extra) ? extra : []) {
+            const h = String(o || '').toLowerCase().replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+            if (h && (host === h || host.endsWith('.' + h))) return true;
+        }
+        return false;
+    }
+    /** The row of tiles: an image as a thumbnail with its name, everything else as a chip with an icon. */
+    function attStrip(list, onOpen) {
+        const strip = el('div', 'ovas-att');
+        for (const a of list) {
+            const b = el('button', a.kind === 'image' ? 'ovas-att-img' : 'ovas-att-chip');
+            b.type = 'button';
+            b.dataset.kind = a.kind;
+            b.dataset.role = a.role;
+            const role = ATT_ROLE_LABEL[a.role] || 'produced';
+            b.title = role + ': ' + a.name;
+            b.setAttribute('aria-label', 'Open ' + a.name + ' (' + role + ')');
+            if (a.kind === 'image') {
+                const img = el('img');
+                img.loading = 'lazy'; img.decoding = 'async'; img.alt = a.name; img.src = a.url;
+                img.addEventListener('error', () => { img.remove(); b.hidden = true; });
+                b.appendChild(img);
+            } else {
+                b.insertAdjacentHTML('beforeend', svg(ATT_ICON[a.kind] || 'file'));
+            }
+            b.appendChild(el('span', 'ovas-att-cap', a.name));
+            b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); onOpen(a); });
+            strip.appendChild(b);
+        }
+        return strip;
+    }
+
+    /** A text file as the preview shows it: a CSV as a table, JSON pretty-printed, Markdown read, code highlighted. */
+    function attText(name, text, linkOk) {
+        const ext = attExt(name);
+        let body = String(text == null ? '' : text);
+        if (ext === 'json' || ext === 'jsonl') { try { body = JSON.stringify(JSON.parse(body), null, 2); } catch { /* not one document */ } }
+        if (ext === 'csv' || ext === 'tsv') { const table = attCsv(body, ext === 'tsv' ? '\t' : ','); if (table) return table; }
+        if (ext === 'md' || ext === 'markdown') {
+            const frag = markdown(body, linkOk);
+            frag.querySelectorAll('pre code').forEach((code) => { const hi = attHighlight(code.textContent, ''); code.textContent = ''; code.appendChild(hi); });
+            return frag;
+        }
+        const pre = el('pre', 'ovas-prev-code');
+        const code = el('code');
+        code.appendChild(attHighlight(body, ext === 'json' ? 'json' : ''));
+        pre.appendChild(code);
+        return pre;
+    }
+    /** Pinch to zoom on a phone, double tap to double, so a screenshot can be read. */
+    function attZoom(img) {
+        let scale = 1, start = null;
+        const apply = () => { img.style.transform = scale > 1 ? 'scale(' + scale + ')' : ''; };
+        img.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) { const a = e.touches[0], b = e.touches[1]; start = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), s: scale }; }
+        }, { passive: true });
+        img.addEventListener('touchmove', (e) => {
+            if (!start || e.touches.length !== 2) return;
+            e.preventDefault();
+            const a = e.touches[0], b = e.touches[1];
+            const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+            scale = Math.min(4, Math.max(1, start.s * (d / (start.d || 1)))); apply();
+        }, { passive: false });
+        img.addEventListener('touchend', () => { start = null; });
+        img.addEventListener('dblclick', () => { scale = scale > 1 ? 1 : 2; apply(); });
+        img.addEventListener('wheel', (e) => { if (!e.ctrlKey) return; e.preventDefault(); scale = Math.min(4, Math.max(1, scale - e.deltaY / 200)); apply(); }, { passive: false });
+    }
+    /** A small highlighter for the preview: strings, numbers, keywords and comments, as spans (never markup). */
+    function attHighlight(text, lang) {
+        const frag = document.createDocumentFragment();
+        const json = lang === 'json';
+        const re = json
+            ? /("(?:[^"\\]|\\.)*")(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g
+            : /(\/\/[^\n]*|#[^\n]*|--[^\n]*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(const|let|var|function|return|if|else|for|while|do|import|export|from|default|class|extends|new|await|async|try|catch|finally|throw|def|then|null|true|false|None|True|False)\b|(\b\d+(?:\.\d+)?\b)/g;
+        const push = (s, cls) => { if (!s) return; frag.appendChild(cls ? el('span', cls, s) : document.createTextNode(s)); };
+        let at = 0, m;
+        while ((m = re.exec(text))) {
+            push(text.slice(at, m.index));
+            if (json) {
+                if (m[1] != null) { push(m[1], m[2] != null ? 'ovas-tok-key' : 'ovas-tok-str'); if (m[2] != null) push(m[2], ''); }
+                else if (m[3] != null) push(m[3], 'ovas-tok-kw');
+                else push(m[4], 'ovas-tok-num');
+            } else if (m[1] != null) push(m[1], 'ovas-tok-com');
+            else if (m[2] != null) push(m[2], 'ovas-tok-str');
+            else if (m[3] != null) push(m[3], 'ovas-tok-kw');
+            else push(m[4], 'ovas-tok-num');
+            at = m.index + m[0].length;
+        }
+        push(text.slice(at));
+        return frag;
+    }
+    /** A CSV as a table (quoted cells kept whole). */
+    function attCsv(text, delim) {
+        const rows = String(text || '').split(/\r?\n/).filter((l) => l.trim() !== '');
+        if (!rows.length) return null;
+        const split = (line) => {
+            const out = []; let cur = '', q = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (q) { if (ch === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+                else if (ch === '"') q = true;
+                else if (ch === delim) { out.push(cur.trim()); cur = ''; }
+                else cur += ch;
+            }
+            out.push(cur.trim());
+            return out;
+        };
+        const head = split(rows[0]);
+        const table = el('table', 'ovas-csv');
+        const thead = el('thead'), tr = el('tr');
+        head.forEach((h) => tr.appendChild(el('th', '', h || ' ')));
+        thead.appendChild(tr); table.appendChild(thead);
+        const tb = el('tbody');
+        for (const line of rows.slice(1, 200)) {
+            const r = el('tr'), cells = split(line);
+            for (let i = 0; i < head.length; i++) r.appendChild(el('td', '', cells[i] == null ? '' : cells[i]));
+            tb.appendChild(r);
+        }
+        table.appendChild(tb);
+        return table;
+    }
 
     /** Light Markdown, text-safe: paragraphs, bullet and numbered lists, `code`, ```blocks```, **bold**, https links (only
      *  those `linkOk(url)` allows; the others stay text). */
@@ -243,6 +434,10 @@
     function mount(host, opts = {}) {
         styles();
         const linkOk = typeof opts.link === 'function' ? (u) => { try { return !!opts.link(u); } catch { return false; } } : null;
+        // Attachments load from the product's own origin or Media's; a product that serves files from another host
+        // says so: mount(el, { origins: ['files.openvibe.codes'] }).
+        const origins = Array.isArray(opts.origins) ? opts.origins : (opts.origins ? [opts.origins] : []);
+        const safeAtts = (list) => normAttachments(list).filter((a) => attAllowed(a.url, origins));
         const LIVE = ['running', 'placed', 'queued', 'verifying'];
         // The clock runs from startedAt, or from now for a run that is live as it mounts; a finished run replayed without
         // a start time shows the time only once its done line says it.
@@ -272,6 +467,63 @@
             try { navigator.clipboard.writeText(text); c.lastChild.textContent = 'Copied'; setTimeout(() => { c.lastChild.textContent = 'Copy'; }, 1400); } catch { /* no clipboard */ }
         });
         const empty = el('li', 'ovas-empty', opts.empty || 'Waiting for the agent to start…'); feed.appendChild(empty);
+
+        // ── The preview sheet: one attachment, opened by a tap ──────────────────────────
+        const sheet = el('div', 'ovas-sheet');
+        sheet.hidden = true;
+        sheet.innerHTML = '<div class="ovas-sheet-panel" role="dialog" aria-modal="true" aria-label="Preview"><div class="ovas-sheet-bar"><b class="ovas-sheet-name"></b><button type="button" class="ovas-sheet-x" aria-label="Close the preview">✕</button></div><div class="ovas-sheet-body"></div><div class="ovas-sheet-foot"><a class="ovas-sheet-open" target="_blank" rel="noopener noreferrer">Open</a><a class="ovas-sheet-dl" download>Download</a></div></div>';
+        host.appendChild(sheet);
+        let sheetBack = null;
+        function closeSheet() {
+            if (sheet.hidden) return;
+            sheet.hidden = true;
+            sheet.querySelector('.ovas-sheet-body').textContent = '';
+            if (sheetBack && sheetBack.focus) sheetBack.focus();
+            sheetBack = null;
+        }
+        function openSheet(a) {
+            const body = sheet.querySelector('.ovas-sheet-body');
+            body.textContent = '';
+            sheet.querySelector('.ovas-sheet-name').textContent = a.name;
+            const open = sheet.querySelector('.ovas-sheet-open'); open.href = a.url; open.setAttribute('aria-label', 'Open ' + a.name);
+            const dl = sheet.querySelector('.ovas-sheet-dl'); dl.href = a.url; dl.setAttribute('download', a.name);
+            const wrap = el('div', 'ovas-prev');
+            if (a.kind === 'image') {
+                const img = el('img', 'ovas-prev-img'); img.alt = a.name; img.src = a.url; wrap.appendChild(img); attZoom(img);
+            } else if (a.kind === 'video') {
+                const v = el('video', 'ovas-prev-media'); v.controls = true; v.playsInline = true; v.preload = 'metadata'; v.src = a.url; wrap.appendChild(v);
+            } else if (a.kind === 'audio') {
+                const au = el('audio', 'ovas-prev-audio'); au.controls = true; au.preload = 'metadata'; au.src = a.url; wrap.appendChild(au);
+            } else if (a.kind === 'pdf') {
+                const f = el('iframe', 'ovas-prev-pdf'); f.src = a.url; f.title = a.name; wrap.appendChild(f);
+            } else if (a.kind === 'text') {
+                const holder = el('div', 'ovas-prev-text');
+                holder.appendChild(el('p', 'ovas-prev-note', 'Loading…'));
+                wrap.appendChild(holder);
+                fetch(a.url, { credentials: 'same-origin' })
+                    .then((r) => (r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status))))
+                    .then((t) => { holder.textContent = ''; holder.appendChild(attText(a.name, t, linkOk)); })
+                    .catch((err) => { holder.textContent = 'Could not open it: ' + err.message; });
+            } else {
+                wrap.appendChild(el('p', 'ovas-prev-note', 'There is no preview for this file. Open it or download it.'));
+            }
+            body.appendChild(wrap);
+            sheetBack = (typeof document !== 'undefined' && document.activeElement) || null;
+            sheet.hidden = false;
+            const x = sheet.querySelector('.ovas-sheet-x'); if (x && x.focus) x.focus();
+        }
+        sheet.querySelector('.ovas-sheet-x').addEventListener('click', closeSheet);
+        sheet.addEventListener('click', (e) => { if (e.target === sheet) closeSheet(); });
+        document.addEventListener('keydown', (e) => {
+            if (sheet.hidden) return;
+            if (e.key === 'Escape') { e.preventDefault(); closeSheet(); return; }
+            if (e.key !== 'Tab') return;
+            const f = [...sheet.querySelectorAll('button, a[href], iframe')].filter((n) => !n.disabled && n.offsetParent !== null);
+            if (!f.length) return;
+            const first = f[0], last = f[f.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        });
 
         function applyFilter() {
             const files = S.filter === 'files';
@@ -340,7 +592,7 @@
             d.dataset.id = step.id;
             const sum = el('summary');
             const info = describe(step); step.info = info;
-            sum.innerHTML = `${svg('chevron', 'ovas-chev')}<span class="ovas-kind" data-k="${esc(step.kind)}">${svg(step.kind)}</span><span class="ovas-sum"><b></b><small></small></span>${info.added || info.removed ? `<span class="ovas-delta"><span class="a">+${info.added}</span><span class="r">−${info.removed}</span></span>` : ''}<span class="ovas-state" data-s="run"><span class="ovas-spin" aria-label="Running"></span><span data-t></span></span>`;
+            sum.innerHTML = `${svg('chevron', 'ovas-chev')}<span class="ovas-kind" data-k="${esc(step.kind)}">${svg(step.kind)}</span><span class="ovas-sum"><b></b><small></small></span>${info.added || info.removed ? `<span class="ovas-delta"><span class="a">+${info.added}</span><span class="r">−${info.removed}</span></span>` : ''}<span class="ovas-state" data-s="run"><span class="ovas-spin" aria-label="Running"></span><span data-t></span></span><span class="ovas-att-slot"></span>`;
             sum.querySelector('b').textContent = info.title;
             sum.querySelector('small').textContent = info.sub;
             if (!info.sub) sum.querySelector('small').hidden = true;
@@ -383,7 +635,7 @@
             if (last && last.classList.contains('ovas-group-li')) return last;
             const li = el('li', 'ovas-group-li'); li.dataset.k = 'steps';
             const g = el('details', 'ovas-group');
-            g.innerHTML = `<summary>${svg('chevron', 'ovas-chev')}<span class="ovas-icons"></span><span class="ovas-sum"><b></b><small></small></span><span class="ovas-delta" hidden><span class="a"></span><span class="r"></span></span><span class="ovas-state"></span></summary><ol></ol>`;
+            g.innerHTML = `<summary>${svg('chevron', 'ovas-chev')}<span class="ovas-icons"></span><span class="ovas-sum"><b></b><small></small></span><span class="ovas-delta" hidden><span class="a"></span><span class="r"></span></span><span class="ovas-state"></span><span class="ovas-att-slot"></span></summary><ol></ol>`;
             li.appendChild(g); parentFeed.appendChild(li);
             li.steps = [];
             return li;
@@ -408,6 +660,20 @@
             // One step alone reads as itself, not as a group of one.
             g.classList.toggle('is-one', steps.length === 1);
             if (steps.length === 1) g.open = true;
+            // The group's attachments, in its header row, so they show while the group is folded.
+            const atts = [], seenAtt = new Set();
+            for (const s of steps) for (const a of (s.attachments || [])) { if (!seenAtt.has(a.url)) { seenAtt.add(a.url); atts.push(a); } }
+            const slot = g.querySelector('.ovas-att-slot');
+            slot.textContent = '';
+            // A group of one hides its header, so there the step's own row carries the attachments instead.
+            if (atts.length && steps.length > 1) slot.appendChild(attStrip(atts, openSheet));
+            // A group of one shows the step's own row; there the attachments belong to the step.
+            for (const s of steps) {
+                const ss = s.el && s.el.querySelector(':scope>summary .ovas-att-slot');
+                if (!ss) continue;
+                ss.textContent = '';
+                if (steps.length === 1 && s.attachments && s.attachments.length) ss.appendChild(attStrip(s.attachments, openSheet));
+            }
         }
         function feedFor(parent) { const p = parent && S.steps.get(parent); return p && p.subEl ? p.subEl : feed; }
         function appendLi(target, li) { if (target === feed) { if (empty.parentNode) empty.remove(); feed.appendChild(li); } else target.appendChild(li); }
@@ -427,11 +693,14 @@
                 paintHead(); return;
             }
             if (x.t === 'text') {
-                const li = el('li', 'ovas-msg'); li.dataset.k = 'msg'; li.appendChild(markdown(x.text, linkOk)); appendLi(target, li); return;
+                const li = el('li', 'ovas-msg'); li.dataset.k = 'msg'; li.appendChild(markdown(x.text, linkOk));
+                const atts = safeAtts(x.attachments);
+                if (atts.length) li.appendChild(attStrip(atts, openSheet));
+                appendLi(target, li); return;
             }
             if (x.t === 'tool') {
                 const kind = kindOf(x.name);
-                const step = { id: x.id || `s${S.steps.size}`, name: x.name, kind, input: x.input || {}, what: x.what || '', started: Date.now(), done: false, ok: null, out: '' };
+                const step = { id: x.id || `s${S.steps.size}`, name: x.name, kind, input: x.input || {}, what: x.what || '', started: Date.now(), done: false, ok: null, out: '', attachments: safeAtts(x.attachments) };
                 if (kind === 'plan') { if (Array.isArray(step.input.todos)) { S.plan = step.input.todos; paintPlan(); } step.hidden = true; S.steps.set(step.id, step); return; }
                 S.steps.set(step.id, step);
                 const g = groupFor(target === feed ? feed : target);
@@ -447,6 +716,12 @@
             }
             if (x.t === 'tool_result') {
                 const step = S.steps.get(String(x.id)); if (!step || step.hidden) return;
+                // A result may carry the files the step produced; the group's header shows them.
+                const extra = safeAtts(x.attachments);
+                if (extra.length) {
+                    const have = step.attachments || (step.attachments = []);
+                    for (const a of extra) if (!have.some((b) => b.url === a.url)) have.push(a);
+                }
                 step.done = true; step.ok = x.ok !== false; step.ended = x.duration_ms > 0 ? step.started + Number(x.duration_ms) : Date.now();
                 if (Number(x.cost_usd) > 0) step.cost = Number(x.cost_usd);
                 if (step.outEl) {
@@ -486,6 +761,8 @@
                 const b = el('b'); b.innerHTML = svg(x.ok ? 'ok' : 'fail'); b.appendChild(document.createTextNode(`${agentName((S.agents[S.agents.length - 1] || {}).agent)} ${x.ok ? 'finished' : 'stopped'}${x.duration_ms ? ` in ${dur(x.duration_ms)}` : ''}`));
                 li.appendChild(b);
                 if (x.text) { const m = el('div', 'ovas-msg'); m.appendChild(markdown(x.text, linkOk)); li.appendChild(m); }
+                const doneAtts = safeAtts(x.attachments);
+                if (doneAtts.length) li.appendChild(attStrip(doneAtts, openSheet));
                 if (!x.ok) li.dataset.p = '1';
                 appendLi(feed, li); paintHead();
             }
