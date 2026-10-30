@@ -19,6 +19,8 @@
 // Desktop: a floating card at the pill's corner. Drag its head to move it (it snaps to the nearest corner), drag the
 // free corner to resize (320-720 × 360-900 px). It is not modal: the page stays usable. Phones: a sheet from the
 // bottom over a scrim; drag the head down, ×, Escape or a tap outside closes it. Motion is transform and opacity only.
+// Pop out (K-D4): on desktop Chromium the panel moves into a window of its own (Document Picture-in-Picture) — the same
+// DOM, the same tabs, the page's own styles copied in; the page keeps the pill, which says where the Dock went.
 // ═══════════════════════════════════════════════════════════════
 (function (root) {
     'use strict';
@@ -41,6 +43,8 @@
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
     let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null;
+    // Pop out (K-D4): the window the panel lives in while it is popped out, and whether it is in one.
+    let pipWin = null, popped = false, pipClosing = false, popOk = true;
     const mounts = {};
 
     const phone = () => { try { return root.matchMedia('(max-width: 640px)').matches; } catch { return false; } };
@@ -74,7 +78,13 @@
         const body = pending; pending = {};
         if (!Object.keys(body).length) return;
         try {
-            const r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(body) });
+            let r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(body) });
+            // A Network whose state contract does not know "popped" yet refuses the whole body; ask again without it,
+            // so the Dock's place and its tab still reach the Network.
+            if (!r && 'popped' in body) {
+                const rest = { ...body }; delete rest.popped;
+                r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(rest) });
+            }
             if (r && r.state && !Object.keys(pending).length) { doc = { ...doc, state: r.state, counts: r.counts || counts() }; notify(); badges(); }
         } catch { /* offline, or no route yet: the copy stands and the next change tries again */ }
     }
@@ -227,6 +237,13 @@
             html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }
             @media (prefers-reduced-motion: reduce) { .ovdk.is-in, .ovdk-wait span { animation: none; } }
             html[data-ov-motion="reduced"] .ovdk.is-in { animation: none; }
+            // In a window of its own the panel is the window: full bleed, no card, no phone sheet.
+            .ovdk-pip .ovdk, .ovdk-pip .ovdk[data-corner] { left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important;
+                width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important;
+                border-radius: 0 !important; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)) !important; box-shadow: none !important; }
+            .ovdk-pip .ovdk-head { padding-top: 10px !important; cursor: grab !important; }
+            .ovdk-pip .ovdk-head::before { display: none !important; }
+            .ovdk-pip .ovdk-size { display: none !important; }
         `;
         document.head.appendChild(st);
     }
@@ -242,6 +259,7 @@
             <header class="ovdk-head">
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
+                    <button type="button" data-act="pop" hidden title="Open the Dock in a window of its own" aria-label="Open the Dock in a window of its own">${svg(G.open)}</button>
                     <button type="button" data-act="pin" aria-pressed="false" title="Keep the Dock's button on every page" aria-label="Keep the Dock's button on every page">${svg(G.pin)}</button>
                     <button type="button" data-act="close" title="Close" aria-label="Close the Dock">${svg(G.close)}</button>
                 </div>
@@ -258,6 +276,7 @@
             if (j >= 0) { e.preventDefault(); setTab(tabs[j].dataset.tab, true); tabs[j].focus(); }
         });
         el.querySelector('[data-act="close"]').addEventListener('click', () => close());
+        el.querySelector('[data-act="pop"]').addEventListener('click', () => { if (popped) backToPage(); else popOut(); });
         el.querySelector('[data-act="pin"]').addEventListener('click', () => { save({ pinned: !state().pinned }); paintPin(); });
         el.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
         // A tap outside closes the phone sheet. The path is the one at dispatch: a tap that redraws its own panel (opening a
@@ -271,6 +290,7 @@
         root.addEventListener('resize', () => { if (isOpen()) layout(); });
         bindMove();
         bindSize();
+        paintPop();
     }
 
     // ── Where it sits ────────────────────────────────────────
@@ -591,6 +611,15 @@
         if (!pill) return;
         const c = counts(), st = state(), w = c.waiting || 0, r = c.running || 0;
         const corner = place().corner;
+        // Popped out: the page keeps the pill, and it says where the Dock went.
+        if (popped) {
+            pill.hidden = false;
+            pill.dataset.corner = CORNERS.includes(corner) ? corner : 'bottom-right';
+            pill.dataset.tone = 'idle';
+            pill.querySelector('.ovdk-t').textContent = 'In a window';
+            pill.setAttribute('aria-label', 'The Dock is in a window of its own \u2014 click to bring it back');
+            return;
+        }
         const show = !isOpen() && !!(w || r || st.pinned);
         pill.hidden = !show;
         pill.dataset.corner = CORNERS.includes(corner) ? corner : 'bottom-right';
@@ -634,12 +663,86 @@
             pill = document.createElement('button');
             pill.type = 'button'; pill.id = 'ovdk-pill'; pill.className = 'ovdk-pill'; pill.hidden = true;
             pill.innerHTML = '<span class="ovdk-m"><span class="ov-mark" data-size="26"></span></span><span class="ovdk-t"></span>';
-            pill.addEventListener('click', () => open());
+            pill.addEventListener('click', () => { if (popped) backToPage(); else open(); });
             document.body.appendChild(pill);
             paintPill();
         }
         if (!bound) { bound = true; document.addEventListener('visibilitychange', () => { if (!document.hidden) read(); }); }
         read();
+    }
+
+    // ── Pop out (K-D4) ────────────────────────────────────────
+    // On desktop Chromium the panel can move into a window of its own (Document Picture-in-Picture). The same DOM and
+    // the same tabs go with it; the window is dressed with the Dock's styles and the theme's colours, so the Dock looks
+    // there as it does here. The page keeps the pill, which says where the Dock went; clicking it brings the panel back.
+    const PIP_W = 360, PIP_H = 520;
+    const pip = () => (root.documentPictureInPicture && typeof root.documentPictureInPicture.requestWindow === 'function') ? root.documentPictureInPicture : null;
+    // The theme's tokens, so the window is painted in the same colours (the names only: the values are read from the page).
+    const TOKENS = 'accent accent-light accent-strong bg bg-card bg-elevated bg-hover bg-input bg-primary bg-secondary bg-tertiary border border-light danger danger-strong gold live-red on-accent on-accent-strong success text-muted text-primary text-secondary warning'.split(' ');
+
+    function paintPop() {
+        const b = el.querySelector('[data-act="pop"]');
+        if (!b) return;
+        b.hidden = !pip();
+        const t = popped ? 'Bring the Dock back to the page' : 'Open the Dock in a window of its own';
+        b.title = t; b.setAttribute('aria-label', t);
+    }
+
+    /** The window gets the Dock's styles, the theme's colours and the page's own type: the Dock looks the same there. */
+    function dress(win) {
+        const d = win.document;
+        if (!d.documentElement) d.appendChild(d.createElement('html'));
+        if (!d.head) d.documentElement.appendChild(d.createElement('head'));
+        if (!d.body) d.documentElement.appendChild(d.createElement('body'));
+        d.title = 'OpenVibe Dock';
+        for (const id of ['ovdk-styles', 'ovac-styles', 'openvibe-notif-styles', 'ov-mark-css']) {
+            const s = document.getElementById(id);
+            if (!s) continue;
+            const c = d.createElement('style');
+            c.id = id; c.textContent = s.textContent;
+            d.head.appendChild(c);
+        }
+        const cs = getComputedStyle(document.documentElement);
+        for (const n of TOKENS) { const v = cs.getPropertyValue('--' + n); if (v) d.documentElement.style.setProperty('--' + n, v.trim()); }
+        const b = getComputedStyle(document.body);
+        const s = d.body.style;
+        s.fontFamily = b.fontFamily; s.fontSize = b.fontSize; s.fontWeight = b.fontWeight; s.lineHeight = b.lineHeight;
+        s.background = b.backgroundColor;
+        d.documentElement.style.colorScheme = cs.colorScheme || '';
+        d.documentElement.classList.add('ovdk-pip');
+    }
+
+    /** The panel moves into a window of its own. Only from a click: the browser wants a gesture, and a Dock that opened
+     * a window by itself would be a window nobody asked for. */
+    async function popOut() {
+        if (popped || !pip()) return;
+        let win = null;
+        try { win = await pip().requestWindow({ width: PIP_W, height: PIP_H }); } catch { return; }
+        if (!win || !win.document) return;
+        pipWin = win;
+        popped = true;
+        dress(win);
+        win.document.body.appendChild(el);
+        win.addEventListener('pagehide', () => { if (popped && !pipClosing) backToPage(); });
+        paintPop();
+        save({ open: true, popped: true });
+        paintPill();
+    }
+
+    /** The panel comes back to the page: the window was closed, or the pill was pressed. */
+    function backToPage() {
+        if (!popped) return;
+        popped = false;
+        const w = pipWin; pipWin = null;
+        pipClosing = true;
+        try { if (w && !w.closed) w.close(); } catch { /* the window is already gone */ }
+        pipClosing = false;
+        if (el.parentNode !== document.body) document.body.appendChild(el);
+        el.hidden = false;
+        layout();
+        paintPop();
+        save({ popped: false });
+        paintPill();
     }
 
     // ── Open and close ───────────────────────────────────────
@@ -654,6 +757,7 @@
         layout();
         badges();
         paintPin();
+        paintPop();
         el.hidden = false;
         el.classList.remove('is-in'); void el.offsetWidth; el.classList.add('is-in');
         if (phone()) { el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open'); } else el.removeAttribute('aria-modal');
@@ -664,6 +768,8 @@
     }
     function close() {
         if (!isOpen()) return;
+        const wasPopped = popped;
+        if (wasPopped) { popped = false; const w = pipWin; pipWin = null; pipClosing = true; try { if (w) w.close(); } catch { /* already gone */ } pipClosing = false; if (el.parentNode !== document.body) document.body.appendChild(el); }
         const inside = el.contains(document.activeElement);
         el.hidden = true;
         el.style.transform = '';
@@ -671,7 +777,7 @@
         document.documentElement.classList.remove('ovdk-sheet-open');
         clear(0);
         clearTimeout(chats.timer); clearTimeout(chats.unreadT);
-        save({ open: false });
+        save(wasPopped ? { open: false, popped: false } : { open: false });
         if (inside) {
             const back = pill && !pill.hidden ? pill : (lastFocus && lastFocus.isConnected ? lastFocus : null);
             try { if (back) back.focus({ preventScroll: true }); } catch { /* */ }
