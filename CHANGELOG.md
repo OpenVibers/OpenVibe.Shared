@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.53.1 — 2026-10-30
+
+- **The patch-notes link under "Recently shipped" wraps on a narrow screen.** It carries a whole post title ("Patch
+  notes: 81 changes across 43 sites (Oct 30) →") and was kept on one line, so it ran past a 320 px screen (found on
+  openvibe.host, which had overridden it). The short "What's in it" link in a grouped row stays whole.
+
 ## 4.53.0 — 2026-10-30
 
 - **The full footer folds on phones** (the short-pages rule: a phone page is one or two screens, and the footer alone

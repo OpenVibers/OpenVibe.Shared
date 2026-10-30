@@ -85,6 +85,9 @@
         '.ov-shipped-group{flex-wrap:wrap}',
         `.ov-shipped-count{flex:none;min-width:2em;text-align:center;font-size:.72rem;font-weight:800;padding:.12rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent);color:${TEXT}}`,
         `.ov-shipped-notes{color:${ACCENT};font-size:.82rem;font-weight:600;text-decoration:none;white-space:nowrap}.ov-shipped-notes:hover{text-decoration:underline}`,
+        // 4.53.1: the patch-notes link under the list carries a whole post title ("Patch notes: 81 changes across 43 sites
+        // (Oct 30) →"); kept on one line it ran past a 320 px screen. It wraps there; the short "What's in it" stays whole.
+        '.ov-shipped-links .ov-shipped-notes{white-space:normal;min-width:0;overflow-wrap:anywhere}',
         `.ov-shipped-fold{flex-basis:100%;min-width:0;font-size:.82rem;color:${MUTED}}.ov-shipped-fold summary{cursor:pointer;padding:3px 0;overflow-wrap:anywhere}`,
         `.ov-shipped-fold .ov-shipped-entries{margin:4px 0 2px;padding-left:10px;border-left:2px solid ${BORDER}}.ov-shipped-fold .ov-shipped-entry{padding:5px 8px}`,
         '@media (max-width:600px){.ov-shipped-entry{flex-wrap:wrap;gap:4px 8px}.ov-shipped-meta{width:100%}}',
