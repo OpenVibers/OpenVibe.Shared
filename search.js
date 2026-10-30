@@ -62,7 +62,7 @@
         { name: 'Developer Tools', icon: 'code', url: 'https://dev.openvibe.tools/' },
         { name: 'Network Tools', icon: 'dns', url: 'https://net.openvibe.tools/' },
     ];
-    const TABS = [['you', 'For you'], ['sites', 'Sites'], ['tools', 'Tools']];
+    const TABS = [['you', 'Start'], ['sites', 'Sites'], ['tools', 'Tools']];
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'you', mine = null, catalog = null, completion = '';
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
@@ -164,7 +164,10 @@
 .ovs { position: fixed; inset: 0; z-index: 10020; display: none; background: rgba(3, 6, 12, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-primary, #e8ecf3); }
 .ovs.is-open { display: block; animation: ovs-in .14s ease-out; }
 .ovs-panel { position: absolute; left: 50%; top: 8vh; width: min(720px, calc(100vw - 32px)); max-height: 80vh; transform: translateX(-50%); display: flex; flex-direction: column; border-radius: 18px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-secondary, #121826); box-shadow: 0 30px 80px rgba(0,0,0,.55); overflow: hidden; }
-.ovs-bar { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 16px; }
+.ovs-bar { display: flex; align-items: center; gap: 10px; margin: 10px 10px 6px; padding: 0 6px 0 14px; border-radius: 999px; background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); transition: box-shadow .2s, background .2s; }
+.ovs-bar:focus-within { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent), 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
+/* A site's own focus ring (the orange box on openvibe.download, 10-29) never draws on the field: the pill shows focus. */
+.ovs .ovs-input, .ovs .ovs-input:focus, .ovs .ovs-input:focus-visible { outline: none !important; box-shadow: none !important; border: 0 !important; background: transparent !important; }
 .ovs-bar > svg { width: 18px; height: 18px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-field { position: relative; flex: 1; min-width: 0; display: flex; }
 .ovs-input, .ovs-ghost { height: 48px; font: inherit; font-size: 17px; letter-spacing: normal; }
@@ -178,7 +181,12 @@
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
 .ovs-tab[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #8ab4ff)); }
 .ovs-tab:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
-.ovs-typing .ovs-bar { border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+.ovs-typing .ovs-bar { border-bottom: 0; }
+/* Opening, the groups rise in one after another (not while typing: every key redraws the list). */
+.ovs:not(.ovs-typing) .ovs-list > li { animation: ovs-rise .32s cubic-bezier(.2, 1.2, .3, 1) both; }
+.ovs-list > li:nth-child(2) { animation-delay: 25ms; } .ovs-list > li:nth-child(3) { animation-delay: 50ms; } .ovs-list > li:nth-child(4) { animation-delay: 75ms; }
+.ovs-list > li:nth-child(5) { animation-delay: 100ms; } .ovs-list > li:nth-child(6) { animation-delay: 125ms; } .ovs-list > li:nth-child(n+7) { animation-delay: 150ms; }
+@keyframes ovs-rise { from { opacity: 0; transform: translateY(6px); } }
 .ovs-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
 .ovs-group { display: flex; align-items: center; gap: 8px; padding: 12px 10px 5px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
 .ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
@@ -233,7 +241,7 @@
 .ovs.ovs-anchored .ovs-panel { top: 8px; left: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); transform: none; transform-origin: 24px 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .22s cubic-bezier(.2,1.15,.3,1); }
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) { .ovs.ovs-anchored .ovs-panel { top: 0; left: 0; width: 100vw; height: auto; max-height: calc(100dvh - var(--ovs-top, 0px) - 12px); border-radius: 0 0 22px 22px; border-top: 0; } }
-@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel { animation: none; } }`;
+@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel, .ovs-list > li { animation: none; } }`;
         document.head.appendChild(st);
     }
 
@@ -423,7 +431,15 @@
         if (typeof ctx.icons === 'function') { try { ctx.icons(listEl); } catch { /* the icons are optional */ } }
     }
 
-    const here = () => (ctx.scope && ctx.scope.label) || document.title.split(/[·|–-]/).pop().trim() || location.hostname;
+    // This site's short name for the field and the headings: the frame's name for this address ("Download"), not the page
+    // title ("OpenVibe.Download: a free 25 GB drive with share links" was cut off in the field and ran over two lines).
+    const shortName = (t) => String(t || '').split(/\s[·|–—-]\s|:\s/)[0].replace(/^OpenVibe\./, '').trim().slice(0, 28);
+    const here = () => {
+        if (ctx.scope && ctx.scope.label) return shortName(ctx.scope.label);
+        const f = ctx.frame, list = f && Array.isArray(f.nav) ? f.nav.map((n) => ({ name: n.name, url: safeUrl(n.url) })) : [];
+        const s = list.length ? hereSite(list) : null;
+        return (s && s.name) || shortName(document.title.split(/[·|–-]/).pop()) || location.hostname;
+    };
     const siteItem = (s, all) => ({ title: s.name, meta: s.desc, url: s.url, site: s.icon || s.id, kind: 'site', here: all && s === hereSite(all) });
     function pagesOf(q) {
         const n = q.toLowerCase();
@@ -442,6 +458,14 @@
     }
     // How well a name answers what was typed: its start (3), inside it (2), or only the words behind it (1).
     const scoreOf = (n, name, words) => { const nm = name.toLowerCase(); return nm.startsWith(n) ? 3 : nm.includes(n) ? 2 : words && words.includes(n) ? 1 : 0; };
+    // Quick tools on Start: the everyday ones first (the owner, 10-29: "I'm trying to just get to basic tools"), then the
+    // network's most used.
+    const EVERYDAY = ['QR Code Generator', 'Image Compressor', 'Merge PDF', 'Image Converter', 'Word Counter', 'YouTube Downloader'];
+    function quickTools() {
+        const picked = catalog ? EVERYDAY.map((n) => catalog.tools.find((t) => t.name === n)).filter(Boolean).map(toolRow) : [];
+        const seen = new Set(picked.map((r) => r.url));
+        return [...picked, ...popularTools().filter((r) => !seen.has(r.url))].slice(0, 6);
+    }
     const toolRow = (t) => ({ title: t.name, meta: t.desc ? `Tool · ${t.desc}` : 'Tool', url: t.go || t.url, site: t.icon, kind: 'tool' });
     /** How often this person opened a tool (their history's visits to any of its addresses). */
     function toolUse(t) {
@@ -514,6 +538,7 @@
         paint([
             { title: 'Jump back in', items: back },
             { title: `On ${here()}`, as: 'chips', items: pagesOf('') },
+            { title: 'Quick tools', as: 'chips', more: { label: 'All tools', tab: 'tools' }, items: quickTools() },
             { title: 'Recent searches', as: 'chips', clear: true, items: r.map((x) => ({ title: x, url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' })) },
             { title: yours ? 'Your sites' : 'Popular on OpenVibe', as: 'tiles', more: { label: 'All sites', tab: 'sites' }, items: ranked },
         ], back.length || r.length ? '' : 'Search streams, recordings, jobs, posts, deals, wikis and more, on every OpenVibe site.');
@@ -675,7 +700,7 @@
         if (at) { el.style.setProperty('--ovs-top', `${Math.max(0, Math.round(at.top))}px`); el.style.setProperty('--ovs-left', `${Math.max(8, Math.round(at.left))}px`); }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: true } })); } catch { /* */ }
         document.documentElement.style.overflow = 'hidden';
-        input.placeholder = `Search ${here()}, or jump to any site`;
+        input.placeholder = `Search ${here()}, or ask Vibe`;
         input.value = opts.q || '';
         paintGhost();
         render(input.value);

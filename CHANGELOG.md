@@ -6,6 +6,30 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.48.0 — 2026-10-30
+
+- **The OpenVibe mark opens a site switcher.** The owner: "clicking the icon … its own drop-down … all the sites, so
+  you can hop between them fast". `site-switcher.js` loads on the first tap of the mark, as search.js does for the
+  menu.
+  - What it shows: a compact grid of every open site, with Recent, then Pinned, then the frame's groups, most used
+    first. The page's own site is marked.
+  - How to use it: type to filter, use the arrow keys to move, Enter to go and Esc to close. Hold a site, or
+    right-click it, to pin it.
+  - On phones it is a sheet under the bar that keeps its own scroll.
+  - Recent and pinned follow the account through Network `/api/themes/me/sites`. Signed out, they stay on this site.
+    The navbar records one visit per site per 30 minutes for a signed-in person, never under GPC or DNT.
+  - The site's name in the bar stays its link home. `switcher: false` keeps the mark as a home link.
+  - `test/site-switcher.test.js` covers it in a real Chrome.
+- **The OpenVibe menu, cleaner** (the owner: "the search input is styled all weird … For you kind of sucks … just get
+  to basic tools"):
+  - the search field is a rounded field with a soft focus ring; a site's own focus style can no longer draw a box
+    on it;
+  - the placeholder and the headings use the site's short name ("Search Download, or ask Vibe", "On Download"),
+    not the page title, which was cut off;
+  - "For you" is now **Start**: this site's places, **Quick tools** (QR codes, images, PDFs, word counts first,
+    then the most used), recent searches, then popular sites;
+  - opening, the groups rise in one after another.
+
 ## 4.47.3 — 2026-10-30
 
 - **A tap on the logo no longer opens the menu.** On a phone, the menu button's invisible touch area (4.46.0) covered

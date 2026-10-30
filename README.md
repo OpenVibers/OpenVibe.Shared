@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.47.3 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.48.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -704,6 +704,11 @@ Sign-in and history: history: { type: 'tool'|'stream'|'paste'|'page'|…,
   chip the first time and re-authenticates silently afterwards, 'silent' only
   re-authenticates, false opts out; fedcmLogin is the POST target for the
   assertion (default: this site's /auth/fedcm).
+Site switcher (4.48): the OpenVibe mark is a button that opens
+  site-switcher.js, a compact grid of every OpenVibe site with Recent, Pinned,
+  then the frame's groups. Recent and pinned follow the account (Network
+  /api/themes/me/sites) when signed in. The site's name stays the link home;
+  switcher: false keeps the mark as a home link.
 Balances: chips: [{ id, icon, value, label, tone, title, onClick, hidden }]
   are status chips beside the bell (Live's OpenCoins and Vibes); setChip(id,
   value) updates one. Two or more fold into one chip at 560 px and narrower.
