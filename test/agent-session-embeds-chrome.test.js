@@ -129,6 +129,12 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
         assert.deepStrictEqual(kinds, ['image', 'video', 'audio', 'pdf', 'text'], 'every kind of file is a tile of its own');
         const openBy = async (name) => {
             await p.evaluate(`(() => { const t = [...document.querySelectorAll('.ovas-att > *')].find((n) => n.querySelector('.ovas-att-cap').textContent === ${JSON.stringify(name)}); if (!t) throw new Error('no tile ' + ${JSON.stringify(name)}); t.click(); return 1 })()`);
+            // A text file is fetched, so the sheet fills a moment later.
+            for (let i = 0; i < 30; i++) {
+                const loading = await p.evaluate(`(() => { const b = document.querySelector('.ovas-sheet-body'); return !b || b.textContent.indexOf('Loading') === 0; })()`);
+                if (!loading) break;
+                await p.evaluate(`new Promise((r) => setTimeout(r, 100)), 1`);
+            }
             return p.evaluate(`(() => { const s = document.querySelector('.ovas-sheet'); const b = s.querySelector('.ovas-sheet-body'); return {
                 video: !!b.querySelector('video'), audio: !!b.querySelector('audio'), pdf: !!b.querySelector('iframe'),
                 code: !!b.querySelector('pre code'), text: b.textContent, scripts: b.querySelectorAll('script').length,
