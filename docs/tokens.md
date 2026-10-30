@@ -70,8 +70,10 @@ nothing is passed through unchecked:
 values try to inject code.
 
 Status: the generated Kotlin, Swift and Dart are checked against the Compose Material 3, SwiftUI and Flutter APIs by
-review and by the tests' expected lines. This host has no Kotlin, Swift or Dart toolchain to compile them; a native
-CI job is the next step.
+review and by the tests' expected lines. The Kotlin and the Swift are also **compiled** now: `scripts/native-check.js`
+writes the generated sources out, and the native CI job (`.github/workflows/native.yml`) compiles the Kotlin with
+kotlinc against the Compose runtime and UI artifacts and type-checks the Swift with swiftc against SwiftUI. The Dart
+still has no toolchain here.
 
 ## Comfort settings (4.45.0)
 

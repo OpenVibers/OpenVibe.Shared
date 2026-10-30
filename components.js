@@ -84,7 +84,7 @@ fun OvButton(label: String, onClick: () -> Unit, kind: OvKind = OvKind.Primary, 
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
-        .tint(kind == .danger ? OvTokens.colorStatusBadBase : kind == .quiet ? .clear : OvTokens.colorAccentStrong)
+        .tint(kind == .danger ? OvTokens.colorStatusBadBase : kind == .quiet ? Color.clear : OvTokens.colorAccentStrong)
         .foregroundStyle(kind == .quiet ? OvTokens.colorTextPrimary : OvTokens.colorAccentOnStrong)
     }
 }`,
@@ -126,7 +126,7 @@ fun OvCard(title: String, onOpen: () -> Unit, image: String? = null, ratio: Floa
                 swiftui: `struct OvCard: View {
     let title: String
     var image: URL? = nil
-    var ratio: CGFloat = 16 / 9
+    var ratio: CGFloat = 16.0 / 9.0
     var badge: String? = nil
     var sub: String? = nil
     var meta: String? = nil
@@ -179,7 +179,7 @@ fun OvRail(title: String, seeAll: (() -> Unit)? = null, content: LazyListScope.(
                 swiftui: `struct OvRail<Content: View>: View {
     let title: String
     var seeAll: (() -> Void)? = nil
-    @ViewBuilder let content: () -> Content
+    @ViewBuilder var content: () -> Content
     var body: some View {
         VStack(alignment: .leading, spacing: OvScale.spaceMd) {
             HStack {
@@ -263,7 +263,7 @@ fun OvList(title: String? = null, content: @Composable ColumnScope.() -> Unit) {
 }`,
                 swiftui: `struct OvList<Content: View>: View {
     var title: String? = nil
-    @ViewBuilder let content: () -> Content
+    @ViewBuilder var content: () -> Content
     var body: some View {
         Section { content() } header: { if let title { Text(title).font(.system(size: OvScale.typeSizeCaption, weight: .heavy)) } }
     }
@@ -298,7 +298,7 @@ fun OvSection(title: String, note: String? = null, content: @Composable ColumnSc
                 swiftui: `struct OvSection<Content: View>: View {
     let title: String
     var note: String? = nil
-    @ViewBuilder let content: () -> Content
+    @ViewBuilder var content: () -> Content
     var body: some View {
         GroupBox {
             VStack(alignment: .leading) { content() }
@@ -342,7 +342,7 @@ fun OvFold(title: String, meta: String? = null, initiallyOpen: Boolean = false, 
     let title: String
     var meta: String? = nil
     @State var open = false
-    @ViewBuilder let content: () -> Content
+    @ViewBuilder var content: () -> Content
     var body: some View {
         DisclosureGroup(isExpanded: $open) { content().padding(.top, OvScale.spaceSm) } label: {
             HStack { Text(title).fontWeight(.bold); if let meta { Text(meta).foregroundStyle(OvTokens.colorTextMuted) } }.frame(minHeight: OvScale.sizeTap)
@@ -412,10 +412,10 @@ fun OvStats(items: List<Pair<String, String>>) {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: OvScale.spaceSm) {
-                ForEach(items, id: \\.label) { item in
+                ForEach(items.indices, id: \\.self) { i in
                     VStack(alignment: .leading) {
-                        Text(item.value).font(.system(size: OvScale.typeSizeTitle, weight: .heavy)).monospacedDigit()
-                        Text(item.label).font(.system(size: OvScale.typeSizeCaption)).foregroundStyle(OvTokens.colorTextMuted)
+                        Text(items[i].value).font(.system(size: OvScale.typeSizeTitle, weight: .heavy)).monospacedDigit()
+                        Text(items[i].label).font(.system(size: OvScale.typeSizeCaption)).foregroundStyle(OvTokens.colorTextMuted)
                     }
                     .padding(.horizontal, 14).padding(.vertical, 8).frame(minWidth: 104, alignment: .leading)
                     .background(OvTokens.colorBgRaised, in: .rect(cornerRadius: OvScale.radiusMd))

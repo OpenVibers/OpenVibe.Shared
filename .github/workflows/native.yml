@@ -1,0 +1,86 @@
+name: native
+# The generated native code, compiled for real. tokens.js compiles a theme into Kotlin (Jetpack Compose) and Swift
+# (SwiftUI); components.js carries a reference view for each of the kit's components in both languages. Until now
+# those outputs were only read as text: a generator that wrote code nobody could compile went unnoticed until an app
+# tried to use it. This workflow compiles the Kotlin against the Compose runtime and UI artifacts and type-checks the
+# Swift against SwiftUI.
+on:
+  pull_request:
+    paths:
+      - 'tokens.js'
+      - 'components.js'
+      - 'builtin-themes.js'
+      - 'scripts/native-check.js'
+      - 'native/kotlin/**'
+      - '.github/workflows/native.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'tokens.js'
+      - 'components.js'
+      - 'builtin-themes.js'
+      - 'scripts/native-check.js'
+      - 'native/kotlin/**'
+      - '.github/workflows/native.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  # The Kotlin: the theme's Compose output and the kit's Compose reference views, compiled by kotlinc against the
+  # Compose artifacts (the runtime, the UI, Material 3 and the icons).
+  kotlin:
+    name: kotlin (Jetpack Compose)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1   # production runs Node 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+      - name: write the native sources
+        run: node scripts/native-check.js --out "$RUNNER_TEMP/native"
+      - name: the Compose artifacts, the Compose compiler plugin and the Kotlin compiler
+        env:
+          OV_NATIVE_TOOLCHAIN: ${{ runner.temp }}/toolchain
+        run: gradle -p native/kotlin --no-daemon --quiet writeToolchain --console=plain
+      - name: compile the Kotlin
+        run: |
+          set -euo pipefail
+          tool="$RUNNER_TEMP/toolchain"
+          # kotlinc: the Kotlin compiler's command line (org.jetbrains.kotlin.cli.jvm.K2JVMCompiler), with the Compose
+          # compiler plugin, over the Compose artifacts.
+          java -cp "$(cat "$tool/compiler.txt")" org.jetbrains.kotlin.cli.jvm.K2JVMCompiler \
+            -no-stdlib -no-reflect \
+            -cp "$(cat "$tool/compose.txt")" \
+            -Xplugin="$(cat "$tool/plugin.txt")" \
+            -d "$RUNNER_TEMP/kotlin-out" \
+            $(find "$RUNNER_TEMP/native/kotlin" -name '*.kt' | sort)
+      - name: what was compiled
+        run: find "$RUNNER_TEMP/kotlin-out" -name '*.class' | wc -l
+
+  # The Swift: the theme's SwiftUI output and the kit's SwiftUI reference views, type-checked against SwiftUI.
+  swift:
+    name: swift (SwiftUI)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - name: write the native sources
+        run: node scripts/native-check.js --out "$RUNNER_TEMP/native"
+      - name: type-check the Swift
+        run: |
+          set -euo pipefail
+          # The SDK's own version as the deployment target, so the newest SwiftUI (ContentUnavailableView and the
+          # scroll targets) is available to the check.
+          sdk=$(xcrun --show-sdk-path)
+          target="$(uname -m)-apple-macos$(xcrun --show-sdk-version | cut -d. -f1).0"
+          swiftc -typecheck -sdk "$sdk" -target "$target" $(find "$RUNNER_TEMP/native/swift" -name '*.swift' | sort)

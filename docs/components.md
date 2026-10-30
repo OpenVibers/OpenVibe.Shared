@@ -59,5 +59,7 @@ theme's tokens it wears (`typealias OvTokens = VibeDarkTokens`). The theme files
 `openvibe.design/tokens` (OpenVibe Tokens' Compose and SwiftUI targets), and the scales are `OvScale` in both.
 OpenVibe.Design's `/components` page shows every component's spec, its web rendering and its Android and iOS views.
 
-Status: the reference views follow the Compose Material 3 and SwiftUI APIs. They are checked by review and by the
-tests' names, not compiled: this host has no Kotlin or Swift toolchain, and a native CI job is the next step.
+Status: the reference views follow the Compose Material 3 and SwiftUI APIs, and they are **compiled** now:
+`scripts/native-check.js` writes the preamble and every view out as Kotlin and Swift, and the native CI job
+(`.github/workflows/native.yml`) compiles the Kotlin with kotlinc against the Compose runtime and UI artifacts and
+type-checks the Swift with swiftc against SwiftUI. A view that does not compile fails the build.
