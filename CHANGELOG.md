@@ -6,6 +6,19 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.53.0 — 2026-10-30
+
+- **The full footer folds on phones** (the short-pages rule: a phone page is one or two screens, and the footer alone
+  was 1.1–1.4 of them). Each link column (the site's own, Network, Popular tools, Legal) is a `<details>` fold.
+  - **On a phone** (560 px and under) each column is a 48 px row with its heading and a chevron, folded. The footer
+    measures 506 px at 390 px wide instead of 891 px.
+  - **A desktop is unchanged.** The heading is only a heading: not a control and not in the tab order.
+  - **A fold the person opens stays open** through a re-render. Turning a phone sideways (wider than 560 px) opens
+    every column again.
+  - **Every link stays in the page.** The server writes every fold open, so crawlers and pages without script see
+    them all; the client folds them on a phone.
+- `test/footer-folds.test.js`: the folds' markup, the desktop and phone rules, and the compact footer's whole footer.
+
 ## 4.52.0 — 2026-10-30
 
 - **The Dock's Chats tab** (Dock plan K-D2). The person's conversations and DMs, on every OpenVibe site.
