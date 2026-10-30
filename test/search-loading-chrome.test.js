@@ -91,10 +91,10 @@ const server = http.createServer((req, res) => {
             groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), chips: [...document.querySelectorAll('.ovs-chip span')].map((t) => t.textContent),
             sites: [...document.querySelectorAll('.ovs-tile b')].map((t) => t.textContent), placeholder: document.querySelector('.ovs-input').placeholder })`);
         assert.ok(v.open && v.focused === 'ovs-input', '"/" opened the panel and focused the box');
-        assert.deepStrictEqual(v.tabs, ['For you*', 'Sites', 'Tools'], 'one menu, three tabs (the launcher and search together, 4.23.0)');
-        assert.deepStrictEqual([v.groups, v.chips], [['On OpenVibe.Chat', 'Popular on OpenVibe'], ['Rooms', 'Servers']], 'nothing typed: this site\'s pages, then the sites');
+        assert.deepStrictEqual(v.tabs, ['Start*', 'Sites', 'Tools'], 'one menu, three tabs (the launcher and search together, 4.23.0)');
+        assert.deepStrictEqual([v.groups, v.chips], [['On Chat', 'Popular on OpenVibe'], ['Rooms', 'Servers']], 'nothing typed: this site\'s pages (by its short name, 4.48.0), then the sites');
         assert.ok(v.sites.includes('Live') && v.sites.includes('Tools'), 'the main sites even before the Frame answers');
-        assert.strictEqual(v.placeholder, 'Search OpenVibe.Chat, or jump to any site');
+        assert.strictEqual(v.placeholder, 'Search Chat, or ask Vibe', 'the site by its short name (4.48.0)');
         // The box completes from this site's pages (and the person's searches, history and sites); Tab takes it.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'Roo'; i.dispatchEvent(new Event('input')); return 1; })()`);
         assert.strictEqual(await p.evaluate('document.querySelector(".ovs-ghost").textContent'), 'Rooms', 'the completion shows behind the text');
@@ -109,12 +109,12 @@ const server = http.createServer((req, res) => {
         await wait(1200);
         v = await p.evaluate(`({ groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), rows: [...document.querySelectorAll('.ovs-item a')].map((a) => [a.querySelector('.ovs-title').textContent, a.getAttribute('href')]),
             bold: !!document.querySelector('.ovs-list .ovs-title b'), active: document.querySelector('.ovs-opt.is-active .ovs-title').textContent })`);
-        assert.deepStrictEqual(v.groups, ['On OpenVibe.Chat', 'Across OpenVibe', 'Search']);
+        assert.deepStrictEqual(v.groups, ['On Chat', 'Across OpenVibe', 'Search']);
         assert.deepStrictEqual(v.rows[0], ['night room', 'https://openvibe.chat/r/night-owls'], 'the room on this site comes first');
         assert.ok(v.rows.some(([t, u]) => t === 'night stream <b>bold</b>' && u === 'https://openvibe.video/v/1'), 'a title is text, never markup');
         assert.ok(!v.bold, 'no markup from a title reached the page');
         assert.ok(!v.rows.some(([, u]) => /^javascript:/.test(u)), 'a script link is dropped');
-        assert.ok(v.rows.some(([t, u]) => t === 'Search “night” on OpenVibe.Chat' && u.endsWith('/search?q=night')), 'this site\'s own search page');
+        assert.ok(v.rows.some(([t, u]) => t === 'Search “night” on Chat' && u.endsWith('/search?q=night')), 'this site\'s own search page');
         assert.ok(v.rows.some(([t, u]) => t === 'All results for “night”' && u === 'https://search.openvibe.network/?q=night'), 'every result, in this panel (the link for a new tab)');
         assert.ok(v.rows.some(([t, u]) => t === 'Ask Vibe: “night”' && u === 'https://openvibe.chat/vibe?ask=night'));
         assert.strictEqual(v.active, 'night room', 'the first row is ready for Enter');
@@ -126,7 +126,7 @@ const server = http.createServer((req, res) => {
             groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), loading: !!document.querySelector('.ovs-skel'), open: !!document.querySelector('.ovs.is-open') })`);
         assert.ok(v.open && v.rtabs, 'Enter shows the results view in the panel');
         assert.deepStrictEqual(v.tabs, ['All*', 'OpenVibe', 'Web', 'Video', 'News', 'Products'], 'scope tabs; Yours only for a signed-in person');
-        assert.deepStrictEqual(v.groups.slice(0, 2), ['On OpenVibe.Chat', 'Across OpenVibe'], 'this site first');
+        assert.deepStrictEqual(v.groups.slice(0, 2), ['On Chat', 'Across OpenVibe'], 'this site first');
         assert.ok(v.loading && v.groups.includes('From the web'), 'the web is still coming: skeleton rows, OpenVibe already shown');
         await wait(500);
         v = await p.evaluate(`({ rows: [...document.querySelectorAll('.ovs-item a')].map((a) => [a.querySelector('.ovs-title').textContent, a.getAttribute('href'), (a.querySelector('.ovs-meta') || {}).textContent || '']),

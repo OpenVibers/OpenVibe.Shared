@@ -59,6 +59,8 @@ const server = http.createServer((req, res) => {
         const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         const brand = await p.evaluate(`(() => { const b = document.getElementById('openvibe-switch-btn'); return { tag: b.tagName, popup: b.getAttribute('aria-haspopup'), expanded: b.getAttribute('aria-expanded'), home: !!document.querySelector('.openvibe-navbar-brand .name a[href]') }; })()`);
         assert.deepStrictEqual(brand, { tag: 'BUTTON', popup: 'dialog', expanded: 'false', home: true }, 'the mark opens the switcher; the name stays the link home');
+        // The visit waits for an idle moment: wait for it (up to 5 s).
+        await p.evaluate(`new Promise((r) => { const t0 = Date.now(); const t = setInterval(() => { if (window.__calls.some((c) => c.method === 'POST') || Date.now() - t0 > 5000) { clearInterval(t); r(true); } }, 50); })`);
         const visits = await p.evaluate(`window.__calls.filter((c) => c.method === 'POST')`);
         assert.strictEqual(visits.length, 1, 'one visit recorded for a signed-in person');
         assert.deepStrictEqual([JSON.parse(visits[0].body).site, visits[0].auth], ['chat', 'Bearer tok_test'], 'this site, with the Network token');

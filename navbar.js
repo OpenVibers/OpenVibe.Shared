@@ -1882,7 +1882,9 @@
         b.addEventListener('click', () => { if (root.OpenVibeSiteSwitcher && root.OpenVibeSiteSwitcher.isOpen()) root.OpenVibeSiteSwitcher.close(); else openSwitcher(); });
         for (const ev of ['pointerenter', 'touchstart', 'focus']) b.addEventListener(ev, () => { loadOvIcons(); OVFrame.get(); }, { once: true, passive: true });
         if (root.OpenVibeSiteSwitcher && root.OpenVibeSiteSwitcher.isOpen()) b.setAttribute('aria-expanded', 'true');
-        recordVisit();
+        // Once the page is idle: the visit never competes with the first paint or the sign-in check.
+        if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(() => recordVisit(), { timeout: 8000 });
+        else setTimeout(recordVisit, 3000);
     }
     let _orbIntro = false;
     let _searchKeys = false;
