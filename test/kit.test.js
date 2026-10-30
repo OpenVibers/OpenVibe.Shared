@@ -194,4 +194,69 @@ const kit = require('../kit');
     assert.strictEqual(kit.VERSION, 2);
 }
 
-console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page) ok');
+// ── The tool frame (4.55.0): toolHead, toolInput, tries, answer, family, tool ──
+{
+    const h = kit.toolHead({ icon: 'globe', hue: 190, crumb: { href: '/network', label: 'Network <tools>' }, title: 'Whois <b>', task: 'Who "registered" it' });
+    assert.ok(h.startsWith('<header class="ovk-tool-head" style="--ovk-tint-h:190">'), 'the family tint is a hue number');
+    assert.ok(h.includes('<a class="ovk-tool-crumb" href="/network">Network &lt;tools&gt;') && h.includes('<h1 class="ovk-tool-title">Whois &lt;b&gt;</h1>'));
+    assert.ok(h.includes('<p class="ovk-tool-task">Who &quot;registered&quot; it</p>'));
+    const evil = kit.toolHead({ title: 'x', hue: 'red;background:url(x)' });
+    assert.ok(/--ovk-tint-h:\d+"/.test(evil) && !evil.includes('url('), 'a hue that is no number is hashed, never written into the style');
+    assert.ok(kit.toolHead({ title: 'x', hue: -30 }).includes('--ovk-tint-h:330') && kit.toolHead({ title: 'x', hue: 725 }).includes('--ovk-tint-h:5'));
+    assert.ok(kit.toolHead({ title: 'Solo' }).includes('ovk-tool-head--solo'), 'no crumb: the tile sits beside the title alone');
+    assert.ok(kit.toolHead({ title: 'x', crumb: { href: 'javascript:alert(1)', label: 'c' } }).includes('href="#"'), 'a crumb link is kept only when it is http(s) or a path');
+    assert.ok(kit.toolHead({ title: 'x', level: 2 }).includes('<h2 class="ovk-tool-title">'));
+
+    const t = kit.tries({ name: 'q', items: [{ value: 'a b&c' }, { label: 'IP', value: '1.1.1.1' }, { label: 'Docs', href: 'javascript:x' }, null] });
+    assert.ok(t.startsWith('<p class="ovk-try"><span>Try</span>'));
+    assert.ok(t.includes('<a href="?q=a%20b%26c" data-ovk-try="a b&amp;c" data-ovk-name="q">a b&amp;c</a>'), 'without JavaScript an example is a link that runs the tool from the query');
+    assert.ok(t.includes('data-ovk-try="1.1.1.1" data-ovk-name="q">IP</a>'));
+    assert.ok(t.includes('<a href="#">Docs</a>'), 'an example link is sanitised like every other');
+    assert.strictEqual(kit.tries({ items: [] }), '', 'no examples, nothing drawn');
+
+    const i = kit.toolInput({ name: 'q', label: 'Domain or IP', placeholder: 'example.com', button: 'Look up', value: 'x"y', inputmode: 'url', tries: { items: [{ value: 'openvibe.network' }] } });
+    assert.ok(i.startsWith('<form class="ovk-tool-form" method="get" action="?">'));
+    assert.ok(i.includes('<label class="ovk-tool-label" for="ovk-tool-q">Domain or IP</label>') && i.includes('value="x&quot;y"') && i.includes('inputmode="url"'));
+    assert.ok(i.includes('data-ovk-clear="#ovk-tool-q" aria-label="Clear" title="Clear">'), 'a box with text shows its clear button');
+    assert.ok(kit.toolInput({ name: 'q' }).includes('title="Clear" hidden>'), 'an empty box hides it until there is text');
+    assert.ok(i.includes('<button type="submit" class="ovk-btn ovk-btn--primary ovk-tool-go">') && i.includes('<span>Look up</span>'));
+    assert.ok(i.includes('data-ovk-for="#ovk-tool-q"') && i.endsWith('</p></form>'), 'its examples point at its own box');
+    assert.ok(kit.toolInput({ name: 'q', type: 'password' }).includes('type="text"'), 'only plain text types');
+    assert.ok(!/<input id="ovk-tool-q"[^>]*aria-label=/.test(kit.toolInput({ name: 'q', label: 'L' })), 'a labelled box needs no aria-label');
+
+    const a = kit.answer({ title: 'openvibe.network', badge: { text: 'Registered', tone: 'ok' }, actions: ['<button>c</button>'],
+        rows: [['Registrar', 'Cloud <flare>'], ['Expires', '2027', { text: 'in 10 months', tone: 'warn' }], ['Created', '2025', '1 year ago'], ['Empty', ''], ['NS', { html: 'a<br>b' }]],
+        next: ['<a class="n">Watch</a>'], id: 'ans' });
+    assert.ok(a.startsWith('<section class="ovk-answer" id="ans" aria-live="polite">'), 'the answer is announced when it arrives');
+    assert.ok(a.includes('<h2>openvibe.network</h2><span class="ovk-badge ovk-badge--ok">Registered</span><span class="ovk-answer-acts"><button>c</button></span>'));
+    assert.ok(a.includes('<div><dt>Registrar</dt><dd>Cloud &lt;flare&gt;</dd></div>') && !a.includes('Empty'), 'rows: escaped, blanks left out');
+    assert.ok(a.includes('2027 <span class="ovk-pill ovk-pill--warn">in 10 months</span>') && a.includes('2025 <span class="ovk-pill">1 year ago</span>'));
+    assert.ok(a.includes('<dd>a<br>b</dd>') && a.includes('<div class="ovk-answer-next"><a class="n">Watch</a></div>'));
+    const bad = kit.answer({ title: 'Not valid JSON', tone: 'bad', body: '<p>x</p>', live: false });
+    assert.ok(bad.startsWith('<section class="ovk-answer ovk-answer--bad">') && bad.includes('<div class="ovk-answer-body"><p>x</p></div>'));
+    assert.ok(kit.answer({ body: 'B' }).includes('aria-label="Answer"') && !kit.answer({ body: 'B' }).includes('ovk-answer-head'), 'no title, no head');
+
+    const f = kit.family({ title: 'Network tools', more: { href: '/network', label: 'All 22' }, items: [{ href: '/whois', label: 'Whois Lookup', short: 'Whois', current: true }, { href: '/dns', label: 'DNS Lookup' }, { label: '' }] });
+    assert.ok(f.startsWith('<nav class="ovk-family" aria-label="Network tools">') && f.includes('<a href="/network">All 22</a>'));
+    assert.ok(f.includes('<a href="/whois" aria-current="page"><span class="ovk-family-short">Whois</span><span class="ovk-family-full">Whois Lookup</span></a>'), 'short on a phone, full beside the tool');
+    assert.ok(f.includes('<a href="/dns">DNS Lookup</a>') && (f.match(/<a href/g) || []).length === 3, 'an item with no label is left out');
+    assert.strictEqual(kit.family({ items: [] }), '');
+
+    const w = kit.tool({ head: '<header>H</header>', input: '<form>I</form>', family: '<nav>F</nav>', folds: [kit.fold({ title: 'About' }), '', kit.fold({ title: 'Questions' })], related: '<ul>R</ul>', id: 'tool' });
+    assert.ok(w.startsWith('<div class="ovk-tool" id="tool"><header>H</header><div class="ovk-tool-card"><form>I</form></div><div class="ovk-tool-out"></div><nav>F</nav>'), 'the order: head, box, answer slot, family');
+    assert.ok(w.includes('<div class="ovk-tool-folds"><details class="ovk-fold">') && (w.match(/<details/g) || []).length === 2 && w.endsWith('<div class="ovk-tool-related"><ul>R</ul></div></div>'));
+    assert.ok(kit.tool({ answer: '<section>A</section>' }).includes('<div class="ovk-tool-out"><section>A</section></div>'), 'the answer goes in its slot');
+}
+
+// kit-web.js marks what it has wired under a name of its own: data-ovk-copy="#id" is dataset.ovkCopy, so a mark of the
+// same name was set by the markup itself, and copy buttons, sheets and confirms were never wired (fixed in 4.55.0).
+{
+    for (const file of ['kit-web.js', 'kit-data-web.js']) {
+        const src = require('fs').readFileSync(require('path').join(__dirname, '..', file), 'utf8');
+        assert.ok(/const once = \(el, key\) => \{ const k = `\$\{key\}Wired`;/.test(src), `${file}: once() keeps its mark apart from the data-ovk-* attribute it wires`);
+        const keys = [...src.matchAll(/once\(\w+, '(\w+)'\)/g)].map((m) => m[1]);
+        assert.ok(keys.length >= 3 && keys.every((k) => !/Wired$/.test(k)), `${file}: once() adds the suffix itself`);
+    }
+}
+
+console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page) and the tool frame ok');
