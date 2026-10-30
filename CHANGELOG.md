@@ -6,6 +6,11 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+- **The Dock keeps "in a window" to the page.** The pop-out window belongs to one page in one browser, closes with it,
+  and no other device can open it again (the browser wants a click), so the Dock no longer sends `popped` to the
+  Network. That also ends the refused PUT and its retry that 4.54.0 made on every pop-out, since the Network's
+  `network.dock-state@1` contract has no such key.
+
 ## 4.54.0 — 2026-10-30
 
 - **The Dock pops out into a window of its own** (Dock plan K-D4). On a desktop browser that can (Chromium's Document
