@@ -15,8 +15,8 @@ function memoryStorage() {
     return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } };
 }
 
-function setup({ reduce = false, session = memoryStorage(), start = 1000000, html = '<a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a><span class="ov-mark" id="foot" data-static="1"></span>' } = {}) {
-    const { window, document, MutationObserver, Event } = parseHTML(`<!doctype html><html><head></head><body>${html}</body></html>`);
+function setup({ reduce = false, session = memoryStorage(), start = 1000000, rootAttrs = '', html = '<a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a><span class="ov-mark" id="foot" data-static="1"></span>' } = {}) {
+    const { window, document, MutationObserver, Event } = parseHTML(`<!doctype html><html${rootAttrs}><head></head><body>${html}</body></html>`);
     let now = start, timers = [];
     const clock = {
         now: () => now,
@@ -29,7 +29,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, htm
             }
         },
     };
-    const FakeDate = { now: () => now };
+    const FakeDate = class extends Date { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } };
     const setT = (fn, ms) => { const t = { fn, at: now + ms }; timers.push(t); return t; };
     const clearT = (t) => { timers = timers.filter((x) => x !== t); };
     const observers = [];
@@ -51,6 +51,14 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, htm
     proto.unpauseAnimations = function () { const s = smil.get(this) || { t: 0 }; s.paused = false; smil.set(this, s); };
     proto.getCurrentTime = function () { return (smil.get(this) || { t: 0 }).t; };
     proto.setCurrentTime = function (t) { const s = smil.get(this) || {}; s.t = t; smil.set(this, s); };
+    if (rootAttrs) {
+        // The seasonal fall measures the page: a phone's width, the mark in the bar and the bar's bottom edge.
+        window.innerWidth = 390;
+        window.localStorage = session.local || memoryStorage();
+        const rect = (r) => () => ({ left: r[0], top: r[1], width: r[2], height: r[3], right: r[0] + r[2], bottom: r[1] + r[3] });
+        for (const m of document.querySelectorAll('.ov-mark')) m.getBoundingClientRect = rect([20, 12, 28, 28]);
+        for (const b of document.querySelectorAll('.openvibe-navbar')) b.getBoundingClientRect = rect([0, 0, 390, 53]);
+    }
     const run = new Function('window', 'document', 'IntersectionObserver', 'MutationObserver', 'setTimeout', 'clearTimeout', 'Date', 'sessionStorage', SRC);
     run(window, document, IO, MutationObserver, setT, clearT, FakeDate, session);
     const io = observers[0];
@@ -77,6 +85,39 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, htm
         assert.strictEqual(t.running(), false);
         assert.strictEqual(t.smilPaused(), true);
         assert.strictEqual(t.smilTime(), 1.6);
+    }
+
+    // ── the seasonal fall lands on the bar's bottom edge, never over the page's heading (4.50.1) ─────────
+    {
+        const leaves = (t) => [...t.document.querySelectorAll('.ovm-fall i')].map((i) => {
+            const st = i.getAttribute('style') || '';
+            return { x: parseFloat((/--x:\s*(-?[\d.]+)px/.exec(st) || [])[1]), y: parseFloat((/--y:\s*(-?[\d.]+)px/.exec(st) || [])[1]) };
+        });
+        const session = memoryStorage(); session.local = memoryStorage();
+        const t = setup({ session, rootAttrs: ' data-ov-season-mark="halloween"', html: '<div class="openvibe-navbar"><a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a></div><main><h1>Conductor</h1></main>' });
+        t.io.fire(t.mark, true);
+        t.clock.advance(1000);
+        const inBar = leaves(t);
+        assert.strictEqual(inBar.length, 7, 'seven leaves fall');
+        const y0 = 12 + 28 * 0.6, edge = 53 - y0;
+        for (const l of inBar) {
+            assert.ok(l.y <= edge - 4 && l.y >= edge - 8, `a leaf lands on the bar's edge (${l.y}px from the mark, the edge at ${edge.toFixed(1)}px)`);
+            assert.ok(34 + l.x >= 8 && 34 + l.x <= 390 - 8, 'and on the screen');
+        }
+        const again = setup({ session, start: 1000000 + 60000, rootAttrs: ' data-ov-season-mark="halloween"', html: '<div class="openvibe-navbar"><a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a></div>' });
+        again.io.fire(again.mark, true); again.clock.advance(1000);
+        assert.strictEqual(leaves(again).length, 0, 'once a day');
+
+        const loose = memoryStorage(); loose.local = memoryStorage();
+        const f = setup({ session: loose, rootAttrs: ' data-ov-season-mark="winter"', html: '<div class="foot"><a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a></div>' });
+        f.io.fire(f.mark, true); f.clock.advance(1000);
+        const out = leaves(f);
+        assert.strictEqual(out.length, 7, 'a mark outside a bar still snows');
+        for (const l of out) assert.ok(l.y >= 36 && l.y <= 64, `a short fall (${l.y}px)`);
+
+        const none = setup({ session: memoryStorage(), html: '<div class="openvibe-navbar"><a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a></div>' });
+        none.io.fire(none.mark, true); none.clock.advance(1000);
+        assert.strictEqual(none.document.querySelectorAll('.ovm-fall').length, 0, 'no season, no fall');
     }
 
     // ── intro: runs once on screen, stops by itself after about 8 s ─────────────────

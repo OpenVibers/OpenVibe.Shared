@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.50.1 — 2026-10-30
+
+- **The seasonal fall lands on the bar.** Once a day the mark's leaves (snow in winter) fell 120-280 px from the brand,
+  over a page's heading on phones (Codes' conductor, 10-30). They now drift down to the bottom edge of the bar the mark
+  sits in (`.openvibe-navbar`, `header` or `nav`), settle there and fade, inside the screen's width; a mark outside a
+  bar gets a short fall of 36-64 px. `test/ov-mark.test.js` covers the landing, the short fall, once a day and no fall
+  without a season.
+
 ## 4.50.0 — 2026-10-30
 
 - **Rich embeds in the agent session.** The owner, 2026-10-30: "When it generates or reads or analyzed images or visuals
