@@ -223,7 +223,7 @@ public struct KitCard: KitComponent {
             case .double(let n): number = String(Int(n))
             default: return nil
             }
-            if value.count > 1, case .string(let word)? = value[1] { return number + " " + word }
+            if value.count > 1, case .string(let word) = value[1] { return number + " " + word }
             return number
         default: return nil
         }
@@ -256,6 +256,14 @@ public struct KitRail: KitComponent {
 
     /// The cards the rail holds.
     public var cards: [KitCard] { children.compactMap { $0 as? KitCard } }
+
+    /// The card nodes the rail holds, ready to draw.
+    public var cardNodes: [KitNode] {
+        children.filter { node in
+            if case .card = node { return true }
+            return false
+        }
+    }
 }
 
 /// A row: one item in a list.
@@ -290,6 +298,14 @@ public struct KitList: KitComponent {
 
     /// The rows the list holds.
     public var rows: [KitRow] { children.compactMap { $0 as? KitRow } }
+
+    /// The row nodes the list holds, ready to draw.
+    public var rowNodes: [KitNode] {
+        children.filter { node in
+            if case .row = node { return true }
+            return false
+        }
+    }
 }
 
 /// A section: a titled group of anything.
@@ -372,7 +388,7 @@ public struct KitStats: KitComponent {
             case .double(let number): value = String(Int(number))
             default: continue
             }
-            guard case .string(let label)? = pair[1] else { continue }
+            guard case .string(let label) = pair[1] else { continue }
             out.append((value: value, label: label))
         }
         return out
@@ -621,8 +637,8 @@ private struct KitNodeBody: View {
 
     /// The cards of a rail.
     private func railCards(_ node: KitRail) -> some View {
-        ForEach(node.cards.indices, id: \.self) { index in
-            KitNodeBody(node: node.cards[index], onAction: self.onAction)
+        ForEach(node.cardNodes.indices, id: \.self) { index in
+            KitNodeBody(node: node.cardNodes[index], onAction: self.onAction)
         }
     }
 
@@ -648,15 +664,15 @@ private struct KitNodeBody: View {
     /// The rows of a list, or the empty state when there are none.
     private func listRows(_ node: KitList) -> some View {
         Group {
-            if node.rows.isEmpty {
+            if node.rowNodes.isEmpty {
                 if let empty = node.empty {
                     OvEmpty(title: empty)
                 } else {
                     EmptyView()
                 }
             } else {
-                ForEach(node.rows.indices, id: \.self) { index in
-                    KitNodeBody(node: node.rows[index], onAction: self.onAction)
+                ForEach(node.rowNodes.indices, id: \.self) { index in
+                    KitNodeBody(node: node.rowNodes[index], onAction: self.onAction)
                 }
             }
         }
