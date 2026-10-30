@@ -6,6 +6,11 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.46.1 — 2026-10-29
+
+- `showcase.apps`: a set of six or nine is three a row (`sc-apps--c3`), on a phone and from 600 px. Four columns left one
+  tile alone on the last row (nine was 4 + 4 + 1).
+
 ## 4.46.0 — 2026-10-29
 
 - **Touch targets from the fleet audit** (effective hit areas at 390 px: a 7x7 grid of `elementFromPoint` probes over

@@ -353,7 +353,8 @@ function apps({ id: sid, title = '', lede = '', groups = null, items = null, mor
     if (!sets.length) return '';
     const h = `sc-${slug(title || 'apps')}`;
     const tile = (x) => `<li><a href="${esc(safeHref(x.href))}"><span class="sc-ic sc-ic-ov">${icon(x.icon || 'ov:spark', 40)}</span><span class="sc-app-t"><b>${esc(x.name)}</b>${x.text ? `<small>${esc(x.text)}</small>` : ''}</span></a></li>`;
-    const cols = (n) => (n >= 2 && n <= 4 ? n : n % 4 === 0 ? 4 : 0);
+    // Six or nine are three a row (4.46.1): four columns left one tile alone on the last row.
+    const cols = (n) => (n >= 2 && n <= 4 ? n : n % 4 === 0 ? 4 : n % 3 === 0 ? 3 : 0);
     const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps${cols(g.items.length) ? ` sc-apps--c${cols(g.items.length)}` : ''}">${g.items.map(tile).join('')}</ul>`).join('');
     const end = more && safeHref(more.href) ? `<p class="sc-apps-more"><a href="${esc(safeHref(more.href))}">${esc(more.label || 'See all')} →</a></p>` : '';
     return `<section class="sc-sec sc-apps-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${body}${end}</section>`;

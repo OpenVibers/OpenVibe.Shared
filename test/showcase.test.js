@@ -30,6 +30,11 @@ assert.strictEqual(sc.fold({ title: 'T', html: '' }), '', 'nothing to fold rende
 assert.strictEqual(sc.fold({ html: '<p>x</p>' }), '', 'a fold needs a heading');
 assert.ok(sc.CSS.includes('.sc-row.sc-row{display:flex;flex-wrap:nowrap'), 'the phone row does not inherit a wrap');
 
+// A set of six or nine apps is three a row; eight is four; seven keeps the grid's own columns.
+const appsN = (n) => sc.apps({ items: Array.from({ length: n }, (_, i) => ({ name: `App ${i}`, href: `/a${i}` })) });
+assert.ok(appsN(9).includes('sc-apps sc-apps--c3') && appsN(6).includes('sc-apps sc-apps--c3'), 'six and nine are three a row');
+assert.ok(appsN(8).includes('sc-apps sc-apps--c4') && !/sc-apps--c\d/.test(appsN(7)), 'eight is four; seven keeps the grid');
+
 const c = sc.compare({ title: 'Compare', columns: ['Us', 'Them'], rows: [{ label: 'Open', values: [true, false] }, { label: 'Price', values: ['Free', 'Paid'] }] });
 assert.ok(c.includes('aria-label="yes"') && c.includes('aria-label="no"') && c.includes('<td class="sc-us">Free</td>'));
 const p = sc.pricing({ title: 'Plans', tiers: [{ name: 'Free', price: 0, per: 'month', items: ['a'] }, { name: 'Pro', price: '$5', per: 'month', highlight: true, action: { label: 'Buy', href: '/buy' } }] });
@@ -179,7 +184,8 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     // 4.39.0: no tile alone on a row. Four go four across on a phone and two by two from 600 px; eight like four.
     const n = (k) => sc.apps({ items: Array.from({ length: k }, (_, i) => ({ name: `A${i}`, href: `/a${i}` })) });
     assert.ok(n(4).includes('<ul class="sc-apps sc-apps--c4">') && n(3).includes('sc-apps--c3') && n(2).includes('sc-apps--c2') && n(8).includes('sc-apps--c4'));
-    assert.ok(n(7).includes('<ul class="sc-apps">') && n(15).includes('<ul class="sc-apps">'), 'other counts keep the auto grid');
+    // 4.46.1: six, nine and fifteen are three a row; seven and eleven keep the auto grid.
+    assert.ok(n(15).includes('sc-apps--c3') && n(7).includes('<ul class="sc-apps">') && n(11).includes('<ul class="sc-apps">'), 'other counts keep the auto grid');
     assert.match(sc.CSS, /@media \(max-width:599px\)\{\.sc-apps--c2\{[^}]*\}\.sc-apps--c3\{[^}]*\}\.sc-apps--c4\{grid-template-columns:repeat\(4,minmax\(0,1fr\)\)\}\}/);
     assert.match(sc.CSS, /\.sc-apps-more a\{display:inline-flex;align-items:center;min-height:44px;/, 'the launcher\'s See all is 44 px');
     const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'showcase.css'), 'utf8');
