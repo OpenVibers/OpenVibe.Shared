@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.47.0 — 2026-10-29
+
+- **The kit renders natively, on Android and iOS.** `scripts/native/compose/KitRenderer.kt` (`KitView(doc: KitNode)`, a
+  Composable that parses the document with org.json) and `scripts/native/swiftui/KitRenderer.swift`
+  (`KitView(doc: KitNode)`, a SwiftUI `View` that decodes it with Codable) draw a kit document with the kit's own
+  reference views, wearing the generated tokens (the Material 3 colour scheme and `OvScale` in Compose, `OvTokens` and
+  `OvScale` in SwiftUI). A tap comes back as an action, so the app decides what a link or a button does.
+- A sample document (`scripts/native/sample-doc.json`: a hero, a card rail, a list, stats and a notice) passes
+  `components.validate()`, and the native CI compiles the Kotlin against Compose and type-checks the Swift against
+  SwiftUI together with the tokens and the reference views. A component added to `components.js` without a native
+  view now fails the kit check, so the two languages cannot fall behind the web.
+
 ## 4.46.1 — 2026-10-29
 
 - `showcase.apps`: a set of six or nine is three a row (`sc-apps--c3`), on a phone and from 600 px. Four columns left one

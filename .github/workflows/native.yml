@@ -11,6 +11,7 @@ on:
       - 'components.js'
       - 'builtin-themes.js'
       - 'scripts/native-check.js'
+      - 'scripts/native/**'
       - 'native/kotlin/**'
       - '.github/workflows/native.yml'
   push:
@@ -20,6 +21,7 @@ on:
       - 'components.js'
       - 'builtin-themes.js'
       - 'scripts/native-check.js'
+      - 'scripts/native/**'
       - 'native/kotlin/**'
       - '.github/workflows/native.yml'
 

@@ -63,3 +63,50 @@ Status: the reference views follow the Compose Material 3 and SwiftUI APIs, and 
 `scripts/native-check.js` writes the preamble and every view out as Kotlin and Swift, and the native CI job
 (`.github/workflows/native.yml`) compiles the Kotlin with kotlinc against the Compose runtime and UI artifacts and
 type-checks the Swift with swiftc against SwiftUI. A view that does not compile fails the build.
+## Native renderers
+
+A kit document is not a web page in a frame: it is data, and every client draws it with its own views. Next to the
+reference views, the kit ships two renderers that do exactly that:
+
+| File | What it is |
+| --- | --- |
+| `scripts/native/compose/KitRenderer.kt` | `KitView(doc: KitNode)`, a Composable that draws a kit document with the kit's Compose views |
+| `scripts/native/swiftui/KitRenderer.swift` | `KitView(doc: KitNode)`, a SwiftUI `View` that draws the same document with the kit's SwiftUI views |
+| `scripts/native/sample-doc.json` | A sample document: a hero, a card rail, a list, stats and a notice |
+
+An app embeds the renderer in one line:
+
+```kotlin
+// Android
+val doc = KitNode.parse(json)                    // org.json, as Android carries it
+MaterialTheme(colorScheme = VibeDarkColorScheme) {
+    KitView(doc) { action ->                     // a tap comes back as an action
+        when (action) {
+            is KitAction.Open -> open(action.href)
+            is KitAction.Run -> run(action.id)
+        }
+    }
+}
+```
+
+```swift
+// iOS
+let doc = try JSONDecoder().decode(KitNode.self, from: data)
+KitView(doc: doc) { action in                    // a tap comes back as an action
+    switch action {
+    case .open(let href): open(href)
+    case .run(let id): run(id)
+    }
+}
+```
+
+Both renderers wear the generated tokens — the Material 3 colour scheme and `OvScale` in Compose, `OvTokens` and
+`OvScale` in SwiftUI — and both draw every component the validator accepts, by calling that component's reference
+view. A component added to `components.js` without a native view fails the kit check, so the two languages never
+fall behind the web.
+
+A kit document from Design (`/api/v1/components/validate`) renders the same on the web, on Android and on iOS: the
+web through `components.render(doc, kit)`, the apps through `KitView(doc)`. The native CI
+(`.github/workflows/native.yml`) compiles the Kotlin against Compose and type-checks the Swift against SwiftUI,
+together with the tokens and the reference views, so a renderer that no longer compiles fails the build here and not
+in an app.

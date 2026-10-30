@@ -14,8 +14,10 @@
  *                                 and the kit's scales (OvScale)
  *   <out>/kotlin/OvKit.kt         the kit's Compose reference views: components.js' preamble and every spec
  *   <out>/kotlin/OvKitStubs.kt    the check's stand-ins: the image loader an app brings (Coil, Glide)
+ *   <out>/kotlin/KitRenderer.kt   the kit renderer: a kit document, drawn with those views
  *   <out>/swift/VibeTokens.swift  the theme's SwiftUI output: both halves (the dark and the light tokens)
  *   <out>/swift/OvKit.swift       the kit's SwiftUI reference views
+ *   <out>/swift/KitRenderer.swift the kit renderer: a kit document, drawn with those views
  *   <out>/manifest.json           what was written, and where it came from
  *
  * The native CI job (.github/workflows/native.yml) compiles the Kotlin with kotlinc against the Compose runtime and
@@ -161,6 +163,18 @@ function swiftKit() {
 }
 
 /**
+ * The renderers: the kit's own sources, checked in under scripts/native/, copied into the folder the compiler
+ * reads so they are compiled (Kotlin) and type-checked (Swift) with the tokens and the reference views.
+ */
+function renderers() {
+    const dir = path.join(__dirname, 'native');
+    return [
+        { path: 'kotlin/KitRenderer.kt', text: fs.readFileSync(path.join(dir, 'compose', 'KitRenderer.kt'), 'utf8') },
+        { path: 'swift/KitRenderer.swift', text: fs.readFileSync(path.join(dir, 'swiftui', 'KitRenderer.swift'), 'utf8') },
+    ];
+}
+
+/**
  * The native sources, as { path, text }: the theme's Kotlin and Swift, and the kit's.
  * The theme is compiled as a pair (its dark half and its light half), so both colour schemes land in one file —
  * the way an app carries them.
@@ -178,6 +192,7 @@ function sources() {
             { path: 'kotlin/OvKitStubs.kt', text: COMPOSE_STUBS },
             { path: `swift/${name}Tokens.swift`, text: tokens.compile(docs, 'swiftui') },
             { path: 'swift/OvKit.swift', text: swiftKit() },
+            ...renderers(),
         ],
     };
 }
@@ -219,4 +234,4 @@ function main(argv) {
 
 if (require.main === module) process.exit(main(process.argv.slice(2)));
 
-module.exports = { sources, write, themes, main };
+module.exports = { sources, write, themes, renderers, main };
