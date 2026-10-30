@@ -33,6 +33,8 @@ const data = {
     assert.strictEqual(items[1].querySelector('a'), null, 'a non-https link is not a link');
     assert.ok(items[0].querySelector('time').textContent.endsWith('h ago'));
     assert.strictEqual(node.querySelector('.ov-shipped-notes').getAttribute('href'), data.latest_post.url);
+    // 4.53.1: the patch-notes link under the list wraps on a narrow screen (a whole post title ran past 320 px).
+    assert.ok(require('fs').readFileSync(require.resolve('../shipped'), 'utf8').includes("'.ov-shipped-links .ov-shipped-notes{white-space:normal;min-width:0;overflow-wrap:anywhere}'"), 'the long notes link may wrap');
 
     const one = document.getElementById('n');
     shipped.render(one, data, { service: 'live', title: '' });
