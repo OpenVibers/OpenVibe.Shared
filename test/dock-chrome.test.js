@@ -7,7 +7,10 @@
 //     bell's list, Escape closes and gives the focus back to the pill;
 //   • every change reaches the Network as one debounced PUT; on a desktop the head drags the card to a corner and the
 //     free corner resizes it inside 320-720 × 360-900; an open Dock reopens by itself on a desktop, never on a phone;
-//   • desktop toasts are told to stack above the pill; nothing runs off a 320 px screen.
+//   • desktop toasts are told to stack above the pill; nothing runs off a 320 px screen;
+//   • Chats (K-D2): the person's conversations from Chat's API with their unread counts, a thread opened in place (theirs
+//     and mine), Enter sends, the thread is marked read, the open chat is the Dock's state, and opening one on a phone
+//     never reads as a tap outside the sheet.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const fs = require('fs');
@@ -43,14 +46,14 @@ const NOTES = [
 
 // The stand-in's state for the scenario under way.
 let scenario = {};
-const puts = [], decided = [];
+const puts = [], decided = [], said = [], reads = [];
 const defaultState = () => ({ open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } }, updated_at: iso(0) });
 
 const PAGE = (o) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tasks</title><link rel="icon" href="data:,">
 <style>body{margin:0;font:15px system-ui}main{padding:16px}p{margin:0 0 12px}</style></head>
 <body><div id="navbar-mount"></div><main>${'<p>Fix the flaky upload test in the Media client and add a regression case.</p>'.repeat(30)}</main>
 <script src="/navbar.js"></script>
-<script>OpenVibeNavbar.init({ service: 'codes', brandName: 'OpenVibe.Codes', notifications: false, dockApiBase: location.origin,
+<script>OpenVibeNavbar.init({ service: 'codes', brandName: 'OpenVibe.Codes', notifications: false, dockApiBase: location.origin, dockChatBase: location.origin,
   ${o.signedIn === false ? 'user: null,' : "token: 'tok_user', user: { id: 7, username: 'ada', display_name: 'Ada', avatar_url: null },"}
   links: [{ label: 'Tasks', href: '/', icon: 'fa-list' }] });</script></body></html>`;
 
@@ -70,6 +73,24 @@ const server = http.createServer((req, res) => {
         if (u.pathname === '/api/v1/me/actions') return json(200, ACTIONS);
         const m = /^\/api\/v1\/me\/actions\/(\w+)\/(\w+)\/(approve|decline)$/.exec(u.pathname);
         if (m && req.method === 'POST') { decided.push(m.slice(1).join(':')); return json(200, { item: ACTIONS.buckets.waiting[0] }); }
+        // Chat's DM API, as OpenVibe.Chat answers it (server/chat/dm-routes.js).
+        if (u.pathname === '/api/dm/unread') return json(200, { unread: 3 });
+        if (u.pathname === '/api/dm/conversations') {
+            const ada = { id: 1, username: 'ada', display_name: 'Ada' }, kai = { id: 2, username: 'kai', display_name: 'Kai Moreno' }, jo = { id: 3, username: 'jo', display_name: 'Jo' };
+            return json(200, { conversations: [
+                { id: 11, name: null, is_group: false, last_message: 'see the shots?', last_sender_id: 2, last_message_at: iso(240e3), unread_count: 2, participants: [ada, kai] },
+                { id: 12, name: 'Design crit', is_group: true, last_message: 'Shipped it', last_sender_id: 1, last_message_at: iso(3600e3), unread_count: 0, participants: [ada, kai, jo] },
+            ] });
+        }
+        const dm = /^\/api\/dm\/conversations\/(\d+)\/(messages|read)$/.exec(u.pathname);
+        if (dm && dm[2] === 'read') { reads.push(dm[1]); return json(200, { ok: true }); }
+        if (dm && req.method === 'POST') { said.push(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').message); return json(201, { message: { id: 900 + said.length } }); }
+        if (dm) {
+            const after = Number(u.searchParams.get('after')) || 0;
+            const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', created_at: iso(120e3) }]
+                .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
+            return json(200, { messages: all.filter((m) => m.id > after) });
+        }
         if (u.pathname === '/api/notifications/unread-count') return json(200, { count: 2 });
         if (u.pathname === '/api/notifications/unread-by-tab') return json(200, { tabs: { all: 2 } });
         if (u.pathname === '/api/notifications') return json(200, { notifications: NOTES, total: NOTES.length, has_more: false });
@@ -160,6 +181,34 @@ async function drag(p, from, to) {
             await p.close();
         }
 
+        // ── Chats (K-D2): the list, a thread in place, Enter sends, read, remembered; a phone keeps the sheet open. ──
+        {
+            scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
+            puts.length = 0; said.length = 0; reads.length = 0;
+            const p = await fresh(390, 780);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, PILL, 'the pill');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, "!!document.getElementById('ovdk-tab-chats')", 'the Chats tab');
+            await until(p, "document.querySelector('[data-n=chats]').textContent === '3'", 'the unread count from Chat');
+            await p.evaluate("document.getElementById('ovdk-tab-chats').click()");
+            const rows = await until(p, "(() => { const r = [...document.querySelectorAll('.ovdk .ovdk-chat')]; return r.length ? r.map((b) => b.getAttribute('aria-label') + ' | ' + b.querySelector('.ovdk-chat-p').textContent) : null; })()", 'the conversations');
+            assert.deepStrictEqual(rows, ['Kai Moreno, 2 unread | see the shots?', 'Design crit | You: Shipped it'], 'named for the other person (or the group), unread first, mine as "You:"');
+            await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
+            const thread = await until(p, "(() => { const m = [...document.querySelectorAll('.ovdk .ovdk-msg')]; return m.length === 2 ? m.map((x) => (x.classList.contains('is-mine') ? 'me: ' : 'them: ') + x.querySelector('.ovdk-text').textContent) : null; })()", 'the thread');
+            assert.deepStrictEqual(thread, ['them: see the shots?', 'me: <b>on it</b>'], 'theirs and mine, and what people wrote is text, never markup');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'opening a chat on a phone is not a tap outside the sheet');
+            await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'Looks good'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
+            await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
+            assert.deepStrictEqual(said, ['Looks good'], 'Enter sends it to Chat');
+            assert.ok(reads.includes('11'), 'the thread is marked read as it is shown');
+            await wait(900);
+            assert.ok(puts.some((b) => b.chat === '11'), `the open chat is the Dock's state (${JSON.stringify(puts)})`);
+            await p.evaluate("document.querySelector('.ovdk-back').click()");
+            await until(p, "document.querySelectorAll('.ovdk .ovdk-chat').length === 2", 'back to the list');
+            await p.close();
+        }
+
         // ── 320 px: nothing runs off the screen, closed or open. ──
         {
             scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
@@ -223,7 +272,7 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all');
             await p.close();
         }
-        console.log('dock-chrome: the pill only when it matters, Agents and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean');
+        console.log('dock-chrome: the pill only when it matters, Agents, Chats and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean');
     } finally {
         await browser.close();
         server.close();

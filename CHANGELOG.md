@@ -6,6 +6,24 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.52.0 — 2026-10-30
+
+- **The Dock's Chats tab** (Dock plan K-D2). The person's conversations and DMs, on every OpenVibe site.
+  - **Where they come from:** OpenVibe.Chat's own API with the person's Network token (`GET /api/dm/conversations`,
+    `/unread`, `…/messages`, `…/read`; Chat checks they are in each one).
+  - **The list:** named for the other person or the group, with the last line ("You: …" when it was theirs), the
+    time and the unread count.
+  - **A thread opens in place:** their bubbles and yours; Enter sends and Shift+Enter is a new line. It polls for new
+    messages every 5 s while it is open, is marked read as it is shown, and links out to Chat.
+  - The open chat is the Dock's state, so it follows you between sites. The tab counts Chat's unread messages.
+  - **Safety:** what people wrote is always text, never markup, and only https pictures are shown.
+- **A tap that redraws its own panel no longer closes the phone sheet.** Opening a chat replaced the list, so the
+  tapped node was detached by the time the tap-outside check ran; it now reads the event's path at dispatch.
+- **Narrow Docks** (under 440 px) drop the tab icons, so three tabs, their counts, the pin and × fit.
+- `dockChatBase` overrides Chat's origin for tests and staging. dock.js is 12.3 KB brotli, for signed-in people only.
+- `test/dock-chrome.test.js` adds the Chats scenario: the list and its counts, the thread (text, never markup), Enter
+  sends, read receipts, the state, and the phone sheet staying open.
+
 ## 4.51.0 — 2026-10-30
 
 - **The Dock** (`dock.js`; the Dock plan of 2026-10-30, K-D1; master plan L13). The owner, 10-30: your agent and your

@@ -989,9 +989,9 @@
 
     // ── The Dock (Dock plan K-D1): your agents and activity at the screen's edge. dock.js draws its pill and the Dock;
     // for a signed-in person it loads after the bell, from beside this file. A Network without the route yet (dock.js
-    // keeps { off } for a day) is not asked again. dockApiBase overrides the Network (tests, staging).
+    // keeps { off } for a day) is not asked again. dockApiBase and dockChatBase override the Network and Chat (tests, staging).
     const dockBase = () => String(_config.dockApiBase || 'https://openvibe.network').replace(/\/+$/, '');
-    const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), sibling });
+    const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), chatBase: _config.dockChatBase, me: _config.user && _config.user.username, sibling });
     const DOCK_GLYPH = '<svg class="ovnav-ic" viewBox="0 0 512 512" style="width:1em" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M80 64h352a48 48 0 0 1 48 48v288a48 48 0 0 1-48 48H80a48 48 0 0 1-48-48V112a48 48 0 0 1 48-48Zm8 56v272h336V120ZM264 312h112a28 28 0 0 1 0 56H264a28 28 0 0 1 0-56Z"/></svg>';
     function loadDock(then) {
         if (root.OpenVibeDock) return then();
