@@ -164,6 +164,7 @@ function swiftKit() {
  * The native sources, as { path, text }: the theme's Kotlin and Swift, and the kit's.
  * The theme is compiled as a pair (its dark half and its light half), so both colour schemes land in one file —
  * the way an app carries them.
+ * The paths are written with slashes, so the manifest reads the same on every machine.
  */
 function sources() {
     const [dark, light] = themes();
@@ -172,11 +173,11 @@ function sources() {
     return {
         themes: { dark: dark.id, light: light.id, name },
         files: [
-            { path: path.join('kotlin', `${name}Theme.kt`), text: tokens.compile(docs, 'compose') },
-            { path: path.join('kotlin', 'OvKit.kt'), text: composeKit() },
-            { path: path.join('kotlin', 'OvKitStubs.kt'), text: COMPOSE_STUBS },
-            { path: path.join('swift', `${name}Tokens.swift`), text: tokens.compile(docs, 'swiftui') },
-            { path: path.join('swift', 'OvKit.swift'), text: swiftKit() },
+            { path: `kotlin/${name}Theme.kt`, text: tokens.compile(docs, 'compose') },
+            { path: 'kotlin/OvKit.kt', text: composeKit() },
+            { path: 'kotlin/OvKitStubs.kt', text: COMPOSE_STUBS },
+            { path: `swift/${name}Tokens.swift`, text: tokens.compile(docs, 'swiftui') },
+            { path: 'swift/OvKit.swift', text: swiftKit() },
         ],
     };
 }
@@ -186,7 +187,7 @@ function write(out) {
     const { themes: which, files } = sources();
     const written = [];
     for (const f of files) {
-        const full = path.join(out, f.path);
+        const full = path.join(out, ...f.path.split('/'));
         fs.mkdirSync(path.dirname(full), { recursive: true });
         fs.writeFileSync(full, f.text);
         written.push({ path: f.path, bytes: Buffer.byteLength(f.text) });
