@@ -383,6 +383,9 @@ private fun JSONObject.bool(key: String, def: Boolean = false): Boolean =
 /** A number prop. */
 private fun JSONObject.int(key: String): Int? = if (has(key) && !isNull(key)) optInt(key) else null
 
+/** An array prop. */
+private fun JSONObject.array(key: String): JSONArray? = if (has(key) && !isNull(key)) optJSONArray(key) else null
+
 /** A link prop: { href, label }. */
 private fun JSONObject.link(key: String): KitLink? {
     val obj = optJSONObject(key) ?: return null
@@ -410,8 +413,8 @@ private fun ratioOf(raw: String?): Float? {
     if (raw == null) return null
     val parts = raw.split(":")
     if (parts.size == 2) {
-        const val a = parts[0].trim().toFloatOrNull()
-        const val b = parts[1].trim().toFloatOrNull()
+        val a = parts[0].trim().toFloatOrNull()
+        val b = parts[1].trim().toFloatOrNull()
         if (a != null && b != null && b != 0f) return a / b
     }
     return raw.trim().toFloatOrNull()

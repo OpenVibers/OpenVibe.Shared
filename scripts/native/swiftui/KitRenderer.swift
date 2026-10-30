@@ -555,25 +555,31 @@ public struct KitView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: OvScale.spaceMd) {
-            self.nodeView(self.doc)
+            KitNodeBody(node: doc, onAction: onAction)
         }
     }
+}
 
-    /// One node, drawn with the kit's view for its component.
-    @ViewBuilder
-    private func nodeView(_ node: KitNode) -> some View {
+/// One node, drawn with the kit's view for its component.
+///
+/// A struct and not a function: a view that draws its own children has to name a type, and a type can name itself.
+private struct KitNodeBody: View {
+    let node: KitNode
+    let onAction: (KitAction) -> Void
+
+    var body: some View {
         switch node {
-        case .button(let n): self.buttonView(n)
-        case .card(let n): self.cardView(n)
-        case .rail(let n): self.railView(n)
-        case .row(let n): self.rowView(n)
-        case .list(let n): self.listView(n)
-        case .section(let n): self.sectionView(n)
-        case .fold(let n): self.foldView(n)
-        case .tabs(let n): self.tabsView(n)
-        case .stats(let n): self.statsView(n)
-        case .notice(let n): self.noticeView(n)
-        case .empty(let n): self.emptyView(n)
+        case .button(let n): buttonView(n)
+        case .card(let n): cardView(n)
+        case .rail(let n): railView(n)
+        case .row(let n): rowView(n)
+        case .list(let n): listView(n)
+        case .section(let n): sectionView(n)
+        case .fold(let n): foldView(n)
+        case .tabs(let n): tabsView(n)
+        case .stats(let n): statsView(n)
+        case .notice(let n): noticeView(n)
+        case .empty(let n): emptyView(n)
         }
     }
 
@@ -616,7 +622,7 @@ public struct KitView: View {
     /// The cards of a rail.
     private func railCards(_ node: KitRail) -> some View {
         ForEach(node.cards.indices, id: \.self) { index in
-            self.nodeView(node.cards[index])
+            KitNodeBody(node: node.cards[index], onAction: self.onAction)
         }
     }
 
@@ -650,7 +656,7 @@ public struct KitView: View {
                 }
             } else {
                 ForEach(node.rows.indices, id: \.self) { index in
-                    self.nodeView(node.rows[index])
+                    KitNodeBody(node: node.rows[index], onAction: self.onAction)
                 }
             }
         }
@@ -667,7 +673,7 @@ public struct KitView: View {
     /// The children of a section.
     private func sectionChildren(_ node: KitSection) -> some View {
         ForEach(node.children.indices, id: \.self) { index in
-            self.nodeView(node.children[index])
+            KitNodeBody(node: node.children[index], onAction: self.onAction)
         }
     }
 
@@ -682,7 +688,7 @@ public struct KitView: View {
     /// The children of a fold.
     private func foldChildren(_ node: KitFold) -> some View {
         ForEach(node.children.indices, id: \.self) { index in
-            self.nodeView(node.children[index])
+            KitNodeBody(node: node.children[index], onAction: self.onAction)
         }
     }
 
