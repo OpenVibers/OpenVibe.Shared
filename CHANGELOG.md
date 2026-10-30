@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.45.1 — 2026-10-29
+
+- **The generated native code is compiled now, not just read.** `scripts/native-check.js` writes the theme's Compose
+  and SwiftUI output (the default theme and the light half it pairs with) and the kit's reference views (the
+  preamble and all eleven components) out as `.kt` and `.swift` files, and a new workflow
+  (`.github/workflows/native.yml`) compiles the Kotlin with kotlinc against the Compose runtime and UI artifacts and
+  type-checks the Swift with swiftc against SwiftUI. A generator that writes code nobody can compile fails the build
+  here, instead of waiting to be found in an app.
+- **Two things that check found in the Swift reference views:** the card's ratio was `16 / 9` (integer division, so
+  the picture area came out square) and the numbers list keyed its rows by a tuple's field, which Swift cannot do.
+
 ## 4.45.0 — 2026-10-29
 
 - **Comfort settings beside the theme.** Four display preferences join motion, text size, seasonal and scheme in
