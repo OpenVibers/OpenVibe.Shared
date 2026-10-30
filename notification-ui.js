@@ -8,6 +8,7 @@
 //        OpenVibeNotifications.init({ token, apiBase, swPath, onAction })
 //        OpenVibeNotifications.createBell(mountEl)
 //        OpenVibeNotifications.renderInbox(containerEl)      // full-page inbox
+//        OpenVibeNotifications.renderDock(containerEl)       // the Dock's Activity tab (dock.js): the same list, no frame
 //
 // Reads: GET /api/notifications?limit&offset&unread_only&tab&q&since
 //        GET /api/notifications/unread-count, /unread-by-tab (the counts on the bell's tabs)
@@ -119,7 +120,7 @@
 
             /* Toasts. Opaque cards on the theme's raised surface; held (hidden, timers paused) while a menu is open. */
             .openvibe-toast-container { position: fixed; z-index: 2147482600; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
-                right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); width: min(380px, calc(100vw - 32px));
+                right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ov-dock-clear, 0px)); width: min(380px, calc(100vw - 32px));
                 font-family: inherit; transition: opacity .18s ease; }
             .openvibe-toast-container.ovn-held { opacity: 0; visibility: hidden; }
             .openvibe-toast-container.ovn-phone { top: var(--ovn-top, 64px); bottom: auto; left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); width: auto; }
@@ -188,7 +189,15 @@
                 background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1));
                 border-radius: 18px; box-shadow: 0 24px 60px rgba(0,0,0,.45); animation: ovn-panel-in .2s cubic-bezier(.2,.8,.2,1); font-family: inherit; }
             .openvibe-notif-panel.open { display: flex; }
-            .openvibe-notif-panel, .openvibe-notif-inbox { --ovn-bg: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
+            .openvibe-notif-panel, .openvibe-notif-inbox, .openvibe-notif-dock { --ovn-bg: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
+            .openvibe-notif-dock { display: flex; flex-direction: column; min-height: 0; flex: 1; color: var(--text-primary, #ececf1); }
+            .openvibe-notif-dock .openvibe-nv-head { display: none; }
+            .openvibe-notif-dock .openvibe-nv-tools { padding-top: 10px; }
+            .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }
+            .openvibe-notif-dock .openvibe-nv-foot [data-role="status"] { margin-right: auto; }
+            .ovn-foot-read { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+            .ovn-foot-read:hover { color: var(--text-primary, #ececf1); }
+            .ovn-foot-read svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-notif-inbox { display: flex; flex-direction: column; overflow: hidden; min-height: 420px; max-height: 78vh; border-radius: 18px;
                 background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1)); font-family: inherit; }
 
@@ -832,7 +841,7 @@
                 </div>
             </div>
             <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
-            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'panel' ? `<a href="${esc(inboxUrl())}">Full inbox →</a>` : ''}</div>`;
+            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'dock' ? `<button type="button" class="ovn-foot-read" data-act="read-all-foot">${svg(ICON.checkAll)}Mark all read</button>` : ''}${mode === 'panel' || mode === 'dock' ? `<a href="${esc(inboxUrl())}">Full inbox →</a>` : ''}</div>`;
         const list = root.querySelector('[data-role="list"]');
         const input = root.querySelector('input[type="search"]');
         let qTimer = null;
@@ -865,6 +874,7 @@
         const unreadBtn = root.querySelector('.openvibe-nv-unread');
         unreadBtn.addEventListener('click', () => { v.unread = !v.unread; unreadBtn.setAttribute('aria-pressed', String(v.unread)); reload(v); });
         root.querySelector('[data-act="read-all"]').addEventListener('click', () => markAllRead());
+        const footRead = root.querySelector('[data-act="read-all-foot"]'); if (footRead) footRead.addEventListener('click', () => markAllRead());
         root.querySelector('[data-act="push"]').addEventListener('click', () => togglePush(v));
         const closeBtn = root.querySelector('[data-act="close"]');
         if (closeBtn) closeBtn.addEventListener('click', () => closePanel());
@@ -1384,6 +1394,15 @@
             container.classList.add('openvibe-notif-inbox');
             const v = buildView(container, { mode: 'inbox' });
             if (opts.tab) { v.tab = opts.tab; container.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === opts.tab); b.setAttribute('aria-selected', String(b.dataset.tab === opts.tab)); }); }
+            reload(v);
+            return v;
+        },
+        /** The Dock's Activity tab: the bell's list in the Dock's container (no frame, no title, no close). */
+        renderDock(container) {
+            injectStyles();
+            if (!container) return null;
+            container.classList.add('openvibe-notif-dock');
+            const v = buildView(container, { mode: 'dock' });
             reload(v);
             return v;
         },

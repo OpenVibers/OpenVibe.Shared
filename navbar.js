@@ -987,6 +987,27 @@
         const sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = sibling('notification-ui.js'); sc.async = true; sc.onload = () => setTimeout(go, 0); document.head.appendChild(sc);
     }
 
+    // ── The Dock (Dock plan K-D1): your agents and activity at the screen's edge. dock.js draws its pill and the Dock;
+    // for a signed-in person it loads after the bell, from beside this file. A Network without the route yet (dock.js
+    // keeps { off } for a day) is not asked again. dockApiBase overrides the Network (tests, staging).
+    const dockBase = () => String(_config.dockApiBase || 'https://openvibe.network').replace(/\/+$/, '');
+    const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), sibling });
+    const DOCK_GLYPH = '<svg class="ovnav-ic" viewBox="0 0 512 512" style="width:1em" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M80 64h352a48 48 0 0 1 48 48v288a48 48 0 0 1-48 48H80a48 48 0 0 1-48-48V112a48 48 0 0 1 48-48Zm8 56v272h336V120ZM264 312h112a28 28 0 0 1 0 56H264a28 28 0 0 1 0-56Z"/></svg>';
+    function loadDock(then) {
+        if (root.OpenVibeDock) return then();
+        let sc = document.getElementById('ov-dock-loader');
+        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-dock-loader'; sc.src = sibling('dock.js'); sc.async = true; document.head.appendChild(sc); }
+        sc.addEventListener('load', () => setTimeout(() => { try { then(); } catch { /* */ } }, 0));
+    }
+    function mountDock(u) {
+        const on = _config.dock !== false && !!u && !u.is_anon && !!_config.token;
+        if (root.OpenVibeDock) return root.OpenVibeDock.mount(on ? dockOpts() : null);
+        try { const k = JSON.parse(localStorage.getItem('ov-dock') || 'null'); if (!on || (k && k.off > Date.now())) return; } catch { if (!on) return; }
+        loadDock(() => root.OpenVibeDock.mount(dockOpts()));
+    }
+    /** Open the Dock on a tab: 'agent' | 'activity'. */
+    function openDock(tab) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open({ tab }); }); }
+
     /** Custom sections for the user menu: [{ label, items: [{ label, icon, href, id, elId, hidden, danger, value, onClick }] }]. */
     function sectionsHTML(sections) {
         return (Array.isArray(sections) ? sections : []).filter(sec => sec && Array.isArray(sec.items) && sec.items.length).map(sec =>
@@ -1667,7 +1688,7 @@
         queueIcons();
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
-        setTimeout(() => mountBell(nav, u), 0);
+        setTimeout(() => { mountBell(nav, u); mountDock(u); }, 0);
 
         // Dropdown
         if (u) {
@@ -1697,6 +1718,7 @@
                 bell ? null : { id: 'ov-notifications', label: 'Notifications', short: 'Alerts', drawn: navIcon('fa-bell'), href: 'https://openvibe.network/my#notifications' },
                 !isAnon ? { id: 'ov-ask', label: 'Ask Vibe', drawn: navIcon('fa-brain'), href: 'https://openvibe.chat/vibe', mark: 'data-ov-ask' } : null,
                 !isAnon ? { id: 'ov-work', label: 'Work together', short: 'Work', drawn: navIcon('fa-people-group'), href: 'https://openvibe.chat/work', mark: 'data-ov-work' } : null,
+                bell && _config.dock !== false ? { id: 'ov-dock', label: 'The Dock: your agents and activity on every page', short: 'Dock', drawn: DOCK_GLYPH, mark: 'data-ov-dock' } : null,
                 admin ? { id: 'ov-admin', label: 'Admin', drawn: navIcon('fa-shield-halved'), href: 'https://openvibe.network/admin' } : null,
             ].filter(Boolean));
             const ranked = byUse(places), grid = ranked.slice(0, 8), more = ranked.slice(8);
@@ -1736,6 +1758,7 @@
             dropdown.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-use]'); if (t) countUse(t.getAttribute('data-use')); });
             nav.appendChild(dropdown);
             bindMenuItems(dropdown, before.concat(after, sectionItems(menuCfg.sections)));
+            dropdown.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('[data-ov-dock]')) return; dropdown.classList.remove('open'); openDock(); });
             bindChips(dropdown);
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
@@ -2070,6 +2093,9 @@
         set activity(_v) { /* island.js binds itself; nothing to store */ },
 
         setToken(token) { _config.token = token; },
+
+        /** Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only. */
+        openDock(tab) { if (_config.token && _config.dock !== false) openDock(tab); },
 
         /** Get the bell mount point for OpenVibeNotifications. */
         getBellMount() {

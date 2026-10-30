@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.50.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.51.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -525,6 +525,25 @@ there), Scheduled, Done (cost, steps, the page) and Failed (why). It reads Netwo
 `action-center.js` loads from beside `notification-ui.js` on the first click (serve it there; it is in `files.js`).
 `OpenVibeNotifications.init({ actions: false })` leaves the ✦ out; `OpenVibeNotifications.openActions(anchor)` opens it
 from a site's own control.
+
+**The Dock (4.51.0).** Your agents and your activity at the edge of every OpenVibe page (the Dock plan of 2026-10-30,
+K-D1). For a signed-in person `navbar.js` loads `dock.js` from beside itself after the bell (serve it there; it is in
+`files.js`), and it draws a pill in the Dock's corner: the mark, a word ("Needs you", "Working", "2 working") and a dot.
+The pill shows only while an agent works, one needs you, or the person pinned it. A tap opens the Dock. On a desktop it
+is a floating card that is not modal: drag its head to a corner, drag its free corner to resize it (320–720 × 360–900).
+On a phone it is a sheet. It has two tabs. **Agents** is the Action Center's waiting and running items, approved or
+declined in place (`OpenVibeActionCenter.mount(container, opts)`). **Activity** is the bell's list
+(`OpenVibeNotifications.renderDock(container)`). Its state (open, tab, pinned, where it sits per device class) is the
+Network's, so it follows the person from site to site:
+- reads: `GET /api/v1/me/dock` (`network.dock-result@1`);
+- writes: one debounced `PUT` (`network.dock-state@1`);
+- this site's copy paints it at once;
+- an open Dock reopens by itself on a desktop, never on a phone;
+- a 404 from a Network without the route keeps it away for a day.
+
+The account menu has a Dock tile. A site can call `OpenVibeNavbar.openDock('agent' | 'activity')`, pass `dock: false`
+to leave it out, or pass `dockApiBase` for tests and staging. Desktop toasts stack above the pill (`--ov-dock-clear`).
+Chats join in K-D2 and the agent's live screen in K-D3.
 
 **Quiet hours (4.30.0).** During the person's window (`GET /api/notifications/quiet-hours`, read at start and every ten
 minutes), toasts and sounds wait; the bell and the badge still fill, and a critical notice still shows.

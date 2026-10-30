@@ -3,6 +3,9 @@
 //
 // notification-ui.js draws the ✦ beside the bell and loads this file, from beside itself, on the first click.
 //   OpenVibeActionCenter.toggle({ anchor, token: () => jwt, apiBase })   · open(opts) · close() · isOpen()
+//   OpenVibeActionCenter.mount(container, { token, apiBase, buckets, onCounts })  → { refresh(), destroy() }
+//       the Dock's Agent tab (dock.js): the items of some buckets in a container of the Dock's, waiting first, the
+//       same rows and the same approve and decline, re-read every 15 s while something runs.
 //
 // Reads  GET  <apiBase>/api/v1/me/actions                     network.me-actions-result@1 (Bearer, or the cookie on
 //                                                             openvibe.network itself)
@@ -47,19 +50,19 @@
 
     function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     const isPhone = () => { try { return root.matchMedia('(max-width: 640px)').matches; } catch { return false; } };
-    const apiBase = () => String((opts && opts.apiBase) || 'https://openvibe.network').replace(/\/+$/, '');
-    const crossOrigin = () => { try { return new URL(apiBase()).origin !== root.location.origin; } catch { return true; } };
-    const tokenOf = () => { const t = opts && opts.token; return typeof t === 'function' ? t() : t; };
-    function api(path, init = {}) {
+    function apiWith(o, path, init = {}) {
+        const base = String((o && o.apiBase) || 'https://openvibe.network').replace(/\/+$/, '');
+        let cross = true; try { cross = new URL(base).origin !== root.location.origin; } catch { /* */ }
         const headers = { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}) };
-        const t = tokenOf();
+        const t = o && (typeof o.token === 'function' ? o.token() : o.token);
         if (t) headers.authorization = `Bearer ${t}`;
-        return fetch(apiBase() + path, { ...init, headers, credentials: crossOrigin() ? 'omit' : 'include' }).then(async (r) => {
+        return fetch(base + path, { ...init, headers, credentials: cross ? 'omit' : 'include' }).then(async (r) => {
             const body = await r.json().catch(() => ({}));
             if (!r.ok) { const e = new Error(body.detail || body.title || `HTTP ${r.status}`); e.status = r.status; throw e; }
             return body;
         });
     }
+    const api = (path, init) => apiWith(opts, path, init);
     function ago(iso) {
         const t = Date.parse(iso || ''); if (!Number.isFinite(t)) return '';
         const s = (Date.now() - t) / 1000;
@@ -145,6 +148,12 @@
                 .ovac-acts button { width: 40px; height: 40px; }
             }
             html.ovac-sheet-open, html.ovac-sheet-open body { overflow: hidden; }
+            .ovac-mounted { display: flex; flex-direction: column; min-height: 0; color: var(--text-primary, #ececf1); }
+            .ovac-mounted .ovac-list { padding: 4px 6px 10px; }
+            .ovac-mounted svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            .ovac-group { display: flex; align-items: center; gap: 8px; margin: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
+            .ovac-group span { font-variant-numeric: tabular-nums; letter-spacing: 0; color: var(--text-secondary, #b6b6c0); }
+            .ovac-group[data-bucket="waiting"] { color: color-mix(in srgb, var(--warning, #f5a524) 70%, var(--text-primary, #ececf1)); }
             @media (prefers-reduced-motion: reduce) { .ovac { animation: none; } .ovac-item[data-bucket="running"] .ovac-state::before { animation: none; } }
         `;
         document.head.appendChild(st);
@@ -275,14 +284,14 @@
         if (isOpen() && data && !data.error && (data.counts.running || 0) > 0) timer = setTimeout(() => load({ quiet: true }), REFRESH_MS);
     }
 
-    async function decide(item, what, btn) {
+    async function decide(item, what, btn, call = api, reload = () => load({ quiet: true })) {
         if (!item || (what !== 'approve' && what !== 'decline')) return;
         item.querySelectorAll('.ovac-btns button').forEach((b) => { b.disabled = true; });
         const old = item.querySelector('.ovac-err'); if (old) old.remove();
         try {
-            await api(`/api/v1/me/actions/${encodeURIComponent(item.dataset.service)}/${encodeURIComponent(item.dataset.id)}/${what}`, { method: 'POST', body: '{}' });
+            await call(`/api/v1/me/actions/${encodeURIComponent(item.dataset.service)}/${encodeURIComponent(item.dataset.id)}/${what}`, { method: 'POST', body: '{}' });
             btn.textContent = what === 'approve' ? 'Approved' : 'Declined';
-            setTimeout(() => load({ quiet: true }), 600);
+            setTimeout(reload, 600);
         } catch (e) {
             item.querySelectorAll('.ovac-btns button').forEach((b) => { b.disabled = false; });
             item.querySelector('.ovac-body').insertAdjacentHTML('beforeend', `<p class="ovac-err" role="alert">${esc(e.message || 'That did not work. Try again.')}</p>`);
@@ -322,5 +331,53 @@
     }
     function toggle(o) { if (isOpen()) close(); else open(o); }
 
-    root.OpenVibeActionCenter = { open, close, toggle, isOpen, _state: () => ({ data, tab }) };
+    /**
+     * A list of some buckets in someone else's container (the Dock's Agent tab): waiting first, then running, each
+     * bucket under a small heading when there is more than one. Its own data, timer and errors; the popover's are
+     * untouched. onCounts(counts) hears every answer, so the Dock's tab and pill can follow it.
+     */
+    function mount(container, o = {}) {
+        styles();
+        const mo = { ...o };
+        const want = Array.isArray(mo.buckets) && mo.buckets.length ? mo.buckets.filter((b) => SHORT[b]) : ['waiting', 'running'];
+        const call = (path, init) => apiWith(mo, path, init);
+        let doc = null, t = 0, gone = false, busy = false;
+        container.classList.add('ovac-mounted');
+        container.innerHTML = '<div class="ovac-list" aria-live="polite"><div class="ovac-wait"><span></span></div></div>';
+        const list = container.firstChild;
+        const draw = () => {
+            if (gone) return;
+            if (doc && doc.error) {
+                list.innerHTML = `<div class="ovac-empty">${svg(G.spark)}<b>${doc.error.status === 401 ? 'Sign in to see your agents' : 'Could not load your agents'}</b>${doc.error.status === 401 ? '' : 'Check your connection and try again.'}</div>`;
+                return;
+            }
+            if (!doc) return;
+            const groups = want.map((b) => [b, (doc.buckets && doc.buckets[b]) || []]).filter(([, items]) => items.length);
+            if (!groups.length) {
+                const [h, p] = mo.empty || ['Nothing is running', 'When an agent works for you, it shows here with its steps, and anything it asks you shows first.'];
+                list.innerHTML = `<div class="ovac-empty">${svg(G.spark)}<b>${esc(h)}</b>${esc(p)}</div>`;
+                return;
+            }
+            list.innerHTML = groups.map(([b, items]) => (groups.length > 1 ? `<h4 class="ovac-group" data-bucket="${b}">${esc(b === 'waiting' ? 'Needs you' : SHORT[b])}<span>${items.length}</span></h4>` : '')
+                + items.map(itemHTML).join('')).join('');
+        };
+        const refresh = async () => {
+            if (gone || busy) return;
+            busy = true; clearTimeout(t);
+            try { doc = await call('/api/v1/me/actions'); } catch (e) { doc = { error: e }; }
+            busy = false;
+            if (gone) return;
+            draw();
+            if (doc && !doc.error && typeof mo.onCounts === 'function') { try { mo.onCounts(doc.counts || {}); } catch { /* */ } }
+            if (doc && !doc.error && (doc.counts.running || 0) > 0) t = setTimeout(refresh, REFRESH_MS);
+        };
+        list.addEventListener('click', (e) => {
+            const b = e.target.closest('button[data-do]'); if (!b) return;
+            decide(b.closest('.ovac-item'), b.dataset.do, b, call, refresh);
+        });
+        refresh();
+        return { refresh, destroy() { gone = true; clearTimeout(t); container.classList.remove('ovac-mounted'); container.innerHTML = ''; } };
+    }
+
+    root.OpenVibeActionCenter = { open, close, toggle, isOpen, mount, _state: () => ({ data, tab }) };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.50.1",
+  "version": "4.51.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -43,6 +43,7 @@
     "./navbar": "./navbar.js",
     "./notification-live": "./notification-live.js",
     "./action-center": "./action-center.js",
+    "./dock": "./dock.js",
     "./notification-ui": "./notification-ui.js",
     "./notifications": "./notifications.js",
     "./openvibe-sw": "./openvibe-sw.js",
