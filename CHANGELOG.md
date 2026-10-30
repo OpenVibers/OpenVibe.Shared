@@ -6,6 +6,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.47.3 — 2026-10-30
+
+- **A tap on the logo no longer opens the menu.** On a phone, the menu button's invisible touch area (4.46.0) covered
+  the whole navbar. The touch rules made the button `position: relative`, but its own `all: unset` rule came later and
+  reset it, so the 44 px hit area was placed against the bar instead. A tap on the mark, the site's name or the orb
+  opened the burger menu on every site on 4.46.0–4.47.2 (found on openvibe.network). The burger now keeps its own
+  position. `test/navbar-hit-areas.test.js` checks that every touch hit area stays on its own button.
+
 ## 4.47.2 — 2026-10-30
 
 - **The updates log reads as changes, not commits.** `shipped.js`'s log folds the entries of one day that are the same
