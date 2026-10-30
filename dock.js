@@ -78,13 +78,7 @@
         const body = pending; pending = {};
         if (!Object.keys(body).length) return;
         try {
-            let r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(body) });
-            // A Network whose state contract does not know "popped" yet refuses the whole body; ask again without it,
-            // so the Dock's place and its tab still reach the Network.
-            if (!r && 'popped' in body) {
-                const rest = { ...body }; delete rest.popped;
-                r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(rest) });
-            }
+            const r = await call('/api/v1/me/dock', { method: 'PUT', body: JSON.stringify(body) });
             if (r && r.state && !Object.keys(pending).length) { doc = { ...doc, state: r.state, counts: r.counts || counts() }; notify(); badges(); }
         } catch { /* offline, or no route yet: the copy stands and the next change tries again */ }
     }
@@ -725,7 +719,9 @@
         win.document.body.appendChild(el);
         win.addEventListener('pagehide', () => { if (popped && !pipClosing) backToPage(); });
         paintPop();
-        save({ open: true, popped: true });
+        // Whether the Dock is in a window stays with this page: the window belongs to one page in one browser, closes
+        // with it, and no other device could open it again (the browser wants a click), so the Network is not told.
+        save({ open: true });
         paintPill();
     }
 
@@ -741,7 +737,6 @@
         el.hidden = false;
         layout();
         paintPop();
-        save({ popped: false });
         paintPill();
     }
 
@@ -777,7 +772,7 @@
         document.documentElement.classList.remove('ovdk-sheet-open');
         clear(0);
         clearTimeout(chats.timer); clearTimeout(chats.unreadT);
-        save(wasPopped ? { open: false, popped: false } : { open: false });
+        save({ open: false });
         if (inside) {
             const back = pill && !pill.hidden ? pill : (lastFocus && lastFocus.isConnected ? lastFocus : null);
             try { if (back) back.focus({ preventScroll: true }); } catch { /* */ }

@@ -304,13 +304,14 @@ async function drag(p, from, to) {
             const inWindow = await until(p, PILL, 'the pill stays');
             assert.strictEqual(inWindow.text, 'In a window', 'the page keeps the pill, and it says where the Dock went');
             await wait(900);
-            assert.ok(puts.some((b) => b.popped === true && b.open === true), `the Network is told the Dock is in a window (${JSON.stringify(puts)})`);
+            assert.ok(puts.some((b) => b.open === true), `the Network is told the Dock is open (${JSON.stringify(puts)})`);
+            assert.ok(!puts.some((b) => 'popped' in b), `and never where its window is: that stays with this page (${JSON.stringify(puts)})`);
             // The window is closed: the panel comes back to the page.
             await p.evaluate("window.__pip.close()");
             await until(p, "!!document.querySelector('.ovdk')", 'the panel back on the page');
             assert.strictEqual(await p.evaluate("!!window.__pip.win.document.querySelector('.ovdk')"), false, 'and out of the window');
             await wait(900);
-            assert.ok(puts.some((b) => b.popped === false), `and told it is back (${JSON.stringify(puts)})`);
+            assert.ok(!puts.some((b) => 'popped' in b), `nor that it is back (${JSON.stringify(puts)})`);
             await p.close();
         }
 
