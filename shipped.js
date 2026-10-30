@@ -62,6 +62,8 @@
         '.ov-shipped ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}.ov-shipped li{display:flex;gap:.5rem;align-items:baseline;min-width:0}',
         `.ov-shipped-site{flex:none;font-size:.72rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent);color:${TEXT};text-decoration:none}`,
         `.ov-shipped a.ov-shipped-subject{color:${TEXT};text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}`,
+        // Touch (4.46.0): a taller hit box with no change to the layout (padding in, margin out); overflow:hidden rules out a pseudo-element.
+        '@media (pointer:coarse){.ov-shipped a.ov-shipped-subject{padding-top:5px;padding-bottom:5px;margin-top:-5px;margin-bottom:-5px}}',
         '.ov-shipped a.ov-shipped-subject:hover{text-decoration:underline}.ov-shipped li time{flex:none;margin-left:auto;font-size:.75rem;opacity:.7}',
         `.ov-shipped-major{font-weight:600}.ov-shipped-links{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.6rem}.ov-shipped-links a{font-weight:600;color:${ACCENT};text-decoration:none}.ov-shipped-links a:hover{text-decoration:underline}`,
         '.ov-shipped-log{display:flex;flex-direction:column;gap:22px;min-width:0}',

@@ -264,3 +264,12 @@ div.ovk-set-row { cursor: default; }
 }
 @media (prefers-reduced-motion: reduce) { .ovk-switch, .ovk-switch::after, .ovk-fold > summary > .ovk-i, .ovk-head, .ovk-btn { transition: none; } }
 @media print { .ovk-head, .ovk-dock, .ovk-save { position: static; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; } }
+
+/* Touch (4.46.0, the fleet tap audit): small buttons are 44px tall on a touch screen, the find bar's go button reaches
+   44px to a finger and looks the same, and the find bar's field and select are 44px tall. */
+@media (pointer: coarse) {
+    .ovk-btn--small { min-height: 44px; }
+    .ovk-go { position: relative; }
+    .ovk-go::after { content: ''; position: absolute; inset: -3px; }
+    .ovk-find input, .ovk-find select { min-height: 44px; }
+}
