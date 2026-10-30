@@ -1,0 +1,156 @@
+{
+  "type": "section",
+  "props": {
+    "id": "hero",
+    "title": "OpenVibe",
+    "count": 5,
+    "note": "What is happening right now"
+  },
+  "children": [
+    {
+      "type": "row",
+      "props": {
+        "title": "Night walk",
+        "sub": "goosely walks the city, live",
+        "meta": "2 min",
+        "mark": "goosely"
+      }
+    },
+    {
+      "type": "button",
+      "props": {
+        "label": "Open the app",
+        "href": "https://openvibe.net/app",
+        "kind": "primary"
+      }
+    },
+    {
+      "type": "rail",
+      "props": {
+        "id": "now",
+        "title": "Live",
+        "more": {
+          "href": "https://openvibe.net/live",
+          "label": "See all"
+        },
+        "size": "m"
+      },
+      "children": [
+        {
+          "type": "card",
+          "props": {
+            "href": "https://openvibe.net/c/1",
+            "title": "Night walk",
+            "type": "stream",
+            "ratio": "16:9",
+            "badge": "LIVE",
+            "live": true,
+            "sub": "A city, at night",
+            "who": "goosely",
+            "count": [
+              128,
+              "watching"
+            ],
+            "when": "2 min"
+          }
+        },
+        {
+          "type": "card",
+          "props": {
+            "href": "https://openvibe.net/c/2",
+            "title": "Studio session",
+            "type": "stream",
+            "ratio": "16:9",
+            "image": "https://openvibe.net/media/session.jpg",
+            "sub": "Three songs, one take",
+            "who": "mira",
+            "count": 42,
+            "when": "9 min"
+          }
+        },
+        {
+          "type": "card",
+          "props": {
+            "href": "https://openvibe.net/c/3",
+            "title": "Meme of the day",
+            "type": "listing",
+            "ratio": "1:1",
+            "sub": "It does not matter",
+            "who": "kit",
+            "count": [
+              7,
+              "comments"
+            ],
+            "when": "1 h"
+          }
+        }
+      ]
+    },
+    {
+      "type": "list",
+      "props": {
+        "title": "Recently",
+        "more": {
+          "href": "https://openvibe.net/recent",
+          "label": "All"
+        },
+        "empty": "Nothing yet"
+      },
+      "children": [
+        {
+          "type": "row",
+          "props": {
+            "href": "https://openvibe.net/r/1",
+            "title": "The nightly show",
+            "sub": "Started 20 minutes ago",
+            "meta": "live"
+          }
+        },
+        {
+          "type": "row",
+          "props": {
+            "href": "https://openvibe.net/r/2",
+            "title": "Ask Vibe anything",
+            "sub": "A thread about the kit",
+            "meta": "3 new"
+          }
+        },
+        {
+          "type": "row",
+          "props": {
+            "title": "A quiet row",
+            "sub": "With nothing to open",
+            "meta": "yesterday"
+          }
+        }
+      ]
+    },
+    {
+      "type": "stats",
+      "props": {
+        "label": "In numbers",
+        "items": [
+          [
+            "12",
+            "live now"
+          ],
+          [
+            "1.4k",
+            "watching"
+          ],
+          [
+            "98",
+            "rooms open"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "notice",
+      "props": {
+        "kind": "info",
+        "text": "The kit renders the same on the web, on Android and on iOS."
+      }
+    }
+  ]
+}

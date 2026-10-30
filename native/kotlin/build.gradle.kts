@@ -61,6 +61,9 @@ dependencies {
     composeClasspath("androidx.compose.material3:material3:$material3Version")
     composeClasspath("androidx.compose.material:material-icons-extended:$composeVersion")
     composeClasspath("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    // The kit renderer's JSON reader. Android carries org.json in the platform; the check compiles against the
+    // same class from Maven Central, so the renderer is checked against the parser it ships with.
+    composeClasspath("org.json:json:20240303")
 
     composeCompilerPlugin("org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable:$kotlinVersion")
 
