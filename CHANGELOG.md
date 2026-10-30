@@ -6,6 +6,18 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.56.0 — 2026-10-30
+
+- **A tool states its terms.** `kit.toolHead({ facts })` adds one short line under the tool's sentence:
+  - what it costs;
+  - where the work happens ("Runs in your browser: nothing is uploaded", or "Your file goes to our server and is
+    deleted after 1 hour");
+  - its limits.
+
+  This is the first outcome of the market research for tool sites, where people's top complaint is limits they are
+  never told. Facts are escaped text, or `{ text, icon }`; blanks are left out. docs/kit.md says to state them from
+  the tool's real configuration, never from a guess.
+
 ## 4.55.0 — 2026-10-30
 
 - **The tool frame: one order for every tool page** (owner ask 11). It has six new kit builders: `kit.toolHead`,

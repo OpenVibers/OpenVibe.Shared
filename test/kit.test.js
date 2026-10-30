@@ -206,6 +206,9 @@ const kit = require('../kit');
     assert.ok(kit.toolHead({ title: 'Solo' }).includes('ovk-tool-head--solo'), 'no crumb: the tile sits beside the title alone');
     assert.ok(kit.toolHead({ title: 'x', crumb: { href: 'javascript:alert(1)', label: 'c' } }).includes('href="#"'), 'a crumb link is kept only when it is http(s) or a path');
     assert.ok(kit.toolHead({ title: 'x', level: 2 }).includes('<h2 class="ovk-tool-title">'));
+    const fh = kit.toolHead({ title: 'PNG Converter', facts: ['Free', { text: 'Runs in your browser: nothing is uploaded', icon: 'lock' }, '', null, 'Files up to <50> MB'] });
+    assert.ok(fh.includes('<ul class="ovk-tool-facts"><li>Free</li><li><svg class="ovk-i"') && fh.includes('Runs in your browser: nothing is uploaded</li><li>Files up to &lt;50&gt; MB</li></ul></header>'), 'the terms: escaped, blanks left out, an icon when asked');
+    assert.ok(!kit.toolHead({ title: 'x' }).includes('ovk-tool-facts'), 'no terms, no list');
 
     const t = kit.tries({ name: 'q', items: [{ value: 'a b&c' }, { label: 'IP', value: '1.1.1.1' }, { label: 'Docs', href: 'javascript:x' }, null] });
     assert.ok(t.startsWith('<p class="ovk-try"><span>Try</span>'));
