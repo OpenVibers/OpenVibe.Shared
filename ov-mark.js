@@ -93,7 +93,7 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmLeaf{from{transform:scale(0) rotate(-50deg)}to{transform:none}}
 @keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
-@keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}80%{opacity:.9}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
+@keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
 @media (prefers-reduced-motion:reduce){.ov-mark svg,.ov-mark .g,.ov-mark .lp,.ov-mark .sw,.ov-mark .d,.ov-mark .sl,.ov-mark .sd{animation:none!important}.ov-mark .sw,.ovm-fall{display:none}}
 html[data-ov-motion=reduced] .ov-mark .sw{display:none}`;
     // The open loop: from the opening's left end round the bottom to its right end, then down the V and back up.
@@ -177,14 +177,22 @@ html[data-ov-motion=reduced] .ov-mark .sw{display:none}`;
     function fallOnce(el) {
         const id = season(); if (!id || reduced() || document.hidden || !el.isConnected) return;
         const day = id + ':' + new Date().toDateString();
-        try { if (localStorage.getItem(FALL_KEY) === day) return; localStorage.setItem(FALL_KEY, day); } catch { return; }
+        try { const ls = window.localStorage; if (ls.getItem(FALL_KEY) === day) return; ls.setItem(FALL_KEY, day); } catch { return; }
         const r = el.getBoundingClientRect(); if (!r.width || !document.body) return;
         const box = document.createElement('div'); box.className = 'ovm-fall'; box.setAttribute('aria-hidden', 'true');
-        box.style.left = (r.left + r.width / 2) + 'px'; box.style.top = (r.top + r.height * 0.6) + 'px';
+        const x0 = r.left + r.width / 2, y0 = r.top + r.height * 0.6;
+        box.style.left = x0 + 'px'; box.style.top = y0 + 'px';
+        // The leaves land on the bottom edge of the bar the mark sits in and fade there, so they never cross a page's
+        // heading (they fell 120-280 px over it on phones, 10-30). A mark outside a bar gets a short fall.
+        const bar = el.closest('.openvibe-navbar,header,nav');
+        const rb = bar && bar.getBoundingClientRect();
+        const floor = rb && rb.bottom > y0 + 8 ? rb.bottom - y0 - 4 : 0;
         const colors = id === 'winter' ? ['#f4fbff', '#d8f3ff', '#ffffff'] : ['#ff7a1a', '#f5a524', '#d9481f', '#7fd04e'];
         for (let i = 0; i < 7; i++) {
             const s = document.createElement('i');
-            s.style.cssText = `--x:${Math.round((Math.random() - 0.3) * 140)}px;--y:${Math.round(120 + Math.random() * 160)}px;--r:${Math.round(Math.random() * 540 - 270)}deg;animation-delay:${(i * 0.18 + Math.random() * 0.2).toFixed(2)}s;animation-duration:${(2.4 + Math.random() * 1.2).toFixed(2)}s;background:${colors[i % colors.length]}`;
+            const dx = Math.max(8 - x0, Math.min((window.innerWidth || 0) - 8 - x0, Math.round((Math.random() - 0.3) * 200)));
+            const dy = floor ? Math.round(floor - Math.random() * 3) : Math.round(36 + Math.random() * 28);
+            s.style.cssText = `--x:${dx}px;--y:${dy}px;--r:${Math.round(Math.random() * 540 - 270)}deg;animation-delay:${(i * 0.18 + Math.random() * 0.2).toFixed(2)}s;animation-duration:${(2.4 + Math.random() * 1.2).toFixed(2)}s;background:${colors[i % colors.length]}`;
             box.appendChild(s);
         }
         document.body.appendChild(box);
