@@ -29,7 +29,7 @@
     --ovk-bottom: var(--ovnav-appbar-h, 0px);      /* the app bar's height on phones (navbar.js sets it) */
     --ovk-font: var(--ov-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 }
-.ovk-stats { display: flex; gap: 8px; margin: 12px -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.ovk-stats { position: relative; display: flex; gap: 8px; margin: 12px -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
 .ovk-stats::-webkit-scrollbar { display: none; }
 .ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: 12px; background: var(--ovk-panel); }
 .ovk-stats dt { margin: 0; color: var(--ovk-muted); font-size: .76rem; line-height: 1.25; }

@@ -6,6 +6,15 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.47.1 — 2026-10-30
+
+- **No page is wider than a phone.** A sideways row (`.sc-row`, `.ovk-tabs`, `.ovk-stats`) is `position: relative`, so a
+  hidden label (`.sr-only`, `position: absolute`) inside a card past the edge stays in the row instead of widening the
+  page. The phone hero's watermark (`.sc-hero-vis`) sits inside the hero's corner instead of 54 px past the screen;
+  five homes were 434-451 px wide on a 390 px phone.
+- docs/kit.md "Scrolling on touch screens": the rules for boxes, sheets and sideways rows on touch screens, and the
+  width check.
+
 ## 4.47.0 — 2026-10-29
 
 - **The kit renders natively, on Android and iOS.** `scripts/native/compose/KitRenderer.kt` (`KitView(doc: KitNode)`, a

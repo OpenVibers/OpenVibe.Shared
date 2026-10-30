@@ -447,7 +447,7 @@ a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-o
 html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow,html[data-ov-motion=reduced] .sc-orb-ring,html[data-ov-motion=reduced] .sc-orb-face{animation:none}
 @media (max-width:860px){
 .sc-hero.sc-has-vis{display:block}
-.sc-hero.sc-has-vis .sc-hero-vis{position:absolute;z-index:-1;top:-26px;right:-54px;width:180px;opacity:.36;pointer-events:none}
+.sc-hero.sc-has-vis .sc-hero-vis{position:absolute;z-index:-1;top:-26px;right:0;width:180px;opacity:.36;pointer-events:none}
 .sc-hero.sc-has-vis .sc-aura .sc-vis-mark{width:46px!important;height:46px!important}
 .sc-hero.sc-has-orbit{display:flex;flex-direction:column}
 .sc-hero.sc-has-orbit .sc-hero-vis{order:-1;position:static;width:auto;opacity:1;pointer-events:auto;margin:0 0 6px}
@@ -569,7 +569,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 /* A list that is one sideways row on a phone (scroll snap, the next card peeking) and whatever the page made it on wide
    screens. Every item stays in the HTML. --sc-row-w sets a card's width (82% by default; 46% for small tiles). */
 @media (max-width:599px){
-.sc-row.sc-row{display:flex;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;gap:10px;margin-left:-16px;margin-right:-16px;padding:0 16px 4px;grid-template-columns:none}
+.sc-row.sc-row{position:relative;display:flex;flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:16px;scrollbar-width:none;gap:10px;margin-left:-16px;margin-right:-16px;padding:0 16px 4px;grid-template-columns:none}
 .sc-row.sc-row::-webkit-scrollbar{display:none}
 .sc-row.sc-row>*{flex:0 0 var(--sc-row-w,82%);min-width:0;scroll-snap-align:start}
 .sc-fold-hint{display:none}
