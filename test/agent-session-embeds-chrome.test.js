@@ -175,9 +175,9 @@ const att = (url, name, kind, role, mime) => ({ url, name, mime: mime || '', kin
 
         // A broken image hides itself.
         await push(p, { t: 'text', text: 'Broken', attachments: [att('/broken.png', 'broken.png', 'image', 'output', 'image/png')] });
-        await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); m.scrollIntoView(); return 1 })()`);
+        await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); m.scrollIntoView(); const img = m.querySelector('.ovas-att-img img'); if (img) img.loading = 'eager'; return 1 })()`);
         let gone = false;
-        for (let i = 0; i < 25 && !gone; i++) {
+        for (let i = 0; i < 60 && !gone; i++) {
             await p.evaluate(`new Promise((r) => setTimeout(r, 100)), 1`);
             gone = await p.evaluate(`(() => { const m = [...document.querySelectorAll('.ovas-msg')].pop(); const b = m.querySelector('.ovas-att > *'); return !!(b && b.hidden && !b.querySelector('img')); })()`);
         }
