@@ -279,12 +279,12 @@
 
     /** The multi-column footer: the brand, the site's own links, the network, popular tools, legal, the account row and the bar. */
     function fullBody(c, { network, popular, discover, brand, tagline, compact = false }) {
-
-        const cols = (c.links || []).map(group => `
-            <nav class="ovf-col" aria-label="${esc(group.heading)}">
-                <h3>${esc(group.heading)}</h3>
-                ${group.items.map(linkTag).join('')}
-            </nav>`).join('');
+        // Each link column is a fold: open on a desktop (its heading reads and behaves as a heading), folded on a phone
+        // (a 48 px row with a chevron), so a phone's footer is about one screen shorter. Every link stays in the page.
+        const fold = (label, heading, body) => `
+            <nav class="ovf-col" aria-label="${esc(label)}"><details class="ovf-fold" open><summary><h3>${esc(heading)}</h3></summary>
+                <div class="ovf-fold-body">${body}</div></details></nav>`;
+        const cols = (c.links || []).map(group => fold(group.heading, group.heading, group.items.map(linkTag).join(''))).join('');
 
         return `<div class="ovf-inner${compact ? ' ovf-inner--expanded' : ''}">
             ${c.pulse === false ? '' : '<p class="ovf-pulse" data-ovf-pulse hidden></p>'}
@@ -298,21 +298,12 @@
                     </div>
                 </div>
                 ${cols}
-                ${c.showNetwork ? `<nav class="ovf-col" aria-label="The OpenVibe network">
-                    <h3>Network</h3>
-                    ${network.slice(0, 8).map(linkTag).join('')}
-                    <a class="ovf-more" href="${NETWORK_URL}" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>
-                </nav>` : ''}
-                ${popular.length ? `<nav class="ovf-col" aria-label="Popular tools">
-                    <h3>Popular tools</h3>
-                    ${popular.slice(0, 6).concat(discover.slice(0, 2)).map(linkTag).join('')}
-                    <a class="ovf-more" href="https://openvibe.tools/all-tools">All tools ${icon('arrow')}</a>
-                </nav>` : ''}
-                <nav class="ovf-col" aria-label="Legal">
-                    <h3>Legal</h3>
-                    ${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name)}</a>`).join('')}
-                    ${reportLink()}
-                </nav>
+                ${c.showNetwork ? fold('The OpenVibe network', 'Network', `${network.slice(0, 8).map(linkTag).join('')}
+                    <a class="ovf-more" href="${NETWORK_URL}" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>`) : ''}
+                ${popular.length ? fold('Popular tools', 'Popular tools', `${popular.slice(0, 6).concat(discover.slice(0, 2)).map(linkTag).join('')}
+                    <a class="ovf-more" href="https://openvibe.tools/all-tools">All tools ${icon('arrow')}</a>`) : ''}
+                ${fold('Legal', 'Legal', `${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name)}</a>`).join('')}
+                    ${reportLink()}`)}
             </div>
             ${compact ? '' : `<div class="ovf-account" id="ovf-account" hidden></div>
             <div class="ovf-bar">
@@ -382,6 +373,9 @@
 .ovf-cols{display:grid;gap:clamp(20px,3vw,36px);grid-template-columns:minmax(230px,1.6fr) repeat(auto-fit,minmax(120px,1fr));align-items:start}
 .ovf-col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .ovf-col h3{margin:0 0 2px;font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted,#8b93ad)}
+.ovf-fold>summary{list-style:none;cursor:default;pointer-events:none}
+.ovf-fold>summary::-webkit-details-marker{display:none}
+.ovf-fold-body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .ovf-col a{color:var(--text-secondary,#b6bdd2);font-size:.86rem;text-decoration:none;line-height:1.4;width:fit-content;transition:color .15s,transform .15s}
 .ovf-col a:hover{color:var(--accent,#60a5fa);transform:translateX(2px)}
 @media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:32px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:0;right:0;top:-12px;bottom:-12px}}
@@ -446,7 +440,15 @@
 @media (max-width:560px){
   .ovf{padding-bottom:calc(20px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}
   .ovf[data-variant="compact"]{padding-bottom:calc(14px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}
-  .ovf-cols{gap:22px 16px}
+  .ovf-cols{gap:0 16px}
+  .ovf-col--brand{margin-bottom:14px}
+  .ovf-col:not(.ovf-col--brand){grid-column:1/-1;border-top:1px solid var(--border,rgba(255,255,255,.08))}
+  .ovf-col:not(.ovf-col--brand):last-child{border-bottom:1px solid var(--border,rgba(255,255,255,.08))}
+  .ovf-fold>summary{pointer-events:auto;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:48px}
+  .ovf-fold>summary h3{margin:0}
+  .ovf-fold>summary::after{content:"";width:.5em;height:.5em;margin-right:4px;border:solid var(--text-muted,#8b93ad);border-width:0 1.8px 1.8px 0;transform:translateY(-.2em) rotate(45deg);transition:transform .2s}
+  .ovf-fold[open]>summary::after{transform:translateY(.1em) rotate(-135deg)}
+  .ovf-fold-body{margin-top:0;padding-bottom:14px}
   .ovf-bar{justify-content:center;text-align:center;padding-inline:0}
   .ovf-legal-inline{justify-content:center}
   .ovf-account{flex-direction:column;align-items:flex-start}
@@ -465,6 +467,39 @@
         document.head.appendChild(st);
     }
 
+    // ── Phones: the columns fold ───────────────────────────────
+    // The server and the first render write every column open (no script: everything shows). On a phone the client
+    // folds them, except the ones the person opened themselves, which stay open through any later render.
+    // Wider than a phone (a phone turned sideways too) every column opens again and its heading is only a heading.
+    const _openFolds = new Set();
+    let _phoneQuery = null;
+    function foldOnPhones(el) {
+        if (!el || typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+        if (!_phoneQuery) {
+            _phoneQuery = window.matchMedia('(max-width: 560px)');
+            const again = () => foldOnPhones(_mounted);
+            if (_phoneQuery.addEventListener) _phoneQuery.addEventListener('change', again); else if (_phoneQuery.addListener) _phoneQuery.addListener(again);
+        }
+        const phone = _phoneQuery.matches;
+        if (!el._ovFolds) {
+            el._ovFolds = true;
+            // The person's own taps on a heading (toggle events are async, so the intent is read from the click).
+            el.addEventListener('click', (e) => {
+                const sum = e.target && e.target.closest && e.target.closest('details.ovf-fold > summary');
+                if (!sum) return;
+                if (!_phoneQuery.matches) { e.preventDefault(); return; }
+                const d = sum.parentNode, nav = d.closest('nav'), key = nav ? nav.getAttribute('aria-label') : '';
+                if (d.open) _openFolds.delete(key); else _openFolds.add(key);
+            });
+        }
+        el.querySelectorAll('details.ovf-fold').forEach((d) => {
+            const nav = d.closest('nav');
+            d.open = !phone || _openFolds.has(nav && nav.getAttribute('aria-label'));
+            const sum = d.querySelector('summary');
+            if (sum) sum.tabIndex = phone ? 0 : -1;
+        });
+    }
+
     // ── Mount ──────────────────────────────────────────────────
     function render() {
         if (!_mounted) return;
@@ -474,6 +509,7 @@
         _mounted.className = 'ovf ' + (_mounted.dataset.extraClass || '');
         _mounted.setAttribute('data-variant', variant);
         _mounted.innerHTML = buildHTML({ ..._cfg, variant, _open: open });
+        foldOnPhones(_mounted);
         if (!_mounted._ovReport) {
             _mounted._ovReport = true;
             const fresh = (e) => { const a = e.target && e.target.closest && e.target.closest('a[data-ov-report]'); if (a) a.href = reportHref(); };
