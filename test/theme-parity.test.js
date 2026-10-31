@@ -48,7 +48,8 @@ for (const t of BUILTIN_THEMES) {
     for (const k of Object.keys(want)) assert.strictEqual(LT[t.id][k], String(want[k]), `loader's ${t.id} carries ${k} as the catalog has it`);
 }
 assert.ok(LT.arctic['--success'], 'loader entries carry the full token set');
-assert.ok(loader.length < 60000, `theme-loader.js stays small for first paint (${loader.length} bytes)`);
+// 62,000 since 4.64.0: the look travels between sites (?ov_look=) and every copy is dated; brotli 15.45 KB (was 15.41) (2026-10-31).
+assert.ok(loader.length < 62000, `theme-loader.js stays small for first paint (${loader.length} characters)`);
 assert.ok(loader.includes('KNOWN_PROPS'), 'loader clears tokens the new theme does not set');
 
 // 5. Derived tokens: text on the accent always reads, on every theme.

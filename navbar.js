@@ -390,6 +390,7 @@
             .openvibe-navbar-dropdown-menu .ud-foot .ud-scheme .ud-ib[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .openvibe-navbar-dropdown .ud-hbtn.ud-out { all: unset; box-sizing: border-box; cursor: pointer; display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--text-secondary, #a8b3c4); }
             .openvibe-navbar-dropdown .ud-hbtn.ud-out:hover, .openvibe-navbar-dropdown .ud-hbtn.ud-out:focus-visible { color: var(--live-red-text, var(--live-red, #f87171)); background: color-mix(in srgb, var(--live-red, #ef4444) 14%, transparent); }
+            .openvibe-navbar-dropdown-menu .ud-look, .ovnav-display .ud-look { flex-basis: 100%; }
             .openvibe-navbar-dropdown-menu .ud-scheme { display: inline-flex; gap: 2px; padding: 2px; border-radius: 11px; background: var(--bg-tertiary, rgba(255,255,255,.06)); }
             .openvibe-navbar-dropdown-menu .ud-scheme[hidden] { display: none; }
             .openvibe-navbar-dropdown-menu .ud-scheme button { width: 32px; min-width: 0; height: 30px; padding: 0; justify-content: center; border-radius: 9px; color: var(--text-secondary, #a8b3c4); }
@@ -475,7 +476,7 @@
     const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'd53438811552', 'ov-glyphs.js': '2b97058350a5', 'ov-brand.woff2': '3b4e6a8a5878' };
+    const SIBLING_REV = { 'ov-mark.js': 'd53438811552', 'ov-glyphs.js': '2b97058350a5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'f234846e81db' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -805,12 +806,7 @@
             const first = pop.querySelector('button'); if (first) first.focus();
         });
     }
-    /**
-     * ov-icons.js draws every .ov-icon in the launcher, the menu and the drawer. It used to load the first time one of them
-     * opened, so their icons popped in a moment later and the rows moved (owner, 2026-10-27). Now it loads once, quietly,
-     * after the page settles, and at once on intent (a pointer over the launcher, a touch, focus); the slots have their
-     * size meanwhile.
-     */
+    /** ov-icons.js draws every .ov-icon: loaded once after the page settles, or at once on intent; slots keep their size. */
     let _iconsQueued = false;
     function loadOvIcons(scope) {
         if (root.OpenVibeIcons) { if (scope && root.OpenVibeIcons.mount) root.OpenVibeIcons.mount(scope); return; }
@@ -870,7 +866,7 @@
         const place = (e) => placeDd(e.target.closest && e.target.closest('.ovnav-dd'));
         nav.addEventListener('pointerover', place); nav.addEventListener('focusin', place);
         if (burger && drawer) {
-            if (!_config.user) bindDisplayControls(drawer.querySelector('.ovnav-display'));   // guests: members have them in the account menu
+            if (!_config.user) { bindDisplayControls(drawer.querySelector('.ovnav-display')); bindLook(drawer); }   // guests: members have them in the account menu
             burger.addEventListener('click', (e) => { e.stopPropagation(); const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); if (open) loadOvIcons(drawer); });
             drawer.addEventListener('click', (e) => {
                 const all = e.target.closest && e.target.closest('[data-open-launcher]'); if (!all) return;
@@ -905,6 +901,20 @@
         box.addEventListener('click', (e) => { const b = e.target.closest('[data-ov-scheme]'); if (!b) return; e.stopPropagation(); L.scheme.set(b.getAttribute('data-ov-scheme')); paint(); });
         ['ov:theme', 'ov:display'].forEach((ev) => root.addEventListener(ev, paint, onDocument()));
         box.hidden = false; paint();
+    }
+
+    /** The Look panel (ov-look.js, 4.64.0): the palette opens it in place; without the script the link goes to Design. */
+    function bindLook(scope) {
+        scope.addEventListener('click', (e) => {
+            const a = e.target.closest && e.target.closest('[data-ov-look-open]'); if (!a) return;
+            const box = a.parentElement && a.parentElement.parentElement && a.parentElement.parentElement.querySelector('.ud-look') || scope.querySelector('.ud-look'); if (!box) return;
+            e.preventDefault(); e.stopPropagation();
+            const open = box.hidden; box.hidden = !open; a.setAttribute('aria-expanded', String(open));
+            if (!open || box.__ovlk) return;
+            const go = () => { if (root.OVLook) root.OVLook.mount(box, { signedIn: !!_config.user, season: !!_config.user }); else location.href = a.href; };
+            if (root.OVLook) return go();
+            const sc = document.createElement('script'); sc.src = siblingV('ov-look.js'); sc.async = true; sc.onload = go; sc.onerror = () => { location.href = a.href; }; document.head.appendChild(sc);
+        });
     }
 
     /** Display rows (text size, animations) cycle their value; state lives in theme-loader.js. */
@@ -968,7 +978,7 @@
             const sch = L.scheme ? L.scheme.get() : null;
             const ss = (val, label, title) => `<button type="button" data-s="${val}" aria-pressed="${sch === val}" title="${title}">${label}</button>`;
             box.innerHTML = `<span class="ovnav-dl">Display</span>${sch ? `<span class="ovnav-seg" role="group" aria-label="Light or dark">${ss('light', 'Light', 'Light theme')}${ss('dark', 'Dark', 'Dark theme')}${ss('auto', 'Auto', 'Follow this device')}</span>` : ''}<span class="ovnav-seg" role="group" aria-label="Text size">${seg('text', '100', 'A', 'Default text size')}${seg('text', '112', 'A+', 'Larger text')}${seg('text', '125', 'A++', 'Largest text')}</span>
-                <span class="ovnav-seg" role="group" aria-label="Motion">${seg('motion', 'auto', 'Motion', 'Animations on')}${seg('motion', 'reduced', 'Calm', 'Reduce animations')}</span>${seasonState() ? `<span class="ovnav-seg" role="group" aria-label="Seasonal themes">${seg('seasonal', 'on', seasonState().s.name, 'Seasonal themes on')}${seg('seasonal', 'off', 'Off', 'Seasonal themes off')}</span>` : ''}<a href="https://openvibe.network/themes">Themes</a>`;
+                <span class="ovnav-seg" role="group" aria-label="Motion">${seg('motion', 'auto', 'Motion', 'Animations on')}${seg('motion', 'reduced', 'Calm', 'Reduce animations')}</span>${seasonState() ? `<span class="ovnav-seg" role="group" aria-label="Seasonal themes">${seg('seasonal', 'on', seasonState().s.name, 'Seasonal themes on')}${seg('seasonal', 'off', 'Off', 'Seasonal themes off')}</span>` : ''}<a href="https://openvibe.design/look" data-ov-look-open aria-expanded="false">Look</a><div class="ud-look" hidden></div>`;
             box.hidden = false;
         };
         box.addEventListener('click', (e) => {
@@ -1238,11 +1248,7 @@
     function resolveLoginHref(host, returnUrl) {
         if (_config.loginUrl) return fillUrl(_config.loginUrl, returnUrl);
         if (onToolsDomain(host)) {
-            // Every *.openvibe.tools host signs in through the gateway apex: it
-            // holds the OAuth state cookie + redirect_uri (both apex-host-only)
-            // and sets ov_token with Domain=.openvibe.tools, so the session
-            // reaches all satellites. A host-local /auth/login would 404 on
-            // satellites and break the OAuth state check on gateway subdomains.
+            // *.openvibe.tools signs in through the gateway apex (its OAuth state; ov_token on Domain=.openvibe.tools).
             return `https://${TOOLS_APEX}/auth/login?next=${encodeURIComponent(returnUrl)}`;
         }
         if (onNetworkDomain(host)) return `/login?return=${encodeURIComponent(returnUrl)}`;
@@ -1381,12 +1387,7 @@
         try { return localStorage.getItem('ov_sso_hint'); } catch { return null; }
     }
 
-    /**
-     * One silent sign-in attempt per tab: only when this browser has signed in to the network
-     * before (the hint survives token expiry), never after an explicit sign-out ('guest'), and
-     * never for bots. The site's login route turns silent=1 into prompt=none and comes straight
-     * back on error=login_required, so a signed-out visitor sees one quick redirect at most.
-     */
+    /** One silent sign-in per tab, only after an earlier sign-in here (never after 'guest', never for bots): silent=1. */
     let _ssoClientLoading = null;
     function loadSsoClient() {
         if (root.OpenVibeSSO) return Promise.resolve(root.OpenVibeSSO);
@@ -1747,8 +1748,9 @@
                         <div class="ud-scheme" role="group" aria-label="Light or dark" hidden>${iconBtn('', navIcon('fa-sun'), 'Light', ' data-ov-scheme="light" aria-pressed="false"')}${iconBtn('', navIcon('fa-moon'), 'Dark', ' data-ov-scheme="dark" aria-pressed="false"')}${iconBtn('', navIcon('fa-circle-half-stroke'), 'Auto: follow this device', ' data-ov-scheme="auto" aria-pressed="false"')}</div>
                         <button type="button" class="ud-ib ud-txt" data-ov-display="text" title="Text size" aria-label="Text size"><span class="icon">${navIcon('fa-text-height')}</span><b class="ud-val"></b></button>
                         <button type="button" class="ud-ib" data-ov-display="motion" title="Animations" aria-label="Animations"><span class="icon">${navIcon('fa-wand-magic-sparkles')}</span><b class="ud-val"></b></button>
-                        <a class="ud-ib" href="https://openvibe.network/themes" title="Themes: every theme, and the season's own" aria-label="Themes"><span class="icon">${navIcon('fa-palette')}</span></a>
+                        <a class="ud-ib" href="https://openvibe.design/look" data-ov-look-open aria-expanded="false" title="Look: themes, the season, and more on openvibe.design" aria-label="Look"><span class="icon">${navIcon('fa-palette')}</span></a>
                     </div>
+                    <div class="ud-look" hidden></div>
                 </div>
             `;
             dropdown.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-use]'); if (t) countUse(t.getAttribute('data-use')); });
@@ -1758,6 +1760,7 @@
             bindChips(dropdown);
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
+            bindLook(dropdown);
             regPanel(dropdown, 'user-menu');
 
             // Avatar click toggles dropdown (the selection for Ask Vibe is read on pointerdown: the press can clear it)
@@ -2004,11 +2007,7 @@
             const el = render();
             upgradeIconsWhenFontsReady();
             if (typeof document !== 'undefined') setTimeout(loadReleaseWatch, 4000);
-            // Pages that hand us a resolved user (openvibe.network, the tools
-            // gateway hub) keep full control. Everyone else — pages that pass
-            // only a token, or nothing at all — gets the user resolved from
-            // the shared SSO state (ov_token cookie / localStorage / optional
-            // sessionUrl) and the navbar re-renders when it arrives.
+            // A page that passes a user keeps control; otherwise the user comes from the shared SSO state, then a re-render.
             // auth: 'external' — the site signs people in itself (Live) and tells us with setUser().
             if (_config.auth === 'external') { if (_config.user) { recordHistory(); enableHandoff(); } }
             else if (!_config.user) refreshAuthState();

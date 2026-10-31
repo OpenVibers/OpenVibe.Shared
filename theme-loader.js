@@ -1,19 +1,11 @@
-// ═══════════════════════════════════════════════════════════════
-// OpenVibe — Theme Loader (Browser)
-// Synchronous theme application from cookie/localStorage.
-// Load this BEFORE navbar.js to prevent FOUC.
-// Sets CSS custom properties on <html> from the user's theme.
-// ═══════════════════════════════════════════════════════════════
+// OpenVibe — Theme Loader (browser): the person's look on <html> before first paint. Load it before navbar.js.
 
 (function (root) {
     'use strict';
 
     const COOKIE_NAME = 'ov_theme_id';
     const STORAGE_KEY = 'ov_theme';
-    // The user's theme is owned centrally by openvibe.network, so EVERY app (openvibe.live,
-    // openvibe.tools + subdomains, openvibe.games, openvibe.media) fetches it from there —
-    // that's what makes the theme chosen at openvibe.network/themes sync everywhere.
-    // Apps may override via init({apiBase}).
+    // The account's look lives on openvibe.network for every site (init({ apiBase }) overrides it).
     const DEFAULT_API_BASE = 'https://openvibe.network';
     let _config = { apiBase: DEFAULT_API_BASE };
 
@@ -90,13 +82,8 @@
     const MODES = { 'vibe':'dark','violet-hour':'dark','midnight':'dark','forest':'dark','neon-tokyo':'dark','dracula':'dark','monokai':'dark','ocean-deep':'dark','sunset':'dark','arctic':'dark','ember':'dark','vapor':'dark','slate':'dark','matrix':'dark','nord':'dark','gruvbox-dark':'dark','abyss':'dark','copper':'dark','sakura-night':'dark','hacker':'dark','daylight':'light','paper':'light','cloud':'light','meadow':'light','peach':'light','lavender':'light','gruvbox-light':'light','snow':'light','sand':'light','rose':'light','solarized-dark':'dark','solarized-light':'light','catppuccin-mocha':'dark','catppuccin-latte':'light','high-contrast':'dark','halloween':'dark','frost':'dark','dawn':'light','tokyo-day':'light','alucard':'light','monokai-light':'light','shallows':'light','ash':'light','vapor-day':'light','greenbar':'light','nord-light':'light','bright':'light','high-contrast-light':'light','hayride':'light','snowfall':'light' };
     // THEMES:END
 
-    // ── Seasons ──────────────────────────────────────────────
-    // During a season (SEASONS above, the visitor's own calendar) its theme stands in for the default theme for anyone
-    // on the default who has not turned seasonal themes off: the display preference `seasonal` (on|off), saved to the
-    // account and followed on every site like text size. A theme someone picked stays theirs. While one shows, <html>
-    // carries data-ov-season="<id>" and window gets an 'ov:season' event ({ id, name, theme } or null).
-    // The OpenVibe mark (ov-mark.js) wears the season for anyone who has not turned seasonal themes off, on any theme:
-    // <html data-ov-season-mark="<id>">.
+    // ── Seasons: in its dates a season's theme stands in for the default theme unless display `seasonal` is off (a picked
+    // theme stays). <html data-ov-season>, window 'ov:season'; the mark wears it on any theme (data-ov-season-mark).
     const DEFAULT_ID = 'vibe';
     function seasonNow(date) {
         const d = date || new Date();
@@ -111,11 +98,8 @@
     let _shown = { id: DEFAULT_ID, vars: null, custom: false };
     let _trying = null;   // { id, name, vars } while a theme is tried on this tab (?ov-try=, 4.41.0)
     /** Paint the theme `themeId` (its variables `vars`), or the season's theme in its place. → the id painted. */
-    // ── Light, dark and Auto ─────────────────────────────────
-    // Every built-in theme has a light and a dark half (PAIRS above). The display preference `scheme` is 'manual' (the
-    // theme someone picked, as it is) or 'auto' (its half that matches the device's light or dark setting). The account
-    // menu's Light / Dark switch saves the other half itself (setScheme). A theme without a half (a community or custom
-    // one) gives way to the default theme's half when Auto wants the other mode.
+    // ── Light, dark and Auto: every built-in has two halves (PAIRS); display `scheme` 'auto' paints the half the device
+    // asks for (a theme without one gives way to the default's half), 'manual' the picked theme as it is.
     let _mq = null;
     function deviceMode() {
         try { _mq = _mq || window.matchMedia('(prefers-color-scheme: dark)'); return _mq.matches ? 'dark' : 'light'; } catch (e) { return 'dark'; }
@@ -134,8 +118,7 @@
 
     function show(themeId, vars, custom) {
         _shown = { id: themeId, vars: vars, custom: !!custom };
-        // While a theme is being tried on this tab (?ov-try=), every repaint paints it: the account's sync, another tab,
-        // the device switching light and dark. _shown still follows the real theme, so Stop goes back to it.
+        // A theme being tried (?ov-try=) wins every repaint; _shown keeps the real one for Stop.
         if (_trying && _trying.vars) return paintTry();
         const half = halfFor(themeId, vars, !!custom);
         const s = isDefault(half.id) && !half.custom && readDisplay().seasonal !== 'off' ? seasonNow() : null;
@@ -158,10 +141,7 @@
 
     /** The Light / Dark / Auto switch's state: 'auto', else the mode of the theme on screen. */
     function getScheme() { return readDisplay().scheme === 'auto' ? 'auto' : modeOf(_shown.id, _shown.vars); }
-    /**
-     * Light or Dark: Auto goes off and, when the picked theme is the other mode, its other half is saved as the theme (the
-     * default theme's half for one without); the season stays as it was. Auto: follow the device. → the new state.
-     */
+    /** Light or Dark saves the picked theme's other half (Auto off); Auto follows the device. → the new state. */
     function setScheme(mode) {
         if (mode === 'auto') { setDisplay({ scheme: 'auto' }); return 'auto'; }
         if (mode !== 'light' && mode !== 'dark') return getScheme();
@@ -181,11 +161,7 @@
         const maxAge = days * 24 * 60 * 60;
         const encoded = encodeURIComponent(value);
         const host = (typeof location !== 'undefined' && location.hostname) || '';
-        // Cookie policy (CONTRACTS.md): a Domain=.openvibe.tools cookie is set ONLY
-        // when actually running on openvibe.tools or one of its subdomains, so the
-        // theme follows the user across the tool satellites. Everywhere else
-        // (openvibe.network, openvibe.live, openvibe.games, localhost, ...) the
-        // cookie is host-only — NO Domain attribute.
+        // Domain=.openvibe.tools only on openvibe.tools and its subdomains (CONTRACTS.md); host-only everywhere else.
         if (host && (host.endsWith('.openvibe.tools') || host === 'openvibe.tools')) {
             document.cookie = `${name}=${encoded};path=/;max-age=${maxAge};domain=.openvibe.tools;SameSite=Lax;Secure`;
         } else {
@@ -205,11 +181,7 @@
         return true;
     }
 
-    /**
-     * Apply arbitrary CSS variables object to <html>.
-     */
-    // Every token any built-in theme sets. Applying a theme clears the ones it does not set, so a
-    // theme that names no --success cannot inherit the previous theme's --success on <html>.
+    // Every token any built-in sets: applying a theme clears the ones it does not set (no inherited --success).
     const KNOWN_PROPS = (function () { const out = {}; for (const id in THEMES) for (const k in THEMES[id]) out[k] = true; return Object.keys(out); })();
     /** Readable text on a colour: near-black or white, whichever contrasts more (WCAG relative luminance). */
     function onColor(c) {
@@ -235,9 +207,7 @@
         // Native controls, scrollbars and form fields follow the theme's light/dark mode.
         const scheme = vars['--color-scheme'];
         if (scheme === 'light' || scheme === 'dark') { el.style.colorScheme = scheme; el.setAttribute('data-theme-mode', scheme); }
-        // The inline critical style paints a fixed dark canvas before any stylesheet; keep it in step with the theme.
-        // Through the variables (with the value as fallback): a page that sets --bg-primary later (its own theme
-        // switcher) repaints the canvas too, instead of leaving the first theme's colour behind.
+        // The canvas follows the variables (value as fallback), so a page that sets --bg-primary later repaints it too.
         if (vars['--bg-primary']) el.style.background = `var(--bg-primary, ${vars['--bg-primary']})`;
         if (vars['--text-primary']) el.style.color = `var(--text-primary, ${vars['--text-primary']})`;
         syncBrowserUi();
@@ -260,12 +230,8 @@
         clearTimeout(_fadeTimer); _fadeTimer = setTimeout(function () { el.classList.remove('ov-theme-fade'); }, 600);
     }
 
-    // ── The browser's own UI (address bar, theme-color) follows the theme ─────────────────────────────────────────────────
-    // The tab icon and the browser/OS toolbar colour are repainted from the theme that was just
-    // applied, so a violet, light or custom theme gets a matching favicon and address bar. Runs on
-    // every apply: first paint, a change on this page, a change in another tab, a server sync.
-    //   favicon: only <link rel="icon" data-ov-icon="<site>"> (written by app-icon.headTags) is touched
-    //   event:   window 'ov:theme' { accent, accentLight, bg, mode } for anything else that wants to follow
+    // ── The browser's UI follows the theme on every apply: theme-color, the favicon (<link rel="icon" data-ov-icon>),
+    // and window 'ov:theme' { accent, accentLight, bg, mode }.
     const DOTS = { live: '#ef4444', games: '#facc15' };
     const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%/]+\)|hsla?\([\d\s.,%/deg]+\))$/i;
     function readColor(name, fallback) {
@@ -294,12 +260,7 @@
         try { window.dispatchEvent(new CustomEvent('ov:theme', { detail: { accent: accent, accentLight: light, bg: bg, mode: mode } })); } catch { /* */ }
     }
 
-    /**
-     * Resolve the active theme from (in order):
-     * 1. localStorage 'ov_theme' (has id + variables — instant)
-     * 2. Cookie 'ov_theme_id' (just slug — look up in built-in map)
-     * Falls back to 'vibe'.
-     */
+    /** The theme from localStorage 'ov_theme' (id and variables), else the 'ov_theme_id' cookie, else the default. */
     function resolveAndApply() {
         // 1. Try localStorage (same-origin cache with full variables)
         try {
@@ -334,25 +295,17 @@
             null;
     }
 
-    /**
-     * Write the resolved theme to every local cache. Always stores the FULL variable set —
-     * including for community/custom themes that aren't in the built-in map — so the next
-     * page load can paint the right colours synchronously with no network call and no flash.
-     */
-    function cacheLocally(themeId, vars, custom) {
+    /** Cache the theme's FULL variables (custom ones too) and the date it was chosen, so the next load paints at once. */
+    function cacheLocally(themeId, vars, custom, at) {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                id: themeId, slug: themeId, variables: vars, at: Date.now(), ...(custom ? { custom: true } : {}),
+                id: themeId, slug: themeId, variables: vars, at: at || Date.now(), ...(custom ? { custom: true } : {}),
             }));
         } catch { /* quota */ }
         setCookie(COOKIE_NAME, themeId, 365);
     }
 
-    /**
-     * Save theme choice locally AND to the user's openvibe.network account, so the choice
-     * follows them to every OpenVibe site. Pass opts.custom for per-user variable overrides;
-     * opts.sync === false keeps it device-local.
-     */
+    /** Save a theme here and to the account (opts.custom: variable overrides; opts.sync === false: this device only). */
     function save(themeId, variables, opts) {
         const custom = (opts && opts.custom) || null;
         const base = variables || THEMES[themeId] || {};
@@ -373,6 +326,11 @@
         }).catch(function () { /* offline / signed out — local cache still holds */ });
     }
 
+    /** When the theme in this browser was chosen (ms), or 0 for a copy older than 4.64.0. */
+    function themeAt() {
+        try { const t = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); return t && Number(t.at) > 0 ? Number(t.at) : 0; } catch { return 0; }
+    }
+
     /**
      * Get the current theme ID (from cookie or localStorage).
      */
@@ -387,18 +345,10 @@
         return getCookie(COOKIE_NAME) || 'vibe';
     }
 
-    // ── Auto-apply on load (synchronous, prevents FOUC) ─────
-    // ── Display preferences: motion + text size, one setting for every OpenVibe site ─────────────
-    //   OpenVibeThemeLoader.display.get() → { motion: 'auto'|'reduced', text: '100'|'112'|'125', seasonal, scheme,
-    //     contrast: 'normal'|'more', font: 'default'|'readable', colors: 'default'|'cb-safe', oled: 'off'|'on' }
-    //   OpenVibeThemeLoader.display.set({ motion, text })   applies here, in other tabs, and saves to the account
-    // Applied as <html data-ov-motion> and --ov-text-scale before first paint; the shared stylesheet
-    // below makes every shared component honour them, and sites can key their own CSS off the same hooks.
-    //   seasonal: 'on'|'off'   the season's theme in place of the default theme (see Seasons above)
-    //   scheme: 'manual'|'auto'   the picked theme as it is, or its half that matches the device (see Light, dark and Auto)
+    // ── Display settings, one record for every OpenVibe site: display.get() → DISPLAY_OPTS' values; display.set(patch)
+    // applies here and in other tabs and saves to the account. <html data-ov-*> and --ov-text-scale before first paint.
     const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'] };
-    // Comfort (4.45.0): an attribute on <html> each; !important because the theme is inline (applyVars). contrast=more,
-    // font=readable (Atkinson Hyperlegible/Verdana), colors=cb-safe (Okabe-Ito), oled=on (black on dark themes).
+    // Comfort (4.45.0): one <html> attribute each, !important over the inline theme (Okabe-Ito colours, OLED black).
     const COMFORT_CSS = 'html[data-ov-contrast=more]{--text-secondary:color-mix(in srgb,var(--text-primary) 88%,var(--bg-primary))!important;--text-muted:color-mix(in srgb,var(--text-primary) 76%,var(--bg-primary))!important;--border:color-mix(in srgb,var(--text-primary) 40%,var(--bg-primary))!important;--border-light:color-mix(in srgb,var(--text-primary) 55%,var(--bg-primary))!important}'
         + 'html[data-ov-contrast=more] :is(p,dd,td) a:not([class]){text-decoration-line:underline;text-underline-offset:2px}html[data-ov-contrast=more] :focus-visible{outline:3px solid var(--accent-strong,var(--accent))!important;outline-offset:2px}'
         + 'html[data-ov-font=readable]{--ov-font:"Atkinson Hyperlegible",Verdana,Tahoma,"Segoe UI",system-ui,sans-serif!important}html[data-ov-font=readable] body{font-family:var(--ov-font)!important;letter-spacing:.02em;word-spacing:.06em}html[data-ov-font=readable] :is(p,li,dd){line-height:1.7}'
@@ -419,31 +369,33 @@
         for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-mark .o,html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + COMFORT_CSS;
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + COMFORT_CSS;
             document.head.appendChild(st);
         }
         try { window.dispatchEvent(new CustomEvent('ov:display', { detail: d })); } catch (e) { /* */ }
+    }
+    /** When the display settings in this browser were last changed (ms), or 0 for a copy older than 4.64.0. */
+    function displayAt() {
+        try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null'); return d && Number(d.at) > 0 ? Number(d.at) : 0; } catch (e) { return 0; }
     }
     function setDisplay(patch, opts) {
         const d = readDisplay();
         const was = d.seasonal + '|' + d.scheme;
         for (const k in DISPLAY_OPTS) if (patch && DISPLAY_OPTS[k].indexOf(String(patch[k])) >= 0) d[k] = String(patch[k]);
-        try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(d)); } catch (e) { /* */ }
+        // A change made here is dated now; one adopted from the account or another site keeps its own date.
+        const at = opts && Number(opts.at) > 0 ? Number(opts.at) : (opts && opts.local ? displayAt() : Date.now());
+        try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(Object.assign({}, d, { at: at }))); } catch (e) { /* */ }
         applyDisplay(d);
         if (d.seasonal + '|' + d.scheme !== was && !(opts && opts.noRepaint)) show(_shown.id, _shown.vars || THEMES[_shown.id] || THEMES[DEFAULT_ID], _shown.custom);
         if (!(opts && opts.local) && typeof fetch !== 'undefined') {
             const token = authToken(); const headers = { 'Content-Type': 'application/json' }; if (token) headers.Authorization = 'Bearer ' + token;
-            if (token || /(?:^|; )ov_sso_hint=account/.test(document.cookie)) fetch(_config.apiBase + '/api/themes/me/display', { method: 'PUT', headers: headers, credentials: 'include', keepalive: true, body: JSON.stringify(d) }).catch(function () {});
+            if (token || /(?:^|; )ov_sso_hint=account/.test(document.cookie)) fetch(_config.apiBase + '/api/themes/me/display', { method: 'PUT', headers: headers, credentials: 'include', keepalive: true, body: JSON.stringify(Object.assign({}, d, { at: at })) }).catch(function () {});
         }
         return d;
     }
-    applyDisplay(readDisplay());
 
-    // ── Try a theme on this page (4.41.0) ──
-    // ?ov-try=<theme> paints that catalog theme on this site without saving it (OpenVibe.Design's "Try it on Live"), and
-    // keeps it for the tab (sessionStorage) while the person moves around the site; ?ov-try=off ends it. A bar at the
-    // bottom says so: Use it saves it to the account, as the studio's Use does; Stop goes back to the account's theme. Only
-    // a catalog name is read from the URL, never colours, and nothing is saved until Use it.
+    // ── Try a theme (4.41.0): ?ov-try=<catalog name> paints it for this tab without saving (?ov-try=off ends it); a bar
+    // offers Use it (saves to the account) and Stop. Only a name is read from the URL, never colours.
     const TRY_KEY = 'ov_try';
     const TRY_ID = /^[a-z0-9][a-z0-9-]{0,63}$/;
     const tryName = function (id) { return String(id).split('-').map(function (w) { return w ? w[0].toUpperCase() + w.slice(1) : w; }).join(' '); };
@@ -540,7 +492,83 @@
         document.body.appendChild(bar);
     }
 
+    // ── The look travels (4.64.0): each domain keeps its own copy, so a click to another OpenVibe site carries ?ov_look=
+    // (what this page paints, the display and theme with their dates). Added at click time, read only after an OpenVibe
+    // page, only colours pass; the next site keeps it when newer and drops it from the address before first paint.
+    const OV_HOST = /(^|\.)(openvibe\.[a-z]{2,12}|openre\.stream)$/i;
+    const PAINT_KEY = 'ov_paint';
+    const PAINT_ATTRS = ['data-theme', 'data-theme-mode', 'data-ov-season', 'data-ov-season-mark', 'data-ov-motion', 'data-ov-text', 'data-ov-contrast', 'data-ov-font', 'data-ov-colors', 'data-ov-oled'];
+    const SAFE_VALUE = /^(#[0-9a-f]{3,8}|rgba?\([0-9.,\s%]+\)|[0-9.,\s]+|light|dark|(-?[0-9.]+(px)?\s+){2,4}rgba?\([0-9.,\s%]+\))$/i;
+    const SAFE_ATTR = /^[a-z0-9-]{1,40}$/;
+    function seasonUntil(s) {
+        if (!s) return 0;
+        const d = new Date(), y = d.getFullYear(), to = s.to.split('-');
+        const end = new Date(y + (s.from > s.to && s.from <= String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') ? 1 : 0), Number(to[0]) - 1, Number(to[1]) + 1);
+        return end.getTime();
+    }
+    function paintRecord() {
+        const el = document.documentElement, a = {};
+        for (let i = 0; i < PAINT_ATTRS.length; i++) { const v = el.getAttribute(PAINT_ATTRS[i]); if (v) a[PAINT_ATTRS[i]] = v; }
+        return { k: THEME_KEYS.map(function (k) { return el.style.getPropertyValue(k).trim(); }), a: a, ts: el.style.getPropertyValue('--ov-text-scale').trim(), u: seasonUntil(_season), at: Date.now() };
+    }
+    let _paintTimer = 0;
+    function rememberPaint() {
+        if (_paintTimer || typeof setTimeout === 'undefined') return;
+        _paintTimer = setTimeout(function () { _paintTimer = 0; if (_trying) return; try { localStorage.setItem(PAINT_KEY, JSON.stringify(paintRecord())); } catch (e) { /* */ } }, 0);
+    }
+    function lookToken() {
+        const rec = { v: 1, d: readDisplay(), da: displayAt(), t: _shown.id, c: _shown.custom ? 1 : 0, ta: themeAt(), p: paintRecord() };
+        return btoa(JSON.stringify(rec)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function readLook() {
+        try {
+            if (typeof location === 'undefined' || !/[?&]ov_look=/.test(location.search)) return null;
+            const u = new URL(location.href), raw = u.searchParams.get('ov_look') || '';
+            u.searchParams.delete('ov_look');
+            try { history.replaceState(history.state, '', u.pathname + (u.search || '') + u.hash); } catch (e) { /* */ }
+            const from = document.referrer ? new URL(document.referrer).hostname : '';
+            if (!OV_HOST.test(from) || raw.length > 4000) return null;
+            const L = JSON.parse(atob(raw.replace(/-/g, '+').replace(/_/g, '/')));
+            return L && L.v === 1 ? L : null;
+        } catch (e) { return null; }
+    }
+    function adoptLook(L) {
+        if (!L) return;
+        const now = Date.now(), clamp = function (n) { n = Number(n) || 0; return n > now + 60000 ? now : n; };
+        const da = clamp(L.da), ta = clamp(L.ta);
+        if (L.d && typeof L.d === 'object' && da > displayAt()) {
+            const d = readDisplay();
+            for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(L.d[k])) >= 0) d[k] = String(L.d[k]);
+            try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(Object.assign({}, d, { at: da }))); } catch (e) { /* */ }
+        }
+        const id = String(L.t || '');
+        if (TRY_ID.test(id) && ta > themeAt()) {
+            if (!L.c && THEMES[id]) cacheLocally(id, THEMES[id], false, ta);
+            else if (L.c && L.p && Array.isArray(L.p.k)) {
+                const vars = {};
+                for (let i = 0; i < THEME_KEYS.length; i++) { const v = String(L.p.k[i] || ''); if (v && SAFE_VALUE.test(v)) vars[THEME_KEYS[i]] = v; }
+                if (Object.keys(vars).length > 8) cacheLocally(id, vars, true, ta);
+            }
+        }
+    }
+    function decorateLink(e) {
+        const a = e.target && e.target.closest && e.target.closest('a[href]');
+        if (!a || a.hasAttribute('download')) return;
+        let u; try { u = new URL(a.href, location.href); } catch (err) { return; }
+        if (!/^https?:$/.test(u.protocol) || u.hostname === location.hostname || !OV_HOST.test(u.hostname)) return;
+        try { u.searchParams.set('ov_look', lookToken()); a.href = u.toString(); } catch (err) { /* */ }
+    }
+    const _arrived = readLook();
+    adoptLook(_arrived);
+    applyDisplay(readDisplay());
+    if (typeof document !== 'undefined' && document.addEventListener) {
+        ['pointerdown', 'keydown', 'click'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (ev !== 'keydown' || e.key === 'Enter') decorateLink(e); }, true); });
+        window.addEventListener('ov:theme', rememberPaint);
+        window.addEventListener('ov:display', rememberPaint);
+    }
+
     const activeId = resolveAndApply();
+    rememberPaint();
     startTry(readTry());
     // The icon link may be parsed after this script: repaint once the head is complete.
     if (typeof document !== 'undefined' && document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { _browserUiKey = ''; syncBrowserUi(); });
@@ -555,9 +583,7 @@
         } catch (e) { /* no media queries */ }
     }
 
-    // Look up a theme we don't ship in the built-in map (community/custom themes) from the
-    // central catalog. Without this, any non-built-in id fell through to the default 'vibe'
-    // — which is why a custom theme could "disappear" and flash purple on every load.
+    // A theme not in the built-in map (community, custom) comes from the catalog, never falls back to the default.
     function fetchThemeVars(themeId) {
         return fetch(_config.apiBase + '/api/themes/' + encodeURIComponent(themeId))
             .then(function (r) { return r.ok ? r.json() : null; })
@@ -565,13 +591,8 @@
             .catch(function () { return null; });
     }
 
-    // ── Pull the account's theme from openvibe.network ───────
-    // Runs IMMEDIATELY, not on a 500ms timer: the cached theme is already painted, so this is
-    // a silent correction — delaying it only widened the window where a cold or stale cache
-    // showed the wrong theme. There is also no token gate any more; the ov_token cookie rides
-    // along via credentials:'include' (openvibe.network allows credentialed CORS per origin),
-    // so this now works on sites where the cookie isn't readable from JS — previously the sync
-    // silently never ran there and the user's theme appeared to be "lost".
+    // ── The account's look from openvibe.network, at once (the cached look is already painted; newest copy wins). No
+    // token gate: the ov_token cookie rides along (credentials: 'include'), for sites whose script cannot read it.
     let _lastSync = 0;
     /** This site's id from <html data-ov-service> (openvibe-shared/shell writes it), or '' (4.43.0). */
     function siteService() {
@@ -582,14 +603,21 @@
         _lastSync = Date.now();
         const token = authToken();
         const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
-        // The site's own exception, when the person set one in OpenVibe.Design ("Games in Neon Tokyo"): Network answers it
-        // for ?service=<this site> and the account's theme otherwise (4.43.0).
+        // A per-site look set in OpenVibe.Design ("Games in Neon Tokyo") answers for ?service=<this site> (4.43.0).
         const site = siteService();
         fetch(_config.apiBase + '/api/themes/me/active' + (site ? '?service=' + encodeURIComponent(site) : ''), { headers: headers, credentials: 'include' })
             .then(function (r) { return r.ok ? r.json() : null; })
             .then(function (data) {
-                if (data && data.display) { const cur = readDisplay(); const next = {}; for (const k in DISPLAY_OPTS) next[k] = data.display[k] || cur[k]; if (JSON.stringify(next) !== JSON.stringify(cur)) { fadeNext(); setDisplay(data.display, { local: true }); } }
+                if (data && data.display) {
+                    const cur = readDisplay(); const next = {}; for (const k in DISPLAY_OPTS) next[k] = data.display[k] || cur[k];
+                    const serverAt = Number(data.display_at) || 0, localAt = displayAt();
+                    const takeServer = serverAt ? serverAt > localAt : !(localAt && Date.now() - localAt < 60000);
+                    if (takeServer && JSON.stringify(next) !== JSON.stringify(cur)) { fadeNext(); setDisplay(data.display, { local: true, at: serverAt || localAt }); }
+                    else if (serverAt && localAt > serverAt && JSON.stringify(next) !== JSON.stringify(cur)) setDisplay(cur, { at: localAt });   // newer here: the account catches up
+                }
                 if (!data || !data.theme_id) return;
+                const serverThemeAt = Number(data.theme_at) || 0, localThemeAt = themeAt();
+                if (serverThemeAt ? serverThemeAt < localThemeAt : (localThemeAt && Date.now() - localThemeAt < 60000)) return;   // a newer pick here
                 const serverId = data.theme_id;
                 const custom = (data.custom_variables && typeof data.custom_variables === 'object'
                     && Object.keys(data.custom_variables).length) ? data.custom_variables : null;
@@ -597,7 +625,7 @@
                 const settle = function (base) {
                     const vars = custom ? Object.assign({}, base || {}, custom) : (base || null);
                     if (!vars || !Object.keys(vars).length) return;
-                    cacheLocally(serverId, vars, !!custom);   // cacheLocally, not save() — no write-back loop
+                    cacheLocally(serverId, vars, !!custom, serverThemeAt || localThemeAt || 1);   // cacheLocally, not save() — no write-back loop
                     if (_shown.id === serverId && !!_shown.custom === !!custom && JSON.stringify(_shown.vars) === JSON.stringify(vars)) return;
                     fadeNext();
                     show(serverId, vars, !!custom);
@@ -608,10 +636,8 @@
             .catch(function () { /* offline / signed out — keep the cached theme */ });
     }
     syncFromServer();
-    // Every site keeps its own copy, so one visited after a change elsewhere paints its old copy first and the account's
-    // answer corrects it (faded, not a jolt). The account is asked again when the page comes back into view (a change made
-    // in another site's tab), and once more shortly after arriving from another site, since a change saved there just
-    // before following the link may land after this page first asked.
+    // Asked again when the page comes back into view, and shortly after arriving from another site (a change saved there
+    // just before the link may land after this page first asked).
     if (typeof document !== 'undefined' && document.addEventListener) {
         const again = function () { if (Date.now() - _lastSync > 10000) syncFromServer(); };
         document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') again(); });

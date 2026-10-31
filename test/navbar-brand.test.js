@@ -237,7 +237,7 @@ function load(hostname, opts = {}) {
     // 4.23.0 (the owner: "a plus button… better use of icons… compactness"): + and the gear beside the name, your places
     // as a grid of icons, and one row at the foot for light/dark, text size, motion and themes; Sign out by the gear.
     assert.ok(/class="ud-hbtn add-account" id="openvibe-add-account"[^>]*aria-label="Add another account"/.test(dd.innerHTML), 'Add another account is a + beside the name');
-    assert.ok(dd.innerHTML.includes('aria-label="Account &amp; settings"') && dd.innerHTML.includes('aria-label="Themes"') && /id="openvibe-logout-btn"[^>]*aria-label="Sign out"/.test(dd.innerHTML), 'the gear, Themes and Sign out are icon buttons');
+    assert.ok(dd.innerHTML.includes('aria-label="Account &amp; settings"') && dd.innerHTML.includes('aria-label="Look"') && dd.innerHTML.includes('data-ov-look-open') && /id="openvibe-logout-btn"[^>]*aria-label="Sign out"/.test(dd.innerHTML), 'the gear, Look (4.64.0: opens in place) and Sign out are icon buttons');
     assert.ok(/<div class="ud-grid">/.test(dd.innerHTML) && /class="ud-tile"[^>]*data-menu-id="mp"/.test(dd.innerHTML), 'the places are a grid of tiles, the site\'s own first');
     assert.ok(!dd.innerHTML.includes('Recently used'), 'the places you went are the search menu\'s');
     assert.ok(!dd.innerHTML.includes('Across OpenVibe'), 'the other sites are the launcher\'s and the drawer\'s, not the account menu\'s');

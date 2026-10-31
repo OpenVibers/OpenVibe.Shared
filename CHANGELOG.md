@@ -6,6 +6,31 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.64.0 — 2026-10-31
+
+- **One look, everywhere, with no flash** (plan L42; the owner: seasonal off on Network was still on, and orange, on
+  Live; "make it reliable and consistent… instant load… change the theme quickly from that user drop-down… works for
+  non logged in users"). Each OpenVibe domain keeps its own copy of the look; now:
+  - every copy is dated (`ov_display.at`, `ov_theme.at`), and the newest wins between this browser and the account.
+    An account copy without a date still wins, unless a change made here in the last minute may not have reached it;
+    when this browser's copy is newer, the account catches up with that date;
+  - a click on a link to another OpenVibe site carries the look (`?ov_look=`: what is painted, the display settings
+    and the theme, each dated). The next site adopts it when newer, before its first paint, and takes it out of the
+    address. It is read only after an OpenVibe page, so a link someone sends cannot set your look, and only colours
+    pass (no `url()`, no `expression()`). Guests get it too: nothing needs an account;
+  - theme-loader.js keeps what it painted in `ov_paint`, for pages whose loader comes late.
+- **`openvibe-shared/look-boot`**: the inline script for the top of `<head>` on a page whose theme-loader.js is deferred
+  (Live). It paints `ov_paint`, or a look a link just carried, before the first frame: colours, `data-theme` and the
+  `data-ov-*` display attributes, text size, background and `color-scheme`. A season whose dates are over is left for
+  the loader. `tag({ nonce })` gives the `<script>`; 1.6 KB.
+- **The Look panel** (`ov-look.js`, loaded the first time it opens, 2.5 KB brotli): the palette in the account menu,
+  and Look in a guest's menu, open it in place instead of sending people to openvibe.network/themes. Eleven themes and
+  the season's own, the season switch, where the look is kept (your account, or this browser), and "More looks on
+  openvibe.design", the home of every theme.
+- **Calm keeps the O.** Reduced motion hid `.ov-mark .o` along with the old comet; the Pair's ring shares that class,
+  so Calm took the O out of the mark. Only the icon's comet hides now.
+- theme-loader.js's size budget is 62,000 characters (15.45 KB brotli, was 15.41).
+
 ## 4.63.0 — 2026-10-31
 
 - **37 more glyphs, for the Font Awesome names the network still used most** (plan L32 I4; openvibe.design/icons'

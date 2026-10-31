@@ -26,6 +26,7 @@ const BROWSER = Object.freeze([
     'user-card.js',
     'ov-mark.js',           // the OV brand mark drop-in
     'ov-glyphs.js',         // the network's own icons in place of Font Awesome's (built from glyphs.js; navbar.js loads it)
+    'ov-look.js',           // the Look panel: themes, the season, more on openvibe.design (navbar.js loads it on first open)
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'history.js',           // cross-site history
     'sso-client.js',        // link hand-off, FedCM
