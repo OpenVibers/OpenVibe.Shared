@@ -6,6 +6,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.58.0 — 2026-10-31
+
+- **A folded footer column says how many links it holds.** Each column's summary carries its count ("Network · 9",
+  "Legal · 4") on a phone, where the columns fold (4.53.0). The count is hidden on a desktop, where the header is a
+  heading and every link shows. Every link stays in the page; no column or link was removed.
+
 ## 4.57.1 — 2026-10-31
 
 - **A tool's terms line wraps cleanly.** The facts in `kit.toolHead({ facts })` are spaced apart, not joined by dots,
