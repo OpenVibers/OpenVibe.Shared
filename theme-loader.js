@@ -322,7 +322,7 @@
         if (token) headers['Authorization'] = 'Bearer ' + token;
         fetch(_config.apiBase + '/api/themes/me', {
             method: 'PUT', headers: headers, credentials: 'include', keepalive: true,
-            body: JSON.stringify({ theme_id: themeId, custom_variables: custom }),
+            body: JSON.stringify({ theme_id: themeId, custom_variables: custom, at: themeAt() }),
         }).catch(function () { /* offline / signed out — local cache still holds */ });
     }
 

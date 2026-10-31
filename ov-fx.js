@@ -15,7 +15,8 @@
  * only), reveal, count, confetti, shimmer (a placeholder that shimmers until data-fx is removed).
  *
  * Motion tokens (a look can set them; theme-loader.js passes a theme's own): --ov-dur-1…4, --ov-ease-out,
- * --ov-ease-spring, --ov-ease-in-out. Nothing here runs by itself: every effect waits for a hover, a press, or the
+ * --ov-ease-spring, --ov-ease-in-out. Each look has a feel (4.67.0): the quiet paper and light themes move calmly (a
+ * little slower, no overshoot), the neon and terminal ones snap (quicker, a livelier spring); the rest are lively. Nothing here runs by itself: every effect waits for a hover, a press, or the
  * element coming on screen, plays once, and stops. Under prefers-reduced-motion or Calm (html[data-ov-motion=reduced])
  * nothing moves: reveals and numbers are simply there, and no confetti falls.
  */
@@ -23,7 +24,12 @@
     'use strict';
     if (!root || root.OVFx) return;
     const doc = root.document;
+    const feel = (ids) => ids.map((id) => `[data-theme=${id}]`).join(',');
+    const CALM = feel(['paper', 'daylight', 'cloud', 'snow', 'sand', 'rose', 'meadow', 'peach', 'lavender', 'dawn', 'solarized-light', 'catppuccin-latte', 'nord', 'nord-light']);
+    const SNAPPY = feel(['neon-tokyo', 'vapor', 'matrix', 'hacker', 'high-contrast', 'dracula', 'monokai', 'abyss']);
     const CSS = ':root{--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s;--ov-ease-out:cubic-bezier(.2,.8,.2,1);--ov-ease-spring:cubic-bezier(.34,1.56,.64,1);--ov-ease-in-out:cubic-bezier(.65,0,.35,1)}'
+        + `html:is(${CALM}){--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s;--ov-ease-spring:var(--ov-ease-out)}`
+        + `html:is(${SNAPPY}){--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s;--ov-ease-spring:cubic-bezier(.3,1.8,.6,1)}`
         + 'html[data-ov-motion=reduced]{--ov-dur-1:0s;--ov-dur-2:0s;--ov-dur-3:0s;--ov-dur-4:0s}'
         + '.ovfx-glint{position:relative;overflow:hidden;isolation:isolate}'
         + '.ovfx-glint::after{content:"";position:absolute;inset:-2px;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);transform:translateX(-120%);z-index:1}'
@@ -182,6 +188,6 @@
         if ('MutationObserver' in root) new root.MutationObserver((rs) => rs.forEach((r) => r.addedNodes.forEach((n) => { if (n.nodeType === 1) scan(n); }))).observe(doc.documentElement, { childList: true, subtree: true });
     }
 
-    root.OVFx = { scan, confetti, wire };
+    root.OVFx = { scan, confetti, wire, FEEL: { CALM, SNAPPY } };
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })(typeof window !== 'undefined' ? window : this);

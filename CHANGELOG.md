@@ -6,6 +6,20 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.67.0 — 2026-10-31
+
+- **Share this look** (plan L45 step 4). The Look panel has a Share button beside "saved to your account". It copies
+  a link to this page with `?ov-try=<theme>` (the phone's share sheet on Android and iOS). Anyone who opens it sees the
+  page in that theme with theme-loader's Use it / Stop bar, and nothing is saved until they choose. Built-in themes
+  only: custom colours never ride a link. `OVLook.shareLink(id)`.
+- **The theme's save is dated**, as the display settings are since 4.64.0. The PUT carries `at`, and Network (since
+  #458) keeps the newest copy.
+- **A feel for each look** (plan L45 step 1). ov-fx.js's motion tokens follow the theme:
+  - the quiet paper and light themes move calmly: a little slower, and the spring settles without overshoot;
+  - the neon and terminal ones snap: quicker, with a livelier spring;
+  - the rest stay lively;
+  - Calm still sets every length to zero. `OVFx.FEEL` lists the two groups.
+
 ## 4.66.0 — 2026-10-31
 
 - **`ov-fx.js`, the network's effects in one kit** (plan L45; the owner: "reusable modular sharable systems and

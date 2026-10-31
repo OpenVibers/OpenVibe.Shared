@@ -63,6 +63,12 @@ const display = (store) => JSON.parse(store.get('ov_display') || 'null');
     assert.strictEqual(display(p.store).seasonal, 'off');
     assert.strictEqual(display(p.store).at, NOW, 'dated now');
 
+    // ── A theme saved here carries its date too (4.67.0): the account keeps the newest ──
+    p = load();
+    p.L.save('nord');
+    const themePut = p.puts.find((x) => /\/api\/themes\/me$/.test(x.url));
+    assert.ok(themePut && themePut.body.theme_id === 'nord' && themePut.body.at === NOW, 'the theme\'s PUT is dated');
+
     // ── The account's answer: newest wins ──
     const older = new Map([['ov_display', JSON.stringify({ seasonal: 'off', at: NOW - 5000 })]]);
     p = load({ store: older, active: { theme_id: 'vibe', display: { seasonal: 'on' }, display_at: NOW - 60000 } });
