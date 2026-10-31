@@ -198,8 +198,9 @@
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-dot { display: none; }
             }
             @media (min-width: 401px) and (max-width: 480px) {
-                .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 30px !important; }
-                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16px; }
+                .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 15px; letter-spacing: -.2px; }
+                .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
             }
             @media (max-width: 480px) {
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-core,
