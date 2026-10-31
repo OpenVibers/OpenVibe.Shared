@@ -160,7 +160,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-switch:checked { background: var(--ovk-fill); }
 .ovk-switch:checked::after { transform: translateX(18px); }
 .ovk-switch:focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 2px; }
-.ovk-seg { display: inline-flex; flex: none; gap: 2px; padding: 3px; border-radius: 10px; background: var(--ovk-panel-2); }
+.ovk-seg { display: inline-flex; flex: none; flex-wrap: wrap; max-width: 100%; gap: 2px; padding: 3px; border-radius: 10px; background: var(--ovk-panel-2); }
 .ovk-seg input, .ovk-chip input { position: absolute; opacity: 0; pointer-events: none; }
 .ovk-seg span { display: block; padding: 6px 12px; border-radius: 8px; color: var(--ovk-muted); font-size: .86rem; font-weight: 650; cursor: pointer; }
 .ovk-seg input:checked + span { background: var(--ovk-fill); color: var(--ovk-on-fill); }
