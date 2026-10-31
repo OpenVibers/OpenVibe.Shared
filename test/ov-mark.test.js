@@ -138,6 +138,17 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(t.running(), false, 'no second intro');
     }
 
+    // ── OVMark.intro(el) replays the intro on one mark, later in the visit, and it ends by itself ─────────────
+    {
+        const t = setup();
+        t.io.fire(t.mark, true); t.clock.advance(9000);
+        assert.ok(!t.mark.hasAttribute('data-ovm-intro'), 'the intro of the visit is over');
+        t.window.OVMark.intro(t.mark);
+        assert.ok(t.mark.hasAttribute('data-ovm-intro') && t.running(), 'replayed');
+        t.clock.advance(1500);
+        assert.ok(!t.mark.hasAttribute('data-ovm-intro') && !t.running(), 'and over again');
+    }
+
     // ── one intro per visit: the next page of a multi-page site finishes it, never restarts it ─
     {
         const session = memoryStorage();

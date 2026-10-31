@@ -427,7 +427,14 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
             let tries = 0; const again = () => { if (!finish() && ++tries <= 20) setTimeout(again, 100); }; again();
         }
     }
-    window.OVMark = { mount, navStart, navEnd, usual, FORMS };
+    /** Replay the intro on one mark (a brand page, a splash): the O pops in and the V grows out of its point. */
+    function intro(el) {
+        const st = el && state.get(el); if (!st) return;
+        el.removeAttribute('data-ovm-intro');
+        try { void el.getBoundingClientRect(); } catch { /* */ }
+        st.introEnd = Date.now() + 1400; update(el);
+    }
+    window.OVMark = { mount, navStart, navEnd, usual, intro, FORMS };
     window.ovMarkMount = mount;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

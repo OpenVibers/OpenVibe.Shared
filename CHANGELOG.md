@@ -23,7 +23,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
     closes the O like an eye. The V's shapes morph, and the gap in the ring follows them.
   - **The page-load progress is the ring:** following a link, the navbar's ring empties and draws itself round again
     at this site's learned pace (the same pace as 4.58.0), the V nodding; on arrival the ring closes and the V hops.
-    `data-progress` (island.js) draws the ring to its level.
+    `data-progress` (island.js) draws the ring to its level. `OVMark.intro(el)` replays the intro on one mark (a
+    brand page, a splash).
   - **Variants:** Live, VIP, Tips, Deals and Coupons carry a light in the O (Live's red record light). **The season:**
     the O is a pumpkin with its stem and leaf in October, with caps of snow in December.
   - **The navbar** shows the mark in the wide box (`data-size="34" data-wide`), the brand button hugging it; the footer
