@@ -85,7 +85,8 @@
 /* The season: the O is a pumpkin in October (states below still colour it). */
 .ov-mark .sh,.ov-mark .sw2{display:none}
 html[data-ov-season-mark=halloween] .ov-mark .sh,html[data-ov-season-mark=winter] .ov-mark .sw2{display:inline}
-:where(html[data-ov-season-mark=halloween]) .ov-mark:not([data-tone]){--ovm-o:#f97316}
+/* As weak as the base rule, so a state, a tone or a page's own colour (a brand page) wins over the season. */
+:where(html[data-ov-season-mark=halloween]) .ov-mark{--ovm-o:#f97316}
 .ov-mark .ss{fill:none;stroke:#5fae3c;stroke-width:4.4;stroke-linecap:round}
 .ov-mark .sl{fill:#7fd04e;transform-box:fill-box;transform-origin:0 80%}
 .ov-mark .sc{fill:none;stroke:#f4fbff;stroke-width:5.6;stroke-linecap:round}
