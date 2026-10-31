@@ -6,6 +6,17 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.57.0 — 2026-10-30
+
+- **The Dock can use a refreshing token and a read-only scope set** (the browser extension's one-click
+  sign-in). `OpenVibeDock.mount({ token, scopes })` and the Action Center accept a `token` that is a string, a
+  sync function or an async function, resolved before every request; the Dock's read, chat and notification
+  calls all use it. `scopes` is optional: a site's Dock passes none and keeps every control. The extension
+  passes `['dock','activity','chat.read']`, so the Agents tab keeps **Details** but hides approve/decline
+  (`actions.decide` absent) and a thread hides the composer (`chat.write` absent) while still reading and
+  marking read. `notification-ui.js` and `notification-live.js` resolve a token function per request too, so the realtime ticket uses the refreshed token.
+- `dock.js` is 14,219 bytes brotli; the budget is 14,336 (14.0 KB), 117 bytes of headroom.
+
 ## 4.56.0 — 2026-10-30
 
 - **A tool states its terms.** `kit.toolHead({ facts })` adds one short line under the tool's sentence:

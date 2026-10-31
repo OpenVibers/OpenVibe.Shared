@@ -56,12 +56,15 @@
     const place = () => ({ ...DEFAULT_STATE.place[kind()], ...((state().place || {})[kind()] || {}) });
     const sibling = (name) => (typeof o.sibling === 'function' ? o.sibling(name) : `https://openvibe.network/shared/${name}`);
 
-    function call(path, init = {}) {
+    async function call(path, init = {}) {
         const base = String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '');
-        const t = typeof o.token === 'function' ? o.token() : o.token;
+        const t = await tokenOf();
         const headers = { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
-        return fetch(base + path, { ...init, headers, credentials: 'omit' }).then((r) => (r.ok ? r.json() : null));
+        const r = await fetch(base + path, { ...init, headers, credentials: 'omit' });
+        return r.ok ? r.json() : null;
     }
+    /** A token may be a string, a sync function or an async function (the extension refreshes it). */
+    async function tokenOf() { return typeof o.token === 'function' ? await o.token() : o.token; }
     const notify = () => { store(doc); paintPill(); };
 
     /** A change to the state: painted now, sent to the Network a beat later (several changes go as one PUT). */
@@ -421,21 +424,21 @@
             if (!ok) return failed(panel, id);
             panel.innerHTML = `<div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
             const m = root.OpenVibeActionCenter.mount(panel.firstChild, {
-                token: o.token, apiBase: o.apiBase, buckets: ['waiting', 'running'],
+                token: o.token, apiBase: o.apiBase, scopes: o.scopes, buckets: ['waiting', 'running'],
                 onCounts: (c) => { doc = { ...(doc || {}), state: state(), counts: { ...counts(), running: c.running || 0, waiting: c.waiting || 0 } }; badges(); notify(); },
             });
             mounts[id] = m;
             panel.querySelector('[data-act="all"]').addEventListener('click', (e) => {
                 const anchor = e.currentTarget;
                 close();
-                try { root.OpenVibeActionCenter.open({ token: o.token, apiBase: o.apiBase, anchor: (pill && !pill.hidden) ? pill : anchor }); } catch { /* */ }
+                try { root.OpenVibeActionCenter.open({ token: o.token, apiBase: o.apiBase, scopes: o.scopes, anchor: (pill && !pill.hidden) ? pill : anchor }); } catch { /* */ }
             });
             return;
         }
         const ok = await load('notification-ui.js', () => !!(root.OpenVibeNotifications && root.OpenVibeNotifications.renderDock));
         if (!ok) return failed(panel, id);
         const N = root.OpenVibeNotifications;
-        if (!N.__ovNavInit) { try { N.init({ token: typeof o.token === 'function' ? o.token() : o.token, apiBase: o.apiBase || 'https://openvibe.network' }); N.__ovNavInit = true; } catch { /* */ } }
+        if (!N.__ovNavInit) { try { N.init({ token: o.token, apiBase: o.apiBase || 'https://openvibe.network', scopes: o.scopes }); N.__ovNavInit = true; } catch { /* */ } }
         panel.innerHTML = '';
         N.renderDock(panel);
         mounts[id] = { refresh: () => { try { N.refresh(); } catch { /* */ } } };
@@ -452,10 +455,12 @@
     const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
+    const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
+    const canWriteChat = () => !scopes() || scopes().includes('chat.write');
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
-    function chatCall(path, init = {}) {
-        const t = typeof o.token === 'function' ? o.token() : o.token;
+    async function chatCall(path, init = {}) {
+        const t = await tokenOf();
         const headers = { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
         return fetch(chatBase() + path, { ...init, headers, credentials: 'omit' }).then(async (r) => {
             const b = await r.json().catch(() => ({}));
@@ -553,28 +558,33 @@
         const go = h('button', 'ovdk-go'); go.type = 'submit'; go.setAttribute('aria-label', 'Send'); go.append(icon(G.send));
         const err = h('p', 'ovdk-err'); err.hidden = true;
         form.append(box, go);
-        panel.append(head, scroll, err, form);
-        const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
-        box.addEventListener('input', fit);
-        box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = box.value.trim();
-            if (!text || chats.busy) return;
-            chats.busy = true; go.disabled = true; err.hidden = true;
-            try {
-                await chatCall(`/api/dm/conversations/${encodeURIComponent(chats.open)}/messages`, { method: 'POST', body: JSON.stringify({ message: text }) });
-                box.value = ''; fit();
-                await pull(list, scroll);
-            } catch (x) {
-                err.textContent = x.status === 429 ? 'Slow down a little, then send it again.' : x.status === 403 ? 'You can’t send messages in this conversation.' : 'That did not send. Try again.';
-                err.hidden = false;
-            } finally { chats.busy = false; go.disabled = false; box.focus(); }
-        });
+        panel.append(head, scroll, err);
+        if (canWriteChat()) {
+            panel.append(form);
+            const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
+            box.addEventListener('input', fit);
+            box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = box.value.trim();
+                if (!text || chats.busy) return;
+                chats.busy = true; go.disabled = true; err.hidden = true;
+                try {
+                    await chatCall(`/api/dm/conversations/${encodeURIComponent(chats.open)}/messages`, { method: 'POST', body: JSON.stringify({ message: text }) });
+                    box.value = ''; fit();
+                    await pull(list, scroll);
+                } catch (x) {
+                    err.textContent = x.status === 429 ? 'Slow down a little, then send it again.' : x.status === 403 ? 'You can’t send messages in this conversation.' : 'That did not send. Try again.';
+                    err.hidden = false;
+                } finally { chats.busy = false; go.disabled = false; box.focus(); }
+            });
+        } else {
+            panel.append(h('div', 'ovdk-none', 'Reading only. Answer in OpenVibe.Chat.'));
+        }
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
-        setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
+        if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {
@@ -624,20 +634,21 @@
         // Desktop toasts (bottom right, notification-ui.js) stack above a pill in their corner; an open Dock sets its own.
         if (!isOpen()) clear(show && pill.dataset.corner === 'bottom-right' && !phone() ? 58 : 0);
     }
-    function read() {
+    async function read() {
         clearTimeout(readT);
         if (!pill || document.hidden) return;
-        const t = typeof o.token === 'function' ? o.token() : o.token;
+        const t = await tokenOf();
         if (!t) return;
-        fetch(`${String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '')}/api/v1/me/dock`, { headers: { authorization: `Bearer ${t}`, accept: 'application/json' }, credentials: 'omit' })
-            .then((r) => { if (r.status !== 404) return r.ok ? r.json() : null; store({ off: Date.now() + 864e5 }); if (pill) pill.hidden = true; return null; })
-            .then((next) => {
-                if (!next || !next.state || !pill) return;
-                update(next);
-                if (!isOpen() && next.state.open && !phone()) open();
-                const c = next.counts || {};
-                if (c.running || c.waiting) readT = setTimeout(read, 30000);
-            }).catch(() => { /* offline: the copy stands */ });
+        try {
+            const r = await fetch(`${String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '')}/api/v1/me/dock`, { headers: { authorization: `Bearer ${t}`, accept: 'application/json' }, credentials: 'omit' });
+            if (r.status === 404) { store({ off: Date.now() + 864e5 }); if (pill) pill.hidden = true; return; }
+            const next = r.ok ? await r.json() : null;
+            if (!next || !next.state || !pill) return;
+            update(next);
+            if (!isOpen() && next.state.open && !phone()) open();
+            const c = next.counts || {};
+            if (c.running || c.waiting) readT = setTimeout(read, 30000);
+        } catch { /* offline: the copy stands */ }
     }
     /** The pill for a signed-in person (navbar.js), or none (null: signed out, or the site turned the Dock off). */
     function mount(opts) {
