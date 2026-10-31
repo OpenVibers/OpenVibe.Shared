@@ -262,4 +262,27 @@ const kit = require('../kit');
     }
 }
 
-console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page) and the tool frame ok');
+// The left sidebar (4.60.0, L35): vertical navigation, sections, a drawer on a phone opened and closed on the document.
+{
+    const html = kit.sidebar({
+        id: 'side', label: 'Codes', action: { href: '/', label: 'New chat', icon: 'pencil' }, find: { action: '/tasks', placeholder: 'Search' },
+        nav: [{ href: '/agents', label: 'Agents', icon: 'members' }, { href: '/machines', label: 'Machines', icon: 'computer', here: true }, { href: '/approvals', label: 'Approvals', icon: 'hand', count: 140 }, { href: 'javascript:x', label: '<b>x</b>', dot: 'needs' }],
+        sections: [{ title: 'Today', items: [{ href: '/t/1', label: 'Fix <it>', meta: '2m', dot: 'busy' }] }, { title: 'Earlier', items: [], empty: 'Nothing yet' }],
+    });
+    assert.match(html, /^<aside class="ovk-sidebar" id="side" aria-label="Codes" data-ovk-sidebar>/);
+    assert.ok(/<nav class="ovk-sidebar-nav" aria-label="Codes">/.test(html) && html.indexOf('ovk-sidebar-nav') < html.indexOf('ovk-sidebar-secs'), 'the navigation is a vertical list above the sections');
+    assert.match(html, /<a class="ovk-sidebar-link is-here" href="\/machines" aria-current="page">/, 'the page you are on is marked');
+    assert.match(html, /<b class="ovk-sidebar-count">99\+<\/b>/, 'a count, capped');
+    assert.ok(html.includes('href="#"') && html.includes('&lt;b&gt;x&lt;/b&gt;') && html.includes('ovk-sidebar-dot is-needs'), 'unsafe links dropped, text escaped, a dot by kind');
+    assert.ok(html.includes('<h2 class="ovk-sidebar-h">Today</h2>') && html.includes('Fix &lt;it&gt;') && html.includes('<p class="ovk-sidebar-empty">Nothing yet</p>'), 'sections, and an empty one says so');
+    assert.ok(html.includes('data-ovk-sidebar-close') && html.includes('<label class="ovk-sr" for="side-q">'), 'a close button and a labelled search');
+    assert.match(kit.sidebarButton({ id: 'side' }), /data-ovk-sidebar-open aria-controls="side" aria-expanded="false"/);
+    assert.match(kit.withSidebar({ sidebar: html, body: '<p>x</p>' }), /^<div class="ovk-with-sidebar"><aside[\s\S]*<div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden><\/div><div class="ovk-with-sidebar-main"><p>x<\/p><\/div><\/div>$/);
+    const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'kit.css'), 'utf8');
+    assert.ok(/@media \(max-width: 760px\) \{\s*\.ovk-with-sidebar \{ grid-template-columns: minmax\(0, 1fr\); \}\s*\.ovk-sidebar \{ position: fixed; z-index: 10060;/.test(css), 'a drawer over everything on a phone');
+    const web = require('fs').readFileSync(require('path').join(__dirname, '..', 'kit-web.js'), 'utf8');
+    assert.ok(/document\.addEventListener\('click', \(e\) => \{\s*const t = e\.target[\s\S]{0,200}\[data-ovk-sidebar-open\]/.test(web), 'opened from the document, so a page boost swaps in needs no wiring');
+    assert.ok(/ov:boost:before', \(\) => Array\.prototype\.forEach\.call\(document\.querySelectorAll\('\.ovk-sidebar\.is-open'\)/.test(web), 'and closed by a page move');
+}
+
+console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page), the tool frame and the sidebar ok');

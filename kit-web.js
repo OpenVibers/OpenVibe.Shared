@@ -13,6 +13,8 @@
  *   tabs           a sideways-scrolling tab strip keeps the open tab in view
  *   rails          .ovk-rail: ‹ › scroll a page of cards on devices with a pointer, hidden at either end
  *   share          [data-ovk-share]: the system share sheet, else the link copied (the menu item says "Link copied")
+ *   sidebars       kit.sidebar on a phone: [data-ovk-sidebar-open] opens the drawer; the scrim, its close button, Escape
+ *                  and a page move close it (document-level, so boost-swapped pages need no wiring)
  *   card previews  .ovk-card video[data-src]: a muted loop while the card is hovered or focused (pointers only, never
  *                  under reduced motion; the file loads only then)
  *
@@ -21,6 +23,17 @@
 (function (root) {
     'use strict';
     const CHECK = '<svg class="ovk-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+
+    /** Opens or closes a sidebar drawer: its scrim, its buttons' aria-expanded, and the focus into it. */
+    function setSidebar(sb, on) {
+        if (!sb) return;
+        sb.classList.toggle('is-open', on);
+        const wrap = sb.closest('.ovk-with-sidebar') || document;
+        const scrim = wrap.querySelector('[data-ovk-sidebar-scrim]');
+        if (scrim) scrim.hidden = !on;
+        Array.prototype.forEach.call(document.querySelectorAll('[data-ovk-sidebar-open]'), (b) => { if (!b.getAttribute('aria-controls') || b.getAttribute('aria-controls') === sb.id) b.setAttribute('aria-expanded', on ? 'true' : 'false'); });
+        if (on) { const first = sb.querySelector('.ovk-sidebar-link.is-here, .ovk-sidebar-action, a, input'); if (first && first.focus) first.focus({ preventScroll: true }); }
+    }
 
     function enhance(rootEl) {
         if (typeof document === 'undefined') return;
@@ -70,7 +83,18 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key !== 'Escape') return;
                 Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { d.open = false; const s = d.querySelector('summary'); if (s) s.focus(); });
+                Array.prototype.forEach.call(document.querySelectorAll('.ovk-sidebar.is-open'), (sb) => setSidebar(sb, false));
             });
+            // The left sidebar on a phone (kit.sidebar): its button opens it; the scrim, its close button, Escape and a page
+            // move close it. Handled on the document, so a page boost swapped in works without being wired again.
+            document.addEventListener('click', (e) => {
+                const t = e.target && e.target.closest ? e.target : null;
+                if (!t) return;
+                const open = t.closest('[data-ovk-sidebar-open]');
+                if (open) { setSidebar(document.getElementById(open.getAttribute('aria-controls') || '') || document.querySelector('[data-ovk-sidebar]'), true); return; }
+                if (t.closest('[data-ovk-sidebar-close], [data-ovk-sidebar-scrim]')) Array.prototype.forEach.call(document.querySelectorAll('.ovk-sidebar.is-open'), (sb) => setSidebar(sb, false));
+            });
+            document.addEventListener('ov:boost:before', () => Array.prototype.forEach.call(document.querySelectorAll('.ovk-sidebar.is-open'), (sb) => setSidebar(sb, false)));
             // The head casts a shadow once the page has scrolled under it.
             let ticking = false;
             const mark = () => { ticking = false; document.documentElement.classList.toggle('ovk-scrolled', (window.scrollY || 0) > 4); };

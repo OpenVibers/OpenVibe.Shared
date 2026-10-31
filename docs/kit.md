@@ -444,6 +444,36 @@ the ring. The gap is a mask, so the mark sits on any ground: a photo, a gradient
   `scripts/build-social-cards.js`); the loading screen (`loading.js`) shows it at work, and its V turns into "!" when
   loading fails.
 
+## The sidebar
+
+`kit.sidebar` is an app's left sidebar, one for every OpenVibe product (4.60.0; the owner, 2026-10-31: "the
+navigation makes more sense in a vertical way… part of the openvibe.design shared styling across everything").
+
+```js
+kit.withSidebar({ sidebar: kit.sidebar({
+    id: 'side', label: 'Codes',
+    action: { href: '/', label: 'New chat', icon: 'pencil' },          // the one thing to start
+    find: { action: '/tasks', placeholder: 'Search conversations' },
+    nav: [{ href: '/agents', label: 'Agents', icon: 'members' }, { href: '/machines', label: 'Machines', icon: 'computer', here: true },
+          { href: '/approvals', label: 'Approvals', icon: 'hand', count: 2 }],
+    sections: [{ title: 'Today', items: [{ href: '/t/1', label: 'Fix the phone home page', mark: kit.mark({ name: 'C' }), meta: '30m', dot: 'busy' }] }],
+}), body: kit.sidebarButton({ id: 'side', label: 'Your conversations' }) + page })
+```
+
+- **Order, top to bottom:**
+  - the main action and search;
+  - the navigation as vertical rows (an icon and a name; the page you are on marked, `aria-current`; a count or a
+    dot: `true`, `'busy'`, `'needs'` or `'bad'`);
+  - then the sections, which scroll on their own;
+  - and an optional foot.
+- **On a computer:** a 272 px column beside the page (`--ovk-sidebar-w`), sticky under the navbar.
+- **On a phone (760 px and under):** a drawer over everything.
+  - `kit.sidebarButton` opens it.
+  - The scrim, its close button, Escape and a page move close it.
+  - The handlers are on the document (kit-web.js), so a page that boost swapped in works without wiring.
+- **Contract:** in openvibe-shared/components as `sidebar` (Compose `ModalNavigationDrawer`, SwiftUI
+  `NavigationSplitView`).
+
 ## The app bar
 
 ```js

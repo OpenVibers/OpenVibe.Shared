@@ -381,6 +381,51 @@ fun OvTabs(tabs: List<String>, selected: Int, onSelect: (Int) -> Unit) {
             },
         },
         {
+            id: 'sidebar', name: 'Sidebar', web: 'kit.sidebar',
+            summary: "An app's left sidebar: the main action and search on top, the navigation as vertical rows (an icon and a name, the page you are on marked, a count or a dot), then its sections. A column beside the page on a computer, a drawer on a phone.",
+            role: 'complementary, with the navigation as a nav; the page you are on is aria-current',
+            anatomy: [
+                { part: 'panel', tokens: { background: 'color.bg.raised', line: 'color.line.base' }, note: '272 px wide on a computer; a drawer of up to 320 px on a phone' },
+                { part: 'action', tokens: { minHeight: 'size.tap', radius: 'radius.md', color: 'color.text.primary', icon: 'color.accent.base' }, note: 'the one thing to start: New chat, Go live, New post' },
+                { part: 'link', tokens: { minHeight: 'size.tap', radius: 'radius.md', color: 'color.text.muted', icon: 'size.icon' }, note: 'the page you are on: color.accent.base icon on a tint of it, color.text.primary' },
+                { part: 'count', optional: true, tokens: { background: 'color.accent.strong', size: 'type.size.caption', weight: 'type.weight.heavy', radius: 'radius.pill' } },
+                { part: 'section heading', optional: true, tokens: { color: 'color.text.muted', size: 'type.size.caption', weight: 'type.weight.heavy' }, note: 'uppercase' },
+                { part: 'item', optional: true, tokens: { color: 'color.text.primary', size: 'type.size.body', hover: 'color.bg.hover' }, note: 'one line, a mark before it and a time or a dot after it' },
+            ],
+            props: { id: { type: 'string' }, label: { type: 'string' }, action: { type: 'link' }, nav: { type: 'navs', required: true } },
+            states: ['default', 'current', 'focused', 'open'],
+            a11y: { name: 'its label (the product)', keys: 'Tab down the rows; Enter opens; Escape closes the drawer and focus returns', minTarget: 'rows 38 px, 44 px with their gap on touch' },
+            layout: { phone: 'a drawer over the page, opened from the bar, closed by the scrim, its close button, Escape or a page move', computer: 'a column beside the page; its sections scroll on their own' },
+            native: {
+                compose: `@Composable
+fun OvSidebar(items: List<Pair<String, ImageVector>>, current: Int, onPick: (Int) -> Unit, drawer: DrawerState, content: @Composable () -> Unit) {
+    ModalNavigationDrawer(drawerState = drawer, drawerContent = {
+        ModalDrawerSheet(Modifier.widthIn(max = 320.dp)) {
+            Column(Modifier.padding(OvScale.SpaceMd)) {
+                items.forEachIndexed { i, (label, icon) ->
+                    NavigationDrawerItem(label = { Text(label) }, icon = { Icon(icon, null, Modifier.size(OvScale.SizeIcon)) }, selected = i == current,
+                        onClick = { onPick(i) }, shape = RoundedCornerShape(OvScale.RadiusMd), modifier = Modifier.heightIn(min = OvScale.SizeTap))
+                }
+            }
+        }
+    }, content = content)
+}`,
+                swiftui: `struct OvSidebar<Detail: View>: View {
+    let items: [(label: String, icon: String)]
+    @Binding var current: Int?
+    @ViewBuilder var detail: () -> Detail
+    var body: some View {
+        NavigationSplitView {
+            List(selection: $current) {
+                ForEach(items.indices, id: \\.self) { i in Label(items[i].label, systemImage: items[i].icon).frame(minHeight: OvScale.sizeTap).tag(i) }
+            }
+            .listStyle(.sidebar)
+        } detail: { detail() }
+    }
+}`,
+            },
+        },
+        {
             id: 'stats', name: 'Numbers', web: 'kit.stats',
             summary: 'A strip of real numbers; zero and unknown values are left out. A number with a link makes its whole tile the link.',
             role: 'description list (label: value)',
@@ -527,6 +572,7 @@ enum OvKind { case primary, quiet, danger }`,
             case 'count': return (typeof v === 'number' && Number.isFinite(v)) || (Array.isArray(v) && v.length <= 2 && Number.isFinite(Number(v[0])) && (v[1] == null || isStr(v[1])));
             case 'stats': return Array.isArray(v) && v.length <= LIMITS.items && v.every((x) => Array.isArray(x) && x.length >= 2 && x.length <= 3 && (isStr(x[0]) || Number.isFinite(x[0])) && isStr(x[1]) && (x[2] == null || isUrl(x[2])));
             case 'tabs': return Array.isArray(v) && v.length <= LIMITS.items && v.every((x) => x && typeof x === 'object' && isStr(x.key) && isStr(x.label) && (x.count == null || Number.isFinite(Number(x.count))) && (x.href == null || isUrl(x.href)));
+            case 'navs': return Array.isArray(v) && v.length <= LIMITS.items && v.every((x) => x && typeof x === 'object' && isUrl(x.href) && isStr(x.label) && (x.icon == null || isStr(x.icon)) && (x.here == null || typeof x.here === 'boolean') && (x.count == null || Number.isFinite(Number(x.count))));
             default: return false;
         }
     }
@@ -585,6 +631,7 @@ enum OvKind { case primary, quiet, danger }`,
                 case 'section': return kit.section({ id: p.id || null, title: p.title || '', count: p.count == null ? null : p.count, note: p.note || '', body: kids.join('') });
                 case 'fold': return kit.fold({ id: p.id || null, title: p.title, meta: p.meta || '', open: !!p.open, tone: p.tone || '', body: kids.join('') });
                 case 'tabs': return kit.tabs({ base: p.base || '', items: p.items, active: p.active || '', param: p.param || 'tab', label: p.label || 'Sections' });
+                case 'sidebar': return kit.sidebar({ id: p.id || 'ovk-sidebar', label: p.label || 'Navigation', action: p.action ? { href: p.action.href, label: p.action.label || 'New' } : null, nav: p.nav.map((x) => ({ href: x.href, label: x.label, icon: x.icon || 'chevron', here: !!x.here, count: x.count == null ? null : Number(x.count) })) });
                 case 'stats': return kit.stats(p.items, { label: p.label || 'In numbers' });
                 case 'notice': return kit.notice({ kind: p.kind || 'info', text: p.text });
                 case 'empty': return kit.empty({ title: p.title, text: p.text || '', icon: p.icon || '', action: p.action ? { href: p.action.href, label: p.action.label || 'Go' } : null });
