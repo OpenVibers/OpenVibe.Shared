@@ -11,7 +11,7 @@ const glyphs = require('../glyphs');
 const kit = require('../kit');
 
 // ── The registry ──
-assert.ok(glyphs.NAMES.length >= 150, `${glyphs.NAMES.length} glyphs`);
+assert.ok(glyphs.NAMES.length >= 190, `${glyphs.NAMES.length} glyphs`);
 for (const name of kit.ICONS) assert.ok(glyphs.NAMES.includes(name), `the kit's ${name} is a glyph`);
 for (const [fa, g] of Object.entries(glyphs.FA)) assert.ok(glyphs.path(g), `fa-${fa} → ${g}, a glyph that exists`);
 for (const name of glyphs.NAMES) {
@@ -52,7 +52,7 @@ ON_ICON.forEach((cls) => assert.ok(CSS.includes(`.ovg.${cls}{`) || CSS.includes(
 ['--fa-beat-scale', '--fa-bounce-height', '--fa-fade-opacity', '--fa-flip-angle', '--fa-rotate-angle', '--fa-animation-duration', '--fa-li-width',
     '--fa-border-color', '--fa-counter-background-color', '--fa-primary-color', '--fa-inverse'].forEach((v) => assert.ok(CSS.includes(v), `Font Awesome's ${v}`));
 assert.ok(!CSS.includes('360deg') && /\.ovg\.fa-spin[^{]*\{animation:ovgBreathe/.test(CSS), 'fa-spin breathes: nothing spins (L27)');
-assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ovg=busy] circle{animation:none!important}}'), 'reduced motion stops every animation');
+assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ovg=busy] circle,.ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}}'), 'reduced motion stops every animation, and a drawn-in glyph is simply there');
 
 // ── In a page ──
 (async () => {
@@ -66,6 +66,8 @@ assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ov
 <i class="fa-solid fa-heart fa-2x fa-beat" data-fa-transform="grow-4 up-2 rotate-90 flip-h" id="tf"></i>
 <i class="fa-solid fa-bell" title="Notifications" id="titled"></i>
 <span class="fa-layers"><i class="fa-solid fa-envelope"></i><span class="fa-layers-counter" id="counter">12</span></span>
+<i class="fa-solid fa-circle-check ovg-draw" id="drawn"></i>
+<i class="fa-solid fa-bell fa-shake ovg-once" id="once"></i>
 </body></html>`);
     window.MutationObserver = MutationObserver;
     new Function('window', 'document', 'MutationObserver', SRC)(window, document, MutationObserver);
@@ -87,6 +89,11 @@ assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ov
     // A layer's counter is text, not an icon.
     assert.ok(!$('#counter').classList.contains('ovg') && $('#counter').textContent === '12');
     assert.ok($('.fa-layers > i').dataset.ovg, 'the layer\'s icon is swapped');
+    // The glyphs' own motion (4.63.0): ovg-draw measures every line as 1, so the CSS can draw it in once.
+    const drawn = $('#drawn').querySelector('svg');
+    assert.ok(drawn.children.length >= 2 && [...drawn.children].every((c) => c.getAttribute('pathLength') === '1'), 'every shape of a drawn-in glyph has pathLength 1');
+    assert.ok(css.includes('@keyframes ovgDraw{to{stroke-dashoffset:0}}') && css.includes('.ovg.ovg-once{--fa-animation-iteration-count:1}'), 'draw-in and play-once');
+    assert.ok(!$('#once').querySelector('[pathLength]'), 'only ovg-draw measures its lines');
     // A page that changes an icon by its class (play ↔ pause) gets the new glyph.
     const t = $('#toggle');
     assert.strictEqual(t.dataset.ovg, 'play');

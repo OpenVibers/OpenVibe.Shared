@@ -1,10 +1,10 @@
 {
   "family": "OV Glyphs",
-  "glyphs": 155,
-  "source_sha256": "fb052064fcb5279c7c291230e2e5389d164613d278969ad437f975b26ab40bdc",
+  "glyphs": 192,
+  "source_sha256": "66688f3cc922cc2ab13ffd7d11400308e8fde3891affed4055fa122eb66de4ac",
   "files": {
-    "ov-glyphs.woff2": 12320,
-    "glyph-fonts/ov-glyphs.ttf": 28500,
-    "glyph-fonts/ov-glyphs.otf": 35816
+    "ov-glyphs.woff2": 15704,
+    "glyph-fonts/ov-glyphs.ttf": 36352,
+    "glyph-fonts/ov-glyphs.otf": 45740
   }
 }
