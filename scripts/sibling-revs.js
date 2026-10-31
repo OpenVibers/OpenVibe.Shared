@@ -9,7 +9,7 @@ const path = require('path');
 const { hashAsset } = require('../assets');
 
 const ROOT = path.join(__dirname, '..');
-const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2'];
+const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js'];
 const revs = () => Object.fromEntries(FILES.map((f) => [f, hashAsset(fs.readFileSync(path.join(ROOT, f)))]));
 const line = (r) => `    const SIBLING_REV = { ${FILES.map((f) => `'${f}': '${r[f]}'`).join(', ')} };`;
 
