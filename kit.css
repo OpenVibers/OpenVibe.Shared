@@ -273,3 +273,50 @@ div.ovk-set-row { cursor: default; }
     .ovk-go::after { content: ''; position: absolute; inset: -3px; }
     .ovk-find input, .ovk-find select { min-height: 44px; }
 }
+
+/* ── The left sidebar (kit.sidebar, L35): one for every product. A column beside the page from 761 px; on a phone a
+   drawer over everything (kit.sidebarButton opens it; the scrim, its close button and Escape close it, kit-web.js). The
+   main action and search on top, the navigation as vertical rows, then the sections, which scroll on their own. ── */
+.ovk-with-sidebar { display: grid; grid-template-columns: var(--ovk-sidebar-w, 272px) minmax(0, 1fr); min-height: calc(100dvh - var(--navbar-h, 52px)); }
+.ovk-with-sidebar-main { min-width: 0; }
+.ovk-sidebar { position: sticky; top: var(--navbar-h, 52px); height: calc(100dvh - var(--navbar-h, 52px)); box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 12px 10px 10px; border-right: 1px solid var(--ovk-line); background: var(--ovk-panel); color: var(--ovk-text); overflow: hidden; }
+.ovk-sidebar-top { display: flex; align-items: center; gap: 6px; }
+.ovk-sidebar-action { flex: 1; display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ovk-line); background: var(--ovk-bg); color: var(--ovk-text); font-weight: 650; text-decoration: none; transition: border-color .18s, background .18s; }
+.ovk-sidebar-action:hover { border-color: color-mix(in srgb, var(--ovk-accent) 55%, var(--ovk-line)); }
+.ovk-sidebar-action .ovk-i { width: 18px; height: 18px; color: var(--ovk-accent); }
+.ovk-sidebar-close, .ovk-sidebar-open { display: none; }
+.ovk-sidebar-find { position: relative; display: flex; align-items: center; margin: 0; }
+.ovk-sidebar-find .ovk-i { position: absolute; left: 11px; width: 16px; height: 16px; color: var(--ovk-muted); pointer-events: none; }
+.ovk-sidebar-find input { width: 100%; min-height: 38px; box-sizing: border-box; padding: 0 12px 0 34px; border-radius: 10px; border: 1px solid transparent; background: var(--ovk-input); color: var(--ovk-text); font: inherit; font-size: 14px; }
+.ovk-sidebar-find input:focus { outline: none; border-color: var(--ovk-accent); }
+.ovk-sidebar-nav { display: grid; gap: 1px; padding-bottom: 8px; border-bottom: 1px solid var(--ovk-line); }
+.ovk-sidebar-link { display: flex; align-items: center; gap: 11px; min-height: 38px; padding: 0 10px; border-radius: 10px; color: var(--ovk-muted); font-size: 14.5px; font-weight: 600; text-decoration: none; transition: background .15s, color .15s; }
+.ovk-sidebar-link .ovk-i { width: 19px; height: 19px; flex: none; }
+.ovk-sidebar-link span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovk-sidebar-link:hover { background: var(--ovk-panel-2); color: var(--ovk-text); }
+.ovk-sidebar-link.is-here { background: color-mix(in srgb, var(--ovk-accent) 14%, transparent); color: var(--ovk-text); }
+.ovk-sidebar-link.is-here .ovk-i { color: var(--ovk-accent); }
+.ovk-sidebar-link:focus-visible, .ovk-sidebar-item:focus-visible, .ovk-sidebar-action:focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: -2px; }
+.ovk-sidebar-count { min-width: 20px; box-sizing: border-box; padding: 1px 6px; border-radius: 999px; background: var(--ovk-fill); color: var(--ovk-on-fill); font-size: 11.5px; font-weight: 700; text-align: center; }
+.ovk-sidebar-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ovk-accent); }
+.ovk-sidebar-dot.is-busy { animation: ovk-sidebar-breathe 1.6s ease-in-out infinite; }
+.ovk-sidebar-dot.is-needs { background: var(--ovk-warn); }
+.ovk-sidebar-dot.is-bad { background: var(--ovk-bad); }
+@keyframes ovk-sidebar-breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.75); } }
+.ovk-sidebar-secs { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -4px; padding: 0 4px 8px; }
+.ovk-sidebar-h { margin: 12px 10px 4px; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ovk-muted); }
+.ovk-sidebar-item { display: flex; align-items: center; gap: 9px; min-height: 36px; padding: 4px 10px; border-radius: 10px; color: var(--ovk-text); font-size: 14px; text-decoration: none; }
+.ovk-sidebar-item:hover { background: var(--ovk-panel-2); }
+.ovk-sidebar-item.is-here { background: var(--ovk-panel-2); font-weight: 600; }
+.ovk-sidebar-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovk-sidebar-m { flex: none; color: var(--ovk-muted); font-size: 12px; }
+.ovk-sidebar-empty { margin: 8px 10px; color: var(--ovk-muted); font-size: 13.5px; }
+.ovk-sidebar-foot { padding-top: 8px; border-top: 1px solid var(--ovk-line); }
+@media (max-width: 760px) {
+    .ovk-with-sidebar { grid-template-columns: minmax(0, 1fr); }
+    .ovk-sidebar { position: fixed; z-index: 10060; top: 0; left: 0; bottom: 0; height: auto; width: min(320px, 86vw); padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); border-right: 0; translate: -100% 0; visibility: hidden; transition: translate .25s ease, visibility 0s linear .25s; box-shadow: 12px 0 32px rgba(0, 0, 0, .25); }
+    .ovk-sidebar.is-open { translate: 0 0; visibility: visible; transition: translate .25s ease; }
+    .ovk-sidebar-close, .ovk-sidebar-open { display: inline-grid; }
+    .ovk-sidebar-scrim { position: fixed; inset: 0; z-index: 10050; background: rgba(0, 0, 0, .4); }
+}
+@media (prefers-reduced-motion: reduce) { .ovk-sidebar, .ovk-sidebar.is-open { transition: none; } .ovk-sidebar-dot.is-busy { animation: none; } }

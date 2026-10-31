@@ -6,6 +6,23 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.60.0 — 2026-10-31
+
+- **One left sidebar for every product: `kit.sidebar`** (plan L35; the owner: "the navigation makes more sense in a
+  vertical way… part of the openvibe.design shared styling across everything").
+  - **The order, top to bottom:**
+    - the main action (New chat, Go live, New post) and search;
+    - the navigation as vertical rows: an icon and a name, the page you are on marked, a count or a dot;
+    - the sections (Pinned, Today…), which scroll on their own;
+    - a foot.
+  - **On a computer:** a column beside the page. **On a phone:** a drawer over everything, which `kit.sidebarButton`
+    opens and the scrim, its close button, Escape and a page move close. The handlers are on the document in
+    kit-web.js, so a page that boost swapped in needs no wiring (Codes' rail lost its handler that way, Codes #209).
+  - **New builders and icon:** `kit.withSidebar` puts the sidebar and the page side by side; a new kit icon,
+    `sidebar`.
+  - **In the component contract** (openvibe.design/components): `sidebar`, with a Compose `ModalNavigationDrawer` and
+    a SwiftUI `NavigationSplitView` reference view, and a kit-document form (the navigation).
+
 ## 4.59.0 — 2026-10-31
 
 - **The OpenVibe mark is the Pair** (the owner, from OpenVibe Mark Systems: "Pair, halo … I like this icon the most.

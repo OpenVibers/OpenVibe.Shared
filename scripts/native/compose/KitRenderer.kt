@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,6 +48,9 @@ data class KitLink(val href: String, val label: String)
 
 /** One tab: its key (what the web puts in the URL), its label and its count. */
 data class KitTab(val key: String, val label: String, val count: Int? = null)
+
+/** One row of a sidebar's navigation: where it goes, its name, its icon, whether you are on it, and a count. */
+data class KitNav(val href: String, val label: String, val icon: String? = null, val here: Boolean = false, val count: Int? = null)
 
 /** One number with its label. */
 data class KitStat(val value: String, val label: String, val href: String? = null)
@@ -194,6 +199,15 @@ sealed class KitNode {
             }
     }
 
+    /** Sidebar: an app's navigation, as rows (on a phone the app shows it in its drawer). */
+    data class Sidebar(
+        val label: String = "Navigation",
+        val nav: List<KitNav> = emptyList(),
+        override val children: List<KitNode> = emptyList(),
+    ) : KitNode() {
+        override val type: String = "sidebar"
+    }
+
     /** Stats: the numbers, in a row. */
     data class Stats(
         val items: List<KitStat> = emptyList(),
@@ -309,6 +323,10 @@ sealed class KitNode {
                     param = props.str("param") ?: "tab",
                     label = props.str("label") ?: "Sections",
                 )
+                "sidebar" -> Sidebar(
+                    label = props.str("label") ?: "Navigation",
+                    nav = navsOf(props.array("nav")),
+                )
                 "stats" -> Stats(
                     items = statsOf(props.array("items")),
                     label = props.str("label") ?: "In numbers",
@@ -351,6 +369,18 @@ sealed class KitNode {
                 val tab = array.optJSONObject(i) ?: continue
                 val key = tab.str("key") ?: continue
                 out.add(KitTab(key, tab.str("label") ?: key, tab.int("count")))
+            }
+            return out
+        }
+
+        /** The rows of a sidebar's navigation. */
+        private fun navsOf(array: JSONArray?): List<KitNav> {
+            if (array == null) return emptyList()
+            val out = ArrayList<KitNav>()
+            for (i in 0 until array.length()) {
+                val row = array.optJSONObject(i) ?: continue
+                val href = row.str("href") ?: continue
+                out.add(KitNav(href, row.str("label") ?: href, row.str("icon"), row.bool("here"), row.int("count")))
             }
             return out
         }
@@ -543,6 +573,7 @@ fun KitNodeView(
             var selected by rememberSaveable { mutableStateOf(node.selectedIndex) }
             OvTabs(tabs = labels, selected = selected, onSelect = { selected = it })
         }
+        is KitNode.Sidebar -> OvSidebarNav(node, icons, onAction)
         is KitNode.Stats -> OvStats(items = node.items.map { it.value to it.label })
         is KitNode.Notice -> OvNotice(text = node.text, kind = node.kind)
         is KitNode.Empty -> {
@@ -576,5 +607,24 @@ private fun OvInitials(name: String) {
             fontSize = OvScale.TypeSizeCaption,
             fontWeight = FontWeight.Bold,
         )
+    }
+}
+
+/** A sidebar's navigation, drawn as a drawer's rows: the one you are on is selected, and a tap opens its link. */
+@Composable
+fun OvSidebarNav(node: KitNode.Sidebar, icons: Map<String, ImageVector>, onAction: (KitAction) -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(OvScale.SpaceMd)) {
+        node.nav.forEach { item ->
+            val vector = item.icon?.let { icons[it] }
+            val count = item.count
+            NavigationDrawerItem(
+                label = { Text(item.label) },
+                selected = item.here,
+                onClick = { onAction(KitAction.Open(item.href)) },
+                icon = if (vector != null) ({ Icon(vector, contentDescription = null) }) else null,
+                badge = if (count != null && count > 0) ({ Text(count.toString()) }) else null,
+                shape = RoundedCornerShape(OvScale.RadiusMd),
+            )
+        }
     }
 }

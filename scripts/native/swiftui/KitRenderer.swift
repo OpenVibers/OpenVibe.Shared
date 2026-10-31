@@ -124,6 +124,23 @@ public struct KitLink {
 }
 
 /// One tab: its key (what the web puts in the URL), its label and its count.
+/// One row of a sidebar's navigation.
+public struct KitNav {
+    public let href: String
+    public let label: String
+    public let icon: String?
+    public let here: Bool
+    public let count: Int?
+
+    public init(href: String, label: String, icon: String? = nil, here: Bool = false, count: Int? = nil) {
+        self.href = href
+        self.label = label
+        self.icon = icon
+        self.here = here
+        self.count = count
+    }
+}
+
 public struct KitTab {
     public let key: String
     public let label: String
@@ -365,6 +382,31 @@ public struct KitTabs: KitComponent {
     }
 }
 
+/// Sidebar: an app's navigation, as rows (on a phone the app shows it in its drawer).
+public struct KitSidebar: KitComponent {
+    public let props: [String: KitValue]
+    public let children: [KitNode]
+
+    public init(props: [String: KitValue] = [:], children: [KitNode] = []) {
+        self.props = props
+        self.children = children
+    }
+
+    /// What the sidebar is named for (the product).
+    public var label: String { props.string("label") ?? "Navigation" }
+
+    /// The rows, as the document gives them.
+    public var nav: [KitNav] {
+        guard let items = props.array("nav") else { return [] }
+        var out: [KitNav] = []
+        for item in items {
+            guard let row = item.objectValue, let href = row.string("href") else { continue }
+            out.append(KitNav(href: href, label: row.string("label") ?? href, icon: row.string("icon"), here: row.bool("here") ?? false, count: row.int("count")))
+        }
+        return out
+    }
+}
+
 /// Stats: the numbers, in a row.
 public struct KitStats: KitComponent {
     public let props: [String: KitValue]
@@ -443,6 +485,7 @@ public enum KitNode: Codable {
     case section(KitSection)
     case fold(KitFold)
     case tabs(KitTabs)
+    case sidebar(KitSidebar)
     case stats(KitStats)
     case notice(KitNotice)
     case empty(KitEmpty)
@@ -461,6 +504,7 @@ public enum KitNode: Codable {
         case "section": self = .section(KitSection(props: props, children: children))
         case "fold": self = .fold(KitFold(props: props, children: children))
         case "tabs": self = .tabs(KitTabs(props: props, children: children))
+        case "sidebar": self = .sidebar(KitSidebar(props: props, children: children))
         case "stats": self = .stats(KitStats(props: props, children: children))
         case "notice": self = .notice(KitNotice(props: props, children: children))
         case "empty": self = .empty(KitEmpty(props: props, children: children))
@@ -493,6 +537,7 @@ public enum KitNode: Codable {
         case .section: return "section"
         case .fold: return "fold"
         case .tabs: return "tabs"
+        case .sidebar: return "sidebar"
         case .stats: return "stats"
         case .notice: return "notice"
         case .empty: return "empty"
@@ -510,6 +555,7 @@ public enum KitNode: Codable {
         case .section(let node): return node.props
         case .fold(let node): return node.props
         case .tabs(let node): return node.props
+        case .sidebar(let node): return node.props
         case .stats(let node): return node.props
         case .notice(let node): return node.props
         case .empty(let node): return node.props
@@ -527,6 +573,7 @@ public enum KitNode: Codable {
         case .section(let node): return node.children
         case .fold(let node): return node.children
         case .tabs(let node): return node.children
+        case .sidebar(let node): return node.children
         case .stats(let node): return node.children
         case .notice(let node): return node.children
         case .empty(let node): return node.children
@@ -593,6 +640,7 @@ private struct KitNodeBody: View {
         case .section(let n): sectionView(n)
         case .fold(let n): foldView(n)
         case .tabs(let n): tabsView(n)
+        case .sidebar(let n): sidebarView(n)
         case .stats(let n): statsView(n)
         case .notice(let n): noticeView(n)
         case .empty(let n): emptyView(n)
@@ -714,6 +762,21 @@ private struct KitNodeBody: View {
         KitTabsHost(tabs: node.tabs.map { $0.label }, selected: node.selectedIndex)
     }
 
+    /// A sidebar's navigation: a row per link, the one you are on marked; a tap opens it.
+    @ViewBuilder
+    private func sidebarView(_ node: KitSidebar) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(node.nav.indices, id: \.self) { index in
+                Button { self.act(.open(node.nav[index].href)) } label: {
+                    OvSidebarNavRow(label: node.nav[index].label, here: node.nav[index].here, count: node.nav[index].count)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(node.label)
+    }
+
     /// The numbers.
     @ViewBuilder
     private func statsView(_ node: KitStats) -> some View {
@@ -744,6 +807,25 @@ private struct KitNodeBody: View {
 }
 
 /// The tabs of a document: the open one is the app's business, so it lives here.
+/// One row of a sidebar's navigation: its name, marked when you are on it, and a count.
+struct OvSidebarNavRow: View {
+    let label: String
+    let here: Bool
+    let count: Int?
+
+    var body: some View {
+        HStack(spacing: OvScale.spaceMd) {
+            Text(label).fontWeight(here ? .bold : .regular)
+            Spacer(minLength: 0)
+            if let count, count > 0 { Text("\(count)").font(.caption.bold()) }
+        }
+        .frame(minHeight: OvScale.sizeTap)
+        .padding(.horizontal, OvScale.spaceMd)
+        .background(here ? Color.accentColor.opacity(0.14) : Color.clear, in: RoundedRectangle(cornerRadius: OvScale.radiusMd))
+        .accessibilityAddTraits(here ? .isSelected : [])
+    }
+}
+
 struct KitTabsHost: View {
     let tabs: [String]
     let selected: Int

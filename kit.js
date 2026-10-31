@@ -28,6 +28,8 @@
  *   kit.empty({ title, text, action: { href, label } }) · kit.notice({ kind, text }) · kit.more({ label, items })
  *   kit.button({ href | type, label, icon, kind }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
  *   kit.mark({ name, src, hue, square }) · kit.when(ts) → { iso, text } · kit.esc(text) · kit.ICONS (names)
+ *   kit.sidebar({ id, label, action, find, nav, sections, foot }) · kit.sidebarButton({ id }) · kit.withSidebar({ sidebar,
+ *   body })                                                       the left sidebar: vertical navigation, a drawer on phones
  *
  * The tool frame, one order for every tool page: kit.tool({ head: kit.toolHead({ icon, hue, crumb, title, task, facts }),
  *   input: kit.toolInput({ name, label, placeholder, button, tries: { items } }) | kit.drop(…) | an editor,
@@ -56,7 +58,7 @@
         plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
         send: '<path d="M12 19V5M5 12l7-7 7 7"/>', search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
         more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
-        menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
+        menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', sidebar: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>', filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
         home: '<path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"/>',
         chat: '<path d="M4 5h16v11H8l-4 4Z"/>', mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',
         bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>',
@@ -183,6 +185,45 @@
             + (actions && actions.length ? `<div class="ovk-head-tools">${actions.join('')}</div>` : '')
             + `</div>${tabs || ''}</header>`;
     }
+    // ── The left sidebar (L35) ──
+    /**
+     * An app's left sidebar, one for every OpenVibe product (the owner, 2026-10-31: "the navigation makes more sense
+     * in a vertical way… part of the openvibe.design shared styling across everything"): the main action and search at
+     * the top, the navigation as vertical rows (an icon and a name, the page you are on marked, a count or a dot), the
+     * sections under it (conversations, recent things) and a foot. A column beside the page from 761 px; on a phone a
+     * drawer that kit.sidebarButton opens and the scrim, its close button or Escape close (kit-web.js, boost-safe).
+     *   kit.sidebar({ id, label, action: { href, label, icon }, find: { action, name, placeholder, label },
+     *                 nav: [{ href, label, icon, iconHtml, here, count, dot }],
+     *                 sections: [{ title, items: [{ href, label, meta, mark, here, dot }], empty }], foot })
+     *   kit.sidebarButton({ id, label })      the button that opens it on a phone (shown only there)
+     *   kit.withSidebar({ sidebar, body })     the sidebar and the page side by side
+     * dot: true, or 'busy' | 'needs' | 'bad'. mark and foot take trusted markup; iconHtml replaces a kit icon.
+     */
+    function sidebar({ id = 'ovk-sidebar', label = 'Navigation', action: act = null, find: f = null, nav = [], sections = [], foot = '' } = {}) {
+        const dotHtml = (d) => (d ? `<i class="ovk-sidebar-dot${d === true ? '' : ` is-${esc(d)}`}" aria-hidden="true"></i>` : '');
+        const link = (x) => `<a class="ovk-sidebar-link${x.here ? ' is-here' : ''}" href="${esc(url(x.href))}"${x.here ? ' aria-current="page"' : ''}>`
+            + `${x.iconHtml != null ? x.iconHtml : icon(x.icon || 'chevron')}<span>${esc(x.label)}</span>`
+            + `${Number(x.count) > 0 ? `<b class="ovk-sidebar-count">${Number(x.count) > 99 ? '99+' : Number(x.count)}</b>` : dotHtml(x.dot)}</a>`;
+        const item = (x) => `<a class="ovk-sidebar-item${x.here ? ' is-here' : ''}" href="${esc(url(x.href))}"${x.here ? ' aria-current="page"' : ''}>`
+            + `${x.mark || ''}<span class="ovk-sidebar-t">${esc(x.label)}</span>${x.meta ? `<span class="ovk-sidebar-m">${esc(x.meta)}</span>` : ''}${dotHtml(x.dot)}</a>`;
+        const secs = (sections || []).map((sec) => {
+            const items = sec.items || [];
+            return `<section class="ovk-sidebar-sec">${sec.title ? `<h2 class="ovk-sidebar-h">${esc(sec.title)}</h2>` : ''}${items.map(item).join('')}`
+                + `${!items.length && sec.empty ? `<p class="ovk-sidebar-empty">${esc(sec.empty)}</p>` : ''}</section>`;
+        }).join('');
+        return `<aside class="ovk-sidebar" id="${esc(id)}" aria-label="${esc(label)}" data-ovk-sidebar>`
+            + `<div class="ovk-sidebar-top">${act ? `<a class="ovk-sidebar-action" href="${esc(url(act.href))}">${icon(act.icon || 'plus')}<span>${esc(act.label)}</span></a>` : ''}`
+            + `<button class="ovk-icon-btn ovk-sidebar-close" type="button" data-ovk-sidebar-close aria-label="Close">${icon('close')}</button></div>`
+            + (f ? `<form class="ovk-sidebar-find" role="search" method="get" action="${esc(url(f.action || '?'))}"><label class="ovk-sr" for="${esc(id)}-q">${esc(f.label || 'Search')}</label>`
+                + `${icon('search')}<input id="${esc(id)}-q" name="${esc(f.name || 'q')}" placeholder="${esc(f.placeholder || 'Search')}" autocomplete="off"></form>` : '')
+            + (nav && nav.length ? `<nav class="ovk-sidebar-nav" aria-label="${esc(label)}">${nav.map(link).join('')}</nav>` : '')
+            + (secs ? `<div class="ovk-sidebar-secs">${secs}</div>` : '')
+            + (foot ? `<div class="ovk-sidebar-foot">${foot}</div>` : '')
+            + '</aside>';
+    }
+    const sidebarButton = ({ id = 'ovk-sidebar', label = 'Menu' } = {}) => `<button class="ovk-icon-btn ovk-sidebar-open" type="button" data-ovk-sidebar-open aria-controls="${esc(id)}" aria-expanded="false" aria-label="${esc(label)}" title="${esc(label)}">${icon('sidebar')}</button>`;
+    const withSidebar = ({ sidebar: sb = '', body = '' } = {}) => `<div class="ovk-with-sidebar">${sb}<div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden></div><div class="ovk-with-sidebar-main">${body}</div></div>`;
+
     /**
      * Tabs as links (?tab=key, or ?<param>=key): the server builds only the open one, so a long page becomes a few short
      * ones and nothing needs JavaScript. items: [{ key, label, count, icon, href }].
@@ -774,7 +815,7 @@
 
     return {
         esc, url, icon, ICONS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
-        head, tabs, tabOf, list, row, section, fold, more,
+        head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,
         num, steps, table, chart, rank, meter, drop, receipt, page,
