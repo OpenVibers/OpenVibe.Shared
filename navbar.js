@@ -45,8 +45,7 @@
             body.ov-nav-overlay > #navbar-mount, body.ov-nav-overlay > .openvibe-navbar { margin-bottom: calc(-1 * var(--ovnav-real-h, 52px)); }
             body.ov-panel-open .openvibe-navbar.ovnav-top { background-color: var(--bg-secondary, #252530); border-bottom-color: var(--border, #333340); }
             @media (prefers-reduced-motion: reduce) { .openvibe-navbar, .openvibe-navbar::before { transition: none; } }
-            /* The names are set in the brand face: Nunito (SIL OFL), rounded like the mark, cut to Latin and weights 700-900
-               (ov-brand.woff2, 14 KB, next to this file). Any other character falls back to the system face. */
+            /* Names: the brand face (ov-brand.woff2: Nunito, Latin, 700-900). */
             @font-face { font-family: 'OV Brand'; src: url(${sibling('ov-brand.woff2')}) format('woff2'); font-weight: 700 900; font-style: normal; font-display: swap; unicode-range: U+0020-007E, U+00A0, U+00B7, U+00E9, U+2013-2014, U+2018-2019, U+201C-201D, U+2026; }
             .openvibe-navbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; margin-right: 8px; min-width: 0; }
             /* Brand group: mark + linked wordmark + launcher read as one control. Every property a host
@@ -173,7 +172,7 @@
             @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
             @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
                 .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
-                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 15px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 15px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
@@ -197,6 +196,10 @@
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-core,
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-tld,
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand.has-sub .b-dot { display: none; }
+            }
+            @media (min-width: 401px) and (max-width: 480px) {
+                .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 30px !important; }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16px; }
             }
             @media (max-width: 480px) {
                 .openvibe-navbar[data-compact="auto"] .openvibe-navbar-brand:not(.has-sub):not(.joined) .b-core,
