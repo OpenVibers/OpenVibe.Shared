@@ -1,5 +1,5 @@
 'use strict';
-// ov-mark.js (the Loop, 4.58.0): its two forms by size, the page-load fill and its learned pace, and the motion budget: the mark moves for its intro, on hover/focus and while it shows activity,
+// ov-mark.js (the Pair, 4.59.0): its two forms by size, the V's shapes per state, the page-load ring and its learned pace, and the motion budget: the mark moves for its intro, on hover/focus and while it shows activity,
 // and is paused (CSS paused where it is, SMIL clock stopped) when the page is hidden, when it is
 // off-screen, under reduced motion and with data-static. Browser check (OpenVibe.Host): the endless
 // mark kept idle pages 12-29% busy. linkedom with a fake clock, IntersectionObserver and matchMedia.
@@ -125,17 +125,28 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         const t = setup();
         t.io.fire(t.mark, true);
         assert.strictEqual(t.running(), true, 'intro runs');
-        assert.ok(t.mark.hasAttribute('data-ovm-intro'), 'the draw-in is on');
+        assert.ok(t.mark.hasAttribute('data-ovm-intro'), 'the pop and growth are on');
         assert.strictEqual(t.smilPaused(), false);
         t.clock.advance(7000);
         assert.strictEqual(t.running(), true, 'still in the intro');
         t.clock.advance(1100);
         assert.strictEqual(t.running(), false, 'intro over: paused');
-        assert.ok(!t.mark.hasAttribute('data-ovm-intro'), 'and the draw-in is off');
+        assert.ok(!t.mark.hasAttribute('data-ovm-intro'), 'and they are off');
         assert.strictEqual(t.smilPaused(), true);
         // Scrolling away and back does not replay the intro.
         t.io.fire(t.mark, false); t.io.fire(t.mark, true);
         assert.strictEqual(t.running(), false, 'no second intro');
+    }
+
+    // ── OVMark.intro(el) replays the intro on one mark, later in the visit, and it ends by itself ─────────────
+    {
+        const t = setup();
+        t.io.fire(t.mark, true); t.clock.advance(9000);
+        assert.ok(!t.mark.hasAttribute('data-ovm-intro'), 'the intro of the visit is over');
+        t.window.OVMark.intro(t.mark);
+        assert.ok(t.mark.hasAttribute('data-ovm-intro') && t.running(), 'replayed');
+        t.clock.advance(1500);
+        assert.ok(!t.mark.hasAttribute('data-ovm-intro') && !t.running(), 'and over again');
     }
 
     // ── one intro per visit: the next page of a multi-page site finishes it, never restarts it ─
@@ -238,19 +249,48 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(t.running(span), true, 'its own intro');
     }
 
-    // ── the form follows the size: the coin up to 24px, the line above; a page's own data-form wins ──────────
+    // ── the form follows the size: the heavy up to 22px, the pair above; a page's own data-form wins ──────────
     {
-        const t = setup({ html: '<a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a><span class="ov-mark" id="small" data-size="16"></span><span class="ov-mark" id="mid" data-size="24"></span><span class="ov-mark" id="forced" data-size="16" data-form="line"></span>' });
-        assert.strictEqual(t.mark.getAttribute('data-form'), 'line', '28px: the line');
-        assert.strictEqual(t.document.getElementById('small').getAttribute('data-form'), 'solid', '16px: the coin');
-        assert.strictEqual(t.document.getElementById('mid').getAttribute('data-form'), 'solid', '24px: the coin');
-        assert.strictEqual(t.document.getElementById('forced').getAttribute('data-form'), 'line', 'a named form is kept');
+        const t = setup({ html: '<a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a><span class="ov-mark" id="small" data-size="16"></span><span class="ov-mark" id="mid" data-size="22"></span><span class="ov-mark" id="forced" data-size="16" data-form="pair"></span><span class="ov-mark" id="old" data-size="40" data-form="solid"></span><span class="ov-mark" id="wide" data-size="34" data-wide></span>' });
+        const $ = (id) => t.document.getElementById(id);
+        assert.strictEqual(t.mark.getAttribute('data-form'), 'pair', '28px: the pair');
+        assert.strictEqual($('small').getAttribute('data-form'), 'heavy', '16px: the heavy');
+        assert.strictEqual($('mid').getAttribute('data-form'), 'heavy', '22px: the heavy');
+        assert.strictEqual($('forced').getAttribute('data-form'), 'pair', 'a named form is kept');
+        const G = t.window.OVMark.FORMS;
+        assert.strictEqual($('old').querySelector('.va').getAttribute('stroke-width'), String(G.heavy.vsw), 'the old name "solid" draws the heavy');
         const svg = t.mark.querySelector('svg').outerHTML;
-        assert.match(svg, /class="lp"/, 'the line');
-        assert.match(svg, /class="fl"[^>]*mask=/, 'the coin, with the V cut through it');
+        assert.match(svg, /<mask id="ovm\d+_h"[^>]*>[\s\S]*class="ha"/, 'the gap around the V is a mask, so the mark sits on any ground');
+        assert.match(svg, /<g mask="url\(#ovm\d+_h\)"><g class="og"/, 'it cuts the O');
+        assert.match(svg, /class="o" d="M[\d.]+ [\d.]+A20 20 0 1 1[^"]*" pathLength="100"/, 'the O is a ring drawn from its top, so a page load can draw it round');
+        assert.strictEqual(t.mark.querySelector('svg').getAttribute('viewBox'), G.pair.box, 'a square box centred on the mark');
+        assert.strictEqual($('wide').querySelector('svg').getAttribute('viewBox'), G.pair.wideBox, 'data-wide: the box hugs the mark');
+        assert.strictEqual($('wide').style.height, '', 'and its height follows the mark (aspect-ratio), not the size');
     }
 
-    // ── a page on its way: the navbar's mark fills at the learned pace, then drains on arrival ─────────────
+    // ── a state reshapes the V, the gap in the ring following it, and it comes back a V ──────────────────────
+    {
+        const t = setup();
+        const G = t.window.OVMark.FORMS.pair;
+        const d = () => [t.mark.querySelector('.va').getAttribute('d'), t.mark.querySelector('.ha').getAttribute('d'), t.mark.querySelector('.vb').getAttribute('d')];
+        const seg = (p, i) => `M${p[i]} ${p[i + 1]}L${p[i + 2]} ${p[i + 3]}`;
+        const as = (shape) => [seg(G.shapes[shape], 0), seg(G.shapes[shape], 0), seg(G.shapes[shape], 4)];
+        assert.deepStrictEqual(d(), as('v'), 'at rest: the V');
+        t.mark.setAttribute('data-state', 'ok'); await t.flush();
+        assert.deepStrictEqual(d(), as('ok'), 'ok: a tick, and the gap moves with it');
+        t.mark.setAttribute('data-state', 'error'); await t.flush();
+        assert.deepStrictEqual(d(), as('err'), 'error: "!"');
+        t.mark.setAttribute('data-state', 'no'); await t.flush();
+        assert.deepStrictEqual(d(), as('no'), 'no: a cross');
+        t.mark.setAttribute('data-state', 'busy'); await t.flush();
+        assert.deepStrictEqual(d(), as('v'), 'busy: a V again');
+        const css = t.document.getElementById('ov-mark-css').textContent;
+        const looks = ['busy', 'ok', 'error', 'no', 'notify', 'live', 'sleep'].filter((st) => !css.includes(`.ov-mark[data-state=${st}]`));
+        assert.deepStrictEqual(looks, [], 'every state has its look');
+        assert.ok(css.includes('.ov-mark[data-nav] .o,.ov-mark[data-progress] .o{stroke-dasharray:100 100;stroke-dashoffset:calc((1 - var(--ovm-fill)) * 100px)}'), 'progress draws the ring round');
+    }
+
+    // ── a page on its way: the navbar's ring draws round at the learned pace, closes on arrival, the V hops ─────
     {
         const t = setup({ html: '<div class="openvibe-navbar-brand"><a href="/"><span class="ov-mark" data-size="28"></span></a></div>' });
         const local = memoryStorage(); t.window.localStorage = local;
@@ -267,9 +307,10 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.ok(Number(m.style.getPropertyValue('--ovm-fill')) <= 0.94, 'never full before the page is here');
         t.window.OVMark.navEnd('boost');
         t.clock.advance(1); // after every other listener of the arrival (the navbar re-renders on it)
-        assert.strictEqual(m.style.getPropertyValue('--ovm-fill'), '1', 'full on arrival');
-        t.clock.advance(400);
-        assert.ok(!m.hasAttribute('data-nav') && !m.style.getPropertyValue('--ovm-fill'), 'then it drains back to the line');
+        assert.strictEqual(m.style.getPropertyValue('--ovm-fill'), '1', 'the ring closes on arrival');
+        assert.ok(m.hasAttribute('data-ovm-arrive'), 'and the V hops');
+        t.clock.advance(600);
+        assert.ok(!m.hasAttribute('data-nav') && !m.hasAttribute('data-ovm-arrive') && !m.style.getPropertyValue('--ovm-fill'), 'then the mark is at rest');
         const learned = JSON.parse(local.getItem('ov-nav-ms'));
         assert.ok(learned['openvibe.test:boost'] > 450, `the slow move is learned (${learned['openvibe.test:boost']} ms)`);
         assert.strictEqual(t.window.OVMark.usual('boost'), learned['openvibe.test:boost'], 'and paces the next one');
@@ -278,5 +319,5 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(t.running(m), true, 'a page on its way runs the mark after its intro');
     }
 
-    console.log('ov-mark: forms by size, the page-load fill and its pace, intro, hover/focus, activity; paused when hidden, off-screen, reduced or static');
+    console.log('ov-mark: forms by size, the shapes of the V, the page-load ring and its pace, intro, hover/focus, activity; paused when hidden, off-screen, reduced or static');
 })().catch((e) => { console.error(e); process.exit(1); });

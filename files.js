@@ -65,12 +65,17 @@ const STYLES = Object.freeze([
     'kit-data.css',         // Kit 2's look: steps, tables, charts, rankings, meters, drop zones, receipts (4.37.0; after kit.css)
     'agent-session.css',    // agent-session.js's look (4.32.0; the script links it from beside itself unless the page does)
 ]);
-const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name));
+// Fonts sites serve at /shared/<file>: the brand face the names are set in (navbar.js declares it from beside itself).
+const FONTS = Object.freeze([
+    'ov-brand.woff2',       // Nunito (SIL OFL 1.1, OFL-Nunito.txt), Latin, weights 700-900: the OpenVibe names (4.59.0)
+]);
+const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name)) || FONTS.includes(String(name));
 
 module.exports = {
     dir: __dirname,
     BROWSER,
     STYLES,
+    FONTS,
     isBrowserFile: served,
     path: (name) => {
         if (!served(name)) throw new Error(`openvibe-shared: ${name} is not a browser file`);

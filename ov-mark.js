@@ -1,22 +1,31 @@
 /**
  * ov-mark.js — the OpenVibe mark as a drop-in.
- *   <span class="ov-mark"></span>                 → 32px mark
- *   <span class="ov-mark" data-size="56">         → any size; add data-static="1" for no motion
- *   <span class="ov-mark" data-variant="live">    → the site's own dot colour and rhythm (see the variants below)
- *   <span class="ov-mark" data-form="solid|line"> → force a form (default: solid up to 24px, the line above)
+ *   <span class="ov-mark"></span>                 → a 32px mark (the box is square, the mark centred in it)
+ *   <span class="ov-mark" data-size="56">         → any size (the box's width); add data-static="1" for no motion
+ *   <span class="ov-mark" data-wide>              → the box hugs the mark (92 × 56) instead of a square
+ *   <span class="ov-mark" data-variant="live">    → the site's own touch (Live's record light in the O, see below)
+ *   <span class="ov-mark" data-tone="ink|white">  → one colour: the text's (stamps, UI) or white (on a colour tile)
+ *   <span class="ov-mark" data-form="heavy">      → force a form (default: heavy up to 22px wide, the pair above)
  *   data-state="busy|ok|error|no|notify|live|sleep" → what it shows (island.js sets busy/ok/error on the navbar's)
- *   data-progress="0.4" with style="--ovm-p:.4"    → a known progress: the coin fills to that level
- * Self-contained: injects its own CSS once, works on any page (Live, Network, static pages).
+ *   data-progress="0.4" with style="--ovm-p:.4"    → a known progress: the ring draws round to that much
+ * Self-contained: injects its own CSS once, works on any page (Live, Network, static pages). The same mark as static
+ * SVG, for servers and icons: openvibe-shared/mark (mark.js), whose numbers this file draws.
  *
- * The mark is the Loop (the owner, 2026-10-31, from OpenVibe Mark Systems: "use the one that's easiest to see across
- * all these resolutions and add lots of animations to it"). One shape, two forms:
- *   - the line: an O opened at the top by a V, one stroke, with the site's dot in the opening (headers, the navbar);
- *   - the solid: the same circle filled, with the V cut through it (16-24px, where a line would blur).
- * Between them the coin's fill rises and drains, and that fill is also the progress: following a link, the navbar's mark
- * fills as the next page loads, paced by how long this site's pages usually take in this browser (learned per site,
- * boost moves and full loads apart), and drains back to the line when the page is here (window.OVMark.navStart/navEnd
- * for single-page apps). Nothing spins: busy is the dot hopping in the V, ok fills the coin green, an error shakes and
- * drops the dot into the V, live sends ripples out from the ring.
+ * The mark is the Pair (the owner, 2026-10-31: "Pair, halo … this should be our new logo"): a ring O and a round V,
+ * with a gap of the ground around the V where it crosses the ring. The gap is a mask, so the mark sits on any ground.
+ * The V is as tall as the O, so it sits level beside a word in the navbar and centred in a tile. Two forms: the pair,
+ * and the heavy (thicker strokes) for 22px and under, where the pair's gap would close.
+ *
+ * Everything it does means something, and nothing spins:
+ *   - intro: the O pops in and the V grows out of its point;
+ *   - hover: the V leans back and the O hops;
+ *   - a page on its way (navbar): the ring empties and draws itself round again as the next page loads, paced by how
+ *     long this site's pages usually take in this browser (learned per site, boost moves and full loads apart); the
+ *     V nods while it waits and hops when the page is here (window.OVMark.navStart/navEnd for single-page apps);
+ *   - busy: the V bobs and the O breathes, in turn; ok: the V becomes a tick, green, and hops (the tick only ever
+ *     means "done"); error: the V becomes "!", red, and the mark shakes; no: the V becomes "×", grey, and the O
+ *     shakes its head; notify: a dot pops up by the V and the O bounces; live: the O is the record light, red, and
+ *     ripples go out from it; sleep: the O closes like an eye and the V sinks.
  *
  * Motion budget: SVG animations restyle and re-lay-out on the main thread every frame, so an endlessly moving mark kept
  * idle pages 12-29% busy (browser check, OpenVibe.Host). A mark moves only for its intro (the first INTRO_MS of a
@@ -24,114 +33,126 @@
  * rest), while it or its link is hovered or focused (and LINGER_MS after), and while it shows a state, a page load or
  * progress. Otherwise its CSS animations are paused where they are. It never moves while the page is hidden, while it
  * is off-screen (IntersectionObserver), with data-static, under prefers-reduced-motion or under the network's own
- * reduced-motion setting (html[data-ov-motion=reduced], theme-loader.js); its colours and fill still change.
+ * reduced-motion setting (html[data-ov-motion=reduced], theme-loader.js); its colours and shapes still change.
  *
  * The season (theme-loader.js sets <html data-ov-season-mark="halloween|winter"> for anyone who has not turned seasonal
- * themes off, on any theme): the mark wears it, a pumpkin's stem and leaf in October, caps of snow in December.
- * Now and then (every 4 to 8 minutes) a mark on screen flickers for a moment, and on the first visit of the day a few
- * leaves (snowflakes in December) drift down from the first mark seen. Never under either reduced-motion setting.
+ * themes off, on any theme): the mark wears it, the O a pumpkin with its stem and leaf in October, caps of snow in
+ * December. Now and then (every 4 to 8 minutes) a mark on screen flickers for a moment, and on the first visit of the
+ * day a few leaves (snowflakes in December) drift down from the first mark seen. Never under either reduced-motion setting.
  */
 (function () {
     'use strict';
     if (window.__ovMark) return; window.__ovMark = true;
     let n = 0;
-    // The Loop in a 48-unit box (the coin's V cut is the line's V plus a 1.7-unit gap each side, so a filling coin keeps
-    // the V visible as an inlay): ring radius 15.84, opened 33° each side of the top, the V's point just under the
-    // middle, stroke 6.24. Centred on (24, 24) with its dot; the solid form (no dot) moves up SOLID_DY to stay centred.
-    const GEO = (() => {
-        const r = 15.84, a = 33 * Math.PI / 180, sw = 6.24, cy = 25, f = (v) => +v.toFixed(2);
-        const lx = r * Math.sin(a), ly = -r * Math.cos(a);
-        const L = [f(24 - lx), f(cy + ly)], Rt = [f(24 + lx), f(cy + ly)], T = [24, f(cy + 0.96)];
-        const at = (deg, rr) => [f(24 + rr * Math.cos(deg * Math.PI / 180)), f(cy + rr * Math.sin(deg * Math.PI / 180))];
-        const cap = (d0, d1) => { const p = at(d0, r + sw / 2 + 1.2), q = at(d1, r + sw / 2 + 1.2); return `M${p[0]} ${p[1]}A${f(r + sw / 2 + 1.2)} ${f(r + sw / 2 + 1.2)} 0 0 1 ${q[0]} ${q[1]}`; };
-        return {
-            r, sw, cy, R: f(r + sw / 2), dotY: f(cy + ly - 4.32), dotR: 3.36,
-            loop: `M${L[0]} ${L[1]}A${r} ${r} 0 1 0 ${Rt[0]} ${Rt[1]}L${T[0]} ${T[1]}Z`,
-            vee: `M${L[0]} ${L[1]}L${T[0]} ${T[1]}L${Rt[0]} ${Rt[1]}`,
-            snow: [cap(-162, -128), cap(-52, -18)], flake: [at(-150, r + 7.6), at(-36, r + 7.2)],
-            // The fill's clip slides up from below the coin (0) to its top (1): translateY in user units.
-            fill0: f(cy + r + sw / 2 + 4), span: f(2 * (r + sw / 2)),
+    const f = (v) => +v.toFixed(2);
+    // The Pair in a 100-unit box, centred on (50, 50) (openvibe-shared/mark: the same numbers; test/mark.test.js).
+    function pair(r, sw, vsw, a = 0.86, t = 1.5, b = 2.16) {
+        const R = r + sw / 2, right = b * R + vsw / 2, cx = 50 - (right - R) / 2, cy = 50;
+        const A = [f(cx + a * R), f(cy - R + vsw / 2)], T = [f(cx + t * R), f(cy + R - vsw / 2)], B = [f(cx + b * R), f(cy - R + vsw / 2)];
+        const ring = `M${f(cx)} ${f(cy - r)}A${r} ${r} 0 1 1 ${f(cx)} ${f(cy + r)}A${r} ${r} 0 1 1 ${f(cx)} ${f(cy - r)}`;
+        const x0 = f(cx - R), x1 = f(B[0] + vsw / 2), pad = 2, w = f(x1 - x0 + 2 * pad);
+        const box = `${f(50 - w / 2)} ${f(50 - w / 2)} ${w} ${w}`, wideBox = `${f(50 - w / 2)} ${f(50 - R - pad)} ${w} ${f(2 * R + 2 * pad)}`;
+        // The V's two strokes, each from its first point, for every shape it takes.
+        const vw = B[0] - A[0], vh = T[1] - A[1], mx = A[0] + vw / 2, my = A[1] + vh * 0.55, s = Math.min(vw, vh) * 0.42, tick = [A[0] + vw * 0.46, T[1]];
+        const shapes = {
+            v: [T[0], T[1], A[0], A[1], T[0], T[1], B[0], B[1]],
+            tip: [T[0], T[1], T[0], T[1], T[0], T[1], T[0], T[1]],
+            ok: [tick[0], tick[1], A[0] + vw * 0.16, A[1] + vh * 0.52, tick[0], tick[1], B[0] + vw * 0.06, A[1]],
+            no: [mx - s + vw * 0.1, my - s, mx + s + vw * 0.1, my + s, mx - s + vw * 0.1, my + s, mx + s + vw * 0.1, my - s],
+            err: [mx, A[1], mx, T[1] - vsw * 1.28, mx, T[1], mx, T[1] + 0.01],
         };
-    })();
-    const SOLID_DY = -2.28;
+        for (const k in shapes) shapes[k] = shapes[k].map(f);
+        return { cx: f(cx), cy, r, sw, R: f(R), vsw, halo: vsw + 7, A, T, B, ring, box, wideBox, shapes };
+    }
+    const FORMS = { pair: pair(20, 13, 13), heavy: pair(18, 18, 17) };
+    const formOf = (v) => (v === 'heavy' || v === 'solid' ? 'heavy' : 'pair');
     const CSS = `
-@property --ovm-fill{syntax:'<number>';inherits:true;initial-value:0}
-.ov-mark{display:inline-grid;place-items:center;width:32px;height:32px;color:var(--accent,#8b5cf6);flex:none;vertical-align:middle;line-height:0;--ovm-to:color-mix(in oklab,currentColor 45%,#a78bfa);--ovm-fill:0;transition:--ovm-fill .55s cubic-bezier(.3,.8,.2,1),color .35s}
+@property --ovm-fill{syntax:'<number>';inherits:true;initial-value:1}
+.ov-mark{display:inline-grid;place-items:center;width:32px;height:32px;flex:none;vertical-align:middle;line-height:0;--ovm-o:#4f7cff;--ovm-v:#8b5cf6;--ovm-fill:1;transition:--ovm-fill .55s cubic-bezier(.3,.8,.2,1)}
+.ov-mark[data-wide]{height:auto;aspect-ratio:94/57}
 .ov-mark svg{width:100%;height:100%;overflow:visible}
-.ov-mark .m{transform-box:view-box;transform-origin:24px 24px;transition:translate .35s}
-.ov-mark .fr{transform-box:view-box;transform:translateY(calc((${GEO.fill0} - var(--ovm-fill) * ${GEO.span + 4}) * 1px))}
-.ov-mark .lp{fill:none;stroke-width:${GEO.sw};stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:100;stroke-dashoffset:0;transition:opacity .3s}
-.ov-mark .d{fill:var(--ovm-dot,var(--text-primary,#fff));transform-box:fill-box;transform-origin:center;transition:opacity .3s,fill .35s}
-.ov-mark .rp{fill:none;stroke:var(--danger,#ef4444);stroke-width:1.6;opacity:0;transform-box:fill-box;transform-origin:center}
-/* The solid form: the coin, the line hidden in it, the dot away (it would vanish into the disc). */
-.ov-mark[data-form=solid]{--ovm-fill:1}
-.ov-mark[data-form=solid] .m{translate:0 ${SOLID_DY}px}
-.ov-mark[data-form=solid] .lp,.ov-mark[data-form=solid] .d{opacity:0}
-/* Hover and focus: the line fills into the coin and drains again when let go. */
-a:hover>.ov-mark:not([data-form=solid]),button:hover>.ov-mark:not([data-form=solid]),.ov-mark:not([data-form=solid]):hover,a:focus-visible>.ov-mark:not([data-form=solid]){--ovm-fill:1}
-a:hover>.ov-mark .d,button:hover>.ov-mark .d,.ov-mark:hover .d{animation:ovmHop .6s cubic-bezier(.3,.7,.4,1) 1}
-/* A page on its way, or a known progress: the coin fills to the level; the line stays drawn over it. */
-.ov-mark[data-nav],.ov-mark[data-progress]{transition:--ovm-fill .3s linear,color .35s}
+.ov-mark .m,.ov-mark .og,.ov-mark .vg{transform-box:view-box}
+.ov-mark .m{transform-origin:50px 50px}
+.ov-mark .o,.ov-mark .ot{fill:none;stroke:var(--ovm-o);transition:stroke .35s}
+.ov-mark .ot{opacity:0;transition:opacity .3s,stroke .35s}
+.ov-mark .va,.ov-mark .vb{fill:none;stroke:var(--ovm-v);stroke-linecap:round;stroke-linejoin:round;transition:stroke .35s,opacity .5s}
+.ov-mark .ha,.ov-mark .hb{fill:none;stroke:#000;stroke-linecap:round}
+.ov-mark .cd{display:none;fill:var(--ovm-dot,#ff3b5c);transform-box:fill-box;transform-origin:center}
+.ov-mark .nd{fill:var(--danger,#ef4444);opacity:0;transform:scale(0);transform-box:fill-box;transform-origin:center;transition:opacity .2s,transform .42s cubic-bezier(.34,1.56,.64,1)}
+.ov-mark .rp{fill:none;stroke:#ff3b5c;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
+.ov-mark[data-tone=ink]{--ovm-o:currentColor;--ovm-v:currentColor}
+.ov-mark[data-tone=white]{--ovm-o:#fff;--ovm-v:#fff}
+/* The season: the O is a pumpkin in October (states below still colour it). */
+.ov-mark .sh,.ov-mark .sw2{display:none}
+html[data-ov-season-mark=halloween] .ov-mark .sh,html[data-ov-season-mark=winter] .ov-mark .sw2{display:inline}
+/* As weak as the base rule, so a state, a tone or a page's own colour (a brand page) wins over the season. */
+:where(html[data-ov-season-mark=halloween]) .ov-mark{--ovm-o:#f97316}
+.ov-mark .ss{fill:none;stroke:#5fae3c;stroke-width:4.4;stroke-linecap:round}
+.ov-mark .sl{fill:#7fd04e;transform-box:fill-box;transform-origin:0 80%}
+.ov-mark .sc{fill:none;stroke:#f4fbff;stroke-width:5.6;stroke-linecap:round}
+.ov-mark .sd{fill:#f4fbff}
+/* Hover and focus: the V leans back and the O hops. */
+a:hover>.ov-mark:not([data-state]) .vg,button:hover>.ov-mark:not([data-state]) .vg,.ov-mark:not([data-state]):hover .vg,a:focus-visible>.ov-mark:not([data-state]) .vg{animation:ovmLean .62s ease-out 1}
+a:hover>.ov-mark:not([data-state]) .og,button:hover>.ov-mark:not([data-state]) .og,.ov-mark:not([data-state]):hover .og,a:focus-visible>.ov-mark:not([data-state]) .og{animation:ovmHopO .62s ease-out 1}
+/* The intro: the O pops in, then the V grows out of its point. */
+.ov-mark[data-ovm-intro] .og{animation:ovmPop .56s cubic-bezier(.34,1.56,.64,1) both}
+.ov-mark[data-ovm-intro] .vg{animation:ovmPop .52s cubic-bezier(.34,1.56,.64,1) .18s both}
+html[data-ov-season-mark] .ov-mark[data-ovm-intro] .sl{animation:ovmLeaf .9s cubic-bezier(.3,1.6,.5,1) .5s both}
+/* A page on its way, or a known progress: the ring draws itself round to the level over a faint track. */
+.ov-mark[data-nav],.ov-mark[data-progress]{transition:--ovm-fill .3s linear}
 .ov-mark[data-progress]{--ovm-fill:var(--ovm-p,0)}
-.ov-mark[data-nav] .lp,.ov-mark[data-progress] .lp{opacity:1}
-.ov-mark[data-nav] .m,.ov-mark[data-progress] .m{translate:none}
-.ov-mark[data-nav] .d,.ov-mark[data-progress] .d{opacity:0}
+.ov-mark[data-nav] .o,.ov-mark[data-progress] .o{stroke-dasharray:100 100;stroke-dashoffset:calc((1 - var(--ovm-fill)) * 100px)}
+.ov-mark[data-nav] .ot,.ov-mark[data-progress] .ot{opacity:.24}
+.ov-mark[data-nav]:not([data-ovm-arrive]) .vg{animation:ovmNod .9s ease-in-out infinite}
+.ov-mark[data-ovm-arrive] .vg{animation:ovmHop .5s ease-out 1}
+.ov-mark[data-ovm-arrive] .og{animation:ovmPulse .5s ease-out 1}
 /* The states. */
-.ov-mark[data-state=busy] .d{animation:ovmHop .82s ease-in-out infinite}
-.ov-mark[data-state=busy][data-form=solid] .m{animation:ovmBreathe 1.1s ease-in-out infinite}
-.ov-mark[data-state=ok]{color:var(--success,#22c55e)!important;--ovm-fill:1}
-.ov-mark[data-state=ok] .m{animation:ovmPop .55s cubic-bezier(.3,1.5,.5,1) 1}
-.ov-mark[data-state=error]{color:var(--danger,#ef4444)!important;--ovm-dot:var(--danger,#ef4444)}
+.ov-mark[data-state=busy] .vg{animation:ovmBob .9s ease-in-out infinite}
+.ov-mark[data-state=busy] .og{animation:ovmBreathe .9s ease-in-out .45s infinite}
+.ov-mark[data-state=ok]{--ovm-o:var(--success,#22c55e);--ovm-v:var(--success,#22c55e)}
+.ov-mark[data-state=ok] .vg{animation:ovmHop .56s ease-out .14s 1 both}
+.ov-mark[data-state=error]{--ovm-o:var(--danger,#ef4444);--ovm-v:var(--danger,#ef4444)}
 .ov-mark[data-state=error] .m{animation:ovmShake .56s ease-in-out 1}
-.ov-mark[data-state=error] .d{animation:ovmDrop .7s ease-in 1 both}
-.ov-mark[data-state=no]{color:var(--text-muted,#94a3b8)!important}
-.ov-mark[data-state=no] .m{animation:ovmNo .52s ease-in-out 1}
-.ov-mark[data-state=notify] .d{animation:ovmPing .76s ease-out 2}
-.ov-mark[data-state=live]{--ovm-dot:var(--danger,#ef4444)}
-.ov-mark[data-state=live] .d{animation:ovmOnAir 1.4s ease-in-out infinite}
+.ov-mark[data-state=no]{--ovm-o:var(--text-muted,#94a3b8);--ovm-v:var(--text-muted,#94a3b8)}
+.ov-mark[data-state=no] .og{animation:ovmNo .52s ease-in-out .1s 1}
+.ov-mark[data-state=notify] .nd{opacity:1;transform:scale(1)}
+.ov-mark[data-state=notify] .og{animation:ovmBounce .76s ease-out .14s 1}
+.ov-mark[data-state=live]{--ovm-o:#ff3b5c}
+.ov-mark[data-state=live] .og{animation:ovmPulse 1.6s ease-in-out infinite}
 .ov-mark[data-state=live] .rp{animation:ovmRipple 1.6s ease-out infinite}
 .ov-mark[data-state=live] .rp2{animation-delay:.8s}
 .ov-mark[data-state=sleep] svg{filter:grayscale(1);opacity:.7}
-.ov-mark[data-state=sleep] .d{transform:translateY(5.2px);transition:transform .6s,opacity .3s}
-/* The intro: the line draws itself, then the dot drops into the opening; the coin pops. */
-.ov-mark[data-ovm-intro]:not([data-form=solid]) .lp{animation:ovmDraw 1.1s cubic-bezier(.3,.8,.2,1) both}
-.ov-mark[data-ovm-intro]:not([data-form=solid]) .d{animation:ovmIn .5s cubic-bezier(.3,1.5,.5,1) .85s both}
-.ov-mark[data-ovm-intro][data-form=solid] .m{animation:ovmPop .6s cubic-bezier(.3,1.5,.5,1) both}
-/* Per-site rhythm: one family, each site with its own dot and pace. Colours stay with the theme (currentColor). */
-.ov-mark[data-variant=live]{--ovm-dot:#ef4444}
-.ov-mark[data-variant=live][data-ovm-run]:not([data-state]) .d{animation:ovmOnAir 1.4s ease-in-out infinite}
+.ov-mark[data-state=sleep] .og{transform:scaleY(.14);transition:transform .52s ease-in-out}
+.ov-mark[data-state=sleep] .vg{transform:translateY(4px);transition:transform .52s ease-in-out}
+.ov-mark[data-state=sleep] .va,.ov-mark[data-state=sleep] .vb{opacity:.5}
+/* Per-site touches: one family, each site with its own light in the O and its own pace. */
+.ov-mark[data-variant=live] .cd,.ov-mark[data-variant=vip] .cd,.ov-mark[data-variant=tips] .cd,.ov-mark[data-variant=deals] .cd,.ov-mark[data-variant=coupons] .cd{display:inline}
+.ov-mark[data-variant=live][data-ovm-run]:not([data-state]) .cd{animation:ovmOnAir 1.4s ease-in-out infinite}
 .ov-mark[data-variant=vip]{--ovm-dot:#facc15}
 .ov-mark[data-variant=tips]{--ovm-dot:#22c55e}
 .ov-mark[data-variant=deals],.ov-mark[data-variant=coupons]{--ovm-dot:#f59e0b}
-.ov-mark[data-variant=games][data-state=busy] .d{animation-duration:.6s}
-.ov-mark[data-variant=chat][data-state=busy] .d{animation-duration:.55s}
-.ov-mark[data-variant=codes][data-state=busy] .d{animation-timing-function:steps(4,end)}
-.ov-mark[data-variant=blog][data-state=busy] .d,.ov-mark[data-variant=wiki][data-state=busy] .d,.ov-mark[data-variant=news][data-state=busy] .d{animation-duration:1.2s}
-@keyframes ovmHop{0%,100%{transform:translateY(0) scale(1)}45%{transform:translateY(5.2px) scale(1.1,.84)}55%{transform:translateY(5.2px) scale(.92,1.1)}}
-@keyframes ovmBreathe{0%,100%{transform:scale(1)}50%{transform:scale(.9)}}
-@keyframes ovmPop{0%{transform:scale(.6)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
-@keyframes ovmShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-3.2px)}30%{transform:translateX(3.2px)}45%{transform:translateX(-2.6px)}60%{transform:translateX(2.6px)}80%{transform:translateX(-1.2px)}}
-@keyframes ovmNo{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}50%{transform:translateX(2px)}75%{transform:translateX(-1.5px)}}
-@keyframes ovmDrop{0%{transform:translateY(0)}55%{transform:translateY(5.6px)}70%{transform:translateY(4.2px)}100%{transform:translateY(5.6px)}}
-@keyframes ovmPing{0%{transform:scale(1)}30%{transform:scale(1.6)}55%{transform:scale(.9)}75%{transform:scale(1.25)}100%{transform:scale(1)}}
-@keyframes ovmOnAir{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.35);opacity:1}}
-@keyframes ovmRipple{0%{transform:scale(1);opacity:.65}100%{transform:scale(1.4);opacity:0}}
-@keyframes ovmDraw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
-@keyframes ovmIn{from{transform:scale(0)}to{transform:scale(1)}}
+.ov-mark[data-variant=games][data-state=busy] .vg,.ov-mark[data-variant=games][data-state=busy] .og{animation-duration:.6s}
+.ov-mark[data-variant=chat][data-state=busy] .vg,.ov-mark[data-variant=chat][data-state=busy] .og{animation-duration:.55s}
+.ov-mark[data-variant=codes][data-state=busy] .vg{animation-timing-function:steps(4,end)}
+.ov-mark[data-variant=blog][data-state=busy] .vg,.ov-mark[data-variant=wiki][data-state=busy] .vg,.ov-mark[data-variant=news][data-state=busy] .vg,.ov-mark[data-variant=blog][data-state=busy] .og,.ov-mark[data-variant=wiki][data-state=busy] .og,.ov-mark[data-variant=news][data-state=busy] .og{animation-duration:1.2s}
+@keyframes ovmPop{0%{transform:scale(0)}100%{transform:scale(1)}}
+@keyframes ovmLean{0%,100%{transform:rotate(0)}45%{transform:rotate(-11deg)}}
+@keyframes ovmHopO{0%,100%{transform:translateY(0)}45%{transform:translateY(-3px)}}
+@keyframes ovmNod{0%,100%{transform:rotate(0)}50%{transform:rotate(-7deg)}}
+@keyframes ovmHop{0%,100%{transform:translateY(0) scaleY(1)}35%{transform:translateY(-9px) scaleY(1.04)}70%{transform:translateY(0) scaleY(.96)}}
+@keyframes ovmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+@keyframes ovmBreathe{0%,100%{transform:scale(1)}50%{transform:scale(.88)}}
+@keyframes ovmPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes ovmShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}30%{transform:translateX(7px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}80%{transform:translateX(-3px)}}
+@keyframes ovmNo{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes ovmBounce{0%,80%,100%{transform:translateY(0)}20%{transform:translateY(-6px)}40%{transform:translateY(0)}60%{transform:translateY(-4px)}}
+@keyframes ovmOnAir{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.3);opacity:1}}
+@keyframes ovmRipple{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.9);opacity:0}}
 .ov-mark[data-static] *{animation:none!important}
 .ov-mark[data-ov]:not([data-ovm-run]) *{animation-play-state:paused!important}
-.ov-mark .sh,.ov-mark .sw2{display:none}
-html[data-ov-season-mark=halloween] .ov-mark .sh,html[data-ov-season-mark=winter] .ov-mark .sw2{display:inline}
-html[data-ov-season-mark=halloween] .ov-mark .d{display:none}
-.ov-mark .ss{fill:none;stroke:#5fae3c;stroke-width:3.2;stroke-linecap:round}
-.ov-mark .sl{fill:#7fd04e;transform-box:fill-box;transform-origin:0 70%}
-.ov-mark .sc{fill:none;stroke:#f4fbff;stroke-width:4.6;stroke-linecap:round}
-.ov-mark .sd{fill:#f4fbff}
-html[data-ov-season-mark=halloween] .ov-mark{--ovm-to:#f97316}
-html[data-ov-season-mark] .ov-mark[data-ovm-intro] .sl{animation:ovmLeaf .9s cubic-bezier(.3,1.6,.5,1) both}
 .ov-mark[data-ovm-flourish] .sl{animation:ovmWiggle 1.2s ease-in-out 1}
 .ov-mark[data-ovm-flourish] .sd{animation:ovmTwinkle 1.4s ease-in-out 1}
-.ov-mark[data-ovm-flourish] .d{animation:ovmPing .76s ease-out 1}
+.ov-mark[data-ovm-flourish] .vg{animation:ovmLean .7s ease-out 1}
 .ovm-fall{position:fixed;width:0;height:0;pointer-events:none;z-index:10010}
 .ovm-fall i{position:absolute;left:-4px;top:-4px;width:9px;height:9px;border-radius:0 70% 0 70%;opacity:0;animation:ovmFall 3s cubic-bezier(.3,.1,.5,1) forwards}
 html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:50%}
@@ -139,20 +160,48 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
-@media (prefers-reduced-motion:reduce){.ov-mark *{animation:none!important}.ov-mark,.ov-mark .m{transition:none}.ovm-fall{display:none}}
+@media (prefers-reduced-motion:reduce){.ov-mark *{animation:none!important}.ov-mark,.ov-mark *{transition:none!important}.ovm-fall{display:none}}
 html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
-    function svg(id) {
-        const G = GEO;
-        return `<svg viewBox="0 0 48 48" aria-hidden="true"><defs>
-<linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="currentColor"/><stop offset="1" style="stop-color:var(--ovm-to)"/></linearGradient>
-<mask id="${id}v" maskUnits="userSpaceOnUse" x="-4" y="-4" width="56" height="56"><rect x="-4" y="-4" width="56" height="56" fill="#fff"/><path d="${G.vee}" fill="none" stroke="#000" stroke-width="${G.sw + 3.4}" stroke-linecap="round" stroke-linejoin="round"/></mask>
-<clipPath id="${id}f"><rect class="fr" x="-4" y="-4" width="56" height="${G.span + 8}"/></clipPath></defs>
-<g class="m"><circle class="rp" cx="24" cy="${G.cy}" r="${G.R}"/><circle class="rp rp2" cx="24" cy="${G.cy}" r="${G.R}"/>
-<g clip-path="url(#${id}f)"><circle class="fl" cx="24" cy="${G.cy}" r="${G.R}" fill="url(#${id}g)" mask="url(#${id}v)"/></g>
-<path class="lp" d="${G.loop}" pathLength="100" stroke="url(#${id}g)"/>
-<circle class="d" cx="24" cy="${G.dotY}" r="${G.dotR}"/>
-<g class="sh"><path class="ss" d="M24 9.6c.2-2.8 1-4.8 2.7-6.1"/><path class="sl" d="M26.4 4.6c2.3-2.5 5.8-2.7 8.3-1.2-1.9 2.7-5.4 3.5-8.3 1.2z"/></g>
-<g class="sw2"><path class="sc" d="${G.snow[0]}"/><path class="sc" d="${G.snow[1]}"/><circle class="sd" cx="${G.flake[0][0]}" cy="${G.flake[0][1]}" r="1.4"/><circle class="sd" cx="${G.flake[1][0]}" cy="${G.flake[1][1]}" r="1.2"/></g></g></svg>`;
+    const seg = (p, i) => `M${f(p[i])} ${f(p[i + 1])}L${f(p[i + 2])} ${f(p[i + 3])}`;
+    function svg(id, G, wide) {
+        const p = G.shapes.v, oc = `transform-origin:${G.cx}px ${G.cy}px`, vc = `transform-origin:${G.T[0]}px ${G.T[1]}px`;
+        const ri = G.r - G.sw / 2, top = G.cy - G.R;
+        // The season: a pumpkin's stem and leaf on the O; snow on the O and on the V's caps.
+        const stem = `M${f(G.cx + 0.6)} ${f(top + 2.5)}c.3-4.6 1.6-8 5-10.6`, leaf = `M${f(G.cx + 5.2)} ${f(top - 7.4)}c4.4-4.8 11-5.2 15.8-2.4-3.6 5.2-10.4 6.8-15.8 2.4z`;
+        const capR = f(G.r + G.sw / 2 - 1.6), at = (deg) => [f(G.cx + capR * Math.cos(deg * Math.PI / 180)), f(G.cy + capR * Math.sin(deg * Math.PI / 180))];
+        const c0 = at(-150), c1 = at(-40);
+        return `<svg viewBox="${wide ? G.wideBox : G.box}" aria-hidden="true"><defs>
+<mask id="${id}h" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><rect x="-20" y="-20" width="140" height="140" fill="#fff"/><g class="vg" style="${vc}"><path class="ha" d="${seg(p, 0)}" stroke-width="${G.halo}"/><path class="hb" d="${seg(p, 4)}" stroke-width="${G.halo}"/></g></mask></defs>
+<g class="m"><circle class="rp" cx="${G.cx}" cy="${G.cy}" r="${G.R}"/><circle class="rp rp2" cx="${G.cx}" cy="${G.cy}" r="${G.R}"/>
+<g mask="url(#${id}h)"><g class="og" style="${oc}"><path class="ot" d="${G.ring}" stroke-width="${G.sw}"/><path class="o" d="${G.ring}" pathLength="100" stroke-width="${G.sw}"/><circle class="cd" cx="${G.cx}" cy="${G.cy}" r="${f(ri * 0.62)}"/>
+<g class="sw2"><path class="sc" d="M${c0[0]} ${c0[1]}A${capR} ${capR} 0 0 1 ${c1[0]} ${c1[1]}"/></g></g></g>
+<g class="vg" style="${vc}"><path class="va" d="${seg(p, 0)}" stroke-width="${G.vsw}"/><path class="vb" d="${seg(p, 4)}" stroke-width="${G.vsw}"/>
+<g class="sw2"><circle class="sd" cx="${G.A[0]}" cy="${f(G.A[1] - G.vsw * 0.18)}" r="${f(G.vsw * 0.36)}"/><circle class="sd" cx="${G.B[0]}" cy="${f(G.B[1] - G.vsw * 0.18)}" r="${f(G.vsw * 0.36)}"/></g></g>
+<circle class="nd" cx="${f(G.B[0] + 5.5)}" cy="${f(G.B[1] - 9)}" r="${f(G.vsw * 0.55)}"/>
+<g class="sh"><path class="ss" d="${stem}"/><path class="sl" d="${leaf}"/></g>
+<g class="sw2"><circle class="sd" cx="${f(G.cx - 12)}" cy="${f(top - 6)}" r="1.8"/><circle class="sd" cx="${f(G.B[0] - 6)}" cy="${f(G.B[1] - 12)}" r="1.5"/></g></g></svg>`;
+    }
+
+    // ── The V's shapes: a state turns it into a tick, a cross or "!" and back, the gap in the ring following it ──
+    const SHAPE_OF = { ok: 'ok', error: 'err', no: 'no' };
+    const backOut = (p) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); };
+    function drawV(q, p) {
+        q.pts = p;
+        const a = seg(p, 0), b = seg(p, 4);
+        q.va.setAttribute('d', a); q.ha.setAttribute('d', a); q.vb.setAttribute('d', b); q.hb.setAttribute('d', b);
+    }
+    function shape(el, animate) {
+        const q = el.__ovm; if (!q) return;
+        const name = SHAPE_OF[el.getAttribute('data-state')] || 'v';
+        if (q.name === name) return;
+        q.name = name;
+        const to = FORMS[q.form].shapes[name], from = q.pts.slice();
+        const raf = typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame.bind(window) : null;
+        if (q.raf && window.cancelAnimationFrame) window.cancelAnimationFrame(q.raf);
+        if (!animate || !raf) { drawV(q, to); return; }
+        const t0 = Date.now(), ms = 420;
+        const step = () => { const t = Math.min(1, (Date.now() - t0) / ms), e = backOut(t); drawV(q, from.map((v, i) => v + (to[i] - v) * e)); q.raf = t < 1 ? raf(step) : 0; };
+        q.raf = raf(step);
     }
 
     const INTRO_MS = 8000, LINGER_MS = 1200;
@@ -183,8 +232,9 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
         const intro = now < st.introEnd;
         const run = may && (intro || st.hover || st.focus || now < st.lingerEnd || showing);
         if (run !== el.hasAttribute('data-ovm-run')) { if (run) el.setAttribute('data-ovm-run', ''); else el.removeAttribute('data-ovm-run'); }
-        // The intro's draw-in and pop are on only inside the intro (paused with the rest while the mark cannot move).
+        // The intro's pop and growth are on only inside the intro (paused with the rest while the mark cannot move).
         if ((may && intro) !== el.hasAttribute('data-ovm-intro') && (may || !intro)) { if (may && intro) el.setAttribute('data-ovm-intro', ''); else el.removeAttribute('data-ovm-intro'); }
+        shape(el, run);
         try { if (run) svgEl.unpauseAnimations(); else svgEl.pauseAnimations(); } catch { /* no SMIL */ }
         clearTimeout(st.timer); st.timer = 0;
         const next = Math.min(...[st.introEnd, st.lingerEnd].filter((t) => t > now));
@@ -263,14 +313,17 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
             if (!el.hasAttribute('data-ov')) {
                 el.setAttribute('data-ov', '1');
                 const size = parseInt(el.getAttribute('data-size'), 10);
-                if (size) { el.style.width = size + 'px'; el.style.height = size + 'px'; }
-                // The form follows the size unless the page names one: a line under 24px blurs, the coin holds.
+                if (size) { el.style.width = size + 'px'; if (!el.hasAttribute('data-wide')) el.style.height = size + 'px'; }
+                // The form follows the size unless the page names one: under 22px the pair's gap closes, the heavy holds.
                 if (!el.hasAttribute('data-form')) {
                     let px = size;
                     if (!px) { try { px = Math.round(el.getBoundingClientRect().width); } catch { px = 0; } }
-                    el.setAttribute('data-form', px && px <= 24 ? 'solid' : 'line');
+                    el.setAttribute('data-form', px && px <= 22 ? 'heavy' : 'pair');
                 }
-                el.innerHTML = svg('ovm' + (++n) + '_');
+                const form = formOf(el.getAttribute('data-form'));
+                el.innerHTML = svg('ovm' + (++n) + '_', FORMS[form], el.hasAttribute('data-wide'));
+                const pick = (c) => el.querySelector(c);
+                el.__ovm = { form, name: 'v', pts: FORMS[form].shapes.v.slice(), raf: 0, va: pick('.va'), vb: pick('.vb'), ha: pick('.ha'), hb: pick('.hb') };
             }
             if (!state.has(el) && el.isConnected) track(el);
         });
@@ -304,10 +357,10 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
             }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'data-static', 'data-nav', 'data-progress', 'data-ov-motion', 'data-ov-season-mark'] });
         } catch { /* */ }
     }
-    // ── A page on its way: the navbar's mark fills as the next page loads ──
+    // ── A page on its way: the navbar's mark draws its ring round as the next page loads ──
     // The pace is learned: the usual time of this site's boost moves and full page loads in this browser (a running
-    // average in localStorage). The fill reaches about four fifths at the usual time and never the top before the page
-    // is really here; then it fills, and drains back to the line on the new page.
+    // average in localStorage). The ring reaches about four fifths at the usual time and never closes before the page
+    // is really here; then it closes, the V hops, and the track fades on the new page.
     const loc = () => window.location || { host: '', href: 'http://localhost/', origin: 'http://localhost', pathname: '/', search: '' };
     const NAV_KEY = 'ov-nav-ms', NAV_FLAG = 'ov-nav-click', NAV_DEFAULT = { boost: 450, page: 1600 };
     const navMarks = () => [...document.querySelectorAll('.openvibe-navbar-brand .ov-mark, .navbar .nav-brand .ov-mark, .ov-mark[data-ov-nav]')].filter((m) => !m.closest('.openvibe-network-badge'));
@@ -326,6 +379,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
     function navStart(kind = 'page') {
         navStop();
         const marks = navMarks(); if (!marks.length) return;
+        marks.forEach((m) => m.removeAttribute('data-ovm-arrive'));
         const t0 = Date.now(), avg = usual(kind);
         const me = { kind, t0, timer: 0 };
         const tick = () => {
@@ -338,14 +392,18 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
         tick();
     }
     function navStop() { if (nav) { clearTimeout(nav.timer); nav = null; } }
-    /** The page is here: fill to the top, then drain back. A navbar re-rendered by the move gets the same ending. */
+    /** The page is here: the ring closes and the V hops. A navbar re-rendered by the move gets the same ending. */
     // The ending runs after every other listener of the arrival (the navbar re-renders on it), and no timer keeps a mark:
     // each step looks the marks up again, so a replaced navbar is never held in memory.
-    const clearNav = () => { if (!nav) navMarks().forEach((m) => { m.removeAttribute('data-nav'); m.style.removeProperty('--ovm-fill'); }); };
+    const clearNav = () => { if (!nav) navMarks().forEach((m) => { m.removeAttribute('data-nav'); m.removeAttribute('data-ovm-arrive'); m.style.removeProperty('--ovm-fill'); }); };
     function navEnd(kind) {
         const was = nav; navStop();
         if (was && kind) learn(kind, Date.now() - was.t0);
-        setTimeout(() => { if (nav) return; mount(); setFill(navMarks(), 1); setTimeout(clearNav, 320); }, 0);
+        setTimeout(() => {
+            if (nav) return; mount();
+            const marks = navMarks(); setFill(marks, 1); marks.forEach((m) => m.setAttribute('data-ovm-arrive', ''));
+            setTimeout(clearNav, 520);
+        }, 0);
     }
     function hookNav() {
         document.addEventListener('ov:boost:before', () => navStart('boost'));
@@ -362,7 +420,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
         });
         // Back to a page from the back/forward cache: nothing is loading any more.
         window.addEventListener('pageshow', (e) => { if (e.persisted) { navStop(); clearNav(); } });
-        // This page came from a click on the last one: learn how long it took, and finish the fill here.
+        // This page came from a click on the last one: learn how long it took, and finish the ring here.
         let t = 0; try { t = Number(sessionStorage.getItem(NAV_FLAG)) || 0; sessionStorage.removeItem(NAV_FLAG); } catch { /* */ }
         if (t && Date.now() - t < 20000) {
             learn('page', Date.now() - t);
@@ -370,7 +428,14 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
             let tries = 0; const again = () => { if (!finish() && ++tries <= 20) setTimeout(again, 100); }; again();
         }
     }
-    window.OVMark = { mount, navStart, navEnd, usual };
+    /** Replay the intro on one mark (a brand page, a splash): the O pops in and the V grows out of its point. */
+    function intro(el) {
+        const st = el && state.get(el); if (!st) return;
+        el.removeAttribute('data-ovm-intro');
+        try { void el.getBoundingClientRect(); } catch { /* */ }
+        st.introEnd = Date.now() + 1400; update(el);
+    }
+    window.OVMark = { mount, navStart, navEnd, usual, intro, FORMS };
     window.ovMarkMount = mount;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

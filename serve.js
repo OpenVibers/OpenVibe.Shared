@@ -79,6 +79,7 @@ function contentType(name) {
     if (name.endsWith('.css')) return 'text/css; charset=utf-8';
     if (name.endsWith('.jpg')) return 'image/jpeg';
     if (name.endsWith('.png')) return 'image/png';
+    if (name.endsWith('.woff2')) return 'font/woff2';
     return 'application/javascript; charset=utf-8';
 }
 

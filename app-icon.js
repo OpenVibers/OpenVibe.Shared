@@ -2,14 +2,14 @@
 // ═══════════════════════════════════════════════════════════════
 // openvibe-shared/app-icon — one app icon design for every OpenVibe site.
 //
-// The icon is the OV mark as it appears in the navbar (the open loop and the site's dot) on the network's
-// deep navy, tinted per site. No text: a home-screen icon is a few millimetres wide.
+// The icon is the OpenVibe mark (openvibe-shared/mark: the Pair, a ring O and a round V) on the network's deep navy,
+// with a soft glow behind it. No text: a home-screen icon is a few millimetres wide.
 //   svg({ site, maskable })   full-bleed square SVG. maskable keeps the mark inside the 40 % radius
 //                             safe zone, so round, squircle and teardrop masks never clip it.
-//   favicon({ site })         the same mark on a rounded tile, tuned for 16–32 px.
+//   favicon({ site })         the heavy form on a rounded tile, tuned for 16–32 px.
 //   manifest({ site, name, shortName, description, startUrl })  web app manifest with shared colours.
-//   SITES                     accent + dot colour per site (the dot is the one thing that differs,
-//                             matching ov-mark.js variants: Live is "on air" red).
+//   SITES                     accent (the glow and the share cards) and the light in the O per site: Live's is the
+//                             red record light, as in ov-mark.js's variants; white means none.
 // PNG sets are rendered from these by scripts/build-app-icons.js.
 // ═══════════════════════════════════════════════════════════════
 const BG = '#0a0f1c', BG_EDGE = '#060912';
@@ -25,33 +25,34 @@ const SITES = {
 };
 const of = (site) => SITES[site] || SITES.network;
 
-function mark(site, scale) {
-    // Drawn in a 48-unit box centred on 0,0 (ov-mark.js's open loop moved by -24,-24), then scaled.
-    const c = of(site);
-    return `<g transform="scale(${scale})">
-<circle r="22" fill="url(#glow)"/>
-<path d="M-8.8,-15.2 A17.5,17.5 0 1,0 8.8,-15.2 L0,6.5 Z" fill="none" stroke="url(#ring)" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cy="-16.6" r="3" fill="${c.dot}"/></g>`;
+const MARK = require('./mark');
+
+// The mark centred on 0,0 (openvibe-shared/mark draws it centred on 50,50 in a 100-unit box), scaled.
+function mark(site, scale, form = 'pair') {
+    const c = of(site), g = MARK.geo(form), { body } = MARK.art({ form, id: 'ov' });
+    const light = c.dot && c.dot.toLowerCase() !== '#ffffff' ? `<circle cx="${g.cx}" cy="${g.cy}" r="${+((g.r - g.sw / 2) * 0.62).toFixed(2)}" fill="${c.dot}"/>` : '';
+    return `<g transform="scale(${scale}) translate(-50 -50)"><ellipse cx="50" cy="50" rx="52" ry="40" fill="url(#glow)"/>${body}${light}</g>`;
 }
 
-function defs(site) {
-    const [a, b] = of(site).accent;
-    // The stroke runs from the site's accent towards violet, as the navbar's mark does.
-    return `<defs><linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset=".65" stop-color="${b}"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
-<radialGradient id="glow"><stop offset="0" stop-color="${a}" stop-opacity=".34"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></radialGradient>
+function defs(site, form = 'pair') {
+    const [a] = of(site).accent;
+    return `<defs>${MARK.art({ form, id: 'ov' }).defs}
+<radialGradient id="glow"><stop offset="0" stop-color="${a}" stop-opacity=".3"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></radialGradient>
 <radialGradient id="bg" cx=".5" cy=".38" r=".8"><stop offset="0" stop-color="#16223a"/><stop offset=".6" stop-color="${BG}"/><stop offset="1" stop-color="${BG_EDGE}"/></radialGradient></defs>`;
 }
 
 /** Full-bleed square. `maskable`: mark radius ≤ 40 % of the half-width; otherwise it fills more of the tile. */
 function svg({ site = 'network', maskable = true, size = 512 } = {}) {
-    const scale = maskable ? 3.7 : 4.6;                       // 21u glow radius × 3.7 ≈ 78u of the 256u half-width… well inside 40 %
+    // The mark's farthest point (the V's caps) is 50 units from its centre: × 4 is 200 of the 256 half-width, inside
+    // the maskable safe zone (40 % of the width, 204.8). A rounded tile carries it at three quarters of its width.
+    const scale = maskable ? 4 : 4.2;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-256 -256 512 512" width="${size}" height="${size}">${defs(site)}
-<rect x="-256" y="-256" width="512" height="512" fill="url(#bg)"${maskable ? '' : ' rx="112"'}/>${mark(site, scale * (maskable ? 1.55 : 1.6))}</svg>`;
+<rect x="-256" y="-256" width="512" height="512" fill="url(#bg)"${maskable ? '' : ' rx="112"'}/>${mark(site, scale)}</svg>`;
 }
 
-/** Small sizes: thicker strokes read better, and the tile is rounded because nothing masks a favicon. */
+/** Small sizes: the heavy form, as wide as the tile allows, and the tile rounded because nothing masks a favicon. */
 function favicon({ site = 'network' } = {}) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64">${defs(site)}<rect x="-32" y="-32" width="64" height="64" rx="15" fill="url(#bg)"/>${mark(site, 1.22)}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -32 64 64">${defs(site, 'heavy')}<rect x="-32" y="-32" width="64" height="64" rx="15" fill="url(#bg)"/>${mark(site, 0.58, 'heavy')}</svg>`;
 }
 
 function manifest({ site = 'network', name, shortName, description, startUrl = '/', iconBase = '/assets' }) {

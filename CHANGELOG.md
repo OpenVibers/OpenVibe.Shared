@@ -6,6 +6,40 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.59.0 — 2026-10-31
+
+- **The OpenVibe mark is the Pair** (the owner, from OpenVibe Mark Systems: "Pair, halo … I like this icon the most.
+  This should be our new logo"): a ring O in blue and a round V in violet, with a gap of the ground around the V
+  where it crosses the ring. The gap is a mask, so the mark sits on any ground. The V is as tall as the O and the mark
+  is centred in its box, so it sits level beside a name in the navbar and centred in a tile.
+  - **`openvibe-shared/mark`** (new): the mark as static SVG for servers, icons, share cards and anyone else:
+    `svg({ form, tone, wide, size, title })`, `art()` to place it inside another SVG, `geo()`, `shapes()`, `COLORS`.
+  - **`ov-mark.js`** draws the same numbers (`test/mark.test.js`). Two forms, the pair and the heavy (22 px wide and
+    under; the old `data-form="solid"` draws the heavy). `data-wide` gives a box that hugs the mark; `data-tone="ink"`
+    or `"white"` gives one colour.
+  - **Every state remade for it, none of them a spin:** the intro pops the O and grows the V out of its point; hover
+    leans the V back; busy bobs the V while the O breathes; ok turns the V into a tick, green; error into "!", red,
+    with a shake; no into "×", grey; notify pops a dot by the V; live makes the O the record light with ripples; sleep
+    closes the O like an eye. The V's shapes morph, and the gap in the ring follows them.
+  - **The page-load progress is the ring:** following a link, the navbar's ring empties and draws itself round again
+    at this site's learned pace (the same pace as 4.58.0), the V nodding; on arrival the ring closes and the V hops.
+    `data-progress` (island.js) draws the ring to its level. `OVMark.intro(el)` replays the intro on one mark (a
+    brand page, a splash).
+  - **Variants:** Live, VIP, Tips, Deals and Coupons carry a light in the O (Live's red record light). **The season:**
+    the O is a pumpkin with its stem and leaf in October, with caps of snow in December.
+  - **The navbar** shows the mark in the wide box (`data-size="34" data-wide`), the brand button hugging it; the footer
+    at 38 (28 small).
+- **The brand face for the names: Nunito** (SIL OFL 1.1, `OFL-Nunito.txt`), cut to Latin and weights 700–900:
+  `ov-brand.woff2`, 13.5 KB. A new `files.FONTS` list serves it at `/shared/ov-brand.woff2` (`serve.js`: `font/woff2`,
+  CORS as for every shared file); it is not a browser script, so the size report and the bundle test do not count it.
+  `navbar.js` declares it from beside itself (`font-display: swap`, its characters only) and sets the site name in
+  it; the footer's brand and the site switcher's names use it; every one falls back to the system face. A site with
+  its own `/shared` route serves `files.FONTS` beside `files.BROWSER` (`test/brand-face.test.js`).
+- **App icons, favicons and share cards** are the Pair: `app-icon.js` draws it (the heavy on the favicon's tile; the
+  maskable icon keeps it inside the 40 % safe circle), and `icons/*.png` and `social/*.jpg` are rebuilt; the cards set
+  the names in the brand face. **The loading screen** (`loading.js`) shows the Pair at work, and its V becomes "!"
+  when loading fails.
+
 ## 4.58.0 — 2026-10-31
 
 - **The OpenVibe mark is the Loop** (the owner chose it from OpenVibe Mark Systems: "use the one that's easiest to see
