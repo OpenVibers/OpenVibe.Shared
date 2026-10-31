@@ -47,7 +47,7 @@
 .ovsw-row { position: relative; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .ovsw-row::-webkit-scrollbar { display: none; }
 .ovsw-row .ovsw-t { flex: 0 0 72px; }
-.ovsw-t { all: unset; box-sizing: border-box; position: relative; display: grid; justify-items: center; gap: 5px; padding: 8px 2px 7px; border-radius: 13px; cursor: pointer; font-size: 11.5px; font-weight: 600; line-height: 1.15; text-align: center; color: var(--text-secondary, #a8b3c4); -webkit-touch-callout: none; user-select: none; animation: ovsw-tile .36s cubic-bezier(.2, 1.3, .3, 1) both; animation-delay: calc(var(--k, 0) * 10ms + 50ms); }
+.ovsw-t { all: unset; box-sizing: border-box; position: relative; display: grid; justify-items: center; gap: 5px; padding: 8px 2px 7px; border-radius: 13px; cursor: pointer; font-family: 'OV Brand', Nunito, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 12px; font-weight: 800; line-height: 1.15; text-align: center; color: var(--text-secondary, #a8b3c4); -webkit-touch-callout: none; user-select: none; animation: ovsw-tile .36s cubic-bezier(.2, 1.3, .3, 1) both; animation-delay: calc(var(--k, 0) * 10ms + 50ms); }
 .ovsw-t:hover, .ovsw-t:focus-visible { outline: none; color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
 .ovsw-t:focus-visible { box-shadow: inset 0 0 0 1.5px var(--accent, #3b82f6); }
 .ovsw-t .ov-icon { width: 36px; height: 36px; transition: transform .26s cubic-bezier(.2, 1.4, .3, 1); }

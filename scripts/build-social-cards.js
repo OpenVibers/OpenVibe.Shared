@@ -6,8 +6,9 @@
 // --only takes site ids (a site's page cards come with it) or page card ids.
 // Needs Chrome (the drawing) and ImageMagick's `convert` (PNG → a ~60 KB progressive JPEG).
 // The name, tagline, domain and accent come from each service manifest's `site` block (Contracts is the source of
-// truth; this script only draws them). The mark is openvibe-shared/app-icon. Inter is fetched once from Google Fonts
-// and embedded, so a card never depends on the fonts of the machine that rendered it. Re-run after a tagline,
+// truth; this script only draws them). The mark is openvibe-shared/app-icon. The names are set in the brand face
+// (ov-brand.woff2, Nunito, as the navbar draws them) and the rest in Inter, fetched once from Google Fonts; both are
+// embedded, so a card never depends on the fonts of the machine that rendered it. Re-run after a tagline,
 // accent or domain changes, and commit the PNGs: sites serve them from their pinned copy (openvibe-shared/serve).
 const fs = require('fs');
 const os = require('os');
@@ -48,6 +49,12 @@ async function interFaces() {
     }
     if (!out.length) throw new Error('no latin Inter faces in the Google Fonts CSS');
     return out.join('\n');
+}
+
+/** The brand face the names are set in (ov-brand.woff2 beside navbar.js), embedded. */
+function brandFace() {
+    const data = fs.readFileSync(path.join(__dirname, '..', 'ov-brand.woff2')).toString('base64');
+    return `@font-face{font-family:'OV Brand';font-style:normal;font-weight:700 900;font-display:block;src:url(data:font/woff2;base64,${data}) format('woff2')}`;
 }
 
 function sites() {
@@ -97,13 +104,13 @@ body{font-family:'Inter',sans-serif;color:#f8fafc;background:#0a0f1c;position:re
 .ring2{position:absolute;right:-30px;top:50%;width:380px;height:380px;margin-top:-190px;border-radius:50%;border:2px solid ${a1};opacity:.16}
 .wrap{position:absolute;inset:0;padding:60px 84px 60px;display:flex;flex-direction:column}
 .top{display:flex;align-items:center;gap:22px}
-.icon{width:88px;height:88px;border-radius:22px;overflow:hidden;box-shadow:0 18px 50px -12px ${a2}88, 0 0 0 1px #ffffff1a}
-.icon svg{width:88px;height:88px;display:block}
+.icon{width:96px;height:96px;border-radius:24px;overflow:hidden;box-shadow:0 18px 50px -12px ${a2}88, 0 0 0 1px #ffffff1a}
+.icon svg{width:96px;height:96px;display:block}
 .net{font-size:26px;font-weight:600;color:#94a3b8;letter-spacing:.01em}
-.net.site{font-size:34px;font-weight:800;letter-spacing:-.02em}
+.net.site{font-family:'OV Brand','Inter',sans-serif;font-size:36px;font-weight:900;letter-spacing:-.01em}
 .net.site .w{color:#f8fafc}.net.site .d{color:${a1}}
 .net.site .p{background:linear-gradient(100deg, ${a1}, ${a2});-webkit-background-clip:text;background-clip:text;color:transparent}
-.name{margin-top:36px;font-size:${long ? 92 : 108}px;font-weight:800;letter-spacing:-.035em;line-height:1}
+.name{margin-top:36px;font-family:'OV Brand','Inter',sans-serif;font-size:${long ? 94 : 110}px;font-weight:900;letter-spacing:-.02em;line-height:1}
 .name .w{color:#f8fafc}.name .d{color:${a1}}
 .name .p{background:linear-gradient(100deg, ${a1}, ${a2});-webkit-background-clip:text;background-clip:text;color:transparent}
 .tag{margin-top:22px;max-width:900px;font-size:42px;font-weight:600;line-height:1.18;color:#cbd5e1;letter-spacing:-.012em;
@@ -128,7 +135,7 @@ body{font-family:'Inter',sans-serif;color:#f8fafc;background:#0a0f1c;position:re
 
 (async () => {
     fs.mkdirSync(OUT, { recursive: true });
-    const fonts = await interFaces();
+    const fonts = `${brandFace()}\n${await interFaces()}`;
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ov-social-'));
     const list = sites();
     for (const site of list) {

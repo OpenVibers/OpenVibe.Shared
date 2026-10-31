@@ -415,15 +415,34 @@ put it under `/`.
 
 ## The mark
 
-`ov-mark.js` draws the OpenVibe mark (4.25.0, the "open loop"): one stroke, an O opened at the top by the V, so it
-reads OV and "open" at once. The site's dot sits in the opening.
-- **Colour:** the stroke runs from the site's accent towards violet (`--ovm-to`).
-- **Motion:**
-  - it draws itself in on a visit's first view, and a short light runs along it while it moves;
-  - otherwise it rests (the motion budget).
-- **Variants:** each site keeps its own rhythm (`data-variant`). Live's dot is red and on air.
-- **App icons, favicons and share cards** draw the same loop (`app-icon.js`, `scripts/build-icons.js`,
-  `scripts/build-social-cards.js`).
+The OpenVibe mark is **the Pair** (4.59.0; the owner chose "Pair, halo" from OpenVibe Mark Systems on 2026-10-31): a
+ring O in blue (`#4f7cff`) and a round V in violet (`#8b5cf6`), with a gap of the ground around the V where it crosses
+the ring. The gap is a mask, so the mark sits on any ground: a photo, a gradient, a light or a dark theme.
+- **Geometry:** the V is exactly as tall as the O, and the mark is centred in its box, so it sits level beside a word
+  and centred in a tile. One set of numbers, drawn by `openvibe-shared/mark` (static SVG for servers, icons, share
+  cards and downloads) and by `ov-mark.js` (the browser drop-in); `test/mark.test.js` holds them together.
+- **Forms:** the pair, and the heavy (thicker strokes) at 22 px wide and under, where the pair's gap would close. The
+  form follows `data-size`, or set `data-form="pair|heavy"`.
+- **Boxes:** square by default (`data-size` is its width and height); `data-wide` hugs the mark (94 × 57), for a
+  mark beside a name: the navbar uses `data-size="34" data-wide`, the footer `38`.
+- **Tones:** brand by default; `data-tone="ink"` (the text colour, for stamps and UI) or `"white"` (on a colour tile).
+- **Motion, all of it meaning something and none of it a spin:**
+  - the intro: the O pops in and the V grows out of its point; hover: the V leans back and the O hops;
+  - a page on its way (the navbar's mark): the ring empties and draws itself round again at this site's usual pace,
+    the V nods while it waits and hops when the page is here (`OVMark.navStart()` / `navEnd()` for single-page apps);
+    a known progress (`data-progress`, island.js) draws the ring to its level;
+  - the states (`data-state`): busy (the V bobs, the O breathes), ok (the V becomes a tick, green; the tick only ever
+    means done), error (the V becomes "!", red, and it shakes), no (a "×", grey), notify (a dot pops up by the V),
+    live (the O is the record light, ripples go out), sleep (the O closes like an eye).
+  - otherwise it rests (the motion budget), and never moves under either reduced-motion setting.
+- **Variants:** each site keeps its own pace (`data-variant`); Live, VIP, Tips, Deals and Coupons carry a light in
+  the O (Live's is the red record light).
+- **The season:** the O is a pumpkin with its stem and leaf in October, and wears caps of snow in December.
+- **The names** beside it are set in the brand face, Nunito (`ov-brand.woff2`, served at `/shared/ov-brand.woff2`,
+  SIL OFL; Latin, 700–900): the navbar's site name, the footer's brand, the site switcher and the share cards.
+- **App icons, favicons and share cards** draw the same mark (`app-icon.js`, `scripts/build-icons.js`,
+  `scripts/build-social-cards.js`); the loading screen (`loading.js`) shows it at work, and its V turns into "!" when
+  loading fails.
 
 ## The app bar
 
