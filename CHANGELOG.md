@@ -6,6 +6,35 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.62.0 — 2026-10-31
+
+- **Font Awesome's features, kept, on the glyphs** (plan L32 I6; the owner: "basically want to keep Font Awesome, so all
+  their features"). `ov-glyphs.js` now carries its own rules for every documented Font Awesome class, with Font
+  Awesome's CSS variables, so a site can drop Font Awesome's stylesheet and keep its markup:
+  - sizes `fa-2xs` … `fa-2xl` and `fa-1x` … `fa-10x`, `fa-fw`, `fa-border`, `fa-pull-left` / `-right`;
+  - `fa-rotate-90/180/270`, `fa-rotate-by` (`--fa-rotate-angle`), `fa-flip-horizontal/vertical/both`;
+  - `fa-ul` / `fa-li`, `fa-stack` (`-1x`, `-2x`, `fa-inverse`), `fa-layers` with `fa-layers-text` and
+    `fa-layers-counter`;
+  - the animations `fa-beat`, `fa-bounce`, `fa-fade`, `fa-beat-fade`, `fa-flip` and `fa-shake`. `fa-spin` and
+    `fa-spin-pulse` breathe instead, since nothing on the network spins (L27). Reduced motion stops all of them;
+  - `fa-thin` and `fa-light` as thinner strokes of the same drawing (`--ovg-stroke`, `ovg-bold`), and
+    `--fa-primary-color` on duotone icons;
+  - `data-fa-transform` (grow, shrink, up, down, left, right, rotate, flip-h, flip-v), in Font Awesome's sixteenths;
+  - a `title` names the icon to screen readers (`role="img"`).
+  - A page that resets an icon's class list but keeps its name keeps the glyph. The drop-in is 9.1 KB brotli and loads
+    after first paint.
+- **The glyphs as fonts** (plan L32 I5; the owner: "exporting like web fonts, regular font files"):
+  - `ov-glyphs.woff2` (12 KB, served at `/shared/ov-glyphs.woff2`), plus `glyph-fonts/ov-glyphs.ttf` and
+    `glyph-fonts/ov-glyphs.otf` for desktop apps and design tools. Each glyph's strokes are expanded to outlines
+    (picosvg, skia-pathops) by `scripts/build-glyph-fonts.py`, so the font draws what the SVG does.
+  - `glyph-codepoints.json`: each glyph's Private Use Area code point from U+E001, given once and never reused.
+  - `ov-glyphs-font.css`: `<i class="ovi ovi-eye">`. `ov-glyphs-fa.css`: Font Awesome's class names on the font, for a
+    page whose every name is covered.
+  - `test/glyph-fonts.test.js` fails when the fonts no longer match the registry. Builds are reproducible
+    (`SOURCE_DATE_EPOCH`).
+- **The sprite:** `ov-glyphs.svg`, every glyph as a `<symbol id="ovg-<name>">`, served at `/shared/ov-glyphs.svg`
+  (`files.IMAGES`; `serve.js` answers `image/svg+xml`).
+
 ## 4.61.0 — 2026-10-31
 
 - **The network's own icons: `openvibe-shared/glyphs` and `ov-glyphs.js`** (plan L32; the owner: "our own custom
