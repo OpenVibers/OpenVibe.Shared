@@ -38,7 +38,7 @@
             set('ticket');
             let tk;
             try {
-                const tok = typeof o.token === 'function' ? o.token() : o.token;
+                const tok = typeof o.token === 'function' ? await o.token() : o.token;
                 const r = await root.fetch(o.ticketUrl, { method: 'POST', credentials: o.credentials || 'omit', cache: 'no-store', headers: tok ? { Authorization: `Bearer ${tok}` } : {} });
                 if (g !== gen) return;
                 if (r.status === 401 || r.status === 403) return halt('signed-out');
