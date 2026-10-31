@@ -36,7 +36,7 @@ for (const form of ['pair', 'heavy']) {
 }
 
 // The standalone SVG: the gap is a mask, so it holds on any ground; the tones; the wide box.
-const svg = mark.svg({ size: 64, title: 'OpenVibe' });
+const svg = mark.svg({ size: 64, title: 'OpenVibe', depth: false });   // the flat colours (depth is checked below)
 assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="[\d. ]+" width="64" height="64" role="img" aria-label="OpenVibe"><title>OpenVibe<\/title>/);
 assert.match(svg, /<mask id="ovmh"[\s\S]*stroke="#000" stroke-width="20"[\s\S]*<\/mask>[\s\S]*<circle [^>]*stroke="#4f7cff"[^>]*mask="url\(#ovmh\)"\/><path [^>]*stroke="#8b5cf6"/, 'blue O cut by a mask, violet V on top');
 assert.match(mark.svg({ tone: 'ink' }), /stroke="currentColor"[\s\S]*stroke="currentColor"/, 'ink: the text colour');
@@ -65,6 +65,22 @@ assert.ok(!appIcon.svg({ site: 'network' }).includes('fill="#ffffff"'), 'a white
     const p = mark.shapes('pair'), seg = (s, i) => `M${s[i]} ${s[i + 1]}L${s[i + 2]} ${s[i + 3]}`;
     assert.ok(src.includes(`const V = ['${seg(p.v, 0)}', '${seg(p.v, 4)}'], BANG = ['${seg(p.err, 0)}', '${seg(p.err, 4)}'];`), 'loading.js draws the same V and "!"');
     assert.ok(src.includes(`viewBox="${mark.geo('pair').box}"`) && src.includes(`cx="${mark.geo('pair').cx}" cy="50" r="20"`), 'and the same O in the same box');
+}
+
+// ── Depth (4.66.0, plan L44): the static mark and the app icons wear ov-mark.js's light-to-deep strokes ──
+{
+    const t = mark.tones(mark.COLORS.o, mark.COLORS.v);
+    assert.deepStrictEqual(t, { o: ['#87a6ff', '#4268d6'], v: ['#ae8df9', '#784fd4'] }, 'the same mixes as ov-mark.js: O 68 % / 84 %, V 70 % / 86 %');
+    const brand = mark.svg({ size: 64 });
+    assert.strictEqual((brand.match(/<linearGradient id="ovmg[ov]" gradientUnits="userSpaceOnUse"/g) || []).length, 2, 'the brand mark has depth by default, in user space');
+    assert.ok(brand.includes('stroke="url(#ovmgo)"') && brand.includes('stroke="url(#ovmgv)"'));
+    assert.ok(!mark.svg({ tone: 'ink' }).includes('linearGradient') && !mark.svg({ tone: 'white' }).includes('linearGradient'), 'one-colour tones stay flat');
+    assert.ok(!mark.svg({ depth: false }).includes('linearGradient'), 'depth can be turned off');
+    assert.ok(!mark.svg({ tone: { o: 'red', v: 'blue' }, depth: true }).includes('linearGradient'), 'only hex colours get tones');
+    const err = mark.art({ shape: 'err', depth: true, id: 'e' });
+    assert.ok(err.defs.includes('id="ego"') && err.body.includes('url(#egv)'), 'the "!" (a straight stroke) still paints: user space');
+    const ai = require('../app-icon');
+    assert.ok(ai.svg({ site: 'live' }).includes('url(#ovgo)') && ai.favicon({ site: 'network' }).includes('url(#ovgv)'), 'the app icons and favicons have depth');
 }
 
 console.log('mark: one geometry in mark.js, ov-mark.js, the icons and the loader; centred, level, the gap a mask; tones, wide box, maskable safe zone');

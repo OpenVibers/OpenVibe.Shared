@@ -6,6 +6,30 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.66.0 — 2026-10-31
+
+- **`ov-fx.js`, the network's effects in one kit** (plan L45; the owner: "reusable modular sharable systems and
+  interface"). The mark's motion is now available for anything on any OpenVibe page:
+  - **API:** `data-fx="glint glow lift press ripple tilt reveal count confetti shimmer"`, and
+    `OVFx.confetti({ x, y, count, colors })` from script;
+  - **reveal:** children rise in as they come on screen (`data-fx-stagger`). Anything already on screen when it is
+    wired is never hidden;
+  - **count:** a number counts up the first time it is seen and ends exactly on its own text;
+  - **tilt:** mouse only;
+  - **confetti:** one canvas, about 1.6 s, then gone;
+  - **motion tokens:** `--ov-dur-1…4`, `--ov-ease-out`, `--ov-ease-spring` and `--ov-ease-in-out`. Calm sets the
+    durations to 0;
+  - **rules:** nothing runs by itself. Under reduced motion or Calm, nothing is hidden, nothing counts and no confetti
+    falls;
+  - **loading:** navbar.js loads it from beside itself once the page settles, and only on a page with `data-fx`
+    (about 2.6 KB brotli). Also exported as `openvibe-shared/ov-fx`.
+- **The static mark has the new depth** (plan L44):
+  - `openvibe-shared/mark` takes `depth`, on by default for the brand tone. Each stroke runs from a lighter to a deeper
+    tone of its colour, the same mixes `ov-mark.js` uses (`tones(o, v)`), in user space so a straight "!" still paints.
+    One-colour tones stay flat;
+  - `app-icon.js` draws with it, so the installable icons (`icons/`) and the share cards (`social/`) are rebuilt with
+    the deeper mark.
+
 ## 4.65.0 — 2026-10-31
 
 - **The mark, with depth and motion** (plan L44; the owner: "the stylistic choices of the logo image need more

@@ -29,14 +29,14 @@ const MARK = require('./mark');
 
 // The mark centred on 0,0 (openvibe-shared/mark draws it centred on 50,50 in a 100-unit box), scaled.
 function mark(site, scale, form = 'pair') {
-    const c = of(site), g = MARK.geo(form), { body } = MARK.art({ form, id: 'ov' });
+    const c = of(site), g = MARK.geo(form), { body } = MARK.art({ form, id: 'ov', depth: true });
     const light = c.dot && c.dot.toLowerCase() !== '#ffffff' ? `<circle cx="${g.cx}" cy="${g.cy}" r="${+((g.r - g.sw / 2) * 0.62).toFixed(2)}" fill="${c.dot}"/>` : '';
     return `<g transform="scale(${scale}) translate(-50 -50)"><ellipse cx="50" cy="50" rx="52" ry="40" fill="url(#glow)"/>${body}${light}</g>`;
 }
 
 function defs(site, form = 'pair') {
     const [a] = of(site).accent;
-    return `<defs>${MARK.art({ form, id: 'ov' }).defs}
+    return `<defs>${MARK.art({ form, id: 'ov', depth: true }).defs}
 <radialGradient id="glow"><stop offset="0" stop-color="${a}" stop-opacity=".3"/><stop offset="1" stop-color="${a}" stop-opacity="0"/></radialGradient>
 <radialGradient id="bg" cx=".5" cy=".38" r=".8"><stop offset="0" stop-color="#16223a"/><stop offset=".6" stop-color="${BG}"/><stop offset="1" stop-color="${BG_EDGE}"/></radialGradient></defs>`;
 }

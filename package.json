@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.65.0",
+  "version": "4.66.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -52,6 +52,7 @@
     "./ov-icons": "./ov-icons.js",
     "./ov-glyphs": "./ov-glyphs.js",
     "./ov-look": "./ov-look.js",
+    "./ov-fx": "./ov-fx.js",
     "./look-boot": "./look-boot.js",
     "./ov-mark": "./ov-mark.js",
     "./package.json": "./package.json",
