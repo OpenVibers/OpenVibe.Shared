@@ -80,6 +80,7 @@ function contentType(name) {
     if (name.endsWith('.jpg')) return 'image/jpeg';
     if (name.endsWith('.png')) return 'image/png';
     if (name.endsWith('.woff2')) return 'font/woff2';
+    if (name.endsWith('.svg')) return 'image/svg+xml; charset=utf-8';
     return 'application/javascript; charset=utf-8';
 }
 

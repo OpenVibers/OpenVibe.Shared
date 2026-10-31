@@ -65,18 +65,27 @@ const STYLES = Object.freeze([
     'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
     'kit-data.css',         // Kit 2's look: steps, tables, charts, rankings, meters, drop zones, receipts (4.37.0; after kit.css)
     'agent-session.css',    // agent-session.js's look (4.32.0; the script links it from beside itself unless the page does)
+    'ov-glyphs-font.css',   // the glyphs as a font: <i class="ovi ovi-eye"> (4.62.0; built with the font, scripts/build-glyph-fonts.py)
+    'ov-glyphs-fa.css',     // Font Awesome's class names on the glyph font, for a site that drops Font Awesome's own (4.62.0)
 ]);
-// Fonts sites serve at /shared/<file>: the brand face the names are set in (navbar.js declares it from beside itself).
+// Fonts sites serve at /shared/<file>: the brand face the names are set in (navbar.js declares it from beside itself),
+// and the glyph font.
 const FONTS = Object.freeze([
     'ov-brand.woff2',       // Nunito (SIL OFL 1.1, OFL-Nunito.txt), Latin, weights 700-900: the OpenVibe names (4.59.0)
+    'ov-glyphs.woff2',      // the OpenVibe glyphs as a font (4.62.0; TTF and OTF for desktop apps are in glyph-fonts/)
 ]);
-const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name)) || FONTS.includes(String(name));
+// Pictures sites serve at /shared/<file>.
+const IMAGES = Object.freeze([
+    'ov-glyphs.svg',        // every glyph as a <symbol>: <svg><use href="/shared/ov-glyphs.svg#ovg-eye"/></svg> (4.62.0)
+]);
+const served = (name) => BROWSER.includes(String(name)) || STYLES.includes(String(name)) || FONTS.includes(String(name)) || IMAGES.includes(String(name));
 
 module.exports = {
     dir: __dirname,
     BROWSER,
     STYLES,
     FONTS,
+    IMAGES,
     isBrowserFile: served,
     path: (name) => {
         if (!served(name)) throw new Error(`openvibe-shared: ${name} is not a browser file`);
