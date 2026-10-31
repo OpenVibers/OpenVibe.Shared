@@ -6,6 +6,25 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.61.0 — 2026-10-31
+
+- **The network's own icons: `openvibe-shared/glyphs` and `ov-glyphs.js`** (plan L32; the owner: "our own custom
+  icon system… replace Font Awesome… through openvibe.design").
+  - **One registry, in the mark's hand** (24-unit grid, 2-unit round strokes): the kit's 84 icons plus 71 drawn for
+    the names the network asked Font Awesome for most. 155 glyphs in all, and 236 Font Awesome names mapped. That
+    covers 179 of the 188 names used eight or more times; the rest are brand logos (which stay Font Awesome's) and
+    a few rare amenity icons.
+  - **`ov-glyphs.js`** (built by `scripts/build-glyphs.js`; 7.4 KB brotli) swaps `<i class="fa-… fa-x">` for the
+    glyph in place, in the text's colour and size.
+    - It follows class changes (play ↔ pause) and markup added later.
+    - It leaves `fa-brands` and names it does not know to Font Awesome.
+    - It turns Font Awesome's own glyph and spin off on what it swaps. A spinner becomes three dots that take turns.
+  - **The navbar loads it** after first paint on any page that uses Font Awesome (a site opts out with
+    `glyphs: false`). `kit.PATHS` exposes the kit's drawings to the registry.
+- **The files beside the navbar load by content hash** (`SIBLING_REV`, `scripts/sibling-revs.js`): ov-mark.js,
+  ov-glyphs.js and the brand face get a new URL each release. After 4.59.0 an edge served the old mark for minutes.
+- navbar.js is smaller than in 4.60.0 (its longest comments tightened), so no home page grows: 40.7 KB brotli.
+
 ## 4.60.0 — 2026-10-31
 
 - **One left sidebar for every product: `kit.sidebar`** (plan L35; the owner: "the navigation makes more sense in a

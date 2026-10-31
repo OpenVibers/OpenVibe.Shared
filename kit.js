@@ -108,6 +108,8 @@
         palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9.5 16.5h5M3 13v2M21 13v2"/>',
     };
     const ICONS = Object.freeze(Object.keys(P));
+    /** Every icon's drawing (the inside of a 24-unit SVG), for openvibe-shared/glyphs, the one registry built on these. */
+    const PATHS = Object.freeze({ ...P });
     /** One icon as inline SVG (decorative: aria-hidden); '' for a name the set does not have. */
     function icon(name, { size = null, cls = '' } = {}) {
         const d = P[name];
@@ -814,7 +816,7 @@
         `<main class="ovk-page${wide ? ' ovk-page--wide' : ''}" id="${esc(id)}">${h}${side ? `<div class="ovk-split"><div class="ovk-main">${body}</div><aside class="ovk-side">${side}</aside></div>` : body}${d}</main>`;
 
     return {
-        esc, url, icon, ICONS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
+        esc, url, icon, ICONS, PATHS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,

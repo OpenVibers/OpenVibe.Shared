@@ -30,7 +30,7 @@ assert.strictEqual(files.path('ov-brand.woff2'), path.join(__dirname, '..', 'ov-
 
     // Declared once by the navbar, from beside itself, for the characters it has; used with a fallback everywhere.
     const nav = read('navbar.js');
-    assert.match(nav, /@font-face \{ font-family: 'OV Brand'; src: url\(\$\{sibling\('ov-brand\.woff2'\)\}\) format\('woff2'\); font-weight: 700 900;[^}]*font-display: swap; unicode-range: U\+0020-007E/, 'navbar.js declares it, swapping in when it arrives');
+    assert.match(nav, /@font-face \{ font-family: 'OV Brand'; src: url\(\$\{siblingV\('ov-brand\.woff2'\)\}\) format\('woff2'\); font-weight: 700 900;[^}]*font-display: swap; unicode-range: U\+0020-007E/, 'navbar.js declares it, swapping in when it arrives');
     const fallback = /font-family: ?'OV Brand', ?Nunito, ?'?Inter'?, ?-apple-system/;
     assert.match(nav, new RegExp(`\\.openvibe-navbar-brand \\.name \\{[^}]*${fallback.source}`), 'the site name');
     assert.match(read('footer.js'), new RegExp(`\\.ovf-brand\\{[^}]*${fallback.source}`), "the footer's brand");
