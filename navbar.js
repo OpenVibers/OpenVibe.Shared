@@ -46,7 +46,7 @@
             body.ov-panel-open .openvibe-navbar.ovnav-top { background-color: var(--bg-secondary, #252530); border-bottom-color: var(--border, #333340); }
             @media (prefers-reduced-motion: reduce) { .openvibe-navbar, .openvibe-navbar::before { transition: none; } }
             /* Names: the brand face (ov-brand.woff2: Nunito, Latin, 700-900). */
-            @font-face { font-family: 'OV Brand'; src: url(${sibling('ov-brand.woff2')}) format('woff2'); font-weight: 700 900; font-style: normal; font-display: swap; unicode-range: U+0020-007E, U+00A0, U+00B7, U+00E9, U+2013-2014, U+2018-2019, U+201C-201D, U+2026; }
+            @font-face { font-family: 'OV Brand'; src: url(${siblingV('ov-brand.woff2')}) format('woff2'); font-weight: 700 900; font-style: normal; font-display: swap; unicode-range: U+0020-007E, U+00A0, U+00B7, U+00E9, U+2013-2014, U+2018-2019, U+201C-201D, U+2026; }
             .openvibe-navbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; margin-right: 8px; min-width: 0; }
             /* Brand group: mark + linked wordmark + launcher read as one control. Every property a host
                page might set on bare "nav a" / "a" is reset here, so the brand looks the same everywhere. */
@@ -474,14 +474,11 @@
     };
     const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
-    // Icons are solid filled paths generated from the Font Awesome Free solid font, so every OpenVibe
-    // page gets the same crisp glyphs with no dependency on Font Awesome CSS. The glyphs the navbar
-    // draws itself ship above; the rest of the set (nav-icons.js, ~16 KB brotli) is fetched once,
-    // after first paint, the first time a site's link, chip or menu row names one. Until it lands
-    // that icon is an empty <svg> of the glyph's exact size, then its path is filled in. A page that
-    // loads nav-icons.js itself (before navbar.js) has every glyph from the first frame. Names not in
-    // the set, and every lazy glyph if nav-icons.js cannot load, fall back to an <i class="fa-solid">
-    // for pages that do load Font Awesome.
+    // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
+    const SIBLING_REV = { 'ov-mark.js': 'd53438811552', 'ov-glyphs.js': '2e3590333ae6', 'ov-brand.woff2': '3b4e6a8a5878' };
+    // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
+    // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
+    // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
     const _selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     let _lazyWidth = null;
     let _iconState = 0;     // 0 idle, 1 loading, 2 loaded, 3 unavailable
@@ -505,6 +502,7 @@
      * A shared browser file next to this navbar.js: the same origin and the same release (a site that
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
+    const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
     function sibling(name) {
         const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
         return `${m ? m[1] : 'https://openvibe.network/shared/'}${name}`;
@@ -1197,14 +1195,9 @@
     }
 
     // ─── SSO auth resolution ───────────────────────────────────
-    // Cookie policy (CONTRACTS.md): ov_token is host-only on openvibe.network,
-    // and Domain=.openvibe.tools on the tools apex + every tool subdomain.
-    // The tools gateway (apex) owns the OAuth client: /auth/login, /auth/logout,
-    // /auth/me, POST /auth/refresh. Satellite subdomains (maps., audio., text.,
-    // img., yt., docs., food., …) do NOT mount /auth/* — they only read the
-    // shared cookie — so sign-in/out always goes through the gateway apex.
-    // Detection order: ov_token cookie → localStorage → page-provided token →
-    // app-specific session endpoint (opt-in via config.sessionUrl).
+    // ov_token is host-only on openvibe.network and Domain=.openvibe.tools on the tools (CONTRACTS.md). The tools'
+    // apex owns the OAuth client (/auth/*); its subdomains only read the cookie, so sign-in/out goes through the apex.
+    // Order: the cookie, localStorage, the page's token, then config.sessionUrl.
     const TOOLS_APEX = 'openvibe.tools';
     const TOKEN_KEY = 'ov_token';
 
@@ -1418,13 +1411,9 @@
     }
 
     /**
-     * Two ways to find out that this browser is signed in to the network without a session here:
-     *   1. the hint cookie this site set on an earlier sign-in ('account') — go straight to the
-     *      silent sign-in (one quick redirect, back where you were);
-     *   2. otherwise ask the network in a hidden iframe (GET /sso/check) — invisible, no
-     *      redirect unless the answer is yes. Browsers that partition third-party cookies answer
-     *      no and nothing happens, which is the same as before.
-     * At most once per tab per 10 minutes; never after an explicit sign-out ('guest'); never for bots.
+     * Signed in to the network but not here: the 'account' hint cookie goes straight to the silent sign-in (one quick
+     * redirect); otherwise a hidden iframe asks GET /sso/check and redirects only on yes (partitioned cookies: no).
+     * At most once per tab per 10 minutes; never after a sign-out ('guest'); never for bots.
      */
     function maybeSilentLogin() {
         if (!_config.silentLogin || typeof location === 'undefined') return false;
@@ -1578,11 +1567,9 @@
     }
 
     /**
-     * wallet: true — OpenCoins and Vibes as chips in the bar, on any site (owner, 2026-10-27: "make that as a feature in the
-     * shared nav bar … maybe we'll put it on games too"). A site that sets chips of its own with those ids (Live) keeps
-     * them; elsewhere the balances stay in the menu's header. The last balances are kept per person, so the chips paint
-     * at once without moving the bar; they refresh from the Network and Billing in the background, and again when the
-     * tab comes back after a minute. On a phone they fold into one chip like Live's (4.16.0).
+     * wallet: true — OpenCoins and Vibes as chips in the bar on any site (owner, 2026-10-27). A site's own chips with
+     * those ids (Live) win. The last balances are kept per person so the chips paint at once; they refresh from the
+     * Network and Billing in the background and when the tab returns after a minute; on a phone they fold into one.
      */
     const WALLET_CHIPS = [
         { id: 'coins', icon: 'fa-coins', tone: 'gold', label: 'OpenCoins', title: 'OpenCoins', href: 'https://openvibe.network/my#coins' },
@@ -1665,7 +1652,11 @@
 
         // The OV brand mark is a drop-in (mounts every .ov-mark); never a second copy of a page's own tag.
         if (!window.__ovMark && !document.getElementById('ov-mark-loader') && !(document.querySelector && document.querySelector('script[src*="/ov-mark.js"]'))) {
-            try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = sibling('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+            try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = siblingV('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        }
+        // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome.
+        if (_config.glyphs !== false && !window.OVGlyphs && !document.getElementById('ov-glyphs-loader') && document.querySelector && document.querySelector('i[class*="fa-"],span[class*="fa-"],link[href*="fontawesome"],link[href*="font-awesome"]')) {
+            try { const sc = document.createElement('script'); sc.id = 'ov-glyphs-loader'; sc.src = siblingV('ov-glyphs.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
         nav.innerHTML = `
             ${brandHTML(brand)}
@@ -1713,11 +1704,9 @@
             const barWallet = !!_config.wallet || (Array.isArray(_config.chips) && _config.chips.some(c => c && (c.id === 'coins' || c.id === 'vibes')));
             const admin = u.role === 'admin' || !!(u.capabilities && (u.capabilities.is_owner || u.capabilities.admin_panel));
 
-            // The menu (4.23.0; the owner, 2026-10-28: "a lot of this is just not even really needed… could be a button in
-            // the corner… a plus button… better use of icons… more compactness… data-driven"): who you are, with + (add an
-            // account) and the gear beside the name; your places as a grid of icons in the order you use them (eight, the
-            // rest under More); the site's own sections; and one row for light/dark, text size, motion, themes and sign
-            // out. Notifications are the bell's, and the places you went and Ask Vibe are the search menu's.
+            // The menu (4.23.0, the owner 2026-10-28: "more compactness… data-driven"): you, with + and the gear; your
+            // places as icons in the order you use them (eight, then More); the site's sections; one row for light/dark,
+            // text size, motion, themes and sign out. Notifications are the bell's; history and Ask Vibe, search's.
             const bell = _config.notifications !== false && !!_config.token && !isAnon;
             const places = before.concat(after).filter((it) => it && !it.sep).concat(menuCfg.defaults === false ? [] : [
                 !isAnon && u.username ? { id: 'ov-channel', label: 'My channel', short: 'Channel', drawn: navIcon('fa-tower-broadcast'), href: `https://openvibe.live/@${encodeURIComponent(u.username)}` } : null,
