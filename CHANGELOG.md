@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.57.1 — 2026-10-31
+
+- **A tool's terms line wraps cleanly.** The facts in `kit.toolHead({ facts })` are spaced apart, not joined by dots,
+  so a wrapped line no longer starts with a dot that reads like a list bullet.
+- **`kit.seg` wraps on a narrow screen.** A segmented control with four to six options (Tools' formatters) stays
+  inside a 320 px screen instead of running off it. Tools had a page-scoped rule for this; the kit does it now.
+
 ## 4.57.0 — 2026-10-30
 
 - **The Dock can use a refreshing token and a read-only scope set** (the browser extension's one-click
