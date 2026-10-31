@@ -6,6 +6,16 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.58.0 — 2026-10-31
+
+- **An audio-only item plays in the same player, with a picture that is not a black box.** A recording whose source had
+  no video track (a browser broadcast with no camera, Media#240) is marked `data-ov-audio-only` with
+  `data-ov-avatar`, `data-ov-title` and `data-ov-artist`. The player shows the avatar large and centred on a softly
+  blurred, enlarged copy of it, the stream's title and "Audio only"; a level ring drawn from a Web Audio
+  `AnalyserNode` on the same media element moves with the sound and stops when paused or the tab is hidden. With
+  `prefers-reduced-motion` the ring is static. The transcript's lines marked `data-ov-start` are highlighted as they
+  play. The file is the file: no video is rendered, and seek, speed, captions and fullscreen are unchanged.
+
 ## 4.57.1 — 2026-10-31
 
 - **A tool's terms line wraps cleanly.** The facts in `kit.toolHead({ facts })` are spaced apart, not joined by dots,

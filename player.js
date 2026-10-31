@@ -163,7 +163,7 @@
         if (!ms) return;
         try {
             const v = api.video;
-            const art = v.getAttribute('poster');
+            const art = v.getAttribute('data-ov-audio-only') ? (v.getAttribute('data-ov-avatar') || v.getAttribute('poster')) : v.getAttribute('poster');
             if (typeof MediaMetadata === 'function') ms.metadata = new MediaMetadata({ title: options.title || v.getAttribute('data-ov-title') || v.getAttribute('aria-label') || document.title, artist: options.artist || v.getAttribute('data-ov-artist') || '', artwork: art ? [{ src: art }] : [] });
             ms.setActionHandler('play', () => api.toggle());
             ms.setActionHandler('pause', () => api.toggle());
@@ -173,10 +173,111 @@
         } catch { /* an action this browser does not know */ }
     }
 
+    const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /**
+     * An audio-only item (a broadcast with no camera, Media#240/R4): the video element is still the player and the file is
+     * still the file, but its picture is the streamer's avatar over a blurred copy of it, with the title and "Audio only".
+     * The level ring is drawn from a Web Audio AnalyserNode on the same media element, and stops with the sound (paused,
+     * hidden tab) and for prefers-reduced-motion (one static ring). Returns null for a video, so the normal player is
+     * unchanged. The stage is aria-hidden and pointer-events:none: every control is still the normal bar and the media.
+     */
+    function audioStage(root, video) {
+        const title = video.getAttribute('data-ov-title') || video.getAttribute('aria-label') || document.title || 'Audio';
+        const artist = video.getAttribute('data-ov-artist') || '';
+        const avatar = video.getAttribute('data-ov-avatar') || '';
+        const still = reducedMotion();
+        const stage = el('div', 'ov-player-audio', { 'aria-hidden': 'true' });
+        const bg = el('div', 'ov-player-audio-bg');
+        if (/^https:\/\//.test(avatar) || /^\/(?!\/)/.test(avatar)) bg.style.backgroundImage = `url("${avatar.replace(/"/g, '%22')}")`;
+        const scrim = el('div', 'ov-player-audio-scrim');
+        const face = el('div', 'ov-player-audio-face');
+        const ring = el('div', 'ov-player-audio-ring');
+        const canvas = el('canvas', 'ov-player-audio-viz');
+        canvas.width = 640; canvas.height = 640;
+        const pic = el('div', 'ov-player-audio-avatar');
+        if (avatar) pic.appendChild(el('img', null, { src: avatar, alt: '', loading: 'eager', referrerpolicy: 'no-referrer' }));
+        else pic.textContent = String(artist || title).trim().charAt(0).toUpperCase() || 'A';
+        ring.append(canvas, pic);
+        const badge = el('div', 'ov-player-audio-badge');
+        badge.textContent = 'Audio only';
+        const heading = el('div', 'ov-player-audio-title');
+        heading.textContent = title;
+        const sub = el('div', 'ov-player-audio-sub');
+        sub.textContent = artist || 'No picture was broadcast';
+        face.append(ring, badge, heading, sub);
+        stage.append(bg, scrim, face);
+        root.insertBefore(stage, video);
+        if (still) root.classList.add('is-reduced-motion');
+
+        const ctx = typeof canvas.getContext === 'function' ? canvas.getContext('2d') : null;
+        const SIZE = 640, CX = SIZE / 2, CY = SIZE / 2, BASE = SIZE * 0.335;
+        function draw(levels) {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, SIZE, SIZE);
+            ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.arc(CX, CY, BASE, 0, Math.PI * 2); ctx.stroke();
+            if (!levels) return;
+            const bars = 72;
+            for (let i = 0; i < bars; i++) {
+                const v = (levels[Math.min(levels.length - 1, Math.floor((i / bars) * levels.length * 0.55))] || 0) / 255;
+                const a = (i / bars) * Math.PI * 2 - Math.PI / 2;
+                const inner = BASE + 6;
+                const outer = inner + 5 + v * BASE * 0.34;
+                ctx.strokeStyle = `rgba(${180 + Math.round(v * 60)},${190 + Math.round(v * 40)},255,${0.35 + v * 0.55})`;
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(CX + Math.cos(a) * inner, CY + Math.sin(a) * inner);
+                ctx.lineTo(CX + Math.cos(a) * outer, CY + Math.sin(a) * outer);
+                ctx.stroke();
+            }
+        }
+        draw(null);
+
+        let context = null, analyser = null, data = null, frame = 0;
+        function startContext() {
+            if (context || !ctx) return;
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            // A cross-origin file without CORS would be silent through a MediaElementSource (and some browsers refuse it):
+            // leave the normal audio path then. Media serves public recordings with Access-Control-Allow-Origin, and the
+            // pages that show an audio-only item ask for it with crossorigin="anonymous".
+            try {
+                const here = typeof location === 'undefined' ? 'http://localhost/' : location.href;
+                if (new URL(video.currentSrc || video.src, here).origin !== new URL(here).origin && !video.crossOrigin) return;
+            } catch { return; }
+            try {
+                context = new Ctx();
+                const source = context.createMediaElementSource(video);
+                analyser = context.createAnalyser();
+                analyser.fftSize = 256;
+                analyser.smoothingTimeConstant = 0.82;
+                data = new Uint8Array(analyser.frequencyBinCount);
+                source.connect(analyser);
+                analyser.connect(context.destination);
+                if (context.state === 'suspended' && context.resume) context.resume().catch(() => {});
+            } catch { context = null; analyser = null; }
+        }
+        function loop() {
+            frame = 0;
+            if (!analyser || video.paused || document.hidden) return;
+            analyser.getByteFrequencyData(data);
+            draw(data);
+            if (typeof requestAnimationFrame === 'function') frame = requestAnimationFrame(loop);
+        }
+        return {
+            /** Sound started (or came back): the ring follows it, unless the person asked for no motion. */
+            start() { if (still) return; startContext(); if (!analyser || frame) return; if (typeof requestAnimationFrame === 'function') frame = requestAnimationFrame(loop); },
+            stop() { if (frame && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame); frame = 0; draw(null); },
+        };
+    }
+
     function enhance(video, options = {}) {
         if (!video || video.__ovPlayer) return video && video.__ovPlayer;
         const idleMs = options.idleMs || 2500;
-        const root = el('div', 'ov-player is-paused is-start', { tabindex: '0', role: 'region', 'aria-label': options.label || video.getAttribute('aria-label') || 'Video player' });
+        const audioOnly = video.hasAttribute('data-ov-audio-only');
+        const root = el('div', `ov-player is-paused is-start${audioOnly ? ' is-audio-only' : ''}`, { tabindex: '0', role: 'region', 'aria-label': options.label || video.getAttribute('aria-label') || (audioOnly ? 'Audio player' : 'Video player') });
         video.parentNode.insertBefore(root, video);
         root.appendChild(video);
         video.controls = false;
@@ -230,7 +331,8 @@
         unmute.innerHTML = `${ICON.muted}<span>Tap for sound</span>`;
         const flash = el('div', 'ov-player-flash', { 'aria-hidden': 'true' });
         root.append(spinner, big, message, unmute, flash, bar);
-        const ambient = video.hasAttribute('data-ov-ambient') || options.ambient ? glow(root, video) : null;
+        // An audio-only item has no frame to glow: its own blurred avatar is the backdrop (and the analyser would read black).
+        const ambient = !audioOnly && (video.hasAttribute('data-ov-ambient') || options.ambient) ? glow(root, video) : null;
         const poster = video.getAttribute('poster');
         if (poster) loadImage(poster, (img) => {
             posterLayer.style.backgroundImage = `url("${poster.replace(/"/g, '%22')}")`;
@@ -239,8 +341,28 @@
             if (ambient) ambient.still(img);
         });
 
+        const stage = audioOnly ? audioStage(root, video) : null;
+        // A transcript with data-ov-start on each line (openvibe.video's VOD page): the line being heard is marked.
+        const transcript = audioOnly ? Array.from(document.querySelectorAll('[data-ov-transcript] [data-ov-start]')) : [];
+        let transcriptLine = null;
+        function paintTranscript() {
+            if (!transcript.length) return;
+            const t = video.currentTime || 0;
+            let active = null;
+            for (const line of transcript) {
+                if (Number(line.getAttribute('data-ov-start')) <= t + 0.01) active = line; else break;
+            }
+            if (active === transcriptLine) return;
+            transcriptLine = active;
+            for (const line of transcript) {
+                const on = line === active;
+                line.classList.toggle('is-current', on);
+                if (on) line.setAttribute('aria-current', 'true'); else line.removeAttribute('aria-current');
+            }
+        }
+
         const pipOk = typeof document !== 'undefined' && document.pictureInPictureEnabled && !video.disablePictureInPicture;
-        if (!pipOk) pipBtn.hidden = true;
+        if (!pipOk || audioOnly) pipBtn.hidden = true;
         const fsOk = !!(root.requestFullscreen || root.webkitRequestFullscreen || video.webkitEnterFullscreen);
         if (!fsOk) fullBtn.hidden = true;
 
@@ -359,7 +481,7 @@
             flashTimer = setTimeout(() => { flash.className = 'ov-player-flash'; }, ms);
         }
         function checkSound() {
-            if (soundKnown || video.paused) return;
+            if (audioOnly || soundKnown || video.paused) return;
             let none = null;
             if (typeof video.mozHasAudio === 'boolean' && video.readyState >= 2) none = !video.mozHasAudio;
             else if (typeof video.webkitAudioDecodedByteCount === 'number' && video.webkitVideoDecodedByteCount > 0
@@ -455,10 +577,10 @@
         });
 
         // ── Media events ─────────────────────────────────────
-        video.addEventListener('play', () => { root.classList.remove('is-start'); paintPlay(); paintVolume(); current = api; session(api, options); if (ambient) ambient.start(); });
-        video.addEventListener('pause', () => { paintPlay(); paintVolume(); if (ambient) ambient.stop(); });
-        video.addEventListener('ended', paintPlay);
-        video.addEventListener('timeupdate', () => { paintTime(); checkSound(); });
+        video.addEventListener('play', () => { root.classList.remove('is-start'); paintPlay(); paintVolume(); current = api; session(api, options); if (ambient) ambient.start(); if (stage) stage.start(); });
+        video.addEventListener('pause', () => { paintPlay(); paintVolume(); if (ambient) ambient.stop(); if (stage) stage.stop(); });
+        video.addEventListener('ended', () => { paintPlay(); if (stage) stage.stop(); });
+        video.addEventListener('timeupdate', () => { paintTime(); checkSound(); paintTranscript(); });
         video.addEventListener('emptied', () => { silent = false; soundKnown = false; playedFrom = null; paintVolume(); });
         video.addEventListener('durationchange', paintTime);
         video.addEventListener('loadedmetadata', () => { paintTime(); paintCaptions(); });
@@ -476,6 +598,11 @@
         }
         document.addEventListener('fullscreenchange', paintFull);
         document.addEventListener('webkitfullscreenchange', paintFull);
+        // A hidden tab stops the analyser with the sound (and picks it up again when the page is visible and playing).
+        document.addEventListener('visibilitychange', () => {
+            if (!stage) return;
+            if (document.hidden) stage.stop(); else if (!video.paused) stage.start();
+        });
 
         paintTime(); paintBuffered(); paintPlay(); paintVolume(); paintCaptions(); paintSpeed(); paintFull();
         if (!video.paused) root.classList.remove('is-start');
