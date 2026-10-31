@@ -6,6 +6,38 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.58.0 — 2026-10-31
+
+- **The OpenVibe mark is the Loop** (the owner chose it from OpenVibe Mark Systems: "use the one that's easiest to see
+  across all these resolutions and add lots of animations to it"). `ov-mark.js` draws today's open loop, refined: a
+  heavier stroke, the V dipping to the middle, the dot balanced in the opening, centred in its box.
+  - **Two forms of one shape:** the line (28 px and up: the navbar, headers) and the solid coin with the V cut through
+    it (16–24 px, where a line would blur). The form follows `data-size`, or set `data-form="solid|line"`.
+  - **Its fill is the progress.** Following a link, the navbar's mark fills as the next page loads, paced by how long
+    this site's boost moves and full loads usually take in this browser (a running average per site in localStorage).
+    It reaches about four fifths at the usual time, never the top before the page is here, then fills and drains back
+    to the line. Single-page apps call `OVMark.navStart()` / `OVMark.navEnd()`. island.js's `data-progress` fills
+    the coin to its level instead of drawing a ring around the mark.
+  - **States, none of them a spin:**
+    - busy: the dot hops in the V;
+    - ok: the coin fills green;
+    - error: it shakes and the dot drops into the V;
+    - no: a small shake in grey;
+    - notify: the dot pings;
+    - live: ripples go out from the ring;
+    - sleep: grey, the dot sinks.
+
+    The intro draws the line in and drops the dot. Hover fills the line into the coin. The motion budget and the
+    seasons are unchanged.
+- **Nothing spins any more.** The kit's spinning rings are gone:
+  - the loader shows the mark with its dot hopping;
+  - the player's buffering is three hopping dots;
+  - the Action Center, the Dock, the notifications list and agent sessions use three dots, and the Action Center's
+    refresh icon pulses;
+  - the showcase's and the room kit's decorative rings rest.
+
+  The owner, 2026-10-31: "a spinning circle around an icon… is so lame… things only spin if they're active."
+
 ## 4.57.2 — 2026-10-31
 
 - **One page is marked in the navbar after a boost page move.** A site that marks its links on the server (Codes'

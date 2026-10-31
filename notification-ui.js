@@ -116,7 +116,7 @@
             @keyframes ovn-bell-ring { 0%{ transform: rotate(0); } 12%{ transform: rotate(13deg); } 24%{ transform: rotate(-12deg); } 36%{ transform: rotate(8deg); } 48%{ transform: rotate(-4deg); } 60%{ transform: rotate(0); } }
             @keyframes ovn-panel-in { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
             @keyframes ovn-sheet-up { from { transform: translateY(48px); opacity: .5; } to { transform: none; opacity: 1; } }
-            @keyframes ovn-spin { to { transform: rotate(360deg); } }
+            @keyframes ovn-hop { 0%, 80%, 100% { transform: translateY(0); opacity: .45; } 40% { transform: translateY(-4px); opacity: 1; } }
 
             /* Toasts. Opaque cards on the theme's raised surface; held (hidden, timers paused) while a menu is open. */
             .openvibe-toast-container { position: fixed; z-index: 2147482600; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
@@ -280,7 +280,9 @@
             .openvibe-nv-empty b { display: block; font-size: 15px; color: var(--text-primary, #ececf1); margin-bottom: 4px; }
             .openvibe-nv-more { display: flex; justify-content: center; padding: 12px; }
             .openvibe-nv-more button { border: 1px solid var(--border, rgba(255,255,255,.1)); background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; padding: 7px 16px; border-radius: 999px; cursor: pointer; }
-            .openvibe-nv-more .spinner { width: 18px; height: 18px; border: 2px solid var(--border, rgba(255,255,255,.12)); border-top-color: var(--accent, #3b82f6); border-radius: 50%; animation: ovn-spin .8s linear infinite; }
+            .openvibe-nv-more .spinner { position: relative; display: inline-block; width: 6px; height: 6px; margin: 0 10px; border: 0; border-radius: 50%; background: var(--accent, #3b82f6); animation: ovn-hop 1s ease-in-out .15s infinite; }
+            .openvibe-nv-more .spinner::before, .openvibe-nv-more .spinner::after { content: ''; position: absolute; top: 0; width: 6px; height: 6px; border-radius: 50%; background: inherit; animation: ovn-hop 1s ease-in-out infinite; }
+            .openvibe-nv-more .spinner::before { left: -10px; } .openvibe-nv-more .spinner::after { left: 10px; animation-delay: .3s; }
             .openvibe-nv-foot { padding: 10px 16px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); font-size: 12px; color: var(--text-muted, #8b8b96); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
             .openvibe-nv-foot a { color: var(--accent-light, var(--accent, #60a5fa)); text-decoration: none; font-weight: 650; }
             .openvibe-nv-note { font-size: 12px; color: var(--text-secondary, #b6b6c0); padding: 8px 16px; background: color-mix(in srgb, var(--warning, #f5a524) 12%, transparent); }

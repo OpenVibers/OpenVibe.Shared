@@ -1,5 +1,5 @@
 'use strict';
-// ov-mark.js motion budget: the mark moves for its intro, on hover/focus and while it shows activity,
+// ov-mark.js (the Loop, 4.58.0): its two forms by size, the page-load fill and its learned pace, and the motion budget: the mark moves for its intro, on hover/focus and while it shows activity,
 // and is paused (CSS paused where it is, SMIL clock stopped) when the page is hidden, when it is
 // off-screen, under reduced motion and with data-static. Browser check (OpenVibe.Host): the endless
 // mark kept idle pages 12-29% busy. linkedom with a fake clock, IntersectionObserver and matchMedia.
@@ -78,13 +78,13 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
     {
         const t = setup();
         const css = t.document.getElementById('ov-mark-css').textContent;
-        assert.match(css, /\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) svg,[^{]*\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) \.sw,[^{]*\{animation-play-state:paused!important\}/, 'paused rule (the running light, 4.25.0)');
+        assert.match(css, /\.ov-mark\[data-ov\]:not\(\[data-ovm-run\]\) \*\{animation-play-state:paused!important\}/, 'everything in a mark that is not running is paused');
+        assert.ok(!/ovmSpin|rotate\(360deg\)/.test(css), 'nothing spins (the owner, 2026-10-31: things only move when they mean something)');
         assert.ok(t.mark.querySelector('svg'), 'mounted');
         assert.ok(t.io.targets.has(t.mark), 'observed for visibility');
-        // Not yet known to be on screen: still, SMIL parked on the centred V sweep.
+        // Not yet known to be on screen: still.
         assert.strictEqual(t.running(), false);
         assert.strictEqual(t.smilPaused(), true);
-        assert.strictEqual(t.smilTime(), 1.6);
     }
 
     // ── the seasonal fall lands on the bar's bottom edge, never over the page's heading (4.50.1) ─────────
@@ -125,11 +125,13 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         const t = setup();
         t.io.fire(t.mark, true);
         assert.strictEqual(t.running(), true, 'intro runs');
+        assert.ok(t.mark.hasAttribute('data-ovm-intro'), 'the draw-in is on');
         assert.strictEqual(t.smilPaused(), false);
         t.clock.advance(7000);
         assert.strictEqual(t.running(), true, 'still in the intro');
         t.clock.advance(1100);
         assert.strictEqual(t.running(), false, 'intro over: paused');
+        assert.ok(!t.mark.hasAttribute('data-ovm-intro'), 'and the draw-in is off');
         assert.strictEqual(t.smilPaused(), true);
         // Scrolling away and back does not replay the intro.
         t.io.fire(t.mark, false); t.io.fire(t.mark, true);
@@ -236,5 +238,44 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(t.running(span), true, 'its own intro');
     }
 
-    console.log('ov-mark: intro, hover/focus, activity; paused when hidden, off-screen, reduced or static');
+    // ── the form follows the size: the coin up to 24px, the line above; a page's own data-form wins ──────────
+    {
+        const t = setup({ html: '<a href="/" class="brand"><span class="ov-mark" data-size="28"></span></a><span class="ov-mark" id="small" data-size="16"></span><span class="ov-mark" id="mid" data-size="24"></span><span class="ov-mark" id="forced" data-size="16" data-form="line"></span>' });
+        assert.strictEqual(t.mark.getAttribute('data-form'), 'line', '28px: the line');
+        assert.strictEqual(t.document.getElementById('small').getAttribute('data-form'), 'solid', '16px: the coin');
+        assert.strictEqual(t.document.getElementById('mid').getAttribute('data-form'), 'solid', '24px: the coin');
+        assert.strictEqual(t.document.getElementById('forced').getAttribute('data-form'), 'line', 'a named form is kept');
+        const svg = t.mark.querySelector('svg').outerHTML;
+        assert.match(svg, /class="lp"/, 'the line');
+        assert.match(svg, /class="fl"[^>]*mask=/, 'the coin, with the V cut through it');
+    }
+
+    // ── a page on its way: the navbar's mark fills at the learned pace, then drains on arrival ─────────────
+    {
+        const t = setup({ html: '<div class="openvibe-navbar-brand"><a href="/"><span class="ov-mark" data-size="28"></span></a></div>' });
+        const local = memoryStorage(); t.window.localStorage = local;
+        t.window.location = { host: 'openvibe.test', href: 'https://openvibe.test/a', origin: 'https://openvibe.test', pathname: '/a', search: '' };
+        const m = t.document.querySelector('.ov-mark');
+        assert.strictEqual(t.window.OVMark.usual('boost'), 450, 'a first visit uses the default pace');
+        t.window.OVMark.navStart('boost');
+        assert.ok(m.hasAttribute('data-nav'), 'the mark shows the move');
+        const p0 = Number(m.style.getPropertyValue('--ovm-fill'));
+        t.clock.advance(480);
+        const p1 = Number(m.style.getPropertyValue('--ovm-fill'));
+        assert.ok(p1 > p0 && p1 > 0.6 && p1 < 0.94, `about four fifths at the usual time (${p1})`);
+        t.clock.advance(20000);
+        assert.ok(Number(m.style.getPropertyValue('--ovm-fill')) <= 0.94, 'never full before the page is here');
+        t.window.OVMark.navEnd('boost');
+        assert.strictEqual(m.style.getPropertyValue('--ovm-fill'), '1', 'full on arrival');
+        t.clock.advance(400);
+        assert.ok(!m.hasAttribute('data-nav') && !m.style.getPropertyValue('--ovm-fill'), 'then it drains back to the line');
+        const learned = JSON.parse(local.getItem('ov-nav-ms'));
+        assert.ok(learned['openvibe.test:boost'] > 450, `the slow move is learned (${learned['openvibe.test:boost']} ms)`);
+        assert.strictEqual(t.window.OVMark.usual('boost'), learned['openvibe.test:boost'], 'and paces the next one');
+        t.io.fire(m, true); t.clock.advance(9000);
+        m.setAttribute('data-nav', ''); await t.flush();
+        assert.strictEqual(t.running(m), true, 'a page on its way runs the mark after its intro');
+    }
+
+    console.log('ov-mark: forms by size, the page-load fill and its pace, intro, hover/focus, activity; paused when hidden, off-screen, reduced or static');
 })().catch((e) => { console.error(e); process.exit(1); });

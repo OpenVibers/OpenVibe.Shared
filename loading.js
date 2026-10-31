@@ -5,14 +5,14 @@
  * sites… a loading system you can use in the SDK and API."
  *
  * It covers what is loading edge to edge, with no card: the thing's own picture (a stream's latest frame, a video's
- * poster) blurred and drifting behind, a thin ring turning around a soft dot, one word of status with one quiet line under
+ * poster) blurred and drifting behind, the OpenVibe mark with its dot hopping in the V (nothing spins), one word of status with one quiet line under
  * it, and a two-pixel line along the bottom that fills as the steps go by (or sweeps while the progress is unknown).
  * Only when it is slow does a hint and its actions appear; a failure says what happened and offers Retry. Done, it fades.
  *
  *   const l = OpenVibeLoading.mount(el, { poster, label: 'Connecting', sub: 'Getting your viewer ready', steps: 5 })
  *   l.update({ label, sub, step, progress })   step: 0-based of steps (or progress 0-1); omit both to keep it
  *   l.slow({ hint, actions: [{ label, onClick }] })      a hint and actions under the status (it keeps loading)
- *   l.fail({ title, detail, actions: [{ label, onClick }] })   stops the ring, says what happened
+ *   l.fail({ title, detail, actions: [{ label, onClick }] })   stops the mark, says what happened
  *   l.done()       fades out and removes itself (the picture underneath shows through as it goes)
  *   l.destroy()    removes it at once
  *   OpenVibeLoading.skeleton(el, { rows: 3, mark: true })   shimmering rows while a list loads → { done() }
@@ -30,9 +30,10 @@
 .ovld-poster.is-in { opacity: 1; }
 .ovld::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(5,7,12,0) 0%, rgba(5,7,12,.35) 55%, rgba(5,7,12,.75) 100%); pointer-events: none; }
 .ovld-core { position: relative; z-index: 1; display: grid; justify-items: center; gap: 10px; max-width: min(86%, 420px); text-align: center; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
-.ovld-ring { position: relative; width: 46px; height: 46px; border-radius: 50%; }
-.ovld-ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, rgba(255,255,255,0) 0 62%, var(--accent-light, #9cc0ff) 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); animation: ovld-spin 1.15s linear infinite; }
-.ovld-ring::after { content: ''; position: absolute; inset: 16px; border-radius: 50%; background: var(--accent-light, #9cc0ff); box-shadow: 0 0 18px var(--accent-light, #9cc0ff); animation: ovld-breathe 1.6s ease-in-out infinite; }
+.ovld-ring { position: relative; width: 46px; height: 46px; color: var(--accent-light, #9cc0ff); filter: drop-shadow(0 0 10px color-mix(in srgb, currentColor 45%, transparent)); }
+.ovld-ring svg { width: 100%; height: 100%; overflow: visible; }
+.ovld-ring .lp { fill: none; stroke: currentColor; stroke-width: 6.24; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; animation: ovld-draw 1.1s cubic-bezier(.3,.8,.2,1) both; }
+.ovld-ring .d { fill: #fff; transform-box: fill-box; transform-origin: center; animation: ovld-hop .82s ease-in-out .9s infinite; }
 .ovld-label { font-size: 15px; font-weight: 650; letter-spacing: .01em; transition: opacity .2s ease, transform .2s ease; }
 .ovld-sub { font-size: 12.5px; line-height: 1.45; color: rgba(244,246,251,.72); min-height: 1.45em; transition: opacity .2s ease; }
 .ovld-swap .ovld-label, .ovld-swap .ovld-sub { opacity: 0; transform: translateY(3px); }
@@ -45,8 +46,8 @@
 .ovld-line { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; height: 2px; background: rgba(255,255,255,.08); overflow: hidden; }
 .ovld-line i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--ovld-p, 0%); background: linear-gradient(90deg, var(--accent, #3b82f6), var(--accent-light, #9cc0ff)); box-shadow: 0 0 10px var(--accent-light, #9cc0ff); transition: width .7s cubic-bezier(.2,.7,.2,1); }
 .ovld.is-unknown .ovld-line i { width: 30%; animation: ovld-sweep 1.4s ease-in-out infinite; }
-.ovld.is-failed .ovld-ring::before { animation: none; background: none; }
-.ovld.is-failed .ovld-ring::after { inset: 14px; background: var(--danger, #ef4444); box-shadow: 0 0 18px var(--danger, #ef4444); animation: none; }
+.ovld.is-failed .ovld-ring { color: var(--danger, #ef4444); animation: ovld-shake .56s ease-in-out 1; }
+.ovld.is-failed .ovld-ring .d { fill: var(--danger, #ef4444); animation: none; transform: translateY(5.6px); transition: transform .5s ease-in; }
 .ovld.is-failed .ovld-line i { background: var(--danger, #ef4444); box-shadow: none; animation: none; width: 100%; }
 .ovld-skel { display: grid; gap: 10px; padding: 4px 0; }
 .ovld-skel-row { display: flex; align-items: center; gap: 12px; }
@@ -55,12 +56,14 @@
 .ovld-skel-line { height: 11px; border-radius: 6px; }
 .ovld-skel-line:last-child { width: 62%; }
 .ovld-skel-mark, .ovld-skel-line { background: linear-gradient(90deg, var(--bg-hover, rgba(255,255,255,.06)) 25%, rgba(255,255,255,.12) 50%, var(--bg-hover, rgba(255,255,255,.06)) 75%); background-size: 300% 100%; animation: ovld-shimmer 1.3s ease-in-out infinite; }
-@keyframes ovld-spin { to { transform: rotate(1turn); } }
+@keyframes ovld-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+@keyframes ovld-hop { 0%, 100% { transform: translateY(0) scale(1); } 45% { transform: translateY(5.2px) scale(1.1, .84); } 55% { transform: translateY(5.2px) scale(.92, 1.1); } }
+@keyframes ovld-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
 @keyframes ovld-breathe { 0%, 100% { transform: scale(.72); opacity: .75; } 50% { transform: scale(1); opacity: 1; } }
 @keyframes ovld-drift { from { transform: scale(1.06) translate3d(-1.5%, -1%, 0); } to { transform: scale(1.14) translate3d(1.5%, 1%, 0); } }
 @keyframes ovld-sweep { from { left: -30%; } to { left: 100%; } }
 @keyframes ovld-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
-@media (prefers-reduced-motion: reduce) { .ovld-poster, .ovld-ring::before, .ovld-ring::after, .ovld-line i, .ovld-skel-mark, .ovld-skel-line { animation: none !important; } .ovld-ring::before { background: conic-gradient(var(--accent-light, #9cc0ff) 0 30%, rgba(255,255,255,.15) 30%); } }`;
+@media (prefers-reduced-motion: reduce) { .ovld-poster, .ovld-ring, .ovld-ring .lp, .ovld-ring .d, .ovld-line i, .ovld-skel-mark, .ovld-skel-line { animation: none !important; } }`;
 
     function styles() {
         if (typeof document === 'undefined' || document.getElementById('openvibe-loading-styles')) return;
@@ -82,6 +85,7 @@
         const core = el('div', 'ovld-core');
         const ring = el('div', 'ovld-ring');
         ring.setAttribute('aria-hidden', 'true');
+        ring.innerHTML = '<svg viewBox="0 0 48 48"><path class="lp" d="M15.37 11.72A15.84 15.84 0 1 0 32.63 11.72L24 25.96Z" pathLength="100"/><circle class="d" cx="24" cy="7.4" r="3.36"/></svg>';
         const label = el('div', 'ovld-label', opts.label || 'Loading');
         const sub = el('div', 'ovld-sub', opts.sub || '');
         const help = el('div', 'ovld-help');

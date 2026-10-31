@@ -159,7 +159,7 @@ html[data-ov-motion=reduced] .ovk-card-badge.is-live::before { animation: none; 
 .sc-room-pic{display:flex;justify-content:center;min-width:0}
 .sc-room-motif{position:relative;width:min(100%,340px);aspect-ratio:1;color:var(--room-accent,#3b82f6)}
 .sc-rm-glow{position:absolute;inset:20%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--room-accent,#3b82f6) 48%,transparent),transparent);filter:blur(10px);animation:sc-breathe 6s ease-in-out infinite}
-.sc-rm-orbit{position:absolute;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--room-accent,#3b82f6) 32%,transparent);animation:sc-spin 26s linear infinite}
+.sc-rm-orbit{position:absolute;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--room-accent,#3b82f6) 32%,transparent)}
 .sc-rm-orbit.o1{inset:15%}
 .sc-rm-orbit.o2{inset:1%;border-style:dashed;animation-duration:52s;animation-direction:reverse;opacity:.7}
 .sc-rm-orbit i{position:absolute;top:-6px;left:calc(50% - 6px);width:12px;height:12px;border-radius:50%;background:currentColor;box-shadow:0 0 18px currentColor}

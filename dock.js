@@ -167,8 +167,10 @@
             .ovdk-foot button:hover { color: var(--text-primary, #ececf1); }
             .ovdk-foot svg { width: 15px; height: 15px; }
             .ovdk-wait { display: flex; justify-content: center; padding: 36px; }
-            .ovdk-wait span { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border, rgba(255,255,255,.12)); border-top-color: var(--accent, #3b82f6); animation: ovdk-spin .8s linear infinite; }
-            @keyframes ovdk-spin { to { transform: rotate(360deg); } }
+            .ovdk-wait span { position: relative; display: inline-block; width: 6px; height: 6px; margin: 0 10px; border: 0; border-radius: 50%; background: var(--accent, #3b82f6); animation: ovdk-hop 1s ease-in-out .15s infinite; }
+            .ovdk-wait span::before, .ovdk-wait span::after { content: ''; position: absolute; top: 0; width: 6px; height: 6px; border-radius: 50%; background: inherit; animation: ovdk-hop 1s ease-in-out infinite; }
+            .ovdk-wait span::before { left: -10px; } .ovdk-wait span::after { left: 10px; animation-delay: .3s; }
+            @keyframes ovdk-hop { 0%, 80%, 100% { transform: translateY(0); opacity: .45; } 40% { transform: translateY(-4px); opacity: 1; } }
             .ovdk-none { padding: 40px 24px; text-align: center; color: var(--text-muted, #8b8b96); font-size: 13.5px; line-height: 1.45; }
             .ovdk-size { position: absolute; z-index: 2; width: 22px; height: 22px; top: 0; left: 0; cursor: nwse-resize; touch-action: none; }
             .ovdk-size::after { content: ''; position: absolute; top: 9px; left: 9px; width: 7px; height: 7px; border-top: 2px solid var(--text-muted, #8b8b96); border-left: 2px solid var(--text-muted, #8b8b96); border-top-left-radius: 3px; opacity: 0; transition: opacity .15s; }
