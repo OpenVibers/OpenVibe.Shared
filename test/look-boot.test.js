@@ -78,7 +78,7 @@ assert.ok(tag({ nonce: 'abc123' }).startsWith('<script nonce="abc123">'));
 assert.ok(!tag({ nonce: '"><x' }).includes('"><x'), 'a nonce cannot break out of its attribute');
 
 // ── The Look panel offers only real themes, and the navbar opens it in place ──
-const sandbox = { window: {} };
+const sandbox = { window: { location: { href: 'https://openvibe.live/@goosely?tab=clips&ov_look=abc&ov-try=old#chat' } }, URL };
 sandbox.window.window = sandbox.window;
 vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'ov-look.js'), 'utf8'), sandbox);
 const { PICKS } = sandbox.window.OVLook;
@@ -90,5 +90,10 @@ const nav = fs.readFileSync(path.join(ROOT, 'navbar.js'), 'utf8');
 assert.ok(/data-ov-look-open/.test(nav) && nav.includes("siblingV('ov-look.js')"), 'the navbar loads the panel from beside itself');
 assert.ok(!nav.includes('openvibe.network/themes"'), 'the menu no longer sends people to another site to change their look');
 assert.ok(require('../files').BROWSER.includes('ov-look.js'), 'served');
+// Share (4.67.0): this page in that theme, for anyone; the tried theme's own bar offers Use it / Stop.
+const shared = new URL(sandbox.window.OVLook.shareLink('nord'));
+assert.deepStrictEqual([shared.origin + shared.pathname, shared.searchParams.get('tab'), shared.searchParams.get('ov-try'), shared.searchParams.has('ov_look'), shared.hash], ['https://openvibe.live/@goosely', 'clips', 'nord', false, ''], 'the page, its own query, the theme to try; never a carried look or an anchor');
+const lookSrc = fs.readFileSync(path.join(__dirname, '..', 'ov-look.js'), 'utf8');
+assert.match(lookSrc, /L\.THEMES\[shareId\] \? \[el\('button'/, 'Share only for a built-in theme (custom colours cannot ride a link)');
 
 console.log(`look boot: paints ov_paint or a carried look before first paint (${BOOT.length} chars), colours only, ended seasons left; the Look panel's ${PICKS.length} picks are real themes`);

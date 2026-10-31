@@ -44,6 +44,10 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{\.ovfx-glint::after\{display:none\}/);
         assert.ok(!/infinite/.test(css.replace(/\.ovfx-shimmer\{[^}]*\}/, '')), 'nothing loops but a placeholder\'s shimmer');
         assert.strictEqual(typeof t.window.OVFx.confetti, 'function');
+        // A feel per look (4.67.0): quiet themes move calmly (no overshoot), neon ones snap; Calm still wins.
+        assert.match(css, /html:is\(\[data-theme=paper\],[^)]*\)\{--ov-dur-1:\.15s;[^}]*--ov-ease-spring:var\(--ov-ease-out\)\}/, 'calm looks: slower, no overshoot');
+        assert.match(css, /html:is\(\[data-theme=neon-tokyo\],[^)]*\)\{--ov-dur-1:\.09s;/, 'neon looks snap');
+        assert.ok(css.indexOf('html[data-ov-motion=reduced]{--ov-dur-1:0s') > css.indexOf('html:is([data-theme=neon-tokyo]'), 'Calm comes last, so it wins over any feel');
     }
 
     // ── reveal: below the fold it waits for the screen; on screen it is never hidden ──
