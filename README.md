@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.57.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.58.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -763,6 +763,12 @@ and fullscreen; the controls hide while playing and idle. Keys while the player 
 ↑/↓ volume, M, F, C, 0–9. On touch, a tap shows the controls and a double tap on either side seeks ±10 s. It drives
 only the media element and listens to its events, so a page's own script (HLS, chapters, next-up, view counts) keeps
 working. Colours follow the site's `--accent`. `OpenVibePlayer.enhance(video)` for a video added later.
+
+An item with no picture (an audio-only broadcast) adds `data-ov-audio-only` (with `data-ov-avatar` for the streamer's
+picture, `data-ov-title` and `data-ov-artist`) and `crossorigin="anonymous"` on the element. The player then shows the
+avatar on a blurred copy of it with "Audio only", and draws a level ring from a Web Audio `AnalyserNode` while the sound
+plays (one static ring under `prefers-reduced-motion`; the file is still the audio file, with every control). Lines in a
+`[data-ov-transcript]` container that carry `data-ov-start` get `is-current` as they are heard.
 
 ### What people wear (`items.js`, `items.css`)
 

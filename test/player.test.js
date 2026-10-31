@@ -168,8 +168,8 @@ console.log('player: all checks passed');
 }
 // ── 4.14: volume on phones, and a video with no sound (owner, 2026-10-26: "Volume seems broken … on mobile can't hear
 // this and also can't easily adjust volume"; VOD 5986 had no sound track) ──
-function player(html, { volumeFixed = false, decoded = null } = {}) {
-    const { window: w, document: d } = parseHTML(`<!doctype html><html><body><div class="host">${html}</div></body></html>`);
+function player(html, { volumeFixed = false, decoded = null, reduce = false, raf = null, extra = '' } = {}) {
+    const { window: w, document: d } = parseHTML(`<!doctype html><html><body><div class="host">${html}</div>${extra}</body></html>`);
     const v = d.querySelector('video');
     let p = true;
     const m = { currentTime: 0, duration: 300, volume: 1, muted: false, playbackRate: 1, ended: false, readyState: 4 };
@@ -189,6 +189,8 @@ function player(html, { volumeFixed = false, decoded = null } = {}) {
     v.play = () => { p = false; f('play'); f('playing'); return Promise.resolve(); };
     v.pause = () => { p = true; f('pause'); };
     const c = { window: w, document: d, console, Promise, setTimeout, clearTimeout, setInterval, clearInterval, Date, Math, Number, String, JSON, Object, Array,
+        matchMedia: (q) => ({ matches: !!reduce && /prefers-reduced-motion/.test(String(q)), addEventListener() {}, removeEventListener() {} }),
+        ...(raf ? { requestAnimationFrame: raf, cancelAnimationFrame() {} } : {}),
         localStorage: { getItem: () => null, setItem() {} } };
     w.OpenVibePlayer = undefined;
     vm.createContext(c);
@@ -229,10 +231,49 @@ function player(html, { volumeFixed = false, decoded = null } = {}) {
     loud.audio = 9000; withSound.m.currentTime = 123; withSound.f('timeupdate');
     assert.ok(!withSound.root.classList.contains('is-silent'), 'audio decoded while muted: it has sound');
 }
+// ── R4: an audio-only item plays in the same player (owner, 2026-10-31: "the audio only stream … should use that
+// picture as the actual video") ──
+{
+    const html = '<video data-ov-player data-ov-audio-only data-ov-avatar="https://openvibe.media/o/med_avatar" data-ov-title="Mic night" data-ov-artist="moosely" crossorigin="anonymous" src="/a.webm"></video>';
+    const a = player(html);
+    assert.ok(a.root.classList.contains('is-audio-only'));
+    assert.ok(a.q('.ov-player-audio'), 'the audio stage replaces the black frame');
+    assert.strictEqual(a.q('.ov-player-audio-badge').textContent, 'Audio only');
+    assert.strictEqual(a.q('.ov-player-audio-title').textContent, 'Mic night');
+    assert.strictEqual(a.q('.ov-player-audio-sub').textContent, 'moosely');
+    assert.strictEqual(a.q('.ov-player-audio-avatar img').getAttribute('src'), 'https://openvibe.media/o/med_avatar');
+    assert.ok(a.q('canvas.ov-player-audio-viz'), 'the level ring is a canvas');
+    assert.strictEqual(a.q('.ov-player-pip').hidden, true, 'no picture-in-picture for a file without a picture');
+    assert.strictEqual(a.root.getAttribute('aria-label'), 'Audio player');
+    a.v.play();
+    assert.ok(!a.root.classList.contains('is-silent'), 'an audio-only item is never called silent');
+
+    // prefers-reduced-motion: the ring is static, no animation frames are asked for.
+    let frames = 0;
+    const calm = player(html, { reduce: true, raf: () => { frames++; return 1; } });
+    assert.ok(calm.root.classList.contains('is-reduced-motion'));
+    calm.v.play();
+    assert.strictEqual(frames, 0, 'reduced motion draws one static ring');
+
+    // The VOD page's transcript: the line being heard is marked as it plays.
+    const tr = player(html, { extra: '<section data-ov-transcript><p data-ov-start="0">first</p><p data-ov-start="5">second</p></section>' });
+    tr.m.currentTime = 6; tr.f('timeupdate');
+    const lines = tr.w.document.querySelectorAll('[data-ov-transcript] [data-ov-start]');
+    assert.ok(lines[1].classList.contains('is-current') && lines[1].getAttribute('aria-current') === 'true', 'the current transcript line is highlighted');
+    assert.ok(!lines[0].classList.contains('is-current'));
+
+    // A video with a picture is untouched: no stage, no class.
+    const video = player('<video data-ov-player src="/a.mp4"></video>');
+    assert.ok(!video.root.classList.contains('is-audio-only') && !video.root.querySelector('.ov-player-audio'));
+}
+// The audio-only styles: the stage above the frame, the ring and the static reduced-motion copy.
+assert.match(css, /\.ov-player\.is-audio-only \.ov-player-video[^{]*\{ opacity: 0 !important; \}/);
+assert.match(css, /\.ov-player-audio-viz \{ position: absolute;/);
+assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.ov-player-audio-bg \{[^}]*filter: blur\(26px\)/);
 // The styles, and a mute icon from the one rounded set.
 assert.match(css, /\.ov-player-unmute \{/);
 assert.match(css, /@media \(hover: none\) \{\s*\.ov-player-volume-slider \{ display: none; \}\s*\.ov-player\.can-volume \.ov-player-volume-slider \{ display: block; width: 84px; height: 36px;/, 'on touch screens the slider shows, finger-sized, where the volume can be set');
 assert.match(css, /\.ov-player\.is-silent \.ov-player-volume-slider \{ display: none; \}/);
 assert.match(css, /\.ov-player\.has-frame \.ov-player-video/);
 assert.match(src, /Material Icons Round/);
-console.log('player: all checks passed (4.13 sound, layers, feedback; 4.14 volume on phones, no-sound videos)');
+console.log('player: all checks passed (4.13 sound, layers, feedback; 4.14 volume on phones, no-sound videos; R4 audio-only stage)');

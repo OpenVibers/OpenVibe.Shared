@@ -196,6 +196,46 @@
 /* Captions sit above the bar while it shows. */
 .ov-player .ov-player-video::cue { background: rgba(0, 0, 0, 0.72); color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 
+/* Audio-only (Media#240/R4): the file has no picture. The stage replaces the black frame with the streamer's avatar on
+   a blurred copy of it; the ring is drawn from the analyser in player.js. It is decorative (aria-hidden and
+   pointer-events: none), so the normal controls and the media element still take every click. */
+.ov-player.is-audio-only { background: radial-gradient(circle at 50% 38%, #1d2440 0%, #0a0e1a 68%); }
+.ov-player.is-audio-only .ov-player-video,
+.ov-player.is-audio-only .ov-player-placeholder,
+.ov-player.is-audio-only .ov-player-poster { opacity: 0 !important; }
+.ov-player-audio { position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; display: grid; place-items: center; }
+.ov-player-audio-bg {
+    position: absolute; inset: -8%; background: center / cover no-repeat;
+    filter: blur(42px) brightness(0.42) saturate(0.85); transform: scale(1.08);
+}
+.ov-player-audio-scrim { position: absolute; inset: 0; background: radial-gradient(circle at 50% 42%, rgba(10, 14, 26, 0) 0%, rgba(10, 14, 26, 0.28) 58%, rgba(10, 14, 26, 0.82) 100%); }
+.ov-player-audio-face { position: relative; display: grid; justify-items: center; gap: 9px; max-width: min(86%, 560px); padding: 0 12px; text-align: center; transform: translateY(-5%); }
+.ov-player-audio-ring { position: relative; width: clamp(132px, 26%, 220px); aspect-ratio: 1; display: grid; place-items: center; }
+.ov-player-audio-viz { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ov-player-audio-avatar {
+    position: relative; width: 58%; aspect-ratio: 1; border-radius: 50%; overflow: hidden;
+    display: grid; place-items: center; background: #1b2340; color: #dfe6ff;
+    font-size: clamp(34px, 6vh, 56px); font-weight: 700;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.10), 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+.ov-player-audio-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ov-player-audio-badge {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.20);
+    color: #eef2ff; font-size: 12px; font-weight: 650; letter-spacing: 0.01em;
+}
+.ov-player-audio-title { font-size: clamp(15px, 2.6vh, 22px); font-weight: 700; line-height: 1.25; color: #f4f6ff; overflow-wrap: anywhere; }
+.ov-player-audio-sub { font-size: 12px; font-weight: 500; color: var(--ovp-muted); }
+.ov-player.is-reduced-motion .ov-player-audio-bg { filter: blur(26px) brightness(0.4) saturate(0.8); }
+@media (prefers-reduced-motion: reduce) { .ov-player-audio-bg { filter: blur(26px) brightness(0.4) saturate(0.8); } }
+@media (max-width: 520px) {
+    .ov-player-audio-face { gap: 3px; transform: translateY(-34px); }
+    .ov-player-audio-ring { width: clamp(92px, 28vw, 116px); }
+    .ov-player-audio-badge { padding: 2px 8px; font-size: 10px; }
+    .ov-player-audio-title { font-size: 14px; }
+    .ov-player-audio-sub { display: none; }
+}
+
 /* Small players and phones: fewer, larger targets. */
 @media (max-width: 520px) {
     .ov-player-speed, .ov-player-pip { display: none; }
