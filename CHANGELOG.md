@@ -6,6 +6,22 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.65.0 — 2026-10-31
+
+- **The mark, with depth and motion** (plan L44; the owner: "the stylistic choices of the logo image need more
+  improvement and cooler animations and effects"). `ov-mark.js`:
+  - **depth:** each stroke runs from a lighter to a deeper tone of its own colour (gradients in user space over
+    `--ovm-o`/`--ovm-v` with color-mix), so states, seasons, tones and a page's own colour still decide it. Tones stay
+    flat; browsers without color-mix show flat strokes;
+  - **intro:** the O rises and draws itself round, the V drops in on a spring, then a glint of light crosses the mark,
+    masked by its own shape (about 1.7 s; `OVMark.intro` replays it for 2 s);
+  - **hover and focus:** the V leans and the O hops as before, plus the glint and a soft glow of the two colours behind
+    the mark. `data-glow` keeps the glow on, for heroes and brand pages;
+  - **press:** the mark gives to 90% and springs back;
+  - still: nothing spins, it moves only for its intro, on hover and for states, and keeps still under reduced motion
+    and Calm (the glow appears without moving).
+- `ov-mark.js` is about 4 KB larger (raw).
+
 ## 4.64.0 — 2026-10-31
 
 - **One look, everywhere, with no flash** (plan L42; the owner: seasonal off on Network was still on, and orange, on

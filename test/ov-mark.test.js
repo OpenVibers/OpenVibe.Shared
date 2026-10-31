@@ -145,7 +145,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.ok(!t.mark.hasAttribute('data-ovm-intro'), 'the intro of the visit is over');
         t.window.OVMark.intro(t.mark);
         assert.ok(t.mark.hasAttribute('data-ovm-intro') && t.running(), 'replayed');
-        t.clock.advance(1500);
+        t.clock.advance(2100);   // the replay lasts 2 s since 4.65.0: the glint ends it
         assert.ok(!t.mark.hasAttribute('data-ovm-intro') && !t.running(), 'and over again');
     }
 
@@ -317,6 +317,31 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         t.io.fire(m, true); t.clock.advance(9000);
         m.setAttribute('data-nav', ''); await t.flush();
         assert.strictEqual(t.running(m), true, 'a page on its way runs the mark after its intro');
+    }
+
+    // ── 4.65.0 (owner, 10-31: "cooler animations and effects"): depth, the glint, the glow and a press ─────
+    {
+        const t = setup();
+        const m = t.mark, svg = m.querySelector('svg'), css = t.document.getElementById('ov-mark-css').textContent;
+        assert.match(m.querySelector('.o').getAttribute('style') || '', /stroke:url\(#[^)]+go\)/, 'the O is drawn with its gradient');
+        assert.match(m.querySelector('.va').getAttribute('style') || '', /stroke:url\(#[^)]+gv\)/, 'and the V with its own');
+        for (const g of svg.querySelectorAll('linearGradient')) if (!/gg$/.test(g.getAttribute('id'))) assert.strictEqual(g.getAttribute('gradientUnits'), 'userSpaceOnUse', 'in user space, so a straight "!" still paints');
+        assert.ok(svg.querySelector('mask .ma') && svg.querySelector('mask .mb') && svg.querySelector('.gr'), 'the glint is masked by the mark\'s own shape');
+        assert.ok(!/\.ov-mark stop\{/.test(css), 'only the strokes\' stops take the colour: the glint stays white');
+        assert.match(css, /@supports \(color:color-mix\(in srgb,red 50%,blue\)\)/, 'the light and deep tones only where color-mix exists; flat strokes elsewhere');
+        assert.match(css, /\.ov-mark\[data-tone\] \.g1,\.ov-mark\[data-tone\] \.g2\{stop-color:var\(--ovm-o\)\}/, 'tones stay flat');
+        assert.match(css, /\.ov-mark\[data-ovm-intro\] \.o\{animation:ovmDraw [^}]*backwards\}/, 'the intro draws the O round, and lets go after (a page-load ring is never held)');
+        assert.match(css, /\.ov-mark\[data-ovm-intro\] \.gr\{animation:ovmGlint/, 'a glint ends the intro');
+        assert.match(css, /\.ov-mark:hover \.gr\{animation:ovmGlint|\.ov-mark:hover \.gr,/, 'and crosses on hover');
+        assert.match(css, /\.ov-mark\[data-glow\]::before\{opacity:\.42/, 'data-glow keeps the glow on');
+        assert.match(css, /\.ov-mark\[data-tone\]::before,\.ov-mark\[data-state=sleep\]::before\{display:none\}/);
+        assert.ok(css.includes('.ov-mark::before{transition:none!important}'), 'reduced motion: the glow appears without moving');
+        assert.match(css, /\.ov-mark:active \.m\{transform:scale\(\.9\)/, 'a press gives a little');
+        assert.ok(!/ovmPop/.test(css), 'the old pop is gone');
+        // The glint's copy of the V follows the V into its shapes.
+        m.setAttribute('data-state', 'error');
+        await t.flush(); t.clock.advance(600); await t.flush();
+        assert.strictEqual(m.querySelector('.ma').getAttribute('d'), m.querySelector('.va').getAttribute('d'), 'the glint follows the "!"');
     }
 
     console.log('ov-mark: forms by size, the shapes of the V, the page-load ring and its pace, intro, hover/focus, activity; paused when hidden, off-screen, reduced or static');
