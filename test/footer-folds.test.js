@@ -15,9 +15,9 @@ const html = footer.buildHTML({ service: 'live', variant: 'full', links });
 const folds = html.match(/<details class="ovf-fold"[^>]*>/g) || [];
 assert.ok(folds.length >= 4, `the site's columns, Network and Legal are folds (${folds.length})`);
 assert.ok(folds.every((d) => / open\b/.test(d)), 'every fold is written open');
-for (const [label, heading] of [['Watch', 'Watch'], ['Create', 'Create'], ['The OpenVibe network', 'Network'], ['Legal', 'Legal']]) {
-    const re = new RegExp(`<nav class="ovf-col" aria-label="${label}"><details class="ovf-fold" open><summary><h3>${heading}</h3></summary>`);
-    assert.match(html, re, `${label}: a nav, its fold and its heading as the summary`);
+for (const [label, heading, count] of [['Watch', 'Watch', 2], ['Create', 'Create', 1], ['The OpenVibe network', 'Network', 9], ['Legal', 'Legal', 4]]) {
+    const re = new RegExp(`<nav class="ovf-col" aria-label="${label}"><details class="ovf-fold" open><summary><h3>${heading}</h3><span class="ovf-fold-n">· ${count}</span></summary>`);
+    assert.match(html, re, `${label}: a nav, its fold, its heading and its count on the fold's line`);
 }
 for (const href of ['/browse', '/clips', '/go-live']) assert.ok(html.includes(`href="${href}"`), `${href} stays in the page`);
 
@@ -31,6 +31,7 @@ assert.match(css, /\.ovf-fold>summary\{list-style:none;cursor:default;pointer-ev
 const phone = css.slice(css.indexOf('@media (max-width:560px)'));
 assert.ok(phone.length < css.length, 'the phone block exists');
 assert.match(phone, /\.ovf-fold>summary\{pointer-events:auto;cursor:pointer;[^}]*min-height:48px\}/);
+assert.match(phone, /\.ovf-fold-n\{display:inline;/, 'the count shows on a phone');
 assert.match(phone, /\.ovf-fold\[open\]>summary::after\{transform:/);
 
 console.log('footer-folds: all checks passed');
