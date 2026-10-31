@@ -6,6 +6,13 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.57.2 — 2026-10-31
+
+- **One page is marked in the navbar after a boost page move.** A site that marks its links on the server (Codes'
+  workspace) marked them for the page it served; after `openvibe-shared/boost` swapped in the next page, the old
+  page's link stayed lit beside the new one (Usage and Agent catalogue both lit on openvibe.codes). The navbar now
+  moves a server mark to the link that leads to the new page (or that the new page sits under).
+
 ## 4.57.1 — 2026-10-31
 
 - **A tool's terms line wraps cleanly.** The facts in `kit.toolHead({ facts })` are spaced apart, not joined by dots,

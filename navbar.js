@@ -1972,6 +1972,18 @@
         root.addEventListener('resize', later, { passive: true });
     }
 
+    // The page a link leads to is this page, or this page sits under it (/tasks marks /tasks/42; / marks only /).
+    const leadsHere = (href, path) => {
+        let p = null;
+        try { p = new URL(href, location.href); } catch { return false; }
+        if (p.origin !== location.origin) return false;
+        return p.pathname === path || (p.pathname !== '/' && path.startsWith(`${p.pathname.replace(/\/+$/, '')}/`));
+    };
+    const remark = (list, path) => list.map((l) => {
+        const out = l.active === undefined ? l : Object.assign({}, l, { active: leadsHere(l.href || '', path) });
+        return Array.isArray(l.children) ? Object.assign({}, out, { children: remark(l.children, path) }) : out;
+    });
+
     // openvibe-shared/boost swapped the page in place: this is a new page for the history and the
     // active-link state, and a login from here returns here.
     let _boostHooked = false;
@@ -1980,6 +1992,9 @@
         _boostHooked = true;
         document.addEventListener('ov:boost:load', () => {
             if (_config.history) _config.history = Object.assign({}, _config.history, { title: document.title, url: location.href });
+            // A site that marked its links on the server marked them for the page it served; after a swap the mark moves
+            // to the new page, or the old page's link stays lit beside the new one (Codes, 2026-10-30).
+            if (Array.isArray(_config.links)) _config.links = remark(_config.links, location.pathname || '/');
             try { render(); } catch { /* keep the old bar */ }
             if (_config.user) recordHistory();
         });

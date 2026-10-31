@@ -18,13 +18,14 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 
 const ROOT = path.join(__dirname, '..');
 const LINKS = [{ label: 'Home', href: '/' }, { label: 'Two', href: '/two' }, { label: 'Three', href: '/three' }];
-const page = (title) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title>
+// The site marks its links on the server, for the page it serves (Codes does): a swap must move the mark.
+const page = (title, here) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${title}</title>
 <meta name="ov-boost" content="site@r1"><link rel="icon" href="data:,">
 <script src="/shared/navbar.js" defer></script><script src="/shared/boost.js" data-main="#main" defer></script></head>
 <body><div id="navbar-mount"></div><main id="main"><h1>${title}</h1><p><a id="to-home" href="/">Home</a> <a id="to-two" href="/two">Two</a></p></main>
-<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: null, links: ${JSON.stringify(LINKS)}, networkLinks: false, countViews: false, notifications: false }); });</script>
+<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: null, links: ${JSON.stringify(LINKS.map((l) => ({ ...l, active: l.href === here })))}, networkLinks: false, countViews: false, notifications: false }); });</script>
 </body></html>`;
-const PAGES = { '/': page('Home'), '/two': page('Two') };
+const PAGES = { '/': page('Home', '/'), '/two': page('Two', '/two') };
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (PAGES[u.pathname]) { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' }); return res.end(PAGES[u.pathname]); }
@@ -64,13 +65,19 @@ const server = http.createServer((req, res) => {
             const pr = await p.evaluate('__ovProbe()');
             return { nodes: m.Nodes, listeners: m.JSEventListeners, doc: pr.documentListeners, win: pr.windowListeners };
         };
+        const lit = () => p.evaluate('[...document.querySelectorAll("nav.openvibe-navbar .ovnav-link.active")].map((a) => a.getAttribute("href")).filter((h, i, all) => all.indexOf(h) === i)');
+        assert.deepStrictEqual(await lit(), ['/'], 'the served page marks Home');
+        assert.strictEqual(await move('to-two'), '/two');
+        assert.deepStrictEqual(await lit(), ['/two'], 'after a swap only the new page is marked, not the old one beside it');
+        assert.strictEqual(await move('to-home'), '/');
+        assert.deepStrictEqual(await lit(), ['/'], 'and back');
         const samples = [];
         for (let lap = 0; lap < 6; lap++) {
             assert.strictEqual(await move('to-two'), '/two');
             assert.strictEqual(await move('to-home'), '/');
             samples.push(await sample());
         }
-        assert.strictEqual(await p.evaluate('OVBoost.controller.stats().moves'), 12, 'every move was a boost swap (no page load)');
+        assert.strictEqual(await p.evaluate('OVBoost.controller.stats().moves'), 14, 'every move was a boost swap (no page load)');
         assert.strictEqual(await p.evaluate('document.querySelectorAll("nav.openvibe-navbar").length'), 1, 'one bar on the page');
         const a = samples[1], b = samples[samples.length - 1];
         const d = { nodes: b.nodes - a.nodes, listeners: b.listeners - a.listeners, doc: b.doc - a.doc, win: b.win - a.win };
