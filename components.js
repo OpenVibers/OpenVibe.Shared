@@ -417,7 +417,7 @@ fun OvSidebar(items: List<Pair<String, ImageVector>>, current: Int, onPick: (Int
     var body: some View {
         NavigationSplitView {
             List(selection: $current) {
-                ForEach(items.indices, id: \.self) { i in Label(items[i].label, systemImage: items[i].icon).frame(minHeight: OvScale.sizeTap).tag(i) }
+                ForEach(items.indices, id: \\.self) { i in Label(items[i].label, systemImage: items[i].icon).frame(minHeight: OvScale.sizeTap).tag(i) }
             }
             .listStyle(.sidebar)
         } detail: { detail() }
