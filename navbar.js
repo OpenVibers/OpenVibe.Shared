@@ -475,7 +475,7 @@
     const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'd53438811552', 'ov-glyphs.js': 'ba57d6e1f417', 'ov-brand.woff2': '3b4e6a8a5878' };
+    const SIBLING_REV = { 'ov-mark.js': 'd53438811552', 'ov-glyphs.js': '2b97058350a5', 'ov-brand.woff2': '3b4e6a8a5878' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.

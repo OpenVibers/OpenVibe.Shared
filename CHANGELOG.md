@@ -6,6 +6,23 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
 ## Unreleased
 
+## 4.63.0 — 2026-10-31
+
+- **37 more glyphs, for the Font Awesome names the network still used most** (plan L32 I4; openvibe.design/icons'
+  "Still Font Awesome" list, counted 10-31):
+  - restroom, shelter, hot-tub, umbrella, parking, skull, group, medical, shapes, headphones, drive, check-double, tv,
+    toolbox, table, scale, road, money, heart-pulse, heading, fist, fast-forward, rewind, file-code, dice, contrast,
+    briefcase, timeline, seedling, rocket, list-ordered, lifebuoy, infinity, inbox, door, card and storm, drawn in the
+    mark's hand;
+  - 75 more Font Awesome names map to glyphs (aliases include `info-circle`, `people-arrows`, `right-left`,
+    `microphone-lines`, `folder-open` and `money-bill-*`).
+  - 192 glyphs for 311 Font Awesome names. The fonts gain the new glyphs at U+E09C–U+E0C0; no code point moved.
+- **The glyphs' own motion** (L32 I9):
+  - `ovg-draw` draws a glyph's lines in once (`--ovg-draw-duration`, `--ovg-draw-delay`), the way the mark's tick does;
+  - `ovg-once` plays any animation a single time (`fa-shake ovg-once`: a bell that rings once);
+  - under reduced motion, a drawn-in glyph is simply there.
+- `ov-glyphs.js` is 11.1 KB brotli and still loads after first paint.
+
 ## 4.62.0 — 2026-10-31
 
 - **Font Awesome's features, kept, on the glyphs** (plan L32 I6; the owner: "basically want to keep Font Awesome, so all
