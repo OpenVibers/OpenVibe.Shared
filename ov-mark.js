@@ -339,13 +339,13 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
     }
     function navStop() { if (nav) { clearTimeout(nav.timer); nav = null; } }
     /** The page is here: fill to the top, then drain back. A navbar re-rendered by the move gets the same ending. */
+    // The ending runs after every other listener of the arrival (the navbar re-renders on it), and no timer keeps a mark:
+    // each step looks the marks up again, so a replaced navbar is never held in memory.
+    const clearNav = () => { if (!nav) navMarks().forEach((m) => { m.removeAttribute('data-nav'); m.style.removeProperty('--ovm-fill'); }); };
     function navEnd(kind) {
         const was = nav; navStop();
         if (was && kind) learn(kind, Date.now() - was.t0);
-        mount();
-        const marks = navMarks(); if (!marks.length) return;
-        setFill(marks, 1);
-        setTimeout(() => marks.forEach((m) => { m.removeAttribute('data-nav'); m.style.removeProperty('--ovm-fill'); }), 320);
+        setTimeout(() => { if (nav) return; mount(); setFill(navMarks(), 1); setTimeout(clearNav, 320); }, 0);
     }
     function hookNav() {
         document.addEventListener('ov:boost:before', () => navStart('boost'));
@@ -361,7 +361,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
             try { if (u.origin === here.origin) sessionStorage.setItem(NAV_FLAG, String(Date.now())); } catch { /* */ }
         });
         // Back to a page from the back/forward cache: nothing is loading any more.
-        window.addEventListener('pageshow', (e) => { if (e.persisted) { navStop(); navMarks().forEach((m) => { m.removeAttribute('data-nav'); m.style.removeProperty('--ovm-fill'); }); } });
+        window.addEventListener('pageshow', (e) => { if (e.persisted) { navStop(); clearNav(); } });
         // This page came from a click on the last one: learn how long it took, and finish the fill here.
         let t = 0; try { t = Number(sessionStorage.getItem(NAV_FLAG)) || 0; sessionStorage.removeItem(NAV_FLAG); } catch { /* */ }
         if (t && Date.now() - t < 20000) {

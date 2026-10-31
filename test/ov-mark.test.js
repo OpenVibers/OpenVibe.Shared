@@ -266,6 +266,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         t.clock.advance(20000);
         assert.ok(Number(m.style.getPropertyValue('--ovm-fill')) <= 0.94, 'never full before the page is here');
         t.window.OVMark.navEnd('boost');
+        t.clock.advance(1); // after every other listener of the arrival (the navbar re-renders on it)
         assert.strictEqual(m.style.getPropertyValue('--ovm-fill'), '1', 'full on arrival');
         t.clock.advance(400);
         assert.ok(!m.hasAttribute('data-nav') && !m.style.getPropertyValue('--ovm-fill'), 'then it drains back to the line');
