@@ -476,7 +476,7 @@
     const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '82afb8a8cb4d', 'ov-glyphs.js': '2b97058350a5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'f234846e81db' };
+    const SIBLING_REV = { 'ov-mark.js': '82afb8a8cb4d', 'ov-glyphs.js': '2b97058350a5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'f234846e81db', 'ov-fx.js': 'de375a22cf17' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -819,6 +819,15 @@
         const go = () => loadOvIcons();
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 4000 });
         else { const t = setTimeout(go, 2500); if (t && typeof t.unref === 'function') t.unref(); }
+    }
+    /** ov-fx.js (4.66.0): the network's effects, loaded once the page settles, only for a page that has data-fx. */
+    function queueFx() {
+        const go = () => {
+            if (root.OVFx || typeof document.querySelector !== 'function' || document.getElementById('ov-fx-loader') || !document.querySelector('[data-fx]')) return;
+            try { const sc = document.createElement('script'); sc.id = 'ov-fx-loader'; sc.src = siblingV('ov-fx.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        };
+        if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 3000 });
+        else { const t = setTimeout(go, 1500); if (t && typeof t.unref === 'function') t.unref(); }
     }
     function bindChips(scope) {
         (_config.chips || []).concat((_config.menu && _config.menu.headerChips) || []).forEach((c) => {
@@ -1685,6 +1694,7 @@
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
+        queueFx();
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
         setTimeout(() => { mountBell(nav, u); mountDock(u); }, 0);

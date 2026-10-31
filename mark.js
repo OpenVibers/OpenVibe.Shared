@@ -15,10 +15,14 @@
 //   geo(form)                       → { cx, cy, r, sw, R, vsw, halo, A, T, B, ring, box, wideBox }
 //   shapes(form)                    → the V's two strokes for each shape it takes: v, ok (a tick), no (a cross),
 //                                     err (an exclamation mark), tip (folded into its point, for the intro)
-//   art({ form, o, v, id, shape })  → { defs, body }: the mark's <defs> and drawing, to place inside another SVG
-//   svg({ form, tone, wide, size, title, id })
+//   art({ form, o, v, id, shape, depth })
+//                                   → { defs, body }: the mark's <defs> and drawing, to place inside another SVG
+//   svg({ form, tone, wide, size, title, id, depth })
 //                                   → a standalone SVG. tone: 'brand' (blue O, violet V), 'ink' (currentColor),
 //                                     'white', or { o, v }. wide: the box hugs the mark (92 × 56) instead of a square.
+//                                     depth (4.66.0; on by default for the brand tone): each stroke runs from a lighter
+//                                     to a deeper tone of its colour, as ov-mark.js draws it. Hex colours only; the
+//                                     one-colour tones stay flat.
 //   COLORS                          → { o: '#4f7cff', v: '#8b5cf6' }
 // ═══════════════════════════════════════════════════════════════
 
@@ -58,29 +62,45 @@ function shapes(form) {
 }
 
 const stroke = (p, i) => `M${p[i]} ${p[i + 1]}L${p[i + 2]} ${p[i + 3]}`;
+const HEX = /^#[0-9a-f]{6}$/i;
+/** hex mixed toward `to` by t (0..1): ov-mark.js's color-mix, worked out for files that cannot run CSS. */
+function mix(hex, to, t) {
+    const a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16);
+    return `#${[16, 8, 0].map((sh) => Math.round(((a >> sh) & 255) * (1 - t) + ((b >> sh) & 255) * t).toString(16).padStart(2, '0')).join('')}`;
+}
+/** The light-to-deep tones of each stroke: the same mixes as ov-mark.js (O 68% / 84%, V 70% / 86%). */
+const tones = (o, v) => ({ o: [mix(o, '#ffffff', 0.32), mix(o, '#000000', 0.16)], v: [mix(v, '#ffffff', 0.30), mix(v, '#000000', 0.14)] });
 
 /** The mark's defs and drawing, to place inside another SVG. ids are prefixed with `id` (unique per document). */
-function art({ form = 'pair', o = COLORS.o, v = COLORS.v, id = 'ovm', shape = 'v' } = {}) {
+function art({ form = 'pair', o = COLORS.o, v = COLORS.v, id = 'ovm', shape = 'v', depth = false } = {}) {
     const g = geo(form), p = shapes(form)[shape] || shapes(form).v;
-    const defs = `<mask id="${id}h" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><rect x="-20" y="-20" width="140" height="140" fill="#fff"/>`
+    let defs = `<mask id="${id}h" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><rect x="-20" y="-20" width="140" height="140" fill="#fff"/>`
         + `<path d="${stroke(p, 0)}${stroke(p, 4)}" fill="none" stroke="#000" stroke-width="${g.halo}" stroke-linecap="round"/></mask>`;
-    const body = `<circle cx="${g.cx}" cy="${g.cy}" r="${g.r}" fill="none" stroke="${o}" stroke-width="${g.sw}" mask="url(#${id}h)"/>`
-        + `<path d="${stroke(p, 0)}${stroke(p, 4)}" fill="none" stroke="${v}" stroke-width="${g.vsw}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    let os = o, vs = v;
+    if (depth && HEX.test(o) && HEX.test(v)) {
+        // In user space: a straight stroke (the "!" shape) has no box for a bounding-box gradient to span.
+        const t = tones(o, v);
+        defs += `<linearGradient id="${id}go" gradientUnits="userSpaceOnUse" x1="${f(g.cx - g.R)}" y1="${f(g.cy - g.R)}" x2="${f(g.cx + g.R)}" y2="${f(g.cy + g.R)}"><stop offset="0" stop-color="${t.o[0]}"/><stop offset="1" stop-color="${t.o[1]}"/></linearGradient>`
+            + `<linearGradient id="${id}gv" gradientUnits="userSpaceOnUse" x1="0" y1="${g.A[1]}" x2="0" y2="${g.T[1]}"><stop offset="0" stop-color="${t.v[0]}"/><stop offset="1" stop-color="${t.v[1]}"/></linearGradient>`;
+        os = `url(#${id}go)`; vs = `url(#${id}gv)`;
+    }
+    const body = `<circle cx="${g.cx}" cy="${g.cy}" r="${g.r}" fill="none" stroke="${os}" stroke-width="${g.sw}" mask="url(#${id}h)"/>`
+        + `<path d="${stroke(p, 0)}${stroke(p, 4)}" fill="none" stroke="${vs}" stroke-width="${g.vsw}" stroke-linecap="round" stroke-linejoin="round"/>`;
     return { defs, body };
 }
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /** A standalone SVG of the mark. */
-function svg({ form = 'pair', tone = 'brand', wide = false, size = null, title = 'OpenVibe', id = 'ovm' } = {}) {
+function svg({ form = 'pair', tone = 'brand', wide = false, size = null, title = 'OpenVibe', id = 'ovm', depth = tone === 'brand' } = {}) {
     const c = typeof tone === 'object' && tone ? tone
         : tone === 'ink' ? { o: 'currentColor', v: 'currentColor' }
             : tone === 'white' ? { o: '#fff', v: '#fff' } : COLORS;
     const g = geo(form), box = wide ? g.wideBox : g.box;
     const [, , bw, bh] = box.split(' ').map(Number);
     const dims = size ? ` width="${f(wide ? size * bw / bh : size)}" height="${size}"` : '';
-    const { defs, body } = art({ form, o: c.o, v: c.v, id });
+    const { defs, body } = art({ form, o: c.o, v: c.v, id, depth });
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box}"${dims} role="img" aria-label="${esc(title)}"><title>${esc(title)}</title><defs>${defs}</defs>${body}</svg>`;
 }
 
-module.exports = { COLORS, FORMS, geo, shapes, art, svg };
+module.exports = { COLORS, FORMS, geo, shapes, art, svg, tones };
