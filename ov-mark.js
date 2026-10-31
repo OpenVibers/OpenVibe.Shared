@@ -17,8 +17,10 @@
  * and the heavy (thicker strokes) for 22px and under, where the pair's gap would close.
  *
  * Everything it does means something, and nothing spins:
- *   - intro: the O pops in and the V grows out of its point;
- *   - hover: the V leans back and the O hops;
+ *   - intro: the O rises and draws itself round, the V drops in on a spring, then a glint of light crosses the mark;
+ *   - hover: the V leans back, the O hops, a glint crosses and a soft glow of its two colours comes up behind it;
+ *   - press: it gives a little and springs back;
+ * Each stroke runs light to deep in its own colour (data-glow keeps the glow on, for heroes and brand pages).
  *   - a page on its way (navbar): the ring empties and draws itself round again as the next page loads, paced by how
  *     long this site's pages usually take in this browser (learned per site, boost moves and full loads apart); the
  *     V nods while it waits and hops when the page is here (window.OVMark.navStart/navEnd for single-page apps);
@@ -77,6 +79,22 @@
 .ov-mark .ot{opacity:0;transition:opacity .3s,stroke .35s}
 .ov-mark .va,.ov-mark .vb{fill:none;stroke:var(--ovm-v);stroke-linecap:round;stroke-linejoin:round;transition:stroke .35s,opacity .5s}
 .ov-mark .ha,.ov-mark .hb{fill:none;stroke:#000;stroke-linecap:round}
+/* Depth (4.65.0): each stroke runs from a lighter to a deeper tone of its own colour, so states, seasons, tones and a
+   page's own colour still decide it. Without color-mix the strokes are flat. */
+.ov-mark .g1,.ov-mark .g2{stop-color:var(--ovm-o);transition:stop-color .35s}.ov-mark .g3,.ov-mark .g4{stop-color:var(--ovm-v);transition:stop-color .35s}
+@supports (color:color-mix(in srgb,red 50%,blue)){.ov-mark .g1{stop-color:color-mix(in srgb,var(--ovm-o) 68%,#fff)}.ov-mark .g2{stop-color:color-mix(in srgb,var(--ovm-o) 84%,#000)}.ov-mark .g3{stop-color:color-mix(in srgb,var(--ovm-v) 70%,#fff)}.ov-mark .g4{stop-color:color-mix(in srgb,var(--ovm-v) 86%,#000)}
+.ov-mark[data-tone] .g1,.ov-mark[data-tone] .g2{stop-color:var(--ovm-o)}.ov-mark[data-tone] .g3,.ov-mark[data-tone] .g4{stop-color:var(--ovm-v)}}
+/* The glint: a band of light crosses the mark (its own shape is the mask) on the intro and on hover. */
+.ov-mark .gr{transform-box:view-box;transform-origin:50px 50px;transform:translateX(-80px) skewX(-20deg)}
+/* The glow: a soft light of the mark's two colours behind it, on hover; always on with data-glow (heroes, brand pages). */
+.ov-mark{position:relative;isolation:isolate}
+.ov-mark::before{content:"";position:absolute;inset:6%;z-index:-1;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side at 36% 50%,var(--ovm-o),transparent),radial-gradient(closest-side at 70% 50%,var(--ovm-v),transparent);filter:blur(8px);opacity:0;transform:scale(.7);transition:opacity .45s,transform .6s cubic-bezier(.3,.8,.2,1)}
+.ov-mark[data-glow]::before{opacity:.42;transform:none}
+a:hover>.ov-mark::before,button:hover>.ov-mark::before,.ov-mark:hover::before,a:focus-visible>.ov-mark::before{opacity:.55;transform:scale(1.14)}
+.ov-mark[data-tone]::before,.ov-mark[data-state=sleep]::before{display:none}
+/* A press: the mark gives a little and springs back. */
+.ov-mark .m{transition:transform .42s cubic-bezier(.34,1.56,.64,1)}
+a:active>.ov-mark .m,button:active>.ov-mark .m,.ov-mark:active .m{transform:scale(.9);transition-duration:.1s}
 .ov-mark .cd{display:none;fill:var(--ovm-dot,#ff3b5c);transform-box:fill-box;transform-origin:center}
 .ov-mark .nd{fill:var(--danger,#ef4444);opacity:0;transform:scale(0);transform-box:fill-box;transform-origin:center;transition:opacity .2s,transform .42s cubic-bezier(.34,1.56,.64,1)}
 .ov-mark .rp{fill:none;stroke:#ff3b5c;stroke-width:3;opacity:0;transform-box:fill-box;transform-origin:center}
@@ -94,9 +112,12 @@ html[data-ov-season-mark=halloween] .ov-mark .sh,html[data-ov-season-mark=winter
 /* Hover and focus: the V leans back and the O hops. */
 a:hover>.ov-mark:not([data-state]) .vg,button:hover>.ov-mark:not([data-state]) .vg,.ov-mark:not([data-state]):hover .vg,a:focus-visible>.ov-mark:not([data-state]) .vg{animation:ovmLean .62s ease-out 1}
 a:hover>.ov-mark:not([data-state]) .og,button:hover>.ov-mark:not([data-state]) .og,.ov-mark:not([data-state]):hover .og,a:focus-visible>.ov-mark:not([data-state]) .og{animation:ovmHopO .62s ease-out 1}
-/* The intro: the O pops in, then the V grows out of its point. */
-.ov-mark[data-ovm-intro] .og{animation:ovmPop .56s cubic-bezier(.34,1.56,.64,1) both}
-.ov-mark[data-ovm-intro] .vg{animation:ovmPop .52s cubic-bezier(.34,1.56,.64,1) .18s both}
+a:hover>.ov-mark .gr,button:hover>.ov-mark .gr,.ov-mark:hover .gr,a:focus-visible>.ov-mark .gr{animation:ovmGlint .8s cubic-bezier(.45,0,.25,1) .05s 1}
+/* The intro: the O rises and draws itself round, the V drops in on a spring, and a glint crosses the two. */
+.ov-mark[data-ovm-intro] .og{animation:ovmRise .6s cubic-bezier(.34,1.4,.64,1) backwards}
+.ov-mark[data-ovm-intro] .o{animation:ovmDraw .8s cubic-bezier(.65,0,.25,1) backwards}
+.ov-mark[data-ovm-intro] .vg{animation:ovmDrop .62s cubic-bezier(.34,1.56,.64,1) .32s backwards}
+.ov-mark[data-ovm-intro] .gr{animation:ovmGlint .9s cubic-bezier(.45,0,.25,1) .8s backwards}
 html[data-ov-season-mark] .ov-mark[data-ovm-intro] .sl{animation:ovmLeaf .9s cubic-bezier(.3,1.6,.5,1) .5s both}
 /* A page on its way, or a known progress: the ring draws itself round to the level over a faint track. */
 .ov-mark[data-nav],.ov-mark[data-progress]{transition:--ovm-fill .3s linear}
@@ -135,7 +156,10 @@ html[data-ov-season-mark] .ov-mark[data-ovm-intro] .sl{animation:ovmLeaf .9s cub
 .ov-mark[data-variant=chat][data-state=busy] .vg,.ov-mark[data-variant=chat][data-state=busy] .og{animation-duration:.55s}
 .ov-mark[data-variant=codes][data-state=busy] .vg{animation-timing-function:steps(4,end)}
 .ov-mark[data-variant=blog][data-state=busy] .vg,.ov-mark[data-variant=wiki][data-state=busy] .vg,.ov-mark[data-variant=news][data-state=busy] .vg,.ov-mark[data-variant=blog][data-state=busy] .og,.ov-mark[data-variant=wiki][data-state=busy] .og,.ov-mark[data-variant=news][data-state=busy] .og{animation-duration:1.2s}
-@keyframes ovmPop{0%{transform:scale(0)}100%{transform:scale(1)}}
+@keyframes ovmRise{from{transform:scale(.55);opacity:0}}
+@keyframes ovmDraw{from{stroke-dasharray:100 100;stroke-dashoffset:100}to{stroke-dasharray:100 100;stroke-dashoffset:0}}
+@keyframes ovmDrop{from{transform:translateY(-18px) scale(.5);opacity:0}}
+@keyframes ovmGlint{from{transform:translateX(-80px) skewX(-20deg)}to{transform:translateX(80px) skewX(-20deg)}}
 @keyframes ovmLean{0%,100%{transform:rotate(0)}45%{transform:rotate(-11deg)}}
 @keyframes ovmHopO{0%,100%{transform:translateY(0)}45%{transform:translateY(-3px)}}
 @keyframes ovmNod{0%,100%{transform:rotate(0)}50%{transform:rotate(-7deg)}}
@@ -160,7 +184,7 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
-@media (prefers-reduced-motion:reduce){.ov-mark *{animation:none!important}.ov-mark,.ov-mark *{transition:none!important}.ovm-fall{display:none}}
+@media (prefers-reduced-motion:reduce){.ov-mark *{animation:none!important}.ov-mark,.ov-mark *,.ov-mark::before{transition:none!important}.ovm-fall{display:none}}
 html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
     const seg = (p, i) => `M${f(p[i])} ${f(p[i + 1])}L${f(p[i + 2])} ${f(p[i + 3])}`;
     function svg(id, G, wide) {
@@ -171,12 +195,17 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
         const capR = f(G.r + G.sw / 2 - 1.6), at = (deg) => [f(G.cx + capR * Math.cos(deg * Math.PI / 180)), f(G.cy + capR * Math.sin(deg * Math.PI / 180))];
         const c0 = at(-150), c1 = at(-40);
         return `<svg viewBox="${wide ? G.wideBox : G.box}" aria-hidden="true"><defs>
-<mask id="${id}h" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><rect x="-20" y="-20" width="140" height="140" fill="#fff"/><g class="vg" style="${vc}"><path class="ha" d="${seg(p, 0)}" stroke-width="${G.halo}"/><path class="hb" d="${seg(p, 4)}" stroke-width="${G.halo}"/></g></mask></defs>
+<mask id="${id}h" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><rect x="-20" y="-20" width="140" height="140" fill="#fff"/><g class="vg" style="${vc}"><path class="ha" d="${seg(p, 0)}" stroke-width="${G.halo}"/><path class="hb" d="${seg(p, 4)}" stroke-width="${G.halo}"/></g></mask>
+<linearGradient id="${id}go" gradientUnits="userSpaceOnUse" x1="${f(G.cx - G.R)}" y1="${f(G.cy - G.R)}" x2="${f(G.cx + G.R)}" y2="${f(G.cy + G.R)}"><stop class="g1" offset="0"/><stop class="g2" offset="1"/></linearGradient>
+<linearGradient id="${id}gv" gradientUnits="userSpaceOnUse" x1="0" y1="${G.A[1]}" x2="0" y2="${G.T[1]}"><stop class="g3" offset="0"/><stop class="g4" offset="1"/></linearGradient>
+<linearGradient id="${id}gg"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<mask id="${id}s" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><g mask="url(#${id}h)"><g class="og" style="${oc}"><path d="${G.ring}" fill="none" stroke="#fff" stroke-width="${G.sw}"/></g></g><g class="vg" style="${vc}"><path class="ma" d="${seg(p, 0)}" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="${G.vsw}"/><path class="mb" d="${seg(p, 4)}" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="${G.vsw}"/></g></mask></defs>
 <g class="m"><circle class="rp" cx="${G.cx}" cy="${G.cy}" r="${G.R}"/><circle class="rp rp2" cx="${G.cx}" cy="${G.cy}" r="${G.R}"/>
-<g mask="url(#${id}h)"><g class="og" style="${oc}"><path class="ot" d="${G.ring}" stroke-width="${G.sw}"/><path class="o" d="${G.ring}" pathLength="100" stroke-width="${G.sw}"/><circle class="cd" cx="${G.cx}" cy="${G.cy}" r="${f(ri * 0.62)}"/>
+<g mask="url(#${id}h)"><g class="og" style="${oc}"><path class="ot" d="${G.ring}" stroke-width="${G.sw}"/><path class="o" d="${G.ring}" pathLength="100" stroke-width="${G.sw}" style="stroke:url(#${id}go)"/><circle class="cd" cx="${G.cx}" cy="${G.cy}" r="${f(ri * 0.62)}"/>
 <g class="sw2"><path class="sc" d="M${c0[0]} ${c0[1]}A${capR} ${capR} 0 0 1 ${c1[0]} ${c1[1]}"/></g></g></g>
-<g class="vg" style="${vc}"><path class="va" d="${seg(p, 0)}" stroke-width="${G.vsw}"/><path class="vb" d="${seg(p, 4)}" stroke-width="${G.vsw}"/>
+<g class="vg" style="${vc}"><path class="va" d="${seg(p, 0)}" stroke-width="${G.vsw}" style="stroke:url(#${id}gv)"/><path class="vb" d="${seg(p, 4)}" stroke-width="${G.vsw}" style="stroke:url(#${id}gv)"/>
 <g class="sw2"><circle class="sd" cx="${G.A[0]}" cy="${f(G.A[1] - G.vsw * 0.18)}" r="${f(G.vsw * 0.36)}"/><circle class="sd" cx="${G.B[0]}" cy="${f(G.B[1] - G.vsw * 0.18)}" r="${f(G.vsw * 0.36)}"/></g></g>
+<g mask="url(#${id}s)"><rect class="gr" x="38" y="-10" width="24" height="120" fill="url(#${id}gg)"/></g>
 <circle class="nd" cx="${f(G.B[0] + 5.5)}" cy="${f(G.B[1] - 9)}" r="${f(G.vsw * 0.55)}"/>
 <g class="sh"><path class="ss" d="${stem}"/><path class="sl" d="${leaf}"/></g>
 <g class="sw2"><circle class="sd" cx="${f(G.cx - 12)}" cy="${f(top - 6)}" r="1.8"/><circle class="sd" cx="${f(G.B[0] - 6)}" cy="${f(G.B[1] - 12)}" r="1.5"/></g></g></svg>`;
@@ -189,6 +218,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
         q.pts = p;
         const a = seg(p, 0), b = seg(p, 4);
         q.va.setAttribute('d', a); q.ha.setAttribute('d', a); q.vb.setAttribute('d', b); q.hb.setAttribute('d', b);
+        if (q.ma) { q.ma.setAttribute('d', a); q.mb.setAttribute('d', b); }
     }
     function shape(el, animate) {
         const q = el.__ovm; if (!q) return;
@@ -323,7 +353,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
                 const form = formOf(el.getAttribute('data-form'));
                 el.innerHTML = svg('ovm' + (++n) + '_', FORMS[form], el.hasAttribute('data-wide'));
                 const pick = (c) => el.querySelector(c);
-                el.__ovm = { form, name: 'v', pts: FORMS[form].shapes.v.slice(), raf: 0, va: pick('.va'), vb: pick('.vb'), ha: pick('.ha'), hb: pick('.hb') };
+                el.__ovm = { form, name: 'v', pts: FORMS[form].shapes.v.slice(), raf: 0, va: pick('.va'), vb: pick('.vb'), ha: pick('.ha'), hb: pick('.hb'), ma: pick('.ma'), mb: pick('.mb') };
             }
             if (!state.has(el) && el.isConnected) track(el);
         });
@@ -428,12 +458,12 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
             let tries = 0; const again = () => { if (!finish() && ++tries <= 20) setTimeout(again, 100); }; again();
         }
     }
-    /** Replay the intro on one mark (a brand page, a splash): the O pops in and the V grows out of its point. */
+    /** Replay the intro on one mark (a brand page, a splash): the O draws itself round, the V drops in, a glint crosses. */
     function intro(el) {
         const st = el && state.get(el); if (!st) return;
         el.removeAttribute('data-ovm-intro');
         try { void el.getBoundingClientRect(); } catch { /* */ }
-        st.introEnd = Date.now() + 1400; update(el);
+        st.introEnd = Date.now() + 2000; update(el);
     }
     window.OVMark = { mount, navStart, navEnd, usual, intro, FORMS };
     window.ovMarkMount = mount;
