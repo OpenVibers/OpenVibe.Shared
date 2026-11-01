@@ -31,6 +31,14 @@ const CSS = [
     '.ovg>svg>.ovg-s{fill:currentColor;stroke:none;clip-path:inset(max(0px, (1.15em - 18.4px) * 999))}',
     '.ovg>svg>.ovg-s .ln{fill:none;stroke:currentColor;stroke-width:2.6px}',
     '.ovg>svg>.ovg-s,.ovg>svg>.ovg-s *{stroke-dasharray:none!important;animation:none!important}',
+    // Line or solid on purpose (4.70.0; the owner, 2026-11-01: "both sets for any size… swap between them… whichever
+    // fits the area"): .ovg-solid and .ovg-line force one at any size, and an active control (the current tab, a pressed
+    // or selected button) wears the solid one, the way an app's tab bar fills the tab you are on. :where() keeps these
+    // easy for a site to override.
+    '.ovg.ovg-solid>svg.has-s{stroke-width:0}.ovg.ovg-solid>svg>.ovg-s{clip-path:none}',
+    '.ovg.ovg-line>svg.has-s{stroke-width:calc(var(--ovg-stroke,2) * 1px + max(0px, (18.4px - 1.15em) * .25))}.ovg.ovg-line>svg>.ovg-s{clip-path:inset(50%)}',
+    ':where([aria-current=page],[aria-current=true],[aria-pressed=true],[aria-selected=true],.is-here)>.ovg:not(.ovg-line)>svg.has-s{stroke-width:0}',
+    ':where([aria-current=page],[aria-current=true],[aria-pressed=true],[aria-selected=true],.is-here)>.ovg:not(.ovg-line)>svg>.ovg-s{clip-path:none}',
     '.ovg.fa-thin{--ovg-stroke:1}.ovg.fa-light{--ovg-stroke:1.5}.ovg.ovg-bold{--ovg-stroke:2.5}.ovg.fa-duotone>svg{stroke:var(--fa-primary-color,currentColor)}',
     // Sizes, fixed width, borders and pulls.
     '.ovg.fa-2xs{font-size:.625em}.ovg.fa-xs{font-size:.75em}.ovg.fa-sm{font-size:.875em}.ovg.fa-lg{font-size:1.25em}.ovg.fa-xl{font-size:1.5em}.ovg.fa-2xl{font-size:2em}',

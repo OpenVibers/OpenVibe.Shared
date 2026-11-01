@@ -815,7 +815,28 @@
     const page = ({ head: h = '', body = '', side = '', dock: d = '', wide = false, id = 'main' } = {}) =>
         `<main class="ovk-page${wide ? ' ovk-page--wide' : ''}" id="${esc(id)}">${h}${side ? `<div class="ovk-split"><div class="ovk-main">${body}</div><aside class="ovk-side">${side}</aside></div>` : body}${d}</main>`;
 
+    /**
+     * Placeholders shaped like the content on its way (4.70.0, plan L52; the owner, 2026-11-01: "placeholder elements while
+     * it loads, a fake thumbnail, so it is not jarring"). Same sizes as the real thing, so it lands without a jump; a soft
+     * shimmer (never a spinner), still under reduced motion; announced once as busy.
+     *   skeleton({ kind: 'card' | 'row' | 'tile' | 'chip' | 'line' | 'chat' | 'stat', count = 3, label = 'Loading' })
+     */
+    function skeleton({ kind = 'row', count = 3, label = 'Loading' } = {}) {
+        const n = Math.max(1, Math.min(48, Number(count) || 1));
+        const one = {
+            card: '<div class="ovk-skel-card"><span class="ovk-skel ovk-skel-thumb"></span><span class="ovk-skel ovk-skel-l1"></span><span class="ovk-skel ovk-skel-l2"></span></div>',
+            row: '<div class="ovk-skel-row"><span class="ovk-skel ovk-skel-avatar"></span><span class="ovk-skel-lines"><span class="ovk-skel ovk-skel-l1"></span><span class="ovk-skel ovk-skel-l2"></span></span></div>',
+            tile: '<span class="ovk-skel ovk-skel-tile"></span>',
+            chip: '<span class="ovk-skel ovk-skel-chip"></span>',
+            line: '<span class="ovk-skel ovk-skel-line"></span>',
+            chat: '<div class="ovk-skel-chat"><span class="ovk-skel ovk-skel-dot"></span><span class="ovk-skel ovk-skel-l1"></span></div>',
+            stat: '<div class="ovk-skel-stat"><span class="ovk-skel ovk-skel-num"></span><span class="ovk-skel ovk-skel-l2"></span></div>',
+        }[kind] || '<span class="ovk-skel ovk-skel-line"></span>';
+        return `<div class="ovk-skels ovk-skels-${esc(kind)}" role="status" aria-busy="true" aria-label="${esc(label)}">${one.repeat(n)}</div>`;
+    }
+
     return {
+        skeleton,
         esc, url, icon, ICONS, PATHS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,

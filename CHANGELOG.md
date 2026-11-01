@@ -4,6 +4,31 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.70.0
+
+- **Line or solid, on purpose** (plan L49; the owner, 2026-11-01: "both sets for any size… swap between them…
+  whichever fits the area"). `.ovg-solid` and `.ovg-line` force one at any size. An active control (the current tab,
+  a pressed or selected button, `aria-current`, `aria-pressed`, `aria-selected`, `.is-here`) wears the solid drawing,
+  as an app's tab bar fills the tab you are on. Kept low in specificity (`:where`) so a site can override it.
+- **The app bar feels like an app's** (plan L52; "improve the mobile button so it feels seamless and smooth"):
+  - it is drawn once and kept between pages;
+  - one pill slides to the tab you are on;
+  - a tap lights its tab at once, before the page arrives;
+  - a press gives, and the new tab's icon pops.
+- **Placeholders shaped like the content** ("placeholder elements while it loads, a fake thumbnail, so it is not
+  jarring"):
+  - `kit.skeleton({ kind, count })` with seven shapes: card (16:9), row, tile, chip, line, chat and stat;
+  - kit.css shimmer, never a spinner, still under reduced motion and Calm;
+  - announced as busy.
+- **Moving between pages** ("the logo changing while it loads… smarter loading"):
+  - `OpenVibeNavbar.busy(on)`: the mark works while something loads;
+  - a plain same-site link starts the mark at once, and the next page's mark takes over (a download gives up after
+    10 s);
+  - speculation rules prefetch same-site pages on hover or press (`moderate`), never /auth, /api, sign-out or a
+    download (`speculate: false` turns it off);
+  - cross-document view transitions keep the navbar and app bar still while a server-rendered page cross-fades (off
+    under reduced motion).
+
 ## 4.69.0
 
 - **Icons that read at every size** (plan L49; the owner, 2026-11-01: "really tiny icons… a solid colour rather than

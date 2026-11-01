@@ -332,3 +332,37 @@ div.ovk-set-row { cursor: default; }
 @media (max-width: 900px), (hover: none) {
     .ovk-sidebar-secs { overscroll-behavior-y: auto; }
 }
+
+/* ── Placeholders shaped like the content (4.70.0, kit.skeleton; plan L52) ── A soft light passes over grey shapes the size of
+   what is coming; nothing spins; still under reduced motion and Calm. A list paints these in its first HTML and fills them in
+   place. */
+.ovk-skel { display: block; border-radius: 8px; background: color-mix(in srgb, var(--text-primary, #e8edf3) 7%, transparent); background-image: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--text-primary, #e8edf3) 9%, transparent) 50%, transparent 70%); background-size: 220% 100%; background-repeat: no-repeat; animation: ovkShimmer 1.6s ease-in-out infinite; }
+@keyframes ovkShimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+.ovk-skels { display: grid; gap: 12px; }
+.ovk-skels-card { grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); }
+.ovk-skels-tile { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+.ovk-skels-chip { display: flex; flex-wrap: wrap; gap: 8px; }
+.ovk-skel-card { display: grid; gap: 8px; }
+.ovk-skel-thumb { aspect-ratio: 16 / 9; border-radius: 12px; }
+.ovk-skel-l1 { height: 13px; width: 86%; }
+.ovk-skel-l2 { height: 11px; width: 58%; }
+.ovk-skel-row { display: flex; align-items: center; gap: 12px; }
+.ovk-skel-avatar { flex: none; width: 40px; height: 40px; border-radius: 50%; }
+.ovk-skel-lines { flex: 1; display: grid; gap: 7px; min-width: 0; }
+.ovk-skel-tile { aspect-ratio: 1; border-radius: 14px; }
+.ovk-skel-chip { width: 84px; height: 30px; border-radius: 999px; }
+.ovk-skel-line { height: 12px; }
+.ovk-skel-chat { display: flex; align-items: center; gap: 8px; }
+.ovk-skel-dot { flex: none; width: 22px; height: 22px; border-radius: 50%; }
+.ovk-skel-stat { display: grid; gap: 6px; padding: 12px; border-radius: 14px; border: 1px solid var(--border, rgba(255,255,255,.08)); }
+.ovk-skel-num { height: 22px; width: 48%; }
+@media (prefers-reduced-motion: reduce) { .ovk-skel { animation: none; } }
+html[data-ov-motion=reduced] .ovk-skel { animation: none; }
+
+/* ── Moving between pages (4.70.0, plan L52) ── A server-rendered site's pages cross-fade while the navbar and the app bar
+   stay put (cross-document view transitions; a browser without them just loads the page). Off under reduced motion. */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
+#navbar-mount, .openvibe-navbar { view-transition-name: ov-navbar; }
+.ovnav-appbar { view-transition-name: ov-appbar; }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
