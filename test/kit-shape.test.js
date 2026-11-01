@@ -26,4 +26,11 @@ assert.match(kit, /:is\(\[data-theme=neon-tokyo\][^{]*\) \{\s*--ov-radius-1: 14p
 assert.match(kit, /--ov-elev-3: 0 0 0 1px color-mix\(in srgb, var\(--ovk-accent\)/, 'and Neon\'s raised things glow in its accent');
 assert.match(room, /:where\(\[data-theme=paper\][^{]*\) \{\s*--ov-radius-1: 4px;/, 'room.css: the same personalities at zero specificity');
 assert.match(room, /:where\(\[data-theme=neon-tokyo\][^{]*\) \{\s*--ov-radius-1: 14px;/);
-console.log('kit-shape: tokens, the kit on them, and the personalities');
+// Motion (4.82.0): ov-fx.js's tokens, in kit.css too, so var(--ov-dur-*) resolves on every page and Reduced reaches it.
+assert.ok(kit.includes('--ov-dur-1: .12s;') && kit.includes('--ov-dur-4: .52s;') && kit.includes('--ov-ease-out: cubic-bezier(.2, .8, .2, 1);'), 'the motion tokens, as ov-fx.js sets them');
+assert.match(kit, /html\[data-ov-motion=reduced\] \{ --ov-dur-1: 0s;/, 'Reduced motion stops them');
+assert.match(kit, /@media \(prefers-reduced-motion: reduce\) \{ :root:root \{ --ov-dur-1: 0s;/, 'and so does a device that asks for less, over ov-fx.js\'s own :root');
+assert.match(kit, /:is\(\[data-theme=paper\][^{]*\) \{\s*--ov-dur-1: \.15s;/, 'Paper is calm');
+const fx = fs.readFileSync(path.join(__dirname, '..', 'ov-fx.js'), 'utf8');
+assert.ok(fx.includes('--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s'), 'the same values as ov-fx.js');
+console.log('kit-shape: tokens, the kit on them, the personalities and the motion');

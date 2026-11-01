@@ -4,6 +4,20 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.82.0 — 2026-11-01
+
+- **The motion tokens are on every page, and Reduced motion reaches every token-timed transition** (plan L45).
+  - Before this release, `--ov-dur-1..4` and `--ov-ease-out`/`-spring`/`-in-out` were set only by `ov-fx.js`, which
+    loads on pages with effects. Everywhere else a site's `var(--ov-dur-2, .2s)` got its fallback, so the person's
+    Reduced setting could not reach it.
+  - `kit.css` now sets the same tokens, with the same values, and the same feels: calm looks are slower and never
+    overshoot, loud ones are quicker.
+  - `html[data-ov-motion=reduced]` sets every duration to 0, and so does a device that asks for reduced motion
+    (`:root:root`, above `ov-fx.js`'s own `:root`).
+  - A site that writes its transitions with the tokens now follows the look and the person's choice. The design lint
+    (openvibe.report/design) counts hand-set timings.
+  - `room.css` carries the same tokens.
+
 ## 4.81.0 — 2026-11-01
 
 - **Shape and elevation are tokens, and a look has a shape** (plan L45 step 2: "Paper is quiet and square, Neon glows

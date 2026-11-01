@@ -30,6 +30,15 @@
     --ov-elev-1: 0 1px 3px rgba(0, 0, 0, .35);           /* a knob, a chip that sits on its surface */
     --ov-elev-2: 0 10px 24px -18px rgba(0, 0, 0, .7);    /* a bar that has scrolled content under it */
     --ov-elev-3: 0 14px 32px rgba(0, 0, 0, .4);          /* a menu or popover above the page */
+    /* Motion (4.82.0): the same tokens ov-fx.js has always set, here so every page's var(--ov-dur-*) resolves and the
+     * person's Reduced motion reaches every transition that uses them, not only pages with effects. */
+    --ov-dur-1: .12s;
+    --ov-dur-2: .2s;
+    --ov-dur-3: .32s;
+    --ov-dur-4: .52s;
+    --ov-ease-out: cubic-bezier(.2, .8, .2, 1);
+    --ov-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+    --ov-ease-in-out: cubic-bezier(.65, 0, .35, 1);
     --ovk-radius: var(--ov-radius-2);
     --ovk-radius-sm: var(--ov-radius-1);
     --ovk-tap: 44px;
