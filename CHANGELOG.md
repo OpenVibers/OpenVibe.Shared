@@ -4,6 +4,21 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.87.0 — 2026-11-01
+
+- **Share cards for a service's other domains.**
+  - openvibe.pics and openvibe.download (MediaHub), openvibe.homes (Rent) and openvibe.website (Space) previewed as
+    their service: a link to openvibe.pics showed the OpenVibe.Video card.
+  - `social.DOMAINS` names them (id, service, host, name, tagline, what); `social.domainOf(id)` and
+    `social.domainForHost(host)` look them up.
+  - The builders draw `social/<id>.jpg` like the service's card (the same mark, Pics in its pink) and write the
+    domain's `icons/sites.json` entry.
+  - `shell.page()` shares the domain's card on any page whose canonical URL is on that host, so the sites need no
+    change.
+- **The footer's "Nobody live right now" line reaches 4.5:1.** `.ovf-pulse-quiet` was the theme's muted text on the
+  pulse's tint: 4.34:1 on Daylight, on every page with a footer (axe flagged 42 inner pages). It is now the
+  secondary text.
+
 ## 4.86.0 — 2026-11-01
 
 - **Status colour names every site can use.**

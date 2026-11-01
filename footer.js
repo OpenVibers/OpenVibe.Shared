@@ -435,7 +435,7 @@
 .ovf-pulse-live{display:inline-flex;align-items:center;gap:7px;color:var(--text-primary,#f1f4fb)!important}
 .ovf-dot{width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 0 rgba(239,68,68,.6);animation:ovfLive 1.8s ease-out infinite}
 @keyframes ovfLive{0%{box-shadow:0 0 0 0 rgba(239,68,68,.55)}70%{box-shadow:0 0 0 7px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
-.ovf-pulse-quiet{font-weight:500!important;color:var(--text-muted,#8b93ad)!important}
+.ovf-pulse-quiet{font-weight:500!important;color:var(--text-secondary,#b6bdd2)!important}
 @media (max-width:900px){.ovf-cols{grid-template-columns:repeat(2,minmax(0,1fr))}.ovf-col--brand{grid-column:1/-1}}
 @media (max-width:560px){
   .ovf{padding-bottom:calc(20px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}

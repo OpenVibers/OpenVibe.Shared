@@ -14,8 +14,10 @@
 //   social.accentOf(service, accent?)   the two accent stops the card uses (build script)
 //   social.iconSite(service)            the app-icon variant for the service's mark (build script)
 //   social.pageOf(id) / social.PAGES     the page cards: which page and site a card id names (null for a site's card)
+//   social.domainOf(id) / social.domainForHost(host) / social.DOMAINS   a service's other named domains (openvibe.pics)
 //
-// shell.page() uses social.url(o.service) for og:image when the page names no image of its own.
+// shell.page() uses social.url(o.service) for og:image when the page names no image of its own, or the domain's card
+// when the page's canonical URL is on one of DOMAINS' hosts.
 // ═══════════════════════════════════════════════════════════════
 const fs = require('fs');
 const path = require('path');
@@ -53,6 +55,28 @@ const PAGES = [
 /** The page a card id names ({ id, service, heading, … }), or null for a site's own card. */
 const pageOf = (id) => PAGES.find((pg) => pg.id === id) || null;
 
+// Domain cards (social/<id>.jpg): a service's other domains that wear their own name on the navbar (openvibe.pics is
+// MediaHub's, openvibe.homes is Rent's). Each gets a site card of its own, drawn like its service's (the same mark;
+// its own accent when it has one), and shell.page() shares it on any page whose canonical URL is on that host. Before
+// 4.86.1 a link to openvibe.pics previewed as OpenVibe.Video.
+const DOMAINS = [
+    { id: 'pics', service: 'media-hub', host: 'openvibe.pics', name: 'Pics', accent: '#f472b6', tagline: 'Share pictures. Fast, open, yours.',
+        what: 'A link to share or embed any picture, in any size or format, with location and camera details removed.' },
+    { id: 'download', service: 'media-hub', host: 'openvibe.download', name: 'Download', tagline: 'Your files, shared on your terms',
+        what: 'A private drive with 25 GB free: share files with links you can take back, and back up a folder.' },
+    { id: 'homes', service: 'rent', host: 'openvibe.homes', name: 'Homes', tagline: 'Every home for sale, one search',
+        what: 'Zillow, Realtor.com, Redfin, Homes.com, Trulia and Craigslist searched at once, plus HUD and bank homes.' },
+    { id: 'website', service: 'space', host: 'openvibe.website', name: 'Website', tagline: 'Websites that look finished',
+        what: 'Start from a real shop, portfolio, event, link page or launch page, or describe yours, and change anything from the first preview.' },
+];
+/** The domain card an id names ({ id, service, host, name, … }), or null. */
+const domainOf = (id) => DOMAINS.find((d) => d.id === id) || null;
+/** The domain card for a host (a www. prefix and a port ignored), or null. */
+function domainForHost(host) {
+    const h = String(host || '').toLowerCase().replace(/:\d+$/, '').replace(/^www\./, '');
+    return DOMAINS.find((d) => d.host === h) || null;
+}
+
 const has = (service) => ID_RE.test(String(service || '')) && isCard(`social/${service}.jpg`);
 
 function url(service, base = '/shared') {
@@ -63,7 +87,12 @@ function url(service, base = '/shared') {
 }
 
 // The mark's tint: app-icon has variants for a few sites; the rest wear the network's.
-const iconSite = (service) => (Object.prototype.hasOwnProperty.call(icon.SITES, service) ? service : service === 'media-hub' ? 'media' : 'network');
+// A domain card wears its service's mark.
+function iconSite(service) {
+    const d = domainOf(service);
+    if (d) return iconSite(d.service);
+    return Object.prototype.hasOwnProperty.call(icon.SITES, service) ? service : service === 'media-hub' ? 'media' : 'network';
+}
 
 /** A deeper stop of the same hue (lightness down 16 points, saturation up 6), so a gradient never turns muddy. */
 function deepen(hex) {
@@ -82,4 +111,4 @@ function accentOf(service, accent) {
     return /^#[0-9a-f]{6}$/i.test(accent || '') ? [accent.toLowerCase(), deepen(accent)] : icon.SITES[iconSite(service)].accent;
 }
 
-module.exports = { has, url, isCard, path: cardPath, accentOf, iconSite, pageOf, PAGES, DIR };
+module.exports = { has, url, isCard, path: cardPath, accentOf, iconSite, pageOf, PAGES, domainOf, domainForHost, DOMAINS, DIR };

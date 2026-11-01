@@ -75,6 +75,13 @@ function sites() {
         if (only && !only.has(pg.id) && !only.has(pg.service)) continue;
         out.push({ ...site, id: pg.id, heading: pg.heading, tagline: pg.tagline, what: pg.what, domain: `${site.domain}${pg.path}`, iconId: site.id });
     }
+    for (const d of social.DOMAINS) {
+        const site = byId.get(d.service);
+        if (!site) throw new Error(`domain card ${d.id}: no site ${d.service} in the manifests`);
+        if (only && !only.has(d.id) && !only.has(d.service)) continue;
+        out.push({ ...site, id: d.id, name: d.name, tagline: d.tagline, what: d.what, domain: d.host,
+            accent: d.accent ? social.accentOf(d.id, d.accent) : site.accent, iconId: site.id });
+    }
     return out;
 }
 

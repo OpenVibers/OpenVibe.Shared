@@ -96,9 +96,14 @@ function serviceOf(o) {
 const siteId = (o) => { const s = String(serviceOf(o) || '').toLowerCase(); return /^[a-z][a-z0-9-]{1,31}$/.test(s) ? s : ''; };
 
 // A page that names no image shares its site's card (openvibe-shared/social), when the site has one and the page
-// has a canonical URL to make it absolute against. `image: null` opts out.
+// has a canonical URL to make it absolute against; a page on one of a service's named domains (openvibe.pics) shares
+// that domain's card. `image: null` opts out.
 function defaultImage(o) {
     if (!o.canonical) return null;
+    let host = '';
+    try { host = new URL(o.canonical).host; } catch (e) { /* a relative canonical: the service's card */ }
+    const domain = social.domainForHost(host);
+    if (domain && social.has(domain.id)) return social.url(domain.id);
     const service = serviceOf(o);
     return service ? social.url(service) : null;
 }
