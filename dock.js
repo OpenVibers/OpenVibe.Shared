@@ -483,8 +483,9 @@
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
     async function chatCall(path, init = {}) {
         const t = await tokenOf();
-        const headers = { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
-        return fetch(chatBase() + path, { ...init, headers, credentials: 'omit' }).then(async (r) => {
+        const headers = { accept: 'application/json', ...(init.body ? { 'content-type': init.type || 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
+        const { type: _type, ...rest } = init;
+        return fetch(chatBase() + path, { ...rest, headers, credentials: 'omit' }).then(async (r) => {
             const b = await r.json().catch(() => ({}));
             if (!r.ok) { const e = new Error(b.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
             return b;

@@ -1677,9 +1677,25 @@
         if (!window.__ovMark && !document.getElementById('ov-mark-loader') && !(document.querySelector && document.querySelector('script[src*="/ov-mark.js"]'))) {
             try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = siblingV('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
-        // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome.
-        if (_config.glyphs !== false && !window.OVGlyphs && !document.getElementById('ov-glyphs-loader') && document.querySelector && document.querySelector('i[class*="fa-"],span[class*="fa-"],link[href*="fontawesome"],link[href*="font-awesome"]')) {
-            try { const sc = document.createElement('script'); sc.id = 'ov-glyphs-loader'; sc.src = siblingV('ov-glyphs.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
+        // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing). The
+        // watch is cheap: a mutation only schedules one look a moment later, and it ends once the glyphs are loading.
+        if (_config.glyphs !== false && !window.OVGlyphs && !document.getElementById('ov-glyphs-loader') && document.querySelector) {
+            const ICONS = 'i[class*="fa-"],span[class*="fa-"],link[href*="fontawesome"],link[href*="font-awesome"]';
+            const loadGlyphs = () => {
+                if (window.OVGlyphs || document.getElementById('ov-glyphs-loader') || (document.querySelector('script[src*="/ov-glyphs.js"]'))) return true;
+                if (!document.querySelector(ICONS)) return false;
+                try { const sc = document.createElement('script'); sc.id = 'ov-glyphs-loader'; sc.src = siblingV('ov-glyphs.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+                return true;
+            };
+            if (!loadGlyphs() && typeof MutationObserver === 'function' && document.body) {
+                let soon = 0;
+                const watch = new MutationObserver(() => {
+                    if (soon) return;
+                    soon = setTimeout(() => { soon = 0; if (loadGlyphs()) watch.disconnect(); }, 250);
+                });
+                watch.observe(document.body, { childList: true, subtree: true });
+            }
         }
         nav.innerHTML = `
             ${brandHTML(brand)}
