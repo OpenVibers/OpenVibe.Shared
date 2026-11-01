@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.73.0 — 2026-11-01
+
+- **Solid drawings for the most-used shapes** (plan L49 step 3; the owner, 2026-11-01: "really tiny icons… a solid
+  colour rather than the border lines"). Twenty more glyphs get the drawing `ov-glyphs.js` shows at 18 px and below,
+  picked by how often the sites draw them: copy, scissors, volume, mute, robot, film, clipboard, computer, sliders,
+  pencil, save, plug, chart, gear, search, game, idea, wrench, target and nodes (68 in all).
+  - Glyphs that are only lines (check, close, plus, the arrows and chevrons, link, code, ban, stop) keep no solid one:
+    their strokes thicken when small, which reads better than a filled shape would.
+  - The same 24-unit grid as the line drawings, so an icon does not jump when it crosses the size.
+
 ## 4.72.0 — 2026-11-01
 
 - **Brand logos without Font Awesome** (plan L54 K4; the owner, 2026-11-01: "get rid of Font Awesome completely").
