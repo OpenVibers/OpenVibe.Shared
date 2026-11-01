@@ -9,6 +9,11 @@
     "description": "Many models, one API. Every answer explained.",
     "icon": "ai"
   },
+  "bench": {
+    "name": "OpenVibe.Bench",
+    "description": "One AI benchmark and comparison engine for every room.",
+    "icon": "network"
+  },
   "blog": {
     "name": "OpenVibe.Blog",
     "description": "Long-form, yours to keep",
@@ -17,6 +22,16 @@
   "bot": {
     "name": "OpenVibe.Bot",
     "description": "Drive any robot from your browser",
+    "icon": "network"
+  },
+  "cam": {
+    "name": "OpenVibe.Cam",
+    "description": "Your camera, your cameras, and Live's cam button",
+    "icon": "network"
+  },
+  "casino": {
+    "name": "OpenVibe.Casino",
+    "description": "Learn it, play it, never pay it",
     "icon": "network"
   },
   "chat": {
@@ -44,14 +59,34 @@
     "description": "Deals worth sharing",
     "icon": "network"
   },
+  "design": {
+    "name": "OpenVibe.Design",
+    "description": "Make it yours",
+    "icon": "network"
+  },
+  "domains": {
+    "name": "OpenVibe.Domains",
+    "description": "Name it, price it, run it",
+    "icon": "network"
+  },
   "events": {
     "name": "OpenVibe.Events",
     "description": "Events your services can count on.",
     "icon": "network"
   },
+  "exchange": {
+    "name": "OpenVibe.Exchange",
+    "description": "Trade what people make",
+    "icon": "network"
+  },
   "food": {
     "name": "OpenVibe.Food",
     "description": "What should we eat?",
+    "icon": "network"
+  },
+  "fun": {
+    "name": "OpenVibe.Fun",
+    "description": "Something to do, alone, together, or live",
     "icon": "network"
   },
   "games": {
@@ -89,6 +124,11 @@
     "description": "Videos, pictures and your files",
     "icon": "media"
   },
+  "meme": {
+    "name": "OpenVibe.Meme",
+    "description": "The internet's meme database",
+    "icon": "network"
+  },
   "network": {
     "name": "OpenVibe.Network",
     "description": "Account and themes",
@@ -119,6 +159,11 @@
     "description": "Every rental site, one search",
     "icon": "network"
   },
+  "report": {
+    "name": "OpenVibe.Report",
+    "description": "Every number on OpenVibe, honest",
+    "icon": "network"
+  },
   "reviews": {
     "name": "OpenVibe.Reviews",
     "description": "Reviews with receipts",
@@ -139,20 +184,40 @@
     "description": "Build on OpenVibe",
     "icon": "network"
   },
+  "shoes": {
+    "name": "OpenVibe.Shoes",
+    "description": "Every shoe, every market, the right price",
+    "icon": "network"
+  },
   "space": {
     "name": "OpenVibe.Space",
     "description": "Make a space: an app on your account",
     "icon": "space"
+  },
+  "surf": {
+    "name": "OpenVibe.Surf",
+    "description": "Ride, browse, watch",
+    "icon": "network"
   },
   "tips": {
     "name": "OpenVibe.Tips",
     "description": "Tips, paid messages and alerts for any stream",
     "icon": "network"
   },
+  "today": {
+    "name": "OpenVibe.Today",
+    "description": "Everything happening for you, today",
+    "icon": "network"
+  },
   "tools": {
     "name": "OpenVibe.Tools",
     "description": "Every online tool",
     "icon": "tools"
+  },
+  "tours": {
+    "name": "OpenVibe.Tours",
+    "description": "Go anywhere: fly, stay, walk, watch",
+    "icon": "network"
   },
   "trade": {
     "name": "OpenVibe.Trade",
@@ -162,6 +227,11 @@
   "vip": {
     "name": "OpenVibe.VIP",
     "description": "Memberships for creators and their software",
+    "icon": "network"
+  },
+  "vision": {
+    "name": "OpenVibe.Vision",
+    "description": "See with the best model for the job",
     "icon": "network"
   },
   "watch": {
