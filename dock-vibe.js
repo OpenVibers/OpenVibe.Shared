@@ -36,10 +36,16 @@
     // The same conversation as openvibe.chat/vibe, through Chat's /api/vibe with the person's Network token: what is
     // asked on Live carries on on Chat and back. Vibe answers in the background; the tab waits for it (a quick poll
     // for a minute and a half after a message, then every 15 s while the tab is open). The mic is the browser's own
-    // speech recognition, hold to talk or Alt+V, and only while the person asks: no wake word, never always on.
+    // speech recognition, hold to talk or Alt+V, and only while the person asks: no wake word, never always on. A
+    // browser without it (Firefox) records instead, up to 30 s, and Chat's /api/vibe/listen turns that into text
+    // (OpenVibe.AI's speech-to-text on this network's own machines; the recording is never kept).
     // Everything is set as text; a link is a link only when it is https.
     const vibe = { panel: null, chat: null, msgs: [], last: 0, timer: 0, busy: false, waitUntil: 0, rec: null, talk: null };
     const SR = root.SpeechRecognition || root.webkitSpeechRecognition || null;
+    const MR = !SR && root.MediaRecorder && root.navigator && root.navigator.mediaDevices && root.navigator.mediaDevices.getUserMedia ? root.MediaRecorder : null;
+    const TALK = Boolean(SR || MR);
+    const REC_TYPES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'];
+    const REC_MAX_MS = 30000;
     const STARTERS = ['Remind me to stretch every 2 hours', 'What is on today?', 'Who is live right now?', 'Remind me tomorrow at 9 to call Sam'];
     function linkified(text) {
         const span = h('span', 'ovdk-text');
@@ -69,11 +75,11 @@
         const scroll = h('div', 'ovdk-scroll ovdk-thread'); scroll.append(list);
         const typing = h('li', 'ovdk-msg is-vibe ovdk-typing'); typing.innerHTML = '<span class="ovdk-text"><i></i><i></i><i></i></span>'; typing.setAttribute('aria-label', 'Vibe is writing');
         const form = h('form', 'ovdk-send');
-        const box = h('textarea'); box.rows = 1; box.maxLength = 8000; box.placeholder = SR ? 'Ask Vibe, or hold the mic' : 'Ask Vibe'; box.setAttribute('aria-label', 'Message Vibe');
+        const box = h('textarea'); box.rows = 1; box.maxLength = 8000; box.placeholder = TALK ? 'Ask Vibe, or hold the mic' : 'Ask Vibe'; box.setAttribute('aria-label', 'Message Vibe');
         const go = h('button', 'ovdk-go'); go.type = 'submit'; go.setAttribute('aria-label', 'Send'); go.append(icon(G.send));
         const err = h('p', 'ovdk-err'); err.hidden = true;
         let mic = null;
-        if (SR) {
+        if (TALK) {
             mic = h('button', 'ovdk-mic'); mic.type = 'button'; mic.append(icon(G.mic));
             mic.setAttribute('aria-label', 'Talk to Vibe: hold, or press Alt+V'); mic.title = 'Hold to talk (Alt+V)'; mic.setAttribute('aria-pressed', 'false');
             form.append(mic);
@@ -127,7 +133,7 @@
             if (answered || Date.now() > vibe.waitUntil) { typing.remove(); vibe.waitUntil = 0; }
             if (first && !vibe.msgs.length) {
                 const start = h('li', 'ovdk-vibe-start');
-                start.append(h('b', '', 'Ask Vibe anything'), h('span', '', SR ? 'Type, or hold the mic and say it. It sets reminders, finds what is live, and answers from the whole network.' : 'It sets reminders, finds what is live, and answers from the whole network.'));
+                start.append(h('b', '', 'Ask Vibe anything'), h('span', '', TALK ? 'Type, or hold the mic and say it. It sets reminders, finds what is live, and answers from the whole network.' : 'It sets reminders, finds what is live, and answers from the whole network.'));
                 const chips = h('div', 'ovdk-chips');
                 STARTERS.forEach((s) => { const c = h('button', 'ovdk-chip', s); c.type = 'button'; c.addEventListener('click', () => send(s)); chips.append(c); });
                 start.append(chips);
@@ -142,8 +148,42 @@
         if (mic) {
             let said = '', heard = false;
             const stop = () => { if (vibe.rec) { try { vibe.rec.stop(); } catch { /* */ } } };
+            const on = (yes) => { mic.classList.toggle('is-on', yes); mic.setAttribute('aria-pressed', yes ? 'true' : 'false'); };
+            const fail = (text) => { err.textContent = text; err.hidden = false; };
+            // No speech recognition in this browser: record, then Chat's /api/vibe/listen says what was said.
+            const record = async () => {
+                const type = REC_TYPES.find((t) => { try { return MR.isTypeSupported(t); } catch { return false; } }) || '';
+                let stream;
+                try { stream = await root.navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) {
+                    return fail(e && e.name === 'NotAllowedError' ? 'The microphone is off for this site: allow it in the browser to talk to Vibe.' : 'No microphone was found.');
+                }
+                const chunks = [];
+                let r;
+                try { r = new MR(stream, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 }); } catch { stream.getTracks().forEach((t) => t.stop()); return fail('This browser cannot record here.'); }
+                const cap = setTimeout(stop, REC_MAX_MS);
+                r.ondataavailable = (ev) => { if (ev.data && ev.data.size) chunks.push(ev.data); };
+                r.onstop = async () => {
+                    clearTimeout(cap); vibe.rec = null; on(false);
+                    stream.getTracks().forEach((t) => t.stop());
+                    const kind = String(r.mimeType || type || 'audio/webm').split(';')[0];
+                    const blob = new Blob(chunks, { type: kind });
+                    if (blob.size < 800) { box.placeholder = 'Ask Vibe, or hold the mic'; return; }
+                    box.placeholder = 'Working out what you said…'; mic.disabled = true;
+                    try {
+                        const lang = String(document.documentElement.lang || root.navigator.language || 'en').slice(0, 2).toLowerCase();
+                        const out = await ctx.chatCall(`/api/vibe/listen?lang=${encodeURIComponent(/^[a-z]{2}$/.test(lang) ? lang : 'en')}`, { method: 'POST', body: blob, type: kind });
+                        const said = String((out && out.text) || '').trim();
+                        if (said) { box.value = said; fit(); send(said); } else fail('I could not hear that. Try again, a little closer.');
+                    } catch (e) {
+                        fail(e && e.status === 429 ? 'That is a lot of talking for one minute: type it, or try again shortly.' : e && e.status === 413 ? 'Keep it under 30 seconds.' : 'I could not hear that just now. Try again, or type it.');
+                    } finally { mic.disabled = false; box.placeholder = 'Ask Vibe, or hold the mic'; }
+                };
+                vibe.rec = r; err.hidden = true; on(true); box.placeholder = 'Listening… let go or tap to send';
+                try { r.start(); } catch { vibe.rec = null; on(false); stream.getTracks().forEach((t) => t.stop()); }
+            };
             const start = () => {
                 if (vibe.rec) return stop();
+                if (!SR) return record();
                 const r = new SR();
                 r.lang = document.documentElement.lang || navigator.language || 'en-US';
                 r.interimResults = true; r.continuous = false;

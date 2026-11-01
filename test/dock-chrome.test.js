@@ -56,7 +56,7 @@ let scenario = {};
 const puts = [], decided = [], said = [], reads = [];
 // Chat's Vibe API for the Dock (OpenVibe.Chat server/rooms/vibe-api.js): one chat, Vibe answering a moment later.
 let vibeChat = null;
-const vibeMsgs = [], asked = [];
+const vibeMsgs = [], asked = [], listened = [];
 const defaultState = () => ({ open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } }, updated_at: iso(0) });
 
 const PAGE = (o) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tasks</title><link rel="icon" href="data:,">
@@ -105,6 +105,10 @@ const server = http.createServer((req, res) => {
             assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'Vibe is asked with the person\'s own token');
             const after = Number(u.searchParams.get('after')) || 0;
             return json(200, { chat: vibeChat, messages: vibeMsgs.filter((m) => m.id > after) });
+        }
+        if (u.pathname === '/api/vibe/listen' && req.method === 'POST') {
+            listened.push({ type: req.headers['content-type'], bytes: Buffer.concat(chunks).length, lang: u.searchParams.get('lang'), auth: req.headers.authorization });
+            return json(200, { text: 'remind me to drink water at 3' });
         }
         if (u.pathname === '/api/vibe/ask' && req.method === 'POST') {
             const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
@@ -359,6 +363,54 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-away').href"), 'https://openvibe.chat/vibe/v1', 'Open in Chat goes to the same chat');
             await wait(900);
             assert.ok(puts.some((b) => b.tab === 'vibe'), `the Network keeps the Vibe tab, so it follows the person to the next site (${JSON.stringify(puts)})`);
+            await p.close();
+        }
+
+        // ── Vibe by voice without the browser's speech recognition (Firefox): the mic records, Chat's /api/vibe/listen
+        //    says what was said, and it is asked like typed text. The recorder is a stand-in: no microphone in CI. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true, tab: 'vibe' } };
+            asked.length = 0;
+            const p = await fresh(1280, 860);
+            await p.send('Page.addScriptToEvaluateOnNewDocument', { source: `
+                delete window.SpeechRecognition; delete window.webkitSpeechRecognition;
+                window.__tracksStopped = 0;
+                navigator.mediaDevices.getUserMedia = async () => ({ getTracks: () => [{ stop() { window.__tracksStopped++; } }] });
+                window.MediaRecorder = class {
+                    static isTypeSupported(t) { return t === 'audio/ogg;codecs=opus'; }
+                    constructor(stream, o) { this.mimeType = (o && o.mimeType) || ''; this.state = 'inactive'; }
+                    start() { this.state = 'recording'; window.__recording = true; }
+                    stop() { this.state = 'inactive'; window.__recording = false; this.ondataavailable({ data: new Blob([new Uint8Array(4096)], { type: 'audio/ogg' }) }); this.onstop(); }
+                };` });
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, PILL, 'the pinned pill');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-mic')", 'a mic, though the browser has no speech recognition');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] textarea').placeholder"), 'Ask Vibe, or hold the mic');
+            await p.evaluate("document.querySelector('.ovdk .ovdk-mic').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))");
+            await until(p, "window.__recording === true && document.querySelector('.ovdk .ovdk-mic').getAttribute('aria-pressed') === 'true'", 'recording, and the mic says so');
+            await p.evaluate("document.querySelector('.ovdk .ovdk-mic').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))");
+            await until(p, "[...document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-msg.is-mine')].some((m) => /drink water at 3/.test(m.innerText))", 'what was said, asked');
+            assert.deepStrictEqual(listened[0], { type: 'audio/ogg', bytes: 4096, lang: 'en', auth: 'Bearer tok_user' }, 'the recording goes to Chat as itself, with the person\'s token');
+            assert.strictEqual(asked[0].message, 'remind me to drink water at 3');
+            assert.strictEqual(await p.evaluate('window.__tracksStopped'), 1, 'the microphone is released');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-mic').getAttribute('aria-pressed')"), 'false');
+            await p.close();
+        }
+
+        // ── The navbar loads the OpenVibe glyphs only when a page shows an icon: none at first costs nothing, and an
+        //    icon the page's own script adds later is drawn all the same (L54 K4: Font Awesome is gone everywhere). ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState() } };
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, "!!document.querySelector('.openvibe-navbar')", 'the navbar');
+            await wait(600);
+            assert.strictEqual(await p.evaluate("!!document.getElementById('ov-glyphs-loader')"), false, 'no icon on the page: no glyphs loaded');
+            await p.evaluate("(() => { const i = document.createElement('i'); i.className = 'fa-solid fa-gear'; i.id = 'late-icon'; document.querySelector('main').prepend(i); })()");
+            await until(p, "!!document.getElementById('ov-glyphs-loader') && !!window.OVGlyphs", 'the glyphs load once an icon appears');
+            await until(p, "(() => { const e = document.getElementById('late-icon'); return !e || !!e.querySelector('svg') || e.tagName.toLowerCase() === 'svg'; })()", 'and the late icon is drawn');
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('script[src*=\"ov-glyphs.js\"]').length"), 1, 'once');
             await p.close();
         }
 

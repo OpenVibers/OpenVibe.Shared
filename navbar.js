@@ -506,6 +506,26 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
+    // ov-glyphs.js, when a page shows a Font Awesome-style icon: now, or the first time one appears. One watch per page,
+    // made here and not in the bar's render, so it holds nothing of a bar that a page move (Boost) re-renders. A
+    // mutation only schedules one look 250 ms later, and the watch ends once the glyphs are loading.
+    const GLYPH_ICONS = 'i[class*="fa-"],span[class*="fa-"],link[href*="fontawesome"],link[href*="font-awesome"]';
+    let glyphWatch = null;
+    function loadGlyphs() {
+        if (root.OVGlyphs || document.getElementById('ov-glyphs-loader') || document.querySelector('script[src*="/ov-glyphs.js"]')) return true;
+        if (!document.querySelector(GLYPH_ICONS)) return false;
+        try { const sc = document.createElement('script'); sc.id = 'ov-glyphs-loader'; sc.src = siblingV('ov-glyphs.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        return true;
+    }
+    function watchGlyphs() {
+        if (glyphWatch || !document.querySelector || loadGlyphs() || typeof MutationObserver !== 'function' || !document.body) return;
+        let soon = 0;
+        glyphWatch = new MutationObserver(() => {
+            if (soon) return;
+            soon = setTimeout(() => { soon = 0; if (loadGlyphs() && glyphWatch) { glyphWatch.disconnect(); glyphWatch = true; } }, 250);
+        });
+        glyphWatch.observe(document.body, { childList: true, subtree: true });
+    }
     function sibling(name) {
         const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
         return `${m ? m[1] : 'https://openvibe.network/shared/'}${name}`;
@@ -1677,10 +1697,9 @@
         if (!window.__ovMark && !document.getElementById('ov-mark-loader') && !(document.querySelector && document.querySelector('script[src*="/ov-mark.js"]'))) {
             try { const sc = document.createElement('script'); sc.id = 'ov-mark-loader'; sc.src = siblingV('ov-mark.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
         }
-        // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome.
-        if (_config.glyphs !== false && !window.OVGlyphs && !document.getElementById('ov-glyphs-loader') && document.querySelector && document.querySelector('i[class*="fa-"],span[class*="fa-"],link[href*="fontawesome"],link[href*="font-awesome"]')) {
-            try { const sc = document.createElement('script'); sc.id = 'ov-glyphs-loader'; sc.src = siblingV('ov-glyphs.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
-        }
+        // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
+        // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
+        if (_config.glyphs !== false) watchGlyphs();
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">

@@ -11,5 +11,7 @@ const src = fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8');
 assert.ok(src.includes(line(revs())), 'SIBLING_REV is current: run node scripts/sibling-revs.js');
 assert.ok(/const siblingV = \(name\) => `\$\{sibling\(name\)\}\$\{SIBLING_REV\[name\] \? `\?v=\$\{SIBLING_REV\[name\]\}` : ''\}`;/.test(src), 'siblingV adds the hash');
 assert.ok(src.includes("sc.src = siblingV('ov-mark.js')") && src.includes("url(${siblingV('ov-brand.woff2')})") && src.includes("sc.src = siblingV('ov-glyphs.js')"), 'the mark, the face and the glyphs load by hash');
-assert.ok(/_config\.glyphs !== false[^\n]*i\[class\*="fa-"\]/.test(src), 'the glyphs load where Font Awesome is used, unless a site says glyphs: false');
+assert.ok(/GLYPH_ICONS = 'i\[class\*="fa-"\]/.test(src), 'the glyphs load where Font Awesome is used, unless a site says glyphs: false');
+assert.ok(/glyphWatch = new MutationObserver[\s\S]{0,300}glyphWatch\.disconnect\(\)/.test(src), 'and when the page adds its first icon later, then the watch ends');
+assert.ok(/_config\.glyphs !== false\) watchGlyphs\(\)/.test(src), 'the render only asks; the one watch lives outside it (a Boost page move re-renders the bar)');
 console.log('sibling revs: the navbar loads the mark, the glyphs and the brand face by content hash');

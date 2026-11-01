@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.77.0 — 2026-11-01
+
+- **Talk to Vibe in any browser** (plan L48 V2). Where the browser has no speech recognition of its own (Firefox),
+  the Dock's mic records instead: hold it (or tap, then tap again), up to 30 s, and OpenVibe.Chat's
+  `POST /api/vibe/listen` turns the recording into text on the network's own speech-to-text (OpenVibe.AI, nothing
+  kept). What was said is asked like typed text. The microphone is released as soon as the recording ends.
+  - The Dock's Chat call (`chatCall`) can send a body that is not JSON: `{ body, type }`.
+- **The glyphs load when a page first shows an icon** (plan L54 K4). The navbar loaded `ov-glyphs.js` only if a page
+  had a Font Awesome-style icon when it mounted, so sites loaded it themselves for icons their own scripts add later.
+  Now the navbar watches for the first one (a mutation schedules one look 250 ms later; the watch ends once the
+  glyphs load), so a page without icons pays nothing and the sites' own `<script src="/shared/ov-glyphs.js">` can go.
+
 ## 4.76.0 — 2026-11-01
 
 - **A timer in the Dock, on every site** (plan L48 R2; the owner, 2026-11-01: "a reminder system… timer or however
