@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.84.0 — 2026-11-01
+
+- **A page with no stylesheet of its own reads in the network's type.**
+  - `shell.page` set no font. On five sites (Events, Run, AI, Bot, Games), `/updates` loads no stylesheet, and its text
+    fell back to the browser's Times New Roman.
+  - The head's reserve style now gives the body `var(--ov-font, 'Inter', system sans)` through `:where(body)`. At zero
+    specificity, any site's own body rule wins, so nothing changes on a page that already sets its font.
+
 ## 4.83.0 — 2026-11-01
 
 - **Status words read on light themes.**

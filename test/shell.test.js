@@ -27,7 +27,11 @@ assert.match(html, /<footer id="ov-footer"/, 'shared footer present');
 assert.ok(html.includes('<main id="hero">Hello</main>'), 'body kept verbatim');
 assert.ok(html.includes('<script src="/shared/theme-loader.js?v='), 'theme-loader via serve.url');
 // The deferred navbar lands in a #navbar-mount that already holds its height; without JavaScript the mount goes away.
-assert.ok(html.includes('<style>body{margin:0}#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>'), 'navbar mount reserved, and no browser margin around the body');
+assert.ok(html.includes('#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>'), 'navbar mount reserved');
+assert.ok(html.includes('<style>body{margin:0}'), 'no browser margin around the body');
+// A page with no stylesheet of its own reads in the network's type, not the browser's serif (4.84.0), and at zero
+// specificity, so a site's own body rule always wins.
+assert.ok(html.includes(":where(body){font-family:var(--ov-font,'Inter',"), 'the base font, at zero specificity');
 assert.ok(html.indexOf('#navbar-mount{min-height:52px}') < html.indexOf('</head>'), 'in the head, before the first paint');
 
 // ── Script order: theme-loader first (eager); the runtime after it (deferred) ─────────────────────
