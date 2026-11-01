@@ -12,7 +12,7 @@
 //     and mine), Enter sends, the thread is marked read, the open chat is the Dock's state, and opening one on a phone
 //     never reads as a tap outside the sheet;
 //   • Vibe (L48 V2): the person's Vibe from Chat's /api/vibe, starters before the first message, a question posted and
-//     Vibe's answer arriving in place (an https link as a link), the Vibe tab never sent to the Network's state;
+//     Vibe's answer arriving in place (an https link as a link), and the Vibe tab kept in the Network's state;
 //   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
 //     its tabs and its styles, the page keeps the pill saying where the Dock went, and closing the window brings the
 //     panel back; the Network is told.
@@ -334,7 +334,7 @@ async function drag(p, from, to) {
             await p.close();
         }
 
-        // ── Vibe (L48 V2): starters, a question, Vibe's answer in place; the tab stays off the Network's state. ──
+        // ── Vibe (L48 V2): starters, a question, Vibe's answer in place; the Network keeps the tab. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true } };
             puts.length = 0;
@@ -356,7 +356,7 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-typing')"), false, 'the writing dots go when it answers');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-away').href"), 'https://openvibe.chat/vibe/v1', 'Open in Chat goes to the same chat');
             await wait(900);
-            assert.ok(!puts.some((b) => b.tab === 'vibe'), `the Network's Dock state never gets a tab it does not know (${JSON.stringify(puts)})`);
+            assert.ok(puts.some((b) => b.tab === 'vibe'), `the Network keeps the Vibe tab, so it follows the person to the next site (${JSON.stringify(puts)})`);
             await p.close();
         }
 

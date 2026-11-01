@@ -42,8 +42,9 @@
     };
     // Vibe first (L48 V2): the person's AI, on every site.
     const TABS = [['vibe', 'Vibe', G.vibe], ['agent', 'Agents', G.spark], ['chats', 'Chats', G.chat], ['activity', 'Activity', G.bell]];
-    // The tabs the Network keeps in the person's Dock state (network.dock-state@1); a newer one stays on this site's copy.
-    const SAVED_TABS = ['agent', 'chats', 'activity'];
+    // The tabs the Network keeps in the person's Dock state (network.dock-state@1; vibe since contracts 0.270.0); a
+    // newer one stays on this site's copy until the Network learns it.
+    const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
     let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null;
