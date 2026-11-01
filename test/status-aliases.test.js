@@ -9,7 +9,7 @@ const path = require('path');
 const SRC = fs.readFileSync(path.join(__dirname, '..', 'theme-loader.js'), 'utf8');
 const alias = (SRC.match(/const ALIAS_CSS = '([^']*)';/) || [])[1] || '';
 assert.ok(alias.startsWith(':where(html){'), 'zero specificity: a site that defines --error keeps its own');
-const pairs = [['--error', '--danger'], ['--error-text', '--danger-text'], ['--ok', '--success-text'], ['--warn', '--warning-text']];
+const pairs = [['--error', '--danger'], ['--error-text', '--danger-text'], ['--ok', '--success-text'], ['--warn', '--warning-text'], ['--accent-text', '--accent-strong']];
 pairs.forEach(([name, token]) => {
     assert.ok(alias.includes(`${name}:var(${token})`), `${name} is the theme's ${token}`);
     assert.ok(SRC.includes(`'${token}'`), `${token} is one of the theme keys every theme sets`);
