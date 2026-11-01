@@ -538,7 +538,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-thumb{position:relative;display:block;aspect-ratio:var(--sc-ar,16/9);background:linear-gradient(135deg,color-mix(in srgb,var(--accent,#3b82f6) 22%,var(--bg-tertiary,#172238)),var(--bg-tertiary,#172238))}
 .sc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .35s ease}.sc-tile:hover .sc-thumb img{transform:scale(1.04)}
 .sc-badge{position:absolute;left:10px;top:10px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.4px;color:#fff;background:rgba(0,0,0,.66)}
-.sc-badge.sc-live{background:var(--live-red,#ef4444)}.sc-badge.sc-live::before{content:'';display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#fff;vertical-align:1px;animation:scPulse 1.4s ease-in-out infinite}
+.sc-badge.sc-live{background:color-mix(in srgb,var(--live-red,#ef4444) 80%,#000)}.sc-badge.sc-live::before{content:'';display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#fff;vertical-align:1px;animation:scPulse 1.4s ease-in-out infinite}
 .sc-tile-body{display:block;padding:12px 14px 14px}.sc-tile-body b{display:block;font-size:15px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .sc-tile-body small{display:block;margin-top:4px;font-size:12.5px;color:var(--text-muted,#7386a3)}.sc-tile-text{display:block;margin-top:6px;font-size:13.5px;line-height:1.45;color:var(--text-secondary,#96a7c2)}
 .sc-spots{display:grid;gap:28px}

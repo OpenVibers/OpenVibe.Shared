@@ -26,7 +26,7 @@
     --ovk-ok-text: var(--success-text, var(--ovk-ok));
     --ovk-warn-text: var(--warning-text, var(--ovk-warn));
     --ovk-bad-text: var(--danger-text, var(--ovk-bad));
-    --ovk-live: var(--live-red, #ef4444);
+    --ovk-live: color-mix(in srgb, var(--live-red, #ef4444) 80%, #000); /* a badge fill under white text: 5.5:1 on #ef4444's 80%, 3.8:1 bare */
     /* Shape and elevation (4.81.0, plan L45 step 2): the kit's corners and shadows as tokens a look can set, so a theme
      * has a shape as well as colours. The defaults are the kit's own corners and shadows; the personalities follow. */
     --ov-radius-1: 10px;   /* chips, inputs, rows, small buttons */
@@ -82,11 +82,12 @@
 }
 
 /* ── Rooms (rooms.js): the room's accent in the theme's mode. rooms.style(id) sets --room-dark/--room-light on .ov-room;
- *    without them the theme's accent stays. --room-accent: icons, outlines, motifs; --room-strong: text on the page;
+ *    without them the theme's accent stays. --room-accent: icons, outlines, motifs; --room-strong: text on the page (a
+ *    quarter of the theme's text mixed in, so it stays at 4.5:1 on the room's tinted chips: the bare accent was 3.9-4.4:1);
  *    --room-fill and --room-on: a filled button and its text (dark text on a dark theme's bright fill, white on light). ── */
-.ov-room { --room-accent: var(--ovk-accent); --room-strong: var(--ovk-accent); --room-fill: var(--ovk-fill); --room-on: var(--ovk-on-fill); }
-.ov-room[style*="--room-dark"] { --room-accent: var(--room-dark); --room-strong: var(--room-dark); --room-fill: var(--room-dark); --room-on: #0b0d12; }
-:root[data-theme-mode="light"] .ov-room[style*="--room-light"] { --room-accent: var(--room-light); --room-strong: var(--room-light); --room-fill: var(--room-light); --room-on: #fff; }
+.ov-room { --room-accent: var(--ovk-accent); --room-strong: color-mix(in srgb, var(--ovk-accent) 75%, var(--ovk-text)); --room-fill: var(--ovk-fill); --room-on: var(--ovk-on-fill); }
+.ov-room[style*="--room-dark"] { --room-accent: var(--room-dark); --room-strong: color-mix(in srgb, var(--room-dark) 75%, var(--ovk-text)); --room-fill: var(--room-dark); --room-on: #0b0d12; }
+:root[data-theme-mode="light"] .ov-room[style*="--room-light"] { --room-accent: var(--room-light); --room-strong: color-mix(in srgb, var(--room-light) 75%, var(--ovk-text)); --room-fill: var(--room-light); --room-on: #fff; }
 
 /* ── Cards (kit.card): one card for every kind of thing ── */
 .ovk-card { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; color: var(--ovk-text); }

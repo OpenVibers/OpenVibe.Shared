@@ -348,6 +348,10 @@
     // ── Display settings, one record for every OpenVibe site: display.get() → DISPLAY_OPTS' values; display.set(patch)
     // applies here and in other tabs and saves to the account. <html data-ov-*> and --ov-text-scale before first paint.
     const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'] };
+    // Status names some sites use (--error, --error-text, --ok, --warn, --accent-text) that no theme sets: they resolve to the theme's
+    // readable status colours instead of each site's fallback literal (pale on light themes). :where() keeps them
+    // below any site's own value (4.86.0).
+    const ALIAS_CSS = ':where(html){--error:var(--danger);--error-text:var(--danger-text);--ok:var(--success-text);--warn:var(--warning-text);--accent-text:var(--accent-strong)}';
     // Comfort (4.45.0): one <html> attribute each, !important over the inline theme (Okabe-Ito colours, OLED black).
     const COMFORT_CSS = 'html[data-ov-contrast=more]{--text-secondary:color-mix(in srgb,var(--text-primary) 88%,var(--bg-primary))!important;--text-muted:color-mix(in srgb,var(--text-primary) 76%,var(--bg-primary))!important;--border:color-mix(in srgb,var(--text-primary) 40%,var(--bg-primary))!important;--border-light:color-mix(in srgb,var(--text-primary) 55%,var(--bg-primary))!important}'
         + 'html[data-ov-contrast=more] :is(p,dd,td) a:not([class]){text-decoration-line:underline;text-underline-offset:2px}html[data-ov-contrast=more] :focus-visible{outline:3px solid var(--accent-strong,var(--accent))!important;outline-offset:2px}'
@@ -369,7 +373,7 @@
         for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + COMFORT_CSS;
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + ALIAS_CSS + COMFORT_CSS;
             document.head.appendChild(st);
         }
         try { window.dispatchEvent(new CustomEvent('ov:display', { detail: d })); } catch (e) { /* */ }
