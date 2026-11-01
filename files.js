@@ -68,6 +68,7 @@ const STYLES = Object.freeze([
     'player.css',           // player.js's controls
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
     'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
+    'kit-layout.css',       // the fluid scale, the layout primitives (.ov-stack, .ov-switcher…) and the opt-in .ov-base (4.78.0; after kit.css)
     'kit-data.css',         // Kit 2's look: steps, tables, charts, rankings, meters, drop zones, receipts (4.37.0; after kit.css)
     'agent-session.css',    // agent-session.js's look (4.32.0; the script links it from beside itself unless the page does)
     'ov-glyphs-font.css',   // the glyphs as a font: <i class="ovi ovi-eye"> (4.62.0; built with the font, scripts/build-glyph-fonts.py)
