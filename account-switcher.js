@@ -19,6 +19,26 @@
     let _config = { apiBase: 'https://openvibe.network', onSwitch: null };
     let _panelEl = null;
 
+    // The account hub is a redirect when signed out: it loads this file, opts into cross-document view transitions
+    // (kit.css) and then navigates to /login, which does not include the kit and so does not opt in. Chrome aborts
+    // the transition and leaves an uncaught InvalidStateError on the sign-in page ("ViewTransition opt-in disabled",
+    // 11-01). A replace navigation is that redirect, not a page move: skip its transition before it starts, and keep
+    // the transition's promises handled so a transition that cannot complete is silent either way.
+    function quietViewTransition(event) {
+        const transition = event && event.viewTransition;
+        if (!transition) return;
+        for (const promise of [transition.finished, transition.ready, transition.updateCallbackDone]) {
+            try { if (promise && typeof promise.catch === 'function') promise.catch(() => {}); } catch { /* not a promise */ }
+        }
+        const activation = event.activation;
+        if (!activation || activation.navigationType !== 'replace') return;
+        try { if (typeof transition.skipTransition === 'function') transition.skipTransition(); } catch { /* already gone */ }
+    }
+    if (typeof document !== 'undefined' && typeof root.addEventListener === 'function') {
+        root.addEventListener('pageswap', quietViewTransition);
+        root.addEventListener('pagereveal', quietViewTransition);
+    }
+
     function isAnonId(id) {
         return String(id) === 'anon' || String(id).startsWith('anon_');
     }

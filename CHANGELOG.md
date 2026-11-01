@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.88.1 — 2026-11-01
+
+- **An aborted view transition is silent on the account hub.**
+  - Signed out, `/my` and `/themes` send the visitor to `/login`, a page that does not load the kit and so does not opt
+    in to cross-document view transitions. Chrome aborted the transition and left an uncaught `InvalidStateError` on
+    the sign-in page: "Transition was aborted because of invalid state. ViewTransition opt-in disabled".
+  - The account switcher now handles `finished`, `ready` and `updateCallbackDone` in `pageswap`/`pagereveal`, and skips
+    a `replace` navigation's transition before it starts: a redirect is not a page move, and a transition that cannot
+    land has nothing to animate.
+
 ## 4.88.0 — 2026-11-01
 
 - **Name effects read on light themes.**
