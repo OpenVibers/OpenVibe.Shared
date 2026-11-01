@@ -16,6 +16,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **Room kit marks reach 4.5:1 for every hue.** `kit.mark`'s white letters sat on `hsl(hue 45% 38%)`, about
   3.5:1 for greens and yellows (axe on Community, Report, Tours, Shoes and Bot). Lightness is now 32%: the worst
   hue is 4.75:1. `test/kit-mark-contrast.test.js` checks all 360.
+- **A room's text colour reaches 4.5:1 on its own chips.** `--room-strong` (room.css) was the bare room accent:
+  3.9-4.4:1 on the room's tinted chips (Bench's benchmark ids, Exchange's listing labels). It is now the accent with a
+  quarter of the theme's text mixed in, 5.2:1 or more there, the hue unchanged.
+- **LIVE badges are white on a deeper red.** `kit.css`'s `--ovk-live` and showcase's `.sc-live` filled with the
+  theme's `--live-red` under white text: 3.8:1 on `#ef4444`. The fill is that red at 80% over black (5.5:1); every
+  built-in theme's red reaches 4.5:1 except Catppuccin's pastel pink.
 
 ## 4.85.0 — 2026-11-01
 
