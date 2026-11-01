@@ -4,7 +4,7 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
-## 4.70.0
+## 4.70.0 — 2026-11-01
 
 - **Line or solid, on purpose** (plan L49; the owner, 2026-11-01: "both sets for any size… swap between them…
   whichever fits the area"). `.ovg-solid` and `.ovg-line` force one at any size. An active control (the current tab,
@@ -29,7 +29,7 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - cross-document view transitions keep the navbar and app bar still while a server-rendered page cross-fades (off
     under reduced motion).
 
-## 4.69.0
+## 4.69.0 — 2026-11-01
 
 - **Icons that read at every size** (plan L49; the owner, 2026-11-01: "really tiny icons… a solid colour rather than
   the border lines… so all our icons look nice across different sizes and devices"). 48 glyphs most often shown small
@@ -42,7 +42,7 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   (sheets, modals, full-screen chats), `.ov-scroll-x` scrolls sideways only. On a phone the kit's sidebar sections
   no longer trap the page.
 
-## 4.68.0
+## 4.68.0 — 2026-11-01
 
 - **83 more glyphs, 446 Font Awesome names** (plan L49 step 1; the owner, 2026-11-01: "why Font Awesome? We should be
   using OpenVibe Design's icon system for all our icons"). Every non-brand name Live uses now has a glyph: trend up and
