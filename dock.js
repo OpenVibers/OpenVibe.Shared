@@ -38,8 +38,12 @@
         chat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
         back: '<path d="M14.5 6.5L9 12l5.5 5.5"/>',
         send: '<path d="M4.5 12h11M11 6.5l5.5 5.5-5.5 5.5"/>',
+        vibe: '<path d="M12 4.5a7.5 7.5 0 0 1 6.4 11.4L19.5 19.5l-3.6-1.1A7.5 7.5 0 1 1 12 4.5z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/>',
     };
-    const TABS = [['agent', 'Agents', G.spark], ['chats', 'Chats', G.chat], ['activity', 'Activity', G.bell]];
+    // Vibe first (L48 V2): the person's AI, on every site.
+    const TABS = [['vibe', 'Vibe', G.vibe], ['agent', 'Agents', G.spark], ['chats', 'Chats', G.chat], ['activity', 'Activity', G.bell]];
+    // The tabs the Network keeps in the person's Dock state (network.dock-state@1); a newer one stays on this site's copy.
+    const SAVED_TABS = ['agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
     let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null;
@@ -409,14 +413,24 @@
     function setTab(id, remember) {
         tab = TABS.some(([t]) => t === id) ? id : 'activity';
         if (tab !== 'chats') clearTimeout(chats.timer);
+        if (tab !== 'vibe' && vibe.api) vibe.api.pause();
         el.querySelectorAll('[role="tab"]').forEach((b) => { const on = b.dataset.tab === tab; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
         el.querySelectorAll('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== tab; });
-        if (remember && state().tab !== tab) save({ tab });
+        if (remember && state().tab !== tab && SAVED_TABS.includes(tab)) save({ tab });
         fill(tab);
     }
 
     async function fill(id) {
         const panel = el.querySelector(`[data-panel="${id}"]`);
+        if (id === 'vibe') {
+            vibe.panel = panel;
+            if (vibe.api) return vibe.api.refresh();
+            panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
+            const ok = await load('dock-vibe.js', () => !!(root.OpenVibeDockVibe && root.OpenVibeDockVibe.mount));
+            if (!ok) { panel.innerHTML = '<div class="ovdk-none">Vibe did not load. Check your connection, then open it again.</div>'; return; }
+            vibe.api = root.OpenVibeDockVibe.mount(panel, { chatCall, active: () => isOpen() && tab === 'vibe', styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'), icons: { vibe: G.vibe, send: G.send } });
+            return;
+        }
         if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
         if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); return; }
         mounts[id] = { refresh: null };
@@ -607,6 +621,18 @@
         if (isOpen() && tab === 'chats' && chats.open === id) chats.timer = setTimeout(() => pull(list, scroll), 5000);
     }
 
+    // ── Vibe (plan L48 V2): the person's Vibe, in dock-vibe.js, loaded the first time the tab opens (the Dock is on
+    // every page for signed-in people; Vibe's conversation and mic are not needed until then). Alt+V talks to Vibe from
+    // any page: it opens the Dock on Vibe and starts listening (only where the browser can listen).
+    const vibe = { panel: null, api: null };
+    const canListen = () => !!(root.SpeechRecognition || root.webkitSpeechRecognition);
+    document.addEventListener('keydown', (e) => {
+        if (!e.altKey || e.ctrlKey || e.metaKey || String(e.key).toLowerCase() !== 'v' || !canListen() || !o || typeof o.token !== 'function') return;
+        e.preventDefault();
+        const talk = () => { if (vibe.api && vibe.api.talk) vibe.api.talk(); };
+        if (!isOpen() || tab !== 'vibe') { open({ tab: 'vibe' }); setTimeout(talk, 600); } else talk();
+    });
+
     // ── The pill ─────────────────────────────────────────────
     let pill = null, readT = 0, bound = false;
     function store(v) {
@@ -771,7 +797,7 @@
         if (phone()) { el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open'); } else el.removeAttribute('aria-modal');
         setTab(want, false);
         readUnread();
-        if (!state().open || state().tab !== tab) save({ open: true, tab }); else notify();
+        if (!state().open || (state().tab !== tab && SAVED_TABS.includes(tab))) save({ open: true, ...(SAVED_TABS.includes(tab) ? { tab } : {}) }); else notify();
         setTimeout(() => { try { el.querySelector('[role="tab"][aria-selected="true"]').focus({ preventScroll: true }); } catch { /* */ } }, 0);
     }
     function close() {

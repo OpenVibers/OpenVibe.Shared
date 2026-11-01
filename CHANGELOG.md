@@ -4,6 +4,22 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.74.0 — 2026-11-01
+
+- **Vibe in the Dock, on every site** (plan L48 V2; the owner, 2026-11-01: "access your agent or the AI… from across
+  all websites… use a voice feature to tell it to set a reminder… have a conversation with your Vibe AI").
+  - The Dock's first tab is Vibe: the same conversation as openvibe.chat/vibe (OpenVibe.Chat's `/api/vibe/chat` and
+    `/api/vibe/ask`, with the person's own token), so a chat started on Live carries on on Chat and back.
+  - Starters show before the first message, and Vibe's answer arrives in place. The tab polls quickly for a minute
+    and a half after a message, then every 15 s while it is open. An https link is a link, and "Open in Chat" goes
+    to the same conversation.
+  - The mic is the browser's own speech recognition. Hold to talk, click to start and stop, or press Alt+V from any
+    page, which opens the Dock on Vibe. It listens only while the person asks: no wake word, never always on.
+  - `dock-vibe.js`, a new served file, holds the conversation and the mic (4.1 KB brotli). It loads the first time
+    the tab opens. `dock.js` grows by the tab, its loader and Alt+V (0.55 KB; the budget note says so).
+  - The Network's Dock state keeps only the tabs it knows. The Vibe tab is remembered on the site until the Network
+    learns it.
+
 ## 4.73.0 — 2026-11-01
 
 - **Solid drawings for the most-used shapes** (plan L49 step 3; the owner, 2026-11-01: "really tiny icons… a solid

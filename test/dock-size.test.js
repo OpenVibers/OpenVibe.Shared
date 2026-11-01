@@ -12,8 +12,10 @@ const DOCK_PATH = path.join(ROOT, 'dock.js');
 // dock.js was 12.27 KB brotli on 2026-10-30 (4.53.1, before the pop-out). K-D4 added 1.45 KB; the budget was that
 // plus 1.5 KB. 4.56.0 adds the async token (the extension refreshes it) and the read-only scope controls; the
 // budget is 14.0 KB, a 0.25 KB increase, so both still have to stay inside it.
-const DOCK_BROTLI_BUDGET = 14336;   // 14.00 KB (14219 after 4.56.0 + 117 bytes of headroom)
-const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js'];
+// 4.74.0 (2026-11-01, L48 V2) adds the Vibe tab's entry, its loader and Alt+V: +568 bytes (14757). The conversation
+// and the mic are dock-vibe.js (4.1 KB brotli), loaded the first time the tab opens, not on every page.
+const DOCK_BROTLI_BUDGET = 14848;   // 14.50 KB (14757 after 4.74.0 + 91 bytes of headroom)
+const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js'];
 
 // ── the budget ──────────────────────────────────────────────
 {
