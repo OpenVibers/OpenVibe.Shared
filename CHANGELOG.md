@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.68.0
+
+- **83 more glyphs, 446 Font Awesome names** (plan L49 step 1; the owner, 2026-11-01: "why Font Awesome? We should be
+  using OpenVibe Design's icon system for all our icons"). Every non-brand name Live uses now has a glyph: trend up and
+  down, sort, share, move, at, box, bug, megaphone, burst, the camera, chat, cloud, link, phone and user "off"
+  variants, record, plus and minus circles, clapper, captions, commit, compass, cookie, couch, cubes, ear, eraser,
+  laugh, fish, finish flag, flask, folder tree, skip, gem, ghost, grip, hammer, handshake, wizard hat, broken heart,
+  hourglass, lungs, mask, mug, paw, walk, piggy bank, airplane, print, quote, radio, ranking, recycle, RSS, scroll,
+  signature, square, sword, columns, thumbs up, undo, user circle, lock, minus, pen and tag, weight, wind, window,
+  align left, and slash, plus 40 names mapped onto glyphs that already stand for the same thing. Brand logos stay
+  Font Awesome Brands. ov-glyphs.js, the glyph font (22.3 KB woff2), its Font Awesome stylesheet and the sprite are
+  rebuilt; existing code points are unchanged.
+
 ## Unreleased
 
 ## 4.67.0 — 2026-10-31

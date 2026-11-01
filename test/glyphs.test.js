@@ -11,7 +11,7 @@ const glyphs = require('../glyphs');
 const kit = require('../kit');
 
 // ── The registry ──
-assert.ok(glyphs.NAMES.length >= 190, `${glyphs.NAMES.length} glyphs`);
+assert.ok(glyphs.NAMES.length >= 270, `${glyphs.NAMES.length} glyphs`);
 for (const name of kit.ICONS) assert.ok(glyphs.NAMES.includes(name), `the kit's ${name} is a glyph`);
 for (const [fa, g] of Object.entries(glyphs.FA)) assert.ok(glyphs.path(g), `fa-${fa} → ${g}, a glyph that exists`);
 for (const name of glyphs.NAMES) {
@@ -60,7 +60,7 @@ assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ov
 <button><i class="fa-solid fa-tower-broadcast"></i> Go live</button>
 <i class="fa-solid fa-spinner fa-spin" id="spin"></i>
 <i class="fa-brands fa-github" id="gh"></i>
-<i class="fa-solid fa-couch" id="unknown"></i>
+<i class="fa-solid fa-otter" id="unknown"></i>
 <i class="fa-solid fa-eye" aria-label="Seen" id="labelled"></i>
 <span class="fa-solid fa-play" id="toggle"></span>
 <i class="fa-solid fa-heart fa-2x fa-beat" data-fa-transform="grow-4 up-2 rotate-90 flip-h" id="tf"></i>
@@ -104,7 +104,7 @@ assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ov
     t.className = 'fa-solid fa-pause is-on';
     await new Promise((r) => setImmediate(r));
     assert.ok(t.classList.contains('ovg') && t.dataset.ovg === 'pause', 'the swap class comes back after a reset');
-    t.className = 'fa-solid fa-couch';
+    t.className = 'fa-solid fa-otter';
     await new Promise((r) => setImmediate(r));
     assert.ok(!t.classList.contains('ovg') && !t.dataset.ovg && !t.querySelector('svg'), 'and hands back a name it does not know');
     // Markup added later is swapped too.
