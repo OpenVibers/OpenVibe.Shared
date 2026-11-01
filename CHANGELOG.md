@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.86.0 — 2026-11-01
+
+- **Status colour names every site can use.**
+  - About eighteen sites colour error and status words with `--error-text`, `--error`, `--ok` or `--warn`. No theme
+    sets those names, so each site's fallback literal showed: `#ef4444`, `#34d399` and `#fbbf24` are pale on light
+    themes.
+  - theme-loader.js now maps them onto the theme's own readable status colours (`--danger-text`, `--danger`,
+    `--success-text`, `--warning-text`). The mapping sits in `:where(html)`, so a site that sets one of these names
+    itself keeps its own value.
+
 ## 4.85.0 — 2026-11-01
 
 - **Share cards for fourteen more sites.**
