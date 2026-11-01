@@ -116,6 +116,10 @@ const data = {
     assert.strictEqual(sf('bot'), 'bot');
     assert.strictEqual(sf('www.openvibe.live'), 'live');
     assert.strictEqual(sf('example.com'), null);
+    assert.strictEqual(sf('bench.openvibe.services'), 'bench', 'a Services subdomain is its own site');
+    assert.strictEqual(sf('ai.openvibe.services'), 'ai');
+    assert.strictEqual(sf('openvibe.services'), 'services');
+    assert.strictEqual(sf('open.shoes'), 'shoes');
     assert.strictEqual(sf('live'), 'live');
     // Every site with a share card and app icon (icons/sites.json, from the Contracts site blocks) is a registry id, so its
     // own feed is the one shown: play.openvibe.network showed Network's changes while 'play' was missing (2026-10-15).
