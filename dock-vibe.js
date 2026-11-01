@@ -26,6 +26,20 @@
             .ovdk-mic { width: 40px; height: 40px; flex: none; margin-left: -8px; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--text-muted, #8b8b96); touch-action: none; }
             .ovdk-mic:hover { color: var(--text-primary, #ececf1); }
             .ovdk-mic.is-on { color: var(--on-accent, #fff); background: var(--live-red, #e5484d); box-shadow: 0 0 0 4px color-mix(in srgb, var(--live-red, #e5484d) 28%, transparent); }
+            .ovdk-res { display: grid; gap: 6px; margin-top: 6px; max-width: 100%; }
+            .ovdk-res-c { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 4px 10px; padding: 8px 10px; border-radius: 12px;
+                border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 35%, var(--border, rgba(255,255,255,.12))); background: color-mix(in srgb, var(--accent, #3b82f6) 8%, transparent); }
+            .ovdk-res-c .ovdk-i { color: var(--accent, #3b82f6); }
+            .ovdk-res-t { min-width: 0; font-size: 13px; line-height: 1.35; color: var(--text-primary, #ececf1); }
+            .ovdk-res-t b { font-weight: 750; }
+            .ovdk-res-t small { display: block; color: var(--text-muted, #8b8b96); font-size: 12px; }
+            .ovdk-res-a { display: flex; gap: 4px; }
+            .ovdk-res-a button, .ovdk-res-a a { min-height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent;
+                color: var(--text-primary, #ececf1); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+            .ovdk-res-a button:hover, .ovdk-res-a a:hover { border-color: var(--accent, #3b82f6); }
+            .ovdk-res-a button:disabled { opacity: .55; cursor: default; }
+            .ovdk-res-c.is-stopped { border-color: var(--border, rgba(255,255,255,.12)); background: transparent; }
+            .ovdk-res-c.is-stopped .ovdk-i, .ovdk-res-c.is-stopped .ovdk-res-t { color: var(--text-muted, #8b8b96); }
             @media (prefers-reduced-motion: reduce) { .ovdk-typing i { animation: none; } }
 `;
     let ctx = null, G = {};
@@ -54,11 +68,50 @@
         });
         return span;
     }
+    const DAY = 24 * 3600 * 1000;
+    /** One thing Vibe did (Chat's results on its answer): what, when, and Undo / Open. */
+    function resultChip(m, r, i) {
+        const set = r.action === 'set';
+        const c = h('div', `ovdk-res-c${set ? '' : ' is-stopped'}`);
+        c.append(icon(r.kind === 'timer' ? G.clock : G.bell));
+        const t = h('div', 'ovdk-res-t');
+        const what = r.kind === 'timer' ? (set ? 'Timer' : 'Timer stopped') : (set ? 'Reminder set' : 'Reminder stopped');
+        t.append(h('b', '', `${what}: `), String(r.title || ''));
+        if (r.when && set) t.append(h('small', '', String(r.when)));
+        const a = h('div', 'ovdk-res-a');
+        const young = !m.at || Date.now() - Date.parse(m.at) < DAY;
+        if (set && young && Number(m.id) > 0) {
+            const undo = h('button', '', 'Undo'); undo.type = 'button';
+            undo.setAttribute('aria-label', `Undo: ${what} ${r.title || ''}`.trim());
+            undo.addEventListener('click', async () => {
+                undo.disabled = true;
+                try {
+                    const out = await ctx.chatCall('/api/vibe/undo', { method: 'POST', body: JSON.stringify({ message_id: Number(m.id), index: i }) });
+                    m.results = (out && out.results) || m.results.map((x, k) => (k === i ? { ...x, action: 'stopped' } : x));
+                    c.replaceWith(resultChip(m, m.results[i], i));
+                    if (r.kind === 'timer' && ctx.refresh) ctx.refresh();
+                } catch (e) {
+                    undo.disabled = false; undo.textContent = e && e.status === 410 ? 'Too old to undo' : 'Try again';
+                    if (e && (e.status === 409 || e.status === 410)) undo.disabled = true;
+                }
+            });
+            a.append(undo);
+        }
+        if (r.url && /^https:\/\//.test(r.url)) { const o = h('a', '', 'Open'); o.href = r.url; o.target = '_blank'; o.rel = 'noopener'; a.append(o); }
+        c.append(t, a);
+        return c;
+    }
+    function results(m) {
+        const box = h('div', 'ovdk-res');
+        m.results.slice(0, 4).forEach((r, i) => { if (r && (r.kind === 'reminder' || r.kind === 'timer')) box.append(resultChip(m, r, i)); });
+        return box;
+    }
     function vbubble(m, prev) {
         const mine = m.from === 'you';
         const li = h('li', `ovdk-msg${mine ? ' is-mine' : ' is-vibe'}${prev && prev.from === m.from ? ' is-cont' : ''}`);
         if (!mine && !(prev && prev.from === m.from)) li.append(h('span', 'ovdk-who', 'Vibe'));
         li.append(linkified(m.text));
+        if (!mine && Array.isArray(m.results) && m.results.length) li.append(results(m));
         if (m.at) li.title = new Date(m.at).toLocaleString();
         return li;
     }
@@ -129,6 +182,7 @@
                 list.insertBefore(vbubble(m, vibe.msgs[vibe.msgs.length - 1]), typing.parentNode === list ? typing : null);
                 vibe.msgs.push(m); vibe.last = Math.max(vibe.last, Number(m.id) || 0);
                 if (m.from === 'vibe') answered = true;
+                if (!first && Array.isArray(m.results) && m.results.some((r) => r && r.kind === 'timer') && ctx.refresh) ctx.refresh();
             });
             if (answered || Date.now() > vibe.waitUntil) { typing.remove(); vibe.waitUntil = 0; }
             if (first && !vibe.msgs.length) {
