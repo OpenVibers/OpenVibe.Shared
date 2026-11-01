@@ -275,6 +275,7 @@
     "wind": "E110",
     "window": "E111",
     "window-restore": "E112",
-    "wizard": "E113"
+    "wizard": "E113",
+    "book-open": "E114"
   }
 }

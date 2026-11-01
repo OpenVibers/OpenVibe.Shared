@@ -18,6 +18,7 @@
 .ovi-ban::before{content:"\e009"}
 .ovi-bell::before{content:"\e00a"}
 .ovi-book::before{content:"\e00b"}
+.ovi-book-open::before{content:"\e114"}
 .ovi-box::before{content:"\e0c5"}
 .ovi-brain::before{content:"\e00c"}
 .ovi-branch::before{content:"\e00d"}

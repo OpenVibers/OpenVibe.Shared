@@ -11,7 +11,7 @@ const glyphs = require('../glyphs');
 const kit = require('../kit');
 
 // ── The registry ──
-assert.ok(glyphs.NAMES.length >= 270, `${glyphs.NAMES.length} glyphs`);
+assert.ok(glyphs.NAMES.length >= 276, `${glyphs.NAMES.length} glyphs`);
 for (const name of kit.ICONS) assert.ok(glyphs.NAMES.includes(name), `the kit's ${name} is a glyph`);
 for (const [fa, g] of Object.entries(glyphs.FA)) assert.ok(glyphs.path(g), `fa-${fa} → ${g}, a glyph that exists`);
 for (const name of glyphs.NAMES) {
@@ -21,6 +21,18 @@ for (const name of glyphs.NAMES) {
     assert.ok(!/fill=|style=|on\w+=|href|<script|url\(/i.test(d), `${name}: no fills, styles, handlers or links`);
     for (const m of d.matchAll(/(?:cx|cy|x|y)="(-?[\d.]+)"/g)) assert.ok(Number(m[1]) >= 0 && Number(m[1]) <= 24, `${name}: on the 24 grid`);
 }
+// Solid drawings for small sizes (4.69.0): filled shapes and evenodd holes, a line as class "ln", on the grid.
+for (const [name, d] of Object.entries(glyphs.SOLID)) {
+    assert.ok(glyphs.path(name), `${name}: a solid drawing has a line one`);
+    const tags = [...d.matchAll(/<([a-z]+)\b/g)].map((m) => m[1]);
+    assert.ok(tags.length && tags.every((t) => ['path', 'circle', 'rect', 'ellipse'].includes(t)), `${name}: solid shapes only (${tags})`);
+    assert.ok(!/style=|on\w+=|href|<script|url\(|fill="(?!none)/i.test(d), `${name}: no styles, handlers, links or colours`);
+    assert.ok([...d.matchAll(/class="([^"]*)"/g)].every((m) => m[1] === 'ln'), `${name}: the only class is ln`);
+    assert.ok(glyphs.inner(name).includes('<g class="ovg-s">'), `${name}: inner() carries it`);
+}
+assert.ok(Object.keys(glyphs.SOLID).length >= 40, 'the glyphs most often shown small have a solid drawing');
+assert.strictEqual(glyphs.fromFa('fa-book-open'), 'book-open', 'an open book, not a square');
+assert.strictEqual(glyphs.inner('check'), glyphs.path('check'), 'a glyph without a solid one is its lines alone');
 assert.strictEqual(glyphs.fromFa('fa-tower-broadcast'), 'live');
 assert.strictEqual(glyphs.fromFa('eye-slash'), 'eye-off');
 assert.strictEqual(glyphs.fromFa('fa-spinner'), 'busy', 'a spinner is the busy dots');
@@ -39,7 +51,7 @@ const SRC = fs.readFileSync(path.join(__dirname, '..', 'ov-glyphs.js'), 'utf8');
 assert.strictEqual(SRC, builder.build(), 'ov-glyphs.js is current: run node scripts/build-glyphs.js');
 const SPRITE = fs.readFileSync(path.join(__dirname, '..', 'ov-glyphs.svg'), 'utf8');
 assert.strictEqual(SPRITE, builder.sprite(), 'ov-glyphs.svg is current: run node scripts/build-glyphs.js');
-assert.strictEqual((SPRITE.match(/<symbol id="ovg-/g) || []).length, glyphs.NAMES.length, 'the sprite has every glyph');
+assert.strictEqual((SPRITE.match(/<symbol id="ovg-/g) || []).length, glyphs.NAMES.length + Object.keys(glyphs.SOLID).length, 'the sprite has every glyph, and each solid one as ovg-<name>-solid');
 assert.ok(SPRITE.includes(`<symbol id="ovg-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${glyphs.path('eye')}</symbol>`));
 
 // Font Awesome's features, kept (4.62.0): every documented class has a rule, with Font Awesome's own variables.

@@ -320,3 +320,15 @@ div.ovk-set-row { cursor: default; }
     .ovk-sidebar-scrim { position: fixed; inset: 0; z-index: 10050; background: rgba(0, 0, 0, .4); }
 }
 @media (prefers-reduced-motion: reduce) { .ovk-sidebar, .ovk-sidebar.is-open { transition: none; } .ovk-sidebar-dot.is-busy { animation: none; } }
+
+/* ── Scroll areas (4.69.0; the owner, 2026-11-01: "you can't scroll down the page even when you're at the bottom of
+   the chat… this should be consistent across websites"). The network's rule: a scroll area inside a page that scrolls
+   hands the swipe on to the page at its ends; only an area that fills the screen (a sheet, a modal, a full-screen
+   chat) holds it. A sideways rail scrolls sideways only, so a vertical swipe on it moves the page. */
+.ov-scroll { overflow: auto; overscroll-behavior: auto; -webkit-overflow-scrolling: touch; }
+.ov-scroll-fill { overflow: auto; overscroll-behavior: contain; }
+.ov-scroll-x { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x pan-y; scrollbar-width: none; }
+.ov-scroll-x::-webkit-scrollbar { display: none; }
+@media (max-width: 900px), (hover: none) {
+    .ovk-sidebar-secs { overscroll-behavior-y: auto; }
+}
