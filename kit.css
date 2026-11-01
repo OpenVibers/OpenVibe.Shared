@@ -165,7 +165,8 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-row-trail { display: flex; align-items: center; gap: 2px; flex: none; }
 .ovk-row-trail form { display: flex; align-items: center; gap: 2px; margin: 0; }
 .ovk-row-trail select { max-width: 9.5em; padding: 5px 6px; border-radius: max(0px, calc(var(--ov-radius-1) - 2px)); border: 1px solid var(--ovk-line); background: var(--ovk-input); color: var(--ovk-text); font: inherit; font-size: .86rem; }
-.ovk-mark { --ovk-mark: 40px; flex: none; display: inline-grid; place-items: center; width: var(--ovk-mark); height: var(--ovk-mark); box-sizing: border-box; border-radius: 50%; object-fit: cover; background: hsl(var(--ovk-hue, 215) 45% 38%); color: #fff; font-size: calc(var(--ovk-mark) * .34); font-weight: 800; letter-spacing: .02em; line-height: 1; }
+/* 32% lightness keeps the white letters at 4.5:1 or more for every hue (38% left greens and yellows near 3.7:1). */
+.ovk-mark { --ovk-mark: 40px; flex: none; display: inline-grid; place-items: center; width: var(--ovk-mark); height: var(--ovk-mark); box-sizing: border-box; border-radius: 50%; object-fit: cover; background: hsl(var(--ovk-hue, 215) 45% 32%); color: #fff; font-size: calc(var(--ovk-mark) * .34); font-weight: 800; letter-spacing: .02em; line-height: 1; }
 .ovk-mark--square { border-radius: 28%; }
 .ovk-empty-line { margin: 0 0 14px; padding: 14px; border: 1px dashed var(--ovk-line); border-radius: var(--ovk-radius); color: var(--ovk-muted); }
 

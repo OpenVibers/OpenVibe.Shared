@@ -13,6 +13,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - theme-loader.js now maps them onto the theme's own readable colours (`--danger-text`, `--danger`,
     `--success-text`, `--warning-text`, `--accent-strong`). The mapping sits in `:where(html)`, so a site that sets
     one of these names itself keeps its own value.
+- **Room kit marks reach 4.5:1 for every hue.** `kit.mark`'s white letters sat on `hsl(hue 45% 38%)`, about
+  3.5:1 for greens and yellows (axe on Community, Report, Tours, Shoes and Bot). Lightness is now 32%: the worst
+  hue is 4.75:1. `test/kit-mark-contrast.test.js` checks all 360.
 
 ## 4.85.0 — 2026-11-01
 
