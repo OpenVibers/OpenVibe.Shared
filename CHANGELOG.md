@@ -12,6 +12,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
     `social.url(service)`.
   - Drawn by `scripts/build-social-cards.js --only …` from each manifest's `site` block (OpenVibe.Contracts main), the
     same way as every other card.
+  - `icons/sites.json` names their app icons (`scripts/build-icons.js`): installable apps and the app-icons test
+    need an entry for every site with a card.
 
 ## 4.84.0 — 2026-11-01
 
