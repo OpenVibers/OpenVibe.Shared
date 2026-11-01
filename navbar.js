@@ -2018,7 +2018,8 @@
     function hookMoves() {
         if (_movesHooked || typeof document === 'undefined' || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
         _movesHooked = true;
-        if (_config.speculate !== false && typeof HTMLScriptElement !== 'undefined' && HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules') && !document.querySelector('script[type="speculationrules"]')) {
+        // A boosted site prefetches through boost.js already (and Chrome's prefetch beside it kept parsed pages alive).
+        if (_config.speculate !== false && !root.OVBoost && !document.querySelector('meta[name="ov-boost"]') && typeof HTMLScriptElement !== 'undefined' && HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules') && !document.querySelector('script[type="speculationrules"]')) {
             try {
                 const sr = document.createElement('script');
                 sr.type = 'speculationrules';
@@ -2035,11 +2036,14 @@
             if (u.origin !== location.origin || (u.pathname === location.pathname && u.search === location.search)) return;
             setTimeout(() => { if (!e.defaultPrevented) busy(true); }, 0);   // after the page's own handler (an SPA's router) had its say
         }, true);
-        window.addEventListener('pageshow', () => busy(false));
+        // Back from the browser's page cache: whatever was loading is done.
+        window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) busy(false); });
     }
-    let _busyTimer = 0;
+    let _busyTimer = 0, _busyOn = false;
     function busy(on) {
         clearTimeout(_busyTimer);
+        if (!on && !_busyOn) return;   // only ends what it started (the mark keeps nothing it was not asked to)
+        _busyOn = !!on;
         // A link that turns out to be a download never leaves the page: the mark gives up after ten seconds.
         if (on) _busyTimer = setTimeout(() => busy(false), 10000);
         try { if (window.OVMark) { if (on) window.OVMark.navStart(); else window.OVMark.navEnd(); } } catch { /* */ }
