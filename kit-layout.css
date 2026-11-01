@@ -1,0 +1,105 @@
+/* openvibe-shared/kit-layout.css: the Kit's fluid scale, its layout primitives and an opt-in classless base
+ * (plan L54 K1/K2). Load it after kit.css; a page that uses none of it loads neither this nor its bytes.
+ *
+ * The fluid scale (Utopia's idea): type steps and spaces that grow with the screen between 320 and 1240 px, by clamp()
+ * and with no breakpoints. Base 16 px at 320 and 18 px at 1240; ratio 1.2 then 1.25.
+ *   --step--2 … --step-5        font sizes
+ *   --space-3xs … --space-3xl   gaps and padding (¼, ½, ¾, 1, 1½, 2, 3, 4 and 6 times the base)
+ *
+ * The primitives (Every Layout's idea): each a few lines, set by custom properties, and aware of their own width
+ * rather than the screen's, so they behave the same in a sidebar, a card or a whole page.
+ *   .ov-stack     children one under another, --gap apart
+ *   .ov-cluster   children in a wrapping row (tags, buttons, a toolbar); --gap, --justify, --align
+ *   .ov-sidebar   a side part --side wide beside the rest; it goes under once the rest would be under --min
+ *                 (the side part is the first child; .ov-sidebar--end when it is the last)
+ *   .ov-switcher  side by side until the box is narrower than --min, then all stacked: never two and one
+ *   .ov-grid      as many columns of at least --min as fit
+ *   .ov-rail      one row that scrolls sideways, items --item wide, snapping
+ *   .ov-cover     a box at least --min tall with one child (.is-centre) centred in it
+ *   .ov-frame     a box of --ratio that crops a picture or a video to fill it
+ *
+ * The classless base (Pico's idea): put .ov-base on <body> or <main> and plain HTML (headings, text, links, lists,
+ * quotes, code, tables, forms) looks finished on the site's theme, light or dark. Every selector is inside :where(),
+ * so it weighs nothing against a site's own rules.
+ */
+:root {
+    --step--2: clamp(0.6944rem, 0.6856rem + 0.0444vw, 0.72rem);
+    --step--1: clamp(0.8333rem, 0.8101rem + 0.1159vw, 0.9rem);
+    --step-0: clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem);
+    --step-1: clamp(1.2rem, 1.1283rem + 0.3587vw, 1.4063rem);
+    --step-2: clamp(1.44rem, 1.3295rem + 0.5527vw, 1.7578rem);
+    --step-3: clamp(1.728rem, 1.5648rem + 0.8161vw, 2.1973rem);
+    --step-4: clamp(2.0736rem, 1.8395rem + 1.1704vw, 2.7466rem);
+    --step-5: clamp(2.4883rem, 2.1597rem + 1.6433vw, 3.4332rem);
+    --space-3xs: clamp(0.25rem, 0.2391rem + 0.0543vw, 0.2813rem);
+    --space-2xs: clamp(0.5rem, 0.4783rem + 0.1087vw, 0.5625rem);
+    --space-xs: clamp(0.75rem, 0.7174rem + 0.163vw, 0.8438rem);
+    --space-s: clamp(1rem, 0.9565rem + 0.2174vw, 1.125rem);
+    --space-m: clamp(1.5rem, 1.4348rem + 0.3261vw, 1.6875rem);
+    --space-l: clamp(2rem, 1.913rem + 0.4348vw, 2.25rem);
+    --space-xl: clamp(3rem, 2.8696rem + 0.6522vw, 3.375rem);
+    --space-2xl: clamp(4rem, 3.8261rem + 0.8696vw, 4.5rem);
+    --space-3xl: clamp(6rem, 5.7391rem + 1.3043vw, 6.75rem);
+}
+
+/* ── Primitives ── */
+.ov-stack { display: flex; flex-direction: column; justify-content: flex-start; gap: var(--gap, var(--space-s)); }
+.ov-stack > * { margin-block: 0; }
+.ov-cluster { display: flex; flex-wrap: wrap; gap: var(--gap, var(--space-xs)); justify-content: var(--justify, flex-start); align-items: var(--align, center); }
+.ov-sidebar { display: flex; flex-wrap: wrap; gap: var(--gap, var(--space-m)); align-items: var(--align, flex-start); }
+.ov-sidebar > :first-child, .ov-sidebar--end > :last-child { flex-basis: var(--side, 18rem); flex-grow: 1; }
+.ov-sidebar > :last-child, .ov-sidebar--end > :first-child { flex-basis: 0; flex-grow: 999; min-inline-size: var(--min, 55%); }
+.ov-sidebar--end > :first-child { order: 0; }
+.ov-switcher { display: flex; flex-wrap: wrap; gap: var(--gap, var(--space-s)); }
+.ov-switcher > * { flex-grow: 1; flex-basis: calc((var(--min, 32rem) - 100%) * 999); min-inline-size: 0; }
+.ov-grid { display: grid; gap: var(--gap, var(--space-s)); grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--min, 16rem)), 1fr)); }
+.ov-rail { display: grid; grid-auto-flow: column; grid-auto-columns: var(--item, min(80%, 18rem)); gap: var(--gap, var(--space-s)); overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: var(--pad, 0px); padding-inline: var(--pad, 0px); padding-block-end: var(--space-2xs); scrollbar-width: thin; }
+.ov-rail > * { scroll-snap-align: start; min-inline-size: 0; }
+.ov-cover { display: flex; flex-direction: column; min-block-size: var(--min, 100svh); padding: var(--pad, var(--space-m)); box-sizing: border-box; }
+.ov-cover > * { margin-block: var(--gap, var(--space-s)); }
+.ov-cover > :first-child:not(.is-centre) { margin-block-start: 0; }
+.ov-cover > :last-child:not(.is-centre) { margin-block-end: 0; }
+.ov-cover > .is-centre { margin-block: auto; }
+.ov-frame { aspect-ratio: var(--ratio, 16 / 9); overflow: hidden; display: flex; justify-content: center; align-items: center; max-inline-size: 100%; }
+.ov-frame > :is(img, video, iframe, canvas, svg) { inline-size: 100%; block-size: 100%; object-fit: cover; }
+
+/* ── The classless base, under .ov-base ── */
+:where(.ov-base) { color: var(--ovk-text); font-family: var(--ovk-font); font-size: var(--step-0); line-height: 1.6; -webkit-text-size-adjust: 100%; }
+:where(.ov-base) :where(h1, h2, h3, h4, h5, h6) { margin: 1.4em 0 .5em; line-height: 1.15; letter-spacing: -.015em; text-wrap: balance; color: var(--ovk-text); }
+:where(.ov-base) :where(h1) { font-size: var(--step-5); letter-spacing: -.03em; margin-block-start: 0; }
+:where(.ov-base) :where(h2) { font-size: var(--step-3); }
+:where(.ov-base) :where(h3) { font-size: var(--step-2); }
+:where(.ov-base) :where(h4) { font-size: var(--step-1); }
+:where(.ov-base) :where(h5, h6) { font-size: var(--step-0); }
+:where(.ov-base) :where(p, ul, ol, dl, blockquote, pre, table, figure, details) { margin: 0 0 1em; }
+:where(.ov-base) :where(p, li, dd, blockquote) { max-inline-size: 68ch; }
+:where(.ov-base) :where(small) { font-size: var(--step--1); color: var(--ovk-muted); }
+:where(.ov-base) :where(a) { color: var(--ovk-accent); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+:where(.ov-base) :where(a:hover) { text-decoration-thickness: 2px; }
+:where(.ov-base) :where(a, button, input, select, textarea, summary):focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 2px; }
+:where(.ov-base) :where(ul, ol) { padding-inline-start: 1.3em; }
+:where(.ov-base) :where(li + li) { margin-block-start: .3em; }
+:where(.ov-base) :where(hr) { border: 0; border-block-start: 1px solid var(--ovk-line); margin: var(--space-l) 0; }
+:where(.ov-base) :where(blockquote) { padding: .2em 0 .2em 1em; border-inline-start: 3px solid var(--ovk-accent); color: var(--ovk-muted); }
+:where(.ov-base) :where(code, kbd, samp, pre) { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; }
+:where(.ov-base) :where(:not(pre) > code, kbd) { padding: .1em .35em; border-radius: 6px; background: var(--ovk-panel-2); }
+:where(.ov-base) :where(pre) { padding: var(--space-xs) var(--space-s); overflow-x: auto; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); background: var(--ovk-panel); line-height: 1.5; }
+:where(.ov-base) :where(img, video, svg, canvas, iframe) { max-inline-size: 100%; }
+:where(.ov-base) :where(img, video) { block-size: auto; border-radius: var(--ovk-radius-sm); }
+:where(.ov-base) :where(table) { inline-size: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; display: block; overflow-x: auto; }
+:where(.ov-base) :where(th, td) { padding: .55em .7em; border-block-end: 1px solid var(--ovk-line); text-align: start; vertical-align: top; }
+:where(.ov-base) :where(th) { font-size: var(--step--1); font-weight: 700; letter-spacing: .03em; color: var(--ovk-muted); }
+:where(.ov-base) :where(details) { padding: .6em .9em; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); background: var(--ovk-panel); }
+:where(.ov-base) :where(summary) { cursor: pointer; font-weight: 700; }
+:where(.ov-base) :where(label) { display: block; margin-block-end: .3em; font-weight: 600; }
+:where(.ov-base) :where(input:not([type=checkbox], [type=radio], [type=range], [type=color]), select, textarea) {
+    box-sizing: border-box; inline-size: 100%; min-block-size: var(--ovk-tap); padding: .5em .8em; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm);
+    background: var(--ovk-input); color: var(--ovk-text); font: inherit; }
+:where(.ov-base) :where(textarea) { min-block-size: 6em; resize: vertical; }
+:where(.ov-base) :where(input[type=checkbox], input[type=radio], input[type=range]) { accent-color: var(--ovk-fill); }
+:where(.ov-base) :where(button, input[type=submit], input[type=button]) { min-block-size: var(--ovk-tap); padding: .5em 1.1em; border: 0; border-radius: 999px; cursor: pointer;
+    background: var(--ovk-fill); color: var(--ovk-on-fill); font: inherit; font-weight: 700; }
+:where(.ov-base) :where(button:disabled, input:disabled, select:disabled, textarea:disabled) { opacity: .55; cursor: not-allowed; }
+:where(.ov-base) :where(fieldset) { margin: 0 0 1em; padding: var(--space-xs) var(--space-s); border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); }
+:where(.ov-base) :where(mark) { padding: 0 .2em; border-radius: 4px; background: color-mix(in srgb, var(--ovk-warn) 35%, transparent); color: inherit; }

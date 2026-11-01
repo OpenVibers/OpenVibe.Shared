@@ -655,6 +655,37 @@ OpenVibeLoading.skeleton(listEl, { rows: 3 })            // shimmering rows whil
 The element it mounts into should be positioned. Motion stops under `prefers-reduced-motion`, and the status is
 announced to screen readers (`role=status`, or `alert` when it fails).
 
+## Layout: the fluid scale, the primitives and the classless base (4.78.0)
+
+`kit-layout.css` is a file of its own (load it after `kit.css`, about 2.5 KB brotli); a page that uses none of it loads
+neither. It brings three things, on the same theme tokens as the rest of the kit.
+
+**The fluid scale.** Type steps and spaces grow with the screen between 320 and 1240 px by `clamp()`, with no
+breakpoints: the base is 16 px on a phone and 18 px on a wide screen, the ratio 1.2 then 1.25.
+
+| Tokens | What for |
+| --- | --- |
+| `--step--2` … `--step-5` | Font sizes: `--step-0` is body text, `--step-5` a page title |
+| `--space-3xs` … `--space-3xl` | Gaps and padding: ¼, ½, ¾, 1, 1½, 2, 3, 4 and 6 times the base |
+
+**The layout primitives.** Each is a few lines, set by custom properties, and lays out by its own width rather than
+the screen's, so it behaves the same in a sidebar, a card or a whole page.
+
+```html
+<div class="ov-stack" style="--gap: var(--space-m)">…</div>          <!-- one under another -->
+<div class="ov-cluster">…tags or buttons…</div>                         <!-- a wrapping row -->
+<div class="ov-sidebar" style="--side: 16rem"><nav>…</nav><main>…</main></div>   <!-- the side goes under when narrow -->
+<div class="ov-switcher" style="--min: 36rem">…three plans…</div>      <!-- all side by side, or all stacked -->
+<div class="ov-grid" style="--min: 14rem">…cards…</div>                 <!-- as many columns as fit -->
+<div class="ov-rail" style="--item: 16rem">…cards…</div>                <!-- one row that scrolls sideways -->
+<section class="ov-cover"><p>…</p><h1 class="is-centre">…</h1></section>  <!-- a tall box, one thing centred -->
+<div class="ov-frame" style="--ratio: 4 / 3"><img …></div>             <!-- a picture cropped to a ratio -->
+```
+
+**The classless base.** Put `.ov-base` on `<body>` or `<main>` and plain HTML looks finished: headings on the fluid
+steps, text kept to a readable measure, links, lists, quotes, code, tables that scroll in their own box, details, and
+form fields a finger tall. Every selector is inside `:where()`, so a site's own rule always wins.
+
 ## Using it
 
 **An OpenVibe site (Node, server-rendered):**

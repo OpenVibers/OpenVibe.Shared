@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.78.0 — 2026-11-01
+
+- **`kit-layout.css`: the fluid scale, the layout primitives and a classless base** (plan L54 K1/K2). A file of its
+  own, after `kit.css` (2.5 KB brotli); a page that uses none of it loads neither.
+  - The fluid scale: `--step--2` … `--step-5` for type and `--space-3xs` … `--space-3xl` for spacing, by `clamp()`
+    between 320 and 1240 px (16 → 18 px base, ratio 1.2 → 1.25). No breakpoints.
+  - Eight primitives that lay out by their own width: `.ov-stack`, `.ov-cluster`, `.ov-sidebar` (`--end`),
+    `.ov-switcher` (all side by side or all stacked, never two and one), `.ov-grid`, `.ov-rail`, `.ov-cover`,
+    `.ov-frame`. Set by `--gap`, `--min`, `--side`, `--item`, `--ratio`.
+  - `.ov-base`: plain HTML (headings, text, links, lists, quotes, code, tables, details, forms) looks finished on the
+    site's theme. Every selector is inside `:where()`, so a site's own rule always wins.
+  - Documented in docs/kit.md; `test/kit-layout-chrome.test.js` measures each in Chrome at 320, 1280 and 1920 px.
+
 ## 4.77.1 — 2026-11-01
 
 - **Tabs below the fold no longer scroll the page to themselves.** kit-web.js kept the open tab in view with
