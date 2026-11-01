@@ -24,6 +24,11 @@
     --ovk-ok: var(--success, #22c55e);
     --ovk-warn: var(--warning, #f59e0b);
     --ovk-bad: var(--danger, var(--error, #ef4444));
+    /* Status in words (4.83.0): a theme's -text status colours are its readable ones; the fills above are for shapes. On
+     * a light theme the fill green or amber on white was about 2:1 (openvibe.design/kit's "paid" and "expiring"). */
+    --ovk-ok-text: var(--success-text, var(--ovk-ok));
+    --ovk-warn-text: var(--warning-text, var(--ovk-warn));
+    --ovk-bad-text: var(--danger-text, var(--ovk-bad));
     --ovk-live: var(--live-red, #ef4444);
     /* Shape and elevation (4.81.0, plan L45 step 2): the kit's corners and shadows as tokens a look can set, so a theme
      * has a shape as well as colours. The defaults are the kit's own corners and shadows; the personalities follow. */
@@ -95,7 +100,7 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-btn--quiet { background: var(--ovk-panel); color: var(--ovk-text); border-color: var(--ovk-line); }
 .ovk-btn--quiet:hover { border-color: var(--ovk-accent); }
 .ovk-btn--ghost { background: transparent; color: var(--ovk-accent); padding-left: 8px; padding-right: 8px; }
-.ovk-btn--danger { background: transparent; color: var(--ovk-bad); border-color: color-mix(in srgb, var(--ovk-bad) 45%, transparent); }
+.ovk-btn--danger { background: transparent; color: var(--ovk-bad-text); border-color: color-mix(in srgb, var(--ovk-bad) 45%, transparent); }
 .ovk-btn--danger:hover { background: color-mix(in srgb, var(--ovk-bad) 12%, transparent); }
 .ovk-btn--small { min-height: 36px; padding: 6px 13px; border-radius: 999px; font-size: .88rem; }
 .ovk-btn:focus-visible, .ovk-icon-btn:focus-visible, .ovk-go:focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 2px; }
@@ -104,15 +109,15 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-icon-btn::-webkit-details-marker { display: none; }
 .ovk-icon-btn:hover { color: var(--ovk-text); background: var(--ovk-panel-2); border-color: var(--ovk-line); }
 .ovk-icon-btn[hidden] { display: none; }
-.ovk-icon-btn.is-done { color: var(--ovk-ok); }
-.ovk-icon-btn--danger:hover { color: var(--ovk-bad); }
+.ovk-icon-btn.is-done { color: var(--ovk-ok-text); }
+.ovk-icon-btn--danger:hover { color: var(--ovk-bad-text); }
 .ovk-icon-btn .ovk-i { width: 20px; height: 20px; }
 @media (pointer: coarse) { .ovk-icon-btn { width: var(--ovk-tap); height: var(--ovk-tap); } }
 .ovk-badge { display: inline-flex; align-items: center; flex: none; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--ovk-line); font-size: .7rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--ovk-muted); white-space: nowrap; }
 .ovk-badge--accent { color: var(--ovk-accent); border-color: color-mix(in srgb, var(--ovk-accent) 50%, transparent); }
-.ovk-badge--ok { color: var(--ovk-ok); border-color: color-mix(in srgb, var(--ovk-ok) 50%, transparent); }
-.ovk-badge--warn { color: var(--ovk-warn); border-color: color-mix(in srgb, var(--ovk-warn) 50%, transparent); }
-.ovk-badge--bad { color: var(--ovk-bad); border-color: color-mix(in srgb, var(--ovk-bad) 50%, transparent); }
+.ovk-badge--ok { color: var(--ovk-ok-text); border-color: color-mix(in srgb, var(--ovk-ok) 50%, transparent); }
+.ovk-badge--warn { color: var(--ovk-warn-text); border-color: color-mix(in srgb, var(--ovk-warn) 50%, transparent); }
+.ovk-badge--bad { color: var(--ovk-bad-text); border-color: color-mix(in srgb, var(--ovk-bad) 50%, transparent); }
 .ovk-badge--live { color: #fff; background: var(--ovk-live); border-color: transparent; }
 .ovk-dot { display: inline-grid; place-items: center; flex: none; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--ovk-fill); color: var(--ovk-on-fill); font-size: .72rem; font-weight: 800; }
 
@@ -181,14 +186,14 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-fold-body { padding: 12px 14px 14px; }
 .ovk-fold-body > :first-child { margin-top: 0; }
 .ovk-fold-body > :last-child { margin-bottom: 0; }
-.ovk-fold--danger > summary { color: var(--ovk-bad); }
+.ovk-fold--danger > summary { color: var(--ovk-bad-text); }
 .ovk-more { position: relative; display: inline-block; }
 .ovk-more > summary { list-style: none; }
 .ovk-pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 60; min-width: 210px; padding: 6px; box-sizing: border-box; border-radius: calc(var(--ov-radius-1) + 2px); border: 1px solid var(--ovk-line); background: var(--ovk-panel); box-shadow: var(--ov-elev-3); }
 .ovk-pop form { margin: 0; }
 .ovk-pop-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: max(0px, calc(var(--ov-radius-1) - 2px)); background: transparent; color: var(--ovk-text); font: inherit; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
 .ovk-pop-item:hover, .ovk-pop-item:focus-visible { background: var(--ovk-panel-2); outline: none; }
-.ovk-pop-item--danger { color: var(--ovk-bad); }
+.ovk-pop-item--danger { color: var(--ovk-bad-text); }
 
 /* ── Settings rows: what it does on the left, its control on the right ── */
 .ovk-set-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; box-sizing: border-box; padding: 8px 14px; border-top: 1px solid var(--ovk-line); color: var(--ovk-text); cursor: pointer; }
@@ -272,10 +277,10 @@ div.ovk-set-row { cursor: default; }
 .ovk-notice { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border-radius: calc(var(--ov-radius-1) + 2px); border: 1px solid var(--ovk-line); background: var(--ovk-panel); color: var(--ovk-text); font-size: .92rem; }
 .ovk-notice > .ovk-i { margin-top: 2px; }
 .ovk-notice--ok { border-color: color-mix(in srgb, var(--ovk-ok) 45%, transparent); }
-.ovk-notice--ok > .ovk-i { color: var(--ovk-ok); }
+.ovk-notice--ok > .ovk-i { color: var(--ovk-ok-text); }
 .ovk-notice--error { border-color: color-mix(in srgb, var(--ovk-bad) 50%, transparent); }
-.ovk-notice--error > .ovk-i { color: var(--ovk-bad); }
-.ovk-notice--warn > .ovk-i { color: var(--ovk-warn); }
+.ovk-notice--error > .ovk-i { color: var(--ovk-bad-text); }
+.ovk-notice--warn > .ovk-i { color: var(--ovk-warn-text); }
 .ovk-notice--info > .ovk-i { color: var(--ovk-accent); }
 .ovk-snip { position: relative; }
 .ovk-snip > .ovk-icon-btn { position: absolute; top: 6px; right: 6px; z-index: 1; width: 34px; height: 34px; background: var(--ovk-panel); border-color: var(--ovk-line); }

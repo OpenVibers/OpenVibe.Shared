@@ -4,6 +4,17 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.83.0 — 2026-11-01
+
+- **Status words read on light themes.**
+  - The kit wrote a status in the theme's fill colours (`--success`, `--warning`, `--danger`). On Daylight, the badges
+    "paid" and "expiring" on openvibe.design/kit were green and amber on white at 2.28:1 and 2.15:1.
+  - `--ovk-ok-text`, `--ovk-warn-text` and `--ovk-bad-text` follow the theme's readable `--success-text`,
+    `--warning-text` and `--danger-text`. They are now 5.4:1 on Daylight, and unchanged on the dark default.
+  - The kit uses them for words: badges, the danger button, done and danger icon buttons, the danger fold, the menu's
+    danger item, notice icons, and kit-data's rank deltas and pills.
+  - Fills and borders keep the fill colours. `room.css` carries the same tokens.
+
 ## 4.82.0 — 2026-11-01
 
 - **The motion tokens are on every page, and Reduced motion reaches every token-timed transition** (plan L45).

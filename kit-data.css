@@ -132,7 +132,7 @@
 .ovk-rank-val > small { color: var(--ovk-muted); font-size: .74rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ovk-rank-delta { grid-column: 5; display: inline-flex; align-items: center; gap: 1px; min-width: 2.6em; justify-content: flex-end; font-size: .78rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .ovk-rank-delta .ovk-i { width: 13px; height: 13px; stroke-width: 3; }
-.ovk-rank-delta.is-up { color: var(--ovk-ok); } .ovk-rank-delta.is-down { color: var(--ovk-bad); } .ovk-rank-delta.is-new { color: var(--ovk-accent); text-transform: uppercase; font-size: .68rem; letter-spacing: .04em; }
+.ovk-rank-delta.is-up { color: var(--ovk-ok-text, var(--ovk-ok)); } .ovk-rank-delta.is-down { color: var(--ovk-bad-text, var(--ovk-bad)); } .ovk-rank-delta.is-new { color: var(--ovk-accent); text-transform: uppercase; font-size: .68rem; letter-spacing: .04em; }
 .ovk-rank-bar { grid-column: 3 / -1; grid-row: 2; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--ovk-line) 60%, transparent); overflow: hidden; }
 .ovk-rank-bar::after { content: ''; display: block; height: 100%; width: calc(var(--v, 0) * 100%); border-radius: inherit; background: color-mix(in srgb, var(--ovk-c1) 55%, transparent); }
 .ovk-rank-row.is-top .ovk-rank-bar::after { background: var(--ovk-c1); }
@@ -233,9 +233,9 @@ a.ovk-tool-crumb:hover { color: var(--ovk-text); }
 .ovk-answer-body > :last-child { margin-bottom: 0; }
 .ovk-answer-next { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
 .ovk-pill { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; font-size: .74rem; font-weight: 700; vertical-align: 1px; white-space: nowrap; color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 13%, transparent); }
-.ovk-pill--ok { color: var(--ovk-ok); background: color-mix(in srgb, var(--ovk-ok) 14%, transparent); }
-.ovk-pill--warn { color: var(--ovk-warn); background: color-mix(in srgb, var(--ovk-warn) 15%, transparent); }
-.ovk-pill--bad { color: var(--ovk-bad); background: color-mix(in srgb, var(--ovk-bad) 14%, transparent); }
+.ovk-pill--ok { color: var(--ovk-ok-text, var(--ovk-ok)); background: color-mix(in srgb, var(--ovk-ok) 14%, transparent); }
+.ovk-pill--warn { color: var(--ovk-warn-text, var(--ovk-warn)); background: color-mix(in srgb, var(--ovk-warn) 15%, transparent); }
+.ovk-pill--bad { color: var(--ovk-bad-text, var(--ovk-bad)); background: color-mix(in srgb, var(--ovk-bad) 14%, transparent); }
 
 .ovk-family-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 8px; }
 .ovk-family-head.ovk-family-head h2 { margin: 0; font-family: inherit; font-size: .95rem; font-weight: 750; color: var(--ovk-text); }
