@@ -56,7 +56,7 @@ let scenario = {};
 const puts = [], decided = [], said = [], reads = [];
 // Chat's Vibe API for the Dock (OpenVibe.Chat server/rooms/vibe-api.js): one chat, Vibe answering a moment later.
 let vibeChat = null;
-const vibeMsgs = [], asked = [], listened = [];
+const vibeMsgs = [], asked = [], listened = [], undone = [];
 const defaultState = () => ({ open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } }, updated_at: iso(0) });
 
 const PAGE = (o) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tasks</title><link rel="icon" href="data:,">
@@ -106,6 +106,14 @@ const server = http.createServer((req, res) => {
             const after = Number(u.searchParams.get('after')) || 0;
             return json(200, { chat: vibeChat, messages: vibeMsgs.filter((m) => m.id > after) });
         }
+        if (u.pathname === '/api/vibe/undo' && req.method === 'POST') {
+            const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+            undone.push(b);
+            const m = vibeMsgs.find((x) => x.id === b.message_id);
+            if (!m || !m.results || !m.results[b.index]) return json(404, { error: 'No such result' });
+            m.results = m.results.map((r, k) => (k === b.index ? { ...r, action: 'stopped' } : r));
+            return json(200, { results: m.results, undone: { kind: 'reminder', id: m.results[b.index].id, title: m.results[b.index].title } });
+        }
         if (u.pathname === '/api/vibe/listen' && req.method === 'POST') {
             listened.push({ type: req.headers['content-type'], bytes: Buffer.concat(chunks).length, lang: u.searchParams.get('lang'), auth: req.headers.authorization });
             return json(200, { text: 'remind me to drink water at 3' });
@@ -116,7 +124,8 @@ const server = http.createServer((req, res) => {
             vibeChat = vibeChat || { slug: 'v1', name: 'Vibe', url: 'https://openvibe.chat/vibe/v1' };
             const mine = { id: 500 + vibeMsgs.length, from: 'you', text: b.message, at: iso(0) };
             vibeMsgs.push(mine);
-            setTimeout(() => vibeMsgs.push({ id: 600 + vibeMsgs.length, from: 'vibe', text: 'Reminder set: Stretch, every 2 hours. See them at https://openvibe.today/reminders', at: iso(0) }), 700);
+            setTimeout(() => vibeMsgs.push({ id: 600 + vibeMsgs.length, from: 'vibe', text: 'Reminder set: Stretch, every 2 hours. See them at https://openvibe.today/reminders', at: iso(0),
+                results: [{ kind: 'reminder', action: 'set', id: 'rem_01J8Z3V9Q6N1X2Y3Z4A5B6C7E1', title: 'Stretch', when: 'Every 2 hours, 9 am–5 pm', url: 'https://openvibe.today/me#reminders' }] }), 700);
             return json(201, { chat: vibeChat, message: mine });
         }
         if (u.pathname === '/api/notifications/unread-count') return json(200, { count: 2 });
@@ -359,6 +368,17 @@ async function drag(p, from, to) {
             const answer = await until(p, "(() => { const m = document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-vibe:not(.ovdk-typing)'); return m ? { text: m.innerText, link: (m.querySelector('a') || {}).href || null } : null; })()", 'Vibe\'s answer', 6000);
             assert.match(answer.text, /Reminder set: Stretch, every 2 hours/);
             assert.strictEqual(answer.link, 'https://openvibe.today/reminders', 'an https link is a link');
+            // What Vibe did, under its answer: a reminder chip with Undo and Open (plan L48 V2, result chips).
+            const chip = await until(p, "(() => { const c = document.querySelector('.ovdk [data-panel=vibe] .ovdk-res-c'); return c ? { text: c.innerText, open: (c.querySelector('a') || {}).href, undo: !!c.querySelector('button') } : null; })()", 'the result chip');
+            assert.match(chip.text, /Reminder set: Stretch/);
+            assert.match(chip.text, /Every 2 hours, 9 am–5 pm/);
+            assert.strictEqual(chip.open, 'https://openvibe.today/me#reminders');
+            assert.ok(chip.undo, 'Undo while it can be undone');
+            await p.evaluate("document.querySelector('.ovdk .ovdk-res-c button').click()");
+            await until(p, "!!document.querySelector('.ovdk .ovdk-res-c.is-stopped')", 'the chip says it is stopped');
+            assert.deepStrictEqual(undone[0], { message_id: vibeMsgs.find((m) => m.from === 'vibe').id, index: 0 }, 'undo names the answer and the result');
+            assert.match(await p.evaluate("document.querySelector('.ovdk .ovdk-res-c').innerText"), /Reminder stopped: Stretch/);
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-res-c button')"), false, 'and is not offered again');
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-typing')"), false, 'the writing dots go when it answers');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-away').href"), 'https://openvibe.chat/vibe/v1', 'Open in Chat goes to the same chat');
             await wait(900);

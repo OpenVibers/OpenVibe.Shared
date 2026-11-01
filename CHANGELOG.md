@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.79.0 — 2026-11-01
+
+- **What Vibe did, as chips you can undo** (plan L48 V2). Under a Vibe answer that set or stopped a reminder or a
+  timer (OpenVibe.Chat's `results` on the message), the Dock's Vibe tab shows a chip: "Reminder set: Stretch · Every
+  2 hours", "Timer: 25 min focus". **Undo** for a day (Chat's `POST /api/vibe/undo`), **Open** for a reminder; an undone
+  one reads "stopped" and is not offered again.
+- **A timer Vibe starts shows at once.** When Vibe's answer started a timer ("Vibe, a 25-minute focus timer"), the Dock
+  reads its state again, so the pill counts down without waiting for the next poll. The Vibe tab's mount takes
+  `refresh`.
+
 ## 4.78.0 — 2026-11-01
 
 - **`kit-layout.css`: the fluid scale, the layout primitives and a classless base** (plan L54 K1/K2). A file of its
