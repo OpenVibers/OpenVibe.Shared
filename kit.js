@@ -28,6 +28,7 @@
  *   kit.empty({ title, text, action: { href, label } }) · kit.notice({ kind, text }) · kit.more({ label, items })
  *   kit.button({ href | type, label, icon, kind }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
  *   kit.mark({ name, src, hue, square }) · kit.when(ts) → { iso, text } · kit.esc(text) · kit.ICONS (names)
+ *   kit.mediaW(url, width)                                      a Media object at a resize width (64/96/160/320/480/640)
  *   kit.sidebar({ id, label, action, find, nav, sections, foot }) · kit.sidebarButton({ id }) · kit.withSidebar({ sidebar,
  *   body })                                                       the left sidebar: vertical navigation, a drawer on phones
  *
@@ -49,6 +50,10 @@
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     /** A URL kept only when it is http(s), a same-site path, a query or a fragment; anything else becomes '#'. */
     const url = (u) => { const s = String(u == null ? '' : u).trim(); return /^(https?:\/\/|\/(?!\/)|\?|#)/i.test(s) ? s : '#'; };
+    // A Media object (openvibe.media/o/med_…) at a width from Media's resize ladder (64, 96, 160, 320, 480, 640); any other
+    // URL as url() gives it. Avatars and pictures are stored as uploaded: Report and Community drew a 3072 px, 3 MB
+    // avatar at 34 px (4.87.0).
+    const mediaW = (u, w) => { const s = url(u); return /^https:\/\/openvibe\.media\/o\/med_[0-9A-Za-z]+$/.test(s) ? `${s}?w=${Number(w) || 160}` : s; };
     const attrs = (o) => Object.keys(o || {}).filter((k) => o[k] != null && o[k] !== false && /^[a-z][a-z0-9-]*$/i.test(k)).map((k) => (o[k] === true ? ` ${k}` : ` ${k}="${esc(o[k])}"`)).join('');
 
     // ── Icons: 24-unit line drawings in the text's colour (stroke 2, round), one set for every site ──
@@ -142,7 +147,7 @@
     function mark({ name = '?', src = '', hue = null, square = false, size = null } = {}) {
         const cls = `ovk-mark${square ? ' ovk-mark--square' : ''}`;
         const st = size ? `--ovk-mark:${Number(size) || 40}px;` : '';
-        if (src && url(src) !== '#') return `<img class="${cls}" src="${esc(url(src))}" alt="" loading="lazy" decoding="async"${st ? ` style="${st}"` : ''}>`;
+        if (src && url(src) !== '#') return `<img class="${cls}" src="${esc(mediaW(src, (Number(size) || 40) > 48 ? 160 : 96))}" alt="" loading="lazy" decoding="async"${st ? ` style="${st}"` : ''}>`;
         const words = String(name || '?').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/).filter(Boolean);
         const letters = (words.length > 1 ? [...words[0]][0] + [...words[1]][0] : [...(words[0] || '?')].slice(0, 2).join('')).toUpperCase();
         return `<span class="${cls}" style="${st}--ovk-hue:${hue == null ? hueOf(name) : Number(hue) || 0}" aria-hidden="true">${esc(letters)}</span>`;
@@ -395,7 +400,7 @@
         const link = url(href);
         const first = String(preview || '').split('\n').slice(0, 9).join('\n').slice(0, 480).trimEnd();
         const pic = media(image)
-            ? `<img src="${esc(image)}" alt="${esc(alt)}" loading="lazy" decoding="async">`
+            ? `<img src="${esc(mediaW(image, 640))}" alt="${esc(alt)}" loading="lazy" decoding="async">`
             : first ? `<pre class="ovk-card-pre" aria-hidden="true">${esc(first)}</pre>`
                 : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
         const loop = media(video) ? `<video class="ovk-card-video" data-src="${esc(video)}" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>` : '';
@@ -837,7 +842,7 @@
 
     return {
         skeleton,
-        esc, url, icon, ICONS, PATHS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
+        esc, url, mediaW, icon, ICONS, PATHS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,

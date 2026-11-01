@@ -18,6 +18,10 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **The footer's "Nobody live right now" line reaches 4.5:1.** `.ovf-pulse-quiet` was the theme's muted text on the
   pulse's tint: 4.34:1 on Daylight, on every page with a footer (axe flagged 42 inner pages). It is now the
   secondary text.
+- **Room kit pictures load at the size they are drawn.** `kit.mark` and `kit.card` put a Media object's original
+  upload in the page: Report and Community drew a 3072 px, 3 MB avatar at 34 px, and Community a 2460 px picture in a
+  280 px card. They now ask Media's resize ladder for the width (`?w=96` or `160` for marks, `640` for card
+  pictures); `kit.mediaW(url, width)` does the same for a site's own images.
 
 ## 4.86.0 — 2026-11-01
 
