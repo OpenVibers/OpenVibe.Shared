@@ -33,4 +33,9 @@ assert.match(kit, /@media \(prefers-reduced-motion: reduce\) \{ :root:root \{ --
 assert.match(kit, /:is\(\[data-theme=paper\][^{]*\) \{\s*--ov-dur-1: \.15s;/, 'Paper is calm');
 const fx = fs.readFileSync(path.join(__dirname, '..', 'ov-fx.js'), 'utf8');
 assert.ok(fx.includes('--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s'), 'the same values as ov-fx.js');
-console.log('kit-shape: tokens, the kit on them, the personalities and the motion');
+// Status in words (4.83.0): the kit writes a status in the theme's readable -text colour, never its fill colour.
+assert.ok(kit.includes('--ovk-ok-text: var(--success-text, var(--ovk-ok));') && kit.includes('--ovk-bad-text: var(--danger-text, var(--ovk-bad));'), 'the -text status tokens');
+assert.doesNotMatch(kit, /[^-\w]color: var\(--ovk-(ok|warn|bad)\)/, 'no word in a fill colour');
+const data = fs.readFileSync(path.join(__dirname, '..', 'kit-data.css'), 'utf8');
+assert.doesNotMatch(data, /[^-\w]color: var\(--ovk-(ok|warn|bad)\)/, 'nor in kit-data.css');
+console.log('kit-shape: tokens, the kit on them, the personalities, the motion and status words');

@@ -21,6 +21,11 @@
     --ovk-ok: var(--success, #22c55e);
     --ovk-warn: var(--warning, #f59e0b);
     --ovk-bad: var(--danger, var(--error, #ef4444));
+    /* Status in words (4.83.0): a theme's -text status colours are its readable ones; the fills above are for shapes. On
+     * a light theme the fill green or amber on white was about 2:1 (openvibe.design/kit's "paid" and "expiring"). */
+    --ovk-ok-text: var(--success-text, var(--ovk-ok));
+    --ovk-warn-text: var(--warning-text, var(--ovk-warn));
+    --ovk-bad-text: var(--danger-text, var(--ovk-bad));
     --ovk-live: var(--live-red, #ef4444);
     /* Shape and elevation (4.81.0, plan L45 step 2): the kit's corners and shadows as tokens a look can set, so a theme
      * has a shape as well as colours. The defaults are the kit's own corners and shadows; the personalities follow. */
