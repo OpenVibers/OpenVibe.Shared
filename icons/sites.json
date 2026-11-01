@@ -69,6 +69,11 @@
     "description": "Name it, price it, run it",
     "icon": "network"
   },
+  "download": {
+    "name": "OpenVibe.Download",
+    "description": "Your files, shared on your terms",
+    "icon": "media"
+  },
   "events": {
     "name": "OpenVibe.Events",
     "description": "Events your services can count on.",
@@ -97,6 +102,11 @@
   "help": {
     "name": "OpenVibe.Help",
     "description": "Answers for every OpenVibe site",
+    "icon": "network"
+  },
+  "homes": {
+    "name": "OpenVibe.Homes",
+    "description": "Every home for sale, one search",
     "icon": "network"
   },
   "host": {
@@ -143,6 +153,11 @@
     "name": "OpenRestream",
     "description": "Go live once, stream everywhere",
     "icon": "network"
+  },
+  "pics": {
+    "name": "OpenVibe.Pics",
+    "description": "Share pictures. Fast, open, yours.",
+    "icon": "media"
   },
   "play": {
     "name": "OpenVibe.Play",
@@ -238,6 +253,11 @@
     "name": "OpenVibe.Watch",
     "description": "Know the moment it changes",
     "icon": "network"
+  },
+  "website": {
+    "name": "OpenVibe.Website",
+    "description": "Websites that look finished",
+    "icon": "space"
   },
   "wiki": {
     "name": "OpenVibe.Wiki",

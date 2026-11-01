@@ -28,6 +28,9 @@ function serviceIds() {
 }
 
 function siteOf(id) {
+    // A domain card (openvibe.pics, …) names itself; its icon is its service's (social.iconSite).
+    const d = social.domainOf(id);
+    if (d) return { id, name: d.name, tagline: d.tagline };
     const m = JSON.parse(fs.readFileSync(path.join(SERVICES, `${id}.json`), 'utf8'));
     if (!m.site) throw new Error(`${id}: no site block`);
     return { id, name: m.site.name, tagline: m.site.tagline || '' };
