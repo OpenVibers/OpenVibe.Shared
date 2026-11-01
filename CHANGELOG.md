@@ -14,6 +14,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
     same way as every other card.
   - `icons/sites.json` names their app icons (`scripts/build-icons.js`): installable apps and the app-icons test
     need an entry for every site with a card.
+  - The update log (`shipped.js`) knows the fourteen as sites, so each one's own feed is shown. A Services subdomain
+    (`ai.`, `bench.openvibe.services`) and `open.shoes` resolve to their own site, the way Network's subdomains do.
 
 ## 4.84.0 — 2026-11-01
 

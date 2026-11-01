@@ -45,6 +45,8 @@
         video: 'Video', pics: 'Pics', rent: 'Rent', homes: 'Homes', work: 'Work', food: 'Food', help: 'Help', quest: 'Quest',
         website: 'Website', fund: 'Fund', 'media-hub': 'Media Hub', extensions: 'Extensions', contracts: 'Contracts', sdk: 'SDK',
         shared: 'Shared', examples: 'Examples', publishing: 'Publishing', play: 'Play', inventory: 'Inventory',
+        bench: 'Bench', cam: 'Cam', casino: 'Casino', design: 'Design', domains: 'Domains', exchange: 'Exchange', fun: 'Fun',
+        meme: 'Meme', report: 'Report', surf: 'Surf', today: 'Today', tours: 'Tours', vision: 'Vision', shoes: 'Shoes',
     };
     const STYLE_ID = 'ov-shipped-style';
     const TEXT = 'var(--text-primary,var(--text,inherit))';
@@ -143,6 +145,12 @@
             const sub = h.replace(/\.?openvibe\.network$/, '');
             return SITE_NAMES[sub] && sub !== 'network' ? sub : 'network';
         }
+        // The Services family lives on its subdomains (ai., bench.openvibe.services), like the Network's.
+        if (/(^|\.)openvibe\.services$/.test(h)) {
+            const sub = h.replace(/\.?openvibe\.services$/, '');
+            return SITE_NAMES[sub] && sub !== 'services' ? sub : 'services';
+        }
+        if (/(^|\.)open\.shoes$/.test(h)) return 'shoes';
         const m = /(?:^|\.)openvibe\.([a-z]+)$/.exec(h);
         return m && SITE_NAMES[m[1]] ? m[1] : null;
     }
