@@ -13,6 +13,8 @@
 //     never reads as a tap outside the sheet;
 //   • Vibe (L48 V2): the person's Vibe from Chat's /api/vibe, starters before the first message, a question posted and
 //     Vibe's answer arriving in place (an https link as a link), and the Vibe tab kept in the Network's state;
+//   • the timer (L48 R2): the header's menu starts one, the pill counts it down when the Dock is closed, its end
+//     clears it and says so, and a focus round's end writes its break from that same end (any page, the same result);
 //   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
 //     its tabs and its styles, the page keeps the pill saying where the Dock went, and closing the window brings the
 //     panel back; the Network is told.
@@ -360,6 +362,50 @@ async function drag(p, from, to) {
             await p.close();
         }
 
+        // ── The timer (L48 R2): start from the menu, count down in the pill, end, and a focus round moves on by itself. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState() } };
+            puts.length = 0;
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await p.evaluate("OpenVibeDock.open({ tab: 'activity' })");
+            await until(p, CARD, 'the card');
+            await p.evaluate("document.querySelector('.ovdk [data-act=timer]').click()");
+            await until(p, "!!document.querySelector('.ovdk .ovdk-tmenu')", 'the timer menu');
+            await p.evaluate("document.querySelector('.ovdk .ovdk-tmenu [data-min=\"5\"]').click()");
+            const strip = await until(p, "(() => { const s = document.querySelector('.ovdk .ovdk-timer'); return s ? s.innerText : null; })()", 'the timer strip in the Dock');
+            assert.match(strip, /^[45]:\d\d/, `about five minutes left (${strip})`);
+            await wait(900);
+            const started = puts.find((b) => b.timer);
+            assert.ok(started && started.timer.kind === 'timer' && Date.parse(started.timer.ends_at) - Date.parse(started.timer.started_at) === 300000, `the Network keeps the timer (${JSON.stringify(puts)})`);
+            await p.evaluate("document.querySelector('.ovdk [data-act=close]').click()");
+            const pill = await until(p, `(() => { const q = ${PILL}; return q && /^\\d+:\\d\\d$/.test(q.text) ? q : null; })()`, 'the pill counts it down');
+            assert.strictEqual(pill.tone, 'timer');
+            assert.match(pill.label, /Timer: \d+:\d\d left/);
+            // Another page's view: a timer two seconds from its end.
+            const soon = (ms, extra = {}) => ({ kind: 'timer', started_at: new Date(Date.now() - 60000).toISOString(), ends_at: new Date(Date.now() + ms).toISOString(), ...extra });
+            scenario.state = { ...defaultState(), timer: soon(1500) };
+            puts.length = 0;
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            const up = await until(p, `(() => { const q = ${PILL}; return q && q.text === "Time's up" ? q : null; })()`, 'the end, said', 8000);
+            assert.match(up.label, /time's up/i);
+            await wait(900);
+            assert.ok(puts.some((b) => 'timer' in b && b.timer === null), `a plain timer clears itself at its end (${JSON.stringify(puts)})`);
+            // A focus round ending: its break starts at that same end, whatever page writes it.
+            const end = Date.now() + 1200;
+            scenario.state = { ...defaultState(), timer: { kind: 'focus', label: 'Write', started_at: new Date(end - 25 * 60000).toISOString(), ends_at: new Date(end).toISOString(), round: 1, rounds: 2, focus_min: 25, break_min: 5 } };
+            puts.length = 0;
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, `(() => { const q = ${PILL}; return q && q.tone === 'timer' ? q : null; })()`, 'the focus round in the pill');
+            await wait(2600);
+            const brk = puts.map((b) => b.timer).find((t) => t && t.kind === 'break');
+            assert.ok(brk, `the break follows the focus round (${JSON.stringify(puts)})`);
+            assert.strictEqual(Date.parse(brk.started_at), end, 'it starts where the round ended');
+            assert.strictEqual(Date.parse(brk.ends_at), end + 5 * 60000, 'five minutes');
+            assert.deepStrictEqual([brk.round, brk.rounds, brk.label], [1, 2, 'Write']);
+            await p.close();
+        }
+
         // ── Network without the route yet (404): no pill, and the site stops asking for a day. Signed out: none. ──
         {
             scenario = { missing: true };
@@ -376,7 +422,7 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all');
             await p.close();
         }
-        console.log('dock-chrome: the pill only when it matters, Vibe, Agents, Chats and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
+        console.log('dock-chrome: the pill only when it matters, Vibe, Agents, Chats and Activity, the timer, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
     } finally {
         await browser.close();
         server.close();

@@ -4,6 +4,24 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.76.0 — 2026-11-01
+
+- **A timer in the Dock, on every site** (plan L48 R2; the owner, 2026-11-01: "a reminder system… timer or however
+  often they want").
+  - The Dock's header has a timer button with 5, 10 and 25 minutes, focus rounds (25/5 ×4, 50/5 ×2), or your own
+    minutes and what it is for.
+  - The timer lives in the Network's Dock state (`timer`, openvibe-contracts 0.271.0, Network #482), so it counts
+    down on every OpenVibe site the person has open and follows them to the next.
+  - **The pill** shows the minutes left (an agent that needs you still comes first). **The open Dock** shows a strip
+    with the time, what it is for, a line that fills, +5 min and Stop.
+  - **At its end:** a soft chime on a page that is showing, a notification when the person allowed them (asked once,
+    when they start one), and "Time's up" in the pill. A focus round moves on to its break and its next round by
+    itself; every page computes that from the same end time, so two pages writing it agree.
+  - `dock-timer.js`, a new served file (3.7 KB brotli), loads only while a timer runs or its menu opens. `dock.js`
+    grows by 0.45 KB (budget noted).
+- **The Dock's header fits four tabs and four buttons.** The tabs are a sideways rail that never runs under the
+  buttons, and a narrow Dock tightens both.
+
 ## 4.75.0 — 2026-11-01
 
 - **The Dock keeps the Vibe tab across sites.** The Network's Dock state knows `vibe` since openvibe-contracts 0.270.0
