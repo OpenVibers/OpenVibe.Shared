@@ -27,8 +27,12 @@ const CSS = [
     // when small; a glyph with a solid drawing shows that instead (its lines go to 0, the solid group's clip opens).
     // A browser without clip-path on SVG groups shows the solid one at every size: still the right icon.
     '.ovg>svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:calc(var(--ovg-stroke,2) * 1px + max(0px, (18.4px - 1.15em) * .25));stroke-linecap:round;stroke-linejoin:round;overflow:visible}',
-    '.ovg>svg.has-s{stroke-width:min(var(--ovg-stroke,2) * 1px, max(0px, (1.15em - 18.4px) * 999))}',
-    '.ovg>svg>.ovg-s{fill:currentColor;stroke:none;clip-path:inset(max(0px, (1.15em - 18.4px) * 999))}',
+    // Where line turns solid (4.71.0, plan L56): --ovg-solid-below is an area's own switch point (default 18.4 px), and
+    // --ovg-pref is the person's preference (display setting `icons`, <html data-ov-icons>), which wins over an area's:
+    // solid is a switch point no icon reaches, line one every icon passes. .ovg-solid and .ovg-line still win over both.
+    'html[data-ov-icons=solid]{--ovg-pref:99999px}html[data-ov-icons=line]{--ovg-pref:0px}',
+    '.ovg>svg.has-s{stroke-width:min(var(--ovg-stroke,2) * 1px + max(0px, (18.4px - 1.15em) * .25), max(0px, (1.15em - var(--ovg-pref, var(--ovg-solid-below, 18.4px))) * 999))}',
+    '.ovg>svg>.ovg-s{fill:currentColor;stroke:none;clip-path:inset(max(0px, (1.15em - var(--ovg-pref, var(--ovg-solid-below, 18.4px))) * 999))}',
     '.ovg>svg>.ovg-s .ln{fill:none;stroke:currentColor;stroke-width:2.6px}',
     '.ovg>svg>.ovg-s,.ovg>svg>.ovg-s *{stroke-dasharray:none!important;animation:none!important}',
     // Line or solid on purpose (4.70.0; the owner, 2026-11-01: "both sets for any size… swap between them… whichever

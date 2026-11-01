@@ -69,4 +69,24 @@ assert.ok(/html\[data-ov-oled=on\]\[data-theme-mode=dark\]\{--bg-primary:#000!im
 assert.ok(/html\[data-ov-colors=cb-safe\]\[data-theme-mode=light\]/.test(css), 'colour-blind-safe colours have a light half');
 assert.ok(!/url\(/.test(css), 'no font or image is fetched');
 
-console.log('display comfort: defaults, set, unknown values, saved paint, CSS behind attributes');
+// 6. Icons (4.71.0, plan L56): auto by default (no attribute), line or solid as <html data-ov-icons>, kept like the rest;
+//    the glyphs' CSS turns the attribute into the switch point every icon reads, and the navbar and bell follow it.
+p = load();
+assert.strictEqual(p.L.display.get().icons, 'auto');
+assert.strictEqual(p.html.getAttribute('data-ov-icons'), null, 'auto paints nothing');
+p.L.display.set({ icons: 'solid' }, { local: true });
+assert.strictEqual(p.html.getAttribute('data-ov-icons'), 'solid');
+p.L.display.set({ icons: 'outline' }, { local: true });
+assert.strictEqual(p.html.getAttribute('data-ov-icons'), 'solid', 'an unknown value changes nothing');
+p.L.display.set({ icons: 'auto' }, { local: true });
+assert.strictEqual(p.html.getAttribute('data-ov-icons'), null);
+p = load({ store: new Map([['ov_display', JSON.stringify({ icons: 'line' })]]) });
+assert.strictEqual(p.html.getAttribute('data-ov-icons'), 'line', 'a saved preference paints on the next page');
+assert.ok(/'data-ov-icons'\]/.test(SRC) || SRC.includes("'data-ov-oled', 'data-ov-icons']"), 'the preference travels with the look (PAINT_ATTRS)');
+const glyphCss = require('fs').readFileSync(require('path').join(__dirname, '..', 'ov-glyphs.js'), 'utf8');
+assert.ok(glyphCss.includes('html[data-ov-icons=solid]{--ovg-pref:99999px}html[data-ov-icons=line]{--ovg-pref:0px}'), 'the glyphs read the preference');
+assert.ok(glyphCss.includes('var(--ovg-pref, var(--ovg-solid-below, 18.4px))'), 'the person\'s preference wins over an area\'s switch point');
+const lookSrc = require('fs').readFileSync(require('path').join(__dirname, '..', 'ov-look.js'), 'utf8');
+assert.ok(/data-look-icons/.test(lookSrc) && /L\.display\.set\(\{ icons:/.test(lookSrc), 'the Look panel offers Auto, Line and Solid');
+
+console.log('display comfort: defaults, set, unknown values, saved paint, CSS behind attributes, icons');

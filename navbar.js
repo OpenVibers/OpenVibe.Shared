@@ -57,7 +57,7 @@
             .openvibe-navbar .openvibe-navbar-brand { gap: 6px; padding: 2px; border-radius: 12px; margin-right: 0; }
             .openvibe-navbar .openvibe-navbar-brand .flame { display: inline-grid; place-items: center; width: auto; min-width: 30px; height: 30px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; transition: background .15s; }
             .openvibe-navbar .openvibe-navbar-brand .flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
-            .openvibe-navbar .openvibe-navbar-brand .name { align-items: center; gap: 0; font-family: 'OV Brand', Nunito, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 17px; letter-spacing: -.1px; }
+            .openvibe-navbar .openvibe-navbar-brand .name { align-items: center; gap: 0; font-family: 'OV Brand', Nunito, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 19px; letter-spacing: -.25px; }
             .openvibe-navbar .openvibe-navbar-brand .name a { padding: 3px 1px; border-radius: 6px; transition: color .15s, background .15s; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-sub { color: var(--text-primary, #e6edf7); font-weight: 900; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
@@ -172,7 +172,7 @@
             @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
             @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
                 .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
-                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 15px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; } }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16.5px; letter-spacing: -.25px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
@@ -199,7 +199,7 @@
             }
             @media (min-width: 401px) and (max-width: 480px) {
                 .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; }
-                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 15px; letter-spacing: -.2px; }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 17px; letter-spacing: -.25px; }
                 .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
             }
             @media (max-width: 480px) {
@@ -265,7 +265,13 @@
                over the page. */
             .openvibe-navbar .ovnav-msgs { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; cursor: pointer; color: var(--text-secondary, #a8b3c4); }
             .openvibe-navbar .ovnav-msgs:hover, .openvibe-navbar .ovnav-msgs:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--text-primary, #e6edf7); }
-            .openvibe-navbar .ovnav-msgs .ovnav-ic { width: 19px; height: 19px; }
+            .openvibe-navbar .ovnav-msgs .ovnav-ic { width: 22px; height: 22px; }
+            .ovnav-ovg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; overflow: visible; vertical-align: -.2em; }
+            .ovnav-chip .ovnav-ovg, .ovnav-chip-mini .ovnav-ovg, .ovnav-chips-pop .ovnav-ovg { stroke-width: 2.3; }
+            .ovnav-ovg > .ovg-s { display: none; fill: currentColor; stroke: none; }
+            .ovnav-ovg > .ovg-s .ln { fill: none; stroke: currentColor; stroke-width: 2.6px; }
+            html[data-ov-icons=solid] .ovnav-ovg.has-s, .ovnav-ab.is-here .ovnav-ovg.has-s { stroke-width: 0; }
+            html[data-ov-icons=solid] .ovnav-ovg.has-s > .ovg-s, .ovnav-ab.is-here .ovnav-ovg.has-s > .ovg-s { display: inline; }
             .openvibe-navbar .ovnav-msgs b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
             .openvibe-navbar .ovnav-msgs b:empty { display: none; }
             @media (max-width: 400px) { .openvibe-navbar .ovnav-msgs { width: 32px; height: 32px; } }
@@ -440,43 +446,39 @@
     // that font every menu row had an empty slot. Known names get an inline SVG; an unknown name still falls
     // back to the page's icon font, so sites that pass their own Font Awesome icons keep working.
     // BEGIN generated by scripts/build-navbar-icons.js from nav-icons.js; do not edit by hand
-    // Font Awesome Free 6 solid glyphs (CC BY 4.0, fontawesome.com/license/free) as filled paths,
-    // viewBox 0 0 <w> 512: only the ones the navbar draws itself. The rest of the set is nav-icons.js.
+    // The glyphs the navbar draws itself: [0, line, solid] is an OpenVibe glyph (24-unit grid); [w, path] a Font
+    // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 <w> 512 viewBox. The rest of the set is nav-icons.js.
     const NAV_ICONS = {
-        'fa-bell': [448, 'M224 11Q210 11 201 20Q192 29 192 43V62Q136 74 101 117Q65 160 64 219V238Q63 310 16 365L8 374Q-5 389 3 408Q12 426 32 427H416Q436 426 445 408Q453 389 440 374L433 365Q385 311 384 238V219Q383 160 347 117Q312 74 256 62V43Q256 29 247 20Q238 11 224 11ZM269 504Q288 485 288 459H224H160Q160 485 179 504Q198 523 224 523Q250 523 269 504Z'],
-        'fa-clock-rotate-left': [512, 'M75 86 41 52 75 86 41 52Q29 41 15 47Q1 52 0 69V179Q2 201 24 203H134Q151 202 156 188Q162 174 151 162L120 131Q174 77 256 75Q338 77 392 131Q446 185 448 267Q446 349 392 403Q338 457 256 459Q194 458 146 425Q135 417 122 419Q110 422 102 433Q94 444 96 456Q99 469 110 477Q173 522 256 523Q328 522 385 488Q443 454 477 396Q511 339 512 267Q511 195 477 138Q443 80 385 46Q328 12 256 11Q203 11 156 31Q110 51 75 86ZM256 139Q234 141 232 163V267Q232 277 239 284L311 356Q328 370 345 356Q359 339 345 322L280 257V163Q278 141 256 139Z'],
-        'fa-coins': [512, 'M512 91Q511 118 474 139Q428 164 351 170Q346 167 340 165Q279 140 192 139Q180 139 168 140L166 139Q129 118 128 91Q130 57 184 34Q238 12 320 11Q402 12 456 34Q510 57 512 91ZM161 172Q176 171 192 171Q239 171 278 180Q318 188 345 202Q383 223 384 251Q384 257 382 263Q374 283 347 298Q347 298 347 298Q347 298 347 298Q347 298 347 298Q347 298 347 298Q346 299 346 299Q346 299 346 299Q319 314 279 322Q240 331 192 331Q100 330 44 302Q41 300 38 299Q1 278 0 251Q1 224 36 204Q71 184 128 176Q144 173 161 172ZM416 251Q414 218 392 198Q435 191 468 177Q493 167 512 152V187Q511 217 468 238Q446 249 416 256Q416 256 416 256Q416 254 416 251ZM384 347Q383 374 346 395Q344 396 342 397Q341 397 340 398Q284 426 192 427Q144 427 105 418Q65 410 38 395Q1 374 0 347V312Q19 327 44 337Q105 362 192 363Q279 362 340 337Q352 332 363 326Q372 321 380 315Q381 314 383 313Q383 312 384 312V315V321V347ZM416 347V315V347V315V289Q445 283 468 273Q493 263 512 248V283Q512 299 497 314Q471 339 416 352Q416 350 416 347ZM192 459Q279 458 340 433Q365 423 384 408V443Q382 477 328 500Q274 522 192 523Q110 522 56 500Q2 477 0 443V408Q19 423 44 433Q105 458 192 459Z'],
-        'fa-palette': [512, 'M512 267Q512 268 512 268Q512 269 512 270Q511 297 490 314Q470 331 442 331H344Q324 332 310 345Q297 359 296 379Q296 384 297 389Q300 403 307 417Q307 418 308 419Q318 439 320 461Q320 485 305 503Q291 521 267 523Q261 523 256 523Q184 522 127 488Q69 454 35 396Q1 339 0 267Q1 195 35 138Q69 80 127 46Q184 12 256 11Q328 12 385 46Q443 80 477 138Q511 195 512 267ZM128 299Q128 285 119 276Q110 267 96 267Q82 267 73 276Q64 285 64 299Q64 313 73 322Q82 331 96 331Q110 331 119 322Q128 313 128 299ZM128 203Q142 203 151 194Q160 185 160 171Q160 157 151 148Q142 139 128 139Q114 139 105 148Q96 157 96 171Q96 185 105 194Q114 203 128 203ZM288 107Q288 93 279 84Q270 75 256 75Q242 75 233 84Q224 93 224 107Q224 121 233 130Q242 139 256 139Q270 139 279 130Q288 121 288 107ZM384 203Q398 203 407 194Q416 185 416 171Q416 157 407 148Q398 139 384 139Q370 139 361 148Q352 157 352 171Q352 185 361 194Q370 203 384 203Z'],
-        'fa-people-group': [640, 'M72 99Q73 67 100 51Q128 35 156 51Q183 67 184 99Q183 131 156 147Q128 163 100 147Q73 131 72 99ZM64 257Q49 274 48 299Q49 324 64 341V257ZM208 207Q162 249 160 315Q161 367 192 406V427Q192 441 183 450Q174 459 160 459H96Q82 459 73 450Q64 441 64 427V400Q35 386 18 360Q0 333 0 299Q1 251 33 220Q64 188 112 187H144Q181 188 208 207ZM448 427V406V427V406Q479 367 480 315Q478 249 432 207Q459 188 496 187H528Q576 188 607 220Q639 251 640 299Q640 333 622 360Q605 386 576 400V427Q576 441 567 450Q558 459 544 459H480Q466 459 457 450Q448 441 448 427ZM456 99Q457 67 484 51Q512 35 540 51Q567 67 568 99Q567 131 540 147Q512 163 484 147Q457 131 456 99ZM576 257V341V257V341Q592 324 592 299Q592 274 576 257ZM320 43Q356 44 375 75Q393 107 375 139Q356 170 320 171Q284 170 265 139Q247 107 265 75Q284 44 320 43ZM240 315Q241 340 256 357V273Q241 290 240 315ZM384 273V357V273V357Q400 340 400 315Q400 290 384 273ZM448 315Q448 349 430 376Q413 402 384 416V459Q384 473 375 482Q366 491 352 491H288Q274 491 265 482Q256 473 256 459V416Q227 402 210 376Q192 349 192 315Q193 267 225 236Q256 204 304 203H336Q384 204 415 236Q447 267 448 315Z'],
-        'fa-plus': [448, 'M256 91Q256 77 247 68Q238 59 224 59Q210 59 201 68Q192 77 192 91V235H48Q34 235 25 244Q16 253 16 267Q16 281 25 290Q34 299 48 299H192V443Q192 457 201 466Q210 475 224 475Q238 475 247 466Q256 457 256 443V299H400Q414 299 423 290Q432 281 432 267Q432 253 423 244Q414 235 400 235H256V91Z'],
-        'fa-right-from-bracket': [512, 'M378 117 501 240 378 117 501 240Q512 251 512 267Q512 283 501 294L378 417Q368 427 354 427Q340 427 330 417Q320 407 320 393V331H192Q178 331 169 322Q160 313 160 299V235Q160 221 169 212Q178 203 192 203H320V141Q320 127 330 117Q340 107 354 107Q368 107 378 117ZM160 107H96H160H96Q82 107 73 116Q64 125 64 139V395Q64 409 73 418Q82 427 96 427H160Q174 427 183 436Q192 445 192 459Q192 473 183 482Q174 491 160 491H96Q55 490 28 463Q1 436 0 395V139Q1 98 28 71Q55 44 96 43H160Q174 43 183 52Q192 61 192 75Q192 89 183 98Q174 107 160 107Z'],
-        'fa-shield-halved': [512, 'M256 11Q263 11 269 14L458 94Q475 101 485 116Q496 131 496 151Q497 202 479 271Q461 340 414 405Q368 471 282 514Q256 526 230 514Q144 471 98 405Q51 340 33 271Q15 202 16 151Q16 131 27 116Q37 101 54 94L243 14Q249 11 256 11ZM256 78V456V78V456Q324 421 363 367Q401 313 417 256Q432 198 432 152L256 78Z'],
-        'fa-text-height': [576, 'M64 139V107V139V107H128V427H96Q82 427 73 436Q64 445 64 459Q64 473 73 482Q82 491 96 491H224Q238 491 247 482Q256 473 256 459Q256 445 247 436Q238 427 224 427H192V107H256V139Q256 153 265 162Q274 171 288 171Q302 171 311 162Q320 153 320 139V91Q319 71 306 57Q292 44 272 43H160H48Q28 44 14 57Q1 71 0 91V139Q0 153 9 162Q18 171 32 171Q46 171 55 162Q64 153 64 139ZM503 52Q493 43 480 43Q467 43 457 52L393 116Q379 132 386 151Q395 170 416 171H448V363H416Q395 364 386 383Q379 402 393 418L457 482Q467 491 480 491Q493 491 503 482L567 418Q581 402 574 383Q565 364 544 363H512V171H544Q565 170 574 151Q581 132 567 116L503 52Z'],
-        'fa-tower-broadcast': [576, 'M80 55Q64 94 64 139Q64 184 80 223Q85 236 80 247Q75 259 63 265Q50 270 38 265Q26 259 21 247Q0 197 0 139Q0 81 21 31Q26 19 38 14Q50 9 63 13Q75 19 80 30Q85 42 80 55ZM555 31Q576 81 576 139Q576 197 555 247Q550 259 538 264Q526 269 513 265Q501 259 496 248Q491 236 496 223Q512 184 512 139Q512 94 496 55Q491 42 496 31Q501 19 513 13Q526 8 538 13Q550 19 555 31ZM352 139Q350 176 320 194V491Q320 505 311 514Q302 523 288 523Q274 523 265 514Q256 505 256 491V194Q226 176 224 139Q225 112 243 94Q261 76 288 75Q315 76 333 94Q351 112 352 139ZM171 88Q160 111 160 139Q160 167 171 190Q176 203 171 215Q166 227 154 232Q141 237 130 233Q118 228 112 216Q96 180 96 139Q96 98 112 62Q118 50 130 45Q142 41 154 46Q166 51 171 63Q176 75 171 88ZM464 62Q480 98 480 139Q480 180 464 216Q458 228 446 233Q434 237 422 232Q410 227 405 215Q400 203 405 190Q416 167 416 139Q416 111 405 88Q400 75 405 63Q410 51 422 46Q435 41 446 45Q458 50 464 62Z'],
-        'fa-user-secret': [448, 'M224 27Q215 26 209 21Q208 21 208 21Q201 13 176 11Q153 12 137 39Q120 65 110 100Q74 107 53 117Q32 127 32 139Q35 161 97 175Q96 181 96 187Q96 213 105 235H45Q33 236 32 248Q32 251 33 253L72 350Q39 375 20 412Q0 449 0 493Q0 506 9 514Q17 523 30 523H418Q431 523 439 514Q448 506 448 493Q448 449 428 412Q409 375 376 350L415 253Q416 251 416 248Q415 236 403 235H343Q352 213 352 187Q352 181 351 175Q413 161 416 139Q416 127 395 117Q374 107 338 100Q328 65 311 39Q295 12 272 11Q247 13 240 21Q240 21 240 21Q239 21 239 21Q233 26 224 27ZM280 235H268H280H268Q241 234 231 209Q229 204 224 204Q219 204 217 209Q207 234 181 235H168Q151 235 140 223Q128 212 128 195V181Q171 187 224 187Q277 187 320 181V195Q320 212 308 223Q297 235 280 235ZM192 331 208 363 192 331 208 363 176 491 128 299 192 331ZM320 299 272 491 320 299 272 491 240 363 256 331 320 299Z'],
-        'fa-wallet': [512, 'M64 43Q37 44 19 62Q1 80 0 107V427Q1 454 19 472Q37 490 64 491H448Q475 490 493 472Q511 454 512 427V203Q511 176 493 158Q475 140 448 139H80Q65 138 64 123Q65 108 80 107H448Q462 107 471 98Q480 89 480 75Q480 61 471 52Q462 43 448 43H64ZM416 283Q430 283 439 292Q448 301 448 315Q448 329 439 338Q430 347 416 347Q402 347 393 338Q384 329 384 315Q384 301 393 292Q402 283 416 283Z'],
-        'fa-wand-magic-sparkles': [576, 'M235 54 197 68 235 54 197 68Q192 70 192 75Q192 80 197 82L235 96L249 134Q251 139 256 139Q261 139 263 134L277 96L315 82Q320 80 320 75Q320 70 315 68L277 54L263 16Q261 11 256 11Q251 11 249 16L235 54ZM46 406Q32 421 32 440Q32 459 46 474L81 509Q95 523 115 523Q134 523 149 509L530 128Q544 113 544 94Q544 74 530 60L495 25Q481 11 461 11Q442 11 427 25L46 406ZM485 94 380 199 485 94 380 199 356 175 461 70 485 94ZM8 128Q0 131 0 139Q0 147 8 150L64 171L85 228Q88 235 96 235Q104 235 107 228L128 171L185 150Q192 147 192 139Q192 131 185 128L128 107L107 51Q104 43 96 43Q88 43 85 51L64 107L8 128ZM360 384Q352 387 352 395Q352 403 360 406L416 427L437 484Q440 491 448 491Q456 491 459 484L480 427L537 406Q544 403 544 395Q544 387 537 384L480 363L459 307Q456 299 448 299Q440 299 437 307L416 363L360 384Z'],
-        'fa-chevron-down': [512, 'M233 418Q243 427 256 427Q269 427 279 418L471 226Q480 216 480 203Q480 190 471 180Q461 171 448 171Q435 171 425 180L256 350L87 180Q77 171 64 171Q51 171 41 180Q32 190 32 203Q32 216 41 226L233 418Z'],
-        'fa-gear': [512, 'M496 178Q500 192 490 202L446 242Q448 254 448 267Q448 280 446 292L490 332Q500 342 496 356Q489 374 480 391L475 399Q465 415 453 430Q443 441 429 437L373 419Q353 435 329 444L317 502Q313 516 298 519Q278 523 256 523Q234 523 213 519Q199 516 195 502L183 444Q159 435 139 419L83 437Q69 441 59 430Q46 415 37 399L32 391Q23 374 16 357Q12 342 22 332L66 293Q64 280 64 267Q64 254 66 242L22 202Q12 192 16 178Q23 160 32 143L37 135Q46 119 59 104Q69 93 83 97L139 115Q159 99 183 89L195 32Q199 18 214 15Q234 11 256 11Q278 11 299 15Q313 18 317 32L329 89Q353 99 373 115L429 97Q443 93 453 104Q466 119 476 135L480 143Q489 160 496 178ZM256 347Q301 346 325 307Q347 267 325 227Q301 188 256 187Q211 188 187 227Q165 267 187 307Q211 346 256 347Z'],
-        'fa-circle-half-stroke': [512, 'M448 267Q446 185 392 131Q338 77 256 75V459Q338 457 392 403Q446 349 448 267ZM0 267Q1 197 34 139Q68 81 128 45Q189 11 256 11Q323 11 384 45Q444 81 478 139Q511 197 512 267Q511 337 478 395Q444 453 384 489Q323 523 256 523Q189 523 128 489Q68 453 34 395Q1 337 0 267Z'],
-        'fa-moon': [384, 'M224 43Q161 44 111 74Q60 103 30 154Q1 204 0 267Q1 330 31 380Q60 431 111 460Q161 490 224 491Q317 489 379 428Q387 419 382 409Q377 399 365 400Q351 403 335 403Q261 401 211 351Q162 302 160 227Q160 177 184 137Q209 97 249 74Q259 68 257 56Q254 46 242 44Q233 43 223 43Z'],
-        'fa-sun': [512, 'M362 12Q369 16 371 24L391 132L499 152Q507 154 511 161Q514 169 509 177L447 267L509 357Q514 365 511 373Q507 380 499 382L391 402L371 510Q369 518 362 522Q354 525 346 520L256 458L166 520Q158 525 151 522Q143 518 141 510L121 402L13 382Q5 380 1 373Q-2 365 3 357L65 267L3 177Q-2 169 1 162Q5 154 13 152L121 132L141 24Q143 16 151 12Q158 9 166 14L256 76L346 14Q354 9 362 12ZM160 267Q160 241 173 219Q186 197 208 184Q231 171 256 171Q281 171 304 184Q326 197 339 219Q352 241 352 267Q352 293 339 315Q326 337 304 350Q281 363 256 363Q231 363 208 350Q186 337 173 315Q160 293 160 267ZM384 267Q384 232 367 203Q350 174 320 156Q290 139 256 139Q222 139 192 156Q162 174 145 203Q128 232 128 267Q128 302 145 331Q162 360 192 378Q222 395 256 395Q290 395 320 378Q350 360 367 331Q384 302 384 267Z'],
-        'fa-comment-dots': [512, 'M256 459Q328 458 385 431Q443 403 477 356Q511 309 512 251Q511 193 477 146Q443 99 385 71Q328 44 256 43Q184 44 127 71Q69 99 35 146Q1 193 0 251Q1 320 48 372Q43 409 26 435Q18 449 11 456Q8 460 6 462Q6 463 5 463Q5 463 5 464Q-2 471 1 481Q6 491 16 491Q60 489 98 472Q133 456 152 441Q200 459 256 459ZM128 219Q142 219 151 228Q160 237 160 251Q160 265 151 274Q142 283 128 283Q114 283 105 274Q96 265 96 251Q96 237 105 228Q114 219 128 219ZM256 219Q270 219 279 228Q288 237 288 251Q288 265 279 274Q270 283 256 283Q242 283 233 274Q224 265 224 251Q224 237 233 228Q242 219 256 219ZM352 251Q352 237 361 228Q370 219 384 219Q398 219 407 228Q416 237 416 251Q416 265 407 274Q398 283 384 283Q370 283 361 274Q352 265 352 251Z'],
-        'fa-brain': [512, 'M184 11Q208 12 224 27Q239 43 240 67V467Q239 491 224 507Q208 522 184 523Q162 523 146 509Q131 495 128 473Q120 475 112 475Q85 474 67 456Q49 438 48 411Q48 400 52 390Q29 381 14 361Q0 341 0 315Q0 291 13 272Q25 253 46 243Q32 226 32 203Q32 180 46 163Q60 146 82 140Q80 132 80 123Q80 100 94 83Q107 67 128 61Q131 39 146 25Q162 11 184 11ZM328 11Q350 11 366 25Q381 39 384 61Q405 67 418 83Q432 100 432 123Q432 132 430 140Q452 146 466 163Q480 180 480 203Q480 226 466 243Q487 253 499 272Q512 291 512 315Q512 341 498 361Q483 381 460 390Q464 400 464 411Q463 438 445 456Q427 474 400 475Q392 475 384 473Q381 495 366 509Q350 523 328 523Q304 522 288 507Q273 491 272 467V67Q273 43 288 27Q304 12 328 11Z'],
+        'fa-bell': [0, '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>', '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>'],
+        'fa-clock-rotate-left': [0, '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4.5v4.1h4.1"/><path d="M12 8v4.2l3 1.8"/>', ''],
+        'fa-coins': [0, '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"/>', '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM11 6h2v1.2c1.1.2 2 .8 2.5 1.7l-1.7 1c-.3-.6-1-1-1.8-1-.9 0-1.5.4-1.5 1s.5.8 1.8 1.1c1.8.4 3.4 1 3.4 3 0 1.4-1 2.4-2.7 2.7V18h-2v-1.3c-1.2-.2-2.2-.9-2.7-1.9l1.7-1c.4.7 1.1 1.1 2 1.1 1 0 1.6-.4 1.6-1s-.6-.8-1.9-1.1c-1.7-.4-3.3-1-3.3-2.9 0-1.3 1-2.3 2.6-2.6Z"/>'],
+        'fa-palette': [0, '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', ''],
+        'fa-people-group': [0, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.6 3 2.4 3 5.2"/>', '<circle cx="9" cy="7.9" r="3.6"/><path d="M2.4 20.8c0-3.8 3-6.5 6.6-6.5s6.6 2.7 6.6 6.5Z"/><circle cx="16.6" cy="7.4" r="2.9"/><path d="M16.8 13.4c2.9.4 4.8 2.8 4.8 6.4V20.8h-4.4c0-2.9-1-5.2-2.8-6.7Z"/>'],
+        'fa-plus': [0, '<path d="M12 5v14M5 12h14"/>', ''],
+        'fa-right-from-bracket': [0, '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>', ''],
+        'fa-shield-halved': [0, '<path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6Z"/>', '<path d="M12 2.6 4.6 5.8V12c0 4.6 3.1 8 7.4 9.5 4.3-1.5 7.4-4.9 7.4-9.5V5.8Z"/>'],
+        'fa-text-height': [0, '<path d="M5.5 20 11 4h2l5.5 16M7.6 14h8.8"/>', ''],
+        'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
+        'fa-user-secret': [0, '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>', '<circle cx="12" cy="7.8" r="4.1"/><path d="M4.2 21c0-4.3 3.5-7.2 7.8-7.2s7.8 2.9 7.8 7.2Z"/>'],
+        'fa-wallet': [0, '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4M4 7.5V18a2 2 0 0 0 2 2h14V9H6.5A2.5 2.5 0 0 1 4 7.5Z"/><path d="M16 14.5h.01"/>', ''],
+        'fa-wand-magic-sparkles': [0, '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/>', '<path d="M12 2.6l2 5.6 5.6 2-5.6 2L12 17.8l-2-5.6-5.6-2 5.6-2ZM19 14.6l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9Z"/>'],
+        'fa-chevron-down': [0, '<path d="m6 9 6 6 6-6"/>', ''],
+        'fa-gear': [0, '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>', ''],
+        'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', ''],
+        'fa-moon': [0, '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>'],
+        'fa-sun': [0, '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', ''],
+        'fa-comment-dots': [0, '<path d="M4 5h16v11H8l-4 4Z"/>', '<path d="M3.5 5.6A1.6 1.6 0 0 1 5.1 4h13.8a1.6 1.6 0 0 1 1.6 1.6v9.8a1.6 1.6 0 0 1-1.6 1.6H8.6L3.5 21Z"/>'],
+        'fa-brain': [0, '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1.2V5.5A2 2 0 0 0 9 4ZM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1.2"/>', ''],
     };
-    // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives).
+    // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives); 0 is an OpenVibe glyph.
     const NAV_ICONS_LAZY = {
-        320: 'fa-chevron-right',
-        384: 'fa-xmark fa-arrow-down fa-play fa-plug fa-file-lines fa-location-dot fa-microphone',
-        448: 'fa-book fa-hand-fist fa-user fa-bars fa-arrow-right fa-check fa-tag fa-bolt fa-font fa-lock fa-utensils fa-hashtag fa-flag-checkered',
-        512: 'fa-camera fa-gauge-high fa-list-check fa-paste fa-scissors fa-screwdriver-wrench fa-arrow-up-right-from-square fa-magnifying-glass fa-file-pdf fa-clock fa-envelope fa-heart fa-circle-info fa-triangle-exclamation fa-globe fa-toolbox fa-server fa-newspaper fa-chart-line fa-pen-nib fa-key fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-gauge fa-pen fa-earth-americas fa-inbox fa-folder fa-puzzle-piece fa-shield fa-list fa-compass',
-        576: 'fa-house fa-id-card fa-video fa-star fa-tower-cell fa-diagram-project fa-money-bill-wave fa-crown fa-ticket fa-map fa-display',
-        640: 'fa-comments fa-gamepad fa-link fa-network-wired fa-people-arrows fa-shirt fa-code fa-robot fa-photo-film fa-wave-square fa-user-shield fa-infinity fa-tv',
+        0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-id-card fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-user fa-video fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
+        512: 'fa-puzzle-piece',
     };
-    const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '4cbc938e8e70';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '82afb8a8cb4d', 'ov-glyphs.js': '7d1c9a6e3934', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '220c2bf637aa', 'ov-fx.js': '46fce1e2b8db' };
+    const SIBLING_REV = { 'ov-mark.js': '82afb8a8cb4d', 'ov-glyphs.js': 'b5485aa05f97', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -491,7 +493,7 @@
     }
     function lazyWidth(name) {
         if (!_lazyWidth) { _lazyWidth = {}; for (const w in NAV_ICONS_LAZY) NAV_ICONS_LAZY[w].split(' ').forEach(n => { _lazyWidth[n] = Number(w); }); }
-        return _lazyWidth[name] || 0;
+        return Object.prototype.hasOwnProperty.call(_lazyWidth, name) ? _lazyWidth[name] : -1;   // 0: an OpenVibe glyph (24×24)
     }
     function adoptIcons() {
         const set = root.OpenVibeNavIcons;
@@ -524,7 +526,8 @@
         iconSlots().forEach((el) => {
             const g = NAV_ICONS[el.getAttribute('data-ovnav-ic')]; if (!g) return;
             el.removeAttribute('data-ovnav-ic'); el.removeAttribute('data-ovnav-cls');
-            el.innerHTML = `<path fill="currentColor" d="${g[1]}"/>`;
+            if (g[0] === 0) { el.innerHTML = g[1] + (g[2] ? `<g class="ovg-s">${g[2]}</g>` : ''); if (g[2]) el.classList.add('has-s'); }
+            else el.innerHTML = `<path fill="currentColor" d="${g[1]}"/>`;
         });
     }
     function iconsUnavailable() {
@@ -549,12 +552,22 @@
         try { requestAnimationFrame(() => setTimeout(start, 0)); } catch { /* */ }
         setTimeout(start, 300);     // background tabs get no animation frames
     }
+    // One hand in the bar (4.71.0; the owner, 2026-11-01: "both solid and border-line icons… weird"): every glyph the
+    // OpenVibe set has is drawn from it (openvibe-shared/glyphs, the line drawing and, where there is one, the solid one);
+    // an entry [0, line, solid] in NAV_ICONS. The bar is line; it goes solid where the person prefers solid icons
+    // (display setting `icons`, <html data-ov-icons>), and the app bar's tab you are on wears the solid one.
+    const ovSvg = (g, extra = '') => `<svg class="ovnav-ic ovnav-ovg${g && g[2] ? ' has-s' : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"${extra}>${g ? g[1] + (g[2] ? `<g class="ovg-s">${g[2]}</g>` : '') : ''}</svg>`;
     function navIcon(cls) {
         if (!cls) return '';
-        const key = String(cls).split(/\s+/).find(c => NAV_ICONS[c] || (_iconState !== 3 && lazyWidth(c)));
+        const key = String(cls).split(/\s+/).find(c => NAV_ICONS[c] || (_iconState !== 3 && lazyWidth(c) >= 0));
         if (!key) return `<i class="fa-solid ${escapeAttr(cls)}"></i>`;
         const g = NAV_ICONS[key] || (adoptIcons() ? NAV_ICONS[key] : null);
         const w = g ? g[0] : lazyWidth(key);
+        if (w === 0) {
+            if (g) return ovSvg(g);
+            loadIcons();
+            return ovSvg(null, ` data-ovnav-ic="${key}" data-ovnav-cls="${escapeAttr(cls)}"`);
+        }
         const svg = `<svg class="ovnav-ic" viewBox="0 0 ${w} 512" style="width:${(w / 512).toFixed(3)}em" aria-hidden="true" focusable="false"`;
         if (g) return `${svg}><path fill="currentColor" d="${g[1]}"/></svg>`;
         loadIcons();

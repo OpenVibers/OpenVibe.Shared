@@ -6,7 +6,8 @@
  *   OVLook.mount(box, { signedIn, season })    draws the panel into `box` and keeps it current (ov:theme, ov:display);
  *                                              season: false leaves out the season switch where the host has its own
  *
- * Theme swatches (the season's own while there is one), the season switch, where this look comes from, Share (4.67.0:
+ * Theme swatches (the season's own while there is one), the season switch, Icons (4.71.0: Auto, Line or Solid, the
+ * person's preference for every OpenVibe icon; plan L56), where this look comes from, Share (4.67.0:
  * a link that opens this page in your theme for anyone, with theme-loader's Use it / Stop bar; built-in themes only),
  * and "More looks" on openvibe.design, the home of every theme. State is theme-loader.js's: a pick applies at once, is
  * kept in this browser, saved to the account when signed in, and travels with links to the other OpenVibe sites.
@@ -34,6 +35,13 @@
         + '.ovlk .ovlk-share:hover{border-color:var(--accent,#3b82f6)}.ovlk .ovlk-share:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}'
         + '.ovlk a.ovlk-more{display:flex!important;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px!important;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.1));color:var(--text-primary,#e6edf7)!important;text-decoration:none;font-size:13px!important;font-weight:600!important;line-height:1.35}'
         + '.ovlk-more:hover{border-color:var(--accent,#3b82f6)}.ovlk-more span{color:var(--accent-light,var(--accent,#60a5fa))}'
+        + '.ovlk-icons{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 6px 6px 10px;border-radius:12px;background:var(--bg-tertiary,rgba(255,255,255,.05))}'
+        + '.ovlk-icons>b{color:var(--text-primary,#e6edf7);font-weight:650}'
+        + '.ovlk-seg{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:var(--bg-primary,rgba(0,0,0,.25))}'
+        + '.ovlk .ovlk-seg button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 10px;border-radius:999px;cursor:pointer;font-size:12.5px;color:var(--text-secondary,#a8b3c4)}'
+        + '.ovlk .ovlk-seg button[aria-checked=true]{background:var(--accent-strong,var(--accent,#3472d8));color:var(--on-accent-strong,#fff)}'
+        + '.ovlk .ovlk-seg button:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:1px}'
+        + '.ovlk-seg svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.ovlk-seg svg.is-solid{fill:currentColor;stroke:none}'
         + '@media (prefers-reduced-motion:reduce){.ovlk-switch::after{transition:none}}';
 
     function css() {
@@ -71,6 +79,17 @@
             panel.append(el('div', { class: 'ovlk-season' }, [el('span', {}, [el('b', {}, [`${season.name} theme`]), ` on the default look`]),
                 el('button', { type: 'button', class: 'ovlk-switch', role: 'switch', 'aria-checked': String(on), 'aria-label': `${season.name} theme`, 'data-look-season': '' })]));
         }
+        // Icons (4.71.0, plan L56; the owner, 2026-11-01: "a setting to prefer a certain icon type... configurable for users
+        // in most cases"): Auto (line, solid when small or for the tab you are on), Line or Solid, everywhere OpenVibe
+        // draws its icons. A site still forces one where it must (.ovg-solid / .ovg-line).
+        if (L.display && L.display.get) {
+            const now = L.display.get().icons || 'auto';
+            const BELL = '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>';
+            const BELL_S = '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>';
+            const sample = (solid) => { const sv = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); sv.setAttribute('viewBox', '0 0 24 24'); sv.setAttribute('aria-hidden', 'true'); if (solid) sv.setAttribute('class', 'is-solid'); sv.innerHTML = solid ? BELL_S : BELL; return sv; };
+            const choice = (id, label, solid) => { const b = el('button', { type: 'button', role: 'radio', 'aria-checked': String(now === id), 'data-look-icons': id }, []); if (solid != null) b.append(sample(solid)); b.append(label); return b; };
+            panel.append(el('div', { class: 'ovlk-icons' }, [el('b', {}, ['Icons']), el('div', { class: 'ovlk-seg', role: 'radiogroup', 'aria-label': 'Icons' }, [choice('auto', 'Auto', null), choice('line', 'Line', false), choice('solid', 'Solid', true)])]));
+        }
         const signedIn = opts.signedIn != null ? !!opts.signedIn : /(?:^|; )ov_sso_hint=account/.test(document.cookie || '') || !!(root.localStorage && (() => { try { return root.localStorage.getItem('ov_token'); } catch (e) { return null; } })());
         const named = showing ? showing.name : ((PICKS.find(([id]) => id === cur) || [0, cur])[1]);
         const why = el('div', { class: 'ovlk-why' }, [`${named} \u00b7 ${signedIn ? 'saved to your account' : 'saved in this browser'}`]);
@@ -107,6 +126,8 @@
             const L = root.OpenVibeThemeLoader; if (!L) return;
             const sh = e.target.closest && e.target.closest('[data-look-share]');
             if (sh) { e.stopPropagation(); return share(sh); }
+            const ic = e.target.closest && e.target.closest('[data-look-icons]');
+            if (ic) { e.stopPropagation(); L.display.set({ icons: ic.getAttribute('data-look-icons') }); return draw(box, opts); }
             const s = e.target.closest && e.target.closest('[data-look-season]');
             if (s) { e.stopPropagation(); L.display.set({ seasonal: s.getAttribute('aria-checked') === 'true' ? 'off' : 'on' }); return draw(box, opts); }
             const b = e.target.closest && e.target.closest('[data-look]'); if (!b) return;

@@ -4,6 +4,24 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.71.0 — 2026-11-01
+
+- **One hand in the bar** (the owner, 2026-11-01: "the icon set doesn't feel consistent… it seems weird that there's
+  both solid and border-line icons… the navbar needs improvement"). Every icon the navbar draws is the OpenVibe set's own
+  (`openvibe-shared/glyphs`): 101 of the 102 names in `nav-icons.js` are `[0, line, solid]` on the set's 24-unit grid,
+  and Font Awesome's filled path stays only for the one name the set does not have yet. `scripts/build-navbar-icons.js`
+  converts the entries itself, and `--check` fails while a covered name still has Font Awesome's path. The bar is line,
+  in one stroke (1.9; 2.3 in the small balance chips). The bell, the messages bubble, the coins and the wallet are the
+  same set's drawings. The app bar's tab you are on wears the solid one.
+- **The name sized to the mark:** 19 px on wide screens, 17 px on phones and 16.5 px on the narrowest.
+- **Icons: Auto, Line or Solid, per person** (plan L56; the owner: "a setting to prefer a certain icon type… we
+  override it where we must… configurable for users in most cases"). A display setting, `icons`, beside motion, text
+  size, contrast, the readable font, colour-blind-safe colours and OLED black. It is saved to the account, travels with
+  links like the rest of the look, and is painted before first paint as `<html data-ov-icons>`. The Look panel has the
+  choice, with a sample bell in each. In the glyphs' CSS the switch point is a variable per area (`--ovg-solid-below`,
+  18.4 px by default), and the person's preference (`--ovg-pref`) wins over it. `.ovg-solid` and `.ovg-line` still
+  force a style where a site must. The navbar and the bell follow the preference too.
+
 ## 4.70.0 — 2026-11-01
 
 - **Line or solid, on purpose** (plan L49; the owner, 2026-11-01: "both sets for any size… swap between them…

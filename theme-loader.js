@@ -347,7 +347,7 @@
 
     // ── Display settings, one record for every OpenVibe site: display.get() → DISPLAY_OPTS' values; display.set(patch)
     // applies here and in other tabs and saves to the account. <html data-ov-*> and --ov-text-scale before first paint.
-    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'] };
+    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'] };
     // Comfort (4.45.0): one <html> attribute each, !important over the inline theme (Okabe-Ito colours, OLED black).
     const COMFORT_CSS = 'html[data-ov-contrast=more]{--text-secondary:color-mix(in srgb,var(--text-primary) 88%,var(--bg-primary))!important;--text-muted:color-mix(in srgb,var(--text-primary) 76%,var(--bg-primary))!important;--border:color-mix(in srgb,var(--text-primary) 40%,var(--bg-primary))!important;--border-light:color-mix(in srgb,var(--text-primary) 55%,var(--bg-primary))!important}'
         + 'html[data-ov-contrast=more] :is(p,dd,td) a:not([class]){text-decoration-line:underline;text-underline-offset:2px}html[data-ov-contrast=more] :focus-visible{outline:3px solid var(--accent-strong,var(--accent))!important;outline-offset:2px}'
@@ -355,9 +355,9 @@
         + 'html[data-ov-colors=cb-safe]{--success:#56b4e9!important;--success-text:#7cc6ef!important;--warning:#f0e442!important;--warning-text:#f0e442!important;--danger:#e8743b!important;--danger-text:#f0985f!important}'
         + 'html[data-ov-colors=cb-safe][data-theme-mode=light]{--success:#0072b2!important;--success-text:#005a8c!important;--warning:#e69f00!important;--warning-text:#8a6100!important;--danger:#d55e00!important;--danger-text:#a84400!important}'
         + 'html[data-ov-oled=on][data-theme-mode=dark]{--bg-primary:#000!important;--bg-secondary:#050608!important;--bg-tertiary:#0b0d12!important;--bg-card:#0a0c10!important;--bg-input:#0b0d12!important;--bg-hover:#12151c!important}';
-    const COMFORT_ATTRS = { contrast: ['data-ov-contrast', 'normal'], font: ['data-ov-font', 'default'], colors: ['data-ov-colors', 'default'], oled: ['data-ov-oled', 'off'] };
+    const COMFORT_ATTRS = { contrast: ['data-ov-contrast', 'normal'], font: ['data-ov-font', 'default'], colors: ['data-ov-colors', 'default'], oled: ['data-ov-oled', 'off'], icons: ['data-ov-icons', 'auto'] };
     function readDisplay() {
-        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off' };
+        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off', icons: 'auto' };
         try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(d[k])) >= 0) out[k] = String(d[k]); } catch (e) { /* */ }
         return out;
     }
@@ -497,7 +497,7 @@
     // page, only colours pass; the next site keeps it when newer and drops it from the address before first paint.
     const OV_HOST = /(^|\.)(openvibe\.[a-z]{2,12}|openre\.stream)$/i;
     const PAINT_KEY = 'ov_paint';
-    const PAINT_ATTRS = ['data-theme', 'data-theme-mode', 'data-ov-season', 'data-ov-season-mark', 'data-ov-motion', 'data-ov-text', 'data-ov-contrast', 'data-ov-font', 'data-ov-colors', 'data-ov-oled'];
+    const PAINT_ATTRS = ['data-theme', 'data-theme-mode', 'data-ov-season', 'data-ov-season-mark', 'data-ov-motion', 'data-ov-text', 'data-ov-contrast', 'data-ov-font', 'data-ov-colors', 'data-ov-oled', 'data-ov-icons'];
     const SAFE_VALUE = /^(#[0-9a-f]{3,8}|rgba?\([0-9.,\s%]+\)|[0-9.,\s]+|light|dark|(-?[0-9.]+(px)?\s+){2,4}rgba?\([0-9.,\s%]+\))$/i;
     const SAFE_ATTR = /^[a-z0-9-]{1,40}$/;
     function seasonUntil(s) {
