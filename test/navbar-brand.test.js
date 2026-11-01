@@ -225,7 +225,8 @@ function load(hostname, opts = {}) {
     assert.ok(nav.innerHTML.includes('data-variant="tools"'), 'ov-mark variant');
     assert.ok(/href="\/mine" class="ovnav-link active"/.test(nav.innerHTML), 'current path marked active');
     assert.ok(/class="ovnav-burger"/.test(nav.innerHTML) && /class="ovnav-drawer"/.test(nav.innerHTML), 'links get a mobile drawer');
-    assert.ok(/<span class="icon"><svg class="ovnav-ic"/.test(nav.innerHTML), 'link icon rendered inline (no icon font needed)');
+    assert.ok(/<span class="icon"><svg class="ovnav-ic[ "]/.test(nav.innerHTML), 'link icon rendered inline (no icon font needed)');
+    assert.ok(/<span class="icon"><svg class="ovnav-ic ovnav-ovg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="/.test(nav.innerHTML), 'a glyph the OpenVibe set has is drawn from it, on its 24-unit grid (4.71.0)');
     assert.ok(!/fa-solid fa-plus/.test(nav.innerHTML), 'known icons do not depend on Font Awesome');
     const dd = created.find(e => e.tag === 'div' && /openvibe-navbar-dropdown-menu/.test(e.innerHTML));
     assert.ok(dd && dd.innerHTML.includes('data-menu-id="mp"') && dd.innerHTML.includes('My pastes'), 'custom dropdown row rendered');

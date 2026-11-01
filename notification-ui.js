@@ -65,7 +65,9 @@
         grid: '<rect x="4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="4" y="13.4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="13.4" width="6.6" height="6.6" rx="1.6"/>',
         pulse: '<path d="M3 12.5h4.2l2.3-5.5 4.2 10.5 2.3-5h4.9"/>',
         check: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
-        bell: '<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>',
+        bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>',
+        // The set's solid bell (openvibe-shared/glyphs): shown where the person prefers solid icons (4.71.0).
+        bellSolid: '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>',
         key: '<circle cx="8.2" cy="14.8" r="4"/><path d="M11.1 12l8.2-8.2M16.4 6.7l2.3 2.3M14.2 8.9l1.8 1.8"/>',
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
     };
@@ -164,7 +166,8 @@
             .ovn-chip.sev { color: color-mix(in srgb, var(--ovn-tone) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone) 14%, transparent); border-color: transparent; text-transform: uppercase; letter-spacing: .03em; font-size: 10px; }
 
             .openvibe-bell { position: relative; cursor: pointer; padding: 6px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; }
-            .openvibe-bell svg { width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #b0b0b8); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
+            html[data-ov-icons=solid] .openvibe-bell svg.has-s { stroke-width: 0; } html[data-ov-icons=solid] .openvibe-bell svg > .ovg-s { display: inline; fill: currentColor; stroke: none; } .openvibe-bell svg > .ovg-s { display: none; }
+            .openvibe-bell svg { color: var(--text-secondary, #b0b0b8); width: 22px; height: 22px; fill: none; stroke: var(--text-secondary, #b0b0b8); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: stroke .2s; }
             .openvibe-bell:hover svg, .openvibe-bell.open svg { stroke: var(--accent-light, var(--accent, #60a5fa)); }
             .openvibe-bell:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
             .openvibe-bell .badge { position: absolute; top: 1px; right: 0; min-width: 17px; height: 17px; padding: 0 5px; box-sizing: border-box; background: var(--live-red, #e5484d); color: #fff; border-radius: 999px;
@@ -785,7 +788,7 @@
         const bell = document.createElement('div');
         bell.className = 'openvibe-bell';
         bell.setAttribute('role', 'button'); bell.setAttribute('aria-label', 'Notifications'); bell.tabIndex = 0;
-        bell.innerHTML = `${svg(GLYPH.bell)}<span class="badge hidden">0</span>`;
+        bell.innerHTML = `<svg class="ovnav-ovg has-s" viewBox="0 0 24 24" aria-hidden="true">${GLYPH.bell}<g class="ovg-s">${GLYPH.bellSolid}</g></svg><span class="badge hidden">0</span>`;
         bell.addEventListener('click', () => togglePanel());
         bell.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanel(); } });
         _bellEl = bell;

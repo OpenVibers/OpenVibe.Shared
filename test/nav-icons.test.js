@@ -58,7 +58,9 @@ function load(opts = {}) {
     const navbar = require(NAVBAR_PATH);
     return { navbar, created, loaders: () => created.filter(e => e.tag === 'script' && e.id === 'ov-nav-icons-loader') };
 }
-const glyph = (name) => `<svg class="ovnav-ic" viewBox="0 0 ${ICONS[name][0]} 512" style="width:${(ICONS[name][0] / 512).toFixed(3)}em" aria-hidden="true" focusable="false"><path fill="currentColor" d="${ICONS[name][1]}"/></svg>`;
+// [0, line, solid] is an OpenVibe glyph (4.71.0: one hand in the bar); [w, path] a Font Awesome one the set lacks.
+const ovg = (g) => `<svg class="ovnav-ic ovnav-ovg${g[2] ? ' has-s' : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${g[1]}${g[2] ? `<g class="ovg-s">${g[2]}</g>` : ''}</svg>`;
+const glyph = (name) => (ICONS[name][0] === 0 ? ovg(ICONS[name]) : `<svg class="ovnav-ic" viewBox="0 0 ${ICONS[name][0]} 512" style="width:${(ICONS[name][0] / 512).toFixed(3)}em" aria-hidden="true" focusable="false"><path fill="currentColor" d="${ICONS[name][1]}"/></svg>`);
 const html = (created) => created.map(e => e.innerHTML).join('\n');
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
@@ -92,7 +94,7 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         const block = src.slice(src.indexOf('const NAV_ICONS_LAZY = {'), src.indexOf('const NAV_ICONS_REV'));
         for (const m of block.matchAll(/(\d+): '([^']+)'/g)) m[2].split(' ').forEach(n => { lazy[n] = Number(m[1]); });
         for (const [name, [w]] of Object.entries(ICONS)) {
-            if (own.includes(name)) assert.ok(src.includes(`'${name}': [${w}, '${ICONS[name][1]}']`), `${name} built in, same path as nav-icons.js`);
+            if (own.includes(name)) assert.ok(src.includes(w === 0 ? `'${name}': [0, '${ICONS[name][1]}', '${ICONS[name][2]}']` : `'${name}': [${w}, '${ICONS[name][1]}']`), `${name} built in, same drawing as nav-icons.js`);
             else assert.strictEqual(lazy[name], w, `${name} listed as lazy with its width`);
         }
         const rev = crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'nav-icons.js'))).digest('hex').slice(0, 12);
@@ -105,8 +107,8 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         const { navbar, created, loaders } = load({ src: 'https://openvibe.live/shared/navbar.js?v=abc123', slots: [slot] });
         navbar.init({ service: 'live', user: admin, token: 't', links: [{ id: 'home', label: 'Home', href: '/', icon: 'fa-house' }, { id: 'x', label: 'X', href: '/x', icon: 'fa-not-a-glyph' }] });
         const out = html(created);
-        const w = ICONS['fa-house'][0];
-        assert.ok(out.includes(`<svg class="ovnav-ic" viewBox="0 0 ${w} 512" style="width:${(w / 512).toFixed(3)}em" aria-hidden="true" focusable="false" data-ovnav-ic="fa-house" data-ovnav-cls="fa-house"></svg>`), 'lazy glyph renders as an empty slot of its exact size');
+        assert.strictEqual(ICONS['fa-house'][0], 0, 'the house is the OpenVibe set\'s own');
+        assert.ok(out.includes('<svg class="ovnav-ic ovnav-ovg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" data-ovnav-ic="fa-house" data-ovnav-cls="fa-house"></svg>'), 'lazy glyph renders as an empty slot of its exact size');
         assert.ok(out.includes('<i class="fa-solid fa-not-a-glyph"></i>'), 'names outside the set keep the icon-font fallback');
         assert.strictEqual(loaders().length, 0, 'nothing fetched before first paint');
         await wait(350);
@@ -118,7 +120,7 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         Object.assign(slot.attrs, { 'data-ovnav-ic': 'fa-house', 'data-ovnav-cls': 'fa-house' });
         global.OpenVibeNavIcons = ICONS;   // what nav-icons.js does when it runs
         sc.onload();
-        assert.strictEqual(slot.innerHTML, `<path fill="currentColor" d="${ICONS['fa-house'][1]}"/>`, 'slot filled with the glyph');
+        assert.strictEqual(slot.innerHTML, ICONS['fa-house'][1] + (ICONS['fa-house'][2] ? `<g class="ovg-s">${ICONS['fa-house'][2]}</g>` : ''), 'slot filled with the glyph: its line and solid drawings');
         assert.strictEqual(slot.attrs['data-ovnav-ic'], undefined);
         created.length = 0;
         navbar.setLinks([{ id: 'home', label: 'Home', href: '/', icon: 'fa-house' }]);
@@ -155,6 +157,21 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         navbar.init({ service: 'live', iconsUrl: '/assets/nav-icons.js', links: [{ label: 'Chat', href: '/chat', icon: 'fa-comments' }] });
         await wait(350);
         assert.strictEqual(loaders()[0].src, '/assets/nav-icons.js');
+    }
+
+    // ── 4.71.0: every name the OpenVibe glyphs cover is drawn from them, and the bar's CSS honours the person's choice ──
+    {
+        const glyphs = require('../glyphs');
+        const covered = Object.keys(ICONS).filter((n) => glyphs.fromFa(n));
+        assert.ok(covered.length >= 100, 'nearly the whole set is the OpenVibe glyphs');
+        covered.forEach((n) => assert.strictEqual(ICONS[n][0], 0, `${n} is an OpenVibe glyph`));
+        assert.deepStrictEqual(ICONS['fa-bell'], [0, glyphs.path('bell'), glyphs.solid('bell')]);
+        const src = fs.readFileSync(NAVBAR_PATH, 'utf8');
+        assert.ok(src.includes('html[data-ov-icons=solid] .ovnav-ovg.has-s'), 'a person who prefers solid icons gets them in the bar');
+        assert.ok(src.includes('.ovnav-ab.is-here .ovnav-ovg.has-s > .ovg-s { display: inline; }'), 'the app bar\'s tab you are on wears the solid one');
+        assert.ok(!/LINE_ICONS|lineIcon/.test(src), 'no second icon set inside the navbar');
+        const bell = fs.readFileSync(path.join(ROOT, 'notification-ui.js'), 'utf8');
+        assert.ok(bell.includes('<svg class=\"ovnav-ovg has-s\"') || bell.includes('<svg class="ovnav-ovg has-s"'), 'the bell has both drawings too');
     }
 
     console.log('nav-icons: all checks passed');
