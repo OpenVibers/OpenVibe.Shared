@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.85.0 — 2026-11-01
+
+- **Share cards for fourteen more sites.**
+  - Bench, Cam, Casino, Design, Domains, Exchange, Fun, Meme, Report, Surf, Today, Tours, Vision and Shoes had no
+    `social/<service>.jpg`. A shared link to their homes showed no picture, because shell.page's og:image is
+    `social.url(service)`.
+  - Drawn by `scripts/build-social-cards.js --only …` from each manifest's `site` block (OpenVibe.Contracts main), the
+    same way as every other card.
+
 ## 4.84.0 — 2026-11-01
 
 - **A page with no stylesheet of its own reads in the network's type.**
