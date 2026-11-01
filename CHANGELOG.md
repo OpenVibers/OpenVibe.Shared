@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.72.0 — 2026-11-01
+
+- **Brand logos without Font Awesome** (plan L54 K4; the owner, 2026-11-01: "get rid of Font Awesome completely").
+  `brands.js`, a new module and served file, carries Simple Icons' drawings (CC0-1.0, v16.36.0): 46 brands for 59
+  Font Awesome `fa-brands` names. That covers every brand an OpenVibe site names, except Microsoft, Windows, LinkedIn
+  and AWS, which Simple Icons no longer carries; those stay with Font Awesome.
+  - `ov-glyphs.js` draws `<i class="fa-brands fa-youtube">` as the brand. Only the small name map is inline; the
+    drawings load from beside it the first time a page shows a brand.
+  - Brands are filled in the text's colour. `ovg-brand-color` gives the brand's own colour (`--ovg-brand`), except
+    where it is near-black and would vanish on a dark page.
+  - `scripts/build-brands.js` rebuilds `brands.js` from a Simple Icons package.
+
 ## 4.71.0 — 2026-11-01
 
 - **One hand in the bar** (the owner, 2026-11-01: "the icon set doesn't feel consistent… it seems weird that there's
