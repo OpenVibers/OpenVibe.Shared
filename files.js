@@ -23,6 +23,7 @@ const BROWSER = Object.freeze([
     'action-center.js',     // the ✦ Action Center; notification-ui loads it on the first click
     'dock.js',              // the Dock and its pill; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
+    'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
     'account-switcher.js',
     'user-card.js',
     'ov-mark.js',           // the OV brand mark drop-in

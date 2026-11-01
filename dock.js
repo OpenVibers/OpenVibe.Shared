@@ -39,6 +39,7 @@
         back: '<path d="M14.5 6.5L9 12l5.5 5.5"/>',
         send: '<path d="M4.5 12h11M11 6.5l5.5 5.5-5.5 5.5"/>',
         vibe: '<path d="M12 4.5a7.5 7.5 0 0 1 6.4 11.4L19.5 19.5l-3.6-1.1A7.5 7.5 0 1 1 12 4.5z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/>',
+        clock: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/>',
     };
     // Vibe first (L48 V2): the person's AI, on every site.
     const TABS = [['vibe', 'Vibe', G.vibe], ['agent', 'Agents', G.spark], ['chats', 'Chats', G.chat], ['activity', 'Activity', G.bell]];
@@ -144,7 +145,9 @@
             @keyframes ovdk-rise { from { transform: translateY(100%); } }
             .ovdk svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
             .ovdk-head { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 8px 8px 10px; cursor: grab; touch-action: none; user-select: none; }
-            .ovdk-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); min-width: 0; }
+            .ovdk-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); min-width: 0; flex: 0 1 auto; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
+            .ovdk-tabs::-webkit-scrollbar { display: none; }
+            .ovdk-tabs button { flex: none; }
             .ovdk-tabs button { position: relative; display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 14px 0 11px; border: 0; border-radius: 999px; background: transparent;
                 color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
             .ovdk-tabs button svg { width: 17px; height: 17px; flex: none; }
@@ -188,7 +191,7 @@
             .ovdk[data-corner="top-left"] .ovdk-size::after { top: auto; bottom: 9px; left: auto; right: 9px; border: 0; border-bottom: 2px solid var(--text-muted, #8b8b96); border-right: 2px solid var(--text-muted, #8b8b96); border-radius: 0 0 3px 0; }
             @media (pointer: coarse) { .ovdk-acts button { width: 44px; height: 44px; } .ovdk-tabs button { height: 40px; } }
             .ovdk { container-type: inline-size; }
-            @container (max-width: 440px) { .ovdk-tabs button { padding: 0 11px; gap: 6px; } .ovdk-tabs button svg { display: none; } }
+            @container (max-width: 440px) { .ovdk-tabs button { padding: 0 8px; gap: 6px; font-size: 13px; } .ovdk-tabs button svg { display: none; } .ovdk-acts { gap: 0; } .ovdk-acts button { width: 34px; } }
             .ovdk-muted { color: var(--text-muted, #8b8b96); }
             .ovdk-i { display: inline-grid; place-items: center; }
             .ovdk-i svg { width: 18px; height: 18px; }
@@ -263,6 +266,7 @@
             <header class="ovdk-head">
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
+                    <button type="button" data-act="timer" title="A timer" aria-label="Start a timer">${svg(G.clock)}</button>
                     <button type="button" data-act="pop" hidden title="Open the Dock in a window of its own" aria-label="Open the Dock in a window of its own">${svg(G.open)}</button>
                     <button type="button" data-act="pin" aria-pressed="false" title="Keep the Dock's button on every page" aria-label="Keep the Dock's button on every page">${svg(G.pin)}</button>
                     <button type="button" data-act="close" title="Close" aria-label="Close the Dock">${svg(G.close)}</button>
@@ -282,6 +286,7 @@
         el.querySelector('[data-act="close"]').addEventListener('click', () => close());
         el.querySelector('[data-act="pop"]').addEventListener('click', () => { if (popped) backToPage(); else popOut(); });
         el.querySelector('[data-act="pin"]').addEventListener('click', () => { save({ pinned: !state().pinned }); paintPin(); });
+        el.querySelector('[data-act="timer"]').addEventListener('click', (e) => { const a = e.currentTarget; withTimer((t) => t.menu(a)); });
         el.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
         // A tap outside closes the phone sheet. The path is the one at dispatch: a tap that redraws its own panel (opening a
         // chat) leaves its target detached, and must not read as outside.
@@ -634,6 +639,17 @@
         if (!isOpen() || tab !== 'vibe') { open({ tab: 'vibe' }); setTimeout(talk, 600); } else talk();
     });
 
+    // ── The timer (plan L48 R2): dock-timer.js, loaded when the state carries one or the person opens its menu ──
+    let timerMod = null, timerLoading = null;
+    function withTimer(fn) {
+        if (timerMod) return fn(timerMod);
+        timerLoading = timerLoading || load('dock-timer.js', () => !!(root.OpenVibeDockTimer && root.OpenVibeDockTimer.attach)).then((ok) => {
+            if (ok && !timerMod) timerMod = root.OpenVibeDockTimer.attach({ state, save, host: () => el, repaint: () => paintPill() });
+            return timerMod;
+        });
+        return timerLoading.then((m) => (m ? fn(m) : null));
+    }
+
     // ── The pill ─────────────────────────────────────────────
     let pill = null, readT = 0, bound = false;
     function store(v) {
@@ -653,13 +669,16 @@
             pill.setAttribute('aria-label', 'The Dock is in a window of its own \u2014 click to bring it back');
             return;
         }
-        const show = !isOpen() && !!(w || r || st.pinned);
+        // A running timer: its minutes, unless an agent needs the person (that comes first).
+        if (st.timer && !timerMod) withTimer((m) => m.sync());
+        const tm = timerMod && !w ? timerMod.pillText() : null;
+        const show = !isOpen() && !!(w || r || st.pinned || tm);
         pill.hidden = !show;
         pill.dataset.corner = CORNERS.includes(corner) ? corner : 'bottom-right';
-        pill.dataset.tone = w ? 'waiting' : r ? 'running' : 'idle';
+        pill.dataset.tone = w ? 'waiting' : tm ? tm.tone : r ? 'running' : 'idle';
         pill.querySelector('.ov-mark').setAttribute('data-state', r && !w ? 'busy' : '');
-        pill.querySelector('.ovdk-t').textContent = w ? 'Needs you' : r ? (r > 1 ? `${r} working` : 'Working') : '';
-        pill.setAttribute('aria-label', [w ? `${w} need${w > 1 ? '' : 's'} you` : '', r ? `${r} working` : ''].filter(Boolean).join(', ') || 'Open the Dock');
+        pill.querySelector('.ovdk-t').textContent = w ? 'Needs you' : tm ? tm.text : r ? (r > 1 ? `${r} working` : 'Working') : '';
+        pill.setAttribute('aria-label', tm ? tm.label : [w ? `${w} need${w > 1 ? '' : 's'} you` : '', r ? `${r} working` : ''].filter(Boolean).join(', ') || 'Open the Dock');
         // Desktop toasts (bottom right, notification-ui.js) stack above a pill in their corner; an open Dock sets its own.
         if (!isOpen()) clear(show && pill.dataset.corner === 'bottom-right' && !phone() ? 58 : 0);
     }
@@ -676,7 +695,7 @@
             update(next);
             if (!isOpen() && next.state.open && !phone()) open();
             const c = next.counts || {};
-            if (c.running || c.waiting) readT = setTimeout(read, 30000);
+            if (c.running || c.waiting || next.state.timer) readT = setTimeout(read, 30000);
         } catch { /* offline: the copy stands */ }
     }
     /** The pill for a signed-in person (navbar.js), or none (null: signed out, or the site turned the Dock off). */
@@ -823,6 +842,7 @@
         if (!next || !next.state) return;
         doc = Object.keys(pending).length ? { ...next, state: state() } : next;
         store(doc);
+        if (timerMod) timerMod.sync();
         paintPill();
         if (!el) return;
         badges();

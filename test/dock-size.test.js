@@ -14,8 +14,11 @@ const DOCK_PATH = path.join(ROOT, 'dock.js');
 // budget is 14.0 KB, a 0.25 KB increase, so both still have to stay inside it.
 // 4.74.0 (2026-11-01, L48 V2) adds the Vibe tab's entry, its loader and Alt+V: +568 bytes (14757). The conversation
 // and the mic are dock-vibe.js (4.1 KB brotli), loaded the first time the tab opens, not on every page.
-const DOCK_BROTLI_BUDGET = 14848;   // 14.50 KB (14757 after 4.74.0 + 91 bytes of headroom)
-const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js'];
+// 4.76.0 (2026-11-01, L48 R2) adds the timer's button, its loader and the pill's countdown hook: +456 bytes (15213).
+// The timer itself (menu, countdown, chime, focus rounds) is dock-timer.js (3.7 KB brotli), loaded only while a timer
+// runs or its menu opens; the header's tab rail and narrow-width rules came with it.
+const DOCK_BROTLI_BUDGET = 15360;   // 15.00 KB (15213 after 4.76.0 + 147 bytes of headroom)
+const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js', 'dock-timer.js'];
 
 // ── the budget ──────────────────────────────────────────────
 {
