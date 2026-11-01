@@ -4,6 +4,17 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.88.0 — 2026-11-01
+
+- **Name effects read on light themes.**
+  - The fifteen name effects in items.css were all drawn on dark pages: bright colour plus glow. On a light theme some
+    names were unreadable: Neon and Glitch at 1.3:1, Ice at 1.6:1, and Divine was mostly white (axe flagged Community's
+    pastes and Pulse).
+  - Under `html[data-theme-mode="light"]`, each effect now has a variant with the same hue and motion, at a depth that
+    reads on white (most stops about 4.6:1 or more).
+  - Fire, Ice and Neon animate their light colours with their own keyframes. Shadow's mist and Void's glow are lighter.
+  - Reduced motion still stops them all.
+
 ## 4.87.0 — 2026-11-01
 
 - **Share cards for a service's other domains.**
