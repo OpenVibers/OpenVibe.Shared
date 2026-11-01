@@ -4,6 +4,20 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.81.0 — 2026-11-01
+
+- **Shape and elevation are tokens, and a look has a shape** (plan L45 step 2: "Paper is quiet and square, Neon glows
+  and bounces").
+  - `--ov-radius-1..3` (small things, cards, sheets) and `--ov-elev-1..3` (on its surface, a bar over scrolled content,
+    a menu above the page) are in `kit.css`. Their defaults are the kit's own corners and shadows, so nothing moves.
+  - Every kit corner and shadow now reads them: `--ovk-radius` is `--ov-radius-2`, and a 12 px corner is
+    `radius-1 + 2px`. Only pills and circles stay literal.
+  - The quiet looks are square, with hairlines where shadows were: Paper, Solarized Light, Nord, Nord Light, Matrix,
+    Hacker and High Contrast.
+  - Neon Tokyo and Vapor are round, and their raised things glow in the accent.
+  - A site's own CSS can use the same tokens to follow the look: `border-radius: var(--ov-radius-2, 14px)`.
+  - `room.css` carries the same tokens, and the personalities at zero specificity.
+
 ## 4.80.0 — 2026-11-01
 
 - **33 more glyphs have a solid drawing for small sizes** (plan L50; the owner, 2026-11-01: "really tiny icons… a

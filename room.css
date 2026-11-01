@@ -22,16 +22,39 @@
     --ovk-warn: var(--warning, #f59e0b);
     --ovk-bad: var(--danger, var(--error, #ef4444));
     --ovk-live: var(--live-red, #ef4444);
-    --ovk-radius: 14px;
-    --ovk-radius-sm: 10px;
+    /* Shape and elevation (4.81.0, plan L45 step 2): the kit's corners and shadows as tokens a look can set, so a theme
+     * has a shape as well as colours. The defaults are the kit's own corners and shadows; the personalities follow. */
+    --ov-radius-1: 10px;   /* chips, inputs, rows, small buttons */
+    --ov-radius-2: 14px;   /* cards, sections, panels */
+    --ov-radius-3: 20px;   /* sheets, dialogs, big surfaces */
+    --ov-elev-1: 0 1px 3px rgba(0, 0, 0, .35);           /* a knob, a chip that sits on its surface */
+    --ov-elev-2: 0 10px 24px -18px rgba(0, 0, 0, .7);    /* a bar that has scrolled content under it */
+    --ov-elev-3: 0 14px 32px rgba(0, 0, 0, .4);          /* a menu or popover above the page */
+    --ovk-radius: var(--ov-radius-2);
+    --ovk-radius-sm: var(--ov-radius-1);
     --ovk-tap: 44px;
     --ovk-top: var(--ovnav-real-h, 52px);          /* the navbar's height: sticky things stop under it */
     --ovk-bottom: var(--ovnav-appbar-h, 0px);      /* the app bar's height on phones (navbar.js sets it) */
     --ovk-font: var(--ov-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 }
+/* Shape personalities, as in kit.css but at zero specificity (plan L45: "Paper is quiet and square, Neon glows and bounces"). A quiet look has square corners
+ * and lies flat, with a hairline where a shadow would be; a loud one is round and its raised things glow in its accent.
+ * The ids are Network's theme catalog (as ov-fx.js's motion feels); any other look keeps the defaults above. */
+:where([data-theme=paper], [data-theme=solarized-light], [data-theme=nord], [data-theme=nord-light], [data-theme=matrix], [data-theme=hacker], [data-theme=high-contrast]) {
+    --ov-radius-1: 4px; --ov-radius-2: 6px; --ov-radius-3: 10px;
+    --ov-elev-1: 0 0 0 1px var(--ovk-line);
+    --ov-elev-2: 0 1px 0 var(--ovk-line);
+    --ov-elev-3: 0 0 0 1px var(--ovk-line), 0 8px 18px -12px rgba(0, 0, 0, .35);
+}
+:where([data-theme=neon-tokyo], [data-theme=vapor]) {
+    --ov-radius-1: 14px; --ov-radius-2: 20px; --ov-radius-3: 28px;
+    --ov-elev-1: 0 0 8px color-mix(in srgb, var(--ovk-accent) 40%, transparent);
+    --ov-elev-2: 0 10px 28px -14px color-mix(in srgb, var(--ovk-accent) 55%, transparent);
+    --ov-elev-3: 0 0 0 1px color-mix(in srgb, var(--ovk-accent) 40%, transparent), 0 18px 44px -14px color-mix(in srgb, var(--ovk-accent) 55%, transparent);
+}
 .ovk-stats { position: relative; display: flex; gap: 8px; margin: 12px -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
 .ovk-stats::-webkit-scrollbar { display: none; }
-.ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: 12px; background: var(--ovk-panel); }
+.ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: calc(var(--ov-radius-1) + 2px); background: var(--ovk-panel); }
 .ovk-stats dt { margin: 0; color: var(--ovk-muted); font-size: .76rem; line-height: 1.25; }
 .ovk-stats dt a { color: inherit; text-decoration: none; }
 .ovk-stat--link { position: relative; transition: border-color .15s; }
