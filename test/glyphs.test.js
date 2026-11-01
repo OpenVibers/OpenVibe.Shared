@@ -30,7 +30,8 @@ for (const [name, d] of Object.entries(glyphs.SOLID)) {
     assert.ok([...d.matchAll(/class="([^"]*)"/g)].every((m) => m[1] === 'ln'), `${name}: the only class is ln`);
     assert.ok(glyphs.inner(name).includes('<g class="ovg-s">'), `${name}: inner() carries it`);
 }
-assert.ok(Object.keys(glyphs.SOLID).length >= 60, 'the glyphs most often shown small have a solid drawing (4.73.0: the most-used shapes too)');
+assert.ok(Object.keys(glyphs.SOLID).length >= 100, 'the glyphs most often shown small have a solid drawing (4.73.0: the most-used shapes too; 4.80.0: the next ones)');
+for (const n of ['globe', 'mail', 'key', 'server', 'phone', 'help', 'cart', 'store', 'terminal', 'database', 'eye-off', 'mic-off']) assert.ok(glyphs.solid(n), `${n}: one of the next most-used shapes has its solid drawing (4.80.0)`);
 for (const n of ['copy', 'scissors', 'volume', 'robot', 'film', 'gear', 'search', 'pencil', 'save', 'chart']) assert.ok(glyphs.solid(n), `${n}: one of the sites' most-used shapes has its solid drawing`);
 for (const n of ['check', 'close', 'plus', 'link', 'code', 'ban', 'stop']) assert.strictEqual(glyphs.solid(n), '', `${n}: a glyph made of lines thickens when small instead`);
 assert.strictEqual(glyphs.fromFa('fa-book-open'), 'book-open', 'an open book, not a square');

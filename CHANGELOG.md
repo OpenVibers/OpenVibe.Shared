@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.80.0 — 2026-11-01
+
+- **33 more glyphs have a solid drawing for small sizes** (plan L50; the owner, 2026-11-01: "really tiny icons… a
+  solid colour rather than the border lines"). The next most-used shapes on the sites after 4.73.0's sweep: globe,
+  circle, plane, mail, eye-off, key, gauge, server, user-check, mic-off, palette, dish, layers, phone, money, care,
+  news, hand, tack, help, invite, ticket, cart, box, store, map, sun, leaf, headphones, tv, bug, terminal and database.
+  Drawn the same way as the others: filled shapes, holes cut with `fill-rule="evenodd"`, a part that has to stay a
+  line as `class="ln"`. An "off" glyph (eye-off, mic-off) keeps its slash as a line and cuts the shape back from it,
+  so the slash still reads at 14 px. 101 of 276 glyphs now have one; a glyph made only of lines (check, code, wifi,
+  share) still thickens when small instead. `ov-glyphs.js` carries them (76.3 KB raw); the sprite gains
+  `ovg-<name>-solid` for each.
+
 ## 4.79.0 — 2026-11-01
 
 - **What Vibe did, as chips you can undo** (plan L48 V2). Under a Vibe answer that set or stopped a reminder or a
