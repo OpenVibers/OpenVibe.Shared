@@ -476,7 +476,7 @@
     const NAV_ICONS_REV = '2a303c60dc83';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '82afb8a8cb4d', 'ov-glyphs.js': '8cece63e3796', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '220c2bf637aa', 'ov-fx.js': '46fce1e2b8db' };
+    const SIBLING_REV = { 'ov-mark.js': '82afb8a8cb4d', 'ov-glyphs.js': '7d1c9a6e3934', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '220c2bf637aa', 'ov-fx.js': '46fce1e2b8db' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2009,11 +2009,55 @@
         });
     }
 
+    // ── Moving between pages (4.70.0, plan L52; the owner, 2026-11-01: "make navigation feel better… the logo changing
+    // while it loads… smarter loading") ──
+    // The mark is the loading indicator: it works from the tap until the next page is in (OVMark.navStart/navEnd; a
+    // single-page app calls OpenVibeNavbar.busy). Same-site pages are fetched ahead on hover or press (speculation rules,
+    // where the browser has them), never sign-in, sign-out, the API or a download.
+    let _movesHooked = false;
+    function hookMoves() {
+        if (_movesHooked || typeof document === 'undefined' || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+        _movesHooked = true;
+        // A boosted site prefetches through boost.js already (and Chrome's prefetch beside it kept parsed pages alive).
+        if (_config.speculate !== false && !root.OVBoost && !document.querySelector('meta[name="ov-boost"]') && typeof HTMLScriptElement !== 'undefined' && HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules') && !document.querySelector('script[type="speculationrules"]')) {
+            try {
+                const sr = document.createElement('script');
+                sr.type = 'speculationrules';
+                sr.textContent = JSON.stringify({ prefetch: [{ where: { and: [{ href_matches: '/*' }, { not: { href_matches: ['/auth/*', '/api/*', '/logout*', '/*logout*', '/signout*', '/internal/*', '/*.zip', '/*.pdf'] } }, { not: { selector_matches: '[data-no-prefetch], [download], [rel~=nofollow]' } }] }, eagerness: 'moderate' }] });
+                document.head.appendChild(sr);
+            } catch { /* an old browser: links load as they always did */ }
+        }
+        // A plain same-site link on a server-rendered page: the mark starts working at once; the next page's mark takes over.
+        document.addEventListener('click', (e) => {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target && e.target.closest && e.target.closest('a[href]');
+            if (!a || a.target === '_blank' || a.hasAttribute('download')) return;
+            let u; try { u = new URL(a.href, location.href); } catch { return; }
+            if (u.origin !== location.origin || (u.pathname === location.pathname && u.search === location.search)) return;
+            setTimeout(() => { if (!e.defaultPrevented) busy(true); }, 0);   // after the page's own handler (an SPA's router) had its say
+        }, true);
+        // Back from the browser's page cache: whatever was loading is done.
+        window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) busy(false); });
+    }
+    let _busyTimer = 0, _busyOn = false;
+    function busy(on) {
+        clearTimeout(_busyTimer);
+        if (!on && !_busyOn) return;   // only ends what it started (the mark keeps nothing it was not asked to)
+        _busyOn = !!on;
+        // A link that turns out to be a download never leaves the page: the mark gives up after ten seconds.
+        if (on) _busyTimer = setTimeout(() => busy(false), 10000);
+        try { if (window.OVMark) { if (on) window.OVMark.navStart(); else window.OVMark.navEnd(); } } catch { /* */ }
+    }
+
     const OpenVibeNavbar = {
+        /** The mark works while something loads (an SPA's route, a long action): busy(true), then busy(false). */
+        busy(on) { busy(!!on); },
+
         init(opts = {}) {
             Object.assign(_config, opts);
             injectStyles();
             hookBoost();
+            hookMoves();
             const el = render();
             upgradeIconsWhenFontsReady();
             if (typeof document !== 'undefined') setTimeout(loadReleaseWatch, 4000);
