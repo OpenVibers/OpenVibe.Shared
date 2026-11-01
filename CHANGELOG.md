@@ -4,6 +4,11 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.75.0 — 2026-11-01
+
+- **The Dock keeps the Vibe tab across sites.** The Network's Dock state knows `vibe` since openvibe-contracts 0.270.0
+  (Network #481), so the open tab follows the person from site to site like the others.
+
 ## 4.74.0 — 2026-11-01
 
 - **Vibe in the Dock, on every site** (plan L48 V2; the owner, 2026-11-01: "access your agent or the AI… from across
