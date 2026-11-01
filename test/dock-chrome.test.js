@@ -11,6 +11,8 @@
 //   • Chats (K-D2): the person's conversations from Chat's API with their unread counts, a thread opened in place (theirs
 //     and mine), Enter sends, the thread is marked read, the open chat is the Dock's state, and opening one on a phone
 //     never reads as a tap outside the sheet;
+//   • Vibe (L48 V2): the person's Vibe from Chat's /api/vibe, starters before the first message, a question posted and
+//     Vibe's answer arriving in place (an https link as a link), the Vibe tab never sent to the Network's state;
 //   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
 //     its tabs and its styles, the page keeps the pill saying where the Dock went, and closing the window brings the
 //     panel back; the Network is told.
@@ -50,6 +52,9 @@ const NOTES = [
 // The stand-in's state for the scenario under way.
 let scenario = {};
 const puts = [], decided = [], said = [], reads = [];
+// Chat's Vibe API for the Dock (OpenVibe.Chat server/rooms/vibe-api.js): one chat, Vibe answering a moment later.
+let vibeChat = null;
+const vibeMsgs = [], asked = [];
 const defaultState = () => ({ open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } }, updated_at: iso(0) });
 
 const PAGE = (o) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tasks</title><link rel="icon" href="data:,">
@@ -93,6 +98,20 @@ const server = http.createServer((req, res) => {
             const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', created_at: iso(120e3) }]
                 .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
             return json(200, { messages: all.filter((m) => m.id > after) });
+        }
+        if (u.pathname === '/api/vibe/chat') {
+            assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'Vibe is asked with the person\'s own token');
+            const after = Number(u.searchParams.get('after')) || 0;
+            return json(200, { chat: vibeChat, messages: vibeMsgs.filter((m) => m.id > after) });
+        }
+        if (u.pathname === '/api/vibe/ask' && req.method === 'POST') {
+            const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+            asked.push(b);
+            vibeChat = vibeChat || { slug: 'v1', name: 'Vibe', url: 'https://openvibe.chat/vibe/v1' };
+            const mine = { id: 500 + vibeMsgs.length, from: 'you', text: b.message, at: iso(0) };
+            vibeMsgs.push(mine);
+            setTimeout(() => vibeMsgs.push({ id: 600 + vibeMsgs.length, from: 'vibe', text: 'Reminder set: Stretch, every 2 hours. See them at https://openvibe.today/reminders', at: iso(0) }), 700);
+            return json(201, { chat: vibeChat, message: mine });
         }
         if (u.pathname === '/api/notifications/unread-count') return json(200, { count: 2 });
         if (u.pathname === '/api/notifications/unread-by-tab') return json(200, { tabs: { all: 2 } });
@@ -298,7 +317,7 @@ async function drag(p, from, to) {
             await p.evaluate(`${POP}.click()`);
             await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the panel in the window');
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk')"), false, 'and not in the page any more');
-            assert.strictEqual(await p.evaluate("window.__pip.win.document.querySelectorAll('.ovdk [role=tab]').length"), 3, 'the same three tabs');
+            assert.strictEqual(await p.evaluate("window.__pip.win.document.querySelectorAll('.ovdk [role=tab]').length"), 4, 'the same four tabs');
             assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovdk-styles')"), true, "the Dock's styles come with it");
             assert.deepStrictEqual(await p.evaluate("window.__pip.opts"), { width: 360, height: 520 }, 'a window of about 360 × 520');
             const inWindow = await until(p, PILL, 'the pill stays');
@@ -312,6 +331,32 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("!!window.__pip.win.document.querySelector('.ovdk')"), false, 'and out of the window');
             await wait(900);
             assert.ok(!puts.some((b) => 'popped' in b), `nor that it is back (${JSON.stringify(puts)})`);
+            await p.close();
+        }
+
+        // ── Vibe (L48 V2): starters, a question, Vibe's answer in place; the tab stays off the Network's state. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true } };
+            puts.length = 0;
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, PILL, 'the pinned pill');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, CARD, 'the card');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [role=tab]').dataset.tab"), 'vibe', 'Vibe is the first tab');
+            await p.evaluate("document.querySelector('#ovdk-tab-vibe').click()");
+            await until(p, "document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip').length === 4", 'the starters before the first message');
+            await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] .ovdk-chip').click()");
+            await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-mine')", 'my question in place');
+            assert.strictEqual(asked[0].message, 'Remind me to stretch every 2 hours');
+            assert.ok(asked[0].timezone, 'with the person\'s time zone, for "at 9"');
+            const answer = await until(p, "(() => { const m = document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-vibe:not(.ovdk-typing)'); return m ? { text: m.innerText, link: (m.querySelector('a') || {}).href || null } : null; })()", 'Vibe\'s answer', 6000);
+            assert.match(answer.text, /Reminder set: Stretch, every 2 hours/);
+            assert.strictEqual(answer.link, 'https://openvibe.today/reminders', 'an https link is a link');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-typing')"), false, 'the writing dots go when it answers');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-away').href"), 'https://openvibe.chat/vibe/v1', 'Open in Chat goes to the same chat');
+            await wait(900);
+            assert.ok(!puts.some((b) => b.tab === 'vibe'), `the Network's Dock state never gets a tab it does not know (${JSON.stringify(puts)})`);
             await p.close();
         }
 
@@ -331,7 +376,7 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all');
             await p.close();
         }
-        console.log('dock-chrome: the pill only when it matters, Agents, Chats and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
+        console.log('dock-chrome: the pill only when it matters, Vibe, Agents, Chats and Activity, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
     } finally {
         await browser.close();
         server.close();
