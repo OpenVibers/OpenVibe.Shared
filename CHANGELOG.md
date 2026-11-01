@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.69.0
+
+- **Icons that read at every size** (plan L49; the owner, 2026-11-01: "really tiny icons… a solid colour rather than
+  the border lines… so all our icons look nice across different sizes and devices"). 48 glyphs most often shown small
+  have a solid drawing (`glyphs.SOLID`, `glyphs.solid(name)`, `glyphs.inner(name)`): filled shapes with holes cut
+  through. ov-glyphs.js draws both, and pure CSS chooses: at 18 px and under the solid one shows, and every other
+  glyph draws its lines heavier (`max(0px, (18.4px - 1.15em) * k)`: inside the SVG a px is a grid unit and an em is
+  the icon's own size). The sprite carries `ovg-<name>-solid` symbols.
+- **An open book** for fa-book-open (the closed one read as an empty square at 14 px).
+- **Scroll areas** (kit.css): `.ov-scroll` hands the swipe on to the page at its ends, `.ov-scroll-fill` holds it
+  (sheets, modals, full-screen chats), `.ov-scroll-x` scrolls sideways only. On a phone the kit's sidebar sections
+  no longer trap the page.
+
 ## 4.68.0
 
 - **83 more glyphs, 446 Font Awesome names** (plan L49 step 1; the owner, 2026-11-01: "why Font Awesome? We should be

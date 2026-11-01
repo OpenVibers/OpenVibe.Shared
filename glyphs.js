@@ -217,9 +217,66 @@
         'window-restore': '<rect x="3.5" y="8.5" width="12" height="11" rx="2"/><path d="M8.5 8.5v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>',
         'align-left': '<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>',
         slash: '<path d="M5 5l14 14"/>',
+        // 4.69.0: an open book for fa-book-open (the closed one read as an empty square at 14 px).
+        'book-open': '<path d="M12 6.6C10 5.1 7 4.6 3.5 5.2v13.2c3.5-.6 6.5-.1 8.5 1.4 2-1.5 5-2 8.5-1.4V5.2C17 4.6 14 5.1 12 6.6Z"/><path d="M12 6.6v13.2"/>',
         // A spinner is never drawn as one (the owner, 2026-10-31: nothing spins): three dots that take turns (ov-glyphs.js).
         busy: '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3.4"/>',
     };
+    // ── Small sizes (4.69.0, plan L49; the owner, 2026-11-01: "really tiny icons… a solid colour rather than the border
+    // lines… so all our icons look nice across sizes"). A solid drawing for the glyphs most often shown small: filled
+    // shapes, holes cut with fill-rule evenodd, a line that must stay a line as class "ln". ov-glyphs.js draws both and
+    // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
+    // one draws its lines heavier there instead.
+    const SOLID = Object.freeze({
+        'book-open': '<path d="M11 6.4C9 5 6.3 4.5 3 5.1v13.3c3.3-.6 6 0 8 1.4ZM13 6.4c2-1.4 4.7-1.9 8-1.3v13.3c-3.3-.6-6 0-8 1.4Z"/>',
+        book: '<path d="M4.5 5A2.5 2.5 0 0 1 7 2.5h12.5v15H7a2.5 2.5 0 0 0-2.5 2.5Z"/><path class="ln" d="M7.5 20.5h11.5"/>',
+        fire: '<path fill-rule="evenodd" d="M12 21.5a6.3 6.3 0 0 0 6.3-6.3c0-4-2.7-6.3-3.9-9.5-1.9 2.1-2.4 4.2-2.4 4.2S10.8 8 9.7 6.1C7.4 8.7 5.7 11.8 5.7 15.2A6.3 6.3 0 0 0 12 21.5Zm0-2.6a2.6 2.6 0 0 0 2.6-2.6c0-1.5-1.1-2.5-1.6-3.7-.8.9-1 1.7-1 1.7s-.5-.8-.9-1.5c-.9 1.1-1.6 2.3-1.6 3.6a2.6 2.6 0 0 0 2.5 2.5Z"/>',
+        info: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM10.8 10.6h2.4V17h-2.4ZM12 6.5a1.45 1.45 0 1 1 0 2.9 1.45 1.45 0 0 1 0-2.9Z"/>',
+        'alert-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM10.8 6.8h2.4v7h-2.4ZM12 15.1a1.45 1.45 0 1 1 0 2.9 1.45 1.45 0 0 1 0-2.9Z"/>',
+        alert: '<path fill-rule="evenodd" d="M10.4 3.9a1.85 1.85 0 0 1 3.2 0l8.3 14.4a1.85 1.85 0 0 1-1.6 2.8H3.7a1.85 1.85 0 0 1-1.6-2.8ZM10.9 9h2.2v5.6h-2.2ZM12 15.9a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Z"/>',
+        heart: '<path d="M12 20.6s-7.6-4.6-7.6-10.6a4.3 4.3 0 0 1 7.6-2.9 4.3 4.3 0 0 1 7.6 2.9c0 6-7.6 10.6-7.6 10.6Z"/>',
+        star: '<path d="M12 3.2l2.6 5.4 5.9.7-4.4 4 1.2 5.9L12 16.3l-5.3 2.9 1.2-5.9-4.4-4 5.9-.7Z"/>',
+        bell: '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>',
+        user: '<circle cx="12" cy="7.8" r="4.1"/><path d="M4.2 21c0-4.3 3.5-7.2 7.8-7.2s7.8 2.9 7.8 7.2Z"/>',
+        members: '<circle cx="9" cy="7.9" r="3.6"/><path d="M2.4 20.8c0-3.8 3-6.5 6.6-6.5s6.6 2.7 6.6 6.5Z"/><circle cx="16.6" cy="7.4" r="2.9"/><path d="M16.8 13.4c2.9.4 4.8 2.8 4.8 6.4V20.8h-4.4c0-2.9-1-5.2-2.8-6.7Z"/>',
+        chat: '<path d="M3.5 5.6A1.6 1.6 0 0 1 5.1 4h13.8a1.6 1.6 0 0 1 1.6 1.6v9.8a1.6 1.6 0 0 1-1.6 1.6H8.6L3.5 21Z"/>',
+        eye: '<path fill-rule="evenodd" d="M12 4.8C6 4.8 1.8 12 1.8 12s4.2 7.2 10.2 7.2S22.2 12 22.2 12 18 4.8 12 4.8Zm0 3.6a3.6 3.6 0 1 1 0 7.2 3.6 3.6 0 0 1 0-7.2Z"/><circle cx="12" cy="12" r="1.7"/>',
+        clock: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM10.9 6.6h2.2v5l3.2 1.9-1.1 1.9-4.3-2.6Z"/>',
+        pin: '<path fill-rule="evenodd" d="M12 2.3a7.3 7.3 0 0 0-7.3 7.3c0 5.6 7.3 12.1 7.3 12.1s7.3-6.5 7.3-12.1A7.3 7.3 0 0 0 12 2.3Zm0 4.6a2.6 2.6 0 1 1 0 5.2 2.6 2.6 0 0 1 0-5.2Z"/>',
+        home: '<path d="M3.3 11.2 12 3.6l8.7 7.6v8.9a1 1 0 0 1-1 1h-5.2v-6.4h-5v6.4H4.3a1 1 0 0 1-1-1Z"/>',
+        camera: '<path fill-rule="evenodd" d="M3 8.3a1.8 1.8 0 0 1 1.8-1.8h2.5L9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v10.1a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.4Zm9 1.9a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/>',
+        video: '<path d="M2.5 7.6a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v8.8a2 2 0 0 1-2 2H4.5a2 2 0 0 1-2-2ZM17.2 10.1l4.3-2.6v9l-4.3-2.6Z"/>',
+        mic: '<path d="M8.7 5.8a3.3 3.3 0 0 1 6.6 0V11a3.3 3.3 0 0 1-6.6 0Z"/><path class="ln" d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+        lock: '<path d="M5 11.6a1.6 1.6 0 0 1 1.6-1.6h10.8a1.6 1.6 0 0 1 1.6 1.6v8a1.6 1.6 0 0 1-1.6 1.6H6.6A1.6 1.6 0 0 1 5 19.6Z"/><path class="ln" d="M8.2 10V7.6a3.8 3.8 0 0 1 7.6 0V10"/>',
+        shield: '<path d="M12 2.6 4.6 5.8V12c0 4.6 3.1 8 7.4 9.5 4.3-1.5 7.4-4.9 7.4-9.5V5.8Z"/>',
+        crown: '<path d="M2.6 7.8 7.4 12 12 4.6 16.6 12l4.8-4.2-2 11.7H4.6Z"/>',
+        trophy: '<path d="M7.3 3.3h9.4V9a4.7 4.7 0 0 1-9.4 0Z"/><path class="ln" d="M7.3 5.8H5.1a3 3 0 0 0 3 4.1M16.7 5.8h2.2a3 3 0 0 1-3 4.1M12 13.8V17M8 20.4h8"/>',
+        tag: '<path fill-rule="evenodd" d="M2.6 4.1A1.5 1.5 0 0 1 4.1 2.6h7.3l10.1 10.1-8.8 8.8L2.6 11.4Zm5.1 2.5a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8Z"/>',
+        zap: '<path d="M13.4 2.4 4.6 13.4h6.2l-1.2 8.2 8.8-11h-6.2Z"/>',
+        play: '<path d="M7.4 4.4v15.2a.8.8 0 0 0 1.2.7l11.4-7.6a.8.8 0 0 0 0-1.4L8.6 3.7a.8.8 0 0 0-1.2.7Z"/>',
+        pause: '<rect x="6.3" y="4.6" width="4" height="14.8" rx="1.2"/><rect x="13.7" y="4.6" width="4" height="14.8" rx="1.2"/>',
+        spark: '<path d="M12 2.6l2 5.6 5.6 2-5.6 2L12 17.8l-2-5.6-5.6-2 5.6-2ZM19 14.6l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9Z"/>',
+        flag: '<path class="ln" d="M5 21V3.8"/><path d="M5.6 3.6h11.6l-2.1 4.4 2.1 4.4H5.6Z"/>',
+        folder: '<path d="M2.8 6.8a2 2 0 0 1 2-2h4.4l2 2h8a2 2 0 0 1 2 2v8.6a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2Z"/>',
+        file: '<path d="M6 2.6h7.6v5.2h5V21.4H6ZM15.2 2.9l3.1 3.3h-3.1Z"/>',
+        image: '<path fill-rule="evenodd" d="M3 6.1a2.6 2.6 0 0 1 2.6-2.6h12.8A2.6 2.6 0 0 1 21 6.1v11.8a2.6 2.6 0 0 1-2.6 2.6H5.6A2.6 2.6 0 0 1 3 17.9Zm6 2.1a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8Zm7.2 3.3-8 7.5h10.2a1.4 1.4 0 0 0 1.4-1.4v-2.9Z"/>',
+        cloud: '<path d="M7 18.8h10a4.4 4.4 0 0 0 .6-8.8A6.4 6.4 0 0 0 5.4 9.4 4.7 4.7 0 0 0 7 18.8Z"/>',
+        moon: '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>',
+        drop: '<path d="M12 2.4s6.4 6.8 6.4 11.6a6.4 6.4 0 0 1-12.8 0C5.6 9.2 12 2.4 12 2.4Z"/>',
+        'check-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM16.3 8.9l1.6 1.6-6.9 6.9-4.1-4.1 1.6-1.6 2.5 2.5Z"/>',
+        'x-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM9.2 7.8 12 10.6l2.8-2.8 1.4 1.4-2.8 2.8 2.8 2.8-1.4 1.4-2.8-2.8-2.8 2.8-1.4-1.4 2.8-2.8-2.8-2.8Z"/>',
+        smile: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM9 8.6a1.35 1.35 0 1 1 0 2.7 1.35 1.35 0 0 1 0-2.7ZM15 8.6a1.35 1.35 0 1 1 0 2.7 1.35 1.35 0 0 1 0-2.7ZM7.9 13.4h8.2a4.1 4.1 0 0 1-8.2 0Z"/>',
+        calendar: '<path fill-rule="evenodd" d="M4 7.4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Zm2.2 4V18.8h11.6v-7.4Z"/><path class="ln" d="M9 3.2v3.6M15 3.2v3.6"/>',
+        'thumbs-up': '<path d="M7.4 10.4v10H4.6a1.1 1.1 0 0 1-1.1-1.1v-7.8a1.1 1.1 0 0 1 1.1-1.1ZM8.8 10.4l3.5-7.1a2.3 2.3 0 0 1 2.6 2.7l-.6 3.4h5.5a2.1 2.1 0 0 1 2.1 2.5l-1.4 6.8a2.1 2.1 0 0 1-2.1 1.7H8.8Z"/>',
+        megaphone: '<path d="M3.4 10a1.1 1.1 0 0 1 1.1-1.1h2.6l9.4-4.7v15.6l-9.4-4.7H4.5A1.1 1.1 0 0 1 3.4 14Z"/><path class="ln" d="M7.2 15.2l1.2 4.9M19 9.4a3.3 3.3 0 0 1 0 5.2"/>',
+        gem: '<path d="M6.4 3.6h11.2l3.8 5.3-9.4 11.6L2.6 8.9Z"/>',
+        ghost: '<path fill-rule="evenodd" d="M4.8 20.6V11a7.2 7.2 0 0 1 14.4 0v9.6l-2.4-1.8-2.4 1.8-2.4-1.8-2.4 1.8-2.4-1.8ZM9.4 9.3a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Zm5.2 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6Z"/>',
+        trash: '<path d="M5.8 7.6h12.4l-1 12a2 2 0 0 1-2 1.8H8.8a2 2 0 0 1-2-1.8Z"/><path class="ln" d="M3.8 6.6h16.4M9 6.6V4h6v2.6"/>',
+        coin: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM11 6h2v1.2c1.1.2 2 .8 2.5 1.7l-1.7 1c-.3-.6-1-1-1.8-1-.9 0-1.5.4-1.5 1s.5.8 1.8 1.1c1.8.4 3.4 1 3.4 3 0 1.4-1 2.4-2.7 2.7V18h-2v-1.3c-1.2-.2-2.2-.9-2.7-1.9l1.7-1c.4.7 1.1 1.1 2 1.1 1 0 1.6-.4 1.6-1s-.6-.8-1.9-1.1c-1.7-.4-3.3-1-3.3-2.9 0-1.3 1-2.3 2.6-2.6Z"/>',
+        live: '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>',
+        gift: '<path d="M3.4 8.6h17.2v3.2H3.4ZM4.6 12.8h6.4v8H5.6a1 1 0 0 1-1-1ZM13 12.8h6.4v7a1 1 0 0 1-1 1H13Z"/><path class="ln" d="M12 8.6c-1.5-3-5-4-5-1.5S12 8.6 12 8.6s5-1 5-3.5-3.5-1.5-5 3.5"/>',
+        music: '<path d="M8.4 6.6l12-2.3v3.2l-12 2.3Z"/><path class="ln" d="M9.5 18V7.8M19.5 16V5.6"/><circle cx="6.7" cy="18" r="2.9"/><circle cx="16.7" cy="16" r="2.9"/>',
+    });
     const BY = { kit: 'the OpenVibe Kit', opus: 'drawn by Opus for the glyph set (2026-10-31)' };
     const ALL = { ...(kit && kit.PATHS ? kit.PATHS : {}), ...DRAWN };
     const NAMES = Object.freeze(Object.keys(ALL).sort());
@@ -252,7 +309,7 @@
         'screwdriver-wrench': 'wrench', wrench: 'wrench', music: 'music', gear: 'gear', gears: 'gear', 'paper-plane': 'plane', fire: 'fire',
         'circle-nodes': 'nodes', 'network-wired': 'nodes', 'diagram-project': 'nodes', sitemap: 'nodes', bridge: 'bridge', envelope: 'mail', sun: 'sun', moon: 'moon',
         'list-check': 'steps', list: 'list', 'list-ul': 'list', bars: 'menu', display: 'computer', desktop: 'computer', laptop: 'computer', 'wave-square': 'wave',
-        newspaper: 'news', 'file-lines': 'file', file: 'file', 'file-pdf': 'file', 'file-audio': 'file', folder: 'folder', book: 'book', 'book-open': 'book', crown: 'crown',
+        newspaper: 'news', 'file-lines': 'file', file: 'file', 'file-pdf': 'file', 'file-audio': 'file', folder: 'folder', book: 'book', 'book-open': 'book-open', crown: 'crown',
         microchip: 'chip', 'id-card': 'id', brain: 'brain', cloud: 'cloud', 'cloud-sun': 'cloud', 'cloud-rain': 'cloud', 'cloud-showers-heavy': 'cloud', snowflake: 'snow',
         mountain: 'mountain', 'mountain-sun': 'mountain', 'layer-group': 'layers', hashtag: 'hash', font: 'text', 'text-height': 'text',
         'right-from-bracket': 'leave', 'right-to-bracket': 'enter', 'arrow-right-from-bracket': 'leave', 'arrow-right-to-bracket': 'enter',
@@ -313,5 +370,9 @@
     }
     const fromFa = (fa) => { const n = String(fa || '').replace(/^fa-/, ''); return Object.prototype.hasOwnProperty.call(FA, n) && path(FA[n]) ? FA[n] : null; };
 
-    return { NAMES, META, FA, DRAWN: Object.freeze(Object.keys(DRAWN)), path, svg, fromFa };
+    const solid = (name) => (Object.prototype.hasOwnProperty.call(SOLID, name) ? SOLID[name] : '');
+    /** The inside of the <svg> ov-glyphs.js draws for a glyph: the line drawing, and its solid one when it has one. */
+    const inner = (name) => { const d = path(name); const so = solid(name); return d ? d + (so ? `<g class="ovg-s">${so}</g>` : '') : ''; };
+
+    return { NAMES, META, FA, SOLID, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa };
 });
