@@ -23,8 +23,11 @@ const BODY = kit.snippet({ code: 'hello', id: 'sn' })
     + kit.action({ action: '/gone', label: 'Delete', confirm: 'Delete it?' })
     + kit.tool({ head: kit.toolHead({ title: 'Whois Lookup', crumb: { label: 'Network tools' } }),
         input: kit.toolInput({ name: 'q', label: 'Domain', button: 'Look up', tries: { items: [{ value: 'openvibe.network' }] } }) });
+// Tabs far below the fold, the open one off to the right of a narrow strip (4.77.1: scrollIntoView moved the page).
+const LOW_TABS = `<div style="height:2400px"></div><div style="width:240px"><style>.ovk-tabs{display:flex;overflow-x:auto;white-space:nowrap}.ovk-tabs a{flex:none;padding:0 18px}</style>${
+    kit.tabs({ base: '/s', active: 'h', items: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((k) => ({ key: k, label: `Section ${k}` })) })}</div>`;
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Kit</title><link rel="icon" href="data:,"></head>
-<body>${BODY}<script>
+<body>${BODY}${LOW_TABS}<script>
   window.__asked = []; window.confirm = (m) => { window.__asked.push(m); return false; };
   window.__sent = [];
   document.addEventListener('submit', (e) => { if (!e.defaultPrevented) { e.preventDefault(); window.__sent.push([e.target.getAttribute('action'), new FormData(e.target).get('q')]); } });
@@ -47,6 +50,8 @@ const server = http.createServer((req, res) => {
         const p = await h.openPage(browser, context, { width: 390 });
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(200);
+        assert.strictEqual(await p.evaluate('Math.round(scrollY)'), 0, 'tabs below the fold never scroll the page to themselves');
+        assert.ok(await p.evaluate("document.querySelector('.ovk-tabs').scrollLeft") > 0, 'but their strip shows the open tab');
         const hasClipboard = await p.evaluate('!!navigator.clipboard');
         if (hasClipboard) assert.strictEqual(await p.evaluate("document.querySelector('[data-ovk-copy]').hidden"), false, 'the copy button shows where the clipboard works');
         await p.evaluate("document.querySelector('[data-ovk-sheet]').click()");

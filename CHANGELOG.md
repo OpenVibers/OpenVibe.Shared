@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.77.1 — 2026-11-01
+
+- **Tabs below the fold no longer scroll the page to themselves.** kit-web.js kept the open tab in view with
+  `scrollIntoView({ block: 'nearest' })`, which also scrolled the page when a tab strip sat below the fold (a settings
+  section lower down, openvibe.design/kit's samples). Only the strip moves now, sideways.
+
 ## 4.77.0 — 2026-11-01
 
 - **Talk to Vibe in any browser** (plan L48 V2). Where the browser has no speech recognition of its own (Firefox),

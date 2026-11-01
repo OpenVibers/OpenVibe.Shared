@@ -143,7 +143,14 @@
             d.addEventListener('click', (e) => { if (e.target === d || (e.target.closest && e.target.closest('[data-ovk-close]'))) d.close(); });
         });
         // Tabs that scroll sideways keep the open one in view.
-        all('.ovk-tabs [aria-current="page"]').forEach((a) => { if (once(a, 'ovkTab') && a.scrollIntoView) a.scrollIntoView({ block: 'nearest', inline: 'center' }); });
+        // Only the strip moves, sideways: scrollIntoView would also scroll the page to a strip below the fold.
+        all('.ovk-tabs [aria-current="page"]').forEach((a) => {
+            if (!once(a, 'ovkTab')) return;
+            const strip = a.closest('.ovk-tabs');
+            if (!strip || strip.scrollWidth <= strip.clientWidth) return;
+            const ar = a.getBoundingClientRect(), sr = strip.getBoundingClientRect();
+            strip.scrollLeft += (ar.left + ar.width / 2) - (sr.left + sr.width / 2);
+        });
         // Rails: ‹ › move a page of cards where there is a pointer to click them; each hides at its end.
         const fine = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
         const still = () => (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) || document.documentElement.getAttribute('data-ov-motion') === 'reduced';
