@@ -4,6 +4,23 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.93.0 — 2026-11-02
+
+- **Content labels, each viewer's own choice** (plan L1, `common.content-labels@1`, `network.label-prefs@1`).
+  - **`ov-labels.js`**: a page marks what carries labels with `data-ov-labels="nudity,18+"`, and optionally the media
+    to cover (`data-ov-labels-media`) and the poster (`data-ov-labels-owner`). The navbar loads the file the first time
+    such an element appears, as it does `ov-glyphs.js`.
+    - It reads the person's choices once from Network (`GET /api/v1/me/label-prefs`, with the navbar's token, cached
+      five minutes) and applies them. **show**: as it is. **blur**: the media is covered by a calm button naming the
+      labels with "Show" (a playing video pauses), until tapped. **hide**: not shown.
+    - Signed out, everything shows (the web default). The poster always sees their own. Things that arrive later (a
+      feed's next page) are covered too.
+  - **`kit.labels(labels)`**: the chips beside a title, in words ("Strong language", "Flashing lights"), 18+ in the
+    warning colour. Only the labels in force: a suggestion is the creator's to confirm and is never shown to viewers.
+    **`kit.labelsAttr(labels)`** writes the matching `data-ov-labels` attribute.
+  - **`OpenVibeNavbar.session`**: who is signed in and the Network token, read only, for files loaded beside the
+    navbar.
+
 ## 4.92.0 — 2026-11-02
 
 - **The page starts the footer it renders** (`shell.page`, `shell.scripts`).

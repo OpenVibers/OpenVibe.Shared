@@ -31,6 +31,7 @@ const BROWSER = Object.freeze([
     'brands.js',            // brand logos (Simple Icons, CC0), fetched by ov-glyphs.js the first time a page shows one (4.72.0)
     'ov-look.js',           // the Look panel: themes, the season, more on openvibe.design (navbar.js loads it on first open)
     'ov-fx.js',             // the network's effects (data-fx): glint, glow, lift, press, ripple, tilt, reveal, count, confetti
+    'ov-labels.js',         // content labels (L1): each viewer's show / blur / hide; navbar.js loads it when a page has [data-ov-labels]
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'history.js',           // cross-site history
     'sso-client.js',        // link hand-off, FedCM

@@ -478,7 +478,7 @@
     const NAV_ICONS_REV = 'a571e2967b16';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': 'bb9d0a92e0f2', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': 'bb9d0a92e0f2', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': '1e528aa9c97b' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -525,6 +525,23 @@
             soon = setTimeout(() => { soon = 0; if (loadGlyphs() && glyphWatch) { glyphWatch.disconnect(); glyphWatch = true; } }, 250);
         });
         glyphWatch.observe(document.body, { childList: true, subtree: true });
+    }
+    // ov-labels.js (content labels, L1), when a page shows something labelled: now, or the first time one appears.
+    let labelWatch = null;
+    function loadLabels() {
+        if (root.OVLabels || document.getElementById('ov-labels-loader')) return true;
+        if (!document.querySelector('[data-ov-labels]')) return false;
+        try { const sc = document.createElement('script'); sc.id = 'ov-labels-loader'; sc.src = siblingV('ov-labels.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        return true;
+    }
+    function watchLabels() {
+        if (labelWatch || !document.querySelector || loadLabels() || typeof MutationObserver !== 'function' || !document.body) return;
+        let soon = 0;
+        labelWatch = new MutationObserver(() => {
+            if (soon) return;
+            soon = setTimeout(() => { soon = 0; if (loadLabels() && labelWatch) { labelWatch.disconnect(); labelWatch = true; } }, 250);
+        });
+        labelWatch.observe(document.body, { childList: true, subtree: true });
     }
     function sibling(name) {
         const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
@@ -1699,7 +1716,7 @@
         }
         // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
-        if (_config.glyphs !== false) watchGlyphs();
+        if (_config.glyphs !== false) watchGlyphs(); watchLabels();
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">
@@ -2189,6 +2206,8 @@
         set activity(_v) { /* island.js binds itself; nothing to store */ },
 
         setToken(token) { _config.token = token; },
+        /** Who is signed in and the token for Network (read only): for the files loaded beside the navbar (ov-labels.js). */
+        get session() { return { user: _config.user || null, token: _config.token || null, apiBase: _config.apiBase }; },
 
         /** Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only. */
         openDock(tab) { if (_config.token && _config.dock !== false) openDock(tab); },
