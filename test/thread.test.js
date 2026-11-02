@@ -51,6 +51,8 @@ assert.ok(comp.includes('data-ovt-starter="Plan a weekend"'));
 assert.ok(comp.includes('formaction="/chat/tsk_1/stop"') && comp.includes('class="ovt-composer is-busy"'), 'Stop while it works');
 assert.ok(comp.includes('enctype="multipart/form-data"') && comp.includes('accept="image/*"'), 'attach');
 assert.ok(!/data-ovt-text required/.test(comp), 'a busy composer may send nothing (it steers)');
+assert.ok(/<button type="submit" class="ovt-stop" hidden data-ovt-stop>/.test(t.composer({ action: '/chat', stopAction: '' })), 'Stop drawn hidden for a script to show');
+assert.ok(!t.composer({ action: '/chat' }).includes('ovt-stop'), 'no Stop when the site has none');
 assert.ok(/data-ovt-text required/.test(t.composer({ action: '/chat' })), 'otherwise it needs words');
 const topped = t.composer({ action: '/chat', top: '<ul class="picked"></ul>', maxlength: 20000 });
 assert.ok(topped.includes('<ul class="picked"></ul><label class="ovt-sr" for="ovt-text">') && topped.includes('maxlength="20000"'), 'a slot above the box, and its limit');

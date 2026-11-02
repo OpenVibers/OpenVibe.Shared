@@ -156,6 +156,7 @@ function card({ tone = 'info', title = '', text = null, html = '' } = {}) {
  * chip, attach), and Send, which becomes Stop while a turn works (busy). Works as a plain form without script.
  *   hidden: { parent: 'tsk_…' };  starters: ['Plan a weekend in Lisbon', …] (shown on an empty chat)
  *   top: the site's safe markup above the box (picked files, a problem line);  maxlength: the box's limit
+ *   stopAction: where Stop posts while a turn works; '' draws Stop hidden, for a page whose script starts turns itself
  */
 function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null } = {}) {
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
@@ -164,7 +165,7 @@ function composer({ action = '', method = 'post', name = 'text', placeholder = '
 ${top || ''}<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
 <textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
 <div class="ovt-c-row"><div class="ovt-c-tools">${attach ? `<label class="ovt-btn ovt-attach" title="Attach files">${icon('attach')}<span class="ovt-sr">Attach files</span><input type="file" name="${esc(attach.name || 'files')}"${attach.accept ? ` accept="${esc(attach.accept)}"` : ''} multiple data-ovt-files hidden></label>` : ''}${tools || ''}</div>
-${busy && stopAction ? `<button type="submit" class="ovt-stop" formaction="${esc(stopAction)}" formnovalidate data-ovt-stop>${icon('stop')}<span>Stop</span></button>` : ''}<button type="submit" class="ovt-send" data-ovt-send aria-label="${esc(sendLabel)}">${icon('send')}<span class="ovt-sr">${esc(sendLabel)}</span></button></div>
+${stopAction != null ? `<button type="submit" class="ovt-stop"${stopAction ? ` formaction="${esc(stopAction)}" formnovalidate` : ''}${busy && stopAction ? '' : ' hidden'} data-ovt-stop>${icon('stop')}<span>Stop</span></button>` : ''}<button type="submit" class="ovt-send" data-ovt-send aria-label="${esc(sendLabel)}">${icon('send')}<span class="ovt-sr">${esc(sendLabel)}</span></button></div>
 ${note ? `<p class="ovt-c-note" data-ovt-note>${esc(note)}</p>` : ''}
 </form>`;
 }
