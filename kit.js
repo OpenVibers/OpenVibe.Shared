@@ -344,7 +344,9 @@
         const fmt = (v) => (typeof v === 'number' ? v.toLocaleString('en-US') : String(v));
         const shown = items.filter((x) => x && x[0] != null && x[0] !== '' && x[0] !== 0);
         if (!shown.length) return '';
-        return `<dl class="ovk-stats" aria-label="${esc(label)}">${shown.map(([v, l, href]) => `<div${href ? ' class="ovk-stat--link"' : ''}><dt>${href ? `<a href="${esc(url(href))}">${esc(l)}</a>` : esc(l)}</dt><dd>${esc(fmt(v))}</dd></div>`).join('')}</dl>`;
+        // tabindex: on a phone the row scrolls sideways, and a row with no link in it had no way in by keyboard
+        // (axe scrollable-region-focusable, 2026-11-01 sweep).
+        return `<dl class="ovk-stats" aria-label="${esc(label)}" tabindex="0">${shown.map(([v, l, href]) => `<div${href ? ' class="ovk-stat--link"' : ''}><dt>${href ? `<a href="${esc(url(href))}">${esc(l)}</a>` : esc(l)}</dt><dd>${esc(fmt(v))}</dd></div>`).join('')}</dl>`;
     }
     /** What an empty list says: a title, one line, and the one thing to do next. */
     const empty = ({ title = '', text = '', action: act = null, icon: ic = '' } = {}) => `<div class="ovk-empty">${ic ? icon(ic) : ''}${title ? `<p class="ovk-empty-title">${esc(title)}</p>` : ''}${text ? `<p>${esc(text)}</p>` : ''}${act ? button({ href: act.href, label: act.label, kind: act.kind || 'primary', icon: act.icon || '' }) : ''}</div>`;

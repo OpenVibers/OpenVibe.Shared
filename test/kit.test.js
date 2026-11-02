@@ -77,6 +77,7 @@ const kit = require('../kit');
     const st = kit.stats([[1234, 'messages'], [0, 'hidden'], [null, 'unknown'], ['12k', 'views']]);
     assert.ok(st.includes('<dd>1,234</dd>') && st.includes('<dd>12k</dd>') && !st.includes('hidden') && !st.includes('unknown'));
     assert.strictEqual(kit.stats([[0, 'none']]), '', 'nothing to show, no strip');
+    assert.ok(st.startsWith('<dl class="ovk-stats" aria-label="In numbers" tabindex="0">'), 'the strip scrolls sideways on a phone: it can be reached by keyboard');
     assert.ok(kit.notice({ kind: 'error', text: 'No' }).includes('role="alert"'));
     assert.ok(kit.notice({ kind: 'ok', text: 'Saved' }).includes('role="status"'));
     assert.ok(kit.empty({ title: 'No rooms', text: 'Start one', action: { href: '/rooms?new=1', label: 'Start a room' } }).includes('href="/rooms?new=1"'));

@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.91.1 — 2026-11-01
+
+- **A numbers strip can be reached by keyboard** (`kit.stats`): on a phone the strip scrolls sideways, and a strip with
+  no link in it had no way in (axe `scrollable-region-focusable`, a WCAG AA sweep of every home). It carries
+  `tabindex="0"` beside its label.
+
 ## 4.91.0 — 2026-11-01
 
 - **Buttons say they are working, then done or failed, with the mark** (`ov-mark.js`, which the navbar loads on every
