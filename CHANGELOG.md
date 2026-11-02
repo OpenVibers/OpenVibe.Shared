@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.94.0 — 2026-11-02
+
+- **A labelled thing's poster may be named by username** (`data-ov-labels-owner="@name"`). The owner rule (their own
+  content always shows to them) matched only a subject (`usr_…`), and a server-rendered page such as openvibe.video's
+  cards knows the maker's username, not their subject. `ov-labels.js` now also matches `@username` against the
+  signed-in person's username, in any case. A bare name is never an owner, so a username that looks like someone's
+  subject matches nothing.
+- **On a thing's own page, hide covers it instead of emptying the page** (`data-ov-labels-opened`). A watch page or a
+  picture's page is somewhere the person went on purpose; with hide chosen for one of its labels, the player vanished
+  and left a title over nothing. Marked opened, it is covered with the calm "Show" button that names the labels, as
+  blur does. Cards and lists still hide.
+- `navbar.js`'s `SIBLING_REV` moves with `ov-labels.js`.
+
 ## 4.93.2 — 2026-11-02
 
 - **A folded footer column says how many links it holds** (from #208, 10-31). On a phone the full footer's columns are
