@@ -6,12 +6,12 @@
   },
   "ai": {
     "name": "OpenVibe.AI",
-    "description": "Many models, one API. Every answer explained.",
+    "description": "Many models, one API. Every answer explained",
     "icon": "ai"
   },
   "bench": {
     "name": "OpenVibe.Bench",
-    "description": "One AI benchmark and comparison engine for every room.",
+    "description": "One AI benchmark and comparison engine for every room",
     "icon": "network"
   },
   "blog": {
@@ -76,7 +76,7 @@
   },
   "events": {
     "name": "OpenVibe.Events",
-    "description": "Events your services can count on.",
+    "description": "Events your services can count on",
     "icon": "network"
   },
   "exchange": {
@@ -116,7 +116,7 @@
   },
   "inventory": {
     "name": "OpenVibe.Inventory",
-    "description": "Your items, on every OpenVibe site.",
+    "description": "Your items, on every OpenVibe site",
     "icon": "network"
   },
   "live": {
@@ -156,12 +156,12 @@
   },
   "pics": {
     "name": "OpenVibe.Pics",
-    "description": "Share pictures. Fast, open, yours.",
+    "description": "Share pictures. Fast, open, yours",
     "icon": "media"
   },
   "play": {
     "name": "OpenVibe.Play",
-    "description": "Achievements, leaderboards and cloud saves for every game.",
+    "description": "Achievements, leaderboards and cloud saves for every game",
     "icon": "network"
   },
   "quest": {
@@ -186,12 +186,12 @@
   },
   "run": {
     "name": "OpenVibe.Run",
-    "description": "Run jobs on machines that can.",
+    "description": "Run jobs on machines that can",
     "icon": "network"
   },
   "search": {
     "name": "OpenVibe.Search",
-    "description": "Search the OpenVibe network.",
+    "description": "Search the OpenVibe network",
     "icon": "network"
   },
   "services": {
@@ -271,7 +271,7 @@
   },
   "zone": {
     "name": "OpenVibe.Zone",
-    "description": "Private S3-compatible storage for your projects.",
+    "description": "Private S3-compatible storage for your projects",
     "icon": "network"
   }
 }

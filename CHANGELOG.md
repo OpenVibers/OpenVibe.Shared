@@ -11,6 +11,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   cut-outs; the drive keeps its case outline as a line over a filled base with two lights; the gavel's head is one
   block apart from its striking bar, so the gap still shows at 16 px. Drawn beside the line drawings, checked at 96,
   24 and 16 px on a dark ground and by Design's `validate.cleanSolid`. The glyph files and fonts are rebuilt.
+- **Taglines end without a full stop, every one** (contracts 0.276.0): `icons/sites.json` (the site switcher) and the
+  share cards of AI, Bench, Events, Inventory, Pics, Play, Run, Search and Zone are rebuilt from the manifests; Pics'
+  domain card line in `social.js` follows. Ten of 55 had one.
 
 ## 4.104.0 — 2026-11-02
 
