@@ -319,6 +319,9 @@
 .fa-circle-plus::before{content:"\e0f3"}
 .fa-plus-circle::before{content:"\e0f3"}
 .fa-print::before{content:"\e0f4"}
+.fa-puzzle::before{content:"\e115"}
+.fa-puzzle-piece::before{content:"\e115"}
+.fa-puzzle-piece-simple::before{content:"\e115"}
 .fa-quote-left::before{content:"\e0f5"}
 .fa-quote-right::before{content:"\e0f5"}
 .fa-radio::before{content:"\e0f6"}

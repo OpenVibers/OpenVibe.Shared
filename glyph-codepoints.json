@@ -276,6 +276,7 @@
     "window": "E111",
     "window-restore": "E112",
     "wizard": "E113",
-    "book-open": "E114"
+    "book-open": "E114",
+    "puzzle": "E115"
   }
 }
