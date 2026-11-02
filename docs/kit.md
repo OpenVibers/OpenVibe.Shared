@@ -199,7 +199,7 @@ kit.badge(text, 'accent' | 'ok' | 'warn' | 'bad' | 'live') · kit.dot(n) · kit.
 ### Cards and rails (4.28.0)
 
 ```js
-kit.card({ href, title, type, ratio, image, alt, video, badge, live, corner, peek, who, whoHtml, avatar, sub, preview,
+kit.card({ href, title, type, ratio, image, alt, video, badge, live, corner, peek, who, whoHtml, avatar, sub, preview, date,
            count: [1832, 'views'], when, level, save: { href }, remind: { href }, share, more: [items] })
 kit.rail({ id, title, more: { href, label }, items: [kit.card(…), …], size: 's' | 'm' | 'l', wrap }))
 ```
@@ -208,7 +208,7 @@ One card for every kind of thing (plan 2026-10-28 §3.4):
 
 | Part | What it does |
 | --- | --- |
-| Media | In the type's shape (`kit.CARD_RATIO`): 16:9 streams, clips, runs, maps, cams, events; 1:1 memes, shoes, listings, deals; 4:3 reports, themes, games; 2:1 domains. `ratio` overrides it. Without a picture, the type's icon on a wash of the room's accent |
+| Media | In the type's shape (`kit.CARD_RATIO`): 16:9 streams, clips, runs, maps, cams, events; 1:1 memes, shoes, listings, deals; 4:3 reports, themes, games; 2:1 domains. `ratio` overrides it. Without a picture, the type's icon on a wash of the room's accent; a person's face when `avatar` is given; the first lines when `preview` is; and the day itself (weekday and month, the day large) when `date` is (a drop, an event, a deadline) |
 | Badge | Top left, one word: NEW, −24 %, WR. `live: true` draws LIVE with a pulse |
 | Corner | Bottom right: a length or a price |
 | Peek | One line over the media on hover or focus |

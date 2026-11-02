@@ -286,4 +286,12 @@ const kit = require('../kit');
     assert.ok(/ov:boost:before', \(\) => Array\.prototype\.forEach\.call\(document\.querySelectorAll\('\.ovk-sidebar\.is-open'\)/.test(web), 'and closed by a page move');
 }
 
+// card({ date }) (4.100.0): a thing without a picture that happens on a day shows the day, not a repeated calendar icon.
+{
+    const dated = kit.card({ href: '/drops#d1', title: 'Nike Air Max Dolce', type: 'event', corner: '$170.00', date: '2026-11-04T15:00:00Z' });
+    assert.ok(dated.includes('<span class="ovk-card-noimg ovk-card-noimg--date" aria-hidden="true"><span class="ovk-card-date-m"><span class="ovk-card-date-w">Wed</span> Nov</span><b class="ovk-card-date-d">4</b></span>'), 'the day as the cover, in UTC');
+    assert.ok(!kit.card({ title: 'x', type: 'event', date: 'not a date' }).includes('--date') && !kit.card({ title: 'x', type: 'event' }).includes('--date'), 'no date, or not a date: the type icon as before');
+    assert.ok(!kit.card({ title: 'x', type: 'event', image: 'https://example.com/a.jpg', date: '2026-11-04' }).includes('--date'), 'a picture wins over the date');
+}
+
 console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page), the tool frame and the sidebar ok');
