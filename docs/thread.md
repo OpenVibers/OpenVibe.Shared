@@ -35,7 +35,8 @@ A `rows` entry for `work()` is one of:
 OVThread.add(html);            // append a new turn (a string from thread.turn, or an element)
 OVThread.live(id, 'Reading');  // the working turn's live line
 OVThread.work(id, rowHtml);    // a row in its work list
-OVThread.replace(id, html);    // the finished turn; its answer fades in
+OVThread.replace(id, html);    // the finished turn; its answer types in, word by word
+OVThread.reveal(answerEl);     // the same reveal, for an answer a site draws itself
 ```
 
 A site renders those strings on the server (`GET /chat/turn/:id`, as Actor does) or in the page. The helpers keep the

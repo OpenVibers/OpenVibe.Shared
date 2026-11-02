@@ -102,7 +102,9 @@ assert.strictEqual(document.querySelector('[data-turn="tsk_1"] [data-ovt-live]')
 OV.work('tsk_1', '<li class="ovt-w-step"><span>Read two pages</span></li>');
 assert.strictEqual(document.querySelectorAll('[data-turn="tsk_1"] [data-ovt-work] > li').length, 3);
 const swapped = OV.replace('tsk_1', t.turn({ id: 'tsk_1', state: 'succeeded', you: { text: 'What <is> it?' }, reply: t.answer({ html: '<p>Done</p>' }) }));
-assert.ok(swapped.classList.contains('is-fresh'), 'a finished turn\'s answer fades in');
+const typed = swapped.querySelector('[data-ovt-answer]');
+assert.ok(typed.classList.contains('is-revealing') || swapped.classList.contains('is-fresh'), 'a finished turn\'s answer types in (or fades in)');
+if (typed.classList.contains('is-revealing')) assert.ok(typed.querySelectorAll('.ovt-sw').length >= 1 && typed.textContent.includes('Done'), 'word by word, every word still in the text');
 assert.strictEqual(document.querySelector('[data-turn="tsk_1"] [data-ovt-copy]').hidden, false, 'the new turn has Copy');
 const added = OV.add(t.turn({ id: 'tsk_2', open: true, you: { text: 'Next' }, reply: t.work({ open: true }) }));
 assert.ok(added.classList.contains('is-new') && document.querySelectorAll('[data-ovt-thread] > li').length === 3, 'a new turn joins the thread');

@@ -11,6 +11,7 @@
  *   OVThread.live(id, text)       the working turn's live line ("Reading the page")
  *   OVThread.work(id, html)       append a row to the turn's work list
  *   OVThread.enhance(el)          Copy buttons for answers and code under el (add/replace call it)
+ *   OVThread.reveal(answerEl)     type an answer in, word by word (replace does it when a working turn finishes)
  * Booted on load and after an in-place page swap (openvibe-shared/boost's ov:boost:load).
  */
 (function (root) {
@@ -67,11 +68,50 @@
         return el;
     }
 
+    /**
+     * The answer types in (the owner, 2026-11-01: "text streams in, with nice effects"). An answer that arrives whole
+     * is revealed word by word, fast (about 45 frames, whatever its length); code, tables, pictures and anything marked
+     * data-ovt-whole come in whole as the words reach them. Only opacity changes, so a screen reader reads it all at once,
+     * and reduced motion shows it at once.
+     */
+    function reveal(ans) {
+        if (!ans || reduce || !document.createTreeWalker) return;
+        var WHOLE = 'pre, table, img, figure, [data-ovt-whole]';
+        var words = [];
+        var walker = document.createTreeWalker(ans, 4, { acceptNode: function (n) { return n.parentNode.closest(WHOLE) ? 2 : (/\S/.test(n.nodeValue) ? 1 : 2); } });
+        var nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(function (n) {
+            var f = document.createDocumentFragment();
+            n.nodeValue.split(/(\s+)/).forEach(function (part) {
+                if (!part) return;
+                if (/^\s+$/.test(part)) { f.appendChild(document.createTextNode(part)); return; }
+                var w = document.createElement('span'); w.className = 'ovt-sw'; w.textContent = part; f.appendChild(w); words.push(w);
+            });
+            n.parentNode.replaceChild(f, n);
+        });
+        var blocks = qa(ans, WHOLE).filter(function (b) { return !b.parentNode.closest(WHOLE); });
+        blocks.forEach(function (b) { b.classList.add('ovt-sw'); });
+        var all = words.concat(blocks);
+        if (!all.length) return;
+        ans.classList.add('is-revealing');
+        var per = Math.max(2, Math.ceil(words.length / 45)), i = 0;
+        var raf = root.requestAnimationFrame || function (fn) { return setTimeout(fn, 16); };
+        (function step() {
+            for (var k = 0; k < per && i < words.length; k++, i++) words[i].classList.add('on');
+            var last = words[Math.max(0, i - 1)];
+            blocks.forEach(function (b) { if (!b.classList.contains('on') && last && (b.compareDocumentPosition(last) & 4)) b.classList.add('on'); });
+            if (i < words.length) raf(step);
+            else { all.forEach(function (w) { w.classList.add('on'); }); setTimeout(function () { ans.classList.remove('is-revealing'); }, 300); }
+        })();
+    }
+
     function threadEl() { return document.querySelector('[data-ovt] [data-ovt-thread]'); }
     function turnEl(id) { return document.querySelector('[data-ovt] [data-turn="' + String(id).replace(/"/g, '') + '"]'); }
 
     var api = {
         enhance: enhance,
+        reveal: reveal,
         add: function (html) {
             var list = threadEl();
             var el = frag(html);
@@ -90,9 +130,11 @@
             var el = frag(html);
             if (!old || !el) return null;
             var stay = nearBottom();
-            if (!el.hasAttribute('data-open') && old.hasAttribute('data-open')) el.classList.add('is-fresh');
+            var finished = !el.hasAttribute('data-open') && old.hasAttribute('data-open');
             old.replaceWith(el);
             enhance(el);
+            // A turn that just finished: its answer types in (or, where motion is reduced or words cannot be split, fades).
+            if (finished) { var ans = q(el, '[data-ovt-answer]'); if (ans && !reduce && document.createTreeWalker) reveal(ans); else el.classList.add('is-fresh'); }
             if (stay) toBottom(false);
             return el;
         },

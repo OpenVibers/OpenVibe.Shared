@@ -14,7 +14,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - `/shared/thread.css` draws it with theme tokens: a page that scrolls as a whole, a composer at the bottom above a
     phone's app bar, and the chats as a column or a drawer.
   - `/shared/ov-thread.js` adds the drawer, Find a chat, the growing composer, Enter to send, Copy, staying at the
-    bottom, and `OVThread.add / replace / live / work` for streaming turns.
+    bottom, and `OVThread.add / replace / live / work` for streaming turns. A turn that finishes types its answer in
+    word by word (`OVThread.reveal`, from Actor #227); code, tables and pictures come in whole.
   - Nothing spins: a working turn breathes, and reduced motion stills it.
   - `docs/thread.md`; `test/thread.test.js`.
 

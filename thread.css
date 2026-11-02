@@ -108,6 +108,10 @@
 .ovt-answer th, .ovt-answer td { padding: 6px 10px; border-bottom: 1px solid var(--ovt-line); text-align: left; }
 .ovt-answer a { color: var(--accent-light, var(--ovt-accent)); }
 .ovt-turn.is-fresh .ovt-answer { animation: ovt-fade .4s ease-out both; }
+/* An answer that types in (ov-thread.js reveal): only opacity, so a screen reader reads it all at once. */
+.ovt-answer.is-revealing .ovt-sw { opacity: 0; transition: opacity .28s ease-out; }
+.ovt-answer.is-revealing .ovt-sw.on { opacity: 1; }
+html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
 .ovt-answer pre:has(.ovt-code-copy) { padding-right: 68px; }
 .ovt-code-copy { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); color: var(--text-secondary, #96a7c2); font-size: 12px; cursor: pointer; }
 .ovt-files { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
@@ -156,6 +160,7 @@
 @keyframes ovt-shimmer { to { background-position: -300% 0; } }
 @media (prefers-reduced-motion: reduce) {
     .ovt-dot, .ovt-turn[data-open] .ovt-avatar, .ovt-w-live, .ovt-turn.is-new .ovt-bubble, .ovt-turn.is-fresh .ovt-answer { animation: none; }
+    .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
     .ovt-w-live { color: var(--text-secondary, #96a7c2); background: none; }
     .ovt-side, .ovt-chev { transition: none; }
 }
