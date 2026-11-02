@@ -53,7 +53,14 @@
             b.addEventListener('click', function () {
                 var turn = b.closest('.ovt-turn');
                 var ans = q(turn, '[data-ovt-answer]');
-                if (ans) copyText(ans.innerText.trim(), b);
+                if (!ans) return;
+                // What a reader means to copy: not the Copy buttons, nor anything the site marked data-ovt-nocopy (a citation's number).
+                var c = ans.cloneNode(true);
+                qa(c, '[data-ovt-nocopy], .ovt-code-copy').forEach(function (x) { x.remove(); });
+                document.body.appendChild(c); c.style.position = 'absolute'; c.style.left = '-9999px';
+                var txt = (c.innerText || c.textContent || '').trim();
+                c.remove();
+                copyText(txt, b);
             });
         });
         if (canCopy) qa(el, '.ovt-answer pre').forEach(function (pre) {

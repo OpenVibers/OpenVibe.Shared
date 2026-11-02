@@ -52,6 +52,8 @@ assert.ok(comp.includes('formaction="/chat/tsk_1/stop"') && comp.includes('class
 assert.ok(comp.includes('enctype="multipart/form-data"') && comp.includes('accept="image/*"'), 'attach');
 assert.ok(!/data-ovt-text required/.test(comp), 'a busy composer may send nothing (it steers)');
 assert.ok(/data-ovt-text required/.test(t.composer({ action: '/chat' })), 'otherwise it needs words');
+const topped = t.composer({ action: '/chat', top: '<ul class="picked"></ul>', maxlength: 20000 });
+assert.ok(topped.includes('<ul class="picked"></ul><label class="ovt-sr" for="ovt-text">') && topped.includes('maxlength="20000"'), 'a slot above the box, and its limit');
 
 const page = t.page({ sidebar: side, head: t.head({ title: 'Chat' }), turns: [], empty: '<h2>What can I do for you?</h2>', composer: t.composer({ action: '/chat', starters: ['One'] }) });
 assert.ok(page.startsWith('<div class="ovt" data-ovt>') && page.includes('<div class="ovt-empty-state"><h2>What can I do for you?</h2></div><ol class="ovt-thread" data-ovt-thread></ol>'));
@@ -95,6 +97,7 @@ const copyBtn = document.querySelector('[data-turn="tsk_0"] [data-ovt-copy]');
 assert.strictEqual(copyBtn.hidden, false, 'Copy shows');
 copyBtn.dispatchEvent(new window.Event('click'));
 assert.strictEqual(copied.length, 1);
+assert.ok(!/Copy$/.test(copied[0]), 'not the Copy buttons\' own words');
 
 // Streaming helpers.
 OV.live('tsk_1', 'Checking the answer');

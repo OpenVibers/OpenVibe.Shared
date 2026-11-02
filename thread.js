@@ -155,13 +155,14 @@ function card({ tone = 'info', title = '', text = null, html = '' } = {}) {
  * The composer, at the bottom of the screen: a box that grows as you type, the caller's tools (a mode chip, a model
  * chip, attach), and Send, which becomes Stop while a turn works (busy). Works as a plain form without script.
  *   hidden: { parent: 'tsk_…' };  starters: ['Plan a weekend in Lisbon', …] (shown on an empty chat)
+ *   top: the site's safe markup above the box (picked files, a problem line);  maxlength: the box's limit
  */
-function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message' } = {}) {
+function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null } = {}) {
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
     return `${starters.length ? `<div class="ovt-starters">${starters.map((s) => `<button type="button" class="ovt-starter" data-ovt-starter="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
 <form class="ovt-composer${busy ? ' is-busy' : ''}" method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}>${hid}
-<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
-<textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}" data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
+${top || ''}<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
+<textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
 <div class="ovt-c-row"><div class="ovt-c-tools">${attach ? `<label class="ovt-btn ovt-attach" title="Attach files">${icon('attach')}<span class="ovt-sr">Attach files</span><input type="file" name="${esc(attach.name || 'files')}"${attach.accept ? ` accept="${esc(attach.accept)}"` : ''} multiple data-ovt-files hidden></label>` : ''}${tools || ''}</div>
 ${busy && stopAction ? `<button type="submit" class="ovt-stop" formaction="${esc(stopAction)}" formnovalidate data-ovt-stop>${icon('stop')}<span>Stop</span></button>` : ''}<button type="submit" class="ovt-send" data-ovt-send aria-label="${esc(sendLabel)}">${icon('send')}<span class="ovt-sr">${esc(sendLabel)}</span></button></div>
 ${note ? `<p class="ovt-c-note" data-ovt-note>${esc(note)}</p>` : ''}

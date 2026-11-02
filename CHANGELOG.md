@@ -16,6 +16,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - `/shared/ov-thread.js` adds the drawer, Find a chat, the growing composer, Enter to send, Copy, staying at the
     bottom, and `OVThread.add / replace / live / work` for streaming turns. A turn that finishes types its answer in
     word by word (`OVThread.reveal`, from Actor #227); code, tables and pictures come in whole.
+  - The composer takes the site's markup above the box (`top`: picked files, a problem line) and a `maxlength`; Copy
+    leaves out anything marked `data-ovt-nocopy` (a citation's number).
   - Nothing spins: a working turn breathes, and reduced motion stills it.
   - `docs/thread.md`; `test/thread.test.js`.
 
