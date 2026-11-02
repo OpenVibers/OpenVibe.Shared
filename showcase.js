@@ -33,12 +33,20 @@
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const has = (a) => Array.isArray(a) && a.length > 0;
 let ovIcons = null;
+let glyphSet = null;
 function icon(name, size = 22) {
     if (!name) return '';
     const n = String(name);
     if (n.startsWith('ov:')) {
         ovIcons = ovIcons || require('./ov-icons');
-        return `<span class="ov-icon sc-ovi" data-icon="${esc(n.slice(3))}" style="--ovi-size:${size}px" aria-hidden="true">${ovIcons.svg(n.slice(3))}</span>`;
+        const key = n.slice(3);
+        // A name the ring set lacks drew as the bare OV mark (Today's "Your agenda", ov:calendar, 2026-11-02): the plain
+        // glyph of that name, in a ring of its own, when the glyph set has it.
+        if (key !== 'ov' && ovIcons.resolve(key) === 'ov') {
+            glyphSet = glyphSet || require('./glyphs');
+            if (glyphSet.NAMES.includes(key)) return `<span class="ov-icon sc-ovi sc-ovi--glyph" data-icon="${esc(key)}" style="--ovi-size:${size}px" aria-hidden="true">${glyphSet.svg(key)}</span>`;
+        }
+        return `<span class="ov-icon sc-ovi" data-icon="${esc(key)}" style="--ovi-size:${size}px" aria-hidden="true">${ovIcons.svg(key)}</span>`;
     }
     return `<i class="fa-solid ${esc(n.replace(/[^a-z0-9 -]/gi, ''))}" aria-hidden="true"></i>`;
 }
@@ -481,6 +489,7 @@ html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow
 a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
 .sc-ic{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:12px;font-size:17px;color:var(--accent-light,#60a5fa);background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent)}
 .sc-ic.sc-ic-ov{background:none;border-radius:50%}
+.sc-ovi--glyph{border-radius:50%;color:var(--accent,#3b82f6);background:color-mix(in srgb,var(--accent,#3b82f6) 13%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent,#3b82f6) 42%,transparent)}.sc-ovi--glyph svg{width:54%!important;height:54%!important}
 .sc-card b{display:block;font-size:15.5px}.sc-card small{display:block;margin-top:3px;color:var(--text-secondary,#96a7c2);font-size:13.5px;line-height:1.45}
 .sc-steps{list-style:none;margin:0;padding:0;counter-reset:sc;display:grid;gap:14px 24px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 @container (min-width:584px) and (max-width:1191px){.sc-steps:has(>:nth-child(4):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -67,6 +67,10 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
 {
     const ring = sc.features({ items: [{ icon: 'ov:live', title: 'Live' }, { icon: 'fa-code', title: 'Code' }] });
     assert.ok(ring.includes('<span class="sc-ic sc-ic-ov"><span class="ov-icon sc-ovi" data-icon="live" style="--ovi-size:40px"'), 'the ring icon is 40 px in an untinted slot');
+    // A name the ring set lacks is its glyph in a ring, never the bare OV mark (2026-11-02, Today's ov:calendar).
+    const cal = sc.features({ title: 'More', items: [{ icon: 'ov:calendar', title: 'Your agenda', text: 'x' }] });
+    assert.ok(cal.includes('<span class="ov-icon sc-ovi sc-ovi--glyph" data-icon="calendar"'), 'a glyph in a ring');
+    assert.ok(!/data-icon="calendar"[^>]*>[^<]*<svg viewBox="0 0 48 48"/.test(cal), 'not the ring set\'s fallback');
     assert.ok(ring.includes('<span class="sc-ic"><i class="fa-solid fa-code"'), 'a Font Awesome icon keeps the plain slot');
     assert.ok(sc.CSS.includes('.sc-ic.sc-ic-ov{background:none'), 'the slot drops its tile for a ring icon');
 }
