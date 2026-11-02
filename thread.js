@@ -46,6 +46,13 @@ const P = {
     wait: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
     panel: 'M4 4h16v16H4zM15 4v16',
     shield: 'M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6zM9 12l2 2 4-4',
+    // A step's kind (work rows' icon): read, find, edit, run, web, sub.
+    read: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    find: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-3.5-3.5',
+    edit: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
+    run: 'M3 4h18v16H3zM7 9l3 3-3 3M13 15h4',
+    web: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18',
+    sub: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18',
 };
 const icon = (name, cls = '') => `<svg class="ovt-ic${cls ? ` ${cls}` : ''}" viewBox="0 0 24 24" aria-hidden="true"><path d="${P[name] || P.note}"/></svg>`;
 
@@ -149,7 +156,9 @@ function divider({ text = '', icon: ic = 'handover' } = {}) {
 
 /**
  * The work, folded under the answer: "Worked for 12 s · 3 tools", or, while it works, the live line ("Reading the
- * page…"), open. rows: [{ kind: 'step' | 'note' | 'you' | 'tool', text, level, name, input, output, ok, running }].
+ * page…"), open. rows: [{ kind: 'step' | 'note' | 'you' | 'tool', text, level, name, input, output, ok, running, icon }].
+ * icon: a thread icon for the row (a coding agent's read, find, edit, run, web, sub); a tool that finished with no output
+ * is a plain row, with nothing to open.
  */
 function work({ open = false, live = 'Working', took = null, rows = [] } = {}) {
     const tools = rows.filter((r) => r.kind === 'tool').length;
@@ -157,12 +166,14 @@ function work({ open = false, live = 'Working', took = null, rows = [] } = {}) {
     const items = rows.map((r) => {
         if (r.kind === 'tool') {
             const st = r.running || r.ok == null ? 'is-run' : r.ok ? 'is-ok' : 'is-bad';
-            return `<li class="ovt-w-tool ${st}"><details><summary>${icon('tool')}<b>${esc(r.name || 'Tool')}</b>${r.input ? `<span class="ovt-w-in">${esc(clip(r.input, 90))}</span>` : ''}<span class="ovt-w-st">${st === 'is-run' ? '<span class="ovt-dot" aria-hidden="true"></span>' : icon(st === 'is-ok' ? 'ok' : 'bad')}</span></summary>
+            const head = `${icon(r.icon || 'tool')}<b>${esc(r.name || 'Tool')}</b>${r.input ? `<span class="ovt-w-in">${esc(clip(r.input, 90))}</span>` : ''}<span class="ovt-w-st">${st === 'is-run' ? '<span class="ovt-dot" aria-hidden="true"></span>' : icon(st === 'is-ok' ? 'ok' : 'bad')}</span>`;
+            if (r.output == null && st !== 'is-run') return `<li class="ovt-w-tool ${st}"><div class="ovt-w-row">${head}</div></li>`;
+            return `<li class="ovt-w-tool ${st}"><details><summary>${head}</summary>
 ${r.output != null ? `<pre class="ovt-w-out">${esc(clip(r.output, 1500))}</pre>` : '<p class="ovt-w-out ovt-muted">Running…</p>'}</details></li>`;
         }
         if (r.kind === 'you') return `<li class="ovt-w-you">${icon('you')}<p>${esc(clip(r.text, 300))}</p></li>`;
         if (r.kind === 'note') return `<li class="ovt-w-note${r.level ? ` is-${esc(r.level)}` : ''}">${icon('note')}<p>${esc(clip(r.text, 700))}</p></li>`;
-        return `<li class="ovt-w-step">${icon('step')}<span>${esc(clip(r.text, 300))}</span></li>`;
+        return `<li class="ovt-w-step">${icon(r.icon || 'step')}<span>${esc(clip(r.text, 300))}</span></li>`;
     });
     const line = open
         ? `<span class="ovt-w-live" data-ovt-live>${esc(live)}…</span>`
@@ -222,16 +233,20 @@ function panel({ id = 'ovt-panel', title = 'Details', sections = [] } = {}) {
  *   hidden: { parent: 'tsk_…' };  starters: ['Plan a weekend in Lisbon', …] (shown on an empty chat)
  *   top: the site's safe markup above the box (picked files, a problem line);  maxlength: the box's limit
  *   stopAction: where Stop posts while a turn works; '' draws Stop hidden, for a page whose script starts turns itself
+ *   id, attrs: the form's id (inputs outside it join it with form="id") and the site's data attributes
+ *   foot: the site's safe markup under the bar (where the work runs, recent repositories); note: a quiet line under that,
+ *   which is also the form's status line (role="status": a site's script says "Sending…" there)
  */
-function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null } = {}) {
+function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '' } = {}) {
+    const extra = Object.entries(attrs || {}).map(([k, v]) => attr(k, v)).join('');
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
     return `${starters.length ? `<div class="ovt-starters">${starters.map((s) => `<button type="button" class="ovt-starter" data-ovt-starter="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
-<form class="ovt-composer${busy ? ' is-busy' : ''}" method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}>${hid}
+<form class="ovt-composer${busy ? ' is-busy' : ''}"${attr('id', id)} method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}${extra}>${hid}
 ${top || ''}<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
 <textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
 <div class="ovt-c-row"><div class="ovt-c-tools">${attach ? `<label class="ovt-btn ovt-attach" title="Attach files">${icon('attach')}<span class="ovt-sr">Attach files</span><input type="file" name="${esc(attach.name || 'files')}"${attach.accept ? ` accept="${esc(attach.accept)}"` : ''} multiple data-ovt-files hidden></label>` : ''}${tools || ''}</div>
 ${stopAction != null ? `<button type="submit" class="ovt-stop"${stopAction ? ` formaction="${esc(stopAction)}" formnovalidate` : ''}${busy && stopAction ? '' : ' hidden'} data-ovt-stop>${icon('stop')}<span>Stop</span></button>` : ''}<button type="submit" class="ovt-send" data-ovt-send aria-label="${esc(sendLabel)}">${icon('send')}<span class="ovt-sr">${esc(sendLabel)}</span></button></div>
-${note ? `<p class="ovt-c-note" data-ovt-note>${esc(note)}</p>` : ''}
+${foot || ''}<p class="ovt-c-note" data-ovt-note role="status">${esc(note || '')}</p>
 </form>`;
 }
 
@@ -240,14 +255,17 @@ ${note ? `<p class="ovt-c-note" data-ovt-note>${esc(note)}</p>` : ''}
  * the site's page; on a phone the composer stays at the bottom above the app bar.
  *   panel: a panel() beside the conversation;  main: a plain page in the conversation's place (a site's settings,
  *   agents or usage, drawn in the same frame as its chats), with no composer
+ *   center: with no turns yet, the welcome and the composer sit together in the middle of the screen (a start page);
+ *   cls: the site's classes on the root
  */
-function page({ sidebar: side = '', head: top = '', turns = [], empty = '', composer: comp = '', panel: pan = '', label = 'Conversation', main = null } = {}) {
+function page({ sidebar: side = '', head: top = '', turns = [], empty = '', composer: comp = '', panel: pan = '', label = 'Conversation', main = null, center = false, cls = '' } = {}) {
     // The kit's sidebar closes on its scrim (kit-web.js); the panel on its own (ov-thread.js).
     const scrim = side && side.includes('data-ovk-sidebar') ? '<div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden></div>' : '';
     const body = main != null ? `<div class="ovt-scroll ovt-page">${main}</div>`
         : `<div class="ovt-scroll">${turns.length ? `<ol class="ovt-thread" data-ovt-thread>${turns.join('')}</ol>` : `<div class="ovt-empty-state">${empty}</div><ol class="ovt-thread" data-ovt-thread></ol>`}</div>
 <div class="ovt-dock">${comp}</div>`;
-    return `<div class="ovt${pan ? ' has-panel' : ''}" data-ovt>${side}${scrim}<section class="ovt-main" aria-label="${esc(label)}">${top}
+    const classes = ['ovt', pan ? 'has-panel' : '', center && !turns.length && main == null ? 'is-start' : '', cls || ''].filter(Boolean).map(esc).join(' ');
+    return `<div class="${classes}" data-ovt>${side}${scrim}<section class="ovt-main" aria-label="${esc(label)}">${top}
 ${body}</section>${pan ? `${pan}<div class="ovt-panel-scrim" data-ovt-panel-scrim hidden></div>` : ''}</div>`;
 }
 

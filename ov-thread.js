@@ -12,6 +12,8 @@
  *   OVThread.work(id, html)       append a row to the turn's work list
  *   OVThread.enhance(el)          Copy buttons for answers and code under el (add/replace call it)
  *   OVThread.reveal(answerEl)     type an answer in, word by word (replace does it when a working turn finishes)
+ *   OVThread.tool(id, { name, input, icon })   a running tool row in the turn's work list (built here, text only)
+ *   OVThread.toolDone(id, ok)     the turn's last running tool row finished (ok false: it failed)
  * Booted on load and after an in-place page swap (openvibe-shared/boost's ov:boost:load).
  */
 (function (root) {
@@ -128,6 +130,27 @@
         })();
     }
 
+    // The icons a streamed tool row can carry (thread.js draws the same ones on the server).
+    var ICONS = {
+        tool: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z',
+        read: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+        find: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-3.5-3.5',
+        edit: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
+        run: 'M3 4h18v16H3zM7 9l3 3-3 3M13 15h4',
+        web: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18',
+        sub: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18',
+        ok: 'M5 12l5 5 9-10',
+        bad: 'M6 6l12 12M18 6L6 18',
+    };
+    function svgIcon(name) {
+        var ns = 'http://www.w3.org/2000/svg';
+        var s = document.createElementNS(ns, 'svg');
+        s.setAttribute('class', 'ovt-ic'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+        var p = document.createElementNS(ns, 'path'); p.setAttribute('d', ICONS[name] || ICONS.tool);
+        s.appendChild(p);
+        return s;
+    }
+
     function threadEl() { return document.querySelector('[data-ovt] [data-ovt-thread]'); }
     function turnEl(id) { return document.querySelector('[data-ovt] [data-turn="' + String(id).replace(/"/g, '') + '"]'); }
 
@@ -163,6 +186,29 @@
         live: function (id, text) {
             var line = q(turnEl(id), '[data-ovt-live]');
             if (line) line.textContent = String(text) + '…';
+        },
+        tool: function (id, t) {
+            t = t || {};
+            var li = document.createElement('li');
+            li.className = 'ovt-w-tool is-run';
+            var row = document.createElement('div');
+            row.className = 'ovt-w-row';
+            var b = document.createElement('b'); b.textContent = String(t.name || 'Tool');
+            row.appendChild(svgIcon(t.icon)); row.appendChild(b);
+            if (t.input) { var inp = document.createElement('span'); inp.className = 'ovt-w-in'; inp.textContent = String(t.input).slice(0, 200); row.appendChild(inp); }
+            var st = document.createElement('span'); st.className = 'ovt-w-st';
+            var dot = document.createElement('span'); dot.className = 'ovt-dot'; dot.setAttribute('aria-hidden', 'true');
+            st.appendChild(dot); row.appendChild(st); li.appendChild(row);
+            return api.work(id, li);
+        },
+        toolDone: function (id, ok) {
+            var rows = qa(turnEl(id), '[data-ovt-work] > .ovt-w-tool.is-run');
+            var li = rows[rows.length - 1];
+            if (!li) return null;
+            li.classList.remove('is-run'); li.classList.add(ok === false ? 'is-bad' : 'is-ok');
+            var st = q(li, '.ovt-w-st');
+            if (st) { st.textContent = ''; st.appendChild(svgIcon(ok === false ? 'bad' : 'ok')); }
+            return li;
         },
         work: function (id, html) {
             var list = q(turnEl(id), '[data-ovt-work]');

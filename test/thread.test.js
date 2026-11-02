@@ -89,6 +89,15 @@ assert.ok(withPanel.includes('data-ovt-panel-open aria-controls="what" aria-expa
 const plain = t.page({ sidebar: side, head: t.head({ title: 'Agents' }), main: '<h2>Your agents</h2>' });
 assert.ok(plain.includes('<div class="ovt-scroll ovt-page"><h2>Your agents</h2></div></section>') && !plain.includes('ovt-dock'), 'a plain page in the same frame, no composer');
 
+const steps = t.work({ rows: [{ kind: 'tool', name: 'Edit', input: 'a.css', icon: 'edit', ok: true }, { kind: 'tool', name: 'Bash', input: 'npm test', output: 'ok', ok: true }] });
+assert.ok(steps.includes('<li class="ovt-w-tool is-ok"><div class="ovt-w-row"><svg class="ovt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9') && !/Edit[\s\S]*?Running…/.test(steps.split('Bash')[0]), 'a finished step with no output is a plain row, with its own icon');
+assert.ok(steps.includes('<details><summary>') && steps.includes('<pre class="ovt-w-out">ok</pre>'), 'a step with output still opens');
+const startForm = t.composer({ action: '/chat', id: 'ch-start', attrs: { 'data-ch-api': '/api/x"y' }, foot: '<p class="where">On your computer</p>' });
+assert.ok(startForm.includes('<form class="ovt-composer" id="ch-start" method="post" action="/chat" data-ovt-composer data-ch-api="/api/x&quot;y">'), 'the form\'s id and the site\'s attributes, escaped');
+assert.ok(startForm.includes('<p class="where">On your computer</p><p class="ovt-c-note" data-ovt-note role="status"></p>'), 'markup under the bar, then a status line that is always there');
+assert.ok(t.page({ turns: [], center: true, cls: 'ch' }).startsWith('<div class="ovt is-start ch" data-ovt>'), 'a start page');
+assert.ok(t.page({ turns: [agentTurn], center: true }).startsWith('<div class="ovt" data-ovt>'), 'not once the conversation has turns');
+
 // ── The script ─────────────────────────────────────────────────────────────────────────────────────────────────
 const SRC = fs.readFileSync(path.join(__dirname, '..', 'ov-thread.js'), 'utf8');
 const html = `<!doctype html><html><body>${t.page({ sidebar: side, head: t.head({ title: 'Chat' }), turns: [turn, t.turn({ id: 'tsk_0', state: 'succeeded', you: { text: 'Hi' }, reply: ans })], composer: t.composer({ action: '/chat', starters: ['Plan a weekend'] }) })}</body></html>`;
@@ -138,6 +147,12 @@ if (typed.classList.contains('is-revealing')) assert.ok(typed.querySelectorAll('
 assert.strictEqual(document.querySelector('[data-turn="tsk_1"] [data-ovt-copy]').hidden, false, 'the new turn has Copy');
 const added = OV.add(t.turn({ id: 'tsk_2', open: true, you: { text: 'Next' }, reply: t.work({ open: true }) }));
 assert.ok(added.classList.contains('is-new') && document.querySelectorAll('[data-ovt-thread] > li').length === 3, 'a new turn joins the thread');
+// A streamed tool row (4.99.0): built from text, running, then done.
+const row = OV.tool('tsk_2', { name: '<Bash>', input: 'npm test', icon: 'run' });
+assert.ok(row && row.classList.contains('is-run') && row.querySelector('b').textContent === '<Bash>' && !row.querySelector('b').innerHTML.includes('<B'), 'a running row, its words as text');
+assert.ok(row.querySelector('.ovt-dot'), 'its dot while it runs');
+OV.toolDone('tsk_2', false);
+assert.ok(row.classList.contains('is-bad') && !row.querySelector('.ovt-dot') && row.querySelector('.ovt-w-st svg'), 'it failed: the dot becomes a mark');
 
 // The panel's drawer (4.99.0): the head's button opens it, the scrim and Escape close it, the focus comes back.
 {

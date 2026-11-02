@@ -13,7 +13,14 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - `panel()` sits beside the conversation: a column from 1180 px, a drawer from the right below;
   - `page({ panel, main })` places the panel, or a plain page, in the conversation's place;
   - `sidebar({ pinned })` keeps chats above the groups, and an item takes a `dot` and a quiet `meta` word;
-  - `you.caption` puts a small word over the person's bubble.
+  - `you.caption` puts a small word over the person's bubble;
+  - a work row takes an `icon` (`read`, `find`, `edit`, `run`, `web`, `sub`), and a finished tool with no output is a
+    plain row rather than one that opens on "Running…";
+  - `composer({ id, attrs, foot })`: the form's id and the site's data attributes, and markup under the bar. The note
+    line is always drawn and is the form's status line (`role="status"`);
+  - `page({ center })` is a start page: the welcome and the composer sit together until there are turns. `cls` adds
+    the site's classes;
+  - `OVThread.tool(id, { name, input, icon })` and `OVThread.toolDone(id, ok)` stream a tool row built from text.
 - 4.96.0's own sidebar code is gone from thread.css and ov-thread.js. `thread.sidebar` has drawn `kit.sidebar` since 4.97.0.
 
 ## 4.97.0 — 2026-11-02

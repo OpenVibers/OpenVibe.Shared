@@ -71,7 +71,8 @@
 .ovt-w-list p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .ovt-w-note.is-warn { color: var(--warning-text, #fbbf24); }
 .ovt-w-tool { display: block !important; }
-.ovt-w-tool > details > summary { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 28px; }
+.ovt-w-tool > details > summary, .ovt-w-tool > .ovt-w-row { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 28px; min-width: 0; }
+.ovt-w-tool > .ovt-w-row { cursor: default; }
 .ovt-w-tool > details > summary::-webkit-details-marker { display: none; }
 .ovt-w-tool b { flex: none; font-weight: 600; color: var(--text-primary, #e6edf7); white-space: nowrap; }
 .ovt-w-in { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #7386a3); }
@@ -170,6 +171,13 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
 .ovt-card-btn.is-quiet { background: none; color: var(--text-primary, #e6edf7); box-shadow: inset 0 0 0 1px var(--ovt-line); }
 .ovt-card-btn:hover { filter: brightness(1.08); }
 .ovt-card-btn.is-quiet:hover { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 6%, transparent)); filter: none; }
+
+/* A start page (page({ center })): the welcome and the composer together in the middle, not the composer at the bottom. */
+.ovt.is-start .ovt-main { justify-content: center; }
+.ovt.is-start .ovt-scroll { flex: none; padding-bottom: 4px; }
+.ovt.is-start .ovt-empty-state { margin-top: 0; }
+.ovt.is-start .ovt-dock { position: static; background: none; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 760px) { .ovt.is-start .ovt-main { justify-content: flex-start; } .ovt.is-start .ovt-empty-state { margin-top: 4vh; } }
 
 /* A plain page in the conversation's place (page({ main })). */
 .ovt-page { max-width: 980px; width: 100%; box-sizing: border-box; margin: 0 auto; }
