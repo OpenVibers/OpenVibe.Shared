@@ -20,10 +20,14 @@ assert.deepStrictEqual(groups.map((g) => [g.name, g.items.length]), [['Today', 2
 
 // ── The markup ─────────────────────────────────────────────────────────────────────────────────────────────────
 const side = t.sidebar({ newHref: '/chat', groups: [{ name: 'Today', items: [{ href: '/chat/1', title: 'Plan <b>a</b> weekend', current: true, live: true }, { href: '/chat/2', title: 'Lisbon' }] }], foot: [{ href: '/memory', label: 'Memory' }] });
-assert.ok(side.includes('<a href="/chat/1" aria-current="page" data-title="plan &lt;b&gt;a&lt;/b&gt; weekend"><span class="ovt-dot" aria-hidden="true"></span><span>Plan &lt;b&gt;a&lt;/b&gt; weekend</span></a>'), 'escaped, current, live');
-assert.ok(side.includes('class="ovt-new" href="/chat"') && side.includes('data-ovt-find') && side.includes('<a href="/memory">Memory</a>'));
-assert.ok(t.sidebar({ groups: [] }).includes('Your chats show here.'), 'the empty line');
-assert.ok(t.head({ title: 'A <title>', newHref: '/chat' }).includes('<h1 class="ovt-title">A &lt;title&gt;</h1>'));
+// The chats live in the network's one sidebar (kit.sidebar, L35), not a second one.
+assert.ok(side.startsWith('<aside class="ovk-sidebar" id="ovt-chats" aria-label="Your chats" data-ovk-sidebar>'), 'kit.sidebar');
+assert.ok(side.includes('<a class="ovk-sidebar-item is-here" href="/chat/1" aria-current="page"><span class="ovk-sidebar-t">Plan &lt;b&gt;a&lt;/b&gt; weekend</span><i class="ovk-sidebar-dot is-busy" aria-hidden="true"></i></a>'), 'escaped, current, live');
+assert.ok(side.includes('<a class="ovk-sidebar-action" href="/chat">') && side.includes('name="q" placeholder="Find a chat"') && side.includes('<p class="ovt-side-foot"><a href="/memory">Memory</a></p>'));
+assert.ok(t.sidebar({ groups: [] }).includes('<p class="ovk-sidebar-empty">Your chats show here.</p>'), 'the empty line');
+assert.ok(t.sidebar({ nav: [{ href: '/console', label: 'Console', icon: 'grid' }] }).includes('<nav class="ovk-sidebar-nav"'), 'the site\'s places as rows');
+const headHtml = t.head({ title: 'A <title>', newHref: '/chat' });
+assert.ok(headHtml.includes('<h1 class="ovt-title">A &lt;title&gt;</h1>') && headHtml.includes('data-ovk-sidebar-open aria-controls="ovt-chats"'), 'the kit\'s button opens the chats on a phone');
 
 const turn = t.turn({ id: 'tsk_1', state: 'running', open: true, you: { text: 'What <is> it?', files: [{ href: '/f/1', name: 'a.png', image: true }, { href: '/f/2', name: 'notes.txt', size: 2048 }] }, reply: t.work({ open: true, live: 'Reading the page', rows: [{ kind: 'step', text: 'Plan' }, { kind: 'tool', name: 'Page reader', input: 'https://x', running: true }] }) });
 assert.ok(turn.startsWith('<li class="ovt-turn state-running" id="t-tsk_1" data-turn="tsk_1" data-state="running" data-open>'), turn.slice(0, 120));
@@ -59,6 +63,7 @@ assert.ok(topped.includes('<ul class="picked"></ul><label class="ovt-sr" for="ov
 
 const page = t.page({ sidebar: side, head: t.head({ title: 'Chat' }), turns: [], empty: '<h2>What can I do for you?</h2>', composer: t.composer({ action: '/chat', starters: ['One'] }) });
 assert.ok(page.startsWith('<div class="ovt" data-ovt>') && page.includes('<div class="ovt-empty-state"><h2>What can I do for you?</h2></div><ol class="ovt-thread" data-ovt-thread></ol>'));
+assert.ok(page.includes('</aside><div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden></div>'), 'the kit\'s scrim closes the drawer');
 
 // ── The script ─────────────────────────────────────────────────────────────────────────────────────────────────
 const SRC = fs.readFileSync(path.join(__dirname, '..', 'ov-thread.js'), 'utf8');
@@ -74,18 +79,14 @@ assert.ok(OV && typeof OV.add === 'function', 'window.OVThread');
 const box = document.querySelector('[data-ovt]');
 assert.strictEqual(box.dataset.ovtReady, '1');
 
-// The drawer.
-document.querySelector('[data-ovt-open]').dispatchEvent(new window.Event('click'));
-assert.ok(box.classList.contains('is-drawer') && document.querySelector('.ovt-scrim').hidden === false, 'opens');
-assert.strictEqual(document.querySelector('[data-ovt-open]').getAttribute('aria-expanded'), 'true');
-const esc = new window.Event('keydown'); esc.key = 'Escape'; document.dispatchEvent(esc);
-assert.ok(!box.classList.contains('is-drawer'), 'Esc closes');
-
-// Find a chat.
-const find = document.querySelector('[data-ovt-find]');
+// Find a chat, in the kit sidebar: it filters as you type (the drawer is kit-web.js's).
+const find = document.querySelector('.ovk-sidebar-find input');
 find.value = 'lisbon'; find.dispatchEvent(new window.Event('input'));
-const items = [...document.querySelectorAll('.ovt-list li')];
-assert.deepStrictEqual(items.map((li) => li.hidden), [true, false], 'only the matching chat shows');
+const items = [...document.querySelectorAll('.ovk-sidebar-secs .ovk-sidebar-item')];
+assert.deepStrictEqual(items.map((a) => a.hidden), [true, false], 'only the matching chat shows');
+const submitted = new window.Event('submit', { cancelable: true });
+find.closest('form').dispatchEvent(submitted);
+assert.ok(submitted.defaultPrevented, 'Enter keeps you on the page');
 
 // The composer: Send waits for words; a starter fills it.
 const send = document.querySelector('[data-ovt-send]');

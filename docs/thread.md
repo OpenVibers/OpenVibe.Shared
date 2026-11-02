@@ -5,7 +5,8 @@ so a conversation looks and behaves the same on every OpenVibe site.
 
 - **Server:** `require('openvibe-shared/thread')` builds the markup. It is complete without script and every string is
   escaped. A field named `html` is markup the caller already made safe (an answer's rendered Markdown).
-- **Look:** `/shared/thread.css`, theme tokens only.
+- **Look:** `/shared/thread.css`, theme tokens only. The chats are the network's one sidebar (`kit.sidebar`), so a
+  page also loads `/shared/kit.css` and `/shared/kit-web.js` (4.97.0).
 - **Behaviour:** `/shared/ov-thread.js` adds the drawer, the search, the growing composer, Enter to send, Copy, staying
   at the bottom, and the helpers a site streams turns with.
 
@@ -14,7 +15,7 @@ so a conversation looks and behaves the same on every OpenVibe site.
 | Function | What it draws |
 |---|---|
 | `page({ sidebar, head, turns, empty, composer })` | The screen: the chats beside the conversation; the composer stays at the bottom |
-| `sidebar({ newHref, groups, foot })` | New chat, Find a chat, the chats grouped Today / Yesterday / This week / Earlier, footer links. A column on a wide screen, a drawer on a phone |
+| `sidebar({ newHref, groups, nav, foot })` | New chat, Find a chat, the chats grouped Today / Yesterday / This week / Earlier, footer links. A column on a wide screen, a drawer on a phone |
 | `group(items, whenOf)` | Items, newest first, into those groups |
 | `head({ title, newHref, actions })` | The sticky head: the drawer's button (phones), the title, New chat |
 | `turn({ id, state, open, you, reply })` | One turn: the person's bubble (with files) and the reply |

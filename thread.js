@@ -18,6 +18,8 @@
 // Every string is escaped; a field named html is markup the caller already made safe (an answer's rendered Markdown).
 // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════
 
+const kit = require('./kit');
+
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const attr = (name, v) => (v == null || v === false ? '' : v === true ? ` ${name}` : ` ${name}="${esc(v)}"`);
 const clip = (s, n) => { const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return t.length > n ? `${t.slice(0, n - 1)}…` : t; };
@@ -64,24 +66,34 @@ function group(items, whenOf, now = Date.now()) {
 }
 
 /**
- * The chats: New chat, a search box, the groups of links, and a footer of links. A column on a wide screen, a drawer
- * on a phone (opened by the head's menu button).
- *   groups: [{ name, items: [{ href, title, current, live }] }]
+ * The chats, in the network's one sidebar (kit.sidebar, plan L35: "the navigation makes more sense in a vertical way…
+ * shared styling across everything"): New chat on top, Find a chat (it filters as you type with ov-thread.js; without
+ * script it is a GET to `findAction`), the site's places as vertical rows (nav), then the chats in their groups. A column
+ * beside the conversation on a wide screen, a drawer on a phone (kit-web.js opens it from head()'s button).
+ *   groups: [{ name, items: [{ href, title, current, live, mark }] }];  nav: kit.sidebar's [{ href, label, icon, here, count }]
+ * Draw with kit.css and kit-web.js beside thread.css and ov-thread.js.
  */
-function sidebar({ label = 'Your chats', newHref = null, newLabel = 'New chat', find = true, groups = [], empty = 'Your chats show here.', foot = [] } = {}) {
-    const list = groups.filter((g) => g && g.items && g.items.length);
-    return `<aside class="ovt-side" id="ovt-chats" aria-label="${esc(label)}" data-ovt-side>
-<div class="ovt-side-head">${newHref ? `<a class="ovt-new" href="${esc(newHref)}">${icon('plus')}<span>${esc(newLabel)}</span></a>` : ''}<button type="button" class="ovt-side-close" data-ovt-close aria-label="Close the chats" hidden>${icon('close')}</button></div>
-${find ? `<label class="ovt-find"><span class="ovt-sr">Find a chat</span><input type="search" placeholder="Find a chat" data-ovt-find autocomplete="off"></label>` : ''}
-<nav class="ovt-list">${list.length ? list.map((g) => `<p class="ovt-group">${esc(g.name)}</p><ul>${g.items.map((c) => `<li><a href="${esc(c.href)}"${c.current ? ' aria-current="page"' : ''} data-title="${esc(String(c.title || '').toLowerCase())}">${c.live ? '<span class="ovt-dot" aria-hidden="true"></span>' : ''}<span>${esc(clip(c.title, 80))}</span></a></li>`).join('')}</ul>`).join('') : `<p class="ovt-empty">${esc(empty)}</p>`}</nav>
-${foot.length ? `<p class="ovt-side-foot">${foot.map((f) => `<a href="${esc(f.href)}">${esc(f.label)}</a>`).join('')}</p>` : ''}
-</aside>
-<div class="ovt-scrim" data-ovt-close hidden></div>`;
+function sidebar({ id = 'ovt-chats', label = 'Your chats', newHref = null, newLabel = 'New chat', find = true, findAction = '', groups = [], empty = 'Your chats show here.', nav = [], foot = [] } = {}) {
+    const sections = groups.filter((g) => g && g.items && g.items.length).map((g) => ({
+        title: g.name,
+        items: g.items.map((c) => ({ href: c.href, label: clip(c.title, 80), here: !!c.current, dot: c.live ? 'busy' : null, mark: c.mark || '' })),
+    }));
+    return kit.sidebar({
+        id, label,
+        action: newHref ? { href: newHref, label: newLabel, icon: 'plus' } : null,
+        find: find ? { action: findAction || newHref || '', name: 'q', placeholder: 'Find a chat', label: 'Find a chat' } : null,
+        nav,
+        sections: sections.length ? sections : [{ title: '', items: [], empty }],
+        foot: foot.length ? `<p class="ovt-side-foot">${foot.map((f) => `<a href="${esc(f.href)}">${esc(f.label)}</a>`).join('')}</p>` : '',
+    });
 }
 
-/** The sticky head over the thread: the drawer's button (phones), the title, New chat, and the caller's actions. */
-function head({ title = '', newHref = null, menu = true, actions = '' } = {}) {
-    return `<header class="ovt-head" data-ovt-head>${menu ? `<button type="button" class="ovt-btn ovt-menu" data-ovt-open aria-controls="ovt-chats" aria-expanded="false" aria-label="Your chats">${icon('menu')}</button>` : ''}<h1 class="ovt-title">${esc(title)}</h1>${actions || ''}${newHref ? `<a class="ovt-btn" href="${esc(newHref)}" aria-label="New chat">${icon('plus')}</a>` : ''}</header>`;
+/**
+ * The sticky head over the thread: the button that opens the chats on a phone (kit.sidebarButton), the title, New chat,
+ * and the caller's actions. `sidebar` names the sidebar's id (false for none).
+ */
+function head({ title = '', newHref = null, sidebar: sid = 'ovt-chats', actions = '' } = {}) {
+    return `<header class="ovt-head" data-ovt-head>${sid ? kit.sidebarButton({ id: sid, label: 'Your chats' }) : ''}<h1 class="ovt-title">${esc(title)}</h1>${actions || ''}${newHref ? `<a class="ovt-btn" href="${esc(newHref)}" aria-label="New chat">${icon('plus')}</a>` : ''}</header>`;
 }
 
 const bytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${Number(n) || 0} B`);
@@ -175,7 +187,9 @@ ${note ? `<p class="ovt-c-note" data-ovt-note>${esc(note)}</p>` : ''}
  * the site's page; on a phone the composer stays at the bottom above the app bar.
  */
 function page({ sidebar: side = '', head: top = '', turns = [], empty = '', composer: comp = '', label = 'Conversation' } = {}) {
-    return `<div class="ovt" data-ovt>${side}<section class="ovt-main" aria-label="${esc(label)}">${top}
+    // The kit's sidebar closes on its scrim (kit-web.js).
+    const scrim = side && side.includes('data-ovk-sidebar') ? '<div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden></div>' : '';
+    return `<div class="ovt" data-ovt>${side}${scrim}<section class="ovt-main" aria-label="${esc(label)}">${top}
 <div class="ovt-scroll">${turns.length ? `<ol class="ovt-thread" data-ovt-thread>${turns.join('')}</ol>` : `<div class="ovt-empty-state">${empty}</div><ol class="ovt-thread" data-ovt-thread></ol>`}</div>
 <div class="ovt-dock">${comp}</div></section></div>`;
 }

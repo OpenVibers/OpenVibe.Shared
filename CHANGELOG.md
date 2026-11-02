@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.97.0 — 2026-11-02
+
+- **The conversation UI uses the network's one sidebar.** 4.96.0's `thread.sidebar` drew a second sidebar beside
+  `kit.sidebar`, which is the network's one (plan L35, the owner 10-31: "the navigation makes more sense in a
+  vertical way… shared styling across everything") and which Codes already uses. Now:
+  - `thread.sidebar` returns `kit.sidebar`: New chat is its action, the chats are its sections (the open one marked, a
+    working one with a dot), and the site's places can be its `nav` rows.
+  - Find a chat filters as you type (ov-thread.js); without script it is the kit's GET form.
+  - `thread.page` lays the kit sidebar out as its first column from 761 px, with the kit's scrim.
+  - `thread.head` carries `kit.sidebarButton`, so kit-web.js opens the drawer on a phone.
+  - Draw with kit.css and kit-web.js beside thread.css and ov-thread.js.
+
 ## 4.96.0 — 2026-11-02
 
 - **One conversation UI for the network** (plan L55 C4). Actor's chat proved the shape; Vibe, Codes and the Dock use
