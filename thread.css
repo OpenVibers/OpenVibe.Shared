@@ -6,6 +6,8 @@
     --ovt-accent: var(--accent, #3b82f6);
     display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - var(--ovt-top)); color: var(--text-primary, #e6edf7); }
 @media (min-width: 900px) { .ovt { grid-template-columns: var(--ovt-rail) minmax(0, 1fr); } }
+/* The hidden attribute always wins inside the kit (a rule's display never shows what a page hid). */
+.ovt [hidden] { display: none !important; }
 .ovt-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ovt-muted { color: var(--text-muted, #7386a3); }
 .ovt-ic { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
