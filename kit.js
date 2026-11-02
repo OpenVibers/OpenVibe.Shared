@@ -348,6 +348,26 @@
         // (axe scrollable-region-focusable, 2026-11-01 sweep).
         return `<dl class="ovk-stats" aria-label="${esc(label)}" tabindex="0">${shown.map(([v, l, href]) => `<div${href ? ' class="ovk-stat--link"' : ''}><dt>${href ? `<a href="${esc(url(href))}">${esc(l)}</a>` : esc(l)}</dt><dd>${esc(fmt(v))}</dd></div>`).join('')}</dl>`;
     }
+    /**
+     * Content labels (L1, common.content-labels@1) as small chips beside a title: what a stream, recording, picture or
+     * post is labelled as. Only the labels in force: an AI or viewer suggestion is the creator's to confirm, never shown
+     * to viewers. The page also marks the labelled thing itself (data-ov-labels="…") so ov-labels.js applies each
+     * viewer's own choice; these chips only say what it carries.
+     *   kit.labels(['language', '18+'])  or  kit.labels({ labels: [...], suggested: [...] })
+     */
+    const LABEL_NAMES = { nudity: 'Nudity', language: 'Strong language', graphic: 'Graphic', '18+': '18+', flashing: 'Flashing lights', spoilers: 'Spoilers' };
+    function labels(list, { label = 'Content labels' } = {}) {
+        const arr = Array.isArray(list) ? list : (list && Array.isArray(list.labels) ? list.labels : []);
+        const shown = [...new Set(arr)].filter((l) => Object.prototype.hasOwnProperty.call(LABEL_NAMES, l));
+        if (!shown.length) return '';
+        return `<ul class="ovk-labels" aria-label="${esc(label)}">${shown.map((l) => `<li class="ovk-label${l === '18+' ? ' ovk-label--adult' : ''}" data-label="${esc(l)}">${esc(LABEL_NAMES[l])}</li>`).join('')}</ul>`;
+    }
+    /** The value for data-ov-labels on the labelled element (empty when there is none). */
+    const labelsAttr = (list) => {
+        const arr = Array.isArray(list) ? list : (list && Array.isArray(list.labels) ? list.labels : []);
+        const shown = [...new Set(arr)].filter((l) => Object.prototype.hasOwnProperty.call(LABEL_NAMES, l));
+        return shown.length ? ` data-ov-labels="${esc(shown.join(','))}"` : '';
+    };
     /** What an empty list says: a title, one line, and the one thing to do next. */
     const empty = ({ title = '', text = '', action: act = null, icon: ic = '' } = {}) => `<div class="ovk-empty">${ic ? icon(ic) : ''}${title ? `<p class="ovk-empty-title">${esc(title)}</p>` : ''}${text ? `<p>${esc(text)}</p>` : ''}${act ? button({ href: act.href, label: act.label, kind: act.kind || 'primary', icon: act.icon || '' }) : ''}</div>`;
     /** A notice in the page: kind 'ok' | 'error' | 'info' | 'warn'; errors are announced (role=alert). */
@@ -849,7 +869,7 @@
         skeleton,
         esc, url, mediaW, icon, ICONS, PATHS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
-        switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, empty, notice, snippet, sheet, sheetButton,
+        switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, labels, labelsAttr, LABEL_NAMES, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,
         num, steps, table, chart, rank, meter, drop, receipt, page,
         toolHead, toolInput, tries, answer, family, tool,
