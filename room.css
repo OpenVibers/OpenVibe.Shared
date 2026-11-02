@@ -98,6 +98,10 @@
 .ovk-card.is-playing .ovk-card-video { opacity: 1; }
 .ovk-card-noimg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--room-accent, var(--ovk-accent)); background: radial-gradient(120% 90% at 28% 18%, color-mix(in srgb, var(--room-accent, var(--ovk-accent)) 24%, transparent), transparent 72%), var(--ovk-panel-2); }
 .ovk-card-noimg .ovk-i { width: 30%; max-width: 60px; height: auto; aspect-ratio: 1; stroke-width: 1.5; }
+/* No picture but a person (2026-11-01): their face, large, over a soft blur of it, not a lone icon in an empty box. */
+.ovk-card-noimg--who { overflow: hidden; }
+.ovk-card-noimg--who .ovk-card-noimg-bg { position: absolute; inset: -15%; width: 130%; height: 130%; object-fit: cover; filter: blur(24px) saturate(1.15); opacity: .5; }
+.ovk-card-noimg--who .ovk-card-noimg-face { position: relative; width: 28%; max-width: 88px; aspect-ratio: 1; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovk-panel, #111a2c) 70%, transparent), 0 10px 28px rgb(0 0 0 / .28); }
 .ovk-card-badge { position: absolute; top: 8px; left: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: rgba(0, 0, 0, .74); color: #fff; font: 800 11.5px/1.5 var(--ovk-font); letter-spacing: .04em; }
 .ovk-card-badge.is-live { background: #d4202b; }
 .ovk-card-badge.is-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: ovk-pulse 1.6s ease-in-out infinite; }

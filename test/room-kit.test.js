@@ -45,6 +45,11 @@ const sc = require('../showcase');
     assert.ok(c.includes('href="/save/1"') && c.includes('Save'), 'Save when given');
     assert.ok(!c.includes('Remind me'), 'no Remind unless given');
     assert.ok(c.includes('class="ovk-card-noimg"'), 'no picture: the type\'s icon');
+    // No picture but a person: their face over a soft blur of it (2026-11-01), at the avatar width, never a script URL.
+    const who = kit.card({ title: 'x', type: 'stream', who: 'Ann', avatar: 'https://openvibe.media/o/med_01ABCDEF' });
+    assert.ok(who.includes('class="ovk-card-noimg ovk-card-noimg--who" aria-hidden="true"'), 'no picture, a person: their face');
+    assert.ok(who.includes('<img class="ovk-card-noimg-face" src="https://openvibe.media/o/med_01ABCDEF?w=160"'), 'the face at 160 px');
+    assert.ok(kit.card({ title: 'x', avatar: 'javascript:x' }).includes('class="ovk-card-noimg"><'), 'a bad avatar URL falls back to the icon');
     assert.ok(!kit.card({ title: 'x', count: [0, 'views'] }).includes('0 views'), 'a count of 0 is left out');
     assert.ok(!kit.card({ title: 'x', count: null }).includes('ovk-card-meta'), 'nothing to say: no meta line');
     assert.ok(kit.card({ title: 'x', type: 'shoe' }).includes('--ovk-ar:1/1'), 'a shoe is square');

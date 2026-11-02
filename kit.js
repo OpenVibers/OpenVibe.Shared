@@ -402,7 +402,10 @@
         const pic = media(image)
             ? `<img src="${esc(mediaW(image, 640))}" alt="${esc(alt)}" loading="lazy" decoding="async">`
             : first ? `<pre class="ovk-card-pre" aria-hidden="true">${esc(first)}</pre>`
-                : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
+                // No picture but a person (2026-11-01): their face, large, over a soft blur of it, where a lone type icon
+                // in an empty box read as a missing image (Report's episodes, Tours' recordings).
+                : media(avatar) ? `<span class="ovk-card-noimg ovk-card-noimg--who" aria-hidden="true"><img class="ovk-card-noimg-bg" src="${esc(mediaW(avatar, 160))}" alt="" loading="lazy" decoding="async"><img class="ovk-card-noimg-face" src="${esc(mediaW(avatar, 160))}" alt="" loading="lazy" decoding="async"></span>`
+                    : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
         const loop = media(video) ? `<video class="ovk-card-video" data-src="${esc(video)}" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>` : '';
         const tag = live ? '<span class="ovk-card-badge is-live">LIVE</span>' : bd ? `<span class="ovk-card-badge">${esc(bd)}</span>` : '';
         const n = Array.isArray(count) ? Number(count[0]) : Number(count);
