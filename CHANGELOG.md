@@ -4,6 +4,28 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.99.0 — 2026-11-02
+
+- **The conversation UI shows several agents, approvals and what the work produced** (plan L55 C4 stage 3, for Codes):
+  - `turn({ who })` heads a reply with an agent's face (initials in its colour) and name;
+  - `divider()` draws a hand-over between agents;
+  - `card({ form, code, icon })` asks and posts without script (an approval: Allow or Deny);
+  - `panel()` sits beside the conversation: a column from 1180 px, a drawer from the right below;
+  - `page({ panel, main })` places the panel, or a plain page, in the conversation's place;
+  - `sidebar({ pinned })` keeps chats above the groups, and an item takes a `dot` and a quiet `meta` word;
+  - `sidebar({ findSubmit })`: Enter in Find a chat runs the site's own search (every message). Without it the form is
+    filter-only, as before; the kit keeps Enter on the page only for a filter-only form, so a site that draws
+    `kit.sidebar` itself (Codes) searches again on Enter;
+  - `you.caption` puts a small word over the person's bubble;
+  - a work row takes an `icon` (`read`, `find`, `edit`, `run`, `web`, `sub`), and a finished tool with no output is a
+    plain row rather than one that opens on "Running…";
+  - `composer({ id, attrs, foot })`: the form's id and the site's data attributes, and markup under the bar. The note
+    line is always drawn and is the form's status line (`role="status"`);
+  - `page({ center })` is a start page: the welcome and the composer sit together until there are turns. `cls` adds
+    the site's classes;
+  - `OVThread.tool(id, { name, input, icon, key })` and `OVThread.toolDone(id, ok, key)` stream a tool row built from
+    text; a result finds its own row by key (tools run side by side), and `ok: null` is a step that ended with no result.
+- 4.96.0's own sidebar code is gone from thread.css and ov-thread.js. `thread.sidebar` has drawn `kit.sidebar` since 4.97.0.
 ## 4.98.0 — 2026-11-02
 
 - **Solid drawings for ten more glyphs (plan L49/L50).** The places and things the sites use most that had none
