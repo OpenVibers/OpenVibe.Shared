@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.103.0 — 2026-11-02
+
+- **Eight more solid drawings**, the next by use on the sites (Design's usage count): retry, water, food, history,
+  compress, bridge, text and steps (120 of 277 glyphs now have one). An arrow keeps its arc as a line with a filled
+  head; a list keeps its rows as lines beside filled boxes. Each was drawn beside its line drawing and checked at 48,
+  24 and 16 px on light and dark grounds. `ov-glyphs.js`, `ov-glyphs.svg` and the glyph fonts are rebuilt.
+
 ## 4.102.0 — 2026-11-02
 
 - **A sidebar row with two lines** (`kit.sidebar` items): `sub` is a quiet second line under the name, a

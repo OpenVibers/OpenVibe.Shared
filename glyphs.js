@@ -347,6 +347,16 @@
         chip: '<path fill-rule="evenodd" d="M8.2 6.6h7.6a1.6 1.6 0 0 1 1.6 1.6v7.6a1.6 1.6 0 0 1-1.6 1.6H8.2a1.6 1.6 0 0 1-1.6-1.6V8.2a1.6 1.6 0 0 1 1.6-1.6Zm1.9 3.5v3.8h3.8v-3.8Z"/><path class="ln" d="M10 3v3.6M14 3v3.6M10 17.4V21M14 17.4V21M3 10h3.6M3 14h3.6M17.4 10H21M17.4 14H21"/>',
         restroom: '<circle cx="7" cy="4.6" r="2"/><circle cx="17" cy="4.6" r="2"/><path d="M6 8.8h2a1.7 1.7 0 0 1 1.7 1.7v5.2H8.6v5.5H5.4v-5.5H4.3v-5.2A1.7 1.7 0 0 1 6 8.8Z"/><path d="M16.4 9.3h1.2a1 1 0 0 1 1 .8l2.1 7H18.3v3.9h-2.6v-3.9h-2.4l2.1-7a1 1 0 0 1 1-.8Z"/><path class="ln" d="M12 3v18"/>',
         brain: '<path d="M9 3.8a3.1 3.1 0 0 0-3.1 3 3 3 0 0 0-2.1 5.2 3 3 0 0 0 2.1 5.1 3.1 3.1 0 0 0 5.5 1.3V5.5A2.2 2.2 0 0 0 9 3.8Z"/><path d="M15 3.8a3.1 3.1 0 0 1 3.1 3 3 3 0 0 1 2.1 5.2 3 3 0 0 1-2.1 5.1 3.1 3.1 0 0 1-5.5 1.3V5.5A2.2 2.2 0 0 1 15 3.8Z"/>',
+        // 4.103.0: the next eight by use (Design's usage count, 2026-11-02): retry, water, food, history, compress,
+        // bridge, text and steps. Arrows keep their arcs as lines with filled heads; a list keeps its rows as lines.
+        retry: '<path class="ln" d="M4.4 12a7.6 7.6 0 0 1 12.7-5.6M19.6 12a7.6 7.6 0 0 1-12.7 5.6"/><path d="M20.8 3.3v6.6h-6.6ZM3.2 20.7v-6.6h6.6Z"/>',
+        water: '<path d="M2.5 7.6c2.4 0 2.4-2 4.8-2s2.4 2 4.7 2 2.4-2 4.8-2 2.4 2 4.7 2v3.2c-2.3 0-2.3-2-4.7-2s-2.4 2-4.8 2-2.3-2-4.7-2-2.4 2-4.8 2ZM2.5 14.6c2.4 0 2.4-2 4.8-2s2.4 2 4.7 2 2.4-2 4.8-2 2.4 2 4.7 2v3.2c-2.3 0-2.3-2-4.7-2s-2.4 2-4.8 2-2.3-2-4.7-2-2.4 2-4.8 2Z"/>',
+        food: '<path d="M4.2 3h1.5v4.6h.6V3h1.4v4.6h.6V3h1.5v4.8A2.8 2.8 0 0 1 8 10.4V21H6V10.4a2.8 2.8 0 0 1-1.8-2.6ZM18 21h-2.2v-7.2h-2.9V10c0-3.8 1.7-6.4 5.1-7.5Z"/>',
+        history: '<path d="M6.06 6.06A8.4 8.4 0 1 1 3.6 12h2.8a5.6 5.6 0 1 0 1.64-3.96ZM3 3.2v6.6h6.6ZM11 8.2h2v3.4l2.5 1.5-1 1.7-3.5-2.1Z"/>',
+        compress: '<path d="M9.8 9.8H3.2L9.8 3.2ZM14.2 9.8h6.6l-6.6-6.6ZM9.8 14.2H3.2l6.6 6.6ZM14.2 14.2h6.6l-6.6 6.6Z"/>',
+        bridge: '<path d="M1.8 14.4h20.4v2.8H1.8ZM3.6 9.4h2v5H3.6ZM18.4 9.4h2v5h-2Z"/><path class="ln" d="M2 9.5c4 0 6-3 10-3s6 3 10 3M8.5 14.4V11.6M15.5 14.4V11.6M12 14.4V8"/>',
+        text: '<path fill-rule="evenodd" d="M10.3 3.4h3.4l6.3 17.2h-3.1l-1.5-4.3H8.6l-1.5 4.3H4ZM9.5 13.7h5L12 6.4Z"/>',
+        steps: '<path fill-rule="evenodd" d="M2.6 3.6h5.2v5.2H2.6Zm1.1 2.6.8-.9.9.9 1.5-1.5.9.9-2.4 2.4ZM2.6 9.4h5.2v5.2H2.6Zm1.1 2.6.8-.9.9.9 1.5-1.5.9.9-2.4 2.4ZM2.6 15.2h5.2v5.2H2.6Zm1.1 2.6.8-.9.9.9 1.5-1.5.9.9-2.4 2.4Z"/><path class="ln" d="M10.8 6.2H21M10.8 12H21M10.8 17.8H21"/>',
     });
     const BY = { kit: 'the OpenVibe Kit', opus: 'drawn by Opus for the glyph set (2026-10-31)' };
     const ALL = { ...(kit && kit.PATHS ? kit.PATHS : {}), ...DRAWN };
