@@ -197,21 +197,24 @@
             root.addEventListener('resize', onScroll);
             setTimeout(measure, 400);
 
-            // The drawer on a phone.
-            var opener = q(box, '[data-ovt-open]');
-            var scrim = q(box, '.ovt-scrim');
-            var closeBtn = q(box, '.ovt-side-close');
-            function drawer(on) {
-                box.classList.toggle('is-drawer', on);
-                if (scrim) scrim.hidden = !on;
-                if (closeBtn) closeBtn.hidden = !on;
-                if (opener) opener.setAttribute('aria-expanded', on ? 'true' : 'false');
-                if (on) { var f = q(box, '[data-ovt-find]'); if (f && fine) f.focus(); }
-                else if (opener && document.activeElement && box.querySelector('.ovt-side').contains(document.activeElement)) opener.focus();
+            // The panel (thread.panel): a drawer from the right below 1180 px, opened from the head's button; its scrim, its
+            // close button and Escape close it, and the focus goes in and comes back.
+            var pan = q(box, '[data-ovt-panel]');
+            var panOpen = q(box, '[data-ovt-panel-open]');
+            var panScrim = q(box, '[data-ovt-panel-scrim]');
+            function panel(on) {
+                if (!pan) return;
+                box.classList.toggle('is-panel', on);
+                if (panScrim) panScrim.hidden = !on;
+                if (panOpen) panOpen.setAttribute('aria-expanded', on ? 'true' : 'false');
+                if (on) { var c = q(pan, '[data-ovt-panel-close]'); if (c) c.focus(); }
+                else if (panOpen && document.activeElement && pan.contains(document.activeElement)) panOpen.focus();
             }
-            if (opener) opener.addEventListener('click', function () { drawer(true); });
-            qa(box, '[data-ovt-close]').forEach(function (el) { el.addEventListener('click', function () { drawer(false); }); });
-            document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.classList.contains('is-drawer')) drawer(false); });
+            if (pan) {
+                if (panOpen) panOpen.addEventListener('click', function () { panel(!box.classList.contains('is-panel')); });
+                qa(box, '[data-ovt-panel-close], [data-ovt-panel-scrim]').forEach(function (el) { el.addEventListener('click', function () { panel(false); }); });
+                document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.classList.contains('is-panel')) panel(false); });
+            }
 
             // Find a chat, in the network's sidebar (kit.sidebar): it filters as you type, and Enter keeps you here.
             var kfind = q(box, '.ovk-sidebar-find input');
@@ -224,13 +227,6 @@
                     qa(box, '.ovk-sidebar-secs .ovk-sidebar-sec').forEach(function (sec) { sec.hidden = !!term && !sec.querySelector('.ovk-sidebar-item:not([hidden])'); });
                 });
             }
-            // Find a chat.
-            var find = q(box, '[data-ovt-find]');
-            if (find) find.addEventListener('input', function () {
-                var term = find.value.trim().toLowerCase();
-                qa(box, '.ovt-list li').forEach(function (li) { var a = li.querySelector('a'); li.hidden = !!term && (!a || (a.getAttribute('data-title') || '').indexOf(term) === -1); });
-                qa(box, '.ovt-group').forEach(function (g) { var ul = g.nextElementSibling; g.hidden = !!ul && !ul.querySelector('li:not([hidden])'); });
-            });
 
             // The composer.
             var form = q(box, '[data-ovt-composer]');

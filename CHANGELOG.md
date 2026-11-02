@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.99.0 — 2026-11-02
+
+- **The conversation UI shows several agents, approvals and what the work produced** (plan L55 C4 stage 3, for Codes):
+  - `turn({ who })` heads a reply with an agent's face (initials in its colour) and name;
+  - `divider()` draws a hand-over between agents;
+  - `card({ form, code, icon })` asks and posts without script (an approval: Allow or Deny);
+  - `panel()` sits beside the conversation: a column from 1180 px, a drawer from the right below;
+  - `page({ panel, main })` places the panel, or a plain page, in the conversation's place;
+  - `sidebar({ pinned })` keeps chats above the groups, and an item takes a `dot` and a quiet `meta` word;
+  - `you.caption` puts a small word over the person's bubble.
+- 4.96.0's own sidebar code is gone from thread.css and ov-thread.js. `thread.sidebar` has drawn `kit.sidebar` since 4.97.0.
+
 ## 4.97.0 — 2026-11-02
 
 - **The conversation UI uses the network's one sidebar.** 4.96.0's `thread.sidebar` drew a second sidebar beside

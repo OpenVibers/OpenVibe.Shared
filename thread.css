@@ -5,7 +5,6 @@
 .ovt { --ovt-top: 56px; --ovt-rail: 272px; --ovt-line: color-mix(in srgb, var(--border, #1f2d47) 80%, transparent);
     --ovt-accent: var(--accent, #3b82f6);
     display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - var(--ovt-top)); color: var(--text-primary, #e6edf7); }
-@media (min-width: 900px) { .ovt { grid-template-columns: var(--ovt-rail) minmax(0, 1fr); } }
 /* The network's one sidebar (kit.sidebar): a column from 761 px, where kit.css makes it one, and sticky under the navbar. */
 @media (min-width: 761px) {
     .ovt:has(> .ovk-sidebar) { grid-template-columns: var(--ovk-sidebar-w, var(--ovt-rail)) minmax(0, 1fr); }
@@ -19,34 +18,8 @@
 .ovt-muted { color: var(--text-muted, #7386a3); }
 .ovt-ic { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-/* ── The chats ──────────────────────────────────────────────────────────────────────────────────────────────── */
-.ovt-side { display: flex; flex-direction: column; gap: 10px; padding: 12px 10px 14px; background: var(--bg-secondary, #0f1729); border-right: 1px solid var(--ovt-line); }
-@media (min-width: 900px) { .ovt-side { position: sticky; top: var(--ovt-top); height: calc(100dvh - var(--ovt-top)); overflow-y: auto; overscroll-behavior: contain; } }
-@media (max-width: 899px) {
-    .ovt-side { position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(86vw, 320px); padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-        overflow-y: auto; overscroll-behavior: contain; transform: translateX(-104%); visibility: hidden; transition: transform .26s cubic-bezier(.2, .8, .2, 1), visibility 0s .26s;
-        box-shadow: 0 0 40px rgba(0, 0, 0, .45); }
-    .ovt.is-drawer .ovt-side { transform: none; visibility: visible; transition: transform .26s cubic-bezier(.2, .8, .2, 1); }
-    .ovt-scrim { position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, .5); }
-    .ovt-side-close { display: grid !important; }
-}
-.ovt-scrim[hidden] { display: none; }
-.ovt-side-head { display: flex; align-items: center; gap: 8px; }
-.ovt-new { flex: 1; display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--ovt-line);
-    background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); font-weight: 650; text-decoration: none; }
-.ovt-new:hover, .ovt-new:focus-visible { border-color: var(--ovt-accent); }
-.ovt-side-close { display: none; place-items: center; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--ovt-line); background: none; color: var(--text-secondary, #96a7c2); cursor: pointer; }
-.ovt-find input { width: 100%; box-sizing: border-box; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ovt-line); background: var(--bg-primary, #0a0f1c); color: var(--text-primary, #e6edf7); font: inherit; font-size: 14px; }
-.ovt-list { flex: 1; min-height: 0; }
-.ovt-list ul { list-style: none; margin: 0 0 6px; padding: 0; }
-.ovt-group { margin: 12px 8px 4px; font-size: 11.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
-.ovt-list a { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border-radius: 10px; color: var(--text-secondary, #b4c0d4); text-decoration: none; font-size: 14.5px; }
-.ovt-list a span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovt-list a:hover, .ovt-list a:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 5%, transparent)); color: var(--text-primary, #e6edf7); }
-.ovt-list a[aria-current=page] { background: color-mix(in srgb, var(--ovt-accent) 16%, transparent); color: var(--text-primary, #e6edf7); font-weight: 600; }
-.ovt-list li[hidden], .ovt-group[hidden] { display: none; }
+/* ── The chats (kit.sidebar) ──────────────────────────────────────────────────────────────────────────────────────────────── */
 .ovt-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ovt-accent); animation: ovt-breathe 1.6s ease-in-out infinite; }
-.ovt-empty { margin: 14px 10px; font-size: 14px; color: var(--text-muted, #7386a3); }
 .ovk-sidebar-foot .ovt-side-foot { border-top: 0; padding-top: 0; }
 .ovt-side-foot { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 10px 8px 0; border-top: 1px solid var(--ovt-line); font-size: 13px; }
 .ovt-side-foot a { color: var(--text-secondary, #96a7c2); text-decoration: none; }
@@ -62,7 +35,6 @@
 .ovt-btn { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 0; background: none; color: var(--text-secondary, #b4c0d4); cursor: pointer; text-decoration: none; }
 .ovt-btn:hover, .ovt-btn:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 6%, transparent)); color: var(--text-primary, #e6edf7); }
 .ovt-btn .ovt-ic { width: 22px; height: 22px; }
-@media (min-width: 900px) { .ovt-menu { display: none; } }
 .ovt-scroll { flex: 1; padding: 8px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
 .ovt-thread { list-style: none; max-width: 780px; margin: 0 auto; padding: 0; display: grid; gap: 30px; }
 .ovt-empty-state { max-width: 780px; margin: 8vh auto 0; text-align: center; }
@@ -143,6 +115,65 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
 .ovt-card.is-wait { border-color: color-mix(in srgb, var(--ovt-accent) 50%, var(--ovt-line)); }
 .ovt-card.is-bad { border-color: color-mix(in srgb, var(--danger-text, #f87171) 50%, var(--ovt-line)); }
 
+/* ── The panel (4.99.0): what the work produced. A third column from 1180 px, a drawer from the right below. ─────── */
+.ovt { --ovt-panel-w: 300px; }
+.ovt-panel { display: flex; flex-direction: column; gap: 4px; padding: 10px 14px 16px; background: var(--bg-secondary, #0f1729); border-left: 1px solid var(--ovt-line); }
+.ovt-panel-head { display: flex; align-items: center; gap: 8px; min-height: 42px; }
+.ovt-panel-head h2 { flex: 1; margin: 0; font-size: 15px; font-weight: 650; }
+.ovt-panel-sec { padding: 10px 0; border-top: 1px solid var(--ovt-line); }
+.ovt-panel-head + .ovt-panel-sec { border-top: 0; padding-top: 2px; }
+.ovt-panel-sec h3 { margin: 0 0 8px; font-size: 11.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
+.ovt-panel-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ovt-panel-rows > li { display: flex; align-items: flex-start; gap: 10px; min-width: 0; font-size: 14px; }
+.ovt-panel-rows > li > .ovt-ic { width: 18px; height: 18px; margin-top: 1px; color: var(--text-secondary, #96a7c2); }
+.ovt-panel-rows > li > span:last-child { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.ovt-panel-rows small { color: var(--text-muted, #7386a3); font-size: 12.5px; }
+.ovt-panel-rows .ovt-avatar { width: 24px; height: 24px; margin-top: 0; font-size: 10.5px; border-radius: 8px; }
+.ovt-panel a { color: var(--accent-light, var(--ovt-accent)); }
+.ovt-panel code { font-size: 12.5px; overflow-wrap: anywhere; }
+@media (min-width: 1180px) {
+    .ovt.has-panel { grid-template-columns: minmax(0, 1fr) var(--ovt-panel-w); }
+    .ovt.has-panel:has(> .ovk-sidebar) { grid-template-columns: var(--ovk-sidebar-w, var(--ovt-rail)) minmax(0, 1fr) var(--ovt-panel-w); }
+    .ovt-panel { position: sticky; top: var(--ovt-top); height: calc(100dvh - var(--ovt-top)); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; }
+    .ovt-panel-open, .ovt-panel-close, .ovt-panel-scrim { display: none !important; }
+}
+@media (max-width: 1179px) {
+    .ovt-panel { position: fixed; z-index: 10060; top: 0; right: 0; bottom: 0; width: min(340px, 88vw); box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain;
+        padding-top: max(10px, env(safe-area-inset-top, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+        border-left: 0; translate: 100% 0; visibility: hidden; transition: translate .25s ease, visibility 0s linear .25s; box-shadow: -12px 0 32px rgba(0, 0, 0, .25); }
+    .ovt.is-panel .ovt-panel { translate: 0 0; visibility: visible; transition: translate .25s ease; }
+    .ovt-panel-scrim { position: fixed; inset: 0; z-index: 10050; background: rgba(0, 0, 0, .4); }
+}
+
+/* An agent's face and name over its reply (turn({ who })), and the line across the thread when another takes over. */
+.ovt-avatar.is-who { display: grid; place-items: center; background: color-mix(in srgb, var(--ovt-who, var(--ovt-accent)) 22%, var(--bg-card, #131c2e));
+    color: color-mix(in srgb, var(--ovt-who, var(--ovt-accent)) 70%, var(--text-primary, #e6edf7)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovt-who, var(--ovt-accent)) 45%, transparent);
+    font-size: 11.5px; font-weight: 750; letter-spacing: -.01em; line-height: 1; }
+.ovt-avatar.is-who .ovt-ic, .ovt-avatar.is-who svg { width: 16px; height: 16px; }
+.ovt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 3px 0 -4px; font-size: 14px; }
+.ovt-who b { font-weight: 650; color: var(--text-primary, #e6edf7); }
+.ovt-who span { color: var(--text-muted, #7386a3); font-size: 13px; }
+.ovt-caption { font-size: 12px; color: var(--text-muted, #7386a3); }
+.ovt-divider { display: flex; align-items: center; gap: 12px; color: var(--text-muted, #7386a3); font-size: 13px; }
+.ovt-divider::before, .ovt-divider::after { content: ""; flex: 1; height: 1px; background: var(--ovt-line); }
+.ovt-divider > span { display: inline-flex; align-items: center; gap: 6px; max-width: min(80%, 560px); text-align: center; }
+.ovt-divider .ovt-ic { width: 16px; height: 16px; }
+
+/* A card that asks (an approval): what it wants to run, then Allow and Deny. */
+.ovt-card-h { display: flex; align-items: flex-start; gap: 8px; }
+.ovt-card-h > .ovt-ic { margin-top: 2px; color: var(--text-secondary, #96a7c2); }
+.ovt-card.is-wait .ovt-card-h > .ovt-ic { color: var(--ovt-accent); }
+.ovt-card-code { margin: 4px 0 8px; max-height: 220px; overflow: auto; padding: 8px 10px; border-radius: 10px; background: var(--bg-primary, #0a0f1c); border: 1px solid var(--ovt-line);
+    font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: break-word; }
+.ovt-card-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.ovt-card-btn { min-height: 38px; padding: 0 16px; border-radius: 11px; border: 0; background: var(--ovt-accent); color: var(--on-accent, #fff); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; }
+.ovt-card-btn.is-quiet { background: none; color: var(--text-primary, #e6edf7); box-shadow: inset 0 0 0 1px var(--ovt-line); }
+.ovt-card-btn:hover { filter: brightness(1.08); }
+.ovt-card-btn.is-quiet:hover { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 6%, transparent)); filter: none; }
+
+/* A plain page in the conversation's place (page({ main })). */
+.ovt-page { max-width: 980px; width: 100%; box-sizing: border-box; margin: 0 auto; }
+
 /* ── The composer ───────────────────────────────────────────────────────────────────────────────────────────── */
 .ovt-dock { position: sticky; bottom: var(--ovnav-appbar-h, 0px); z-index: 15; padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
     background: linear-gradient(to top, var(--bg-primary, #0a0f1c) 70%, transparent); }
@@ -172,5 +203,5 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
     .ovt-dot, .ovt-turn[data-open] .ovt-avatar, .ovt-w-live, .ovt-turn.is-new .ovt-bubble, .ovt-turn.is-fresh .ovt-answer { animation: none; }
     .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
     .ovt-w-live { color: var(--text-secondary, #96a7c2); background: none; }
-    .ovt-side, .ovt-chev { transition: none; }
+    .ovt-panel, .ovt-chev { transition: none; }
 }

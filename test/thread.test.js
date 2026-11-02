@@ -65,6 +65,30 @@ const page = t.page({ sidebar: side, head: t.head({ title: 'Chat' }), turns: [],
 assert.ok(page.startsWith('<div class="ovt" data-ovt>') && page.includes('<div class="ovt-empty-state"><h2>What can I do for you?</h2></div><ol class="ovt-thread" data-ovt-thread></ol>'));
 assert.ok(page.includes('</aside><div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden></div>'), 'the kit\'s scrim closes the drawer');
 
+// ── 4.99.0: the parts Codes needs (several agents in one conversation, approvals, what the work produced) ──────
+const pinnedSide = t.sidebar({ pinned: [{ href: '/tasks/c', title: 'Conductor', dot: 'needs' }], groups: [{ name: 'Today', items: [{ href: '/tasks/1', title: 'Fix', meta: '2h' }] }], findPlaceholder: 'Search conversations' });
+assert.ok(/<h2 class="ovk-sidebar-h">Pinned<\/h2>[\s\S]*Conductor[\s\S]*is-needs[\s\S]*Today/.test(pinnedSide) || (pinnedSide.indexOf('Pinned') > -1 && pinnedSide.indexOf('Pinned') < pinnedSide.indexOf('Today') && pinnedSide.includes('is-needs')), 'pinned chats above the groups, with their dot');
+assert.ok(pinnedSide.includes('<span class="ovk-sidebar-m">2h</span>') && pinnedSide.includes('placeholder="Search conversations"'), 'a quiet word after the title, and the find box\'s words');
+const agentTurn = t.turn({ id: 'a1', who: { name: 'Codex <x>', initials: 'Cxy', color: '#10a37f', sub: 'gpt-5 · Thorough' }, reply: '<p>Done</p>' });
+assert.ok(agentTurn.includes('<span class="ovt-avatar is-who" style="--ovt-who:#10a37f" aria-hidden="true">Cx</span>'), 'the agent\'s face: two letters in its colour');
+assert.ok(agentTurn.includes('<p class="ovt-who"><b>Codex &lt;x&gt;</b><span>gpt-5 · Thorough</span></p><p>Done</p>'), 'its name over the reply, escaped');
+for (const bad of ['red;background:url(//x)', 'expression(1)', '#12345678901']) assert.ok(!t.face({ name: 'A', color: bad }).includes('style='), `no colour that is not one: ${bad}`);
+assert.ok(t.face({ name: 'A', color: 'var(--accent)' }).includes('style="--ovt-who:var(--accent)"'), 'a theme token is a colour');
+const brief = t.turn({ you: { text: 'Do it', caption: 'Hand-over brief' }, reply: null });
+assert.ok(brief.includes('<span class="ovt-caption">Hand-over brief</span>') && !brief.includes('ovt-bot'), 'a caption over the bubble; reply null draws only the person');
+assert.strictEqual(t.divider({ text: 'Codex took <over>' }).replace(/<svg[\s\S]*?<\/svg>/, ''), '<li class="ovt-divider"><span>Codex took &lt;over&gt;</span></li>', 'a hand-over line, escaped');
+const ask = t.card({ tone: 'wait', icon: 'shield', title: 'Bash', text: 'wants to run', code: 'rm -rf "<dir>"', form: { action: '/tasks/1/approvals/2', hidden: { back: '/tasks/1' }, buttons: [{ name: 'decision', value: 'allow', label: 'Allow' }, { name: 'decision', value: 'deny', label: 'Deny', quiet: true }] } });
+assert.ok(ask.startsWith('<form class="ovt-card is-wait" method="post" action="/tasks/1/approvals/2"><input type="hidden" name="back" value="/tasks/1">'), 'an approval posts without script');
+assert.ok(ask.includes('<pre class="ovt-card-code" tabindex="0">rm -rf &quot;&lt;dir&gt;&quot;</pre>') && ask.includes('<button type="submit" class="ovt-card-btn is-quiet" name="decision" value="deny">Deny</button>'), 'what it runs, escaped; Allow and Deny');
+assert.ok(t.card({ tone: 'bad', text: 'x' }).startsWith('<div class="ovt-card is-bad">'), 'a card without a form stays a div');
+const pan = t.panel({ id: 'what', title: 'What it did', sections: [{ title: 'Agents', rows: [{ who: { name: 'Codex', initials: 'Cx' }, title: 'Codex', sub: 'finished' }] }, { title: 'Where', rows: [{ icon: 'file', html: '<code>src/</code>' }] }, null] });
+assert.ok(pan.startsWith('<aside class="ovt-panel" id="what" aria-label="What it did" data-ovt-panel>') && pan.includes('<h3>Agents</h3>') && pan.includes('<b>Codex</b><small>finished</small>') && pan.includes('<span><code>src/</code></span>'), 'the panel and its rows');
+const withPanel = t.page({ sidebar: side, head: t.head({ title: 'Fix', panel: 'what', panelLabel: 'What it did' }), turns: [agentTurn, t.divider({ text: 'Codex took over' })], panel: pan });
+assert.ok(withPanel.startsWith('<div class="ovt has-panel" data-ovt>') && withPanel.endsWith('</aside><div class="ovt-panel-scrim" data-ovt-panel-scrim hidden></div></div>'), 'the panel after the conversation, with its scrim');
+assert.ok(withPanel.includes('data-ovt-panel-open aria-controls="what" aria-expanded="false" aria-label="What it did"'), 'the head\'s button opens it');
+const plain = t.page({ sidebar: side, head: t.head({ title: 'Agents' }), main: '<h2>Your agents</h2>' });
+assert.ok(plain.includes('<div class="ovt-scroll ovt-page"><h2>Your agents</h2></div></section>') && !plain.includes('ovt-dock'), 'a plain page in the same frame, no composer');
+
 // ── The script ─────────────────────────────────────────────────────────────────────────────────────────────────
 const SRC = fs.readFileSync(path.join(__dirname, '..', 'ov-thread.js'), 'utf8');
 const html = `<!doctype html><html><body>${t.page({ sidebar: side, head: t.head({ title: 'Chat' }), turns: [turn, t.turn({ id: 'tsk_0', state: 'succeeded', you: { text: 'Hi' }, reply: ans })], composer: t.composer({ action: '/chat', starters: ['Plan a weekend'] }) })}</body></html>`;
@@ -114,5 +138,23 @@ if (typed.classList.contains('is-revealing')) assert.ok(typed.querySelectorAll('
 assert.strictEqual(document.querySelector('[data-turn="tsk_1"] [data-ovt-copy]').hidden, false, 'the new turn has Copy');
 const added = OV.add(t.turn({ id: 'tsk_2', open: true, you: { text: 'Next' }, reply: t.work({ open: true }) }));
 assert.ok(added.classList.contains('is-new') && document.querySelectorAll('[data-ovt-thread] > li').length === 3, 'a new turn joins the thread');
+
+// The panel's drawer (4.99.0): the head's button opens it, the scrim and Escape close it, the focus comes back.
+{
+    const doc2 = parseHTML(`<!doctype html><html><body>${withPanel}</body></html>`);
+    delete globalThis.OVThread;
+    new Function('window', 'document', 'navigator', 'location', 'setTimeout', SRC)(doc2.window, doc2.document, nav, { hash: '' }, setTimeout);
+    const b2 = doc2.document.querySelector('[data-ovt]');
+    const opener = doc2.document.querySelector('[data-ovt-panel-open]');
+    const scrim = doc2.document.querySelector('[data-ovt-panel-scrim]');
+    opener.dispatchEvent(new doc2.window.Event('click'));
+    assert.ok(b2.classList.contains('is-panel') && scrim.hidden === false && opener.getAttribute('aria-expanded') === 'true', 'the button opens the panel');
+    scrim.dispatchEvent(new doc2.window.Event('click'));
+    assert.ok(!b2.classList.contains('is-panel') && scrim.hidden === true && opener.getAttribute('aria-expanded') === 'false', 'the scrim closes it');
+    opener.dispatchEvent(new doc2.window.Event('click'));
+    const esc = new doc2.window.Event('keydown'); esc.key = 'Escape';
+    doc2.document.dispatchEvent(esc);
+    assert.ok(!b2.classList.contains('is-panel'), 'Escape closes it');
+}
 
 console.log('thread: all passed');

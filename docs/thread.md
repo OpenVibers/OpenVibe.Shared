@@ -14,14 +14,16 @@ so a conversation looks and behaves the same on every OpenVibe site.
 
 | Function | What it draws |
 |---|---|
-| `page({ sidebar, head, turns, empty, composer })` | The screen: the chats beside the conversation; the composer stays at the bottom |
-| `sidebar({ newHref, groups, nav, foot })` | New chat, Find a chat, the chats grouped Today / Yesterday / This week / Earlier, footer links. A column on a wide screen, a drawer on a phone |
+| `page({ sidebar, head, turns, empty, composer, panel, main })` | The screen: the chats beside the conversation; the composer stays at the bottom. `panel` goes beside it; `main` is a plain page in the conversation's place |
+| `sidebar({ newHref, groups, pinned, nav, foot })` | New chat, Find a chat, pinned chats, the chats grouped Today / Yesterday / This week / Earlier, footer links. A column on a wide screen, a drawer on a phone |
 | `group(items, whenOf)` | Items, newest first, into those groups |
-| `head({ title, newHref, actions })` | The sticky head: the drawer's button (phones), the title, New chat |
-| `turn({ id, state, open, you, reply })` | One turn: the person's bubble (with files) and the reply |
+| `head({ title, newHref, actions, panel })` | The sticky head: the drawer's button (phones), the title, New chat, and the panel's button where the panel is a drawer |
+| `turn({ id, state, open, you, reply, who })` | One turn: the person's bubble (with files and a caption) and the reply. `who` heads the reply with an agent's face and name |
+| `divider({ text, icon })` | A line across the thread: a hand-over to another agent, a wait |
 | `work({ open, live, took, rows })` | The work folded under the answer: "Worked for 12 s · 3 tools", or the live line while it works |
 | `answer({ html, files, sources, meta, actions })` | The answer, its files, its sources as quiet links, and a footer with Copy |
-| `card({ tone, title, text, html })` | A question waiting for the person (`wait`), a failure (`bad`), or a note (`info`) |
+| `card({ tone, title, text, html, icon, code, form })` | A question waiting for the person (`wait`), a failure (`bad`), or a note (`info`). With `form` it asks, and posts without script (an approval: Allow or Deny) |
+| `panel({ id, title, sections })` | What the work produced, beside the conversation: a third column from 1180 px, a drawer from the right below |
 | `composer({ action, busy, stopAction, attach, tools, starters, note })` | The composer: grows as you type, the site's chips, Send, and Stop while a turn works |
 
 A `rows` entry for `work()` is one of:
@@ -29,6 +31,27 @@ A `rows` entry for `work()` is one of:
 - `{ kind: 'note', text, level }`;
 - `{ kind: 'you', text }`, something the person said while it worked;
 - `{ kind: 'tool', name, input, output, ok, running }`.
+
+## Several agents, approvals and the panel (4.99.0)
+
+Codes hands a task from one agent to another inside one conversation. These parts show that:
+
+```js
+thread.turn({ who: { name: 'Codex', initials: 'Cx', color: '#10a37f', sub: 'gpt-5 · Thorough' }, reply });
+thread.divider({ text: 'Codex took over: Claude Code ran out of turns' });
+thread.card({ tone: 'wait', icon: 'shield', title: 'Bash', text: 'wants to run', code: 'npm test',
+    form: { action: '/tasks/1/approvals/9', buttons: [{ name: 'decision', value: 'allow', label: 'Allow' },
+        { name: 'decision', value: 'deny', label: 'Deny', quiet: true }] } });
+thread.page({ sidebar, head: thread.head({ title, panel: 'side', panelLabel: 'What it did' }), turns, composer,
+    panel: thread.panel({ id: 'side', title: 'What it did', sections: [{ title: 'Agents', rows: [{ who, title, sub }] }] }) });
+```
+
+- **Colours:** an agent's colour is only ever a colour: `#rgb` to `#rrggbbaa`, or a theme token (`var(--accent)`).
+  Anything else is dropped.
+- **The panel:**
+  - it is a column from 1180 px;
+  - below that, the head's button opens it as a drawer from the right;
+  - its scrim, its close button and Escape close it, and the focus returns to the button.
 
 ## Streaming
 
