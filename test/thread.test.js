@@ -92,6 +92,10 @@ assert.ok(plain.includes('<div class="ovt-scroll ovt-page"><h2>Your agents</h2><
 const steps = t.work({ rows: [{ kind: 'tool', name: 'Edit', input: 'a.css', icon: 'edit', ok: true }, { kind: 'tool', name: 'Bash', input: 'npm test', output: 'ok', ok: true }] });
 assert.ok(steps.includes('<li class="ovt-w-tool is-ok"><div class="ovt-w-row"><svg class="ovt-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9') && !/Edit[\s\S]*?Running…/.test(steps.split('Bash')[0]), 'a finished step with no output is a plain row, with its own icon');
 assert.ok(steps.includes('<details><summary>') && steps.includes('<pre class="ovt-w-out">ok</pre>'), 'a step with output still opens');
+const ended = t.work({ rows: [{ kind: 'tool', name: 'Read', running: false }] });
+assert.ok(ended.includes('<li class="ovt-w-tool is-done">') && ended.includes('<span class="ovt-w-st"></span>'), 'a step that ended with no result has no mark');
+assert.ok(!t.head({ title: '' }).includes('<h1') && t.head({ title: 'x' }).includes('<h1 class="ovt-title">x</h1>'), 'no empty heading');
+assert.ok(t.panel({ sections: [{ rows: [{ iconHtml: '<svg class="mine"></svg>', title: 'Repo' }] }] }).includes('<li><svg class="mine"></svg><span><b>Repo</b>'), 'a panel row with the site\'s own icon');
 const startForm = t.composer({ action: '/chat', id: 'ch-start', attrs: { 'data-ch-api': '/api/x"y' }, foot: '<p class="where">On your computer</p>' });
 assert.ok(startForm.includes('<form class="ovt-composer" id="ch-start" method="post" action="/chat" data-ovt-composer data-ch-api="/api/x&quot;y">'), 'the form\'s id and the site\'s attributes, escaped');
 assert.ok(startForm.includes('<p class="where">On your computer</p><p class="ovt-c-note" data-ovt-note role="status"></p>'), 'markup under the bar, then a status line that is always there');

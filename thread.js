@@ -109,7 +109,7 @@ function sidebar({ id = 'ovt-chats', label = 'Your chats', newHref = null, newLa
  */
 function head({ title = '', newHref = null, sidebar: sid = 'ovt-chats', sidebarLabel = 'Your chats', actions = '', panel: pid = null, panelLabel = 'Details' } = {}) {
     const panelBtn = pid ? `<button type="button" class="ovt-btn ovt-panel-open" data-ovt-panel-open aria-controls="${esc(pid)}" aria-expanded="false" aria-label="${esc(panelLabel)}" title="${esc(panelLabel)}">${icon('panel')}</button>` : '';
-    return `<header class="ovt-head" data-ovt-head>${sid ? kit.sidebarButton({ id: sid, label: sidebarLabel }) : ''}<h1 class="ovt-title">${esc(title)}</h1>${actions || ''}${newHref ? `<a class="ovt-btn" href="${esc(newHref)}" aria-label="New chat">${icon('plus')}</a>` : ''}${panelBtn}</header>`;
+    return `<header class="ovt-head" data-ovt-head>${sid ? kit.sidebarButton({ id: sid, label: sidebarLabel }) : ''}${title ? `<h1 class="ovt-title">${esc(title)}</h1>` : '<span class="ovt-title"></span>'}${actions || ''}${newHref ? `<a class="ovt-btn" href="${esc(newHref)}" aria-label="New chat">${icon('plus')}</a>` : ''}${panelBtn}</header>`;
 }
 
 // An agent's colour, only as a colour: #rgb…#rrggbbaa or a theme token, never anything else in a style attribute.
@@ -158,15 +158,16 @@ function divider({ text = '', icon: ic = 'handover' } = {}) {
  * The work, folded under the answer: "Worked for 12 s · 3 tools", or, while it works, the live line ("Reading the
  * page…"), open. rows: [{ kind: 'step' | 'note' | 'you' | 'tool', text, level, name, input, output, ok, running, icon }].
  * icon: a thread icon for the row (a coding agent's read, find, edit, run, web, sub); a tool that finished with no output
- * is a plain row, with nothing to open.
+ * is a plain row, with nothing to open. running: false with no ok is a step that ended without a result: no mark.
  */
 function work({ open = false, live = 'Working', took = null, rows = [] } = {}) {
     const tools = rows.filter((r) => r.kind === 'tool').length;
     if (!open && !rows.length) return '';
     const items = rows.map((r) => {
         if (r.kind === 'tool') {
-            const st = r.running || r.ok == null ? 'is-run' : r.ok ? 'is-ok' : 'is-bad';
-            const head = `${icon(r.icon || 'tool')}<b>${esc(r.name || 'Tool')}</b>${r.input ? `<span class="ovt-w-in">${esc(clip(r.input, 90))}</span>` : ''}<span class="ovt-w-st">${st === 'is-run' ? '<span class="ovt-dot" aria-hidden="true"></span>' : icon(st === 'is-ok' ? 'ok' : 'bad')}</span>`;
+            const st = r.running === false && r.ok == null ? 'is-done' : r.running || r.ok == null ? 'is-run' : r.ok ? 'is-ok' : 'is-bad';
+            const mark = st === 'is-run' ? '<span class="ovt-dot" aria-hidden="true"></span>' : st === 'is-done' ? '' : icon(st === 'is-ok' ? 'ok' : 'bad');
+            const head = `${icon(r.icon || 'tool')}<b>${esc(r.name || 'Tool')}</b>${r.input ? `<span class="ovt-w-in">${esc(clip(r.input, 90))}</span>` : ''}<span class="ovt-w-st">${mark}</span>`;
             if (r.output == null && st !== 'is-run') return `<li class="ovt-w-tool ${st}"><div class="ovt-w-row">${head}</div></li>`;
             return `<li class="ovt-w-tool ${st}"><details><summary>${head}</summary>
 ${r.output != null ? `<pre class="ovt-w-out">${esc(clip(r.output, 1500))}</pre>` : '<p class="ovt-w-out ovt-muted">Running…</p>'}</details></li>`;
@@ -218,11 +219,11 @@ function card({ tone = 'info', title = '', text = null, html = '', code = null, 
 /**
  * The panel beside the conversation: what the work produced (who worked on it, where, the changes, the proof). A third
  * column from 1180 px; below that a drawer from the right that head({ panel: id })'s button opens (ov-thread.js).
- *   sections: [{ title, html, rows: [{ who, icon, title, sub, html }] }]; a row's who draws an agent's face (turn's who),
- *   icon a thread icon; html is the caller's safe markup in place of title and sub.
+ *   sections: [{ title, html, rows: [{ who, icon, iconHtml, title, sub, html }] }]; a row's who draws an agent's face (turn's
+ *   who), icon a thread icon, iconHtml the site's own safe icon; html is the caller's safe markup in place of title and sub.
  */
 function panel({ id = 'ovt-panel', title = 'Details', sections = [] } = {}) {
-    const row = (r) => `<li>${r.who ? face(r.who) : r.icon ? icon(r.icon) : ''}<span>${r.html != null ? r.html : `<b>${esc(r.title || '')}</b>${r.sub ? `<small>${esc(r.sub)}</small>` : ''}`}</span></li>`;
+    const row = (r) => `<li>${r.who ? face(r.who) : r.iconHtml != null ? r.iconHtml : r.icon ? icon(r.icon) : ''}<span>${r.html != null ? r.html : `<b>${esc(r.title || '')}</b>${r.sub ? `<small>${esc(r.sub)}</small>` : ''}`}</span></li>`;
     const secs = sections.filter(Boolean).map((s) => `<section class="ovt-panel-sec">${s.title ? `<h3>${esc(s.title)}</h3>` : ''}${s.rows && s.rows.length ? `<ul class="ovt-panel-rows">${s.rows.map(row).join('')}</ul>` : ''}${s.html || ''}</section>`).join('');
     return `<aside class="ovt-panel" id="${esc(id)}" aria-label="${esc(title)}" data-ovt-panel><div class="ovt-panel-head"><h2>${esc(title)}</h2><button type="button" class="ovt-btn ovt-panel-close" data-ovt-panel-close aria-label="Close">${icon('close')}</button></div>${secs}</aside>`;
 }

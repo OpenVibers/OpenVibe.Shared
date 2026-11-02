@@ -126,7 +126,7 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
 .ovt-panel-sec h3 { margin: 0 0 8px; font-size: 11.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
 .ovt-panel-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .ovt-panel-rows > li { display: flex; align-items: flex-start; gap: 10px; min-width: 0; font-size: 14px; }
-.ovt-panel-rows > li > .ovt-ic { width: 18px; height: 18px; margin-top: 1px; color: var(--text-secondary, #96a7c2); }
+.ovt-panel-rows > li > svg { flex: none; width: 18px; height: 18px; margin-top: 1px; color: var(--text-secondary, #96a7c2); }
 .ovt-panel-rows > li > span:last-child { display: grid; min-width: 0; overflow-wrap: anywhere; }
 .ovt-panel-rows small { color: var(--text-muted, #7386a3); font-size: 12.5px; }
 .ovt-panel-rows .ovt-avatar { width: 24px; height: 24px; margin-top: 0; font-size: 10.5px; border-radius: 8px; }
@@ -151,6 +151,9 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
     color: color-mix(in srgb, var(--ovt-who, var(--ovt-accent)) 70%, var(--text-primary, #e6edf7)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovt-who, var(--ovt-accent)) 45%, transparent);
     font-size: 11.5px; font-weight: 750; letter-spacing: -.01em; line-height: 1; }
 .ovt-avatar.is-who .ovt-ic, .ovt-avatar.is-who svg { width: 16px; height: 16px; }
+/* A face in the sidebar (a chat's agent) or a panel row: smaller, beside a line of text. */
+.ovk-sidebar-item .ovt-avatar.is-who { flex: none; width: 22px; height: 22px; margin: 0; border-radius: 7px; font-size: 10px; }
+.ovk-sidebar-item .ovt-avatar.is-who svg { width: 13px; height: 13px; }
 .ovt-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 3px 0 -4px; font-size: 14px; }
 .ovt-who b { font-weight: 650; color: var(--text-primary, #e6edf7); }
 .ovt-who span { color: var(--text-muted, #7386a3); font-size: 13px; }
