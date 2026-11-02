@@ -30,6 +30,18 @@
 .ov-player-poster { opacity: 0; transition: opacity 0.35s ease; }
 .ov-player.has-poster .ov-player-poster { opacity: 1; }
 .ov-player.has-frame .ov-player-placeholder, .ov-player.has-poster .ov-player-placeholder { opacity: 0; transition: opacity 0.5s ease; }
+/* An audio-only recording (no picture track; plan R4, 2026-11-01): the streamer's face over a soft blur of it, never a
+   black box. The video element stays (it plays the sound) but shows nothing; the controls sit above as always. A sound
+   file has no picture size, so the player keeps the 16:9 a video would have (the browser's default is 150 px tall). */
+.ov-player-audio { position: absolute; inset: 0; z-index: 1; display: none; place-items: center; overflow: hidden; background: var(--ovp-bg, #0b1220); pointer-events: none; }
+.ov-player.is-audio .ov-player-audio { display: grid; }
+.ov-player.is-audio { aspect-ratio: 16 / 9; }
+.ov-player.is-audio .ov-player-video { position: absolute; inset: 0; height: 100%; opacity: 0 !important; }
+.ov-player-audio-bg { position: absolute; inset: -15%; width: 130%; height: 130%; object-fit: cover; filter: blur(28px) saturate(1.15); opacity: .5; }
+.ov-player-audio-face { position: relative; width: clamp(72px, 22%, 168px); aspect-ratio: 1; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 4px rgb(255 255 255 / .12), 0 12px 32px rgb(0 0 0 / .4); }
+.ov-player-audio-glyph { position: relative; display: grid; place-items: center; width: clamp(64px, 16%, 112px); aspect-ratio: 1; border-radius: 50%; background: rgb(255 255 255 / .1); color: #fff; }
+.ov-player-audio-glyph svg { width: 44%; height: 44%; }
+.ov-player-audio-tag { position: absolute; top: 12px; right: 12px; padding: 4px 10px; border-radius: 999px; background: rgb(0 0 0 / .55); color: #fff; font: 600 12px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; letter-spacing: .02em; }
 
 /* Ambient glow (data-ov-ambient): the picture, blurred, behind and around the player. */
 .ov-player-host { position: relative; isolation: isolate; }
