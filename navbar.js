@@ -54,6 +54,7 @@
             :where(.openvibe-navbar-brand) button.flame { all: unset; cursor: pointer; color: inherit; font: inherit; }
             .openvibe-navbar .openvibe-navbar-brand .flame[aria-expanded="true"] { background: var(--accent-glow, rgba(59,130,246,.18)); }
             .openvibe-navbar .openvibe-navbar-brand button.flame:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+            [data-ov-scroll-focus]:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
             .openvibe-navbar .openvibe-navbar-brand { gap: 6px; padding: 2px; border-radius: 12px; margin-right: 0; }
             .openvibe-navbar .openvibe-navbar-brand .flame { display: inline-grid; place-items: center; width: auto; min-width: 30px; height: 30px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; transition: background .15s; }
             .openvibe-navbar .openvibe-navbar-brand .flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
@@ -542,6 +543,43 @@
             soon = setTimeout(() => { soon = 0; if (loadLabels() && labelWatch) { labelWatch.disconnect(); labelWatch = true; } }, 250);
         });
         labelWatch.observe(document.body, { childList: true, subtree: true });
+    }
+    // A box that scrolls (a code block, a wide table, a list held to a height) with nothing focusable inside it cannot be
+    // scrolled from a keyboard (WCAG 2.1.1; axe scrollable-region-focusable flagged pages on six sites, 2026-11-02). Each
+    // such box gets tabindex="0", so Tab reaches it and the arrow keys scroll it. A box with a link or a button inside is
+    // reachable already and is left alone; a page's own tabindex always wins. Run when the page settles, again a little
+    // later for content that loads after it, and after a resize changes what overflows.
+    const SCROLL_FOCUSABLE = 'a[href],button,input,select,textarea,summary,iframe,[tabindex],[contenteditable="true"]';
+    function focusScrollers() {
+        if (!document.body || !document.body.getElementsByTagName) return 0;
+        let n = 0;
+        const all = document.body.getElementsByTagName('*');
+        for (let i = 0; i < all.length; i++) {
+            const el = all[i];
+            // Cheap first: only a box whose content is bigger than it is, and that has no tabindex of its own.
+            if (el.scrollWidth <= el.clientWidth + 1 && el.scrollHeight <= el.clientHeight + 1) continue;
+            if (el.hasAttribute('tabindex') || el.closest('#openvibe-navbar, .openvibe-navbar, .ovf, footer')) continue;
+            const cs = getComputedStyle(el);
+            const sx = /(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 1;
+            const sy = /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1;
+            if (!sx && !sy) continue;
+            if (el.querySelector(SCROLL_FOCUSABLE)) continue;
+            el.setAttribute('tabindex', '0');
+            el.setAttribute('data-ov-scroll-focus', '');
+            n++;
+        }
+        return n;
+    }
+    let scrollWatch = false;
+    function watchScrollers() {
+        if (scrollWatch || typeof window === 'undefined' || !document.body) return;
+        scrollWatch = true;
+        const idle = (fn, t) => (typeof root.requestIdleCallback === 'function' ? root.requestIdleCallback(fn, { timeout: t }) : setTimeout(fn, Math.min(t, 1500)));
+        const run = () => { try { if (typeof getComputedStyle === 'function') focusScrollers(); } catch { /* never a page's problem */ } };
+        idle(run, 3000);
+        setTimeout(() => idle(run, 2000), 4000);
+        let soon = 0;
+        if (typeof window.addEventListener === 'function') window.addEventListener('resize', () => { clearTimeout(soon); soon = setTimeout(run, 400); }, { passive: true });
     }
     function sibling(name) {
         const m = /^(https?:\/\/[^?#]*\/)navbar\.js(?:[?#]|$)/.exec(_selfSrc);
@@ -1716,7 +1754,7 @@
         }
         // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
-        if (_config.glyphs !== false) watchGlyphs(); watchLabels();
+        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers();
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">
@@ -2208,6 +2246,10 @@
         setToken(token) { _config.token = token; },
         /** Who is signed in and the token for Network (read only): for the files loaded beside the navbar (ov-labels.js). */
         get session() { return { user: _config.user || null, token: _config.token || null, apiBase: _config.apiBase }; },
+
+        /** Give every box that scrolls with nothing focusable inside it tabindex="0" now (the bar does it when the page
+         *  settles; a page that draws such a box later may call this). Returns how many it marked. */
+        focusScrollers() { try { return focusScrollers(); } catch { return 0; } },
 
         /** Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only. */
         openDock(tab) { if (_config.token && _config.dock !== false) openDock(tab); },
