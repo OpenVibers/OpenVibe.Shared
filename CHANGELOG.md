@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.91.0 — 2026-11-01
+
+- **Buttons say they are working, then done or failed, with the mark** (`ov-mark.js`, which the navbar loads on every
+  site; the plan's "buttons' busy, then done or failed, from the mark's states").
+  - `OVMark.busy(button)` → `{ done(text?), fail(text?), reset() }`: the button shows the mark busy beside its label,
+    keeps its width and takes no second press; done turns the V into the green tick and says "Done" (or the text),
+    fail into the red "!" and a word; then the label comes back.
+  - A form posted the old way (POST) does this by itself until the next page arrives, and a second submit does nothing.
+    Its submitter is never disabled, so its name and value still post. A GET form, a form whose own script took the
+    submit, and `data-ov-busy="off"` are left alone; the back/forward cache resets it.
+  - `navbar.js` loads the new `ov-mark.js` by its content hash (`SIBLING_REV`).
+
 ## 4.90.0 — 2026-11-01
 
 - **An audio-only recording shows the streamer, not a black box** (`player.js`, `player.css`; plan R4).
