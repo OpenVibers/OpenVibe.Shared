@@ -14,6 +14,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **Taglines end without a full stop, every one** (contracts 0.276.0): `icons/sites.json` (the site switcher) and the
   share cards of AI, Bench, Events, Inventory, Pics, Play, Run, Search and Zone are rebuilt from the manifests; Pics'
   domain card line in `social.js` follows. Ten of 55 had one.
+- **The release browser check reads the words** (`browser-harness.js`, check `text`): the visible text has no
+  "[object Object]", bare undefined/NaN, `{{ }}`, markup or an entity shown as text, or a space before a full stop.
+  It warns and never fails (a developer page may show such words in code). Each was on a live site on 11-02.
 
 ## 4.104.0 — 2026-11-02
 

@@ -24,6 +24,8 @@
  * once per route, at the widest width:
  *   axe        axe-core, WCAG 2.0/2.1 A and AA rules: serious and critical violations fail, moderate and
  *              minor are reported
+ *   text       the visible text has no "[object Object]", bare undefined/NaN, {{ }}, markup or an entity shown as
+ *              text, or a space before a full stop (TEXT_SMELLS); warns, never fails
  * once per site (`navigation`):
  *   growth     A → B → A, `laps` times (default 5; a link on the page is clicked when there is one, so a
  *              single-page app navigates in place). After a forced GC at the end of each lap the JS heap,
@@ -55,7 +57,26 @@ const os = require('os');
 const path = require('path');
 
 const WIDTHS = [390, 768, 1280];
-const CHECKS = ['status', 'errors', 'overflow', 'scripts', 'nojs', 'canonical', 'jsonld', 'axe'];
+const CHECKS = ['status', 'errors', 'overflow', 'scripts', 'nojs', 'canonical', 'jsonld', 'axe', 'text'];
+
+// Words a template, a serializer or a double escape leaves in a page (11-02 found each on a live site: a status page's
+// "released undefined", /kit's "[object Object]", a changelog's "&lt;ul&gt;", a summary's "covers ."). Text a
+// developer page shows in its code samples can match, so the check only warns.
+const TEXT_SMELLS = [
+    ['[object Object]', /\[object Object\]/],
+    ['undefined or NaN', /(?:^|[\s(:])(?:undefined|NaN)(?=[\s.,;)]|$)/],
+    ['template braces', /\{\{|\}\}/],
+    ['escaped twice', /&(?:amp|lt|gt|quot|#\d+);|<\/?(?:ul|li|p|div|span|strong|em|code|a)(?:\s[^>]*)?>/i],
+    ['a space before a full stop', /[A-Za-z] [.,;](?=\s|$)/],
+];
+function textSmells(text) {
+    const out = [];
+    for (const [name, re] of TEXT_SMELLS) {
+        const m = re.exec(text);
+        if (m) out.push({ smell: name, sample: text.slice(Math.max(0, m.index - 40), m.index + m[0].length + 30).trim() });
+    }
+    return out;
+}
 /** Growth allowed from the end of lap 2 to the end of the last lap (so over 3 laps with the default 5). */
 const BUDGETS = Object.freeze({ heapKB: 3072, nodes: 300, listeners: 30, documents: 1, intervals: 1, timeouts: 10, sockets: 1 });
 const AXE = Object.freeze({
@@ -536,6 +557,10 @@ function checkRoute(route, r, { minText, ignoreErrors }) {
     } else {
         for (const c of ['nojs', 'canonical', 'jsonld']) checks[c] = want(c) && r.nojs && r.nojs.error ? 'fail' : 'skip';
     }
+    // text: what the page says reads whole (TEXT_SMELLS); warns, never fails.
+    const pageText = (r.widths.find((w) => w.text) || {}).text || '';
+    if (!want('text') || !pageText) checks.text = 'skip';
+    else { const smells = textSmells(pageText); if (smells.length) r.textSmells = smells; checks.text = smells.length ? 'warn' : 'pass'; }
     if (!r.axe || r.axe.skipped) checks.axe = 'skip';
     else if (r.axe.error) checks.axe = 'fail';
     else checks.axe = r.axe.serious + r.axe.critical ? 'fail' : r.axe.moderate ? 'warn' : 'pass';
@@ -606,6 +631,7 @@ function format(report, { markdown = false } = {}) {
                     : `JSON-LD ${e.type} ${e.field} ${JSON.stringify(e.value.slice(0, 90))} ${e.found === 'js' ? 'is only visible with JavaScript' : 'is not in the visible text'}`);
             }
         }
+        for (const t of r.textSmells || []) d(`text: ${t.smell}: …${JSON.stringify(t.sample)}…`);
         if (r.axe && r.axe.error) d(`axe: ${r.axe.error}`);
         for (const v of (r.axe && r.axe.violations) || []) {
             if (v.impact === 'minor') continue;
@@ -876,7 +902,7 @@ async function run(opts = {}) {
     return report;
 }
 
-module.exports = {
+module.exports = { textSmells,
     run, launch, openPage, format, summarize, findChrome, axeSource, checkUnreachable,
     // pure helpers, exported for tests and for the Host CLI
     normalizeRoutes, jsonLdEntities, findText, visibleIn, growth, sitemapPaths, checkRoute, splitErrors,
