@@ -63,8 +63,8 @@ OVThread.live(id, 'Reading');  // the working turn's live line
 OVThread.work(id, rowHtml);    // a row in its work list
 OVThread.replace(id, html);    // the finished turn; its answer types in, word by word
 OVThread.reveal(answerEl);     // the same reveal, for an answer a site draws itself
-OVThread.tool(id, { name: 'Bash', input: 'npm test', icon: 'run' });  // a running tool row, built from text
-OVThread.toolDone(id, ok);     // the last running tool row finished (false: it failed)
+OVThread.tool(id, { name: 'Bash', input: 'npm test', icon: 'run', key });  // a running tool row, built from text
+OVThread.toolDone(id, ok, key);  // that tool's row finished (key: the tool call's id); false: it failed, null: no result
 ```
 
 A site renders those strings on the server (`GET /chat/turn/:id`, as Actor does) or in the page. The helpers keep the

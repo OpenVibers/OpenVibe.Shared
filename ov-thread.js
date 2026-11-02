@@ -230,16 +230,21 @@
             box.dataset.ovtReady = '1';
             var head = q(box, '[data-ovt-head]');
 
-            // Under the navbar: the sticky head and the chats column follow its bottom edge.
-            var nav = document.querySelector('.openvibe-navbar') || document.getElementById('navbar-mount');
-            var topWas = -1, ticking = false;
+            // Under the navbar: the sticky head and the chats column follow its bottom edge. The bar is found on each
+            // measure (navbar.js may draw it after this runs), and measured again once its slide ends: on a phone it
+            // slides away while reading down (.32 s), and the head then moves up to the top instead of leaving a gap.
+            var topWas = -1, ticking = false, trail = 0;
             function measure() {
                 ticking = false;
+                var nav = document.querySelector('.openvibe-navbar') || document.getElementById('navbar-mount');
                 var b = nav && nav.getBoundingClientRect ? Math.max(0, Math.round(nav.getBoundingClientRect().bottom || 0)) : 0;
                 if (b !== topWas) { topWas = b; box.style.setProperty('--ovt-top', b + 'px'); }
                 if (head) head.classList.toggle('is-stuck', root.scrollY > 8);
             }
-            function onScroll() { if (!ticking) { ticking = true; (root.requestAnimationFrame || setTimeout)(measure); } }
+            function onScroll() {
+                if (!ticking) { ticking = true; (root.requestAnimationFrame || setTimeout)(measure); }
+                clearTimeout(trail); trail = setTimeout(measure, 380);
+            }
             measure();
             root.addEventListener('scroll', onScroll, { passive: true });
             root.addEventListener('resize', onScroll);
