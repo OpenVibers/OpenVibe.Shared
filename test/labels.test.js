@@ -26,7 +26,8 @@ const PAGE = `<div id="a" data-ov-labels="nudity"><img data-ov-labels-media src=
 <div id="d" data-ov-labels="18+" data-ov-labels-owner="usr_me"><img src="d.jpg"></div>
 <div id="e"><img src="e.jpg"></div>
 <div id="f" data-ov-labels="18+" data-ov-labels-owner="@Me_Name"><img src="f.jpg"></div>
-<div id="g" data-ov-labels="18+" data-ov-labels-owner="me_name"><img src="g.jpg"></div>`;
+<div id="g" data-ov-labels="18+" data-ov-labels-owner="me_name"><img src="g.jpg"></div>
+<div id="h" data-ov-labels="18+" data-ov-labels-opened><video src="h.mp4"></video></div>`;
 
 async function page({ session, prefs }) {
     // linkedom's window falls back to the process's globals: each page starts without the last one's module.
@@ -71,6 +72,9 @@ async function page({ session, prefs }) {
         assert.strictEqual(document.getElementById('d').getAttribute('data-ov-labels-state'), 'show', 'the poster sees their own');
         assert.strictEqual(document.getElementById('f').getAttribute('data-ov-labels-state'), 'show', 'named by @username, in any case: still their own');
         assert.strictEqual(document.getElementById('g').getAttribute('data-ov-labels-state'), 'hide', 'a bare name is not an owner (it could be anyone\'s subject-like name)');
+        const h = document.getElementById('h');
+        assert.strictEqual(h.getAttribute('data-ov-labels-state'), 'blur', 'on its own page, hide covers instead of emptying the page');
+        assert.ok(h.querySelector('.ov-labels-gate') && h.querySelector('.ov-labels-gate').textContent.includes('18+'), 'and names why');
         assert.ok(!document.getElementById('e').hasAttribute('data-ov-labels-state'), 'an unlabelled thing is untouched');
         // Show: uncovered, and it stays uncovered when the page applies again.
         gate.dispatchEvent(new (document.defaultView || globalThis).Event('click', { bubbles: true, cancelable: true }));

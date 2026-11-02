@@ -3,7 +3,9 @@
  * A page marks what carries labels: data-ov-labels="nudity,18+" on a card, a player or a picture. Optionally:
  *   data-ov-labels-media   on the child to cover (the thumbnail, the <video>), else the marked element itself;
  *   data-ov-labels-owner   the poster, as their subject (usr_…) or as @username for a page that knows only the name:
- *                          their own content always shows to them.
+ *                          their own content always shows to them;
+ *   data-ov-labels-opened  on the thing's own page (a watch page, a picture's page): the person opened it themselves, so
+ *                          hide covers it as blur does instead of leaving the page empty.
  * The navbar loads this file the first time such an element appears (navbar.js, like ov-glyphs.js). It reads the
  * person's choices once from Network (GET /api/v1/me/label-prefs, network.label-prefs@1) with the navbar's token:
  *   show  as it is (the web default, and what a signed-out visitor gets);
@@ -54,7 +56,7 @@
         if (owner && ((me && owner === me) || (meName && owner.charAt(0) === '@' && owner.toLowerCase() === meName))) return 'show';
         let out = 'show';
         for (const l of labels) {
-            if (prefs[l] === 'hide') return 'hide';
+            if (prefs[l] === 'hide') return el.hasAttribute('data-ov-labels-opened') ? 'blur' : 'hide';
             if (prefs[l] === 'blur') out = 'blur';
         }
         return out;
