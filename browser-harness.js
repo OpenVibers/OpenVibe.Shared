@@ -360,7 +360,10 @@ const READ_PAGE = `(() => {
       offenders.push({ el: e, desc: describe(e) + ' (right ' + Math.round(r.right) + 'px)' });
     }
   }
-  const text = (body ? body.innerText : '').replace(/\\s+/g, ' ').trim();
+  // A counted fold's contents (a closed <details>: one tap, with or without JavaScript, and read by search engines)
+  // count as the page's text: the network's rule is to fold, never to hide (the owner, 2026-10-31).
+  const folded = [...document.querySelectorAll('details:not([open])')].map((d) => [...d.children].filter((c) => c.tagName !== 'SUMMARY').map((c) => c.textContent).join(' ')).join(' ');
+  const text = ((body ? body.innerText : '') + ' ' + folded).replace(/\\s+/g, ' ').trim();
   return {
     url: location.href, title: document.title, vw, scrollWidth, scrollX,
     offenders: offenders.map((o) => o.desc),

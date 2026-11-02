@@ -15,8 +15,10 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 const words = 'This page has enough server-rendered words to count as meaningful content for a crawler. '.repeat(4);
 const page = (body, head = '') => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>T</title><link rel="icon" href="data:,">${head}</head><body>${body}</body></html>`;
 const ROUTES = {
-    '/': () => page(`<main><h1>Good Page</h1><p>${words}</p><a href="/b">B page</a></main>`,
-        '<link rel="canonical" href="ORIGIN/"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Good Page"}</script>'),
+    // A list whose items sit in a counted fold (a closed <details>) is on the page: fold, never hide (2026-11-02).
+    '/': () => page(`<main><h1>Good Page</h1><p>${words}</p><a href="/b">B page</a><details><summary>Every other site <span>3 more</span></summary><ul><li>Folded Alpha</li><li>Folded Beta</li><li>Folded Gamma</li></ul></details></main>`,
+        '<link rel="canonical" href="ORIGIN/"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Good Page"}</script>'
+        + '<script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Sites","itemListElement":[{"@type":"ListItem","position":1,"name":"Folded Alpha"},{"@type":"ListItem","position":2,"name":"Folded Beta"},{"@type":"ListItem","position":3,"name":"Folded Gamma"}]}</script>'),
     '/b': () => page(`<div id="root"></div><div style="width:2000px" class="wide">wide</div>
         <script src="/s.js?v=1"></script><script src="/s.js?v=2"></script>
         <script>document.getElementById('root').innerHTML = '<p>${words}</p>'; console.error('boom from b'); window.onload = () => { null.x; };</script>`,
@@ -73,7 +75,7 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
     assert.ok(/^Chrome\/|HeadlessChrome\//.test(report.chrome), report.chrome);
     assert.deepStrictEqual(good.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass' }, text);
     assert.strictEqual(good.canonical.href, `${base}/`);
-    assert.deepStrictEqual(good.jsonld.entities.map((e) => e.found), ['html']);
+    assert.deepStrictEqual(good.jsonld.entities.map((e) => e.found), ['html', 'html'], 'a list folded in a closed <details> counts as on the page');
 
     assert.deepStrictEqual(bad.checks, { status: 'pass', errors: 'fail', overflow: 'fail', scripts: 'fail', nojs: 'fail', canonical: 'fail', jsonld: 'fail', axe: 'fail' }, text);
     assert.ok(bad.errors.some((e) => e.startsWith('console: boom from b (')), bad.errors.join(' | '));
