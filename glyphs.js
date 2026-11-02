@@ -357,6 +357,16 @@
         bridge: '<path d="M1.8 14.4h20.4v2.8H1.8ZM3.6 9.4h2v5H3.6ZM18.4 9.4h2v5h-2Z"/><path class="ln" d="M2 9.5c4 0 6-3 10-3s6 3 10 3M8.5 14.4V11.6M15.5 14.4V11.6M12 14.4V8"/>',
         text: '<path fill-rule="evenodd" d="M10.3 3.4h3.4l6.3 17.2h-3.1l-1.5-4.3H8.6l-1.5 4.3H4ZM9.5 13.7h5L12 6.4Z"/>',
         steps: '<path fill-rule="evenodd" d="M2.6 3.6h5.2v5.2H2.6Zm1.1 2.6.8-.9.9.9 1.5-1.5.9.9-2.4 2.4ZM2.6 9.4h5.2v5.2H2.6Zm1.1 2.6.8-.9.9.9 1.5-1.5.9.9-2.4 2.4ZM2.6 15.2h5.2v5.2H2.6Zm1.1 2.6.8-.9.9.9 1.5-1.5.9.9-2.4 2.4Z"/><path class="ln" d="M10.8 6.2H21M10.8 12H21M10.8 17.8H21"/>',
+        // 4.104.0: the next eight by use with a shape to fill (Design's usage count): download, upload, expand, shirt,
+        // shapes, shelter, archive and keyboard. An arrow is filled whole; its tray stays a line.
+        download: '<path d="M10.8 3.6h2.4v6.6h4.4L12 15.8l-5.6-5.6h4.4Z"/><path class="ln" d="M5 20h14"/>',
+        upload: '<path d="M10.8 20.4h2.4v-6.6h4.4L12 8.2l-5.6 5.6h4.4Z"/><path class="ln" d="M5 4h14"/>',
+        expand: '<path d="M3.2 3.2h6.6L3.2 9.8ZM20.8 3.2h-6.6l6.6 6.6ZM3.2 20.8h6.6l-6.6-6.6ZM20.8 20.8h-6.6l6.6-6.6Z"/>',
+        shirt: '<path d="M7.8 2.2 2 5.6l2.6 5.2 1.6-.8v11.8h11.6V10l1.6.8L22 5.6l-5.8-3.4c-.6 1.6-2 2.6-4.2 2.6S8.4 3.8 7.8 2.2Z"/>',
+        shapes: '<circle cx="7.5" cy="7.5" r="4.2"/><path d="m16.5 2.6 4.8 8.4h-9.6ZM13.4 13.4h7.2v7.2h-7.2ZM2.8 20.6 7 13.4l4.2 7.2Z"/>',
+        shelter: '<path fill-rule="evenodd" d="M12 2.4 2 10.3l1.2 1.6 1-.8v10.5h15.6V11.1l1 .8 1.2-1.6ZM9.4 21.6v-5a2.6 2.6 0 0 1 5.2 0v5ZM12 9.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6Z"/>',
+        archive: '<rect x="2.6" y="3.4" width="18.8" height="5.4" rx="1.2"/><path fill-rule="evenodd" d="M4.4 10h15.2v9.2a1.6 1.6 0 0 1-1.6 1.6H6a1.6 1.6 0 0 1-1.6-1.6ZM9.6 12.4v1.8h4.8v-1.8Z"/>',
+        keyboard: '<path fill-rule="evenodd" d="M4.4 5.4h15.2A2.4 2.4 0 0 1 22 7.8v8.4a2.4 2.4 0 0 1-2.4 2.4H4.4A2.4 2.4 0 0 1 2 16.2V7.8a2.4 2.4 0 0 1 2.4-2.4ZM5 9h2v2H5ZM8 9h2v2H8ZM11 9h2v2h-2ZM14 9h2v2h-2ZM17 9h2v2h-2ZM7.6 13.4h8.8v1.8H7.6Z"/>',
     });
     const BY = { kit: 'the OpenVibe Kit', opus: 'drawn by Opus for the glyph set (2026-10-31)' };
     const ALL = { ...(kit && kit.PATHS ? kit.PATHS : {}), ...DRAWN };
