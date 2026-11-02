@@ -12,8 +12,9 @@
  *   OVThread.work(id, html)       append a row to the turn's work list
  *   OVThread.enhance(el)          Copy buttons for answers and code under el (add/replace call it)
  *   OVThread.reveal(answerEl)     type an answer in, word by word (replace does it when a working turn finishes)
- *   OVThread.tool(id, { name, input, icon })   a running tool row in the turn's work list (built here, text only)
- *   OVThread.toolDone(id, ok)     the turn's last running tool row finished (ok false: it failed)
+ *   OVThread.tool(id, { name, input, icon, key })   a running tool row in the turn's work list (built here, text only)
+ *   OVThread.toolDone(id, ok, key)  that tool's row finished (the row with key, else the last running one); ok false: it
+ *                                   failed, null: it ended with no result (no mark)
  * Booted on load and after an in-place page swap (openvibe-shared/boost's ov:boost:load).
  */
 (function (root) {
@@ -191,6 +192,7 @@
             t = t || {};
             var li = document.createElement('li');
             li.className = 'ovt-w-tool is-run';
+            if (t.key != null) li.setAttribute('data-key', String(t.key));
             var row = document.createElement('div');
             row.className = 'ovt-w-row';
             var b = document.createElement('b'); b.textContent = String(t.name || 'Tool');
@@ -201,13 +203,13 @@
             st.appendChild(dot); row.appendChild(st); li.appendChild(row);
             return api.work(id, li);
         },
-        toolDone: function (id, ok) {
+        toolDone: function (id, ok, key) {
             var rows = qa(turnEl(id), '[data-ovt-work] > .ovt-w-tool.is-run');
-            var li = rows[rows.length - 1];
+            var li = key != null ? rows.filter(function (r) { return r.getAttribute('data-key') === String(key); })[0] : rows[rows.length - 1];
             if (!li) return null;
-            li.classList.remove('is-run'); li.classList.add(ok === false ? 'is-bad' : 'is-ok');
+            li.classList.remove('is-run'); li.classList.add(ok === null ? 'is-done' : ok === false ? 'is-bad' : 'is-ok');
             var st = q(li, '.ovt-w-st');
-            if (st) { st.textContent = ''; st.appendChild(svgIcon(ok === false ? 'bad' : 'ok')); }
+            if (st) { st.textContent = ''; if (ok !== null) st.appendChild(svgIcon(ok === false ? 'bad' : 'ok')); }
             return li;
         },
         work: function (id, html) {

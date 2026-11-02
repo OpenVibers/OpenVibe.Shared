@@ -157,6 +157,11 @@ assert.ok(row && row.classList.contains('is-run') && row.querySelector('b').text
 assert.ok(row.querySelector('.ovt-dot'), 'its dot while it runs');
 OV.toolDone('tsk_2', false);
 assert.ok(row.classList.contains('is-bad') && !row.querySelector('.ovt-dot') && row.querySelector('.ovt-w-st svg'), 'it failed: the dot becomes a mark');
+const r1 = OV.tool('tsk_2', { name: 'Read', key: 't1' }), r2 = OV.tool('tsk_2', { name: 'Grep', key: 't2' });
+OV.toolDone('tsk_2', true, 't1');
+assert.ok(r1.classList.contains('is-ok') && r2.classList.contains('is-run'), 'a result finds its own row by key, not the last one');
+OV.toolDone('tsk_2', null, 't2');
+assert.ok(r2.classList.contains('is-done') && !r2.querySelector('.ovt-w-st svg') && !r2.querySelector('.ovt-dot'), 'ended with no result: no mark');
 
 // The panel's drawer (4.99.0): the head's button opens it, the scrim and Escape close it, the focus comes back.
 {

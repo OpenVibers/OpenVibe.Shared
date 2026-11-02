@@ -20,7 +20,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
     line is always drawn and is the form's status line (`role="status"`);
   - `page({ center })` is a start page: the welcome and the composer sit together until there are turns. `cls` adds
     the site's classes;
-  - `OVThread.tool(id, { name, input, icon })` and `OVThread.toolDone(id, ok)` stream a tool row built from text.
+  - `OVThread.tool(id, { name, input, icon, key })` and `OVThread.toolDone(id, ok, key)` stream a tool row built from
+    text; a result finds its own row by key (tools run side by side), and `ok: null` is a step that ended with no result.
 - 4.96.0's own sidebar code is gone from thread.css and ov-thread.js. `thread.sidebar` has drawn `kit.sidebar` since 4.97.0.
 ## 4.98.0 — 2026-11-02
 
