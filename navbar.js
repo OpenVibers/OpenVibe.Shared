@@ -451,14 +451,14 @@
     // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 <w> 512 viewBox. The rest of the set is nav-icons.js.
     const NAV_ICONS = {
         'fa-bell': [0, '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>', '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>'],
-        'fa-clock-rotate-left': [0, '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4.5v4.1h4.1"/><path d="M12 8v4.2l3 1.8"/>', ''],
+        'fa-clock-rotate-left': [0, '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4.5v4.1h4.1"/><path d="M12 8v4.2l3 1.8"/>', '<path d="M6.06 6.06A8.4 8.4 0 1 1 3.6 12h2.8a5.6 5.6 0 1 0 1.64-3.96ZM3 3.2v6.6h6.6ZM11 8.2h2v3.4l2.5 1.5-1 1.7-3.5-2.1Z"/>'],
         'fa-coins': [0, '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"/>', '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM11 6h2v1.2c1.1.2 2 .8 2.5 1.7l-1.7 1c-.3-.6-1-1-1.8-1-.9 0-1.5.4-1.5 1s.5.8 1.8 1.1c1.8.4 3.4 1 3.4 3 0 1.4-1 2.4-2.7 2.7V18h-2v-1.3c-1.2-.2-2.2-.9-2.7-1.9l1.7-1c.4.7 1.1 1.1 2 1.1 1 0 1.6-.4 1.6-1s-.6-.8-1.9-1.1c-1.7-.4-3.3-1-3.3-2.9 0-1.3 1-2.3 2.6-2.6Z"/>'],
         'fa-palette': [0, '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', '<path fill-rule="evenodd" d="M12 2.7a9.3 9.3 0 1 0 0 18.6c1.3 0 2-.9 2-1.9 0-1.2-1-1.5-1-2.5s.8-1.6 2-1.6H17a4.3 4.3 0 0 0 4.3-4.3C21.3 6.5 17.2 2.7 12 2.7ZM7.5 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm2.5-3.7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>'],
         'fa-people-group': [0, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.6 3 2.4 3 5.2"/>', '<circle cx="9" cy="7.9" r="3.6"/><path d="M2.4 20.8c0-3.8 3-6.5 6.6-6.5s6.6 2.7 6.6 6.5Z"/><circle cx="16.6" cy="7.4" r="2.9"/><path d="M16.8 13.4c2.9.4 4.8 2.8 4.8 6.4V20.8h-4.4c0-2.9-1-5.2-2.8-6.7Z"/>'],
         'fa-plus': [0, '<path d="M12 5v14M5 12h14"/>', ''],
         'fa-right-from-bracket': [0, '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>', ''],
         'fa-shield-halved': [0, '<path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6Z"/>', '<path d="M12 2.6 4.6 5.8V12c0 4.6 3.1 8 7.4 9.5 4.3-1.5 7.4-4.9 7.4-9.5V5.8Z"/>'],
-        'fa-text-height': [0, '<path d="M5.5 20 11 4h2l5.5 16M7.6 14h8.8"/>', ''],
+        'fa-text-height': [0, '<path d="M5.5 20 11 4h2l5.5 16M7.6 14h8.8"/>', '<path fill-rule="evenodd" d="M10.3 3.4h3.4l6.3 17.2h-3.1l-1.5-4.3H8.6l-1.5 4.3H4ZM9.5 13.7h5L12 6.4Z"/>'],
         'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
         'fa-user-secret': [0, '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>', '<circle cx="12" cy="7.8" r="4.1"/><path d="M4.2 21c0-4.3 3.5-7.2 7.8-7.2s7.8 2.9 7.8 7.2Z"/>'],
         'fa-wallet': [0, '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4M4 7.5V18a2 2 0 0 0 2 2h14V9H6.5A2.5 2.5 0 0 1 4 7.5Z"/><path d="M16 14.5h.01"/>', '<path fill-rule="evenodd" d="M6.5 4.6H18v4h1.4a.8.8 0 0 1 .8.8v10.8H6a2.2 2.2 0 0 1-2.2-2.2V7.3a2.7 2.7 0 0 1 2.7-2.7Zm0 1.8a.9.9 0 0 0 0 1.8h9.7V6.4ZM16 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>'],
@@ -475,10 +475,10 @@
     const NAV_ICONS_LAZY = {
         0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-id-card fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-user fa-video fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
     };
-    const NAV_ICONS_REV = '88c256e7187a';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '46230b0a97ca';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '47948f3877df', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': 'e874104f6b8d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
