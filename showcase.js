@@ -456,7 +456,7 @@ html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow
 @media (max-width:860px){
 .sc-hero.sc-has-vis{display:block}
 .sc-hero.sc-has-vis .sc-hero-vis{position:absolute;z-index:-1;top:-26px;right:0;width:180px;opacity:.36;pointer-events:none}
-.sc-hero.sc-has-vis .sc-aura .sc-vis-mark{width:46px!important;height:46px!important}
+.sc-hero.sc-has-vis .sc-aura .sc-vis-mark{display:none!important}
 .sc-hero.sc-has-orbit{display:flex;flex-direction:column}
 .sc-hero.sc-has-orbit .sc-hero-vis{order:-1;position:static;width:auto;opacity:1;pointer-events:auto;margin:0 0 6px}
 .sc-hero.sc-has-orbit .sc-vis{width:min(70vw,250px)}

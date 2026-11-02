@@ -100,6 +100,11 @@
 .ovk-card-noimg .ovk-i { width: 30%; max-width: 60px; height: auto; aspect-ratio: 1; stroke-width: 1.5; }
 /* No picture but a person (2026-11-01): their face, large, over a soft blur of it, not a lone icon in an empty box. */
 .ovk-card-noimg--who { overflow: hidden; }
+/* A day as the cover (kit.card({ date })): the month in the accent, the day large, the weekday quiet. */
+.ovk-card-noimg--date { container-type: inline-size; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding-bottom: 8%; line-height: 1; font-variant-numeric: tabular-nums; }
+.ovk-card-date-m { font-size: clamp(11px, 6cqi, 15px); font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.ovk-card-date-d { margin: 4px 0 0; font-size: clamp(30px, 23cqi, 64px); font-weight: 800; letter-spacing: -.03em; color: var(--ovk-text, var(--text-primary, #e6edf7)); }
+.ovk-card-date-w { font-weight: 650; color: var(--ovk-muted, var(--text-muted, #8b97ab)); }
 .ovk-card-noimg--who .ovk-card-noimg-bg { position: absolute; inset: -15%; width: 130%; height: 130%; object-fit: cover; filter: blur(24px) saturate(1.15); opacity: .5; }
 .ovk-card-noimg--who .ovk-card-noimg-face { position: relative; width: 28%; max-width: 88px; aspect-ratio: 1; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovk-panel, #111a2c) 70%, transparent), 0 10px 28px rgb(0 0 0 / .28); }
 .ovk-card-badge { position: absolute; top: 8px; left: 8px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: rgba(0, 0, 0, .74); color: #fff; font: 800 11.5px/1.5 var(--ovk-font); letter-spacing: .04em; }

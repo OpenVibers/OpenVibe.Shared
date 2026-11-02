@@ -411,13 +411,25 @@
      *    name as markup the caller escaped (a name with its decorations); who stays the plain name for the letters
      *  - preview: for a thing without a picture whose text is the point (a code paste, a note), its first lines drawn in
      *    the media instead of the type's icon
+     *  - date: for a thing without a picture that happens on a day (a drop, an event, a deadline), the day itself drawn in
+     *    the media (weekday and month, the day large; UTC) instead of a calendar icon repeated on every card
      *  - ⋯ with Save and Remind when given ({ href } or { action, hidden }), Share (always: the system share sheet, else
      *    the link copied) and any `more` items (kit.more's)
      * The card is one link, the title's, stretched over it; ⋯ sits above it. level: the title's heading level (3).
      */
+    // A day as a card's cover (card({ date })): the weekday and month on a line, the day large under it (clear of the
+    // corner's price). UTC, as the sites' dates are.
+    function dateCover(value) {
+        if (value == null || value === '') return '';
+        const t = value instanceof Date ? value.getTime() : typeof value === 'number' ? value : Date.parse(String(value));
+        if (!Number.isFinite(t)) return '';
+        const d = new Date(t);
+        return `<span class="ovk-card-noimg ovk-card-noimg--date" aria-hidden="true"><span class="ovk-card-date-m"><span class="ovk-card-date-w">${WEEKDAYS[d.getUTCDay()]}</span> ${MONTHS[d.getUTCMonth()]}</span>`
+            + `<b class="ovk-card-date-d">${d.getUTCDate()}</b></span>`;
+    }
     function card({ href = '#', title = '', type = '', ratio = '', image = '', alt = '', video = '', badge: bd = '', live = false, corner = '',
         peek = '', who = '', whoHtml = null, avatar = '', count = null, when: at = null, level = 3, save = null, remind = null, share = true,
-        more: extra = null, sub = '', preview = '' } = {}) {
+        more: extra = null, sub = '', preview = '', date = null } = {}) {
         const ar = /^\d{1,2}\/\d{1,2}$/.test(String(ratio)) ? ratio : CARD_RATIO[type] || '16/9';
         const link = url(href);
         const first = String(preview || '').split('\n').slice(0, 9).join('\n').slice(0, 480).trimEnd();
@@ -427,7 +439,7 @@
                 // No picture but a person (2026-11-01): their face, large, over a soft blur of it, where a lone type icon
                 // in an empty box read as a missing image (Report's episodes, Tours' recordings).
                 : media(avatar) ? `<span class="ovk-card-noimg ovk-card-noimg--who" aria-hidden="true"><img class="ovk-card-noimg-bg" src="${esc(mediaW(avatar, 160))}" alt="" loading="lazy" decoding="async"><img class="ovk-card-noimg-face" src="${esc(mediaW(avatar, 160))}" alt="" loading="lazy" decoding="async"></span>`
-                    : `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
+                    : dateCover(date) || `<span class="ovk-card-noimg">${icon(CARD_ICON[type] || 'image')}</span>`;
         const loop = media(video) ? `<video class="ovk-card-video" data-src="${esc(video)}" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>` : '';
         const tag = live ? '<span class="ovk-card-badge is-live">LIVE</span>' : bd ? `<span class="ovk-card-badge">${esc(bd)}</span>` : '';
         const n = Array.isArray(count) ? Number(count[0]) : Number(count);

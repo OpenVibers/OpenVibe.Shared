@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.100.0 — 2026-11-02
+
+From a phone sweep of every site's home (11-02):
+- **A card's day as its cover.** `kit.card({ date })`: a thing without a picture that happens on a day (a drop, an
+  event, a deadline) shows the weekday and month with the day large, instead of the same calendar icon on every card.
+  The day stays clear of the corner's price. Shoes' "Dropping this week" was a row of identical calendar icons.
+- **The aura's mark leaves the heading alone on a phone.** On a phone the aura hero (`sc-has-vis` without an orbit) is a
+  watermark behind the heading, and its mark landed at the end of a long heading: AI's read "one API.V", Download's
+  and Watch's the same. The glow stays; the mark goes there (the navbar shows it). Computers keep it in its column.
+
 ## 4.99.1 — 2026-11-02
 
 - **The conversation's head follows the navbar on a phone.** The navbar slides away while you read down. The thread's
