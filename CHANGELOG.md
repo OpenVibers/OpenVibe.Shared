@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.105.1 — 2026-11-02
+
+- **OpenVibe Connect draws the plug in the launcher** (`ov-icons.js` ALIASES `connect: 'plug'`), not the fallback mark.
+  Connect went live with Contracts 0.279.0 (Website Connect v0). `test/site-icons.test.js` checks that every live
+  site's launcher icon is a real glyph.
+
 ## 4.105.0 — 2026-11-02
 
 - **Eight more solid drawings**, the next by use with a shape to fill: umbrella, parking, medical, drive, skull,
