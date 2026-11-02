@@ -194,8 +194,13 @@
             if (!/^#[0-9a-f]{3,8}$/i.test(color || '')) loadImage(thumb, (img) => averageColor(img, (c) => root.style.setProperty('--ovp-bg', c)));
         }
         const posterLayer = el('div', 'ov-player-poster', { 'aria-hidden': 'true' });
+        // An audio-only recording (a browser broadcast with no camera; plan R4, 2026-11-01): no picture track, so the
+        // video element would be a black box. The cover shows the streamer's face (data-ov-avatar, else the poster)
+        // over a soft blur of it, and says "Audio only". Filled once the metadata says there is no picture.
+        const audioLayer = el('div', 'ov-player-audio', { 'aria-hidden': 'true' });
         root.insertBefore(placeholder, video);
         root.insertBefore(posterLayer, video);
+        root.insertBefore(audioLayer, video);
         const shown = () => root.classList.add('has-frame');
         if (video.readyState >= 2) shown(); else video.addEventListener('loadeddata', shown, { once: true });
 
@@ -305,6 +310,25 @@
             const r = video.playbackRate || 1;
             speedBtn.textContent = `${r}×`;
             speedBtn.setAttribute('aria-label', `Playback speed: ${r}×`);
+        }
+        /** No picture track once the metadata is in: the audio cover, and no picture-in-picture (there is no picture). */
+        function paintAudioOnly() {
+            const audio = video.readyState >= 1 && !video.videoWidth && !video.videoHeight;
+            root.classList.toggle('is-audio', audio);
+            if (pipOk) pipBtn.hidden = audio;
+            if (!audio || audioLayer.firstChild) return;
+            const src = [video.getAttribute('data-ov-avatar'), video.getAttribute('poster')].find((u) => /^(https:\/\/|\/(?!\/))/.test(u || ''));
+            if (src) {
+                const bg = el('img', 'ov-player-audio-bg', { src, alt: '', decoding: 'async' });
+                const face = el('img', 'ov-player-audio-face', { src, alt: '', decoding: 'async' });
+                audioLayer.append(bg, face);
+            } else {
+                audioLayer.append(el('span', 'ov-player-audio-glyph'));
+                audioLayer.lastChild.innerHTML = ICON.volume;
+            }
+            const tag = el('span', 'ov-player-audio-tag');
+            tag.textContent = 'Audio only';
+            audioLayer.append(tag);
         }
         function paintFull() {
             const on = fullscreenElement() === root;
@@ -459,9 +483,9 @@
         video.addEventListener('pause', () => { paintPlay(); paintVolume(); if (ambient) ambient.stop(); });
         video.addEventListener('ended', paintPlay);
         video.addEventListener('timeupdate', () => { paintTime(); checkSound(); });
-        video.addEventListener('emptied', () => { silent = false; soundKnown = false; playedFrom = null; paintVolume(); });
+        video.addEventListener('emptied', () => { silent = false; soundKnown = false; playedFrom = null; paintVolume(); root.classList.remove('is-audio'); });
         video.addEventListener('durationchange', paintTime);
-        video.addEventListener('loadedmetadata', () => { paintTime(); paintCaptions(); });
+        video.addEventListener('loadedmetadata', () => { paintTime(); paintCaptions(); paintAudioOnly(); });
         video.addEventListener('progress', paintBuffered);
         video.addEventListener('volumechange', paintVolume);
         video.addEventListener('ratechange', paintSpeed);
@@ -477,7 +501,7 @@
         document.addEventListener('fullscreenchange', paintFull);
         document.addEventListener('webkitfullscreenchange', paintFull);
 
-        paintTime(); paintBuffered(); paintPlay(); paintVolume(); paintCaptions(); paintSpeed(); paintFull();
+        paintTime(); paintBuffered(); paintPlay(); paintVolume(); paintCaptions(); paintSpeed(); paintFull(); paintAudioOnly();
         if (!video.paused) root.classList.remove('is-start');
         return api;
     }

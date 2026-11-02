@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.90.0 — 2026-11-01
+
+- **An audio-only recording shows the streamer, not a black box** (`player.js`, `player.css`; plan R4).
+  - A browser broadcast with no camera is recorded as sound only. When the metadata says there is no picture track, the
+    player shows a cover: the face from `data-ov-avatar` (else the poster) in a circle over a soft blur of it, with an
+    "Audio only" tag. With no usable picture, a speaker glyph. The sound plays under it with the usual controls.
+  - The player keeps a 16:9 shape (a sound file has no picture size, and the browser drew it 150 px tall), and hides
+    picture-in-picture. A new source decides again.
+  - Pages: put the streamer's avatar on the video as `data-ov-avatar="…"`.
+
 ## 4.89.0 — 2026-11-01
 
 - **A card with no picture but a person shows their face** (`kit.card`, `room.css`).

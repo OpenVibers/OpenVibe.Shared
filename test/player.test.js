@@ -235,4 +235,42 @@ assert.match(css, /@media \(hover: none\) \{\s*\.ov-player-volume-slider \{ disp
 assert.match(css, /\.ov-player\.is-silent \.ov-player-volume-slider \{ display: none; \}/);
 assert.match(css, /\.ov-player\.has-frame \.ov-player-video/);
 assert.match(src, /Material Icons Round/);
-console.log('player: all checks passed (4.13 sound, layers, feedback; 4.14 volume on phones, no-sound videos)');
+// ── 4.90: an audio-only recording shows the streamer's face, not a black box (plan R4, 2026-11-01) ──
+{
+    const make = (attrs, width) => {
+        const { window: w3, document: d3 } = parseHTML(`<!doctype html><html><body><div class="host"><video id="a" data-ov-player ${attrs} src="/a.webm"></video></div></body></html>`);
+        const v = d3.getElementById('a');
+        const m = { readyState: 0 };
+        Object.defineProperties(v, {
+            paused: { get: () => true }, ended: { get: () => false }, readyState: { get: () => m.readyState },
+            currentTime: { get: () => 0, set() {} }, duration: { get: () => 60 }, volume: { get: () => 1, set() {} },
+            muted: { get: () => false, set() {} }, playbackRate: { get: () => 1, set() {} }, buffered: { get: () => ({ length: 0 }) },
+            textTracks: { value: Object.assign([], { addEventListener() {} }) },
+            videoWidth: { get: () => (m.readyState >= 1 ? width : 0) }, videoHeight: { get: () => (m.readyState >= 1 ? Math.round(width * 9 / 16) : 0) },
+        });
+        v.play = () => Promise.resolve(); v.pause = () => {};
+        const c3 = { window: w3, document: d3, console, Promise, setTimeout, clearTimeout, setInterval, clearInterval, Date, Math, Number, String, JSON, Object, Array,
+            localStorage: { getItem: () => null, setItem() {} } };
+        w3.OpenVibePlayer = undefined;
+        vm.createContext(c3);
+        vm.runInContext(src, c3);
+        const root = v.parentNode;
+        assert.ok(!root.classList.contains('is-audio'), 'nothing is decided before the metadata');
+        m.readyState = 1; v.dispatchEvent(new w3.Event('loadedmetadata'));
+        return { root, v, w3 };
+    };
+    const a = make('data-ov-avatar="https://openvibe.media/o/med_01FACE"', 0);
+    assert.ok(a.root.classList.contains('is-audio'), 'no picture track: the audio cover');
+    assert.strictEqual(a.root.querySelector('.ov-player-audio-face').getAttribute('src'), 'https://openvibe.media/o/med_01FACE', 'the streamer\'s face');
+    assert.ok(a.root.querySelector('.ov-player-audio-bg'), 'over a blur of it');
+    assert.strictEqual(a.root.querySelector('.ov-player-audio-tag').textContent, 'Audio only');
+    assert.strictEqual(a.root.querySelector('.ov-player-audio').getAttribute('aria-hidden'), 'true');
+    a.v.dispatchEvent(new a.w3.Event('emptied'));
+    assert.ok(!a.root.classList.contains('is-audio'), 'a new source decides again');
+    const g = make('data-ov-avatar="javascript:alert(1)"', 0);
+    assert.ok(g.root.querySelector('.ov-player-audio-glyph') && !g.root.querySelector('.ov-player-audio-face'), 'no usable picture: a speaker glyph, never a script URL');
+    const v = make('data-ov-avatar="https://openvibe.media/o/med_01FACE"', 1280);
+    assert.ok(!v.root.classList.contains('is-audio') && !v.root.querySelector('.ov-player-audio-face'), 'a video with pictures is a video');
+}
+assert.match(css, /\.ov-player\.is-audio \.ov-player-audio \{ display: grid; \}/);
+console.log('player: all checks passed (4.13 sound, layers, feedback; 4.14 volume on phones, no-sound videos; 4.90 audio-only cover)');
