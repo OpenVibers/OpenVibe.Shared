@@ -2110,6 +2110,11 @@
             try {
                 const sr = document.createElement('script');
                 sr.type = 'speculationrules';
+                // A page whose policy names a nonce (Chat, Search…) runs inline speculation rules only with it: Chrome 156
+                // ignores 'inline-speculation-rules' beside a nonce (2026-11-02). The page's own nonce is read from any of
+                // its nonced scripts (the attribute is blanked once parsed; the property keeps it).
+                const nonce = [].slice.call(document.scripts || []).map((x) => x.nonce).find(Boolean);
+                if (nonce) sr.nonce = nonce;
                 sr.textContent = JSON.stringify({ prefetch: [{ where: { and: [{ href_matches: '/*' }, { not: { href_matches: ['/auth/*', '/api/*', '/logout*', '/*logout*', '/signout*', '/internal/*', '/*.zip', '/*.pdf'] } }, { not: { selector_matches: '[data-no-prefetch], [download], [rel~=nofollow]' } }] }, eagerness: 'moderate' }] });
                 document.head.appendChild(sr);
             } catch { /* an old browser: links load as they always did */ }
