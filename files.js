@@ -32,6 +32,7 @@ const BROWSER = Object.freeze([
     'ov-look.js',           // the Look panel: themes, the season, more on openvibe.design (navbar.js loads it on first open)
     'ov-fx.js',             // the network's effects (data-fx): glint, glow, lift, press, ripple, tilt, reveal, count, confetti
     'ov-labels.js',         // content labels (L1): each viewer's show / blur / hide; navbar.js loads it when a page has [data-ov-labels]
+    'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'history.js',           // cross-site history
     'sso-client.js',        // link hand-off, FedCM
@@ -69,6 +70,7 @@ const STYLES = Object.freeze([
     'player.css',           // player.js's controls
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
     'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
+    'thread.css',           // the conversation UI's look (openvibe-shared/thread, ov-thread.js; plan L55 C4)
     'kit-layout.css',       // the fluid scale, the layout primitives (.ov-stack, .ov-switcher…) and the opt-in .ov-base (4.78.0; after kit.css)
     'kit-data.css',         // Kit 2's look: steps, tables, charts, rankings, meters, drop zones, receipts (4.37.0; after kit.css)
     'agent-session.css',    // agent-session.js's look (4.32.0; the script links it from beside itself unless the page does)

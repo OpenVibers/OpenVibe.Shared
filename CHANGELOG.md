@@ -4,6 +4,23 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.96.0 — 2026-11-02
+
+- **One conversation UI for the network** (plan L55 C4). Actor's chat proved the shape; Vibe, Codes and the Dock use
+  the same parts:
+  - `openvibe-shared/thread` builds the markup: the chats in a sidebar (grouped Today / Yesterday / This week /
+    Earlier), the sticky head, turns, the work folded under an answer, the answer with its sources and a footer, cards,
+    and the composer. Complete without script, every string escaped.
+  - `/shared/thread.css` draws it with theme tokens: a page that scrolls as a whole, a composer at the bottom above a
+    phone's app bar, and the chats as a column or a drawer.
+  - `/shared/ov-thread.js` adds the drawer, Find a chat, the growing composer, Enter to send, Copy, staying at the
+    bottom, and `OVThread.add / replace / live / work` for streaming turns. A turn that finishes types its answer in
+    word by word (`OVThread.reveal`, from Actor #227); code, tables and pictures come in whole.
+  - The composer takes the site's markup above the box (`top`: picked files, a problem line) and a `maxlength`; Copy
+    leaves out anything marked `data-ovt-nocopy` (a citation's number).
+  - Nothing spins: a working turn breathes, and reduced motion stills it.
+  - `docs/thread.md`; `test/thread.test.js`.
+
 ## 4.95.0 — 2026-11-02
 
 - **A box that scrolls can be scrolled from a keyboard** (WCAG 2.1.1). A code block, a wide table or a list held to a

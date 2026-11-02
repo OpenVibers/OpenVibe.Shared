@@ -1,0 +1,168 @@
+/* openvibe-shared/thread.css — one conversation UI for the network (plan L55 C4), drawn by openvibe-shared/thread and
+   ov-thread.js. The page scrolls as a whole (no inner box to trap a thumb); the composer stays at the bottom of the
+   screen, above a phone's app bar; the chats are a column on a wide screen and a drawer on a phone. Theme tokens only,
+   so every OpenVibe look applies. Nothing spins: a working turn breathes. */
+.ovt { --ovt-top: 56px; --ovt-rail: 272px; --ovt-line: color-mix(in srgb, var(--border, #1f2d47) 80%, transparent);
+    --ovt-accent: var(--accent, #3b82f6);
+    display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - var(--ovt-top)); color: var(--text-primary, #e6edf7); }
+@media (min-width: 900px) { .ovt { grid-template-columns: var(--ovt-rail) minmax(0, 1fr); } }
+/* The hidden attribute always wins inside the kit (a rule's display never shows what a page hid). */
+.ovt [hidden] { display: none !important; }
+.ovt-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ovt-muted { color: var(--text-muted, #7386a3); }
+.ovt-ic { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── The chats ──────────────────────────────────────────────────────────────────────────────────────────────── */
+.ovt-side { display: flex; flex-direction: column; gap: 10px; padding: 12px 10px 14px; background: var(--bg-secondary, #0f1729); border-right: 1px solid var(--ovt-line); }
+@media (min-width: 900px) { .ovt-side { position: sticky; top: var(--ovt-top); height: calc(100dvh - var(--ovt-top)); overflow-y: auto; overscroll-behavior: contain; } }
+@media (max-width: 899px) {
+    .ovt-side { position: fixed; z-index: 60; inset: 0 auto 0 0; width: min(86vw, 320px); padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        overflow-y: auto; overscroll-behavior: contain; transform: translateX(-104%); visibility: hidden; transition: transform .26s cubic-bezier(.2, .8, .2, 1), visibility 0s .26s;
+        box-shadow: 0 0 40px rgba(0, 0, 0, .45); }
+    .ovt.is-drawer .ovt-side { transform: none; visibility: visible; transition: transform .26s cubic-bezier(.2, .8, .2, 1); }
+    .ovt-scrim { position: fixed; inset: 0; z-index: 59; background: rgba(0, 0, 0, .5); }
+    .ovt-side-close { display: grid !important; }
+}
+.ovt-scrim[hidden] { display: none; }
+.ovt-side-head { display: flex; align-items: center; gap: 8px; }
+.ovt-new { flex: 1; display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--ovt-line);
+    background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); font-weight: 650; text-decoration: none; }
+.ovt-new:hover, .ovt-new:focus-visible { border-color: var(--ovt-accent); }
+.ovt-side-close { display: none; place-items: center; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--ovt-line); background: none; color: var(--text-secondary, #96a7c2); cursor: pointer; }
+.ovt-find input { width: 100%; box-sizing: border-box; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--ovt-line); background: var(--bg-primary, #0a0f1c); color: var(--text-primary, #e6edf7); font: inherit; font-size: 14px; }
+.ovt-list { flex: 1; min-height: 0; }
+.ovt-list ul { list-style: none; margin: 0 0 6px; padding: 0; }
+.ovt-group { margin: 12px 8px 4px; font-size: 11.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7386a3); }
+.ovt-list a { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; border-radius: 10px; color: var(--text-secondary, #b4c0d4); text-decoration: none; font-size: 14.5px; }
+.ovt-list a span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovt-list a:hover, .ovt-list a:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 5%, transparent)); color: var(--text-primary, #e6edf7); }
+.ovt-list a[aria-current=page] { background: color-mix(in srgb, var(--ovt-accent) 16%, transparent); color: var(--text-primary, #e6edf7); font-weight: 600; }
+.ovt-list li[hidden], .ovt-group[hidden] { display: none; }
+.ovt-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ovt-accent); animation: ovt-breathe 1.6s ease-in-out infinite; }
+.ovt-empty { margin: 14px 10px; font-size: 14px; color: var(--text-muted, #7386a3); }
+.ovt-side-foot { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 10px 8px 0; border-top: 1px solid var(--ovt-line); font-size: 13px; }
+.ovt-side-foot a { color: var(--text-secondary, #96a7c2); text-decoration: none; }
+.ovt-side-foot a:hover { color: var(--text-primary, #e6edf7); }
+
+/* ── The conversation ───────────────────────────────────────────────────────────────────────────────────────── */
+.ovt-main { display: flex; flex-direction: column; min-width: 0; min-height: calc(100dvh - var(--ovt-top) - var(--ovnav-appbar-h, 0px)); }
+.ovt-head { position: sticky; top: var(--ovt-top); z-index: 20; display: flex; align-items: center; gap: 8px; min-height: 52px;
+    padding: 6px max(12px, env(safe-area-inset-right, 0px)) 6px max(12px, env(safe-area-inset-left, 0px));
+    background: color-mix(in srgb, var(--bg-primary, #0a0f1c) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid transparent; }
+.ovt-head.is-stuck { border-bottom-color: var(--ovt-line); }
+.ovt-title { flex: 1; min-width: 0; margin: 0; font-size: 16px; font-weight: 650; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovt-btn { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; border: 0; background: none; color: var(--text-secondary, #b4c0d4); cursor: pointer; text-decoration: none; }
+.ovt-btn:hover, .ovt-btn:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 6%, transparent)); color: var(--text-primary, #e6edf7); }
+.ovt-btn .ovt-ic { width: 22px; height: 22px; }
+@media (min-width: 900px) { .ovt-menu { display: none; } }
+.ovt-scroll { flex: 1; padding: 8px max(16px, env(safe-area-inset-right, 0px)) 16px max(16px, env(safe-area-inset-left, 0px)); }
+.ovt-thread { list-style: none; max-width: 780px; margin: 0 auto; padding: 0; display: grid; gap: 30px; }
+.ovt-empty-state { max-width: 780px; margin: 8vh auto 0; text-align: center; }
+.ovt-empty-state:empty { display: none; }
+
+.ovt-turn { display: grid; gap: 14px; scroll-margin-top: calc(var(--ovt-top) + 60px); }
+.ovt-you { display: grid; justify-items: end; gap: 8px; }
+.ovt-bubble { max-width: min(85%, 620px); margin: 0; padding: 10px 15px; border-radius: 20px 20px 6px 20px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5;
+    background: color-mix(in srgb, var(--ovt-accent) 14%, var(--bg-card, #131c2e)); color: var(--text-primary, #e6edf7); }
+.ovt-turn.is-new .ovt-bubble { animation: ovt-rise .32s cubic-bezier(.2, .8, .2, 1) both; }
+.ovt-bot { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; }
+.ovt-bot:not(:has(.ovt-avatar)) { grid-template-columns: minmax(0, 1fr); }
+.ovt-avatar { width: 28px; height: 28px; margin-top: 2px; border-radius: 9px;
+    background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--ovt-accent) 70%, #fff), var(--ovt-accent) 55%, color-mix(in srgb, var(--ovt-accent) 60%, #000));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ovt-accent) 35%, transparent); }
+.ovt-turn[data-open] .ovt-avatar { animation: ovt-breathe 1.6s ease-in-out infinite; }
+.ovt-reply { min-width: 0; display: grid; gap: 10px; }
+/* Grid items size to their content by default: a tool row's long input would widen the page. */
+.ovt-reply > *, .ovt-work, .ovt-w-tool > details { min-width: 0; max-width: 100%; }
+.ovt-w-tool > details > summary { min-width: 0; }
+
+/* The work, folded: "Worked for 12 s · 3 tools". Open while the turn works, so its live line shows. */
+.ovt-work > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 32px; padding: 0 10px 0 2px; border-radius: 10px; cursor: pointer;
+    color: var(--text-secondary, #96a7c2); font-size: 14px; }
+.ovt-work > summary::-webkit-details-marker { display: none; }
+.ovt-work > summary:hover { color: var(--text-primary, #e6edf7); }
+.ovt-chev { width: 16px; height: 16px; transition: transform .2s; }
+.ovt-work[open] > summary .ovt-chev { transform: rotate(180deg); }
+.ovt-w-live { background: linear-gradient(90deg, var(--text-secondary, #96a7c2) 40%, var(--text-primary, #e6edf7) 50%, var(--text-secondary, #96a7c2) 60%) 0 0 / 300% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent; animation: ovt-shimmer 2.4s linear infinite; }
+.ovt-w-list { list-style: none; margin: 6px 0 0; padding: 0 0 0 12px; border-left: 2px solid var(--ovt-line); display: grid; gap: 6px; font-size: 14px; color: var(--text-secondary, #96a7c2); }
+.ovt-w-list > li { display: flex; gap: 8px; align-items: flex-start; min-width: 0; }
+.ovt-w-list > li > .ovt-ic { width: 16px; height: 16px; margin-top: 2px; }
+.ovt-w-list p { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ovt-w-note.is-warn { color: var(--warning-text, #fbbf24); }
+.ovt-w-tool { display: block !important; }
+.ovt-w-tool > details > summary { list-style: none; display: flex; align-items: center; gap: 8px; cursor: pointer; min-height: 28px; }
+.ovt-w-tool > details > summary::-webkit-details-marker { display: none; }
+.ovt-w-tool b { flex: none; font-weight: 600; color: var(--text-primary, #e6edf7); white-space: nowrap; }
+.ovt-w-in { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #7386a3); }
+.ovt-w-st { margin-left: auto; display: inline-flex; }
+.ovt-w-tool.is-ok .ovt-w-st { color: var(--success-text, #4ade80); }
+.ovt-w-tool.is-bad .ovt-w-st { color: var(--danger-text, #f87171); }
+.ovt-w-out { margin: 6px 0 4px 24px; max-height: 260px; overflow: auto; padding: 8px 10px; border-radius: 8px; background: var(--bg-primary, #0a0f1c); border: 1px solid var(--ovt-line);
+    font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* The answer: comfortable reading, code with Copy, tables that scroll inside themselves. */
+.ovt-answer { line-height: 1.65; font-size: 16px; overflow-wrap: anywhere; }
+.ovt-answer > :first-child { margin-top: 0; }
+.ovt-answer > :last-child { margin-bottom: 0; }
+.ovt-answer pre { position: relative; overflow-x: auto; padding: 12px 14px; border-radius: 12px; background: var(--bg-secondary, #0f1729); border: 1px solid var(--ovt-line); font-size: 13.5px; }
+.ovt-answer table { display: block; overflow-x: auto; border-collapse: collapse; max-width: 100%; }
+.ovt-answer th, .ovt-answer td { padding: 6px 10px; border-bottom: 1px solid var(--ovt-line); text-align: left; }
+.ovt-answer a { color: var(--accent-light, var(--ovt-accent)); }
+.ovt-turn.is-fresh .ovt-answer { animation: ovt-fade .4s ease-out both; }
+/* An answer that types in (ov-thread.js reveal): only opacity, so a screen reader reads it all at once. */
+.ovt-answer.is-revealing .ovt-sw { opacity: 0; transition: opacity .28s ease-out; }
+.ovt-answer.is-revealing .ovt-sw.on { opacity: 1; }
+html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
+.ovt-answer pre:has(.ovt-code-copy) { padding-right: 68px; }
+.ovt-code-copy { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); color: var(--text-secondary, #96a7c2); font-size: 12px; cursor: pointer; }
+.ovt-files { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.ovt-files img { display: block; max-width: 220px; max-height: 180px; border-radius: 12px; border: 1px solid var(--ovt-line); object-fit: cover; }
+.ovt-file { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); color: inherit; text-decoration: none; }
+.ovt-file span { display: grid; }
+.ovt-file small { color: var(--text-muted, #7386a3); }
+.ovt-sources { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.ovt-sources a { padding: 2px 10px; border-radius: 999px; border: 1px solid var(--ovt-line); color: var(--text-secondary, #96a7c2); font-size: 13px; text-decoration: none; }
+.ovt-sources a:hover { color: var(--text-primary, #e6edf7); border-color: var(--ovt-accent); }
+.ovt-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 13px; color: var(--text-muted, #7386a3); }
+.ovt-acts { display: inline-flex; gap: 4px; margin-left: auto; }
+.ovt-act { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px; border-radius: 9px; border: 0; background: none; color: var(--text-secondary, #96a7c2); font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+.ovt-act:hover, .ovt-act:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 6%, transparent)); color: var(--text-primary, #e6edf7); }
+.ovt-act .ovt-ic { width: 16px; height: 16px; }
+.ovt-card { padding: 12px 14px; border-radius: 14px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); }
+.ovt-card p { margin: 0 0 6px; }
+.ovt-card > :last-child { margin-bottom: 0; }
+.ovt-card.is-wait { border-color: color-mix(in srgb, var(--ovt-accent) 50%, var(--ovt-line)); }
+.ovt-card.is-bad { border-color: color-mix(in srgb, var(--danger-text, #f87171) 50%, var(--ovt-line)); }
+
+/* ── The composer ───────────────────────────────────────────────────────────────────────────────────────────── */
+.ovt-dock { position: sticky; bottom: var(--ovnav-appbar-h, 0px); z-index: 15; padding: 8px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+    background: linear-gradient(to top, var(--bg-primary, #0a0f1c) 70%, transparent); }
+.ovt-starters { display: flex; flex-wrap: wrap; gap: 8px; max-width: 780px; margin: 0 auto 10px; }
+.ovt-starter { padding: 8px 12px; border-radius: 12px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); color: var(--text-secondary, #b4c0d4); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.ovt-starter:hover, .ovt-starter:focus-visible { border-color: var(--ovt-accent); color: var(--text-primary, #e6edf7); }
+.ovt-composer { max-width: 780px; margin: 0 auto; padding: 10px 10px 8px 14px; border-radius: 22px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+.ovt-composer:focus-within { border-color: color-mix(in srgb, var(--ovt-accent) 60%, var(--ovt-line)); }
+.ovt-composer textarea { display: block; width: 100%; box-sizing: border-box; min-height: 26px; max-height: 40vh; padding: 4px 0; border: 0; outline: 0; resize: none; background: none;
+    color: var(--text-primary, #e6edf7); font: inherit; font-size: 16px; line-height: 1.5; }
+.ovt-c-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.ovt-c-tools { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ovt-send, .ovt-stop { flex: none; display: inline-grid; place-items: center; min-width: 40px; height: 40px; padding: 0 10px; border-radius: 14px; border: 0; cursor: pointer; font: inherit; font-weight: 650; }
+.ovt-send { background: var(--ovt-accent); color: var(--on-accent, #fff); }
+.ovt-send:disabled { opacity: .45; cursor: default; }
+.ovt-stop { display: inline-flex; gap: 6px; background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 8%, transparent)); color: var(--text-primary, #e6edf7); }
+.ovt-send .ovt-ic, .ovt-stop .ovt-ic { width: 18px; height: 18px; }
+.ovt-c-note { margin: 6px 4px 0; font-size: 12.5px; color: var(--text-muted, #7386a3); }
+.ovt-c-note:empty { display: none; }
+
+@keyframes ovt-breathe { 50% { opacity: .45; } }
+@keyframes ovt-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes ovt-fade { from { opacity: 0; } }
+@keyframes ovt-shimmer { to { background-position: -300% 0; } }
+@media (prefers-reduced-motion: reduce) {
+    .ovt-dot, .ovt-turn[data-open] .ovt-avatar, .ovt-w-live, .ovt-turn.is-new .ovt-bubble, .ovt-turn.is-fresh .ovt-answer { animation: none; }
+    .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
+    .ovt-w-live { color: var(--text-secondary, #96a7c2); background: none; }
+    .ovt-side, .ovt-chev { transition: none; }
+}
