@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.98.0 — 2026-11-02
+
+- **Solid drawings for ten more glyphs (plan L49/L50).** The places and things the sites use most that had none
+  (Design's usage count): `tree`, `tent`, `train`, `mountain`, `city`, `id`, `wallet`, `chip`, `restroom`,
+  `brain`. A swapped icon at 18 px or less now shows the filled shape instead of heavier lines, and
+  openvibe.design/icons.css gives them an `is-solid` class. ov-glyphs.js and ov-glyphs.svg rebuilt.
+
 ## 4.97.0 — 2026-11-02
 
 - **The conversation UI uses the network's one sidebar.** 4.96.0's `thread.sidebar` drew a second sidebar beside
