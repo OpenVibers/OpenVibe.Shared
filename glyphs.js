@@ -332,6 +332,18 @@
         bug: '<path fill-rule="evenodd" d="M12 8a4.8 4.8 0 0 1 4.8 4.8v3.4a4.8 4.8 0 0 1-9.6 0v-3.4A4.8 4.8 0 0 1 12 8Zm-.7 4.4v7.4h1.4v-7.4Z"/><path d="M9.4 6.8a2.6 2.6 0 0 1 5.2 0Z"/><path class="ln" d="M7.2 13.5H3.8M20.2 13.5h-3.4M7.6 10.4 5 8M16.4 10.4 19 8M7.6 17.6 5 20M16.4 17.6 19 20"/>',
         terminal: '<path fill-rule="evenodd" d="M5 3.6h14a2.4 2.4 0 0 1 2.4 2.4v12a2.4 2.4 0 0 1-2.4 2.4H5A2.4 2.4 0 0 1 2.6 18V6A2.4 2.4 0 0 1 5 3.6Zm1.4 6 1.3-1.3 3.6 3.7-3.6 3.7-1.3-1.3 2.4-2.4Zm6.4 4.6h4.4v1.7h-4.4Z"/>',
         database: '<ellipse cx="12" cy="6" rx="7.4" ry="3"/><path d="M4.6 7.6a7.4 3 0 0 0 14.8 0v4a7.4 3 0 0 1-14.8 0ZM4.6 13.2a7.4 3 0 0 0 14.8 0v4.4a7.4 3 0 0 1-14.8 0Z"/>',
+        // 4.98.0: the most-used places and things without one (Design's usage count, 2026-11-02): tree, tent, train,
+        // mountain, city, id, wallet, chip, restroom, brain.
+        tree: '<path d="M12 2.6 5.6 11.2h3.2L4 17.8h16l-4.8-6.6h3.2Z"/><path class="ln" d="M12 17v4.2"/>',
+        tent: '<path fill-rule="evenodd" d="M12 4.2 20.6 19.8H3.4ZM12 13 9 19.8h6Z"/><path class="ln" d="M2.4 20.2h19.2"/>',
+        train: '<path fill-rule="evenodd" d="M9 3h6a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3Zm-1.2 2.6v4.2h8.4V5.6ZM9 12a1.1 1.1 0 1 0 0 2.2A1.1 1.1 0 0 0 9 12Zm6 0a1.1 1.1 0 1 0 0 2.2 1.1 1.1 0 0 0 0-2.2Z"/><path class="ln" d="M8.5 21l2-3.5M15.5 21l-2-3.5"/>',
+        mountain: '<path d="M2.6 20.2 9.5 8l4 6.4 2.6-3.6 5.3 9.4Z"/>',
+        city: '<path fill-rule="evenodd" d="M4.6 8.8h5.2v12.4H4.6Zm2.2 2.6v1.6h1.4v-1.6Zm0 3.4v1.6h1.4v-1.6Z"/><path fill-rule="evenodd" d="M10.6 3.8h5.8v17.4h-5.8Zm2 2.8v1.6h1.6V6.6Zm0 3.4v1.6h1.6V10Zm0 3.4v1.6h1.6v-1.6Z"/><path d="M17.2 12.8h2.6v8.4h-2.6Z"/><path class="ln" d="M2.8 21.2h18.4"/>',
+        id: '<path fill-rule="evenodd" d="M5 4.8h14a2.2 2.2 0 0 1 2.2 2.2v10a2.2 2.2 0 0 1-2.2 2.2H5A2.2 2.2 0 0 1 2.8 17V7A2.2 2.2 0 0 1 5 4.8Zm4 4.1a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm-3.1 7.5h6.2c-.6-1.7-1.8-2.6-3.1-2.6s-2.5.9-3.1 2.6Zm8.6-7v1.5h3.9V9.4Zm0 3.5v1.5h3.9v-1.5Z"/>',
+        wallet: '<path fill-rule="evenodd" d="M6.5 4.6H18v4h1.4a.8.8 0 0 1 .8.8v10.8H6a2.2 2.2 0 0 1-2.2-2.2V7.3a2.7 2.7 0 0 1 2.7-2.7Zm0 1.8a.9.9 0 0 0 0 1.8h9.7V6.4ZM16 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>',
+        chip: '<path fill-rule="evenodd" d="M8.2 6.6h7.6a1.6 1.6 0 0 1 1.6 1.6v7.6a1.6 1.6 0 0 1-1.6 1.6H8.2a1.6 1.6 0 0 1-1.6-1.6V8.2a1.6 1.6 0 0 1 1.6-1.6Zm1.9 3.5v3.8h3.8v-3.8Z"/><path class="ln" d="M10 3v3.6M14 3v3.6M10 17.4V21M14 17.4V21M3 10h3.6M3 14h3.6M17.4 10H21M17.4 14H21"/>',
+        restroom: '<circle cx="7" cy="4.6" r="2"/><circle cx="17" cy="4.6" r="2"/><path d="M6 8.8h2a1.7 1.7 0 0 1 1.7 1.7v5.2H8.6v5.5H5.4v-5.5H4.3v-5.2A1.7 1.7 0 0 1 6 8.8Z"/><path d="M16.4 9.3h1.2a1 1 0 0 1 1 .8l2.1 7H18.3v3.9h-2.6v-3.9h-2.4l2.1-7a1 1 0 0 1 1-.8Z"/><path class="ln" d="M12 3v18"/>',
+        brain: '<path d="M9 3.8a3.1 3.1 0 0 0-3.1 3 3 3 0 0 0-2.1 5.2 3 3 0 0 0 2.1 5.1 3.1 3.1 0 0 0 5.5 1.3V5.5A2.2 2.2 0 0 0 9 3.8Z"/><path d="M15 3.8a3.1 3.1 0 0 1 3.1 3 3 3 0 0 1 2.1 5.2 3 3 0 0 1-2.1 5.1 3.1 3.1 0 0 1-5.5 1.3V5.5A2.2 2.2 0 0 1 15 3.8Z"/>',
     });
     const BY = { kit: 'the OpenVibe Kit', opus: 'drawn by Opus for the glyph set (2026-10-31)' };
     const ALL = { ...(kit && kit.PATHS ? kit.PATHS : {}), ...DRAWN };
