@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.99.1 — 2026-11-02
+
+- **The conversation's head follows the navbar on a phone.** The navbar slides away while you read down. The thread's
+  sticky head stayed where the bar had been, leaving a gap with the thread showing through. ov-thread.js now finds the
+  bar on each measure (navbar.js may draw it after the kit starts) and measures again once the slide ends.
+- docs/thread.md: `OVThread.tool` and `toolDone` take the tool call's `key`.
+
 ## 4.99.0 — 2026-11-02
 
 - **The conversation UI shows several agents, approvals and what the work produced** (plan L55 C4 stage 3, for Codes):
