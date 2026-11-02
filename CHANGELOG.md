@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.95.0 — 2026-11-02
+
+- **A box that scrolls can be scrolled from a keyboard** (WCAG 2.1.1). A code block, a wide table or a list held to a
+  height, with nothing focusable inside it, could not be reached with Tab, so its hidden part was out of reach without
+  a mouse. axe (scrollable-region-focusable) flagged such pages on six sites in the 11-02 sweep. Once the page settles,
+  and again a little later and after a resize, the navbar gives each such box `tabindex="0"` (and
+  `data-ov-scroll-focus`, with a focus ring). A box with a link or a button inside, a page's own tabindex, and
+  `overflow: hidden` are left alone. `OpenVibeNavbar.focusScrollers()` runs it on demand for a page that draws one
+  later. `test/keyboard-scrollers.test.js` checks it in a real Chrome.
+
 ## 4.94.0 — 2026-11-02
 
 - **A labelled thing's poster may be named by username** (`data-ov-labels-owner="@name"`). The owner rule (their own
