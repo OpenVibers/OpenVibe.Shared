@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.106.0 — 2026-11-02
+
+- **The ghost cursor** (`motion.js` `[data-ov-ghost]`, MOTION-1): a scene shows how it is used. An arrow walks to each
+  `[data-ov-ghost-step="N"]` inside it in order, "clicks" (a ring that widens and fades, never a spinner), marks that
+  step `data-ov-ghost-on` so the page can draw it chosen, and starts over after the last. It runs only while the scene
+  is in view, never under reduced motion (the OS setting or `data-ov-motion="reduced"`), and is gone for good the
+  moment the reader touches, clicks, types or focuses inside the scene. The cursor is aria-hidden and takes no focus or
+  pointer events. `test/motion-ghost-chrome.test.js` checks it in Chrome.
+
 ## 4.105.1 — 2026-11-02
 
 - **OpenVibe Connect draws the plug in the launcher** (`ov-icons.js` ALIASES `connect: 'plug'`), not the fallback mark.
