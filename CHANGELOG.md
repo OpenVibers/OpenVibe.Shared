@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.93.2 — 2026-11-02
+
+- **A folded footer column says how many links it holds** (from #208, 10-31). On a phone the full footer's columns are
+  folds (4.53.0), and a fold showed only its heading. Each now carries its count on its line ("9 links", "1 link"), the way
+  the network's other folds say what they hold. On a desktop, where every column is open, the count is hidden. Every link stays in the
+  page.
+
 ## 4.93.1 — 2026-11-02
 
 - **An `ov:` icon the ring set lacks draws as its glyph** (`showcase.icon`). Before, it drew the bare OV mark: Today's
