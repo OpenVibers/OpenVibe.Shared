@@ -42,6 +42,26 @@
         }).catch(function () { /* a refused clipboard changes nothing */ });
     }
 
+    /**
+     * What a reader means by an answer's text: without the Copy buttons and anything marked data-ovt-nocopy (a citation's
+     * number: "visits 12" was "visits 1 2"); the space before a removed mark goes when punctuation follows it. innerText
+     * keeps line breaks only for laid-out nodes, so the copy is read while it sits, invisible, in the page (Actor's, 11-01).
+     */
+    function plainText(el) {
+        var c = el.cloneNode(true);
+        qa(c, '[data-ovt-nocopy], .ovt-code-copy').forEach(function (x) {
+            var before = x.previousSibling, after = x.nextSibling;
+            if (before && before.nodeType === 3 && (!after || (after.nodeType === 3 && /^[\s,.;:!?)]/.test(after.nodeValue)))) before.nodeValue = before.nodeValue.replace(/\s+$/, '');
+            x.remove();
+        });
+        if (c.style) c.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + (el.clientWidth || 600) + 'px;opacity:0;pointer-events:none';
+        c.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(c);
+        var t = String(c.innerText || c.textContent || '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+        c.remove();
+        return t;
+    }
+
     /** Copy on answers and code blocks under el (once each). */
     function enhance(el) {
         if (!el) return el;
@@ -55,12 +75,7 @@
                 var ans = q(turn, '[data-ovt-answer]');
                 if (!ans) return;
                 // What a reader means to copy: not the Copy buttons, nor anything the site marked data-ovt-nocopy (a citation's number).
-                var c = ans.cloneNode(true);
-                qa(c, '[data-ovt-nocopy], .ovt-code-copy').forEach(function (x) { x.remove(); });
-                document.body.appendChild(c); c.style.position = 'absolute'; c.style.left = '-9999px';
-                var txt = (c.innerText || c.textContent || '').trim();
-                c.remove();
-                copyText(txt, b);
+                copyText(plainText(ans), b);
             });
         });
         if (canCopy) qa(el, '.ovt-answer pre').forEach(function (pre) {
