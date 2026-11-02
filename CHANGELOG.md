@@ -22,6 +22,12 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
     the site's classes;
   - `OVThread.tool(id, { name, input, icon })` and `OVThread.toolDone(id, ok)` stream a tool row built from text.
 - 4.96.0's own sidebar code is gone from thread.css and ov-thread.js. `thread.sidebar` has drawn `kit.sidebar` since 4.97.0.
+## 4.98.0 — 2026-11-02
+
+- **Solid drawings for ten more glyphs (plan L49/L50).** The places and things the sites use most that had none
+  (Design's usage count): `tree`, `tent`, `train`, `mountain`, `city`, `id`, `wallet`, `chip`, `restroom`,
+  `brain`. A swapped icon at 18 px or less now shows the filled shape instead of heavier lines, and
+  openvibe.design/icons.css gives them an `is-solid` class. ov-glyphs.js and ov-glyphs.svg rebuilt.
 
 ## 4.97.0 — 2026-11-02
 
