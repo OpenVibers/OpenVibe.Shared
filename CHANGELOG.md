@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.93.1 — 2026-11-02
+
+- **An `ov:` icon the ring set lacks draws as its glyph** (`showcase.icon`). Before, it drew the bare OV mark: Today's
+  "Your agenda" (`ov:calendar`) showed a "V". When the ring icons do not know a name and the glyph set does, the glyph
+  is drawn in a ring of its own (the accent, a soft fill and a thin ring), the same size as the ring icons.
+
 ## 4.93.0 — 2026-11-02
 
 - **Content labels, each viewer's own choice** (plan L1, `common.content-labels@1`, `network.label-prefs@1`).
