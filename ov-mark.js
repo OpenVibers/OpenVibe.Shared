@@ -8,6 +8,8 @@
  *   <span class="ov-mark" data-form="heavy">      → force a form (default: heavy up to 22px wide, the pair above)
  *   data-state="busy|ok|error|no|notify|live|sleep" → what it shows (island.js sets busy/ok/error on the navbar's)
  *   data-progress="0.4" with style="--ovm-p:.4"    → a known progress: the ring draws round to that much
+ * OVMark.busy(button) → { done, fail, reset }: a button at work shows the mark busy, then the tick or the "!". A form
+ *   posted the old way (POST) does this by itself until the next page; data-ov-busy="off" on a form opts out.
  * Self-contained: injects its own CSS once, works on any page (Live, Network, static pages). The same mark as static
  * SVG, for servers and icons: openvibe-shared/mark (mark.js), whose numbers this file draws.
  *
@@ -185,7 +187,10 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
 @media (prefers-reduced-motion:reduce){.ov-mark *{animation:none!important}.ov-mark,.ov-mark *,.ov-mark::before{transition:none!important}.ovm-fall{display:none}}
-html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
+html[data-ov-motion=reduced] .ov-mark *{animation:none!important}
+.ov-busy{cursor:progress;pointer-events:none}
+.ov-busy-mark{display:inline-block;vertical-align:-.2em;margin-right:.45em;flex:none}
+`;
     const seg = (p, i) => `M${f(p[i])} ${f(p[i + 1])}L${f(p[i + 2])} ${f(p[i + 3])}`;
     function svg(id, G, wide) {
         const p = G.shapes.v, oc = `transform-origin:${G.cx}px ${G.cy}px`, vc = `transform-origin:${G.T[0]}px ${G.T[1]}px`;
@@ -465,7 +470,73 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}`;
         try { void el.getBoundingClientRect(); } catch { /* */ }
         st.introEnd = Date.now() + 2000; update(el);
     }
-    window.OVMark = { mount, navStart, navEnd, usual, intro, FORMS };
+    // ── Busy buttons (the plan: "buttons' busy, then done or failed, from the mark's states", 2026-11-01) ──
+    // A button that starts work shows the mark at work beside its label, keeps its width and takes no second press.
+    // Script work ends it with done (the tick, and "Done" or a word) or fail (the "!", and a word), then the label
+    // comes back; a form posted the old way stays busy until the next page arrives. The button is never disabled:
+    // a disabled submitter's name and value would drop out of the form it posts.
+    //   OVMark.busy(button) → { done(text?), fail(text?), reset() }
+    const BUSY = new Map();
+    function busy(btn) {
+        if (!btn || !btn.isConnected) return null;
+        if (BUSY.has(btn)) return BUSY.get(btn);
+        const isInput = btn.tagName === 'INPUT';
+        const before = isInput ? btn.value : btn.innerHTML;
+        const width = btn.offsetWidth;
+        if (width) btn.style.minWidth = width + 'px';
+        btn.setAttribute('aria-busy', 'true');
+        btn.classList.add('ov-busy');
+        let mark = null;
+        if (!isInput) {
+            mark = document.createElement('span');
+            mark.className = 'ov-mark ov-busy-mark';
+            mark.setAttribute('data-size', '18'); mark.setAttribute('data-tone', 'ink'); mark.setAttribute('data-state', 'busy'); mark.setAttribute('aria-hidden', 'true');
+            btn.insertBefore(mark, btn.firstChild);
+            mount(btn);
+        }
+        let timer = 0;
+        const reset = () => {
+            clearTimeout(timer);
+            if (!BUSY.has(btn)) return;
+            BUSY.delete(btn);
+            if (isInput) btn.value = before; else btn.innerHTML = before;
+            btn.style.minWidth = '';
+            btn.removeAttribute('aria-busy');
+            btn.classList.remove('ov-busy');
+            const form = btn.form || (btn.closest && btn.closest('form'));
+            if (form) delete form.__ovBusy;
+        };
+        const end = (st, text, ms) => {
+            if (!BUSY.has(btn)) return;
+            if (mark) {
+                mark.setAttribute('data-state', st);
+                // The label after the mark says what happened, in the button's own place.
+                while (mark.nextSibling) btn.removeChild(mark.nextSibling);
+                btn.appendChild(document.createTextNode(text));
+            } else btn.value = text;
+            btn.setAttribute('aria-busy', 'false');
+            clearTimeout(timer); timer = setTimeout(reset, ms);
+        };
+        const api = { done: (text) => end('ok', text || 'Done', 1400), fail: (text) => end('error', text || 'Failed', 2600), reset };
+        BUSY.set(btn, api);
+        return api;
+    }
+    // A form posted the old way (POST, no script of the page's own took the submit): its button shows the mark at work
+    // until the next page arrives, and a second submit does nothing. data-ov-busy="off" on a form opts out.
+    document.addEventListener('submit', (e) => {
+        const form = e.target;
+        if (!form || form.tagName !== 'FORM' || form.getAttribute('data-ov-busy') === 'off') return;
+        if (String(form.getAttribute('method') || 'get').toLowerCase() !== 'post') return;
+        if (form.__ovBusy) { e.preventDefault(); return; }
+        if (e.defaultPrevented) return;
+        const btn = e.submitter || form.querySelector('button[type=submit],button:not([type]),input[type=submit]');
+        if (!btn) return;
+        form.__ovBusy = true;
+        busy(btn);
+    });
+    // Back to a page from the back/forward cache: nothing is busy any more.
+    window.addEventListener('pageshow', (e) => { if (e.persisted) [...BUSY.values()].forEach((b) => b.reset()); });
+    window.OVMark = { mount, navStart, navEnd, usual, intro, busy, FORMS };
     window.ovMarkMount = mount;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
