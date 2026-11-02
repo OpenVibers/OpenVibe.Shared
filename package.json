@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.95.0",
+  "version": "4.96.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -98,7 +98,9 @@
     "./boost": "./boost.js",
     "./rooms": "./rooms.js",
     "./motion": "./motion.js",
-    "./agent-layer": "./agent-layer.js"
+    "./agent-layer": "./agent-layer.js",
+    "./thread": "./thread.js",
+    "./ov-thread": "./ov-thread.js"
   },
   "files": [
     "*.js",
