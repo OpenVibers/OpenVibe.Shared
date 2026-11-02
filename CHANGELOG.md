@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.100.1 — 2026-11-02
+
+- **The browser harness counts a counted fold's text as on the page.** A closed `<details>` opens with one tap, with
+  or without JavaScript, and search engines read it; the network's rule is to fold, never to hide. The release check's
+  JSON-LD rule (each entity's name in the page's text; 80% of a list's items) failed Network's home: its "50 sites"
+  list names the sites under "Every other neighbourhood". The contents of closed `<details>` (all but the summary) are
+  now part of the text the checks read.
+
 ## 4.100.0 — 2026-11-02
 
 From a phone sweep of every site's home (11-02):
