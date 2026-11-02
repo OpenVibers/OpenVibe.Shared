@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.105.0 — 2026-11-02
+
+- **Eight more solid drawings**, the next by use with a shape to fill: umbrella, parking, medical, drive, skull,
+  hot-tub, group and gavel (136 of 277 now). The parking sign and the first-aid case keep their letter and cross as
+  cut-outs; the drive keeps its case outline as a line over a filled base with two lights; the gavel's head is one
+  block apart from its striking bar, so the gap still shows at 16 px. Drawn beside the line drawings, checked at 96,
+  24 and 16 px on a dark ground and by Design's `validate.cleanSolid`. The glyph files and fonts are rebuilt.
+
 ## 4.104.0 — 2026-11-02
 
 - **Eight more solid drawings**, the next by use with a shape to fill: download, upload, expand, shirt, shapes,
