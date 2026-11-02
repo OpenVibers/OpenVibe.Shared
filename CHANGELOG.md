@@ -4,6 +4,17 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.92.0 — 2026-11-02
+
+- **The page starts the footer it renders** (`shell.page`, `shell.scripts`).
+  - Six sites rendered the shared footer and never started it: Video, Pics, Run, Events, AI and Website. On a phone
+    every fold stood open, and there was no shipped line.
+  - The page's boot now starts it a moment after the site's own scripts, with the page's footer config.
+  - A site that starts it itself (`OpenVibeFooter.init`) keeps its own: a started footer carries `data-ovf-live`, and
+    the shell leaves it.
+- **The compact footer centres its links** under its centred brand. On a phone the row sat at the left, and "Report a
+  problem" wrapped alone.
+
 ## 4.91.1 — 2026-11-01
 
 - **A numbers strip can be reached by keyboard** (`kit.stats`): on a phone the strip scrolls sideways, and a strip with

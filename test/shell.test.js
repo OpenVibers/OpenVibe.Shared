@@ -5,6 +5,8 @@
 // escaped, the page summary appears only when asked for, and the no-JS nav + shared footer are there.
 const assert = require('node:assert/strict');
 const shell = require('openvibe-shared/shell');
+const fs = require('fs');
+const path = require('path');
 
 // ── A whole document, in order ────────────────────────────────────────────────────────────────────
 const html = shell.page({
@@ -61,6 +63,13 @@ assert.deepEqual(JSON.parse(m[1]), {
     versions: { '/js/chat.js': 'abc123' },
 });
 assert.match(bootSrc, /OpenVibeNavbar\.init\(\{"service":"example"\}\);/, 'navbar init carries the service');
+// The footer it renders is started too, unless the site started it (Video and five more never did: 2026-11-02).
+assert.match(bootSrc, /setTimeout\(function \(\) \{ var f = document\.getElementById\('ov-footer'\); if \(window\.OpenVibeFooter && f && !f\.hasAttribute\('data-ovf-live'\)\) OpenVibeFooter\.init\(\{"service":"example","variant":"compact"\}\); \}, 0\);/, 'the page starts its footer after the site\'s own scripts');
+const withFooter = shell.scripts({ name: 'v', footer: { service: 'media-hub', variant: 'full', brandName: 'OpenVibe.Video' } });
+assert.ok(withFooter.includes('OpenVibeFooter.init({"service":"media-hub","variant":"full","brandName":"OpenVibe.Video"})'), 'with the page\'s own footer config');
+const footerSrc = fs.readFileSync(path.join(__dirname, '..', 'footer.js'), 'utf8');
+assert.ok(/_mounted = el;\s*\/\/[^\n]*\n\s*try \{ el\.setAttribute\('data-ovf-live', ''\); \}/.test(footerSrc), 'a started footer says so');
+assert.ok(footerSrc.includes('.ovf-compact-links{justify-content:center}'), 'the compact row centres its links under the brand');
 const evil = shell.page({ name: 'x', features: { a: '</script><script>alert(1)</script>' } });
 assert.ok(!evil.includes('</script><script>alert(1)'), 'a feature name cannot break out of the boot script');
 assert.ok(evil.includes('\\u003c/script>'), 'the boot escapes <');
