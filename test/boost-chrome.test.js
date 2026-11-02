@@ -21,11 +21,12 @@ const page = ({ title, marker = 'site@r1', css = [], scripts = ['/js/site.js'], 
 <link rel="icon" href="data:,">${css.map((c) => `<link rel="stylesheet" href="${c}">`).join('')}
 ${scripts.map((s) => `<script src="${s}"></script>`).join('')}<script src="/boost.js" data-main="#main" defer></script></head>
 <body class="page-${title.replace(/\W+/g, '-').toLowerCase()}"><header>header</header><main id="main" data-page="${title}">${body}</main><footer>footer</footer></body></html>`;
-const LINKS = '<a id="to-a" href="/a">A</a> <a id="to-b" href="/b">B</a> <a id="to-x" href="/x">X</a> <a id="to-y" href="/y">Y</a> <a id="to-api" href="/api/thing">api</a> <a id="to-new" href="/a" target="_blank">new</a>';
+const LINKS = '<a id="to-v" href="/v">V</a> <a id="to-home" href="/">Home</a> <a id="to-a" href="/a">A</a> <a id="to-b" href="/b">B</a> <a id="to-x" href="/x">X</a> <a id="to-y" href="/y">Y</a> <a id="to-api" href="/api/thing">api</a> <a id="to-new" href="/a" target="_blank">new</a>';
 const PAGES = {
     '/': page({ title: 'Home', canonical: '/', body: `<h1>Home</h1><a id="to-part" href="#part">part</a><div style="height:3000px">${LINKS}</div><p id="bottom">bottom</p><div style="height:900px"></div><p id="part">part</p><div style="height:900px"></div>` }),
     '/a': page({ title: 'Page A', canonical: '/a', css: ['/css/a.css'], body: `<h1>A</h1>${LINKS}<script>window.inlineRuns = (window.inlineRuns || 0) + 1;</script><script type="application/ld+json">{"@type":"WebPage","name":"A"}</script>` }),
     '/b': page({ title: 'Page B', canonical: '/b', body: `<h1>B</h1>${LINKS}` }),
+    '/v': page({ title: 'Page V', canonical: '/v', body: `<h1>V</h1><video muted playsinline aria-label="preview"></video><canvas hidden></canvas>${LINKS}` }),
     '/x': page({ title: 'Page X', canonical: '/x', marker: 'site@r2', body: `<h1>X</h1>${LINKS}` }),
     '/y': page({ title: 'Page Y', canonical: '/y', scripts: ['/js/site.js', '/js/other.js'], body: `<h1>Y</h1>${LINKS}` }),
     '/api/thing': page({ title: 'API', canonical: '/api/thing', body: '<h1>api</h1>' }),
@@ -96,6 +97,18 @@ const server = http.createServer((req, res) => {
         assert.deepStrictEqual([v.alive, v.hash], [3, ''], 'Back from the part stays on the page');
         assert.ok(Math.abs(v.y - 40) < 5, `and returns to where the person was (${v.y})`);
         await p.evaluate('window.alive = 1; 1');
+
+        // A page with a <video> visited again and again in place lets each parsed page go (4.102.0). Chrome held the parsed
+        // page's own <video> as a pending activity, and with it the whole page: a document more on every visit.
+        const docs = async () => { await p.send('HeapProfiler.collectGarbage'); await p.send('HeapProfiler.collectGarbage'); return (await p.metrics()).Documents; };
+        const swap = (id) => p.evaluate(`new Promise((done) => { document.addEventListener('ov:boost:load', () => done(document.getElementById('main').dataset.page), { once: true }); document.getElementById('${id}').click(); })`);
+        assert.strictEqual(await swap('to-v'), 'Page V');
+        assert.strictEqual(await swap('to-home'), 'Home');
+        const docs0 = await docs();
+        for (let i = 0; i < 4; i++) { await swap('to-v'); await swap('to-home'); }
+        const docs1 = await docs();
+        assert.strictEqual(await p.evaluate('window.alive'), 1, 'all in place');
+        assert.ok(docs1 <= docs0, `the parsed pages were let go (documents ${docs0} → ${docs1})`);
 
         // Not swappable: an excluded path and a new tab are left to the browser; another release or other scripts load normally.
         // Did boost claim the click? A window listener runs after boost's document listener: it records the answer and

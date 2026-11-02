@@ -4,6 +4,18 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.102.0 — 2026-11-02
+
+- **A sidebar row with two lines** (`kit.sidebar` items): `sub` is a quiet second line under the name, a
+  conversation's last message or where a search matched, with the mark beside both lines. `attrs` gives a row `data-*`
+  attributes so a page's script finds it again (Chat's support inbox, `data-conv`); any other name is dropped. A
+  one-line row's markup is unchanged.
+- **Boost lets each parsed page go.** After a swap, boost empties the page it parsed. Chrome held that page's own
+  `<video>` (the swap shows a copy) as a pending activity, and with it the whole parsed page: one document and every
+  node more on each visit. On openvibe.cam, `/` ↔ `/app` grew by 3 documents and 1,729 nodes in three laps and failed
+  the release check's navigation test. `boost-chrome.test.js` visits a page with a video five times in place and checks
+  the document count stays put.
+
 ## 4.101.0 — 2026-11-02
 
 - **A puzzle glyph** (`puzzle`, with a solid drawing): a jigsaw piece, knobs out on top and right, notches in, for a

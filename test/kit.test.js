@@ -278,6 +278,15 @@ const kit = require('../kit');
     assert.ok(html.includes('<h2 class="ovk-sidebar-h">Today</h2>') && html.includes('Fix &lt;it&gt;') && html.includes('<p class="ovk-sidebar-empty">Nothing yet</p>'), 'sections, and an empty one says so');
     assert.ok(html.includes('data-ovk-sidebar-close') && html.includes('<label class="ovk-sr" for="side-q">'), 'a close button and a labelled search');
     assert.match(kit.sidebarButton({ id: 'side' }), /data-ovk-sidebar-open aria-controls="side" aria-expanded="false"/);
+    // 4.102.0: a second line, and data attributes a page's script finds the row by (only data-*).
+    const two = kit.sidebar({ sections: [{ items: [
+        { href: '/inbox/1?c=7', label: 'Ana', meta: '2m', dot: 'needs', sub: 'Where is <my> order?', mark: '<span class="m">A</span>', attrs: { 'data-conv': 7, onclick: 'x()', 'data-x"y': 1, 'data-off': false } },
+        { href: '/inbox/1?c=8', label: 'Bo', sub: 'Thanks' },
+    ] }] });
+    assert.ok(two.includes('<a class="ovk-sidebar-item has-sub has-mark" href="/inbox/1?c=7" data-conv="7">'), 'a mark beside two lines, the row findable by data-conv');
+    assert.ok(two.includes('<span class="ovk-sidebar-s">Where is &lt;my&gt; order?</span></a>') && !two.includes('onclick') && !two.includes('data-x') && !two.includes('data-off'), 'the line escaped, only data-* attributes kept');
+    assert.ok(two.includes('<a class="ovk-sidebar-item has-sub" href="/inbox/1?c=8">'), 'no mark: no mark column');
+    assert.ok(!html.includes('has-sub') && !html.includes('class="ovk-sidebar-s"'), 'a one-line row is unchanged');
     assert.match(kit.withSidebar({ sidebar: html, body: '<p>x</p>' }), /^<div class="ovk-with-sidebar"><aside[\s\S]*<div class="ovk-sidebar-scrim" data-ovk-sidebar-scrim hidden><\/div><div class="ovk-with-sidebar-main"><p>x<\/p><\/div><\/div>$/);
     const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'kit.css'), 'utf8');
     assert.ok(/@media \(max-width: 760px\) \{\s*\.ovk-with-sidebar \{ grid-template-columns: minmax\(0, 1fr\); \}\s*\.ovk-sidebar \{ position: fixed; z-index: 10060;/.test(css), 'a drawer over everything on a phone');

@@ -360,6 +360,12 @@ div.ovk-set-row { cursor: default; }
 .ovk-sidebar-item.is-here { background: var(--ovk-panel-2); font-weight: 600; }
 .ovk-sidebar-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovk-sidebar-m { flex: none; color: var(--ovk-muted); font-size: 12px; }
+/* A row with a quiet second line (4.102.0): a conversation's last message under its name, the mark beside both lines. */
+.ovk-sidebar-item.has-sub { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 9px; row-gap: 1px; padding-block: 6px; }
+.ovk-sidebar-item.has-sub.has-mark { grid-template-columns: auto minmax(0, 1fr) auto auto; }
+.ovk-sidebar-item.has-sub.has-mark > :first-child { grid-row: 1 / span 2; }
+.ovk-sidebar-s { grid-column: 1 / -1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovk-muted); font-size: 12.5px; font-weight: 400; }
+.ovk-sidebar-item.has-sub.has-mark .ovk-sidebar-s { grid-column: 2 / -1; }
 .ovk-sidebar-empty { margin: 8px 10px; color: var(--ovk-muted); font-size: 13.5px; }
 .ovk-sidebar-foot { padding-top: 8px; border-top: 1px solid var(--ovk-line); }
 @media (max-width: 760px) {
