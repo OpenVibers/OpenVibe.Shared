@@ -281,10 +281,12 @@
     function fullBody(c, { network, popular, discover, brand, tagline, compact = false }) {
         // Each link column is a fold: open on a desktop (its heading reads and behaves as a heading), folded on a phone
         // (a 48 px row with a chevron), so a phone's footer is about one screen shorter. Every link stays in the page.
-        const fold = (label, heading, body) => `
-            <nav class="ovf-col" aria-label="${esc(label)}"><details class="ovf-fold" open><summary><h3>${esc(heading)}</h3></summary>
+        // The fold's line carries its count ("9 links"), so a folded column still says how much it holds (#208).
+        const fold = (label, heading, body, count) => `
+            <nav class="ovf-col" aria-label="${esc(label)}"><details class="ovf-fold" open><summary><h3>${esc(heading)}</h3><span class="ovf-fold-n">${esc(String(count))} ${count === 1 ? 'link' : 'links'}</span></summary>
                 <div class="ovf-fold-body">${body}</div></details></nav>`;
-        const cols = (c.links || []).map(group => fold(group.heading, group.heading, group.items.map(linkTag).join(''))).join('');
+        const cols = (c.links || []).map(group => fold(group.heading, group.heading, group.items.map(linkTag).join(''), group.items.length)).join('');
+        const networkLinks = network.slice(0, 8);
 
         return `<div class="ovf-inner${compact ? ' ovf-inner--expanded' : ''}">
             ${c.pulse === false ? '' : '<p class="ovf-pulse" data-ovf-pulse hidden></p>'}
@@ -298,12 +300,12 @@
                     </div>
                 </div>
                 ${cols}
-                ${c.showNetwork ? fold('The OpenVibe network', 'Network', `${network.slice(0, 8).map(linkTag).join('')}
-                    <a class="ovf-more" href="${NETWORK_URL}" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>`) : ''}
+                ${c.showNetwork ? fold('The OpenVibe network', 'Network', `${networkLinks.map(linkTag).join('')}
+                    <a class="ovf-more" href="${NETWORK_URL}" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>`, networkLinks.length + 1) : ''}
                 ${popular.length ? fold('Popular tools', 'Popular tools', `${popular.slice(0, 6).concat(discover.slice(0, 2)).map(linkTag).join('')}
-                    <a class="ovf-more" href="https://openvibe.tools/all-tools">All tools ${icon('arrow')}</a>`) : ''}
+                    <a class="ovf-more" href="https://openvibe.tools/all-tools">All tools ${icon('arrow')}</a>`, Math.min(popular.length, 6) + Math.min(discover.length, 2) + 1) : ''}
                 ${fold('Legal', 'Legal', `${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name)}</a>`).join('')}
-                    ${reportLink()}`)}
+                    ${reportLink()}`, LEGAL.length + 1)}
             </div>
             ${compact ? '' : `<div class="ovf-account" id="ovf-account" hidden></div>
             <div class="ovf-bar">
@@ -376,6 +378,7 @@
 .ovf-fold>summary{list-style:none;cursor:default;pointer-events:none}
 .ovf-fold>summary::-webkit-details-marker{display:none}
 .ovf-fold-body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.ovf-fold-n{display:none}
 .ovf-col a{color:var(--text-secondary,#b6bdd2);font-size:.86rem;text-decoration:none;line-height:1.4;width:fit-content;transition:color .15s,transform .15s}
 .ovf-col a:hover{color:var(--accent,#60a5fa);transform:translateX(2px)}
 @media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:32px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:0;right:0;top:-12px;bottom:-12px}}
@@ -447,6 +450,7 @@
   .ovf-col:not(.ovf-col--brand):last-child{border-bottom:1px solid var(--border,rgba(255,255,255,.08))}
   .ovf-fold>summary{pointer-events:auto;cursor:pointer;display:flex;align-items:center;justify-content:space-between;min-height:48px}
   .ovf-fold>summary h3{margin:0}
+  .ovf-fold-n{display:inline;margin-left:auto;margin-right:10px;color:var(--text-muted,#8b93ad);font-size:.82rem;font-weight:600;font-variant-numeric:tabular-nums}
   .ovf-fold>summary::after{content:"";width:.5em;height:.5em;margin-right:4px;border:solid var(--text-muted,#8b93ad);border-width:0 1.8px 1.8px 0;transform:translateY(-.2em) rotate(45deg);transition:transform .2s}
   .ovf-fold[open]>summary::after{transform:translateY(.1em) rotate(-135deg)}
   .ovf-fold-body{margin-top:0;padding-bottom:14px}

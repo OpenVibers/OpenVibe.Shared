@@ -15,8 +15,13 @@ const html = footer.buildHTML({ service: 'live', variant: 'full', links });
 const folds = html.match(/<details class="ovf-fold"[^>]*>/g) || [];
 assert.ok(folds.length >= 4, `the site's columns, Network and Legal are folds (${folds.length})`);
 assert.ok(folds.every((d) => / open\b/.test(d)), 'every fold is written open');
+// Each fold's line says how many links it holds (4.93.2): a site's own columns, the network's 8 and Everything else, Legal.
+const counts = { Watch: null, Create: null, Network: 9, Legal: null };
 for (const [label, heading] of [['Watch', 'Watch'], ['Create', 'Create'], ['The OpenVibe network', 'Network'], ['Legal', 'Legal']]) {
-    const re = new RegExp(`<nav class="ovf-col" aria-label="${label}"><details class="ovf-fold" open><summary><h3>${heading}</h3></summary>`);
+    const re = new RegExp(`<nav class="ovf-col" aria-label="${label}"><details class="ovf-fold" open><summary><h3>${heading}</h3><span class="ovf-fold-n">(\\d+) links?</span></summary>`);
+    const m = re.exec(html);
+    assert.ok(m && Number(m[1]) > 0, `${label}: the fold's line carries its count`);
+    if (counts[heading]) assert.strictEqual(Number(m[1]), counts[heading], `${label}: ${counts[heading]} links`);
     assert.match(html, re, `${label}: a nav, its fold and its heading as the summary`);
 }
 for (const href of ['/browse', '/clips', '/go-live']) assert.ok(html.includes(`href="${href}"`), `${href} stays in the page`);
