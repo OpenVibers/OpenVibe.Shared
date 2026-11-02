@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.89.0 — 2026-11-01
+
+- **A card with no picture but a person shows their face** (`kit.card`, `room.css`).
+  - A card with no `image` (and no `preview`) but an `avatar` draws the avatar large in a circle over a soft blur of it.
+    A lone type icon in an empty box read as a missing image: Report's episodes and Tours' recordings of streams with no
+    public recording.
+  - The avatar is fetched at 160 px (`mediaW`), is `aria-hidden` (the body's mark and the title already name the
+    person), and a script or bad URL falls back to the icon as before.
+
 ## 4.88.1 — 2026-11-01
 
 - **An aborted view transition is silent on the account hub.**
