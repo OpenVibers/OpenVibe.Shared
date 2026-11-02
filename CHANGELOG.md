@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.100.2 — 2026-11-02
+
+- **The page prefetch runs under a nonce policy.** The navbar's inline speculation rules (4.70.0) were refused on
+  every page whose Content-Security-Policy names a nonce: openvibe.chat logged it on each page. Chrome 156 ignores
+  `'inline-speculation-rules'` beside a nonce. The navbar now gives its rules the page's own nonce, read from any of
+  its nonced scripts. Checked on production's openvibe.chat/vibe with this navbar.js swapped in: no violation, and
+  the rules carry the nonce.
+
 ## 4.100.1 — 2026-11-02
 
 - **The browser harness counts a counted fold's text as on the page.** A closed `<details>` opens with one tap, with
