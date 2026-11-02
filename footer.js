@@ -409,6 +409,7 @@
   padding-inline:clamp(0px, calc(84px - (100vw - 1240px) / 2), 84px)}
 .ovf-copy{color:var(--text-muted,#8b93ad);font-size:.78rem}
 .ovf-legal-inline,.ovf-compact-links{display:flex;flex-wrap:wrap;gap:14px}
+.ovf-compact-links{justify-content:center}
 .ovf [hidden],.ovf-account[hidden]{display:none!important}
 .ovf .ovf-shipped.ov-shipped-latest{font-size:.76rem;padding:4px 12px;max-width:min(520px,100%);background:transparent}
 .ovf-legal-inline a,.ovf-compact-links a{color:var(--text-muted,#8b93ad);font-size:.78rem;text-decoration:none;transition:color .15s}
@@ -598,6 +599,8 @@
         const el = typeof _cfg.mount === 'string' ? document.querySelector(_cfg.mount) : _cfg.mount;
         if (!el) return null;
         _mounted = el;
+        // Started: shell.page's own start (after the site's scripts) leaves a footer the site started alone.
+        try { el.setAttribute('data-ovf-live', ''); } catch { /* */ }
         render();
         // 'auto' on a single-page site follows its routes: back and forward re-read the path (a route the site pushes
         // itself calls setVariant or render).

@@ -58,6 +58,7 @@ function attrs(map) {
 function scripts(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
     const navbar = { service: name, ...(o.navbar || {}) };
+    const footer = o.footer || { service: name, variant: 'compact' };
     const boot = { features: o.features || {}, routes: o.routes || [] };
     if (o.versions) boot.versions = o.versions;
     return [
@@ -65,7 +66,9 @@ function scripts(o = {}) {
         `<script src="${esc(serve.url('web-runtime.js'))}" defer></script>`,
         `<script src="${esc(serve.url('navbar.js'))}" defer></script>`,
         `<script src="${esc(serve.url('footer.js'))}" defer></script>`,
-        `<script>window.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init(${json(navbar)}); OVWebRuntime.create(${json(boot)}).boot(); });</script>`,
+        // The footer this page renders (frame.footer) is started here too, a moment after the site's own scripts: a site
+        // that starts it itself (OpenVibeFooter.init) keeps its own; one that does not gets its phone folds and its line.
+        `<script>window.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init(${json(navbar)}); OVWebRuntime.create(${json(boot)}).boot(); setTimeout(function () { var f = document.getElementById('ov-footer'); if (window.OpenVibeFooter && f && !f.hasAttribute('data-ovf-live')) OpenVibeFooter.init(${json(footer)}); }, 0); });</script>`,
     ].join('\n');
 }
 
