@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.101.0 — 2026-11-02
+
+- **A puzzle glyph** (`puzzle`, with a solid drawing): a jigsaw piece, knobs out on top and right, notches in, for a
+  browser extension, an add-on or a plug-in. `fa-puzzle-piece` drew nothing on Coupons and Design since Font Awesome
+  left. A sweep of every `fa-` name the sites use found no other gap except brands (drawn by brands.js) and words in
+  Design's docs.
+
 ## 4.100.2 — 2026-11-02
 
 - **The page prefetch runs under a nonce policy.** The navbar's inline speculation rules (4.70.0) were refused on
