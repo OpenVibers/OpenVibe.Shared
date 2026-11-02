@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.106.1 — 2026-11-02
+
+- **The OpenVibe mark opens the site switcher again, on every site.** `site-switcher.js` (4.48.0) was never in
+  `files.js`'s `BROWSER` list, and sites serve `/shared/*` from that list only: the mark loaded it on the first tap, the
+  site answered 404 and the switcher never opened. It is on the list now. `test/browser-files-complete.test.js` fails
+  when a browser file loads a file of this package that no list serves.
+
 ## 4.106.0 — 2026-11-02
 
 - **The ghost cursor** (`motion.js` `[data-ov-ghost]`, MOTION-1): a scene shows how it is used. An arrow walks to each
