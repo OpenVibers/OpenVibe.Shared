@@ -116,3 +116,11 @@ assert.ok(!('license' in dataset), 'no license claim when the site states none')
 assert.strictEqual(seo.headTags({ title: 'T', canonical: 'https://example.test/', jsonLd: [ev, job, recipe, dataset] }).match(/application\/ld\+json/g).length, 4, 'one script per node');
 
 console.log('seo: all checks passed');
+
+// A title that already names the site gets no " · Site" suffix ("What shipped on OpenVibe.Work · OpenVibe.Work", 11-02).
+{
+    const seoMod = require('../seo');
+    const t = (o) => seoMod.headTags(o).match(/<title>([^<]*)/)[1];
+    assert.strictEqual(t({ title: 'What shipped on OpenVibe.Work', titleSuffix: ' · OpenVibe.Work' }), 'What shipped on OpenVibe.Work');
+    assert.strictEqual(t({ title: 'Jobs in Berlin', titleSuffix: ' · OpenVibe.Work' }), 'Jobs in Berlin · OpenVibe.Work');
+}

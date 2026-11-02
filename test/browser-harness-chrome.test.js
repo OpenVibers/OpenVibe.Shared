@@ -19,7 +19,7 @@ const ROUTES = {
     '/': () => page(`<main><h1>Good Page</h1><p>${words}</p><a href="/b">B page</a><details><summary>Every other site <span>3 more</span></summary><ul><li>Folded Alpha</li><li>Folded Beta</li><li>Folded Gamma</li></ul></details></main>`,
         '<link rel="canonical" href="ORIGIN/"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Good Page"}</script>'
         + '<script type="application/ld+json">{"@context":"https://schema.org","@type":"ItemList","name":"Sites","itemListElement":[{"@type":"ListItem","position":1,"name":"Folded Alpha"},{"@type":"ListItem","position":2,"name":"Folded Beta"},{"@type":"ListItem","position":3,"name":"Folded Gamma"}]}</script>'),
-    '/b': () => page(`<div id="root"></div><div style="width:2000px" class="wide">wide</div>
+    '/b': () => page(`<div id="root"></div><div style="width:2000px" class="wide">wide [object Object]</div>
         <script src="/s.js?v=1"></script><script src="/s.js?v=2"></script>
         <script>document.getElementById('root').innerHTML = '<p>${words}</p>'; console.error('boom from b'); window.onload = () => { null.x; };</script>`,
     '<script type="application/ld+json">{"@type":"Article","headline":"Not On The Page"}</script><script type="application/ld+json">{bad json</script>'),
@@ -73,11 +73,11 @@ const AXE_STUB = `window.axe = { run: () => Promise.resolve({ violations: locati
     const text = h.format(report);
 
     assert.ok(/^Chrome\/|HeadlessChrome\//.test(report.chrome), report.chrome);
-    assert.deepStrictEqual(good.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass' }, text);
+    assert.deepStrictEqual(good.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass', text: 'pass' }, text);
     assert.strictEqual(good.canonical.href, `${base}/`);
     assert.deepStrictEqual(good.jsonld.entities.map((e) => e.found), ['html', 'html'], 'a list folded in a closed <details> counts as on the page');
 
-    assert.deepStrictEqual(bad.checks, { status: 'pass', errors: 'fail', overflow: 'fail', scripts: 'fail', nojs: 'fail', canonical: 'fail', jsonld: 'fail', axe: 'fail' }, text);
+    assert.deepStrictEqual(bad.checks, { status: 'pass', errors: 'fail', overflow: 'fail', scripts: 'fail', nojs: 'fail', canonical: 'fail', jsonld: 'fail', axe: 'fail', text: 'warn' }, text);
     assert.ok(bad.errors.some((e) => e.startsWith('console: boom from b (')), bad.errors.join(' | '));
     assert.ok(bad.errors.some((e) => /^exception: .*TypeError/.test(e)), bad.errors.join(' | '));
     assert.deepStrictEqual(bad.widths.map((w) => [w.width, w.overflow]), [[390, true], [1280, true]]);

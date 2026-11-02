@@ -60,7 +60,7 @@ const pageOf = (id) => PAGES.find((pg) => pg.id === id) || null;
 // its own accent when it has one), and shell.page() shares it on any page whose canonical URL is on that host. Before
 // 4.86.1 a link to openvibe.pics previewed as OpenVibe.Video.
 const DOMAINS = [
-    { id: 'pics', service: 'media-hub', host: 'openvibe.pics', name: 'Pics', accent: '#f472b6', tagline: 'Share pictures. Fast, open, yours.',
+    { id: 'pics', service: 'media-hub', host: 'openvibe.pics', name: 'Pics', accent: '#f472b6', tagline: 'Share pictures. Fast, open, yours',
         what: 'A link to share or embed any picture, in any size or format, with location and camera details removed.' },
     { id: 'download', service: 'media-hub', host: 'openvibe.download', name: 'Download', tagline: 'Your files, shared on your terms',
         what: 'A private drive with 25 GB free: share files with links you can take back, and back up a folder.' },
