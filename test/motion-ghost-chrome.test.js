@@ -36,6 +36,8 @@ const server = http.createServer((req, res) => {
     try {
         const context = await browser.newContext();
         const p = await h.openPage(browser, context, { width: 390 });
+        // A runner may have reduce motion set (macOS CI does): this page asks for motion explicitly.
+        await p.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'no-preference' }] });
         await p.goto(`${base}/`, { maxMs: 5000 });
         const seen = [];
         for (let k = 0; k < 40 && seen.length < 3; k++) {
@@ -51,6 +53,7 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate(`!document.querySelector(".ov-ghost") && ${chosen} === ""`), true, 'a touch ends it for good');
 
         const still = await h.openPage(browser, context, { width: 390 });
+        await still.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
         await still.goto(`${base}/still`, { maxMs: 5000 });
         await wait(1500);
         assert.strictEqual(await still.evaluate('!document.querySelector(".ov-ghost") && document.querySelectorAll("[data-ov-ghost-on]").length === 0'), true, 'reduced motion: no cursor at all');
