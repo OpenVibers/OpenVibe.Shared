@@ -17,6 +17,8 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 - **The release browser check reads the words** (`browser-harness.js`, check `text`): the visible text has no
   "[object Object]", bare undefined/NaN, `{{ }}`, markup or an entity shown as text, or a space before a full stop.
   It warns and never fails (a developer page may show such words in code). Each was on a live site on 11-02.
+- **A title that names its site gets no " · Site" suffix** (`seo.headTags` `titleSuffix`): every update log read
+  "What shipped on OpenVibe.Work · OpenVibe.Work".
 
 ## 4.104.0 — 2026-11-02
 

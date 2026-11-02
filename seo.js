@@ -40,11 +40,14 @@ function jsonLdTag(obj) {
  * @param {object} o title, description, canonical (absolute), image, imageAlt, type ('website'),
  *   siteName, robots ('index, follow'), locale ('en_US'), keywords (array|string), author,
  *   themeColor, twitterSite, alternates [{ hreflang, href }], prev, next, jsonLd (array|object),
- *   titleSuffix (appended when it fits), noTitle (skip <title> when the page has its own)
+ *   titleSuffix (appended when it fits and the title does not already name the site), noTitle (skip <title> when the page has its own)
  */
 function headTags(o = {}) {
     let title = String(o.title || o.siteName || 'OpenVibe');
-    if (o.titleSuffix && (title + o.titleSuffix).length <= 60) title += o.titleSuffix;
+    // The suffix (" · OpenVibe.Work") is left off a title that already names the site: "What shipped on OpenVibe.Work
+    // · OpenVibe.Work" was every update log's title (11-02).
+    const named = String(o.titleSuffix || '').replace(/^[\s·|—–-]+/, '').trim().toLowerCase();
+    if (o.titleSuffix && !(named && title.toLowerCase().includes(named)) && (title + o.titleSuffix).length <= 60) title += o.titleSuffix;
     title = clip(title, 60);
     const description = clip(o.description || '', 160);
     const canonical = absolute(o.canonical);
