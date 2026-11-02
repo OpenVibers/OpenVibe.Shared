@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.104.0 — 2026-11-02
+
+- **Eight more solid drawings**, the next by use with a shape to fill: download, upload, expand, shirt, shapes,
+  shelter, archive and keyboard (128 of 277 now). An arrow is filled whole and its tray stays a line; expand is
+  compress's twin, four corners pushing out. Drawn beside the line drawings and checked at 48, 24 and 16 px on light
+  and dark grounds. The glyph files and fonts are rebuilt.
+
 ## 4.103.0 — 2026-11-02
 
 - **Eight more solid drawings**, the next by use on the sites (Design's usage count): retry, water, food, history,
