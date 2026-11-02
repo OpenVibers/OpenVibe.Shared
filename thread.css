@@ -6,6 +6,13 @@
     --ovt-accent: var(--accent, #3b82f6);
     display: grid; grid-template-columns: minmax(0, 1fr); min-height: calc(100dvh - var(--ovt-top)); color: var(--text-primary, #e6edf7); }
 @media (min-width: 900px) { .ovt { grid-template-columns: var(--ovt-rail) minmax(0, 1fr); } }
+/* The network's one sidebar (kit.sidebar): a column from 761 px, where kit.css makes it one, and sticky under the navbar. */
+@media (min-width: 761px) {
+    .ovt:has(> .ovk-sidebar) { grid-template-columns: var(--ovk-sidebar-w, var(--ovt-rail)) minmax(0, 1fr); }
+    .ovt > .ovk-sidebar { position: sticky; top: var(--ovt-top); height: calc(100dvh - var(--ovt-top)); overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (max-width: 760px) { .ovt > .ovk-sidebar-scrim:not([hidden]) { position: fixed; inset: 0; z-index: 59; } }
+.ovt-head .ovk-sidebar-open { flex: none; }
 /* The hidden attribute always wins inside the kit (a rule's display never shows what a page hid). */
 .ovt [hidden] { display: none !important; }
 .ovt-sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -40,6 +47,7 @@
 .ovt-list li[hidden], .ovt-group[hidden] { display: none; }
 .ovt-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--ovt-accent); animation: ovt-breathe 1.6s ease-in-out infinite; }
 .ovt-empty { margin: 14px 10px; font-size: 14px; color: var(--text-muted, #7386a3); }
+.ovk-sidebar-foot .ovt-side-foot { border-top: 0; padding-top: 0; }
 .ovt-side-foot { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 10px 8px 0; border-top: 1px solid var(--ovt-line); font-size: 13px; }
 .ovt-side-foot a { color: var(--text-secondary, #96a7c2); text-decoration: none; }
 .ovt-side-foot a:hover { color: var(--text-primary, #e6edf7); }

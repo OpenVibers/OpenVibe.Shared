@@ -213,6 +213,17 @@
             qa(box, '[data-ovt-close]').forEach(function (el) { el.addEventListener('click', function () { drawer(false); }); });
             document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.classList.contains('is-drawer')) drawer(false); });
 
+            // Find a chat, in the network's sidebar (kit.sidebar): it filters as you type, and Enter keeps you here.
+            var kfind = q(box, '.ovk-sidebar-find input');
+            if (kfind) {
+                var kform = kfind.closest('form');
+                if (kform) kform.addEventListener('submit', function (e) { e.preventDefault(); });
+                kfind.addEventListener('input', function () {
+                    var term = kfind.value.trim().toLowerCase();
+                    qa(box, '.ovk-sidebar-secs .ovk-sidebar-item').forEach(function (a) { var tt = q(a, '.ovk-sidebar-t'); a.hidden = !!term && (!tt || tt.textContent.toLowerCase().indexOf(term) === -1); });
+                    qa(box, '.ovk-sidebar-secs .ovk-sidebar-sec').forEach(function (sec) { sec.hidden = !!term && !sec.querySelector('.ovk-sidebar-item:not([hidden])'); });
+                });
+            }
             // Find a chat.
             var find = q(box, '[data-ovt-find]');
             if (find) find.addEventListener('input', function () {
