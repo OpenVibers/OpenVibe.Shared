@@ -211,8 +211,11 @@
         const link = (x) => `<a class="ovk-sidebar-link${x.here ? ' is-here' : ''}" href="${esc(url(x.href))}"${x.here ? ' aria-current="page"' : ''}>`
             + `${x.iconHtml != null ? x.iconHtml : icon(x.icon || 'chevron')}<span>${esc(x.label)}</span>`
             + `${Number(x.count) > 0 ? `<b class="ovk-sidebar-count">${Number(x.count) > 99 ? '99+' : Number(x.count)}</b>` : dotHtml(x.dot)}</a>`;
-        const item = (x) => `<a class="ovk-sidebar-item${x.here ? ' is-here' : ''}" href="${esc(url(x.href))}"${x.here ? ' aria-current="page"' : ''}>`
-            + `${x.mark || ''}<span class="ovk-sidebar-t">${esc(x.label)}</span>${x.meta ? `<span class="ovk-sidebar-m">${esc(x.meta)}</span>` : ''}${dotHtml(x.dot)}</a>`;
+        // A row's data-* attributes (a site finds its rows by them: a conversation's id), nothing else.
+        const data = (a) => Object.entries(a || {}).filter(([k, v]) => /^data-[a-z0-9-]+$/.test(k) && v != null && v !== false).map(([k, v]) => ` ${k}="${esc(v)}"`).join('');
+        const item = (x) => `<a class="ovk-sidebar-item${x.sub ? ' has-sub' : ''}${x.sub && x.mark ? ' has-mark' : ''}${x.here ? ' is-here' : ''}" href="${esc(url(x.href))}"${x.here ? ' aria-current="page"' : ''}${data(x.attrs)}>`
+            + `${x.mark || ''}<span class="ovk-sidebar-t">${esc(x.label)}</span>${x.meta ? `<span class="ovk-sidebar-m">${esc(x.meta)}</span>` : ''}${dotHtml(x.dot)}`
+            + `${x.sub ? `<span class="ovk-sidebar-s">${esc(x.sub)}</span>` : ''}</a>`;
         const secs = (sections || []).map((sec) => {
             const items = sec.items || [];
             return `<section class="ovk-sidebar-sec">${sec.title ? `<h2 class="ovk-sidebar-h">${esc(sec.title)}</h2>` : ''}${items.map(item).join('')}`

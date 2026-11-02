@@ -466,6 +466,9 @@ kit.withSidebar({ sidebar: kit.sidebar({
     dot: `true`, `'busy'`, `'needs'` or `'bad'`);
   - then the sections, which scroll on their own;
   - and an optional foot.
+- **A row with two lines (4.102.0):** `sub` is a quiet second line under the name (a conversation's last message, where
+  a search matched), and the mark sits beside both lines. `attrs` gives the row `data-*` attributes, so a page's script
+  can find a row again (`{ 'data-conv': 12 }`); any other name is dropped.
 - **On a computer:** a 272 px column beside the page (`--ovk-sidebar-w`), sticky under the navbar.
 - **On a phone (760 px and under):** a drawer over everything.
   - `kit.sidebarButton` opens it.

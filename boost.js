@@ -132,10 +132,11 @@
             const Fx = await fx(mainEl);
             const h = Fx ? Fx.start(mainEl, { prefix }) : null;
             emit('before', { url: target.href });
+            let doc = null;
             try {
                 const page = await fetchPage(target.href);
                 if (inflight !== mine) return;                            // a newer move won
-                const doc = new root.DOMParser().parseFromString(page.html, 'text/html');
+                doc = new root.DOMParser().parseFromString(page.html, 'text/html');
                 const next = doc.querySelector(mainSel);
                 // A different release, other external scripts, or no <main>: this page cannot be swapped safely.
                 if (!next || marker(doc) !== here.marker || externalScripts(doc) !== here.scripts) throw new Error('not swappable');
@@ -172,6 +173,12 @@
                 s.fallbacks++;
                 if (h) h.done();
                 root.location.assign(target.href);                        // any doubt: a normal page load
+            } finally {
+                // Let the parsed page go. Its own copy of a <video> or <audio> (the swap imported a copy) is held by
+                // Chrome as a pending activity (RemotePlayback), and with it the whole parsed page: one more document
+                // and every node of the page on each visit (openvibe.cam/app, the release check's navigation test,
+                // 2026-11-02). Emptying the parsed page releases it.
+                if (doc && doc.documentElement) doc.documentElement.replaceChildren();
             }
         }
 
