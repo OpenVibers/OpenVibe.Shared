@@ -21,12 +21,12 @@ const ROOT = path.join(__dirname, '..');
 const PAGE = (signedIn) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Games · OpenVibe.Games</title><link rel="icon" href="data:,"></head>
 <body><div id="navbar-mount"></div><main><h1>Games</h1></main>
 <script>
-  localStorage.setItem('ov-wallet:42', JSON.stringify({ coins: 4100, vibes: 1250 }));
+  localStorage.setItem('ov-wallet:42', JSON.stringify({ coins: 161000, vibes: 400 }));
   window.fetch = async () => new Response('{}', { status: 404 });
 </script>
 <script src="/navbar.js"></script>
 <script>
-  OpenVibeNavbar.init({ service: 'games', brandName: 'OpenVibe.Games', wallet: true, ${signedIn ? "token: 'x', user: { id: 42, username: 'moosely', display_name: 'moosely', avatar_url: null }," : 'user: null,'}
+  OpenVibeNavbar.init({ service: 'games', brandName: 'OpenVibe.Games', wallet: true, messages: { href: 'https://openvibe.chat/messages' }, ${signedIn ? "token: 'x', user: { id: 42, username: 'moosely', display_name: 'moosely', avatar_url: null }," : 'user: null,'}
     links: [{ label: 'Games', href: '/', icon: 'fa-gamepad' }, { label: 'Leaderboard', href: '/top', icon: 'fa-star' }] });
 </script></body></html>`;
 const server = http.createServer((req, res) => {

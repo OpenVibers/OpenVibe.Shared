@@ -176,6 +176,16 @@
                 .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16.5px; letter-spacing: -.25px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
+            /* The site's name reads whole on a signed-in phone (the owner, 2026-11-02: "the label or the branding of the
+               website you're on seems to get cut off", openvibe.live showing "Li…" beside 161k | 400, the messages, the bell
+               and the picture). Up to 480px the two balances stack in one pill, each with its icon (both still show, as asked
+               on 10-28): the pill is about 53px instead of 90-103px, and the name has that room. */
+            @media (max-width: 480px) {
+                .openvibe-navbar .ovnav-chip.ovnav-chip--all { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; height: 34px; padding: 2px; border-radius: 10px; font-size: 11.5px; line-height: 1; letter-spacing: -.1px; }
+                .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini { height: 14px; padding: 0 4px; gap: 3px; justify-content: flex-start; font-variant-numeric: tabular-nums; }
+                .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini + .ovnav-chip-mini { border-left: 0; }
+                .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini .ovnav-ic { width: 11px; height: 11px; flex: none; }
+            }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
             .openvibe-navbar-brand .name { display: inline-flex; align-items: baseline; font-size: 15px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; line-height: 1; }
             /* Segments: subdomain · OpenVibe · TLD. The part that names *this* site is the loud one. */

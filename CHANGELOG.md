@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.106.2 — 2026-11-02
+
+- **The site's name reads whole on a signed-in phone.** On openvibe.live a phone showed "Li…" beside the balances, the
+  messages, the bell and the picture (the owner's screenshot). Up to 480px the two balances now stack in one pill, each
+  with its icon, so both still show: the pill is about 53px instead of 90-103px and the name has that room. At 320px the
+  OpenVibe menu's orb no longer runs into the balances. `test/navbar-phone-fit-chrome.test.js` now signs in with the
+  messages button and the owner's figures (161k, 400).
+
 ## 4.106.1 — 2026-11-02
 
 - **The OpenVibe mark opens the site switcher again, on every site.** `site-switcher.js` (4.48.0) was never in
