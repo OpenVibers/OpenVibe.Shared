@@ -13,6 +13,9 @@ A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
   - `panel()` sits beside the conversation: a column from 1180 px, a drawer from the right below;
   - `page({ panel, main })` places the panel, or a plain page, in the conversation's place;
   - `sidebar({ pinned })` keeps chats above the groups, and an item takes a `dot` and a quiet `meta` word;
+  - `sidebar({ findSubmit })`: Enter in Find a chat runs the site's own search (every message). Without it the form is
+    filter-only, as before; the kit keeps Enter on the page only for a filter-only form, so a site that draws
+    `kit.sidebar` itself (Codes) searches again on Enter;
   - `you.caption` puts a small word over the person's bubble;
   - a work row takes an `icon` (`read`, `find`, `edit`, `run`, `web`, `sub`), and a finished tool with no output is a
     plain row rather than one that opens on "Running…";

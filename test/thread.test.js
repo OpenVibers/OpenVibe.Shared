@@ -25,6 +25,7 @@ assert.ok(side.startsWith('<aside class="ovk-sidebar" id="ovt-chats" aria-label=
 assert.ok(side.includes('<a class="ovk-sidebar-item is-here" href="/chat/1" aria-current="page"><span class="ovk-sidebar-t">Plan &lt;b&gt;a&lt;/b&gt; weekend</span><i class="ovk-sidebar-dot is-busy" aria-hidden="true"></i></a>'), 'escaped, current, live');
 assert.ok(side.includes('<a class="ovk-sidebar-action" href="/chat">') && side.includes('name="q" placeholder="Find a chat"') && side.includes('<p class="ovt-side-foot"><a href="/memory">Memory</a></p>'));
 assert.ok(t.sidebar({ groups: [] }).includes('<p class="ovk-sidebar-empty">Your chats show here.</p>'), 'the empty line');
+assert.ok(side.includes('<form class="ovk-sidebar-find" data-ovt-filter-only') && !t.sidebar({ findSubmit: true, findAction: '/vibe' }).includes('data-ovt-filter-only'), 'filter-only unless the site searches every message');
 assert.ok(t.sidebar({ nav: [{ href: '/console', label: 'Console', icon: 'grid' }] }).includes('<nav class="ovk-sidebar-nav"'), 'the site\'s places as rows');
 const headHtml = t.head({ title: 'A <title>', newHref: '/chat' });
 assert.ok(headHtml.includes('<h1 class="ovt-title">A &lt;title&gt;</h1>') && headHtml.includes('data-ovk-sidebar-open aria-controls="ovt-chats"'), 'the kit\'s button opens the chats on a phone');

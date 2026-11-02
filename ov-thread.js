@@ -264,11 +264,12 @@
                 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && box.classList.contains('is-panel')) panel(false); });
             }
 
-            // Find a chat, in the network's sidebar (kit.sidebar): it filters as you type, and Enter keeps you here.
+            // Find a chat, in the network's sidebar (kit.sidebar): it filters as you type. Enter keeps you here when the
+            // form is filter-only (thread.sidebar's default); otherwise it runs the site's own search (every message).
             var kfind = q(box, '.ovk-sidebar-find input');
             if (kfind) {
                 var kform = kfind.closest('form');
-                if (kform) kform.addEventListener('submit', function (e) { e.preventDefault(); });
+                if (kform && kform.hasAttribute('data-ovt-filter-only')) kform.addEventListener('submit', function (e) { e.preventDefault(); });
                 kfind.addEventListener('input', function () {
                     var term = kfind.value.trim().toLowerCase();
                     qa(box, '.ovk-sidebar-secs .ovk-sidebar-item').forEach(function (a) { var tt = q(a, '.ovk-sidebar-t'); a.hidden = !!term && (!tt || tt.textContent.toLowerCase().indexOf(term) === -1); });

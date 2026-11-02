@@ -84,15 +84,16 @@ function group(items, whenOf, now = Date.now()) {
  *   groups: [{ name, items: [{ href, title, current, live, dot, meta, mark }] }];  nav: kit.sidebar's [{ href, label, icon, here, count }]
  *   pinned: chats kept above the groups (Codes' conductor), the same shape as a group's items
  *   dot: 'busy' (live sets it), 'needs' (waiting for the person) or 'bad'; meta: a quiet word after the title ("2h")
+ *   findSubmit: Enter in Find a chat runs the site's search at findAction (every message), not only the filter
  * Draw with kit.css and kit-web.js beside thread.css and ov-thread.js.
  */
-function sidebar({ id = 'ovt-chats', label = 'Your chats', newHref = null, newLabel = 'New chat', find = true, findAction = '', findPlaceholder = 'Find a chat', groups = [], pinned = [], empty = 'Your chats show here.', nav = [], foot = [] } = {}) {
+function sidebar({ id = 'ovt-chats', label = 'Your chats', newHref = null, newLabel = 'New chat', find = true, findAction = '', findPlaceholder = 'Find a chat', findSubmit = false, groups = [], pinned = [], empty = 'Your chats show here.', nav = [], foot = [] } = {}) {
     const item = (c) => ({ href: c.href, label: clip(c.title, 80), here: !!c.current, dot: c.dot || (c.live ? 'busy' : null), meta: c.dot || c.live ? '' : (c.meta || ''), mark: c.mark || '' });
     const sections = [
         ...(pinned && pinned.length ? [{ title: 'Pinned', items: pinned.map(item) }] : []),
         ...groups.filter((g) => g && g.items && g.items.length).map((g) => ({ title: g.name, items: g.items.map(item) })),
     ];
-    return kit.sidebar({
+    const html = kit.sidebar({
         id, label,
         action: newHref ? { href: newHref, label: newLabel, icon: 'plus' } : null,
         find: find ? { action: findAction || newHref || '', name: 'q', placeholder: findPlaceholder, label: findPlaceholder } : null,
@@ -100,6 +101,7 @@ function sidebar({ id = 'ovt-chats', label = 'Your chats', newHref = null, newLa
         sections: sections.length ? sections : [{ title: '', items: [], empty }],
         foot: foot.length ? `<p class="ovt-side-foot">${foot.map((f) => `<a href="${esc(f.href)}">${esc(f.label)}</a>`).join('')}</p>` : '',
     });
+    return findSubmit ? html : html.replace('<form class="ovk-sidebar-find"', '<form class="ovk-sidebar-find" data-ovt-filter-only');
 }
 
 /**
