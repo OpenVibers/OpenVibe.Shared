@@ -30,6 +30,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <label>Many <select id="many" name="many" multiple><option>a</option><option>b</option><option>c</option></select></label>
 <label>Long <select id="long" name="long"><optgroup label="Small">${LONG.slice(0, 6).map((x) => `<option>${x}</option>`).join('')}</optgroup><optgroup label="Big">${LONG.slice(6).map((x) => `<option>${x}</option>`).join('')}</optgroup></select></label>
 <span data-ov-native><select id="raw" name="raw"><option>x</option></select></span>
+<span class="chip" style="display:inline-flex;gap:4px;border:1px solid #888;border-radius:99px;padding:4px 10px">● <select id="bare" name="bare" data-ov-select="bare"><option>Quick</option><option>Deep</option></select> ▾</span>
 <label><input type="checkbox" role="switch" id="sw"> A switch</label>
 <button id="send">Send</button>
 </form>
@@ -64,6 +65,8 @@ const key = (k, target = 'document.activeElement') => `(${target}).dispatchEvent
         assert.strictEqual(await p.evaluate("document.getElementById('agent').classList.contains('ov-sel-native')"), true, 'the select is enhanced');
         assert.strictEqual(await p.evaluate(`${btn}.textContent.trim()`), 'Choose…');
         assert.strictEqual(await p.evaluate("!!document.querySelector('#raw + .ov-sel')"), false, 'data-ov-native keeps the browser\'s own');
+        assert.deepStrictEqual(await p.evaluate("(() => { const b = document.querySelector('#bare + .ov-sel'); const cs = getComputedStyle(b); return [b.classList.contains('is-bare'), cs.borderTopWidth, cs.backgroundColor, getComputedStyle(b.querySelector('.ov-sel-chev')).display]; })()"),
+            [true, '0px', 'rgba(0, 0, 0, 0)', 'none'], 'a bare select keeps its chip\'s look: no box, no chevron');
         assert.strictEqual(await p.evaluate(`${btn}.getAttribute('aria-labelledby').split(' ').some((id) => document.getElementById(id) && document.getElementById(id).tagName === 'LABEL')`), true, 'the button is named by the select\'s label');
         assert.strictEqual(await p.evaluate(`${btn}.getBoundingClientRect().width === document.getElementById('f').getBoundingClientRect().width`), true, 'a full-width select gives a full-width button');
 

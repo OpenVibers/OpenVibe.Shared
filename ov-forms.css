@@ -40,6 +40,12 @@
 .ov-sel-chev svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; }
 .ov-sel[aria-expanded="true"] .ov-sel-chev svg { transform: rotate(180deg); }
 .ov-sel .ov-sel-badge { margin-inline-start: auto; }
+/* data-ov-select="bare": the chip or toolbar around it is the box (4.109.1); the list is still OpenVibe's. */
+.ov-sel.is-bare { min-height: 0; padding: 0; gap: 6px; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; box-shadow: none; }
+.ov-sel.is-bare .ov-sel-chev, .ov-sel.is-bare .ov-sel-badge { display: none; }
+.ov-sel.is-bare:hover:not(:disabled) { border-color: transparent; }
+.ov-sel.is-bare:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ovf-accent) 45%, transparent); }
+.ov-sel.is-bare[aria-expanded="true"] { box-shadow: none; }
 .ov-sel-native {
     position: absolute !important; width: 1px !important; height: 1px !important; min-width: 0 !important; min-height: 0 !important;
     margin: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0 !important; pointer-events: none !important;

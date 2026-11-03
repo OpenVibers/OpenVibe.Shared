@@ -51,6 +51,7 @@ None of these change a size: every rule is `:where()`, so a site's own rule alwa
 | `data-placeholder` | the button's words when nothing is chosen (a multiple select) |
 | `multiple` | rows with boxes; the list stays open, and the button says "a, c" or "3 chosen" |
 | `size="5"` | stays the browser's list box: it is already a list on the page |
+| `data-ov-select="bare"` | no box, chevron or badge of its own: for a select inside a chip or a toolbar (4.109.1) |
 | `data-ov-native` | stays the browser's own (also on any ancestor) |
 
 Groups (`<optgroup>`) are headings in the list. A `required` select left empty marks its button and takes the focus:

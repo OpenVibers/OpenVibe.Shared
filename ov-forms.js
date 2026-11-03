@@ -18,6 +18,8 @@
  *     data-ov-native          keep the browser's own select (also on any ancestor, or <html data-ov-forms="off">)
  *     data-ov-search="on|off" a search box (on by itself from 9 choices)
  *     data-ov-title="…"       the phone sheet's title (else the select's label)
+ *     data-ov-select="bare"   no box of its own and no chevron: a select inside a chip or a toolbar keeps that look,
+ *                             and only its list is OpenVibe's (4.109.1)
  *
  *   OVForms.enhance(root)     every select under root (the navbar calls it once the page settles, and for new markup)
  *   OVForms.refresh(select)   read the select again (its options changed in a way the page did not announce)
@@ -107,11 +109,13 @@
             'grid-column', 'grid-row', 'order', 'max-width', 'vertical-align', 'font-size', 'border-radius'];
         for (const p of keep) { const v = cs.getPropertyValue(p); if (v && v !== 'auto' && v !== 'normal' && v !== '0px' && v !== 'none') btn.style.setProperty(p, v); }
         if (cs.display === 'block' || cs.display === 'flex' || cs.display === 'grid') btn.classList.add('is-block');
+        const bare = s.dataset.ovSelect === 'bare';
+        if (bare) btn.classList.add('is-bare');
         const pw = parent ? parent.clientWidth - parseFloat(root.getComputedStyle(parent).paddingLeft || 0) - parseFloat(root.getComputedStyle(parent).paddingRight || 0) : 0;
-        if (s.offsetWidth && pw && s.offsetWidth >= pw - 1) btn.classList.add('is-full');
-        else if (s.offsetWidth) btn.style.minWidth = `${s.offsetWidth}px`;
+        if (s.offsetWidth && pw && s.offsetWidth >= pw - 1 && !bare) btn.classList.add('is-full');
+        else if (s.offsetWidth && !bare) btn.style.minWidth = `${s.offsetWidth}px`;
         // Inside an .ov-field the field's own height rules (44 px, the same as its text inputs); elsewhere the select's.
-        if (s.offsetHeight && !s.closest('.ov-field')) btn.style.minHeight = `${s.offsetHeight}px`;
+        if (s.offsetHeight && !s.closest('.ov-field') && !bare) btn.style.minHeight = `${s.offsetHeight}px`;
         if (s.className) btn.dataset.from = s.className.slice(0, 120);
         s.insertAdjacentElement('afterend', btn);
         s.classList.add('ov-sel-native');
