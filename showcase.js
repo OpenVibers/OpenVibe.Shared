@@ -461,7 +461,7 @@ html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow
 .sc-hero.sc-has-orbit .sc-hero-vis{order:-1;position:static;width:auto;opacity:1;pointer-events:auto;margin:0 0 6px}
 .sc-hero.sc-has-orbit .sc-vis{width:min(70vw,250px)}
 .sc-hero.sc-has-orbit .sc-orb-core .sc-vis-mark{width:50px!important;height:50px!important}
-.sc-orb-node{width:32px;height:32px;margin:-16px}.sc-orb-node.is-big{width:42px;height:42px;margin:-21px}.sc-orb-name{font-size:10.5px}
+.sc-orb-node{width:32px;height:32px;margin:-16px}.sc-orb-node.is-big{width:44px;height:44px;margin:-22px}.sc-orb-name{font-size:10.5px}
 }
 
 .sc-hero,.sc-sec,.sc-cta{max-width:1080px;margin:0 auto;padding:0 24px;font-family:var(--ov-font,'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif)}

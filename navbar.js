@@ -77,10 +77,13 @@
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px; }
                 /* 4.46.0 (the fleet tap audit): Sign In, the menu and the orb reach 44px to a finger, still drawn as before. */
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
-                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -6px 0; }
+                /* 4.107.2 (the 11-03 re-audit): Sign In measured 40px tall; 9px above and below makes 45. */
+                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -9px 0; }
                 .openvibe-navbar .ovnav-burger::after { content: ''; position: absolute; inset: -3px -5px; }
-                /* The orb grows up and down only a little sideways: the site's name sits 8px from it and keeps its own taps. */
-                .openvibe-navbar .ovnav-orb::after { content: ''; position: absolute; inset: -6px -4px; }
+                /* The orb grows up and down, and sideways mostly to the right: the site's name sits 8px to its left and keeps
+                   its own taps (4px there); the extra width goes to the open bar on its right (12px), so it measures 44px
+                   wide on a phone (it was 36.9 in the 11-03 re-audit). */
+                .openvibe-navbar .ovnav-orb::after { content: ''; position: absolute; inset: -6px -12px -6px -4px; }
             }
             .openvibe-navbar .ovnav-dd { position: relative; display: inline-flex; flex: none; }
             .openvibe-navbar .ovnav-dd-menu { display: none; position: fixed; top: 56px; left: 0; min-width: 180px; padding: 5px; border-radius: 12px; z-index: 1002; background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 44px rgba(0,0,0,.45); flex-direction: column; gap: 2px; }
