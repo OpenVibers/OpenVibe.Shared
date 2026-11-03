@@ -65,6 +65,11 @@
     color: var(--ovf-text); background: var(--ovf-surface);
     font-family: inherit; font-size: 14px; line-height: 1.35; text-align: start;
 }
+/* In the top layer (4.109.2) the list is a popover: the browser's own popover box (centred, bordered, padded) is undone. */
+.ov-sel-pop[popover], .ov-sel-sheet[popover], .ov-sel-scrim[popover] { margin: 0; inset: auto; }
+.ov-sel-pop[popover] { padding: 6px; border: 1px solid var(--ovf-line); overflow: hidden; }
+.ov-sel-sheet[popover] { left: 0; right: 0; bottom: 0; width: auto; max-width: none; border: 0; }
+.ov-sel-scrim[popover] { inset: 0; width: auto; height: auto; padding: 0; border: 0; }
 .ov-sel-pop *, .ov-sel-sheet *, .ov-sel-pop *::before, .ov-sel-sheet *::after { box-sizing: border-box; }
 .ov-sel-pop {
     position: fixed; max-width: min(460px, calc(100vw - 16px)); padding: 6px; overflow: hidden;

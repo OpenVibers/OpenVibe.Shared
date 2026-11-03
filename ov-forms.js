@@ -249,9 +249,10 @@
         if (sheet) {
             st.scrim = el('div', 'ov-sel-scrim');
             st.scrim.addEventListener('click', () => close(true));
-            doc.body.append(st.scrim, wrap);
+            raise(st.scrim, st.btn);
+            raise(wrap, st.btn);
             doc.documentElement.classList.add('ov-sel-locked');
-        } else doc.body.appendChild(wrap);
+        } else raise(wrap, st.btn);
         draw(st);
         st.btn.setAttribute('aria-expanded', 'true');
         st.btn.setAttribute('aria-controls', `${st.id}-pop`);
@@ -270,6 +271,21 @@
             const row = e.target.closest('.ov-sel-opt');
             if (row && row.getAttribute('aria-disabled') !== 'true') choose(st, Number(row.dataset.i));
         });
+    }
+
+    /**
+     * Put the list where it is seen and can be touched (4.109.2): inside the modal <dialog> or the fullscreen element
+     * the select is in (else the body), and in the top layer when the browser has popovers, so it opens over the
+     * dialog, a fullscreen player, and anything with a z-index.
+     */
+    const POPOVER = typeof root.HTMLElement === 'function' && typeof root.HTMLElement.prototype.showPopover === 'function';
+    function raise(node, from) {
+        // A modal dialog makes everything outside it inert, top layer or not: the list lives inside the dialog.
+        const host = (from && from.closest('dialog[open]')) || (doc.fullscreenElement && doc.fullscreenElement.contains(from) ? doc.fullscreenElement : null) || doc.body;
+        host.appendChild(node);
+        if (!POPOVER) return;
+        node.setAttribute('popover', 'manual');
+        try { node.showPopover(); } catch { node.removeAttribute('popover'); }
     }
 
     function last(st, items) { for (let k = items.length - 1; k >= 0; k--) if (!items[k].disabled) return items[k].i; return null; }
@@ -383,7 +399,8 @@
         const wrap = st.wrap; const scrim = st.scrim;
         st.wrap = null; st.list = null; st.scrim = null; st.input = null;
         doc.documentElement.classList.remove('ov-sel-locked');
-        const gone = () => { if (wrap) wrap.remove(); if (scrim) scrim.remove(); };
+        const drop = (n) => { if (!n) return; try { if (n.matches(':popover-open')) n.hidePopover(); } catch { /* not a popover */ } n.remove(); };
+        const gone = () => { drop(wrap); drop(scrim); };
         if (wrap) wrap.classList.remove('is-open');
         if (scrim) scrim.classList.remove('is-open');
         if (st.sheet && !reduce()) setTimeout(gone, 220); else gone();

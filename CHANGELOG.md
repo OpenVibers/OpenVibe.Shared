@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.109.2 — 2026-11-03
+
+- **A select inside a modal dialog or a fullscreen player opens over it.** The list (menu or phone sheet) used to be
+  added to the body. A modal `<dialog>` such as the kit's sheets made it inert, and a fullscreen element hid it.
+  - It now goes inside the dialog or the fullscreen element the select is in.
+  - Where the browser supports popovers, it opens in the top layer, above any z-index.
+  - The browser's own popover box is undone.
+  - `test/ov-forms-chrome.test.js` covers a select in a modal dialog: the list is seen, a choice lands, the dialog
+    stays open.
+
 ## 4.109.1 — 2026-11-03
 
 - **`data-ov-select="bare"`: a select inside a chip or a toolbar keeps that look.** It gets no box, chevron or badge of

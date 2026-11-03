@@ -34,6 +34,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <label><input type="checkbox" role="switch" id="sw"> A switch</label>
 <button id="send">Send</button>
 </form>
+<dialog id="dlg"><label for="indlg">In a dialog</label><select id="indlg"><option>one</option><option>two</option></select></dialog>
 <script>window.__changes = 0; document.getElementById('agent').addEventListener('change', () => window.__changes++);
 document.getElementById('f').addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(e.target); window.__sent = { agent: d.get('agent'), many: d.getAll('many'), long: d.get('long') }; });</script>
 <script src="/ov-forms.js"></script></body></html>`;
@@ -124,6 +125,19 @@ const key = (k, target = 'document.activeElement') => `(${target}).dispatchEvent
         await p.evaluate("document.getElementById('f').requestSubmit()");
         assert.strictEqual(await p.evaluate(`${btn}.classList.contains('is-invalid')`), true, 'an empty required select marks its button');
         assert.strictEqual(await p.evaluate(`document.activeElement === ${btn}`), true, 'and takes the focus');
+
+        // A select inside a modal dialog opens over it (the top layer), and can be chosen from.
+        await p.evaluate("document.getElementById('dlg').showModal()");
+        await wait(60);
+        await p.evaluate("document.querySelector('#indlg + .ov-sel').click()");
+        await wait(80);
+        const seen = await p.evaluate("(() => { const pop = document.querySelector('.ov-sel-pop'); if (!pop) return 'no pop'; const r = pop.getBoundingClientRect(); const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return pop.contains(hit) ? true : JSON.stringify({ r: [r.left, r.top, r.width, r.height], open: pop.matches(':popover-open'), hit: hit && (hit.id || hit.className || hit.tagName), cs: getComputedStyle(pop).opacity }); })()");
+        assert.strictEqual(seen, true, `the list is seen over a modal dialog: ${seen}`);
+        await p.evaluate("document.querySelectorAll('.ov-sel-pop .ov-sel-opt')[1].click()");
+        await wait(60);
+        assert.strictEqual(await p.evaluate("document.getElementById('indlg').value"), 'two', 'and a choice in it lands');
+        assert.strictEqual(await p.evaluate("document.getElementById('dlg').open"), true, 'without closing the dialog');
+        await p.evaluate("document.getElementById('dlg').close()");
 
         // Markup added later is enhanced too.
         await p.evaluate("document.body.insertAdjacentHTML('beforeend', '<select id=\"late\"><option>x</option><option>y</option></select>')");
