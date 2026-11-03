@@ -4,6 +4,17 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.107.1 — 2026-11-03
+
+- **Legal pages draw the brand in its own font on every site.** `legal.page()` loaded the theme loader, the navbar and
+  the footer from openvibe.network, so the navbar asked openvibe.network for its brand font too, and sites whose CSP
+  allows fonts only from themselves (Connect, Cam, Surf, Tips, Zone) refused it: their `/terms`, `/privacy` and
+  `/dmca` showed the name in the system font. Every site serves openvibe-shared at `/shared/`, and the page now loads
+  the three scripts from there.
+- **The public and service pages carry the day they were written.** They said "Last updated September 18, 2026", the
+  template's date, though their words are from 2026-11-03. A profile written later carries its own date
+  (`PROFILE_UPDATED`); the older profiles keep theirs.
+
 ## 4.107.0 — 2026-11-03
 
 - **Two legal profiles for sites the old ones did not fit.** Ten sites served no `/terms`, `/privacy` or `/dmca`
