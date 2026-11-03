@@ -33,12 +33,14 @@ function siteOf(id) {
     if (d) return { id, name: d.name, tagline: d.tagline };
     const m = JSON.parse(fs.readFileSync(path.join(SERVICES, `${id}.json`), 'utf8'));
     if (!m.site) throw new Error(`${id}: no site block`);
-    return { id, name: m.site.name, tagline: m.site.tagline || '' };
+    return { id, name: m.site.name, tagline: m.site.tagline || '', domains: m.domains || [] };
 }
 
-/** The product's full name: "OpenVibe." + the site name, unless it already carries its own ("OpenRestream"). */
-function productName(name) {
-    return /^Open(Re)(.+)$/.test(name) ? name : `OpenVibe.${name}`;
+/** The product's full name: "OpenVibe." + the site name, unless it already carries its own ("OpenRestream") or lives on
+ *  its own open.<tld> domain (open.shoes → "Open.Shoes"). */
+function productName(name, domains = []) {
+    if (/^Open(Re)(.+)$/.test(name)) return name;
+    return /^open\.[a-z]+$/.test(domains[0] || '') ? `Open.${name}` : `OpenVibe.${name}`;
 }
 
 (async () => {
@@ -49,7 +51,7 @@ function productName(name) {
     for (const id of serviceIds()) {
         const site = siteOf(id);
         const variant = social.iconSite(id);
-        sites[id] = { name: productName(site.name), description: site.tagline, icon: variant };
+        sites[id] = { name: productName(site.name, site.domains), description: site.tagline, icon: variant };
         variants.add(variant);
     }
     for (const variant of [...variants].sort()) {

@@ -102,6 +102,10 @@ function pngSize(buf) {
         const openre = await (await fetch(base + serve.manifestUrl('openre'))).json();
         assert.strictEqual(openre.name, 'OpenRestream');
         assert.strictEqual(openre.short_name, 'OpenRestream');
+        // A site on its own open.<tld> domain installs under that name (11-02: open.shoes was "OpenVibe.Shoes").
+        const shoes = await (await fetch(base + serve.manifestUrl('shoes'))).json();
+        assert.strictEqual(shoes.name, 'Open.Shoes');
+        assert.strictEqual(shoes.short_name, 'Open.Shoes');
 
         assert.strictEqual((await fetch(base + '/shared/manifest/nope.webmanifest')).status, 404);
         assert.strictEqual((await fetch(base + '/shared/manifest/wiki.png')).status, 404);

@@ -4,6 +4,14 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.106.3 — 2026-11-02
+
+- **A site on its own open.<tld> domain is named for it.** open.shoes read "OpenVibe.Shoes" in the bar and its name
+  linked to openvibe.shoes (the owner's screenshot). The navbar now reads `<sub>.open.<tld>` hosts as Open.<Tld>, and a
+  config can say `brand: { core: 'Open' }` itself off the domain (localhost, previews). The brand carries its front door
+  as `apex` (open.shoes, openre.stream, openvibe.<tld>), and the name's links go there. The footer's fallback and the
+  installed app's name (`icons/sites.json`, from the manifest's first domain) say Open.Shoes too.
+
 ## 4.106.2 — 2026-11-02
 
 - **The site's name reads whole on a signed-in phone.** On openvibe.live a phone showed "Li…" beside the balances, the
