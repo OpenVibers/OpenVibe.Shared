@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.108.1 — 2026-11-03
+
+- **A page named after a domain keeps its Markdown twin in llms.txt.** 4.108.0 counted any last segment with a dot as a
+  file, so Help's `/sites/openvibe.blog` and Host's `/catalog/domains/co.uk` kept their HTML URLs.
+  `/sites/openvibe.community` got its twin only because ".community" is longer than eight letters. Now only a real
+  file ending (json, xml, txt, png, html, …) makes a file. `test/llms-markdown-links.test.js`.
+
 ## 4.108.0 — 2026-11-03
 
 - **llms.txt can link a site's own pages at their Markdown twins, and only those** (AGT-5). `seo.llmsTxt({ markdown:
