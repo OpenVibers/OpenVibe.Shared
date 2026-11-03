@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.107.0 — 2026-11-03
+
+- **Two legal profiles for sites the old ones did not fit.** Ten sites served no `/terms`, `/privacy` or `/dmca`
+  because no profile told the truth about them: `info` says the site is not open yet, and `tools` promises uploads
+  deleted within the hour. `public` is an open, read-only site with no account (search, reports, domain prices).
+  `service` is a personal tool or API that keeps what you make with your account. A service site says in its own
+  words what it does (`what`) and keeps (`makes`), whether it fetches addresses people give it (`fetches`) and whether
+  it sends what they give it to AI models (`ai`), and names any extra processors (`processors`). `legal.PROFILES` lists
+  every profile. `test/legal-profiles.test.js` covers them.
+
 ## 4.106.3 — 2026-11-02
 
 - **A site on its own open.<tld> domain is named for it.** open.shoes read "OpenVibe.Shoes" in the bar and its name
