@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.108.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.109.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -807,6 +807,15 @@ open, no credentials), which gathers OpenVibe.Inventory, OpenVibe.Quest and Open
 to OpenVibe's own https hosts, pictures only from openvibe.media and openvibe.network; a private profile shows its name
 and picture; no answer leaves the fallback link. `window.OpenVibeProfilePanelConfig = { api }` points it at another
 Network (development).
+
+### Forms (`ov-forms.js`, `ov-forms.css`)
+
+OpenVibe's own select and form controls on every site: the navbar loads them on a page with a form control. Every
+`<select>` becomes a button that opens a menu on a computer and a sheet on a phone. The hidden select keeps the value,
+so forms, `select.value` and `change` listeners work as before. An option can say more: `data-desc`, `data-badge`,
+`data-state` and a `data-href` setup link. Checkboxes, radios and sliders take the site's accent; `role="switch"` is a
+switch; `.ov-field`, `.ov-input` and `.ov-choice` are the full field look. Turn it off with `data-ov-native` or
+`<html data-ov-forms="off">`. See [docs/forms.md](docs/forms.md).
 
 ## Development
 
