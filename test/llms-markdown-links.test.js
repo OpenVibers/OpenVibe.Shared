@@ -36,4 +36,11 @@ const old = seo.llmsTxt({ name: 'X', markdown: true, sections: [{ title: 'P', li
 assert.deepStrictEqual(links(old), ['https://example.com/index.md', 'https://example.com/openapi.json']);
 // Without markdown nothing changes.
 assert.deepStrictEqual(links(seo.llmsTxt({ name: 'X', sections: [{ title: 'P', links: [{ title: 'Hot', url: '/hot' }] }] })), ['/hot']);
+// 4.108.1: a page named after a domain is a page; only a real file ending makes a file.
+const domains = seo.llmsTxt({ name: 'Help', markdown: true, base: 'https://openvibe.help', sections: [{ title: 'Sites', links: [
+    { title: 'Blog', url: 'https://openvibe.help/sites/openvibe.blog' }, { title: 'Community', url: 'https://openvibe.help/sites/openvibe.community' },
+    { title: 'UK', url: '/catalog/domains/co.uk' }, { title: 'Data', url: '/export.CSV' }, { title: 'Old page', url: '/legacy/index.html' }, { title: 'v2.1', url: '/releases/v2.1' },
+] }] });
+assert.deepStrictEqual(links(domains), ['https://openvibe.help/sites/openvibe.blog.md', 'https://openvibe.help/sites/openvibe.community.md',
+    '/catalog/domains/co.uk.md', '/export.CSV', '/legacy/index.html', '/releases/v2.1.md']);
 console.log('llms markdown links: ok');

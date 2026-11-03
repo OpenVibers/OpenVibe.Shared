@@ -276,9 +276,16 @@ function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true
     return lines.join('\n') + '\n';
 }
 
+// The endings that make a path a file rather than a page (4.108.1). Any dot used to count, so a page named after a
+// domain (Help's /sites/openvibe.blog, Host's /catalog/domains/co.uk) lost its twin, unless its ending was longer
+// than eight letters (/sites/openvibe.community kept it).
+const FILE_EXT = new Set(('txt md json jsonl xml rss atom csv tsv yaml yml toml ics vcf webmanifest html htm js mjs cjs css map wasm '
+    + 'png jpg jpeg gif webp avif svg ico bmp tif tiff heic pdf zip gz tgz tar bz2 xz 7z rar dmg exe msi deb rpm apk '
+    + 'mp3 mp4 m4a m4v webm ogg oga ogv wav flac mov avi mkv m3u8 ts srt vtt woff woff2 ttf otf eot sh ps1 py').split(' '));
+
 /**
  * Whether llms.txt's markdown mode links `url` at its Markdown twin: one of the site's own pages. A file (a last path
- * segment with an extension: /openapi.json, /feed.xml, /llms-full.txt), an /api/ or /.well-known/ path and, when
+ * segment with a file ending: /openapi.json, /feed.xml, /llms-full.txt), an /api/ or /.well-known/ path and, when
  * `base` is given, another origin's link keep their URL (4.108.0; before, /openapi.json became /openapi.json.md).
  */
 function twinnable(url, base) {
@@ -287,7 +294,9 @@ function twinnable(url, base) {
     if (!/^https?:$/.test(u.protocol)) return false;
     if (base && /^([a-z][a-z0-9+.-]*:|\/\/)/i.test(String(url)) && u.origin !== new URL(base).origin) return false;
     if (/^\/(api|\.well-known)(\/|$)/.test(u.pathname)) return false;
-    return !/\.[a-z0-9]{1,8}$/i.test(u.pathname.split('/').pop());
+    const last = u.pathname.split('/').pop();
+    const dot = last.lastIndexOf('.');
+    return dot < 0 || !FILE_EXT.has(last.slice(dot + 1).toLowerCase());
 }
 
 /**
