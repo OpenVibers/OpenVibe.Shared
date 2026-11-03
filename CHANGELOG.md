@@ -4,6 +4,12 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.109.1 — 2026-11-03
+
+- **`data-ov-select="bare"`: a select inside a chip or a toolbar keeps that look.** It gets no box, chevron or badge of
+  its own, and only its list (the menu, or the phone sheet) is OpenVibe's. Codes' composer chips use it.
+  `test/ov-forms-chrome.test.js`.
+
 ## 4.109.0 — 2026-11-03
 
 - **OpenVibe's own select and form controls, on every site (`ov-forms.js`, `ov-forms.css`, docs/forms.md).** The owner
