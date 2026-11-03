@@ -4,6 +4,19 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.107.2 — 2026-11-03
+
+- **The last small touch targets in the shared bar and footer reach 44px.** A re-run of the tap audit over every
+  site's home (11-03: 31 of 45 sites with a small target, down from 40 of 42 on 10-29) found these:
+  - Sign In was 40px tall; its invisible hit area now reaches 45px;
+  - the OpenVibe menu's orb was 36.9px wide on a phone; it grows to the right, toward the open bar, so it measures
+    44px while the site's name keeps the taps on its own last letters;
+  - the footer's brand was 33px tall, now 45px;
+  - the orbit's big nodes on a phone were 42px, now 44px.
+  Nothing is drawn differently. `test/tap-areas-chrome.test.js` measures each to a finger with
+  `elementFromPoint`, from 320 to 430px, signed in and out, and checks that the name and the right-hand group keep
+  their own taps.
+
 ## 4.107.1 — 2026-11-03
 
 - **Legal pages draw the brand in its own font on every site.** `legal.page()` loaded the theme loader, the navbar and
