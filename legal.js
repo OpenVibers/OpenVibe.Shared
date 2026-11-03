@@ -199,7 +199,11 @@ const CSS = `*{box-sizing:border-box}body{margin:0;background:var(--bg-primary,#
 .ov-legal a{color:var(--accent-light,var(--accent,#60a5fa))}.ov-legal code{font-size:13.5px;background:var(--bg-secondary,#111826);padding:1px 6px;border-radius:5px}
 .ov-legal-more{display:flex;flex-wrap:wrap;gap:10px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border,rgba(255,255,255,.1))}.ov-legal-more a{padding:8px 14px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px;text-decoration:none;font-weight:600;font-size:14px}`;
 
-/** A complete page: shared theme, navbar and footer, readable without JavaScript. */
+/**
+ * A complete page: shared theme, navbar and footer, readable without JavaScript. The scripts come from the site's own
+ * /shared/ (every site serves openvibe-shared there), so the navbar's brand font and icons load from the same origin and
+ * no site's CSP has to name openvibe.network for them (11-03: Connect, Cam, Surf, Tips and Zone refused the font).
+ */
 function page(kind, site) {
     const d = build(kind, site);
     const url = `https://${site.host}/${kind}`;
@@ -209,10 +213,10 @@ function page(kind, site) {
     return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 ${head}
 ${require('./app-icon').headTags({ site: site.id })}
-<script src="https://openvibe.network/shared/theme-loader.js" defer></script><style>${CSS}</style></head><body>
+<script src="/shared/theme-loader.js" defer></script><style>${CSS}</style></head><body>
 ${require('./frame').noscriptNav({ name: site.name })}
 <main>${article(kind, site)}</main>${require('./footer').ssr({ service: site.service || site.id || 'network', variant: 'compact' })}
-<script src="https://openvibe.network/shared/navbar.js" defer></script><script src="https://openvibe.network/shared/footer.js" defer></script>
+<script src="/shared/navbar.js" defer></script><script src="/shared/footer.js" defer></script>
 <script>addEventListener('DOMContentLoaded',function(){var t=null;try{t=(document.cookie.match(/(?:^|; )ov_token=([^;]*)/)||[])[1]||localStorage.getItem('ov_token')}catch(e){}
 try{OpenVibeNavbar.init({service:${JSON.stringify(site.service || site.id || 'network')},apiBase:'https://openvibe.network',token:t?decodeURIComponent(t):null})}catch(e){}
 try{OpenVibeFooter.init({service:${JSON.stringify(site.service || site.id || 'network')},variant:'compact',mount:'#ov-footer',apiBase:'https://openvibe.network'})}catch(e){}});</script>

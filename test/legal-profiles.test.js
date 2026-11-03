@@ -60,4 +60,8 @@ assert.match(legal.article('privacy', { host: 'openvibe.watch', name: 'W', profi
 assert.match(legal.article('terms', { host: 'openvibe.live', name: 'L', profile: 'streaming' }), /<time datetime="2026-09-18">September 18, 2026<\/time>/);
 assert.deepStrictEqual(legal.PROFILES, ['streaming', 'tools', 'ugc', 'games', 'hosting', 'account', 'info', 'public', 'service']);
 for (const profile of legal.PROFILES) for (const kind of Object.keys(legal.TITLES)) assert.ok(legal.page(kind, { host: 'a.openvibe.network', name: 'A', profile, id: 'network' }).includes('</html>'));
+// The page loads the shared scripts from the site's own /shared/, never another origin.
+const html = legal.page('terms', { host: 'openvibe.zone', name: 'OpenVibe.Zone', profile: 'service', id: 'zone' });
+assert.match(html, /<script src="\/shared\/navbar\.js" defer>/);
+assert.doesNotMatch(html, /src="https:\/\/openvibe\.network\/shared\//);
 console.log('legal profiles: all checks passed');
