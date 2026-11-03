@@ -675,7 +675,7 @@
     }
 
     // ─── Brand from hostname ───────────────────────────────────
-    // Every property is <sub?>.openvibe.<tld> (plus openre.stream). The navbar spells the
+    // Every property is <sub?>.openvibe.<tld> (plus openre.stream and open.<tld>). The navbar spells the
     // whole name — Pastes.OpenVibe.Tools, not "Paste.OpenVibe" — because the subdomain and
     // the TLD are what tell a visitor where they are in the network.
     const TLD_LABELS = {
@@ -728,6 +728,8 @@
         let m = host.match(/^(?:(.+)\.)?openvibe\.([a-z]+)$/);
         if (m) { sub = m[1] && m[1] !== 'www' ? m[1] : null; tld = m[2]; }
         else if ((m = host.match(/^(?:(.+)\.)?openre\.stream$/))) { sub = m[1] && m[1] !== 'www' ? m[1] : null; core = 'OpenRe'; tld = 'stream'; joined = true; }
+        // A site on its own open.<tld> domain (open.shoes) is named for it: Open.Shoes, not OpenVibe.Shoes.
+        else if ((m = host.match(/^(?:(.+)\.)?open\.([a-z]+)$/))) { sub = m[1] && m[1] !== 'www' ? m[1] : null; core = 'Open'; tld = m[2]; }
         // Off-network hosts (localhost, previews): fall back to the service id.
         if (!tld) { tld = SERVICE_TLD[_config.service] || (SERVICE_SUB[_config.service] ? 'tools' : 'network'); sub = SERVICE_SUB[_config.service] || null; }
         // Legacy brandName ("Paste.OpenVibe", "OpenVibe.Live") still steers the segments.
@@ -739,18 +741,21 @@
         }
         if (b.sub !== undefined) sub = b.sub ? String(b.sub).toLowerCase() : null;
         if (b.tld) tld = String(b.tld).toLowerCase();
+        if (b.core && !joined) core = String(b.core);
         const subText = b.subLabel || (sub ? subLabel(sub) : null);
         const tldText = b.tldLabel || (joined ? tld : TLD_LABELS[tld] || titleCase(tld));
         const site = joined ? `${core}${tldText}` : `${core}.${tldText}`;
         const name = b.name || [subText, site].filter(Boolean).join('.');
         const icon = b.icon || _config.brandIcon || null;
         const variant = b.variant || (joined ? 'stream' : tld);
-        return { sub, subText, core, tld, tldText, joined, site, name, short: subText || site, icon, variant, tag: b.tag || null, href: b.href || '/' };
+        // The site's own front door: openre.stream, open.shoes, openvibe.<tld>.
+        const apex = b.apex || (joined ? 'https://openre.stream/' : `https://${core.toLowerCase()}.${tld}/`);
+        return { sub, subText, core, tld, tldText, joined, site, name, short: subText || site, icon, variant, tag: b.tag || null, href: b.href || '/', apex };
     }
 
     /** Where each brand segment goes: sub → this tool, OpenVibe → the network, TLD → the site's apex. */
     function brandLinks(brand) {
-        const apex = brand.joined ? 'https://openre.stream/' : `https://openvibe.${brand.tld}/`;
+        const apex = brand.apex || (brand.joined ? 'https://openre.stream/' : `https://openvibe.${brand.tld}/`);
         if (!brand.subText) return { sub: brand.href, core: brand.href, tld: brand.href, apex };
         return { sub: brand.href, core: brand.joined ? apex : 'https://openvibe.network/', tld: apex, apex };
     }
@@ -769,7 +774,7 @@
         const dot = '<span class="b-dot">.</span>';
         const join = brand.joined ? '' : dot;
         const text = brand.subText
-            ? seg('b-sub', brand.subText, to.sub, brand.name) + dot + seg('b-core', brand.core, to.core, brand.joined ? brand.site : 'OpenVibe Network') + join + seg('b-tld', brand.tldText, to.tld, `All of ${brand.site}`)
+            ? seg('b-sub', brand.subText, to.sub, brand.name) + dot + seg('b-core', brand.core, to.core, brand.core === 'OpenVibe' ? 'OpenVibe Network' : brand.site) + join + seg('b-tld', brand.tldText, to.tld, `All of ${brand.site}`)
             : seg('b-core', brand.core, to.core, brand.name) + join + seg('b-tld', brand.tldText, to.tld, brand.name);
         const mark = brand.icon
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`

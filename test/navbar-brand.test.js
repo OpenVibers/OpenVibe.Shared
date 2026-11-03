@@ -108,6 +108,33 @@ function load(hostname, opts = {}) {
     navbar.init({ service: 'network' });
     assert.strictEqual(navbar.brand().name, 'OpenVibe.VIP');
 }
+{
+    // A site on its own open.<tld> domain is named for it (11-02: open.shoes read "OpenVibe.Shoes"), and its
+    // segments lead to open.shoes, not openvibe.shoes. Shoes' own config (tld + label) keeps that.
+    const { navbar } = load('open.shoes');
+    navbar.init({ service: 'shoes', brand: { tld: 'shoes', tldLabel: 'Shoes' } });
+    const b = navbar.brand();
+    assert.strictEqual(b.name, 'Open.Shoes');
+    assert.strictEqual(b.core, 'Open');
+    assert.strictEqual(b.apex, 'https://open.shoes/');
+    assert.strictEqual(b.variant, 'shoes');
+}
+{
+    // Off the domain (localhost, previews) the config can say so itself.
+    const { navbar } = load('localhost');
+    navbar.init({ service: 'shoes', brand: { core: 'Open', tld: 'shoes', tldLabel: 'Shoes' } });
+    assert.strictEqual(navbar.brand().name, 'Open.Shoes');
+    assert.strictEqual(navbar.brand().apex, 'https://open.shoes/');
+}
+{
+    // openvibe.<tld> and openre.stream keep their front doors.
+    let { navbar } = load('openvibe.live');
+    navbar.init({ service: 'live' });
+    assert.strictEqual(navbar.brand().apex, 'https://openvibe.live/');
+    ({ navbar } = load('openre.stream'));
+    navbar.init({ service: 'openre' });
+    assert.strictEqual(navbar.brand().apex, 'https://openre.stream/');
+}
 // ── off-network hosts fall back to the service id ────────────
 {
     const { navbar } = load('localhost');
