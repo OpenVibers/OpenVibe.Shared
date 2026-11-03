@@ -4,6 +4,16 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.108.0 — 2026-11-03
+
+- **llms.txt can link a site's own pages at their Markdown twins, and only those** (AGT-5). `seo.llmsTxt({ markdown:
+  true })` used to append `.md` to every link, so `/openapi.json` became `/openapi.json.md`, and so did a feed or an
+  API path. Now only the site's own pages get a twin: `/hot` → `/hot.md`, `/` → `/index.md`. Files, `/api/` and
+  `/.well-known/` paths, other schemes and, given the new `base` (the site's origin), other sites' links keep their
+  URL. A page with no twin still takes `html: true`. `optional` writes the llmstxt.org `## Optional` section.
+  `test/llms-markdown-links.test.js`.
+- **The fire name effect reads at WCAG AA on a red-tinted row** (`items.css` #ff7a1f, from #282: it was 4.42:1 on Chat).
+
 ## 4.107.4 — 2026-11-03
 
 - **The profile panel and the user card give a lookup eight seconds, and a failed one is not kept.** A request held

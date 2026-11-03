@@ -276,14 +276,34 @@ function robotsTxt({ sitemaps = [], disallow = [], allow = ['/'], allowAI = true
     return lines.join('\n') + '\n';
 }
 
-/** /llms.txt (llmstxt.org): a markdown map of the site for language-model crawlers. */
-function llmsTxt({ name, summary, details, sections = [], markdown = false, optional = [] } = {}) {
+/**
+ * Whether llms.txt's markdown mode links `url` at its Markdown twin: one of the site's own pages. A file (a last path
+ * segment with an extension: /openapi.json, /feed.xml, /llms-full.txt), an /api/ or /.well-known/ path and, when
+ * `base` is given, another origin's link keep their URL (4.108.0; before, /openapi.json became /openapi.json.md).
+ */
+function twinnable(url, base) {
+    let u;
+    try { u = new URL(url, base || 'https://agent.invalid'); } catch { return false; }
+    if (!/^https?:$/.test(u.protocol)) return false;
+    if (base && /^([a-z][a-z0-9+.-]*:|\/\/)/i.test(String(url)) && u.origin !== new URL(base).origin) return false;
+    if (/^\/(api|\.well-known)(\/|$)/.test(u.pathname)) return false;
+    return !/\.[a-z0-9]{1,8}$/i.test(u.pathname.split('/').pop());
+}
+
+/**
+ * /llms.txt (llmstxt.org): a markdown map of the site for language-model crawlers. `markdown: true` links each of the
+ * site's own pages at its Markdown twin (/hot → /hot.md, / → /index.md); `base` (the site's origin) says which absolute
+ * links are its own. A page with no twin takes `html: true` and keeps its URL, marked "(HTML)". `optional` is the
+ * llmstxt.org "## Optional" section: links an agent may skip when it needs a shorter context.
+ */
+function llmsTxt({ name, summary, details, sections = [], markdown = false, optional = [], base } = {}) {
     const out = [`# ${name}`, '', `> ${String(summary || '').replace(/\s+/g, ' ').trim()}`, ''];
     if (details) out.push(String(details).trim(), '');
+    const href = (l) => (markdown && !l.html && twinnable(l.url, base) ? require('./agent-layer').twinUrl(l.url) : l.url);
     for (const sec of [...sections, ...(optional.length ? [{ title: 'Optional', links: optional }] : [])]) {
         if (!sec || !sec.links || !sec.links.length) continue;
         out.push(`## ${sec.title}`, '');
-        for (const l of sec.links) out.push(`- [${l.title}](${markdown && !l.html ? require('./agent-layer').twinUrl(l.url) : l.url})${l.html ? ' (HTML)' : ''}${l.note ? `: ${String(l.note).replace(/\s+/g, ' ').trim()}` : ''}`);
+        for (const l of sec.links) out.push(`- [${l.title}](${href(l)})${l.html ? ' (HTML)' : ''}${l.note ? `: ${String(l.note).replace(/\s+/g, ' ').trim()}` : ''}`);
         out.push('');
     }
     return out.join('\n');
