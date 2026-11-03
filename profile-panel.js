@@ -29,8 +29,12 @@
 
     function load(username) {
         if (!seen.has(username)) {
-            seen.set(username, fetch(`${api()}/api/v1/profiles/${encodeURIComponent(username)}`, { credentials: 'omit', headers: { Accept: 'application/json' } })
-                .then((r) => (r.ok ? r.json() : null)).then((b) => (b && b.profile) || null).catch(() => null));
+            // At most eight seconds, and a failure is not kept: a request held while Network restarted used to stay in
+            // this map for the page's life, so that person's panel never opened again (11-03, the Live name card).
+            const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined;
+            seen.set(username, fetch(`${api()}/api/v1/profiles/${encodeURIComponent(username)}`, { credentials: 'omit', headers: { Accept: 'application/json' }, signal })
+                .then((r) => (r.ok ? r.json() : null)).then((b) => (b && b.profile) || null)
+                .catch(() => { seen.delete(username); return null; }));
         }
         return seen.get(username);
     }

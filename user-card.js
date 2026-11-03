@@ -94,7 +94,9 @@
         try {
             const headers = {};
             if (_config.token) headers['Authorization'] = `Bearer ${_config.token}`;
-            const res = await fetch(`${_config.apiBase}/api/users/${userId}/card`, { headers, credentials: 'include' });
+            // At most eight seconds: a click never waits on a service that is restarting (11-03).
+            const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined;
+            const res = await fetch(`${_config.apiBase}/api/users/${userId}/card`, { headers, credentials: 'include', signal });
             if (!res.ok) return null;
             const data = await res.json();
             _cache.set(userId, data);
