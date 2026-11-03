@@ -4,6 +4,15 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.107.3 — 2026-11-03
+
+- **On a phone, a site's own room picture sits below the hero, not behind its text.** Under 760px the room drew its
+  picture behind the hero's text at 0.28 opacity. For the default motif (the orbits) that is a backdrop. A site's own
+  picture is usually a sample card of words and numbers, and on 11-03 it ran through the headline on Report ("OpenVibe,
+  honest" over "2 h 14 m"), Domains, Surf, Shoes and Tours. Now a picture that is not the default motif sits below the
+  hero, whole and at full strength; the default motif stays a faint backdrop. `test/room-pic-phone-chrome.test.js`
+  checks both at 360, 390 and 700px.
+
 ## 4.107.2 — 2026-11-03
 
 - **The last small touch targets in the shared bar and footer reach 44px.** A re-run of the tap audit over every

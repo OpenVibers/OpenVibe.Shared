@@ -229,6 +229,10 @@ html.ov-motion [data-ov-reveal].is-in{opacity:1;transform:none}
 @media (max-width:759px){
 .sc-room-hero{grid-template-columns:minmax(0,1fr);margin-inline:-16px;padding-inline:16px;overflow-x:clip}
 .sc-room-pic{position:absolute;z-index:-1;top:-4px;right:-30px;width:168px;opacity:.28;pointer-events:none}
+/* 4.107.3: a site's own picture (anything but the default motif) is a sample card of words and numbers more often than a
+   backdrop: behind the hero's text it ran through the headline (Report, Domains, Surf, Shoes, Tours on 11-03). On a phone
+   it sits below the hero, whole; the default motif stays a faint backdrop. */
+.sc-room-pic:not(:has(> .sc-room-motif)){position:static;z-index:auto;width:auto;opacity:1;margin-top:24px;pointer-events:auto}
 .sc-scene,.sc-scene.is-flip{grid-template-columns:minmax(0,1fr)}.sc-scene.is-flip .sc-scene-text{order:0}
 }
 @media (max-width:599px){.sc-room-chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding:2px 16px;scrollbar-width:none}.sc-room-chips::-webkit-scrollbar{display:none}.sc-room-box input{height:52px;padding-left:18px}}
