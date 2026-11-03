@@ -4,6 +4,13 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.107.4 — 2026-11-03
+
+- **The profile panel and the user card give a lookup eight seconds, and a failed one is not kept.** A request held
+  while Network restarted in a deploy round stayed in the panel's map for the page's life, so that person's panel never
+  opened again until a reload (11-03, found with Live's name card). Now each lookup has an eight-second limit and a
+  failure is forgotten, so the next click asks again. `test/card-fetch-limits.test.js`.
+
 ## 4.107.3 — 2026-11-03
 
 - **On a phone, a site's own room picture sits below the hero, not behind its text.** Under 760px the room drew its
