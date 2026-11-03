@@ -28,6 +28,9 @@
 // ═══════════════════════════════════════════════════════════════
 const UPDATED = '2026-09-18';
 const UPDATED_TEXT = 'September 18, 2026';
+// A profile written later carries the day it was written, so its pages never claim an older date (11-03).
+const PROFILE_UPDATED = { public: ['2026-11-03', 'November 3, 2026'], service: ['2026-11-03', 'November 3, 2026'] };
+const updatedOf = (profile) => PROFILE_UPDATED[profile] || [UPDATED, UPDATED_TEXT];
 const CONTACT = 'dmca@openvibe.live';
 const PATHS = ['/terms', '/privacy', '/dmca'];
 const TITLES = { terms: 'Terms of Service', privacy: 'Privacy Policy', dmca: 'DMCA & Copyright' };
@@ -175,14 +178,14 @@ function build(kind, site) {
     const s = Object.assign({ profile: 'info' }, site);
     return { kind, title: `${TITLES[kind]} — ${s.name}`, heading: TITLES[kind],
         description: { terms: `The rules for using ${s.name}, in plain language.`, privacy: `What ${s.name} collects, why, and the choices you have.`, dmca: `How to report copyright infringement on ${s.name}, and how to respond to a report.` }[kind],
-        updated: UPDATED, sections: BUILDERS[kind](s) };
+        updated: updatedOf(s.profile)[0], updatedText: updatedOf(s.profile)[1], sections: BUILDERS[kind](s) };
 }
 
 /** Article markup only, for sites that wrap it in their own layout. */
 function article(kind, site) {
     const d = build(kind, site);
     const others = Object.keys(TITLES).filter(k => k !== kind);
-    return `<article class="ov-legal"><p class="ov-legal-kicker">${esc(site.name)}</p><h1>${esc(d.heading)}</h1><p class="ov-legal-date">Last updated <time datetime="${d.updated}">${UPDATED_TEXT}</time></p>
+    return `<article class="ov-legal"><p class="ov-legal-kicker">${esc(site.name)}</p><h1>${esc(d.heading)}</h1><p class="ov-legal-date">Last updated <time datetime="${d.updated}">${d.updatedText}</time></p>
 <nav class="ov-legal-toc" aria-label="On this page"><ol>${d.sections.map(([h], i) => `<li><a href="#s${i + 1}">${esc(h)}</a></li>`).join('')}</ol></nav>
 ${d.sections.map(([h, html], i) => `<section><h2 id="s${i + 1}">${esc(h)}</h2>${html}</section>`).join('\n')}
 <nav class="ov-legal-more" aria-label="Other policies">${others.map(k => `<a href="/${k}">${esc(TITLES[k])}</a>`).join('')}<a href="https://openvibe.network/">About OpenVibe</a></nav></article>`;
