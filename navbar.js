@@ -491,7 +491,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '2c505c7b96a3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '2c505c7b96a3', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': 'd1ce994449ca', 'ov-forms.css': 'c99414a7ab49' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -555,6 +555,39 @@
             soon = setTimeout(() => { soon = 0; if (loadLabels() && labelWatch) { labelWatch.disconnect(); labelWatch = true; } }, 250);
         });
         labelWatch.observe(document.body, { childList: true, subtree: true });
+    }
+    // ov-forms.js and ov-forms.css (4.109.0, the owner 2026-11-03: "a custom system for those select inputs … shared
+    // across the network and all websites rather than using default stuff"): OpenVibe's own select and form controls,
+    // loaded once the page settles, for a page with a select or a checkbox, radio, slider or file input — now, or the
+    // first time one appears. <html data-ov-forms="off"> keeps the browser's own; data-ov-native keeps one control's.
+    const FORM_CONTROLS = 'select,input[type="checkbox"],input[type="radio"],input[type="range"],input[type="file"]';
+    let formWatch = null;
+    function loadForms() {
+        if (root.OVForms || document.getElementById('ov-forms-loader')) return true;
+        if (document.documentElement.getAttribute('data-ov-forms') === 'off') return true;
+        if (!document.querySelector(FORM_CONTROLS)) return false;
+        try {
+            if (!document.querySelector('link[href*="ov-forms.css"]')) {
+                const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = siblingV('ov-forms.css'); document.head.appendChild(ln);
+            }
+            const sc = document.createElement('script'); sc.id = 'ov-forms-loader'; sc.src = siblingV('ov-forms.js'); sc.async = true; document.head.appendChild(sc);
+        } catch { /* */ }
+        return true;
+    }
+    function watchForms() {
+        if (formWatch || !document.querySelector || typeof MutationObserver !== 'function' || !document.body) return;
+        const go = () => {
+            if (loadForms()) return;
+            let soon = 0;
+            formWatch = new MutationObserver(() => {
+                if (soon) return;
+                soon = setTimeout(() => { soon = 0; if (loadForms() && formWatch) { formWatch.disconnect(); formWatch = true; } }, 250);
+            });
+            formWatch.observe(document.body, { childList: true, subtree: true });
+        };
+        formWatch = true;
+        if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(() => { formWatch = null; go(); }, { timeout: 2000 });
+        else { const t = setTimeout(() => { formWatch = null; go(); }, 1200); if (t && typeof t.unref === 'function') t.unref(); }
     }
     // A box that scrolls (a code block, a wide table, a list held to a height) with nothing focusable inside it cannot be
     // scrolled from a keyboard (WCAG 2.1.1; axe scrollable-region-focusable flagged pages on six sites, 2026-11-02). Each
@@ -1771,7 +1804,7 @@
         }
         // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
-        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers();
+        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) watchForms();
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">

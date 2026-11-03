@@ -4,6 +4,23 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.109.0 — 2026-11-03
+
+- **OpenVibe's own select and form controls, on every site (`ov-forms.js`, `ov-forms.css`, docs/forms.md).** The owner
+  asked for "a custom system for those select inputs … shared across the network and all websites rather than using
+  default stuff", one that works on phones and computers alike.
+  - **The select.** Every `<select>` becomes a button that opens OpenVibe's list: a menu on a computer, a sheet from
+    the bottom on a phone.
+    - The hidden select keeps the value, so forms, `select.value` and `change` listeners work as before.
+    - An option can carry a description, a toned badge, a state dot and a "Set up" link (`data-desc`, `data-badge`,
+      `data-state`, `data-href`).
+    - The list has search from 9 choices, groups, multiple choice and the full keyboard.
+  - **The other controls.** Checkboxes, radios and sliders take the site's accent, and `role="switch"` draws a switch.
+    `.ov-field`, `.ov-input` and `.ov-choice` give the full field look to a page that asks for it.
+  - **Loading.** The navbar loads both files once the page settles, only on a page with a form control.
+    - Turn it off with `<html data-ov-forms="off">`, `navbar.init({ forms: false })`, or `data-ov-native` on a control.
+    - `test/ov-forms-chrome.test.js` covers it.
+
 ## 4.108.1 — 2026-11-03
 
 - **A page named after a domain keeps its Markdown twin in llms.txt.** 4.108.0 counted any last segment with a dot as a
