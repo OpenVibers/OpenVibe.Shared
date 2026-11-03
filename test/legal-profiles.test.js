@@ -54,6 +54,10 @@ const text = (kind, site) => legal.build(kind, site).sections.map(([h, html]) =>
     assert.doesNotMatch(text('terms', { host: 'openvibe.live', name: 'OpenVibe.Live', profile: 'streaming' }), /What you make here|No account needed/);
 }
 
+// Each profile's pages carry the day its words were written.
+assert.strictEqual(legal.build('terms', { host: 'openvibe.report', name: 'R', profile: 'public' }).updated, '2026-11-03');
+assert.match(legal.article('privacy', { host: 'openvibe.watch', name: 'W', profile: 'service' }), /<time datetime="2026-11-03">November 3, 2026<\/time>/);
+assert.match(legal.article('terms', { host: 'openvibe.live', name: 'L', profile: 'streaming' }), /<time datetime="2026-09-18">September 18, 2026<\/time>/);
 assert.deepStrictEqual(legal.PROFILES, ['streaming', 'tools', 'ugc', 'games', 'hosting', 'account', 'info', 'public', 'service']);
 for (const profile of legal.PROFILES) for (const kind of Object.keys(legal.TITLES)) assert.ok(legal.page(kind, { host: 'a.openvibe.network', name: 'A', profile, id: 'network' }).includes('</html>'));
 console.log('legal profiles: all checks passed');
