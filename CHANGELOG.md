@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.111.0 — 2026-11-04
+
+- **`openvibe-shared/vibes-pay` (`vibes-pay.js`): Vibes Pay for any page** (MONEY.md, D12).
+  - `OpenVibe.vibes.pay(payUrl)` opens the sheet in a 520 px popup on a computer and as the full page in a new tab on
+    a phone (a blocked popup falls back to navigating the page). It resolves `{ status }` (plus `charge_id` and
+    `pay_url` when known) from a `postMessage` whose `origin` is `https://openvibe.network` and whose data is
+    `{ type: 'ov-vibes-pay', status, charge_id? }`; a popup closed without a payment resolves `{ status: 'closed' }`.
+    The same result is dispatched as a bubbling `ov-vibes-pay` event on the document. Only
+    `https://openvibe.network/pay/…` URLs are accepted; anything else throws before a window is opened.
+  - `[data-ov-vibes-pay]` elements bind once: the label is "Pay with Vibes", the Vibes green with dark ink and a
+    focus ring (light and dark themes), a 44 px target, disabled while the sheet is open, and re-enabled on the
+    result. `bind(document)` is there for buttons added later; a `MutationObserver` picks them up automatically.
+  - The server side creates the charge with `openvibe-sdk/vibes`. `docs/vibes-pay.md` is the guide; the button is
+    not added to openvibe.design's `/components` page from this repository (that page is OpenVibe.Design's source).
 All notable changes to `openvibe-shared`. Versions follow [semver](https://semver.org/): a
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
