@@ -4,6 +4,49 @@ All notable changes to `openvibe-shared`. Versions follow [semver](https://semve
 breaking change to any exported module, browser global or served file name is a new major.
 A release is the git tag `vX.Y.Z`; consumers pin the tag's tarball (see README).
 
+## 4.110.0 — 2026-11-04
+
+- **`openvibe-shared/config`: sealed secrets, write-only secret routes, env pins and the owner settings'
+  schema (D11 S2).** Every new option is opt-in: without a KEK the store stores, reads and redacts
+  exactly as before and reports `sealed: false`.
+  - **Sealed secrets.** A secret-class value is stored as `v1:<kek_id>:<fingerprint>:<hint>:<bind>:…`:
+    a random 256-bit data key seals the value with AES-256-GCM, the KEK seals that data key, and both
+    use the AAD `service|namespace|key|bind`. `values_json` never holds the plaintext again; `get()`
+    opens the envelope for the service, and a summary, snapshot, history or rollback shows only its
+    marker. The KEKs come from `opts.keks` (`{ current, keys }`) or `OV_CONFIG_KEKS` /
+    `OV_CONFIG_KEK_CURRENT`; a value that is not base64 of exactly 32 bytes refuses startup with an
+    error naming the variable, never the key. Only `node:crypto` is used. The namespace fingerprint
+    key is plain only when no KEK is configured; with one, `config_keys` holds that same key wrapped
+    under the current KEK (AES-256-GCM, AAD `openvibe-config-fingerprint|<service>|<namespace>`), so
+    a database dump has no key that reproduces a fingerprint. It is rewrapped on boot and never
+    changes, so markers and checksums are stable across a KEK rotation and when a KEK is first
+    enabled; `reseal()` recomputes each envelope's fingerprint with it.
+  - **`x-bind`.** A secret property can name another key (`x-bind: "base_url"`); its value joins the
+    AAD, so changing it locks the secret until it is entered again. A copied envelope fails on another
+    key or namespace.
+  - **`reseal()`.** Plaintext secrets and envelopes under an older KEK move to the current KEK,
+    revision by revision, preserving fingerprints and never resurrecting a changed bind. It reports
+    `{ resealed, current, plaintext, locked, errors }` and is a 409 `config.no_kek` without a KEK.
+  - **Write-only routes.** `PUT <base>/:namespace/secrets/:key { value, reason }` and `DELETE …` answer
+    a marker (`fingerprint`, four-character `hint`, `set_at`, `set_by`, `bound_to`), never the value.
+    A normal `POST` may no longer write or unset a secret-class key (422 `config.secret_write_only`); a
+    marker round trip is still allowed.
+  - **Env pins and the summary.** `x-env: "NAME"` makes the env value effective and read-only
+    (`summary().pins`, 409 `config.pinned_in_env`). `summary()` now carries `sealed`, `kek`, `pins`,
+    `secrets` and `schema`; a secret property's `default`, `examples`, `enum` and `const` are removed
+    from the schema copy. The annotations `title`, `description`, `x-group`, `x-env`, `x-danger`,
+    `x-bind` and `x-unit` are checked at creation.
+  - **Hooks.** `onChange({ namespace, keys, actor, revision })` runs after every successful activation
+    (a throwing hook is logged, never fatal); `requireFresh(req, { namespace, keys })` on `adminRoutes`
+    runs before secret writes and `x-danger` keys and answers 403 `config.fresh_required` when false.
+  - `test/config-secrets.test.js` covers the envelopes and their AAD, x-bind and copied envelopes,
+    write-only routes, pins, the summary schema, the hooks, reseal and rotation, that a dump of
+    `config_keys` and the snapshots has no key that reproduces a fingerprint, that the fingerprint is
+    stable across a k1→k2 rotation and a KEK first enabled, that no-KEK markers are unchanged, and
+    that no value reaches a summary, snapshot, history, error, log or `values_json`; the existing test
+    still proves the no-KEK call sites and redaction are unchanged. `npm test`: 129/130 files passed,
+    1 skipped (floating-promises, acorn not installed).
+
 ## 4.109.2 — 2026-11-03
 
 - **A select inside a modal dialog or a fullscreen player opens over it.** The list (menu or phone sheet) used to be
