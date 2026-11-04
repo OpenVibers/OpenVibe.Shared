@@ -534,16 +534,20 @@ function counting(db) {
     res = await call('POST', '/api/admin/config/live.site_settings', { body: { values: { youtube_api_key: 'AIzaNEW' }, merge: true } });
     assertProblem(res.body, 403, 'config.forbidden');
     assert.strictEqual(live.get('youtube_api_key'), SECRET, 'authorize() refused a secret change');
-    res = await call('POST', '/api/admin/config/live.site_settings', { user: 'owner', body: { values: { youtube_api_key: 'AIzaNEW' }, merge: true } });
-    assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.created_by.id, USER2);
+    res = await call('PUT', '/api/admin/config/live.site_settings/secrets/youtube_api_key', { user: 'owner', body: { value: 'AIzaNEW', reason: 'owner key' } });
+    assert.strictEqual(res.status, 200, JSON.stringify(res.body));
+    assert.deepStrictEqual(Object.keys(res.body).sort(), ['bound_to', 'fingerprint', 'hint', 'redacted', 'set_at', 'set_by']);
+    assert.strictEqual(res.body.set_by.id, USER2);
     assert.strictEqual(live.get('youtube_api_key'), 'AIzaNEW');
+    res = await call('POST', '/api/admin/config/live.site_settings', { user: 'owner', body: { values: { youtube_api_key: 'still-write-only' }, merge: true } });
+    assertProblem(res.body, 422, 'config.secret_write_only');
     res = await call('POST', '/api/admin/config/live.site_settings', { user: 'nosubject', body: { values: { mode: 'open' }, merge: true } });
     assertProblem(res.body, 403, 'config.actor_required');
-    failNext = new Error(`Media said no to ${SECRET}`);
-    res = await call('POST', '/api/admin/config/live.site_settings', { user: 'owner', body: { values: { youtube_api_key: SECRET, mode: 'open' }, merge: true } });
+    failNext = new Error('Media said no to AIzaNEW');
+    res = await call('POST', '/api/admin/config/live.site_settings', { user: 'owner', body: { values: { mode: 'open' }, merge: true } });
     assertProblem(res.body, 422, 'config.activation_failed');
     assert.strictEqual(live.get('mode'), 'invite', 'the failure restored the previous values');
+    assert.ok(!JSON.stringify(res.body).includes('AIzaNEW'), 'the activation error is scrubbed');
 
     res = await call('POST', '/api/admin/config/live.site_settings/rollback', { body: { reason: 'undo the key' } });
     assertProblem(res.body, 403, 'config.forbidden');
@@ -625,10 +629,11 @@ function counting(db) {
     direct.list({ url: '/api/admin/config', admin: true }, allowedRes);
     await sleep(5);
     assert.strictEqual(allowedRes.statusCode, 200);
-    assert.strictEqual(direct.routes.length, 5);
+    assert.strictEqual(direct.routes.length, 7);
     assert.deepStrictEqual(direct.routes.map((x) => `${x.method.toUpperCase()} ${x.path}`), [
         'GET /api/admin/config', 'GET /api/admin/config/:namespace', 'GET /api/admin/config/:namespace/history',
         'POST /api/admin/config/:namespace', 'POST /api/admin/config/:namespace/rollback',
+        'PUT /api/admin/config/:namespace/secrets/:key', 'DELETE /api/admin/config/:namespace/secrets/:key',
     ]);
 
     assertNoLeak(logs.join('\n'), (await leakForms(db)).concat(await leakForms(legacyDb)), 'the whole log');

@@ -1,6 +1,6 @@
 'use strict';
 /** Configuration store on an openvibe-sdk/db handle. The store is ready when the promise resolves. */
-const { fromRows, canonical, ConfigError, subjectRef, isPlainObject, makeLog, scrub, errText } = require('./config-core');
+const { fromRows, canonical, ConfigError, subjectRef, isPlainObject, isMarker, makeLog, scrub, errText } = require('./config-core');
 
 function createConfigStore(opts = {}) {
     if (!opts.db || typeof opts.db.prepare !== 'function' || typeof opts.db.tx !== 'function') {
@@ -55,17 +55,23 @@ function readBody(req, limit = 256 * 1024) {
 }
 
 /**
- * adminRoutes(stores, { requireAdmin, basePath, actor, authorize, router, log })
- *   GET  <base>                         every namespace: active revision, values (redacted), last-known-good
- *   GET  <base>/:namespace              one of them
- *   GET  <base>/:namespace/history      ?limit (≤200) &before=<revision>, newest first
- *   POST <base>/:namespace              { values, reason, merge?, unset? } → apply; 422 with errors
- *   POST <base>/:namespace/rollback     { to?, reason } → the new revision
+ * adminRoutes(stores, { requireAdmin, basePath, actor, authorize, requireFresh, router, log })
+ *   GET    <base>                         every namespace: active revision, values (redacted), last-known-good
+ *   GET    <base>/:namespace              one of them
+ *   GET    <base>/:namespace/history      ?limit (≤200) &before=<revision>, newest first
+ *   POST   <base>/:namespace              { values, reason, merge?, unset? } → apply; 422 with errors
+ *   POST   <base>/:namespace/rollback     { to?, reason } → the new revision
+ *   PUT    <base>/:namespace/secrets/:key { value, reason } → the marker (write-only)
+ *   DELETE <base>/:namespace/secrets/:key { reason } → the empty marker (write-only)
  * requireAdmin (a middleware or a list) guards every handler, mounted or called directly. actor(req)
  * names who acts (default: req.user.subject_id and friends; none → 403). authorize(req, { action:
- * 'read' | 'write', namespace, keys }) may refuse more (false → 403). No Express dependency: pass
- * `router` (anything with get/post) or call mount(router), use the handlers, or handle(req, res, next)
- * for a plain http server. The body is req.body when a JSON parser ran, else read from the request.
+ * 'read' | 'write', namespace, keys }) may refuse more (false → 403). requireFresh(req, { namespace,
+ * keys }) runs before a secret write and before a change to an x-danger key; false → 403
+ * config.fresh_required. A normal POST may not carry a secret-class value (422
+ * config.secret_write_only) or an env-pinned key (409 config.pinned_in_env). No Express dependency:
+ * pass `router` (anything with get/post/put/delete) or call mount(router), use the handlers, or
+ * handle(req, res, next) for a plain http server. The body is req.body when a JSON parser ran, else
+ * read from the request.
  */
 function adminRoutes(stores, o = {}) {
     const list = [].concat(stores || []);
@@ -80,6 +86,8 @@ function adminRoutes(stores, o = {}) {
     const basePath = (o.basePath || '/api/admin/config').replace(/\/+$/, '');
     const actorOf = o.actor || defaultActor;
     const authorize = o.authorize || null;
+    const requireFresh = o.requireFresh || null;
+    if (requireFresh !== null && typeof requireFresh !== 'function') throw new TypeError('adminRoutes: requireFresh must be a function');
     const log = makeLog(o.log);
 
     const allowed = async (req, ctx) => !authorize || (await authorize(req, ctx)) !== false;
@@ -90,6 +98,18 @@ function adminRoutes(stores, o = {}) {
         return s;
     }
     const queryOf = (req) => req.query || Object.fromEntries(new URL(req.url || '/', 'http://x').searchParams);
+    const keyList = (keys) => keys.slice(0, 10).join(', ') + (keys.length > 10 ? ` (+${keys.length - 10})` : '');
+    const keyOf = (req) => {
+        let key = (req.params && req.params.key) || '';
+        try { key = decodeURIComponent(key); } catch { /* keep it as it is */ }
+        return key;
+    };
+    /** requireFresh for a secret or x-danger write; absent means no extra gate (nothing new is on). */
+    async function fresh(req, s, keys) {
+        if (!requireFresh) return;
+        const ok = await requireFresh(req, { namespace: s.namespace, keys });
+        if (ok === false) throw new ConfigError('config.fresh_required', 'a fresh sign-in is required for this change', { status: 403 });
+    }
 
     const handlers = {
         async list(req, res) {
@@ -120,6 +140,13 @@ function adminRoutes(stores, o = {}) {
             const opts = { merge: body.merge === true, unset: body.unset || [], actor, reason: body.reason };
             const keys = await s.changes(body.values, opts);
             if (!(await allowed(req, { action: 'write', namespace: s.namespace, keys }))) throw new ConfigError('config.forbidden', 'not allowed to change these keys', { status: 403 });
+            const classes = await s.classes(body.values, opts);
+            // A secret value may not even be carried unchanged through the normal route; a marker may.
+            const carried = Object.entries(body.values).filter(([k, v]) => !isMarker(v) && s.classify(k, v) === 'secret').map(([k]) => k);
+            const secretKeys = [...new Set([...keys.filter((k) => classes[k] === 'secret'), ...carried])];
+            if (secretKeys.length) throw new ConfigError('config.secret_write_only', `secret-class keys are write-only through /secrets: ${keyList(secretKeys)}`, { status: 422 });
+            const danger = keys.filter((k) => s.isDanger(k));
+            if (danger.length) await fresh(req, s, danger);
             send(res, 200, await s.apply(body.values, opts));
         },
         async rollback(req, res) {
@@ -129,9 +156,35 @@ function adminRoutes(stores, o = {}) {
             if (body.to != null && !Number.isInteger(body.to)) throw new ConfigError('config.bad_request', 'to must be a revision number', { status: 400 });
             const actor = await actorOf(req);
             if (!subjectRef(actor)) throw new ConfigError('config.actor_required', 'the request does not name the acting subject', { status: 403 });
-            const keys = await s.changes(null, { revision: await s.rollbackTarget(body.to) });
+            const target = await s.rollbackTarget(body.to);
+            const keys = await s.changes(null, { revision: target });
             if (!(await allowed(req, { action: 'write', namespace: s.namespace, keys }))) throw new ConfigError('config.forbidden', 'not allowed to change these keys', { status: 403 });
-            send(res, 200, await s.rollback({ to: body.to, reason: body.reason, actor }));
+            const classes = await s.classes(null, { revision: target });
+            const gated = [...new Set([...keys.filter((k) => classes[k] === 'secret'), ...keys.filter((k) => s.isDanger(k))])];
+            if (gated.length) await fresh(req, s, gated);
+            send(res, 200, await s.rollback({ to: target, reason: body.reason, actor }));
+        },
+        async secretPut(req, res) {
+            const s = storeFor(req);
+            const key = keyOf(req);
+            if (!(await allowed(req, { action: 'write', namespace: s.namespace, keys: [key] }))) throw new ConfigError('config.forbidden', 'not allowed to change this key', { status: 403 });
+            const body = await readBody(req);
+            if (!isPlainObject(body) || !Object.prototype.hasOwnProperty.call(body, 'value')) throw new ConfigError('config.bad_request', 'the body must be { value, reason }', { status: 400 });
+            const actor = await actorOf(req);
+            if (!subjectRef(actor)) throw new ConfigError('config.actor_required', 'the request does not name the acting subject', { status: 403 });
+            await fresh(req, s, [key]);
+            send(res, 200, await s.setSecret(key, body.value, { actor, reason: body.reason }));
+        },
+        async secretDelete(req, res) {
+            const s = storeFor(req);
+            const key = keyOf(req);
+            if (!(await allowed(req, { action: 'write', namespace: s.namespace, keys: [key] }))) throw new ConfigError('config.forbidden', 'not allowed to change this key', { status: 403 });
+            const body = await readBody(req);
+            if (!isPlainObject(body)) throw new ConfigError('config.bad_request', 'the body must be { reason }', { status: 400 });
+            const actor = await actorOf(req);
+            if (!subjectRef(actor)) throw new ConfigError('config.actor_required', 'the request does not name the acting subject', { status: 403 });
+            await fresh(req, s, [key]);
+            send(res, 200, await s.deleteSecret(key, { actor, reason: body.reason }));
         },
     };
 
@@ -161,12 +214,14 @@ function adminRoutes(stores, o = {}) {
         { method: 'get', path: `${basePath}/:namespace/history`, handler: out.history },
         { method: 'post', path: `${basePath}/:namespace`, handler: out.apply },
         { method: 'post', path: `${basePath}/:namespace/rollback`, handler: out.rollback },
+        { method: 'put', path: `${basePath}/:namespace/secrets/:key`, handler: out.secretPut },
+        { method: 'delete', path: `${basePath}/:namespace/secrets/:key`, handler: out.secretDelete },
     ];
     function mount(router) {
         for (const r of routes) router[r.method](r.path, r.handler);
         return router;
     }
-    /** For a plain http server: dispatches the five routes, calls next() (or answers 404) for anything else. */
+    /** For a plain http server: dispatches the seven routes, calls next() (or answers 404) for anything else. */
     function handle(req, res, next) {
         const url = new URL(req.url || '/', 'http://x');
         const method = String(req.method || 'GET').toLowerCase();
@@ -179,11 +234,15 @@ function adminRoutes(stores, o = {}) {
             else if (parts.length === 1 && method === 'post') m = ['apply', parts[0]];
             else if (parts.length === 2 && parts[1] === 'history' && method === 'get') m = ['history', parts[0]];
             else if (parts.length === 2 && parts[1] === 'rollback' && method === 'post') m = ['rollback', parts[0]];
+            else if (parts.length === 3 && parts[1] === 'secrets' && method === 'put') m = ['secretPut', parts[0], parts[2]];
+            else if (parts.length === 3 && parts[1] === 'secrets' && method === 'delete') m = ['secretDelete', parts[0], parts[2]];
         }
         if (!m) return typeof next === 'function' ? next() : sendProblem(res, 404, 'config.route_not_found', { detail: 'no such configuration route' });
         let ns = m[1] || '';
         try { ns = decodeURIComponent(ns); } catch { /* keep it as it is */ }
-        req.params = { ...(req.params || {}), namespace: ns };
+        const params = { ...(req.params || {}), namespace: ns };
+        if (m[2] !== undefined) { let key = m[2]; try { key = decodeURIComponent(key); } catch { /* keep it as it is */ } params.key = key; }
+        req.params = params;
         if (!req.query) req.query = Object.fromEntries(url.searchParams);
         return out[m[0]](req, res, next);
     }

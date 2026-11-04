@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.109.2 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.110.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -268,6 +268,8 @@ const settings = await config.createConfigStore({
     defaults,                      // revision 1 of a new namespace, and under every revision
     legacy: async () => config.fromRows(await db.all('SELECT * FROM site_settings')),  // revision 1 instead
     onActivate: async (values, previous, { restoring }) => { /* apply it; throw to refuse */ },
+    keks: { current: 'k2', keys: { k1, k2 } },   // 32-byte Buffers; or OV_CONFIG_KEKS / OV_CONFIG_KEK_CURRENT
+    onChange: async ({ namespace, keys, actor, revision }) => { /* the operator alert */ },
     keep: 50, log: console, now: () => new Date(),
 });
 settings.get();                    // defaults overlaid with the active values: frozen, in memory
@@ -280,6 +282,11 @@ await settings.rollback({ actor, reason, to });                 // a new revisio
 await settings.lastKnownGood(); await settings.history({ limit, before }); await settings.snapshot(revision); await settings.summary();
 await settings.import(legacy);           // revision 1 from a legacy source when the namespace has none
 await settings.reload();                 // another process changed it: re-read the active revision
+await settings.setSecret(key, value, { actor, reason });   // the write-only path; returns the marker
+await settings.deleteSecret(key, { actor, reason });       // removes it as a new revision
+await settings.secretMarker(key);        // fingerprint, hint, set_at, set_by, bound_to (or null)
+await settings.reseal();                 // plaintext and old-KEK rows to the current KEK
+settings.sealed; settings.kek;           // false / null without a KEK
 ```
 
 - **Values** are a complete snapshot; `merge: true` starts from the active values and `unset` removes
@@ -295,14 +302,42 @@ await settings.reload();                 // another process changed it: re-read 
   on the last-known-good.
 - **Last-known-good** is the newest revision that activated successfully. Pruning keeps the newest
   `keep` revisions and never the active one or the last-known-good.
-- **Secrets** stay in the row so they can be activated again, but leave only redacted (history,
-  summary, routes, the return values) and never reach the log or a stored error. A redacted value is
-  `{ redacted: true, fingerprint }`: HMAC-SHA256 of its canonical JSON under a random 32-byte key made
-  for the namespace on first use and kept in `config_keys`. The key never leaves the database and is
-  never logged, so equal fingerprints mean an unchanged value while nothing can be guessed offline. A
-  snapshot's `checksum` is the sha256 of its values as shown. Losing the key row only means a new key:
-  older markers stop round-tripping. A key classified secret later is redacted in older revisions too.
-  Errors name the rule, never the value.
+- **Secrets** leave only redacted (history, summary, routes, the return values) and never reach the
+  log or a stored error. A redacted value is `{ redacted: true, fingerprint }`: HMAC-SHA256 of its
+  canonical JSON under a random 32-byte key made for the namespace on first use and kept in
+  `config_keys`. The key never leaves the database and is never logged, so equal fingerprints mean an
+  unchanged value while nothing can be guessed offline. A snapshot's `checksum` is the sha256 of its
+  values as shown. Losing the key row only means a new key: older markers stop round-tripping. A key
+  classified secret later is redacted in older revisions too. Errors name the rule, never the value.
+- **Sealed secrets (D11).** With a KEK, a secret-class value never enters `values_json`: it is stored
+  as a versioned envelope (`v1:<kek_id>:<fingerprint>:<hint>:<bind>:…`) that a random 256-bit
+  data key sealed with AES-256-GCM, itself sealed by the current KEK (AES-256-GCM), with the AAD
+  `service|namespace|key|bind` on both. `get()` opens the envelope for the service (the plaintext
+  lives in memory exactly as before); a summary, snapshot, history entry or rollback shows a marker.
+  - The KEKs come from `opts.keks` (`{ current, keys: { k1: Buffer } }`) or, by default, from
+    `OV_CONFIG_KEKS=k1:<base64 32 bytes>[,k2:…]` and `OV_CONFIG_KEK_CURRENT=k2`. A value that does not
+    decode to exactly 32 bytes refuses startup with an error that names the variable and the KEK id,
+    never a byte of the key. Only `node:crypto` is used.
+  - No KEK means today's behaviour, untouched and unflagged: `sealed: false`, `kek: null`, the value
+    stays in the row. `reseal()` moves plaintext secrets and envelopes under an older KEK to the
+    current KEK revision by revision (it never resurrects one whose bind changed) and reports
+    `{ resealed, current, plaintext, locked, errors }`.
+  - A `v1:…` envelope string is reserved for a stored secret: a value that already parses as an
+    envelope is carried as one (that is also why a copied envelope never opens under another key).
+- **Bind, pins and the summary schema.** A secret property's `x-bind: "<key>"` puts that key's value
+  (e.g. a provider's `base_url`) into the AAD: changing it locks the secret (`get()` gives undefined)
+  until the owner enters it again for the new value. `x-env: "NAME"` pins a key to the process
+  environment: the summary shows the env value with `pinned: true`, and a write to it is 409
+  `config.pinned_in_env`. `summary()` now carries `sealed`, `kek`, `pins`, `secrets` (each secret's
+  marker with its four-character `hint`, `set_at`, `set_by`, `bound_to`) and `schema`, the JSON
+  Schema to draw the form from; a secret property's `default`, `examples`, `enum` and `const` are
+  removed from that copy. The annotations are `title`, `description`, `x-group`, `x-env`, `x-danger`,
+  `x-bind` and `x-unit` (`nano_usd`, `ms`, `bps`).
+- **Hooks.** `onChange({ namespace, keys, actor, revision })` runs after every successful activation
+  (never for a proposal or the seed), and a throwing hook is logged and never refuses the revision.
+  `requireFresh(req, { namespace, keys })`, an `adminRoutes` option, runs before a secret write, a
+  rollback that changes a secret or an `x-danger` key, and a danger write; a false answer is 403
+  `config.fresh_required`.
 - `config.fromRows(rows, { prefix, type })` reads typed key-value rows (`number`, `boolean`, `json`,
   anything else a string), as Live's and Network's `site_settings` and Media's `media_settings` keep them.
 
@@ -311,20 +346,24 @@ config.adminRoutes([settings, other], {
     requireAdmin,                             // a middleware or a list; guards every handler
     actor: (req) => ({ type: 'user', id: req.user.subject_id }),  // default: req.actor, req.subject, req.user.subject(_id)
     authorize: (req, { action, namespace, keys }) => action === 'read' || isOwner(req.user) || !keys.some(isSecret),
+    requireFresh: (req, { namespace, keys }) => isFreshSignIn(req),  // secrets and x-danger keys; false → 403
     basePath: '/api/admin/config',
 }).mount(app);                                // or { router }, the handlers, or handle(req, res, next) on plain http
 ```
 
 | Route | Answer |
 |---|---|
-| `GET /api/admin/config` | `{ namespaces: [{ service, namespace, revision, values, classification, active, last_known_good }] }`, values redacted |
+| `GET /api/admin/config` | `{ namespaces: [{ service, namespace, revision, values, classification, sealed, kek, pins, secrets, schema, active, last_known_good }] }`, values redacted |
 | `GET /api/admin/config/:namespace` | one of them |
 | `GET /api/admin/config/:namespace/history?limit&before` | `{ namespace, snapshots, next_before }`, newest first |
-| `POST /api/admin/config/:namespace` `{ values, reason, merge?, unset? }` | the new active snapshot; 422 `config.invalid` with `errors[]`, 422 `config.activation_failed` |
+| `POST /api/admin/config/:namespace` `{ values, reason, merge?, unset? }` | the new active snapshot; 422 `config.invalid` with `errors[]`, 422 `config.activation_failed`; a secret-class value or unset is 422 `config.secret_write_only`, an env-pinned key 409 `config.pinned_in_env` |
 | `POST /api/admin/config/:namespace/rollback` `{ to?, reason }` | the new active snapshot; 409 `config.no_previous`, `config.not_good` |
+| `PUT /api/admin/config/:namespace/secrets/:key` `{ value, reason }` | the marker `{ redacted, fingerprint, hint, set_at, set_by, bound_to }`; write-only |
+| `DELETE /api/admin/config/:namespace/secrets/:key` `{ reason }` | the empty marker; a new revision without the key |
 
 Errors are `application/problem+json` (`errors.problem@1`). Mount it after a JSON body parser, or
-let it read the body itself.
+let it read the body itself. A normal POST cannot write a secret-class value: the two `/secrets`
+routes are the only write path, and they answer a marker, never the value.
 
 ### Releases: `/release.json`, open tabs and the mixed-version test (ADR-016, Track R)
 
