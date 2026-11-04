@@ -305,10 +305,11 @@ settings.sealed; settings.kek;           // false / null without a KEK
 - **Secrets** leave only redacted (history, summary, routes, the return values) and never reach the
   log or a stored error. A redacted value is `{ redacted: true, fingerprint }`: HMAC-SHA256 of its
   canonical JSON under a random 32-byte key made for the namespace on first use and kept in
-  `config_keys`. The key never leaves the database and is never logged, so equal fingerprints mean an
-  unchanged value while nothing can be guessed offline. A snapshot's `checksum` is the sha256 of its
-  values as shown. Losing the key row only means a new key: older markers stop round-tripping. A key
-  classified secret later is redacted in older revisions too. Errors name the rule, never the value.
+  `config_keys`. The key is never logged; with a KEK it is stored there wrapped, so a database dump
+  has the fingerprint but no key that reproduces it. Equal fingerprints mean an unchanged value. A
+  snapshot's `checksum` is the sha256 of its values as shown. Losing the key row only means a new key:
+  older markers stop round-tripping. A key classified secret later is redacted in older revisions too.
+  Errors name the rule, never the value.
 - **Sealed secrets (D11).** With a KEK, a secret-class value never enters `values_json`: it is stored
   as a versioned envelope (`v1:<kek_id>:<fingerprint>:<hint>:<bind>:…`) that a random 256-bit
   data key sealed with AES-256-GCM, itself sealed by the current KEK (AES-256-GCM), with the AAD
@@ -322,6 +323,17 @@ settings.sealed; settings.kek;           // false / null without a KEK
     stays in the row. `reseal()` moves plaintext secrets and envelopes under an older KEK to the
     current KEK revision by revision (it never resurrects one whose bind changed) and reports
     `{ resealed, current, plaintext, locked, errors }`.
+  - **The fingerprint key.** With no KEK, `config_keys.hmac_key` is today's plain 32-byte namespace
+    key. With a KEK it is the same key sealed under the current KEK there (AES-256-GCM, AAD
+    `openvibe-config-fingerprint|<service>|<namespace>`), never the key itself; the store unwraps it
+    in memory and rewraps it under a new current KEK on boot. The key itself never changes, so markers
+    and checksums do not move across a KEK rotation, or when a KEK is first enabled on an existing
+    namespace. This is the wrapped-key alternative to deriving it from `k1`: a wrapped key does not
+    depend on `k1` surviving a rotation, and enabling a KEK preserves every marker written before it.
+    `reseal()` recomputes each resealed envelope's fingerprint with this stable key.
+  - **Rotation.** Add the new KEK next to the old one and set it current. The first boot rewraps the
+    fingerprint key (the key is unchanged); `reseal()` moves the envelopes to the new KEK and
+    recomputes their fingerprints; then the old KEK can be removed.
   - A `v1:…` envelope string is reserved for a stored secret: a value that already parses as an
     envelope is carried as one (that is also why a copied envelope never opens under another key).
 - **Bind, pins and the summary schema.** A secret property's `x-bind: "<key>"` puts that key's value

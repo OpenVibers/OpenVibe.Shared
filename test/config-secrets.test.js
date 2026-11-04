@@ -9,6 +9,7 @@ try { ({ createDb } = require('openvibe-sdk/db')); } catch { console.log('config
 const express = require('express');
 const { configSchema } = require('../config-pg');
 const { createConfigStore, adminRoutes } = require('../config');
+const { openFingerprintKey } = require('../config-core');
 
 const USER = { type: 'user', id: 'usr_01JAB2C3D4E5F6G7H8J9K0MNPQ' };
 const USER2 = { type: 'user', id: 'usr_01JAB2C3D4E5F6G7H8J9K0MNPR' };
@@ -39,6 +40,7 @@ const SCHEMA = {
 const DEFAULTS = { provider: 'p', base_url: 'https://a.example' };
 const classify = (k) => (/_key$/.test(k) ? 'secret' : undefined);
 const activeRow = async (db, ns) => await db.prepare("SELECT * FROM config_snapshots WHERE namespace = ? AND state = 'active'").get(ns);
+const storedKey = async (db, ns) => Buffer.from((await db.prepare('SELECT hmac_key FROM config_keys WHERE namespace = ?').get(ns)).hmac_key);
 const envelopeOf = async (db, ns, key) => JSON.parse((await activeRow(db, ns)).values_json)[key];
 const noSecret = (text, values, what) => {
     for (const s of values) assert.ok(!String(text).includes(s), `${what} leaks a secret`);
@@ -107,6 +109,22 @@ const noSecret = (text, values, what) => {
     assert.strictEqual(summary.schema.properties.danger_switch['x-danger'], true);
     assert.strictEqual(summary.schema.properties.provider_key['x-bind'], 'base_url');
     assert.strictEqual(summary.schema.properties.price['x-unit'], 'nano_usd');
+    // A database dump (config_keys plus snapshots) has no key that reproduces a fingerprint.
+    const dumpKey = await storedKey(db, 'live.sealed');
+    assert.ok(dumpKey.toString('utf8').startsWith('ovfp.v1.'), 'config_keys holds a KEK-wrapped key, not the fingerprint key');
+    assert.notStrictEqual(dumpKey.length, 32);
+    const unwrapped = openFingerprintKey(dumpKey, { service: 'live', namespace: 'live.sealed', keys: new Map([['k1', K1]]) });
+    assert.strictEqual(unwrapped.key.length, 32);
+    assert.ok(!dumpKey.equals(unwrapped.key));
+    assert.notStrictEqual(crypto.createHmac('sha256', dumpKey).update(JSON.stringify(SECRET)).digest('hex'), summary.secrets.api_key.fingerprint);
+    for (const r of await db.prepare('SELECT namespace, hmac_key FROM config_keys').all()) {
+        const b = Buffer.from(r.hmac_key);
+        assert.ok(!b.includes(unwrapped.key), `${r.namespace} config_keys holds the raw fingerprint key`);
+        if (b.length === 32) assert.notStrictEqual(crypto.createHmac('sha256', b).update(JSON.stringify(SECRET)).digest('hex'), summary.secrets.api_key.fingerprint, `${r.namespace} reproduces the marker`);
+    }
+    for (const r of await db.prepare('SELECT namespace, values_json FROM config_snapshots').all()) {
+        assert.ok(!Buffer.from(r.values_json).includes(unwrapped.key), `${r.namespace} values_json holds the raw fingerprint key`);
+    }
     // Restart: the same KEK reads the same values and the same markers.
     const restarted = await createConfigStore({ db, service: 'live', namespace: 'live.sealed', schema: SCHEMA, classify, defaults: DEFAULTS, keks: keks1, log });
     assert.strictEqual(restarted.get('provider_key'), SECRET);
@@ -363,7 +381,12 @@ const noSecret = (text, values, what) => {
 
     // ── reseal(): plaintext rows move under the current KEK, old KEKs rotate, no value changes ──
     const beforeReseal = await plainStore.summary();
+    const plainSnap = await plainStore.snapshot(plainStore.revision());
+    const plainKey = await storedKey(db, 'live.plain');
+    assert.strictEqual(plainKey.length, 32, 'without a KEK config_keys still holds the plain 32-byte key');
+    assert.strictEqual(beforeReseal.secrets.api_key.fingerprint, crypto.createHmac('sha256', plainKey).update(JSON.stringify(SECRET)).digest('hex'), "no KEK keeps today's marker");
     const migrated = await createConfigStore({ db, service: 'live', namespace: 'live.plain', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: keks1, log });
+    assert.ok((await storedKey(db, 'live.plain')).toString('utf8').startsWith('ovfp.v1.k1'), 'enabling a KEK wraps the same fingerprint key');
     assert.strictEqual(migrated.get('api_key'), SECRET, 'reading the open plaintext is unchanged');
     const report1 = await migrated.reseal();
     assert.strictEqual(report1.plaintext, 1);
@@ -373,16 +396,49 @@ const noSecret = (text, values, what) => {
     assert.match(JSON.parse(migratedRow.values_json).api_key, /^v1:k1:/);
     assert.strictEqual(migrated.get('api_key'), SECRET, 'the same value after reseal');
     assert.deepStrictEqual((await migrated.summary()).values.api_key, beforeReseal.values.api_key, 'the marker fingerprint survives reseal');
-    // Rotation: an envelope under k1 needs k1; reseal to k2 makes k2 alone enough.
-    const k2Only = await createConfigStore({ db, service: 'live', namespace: 'live.plain', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: { current: 'k2', keys: { k2: K2 } }, log });
-    assert.strictEqual(k2Only.get('api_key'), undefined, 'a k1 envelope does not open with k2 alone');
+    assert.strictEqual((await migrated.snapshot(migrated.revision())).checksum, plainSnap.checksum, 'the checksum survives reseal');
+    // Rotation: start with both KEKs once, which rewraps the fingerprint key under k2 without moving it;
+    // the k1 envelope still needs resealing before k1 can go.
     const rotating = await createConfigStore({ db, service: 'live', namespace: 'live.plain', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: keks12, log });
     assert.strictEqual(rotating.get('api_key'), SECRET, 'two KEKs open the old one');
+    assert.ok((await storedKey(db, 'live.plain')).toString('utf8').startsWith('ovfp.v1.k2'), 'the fingerprint key wrapper follows the current KEK');
+    const fpBeforeRotation = (await rotating.summary()).secrets.api_key.fingerprint;
+    const snapBeforeRotation = await rotating.snapshot(rotating.revision());
+    const k2Only = await createConfigStore({ db, service: 'live', namespace: 'live.plain', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: { current: 'k2', keys: { k2: K2 } }, log });
+    assert.strictEqual(k2Only.get('api_key'), undefined, 'a k1 envelope does not open with k2 alone');
     const report2 = await rotating.reseal();
     assert.strictEqual(report2.resealed, 1);
     assert.match(JSON.parse((await activeRow(db, 'live.plain')).values_json).api_key, /^v1:k2:/);
     const k2After = await createConfigStore({ db, service: 'live', namespace: 'live.plain', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: { current: 'k2', keys: { k2: K2 } }, log });
     assert.strictEqual(k2After.get('api_key'), SECRET, 'after reseal the current KEK alone reads it');
+    assert.strictEqual((await k2After.summary()).secrets.api_key.fingerprint, fpBeforeRotation, 'the marker fingerprint survives the k1 -> k2 rotation');
+    assert.strictEqual((await k2After.snapshot(k2After.revision())).checksum, snapBeforeRotation.checksum, 'and so does the snapshot checksum');
+    await assert.rejects(createConfigStore({ db, service: 'live', namespace: 'live.plain', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: false, log }), /sealed under a KEK/);
+
+    // reseal() recomputes an envelope's fingerprint rather than trusting its header.
+    const refp = await createConfigStore({ db, service: 'live', namespace: 'live.refp', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: keks1, log });
+    await refp.apply({ api_key: SECRET }, { merge: true, actor: USER });
+    const refpRow = await activeRow(db, 'live.refp');
+    const refpValues = JSON.parse(refpRow.values_json);
+    const refpParts = refpValues.api_key.split(':');
+    const realFp = refpParts[2];
+    refpParts[2] = '0'.repeat(64);
+    await db.prepare('UPDATE config_snapshots SET values_json = ? WHERE namespace = ? AND revision = ?').run(JSON.stringify({ ...refpValues, api_key: refpParts.join(':') }), 'live.refp', refpRow.revision);
+    const refpRotated = await createConfigStore({ db, service: 'live', namespace: 'live.refp', schema: SCHEMA, classify, defaults: DEFAULTS, env: {}, keks: keks12, log });
+    assert.strictEqual(refpRotated.get('api_key'), SECRET);
+    const refpReport = await refpRotated.reseal();
+    assert.strictEqual(refpReport.resealed, 1);
+    const refpAfter = JSON.parse((await activeRow(db, 'live.refp')).values_json).api_key;
+    assert.strictEqual(refpAfter.split(':')[2], realFp, 'reseal recomputed the fingerprint with the stable key');
+    assert.strictEqual((await refpRotated.summary()).secrets.api_key.fingerprint, realFp);
+    // The same check for an envelope already under the current KEK: a fingerprint that does not match is repaired.
+    const refpVals2 = JSON.parse((await activeRow(db, 'live.refp')).values_json);
+    const refpParts2 = refpVals2.api_key.split(':');
+    refpParts2[2] = 'f'.repeat(64);
+    await db.prepare('UPDATE config_snapshots SET values_json = ? WHERE namespace = ? AND revision = ?').run(JSON.stringify({ ...refpVals2, api_key: refpParts2.join(':') }), 'live.refp', (await activeRow(db, 'live.refp')).revision);
+    const refpReport2 = await refpRotated.reseal();
+    assert.strictEqual(refpReport2.resealed, 1);
+    assert.strictEqual(JSON.parse((await activeRow(db, 'live.refp')).values_json).api_key.split(':')[2], realFp);
     assert.strictEqual((await k2After.history({ limit: 200 })).filter((s) => s.state !== 'rejected').every((s) => !JSON.stringify(s).includes(SECRET)), true);
     // A KEK that is missing from the environment leaves its rows locked and named in the report.
     const orphanRow = await activeRow(db, 'live.plain');

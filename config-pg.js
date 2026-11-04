@@ -12,7 +12,7 @@
 // and the store behaves exactly as before, but reports sealed: false.
 const crypto = require('crypto');
 const { CLASSES, SERVICE_RE, NAMESPACE_RE, validKey, REASON_MAX, ERROR_MAX, ConfigError, canonical, sha256, isPlainObject, pointer, clone, same, has, deepFreeze, jsonErrors, isMarker, looksRedacted, sameHex, compileSchema, checkSchema, validateResult, subjectRef, scrub, errText, summarize, makeLog, fromRows,
-    isEnvelope, parseEnvelope, sealEnvelope, openEnvelope, keksOf, hintOf, bindText, schemaAnnotations, summarySchema } = require('./config-core');
+    isEnvelope, parseEnvelope, sealEnvelope, openEnvelope, isWrappedFingerprintKey, sealFingerprintKey, openFingerprintKey, keksOf, hintOf, bindText, schemaAnnotations, summarySchema } = require('./config-core');
 
 /** The DDL of config_snapshots and config_keys, for a service's migrations. */
 function configSchema() {
@@ -39,7 +39,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS config_snapshots_one_active ON config_snapshot
 -- The fingerprint key of each namespace. Never served, never logged.
 CREATE TABLE IF NOT EXISTS config_keys (
     namespace   text COLLATE "C" PRIMARY KEY,
-    hmac_key    bytea NOT NULL,
+    hmac_key    bytea NOT NULL,                                -- the 32-byte fingerprint key, or that key wrapped under the current KEK
     created_at  text COLLATE "C" NOT NULL
 );`;
 }
@@ -170,17 +170,65 @@ async function createPgConfigStore(opts = {}) {
     const tx = async (fn) => await db.tx(fn);   // ambient: the store's statements inside join it
 
     // ── the namespace's fingerprint key: made on first use, then read (a racing process keeps the first) ──
+    // With a KEK, config_keys holds that key wrapped under the current KEK (never the key); without one it is
+    // today's plain 32-byte key. The key itself never changes, so markers and checksums survive a KEK rotation.
     let hmacKey = null;   // loaded by init(): made on first use, then read (a racing process keeps the first)
     async function loadKey() {
         const read = db.prepare('SELECT hmac_key FROM config_keys WHERE namespace = ?');
+        const insert = db.prepare('INSERT INTO config_keys (namespace, hmac_key, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING');
+        const conditional = db.prepare('UPDATE config_keys SET hmac_key = ? WHERE namespace = ? AND hmac_key = ?');
+        const unconditional = db.prepare('UPDATE config_keys SET hmac_key = ? WHERE namespace = ?');
+        const wrap = (key) => sealFingerprintKey(key, { service, namespace, kekId: keks.current, kek: keks.keys.get(keks.current) });
+        const open = (stored) => openFingerprintKey(stored, { service, namespace, keys: keks.keys });
         let row = await read.get(namespace);
         if (!row) {
-            await db.prepare('INSERT INTO config_keys (namespace, hmac_key, created_at) VALUES (?, ?, ?) ON CONFLICT DO NOTHING').run(namespace, crypto.randomBytes(32), iso());
+            const fresh = crypto.randomBytes(32);
+            await insert.run(namespace, keks ? wrap(fresh) : fresh, iso());
             row = await read.get(namespace);
         }
-        const k = row && row.hmac_key ? Buffer.from(row.hmac_key) : null;   // Buffer (pg) or Uint8Array (PGlite)
-        if (!k || k.length < 32) throw new Error(`createConfigStore: the fingerprint key of ${namespace} in config_keys is not a 32-byte key`);
-        hmacKey = k;
+        let stored = row && row.hmac_key ? Buffer.from(row.hmac_key) : null;   // Buffer (pg) or Uint8Array (PGlite)
+        if (!stored) throw new Error(`createConfigStore: config_keys has no fingerprint key for ${namespace}`);
+        if (isWrappedFingerprintKey(stored)) {
+            if (!keks) throw new Error(`createConfigStore: the fingerprint key of ${namespace} in config_keys is sealed under a KEK, but no KEK is configured`);
+            let opened = open(stored);
+            if (!opened) throw new Error(`createConfigStore: the fingerprint key of ${namespace} in config_keys is not a valid wrapper`);
+            if (opened.kekId !== keks.current) {
+                const replacement = wrap(opened.key);
+                await conditional.run(replacement, namespace, stored);
+                let after = Buffer.from((await read.get(namespace)).hmac_key);
+                let next = isWrappedFingerprintKey(after) ? open(after) : null;
+                if (!next || next.kekId !== keks.current) {
+                    // A row this process did not read (or a driver that did not match bytea): rewrap it outright.
+                    await unconditional.run(replacement, namespace);
+                    after = Buffer.from((await read.get(namespace)).hmac_key);
+                    next = isWrappedFingerprintKey(after) ? open(after) : null;
+                }
+                if (!next) throw new Error(`createConfigStore: could not rewrap the fingerprint key of ${namespace} under ${keks.current}`);
+                opened = next;
+            }
+            hmacKey = opened.key;
+            return;
+        }
+        if (stored.length !== 32) throw new Error(`createConfigStore: the fingerprint key of ${namespace} in config_keys is neither a 32-byte key nor a KEK-wrapped key`);
+        if (!keks) { hmacKey = stored; return; }
+        // A KEK was just configured on an existing namespace: wrap the same key, so no marker or checksum moves.
+        let replacement = wrap(stored);
+        await conditional.run(replacement, namespace, stored);
+        let after = Buffer.from((await read.get(namespace)).hmac_key);
+        if (!isWrappedFingerprintKey(after)) {
+            // The conditional did not match: another process may have wrapped it (read again) or replaced
+            // the key, or the driver did not compare bytea. Wrap whichever 32-byte key is there now, once
+            // without the old-value guard, then fail closed.
+            if (after.length === 32) {
+                if (!after.equals(stored)) replacement = wrap(after);
+                await unconditional.run(replacement, namespace);
+                after = Buffer.from((await read.get(namespace)).hmac_key);
+            }
+            if (!isWrappedFingerprintKey(after)) throw new Error(`createConfigStore: could not seal the fingerprint key of ${namespace} under ${keks.current}`);
+        }
+        const opened = open(after);
+        if (!opened) throw new Error(`createConfigStore: the fingerprint key of ${namespace} in config_keys is not a valid wrapper`);
+        hmacKey = opened.key;
     }
     const fingerprint = (v) => crypto.createHmac('sha256', hmacKey).update(canonical(v)).digest('hex');
     const markerFor = (v) => ({ redacted: true, fingerprint: fingerprint(v) });
@@ -592,25 +640,24 @@ async function createPgConfigStore(opts = {}) {
             for (const [k, v] of Object.entries(values)) {
                 if (cls[k] !== 'secret') { next[k] = v; continue; }
                 try {
+                    const target = binds[k];
+                    const bindVal = target ? (pinKeys.has(target) ? pins[target].value : (has(mat.effective, target) ? mat.effective[target] : undefined)) : undefined;
+                    if (target && has(values, target) && isEnvelope(values[target])) throw new ConfigError('config.bind_secret', `the x-bind target of ${k} is secret-class`, { status: 422 });
+                    if (target && bindVal !== undefined && classOfValue(target, bindVal) === 'secret') throw new ConfigError('config.bind_secret', `the x-bind target of ${k} is secret-class`, { status: 422 });
+                    const bind = bindText(bindVal);
                     if (isEnvelope(v)) {
                         const p = parseEnvelope(v);
-                        if (p && p.kekId === keks.current) { next[k] = v; report.current++; continue; }
-                        const target = binds[k];
-                        const bind = bindText(target && has(mat.effective, target) ? mat.effective[target] : undefined);
                         const { value } = openEnvelope(v, { service, namespace, key: k, bind, keys: keks.keys });
+                        const fpNow = fingerprint(value);
+                        if (p.kekId === keks.current && fpNow === p.fingerprint) { next[k] = v; report.current++; continue; }
                         next[k] = sealEnvelope({
                             service, namespace, key: k, value, bind,
-                            fingerprint: (p && p.fingerprint) || fingerprint(value), hint: (p && p.hint) || hintOf(value),
+                            fingerprint: fpNow, hint: p.hint || hintOf(value),
                             kekId: keks.current, kek: keks.keys.get(keks.current),
                         });
                         changed = true;
                         report.resealed++;
                     } else {
-                        const target = binds[k];
-                        const bindVal = target ? (pinKeys.has(target) ? pins[target].value : mat.effective[target]) : undefined;
-                        if (target && has(values, target) && isEnvelope(values[target])) throw new ConfigError('config.bind_secret', `the x-bind target of ${k} is secret-class`, { status: 422 });
-                        if (target && bindVal !== undefined && classOfValue(target, bindVal) === 'secret') throw new ConfigError('config.bind_secret', `the x-bind target of ${k} is secret-class`, { status: 422 });
-                        const bind = bindText(bindVal);
                         next[k] = sealEnvelope({
                             service, namespace, key: k, value: v, bind,
                             fingerprint: fingerprint(v), hint: hintOf(v), kekId: keks.current, kek: keks.keys.get(keks.current),

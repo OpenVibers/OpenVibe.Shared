@@ -136,6 +136,53 @@ function sealEnvelope({ service, namespace, key, value, bind = '', fingerprint, 
 
 const secretUnreadable = (why) => Object.assign(new Error(`secret does not open (${why})`), { code: 'config.secret_unreadable' });
 
+// ── The namespace fingerprint key, sealed under the KEK (D11 S2 review) ─────────────────────────
+// With a KEK, config_keys.hmac_key is not the key: it is the 32-byte key wrapped with the current KEK
+// (AES-256-GCM, AAD openvibe-config-fingerprint|<service>|<namespace>) in this small versioned form.
+// A database dump then has the fingerprints but no key that reproduces them. The same key is kept
+// across KEK rotations (rewrapped on boot), so markers and checksums never move.
+const FP_WRAP_PREFIX = 'ovfp.v1.';
+const fpAad = ({ service, namespace }) => Buffer.from(`openvibe-config-fingerprint|${service}|${namespace}`, 'utf8');
+const isWrappedFingerprintKey = (stored) => stored != null && Buffer.from(stored).toString('utf8').startsWith(FP_WRAP_PREFIX);
+
+function sealFingerprintKey(key, { service, namespace, kekId, kek }) {
+    if (!Buffer.isBuffer(key) || key.length !== KEY_BYTES) throw new TypeError('sealFingerprintKey: the fingerprint key must be a 32-byte Buffer');
+    if (typeof kekId !== 'string' || !KEK_ID.test(kekId)) throw new TypeError('sealFingerprintKey: kek id must be k1, k2, …');
+    if (!Buffer.isBuffer(kek) || kek.length !== KEY_BYTES) throw new TypeError('sealFingerprintKey: the KEK must be a 32-byte Buffer');
+    const iv = crypto.randomBytes(IV_BYTES);
+    const cipher = crypto.createCipheriv('aes-256-gcm', kek, iv);
+    cipher.setAAD(fpAad({ service, namespace }));
+    const body = Buffer.concat([cipher.update(key), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return Buffer.from(`${FP_WRAP_PREFIX}${kekId}:${b64(iv)}:${b64(tag)}:${b64(body)}`, 'utf8');
+}
+
+/** Open a wrapped fingerprint key: { key, kekId }. Null when the value is a plain 32-byte key. */
+function openFingerprintKey(stored, { service, namespace, keys }) {
+    const text = Buffer.from(stored).toString('utf8');
+    if (!text.startsWith(FP_WRAP_PREFIX)) return null;
+    const fail = (why) => Object.assign(new Error(`createConfigStore: the fingerprint key of ${namespace} in config_keys ${why}`), { code: 'config.fingerprint_key_unreadable' });
+    const parts = text.slice(FP_WRAP_PREFIX.length).split(':');
+    if (parts.length !== 4 || !KEK_ID.test(parts[0])) throw fail('is not a valid wrapper');
+    const [kekId, ivB64, tagB64, bodyB64] = parts;
+    const iv = unb64(ivB64, IV_BYTES);
+    const tag = unb64(tagB64, TAG_BYTES);
+    const body = unb64(bodyB64, KEY_BYTES);
+    if (!iv || !tag || !body) throw fail('is not a valid wrapper');
+    const kek = keys && typeof keys.get === 'function' ? keys.get(kekId) : keys && keys[kekId];
+    if (!kek) throw fail(`is sealed under the KEK "${kekId}", which is not configured`);
+    try {
+        const decipher = crypto.createDecipheriv('aes-256-gcm', kek, iv);
+        decipher.setAAD(fpAad({ service, namespace }));
+        decipher.setAuthTag(tag);
+        const key = Buffer.concat([decipher.update(body), decipher.final()]);
+        if (key.length !== KEY_BYTES) throw new Error('wrong length');
+        return { key, kekId };
+    } catch {
+        throw fail(`does not open with the KEK "${kekId}"`);
+    }
+}
+
 /** Open one envelope: { value, meta }. Throws a coded error when the KEK, bind or tag is wrong. */
 function openEnvelope(envelope, { service, namespace, key, bind = '', keys }) {
     const p = parseEnvelope(envelope);
@@ -406,4 +453,4 @@ function fromRows(rows, { prefix = '', type = null } = {}) {
 }
 
 module.exports = { CLASSES, SERVICE_RE, NAMESPACE_RE, validKey, REASON_MAX, ERROR_MAX, ConfigError, canonical, sha256, isPlainObject, pointer, clone, same, has, deepFreeze, jsonErrors, isMarker, looksRedacted, sameHex, compileSchema, checkSchema, validateResult, subjectRef, scrub, errText, summarize, makeLog, fromRows,
-    KEK_ID, KEY_BYTES, IV_BYTES, TAG_BYTES, isEnvelope, parseEnvelope, sealEnvelope, openEnvelope, keksOf, hintOf, bindText, schemaAnnotations, summarySchema };
+    KEK_ID, KEY_BYTES, IV_BYTES, TAG_BYTES, isEnvelope, parseEnvelope, sealEnvelope, openEnvelope, isWrappedFingerprintKey, sealFingerprintKey, openFingerprintKey, keksOf, hintOf, bindText, schemaAnnotations, summarySchema };
