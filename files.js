@@ -47,6 +47,7 @@ const BROWSER = Object.freeze([
     'profile-panel.js',     // a person's stuff on any site (worn items, badges, achievements), from the Network profile
     'tooltip.js',
     'player.js',            // the network's one video player look: enhances video[data-ov-player]; draw with player.css
+    'vibes-pay.js',         // Vibes Pay: OpenVibe.vibes.pay() and <button data-ov-vibes-pay> (MONEY.md, D12); 4.111.0
     'release-watch.js',     // keeps open tabs on a supported release (ADR-016), loaded after first paint
     'release-update.js',    // plans a new release and applies style/content in place; release-watch loads it on demand
     'web-runtime.js',       // feature loader and route lifecycle (OVWebRuntime), from Live's ov-loader
