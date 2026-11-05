@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.112.0 — 2026-11-05
+
+- **`openvibe-shared/config`: `x-unit: "seconds"` is an owner-setting unit.** An integer property may now be
+  annotated `seconds` (alongside `nano_usd`, `ms` and `bps`), and `summary()` carries the annotation unchanged so a
+  settings form can show the input in seconds with the label "s". An unknown unit is still refused when the store is
+  created, naming the unit.
+
 ## 4.111.1 — 2026-11-05
 
 - **The tab icon is the Pair on every site.** `theme-loader.js` repaints the favicon on each theme apply

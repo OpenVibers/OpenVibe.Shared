@@ -363,7 +363,10 @@ const noSecret = (text, values, what) => {
     assert.strictEqual(bindLeakSummary.secrets.bound_key.bound_to, null);
     const enumSecret = await createConfigStore({ db, service: 'live', namespace: 'live.enumsecret', schema: { type: 'object', additionalProperties: false, properties: { api_key: { type: 'string', enum: ['ENUM-MADE-UP-SECRET-7'] } } }, classify, defaults: {}, keks: keks1, log });
     await assert.rejects(enumSecret.setSecret('api_key', 'another value', { actor: USER }), (e) => e.code === 'config.invalid' && !JSON.stringify(e).includes('ENUM-MADE-UP-SECRET-7'));
-    await assert.rejects(createConfigStore({ db, service: 'live', namespace: 'live.badunit', schema: { type: 'object', properties: { x: { type: 'integer', 'x-unit': 'seconds' } } }, keks: keks1, log }), /x-unit/);
+    // `seconds` is an owner-setting unit (an integer the form shows in seconds, labelled "s"); anything else is refused.
+    const seconds = await createConfigStore({ db, service: 'live', namespace: 'live.secondsunit', schema: { type: 'object', properties: { x: { type: 'integer', 'x-unit': 'seconds' } } }, keks: keks1, log });
+    assert.strictEqual((await seconds.summary()).schema.properties.x['x-unit'], 'seconds');
+    await assert.rejects(createConfigStore({ db, service: 'live', namespace: 'live.badunit', schema: { type: 'object', properties: { x: { type: 'integer', 'x-unit': 'fortnights' } } }, keks: keks1, log }), /x-unit/);
     await assert.rejects(createConfigStore({ db, service: 'live', namespace: 'live.badenv', schema: { type: 'object', properties: { x: { type: 'string', 'x-env': 'lower-case' } } }, keks: keks1, log }), /x-env/);
     await assert.rejects(createConfigStore({ db, service: 'live', namespace: 'live.baddanger', schema: { type: 'object', properties: { x: { type: 'boolean', 'x-danger': 'yes' } } }, keks: keks1, log }), /x-danger/);
 
