@@ -265,7 +265,7 @@ const KEYWORDS = new Set(['type', 'enum', 'const', 'properties', 'required', 'ad
     'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf']);
 const ANNOTATIONS = new Set(['$schema', '$id', '$comment', 'title', 'description', 'default', 'examples', 'deprecated', 'readOnly', 'writeOnly', 'format']);
 const TYPES = ['object', 'array', 'string', 'number', 'integer', 'boolean', 'null'];
-const UNITS = new Set(['nano_usd', 'ms', 'bps']);
+const UNITS = new Set(['nano_usd', 'ms', 'bps', 'seconds']);
 const ENV_NAME = /^[A-Z][A-Z0-9_]{0,127}$/;
 const patterns = new WeakMap();
 

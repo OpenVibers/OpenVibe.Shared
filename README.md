@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.111.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.112.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -344,7 +344,7 @@ settings.sealed; settings.kek;           // false / null without a KEK
   marker with its four-character `hint`, `set_at`, `set_by`, `bound_to`) and `schema`, the JSON
   Schema to draw the form from; a secret property's `default`, `examples`, `enum` and `const` are
   removed from that copy. The annotations are `title`, `description`, `x-group`, `x-env`, `x-danger`,
-  `x-bind` and `x-unit` (`nano_usd`, `ms`, `bps`).
+  `x-bind` and `x-unit` (`nano_usd`, `ms`, `bps`, `seconds`).
 - **Hooks.** `onChange({ namespace, keys, actor, revision })` runs after every successful activation
   (never for a proposal or the seed), and a throwing hook is logged and never refuses the revision.
   `requireFresh(req, { namespace, keys })`, an `adminRoutes` option, runs before a secret write, a
