@@ -8,7 +8,7 @@
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.222.0 (devDependency: the release manifest contract)",
+  "contracts": "openvibe-contracts v0.289.1 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.82.0",
   "features": [
     "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
@@ -29,5 +29,5 @@
     "the Dock accepts a refreshing token (string, sync or async) and an optional read-only scope set: the extension hides approve/decline and the chat composer while keeping reads",
     "vibes-pay.js: OpenVibe.vibes.pay(payUrl) opens the Vibes Pay sheet (popup on a computer, full page on a phone), resolves { status } from an origin-checked postMessage and binds <button data-ov-vibes-pay> in the Vibes accent, both themes (D12)"
   ],
-  "updated": "2026-11-04"
+  "updated": "2026-11-05"
 }
