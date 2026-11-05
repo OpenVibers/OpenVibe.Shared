@@ -49,7 +49,8 @@ for (const t of BUILTIN_THEMES) {
 }
 assert.ok(LT.arctic['--success'], 'loader entries carry the full token set');
 // 62,000 since 4.64.0: the look travels between sites (?ov_look=) and every copy is dated; brotli 15.45 KB (was 15.41) (2026-10-31).
-assert.ok(loader.length < 62000, `theme-loader.js stays small for first paint (${loader.length} characters)`);
+// 63,500 since 4.111.1 (2026-11-05): the FAVICON block draws the Pair (about 1.2 KB raw) instead of the retired ring.
+assert.ok(loader.length < 63500, `theme-loader.js stays small for first paint (${loader.length} characters)`);
 assert.ok(loader.includes('KNOWN_PROPS'), 'loader clears tokens the new theme does not set');
 
 // 5. Derived tokens: text on the accent always reads, on every theme.

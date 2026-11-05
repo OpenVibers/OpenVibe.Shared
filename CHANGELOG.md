@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.111.1 — 2026-11-05
+
+- **The tab icon is the Pair on every site.** `theme-loader.js` repaints the favicon on each theme apply
+  (`<link rel="icon" data-ov-icon>`), and it still drew the retired ring mark: every site's inline Pair favicon turned
+  into the old ring once the page loaded. It now draws `app-icon.js`'s `favicon()` (the heavy form, the site's glow,
+  Live's red light and Games' yellow one) with the theme's `--bg-primary` as the tile; the theme accent no longer
+  recolours the mark. The drawing is generated into the loader's `FAVICON` block by `scripts/build-theme-loader.js`
+  from `mark.js` and `app-icon.js` (`--check` fails when stale), so it cannot drift again.
+- Tests: `test/favicon-pair.test.js` (each site equals `favicon()`, the lights, the tile follows the theme, the block
+  is current).
+
 ## 4.111.0 — 2026-11-04
 
 - **`openvibe-shared/vibes-pay` (`vibes-pay.js`): Vibes Pay for any page** (MONEY.md, D12).
