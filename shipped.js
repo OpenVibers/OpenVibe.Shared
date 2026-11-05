@@ -65,7 +65,7 @@
         `.ov-shipped-site{flex:none;font-size:.72rem;font-weight:700;padding:.05rem .45rem;border-radius:999px;background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent);color:${TEXT};text-decoration:none}`,
         `.ov-shipped a.ov-shipped-subject{color:${TEXT};text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}`,
         // Touch (4.46.0): a taller hit box with no change to the layout (padding in, margin out); overflow:hidden rules out a pseudo-element.
-        '@media (pointer:coarse){.ov-shipped a.ov-shipped-subject{padding-top:5px;padding-bottom:5px;margin-top:-5px;margin-bottom:-5px}}',
+        '@media (pointer:coarse){.ov-shipped ul{gap:0}.ov-shipped li{min-height:44px;align-items:center}.ov-shipped a.ov-shipped-subject{padding-top:12px;padding-bottom:12px}}',
         '.ov-shipped a.ov-shipped-subject:hover{text-decoration:underline}.ov-shipped li time{flex:none;margin-left:auto;font-size:.75rem;opacity:.7}',
         `.ov-shipped-major{font-weight:600}.ov-shipped-links{display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin-top:.6rem}.ov-shipped-links a{font-weight:600;color:${ACCENT};text-decoration:none}.ov-shipped-links a:hover{text-decoration:underline}`,
         '.ov-shipped-log{display:flex;flex-direction:column;gap:22px;min-width:0}',
@@ -90,6 +90,7 @@
         // 4.53.1: the patch-notes link under the list carries a whole post title ("Patch notes: 81 changes across 43 sites
         // (Oct 30) →"); kept on one line it ran past a 320 px screen. It wraps there; the short "What's in it" stays whole.
         '.ov-shipped-links .ov-shipped-notes{white-space:normal;min-width:0;overflow-wrap:anywhere}',
+        '@media (pointer:coarse){.ov-shipped-links a{display:inline-flex;align-items:center;min-height:44px}.ov-shipped-entry{padding-top:12px;padding-bottom:12px}.ov-shipped-hash{padding-top:12px;padding-bottom:12px;margin-top:-12px;margin-bottom:-12px}}',
         `.ov-shipped-fold{flex-basis:100%;min-width:0;font-size:.82rem;color:${MUTED}}.ov-shipped-fold summary{cursor:pointer;padding:3px 0;overflow-wrap:anywhere}`,
         `.ov-shipped-fold .ov-shipped-entries{margin:4px 0 2px;padding-left:10px;border-left:2px solid ${BORDER}}.ov-shipped-fold .ov-shipped-entry{padding:5px 8px}`,
         '@media (max-width:600px){.ov-shipped-entry{flex-wrap:wrap;gap:4px 8px}.ov-shipped-meta{width:100%}}',
