@@ -32,6 +32,9 @@ class AnalyticsTrackerCore {
         this.service = service;
         this._now = opts.now || Date.now;
         this._pathOpts = privacy.pathOptions({ paramPrefixes: opts.paramPrefixes, pathRules: opts.pathRules });
+        // A site may count bot API calls into its rollups at ingest instead of writing a raw row for each (the
+        // PostgreSQL tracker does the counting; see analytics/pg.js).
+        this._countBotApiAtIngest = !!opts.countBotApiAtIngest;
         this.pruneJob = null;
         this._buffer = [];
         this._visitors = new Map();
@@ -110,7 +113,7 @@ class AnalyticsTrackerCore {
         const vhash = this._visitorHash(ip, ua, day);
         const authenticated = !!(req.user && (req.user.id != null || req.user.sub != null));
         const isApi = entryPath.startsWith('/api/') || entryPath.startsWith('/internal/') || entryPath.startsWith('/oauth/');
-        this._push({
+        const event = {
             service: this.service,
             event_type: isApi ? 'api_call' : 'pageview',
             path: privacy.routeTemplate(req, entryPath, this._pathOpts),
@@ -128,9 +131,17 @@ class AnalyticsTrackerCore {
             os: parsed.os,
             authenticated,
             created_at: sqlTime(nowMs),
-        }, { day, hour: hourOf(nowMs), vhash, authenticated });
+        };
+        if (event.event_type === 'api_call' && event.is_bot && this._countBotApiAtIngest && this._ingestBotApi(event)) return true;
+        this._push(event, { day, hour: hourOf(nowMs), vhash, authenticated });
         return true;
     }
+
+    /**
+     * Count one bot API call into the tracker's rollups instead of a raw row. The PostgreSQL tracker overrides
+     * this when `countBotApiAtIngest` is on; the default writes the raw row as before. Returns whether it counted.
+     */
+    _ingestBotApi() { return false; }
 
     /**
      * Express middleware: one row per finished request (health checks, static assets and opted-out

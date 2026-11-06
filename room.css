@@ -86,6 +86,8 @@
  *    quarter of the theme's text mixed in, so it stays at 4.5:1 on the room's tinted chips: the bare accent was 3.9-4.4:1);
  *    --room-fill and --room-on: a filled button and its text (dark text on a dark theme's bright fill, white on light). ── */
 .ov-room { --room-accent: var(--ovk-accent); --room-strong: color-mix(in srgb, var(--ovk-accent) 75%, var(--ovk-text)); --room-fill: var(--ovk-fill); --room-on: var(--ovk-on-fill); }
+/* 44 px to the touch (4.113.0, the phone sweep of 11-06): a room's own links (a brand, a place) were 40.6 px tall. */
+@media (pointer: coarse) { .ov-room > a { min-height: 44px; display: inline-flex; align-items: center; } }
 .ov-room[style*="--room-dark"] { --room-accent: var(--room-dark); --room-strong: color-mix(in srgb, var(--room-dark) 75%, var(--ovk-text)); --room-fill: var(--room-dark); --room-on: #0b0d12; }
 :root[data-theme-mode="light"] .ov-room[style*="--room-light"] { --room-accent: var(--room-light); --room-strong: color-mix(in srgb, var(--room-light) 75%, var(--ovk-text)); --room-fill: var(--room-light); --room-on: #fff; }
 

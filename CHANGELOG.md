@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.113.0 — 2026-11-06
+
+- **Bot API calls can be counted at ingest, not stored row by row.** `AnalyticsTrackerPg` takes
+  `countBotApiAtIngest` (off by default): a bot's API call increments `analytics_bot_api_hourly` and
+  `analytics_bot_api_daily` by endpoint group, status class and bot family at flush instead of writing a raw
+  `analytics_events` row. The hourly and daily rollups add those counters to raw rows, so a day's `api_calls`,
+  `bot_hits` and `error_count` are what the raw rows gave before, and a day recomputed at close counts each call
+  once. The admin's bot breakdown, status classes and sub-day summary include the counters; a raw page view by a
+  bot still keeps its row, and the option off changes nothing. New tables are expand-only: `analyticsSchema()`
+  creates them for a new install, and an existing service adds them in a migration.
+
+- **Phone minimums in the kit** (the fleet phone sweep of 11-05/06): `.ovk-badge` is 12 px (was 11.2 px), and a room's
+  own links (`.ov-room > a`) are 44 px tall on touch screens (were 40.6 px).
+
 ## 4.112.1 — 2026-11-05
 
 - **The shared chrome meets the phone minimums** (the fleet phone sweep of 11-05, 322 pages at 390 px). Nothing
@@ -777,6 +791,17 @@ From a phone sweep of every site's home (11-02):
   rebuilt; existing code points are unchanged.
 
 ## Unreleased
+
+## 4.113.0 — 2026-11-06
+
+- **Bot API calls can be counted at ingest, not stored row by row.** `AnalyticsTrackerPg` takes
+  `countBotApiAtIngest` (off by default): a bot's API call increments `analytics_bot_api_hourly` and
+  `analytics_bot_api_daily` by endpoint group, status class and bot family at flush instead of writing a raw
+  `analytics_events` row. The hourly and daily rollups add those counters to raw rows, so a day's `api_calls`,
+  `bot_hits` and `error_count` are what the raw rows gave before, and a day recomputed at close counts each call
+  once. The admin's bot breakdown, status classes and sub-day summary include the counters; a raw page view by a
+  bot still keeps its row, and the option off changes nothing. New tables are expand-only: `analyticsSchema()`
+  creates them for a new install, and an existing service adds them in a migration.
 
 ## 4.67.0 — 2026-10-31
 
