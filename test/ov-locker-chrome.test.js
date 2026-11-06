@@ -22,7 +22,7 @@ const CORE = `window.OVLockerCore = {
   WORDS: 'acid atom bold calm cedar coral delta ember fable fern gecko glow harbor iris jade kite lumen maple nectar onyx'.split(' '),
   async generatePersonKeys() { return { id: 'p1' }; },
   async recoveryWords(n) { const w = this.WORDS; return Array.from({ length: n }, (_, i) => w[(i * 7) % w.length]); },
-  async exportPersonKeys() { return { ecdh: { kty: 'EC' }, signing: { kty: 'EC' }, self_signature: 'sig', fingerprint: 'cedar ember lumen onyx fable maple gecko iris' }; },
+  async exportPersonKeys() { return { ecdh: { kty: 'EC' }, signing: { kty: 'EC' }, fingerprint_signature: 'sig', fingerprint: 'cedar ember lumen onyx fable maple gecko iris' }; },
   async exportPrivateKeys() { return { d: 'private' }; },
   async importPersonKeys() { return { id: 'p1' }; },
   async seal(b, o) { return { bytes: new TextEncoder().encode('sealed-by-' + o.lock) }; },
@@ -129,9 +129,12 @@ const server = http.createServer((req, res) => {
         const put = sent.find((s) => s.startsWith('PUT /api/v1/me/keys'));
         assert.ok(put, 'the locked copies are saved');
         assert.ok(!put.includes('violet') && !put.includes('lantern'), 'the passphrase never leaves the page');
-        assert.ok(!words.filter((w) => put.includes(` ${w} `) || put.includes(`"${w}`)).length && !put.includes(words.join(' ')), 'nor do the recovery words');
+        // The fingerprint is public and drawn from the same word list: set it aside before looking for the kit's words.
+        const rest = put.replace(/"fingerprint":"[^"]*"/, '');
+        assert.ok(!words.filter((w) => rest.includes(` ${w} `) || rest.includes(`"${w}`)).length && !put.includes(words.join(' ')), 'nor do the recovery words');
         assert.ok(!put.includes('"d":"private"') && !put.includes('private'), 'nor the private keys in the clear');
         assert.match(put, /"backups":\{"passphrase":\{"format":"locker.envelope.v1"/, 'what is saved is two Locker envelopes');
+        assert.match(put, /"self_signature":"sig"/, 'with the keys\u2019 self-signature (the SDK\u2019s fingerprint_signature)');
         assert.strictEqual(await p.evaluate('localStorage.length + sessionStorage.length'), 0, 'nothing is stored in the browser');
 
         // A phone: the kit fits, no sideways scroll.
