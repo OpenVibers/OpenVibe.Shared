@@ -41,6 +41,9 @@ sealed class KitAction {
 
     /** Run the action a button names (the app decides what that means). */
     data class Run(val id: String) : KitAction()
+
+    /** Share a link: the app opens the platform's own share sheet (Android's chooser, with Direct Share). */
+    data class Share(val title: String, val url: String) : KitAction()
 }
 
 /** A link the kit draws: where it goes and what it says. */
@@ -226,6 +229,16 @@ sealed class KitNode {
         override val type: String = "notice"
     }
 
+    /** The Share button: the platform's own share sheet for the link (Android's chooser, with Direct Share). */
+    data class Share(
+        val title: String,
+        val url: String? = null,
+        val label: String = "Share",
+        override val children: List<KitNode> = emptyList(),
+    ) : KitNode() {
+        override val type: String = "share"
+    }
+
     /** An empty state: what a screen shows when it has nothing to show. */
     data class Empty(
         val title: String,
@@ -339,6 +352,11 @@ sealed class KitNode {
                         "error" -> OvNoticeKind.Error
                         else -> OvNoticeKind.Info
                     },
+                )
+                "share" -> Share(
+                    title = props.str("title") ?: "",
+                    url = props.str("url"),
+                    label = props.str("label") ?: "Share",
                 )
                 "empty" -> Empty(
                     title = props.str("title") ?: "",
@@ -576,6 +594,7 @@ fun KitNodeView(
         is KitNode.Sidebar -> OvSidebarNav(node, icons, onAction)
         is KitNode.Stats -> OvStats(items = node.items.map { it.value to it.label })
         is KitNode.Notice -> OvNotice(text = node.text, kind = node.kind)
+        is KitNode.Share -> OvShare(title = node.title, url = node.url ?: "", label = node.label, onShare = { t, u -> onAction(KitAction.Share(t, u)) })
         is KitNode.Empty -> {
             val link = node.action
             val action: Pair<String, () -> Unit>? = if (link != null) {

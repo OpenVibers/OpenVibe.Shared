@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.113.0",
+  "version": "4.114.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -56,6 +56,7 @@
     "./ov-glyphs": "./ov-glyphs.js",
     "./ov-forms": "./ov-forms.js",
     "./ov-qr": "./ov-qr.js",
+    "./ov-share": "./ov-share.js",
     "./ov-labels": "./ov-labels.js",
     "./ov-look": "./ov-look.js",
     "./ov-fx": "./ov-fx.js",

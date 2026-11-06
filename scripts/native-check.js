@@ -79,6 +79,7 @@ const COMPOSE_IMPORTS = [
     'androidx.compose.material.icons.filled.Error',
     'androidx.compose.material.icons.filled.ExpandMore',
     'androidx.compose.material.icons.filled.Info',
+    'androidx.compose.material.icons.filled.Share',
     'androidx.compose.material3.Button',
     'androidx.compose.material3.ButtonDefaults',
     'androidx.compose.material3.DrawerState',

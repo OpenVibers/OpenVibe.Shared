@@ -1,5 +1,33 @@
 # Changelog
 
+## 4.114.0 — 2026-11-06
+
+- **One Share sheet on every site** (`ov-share.js`, `ov-share.css`; plan track Q; docs/share.md). Press Share
+  anywhere and the same sheet opens: a sheet from the bottom on a phone, a dialog on a computer, no tabs.
+  - **Send it** (everyone): the link with Copy, which turns into a tick; on a phone, "Send with your phone" (the
+    phone's own share sheet, with its contacts and apps); 16 places (X, Bluesky, WhatsApp, Reddit, Discord, Telegram,
+    Threads, Mastodon, Facebook, email, Messages, LinkedIn, Pinterest, Tumblr, Hacker News, LINE), recent ones first,
+    the rest behind "More (n)"; a QR code made on the device; "Start at 1:23"; embed code. Nothing is added to a
+    shared link.
+  - **Who can open it** (the owner, through `openvibe-sdk/share`'s router): Everyone, Anyone with the link, Specific
+    people (by @name, checked as you add them; Can view or Can edit; an end date), Only me; people who asked;
+    transfer of ownership, bound to the recipient, "Remove my access" by default. Saves send If-Match. A 401, 403 or
+    404 leaves only Send it.
+  - `OVShare.offer()` is the recipient's Accept/Decline banner; `OVShare.gate()` is the not-on-the-list page (Ask
+    for access, or Sign in). Every name and title is text, never markup.
+  - The navbar loads it on the first press of a `[data-ov-share-sheet]` button, so nothing loads before that. The
+    kit's `[data-ovk-share]` items open it too.
+  - Events: `ov-share:sent` `{ target, url }` and `ov-share:change`.
+  - **A Share component** in OpenVibe Design (`openvibe-shared/components`, `kit.share({ title, url, kind, id })`): a
+    kit document's `{ type: 'share' }` renders the button, and the spec gives its anatomy, states, keys, and the
+    Android (Intent chooser with Direct Share) and iOS (`ShareLink`) views, so native apps share the same way.
+  - **`ov-qr.js`**: a QR code from a link, made on the device with no dependency and no network (a Locker link's key
+    stays on the device). `OVQR.matrix(text, { ecc })` and `OVQR.svg(text, { ecc, margin, dark, light, title })`;
+    byte mode, versions 1 to 40, all eight masks. Ported from Nayuki's QR Code generator (MIT); checked module by
+    module against bwip-js on 1,196 matrices (test/ov-qr.test.js). The sheet loads it on the first QR code.
+  - **Brand logos**: Tumblr, Hacker News and LINE join brands.js (49 brands, Simple Icons 16.36.0, CC0).
+  - Tests: test/ov-share-chrome.test.js (headless Chrome).
+
 ## 4.113.0 — 2026-11-06
 
 - **Bot API calls can be counted at ingest, not stored row by row.** `AnalyticsTrackerPg` takes

@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.113.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.114.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -901,6 +901,19 @@ so forms, `select.value` and `change` listeners work as before. An option can sa
 `data-state` and a `data-href` setup link. Checkboxes, radios and sliders take the site's accent; `role="switch"` is a
 switch; `.ov-field`, `.ov-input` and `.ov-choice` are the full field look. Turn it off with `data-ov-native` or
 `<html data-ov-forms="off">`. See [docs/forms.md](docs/forms.md).
+
+### Share (`ov-share.js`, `ov-share.css`)
+
+One Share sheet on every site (plan track Q): a sheet from the bottom on a phone, a dialog on a computer.
+- **Send it, for everyone:** the link and Copy; the phone's own share sheet (contacts, messages, apps); X, Bluesky,
+  WhatsApp, Reddit, Discord, Telegram, Threads, Mastodon, Facebook, email, Messages, LinkedIn, Pinterest, Tumblr,
+  Hacker News and LINE; a QR code made on the device; Start at 1:23; embed code.
+- **Who can open it, for the owner:** Everyone, Anyone with the link, Specific people by @name (Can view or Can edit,
+  with an end date) and Only me; access requests; transfer of ownership with the recipient's say-so.
+
+Put `<button data-ov-share-sheet data-title="…">Share</button>` on a page: the navbar loads the sheet on the first
+press. Add `data-kind` and `data-id` where the service mounts `openvibe-sdk/share`'s router. See
+[docs/share.md](docs/share.md).
 
 ## Development
 
