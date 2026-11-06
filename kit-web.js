@@ -12,7 +12,8 @@
  *   sheets         [data-ovk-sheet="#id"] opens dialog.ovk-sheet; the backdrop, Close and Escape close it
  *   tabs           a sideways-scrolling tab strip keeps the open tab in view
  *   rails          .ovk-rail: ‹ › scroll a page of cards on devices with a pointer, hidden at either end
- *   share          [data-ovk-share]: the system share sheet, else the link copied (the menu item says "Link copied")
+ *   share          [data-ovk-share]: the network's Share sheet (ov-share.js, beside this file); without it, the system
+ *                  share sheet, else the link copied (the menu item says "Link copied")
  *   sidebars       kit.sidebar on a phone: [data-ovk-sidebar-open] opens the drawer; the scrim, its close button, Escape
  *                  and a page move close it (document-level, so boost-swapped pages need no wiring)
  *   card previews  .ovk-card video[data-src]: a muted loop while the card is hovered or focused (pointers only, never
@@ -22,6 +23,8 @@
  */
 (function (root) {
     'use strict';
+    // ov-share.js beside this file (its query, so a release's copy goes with this one's), for [data-ovk-share].
+    const SHARE_SRC = (() => { try { const me = document.currentScript; return me && me.src ? me.src.replace(/kit-web\.js(\?[^#]*)?.*$/, 'ov-share.js$1') : ''; } catch (_) { return ''; } })();
     const CHECK = '<svg class="ovk-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
 
     /** Opens or closes a sidebar drawer: its scrim, its buttons' aria-expanded, and the focus into it. */
@@ -180,6 +183,19 @@
                 const link = new URL(a.getAttribute('href'), location.href).href;
                 const title = a.getAttribute('data-ovk-share') || document.title;
                 const done = () => { const d = a.closest('details'); if (d) d.open = false; };
+                // The network's one Share sheet (ov-share.js, 4.114.0) when it can load; the device's own sheet, or the
+                // link copied, when it cannot.
+                const sheet = () => { done(); root.OVShare.open(Object.assign(root.OVShare.fromButton(a), { url: link, title })); };
+                if (root.OVShare) { sheet(); return; }
+                if (SHARE_SRC && !a.dataset.ovkShareTried) {
+                    a.dataset.ovkShareTried = '1';
+                    if (!document.querySelector('link[href*="ov-share.css"]')) { const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = SHARE_SRC.replace('ov-share.js', 'ov-share.css'); document.head.appendChild(ln); }
+                    const sc = document.createElement('script'); sc.src = SHARE_SRC; sc.async = true;
+                    sc.onload = () => { if (root.OVShare) sheet(); else a.click(); };
+                    sc.onerror = () => a.click();
+                    document.head.appendChild(sc);
+                    return;
+                }
                 if (navigator.share) { navigator.share({ title, url: link }).then(done, () => {}); return; }
                 if (!navigator.clipboard) { location.href = link; return; }
                 navigator.clipboard.writeText(link).then(() => {

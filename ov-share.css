@@ -1,0 +1,344 @@
+/* openvibe-shared/ov-share.css — the look of ov-share.js: the Share sheet (a dialog in the middle on a computer, a sheet
+ * from the bottom on a phone), the recipient's transfer banner and the "shared with specific people" gate.
+ * Colours come from the site's theme (--accent, --bg-card, --border, --text-primary …) with system colours when a site
+ * has none, the same fallbacks as ov-forms.css, so light and dark follow the site. Nothing spins: a wait is words. */
+
+.ov-share, .ov-share-banner, .ov-share-gate {
+    --ovs-accent: var(--accent, #3b82f6);
+    --ovs-on-accent: var(--on-accent, #fff);
+    --ovs-surface: var(--bg-card, var(--bg-secondary, Canvas));
+    --ovs-text: var(--text-primary, CanvasText);
+    --ovs-muted: var(--text-muted, var(--text-secondary, color-mix(in srgb, CanvasText 60%, Canvas)));
+    --ovs-line: var(--border, color-mix(in srgb, CanvasText 14%, transparent));
+    --ovs-hover: var(--bg-hover, color-mix(in srgb, CanvasText 7%, transparent));
+    --ovs-field: var(--bg-input, var(--bg-tertiary, Field));
+    --ovs-bad: var(--danger, #ef4444);
+    --ovs-warn: var(--warning, #f59e0b);
+    --ovs-radius: var(--ov-radius-2, 14px);
+    color: var(--ovs-text); font-family: inherit; font-size: 14px; line-height: 1.45; text-align: start;
+}
+.ov-share *, .ov-share *::before, .ov-share *::after, .ov-share-banner *, .ov-share-gate * { box-sizing: border-box; }
+
+/* ── The dialog ─────────────────────────────────────────────────────────────────────────────────────────────── */
+.ov-share {
+    box-sizing: border-box; width: min(520px, calc(100vw - 24px)); max-width: none; max-height: min(88dvh, 760px); max-height: min(88vh, 760px);
+    margin: auto; padding: 0; overflow: hidden;
+    background: var(--ovs-surface); border: 1px solid var(--ovs-line); border-radius: var(--ov-radius-3, 20px);
+    box-shadow: 0 28px 70px -18px rgb(0 0 0 / .5), 0 4px 14px rgb(0 0 0 / .14);
+    opacity: 0; transform: translateY(10px) scale(.985);
+    transition: opacity .16s ease, transform .2s cubic-bezier(.2, .8, .2, 1);
+}
+.ov-share.is-open { opacity: 1; transform: none; }
+.ov-share::backdrop { background: rgb(6 10 16 / .52); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+html.ov-share-locked, html.ov-share-locked body { overflow: hidden; overscroll-behavior: none; }
+.ov-share-box { display: flex; flex-direction: column; max-height: inherit; min-height: 0; }
+.ov-share-head { display: flex; align-items: center; gap: 6px; padding: 14px 10px 6px 20px; }
+.ov-share-title { flex: 1; min-width: 0; margin: 0; font-size: 17px; font-weight: 700; line-height: 1.3; letter-spacing: -.005em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-share-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: grid; align-content: start; gap: 18px; padding: 8px 20px 18px; scrollbar-width: thin; }
+.ov-share-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 16px 14px; border-top: 1px solid var(--ovs-line); }
+.ov-share-foot.is-confirm { background: color-mix(in srgb, var(--ovs-warn) 9%, transparent); }
+.ov-share-foot.is-confirm p { margin: 0; font-weight: 600; }
+.ov-share-grow { flex: 1 1 auto; min-width: 0; }
+
+/* A phone: a sheet from the bottom, the whole width, clear of the home bar. */
+@media (max-width: 640px), (pointer: coarse) and (max-width: 900px) {
+    .ov-share {
+        width: 100%; max-width: 100%; max-height: min(92dvh, 820px); max-height: min(92vh, 820px);
+        margin: auto 0 0; border: 0; border-radius: var(--ov-radius-3, 20px) var(--ov-radius-3, 20px) 0 0;
+        box-shadow: 0 -14px 44px rgb(0 0 0 / .38);
+        opacity: 1; transform: translateY(100%); transition: transform .26s cubic-bezier(.2, .85, .25, 1);
+    }
+    .ov-share.is-open { transform: none; }
+    .ov-share-head { position: relative; padding: 20px max(8px, env(safe-area-inset-right, 0px)) 6px max(18px, env(safe-area-inset-left, 0px)); }
+    .ov-share-head::before { content: ""; position: absolute; top: 7px; left: 50%; width: 38px; height: 5px; margin-left: -19px; border-radius: 99px; background: color-mix(in srgb, var(--ovs-text) 22%, transparent); }
+    .ov-share-body { padding: 8px max(16px, env(safe-area-inset-right, 0px)) 18px max(16px, env(safe-area-inset-left, 0px)); font-size: 15px; }
+    .ov-share-foot { padding: 10px max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); }
+}
+
+/* ── Words ──────────────────────────────────────────────────────────────────────────────────────────────────── */
+.ov-share-label { display: block; margin: 0 0 8px; padding: 0; font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ovs-muted); }
+.ov-share-desc, .ov-share-lead { margin: 10px 0 0; color: var(--ovs-muted); font-size: 13.5px; }
+.ov-share-lead { margin: 0; font-size: 14px; }
+.ov-share-desc strong { color: var(--ovs-text); font-weight: 650; }
+.ov-share-muted { margin: 0; color: var(--ovs-muted); font-size: 13px; }
+.ov-share-note { margin: 0; font-size: 13px; color: var(--ovs-text); padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--ovs-accent) 9%, transparent); }
+.ov-share-warn { margin: 0; font-size: 13px; padding: 8px 10px; border-radius: 10px; color: var(--warning-text, var(--ovs-text)); background: color-mix(in srgb, var(--ovs-warn) 15%, transparent); }
+.ov-share-error { margin: 0; font-size: 13px; color: var(--danger-text, var(--ovs-bad)); }
+.ov-share-soft { font-style: italic; }
+
+/* ── Buttons ────────────────────────────────────────────────────────────────────────────────────────────────── */
+.ov-share-btn {
+    -webkit-appearance: none; appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 40px; padding: 0 15px; margin: 0; border: 1px solid var(--ovs-line); border-radius: 10px;
+    background: transparent; color: var(--ovs-text); font: inherit; font-size: 14px; font-weight: 650; line-height: 1.2;
+    text-decoration: none; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: background-color .14s ease, border-color .14s ease, box-shadow .14s ease;
+}
+.ov-share-btn:hover:not(:disabled) { background: var(--ovs-hover); }
+.ov-share-btn:focus-visible, .ov-share-iconbtn:focus-visible, .ov-share-link:focus-visible, .ov-share-chip:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovs-accent) 40%, transparent);
+}
+.ov-share-btn:disabled { opacity: .55; cursor: default; }
+.ov-share-btn.is-primary { background: var(--ovs-accent); border-color: var(--ovs-accent); color: var(--ovs-on-accent); }
+.ov-share-btn.is-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ovs-accent) 88%, #000); }
+.ov-share-btn.is-quiet { border-color: transparent; }
+.ov-share-btn.is-danger { background: var(--ovs-bad); border-color: var(--ovs-bad); color: #fff; }
+.ov-share-btn.is-small { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.ov-share-btn .ov-share-ico { width: 18px; height: 18px; }
+.ov-share-iconbtn {
+    -webkit-appearance: none; appearance: none; flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; margin: 0; padding: 0;
+    border: 0; border-radius: 10px; background: none; color: var(--ovs-muted); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.ov-share-iconbtn:hover { background: var(--ovs-hover); color: var(--ovs-text); }
+.ov-share-iconbtn.is-small { width: 34px; height: 34px; }
+.ov-share-link {
+    -webkit-appearance: none; appearance: none; display: inline; margin: 0; padding: 2px 0; border: 0; background: none;
+    color: var(--ovs-accent); font: inherit; font-weight: 600; cursor: pointer; border-radius: 4px;
+}
+.ov-share-link:hover { text-decoration: underline; }
+.ov-share-link.is-quiet { color: var(--ovs-muted); font-weight: 500; }
+@media (pointer: coarse) {
+    .ov-share-btn { min-height: 44px; }
+    .ov-share-btn.is-small { min-height: 40px; }
+    .ov-share-iconbtn { width: 44px; height: 44px; }
+    .ov-share-iconbtn.is-small { width: 40px; height: 40px; }
+    .ov-share-link { padding: 6px 0; }
+}
+
+/* Icons: one stroke family, the currentColor of their place. */
+.ov-share-ico { flex: none; display: inline-grid; place-items: center; width: 20px; height: 20px; }
+.ov-share-ico svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ov-share-ico.is-big { width: 40px; height: 40px; color: var(--ovs-accent); }
+
+/* ── Who can open this: a segmented choice of up to four ───────────────────────────────────────────────────── */
+.ov-share-aud { margin: 0; padding: 0; border: 0; min-width: 0; }
+.ov-share-aud:disabled .ov-share-segopt { cursor: default; }
+.ov-share-seg { display: grid; grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: var(--ovs-radius); background: var(--ovs-hover); }
+.ov-share-segopt {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    min-width: 0; min-height: 62px; padding: 8px 4px; border-radius: 11px; cursor: pointer;
+    color: var(--ovs-muted); font-size: 13px; font-weight: 600; text-align: center; -webkit-tap-highlight-color: transparent;
+    transition: background-color .14s ease, color .14s ease, box-shadow .14s ease;
+}
+.ov-share-segopt > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
+.ov-share-segopt:hover { color: var(--ovs-text); }
+.ov-share-segopt:has(input:checked) { background: var(--ovs-surface); color: var(--ovs-accent); box-shadow: 0 1px 3px rgb(0 0 0 / .16), 0 0 0 1px color-mix(in srgb, var(--ovs-accent) 30%, transparent); }
+.ov-share-segopt:has(input:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovs-accent) 40%, transparent); }
+.ov-share-seglabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-share-aud:disabled .ov-share-segopt:not(:has(input:checked)) { opacity: .55; }
+
+/* ── People ─────────────────────────────────────────────────────────────────────────────────────────────────── */
+.ov-share-people { display: grid; gap: 10px; min-width: 0; }
+.ov-share-people .ov-share-label { margin: 0; }
+.ov-share-add { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin: 0; }
+.ov-share-addfield {
+    display: flex; align-items: center; min-width: 0; min-height: 44px; padding: 0 12px; gap: 2px;
+    background: var(--ovs-field); border: 1px solid var(--ovs-line); border-radius: 10px;
+    transition: border-color .14s ease, box-shadow .14s ease;
+}
+.ov-share-addfield:focus-within { border-color: var(--ovs-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovs-accent) 28%, transparent); }
+.ov-share-at { color: var(--ovs-muted); font-weight: 650; }
+.ov-share-addfield input { flex: 1; min-width: 0; height: 42px; padding: 0; border: 0; outline: 0; background: none; color: var(--ovs-text); font: inherit; }
+.ov-share-addfield input::placeholder { color: var(--ovs-muted); opacity: 1; }
+@media (pointer: coarse) { .ov-share-addfield input { font-size: 16px; } }   /* a phone does not zoom into a 16 px field */
+.ov-share-add .ov-share-btn { min-height: 44px; }
+.ov-share-addmsg { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--ovs-muted); }
+.ov-share-addmsg:empty { display: none; }
+.ov-share-addmsg.is-bad { color: var(--danger-text, var(--ovs-bad)); }
+.ov-share-sugg { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
+.ov-share-chip {
+    -webkit-appearance: none; appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; margin: 0; padding: 0 10px 0 4px;
+    border: 1px solid var(--ovs-line); border-radius: 999px; background: none; color: var(--ovs-text); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.ov-share-chip:hover { background: var(--ovs-hover); }
+.ov-share-chip .ov-share-av { width: 24px; height: 24px; font-size: 11px; }
+@media (pointer: coarse) { .ov-share-chip { min-height: 40px; } }
+
+.ov-share-list { display: grid; margin: 0; padding: 0; list-style: none; }
+.ov-share-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 7px 0; min-width: 0; }
+.ov-share-row + .ov-share-row { border-top: 1px solid color-mix(in srgb, var(--ovs-line) 70%, transparent); }
+.ov-share-row.is-dim > :not(.ov-share-iconbtn) { opacity: .5; }
+.ov-share-row.is-new .ov-share-av { box-shadow: 0 0 0 2px var(--ovs-surface), 0 0 0 4px color-mix(in srgb, var(--ovs-accent) 55%, transparent); }
+.ov-share-av {
+    flex: none; display: inline-grid; place-items: center; width: 38px; height: 38px; overflow: hidden; border-radius: 50%;
+    background: hsl(var(--ov-share-h, 210) 52% 46%); color: #fff; font-size: 15px; font-weight: 700; line-height: 1; user-select: none;
+}
+.ov-share-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ov-share-words { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ov-share-name { display: flex; align-items: center; gap: 6px; min-width: 0; font-weight: 650; }
+.ov-share-display { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-share-tag { flex: none; padding: 1px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1.4; color: var(--ovs-muted); background: var(--ovs-hover); }
+.ov-share-tag.is-new { color: var(--ovs-accent); background: color-mix(in srgb, var(--ovs-accent) 14%, transparent); }
+.ov-share-sub { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0; row-gap: 2px; min-width: 0; font-size: 12.5px; color: var(--ovs-muted); }
+.ov-share-sub > * + *::before { content: "\00b7"; display: inline-block; padding: 0 6px; color: var(--ovs-muted); font-style: normal; font-weight: 400; }
+.ov-share-sub > * { min-width: 0; white-space: nowrap; }   /* a part wraps whole, never inside "until Nov 30" */
+.ov-share-sub > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 480px) {   /* a phone: the name, then the end date under it, no dot left hanging */
+    .ov-share-sub { flex-direction: column; align-items: flex-start; }
+    .ov-share-sub > * + *::before { content: none; }
+}
+.ov-share-exp { display: inline-flex; align-items: baseline; gap: 8px; }
+.ov-share-exp .ov-share-link { font-size: 12.5px; }
+.ov-share-exp .ov-share-btn { min-height: 30px; padding: 0 8px; font-size: 12.5px; }
+.ov-share-date { min-height: 32px; padding: 2px 8px; border: 1px solid var(--ovs-accent); border-radius: 8px; background: var(--ovs-field); color: var(--ovs-text); font: inherit; font-size: 13px; color-scheme: light dark; }
+.ov-share-role { flex: none; font-size: 13px; color: var(--ovs-muted); white-space: nowrap; }
+.ov-share-role.is-fixed { font-weight: 600; }
+.ov-share-rolepill { flex: none; display: inline-flex; align-items: stretch; min-height: 34px; padding: 0; border: 1px solid var(--ovs-line); border-radius: 999px; font-size: 13px; font-weight: 600; overflow: hidden; }
+.ov-share-rolepill:focus-within { border-color: var(--ovs-accent); }
+.ov-share-select { max-width: 100%; min-height: 32px; margin: 0; padding: 0 10px; border: 0; outline: 0; background: transparent; color: var(--ovs-text); font: inherit; cursor: pointer; }
+.ov-share-rolepill .ov-sel { padding: 0 10px; }   /* ov-forms.js, when the site has it, draws the select as a bare button */
+@media (pointer: coarse) { .ov-share-rolepill { min-height: 40px; } .ov-share-select { min-height: 38px; } .ov-share-exp .ov-share-link { padding: 9px 0; } }
+.ov-share-check { display: flex; align-items: center; gap: 10px; font-size: 13.5px; cursor: pointer; }
+.ov-share-check input { flex: none; width: 18px; height: 18px; margin: 0; accent-color: var(--ovs-accent); }
+/* The sheet's own switch, the same as ov-forms.css draws (a site without the Forms kit still gets a switch). */
+.ov-share-check input[role="switch"] {
+    -webkit-appearance: none; appearance: none; width: 42px; height: 24px; border-radius: 999px; cursor: pointer;
+    background-color: color-mix(in srgb, var(--ovs-text) 26%, transparent);
+    background-image: radial-gradient(circle, #fff 0 8.5px, transparent 9px); background-repeat: no-repeat; background-size: 20px 20px; background-position: 2px 50%;
+    transition: background-color .18s ease, background-position .2s cubic-bezier(.3, .8, .3, 1);
+}
+.ov-share-check input[role="switch"]:checked { background-color: var(--ovs-accent); background-position: calc(100% - 2px) 50%; }
+.ov-share-check input[role="switch"]:focus-visible { outline: 2px solid var(--ovs-accent); outline-offset: 2px; }
+
+/* ── Send it: the link, the phone's own sheet, the places ──────────────────────────────────────────────────── */
+.ov-share-box { position: relative; }
+.ov-share-send { display: grid; gap: 14px; min-width: 0; }
+.ov-share-linkpill {
+    display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 5px 5px 14px;
+    background: var(--ovs-field); border: 1px solid var(--ovs-line); border-radius: 14px;
+    transition: border-color .18s ease, box-shadow .18s ease;
+}
+.ov-share-linkpill:focus-within { border-color: var(--ovs-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovs-accent) 26%, transparent); }
+.ov-share-linkpill > .ov-share-ico { color: var(--ovs-muted); width: 18px; height: 18px; }
+.ov-share-linktext { flex: 1; min-width: 0; height: 40px; padding: 0; border: 0; outline: 0; background: none; color: var(--ovs-text); font: inherit; font-size: 14.5px; text-overflow: ellipsis; }
+@media (pointer: coarse) { .ov-share-linktext { font-size: 16px; } }
+.ov-share-copy { min-width: 96px; border-radius: 10px; }
+.ov-share-linkpill.is-copied { border-color: var(--success, #22c55e); animation: ov-share-ring .7s ease-out; }
+.ov-share-linkpill.is-copied .ov-share-copy { background: var(--success, #16a34a); border-color: var(--success, #16a34a); color: #fff; }
+.ov-share-linkpill.is-copied .ov-share-copy .ov-share-ico { animation: ov-share-pop .38s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes ov-share-ring { from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success, #22c55e) 50%, transparent); } to { box-shadow: 0 0 0 12px transparent; } }
+@keyframes ov-share-pop { 0% { transform: scale(.4); } 70% { transform: scale(1.18); } 100% { transform: none; } }
+.ov-share-linkfor { margin-top: -6px; }
+.ov-share-rule { margin: 2px 0; border: 0; border-top: 1px solid var(--ovs-line); }
+
+.ov-share-device {
+    -webkit-appearance: none; appearance: none; display: flex; align-items: center; gap: 14px; width: 100%; min-height: 64px; margin: 0; padding: 10px 14px;
+    border: 1px solid var(--ovs-line); border-radius: 14px; background: color-mix(in srgb, var(--ovs-accent) 6%, transparent);
+    color: var(--ovs-text); font: inherit; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: transform .12s ease, background-color .14s ease;
+}
+.ov-share-device:active { transform: scale(.985); }
+.ov-share-device .ov-share-tileic { background: var(--ovs-accent); color: var(--ovs-on-accent); }
+.ov-share-devicewords { display: grid; gap: 1px; min-width: 0; }
+.ov-share-devicetitle { font-weight: 700; font-size: 15px; }
+
+.ov-share-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 4px; margin: 0 -6px; }
+@media (max-width: 640px) { .ov-share-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ov-share-tile {
+    -webkit-appearance: none; appearance: none; display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; margin: 0; padding: 9px 2px 8px;
+    border: 0; border-radius: 14px; background: none; color: var(--ovs-text); font: inherit; font-size: 12.5px; font-weight: 600; line-height: 1.2;
+    text-decoration: none; text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent;
+    transition: background-color .14s ease, transform .12s ease;
+}
+.ov-share-tile:hover { background: var(--ovs-hover); }
+.ov-share-tile:active { transform: scale(.94); }
+.ov-share-tile:focus-visible, .ov-share-device:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovs-accent) 40%, transparent); }
+.ov-share-tile[aria-expanded="true"] { background: color-mix(in srgb, var(--ovs-accent) 12%, transparent); }
+.ov-share-tilelabel { max-width: 100%; padding: 0 2px; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
+.ov-share-tileic {
+    flex: none; display: inline-grid; place-items: center; width: 48px; height: 48px; border-radius: 50%;
+    background: var(--ovs-hover); color: var(--ovs-text); font-weight: 800; font-size: 18px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovs-text) 10%, transparent);
+    transition: transform .16s cubic-bezier(.3, 1.4, .5, 1);
+}
+.ov-share-tile:hover .ov-share-tileic { transform: translateY(-2px); }
+.ov-share-tileic svg { width: 22px; height: 22px; }
+.ov-share-tileic:not(.is-brand) svg { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ov-share-tileic.is-brand { background: var(--ov-brand); color: #fff; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14); }
+.ov-share-tileic.is-email { background: color-mix(in srgb, var(--ovs-accent) 16%, transparent); color: var(--ovs-accent); }
+.ov-share-tileic.is-sms { background: #34c759; color: #fff; }
+.ov-share-tileic.is-linkedin { background: #0a66c2; color: #fff; }
+.ov-share-tileic.is-qr, .ov-share-tileic.is-embed, .ov-share-tileic.is-device, .ov-share-tileic.is-more { color: var(--ovs-text); }
+.ov-share-tileic.is-more svg { fill: currentColor; stroke: none; }
+.ov-share-box.is-first .ov-share-tile, .ov-share-box.is-first .ov-share-device, .ov-share-box.is-first .ov-share-linkpill {
+    animation: ov-share-in .34s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms + 70ms);
+}
+.ov-share-box.is-first .ov-share-linkpill { --i: -2; }
+.ov-share-box.is-first .ov-share-device { --i: -1; }
+@keyframes ov-share-in { from { opacity: 0; transform: translateY(8px) scale(.92); } to { opacity: 1; transform: none; } }
+
+.ov-share-panel {
+    display: grid; gap: 10px; margin: 0; padding: 14px; min-width: 0; border-radius: 14px;
+    background: color-mix(in srgb, var(--ovs-text) 4%, transparent); border: 1px solid var(--ovs-line);
+    animation: ov-share-unfold .22s cubic-bezier(.2, .8, .2, 1);
+}
+.ov-share-panel .ov-share-label { margin: 0; }
+@keyframes ov-share-unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.ov-share-qr { grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; }
+.ov-share-qrart { display: grid; place-items: center; width: 172px; height: 172px; padding: 8px; border-radius: 14px; background: #fff; color: #0b0f17; font-size: 12.5px; text-align: center; box-shadow: 0 6px 20px -8px rgb(0 0 0 / .4); }
+.ov-share-qrart svg { display: block; width: 100%; height: 100%; shape-rendering: crispEdges; }
+.ov-share-qrside { display: grid; gap: 10px; justify-items: start; min-width: 0; }
+@media (max-width: 420px) { .ov-share-qr { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; } .ov-share-qrside { justify-items: center; } }
+.ov-share-code {
+    box-sizing: border-box; width: 100%; min-width: 0; margin: 0; padding: 10px 12px; resize: none;
+    font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--ovs-text);
+    background: var(--ovs-field); border: 1px solid var(--ovs-line); border-radius: 10px;
+}
+.ov-share-panel > .ov-share-btn { justify-self: start; }
+
+.ov-share-toast {
+    position: absolute; left: 50%; bottom: 78px; z-index: 2; max-width: calc(100% - 32px); margin: 0; padding: 9px 16px;
+    border-radius: 999px; background: color-mix(in srgb, var(--ovs-text) 92%, transparent); color: var(--ovs-surface);
+    font-size: 13.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+    box-shadow: 0 10px 30px -8px rgb(0 0 0 / .45);
+    opacity: 0; transform: translate(-50%, 8px) scale(.96); transition: opacity .18s ease, transform .22s cubic-bezier(.2, .9, .3, 1.3);
+}
+.ov-share-toast:empty { display: none; }
+.ov-share-toast.is-quiet { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ov-share-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+@media (max-width: 640px), (pointer: coarse) and (max-width: 900px) { .ov-share-toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); } }
+
+/* ── Transfer ───────────────────────────────────────────────────────────────────────────────────────────────── */
+.ov-share-give { display: grid; gap: 10px; margin: 0; }
+.ov-share-give .ov-share-label { margin: 6px 0 0; }
+.ov-share-keep { display: grid; gap: 8px; margin: 6px 0 0; padding: 0; border: 0; min-width: 0; }
+.ov-share-radio {
+    display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border: 1px solid var(--ovs-line); border-radius: 12px; cursor: pointer;
+    transition: border-color .14s ease, background-color .14s ease;
+}
+.ov-share-radio:has(input:checked) { border-color: var(--ovs-accent); background: color-mix(in srgb, var(--ovs-accent) 7%, transparent); }
+.ov-share-radio:has(input:focus-visible) { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovs-accent) 35%, transparent); }
+.ov-share-radio input { flex: none; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ovs-accent); }
+.ov-share-radiowords { display: grid; gap: 2px; min-width: 0; }
+.ov-share-radiotitle { font-weight: 650; }
+
+/* ── Banners: the owner's pending offer, the recipient's offer ─────────────────────────────────────────────── */
+.ov-share-banner {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 12px 14px; border-radius: 12px;
+    background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent);
+}
+.ov-share-banner > .ov-share-ico { color: var(--ovs-accent); }
+.ov-share-banner > p { flex: 1 1 220px; min-width: 0; margin: 0; font-size: 13.5px; }
+.ov-share-banner > .ov-share-error { flex-basis: 100%; }
+.ov-share-banner.is-offer { margin: 0 0 16px; }
+.ov-share-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ── The gate: a person who is not on the list ─────────────────────────────────────────────────────────────── */
+.ov-share-gate {
+    display: grid; justify-items: center; gap: 12px; max-width: 440px; margin: 48px auto; padding: 32px 24px; text-align: center;
+    background: var(--ovs-surface); border: 1px solid var(--ovs-line); border-radius: var(--ov-radius-3, 20px);
+}
+.ov-share-gatetitle { margin: 4px 0 0; font-size: 19px; font-weight: 700; line-height: 1.3; text-wrap: balance; }
+.ov-share-gate .ov-share-acts { justify-content: center; margin-top: 4px; }
+.ov-share-gate .ov-share-muted { font-size: 14px; max-width: 34ch; }
+
+.ov-share-copybuf { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ov-share, .ov-share-btn, .ov-share-segopt, .ov-share-addfield, .ov-share-radio, .ov-share-tile, .ov-share-tileic, .ov-share-device, .ov-share-toast, .ov-share-linkpill { transition: none !important; }
+    .ov-share *, .ov-share-box.is-first * { animation: none !important; }
+}
+@media (forced-colors: active) {
+    .ov-share { border: 1px solid CanvasText; }
+    .ov-share-segopt:has(input:checked), .ov-share-radio:has(input:checked) { outline: 2px solid Highlight; }
+}

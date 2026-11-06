@@ -491,7 +491,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '715972edd968', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '715972edd968', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'd5bbb14b108e', 'ov-share.css': 'd6afb0f03db7' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -573,6 +573,22 @@
             const sc = document.createElement('script'); sc.id = 'ov-forms-loader'; sc.src = siblingV('ov-forms.js'); sc.async = true; document.head.appendChild(sc);
         } catch { /* */ }
         return true;
+    }
+    // ov-share.js and ov-share.css (4.114.0, plan track Q): the one Share sheet, fetched the first time someone presses a
+    // [data-ov-share-sheet] button, so a site gets it by putting the button on its page and nothing loads before that.
+    function shareClick(e) {
+        const b = e.target && e.target.closest ? e.target.closest('[data-ov-share-sheet]') : null;
+        if (!b || root.OVShare || b.disabled) return;
+        e.preventDefault();
+        if (document.getElementById('ov-share-loader')) return;
+        try {
+            if (!document.querySelector('link[href*="ov-share.css"]')) {
+                const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = siblingV('ov-share.css'); document.head.appendChild(ln);
+            }
+            const sc = document.createElement('script'); sc.id = 'ov-share-loader'; sc.src = siblingV('ov-share.js'); sc.async = true;
+            sc.onload = () => { if (root.OVShare) root.OVShare.open(root.OVShare.fromButton(b)); };
+            document.head.appendChild(sc);
+        } catch { /* */ }
     }
     function watchForms() {
         if (formWatch || !document.querySelector || typeof MutationObserver !== 'function' || !document.body) return;
@@ -1805,6 +1821,7 @@
         // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
         if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) watchForms();
+        if (!root.__ovShareClick) { root.__ovShareClick = true; document.addEventListener('click', shareClick); }
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">

@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.114.0 — 2026-11-06
+
+- **One Share sheet on every site** (`ov-share.js`, `ov-share.css`; plan track Q; docs/share.md). Press Share
+  anywhere and the same sheet opens: a sheet from the bottom on a phone, a dialog on a computer, no tabs.
+  - **Send it** (everyone): the link with Copy, which turns into a tick; on a phone, "Send with your phone" (the
+    phone's own share sheet, with its contacts and apps); 16 places (X, Bluesky, WhatsApp, Reddit, Discord, Telegram,
+    Threads, Mastodon, Facebook, email, Messages, LinkedIn, Pinterest, Tumblr, Hacker News, LINE), recent ones first,
+    the rest behind "More (n)"; a QR code made on the device; "Start at 1:23"; embed code. Nothing is added to a
+    shared link.
+  - **Who can open it** (the owner, through `openvibe-sdk/share`'s router): Everyone, Anyone with the link, Specific
+    people (by @name, checked as you add them; Can view or Can edit; an end date), Only me; people who asked;
+    transfer of ownership, bound to the recipient, "Remove my access" by default. Saves send If-Match. A 401, 403 or
+    404 leaves only Send it.
+  - `OVShare.offer()` is the recipient's Accept/Decline banner; `OVShare.gate()` is the not-on-the-list page (Ask
+    for access, or Sign in). Every name and title is text, never markup.
+  - The navbar loads it on the first press of a `[data-ov-share-sheet]` button, so nothing loads before that. The
+    kit's `[data-ovk-share]` items open it too.
+  - Events: `ov-share:sent` `{ target, url }` and `ov-share:change`.
+  - Tests: test/ov-share-chrome.test.js (headless Chrome).
+
 ## 4.113.0 — 2026-11-06
 
 - **Bot API calls can be counted at ingest, not stored row by row.** `AnalyticsTrackerPg` takes
