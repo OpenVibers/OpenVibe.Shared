@@ -16,6 +16,7 @@ const FA = {
     youtube: 'youtube', 'square-youtube': 'youtube', twitch: 'twitch', discord: 'discord', github: 'github', 'square-github': 'github',
     'x-twitter': 'x', 'square-x-twitter': 'x', twitter: 'x', kick: 'kick', 'kickstarter-k': 'kick', kickstarter: 'kickstarter',
     google: 'google', tiktok: 'tiktok', threads: 'threads', spotify: 'spotify', soundcloud: 'soundcloud', reddit: 'reddit', 'reddit-alien': 'reddit',
+    tumblr: 'tumblr', 'hacker-news': 'ycombinator', line: 'line',
     paypal: 'paypal', patreon: 'patreon', mastodon: 'mastodon', linux: 'linux', instagram: 'instagram', facebook: 'facebook', 'facebook-f': 'facebook',
     cloudflare: 'cloudflare', brave: 'brave', bluesky: 'bluesky', bitcoin: 'bitcoin', apple: 'apple', telegram: 'telegram', whatsapp: 'whatsapp',
     steam: 'steam', snapchat: 'snapchat', pinterest: 'pinterest', vimeo: 'vimeo', 'vimeo-v': 'vimeo', npm: 'npm', node: 'nodedotjs', 'node-js': 'nodedotjs',
