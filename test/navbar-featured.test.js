@@ -51,6 +51,10 @@ const between = (html, a, b) => { const i = html.indexOf(a); const j = html.inde
     assert.ok(!/ovnav-link--featured[^}]*animation/.test(bar), 'the pill does not animate');
     const drawer = between(barHtml(created), 'id="openvibe-drawer"', 'ovnav-drawer-net');
     assert.ok(drawer.indexOf('>Node<') >= 0 && drawer.indexOf('>Node<') < drawer.indexOf('>My Account<'), 'on a phone the Node is the first entry of the menu');
+    // 4.119.0: on a phone the links row folds away, so the featured link keeps an icon button on the bar itself.
+    const right = between(barHtml(created), 'openvibe-navbar-right', 'openvibe-bell-mount');
+    assert.ok(/<a class="ovnav-featured-phone" href="https:\/\/node\.openvibe\.network" aria-label="Node"/.test(right), 'the phone bar has the Node button, named for readers');
+    assert.strictEqual((barHtml(created).match(/ovnav-featured-phone"/g) || []).length, 1, 'one phone button');
 }
 {
     // Without the option, nothing changes: an ordinary link, in the order it was given.
@@ -63,6 +67,7 @@ const between = (html, a, b) => { const i = html.indexOf(a); const j = html.inde
     assert.ok(!bar.includes('ovnav-link--featured'), 'a plain link is not a pill');
     const drawer = between(barHtml(created), 'id="openvibe-drawer"', 'ovnav-drawer-net');
     assert.ok(drawer.indexOf('>My Account<') < drawer.indexOf('>Node<'), 'and it keeps its place in the menu');
+    assert.ok(!barHtml(created).includes('ovnav-featured-phone"'), 'no phone button without a featured link');
 }
 {
     // The stylesheet carries the pill: one hairline, one tint, the glyph, and nothing that moves.
