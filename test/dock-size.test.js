@@ -15,10 +15,12 @@ const DOCK_PATH = path.join(ROOT, 'dock.js');
 // 4.74.0 (2026-11-01, L48 V2) adds the Vibe tab's entry, its loader and Alt+V: +568 bytes (14757). The conversation
 // and the mic are dock-vibe.js (4.1 KB brotli), loaded the first time the tab opens, not on every page.
 // 4.76.0 (2026-11-01, L48 R2) adds the timer's button, its loader and the pill's countdown hook: +456 bytes (15213).
+// 4.120.0 (2026-11-06, K-D3) adds the agent view's container and its lazy loader: +222 bytes (15435). The view itself
+// (the embed, Curtain now, End, the still) is dock-agent.js, 3.9 KB brotli, loaded the first time the Agents tab opens.
 // The timer itself (menu, countdown, chime, focus rounds) is dock-timer.js (3.7 KB brotli), loaded only while a timer
 // runs or its menu opens; the header's tab rail and narrow-width rules came with it.
-const DOCK_BROTLI_BUDGET = 15360;   // 15.00 KB (15213 after 4.76.0 + 147 bytes of headroom)
-const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js', 'dock-timer.js'];
+const DOCK_BROTLI_BUDGET = 15872;   // 15.50 KB (15435 after 4.120.0 + 437 bytes of headroom)
+const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js', 'dock-timer.js', 'dock-agent.js'];
 
 // ── the budget ──────────────────────────────────────────────
 {

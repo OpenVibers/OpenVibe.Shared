@@ -13,9 +13,11 @@
 // State: GET/PUT <apiBase>/api/v1/me/dock (network.dock-result@1, network.dock-state@1): open, tab, pinned and where it
 // sits for each device class, so it follows the person from site to site. A change shows at once (onChange paints the
 // pill and the site's copy) and reaches the Network a beat later; before Network has the route the copy stands.
-// Tabs: Agents (action-center.js mount(): what needs you, then what runs, approve or decline in place), Chats (K-D2: the
-// person's conversations and DMs from OpenVibe.Chat's own API, GET /api/dm/conversations, opened in place, read and
-// answered there) and Activity (notification-ui.js renderDock(): the bell's list). The agent's live screen is K-D3.
+// Tabs: Agents (action-center.js mount(): what needs you, then what runs, approve or decline in place; K-D3: above it,
+// the person's own desk stream — dock-agent.js loads the first time the tab opens — with Curtain now, End and the still
+// when nothing is live), Chats (K-D2: the person's conversations and DMs from OpenVibe.Chat's own API,
+// GET /api/dm/conversations, opened in place, read and answered there) and Activity (notification-ui.js renderDock():
+// the bell's list).
 // Desktop: a floating card at the pill's corner. Drag its head to move it (it snaps to the nearest corner), drag the
 // free corner to resize (320-720 × 360-900 px). It is not modal: the page stays usable. Phones: a sheet from the
 // bottom over a scrim; drag the head down, ×, Escape or a tap outside closes it. Motion is transform and opacity only.
@@ -61,6 +63,8 @@
     const kind = () => (phone() ? 'phone' : 'desktop');
     const place = () => ({ ...DEFAULT_STATE.place[kind()], ...((state().place || {})[kind()] || {}) });
     const sibling = (name) => (typeof o.sibling === 'function' ? o.sibling(name) : `https://openvibe.network/shared/${name}`);
+    // K-D3: the agent stream comes from OpenVibe.Codes' API (it mints the view ticket with the person's own token).
+    const agentBase = () => String(o.agentBase || 'https://openvibe.codes').replace(/\/+$/, '');
 
     async function call(path, init = {}) {
         const base = String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '');
@@ -444,8 +448,12 @@
         if (id === 'agent') {
             const ok = await load('action-center.js', () => !!(root.OpenVibeActionCenter && root.OpenVibeActionCenter.mount));
             if (!ok) return failed(panel, id);
-            panel.innerHTML = `<div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
-            const m = root.OpenVibeActionCenter.mount(panel.firstChild, {
+            // K-D3: the person's own agent stream above the list; it hides itself when there is none.
+            panel.innerHTML = `<div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
+                if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.firstChild, { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
+            });
+            const m = root.OpenVibeActionCenter.mount(panel.querySelector('.ovdk-scroll'), {
                 token: o.token, apiBase: o.apiBase, scopes: o.scopes, buckets: ['waiting', 'running'],
                 onCounts: (c) => { doc = { ...(doc || {}), state: state(), counts: { ...counts(), running: c.running || 0, waiting: c.waiting || 0 } }; badges(); notify(); },
             });
