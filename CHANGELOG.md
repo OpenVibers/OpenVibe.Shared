@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.120.0 — 2026-11-06
+
+- **The Dock's agent view** (Dock K-D3; `dock-agent.js`, `dock.js`; Agent Streams S1). The Agents tab now opens on the
+  person's own desk stream: Live's embed (`/embed/agent/<ags_id>?vt=wvt_…`, the `AI agent` label, the curtain state and
+  the viewer count on the picture), one line for the task with the time it has worked, and the owner's **Curtain
+  now** and **End**. Above the list, and it hides itself when there is no stream, so the tab is what it was.
+  - The view ticket is minted server-side by OpenVibe.Codes with the person's own token (`GET
+    /api/v1/me/agent-view`) — a third-party iframe has no Live cookie — and the embed renews its own ticket while it
+    plays, so nothing is re-mounted on a poll.
+  - Nothing live: the last frame, read with the token and shown as a local object URL (an `<img>` cannot carry a
+    bearer), with the task and the worked time.
+  - No step line yet: steps are Agent Streams S2, and the view shows none until Live serves them.
+  - `dock-agent.js` is a sibling loaded the first time the tab opens (3.9 KB brotli); `dock.js` grows 222 bytes and its
+    budget goes to 15.50 KB. `navbar.js` passes `dockAgentBase` (default `https://openvibe.codes`).
+
 ## 4.119.0 — 2026-11-06
 
 - A featured link keeps a place on the phone's bar: where the links row folds into the menu, the featured link (4.117.0) also shows as one tinted icon button beside Sign In or the avatar (38 px, 34 px under 400 px, a 44 px hit area on the element), named by its label for screen readers. The Node on the Network is one tap away on a phone. Only a featured link with an icon gets one; no animation.
