@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.112.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.113.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -497,6 +497,7 @@ const analytics = new AnalyticsTrackerPg(db, 'live', {
     retention: { days: 30 },
     paramPrefixes: ['avatar'],
     pathRules: [[/\/by-username\/[^/?#]+/gi, '/by-username/:username']],
+    countBotApiAtIngest: true,   // optional: bot API calls go into the rollups, not one raw row each
 });
 app.use(analytics.middleware());
 // A service may call pruneRawEventsPg(db, { days: 30 }) in its own job runner.
@@ -507,6 +508,16 @@ referer origin, a user-agent class, a rotating session id and a country. Raw eve
 30 days, and the rollups for longer. A request with `Sec-GPC: 1` or `DNT: 1` is not recorded at
 all. The row shape is `analytics/event.v1` (`docs/schemas/analytics-event.v1.json`), and
 `require('openvibe-shared/analytics/event').checkRow(row)` checks a stored row against it. PostgreSQL retention uses `pruneRawEventsPg(db, { days })`; `retention.MAX_DAYS` is 30.
+
+`countBotApiAtIngest` (off by default) stops writing a raw row for a bot's API call. At flush the
+call increments `analytics_bot_api_hourly` and `analytics_bot_api_daily` by endpoint group (the
+first three path segments of the route template), status class (`2xx`/`3xx`/`4xx`/`5xx`/`other`) and
+bot family (the row's `bot_type`: `known_crawler`, `no_useragent`, `rate_limit`, `honeypot_hit`).
+The hour's and day's rollups add those counters to raw rows when they are computed, so a day closes
+to the same `api_calls`, `bot_hits` and `error_count` a raw-row rollup gave; the counters are totals,
+so recomputing a day never counts a call twice. Page views by bots always keep their raw row, and a
+call that cannot be counted (the bounded in-memory map is full) falls back to a raw row. The bot
+breakdown and status classes in `getStats` and `getBotAnalysis` include the counters.
 
 ### Browser side: two options
 
