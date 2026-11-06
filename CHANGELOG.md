@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.121.0 — 2026-11-06
+
+- **The Dock's agent view works in the window too** (Dock K-D4, on K-D3). The pop-out keeps the Agents tab's stream:
+  the agent view's own style goes into the document it is mounted in, so a tab opened after the pop-out is styled in
+  the window (and its style is not left on the page behind it), and a view already open when the Dock pops out carries
+  its style with the rest of the Dock. Closing the window brings the same stream back to the page.
+- No new file and no new request: `dock-agent.js` creates its nodes and its style from `container.ownerDocument`.
+  `test/dock-chrome.test.js` covers the pop-out with the stream.
+
 ## 4.120.0 — 2026-11-06
 
 - **The Dock's agent view** (Dock K-D3; `dock-agent.js`, `dock.js`; Agent Streams S1). The Agents tab now opens on the

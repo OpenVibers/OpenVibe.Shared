@@ -27,9 +27,11 @@
         open: '<path d="M14 4h6v6M20 4l-9 9M19 14v5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H10"/>',
     };
 
-    function styles() {
-        if (document.getElementById('ovda-styles')) return;
-        const st = document.createElement('style');
+    // The style goes into the document the view lives in: the page, or the Dock's own window when it is popped out.
+    function styles(doc) {
+        const d = doc || (typeof document !== 'undefined' ? document : null);
+        if (!d || d.getElementById('ovda-styles')) return;
+        const st = d.createElement('style');
         st.id = 'ovda-styles';
         st.textContent = `
             .ovda { display: none; flex: none; padding: 8px 8px 2px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); }
@@ -57,18 +59,19 @@
             @keyframes ovda-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
             @media (prefers-reduced-motion: reduce) { .ovda-line .dot.live { animation: none; } }
         `;
-        document.head.appendChild(st);
+        (d.head || d.documentElement).appendChild(st);
     }
 
-    const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     const mins = (s) => {
         const m = Math.max(0, Math.round((Number(s) || 0) / 60));
         return m < 1 ? 'under a minute' : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
     };
 
     function mount(container, opts = {}) {
-        styles();
+        const d = container.ownerDocument || document;
+        styles(d);
         const o = { ...opts };
+        const h = (tag, cls, text) => { const n = d.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
         let gone = false, timer = 0, busy = false, agent = null, frameUrl = null, lastFrame = '';
         container.innerHTML = '';
         container.classList.add('ovda');
