@@ -40,7 +40,9 @@ document.addEventListener('click', () => { const t = performance.now(); while (p
         if (process.platform !== 'darwin') assert.ok(m.cwv.cls > 0, `the late block shifts the text: ${JSON.stringify(m.cwv)}`);
         assert.ok(m.cwv.lcpMs > 0, 'the text paints');
         assert.ok(m.cwv.inpMs >= 0 && Number.isInteger(m.cwv.inpMs), 'the click is measured');
-        assert.deepStrictEqual(check(m, { cls: 0 }), [{ name: 'cls', value: m.cwv.cls, budget: 0 }]);
+        // The budget check is exercised where the shift is seen (the same macOS caveat as above).
+        if (process.platform !== 'darwin') assert.deepStrictEqual(check(m, { cls: 0 }), [{ name: 'cls', value: m.cwv.cls, budget: 0 }]);
+        else assert.deepStrictEqual(check({ ...m, cwv: { ...m.cwv, cls: 0.2 } }, { cls: 0 }), [{ name: 'cls', value: 0.2, budget: 0 }]);
         assert.match(format(m), /cwv: lcp \d+ ms, inp \d+ ms, cls [\d.]+/);
 
         // A running browser is reused and left running.
