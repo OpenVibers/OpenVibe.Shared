@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.114.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.115.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -902,6 +902,13 @@ so forms, `select.value` and `change` listeners work as before. An option can sa
 switch; `.ov-field`, `.ov-input` and `.ov-choice` are the full field look. Turn it off with `data-ov-native` or
 `<html data-ov-forms="off">`. See [docs/forms.md](docs/forms.md).
 
+### Locker (`ov-locker.js`, `ov-locker.css`, `ov-locker-core.js`)
+
+End-to-end encryption in the browser (plan Q2): a locked item's card (the link's key, a password, or your locker),
+making your locker (a passphrase, then a 24-word recovery kit), and unlocking it on a new device. Nothing readable
+leaves the page. `ov-locker-core.js` is `openvibe-sdk/locker`, generated (`node scripts/build-locker-core.js`), and
+reproduces the SDK's test vectors exactly. See [docs/locker.md](docs/locker.md).
+
 ### Share (`ov-share.js`, `ov-share.css`)
 
 One Share sheet on every site (plan track Q): a sheet from the bottom on a phone, a dialog on a computer.
@@ -1079,5 +1086,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 
 <!-- versions:start -->
 - openvibe-contracts: v0.289.1
-- openvibe-sdk: v0.82.0
+- openvibe-sdk: v0.86.0
 <!-- versions:end -->
