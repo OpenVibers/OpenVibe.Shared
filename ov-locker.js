@@ -241,8 +241,9 @@
                 try {
                     const pub = await c.exportPersonKeys(person);
                     const priv = utf8(JSON.stringify(await c.exportPrivateKeys(person)));
-                    const byPass = await c.seal(priv, { lock: 'password', password: passphrase });
-                    const byWords = await c.seal(priv, { lock: 'password', password: words.join(' ') });
+                    // seal() answers { header, bytes, … }: the bytes are the envelope that goes on the wire.
+                    const byPass = (await c.seal(priv, { lock: 'password', password: passphrase })).bytes;
+                    const byWords = (await c.seal(priv, { lock: 'password', password: words.join(' ') })).bytes;
                     await network('PUT', '/api/v1/me/keys', {
                         ecdh_public: pub.ecdh, signing_public: pub.signing, self_signature: pub.self_signature,
                         backups: { passphrase: { format: 'locker.envelope.v1', envelope: b64(byPass) }, recovery: { format: 'locker.envelope.v1', envelope: b64(byWords) } },

@@ -25,7 +25,7 @@ const CORE = `window.OVLockerCore = {
   async exportPersonKeys() { return { ecdh: { kty: 'EC' }, signing: { kty: 'EC' }, self_signature: 'sig', fingerprint: 'cedar ember lumen onyx fable maple gecko iris' }; },
   async exportPrivateKeys() { return { d: 'private' }; },
   async importPersonKeys() { return { id: 'p1' }; },
-  async seal(b, o) { return new TextEncoder().encode('sealed-by-' + o.lock); },
+  async seal(b, o) { return { bytes: new TextEncoder().encode('sealed-by-' + o.lock) }; },
   inspect(b) { return { lock: new TextDecoder().decode(b).split(':')[0] }; },
   async open(b, c) {
     const [lock, secret, body] = new TextDecoder().decode(b).split(':');
