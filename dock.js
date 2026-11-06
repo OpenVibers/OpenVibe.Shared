@@ -757,7 +757,7 @@
         if (!d.head) d.documentElement.appendChild(d.createElement('head'));
         if (!d.body) d.documentElement.appendChild(d.createElement('body'));
         d.title = 'OpenVibe Dock';
-        for (const id of ['ovdk-styles', 'ovac-styles', 'openvibe-notif-styles', 'ov-mark-css']) {
+        for (const id of ['ovdk-styles', 'ovac-styles', 'openvibe-notif-styles', 'ovda-styles', 'ov-mark-css']) {
             const s = document.getElementById(id);
             if (!s) continue;
             const c = d.createElement('style');

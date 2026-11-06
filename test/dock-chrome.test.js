@@ -16,8 +16,8 @@
 //   • the timer (L48 R2): the header's menu starts one, the pill counts it down when the Dock is closed, its end
 //     clears it and says so, and a focus round's end writes its break from that same end (any page, the same result);
 //   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
-//     its tabs and its styles, the page keeps the pill saying where the Dock went, and closing the window brings the
-//     panel back; the Network is told.
+//     its tabs and its styles, the agent view's stream and styles included, the page keeps the pill saying where the
+//     Dock went, and closing the window brings the panel back; the Network is told.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const fs = require('fs');
@@ -187,8 +187,10 @@ const PIP = `(() => {
     const w = f.contentWindow;
     const shut = () => { try { w.dispatchEvent(new w.Event('pagehide')); } catch (e) { } try { f.remove(); } catch (e) { } };
     w.close = shut;
-    window.__pip = { win: w, frame: f, close: shut };
-    window.documentPictureInPicture = { requestWindow: async (o) => { window.__pip.opts = o || null; return w; } };
+    const dp = { requestWindow: async (o) => { window.__pip.opts = o || null; return w; } };
+    window.__pip = { win: w, frame: f, close: shut, dp };
+    // Chromium has its own Document Picture-in-Picture getter; an own, writable value stands in for it in the test.
+    Object.defineProperty(window, 'documentPictureInPicture', { value: dp, writable: true, configurable: true });
     return true;
 })()`;
 
@@ -419,6 +421,38 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("!!window.__pip.win.document.querySelector('.ovdk')"), false, 'and out of the window');
             await wait(900);
             assert.ok(!puts.some((b) => 'popped' in b), `nor that it is back (${JSON.stringify(puts)})`);
+            await p.close();
+        }
+
+        // ── Pop out with the agent view (K-D3): the stream goes into the window too, and its styles follow the
+        //    document the view is actually in, not the page behind it. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true, tab: 'activity' } };
+            agentView = {
+                id: AGENT_ID, state: 'live', title: 'Fix the flaky upload test',
+                task: { source: 'codes', ref: 'tsk_1', title: 'Fix the flaky upload test', url: 'https://openvibe.codes/run/tasks/tsk_1' },
+                curtain: { up: false }, viewers: 1, worked_seconds: 300, visibility: 'private',
+                page_url: `https://openvibe.live/@ada/agents/${AGENT_ID}`,
+                embed_url: `https://openvibe.live/embed/agent/${AGENT_ID}?vt=wvt_test`, last_frame_url: null,
+            };
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 8000 });
+            await until(p, PILL, 'the pinned pill');
+            await p.evaluate(PIP);
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, CARD, 'the Dock on Activity');
+            await p.evaluate("document.querySelector('.ovdk [data-act=pop]').click()");
+            await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the Dock in the window');
+            // The Agents tab opens for the first time in the window: the stream and its style belong there.
+            await p.evaluate("window.__pip.win.document.querySelector('#ovdk-tab-agent').click()");
+            const src = await until(p, "(() => { const w = window.__pip.win; const f = w.document.querySelector('.ovda iframe'); return f && f.getAttribute('src'); })()", 'the stream in the window');
+            assert.strictEqual(src, agentView.embed_url, 'the same ticket and stream, in the window');
+            assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovda-styles')"), true, 'the agent view keeps its styles in the window');
+            assert.strictEqual(await p.evaluate("!!document.getElementById('ovda-styles')"), false, 'and does not put them on the page behind it');
+            // Back on the page, the same view is still there.
+            await p.evaluate("window.__pip.close()");
+            await until(p, "!!document.querySelector('.ovdk .ovda iframe')", 'the stream back on the page');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda iframe').getAttribute('src')"), agentView.embed_url);
             await p.close();
         }
 
