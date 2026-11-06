@@ -35,6 +35,10 @@
  *       the recipient's banner for a pending transfer: Accept, Decline
  *   OVShare.gate(el, { kind, id, signedInAs?, signInUrl?, base?, token?, onDone? })
  *       the page a person who is not on the list sees: "Ask for access", or "Sign in"
+ *   <div data-ov-share-gate data-kind="post" data-id="12" data-signed-in-as="usr_…" data-sign-in-url="/auth/login?next=…">
+ *       the same gate from markup, started when this file loads (and by OVShare.startGates() for markup added later):
+ *       no inline script, so a page under a strict CSP needs nothing else, and every value goes through the page's
+ *       own attribute escaping (data-base and data-path as for the sheet). The element's text is what shows before.
  *
  * The sheet only asks; the service decides. Who may see a thing is enforced by the service holding it (canView), never
  * by this file. Every name and title is set as text, never as markup. No tracking is added to a shared link.
@@ -1307,6 +1311,26 @@
         open(fromButton(b));
     });
 
+    // ── Gates in markup: [data-ov-share-gate] ─────────────────────────────────────────────────────────────────────────
+    // A page's "not on the list" answer is markup only: the page escapes the values as it escapes any attribute, and no
+    // inline script is needed (an inline script needs a CSP nonce on most of the network's sites, and a value written
+    // into one has to be escaped for JavaScript, not HTML). Each gate starts once.
+    function startGates(scope) {
+        const within = scope && scope.querySelectorAll ? scope : doc;
+        const nodes = within.querySelectorAll('[data-ov-share-gate]:not([data-ov-share-gate-on])');
+        let n = 0;
+        nodes.forEach((node) => {
+            const d = node.dataset || {};
+            if (!d.kind || !d.id) return;
+            node.setAttribute('data-ov-share-gate-on', '');
+            gate(node, { kind: d.kind, id: d.id, signedInAs: d.signedInAs || null, signInUrl: d.signInUrl || undefined, base: d.base, path: d.path });
+            n += 1;
+        });
+        return n;
+    }
+    if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', () => startGates());
+    else startGates();
+
     // A button's data-* as open()'s options (navbar.js and kit-web.js use it too, once this file has loaded).
     function fromButton(b) {
         const d = b.dataset || {};
@@ -1317,5 +1341,5 @@
             time: time >= 5 ? time : 0, timeParam: d.timeParam, base: d.base, path: d.path };
     }
 
-    root.OVShare = { open, offer, gate, fromButton, version: 3 };
+    root.OVShare = { open, offer, gate, startGates, fromButton, version: 4 };
 })(typeof window !== 'undefined' ? window : null);

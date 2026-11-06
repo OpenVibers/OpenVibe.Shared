@@ -37,6 +37,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <button type="button" id="send" data-ov-share-sheet data-title="A robot & a wave" data-url="https://video.test/v/1" data-time="83" data-embed="https://video.test/embed/1">Send</button>
 <button type="button" id="theirs" data-ov-share-sheet data-kind="paste" data-id="theirs" data-title="theirs">Theirs</button>
 <div id="offer"></div><div id="gate"></div>
+<div id="gate2" data-ov-share-gate data-kind="paste" data-id="abc" data-sign-in-url="/login?next=%2Fp%2F&quot;&lt;/script&gt;">Shared with specific people.</div>
 <script>window.__changes = 0; window.__sent = []; document.addEventListener('ov-share:change', () => { window.__changes++; }); document.addEventListener('ov-share:sent', (e) => { window.__sent.push(e.detail.target + ' ' + e.detail.url); });</script>
 <script src="/ov-share.js"></script></body></html>`;
 
@@ -173,6 +174,11 @@ const server = http.createServer((req, res) => {
         await wait(320);
         assert.strictEqual(await p.evaluate("document.querySelectorAll('dialog').length + (document.documentElement.classList.contains('ov-share-locked') ? 1 : 0)"), 0, 'closing removes the sheet and frees the page');
 
+        // A gate in markup starts by itself, once, with its values as plain attributes (a quote or </script> in one is
+        // just text); signed out, it offers the sign-in link it was given.
+        assert.ok(await p.evaluate("!!document.querySelector('#gate2 .ov-share-gate')"), 'a gate in markup starts when ov-share.js loads');
+        assert.strictEqual(await p.evaluate("document.querySelector('#gate2 a').getAttribute('href')"), '/login?next=%2Fp%2F"</script>', 'its sign-in link is the attribute, as text');
+        assert.strictEqual(await p.evaluate('OVShare.startGates()'), 0, 'and it starts only once');
         // The recipient's banner and the gate.
         await p.evaluate("OVShare.offer(document.getElementById('offer'), { kind: 'paste', id: 'abc', transfer_id: '00000000-0000-4000-8000-0000000000aa', from: { username: 'goosely' }, title: 'notes' })");
         await p.evaluate("[...document.querySelectorAll('#offer button')].find((b) => b.textContent === 'Accept').click()");
