@@ -375,14 +375,14 @@
 .ovf-inner--compact{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;text-align:center}
 .ovf-cols{display:grid;gap:clamp(20px,3vw,36px);grid-template-columns:minmax(230px,1.6fr) repeat(auto-fit,minmax(120px,1fr));align-items:start}
 .ovf-col{display:flex;flex-direction:column;gap:8px;min-width:0}
-.ovf-col h3{margin:0 0 2px;font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted,#8b93ad)}
+.ovf-col h3{margin:0 0 2px;font-size:.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted,#8b93ad)}
 .ovf-fold>summary{list-style:none;cursor:default;pointer-events:none}
 .ovf-fold>summary::-webkit-details-marker{display:none}
 .ovf-fold-body{display:flex;flex-direction:column;gap:8px;margin-top:8px}
 .ovf-fold-n{display:none}
 .ovf-col a{color:var(--text-secondary,#b6bdd2);font-size:.86rem;text-decoration:none;line-height:1.4;width:fit-content;transition:color .15s,transform .15s}
 .ovf-col a:hover{color:var(--accent,#60a5fa);transform:translateX(2px)}
-@media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:32px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:0;right:0;top:-12px;bottom:-12px}}
+@media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:32px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:0;right:0;top:-15px;bottom:-15px}}
 .ovf-more{font-weight:600;opacity:.85}.ovf-ic{flex:none;vertical-align:-.14em}.ovf-more .ovf-ic{font-size:.85em;margin-left:3px;transition:transform .15s}.ovf-more:hover .ovf-ic{transform:translateX(3px)}.ovf-social .ovf-ic{font-size:17px}.ovf-account-links .ovf-ic{font-size:1.05em;opacity:.85}
 .ovf-brand{position:relative;display:inline-flex;align-items:center;gap:9px;color:var(--text-primary,#f1f4fb);font-family:'OV Brand',Nunito,Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:1.12rem;font-weight:800;letter-spacing:-.1px;text-decoration:none}
 .ovf-brand--sm{font-size:.9rem}
@@ -417,9 +417,10 @@
 .ovf-compact-links{justify-content:center}
 .ovf [hidden],.ovf-account[hidden]{display:none!important}
 .ovf .ovf-shipped.ov-shipped-latest{font-size:.76rem;padding:4px 12px;max-width:min(520px,100%);background:transparent}
+@media (pointer:coarse){.ovf .ovf-shipped.ov-shipped-latest{min-height:44px;padding-top:12px;padding-bottom:12px;box-sizing:border-box}}
 .ovf-legal-inline a,.ovf-compact-links a{color:var(--text-muted,#8b93ad);font-size:.78rem;text-decoration:none;transition:color .15s}
 .ovf-legal-inline a:hover,.ovf-compact-links a:hover{color:var(--accent,#60a5fa)}
-.ovf-compact-meta{color:var(--text-muted,#8b93ad);font-size:.74rem}
+.ovf-compact-meta{color:var(--text-muted,#8b93ad);font-size:.75rem}
 .ovf-expand{max-width:1240px;margin:8px auto 0}
 .ovf[data-variant="compact"]{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;column-gap:18px}
 .ovf[data-variant="compact"]>.ovf-inner--compact{flex:0 1 auto;min-width:0;margin:0}

@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.112.1 — 2026-11-05
+
+- **The shared chrome meets the phone minimums** (the fleet phone sweep of 11-05, 322 pages at 390 px). Nothing
+  changes on a computer.
+  - **Text of at least 12 px:**
+    - the footer's column headings (11.52 px on 305 pages of 55 sites);
+    - its compact meta line (11.84 px);
+    - the phone app bar's labels (11 px on 146 pages).
+  - **44 px to the touch, measured** (`pointer: coarse` only):
+    - the footer's legal links: their hit area was 39 px tall and is now 45;
+    - the footer's "shipped" pill: 24 to 44 px;
+    - the shipped list's rows: each row is 44 px and its subject fills it, so the hit boxes no longer overlap the next
+      row's (4.46.0's padding-in/margin-out made 33.5 px boxes that did);
+    - "All updates" and the patch-notes line: 18 px to 44;
+    - the update log's commit hashes.
+
 ## 4.112.0 — 2026-11-05
 
 - **`openvibe-shared/config`: `x-unit: "seconds"` is an owner-setting unit.** An integer property may now be

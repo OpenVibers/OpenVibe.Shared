@@ -46,7 +46,7 @@
                     background: color-mix(in srgb, var(--bg-secondary, #121826) 90%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px);
                     border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: transform .2s ease; }
                 .ovnav-appbar .ovnav-ab { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; cursor: pointer;
-                    color: var(--text-muted, #93a0b4); font-size: 11px; font-weight: 650; line-height: 1.1; text-align: center; -webkit-tap-highlight-color: transparent; }
+                    color: var(--text-muted, #93a0b4); font-size: 12px; font-weight: 650; line-height: 1.1; text-align: center; -webkit-tap-highlight-color: transparent; }
                 .ovnav-appbar .ovnav-ab:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -4px; border-radius: 12px; }
                 .ovnav-appbar .ovnav-ab.is-here { color: var(--text-primary, #e8ecf3); }
                 .ovnav-appbar .ovnav-ab-ic { position: relative; display: grid; place-items: center; width: 52px; height: 28px; border-radius: 999px; font-size: 18px; transition: background .15s; }
