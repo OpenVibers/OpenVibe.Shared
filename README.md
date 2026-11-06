@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.116.1 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.117.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -773,8 +773,10 @@ Brand: derived from the hostname — `pastes.openvibe.tools` renders as
   legacy brandName/brandIcon. compact: 'auto' (default — the brand shortens
   to the subdomain on narrow viewports), 'always', 'never'.
 Menus are modular: every site keeps the shared account menu and adds its own
-  pieces — links: [{label, href, icon?, active?}] replaces the service's top
-  links; menu: { before: [item], after: [item] } adds dropdown rows
+  pieces — links: [{label, href, icon?, active?, featured?}] replaces the service's
+  top links; featured: true draws that one link as a quiet accent pill with its
+  glyph, and puts it first in the phone's menu (4.117.0); menu: { before: [item],
+  after: [item] } adds dropdown rows
   ({label, href, icon, onClick, danger, external}); OpenVibeNavbar.addMenuItem()
   / setLinks() do the same at runtime. Signed-in users also get a
   "Recently used" row fed by the shared history module when it is loaded.

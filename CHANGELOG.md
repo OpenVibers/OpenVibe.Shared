@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.117.0 — 2026-11-06
+
+- **A navbar link can be the site's one featured piece** (`navbar.js`; the owner, 2026-11-06: the Node on the
+  Network is "a central piece", on its own subdomain). A link with `featured: true` draws as a quiet accent pill
+  with its glyph on the bar — one hairline, one tint, the glyph, and nothing that moves — and leads the phone's
+  menu. Every other link keeps its place and its plain look.
+
 ## 4.116.1 — 2026-11-06
 
 - **A transfer of a people-locked item carries the recipient's slot.** The sheet wraps the content key for the new
