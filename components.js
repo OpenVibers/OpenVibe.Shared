@@ -528,19 +528,16 @@ fun OvNotice(text: String, kind: OvNoticeKind = OvNoticeKind.Info) {
             layout: { phone: 'a sheet from the bottom, the home bar cleared, Send with your phone first, four places a row', computer: 'a dialog, six places a row' },
             native: {
                 compose: `@Composable
-fun OvShareButton(title: String, url: String, label: String = "Share") {
-    val context = LocalContext.current
-    // The platform's own sheet (with Direct Share's contacts) is the first way; the OpenVibe sheet adds the rest.
-    OutlinedButton(onClick = {
-        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, url); putExtra(Intent.EXTRA_TITLE, title) }
-        context.startActivity(Intent.createChooser(send, title))
-    }, modifier = Modifier.heightIn(min = OvScale.SizeTap), shape = RoundedCornerShape(OvScale.RadiusPill)) {
+fun OvShare(title: String, url: String, label: String = "Share", onShare: (title: String, url: String) -> Unit) {
+    // The app hands the link to the platform's own sheet, with Direct Share's contacts. On Android:
+    // context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, url) }, title))
+    OutlinedButton(onClick = { onShare(title, url) }, modifier = Modifier.heightIn(min = OvScale.SizeTap), shape = RoundedCornerShape(OvScale.RadiusPill)) {
         Icon(Icons.Default.Share, contentDescription = null)
         Spacer(Modifier.width(OvScale.SpaceSm))
         Text(label, fontWeight = FontWeight.Bold)
     }
 }`,
-                swiftui: `struct OvShareButton: View {
+                swiftui: `struct OvShare: View {
     let title: String
     let url: URL
     var label = "Share"

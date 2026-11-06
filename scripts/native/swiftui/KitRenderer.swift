@@ -456,6 +456,21 @@ public struct KitNotice: KitComponent {
     }
 }
 
+/// The Share button: the system share sheet for the link (ShareLink).
+public struct KitShare: KitComponent {
+    public let props: [String: KitValue]
+    public let children: [KitNode]
+
+    public init(props: [String: KitValue] = [:], children: [KitNode] = []) {
+        self.props = props
+        self.children = children
+    }
+
+    public var title: String { props.string("title") ?? "" }
+    public var url: String? { props.string("url") }
+    public var label: String { props.string("label") ?? "Share" }
+}
+
 /// An empty state: what a screen shows when it has nothing to show.
 public struct KitEmpty: KitComponent {
     public let props: [String: KitValue]
@@ -489,6 +504,7 @@ public enum KitNode: Codable {
     case stats(KitStats)
     case notice(KitNotice)
     case empty(KitEmpty)
+    case share(KitShare)
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: KitCodingKey.self)
@@ -508,6 +524,7 @@ public enum KitNode: Codable {
         case "stats": self = .stats(KitStats(props: props, children: children))
         case "notice": self = .notice(KitNotice(props: props, children: children))
         case "empty": self = .empty(KitEmpty(props: props, children: children))
+        case "share": self = .share(KitShare(props: props, children: children))
         default:
             throw DecodingError.dataCorruptedError(
                 forKey: KitCodingKey("type"),
@@ -541,6 +558,7 @@ public enum KitNode: Codable {
         case .stats: return "stats"
         case .notice: return "notice"
         case .empty: return "empty"
+        case .share: return "share"
         }
     }
 
@@ -559,6 +577,7 @@ public enum KitNode: Codable {
         case .stats(let node): return node.props
         case .notice(let node): return node.props
         case .empty(let node): return node.props
+        case .share(let node): return node.props
         }
     }
 
@@ -577,6 +596,7 @@ public enum KitNode: Codable {
         case .stats(let node): return node.children
         case .notice(let node): return node.children
         case .empty(let node): return node.children
+        case .share(let node): return node.children
         }
     }
 }
@@ -644,6 +664,7 @@ private struct KitNodeBody: View {
         case .stats(let n): statsView(n)
         case .notice(let n): noticeView(n)
         case .empty(let n): emptyView(n)
+        case .share(let n): shareView(n)
         }
     }
 
@@ -793,6 +814,14 @@ private struct KitNodeBody: View {
     @ViewBuilder
     private func emptyView(_ node: KitEmpty) -> some View {
         OvEmpty(title: node.title, text: node.text)
+    }
+
+    /// The Share button, for a link the document names.
+    @ViewBuilder
+    private func shareView(_ node: KitShare) -> some View {
+        if let link = node.url.flatMap(URL.init(string:)) {
+            OvShare(title: node.title, url: link, label: node.label)
+        }
     }
 
     /// What the rail's "See all" does.
