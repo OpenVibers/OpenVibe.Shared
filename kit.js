@@ -26,7 +26,7 @@
  *   kit.dock({ action, name, placeholder, label })               the composer pinned at the bottom
  *   kit.stats([[1234, 'messages this week'], …])                 a strip of numbers (scrolls sideways on phones)
  *   kit.empty({ title, text, action: { href, label } }) · kit.notice({ kind, text }) · kit.more({ label, items })
- *   kit.button({ href | type, label, icon, kind }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
+ *   kit.button({ href | type, label, icon, kind }) · kit.share({ title, url, kind, id }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
  *   kit.mark({ name, src, hue, square }) · kit.when(ts) → { iso, text } · kit.esc(text) · kit.ICONS (names)
  *   kit.mediaW(url, width)                                      a Media object at a resize width (64/96/160/320/480/640)
  *   kit.sidebar({ id, label, action, find, nav, sections, foot }) · kit.sidebarButton({ id }) · kit.withSidebar({ sidebar,
@@ -160,6 +160,16 @@
         const inner = `${ic ? icon(ic) : ''}<span>${esc(label)}</span>`;
         if (href != null) return `<a class="${cls}" href="${esc(url(href))}"${attrs(extra)}>${inner}</a>`;
         return `<button class="${cls}" type="${type === 'button' ? 'button' : type === 'reset' ? 'reset' : 'submit'}"${name ? ` name="${esc(name)}"` : ''}${value != null ? ` value="${esc(value)}"` : ''}${attrs(extra)}>${inner}</button>`;
+    }
+    /**
+     * The one Share button (4.114.0, docs/share.md): it opens the network's Share sheet (ov-share.js, which the navbar
+     * loads on the first press). url is what is shared (else the page's address); kind and id add "Who can open it" for
+     * the owner, where the service mounts openvibe-sdk/share's router.
+     */
+    function share({ title = '', url: link = null, text = '', image = null, embed = null, kind = null, id = null, label = 'Share', small = false, quiet = true } = {}) {
+        return button({ type: 'button', label, icon: 'upload', kind: quiet ? 'quiet' : 'primary', small,
+            attrs: { 'data-ov-share-sheet': true, 'data-title': title || null, 'data-url': link ? url(link) : null, 'data-text': text || null,
+                'data-image': image ? url(image) : null, 'data-embed': embed ? url(embed) : null, 'data-kind': kind || null, 'data-id': id || null } });
     }
     /** An icon-only control: a link (href), or a button (type) — it always carries its label for screen readers and a tooltip. */
     function iconButton({ href = null, type = 'submit', icon: ic = 'more', label = '', name = null, value = null, kind = '', attrs: extra = null } = {}) {
@@ -882,7 +892,7 @@
 
     return {
         skeleton,
-        esc, url, mediaW, icon, ICONS, PATHS, when, hueOf, mark, button, iconButton, action, badge, dot, card, rail, CARD_RATIO,
+        esc, url, mediaW, icon, ICONS, PATHS, when, hueOf, mark, button, share, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, labels, labelsAttr, LABEL_NAMES, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,

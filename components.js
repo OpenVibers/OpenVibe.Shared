@@ -509,6 +509,52 @@ fun OvNotice(text: String, kind: OvNoticeKind = OvNoticeKind.Info) {
             },
         },
         {
+            id: 'share', name: 'Share', web: 'kit.share',
+            summary: 'The one Share button and the sheet it opens, on every site: send the link (copy, the phone\'s own share sheet, the places people post, a QR code, embed, start at a time) and, for its owner, who can open it.',
+            role: 'button that opens a modal sheet',
+            children: null,
+            anatomy: [
+                { part: 'button', tokens: { minHeight: 'size.tap', weight: 'type.weight.bold' }, note: 'Share, with the up-from-a-tray icon' },
+                { part: 'sheet', tokens: { surface: 'color.bg.raised', radius: 'radius.md', padding: 'space.lg' }, note: 'from the bottom on a phone, a 520 px dialog on a computer; Escape, the backdrop and Done close it' },
+                { part: 'link', tokens: { surface: 'color.bg.hover', text: 'color.text.primary', action: 'color.accent.strong', onAction: 'color.accent.onStrong' }, note: 'the link without https:// and Copy, which turns into a tick' },
+                { part: 'device', optional: true, tokens: { minHeight: 'size.tap' }, note: 'phones: "Send with your phone", the platform\'s own sheet with its contacts' },
+                { part: 'places', tokens: { size: 'size.avatar', label: 'type.size.meta' }, note: 'round brand tiles, the person\'s recent ones first, the rest behind More (n)' },
+                { part: 'panel', optional: true, tokens: { line: 'color.line.base' }, note: 'QR code, embed code or a Mastodon server, under the places' },
+                { part: 'access', optional: true, tokens: { muted: 'color.text.muted' }, note: 'the owner only: Everyone · Anyone with the link · Specific people · Only me, the people, Transfer' },
+            ],
+            props: { title: { type: 'string', required: true }, url: { type: 'url' }, text: { type: 'string' }, image: { type: 'url' }, embed: { type: 'url' }, kind: { type: 'string' }, id: { type: 'string' }, label: { type: 'string' }, small: { type: 'boolean' } },
+            states: ['closed', 'open', 'copied', 'panel open', 'saving', 'not the owner (send only)'],
+            a11y: { name: '"Share", and the sheet is named "Share <title>"', keys: 'Enter opens; Tab moves; Escape closes (asking first when there are unsaved changes)', minTarget: '44 px' },
+            layout: { phone: 'a sheet from the bottom, the home bar cleared, Send with your phone first, four places a row', computer: 'a dialog, six places a row' },
+            native: {
+                compose: `@Composable
+fun OvShareButton(title: String, url: String, label: String = "Share") {
+    val context = LocalContext.current
+    // The platform's own sheet (with Direct Share's contacts) is the first way; the OpenVibe sheet adds the rest.
+    OutlinedButton(onClick = {
+        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, url); putExtra(Intent.EXTRA_TITLE, title) }
+        context.startActivity(Intent.createChooser(send, title))
+    }, modifier = Modifier.heightIn(min = OvScale.SizeTap), shape = RoundedCornerShape(OvScale.RadiusPill)) {
+        Icon(Icons.Default.Share, contentDescription = null)
+        Spacer(Modifier.width(OvScale.SpaceSm))
+        Text(label, fontWeight = FontWeight.Bold)
+    }
+}`,
+                swiftui: `struct OvShareButton: View {
+    let title: String
+    let url: URL
+    var label = "Share"
+    var body: some View {
+        // ShareLink is the system sheet (contacts, Messages, AirDrop, apps); the OpenVibe sheet adds QR, embed and access.
+        ShareLink(item: url, subject: Text(title), message: Text(title)) {
+            Label(label, systemImage: "square.and.arrow.up").fontWeight(.bold).frame(minHeight: OvScale.sizeTap)
+        }
+        .buttonStyle(.bordered).clipShape(RoundedRectangle(cornerRadius: OvScale.radiusMd))
+    }
+}`,
+            },
+        },
+        {
             id: 'empty', name: 'Empty state', web: 'kit.empty',
             summary: 'What an empty list says: a title, one line, and the one thing to do next.',
             role: 'status',
@@ -634,6 +680,7 @@ enum OvKind { case primary, quiet, danger }`,
                 case 'sidebar': return kit.sidebar({ id: p.id || 'ovk-sidebar', label: p.label || 'Navigation', action: p.action ? { href: p.action.href, label: p.action.label || 'New' } : null, nav: p.nav.map((x) => ({ href: x.href, label: x.label, icon: x.icon || 'chevron', here: !!x.here, count: x.count == null ? null : Number(x.count) })) });
                 case 'stats': return kit.stats(p.items, { label: p.label || 'In numbers' });
                 case 'notice': return kit.notice({ kind: p.kind || 'info', text: p.text });
+                case 'share': return kit.share({ title: p.title, url: p.url || null, text: p.text || '', image: p.image || null, embed: p.embed || null, kind: p.kind || null, id: p.id || null, label: p.label || 'Share', small: !!p.small });
                 case 'empty': return kit.empty({ title: p.title, text: p.text || '', icon: p.icon || '', action: p.action ? { href: p.action.href, label: p.action.label || 'Go' } : null });
                 default: return '';
             }

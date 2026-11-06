@@ -18,6 +18,9 @@
   - The navbar loads it on the first press of a `[data-ov-share-sheet]` button, so nothing loads before that. The
     kit's `[data-ovk-share]` items open it too.
   - Events: `ov-share:sent` `{ target, url }` and `ov-share:change`.
+  - **A Share component** in OpenVibe Design (`openvibe-shared/components`, `kit.share({ title, url, kind, id })`): a
+    kit document's `{ type: 'share' }` renders the button, and the spec gives its anatomy, states, keys, and the
+    Android (Intent chooser with Direct Share) and iOS (`ShareLink`) views, so native apps share the same way.
   - Tests: test/ov-share-chrome.test.js (headless Chrome).
 
 ## 4.113.0 — 2026-11-06
