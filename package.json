@@ -57,6 +57,7 @@
     "./ov-forms": "./ov-forms.js",
     "./ov-qr": "./ov-qr.js",
     "./ov-share": "./ov-share.js",
+    "./ov-locker": "./ov-locker.js",
     "./ov-labels": "./ov-labels.js",
     "./ov-look": "./ov-look.js",
     "./ov-fx": "./ov-fx.js",
