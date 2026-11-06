@@ -113,7 +113,7 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-icon-btn--danger:hover { color: var(--ovk-bad-text); }
 .ovk-icon-btn .ovk-i { width: 20px; height: 20px; }
 @media (pointer: coarse) { .ovk-icon-btn { width: var(--ovk-tap); height: var(--ovk-tap); } }
-.ovk-badge { display: inline-flex; align-items: center; flex: none; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--ovk-line); font-size: .7rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--ovk-muted); white-space: nowrap; }
+.ovk-badge { display: inline-flex; align-items: center; flex: none; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--ovk-line); font-size: .75rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--ovk-muted); white-space: nowrap; }
 .ovk-badge--accent { color: var(--ovk-accent); border-color: color-mix(in srgb, var(--ovk-accent) 50%, transparent); }
 .ovk-badge--ok { color: var(--ovk-ok-text); border-color: color-mix(in srgb, var(--ovk-ok) 50%, transparent); }
 .ovk-badge--warn { color: var(--ovk-warn-text); border-color: color-mix(in srgb, var(--ovk-warn) 50%, transparent); }

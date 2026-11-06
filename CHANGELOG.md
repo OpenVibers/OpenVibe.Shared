@@ -11,6 +11,9 @@
   bot still keeps its row, and the option off changes nothing. New tables are expand-only: `analyticsSchema()`
   creates them for a new install, and an existing service adds them in a migration.
 
+- **Phone minimums in the kit** (the fleet phone sweep of 11-05/06): `.ovk-badge` is 12 px (was 11.2 px), and a room's
+  own links (`.ov-room > a`) are 44 px tall on touch screens (were 40.6 px).
+
 ## 4.112.1 — 2026-11-05
 
 - **The shared chrome meets the phone minimums** (the fleet phone sweep of 11-05, 322 pages at 390 px). Nothing
