@@ -246,6 +246,7 @@
                     const byWords = (await c.seal(priv, { lock: 'password', password: words.join(' ') })).bytes;
                     await network('PUT', '/api/v1/me/keys', {
                         ecdh_public: pub.ecdh, signing_public: pub.signing, self_signature: pub.fingerprint_signature, fingerprint: pub.fingerprint,
+                        ...(o.reset ? { reset: true } : {}),
                         backups: { passphrase: { format: 'locker.envelope.v1', envelope: b64(byPass) }, recovery: { format: 'locker.envelope.v1', envelope: b64(byWords) } },
                     });
                     session = { person, subject: null, fingerprint: pub.fingerprint };
@@ -253,7 +254,11 @@
                     step4(pub.fingerprint);
                 } catch (err) {
                     go.disabled = false;
-                    say(msg, err.status === 401 ? 'Sign in to OpenVibe first, then make your locker.' : `Could not save your locker: ${err.message}`, true);
+                    if (err.status === 403 && /reauth|sign in again/i.test(err.message)) {
+                        say(msg, 'For your safety, sign in again, then start your new locker.', true);
+                        const a = el('a', 'ovl-btn is-quiet', { href: `${cfg().network.replace(/\/+$/, '')}/login?next=${encodeURIComponent(root.location.href)}` }, 'Sign in again');
+                        msg.appendChild(doc.createTextNode(' ')); msg.appendChild(a);
+                    } else say(msg, err.status === 401 ? 'Sign in to OpenVibe first, then make your locker.' : `Could not save your locker: ${err.message}`, true);
                 }
             });
             s.body.appendChild(f);
@@ -308,6 +313,11 @@
             const other = el('button', 'ovl-link', { type: 'button', 'data-k': 'other' }, mode === 'words' ? 'Use my passphrase instead' : 'I forgot it: use my recovery kit');
             other.addEventListener('click', () => draw(mode === 'words' ? 'pass' : 'words'));
             f.appendChild(other);
+            if (mode === 'words') {
+                const lost = el('button', 'ovl-link is-quiet', { type: 'button', 'data-k': 'lost' }, 'I lost both: start a new locker');
+                lost.addEventListener('click', () => drawLost());
+                f.appendChild(lost);
+            }
             f.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const secret = mode === 'words' ? input.value.trim().toLowerCase().split(/\s+/).join(' ') : input.value;
@@ -339,6 +349,22 @@
             });
             s.body.appendChild(f);
             setTimeout(() => input.focus(), 0);
+        };
+        // Lost the passphrase and the kit: a new locker, said plainly. What was locked for the old keys stays locked.
+        const drawLost = () => {
+            s.setTitle('Start a new locker');
+            s.body.replaceChildren();
+            s.body.appendChild(el('p', 'ovl-lead', null, 'A new locker makes new keys. Anything locked for your old locker cannot be opened again, by you or by anyone at OpenVibe: ask the people who shared it to share it with you again.'));
+            s.body.appendChild(el('p', 'ovl-lead', null, 'For your safety, OpenVibe may ask you to sign in again first.'));
+            const l = el('label', 'ovl-check');
+            const cb = el('input', null, { type: 'checkbox', 'data-k': 'lost-ok' });
+            l.appendChild(cb);
+            l.appendChild(el('span', null, null, 'I understand that what was locked for my old locker is gone.'));
+            s.body.appendChild(l);
+            const go = button('Start a new locker', 'primary', { 'data-k': 'lost-go', disabled: true });
+            cb.addEventListener('change', () => { go.disabled = !cb.checked; });
+            go.addEventListener('click', async () => { s.close(null); const st = await setup({ reset: true }); if (st && typeof o.onDone === 'function') o.onDone(st); });
+            s.body.appendChild(go);
         };
         draw('pass');
         return s.finished;

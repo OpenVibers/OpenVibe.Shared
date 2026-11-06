@@ -137,6 +137,21 @@ const server = http.createServer((req, res) => {
         assert.match(put, /"self_signature":"sig"/, 'with the keys\u2019 self-signature (the SDK\u2019s fingerprint_signature)');
         assert.strictEqual(await p.evaluate('localStorage.length + sessionStorage.length'), 0, 'nothing is stored in the browser');
 
+        // Lost both: a plain warning, a checkbox that gates the button, then a new locker saved with reset: true.
+        await p.evaluate('OVLocker.forget()');
+        await p.evaluate("document.querySelectorAll('dialog').forEach((d) => d.remove())");
+        await p.evaluate('(() => { OVLocker.unlock(); })()'); await wait(300);
+        await p.evaluate(submit('other')); await wait(80);
+        await p.evaluate(submit('lost')); await wait(80);
+        assert.match(await p.evaluate("document.querySelector('dialog .ovl-body').textContent"), /cannot be opened again/, 'it says what is lost');
+        assert.strictEqual(await p.evaluate(`${q('lost-go')}.disabled`), true, 'nothing starts until the person says they understand');
+        await p.evaluate(`${q('lost-ok')}.click()`); await p.evaluate(submit('lost-go')); await wait(400);
+        await p.evaluate(type('pass', 'amber window tide falcon')); await p.evaluate(type('pass2', 'amber window tide falcon')); await p.evaluate(submit('next')); await wait(300);
+        const w2 = await p.evaluate("[...document.querySelectorAll('.ovl-words li')].map((li) => li.textContent)");
+        const l2 = await p.evaluate("[...document.querySelectorAll('dialog .ovl-pair .ovl-label')].map((l) => Number(l.textContent.replace(/\\D/g, '')))");
+        await p.evaluate(type('w1', w2[l2[0] - 1])); await p.evaluate(type('w2', w2[l2[1] - 1])); await p.evaluate(submit('make')); await wait(400);
+        assert.match(sent.filter((x) => x.startsWith('PUT')).pop(), /"reset":true/, 'a new locker after losing both says reset');
+
         // A phone: the kit fits, no sideways scroll.
         const phone = await h.openPage(browser, context, { width: 390 });
         await phone.goto(`${base}/`, { maxMs: 5000 });
