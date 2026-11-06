@@ -176,11 +176,12 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
 .ovt-card-btn.is-quiet:hover { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 6%, transparent)); filter: none; }
 
 /* A start page (page({ center })): the welcome and the composer together in the middle, not the composer at the bottom. */
-.ovt.is-start .ovt-main { justify-content: center; }
-.ovt.is-start .ovt-scroll { flex: none; padding-bottom: 4px; }
+/* The head stays at the top; only the welcome and the composer are centred, by auto margins (centring the whole column
+   floated the head into the middle of a tall screen, above an empty band). */
+.ovt.is-start .ovt-scroll { flex: none; padding-bottom: 4px; margin-top: auto; }
 .ovt.is-start .ovt-empty-state { margin-top: 0; }
-.ovt.is-start .ovt-dock { position: static; background: none; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
-@media (max-width: 760px) { .ovt.is-start .ovt-main { justify-content: flex-start; } .ovt.is-start .ovt-empty-state { margin-top: 4vh; } }
+.ovt.is-start .ovt-dock { position: static; background: none; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); margin-bottom: auto; }
+@media (max-width: 760px) { .ovt.is-start .ovt-scroll { margin-top: 0; } .ovt.is-start .ovt-dock { margin-bottom: 0; } .ovt.is-start .ovt-empty-state { margin-top: 4vh; } }
 
 /* A plain page in the conversation's place (page({ main })). */
 .ovt-page { max-width: 980px; width: 100%; box-sizing: border-box; margin: 0 auto; }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.122.0 — 2026-11-06
+
+- A thread start page (`page({ center })`) keeps its head at the top on wide screens: only the welcome and the composer are centred, by auto margins. Centring the whole column floated the head into the middle of a tall screen above an empty band (seen on openvibe.exchange/chat at 1280 px). Phones are unchanged.
+
 ## 4.119.0 — 2026-11-06
 
 - A featured link keeps a place on the phone's bar: where the links row folds into the menu, the featured link (4.117.0) also shows as one tinted icon button beside Sign In or the avatar (38 px, 34 px under 400 px, a 44 px hit area on the element), named by its label for screen readers. The Node on the Network is one tap away on a phone. Only a featured link with an icon gets one; no animation.
