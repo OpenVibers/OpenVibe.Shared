@@ -101,6 +101,12 @@
             .openvibe-navbar-dropdown-header a.name.ud-me { line-height: inherit; display: block; }
             .openvibe-navbar-dropdown-header a.name.ud-me:hover, .openvibe-navbar-dropdown-header a.name.ud-me:focus-visible { text-decoration: underline; }
             .openvibe-navbar-dropdown .ovnav-chip--menu { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font: 700 12px/1.2 inherit; color: var(--chip-c, #fbbf24); background: color-mix(in srgb, var(--chip-c, #fbbf24) 12%, transparent); border: 1px solid color-mix(in srgb, var(--chip-c, #fbbf24) 34%, transparent); }
+            /* The featured link's phone button (4.119.0): hidden where the links row shows the pill. 38 px drawn, a 44 px
+               hit area on the element itself; the one accent, tinted, no animation. */
+            .openvibe-navbar .ovnav-featured-phone { all: unset; box-sizing: border-box; position: relative; cursor: pointer; display: none; width: 38px; height: 38px; border-radius: 999px; align-items: center; justify-content: center; flex: none; color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+            .openvibe-navbar .ovnav-featured-phone::after { content: ''; position: absolute; inset: -5px; }
+            .openvibe-navbar .ovnav-featured-phone .ovnav-ic, .openvibe-navbar .ovnav-featured-phone svg, .openvibe-navbar .ovnav-featured-phone i { width: 17px; height: 17px; font-size: 16px; }
+            .openvibe-navbar .ovnav-featured-phone:focus-visible { outline: 2px solid var(--accent-light, #60a5fa); outline-offset: 2px; }
             .openvibe-navbar .ovnav-burger { all: unset; box-sizing: border-box; position: relative; cursor: pointer; display: none; width: 38px; height: 38px; border-radius: 11px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: none; }
             .openvibe-navbar .ovnav-burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: currentColor; transition: transform .2s, opacity .2s; }
             .openvibe-navbar .ovnav-burger[aria-expanded="true"] span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
@@ -167,7 +173,7 @@
                 .openvibe-navbar-right.has-chips-all .ovnav-chip[data-chip-id] { display: none; }
                 .openvibe-navbar-right.has-chips-all .ovnav-chip--all { display: inline-flex; }
             }
-            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
+            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
                in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 440px
@@ -179,7 +185,7 @@
                tightens instead of folding to one. */
             @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
             @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
-                .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
+                .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .ovnav-featured-phone { width: 34px; height: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
                 .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16.5px; letter-spacing: -.25px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
@@ -1259,6 +1265,14 @@
         const menu = kids.map(k => `<a href="${escapeAttr(k.href || '#')}" class="ovnav-link ovnav-sublink"${k.id ? ` data-link-id="${escapeAttr(k.id)}"` : ''}${k.hidden ? ' hidden' : ''}>${k.icon ? `<span class="icon">${navIcon(k.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(k.label)}</span></a>`).join('');
         return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a}<div class="ovnav-dd-menu">${menu}</div></div>`;
     }
+    /** A phone folds the links row into the menu, so a featured link also keeps one icon button on the bar itself: the
+        piece the site is built around (the Node on the Network) stays one tap away (4.119.0). It shows only where the
+        links row does not, and only for a featured link with an icon. */
+    function featuredPhoneHTML(links) {
+        const f = (links || []).find(l => l && l.featured && !l.hidden && l.icon);
+        if (!f) return '';
+        return `<a class="ovnav-featured-phone${f.active ? ' active' : ''}" href="${escapeAttr(f.href || '#')}" aria-label="${escapeAttr(f.label)}" title="${escapeAttr(f.label)}"${f.active ? ' aria-current="page"' : ''}>${navIcon(f.icon)}</a>`;
+    }
     const flatLinks = (list) => list.reduce((out, l) => out.concat([l], Array.isArray(l.children) ? l.children : []), []);
 
     /** The drawer's order: a featured link leads the menu (the phone's first entry), the rest keep theirs. */
@@ -1857,6 +1871,7 @@
             <div class="openvibe-navbar-right">
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 ${u && !isAnon && _config.messages ? messagesHTML() : ''}
+                ${featuredPhoneHTML(links)}
                 <div id="openvibe-bell-mount"></div>
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}

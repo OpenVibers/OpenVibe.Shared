@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.119.0 — 2026-11-06
+
+- A featured link keeps a place on the phone's bar: where the links row folds into the menu, the featured link (4.117.0) also shows as one tinted icon button beside Sign In or the avatar (38 px, 34 px under 400 px, a 44 px hit area on the element), named by its label for screen readers. The Node on the Network is one tap away on a phone. Only a featured link with an icon gets one; no animation.
+
 ## 4.118.0 — 2026-11-06
 
 - Locker reset and unlock errors requiring fresh authentication now link to Network’s password reauthentication with the complete current page as the return destination, including `locker.proof_required`.
