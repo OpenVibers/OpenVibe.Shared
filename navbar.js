@@ -112,6 +112,9 @@
             .ovnav-drawer.open { display: flex; animation: openvibe-slide-down .2s ease; }
             .ovnav-drawer a { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 10px; color: var(--text-primary, #e6edf7); text-decoration: none; font-size: 14.5px; font-weight: 600; }
             .ovnav-drawer a.ovnav-sublink { padding-left: 34px; font-weight: 500; color: var(--text-secondary, #a8b3c4); }
+            /* A featured link in the phone's menu: the same one accent, as a quiet line rather than a pill. */
+            .ovnav-drawer a.ovnav-link--featured { color: var(--accent-light, #60a5fa); font-weight: 650; }
+            .ovnav-drawer a.ovnav-link--featured .icon { color: var(--accent-light, #60a5fa); }
             .ovnav-drawer a.active { background: var(--accent-glow, rgba(59,130,246,.14)); }
             @media (hover: hover) { .ovnav-drawer a:hover { background: var(--accent-glow, rgba(59,130,246,.14)); } }
             .ovnav-drawer a[hidden] { display: none; }
@@ -241,6 +244,19 @@
             }
             .openvibe-navbar-links a:hover { background: var(--bg-hover, #2f2f3d); color: var(--text-primary, #e0e0e0); }
             .openvibe-navbar-links a.active { background: var(--bg-tertiary, #2a2a38); color: var(--accent-light, #60a5fa); }
+            /* A featured link (4.117.0): one quiet accent pill with its glyph, for the piece a site is
+               built around (the Node on the Network). Deliberate, not loud: one hairline, one tint, the
+               glyph, and nothing that moves. */
+            .openvibe-navbar-links a.ovnav-link--featured {
+                display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 10px;
+                border-radius: 999px; font-weight: 650; color: var(--accent-light, #60a5fa);
+                border: 1px solid color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent);
+                background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent);
+                transition: none;
+            }
+            .openvibe-navbar-links a.ovnav-link--featured:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); color: var(--accent-light, #60a5fa); }
+            .openvibe-navbar-links a.ovnav-link--featured .icon { opacity: 1; margin-right: 0; color: var(--accent-light, #60a5fa); }
+            .openvibe-navbar-links a.ovnav-link--featured .ovnav-ic { width: 15px; height: 15px; }
 
             .openvibe-navbar-spacer { flex: 1; }
 
@@ -1231,17 +1247,24 @@
         }
     }
 
-    /** One top-level link. Supports { label, href, icon, id, elId, page, hidden, external, dot, dotId, children: [...] }. */
+    /** One top-level link. Supports { label, href, icon, id, elId, page, hidden, external, dot, dotId,
+        featured, children: [...] }. featured: true draws it as the site's one accent pill (4.117.0). */
     function linkHTML(l, inDrawer) {
         const attrs = `${l.id ? ` data-link-id="${escapeAttr(l.id)}"` : ''}${l.elId ? ` id="${escapeAttr((inDrawer ? 'drawer-' : '') + l.elId)}"` : ''}${l.page ? ` data-page="${escapeAttr(l.page)}"` : ''}${l.hidden ? ' hidden' : ''}${l.external ? ' target="_blank" rel="noopener"' : ''}`;
         const kids = Array.isArray(l.children) ? l.children.filter(Boolean) : [];
         const inner = `${l.icon ? `<span class="icon">${navIcon(l.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(l.label)}</span>${l.dot !== undefined ? `<span class="ovnav-dot"${l.dotId && !inDrawer ? ` id="${escapeAttr(l.dotId)}"` : ''}${l.dot ? '' : ' hidden'}></span>` : ''}`;
-        const a = `<a href="${escapeAttr(l.href || '#')}" class="ovnav-link${l.active ? ' active' : ''}"${attrs}>${inner}${kids.length && !inDrawer ? '<span class="ovnav-caret" aria-hidden="true">▾</span>' : ''}</a>`;
+        const a = `<a href="${escapeAttr(l.href || '#')}" class="ovnav-link${l.active ? ' active' : ''}${l.featured ? ' ovnav-link--featured' : ''}"${attrs}>${inner}${kids.length && !inDrawer ? '<span class="ovnav-caret" aria-hidden="true">▾</span>' : ''}</a>`;
         if (!kids.length) return a;
         const menu = kids.map(k => `<a href="${escapeAttr(k.href || '#')}" class="ovnav-link ovnav-sublink"${k.id ? ` data-link-id="${escapeAttr(k.id)}"` : ''}${k.hidden ? ' hidden' : ''}>${k.icon ? `<span class="icon">${navIcon(k.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(k.label)}</span></a>`).join('');
         return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a}<div class="ovnav-dd-menu">${menu}</div></div>`;
     }
     const flatLinks = (list) => list.reduce((out, l) => out.concat([l], Array.isArray(l.children) ? l.children : []), []);
+
+    /** The drawer's order: a featured link leads the menu (the phone's first entry), the rest keep theirs. */
+    function drawerOrder(list) {
+        const items = (list || []).filter(Boolean);
+        return items.filter(l => l.featured && !l.hidden).concat(items.filter(l => !(l.featured && !l.hidden)));
+    }
 
     function currentLinks() {
         const list = _runtimeLinks || _config.links || SERVICE_LINKS[_config.service] || [];
@@ -1838,7 +1861,7 @@
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}
                 ${links.length ? '<button type="button" class="ovnav-burger" id="openvibe-burger" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span></span><span></span><span></span></button>' : ''}
             </div>
-            ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${links.map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
+            ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
