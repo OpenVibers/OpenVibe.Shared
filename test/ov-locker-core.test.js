@@ -24,27 +24,35 @@ assert.strictEqual(C.SDK_VERSION, sdk.version, 'built from the pinned SDK');
 });
 
 (async () => {
-    // The SDK's vectors, through the browser build.
+    // The SDK's shared vectors, made again by the browser build: the same headers, the same envelope bytes (SHA-256),
+    // the same fingerprint, recovery phrase and inspect answers, as test/locker.test.js checks in the SDK.
     const vectors = require('openvibe-sdk/locker/vectors');
-    const list = Array.isArray(vectors) ? vectors : vectors.VECTORS || Object.values(vectors).filter((v) => v && v.envelope);
-    assert.ok(list.length >= 3, 'the SDK ships vectors for every lock');
+    const sha256 = (b) => require('crypto').createHash('sha256').update(Buffer.from(b)).digest('hex');
+    const P = vectors.PERSON;
+    const random = vectors.fixedRandom();
+    const made = {
+        people: await C.seal(vectors.CONTENT, { lock: 'people', keys: [{ subject: vectors.SUBJECT, publicKey: P.ecdhPublic }], random, ephemeral: { private: P.ecdh } }),
+        password: await C.seal(vectors.CONTENT, { lock: 'password', password: 'correct horse battery staple', random }),
+        link: await C.seal(vectors.CONTENT, { lock: 'link', random }),
+    };
     let opened = 0;
-    for (const v of list) {
-        const bytes = Uint8Array.from(Buffer.from(v.envelope, v.envelope_encoding || 'base64'));
-        const creds = v.password ? { password: v.password } : v.key ? { key: Uint8Array.from(Buffer.from(v.key, 'base64url')) } : v.person ? { person: await C.importPersonKeys(v.person) } : null;
-        if (!creds) continue;
-        const plain = await C.open(bytes, creds);
-        assert.strictEqual(Buffer.from(plain).toString('base64'), Buffer.from(v.plaintext, v.plaintext_encoding || 'utf8').toString('base64'), `vector ${v.name || opened} opens`);
+    vectors.CASES.forEach((tc) => {
+        assert.deepStrictEqual(JSON.parse(JSON.stringify(made[tc.name].header)), tc.header, `the ${tc.name} header`);
+        assert.strictEqual(sha256(made[tc.name].bytes), tc.envelope_sha256, `the ${tc.name} envelope, the same bytes`);
+        assert.deepStrictEqual(JSON.parse(JSON.stringify(C.inspect(made[tc.name].bytes))), vectors.INSPECT[tc.name], `inspect on ${tc.name}`);
         opened++;
-    }
-    assert.ok(opened >= 3, `the vectors opened (${opened})`);
+    });
+    assert.strictEqual(await C.fingerprintOf(P.ecdhPublic, P.signingPublic), P.fingerprint, 'the same fingerprint');
+    assert.strictEqual(C.recoveryWords(24, { random: vectors.fixedRandom(0x5eed1e) }), vectors.RECOVERY.phrase, 'the same recovery phrase');
+    const keysBack = await C.importPersonKeys({ ecdh: P.ecdh, signing: P.signing });
+    assert.strictEqual(new TextDecoder().decode(await C.open(made.people.bytes, { person: keysBack })), vectors.CONTENT, 'the people vector opens with its person');
     // A round trip made in the browser build opens in Node's SDK, and the other way round.
     const node = require('openvibe-sdk/locker');
-    const made = await C.seal(new TextEncoder().encode('from the browser'), { lock: 'password', password: 'violet lantern river cobalt' });
-    assert.strictEqual(Buffer.from(await node.open(made.bytes, { password: 'violet lantern river cobalt' })).toString(), 'from the browser');
+    const crossed = await C.seal(new TextEncoder().encode('from the browser'), { lock: 'password', password: 'violet lantern river cobalt' });
+    assert.strictEqual(Buffer.from(await node.open(crossed.bytes, { password: 'violet lantern river cobalt' })).toString(), 'from the browser');
     const back = await node.seal(Buffer.from('from node'), { lock: 'password', password: 'violet lantern river cobalt' });
     assert.strictEqual(new TextDecoder().decode(await C.open(back.bytes, { password: 'violet lantern river cobalt' })), 'from node');
-    const words = await C.recoveryWords(24);
-    assert.strictEqual(words.length, 24, 'a recovery kit is 24 words');
-    console.log(`ov-locker-core: current with openvibe-sdk ${sdk.version}; ${opened} vectors open in a browser-only VM; browser and Node envelopes cross both ways`);
+    const kit = C.recoveryWords(24);
+    assert.strictEqual(String(kit).split(' ').length, 24, 'a recovery kit is 24 words');
+    console.log(`ov-locker-core: current with openvibe-sdk ${sdk.version}; ${opened} vectors made again, the same bytes, in a browser-only VM; browser and Node envelopes cross both ways`);
 })().catch((e) => { console.error(e); process.exit(1); });

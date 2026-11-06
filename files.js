@@ -35,6 +35,7 @@ const BROWSER = Object.freeze([
     'ov-labels.js',         // content labels (L1): each viewer's show / blur / hide; navbar.js loads it when a page has [data-ov-labels]
     'ov-forms.js',          // OpenVibe's own select (a menu on a computer, a sheet on a phone); navbar.js loads it when a page has a form control
     'ov-qr.js',             // a QR code from a link, on the device: the Share sheet's QR code (ov-share.js loads it on first use)
+    'ov-locker-core.js',    // openvibe-sdk/locker for the browser, generated (scripts/build-locker-core.js): WebCrypto only, the SDK's own vectors
     'ov-locker.js',         // Locker in the browser (plan Q2): a locked item's card, making and unlocking your locker; crypto in ov-locker-core.js
     'ov-share.js',          // the one Share sheet (plan track Q): who can open a thing, people by @name, transfer; navbar.js loads it on the first press of a [data-ov-share-sheet] button
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css

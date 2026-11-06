@@ -21,10 +21,11 @@ const PASS = 'correct horse battery staple';
 const CORE = `window.OVLockerCore = {
   WORDS: 'acid atom bold calm cedar coral delta ember fable fern gecko glow harbor iris jade kite lumen maple nectar onyx'.split(' '),
   async generatePersonKeys() { return { id: 'p1' }; },
-  async recoveryWords(n) { const w = this.WORDS; return Array.from({ length: n }, (_, i) => w[(i * 7) % w.length]); },
+  recoveryWords(n) { const w = this.WORDS; return Array.from({ length: n }, (_, i) => w[(i * 7) % w.length]).join(' '); },
   async exportPersonKeys() { return { ecdh: { kty: 'EC' }, signing: { kty: 'EC' }, fingerprint_signature: 'sig', fingerprint: 'cedar ember lumen onyx fable maple gecko iris' }; },
   async exportPrivateKeys() { return { d: 'private' }; },
-  async importPersonKeys() { return { id: 'p1' }; },
+  async importPersonKeys() { return { id: 'p1', ecdhPublic: {}, signingPublic: {} }; },
+  async fingerprintOf() { return 'cedar ember lumen onyx fable maple gecko iris'; },
   async seal(b, o) { return { bytes: new TextEncoder().encode('sealed-by-' + o.lock) }; },
   inspect(b) { return { lock: new TextDecoder().decode(b).split(':')[0] }; },
   async open(b, c) {

@@ -197,7 +197,8 @@
             try {
                 c = await core();
                 person = await c.generatePersonKeys();
-                words = await c.recoveryWords(RECOVERY_WORDS);
+                // The SDK answers the phrase as one string of words.
+                words = String(await c.recoveryWords(RECOVERY_WORDS)).trim().split(/\s+/);
             } catch (e) { s.body.replaceChildren(el('p', 'ovl-msg is-bad', { role: 'alert' }, e.message)); return; }
             step3(c, person, passphrase, words);
         };
@@ -330,8 +331,9 @@
                     if (!b || !b.envelope) throw Object.assign(new Error('nothing'), { status: 404 });
                     const priv = JSON.parse(fromUtf8(await c.open(unb64(b.envelope), { password: secret })));
                     const person = await c.importPersonKeys(priv);
-                    const pub = await c.exportPersonKeys(person);
-                    session = { person, subject: backups.subject || null, fingerprint: pub.fingerprint };
+                    // The fingerprint from the public keys alone (an imported set signs nothing here).
+                    const fingerprint = await c.fingerprintOf(person.ecdhPublic, person.signingPublic);
+                    session = { person, subject: backups.subject || null, fingerprint };
                     doc.dispatchEvent(new CustomEvent('ov-locker:change', { detail: state() }));
                     s.close(state());
                     if (typeof o.onDone === 'function') o.onDone(state());
