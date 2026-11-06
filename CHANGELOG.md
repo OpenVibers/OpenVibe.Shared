@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.118.0 — 2026-11-06
+
+- Locker reset and unlock errors requiring fresh authentication now link to Network’s password reauthentication with the complete current page as the return destination, including `locker.proof_required`.
+- Touch footer fold links are 44 px tall on the links themselves; the navbar TLD link is at least 44 px wide.
+- Regenerate the Locker browser core from openvibe-sdk v0.92.0.
+
 ## 4.117.0 — 2026-11-06
 
 - **A navbar link can be the site's one featured piece** (`navbar.js`; the owner, 2026-11-06: the Node on the

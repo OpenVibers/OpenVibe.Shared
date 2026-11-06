@@ -88,7 +88,7 @@
         });
         let j = null;
         try { j = await r.json(); } catch (_) { /* empty */ }
-        if (!r.ok) { const e = new Error((j && (j.error || j.message)) || `OpenVibe answered ${r.status}`); e.status = r.status; throw e; }
+        if (!r.ok) { const e = new Error((j && (j.error || j.message)) || `OpenVibe answered ${r.status}`); e.status = r.status; e.code = j && (j.code || j.error); throw e; }
         return j || {};
     }
 
@@ -169,6 +169,15 @@
     }
     const button = (label, kind, attrs) => el('button', `ovl-btn${kind ? ` is-${kind}` : ''}`, Object.assign({ type: 'button' }, attrs || {}), label);
     const say = (box, words, bad) => { box.textContent = words || ''; box.className = `ovl-msg${bad ? ' is-bad' : ''}`; };
+
+    const needsReauth = (err) => /locker\.(reauth_required|proof_required)/.test(err.code || err.message)
+        || (err.status === 403 && /reauth|sign in again/i.test(err.message));
+    function offerReauth(msg) {
+        say(msg, 'For your safety, sign in again, then return to your locker.', true);
+        const href = `${cfg().network.replace(/\/+$/, '')}/login?reauth=1&return=${encodeURIComponent(root.location.href)}`;
+        msg.appendChild(doc.createTextNode(' '));
+        msg.appendChild(el('a', 'ovl-btn is-quiet', { href }, 'Sign in again'));
+    }
 
     // ── Make your locker ────────────────────────────────────────────────────────────────────────────────────
     async function setup(opts) {
@@ -261,11 +270,8 @@
                     step4(pub.fingerprint);
                 } catch (err) {
                     go.disabled = false;
-                    if (err.status === 403 && /reauth|sign in again/i.test(err.message)) {
-                        say(msg, 'For your safety, sign in again, then start your new locker.', true);
-                        const a = el('a', 'ovl-btn is-quiet', { href: `${cfg().network.replace(/\/+$/, '')}/login?next=${encodeURIComponent(root.location.href)}` }, 'Sign in again');
-                        msg.appendChild(doc.createTextNode(' ')); msg.appendChild(a);
-                    } else say(msg, err.status === 401 ? 'Sign in to OpenVibe first, then make your locker.' : `Could not save your locker: ${err.message}`, true);
+                    if (needsReauth(err)) offerReauth(msg);
+                    else say(msg, err.status === 401 ? 'Sign in to OpenVibe first, then make your locker.' : `Could not save your locker: ${err.message}`, true);
                 }
             });
             s.body.appendChild(f);
@@ -345,7 +351,8 @@
                     if (typeof o.onDone === 'function') o.onDone(state());
                 } catch (err) {
                     go.disabled = false;
-                    if (err.status === 404) {
+                    if (needsReauth(err)) offerReauth(msg);
+                    else if (err.status === 404) {
                         say(msg, 'You have no locker yet.', true);
                         const mk = button('Make my locker', 'quiet', { 'data-k': 'make-instead' });
                         mk.addEventListener('click', async () => { s.close(null); const st = await setup(); if (st && typeof o.onDone === 'function') o.onDone(st); });

@@ -63,6 +63,11 @@ const MEASURE = `(() => {
     const fr = firstRight && firstRight.getBoundingClientRect();
     const rightKeepsItsStart = !firstRight || on(firstRight, fr.left + 2, fr.top + fr.height / 2);
     const out = { signIn: size(bar.querySelector('#openvibe-login-btn')), orb: size(bar.querySelector('.ovnav-orb')), nameKeepsItsEnd, rightKeepsItsStart };
+    out.flame = size(bar.querySelector('.flame'));
+    out.tld = size(bar.querySelector('a.b-tld'));
+    out.tldBox = bar.querySelector('a.b-tld').getBoundingClientRect().width;
+    document.querySelectorAll('.ovf-fold').forEach((fold) => { fold.open = true; });
+    out.footerLinks = [...document.querySelectorAll('.ovf-fold a')].map((el) => ({ ...size(el), height: el.getBoundingClientRect().height }));
     out.footerBrand = size(document.querySelector('.ovf-brand'));
     return out;
 })()`;
@@ -75,7 +80,7 @@ const MEASURE = `(() => {
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     try {
         const context = await browser.newContext();
-        for (const width of [320, 360, 393, 430]) {
+        for (const width of [320, 360, 390, 393, 430]) {
             for (const who of ['out', 'in']) {
                 const p = await h.openPage(browser, context, { width, height: 800 });
                 await p.goto(`${base}/${who}`, { maxMs: 5000 });
@@ -84,9 +89,15 @@ const MEASURE = `(() => {
                 const at = `${width}px signed ${who}`;
                 if (who === 'out') assert.ok(v.signIn && v.signIn.h >= 44 && v.signIn.w >= 44, `${at}: Sign In ${JSON.stringify(v.signIn)}`);
                 assert.ok(v.orb && v.orb.w >= 44 && v.orb.h >= 44, `${at}: the orb ${JSON.stringify(v.orb)}`);
+                assert.ok(v.flame.w >= 44 && v.flame.h >= 44, `${at}: site switcher ${JSON.stringify(v.flame)}`);
                 assert.ok(v.nameKeepsItsEnd, `${at}: the site's name keeps the taps on its last letters`);
                 assert.ok(v.rightKeepsItsStart, `${at}: the right-hand group keeps its own first taps`);
                 assert.ok(v.footerBrand && v.footerBrand.h >= 44, `${at}: the footer's brand ${JSON.stringify(v.footerBrand)}`);
+                if (width === 390) {
+                    assert.ok(v.tldBox >= 44 && v.tld.w >= 44, `${at}: TLD has its own 44px width ${JSON.stringify(v.tld)}`);
+                    assert.ok(v.footerLinks.length > 0);
+                    for (const link of v.footerLinks) assert.ok(link.height >= 44 && link.h >= 44, `${at}: footer link has its own 44px height ${JSON.stringify(link)}`);
+                }
                 await p.close();
             }
         }

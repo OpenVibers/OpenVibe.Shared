@@ -42,6 +42,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <link rel="stylesheet" href="/ov-locker.css"></head><body style="font:15px system-ui;padding:16px"><div id="item"></div>
 <script>window.OpenVibeLockerConfig = { network: '' }; window.__opened = []; </script><script src="/ov-locker-core.js"></script><script src="/ov-locker.js"></script></body></html>`;
 const sent = [];
+let authError = null;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     let body = '';
@@ -53,6 +54,7 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'content-type': u.pathname.endsWith('.css') ? 'text/css; charset=utf-8' : 'application/javascript; charset=utf-8' });
             return res.end(fs.readFileSync(path.join(ROOT, u.pathname.slice(1))));
         }
+        if (authError && u.pathname.startsWith('/api/v1/me/keys')) { res.writeHead(403, { 'content-type': 'application/json' }); return res.end(JSON.stringify(authError)); }
         sent.push(`${req.method} ${u.pathname}${u.search} ${body}`);
         if (u.pathname === '/api/v1/me/keys' && req.method === 'PUT') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"ok":true}'); }
         if (u.pathname === '/api/v1/me/keys/backup') {
@@ -150,8 +152,29 @@ const server = http.createServer((req, res) => {
         await p.evaluate(type('pass', 'amber window tide falcon')); await p.evaluate(type('pass2', 'amber window tide falcon')); await p.evaluate(submit('next')); await wait(300);
         const w2 = await p.evaluate("[...document.querySelectorAll('.ovl-words li')].map((li) => li.textContent)");
         const l2 = await p.evaluate("[...document.querySelectorAll('dialog .ovl-pair .ovl-label')].map((l) => Number(l.textContent.replace(/\\D/g, '')))");
-        await p.evaluate(type('w1', w2[l2[0] - 1])); await p.evaluate(type('w2', w2[l2[1] - 1])); await p.evaluate(submit('make')); await wait(400);
+        await p.evaluate(type('w1', w2[l2[0] - 1])); await p.evaluate(type('w2', w2[l2[1] - 1]));
+        await p.evaluate("history.replaceState(null, '', '/?item=a%26b#section')");
+        for (const error of [{ error: 'locker.reauth_required' }, { code: 'locker.proof_required', message: 'Fresh proof needed' }]) {
+            authError = error;
+            await p.evaluate(submit('make')); await wait(150);
+            const href = await p.evaluate("document.querySelector('dialog .ovl-msg a').href");
+            const url = new URL(href);
+            assert.strictEqual(url.pathname, '/login');
+            assert.strictEqual(url.searchParams.get('reauth'), '1');
+            assert.strictEqual(url.searchParams.get('return'), `${base}/?item=a%26b#section`);
+            assert.strictEqual(url.searchParams.has('next'), false);
+            assert.strictEqual(url.searchParams.has('add_account'), false);
+        }
+        authError = null;
+        await p.evaluate(submit('make')); await wait(400);
         assert.match(sent.filter((x) => x.startsWith('PUT')).pop(), /"reset":true/, 'a new locker after losing both says reset');
+
+        await p.evaluate("document.querySelectorAll('dialog').forEach((d) => d.remove()); OVLocker.forget(); OVLocker.unlock(); void 0");
+        await wait(300);
+        authError = { error: 'locker.proof_required' };
+        await p.evaluate(type('pass', PASS)); await p.evaluate(submit('unlock')); await wait(150);
+        assert.strictEqual(new URL(await p.evaluate("document.querySelector('dialog .ovl-msg a').href")).searchParams.get('reauth'), '1');
+        authError = null;
 
         // A phone: the kit fits, no sideways scroll.
         const phone = await h.openPage(browser, context, { width: 390 });
