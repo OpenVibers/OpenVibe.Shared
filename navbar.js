@@ -101,11 +101,10 @@
             .openvibe-navbar-dropdown-header a.name.ud-me { line-height: inherit; display: block; }
             .openvibe-navbar-dropdown-header a.name.ud-me:hover, .openvibe-navbar-dropdown-header a.name.ud-me:focus-visible { text-decoration: underline; }
             .openvibe-navbar-dropdown .ovnav-chip--menu { all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font: 700 12px/1.2 inherit; color: var(--chip-c, #fbbf24); background: color-mix(in srgb, var(--chip-c, #fbbf24) 12%, transparent); border: 1px solid color-mix(in srgb, var(--chip-c, #fbbf24) 34%, transparent); }
-            /* The featured link's phone button (4.119.0): hidden where the links row shows the pill. 38 px drawn, a 44 px
-               hit area on the element itself; the one accent, tinted, no animation. */
+            /* 4.119.0: the featured link's phone button */
             .openvibe-navbar .ovnav-featured-phone { all: unset; box-sizing: border-box; position: relative; cursor: pointer; display: none; width: 38px; height: 38px; border-radius: 999px; align-items: center; justify-content: center; flex: none; color: var(--accent-light, #60a5fa); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
             .openvibe-navbar .ovnav-featured-phone::after { content: ''; position: absolute; inset: -5px; }
-            .openvibe-navbar .ovnav-featured-phone .ovnav-ic, .openvibe-navbar .ovnav-featured-phone svg, .openvibe-navbar .ovnav-featured-phone i { width: 17px; height: 17px; font-size: 16px; }
+            .openvibe-navbar .ovnav-featured-phone :is(.ovnav-ic, svg, i) { width: 17px; height: 17px; font-size: 16px; }
             .openvibe-navbar .ovnav-featured-phone:focus-visible { outline: 2px solid var(--accent-light, #60a5fa); outline-offset: 2px; }
             .openvibe-navbar .ovnav-burger { all: unset; box-sizing: border-box; position: relative; cursor: pointer; display: none; width: 38px; height: 38px; border-radius: 11px; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: none; }
             .openvibe-navbar .ovnav-burger span { display: block; width: 18px; height: 2px; border-radius: 2px; background: currentColor; transition: transform .2s, opacity .2s; }
@@ -1265,9 +1264,7 @@
         const menu = kids.map(k => `<a href="${escapeAttr(k.href || '#')}" class="ovnav-link ovnav-sublink"${k.id ? ` data-link-id="${escapeAttr(k.id)}"` : ''}${k.hidden ? ' hidden' : ''}>${k.icon ? `<span class="icon">${navIcon(k.icon)}</span>` : ''}<span class="ovnav-l">${escapeAttr(k.label)}</span></a>`).join('');
         return inDrawer ? a + menu : `<div class="ovnav-dd"${l.hidden ? ' hidden' : ''}>${a}<div class="ovnav-dd-menu">${menu}</div></div>`;
     }
-    /** A phone folds the links row into the menu, so a featured link also keeps one icon button on the bar itself: the
-        piece the site is built around (the Node on the Network) stays one tap away (4.119.0). It shows only where the
-        links row does not, and only for a featured link with an icon. */
+    /** 4.119.0: a featured link with an icon keeps a button on the phone's bar. */
     function featuredPhoneHTML(links) {
         const f = (links || []).find(l => l && l.featured && !l.hidden && l.icon);
         if (!f) return '';
