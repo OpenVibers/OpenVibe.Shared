@@ -1107,7 +1107,31 @@
         if (st.server.owner && to.subject && same(to.subject, st.server.owner.subject)) { st.busy = false; st.giveMsg = 'That is you.'; st.giveBad = true; draw(st); return; }
         st.busy = true; draw(st);
         try {
-            const out = await call(st.o, 'POST', `${endpoint(st.o).path}/transfer`, { to: to.subject ? { subject: to.subject } : { name: to.name }, keep_access: !!st.keepAccess });
+            // A people-locked item is opened by its slots: the recipient's comes with the offer, and the envelope that
+            // goes up carries it too, so they can look before they accept. Their key is asked of Network, and the
+            // wrapping happens here.
+            let slot = null;
+            if (isLocked(st) && st.server.lock === 'people') {
+                if (!to.subject) throw new Error('That is not an OpenVibe account, so there is no key to lock it for.');
+                const L = await locker();
+                if (!L) throw new Error('The Locker could not load. Check your connection and try again.');
+                const keys = await L.keys(to.subject);
+                if (!keys) throw new Error(`${handle(to) || nameOf(to)} has no locker yet: they make one the first time they open a locked item.`);
+                await L.ensure();
+                const bytes = await envelopeBytes(st);
+                const wrapped = await L.rewrap(bytes, { add: [{ subject: to.subject, publicKey: keys.ecdh_public || keys.ecdh }] });
+                slot = (wrapped.header.slots.people || []).find((x) => same(x.subject, to.subject)) || null;
+                if (!slot) throw new Error('The sealed envelope has no key for them; try again.');
+                const members = st.audience === 'private' ? [] : st.members.map((m) => ({
+                    subject: m.subject, role: m.role,
+                    ...(m.expires_at ? { expires_at: m.expires_at } : {}),
+                    ...(m.key_slot ? { key_slot: m.key_slot } : {}),
+                }));
+                take(st, await call(st.o, 'PUT', endpoint(st.o).path, { audience: st.audience, members, envelope: b64(wrapped.bytes) }, st.etag ? { 'if-match': st.etag } : null));
+            }
+            const out = await call(st.o, 'POST', `${endpoint(st.o).path}/transfer`, {
+                to: to.subject ? { subject: to.subject } : { name: to.name }, keep_access: !!st.keepAccess, ...(slot ? { key_slot: slot } : {}),
+            });
             if (out && out.audience) take(st, out); else take(st, await call(st.o, 'GET', endpoint(st.o).path));
             st.view = 'main'; st.giveTo = null; st.giveDraft = ''; st.giveMsg = '';
             st.note = `Offer sent to ${handle(to) || nameOf(to)}. It stays yours until they accept.`;

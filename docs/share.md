@@ -80,6 +80,8 @@ page that never touches a locked item never loads the crypto.
 - **With a link** — the key is the part of the link after `#`. The page's address has it, so **Copy** and every place
   the sheet sends keep the whole link; the sheet never invents a key, and says plainly when the link in front of it is
   missing one.
+- **A transfer** to a person wraps the content key for their key first, saves the envelope with their slot (so they can
+  look before they accept) and sends the offer with it. Someone without a locker cannot be offered one.
 - **With a password** — nothing is stored: the password opens the envelope on the reader's device. Lose it and nobody
   can open the item, including OpenVibe (the sheet says this at the moment it matters).
 - The envelope's URL comes from the service's `describe(ref)` as `envelope_url`; the sheet fetches it, re-wraps or

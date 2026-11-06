@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.116.1 — 2026-11-06
+
+- **A transfer of a people-locked item carries the recipient's slot.** The sheet wraps the content key for the new
+  owner's key, saves the envelope with their slot (so they can open it while the offer is pending, before they accept),
+  and sends the offer with that `key_slot` — which `openvibe-sdk/share` requires for a people lock. Someone without a
+  locker is told so, and nothing is offered.
+
 ## 4.116.0 — 2026-11-06
 
 - **The Share sheet's Locked part** (`ov-share.js`, `ov-share.css`; Locker design 2026-11-06, the pilot; docs/share.md).
