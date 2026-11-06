@@ -73,8 +73,9 @@
                gets a clear ring, without moving anything (they were 22px and 30px tall). */
             @media (pointer: coarse) {
                 .openvibe-navbar .openvibe-navbar-brand .name a { padding-top: 14px; padding-bottom: 14px; margin-top: -11px; margin-bottom: -11px; }
+                .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; box-sizing: border-box; }
                 .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
-                .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px; }
+                .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
                 /* 4.46.0 (the fleet tap audit): Sign In, the menu and the orb reach 44px to a finger, still drawn as before. */
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
                 /* 4.107.2 (the 11-03 re-audit): Sign In measured 40px tall; 9px above and below makes 45. */

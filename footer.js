@@ -382,7 +382,7 @@
 .ovf-fold-n{display:none}
 .ovf-col a{color:var(--text-secondary,#b6bdd2);font-size:.86rem;text-decoration:none;line-height:1.4;width:fit-content;transition:color .15s,transform .15s}
 .ovf-col a:hover{color:var(--accent,#60a5fa);transform:translateX(2px)}
-@media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:32px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:0;right:0;top:-15px;bottom:-15px}}
+@media (pointer:coarse){.ovf-col a{display:inline-flex;align-items:center;min-height:44px}.ovf-col .ovf-social a{width:44px;height:44px}.ovf-legal-inline a,.ovf-compact-links a{position:relative}.ovf-legal-inline a::after,.ovf-compact-links a::after{content:'';position:absolute;left:0;right:0;top:-15px;bottom:-15px}}
 .ovf-more{font-weight:600;opacity:.85}.ovf-ic{flex:none;vertical-align:-.14em}.ovf-more .ovf-ic{font-size:.85em;margin-left:3px;transition:transform .15s}.ovf-more:hover .ovf-ic{transform:translateX(3px)}.ovf-social .ovf-ic{font-size:17px}.ovf-account-links .ovf-ic{font-size:1.05em;opacity:.85}
 .ovf-brand{position:relative;display:inline-flex;align-items:center;gap:9px;color:var(--text-primary,#f1f4fb);font-family:'OV Brand',Nunito,Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:1.12rem;font-weight:800;letter-spacing:-.1px;text-decoration:none}
 .ovf-brand--sm{font-size:.9rem}
