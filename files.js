@@ -34,6 +34,7 @@ const BROWSER = Object.freeze([
     'ov-fx.js',             // the network's effects (data-fx): glint, glow, lift, press, ripple, tilt, reveal, count, confetti
     'ov-labels.js',         // content labels (L1): each viewer's show / blur / hide; navbar.js loads it when a page has [data-ov-labels]
     'ov-forms.js',          // OpenVibe's own select (a menu on a computer, a sheet on a phone); navbar.js loads it when a page has a form control
+    'ov-qr.js',             // a QR code from a link, on the device: the Share sheet's QR code (ov-share.js loads it on first use)
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'history.js',           // cross-site history

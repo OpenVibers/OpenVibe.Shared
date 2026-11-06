@@ -10,7 +10,7 @@ const ROOT = path.join(__dirname, '..');
 
 // The brands the sites use (a sweep of Live, Network, Chat, Design, Actor, Codes, Games and Tools, 2026-11-01).
 for (const fa of ['youtube', 'twitch', 'discord', 'github', 'x-twitter', 'kickstarter-k', 'google', 'tiktok', 'threads', 'spotify', 'soundcloud', 'reddit-alien',
-    'paypal', 'patreon', 'mastodon', 'linux', 'instagram', 'facebook', 'cloudflare', 'brave', 'bluesky', 'bitcoin', 'apple']) {
+    'paypal', 'patreon', 'mastodon', 'linux', 'instagram', 'facebook', 'cloudflare', 'brave', 'bluesky', 'bitcoin', 'apple', 'tumblr', 'hacker-news', 'line']) {
     const slug = brands.fromFa(`fa-${fa}`);
     assert.ok(slug, `fa-${fa} has a brand`);
     const b = brands.get(slug);

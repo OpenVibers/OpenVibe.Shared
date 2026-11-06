@@ -55,6 +55,7 @@
     "./ov-icons": "./ov-icons.js",
     "./ov-glyphs": "./ov-glyphs.js",
     "./ov-forms": "./ov-forms.js",
+    "./ov-qr": "./ov-qr.js",
     "./ov-labels": "./ov-labels.js",
     "./ov-look": "./ov-look.js",
     "./ov-fx": "./ov-fx.js",
