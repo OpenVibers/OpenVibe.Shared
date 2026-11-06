@@ -49,6 +49,9 @@ OVLocker.rewrap(bytes, { add, remove, keys });
                            // a people-locked envelope re-wrapped here: add [{ subject, publicKey }] wraps the
                            // content key for someone; remove [subject] seals the content under a fresh key for
                            // `keys` (the public keys of those who stay). → { bytes, header }
+OVLocker.seal(content, { lock, keys, password });
+                           // seal content here (a new locked item): the key is made and kept in this tab; a link
+                           // lock comes back with linkKey, the 32 bytes that go in the link after #k=
 OVLocker.inspect(bytes);   // the envelope's header, without a key
 window.OpenVibeLockerConfig = { network: 'https://openvibe.network' };
 ```

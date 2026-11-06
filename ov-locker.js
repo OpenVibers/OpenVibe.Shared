@@ -14,6 +14,7 @@
  *   OVLocker.keys(who)             a person's public keys from Network: null when they have no locker yet
  *   OVLocker.publicKeys()          my public keys, for locking something for myself as well as for others
  *   OVLocker.rewrap(bytes, { add, remove, keys })  a people-locked envelope re-wrapped, the content never leaving
+ *   OVLocker.seal(content, { lock, keys, password })  seal content here: the lock is made in this tab
  *   OVLocker.inspect(bytes)        the header of an envelope, without a key
  *   window.OpenVibeLockerConfig = { network: 'https://openvibe.network' }   where the key directory is
  *
@@ -410,6 +411,16 @@
             : `/api/v1/people/@${encodeURIComponent(String(who || '').replace(/^@+/, ''))}/keys`;
         try { return await network('GET', path); } catch (e) { if (e.status === 404) return null; throw e; }
     }
+    /**
+     * Seal content on this device (a new locked item): `{ lock: 'people', keys: [{ subject, publicKey }] }`,
+     * `{ lock: 'password', password }`, or `{ lock: 'link' }`, whose key comes back in `linkKey` for the link's #k=.
+     * The content key is made and kept here; only the envelope leaves.
+     */
+    async function seal(content, opts = {}) {
+        const c = await core();
+        const out = await c.seal(content, opts);
+        return { bytes: out.bytes, header: out.header, linkKey: out.linkKey || null };
+    }
     /** An envelope's header, without any key. */
     async function inspectBytes(bytes) {
         const c = await core();
@@ -495,7 +506,7 @@
     }
 
     root.OVLocker = {
-        open, setup, unlock, ensure, keys, publicKeys, rewrap, inspect: inspectBytes,
+        open, setup, unlock, ensure, keys, publicKeys, rewrap, seal, inspect: inspectBytes,
         state, forget, keyFromLink, strength, version: 2,
     };
 })(typeof window !== 'undefined' ? window : null);
