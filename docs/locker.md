@@ -42,6 +42,17 @@ OVLocker.unlock({ onDone });                                      // unlock it o
 OVLocker.state();          // { unlocked, fingerprint, subject }
 OVLocker.forget();         // drop the unlocked keys
 OVLocker.keyFromLink();    // the 32-byte key after #k=, or null
+OVLocker.ensure();         // resolves once unlocked here, or opens the unlock sheet; rejects when declined
+OVLocker.keys(subject|'@name');   // Network's public keys for one person, or null when they have no locker
+OVLocker.publicKeys();     // my public keys (for a people lock that wraps for me too)
+OVLocker.rewrap(bytes, { add, remove, keys });
+                           // a people-locked envelope re-wrapped here: add [{ subject, publicKey }] wraps the
+                           // content key for someone; remove [subject] seals the content under a fresh key for
+                           // `keys` (the public keys of those who stay). → { bytes, header }
+OVLocker.seal(content, { lock, keys, password });
+                           // seal content here (a new locked item): the key is made and kept in this tab; a link
+                           // lock comes back with linkKey, the 32 bytes that go in the link after #k=
+OVLocker.inspect(bytes);   // the envelope's header, without a key
 window.OpenVibeLockerConfig = { network: 'https://openvibe.network' };
 ```
 

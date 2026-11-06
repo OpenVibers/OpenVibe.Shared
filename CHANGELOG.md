@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.116.0 — 2026-11-06
+
+- **The Share sheet's Locked part** (`ov-share.js`, `ov-share.css`; Locker design 2026-11-06, the pilot; docs/share.md).
+  A locked item (`lock: people | password | link` in the share API's answer) gets its own part between Send it and Who
+  can open it:
+  - the lock in plain words, and a link lock says when the link in front of it is missing its `#k=` key;
+  - a people lock shows each person's eight-word fingerprint, warns when their key changed since the slot was made,
+    and offers **Use their new key**;
+  - adding someone asks Network for their public key and wraps their content key on this device (the member row and
+    the slot are saved together); someone without a locker is told so, not added;
+  - removing someone seals the content again under a fresh key for those who stay, uploads the new envelope with the
+    members, and says "They had the key before you removed them: they may still have a copy of what they already
+    opened."
+  - `ov-locker.js` loads on the first press of the part, never with the sheet.
+- **`ov-locker.js`** gains the calls the sheet needs, all keeping the keys in the tab: `ensure()`, `keys(who)` (Network's
+  key directory), `publicKeys()`, `rewrap(bytes, { add, remove, keys })` and `inspect(bytes)` (docs/locker.md).
+- **`ov-locker-core.js`** regenerated from openvibe-sdk 0.89.0 (`seal.js` and `server.js` moved since 0.86.0).
+  openvibe-sdk devDependency 0.86.0 → 0.89.0.
+- test/ov-share-lock-chrome.test.js: the Locked part with the real crypto — lazy load, fingerprints, adding wraps for
+  them (and the envelope that goes up opens for them), removing re-seals (and the removed person's key opens nothing),
+  and a link lock keeps its key after `#`.
+
 ## 4.115.1 — 2026-11-06
 
 - **Share sheet:** its headings no longer take a site's own `h2` rule (Wiki's bottom border and margin showed under the sheet's title). Every property a site might set on an `h2` is reset inside the sheet and the access gate.

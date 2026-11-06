@@ -10,6 +10,12 @@
  *   OVLocker.state()               { unlocked, fingerprint, subject }
  *   OVLocker.forget()              drop the unlocked keys from this tab
  *   OVLocker.keyFromLink(href?)    the content key a link carries after #k= (link locks)
+ *   OVLocker.ensure()              resolves once the locker is unlocked here (the unlock sheet when it is not)
+ *   OVLocker.keys(who)             a person's public keys from Network: null when they have no locker yet
+ *   OVLocker.publicKeys()          my public keys, for locking something for myself as well as for others
+ *   OVLocker.rewrap(bytes, { add, remove, keys })  a people-locked envelope re-wrapped, the content never leaving
+ *   OVLocker.seal(content, { lock, keys, password })  seal content here: the lock is made in this tab
+ *   OVLocker.inspect(bytes)        the header of an envelope, without a key
  *   window.OpenVibeLockerConfig = { network: 'https://openvibe.network' }   where the key directory is
  *
  * The cryptography is ov-locker-core.js beside this file (generated from openvibe-sdk/locker: WebCrypto only, the
@@ -372,6 +378,55 @@
         return s.finished;
     }
 
+    // ── The locker as a tool: a public key, a lookup, and a re-wrap ─────────────────────────────────────────
+    /** The locker, unlocked on this device: unlocks it (the sheet) when it is not, and says so when that is declined. */
+    async function ensure() {
+        if (session) return state();
+        const st = await unlock();
+        if (!st || !st.unlocked) throw Object.assign(new Error('Unlock your locker to do this.'), { code: 'locker.locked' });
+        return st;
+    }
+    /** My public keys, as they are published: what a people lock wraps for me too. */
+    async function publicKeys() {
+        if (!session) return null;
+        const c = await core();
+        return await c.exportPersonKeys(session.person);
+    }
+    /**
+     * A people-locked envelope, its key slots wrapped again: `add` [{ subject, publicKey }] keeps the content and
+     * the chunks and adds their slots; `remove` [subject] seals the content under a fresh key for `keys` (the public
+     * keys of those who stay), so the person who left opens nothing. The content key and the plaintext stay here.
+     */
+    async function rewrap(bytes, { add = [], remove = [], keys = [] } = {}) {
+        await ensure();
+        const c = await core();
+        const out = await c.rewrap(bytes, { add, remove, keys, credentials: { person: session.person } });
+        return { bytes: out.bytes, header: out.header };
+    }
+    /** A person's public keys from Network's directory (by subject or by @name): null when they have no locker yet. */
+    async function keys(who) {
+        const id = who && typeof who === 'object' ? (who.subject && who.subject.id) || who.id : null;
+        const path = id
+            ? `/api/v1/people/${encodeURIComponent(id)}/keys`
+            : `/api/v1/people/@${encodeURIComponent(String(who || '').replace(/^@+/, ''))}/keys`;
+        try { return await network('GET', path); } catch (e) { if (e.status === 404) return null; throw e; }
+    }
+    /**
+     * Seal content on this device (a new locked item): `{ lock: 'people', keys: [{ subject, publicKey }] }`,
+     * `{ lock: 'password', password }`, or `{ lock: 'link' }`, whose key comes back in `linkKey` for the link's #k=.
+     * The content key is made and kept here; only the envelope leaves.
+     */
+    async function seal(content, opts = {}) {
+        const c = await core();
+        const out = await c.seal(content, opts);
+        return { bytes: out.bytes, header: out.header, linkKey: out.linkKey || null };
+    }
+    /** An envelope's header, without any key. */
+    async function inspectBytes(bytes) {
+        const c = await core();
+        return c.inspect(bytes);
+    }
+
     // ── The card a locked item shows ────────────────────────────────────────────────────────────────────────
     async function open(container, opts) {
         const o = Object.assign({}, opts || {});
@@ -450,5 +505,8 @@
         });
     }
 
-    root.OVLocker = { open, setup, unlock, state, forget, keyFromLink, strength, version: 1 };
+    root.OVLocker = {
+        open, setup, unlock, ensure, keys, publicKeys, rewrap, seal, inspect: inspectBytes,
+        state, forget, keyFromLink, strength, version: 2,
+    };
 })(typeof window !== 'undefined' ? window : null);
