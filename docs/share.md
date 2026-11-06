@@ -13,6 +13,7 @@ computer. It has two parts and no tabs:
 |---|---|---|
 | **Send it** | everyone | the link and **Copy**; on a phone, **Send with your phone** (the phone's own share sheet: contacts, messages, every app); X, Bluesky, WhatsApp, Reddit, Discord, Telegram, Threads, Mastodon, Facebook, Email, Messages (phones), LinkedIn, Pinterest (with a picture), Tumblr, Hacker News, LINE; **QR code**; **Embed**; **Start at 1:23** for a video or a recording |
 | **Who can open it** | the owner (and staff) of a thing with a share API | Everyone · Anyone with the link · Specific people · Only me; people by @name, each Can view or Can edit, with an end date; people who asked; **Transfer** |
+| **Locked** | the owner of a locked item (one sealed with [Locker](locker.md)) | what the lock means in plain words; each person's eight-word fingerprint; add someone (their key wrapped on this device) or remove them (the content sealed again) |
 
 The first eight places show at once, with the person's three most recent first. The rest are behind a counted fold
 (**More (n)**), never hidden.
@@ -61,6 +62,31 @@ OVShare.fromButton(button);                                                     
 - `ov-share:sent` `{ target, url, kind, id }` when the link goes somewhere: copy, x, device, qr, embed and the rest.
   A site's analytics may count these.
 - `ov-share:change` `{ kind, id, state }` after a save, a transfer or an answer.
+
+## Locked items (Locker)
+
+A locked item carries the lock's kind in the share API's answer (`lock: people | password | link`) and the sheet draws a
+**Locked** part between the two above. It opens on the first press, and only then does the sheet load `ov-locker.js`: a
+page that never touches a locked item never loads the crypto.
+
+- **For the people on the list** — the sheet shows each person's eight-word fingerprint (the one Network publishes with
+  their keys). It warns when their key changed since the slot was made, with **Use their new key**; nothing is wrapped
+  for a key the person has not seen.
+  - Adding someone asks Network for their public key first. Their content key is wrapped for it on this device, and the
+    member row and the slot are saved together. Someone without a locker cannot be added, and the sheet says so in
+    words.
+  - Removing someone seals the content again under a fresh key for those who stay, then uploads the new envelope. The
+    sheet says: "They had the key before you removed them: they may still have a copy of what they already opened."
+- **With a link** — the key is the part of the link after `#`. The page's address has it, so **Copy** and every place
+  the sheet sends keep the whole link; the sheet never invents a key, and says plainly when the link in front of it is
+  missing one.
+- **With a password** — nothing is stored: the password opens the envelope on the reader's device. Lose it and nobody
+  can open the item, including OpenVibe (the sheet says this at the moment it matters).
+- The envelope's URL comes from the service's `describe(ref)` as `envelope_url`; the sheet fetches it, re-wraps or
+  re-seals it with `OVLocker.rewrap()`, and sends the base64 in the save's `envelope` field. The content key and the
+  plaintext never leave the browser.
+- The service must register the lock when the item is made (`register(ref, { lock })`), report it in the GET, store a
+  re-seal through `onReseal(ref, bytes, tx)`, and keep the item out of public lists: a locked item can never be public.
 
 ## What it promises
 

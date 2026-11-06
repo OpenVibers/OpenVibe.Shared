@@ -130,6 +130,27 @@ html.ov-share-locked, html.ov-share-locked body { overflow: hidden; overscroll-b
 .ov-share-seglabel { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ov-share-aud:disabled .ov-share-segopt:not(:has(input:checked)) { opacity: .55; }
 
+/* ── Locked: what the lock means, and the fingerprints it is wrapped for ───────────────────────────────────── */
+.ov-share-lock { display: grid; gap: 8px; min-width: 0; padding: 10px 12px; border-radius: var(--ovs-radius); background: color-mix(in srgb, var(--ovs-accent) 6%, var(--ovs-hover)); }
+.ov-share-lockhead {
+    -webkit-appearance: none; appearance: none; display: flex; align-items: center; gap: 10px; width: 100%; min-height: 34px;
+    margin: 0; padding: 0; border: 0; background: none; color: var(--ovs-text); font: inherit; text-align: left; cursor: pointer;
+}
+.ov-share-lockhead .ov-share-ico { color: var(--ovs-accent); }
+.ov-share-lockhead:focus-visible { outline: 3px solid color-mix(in srgb, var(--ovs-accent) 40%, transparent); outline-offset: 3px; border-radius: 8px; }
+.ov-share-locklabel { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.ov-share-locktitle { font-weight: 700; font-size: 14px; }
+.ov-share-lockcaret { flex: none; width: 20px; text-align: center; color: var(--ovs-muted); font-size: 17px; line-height: 1; }
+.ov-share-lockshort { font-size: 12.5px; }
+.ov-share-lockbody { display: grid; gap: 8px; min-width: 0; }
+.ov-share-lockmeans { margin: 0; font-size: 13.5px; color: var(--ovs-text); }
+.ov-share-fps { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ov-share-fprow { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; font-size: 12.5px; }
+.ov-share-fpwho { flex: none; color: var(--ovs-text); font-weight: 650; }
+.ov-share-fp { min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--ovs-muted); white-space: normal; overflow-wrap: anywhere; }
+.ov-share-fp.is-changed { color: var(--warning-text, var(--ovs-warn)); }
+.ov-share-tag.is-warn { color: var(--warning-text, var(--ovs-warn)); background: color-mix(in srgb, var(--ovs-warn) 16%, transparent); }
+
 /* ── People ─────────────────────────────────────────────────────────────────────────────────────────────────── */
 .ov-share-people { display: grid; gap: 10px; min-width: 0; }
 .ov-share-people .ov-share-label { margin: 0; }

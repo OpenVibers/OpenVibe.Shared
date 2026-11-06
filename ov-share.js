@@ -12,6 +12,13 @@
  *   Who can open it   for the owner, when the thing has kind and id: Everyone, Anyone with the link, Specific people
  *                (by @name, each Can view or Can edit, with an end date), Only me; people who asked; Transfer.
  *
+ * A locked item (Locker, ov-locker.js) gets one more part between them: what its lock means in plain words, each
+ * person's eight-word fingerprint (and a warning when their key changed), and, for a people lock, adding someone (their
+ * content key is wrapped for them on this device) and removing someone (the content is sealed again under a fresh key,
+ * and the sheet says they keep what they already opened). A link lock's key is the part of the link after #, which
+ * browsers never send; the sheet never invents it, it copies the whole link. ov-locker.js is loaded on the first press
+ * of that part, never before.
+ *
  *   <button type="button" data-ov-share-sheet data-title="…">Share</button>       the page's own address
  *     data-url="https://…"      the link to share (else the page's address)
  *     data-text="…"             a line to send with it (email, the phone's sheet)
@@ -54,6 +61,22 @@
         private: { label: 'Only me', title: 'Only me', desc: 'Only you can open it.' },
     };
     const ROLE_WORDS = { viewer: 'Can view', editor: 'Can edit' };
+    // What each lock means, in the words the person choosing it reads (Locker design 2026-11-06: "OpenVibe can't read
+    // what's inside"). The same three sentences are on the page that makes a locked item.
+    const LOCK_WORDS = {
+        people: {
+            label: 'For the people on the list',
+            means: 'Only you and the people below can open it, each with their own keys. OpenVibe can’t read what’s inside.',
+        },
+        password: {
+            label: 'With a password',
+            means: 'Anyone you give the password to can open it. OpenVibe can’t read what’s inside, and if the password is lost, nobody can open it, including us.',
+        },
+        link: {
+            label: 'With the link',
+            means: 'The key travels in the link, after the #, which browsers never send to OpenVibe. Anyone with the whole link can open it.',
+        },
+    };
     const svg = (d, extra) => `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"${extra || ''}>${d}</svg>`;
     const ICON = {
         public: svg('<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.6 2.4 3.8 5.3 3.8 8.5s-1.2 6.1-3.8 8.5c-2.6-2.4-3.8-5.3-3.8-8.5s1.2-6.1 3.8-8.5Z"/>'),
@@ -183,11 +206,20 @@
         return [...recent.map((id) => list.find((t) => t[0] === id)), ...list.filter((t) => !recent.includes(t[0]))];
     }
     const hms = (s) => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${h}:${String(m).padStart(2, '0')}:${String(x).padStart(2, '0')}` : `${m}:${String(x).padStart(2, '0')}`; };
+    /** The key a link carries after #k= (a link lock): base64url, 32 bytes. The same rule as ov-locker.js. */
+    function linkKey(href) {
+        const h = String(href == null ? root.location.hash : href).replace(/^#/, '');
+        const m = h.match(/(?:^|&)k=([A-Za-z0-9_-]{43})(?:&|$)/) || String(root.location.hash || '').match(/(?:^|&)k=([A-Za-z0-9_-]{43})(?:&|$)/);
+        return m ? m[1] : null;
+    }
     function theLink(st) {
         const raw = (st.server && st.server.link) || st.o.link || st.o.url || root.location.href;
         let u;
         try { u = new URL(raw, root.location.href); } catch (_) { return raw; }
         if (st.atTime && st.o.time > 0) u.searchParams.set(st.o.timeParam || 't', String(Math.floor(st.o.time)));
+        // A link-locked item is opened by the part after #; the service's own link never has it, the page's address does.
+        const key = st.server && st.server.lock === 'link' ? linkKey() : null;
+        if (key && !linkKey(u.href)) u.hash = `k=${key}`;
         return u.href;
     }
     const shownLink = (href) => href.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -428,6 +460,7 @@
                 o, server: null, audience: 'private', members: [], notify: true, view: 'main', busy: false,
                 note: '', error: '', confirmLeave: false, saved: null, resolve, giveTo: null, keepAccess: false,
                 access: !!(o.kind && o.id), first: true, atTime: false, panel: '', allTargets: false,
+                lockOpen: false, reseal: false,
             };
             st.dlg = el('dialog', 'ov-share', { 'aria-labelledby': 'ov-share-title' });
             st.close = (force) => close(st, force);
@@ -468,6 +501,7 @@
     function memberKey(m) { return m.subject ? sid(m.subject) : `name:${String(m.name || m.username).toLowerCase()}`; }
     function dirty(st) {
         if (!st.server) return false;
+        if (st.reseal) return true;
         if (st.audience !== (st.server.audience || 'private')) return true;
         const a = (st.server.members || []).map((m) => `${memberKey(m)}|${m.role}|${m.expires_at || ''}`).sort().join(',');
         const b = st.members.map((m) => `${memberKey(m)}|${m.role}|${m.expires_at || ''}`).sort().join(',');
@@ -546,7 +580,9 @@
         if (s.transfer && s.transfer.state === 'pending' && mine) body.appendChild(pendingBanner(st));
 
         // Who can open this: four choices, one line saying what the chosen one means.
-        const offered = (Array.isArray(s.audiences) && s.audiences.length ? s.audiences : Object.keys(AUDIENCES)).filter((a) => AUDIENCES[a]);
+        // A locked item is never public (the service refuses it too): the choice is not offered.
+        const offered = (Array.isArray(s.audiences) && s.audiences.length ? s.audiences : Object.keys(AUDIENCES))
+            .filter((a) => AUDIENCES[a] && !(isLocked(st) && a === 'public'));
         const fs = el('fieldset', 'ov-share-aud', { disabled: !mine || st.busy });
         fs.appendChild(el('legend', 'ov-share-label', null, 'Who can open this'));
         const seg = el('div', 'ov-share-seg', { style: `--n:${offered.length}` });
@@ -566,6 +602,9 @@
         desc.appendChild(doc.createTextNode(AUDIENCES[st.audience] ? AUDIENCES[st.audience].desc : ''));
         fs.appendChild(desc);
         body.appendChild(fs);
+
+        // Locked items: what the lock means, the fingerprints, and the people they are wrapped for.
+        if (isLocked(st)) body.appendChild(lockSection(st));
 
         // People: who has access (or, on an open item, who may edit it).
         const open = st.audience === 'public' || st.audience === 'link';
@@ -619,6 +658,183 @@
         if (st.error) body.appendChild(el('p', 'ov-share-error', { role: 'alert' }, st.error));
     }
 
+    // ── Locked items (Locker) ────────────────────────────────────────────────────────────────────────────────
+    // ov-locker.js loads on the first press of the Locked part, never before: the lock's words and the fingerprints
+    // come from the service's own answer; only the wrapping and the re-seal need the keys, and they live in that file.
+    const isLocked = (st) => !!(st.server && st.server.lock && st.server.lock !== 'none');
+    async function locker() {
+        if (root.OVLocker) return root.OVLocker;
+        const ok = await loadSibling('ov-locker.js', 'OVLocker');
+        return ok && root.OVLocker ? root.OVLocker : null;
+    }
+    const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return root.btoa(s); };
+    /** The people whose slot was in the stored envelope and who are no longer on the list. */
+    function removedMembers(st) {
+        if (!st.server) return [];
+        return (st.server.members || []).filter((m) => m.key_slot && !st.members.some((x) => same(x.subject, m.subject)));
+    }
+    function lockSection(st) {
+        const kind = st.server.lock;
+        const words = LOCK_WORDS[kind] || { label: kind, means: '' };
+        const sec = el('section', 'ov-share-lock', { 'aria-labelledby': 'ov-share-lock-h' });
+        const head = el('button', 'ov-share-lockhead', { type: 'button', 'data-k': 'lock-open', 'aria-expanded': st.lockOpen ? 'true' : 'false', 'aria-controls': 'ov-share-lock-body' });
+        head.appendChild(iconEl('private'));
+        const w = el('span', 'ov-share-locklabel');
+        w.appendChild(el('span', 'ov-share-locktitle', { id: 'ov-share-lock-h' }, 'Locked'));
+        w.appendChild(el('span', 'ov-share-muted', null, words.label));
+        head.appendChild(w);
+        head.appendChild(el('span', 'ov-share-lockcaret', { 'aria-hidden': 'true' }, st.lockOpen ? '−' : '+'));
+        head.addEventListener('click', () => {
+            st.lockOpen = !st.lockOpen;
+            if (st.lockOpen && !root.OVLocker) locker();   // the words need nothing; the sealing later does
+            draw(st);
+        });
+        sec.appendChild(head);
+        if (!st.lockOpen) {
+            sec.appendChild(el('p', 'ov-share-muted ov-share-lockshort', null, 'OpenVibe can’t read what’s inside.'));
+            return sec;
+        }
+        const inner = el('div', 'ov-share-lockbody', { id: 'ov-share-lock-body' });
+        inner.appendChild(el('p', 'ov-share-lockmeans', null, words.means));
+        if (kind === 'link') {
+            const key = linkKey(theLink(st));
+            inner.appendChild(el('p', key ? 'ov-share-muted' : 'ov-share-warn', { role: key ? null : 'status' }, key
+                ? 'The whole link, including the part after #, is the key. Copy sends the whole link.'
+                : 'This link is missing its key: a locked link ends with #k=… Ask whoever shared it for the whole link. OpenVibe never had the key, so it cannot send it.'));
+        }
+        if (kind === 'password') {
+            inner.appendChild(el('p', 'ov-share-muted', null, 'The password is not stored anywhere. If you lose it, nobody can open this: there is no reset.'));
+        }
+        if (kind === 'people') {
+            inner.appendChild(el('p', 'ov-share-muted', null, 'Each person’s content key is wrapped for their locker on this device. OpenVibe never sees a key.'));
+            const known = st.members.filter((m) => m.key_fingerprint);
+            if (known.length) {
+                const ul = el('ul', 'ov-share-fps', { 'aria-label': 'Fingerprints' });
+                for (const m of known) {
+                    const li = el('li', 'ov-share-fprow');
+                    li.appendChild(el('span', 'ov-share-fpwho', null, handle(m) || nameOf(m)));
+                    li.appendChild(el('span', 'ov-share-fp', null, m.key_fingerprint));
+                    if (m.fingerprint_changed) li.appendChild(el('span', 'ov-share-tag is-warn', null, 'key changed'));
+                    ul.appendChild(li);
+                }
+                inner.appendChild(ul);
+            }
+            const changed = st.members.filter((m) => m.fingerprint_changed);
+            if (changed.length) {
+                const who = changed.map((m) => handle(m) || nameOf(m)).join(', ');
+                inner.appendChild(el('p', 'ov-share-warn', { role: 'status' }, `${who} changed locker keys since this was shared for them. Compare the new fingerprint with them, in person or on a call, before you use it.`));
+                const use = el('button', 'ov-share-btn is-small is-quiet', { type: 'button', 'data-k': 'use-new-key' }, 'Use their new key');
+                use.addEventListener('click', async () => {
+                    use.disabled = true;
+                    try {
+                        const L = await locker();
+                        if (!L) throw new Error('The Locker could not load. Check your connection and try again.');
+                        for (const m of changed) {
+                            const keys = await L.keys(m.subject);
+                            if (!keys) throw new Error(`${handle(m) || nameOf(m)} has no locker now.`);
+                            m._publicKey = keys.ecdh_public || keys.ecdh;
+                            m._keyFingerprint = keys.fingerprint || null;
+                            m.fingerprint_changed = false;
+                            m.useNewKey = true;
+                        }
+                        st.reseal = true; st.lockNote = 'Their new key is used when you save.';
+                        st.lockError = '';
+                    } catch (e) { st.lockError = e.message; }
+                    draw(st);
+                });
+                inner.appendChild(use);
+            }
+            const gone = removedMembers(st);
+            if (gone.length) {
+                const who = gone.map((m) => handle(m) || nameOf(m)).join(', ');
+                inner.appendChild(el('p', 'ov-share-warn', { role: 'status' },
+                    `They had the key before you removed them (${who}). They may still have a copy of what they already opened.`));
+            }
+            if (st.lockNote) inner.appendChild(el('p', 'ov-share-note', { role: 'status' }, st.lockNote));
+            if (st.lockError) inner.appendChild(el('p', 'ov-share-error', { role: 'alert' }, st.lockError));
+        }
+        sec.appendChild(inner);
+        return sec;
+    }
+
+    /** The person's public key, asked of Network through the Locker: a people lock cannot be made without it. */
+    async function attachKey(st, p) {
+        if (!p || !p.subject) { st.addMsg = `We could not confirm ${handle(p) || nameOf(p)}’s account, so no key is known.`; st.addMsgBad = true; return false; }
+        try {
+            const L = await locker();
+            if (!L) throw new Error('The Locker could not load. Check your connection and try again.');
+            const keys = await L.keys(p.subject);
+            if (!keys) {
+                st.addMsg = `${handle(p) || nameOf(p)} has no locker yet: they make one the first time they open a locked item.`;
+                st.addMsgBad = true;
+                return false;
+            }
+            p._publicKey = keys.ecdh_public || keys.ecdh;
+            p._keyFingerprint = keys.fingerprint || null;
+            p.needsKey = true;
+            return true;
+        } catch (e) {
+            st.addMsg = `Could not get ${handle(p) || nameOf(p)}’s key: ${e.message}`;
+            st.addMsgBad = true;
+            return false;
+        }
+    }
+
+    /** The bytes a locked item serves: its envelope. */
+    async function envelopeBytes(st) {
+        const url = (st.server && st.server.envelope_url) || st.o.envelope_url;
+        if (!url) throw new Error('This service did not say where the locked item is.');
+        const r = await fetch(url, { credentials: st.o.base ? 'include' : 'same-origin', headers: { accept: 'application/octet-stream' } });
+        if (!r.ok) throw new Error(`The locked item answered ${r.status}.`);
+        return new Uint8Array(await r.arrayBuffer());
+    }
+
+    /**
+     * For a people lock whose list changed: the envelope re-wrapped here. Someone added gets their slot (the content key
+     * never leaves this device); someone removed means the content is sealed again under a fresh key for those who stay,
+     * so the key the person leaving holds opens nothing. The service stores the bytes and never reads them.
+     */
+    async function resealIfNeeded(st) {
+        const before = st.server.members || [];
+        const after = st.audience === 'private' ? [] : st.members;
+        const gone = before.filter((m) => !after.some((x) => same(x.subject, m.subject)));
+        const needing = after.filter((m) => m.needsKey || m.fingerprint_changed || m.useNewKey);
+        // A slot that is already there has to go when it is wrapped again for the same person: two slots for one
+        // person would leave the old key in the envelope.
+        const stale = needing.filter((m) => m.key_slot);
+        const remove = [...gone, ...stale].map((m) => m.subject);
+        if (!remove.length && !needing.length && !st.reseal) return null;
+        const L = await locker();
+        if (!L) throw new Error('The Locker could not load. Check your connection and try again.');
+        await L.ensure();
+        const bytes = await envelopeBytes(st);
+        const publicKey = async (m) => {
+            if (m._publicKey) return m._publicKey;
+            const keys = await L.keys(m.subject);
+            if (!keys) throw new Error(`${handle(m) || nameOf(m)} has no locker now.`);
+            m._publicKey = keys.ecdh_public || keys.ecdh;
+            m._keyFingerprint = keys.fingerprint || null;
+            return m._publicKey;
+        };
+        const add = [];
+        for (const m of needing) add.push({ subject: m.subject, publicKey: await publicKey(m) });
+        const keys = [];
+        const me = await L.publicKeys();
+        const my = st.server.you && st.server.you.subject;
+        if (remove.length && my && me) keys.push({ subject: my, publicKey: me.ecdh });
+        if (remove.length) for (const m of after) keys.push({ subject: m.subject, publicKey: await publicKey(m) });
+        const out = await L.rewrap(bytes, { add, remove, keys });
+        const slots = new Map((out.header.slots.people || []).map((slot) => [sid(slot.subject), slot]));
+        const list = after.map((m) => {
+            const slot = slots.get(sid(m.subject));
+            if (!slot) throw new Error(`The sealed envelope has no key for ${handle(m) || nameOf(m)}.`);
+            const r = { subject: m.subject, role: m.role, key_slot: slot };
+            if (m.expires_at) r.expires_at = m.expires_at;
+            return r;
+        });
+        return { members: list, envelope: b64(out.bytes) };
+    }
+
     // The @name field: Enter or Add checks the name with Network (through the service), then adds a chip-row.
     function adder(st) {
         const wrap = el('form', 'ov-share-add', { novalidate: true });
@@ -667,15 +883,20 @@
         st.checking = true; st.addMsg = ''; draw(st);
         const missing = [];
         try {
+            const peopleLock = !!(st.server && st.server.lock === 'people');
             for (const n of names) {
                 const p = await lookup(st.o, n);
                 if (p === null) missing.push(n);
+                else if (p === undefined && peopleLock) { st.addMsg = `We could not check @${n}, so no key is known for them. Try again.`; st.addMsgBad = true; }
                 else if (p === undefined) addPerson(st, { name: n, username: n, unchecked: true }, true);
+                else if (peopleLock) { if (await attachKey(st, p)) addPerson(st, p, true); }
                 else addPerson(st, p, true);
             }
             st.draftName = missing.join(' ');
-            st.addMsg = missing.length ? `No OpenVibe account is called ${missing.map((n) => `@${n}`).join(', ')}.` : '';
-            st.addMsgBad = !!missing.length;
+            if (missing.length) {
+                st.addMsg = `No OpenVibe account is called ${missing.map((n) => `@${n}`).join(', ')}.`;
+                st.addMsgBad = true;
+            }
         } catch (e) {
             st.addMsg = e.message; st.addMsgBad = true;
         }
@@ -688,7 +909,14 @@
         if (st.members.some((m) => memberKey(m) === memberKey(p))) { st.addMsg = `${handle(p)} is on the list already.`; st.addMsgBad = false; if (!quiet) draw(st); return; }
         const open = st.audience === 'public' || st.audience === 'link';
         const role = open && roles(st).includes('editor') ? 'editor' : 'viewer';
-        st.members.push({ subject: p.subject, name: p.subject ? undefined : p.name, username: p.username, display_name: p.display_name, avatar_url: p.avatar_url, role, expires_at: null, isNew: true, unchecked: !!p.unchecked });
+        st.members.push({
+            subject: p.subject, name: p.subject ? undefined : p.name, username: p.username, display_name: p.display_name,
+            avatar_url: p.avatar_url, role, expires_at: null, isNew: true, unchecked: !!p.unchecked,
+            ...(p.key_slot ? { key_slot: p.key_slot } : {}),
+            ...(p.needsKey ? { needsKey: true } : {}),
+            ...(p._publicKey ? { _publicKey: p._publicKey } : {}),
+            ...(p._keyFingerprint || p.key_fingerprint ? { key_fingerprint: p._keyFingerprint || p.key_fingerprint } : {}),
+        });
         if (st.audience === 'private') { st.audience = 'people'; st.note = 'Switched to Specific people, so they can open it.'; }
         if (!quiet) { st.draftName = ''; draw(st); }
     }
@@ -706,6 +934,11 @@
         if (p.username) sub.appendChild(el('span', null, null, handle(p)));
         if (x.member && x.member.unchecked) sub.appendChild(el('span', 'ov-share-soft', null, 'checked when you save'));
         if (x.member) sub.appendChild(expiry(st, x.member));
+        // A people lock shows which key the slot is for: the eight words a person can compare out of band.
+        if (x.member && isLocked(st) && st.server.lock === 'people' && x.member.key_fingerprint) {
+            sub.appendChild(el('span', `ov-share-fp${x.member.fingerprint_changed ? ' is-changed' : ''}`, { title: 'Their locker’s fingerprint' }, x.member.key_fingerprint));
+            if (x.member.fingerprint_changed) sub.appendChild(el('span', 'ov-share-soft', null, 'key changed'));
+        }
         words.appendChild(sub);
         li.appendChild(words);
         if (x.tag) { li.appendChild(el('span', 'ov-share-role is-fixed', null, x.tag)); return li; }
@@ -724,7 +957,9 @@
         rm.appendChild(iconEl('close'));
         rm.addEventListener('click', () => {
             st.members.splice(st.members.indexOf(m), 1);
-            st.note = m.isNew ? '' : `${handle(m) || nameOf(m)} loses access when you save. They may still have a copy of what they already opened.`;
+            st.note = m.isNew ? '' : isLocked(st) && st.server.lock === 'people'
+                ? `${handle(m) || nameOf(m)} loses access when you save. They had the key before you removed them: they may still have a copy of what they already opened.`
+                : `${handle(m) || nameOf(m)} loses access when you save. They may still have a copy of what they already opened.`;
             draw(st);
         });
         li.appendChild(rm);
@@ -922,7 +1157,7 @@
     }
 
     async function save(st) {
-        st.busy = true; st.error = ''; draw(st);
+        st.busy = true; st.error = ''; st.lockError = ''; draw(st);
         const members = st.audience === 'private' ? [] : st.members.map((m) => {
             const r = { role: m.role };
             if (m.expires_at) r.expires_at = m.expires_at;
@@ -930,9 +1165,16 @@
             return r;
         });
         try {
-            const out = await call(st.o, 'PUT', endpoint(st.o).path, { audience: st.audience, members, notify: !!st.notify }, st.etag ? { 'if-match': st.etag } : null);
+            const body = { audience: st.audience, members, notify: !!st.notify };
+            // A people lock follows its people: someone added is wrapped for now, someone removed means the content is
+            // sealed again. The bytes go up with the list, and this browser is the only place they were opened.
+            if (isLocked(st) && st.server.lock === 'people') {
+                const sealed = await resealIfNeeded(st);
+                if (sealed) { body.members = sealed.members; body.envelope = sealed.envelope; }
+            }
+            const out = await call(st.o, 'PUT', endpoint(st.o).path, body, st.etag ? { 'if-match': st.etag } : null);
             take(st, out && out.audience ? out : await call(st.o, 'GET', endpoint(st.o).path));
-            st.saved = st.server; st.note = 'Saved.';
+            st.saved = st.server; st.note = 'Saved.'; st.reseal = false; st.lockNote = '';
             announce(st.o, st.server);
         } catch (e) {
             if (e.status === 412) {
@@ -941,7 +1183,12 @@
                 draw(st); return;
             }
             const names = e.body && Array.isArray(e.body.names) ? e.body.names : null;
-            st.error = names && names.length ? `No OpenVibe account is called ${names.map((n) => `@${n}`).join(', ')}. Remove them, then save.` : `Could not save: ${e.message}`;
+            const code = (e.body && e.body.code) || e.code;
+            if (code === 'share.key_changed') st.error = 'Someone’s locker key changed. Open the Locked part and use their new key, then save again.';
+            else if (code === 'share.no_key') st.error = 'Someone on the list has no locker yet. They make one the first time they open a locked item.';
+            else if (code === 'share.reseal_required') st.error = 'Removing someone from a locked item seals it again here. Unlock your locker and save again.';
+            else if (code === 'share.slot_required') st.error = 'Every person on a locked item needs their key. Add them again, then save.';
+            else st.error = names && names.length ? `No OpenVibe account is called ${names.map((n) => `@${n}`).join(', ')}. Remove them, then save.` : `Could not save: ${e.message}`;
         }
         st.busy = false; draw(st);
     }
@@ -1046,5 +1293,5 @@
             time: time >= 5 ? time : 0, timeParam: d.timeParam, base: d.base, path: d.path };
     }
 
-    root.OVShare = { open, offer, gate, fromButton, version: 2 };
+    root.OVShare = { open, offer, gate, fromButton, version: 3 };
 })(typeof window !== 'undefined' ? window : null);
