@@ -49,6 +49,7 @@
     "./dock": "./dock.js",
     "./dock-vibe": "./dock-vibe.js",
     "./dock-timer": "./dock-timer.js",
+    "./dock-agent": "./dock-agent.js",
     "./notification-ui": "./notification-ui.js",
     "./notifications": "./notifications.js",
     "./openvibe-sw": "./openvibe-sw.js",

@@ -4,6 +4,30 @@
 
 - A thread start page (`page({ center })`) keeps its head at the top on wide screens: only the welcome and the composer are centred, by auto margins. Centring the whole column floated the head into the middle of a tall screen above an empty band (seen on openvibe.exchange/chat at 1280 px). Phones are unchanged.
 
+## 4.121.0 — 2026-11-06
+
+- **The Dock's agent view works in the window too** (Dock K-D4, on K-D3). The pop-out keeps the Agents tab's stream:
+  the agent view's own style goes into the document it is mounted in, so a tab opened after the pop-out is styled in
+  the window (and its style is not left on the page behind it), and a view already open when the Dock pops out carries
+  its style with the rest of the Dock. Closing the window brings the same stream back to the page.
+- No new file and no new request: `dock-agent.js` creates its nodes and its style from `container.ownerDocument`.
+  `test/dock-chrome.test.js` covers the pop-out with the stream.
+
+## 4.120.0 — 2026-11-06
+
+- **The Dock's agent view** (Dock K-D3; `dock-agent.js`, `dock.js`; Agent Streams S1). The Agents tab now opens on the
+  person's own desk stream: Live's embed (`/embed/agent/<ags_id>?vt=wvt_…`, the `AI agent` label, the curtain state and
+  the viewer count on the picture), one line for the task with the time it has worked, and the owner's **Curtain
+  now** and **End**. Above the list, and it hides itself when there is no stream, so the tab is what it was.
+  - The view ticket is minted server-side by OpenVibe.Codes with the person's own token (`GET
+    /api/v1/me/agent-view`) — a third-party iframe has no Live cookie — and the embed renews its own ticket while it
+    plays, so nothing is re-mounted on a poll.
+  - Nothing live: the last frame, read with the token and shown as a local object URL (an `<img>` cannot carry a
+    bearer), with the task and the worked time.
+  - No step line yet: steps are Agent Streams S2, and the view shows none until Live serves them.
+  - `dock-agent.js` is a sibling loaded the first time the tab opens (3.9 KB brotli); `dock.js` grows 222 bytes and its
+    budget goes to 15.50 KB. `navbar.js` passes `dockAgentBase` (default `https://openvibe.codes`).
+
 ## 4.119.0 — 2026-11-06
 
 - A featured link keeps a place on the phone's bar: where the links row folds into the menu, the featured link (4.117.0) also shows as one tinted icon button beside Sign In or the avatar (38 px, 34 px under 400 px, a 44 px hit area on the element), named by its label for screen readers. The Node on the Network is one tap away on a phone. Only a featured link with an icon gets one; no animation.

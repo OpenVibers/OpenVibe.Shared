@@ -24,6 +24,7 @@ const BROWSER = Object.freeze([
     'dock.js',              // the Dock and its pill; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
     'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
+    'dock-agent.js',        // the Dock's agent view (K-D3); dock.js loads it the first time the Agents tab opens
     'account-switcher.js',
     'site-switcher.js',     // the OpenVibe mark's site switcher (4.48.0); navbar.js loads it on the first tap. Missing from this list until 4.106.1, so every site answered 404 for it and the mark did nothing
     'user-card.js',

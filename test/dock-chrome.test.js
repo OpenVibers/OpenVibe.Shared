@@ -16,8 +16,8 @@
 //   • the timer (L48 R2): the header's menu starts one, the pill counts it down when the Dock is closed, its end
 //     clears it and says so, and a focus round's end writes its break from that same end (any page, the same result);
 //   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
-//     its tabs and its styles, the page keeps the pill saying where the Dock went, and closing the window brings the
-//     panel back; the Network is told.
+//     its tabs and its styles, the agent view's stream and styles included, the page keeps the pill saying where the
+//     Dock went, and closing the window brings the panel back; the Network is told.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const fs = require('fs');
@@ -54,6 +54,11 @@ const NOTES = [
 // The stand-in's state for the scenario under way.
 let scenario = {};
 const puts = [], decided = [], said = [], reads = [];
+// K-D3: the agent view Codes' API answers (dock-agent.js) and the controls the Dock pressed.
+let agentView = null;
+const controls = [];
+const AGENT_ID = 'ags_01JAB2C3D4E5F6G7H8J9K0MNPQ';
+const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0xff, 0xd9]);
 // Chat's Vibe API for the Dock (OpenVibe.Chat server/rooms/vibe-api.js): one chat, Vibe answering a moment later.
 let vibeChat = null;
 const vibeMsgs = [], asked = [], listened = [], undone = [];
@@ -63,7 +68,7 @@ const PAGE = (o) => `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <style>body{margin:0;font:15px system-ui}main{padding:16px}p{margin:0 0 12px}</style></head>
 <body><div id="navbar-mount"></div><main>${'<p>Fix the flaky upload test in the Media client and add a regression case.</p>'.repeat(30)}</main>
 <script src="/navbar.js"></script>
-<script>OpenVibeNavbar.init({ service: 'codes', brandName: 'OpenVibe.Codes', notifications: false, dockApiBase: location.origin, dockChatBase: location.origin,
+<script>OpenVibeNavbar.init({ service: 'codes', brandName: 'OpenVibe.Codes', notifications: false, dockApiBase: location.origin, dockChatBase: location.origin, dockAgentBase: location.origin,
   ${o.signedIn === false ? 'user: null,' : "token: 'tok_user', user: { id: 7, username: 'ada', display_name: 'Ada', avatar_url: null },"}
   links: [{ label: 'Tasks', href: '/', icon: 'fa-list' }] });</script></body></html>`;
 
@@ -81,6 +86,24 @@ const server = http.createServer((req, res) => {
             return json(200, { state: scenario.state || defaultState(), counts: scenario.counts || { running: 0, waiting: 0, unread: 0 }, sources_partial: false });
         }
         if (u.pathname === '/api/v1/me/actions') return json(200, ACTIONS);
+        // Codes' agent view (K-D3): the stream, its two controls, and the still.
+        if (u.pathname === '/api/v1/me/agent-view' && req.method === 'GET') {
+            assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'the agent view is read with the person\'s own token');
+            return json(200, { agent: agentView });
+        }
+        if (u.pathname === '/api/v1/me/agent-view/frame') {
+            res.writeHead(200, { 'content-type': 'image/jpeg' });
+            return res.end(JPEG);
+        }
+        const ctl = /^\/api\/v1\/me\/agent-view\/(curtain|end)$/.exec(u.pathname);
+        if (ctl && req.method === 'POST') {
+            assert.strictEqual(req.headers.authorization, 'Bearer tok_user', `${ctl[1]} is pressed with the person's own token`);
+            controls.push(ctl[1]);
+            agentView = ctl[1] === 'curtain'
+                ? { ...agentView, curtain: { up: true } }
+                : { ...agentView, state: 'ended', embed_url: null, last_frame_url: '/api/v1/me/agent-view/frame' };
+            return json(200, { agent: agentView });
+        }
         const m = /^\/api\/v1\/me\/actions\/(\w+)\/(\w+)\/(approve|decline)$/.exec(u.pathname);
         if (m && req.method === 'POST') { decided.push(m.slice(1).join(':')); return json(200, { item: ACTIONS.buckets.waiting[0] }); }
         // Chat's DM API, as OpenVibe.Chat answers it (server/chat/dm-routes.js).
@@ -164,8 +187,10 @@ const PIP = `(() => {
     const w = f.contentWindow;
     const shut = () => { try { w.dispatchEvent(new w.Event('pagehide')); } catch (e) { } try { f.remove(); } catch (e) { } };
     w.close = shut;
-    window.__pip = { win: w, frame: f, close: shut };
-    window.documentPictureInPicture = { requestWindow: async (o) => { window.__pip.opts = o || null; return w; } };
+    const dp = { requestWindow: async (o) => { window.__pip.opts = o || null; return w; } };
+    window.__pip = { win: w, frame: f, close: shut, dp };
+    // Chromium has its own Document Picture-in-Picture getter; an own, writable value stands in for it in the test.
+    Object.defineProperty(window, 'documentPictureInPicture', { value: dp, writable: true, configurable: true });
     return true;
 })()`;
 
@@ -261,6 +286,56 @@ async function drag(p, from, to) {
             await p.close();
         }
 
+        // ── The agent view (K-D3): the person's own desk stream, its curtain, End, and the still when it ends ──
+        {
+            scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
+            controls.length = 0;
+            const view = () => ({
+                id: AGENT_ID, state: 'live', title: 'Fix the flaky upload test',
+                task: { source: 'codes', ref: 'tsk_1', title: 'Fix the flaky upload test', url: 'https://openvibe.codes/run/tasks/tsk_1' },
+                curtain: { up: false }, viewers: 2, worked_seconds: 720, visibility: 'private',
+                page_url: `https://openvibe.live/@ada/agents/${AGENT_ID}`,
+                embed_url: `https://openvibe.live/embed/agent/${AGENT_ID}?vt=wvt_test`, last_frame_url: null,
+            });
+            agentView = view();
+            // The embed is Live's own page; the harness blocks its address so the test never reaches it.
+            const p = await h.openPage(browser, await browser.newContext(), { width: 390, height: 780, block: ['https://openvibe.live/*'] });
+            await p.goto(`${base}/page`, { maxMs: 8000 });
+            await until(p, PILL, 'the pill');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, `(() => { const c = ${CARD}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents tab');
+            // The stream: Live's embed, the task, the numbers.
+            const src = await until(p, "document.querySelector('.ovda iframe') && document.querySelector('.ovda iframe').getAttribute('src')", 'the embed');
+            assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda-line').textContent"), 'Fix the flaky upload test', 'the task, one line');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Live · 2 watching · worked 12 min');
+            assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovda-acts button')].map((b) => b.dataset.act)"), ['curtain', 'end'], 'the owner\'s two buttons');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), true, 'the view is shown above the list');
+            // Curtain now: Live is asked, and the line says so.
+            await p.evaluate("document.querySelector('.ovda-acts button[data-act=curtain]').click()");
+            await until(p, "document.querySelector('.ovda-meta').textContent.includes('Private screen')", 'the curtain in the line');
+            assert.deepStrictEqual(controls, ['curtain'], 'Curtain now reached Codes, which puts it to Live');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovda-acts button[data-act=curtain]')"), false, 'no Curtain now while the curtain is up');
+            // End: the stream becomes the last frame, and the list is still there under it.
+            await p.evaluate("document.querySelector('.ovda-acts button[data-act=end]').click()");
+            const stillSrc = await until(p, "document.querySelector('.ovda img') && document.querySelector('.ovda img').getAttribute('src')", 'the still after End');
+            assert.ok(stillSrc.startsWith('blob:'), 'the still is read with the token, never a bare <img> URL');
+            assert.deepStrictEqual(controls, ['curtain', 'end'], 'End reached Codes, which puts it to Live');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovda iframe')"), false, 'no player once it has ended');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Ended · worked 12 min');
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovac-item').length"), 3, 'the agents list is untouched under the stream');
+            // No stream at all: the view hides itself and the tab is just the list.
+            agentView = null;
+            await p.goto(`${base}/page`, { maxMs: 8000 });
+            await until(p, PILL, 'the pill again');
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, `(() => { const c = ${CARD}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents tab again');
+            await wait(400);
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), false, 'nothing to show, and nowhere to show it');
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovac-item').length"), 3, 'the list alone');
+            await p.close();
+        }
+
         // ── 320 px: nothing runs off the screen, closed or open. ──
         {
             scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
@@ -346,6 +421,38 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("!!window.__pip.win.document.querySelector('.ovdk')"), false, 'and out of the window');
             await wait(900);
             assert.ok(!puts.some((b) => 'popped' in b), `nor that it is back (${JSON.stringify(puts)})`);
+            await p.close();
+        }
+
+        // ── Pop out with the agent view (K-D3): the stream goes into the window too, and its styles follow the
+        //    document the view is actually in, not the page behind it. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true, tab: 'activity' } };
+            agentView = {
+                id: AGENT_ID, state: 'live', title: 'Fix the flaky upload test',
+                task: { source: 'codes', ref: 'tsk_1', title: 'Fix the flaky upload test', url: 'https://openvibe.codes/run/tasks/tsk_1' },
+                curtain: { up: false }, viewers: 1, worked_seconds: 300, visibility: 'private',
+                page_url: `https://openvibe.live/@ada/agents/${AGENT_ID}`,
+                embed_url: `https://openvibe.live/embed/agent/${AGENT_ID}?vt=wvt_test`, last_frame_url: null,
+            };
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 8000 });
+            await until(p, PILL, 'the pinned pill');
+            await p.evaluate(PIP);
+            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, CARD, 'the Dock on Activity');
+            await p.evaluate("document.querySelector('.ovdk [data-act=pop]').click()");
+            await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the Dock in the window');
+            // The Agents tab opens for the first time in the window: the stream and its style belong there.
+            await p.evaluate("window.__pip.win.document.querySelector('#ovdk-tab-agent').click()");
+            const src = await until(p, "(() => { const w = window.__pip.win; const f = w.document.querySelector('.ovda iframe'); return f && f.getAttribute('src'); })()", 'the stream in the window');
+            assert.strictEqual(src, agentView.embed_url, 'the same ticket and stream, in the window');
+            assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovda-styles')"), true, 'the agent view keeps its styles in the window');
+            assert.strictEqual(await p.evaluate("!!document.getElementById('ovda-styles')"), false, 'and does not put them on the page behind it');
+            // Back on the page, the same view is still there.
+            await p.evaluate("window.__pip.close()");
+            await until(p, "!!document.querySelector('.ovdk .ovda iframe')", 'the stream back on the page');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovda iframe').getAttribute('src')"), agentView.embed_url);
             await p.close();
         }
 
