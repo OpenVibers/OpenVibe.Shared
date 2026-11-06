@@ -1086,5 +1086,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 
 <!-- versions:start -->
 - openvibe-contracts: v0.289.1
-- openvibe-sdk: v0.89.0
+- openvibe-sdk: v0.91.0
 <!-- versions:end -->

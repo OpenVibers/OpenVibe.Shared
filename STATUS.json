@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.289.1 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.89.0",
+  "sdk": "openvibe-sdk v0.91.0",
   "features": [
     "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
     "the launcher beside the brand lists every site of the network, in groups; Ask Actor and the Vibes chip in the account menu",
@@ -30,5 +30,5 @@
     "vibes-pay.js: OpenVibe.vibes.pay(payUrl) opens the Vibes Pay sheet (popup on a computer, full page on a phone), resolves { status } from an origin-checked postMessage and binds <button data-ov-vibes-pay> in the Vibes accent, both themes (D12)",
     "openvibe-shared/config accepts x-unit seconds for an integer owner setting, so an owner form can label the input in seconds"
   ],
-  "updated": "2026-11-05"
+  "updated": "2026-11-06"
 }
