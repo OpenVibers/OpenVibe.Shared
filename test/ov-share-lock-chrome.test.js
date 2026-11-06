@@ -32,6 +32,7 @@ const keys = {};          // subject id → what Network publishes: { subject, e
 const items = {};         // path → envelope bytes
 let lockerPut = null;     // the browser's PUT /api/v1/me/keys
 const puts = [];          // every share save body
+const transfers = [];     // every POST .../share/transfer body
 let share = null;         // the share GET body
 
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Locked</title><link rel="icon" href="data:,">
@@ -64,6 +65,12 @@ const server = http.createServer((req, res) => {
         }
         if (u.pathname === '/api/v1/paste/locked/share' && req.method === 'GET') {
             res.writeHead(200, { 'content-type': 'application/json', etag: '"4"' }); return res.end(JSON.stringify(share));
+        }
+        if (u.pathname === '/api/v1/paste/locked/share/transfer' && req.method === 'POST') {
+            const b = JSON.parse(body);
+            transfers.push(b);
+            share = { ...share, transfer: { id: '00000000-0000-4000-8000-0000000000aa', to: b.to, keep_access: b.keep_access, expires_at: '2026-11-13T10:00:00Z', state: 'pending' } };
+            res.writeHead(201, { 'content-type': 'application/json' }); return res.end(JSON.stringify(share));
         }
         if (u.pathname === '/api/v1/paste/locked/share' && req.method === 'PUT') {
             const b = JSON.parse(body);
@@ -193,7 +200,21 @@ const server = http.createServer((req, res) => {
         await assert.rejects(async () => await locker.open(afterRemove, { privateKey: mat.ecdh.privateKey, subject: MAT }), 'maticus cannot open the new envelope');
         assert.ok(!removePut.members.some((m) => m.subject && m.subject.id === MAT.id), 'maticus is not a member');
 
-        // 4. A link lock: the key after # is part of the link the sheet copies, and a link without it says so.
+        // 4. Transfer to maticus: the offer carries the slot they need, and the envelope that goes up opens for them.
+        await page.evaluate("document.getElementById('sh').click()");
+        await wait(400);
+        await page.evaluate(press('give'));
+        await wait(200);
+        await page.evaluate(type('give-name', 'maticus'));
+        await page.evaluate(press('give-send'));
+        await wait(3000);
+        assert.strictEqual(transfers.length, 1, 'the offer was sent');
+        assert.ok(transfers[0].key_slot, 'the offer carries a key slot for the new owner');
+        assert.strictEqual(transfers[0].key_slot.recipient_key, await locker.jwkThumbprint(matPub.ecdh), 'the slot names their key');
+        const forTransfer = Buffer.from(puts[puts.length - 1].envelope, 'base64');
+        assert.deepStrictEqual([...new Uint8Array(await locker.open(forTransfer, { privateKey: mat.ecdh.privateKey, subject: MAT }))], [...Buffer.from(plain)], 'they can open it before accepting');
+
+        // 5. A link lock: the key after # is part of the link the sheet copies, and a link without it says so.
         const linkSealed = await locker.seal(plain, { lock: 'link' });
         const linkPage = await h.openPage(browser, await browser.newContext(), { width: 390 });
         await linkPage.goto(`${base}/#k=${linkSealed.linkKey}`, { maxMs: 5000 });
