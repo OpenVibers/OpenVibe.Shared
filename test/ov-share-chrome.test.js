@@ -100,6 +100,11 @@ const server = http.createServer((req, res) => {
         await wait(300);
         assert.strictEqual(await p.evaluate("document.querySelector('dialog.ov-share').open"), true, 'a [data-ov-share-sheet] button opens the sheet as a modal dialog');
         assert.strictEqual(await p.evaluate("document.getElementById('ov-share-title').textContent"), 'Share “<b>notes</b>”', 'the title is text, never markup');
+        // A site's own h2 rule (Wiki: h2 { border-bottom; padding-bottom; margin }) never reaches the sheet's title.
+        await p.evaluate("(() => { const st = document.createElement('style'); st.textContent = 'h2 { border-bottom: 3px solid red; padding-bottom: 9px; text-transform: uppercase; }'; document.head.appendChild(st); })()");
+        assert.strictEqual(await p.evaluate("getComputedStyle(document.getElementById('ov-share-title')).borderBottomWidth"), '0px', 'a page h2 border does not reach the sheet title');
+        assert.strictEqual(await p.evaluate("getComputedStyle(document.getElementById('ov-share-title')).paddingBottom"), '0px', 'nor its padding');
+        assert.strictEqual(await p.evaluate("getComputedStyle(document.getElementById('ov-share-title')).textTransform"), 'none', 'nor its text-transform');
         assert.strictEqual(await p.evaluate(`${q('aud-private')}.checked`), true, 'the service\'s audience is chosen');
         assert.strictEqual(await p.evaluate("document.querySelector('dialog.ov-share [data-k=\"done\"]').textContent"), 'Done', 'nothing changed: Done, not Save');
 
