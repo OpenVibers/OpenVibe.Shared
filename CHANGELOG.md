@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.115.1 — 2026-11-06
+
+- **Share sheet:** its headings no longer take a site's own `h2` rule (Wiki's bottom border and margin showed under the sheet's title). Every property a site might set on an `h2` is reset inside the sheet and the access gate.
+
 ## 4.115.0 — 2026-11-06
 
 - **Locker in the browser** (`ov-locker.js`, `ov-locker.css`; plan Q2; docs/locker.md). The owner: "completely
