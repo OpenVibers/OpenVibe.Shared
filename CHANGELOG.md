@@ -21,6 +21,11 @@
   - **A Share component** in OpenVibe Design (`openvibe-shared/components`, `kit.share({ title, url, kind, id })`): a
     kit document's `{ type: 'share' }` renders the button, and the spec gives its anatomy, states, keys, and the
     Android (Intent chooser with Direct Share) and iOS (`ShareLink`) views, so native apps share the same way.
+  - **`ov-qr.js`**: a QR code from a link, made on the device with no dependency and no network (a Locker link's key
+    stays on the device). `OVQR.matrix(text, { ecc })` and `OVQR.svg(text, { ecc, margin, dark, light, title })`;
+    byte mode, versions 1 to 40, all eight masks. Ported from Nayuki's QR Code generator (MIT); checked module by
+    module against bwip-js on 1,196 matrices (test/ov-qr.test.js). The sheet loads it on the first QR code.
+  - **Brand logos**: Tumblr, Hacker News and LINE join brands.js (49 brands, Simple Icons 16.36.0, CC0).
   - Tests: test/ov-share-chrome.test.js (headless Chrome).
 
 ## 4.113.0 — 2026-11-06
