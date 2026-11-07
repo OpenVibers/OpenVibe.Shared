@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.126.0 — 2026-11-07
+
+- **Audio description in the player (X1)**: a video with a `<track kind="descriptions">` gets an **AD** button beside
+  Captions. It turns the descriptions track on and is remembered per person in localStorage, like the volume; **D**
+  toggles it from the keyboard and its label says whether it is on. The active cue is shown over the picture and
+  spoken through the browser's speech synthesis, so a blind viewer hears what is on screen between the speech. No
+  descriptions track, no button. `player.js`, `player.css`, `test/player.test.js`.
+
 ## 4.125.0 — 2026-11-07
 
 - **The owner's Setup page and clear settings** (`openvibe-shared/config`; OWNER-SETUP-AND-ADMIN-CLARITY-DESIGN, 2026-11-07). New schema annotations, passed through to the summary: `x-owner-input { group, unlocks, get_it_at, get_it_how, test }` marks a field for Network's Setup tab (the groups are `config.OWNER_INPUT_GROUPS`), `x-required-for` makes an unset field **Needed**, `x-enum-labels` gives every option of a choice words and a line, `x-advanced` folds a field under a counted "Advanced settings (N)", and `x-example` is a placeholder. A secret-class property loses `x-example` and `x-enum-labels` in the summary, as it already lost its default, examples and enum.
