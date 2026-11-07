@@ -16,7 +16,9 @@
   and narrower, on a bar with page links), the orb that opened the same menu steps aside. A bar without page links
   keeps its orb, its only way in.
 - **One Close.** On a phone the menu's in-box "Close" steps aside for the burger's ✕.
-- Budgets: navbar.js 43.5 KB brotli (43.2 with the hashes, which do not compress), dock.js 16.0 KB.
+- **The menu opens at once.** search.js is prefetched at idle once the page settles (not on Save-Data or 2G), and as
+  soon as a finger or pointer reaches the burger or the orb. By its hashed URL it is cached until the next release.
+- Budgets: navbar.js 44 KB brotli (43.5 with the hashes, which do not compress, and the warm-up), dock.js 16.0 KB.
 
 ## 4.135.0 — 2026-11-07
 

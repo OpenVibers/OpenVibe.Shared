@@ -1041,6 +1041,8 @@
         // The menu's own Close is the burger's ✕ on a phone (search.js hides its in-box Close then).
         try { document.documentElement.classList.toggle('ovnav-has-burger', !!burger); } catch { /* */ }
         const closeDrawer = () => { if (drawer) drawer.classList.remove('open'); if (burger) burger.setAttribute('aria-expanded', 'false'); };
+        // A finger or pointer on its way to the menu fetches it now (warmMenu above).
+        ['pointerenter', 'pointerdown', 'focusin'].forEach((t) => nav.addEventListener(t, (e) => { if (e.target && e.target.closest && e.target.closest('#openvibe-burger, #openvibe-search-btn')) warmMenu(); }, { passive: true, capture: t === 'pointerenter' }));
         nav.addEventListener('click', (e) => {
             const a = e.target.closest && e.target.closest('a.ovnav-link, .ovnav-net'); if (!a || !nav.contains(a)) return;
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -2075,6 +2077,20 @@
 
     // Search (search.js, loaded on first use). _config.search: false, or { owner, label, page }.
     let _searchLoading = false;
+    // Warm the menu (4.136.0): search.js by its hashed URL is cached for good, so fetching it early costs one download per
+    // release. At idle after the page settles (not on Save-Data or 2G), and at once when a finger or pointer reaches the
+    // burger or the orb; the first open then has nothing to wait for.
+    let _menuWarm = false;
+    function warmMenu() {
+        if (_menuWarm || root.OpenVibeSearch || typeof document === 'undefined') return;
+        _menuWarm = true;
+        try { const l = document.createElement('link'); l.rel = 'prefetch'; l.as = 'script'; l.href = siblingV('search.js'); document.head.appendChild(l); } catch { /* */ }
+    }
+    function warmMenuLater() {
+        try { const c = root.navigator && root.navigator.connection; if (c && (c.saveData || /(^|-)2g$/.test(c.effectiveType || ''))) return; } catch { /* */ }
+        const go = () => warmMenu();
+        if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
+    }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
     function openSearch(q, tab, fromEl) {
         const orb = _navEl && _navEl.querySelector('#openvibe-search-btn');
@@ -2301,6 +2317,7 @@
             const el = render();
             upgradeIconsWhenFontsReady();
             if (typeof document !== 'undefined') setTimeout(loadReleaseWatch, 4000);
+            if (typeof document !== 'undefined') setTimeout(warmMenuLater, 3000);
             // A page that passes a user keeps control; otherwise the user comes from the shared SSO state, then a re-render.
             // auth: 'external' — the site signs people in itself (Live) and tells us with setUser().
             if (_config.auth === 'external') { if (_config.user) { recordHistory(); enableHandoff(); } }
