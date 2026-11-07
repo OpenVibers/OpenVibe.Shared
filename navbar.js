@@ -1235,11 +1235,14 @@
         if (document.getElementById('ov-presence-loader')) return;
         const sc = document.createElement('script'); sc.id = 'ov-presence-loader'; sc.src = sibling('presence.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
     }
-    /**
-     * Open the Dock on a tab: 'agent' | 'activity'. opts may name the step to point at (opts.task): the
-     * Agent panel marks that entry and brings it into view, so a site can open the Dock at its own task.
-     */
+    // The Dock on a tab ('agent' | 'activity'); opts.task marks that step and brings it into view.
     function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }
+    // Ask your agent (4.135.0): Vibe opens with the question in its box; signed out, sign in first.
+    function askAgent(text) {
+        if (!_config.token || _config.dock === false) { const u = resolveLoginHref(currentHost(), location.href); if (u) location.href = u; return; }
+        loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); });
+    }
+    if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('click', (e) => { const b = e.target && e.target.closest && e.target.closest('[data-ov-ask]'); if (!b) return; e.preventDefault(); askAgent(b.getAttribute('data-ov-ask') || ''); });
 
     /** Custom sections for the user menu: [{ label, items: [{ label, icon, href, id, elId, hidden, danger, value, onClick }] }]. */
     function sectionsHTML(sections) {
@@ -2399,12 +2402,9 @@
          *  settles; a page that draws such a box later may call this). Returns how many it marked. */
         focusScrollers() { try { return focusScrollers(); } catch { return 0; } },
 
-        /**
-         * Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only.
-         * opts may name the step to point at (opts.task): the Agent panel marks that entry and brings it
-         * into view, so a site can open the Dock at its own task.
-         */
+        /** The Dock on a tab, signed in only; opts.task points at that step (see openDock above). */
         openDock(tab, opts) { if (_config.token && _config.dock !== false) openDock(tab, opts); },
+        askAgent(text) { askAgent(text); },
 
         /** Get the bell mount point for OpenVibeNotifications. */
         getBellMount() {

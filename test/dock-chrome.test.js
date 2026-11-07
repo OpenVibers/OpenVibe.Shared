@@ -608,7 +608,23 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all');
             await p.close();
         }
-        console.log('dock-chrome: the pill only when it matters, Vibe, Agents, Chats and Activity, the timer, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
+        // ── Ask your agent (4.135.0): a page's [data-ov-ask] chip opens Vibe with the question in the box, unsent. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: false } };
+            const before = asked.length;
+            const p = await fresh(1280, 860);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, "!!window.OpenVibeNavbar && typeof OpenVibeNavbar.askAgent === 'function'", 'the navbar');
+            await p.evaluate("(() => { const b = document.createElement('button'); b.type = 'button'; b.id = 'ask'; b.setAttribute('data-ov-ask', 'About this stream: night walk in Asakusa. '); document.body.appendChild(b); b.click(); })()");
+            await until(p, CARD, 'the Dock opens');
+            const box = await until(p, "(() => { const t = document.querySelector('.ovdk [data-panel=vibe] textarea'); return t && t.value ? { value: t.value } : null; })()", 'the question in the box');
+            assert.strictEqual(box.value, 'About this stream: night walk in Asakusa. ', 'the page question, as given');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [role=tab][aria-selected=true]').dataset.tab"), 'vibe', 'on the Vibe tab');
+            await wait(400);
+            assert.strictEqual(asked.length, before, 'nothing is sent for the person');
+            await p.close();
+        }
+        console.log('dock-chrome: the pill only when it matters, Vibe, Ask your agent, Agents, Chats and Activity, the timer, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
     } finally {
         await browser.close();
         server.close();

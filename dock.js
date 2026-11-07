@@ -827,6 +827,8 @@
     }
 
     // ── Open and close ───────────────────────────────────────
+    // Ask your agent (4.135.0): Vibe opens with the question in its box, unsent.
+    function ask({ text = '' } = {}, n = 0) { if (!n) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!(el && !el.hidden); }
     function open(opts = {}) {
         o = { ...o, ...opts };
@@ -877,5 +879,5 @@
         if (isOpen()) layout();
     }
 
-    root.OpenVibeDock = { mount, open, close, isOpen, update, _state: () => ({ doc, tab, pending }) };
+    root.OpenVibeDock = { mount, open, close, isOpen, update, ask, _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);

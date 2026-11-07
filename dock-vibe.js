@@ -140,6 +140,8 @@
         form.append(box, go);
         panel.append(head, scroll, err, form);
         const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
+        vibe.fill = (text) => { box.value = String(text || '').slice(0, 8000); fit(); try { box.focus(); box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } };
+        if (vibe.pendingAsk) { vibe.fill(vibe.pendingAsk); vibe.pendingAsk = null; }
         box.addEventListener('input', fit);
         box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
 
@@ -282,6 +284,8 @@
             refresh: () => { vibe.panel = panel; return openVibe(); },
             pause: () => { clearTimeout(vibe.timer); if (vibe.rec) { try { vibe.rec.abort(); } catch { /* */ } } },
             talk: () => { if (vibe.talk) vibe.talk(); },
+            // A page's "Ask your agent" (4.135.0): the question waits in the box, with its context, for the person to send.
+            ask: (text) => { if (vibe.fill) vibe.fill(text); else vibe.pendingAsk = text; },
         };
     }
     root.OpenVibeDockVibe = { mount };
