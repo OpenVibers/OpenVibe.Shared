@@ -2043,7 +2043,7 @@
         const anchor = () => {
             if (!_navEl || !orb || !orb.getBoundingClientRect) return null;
             const bar = _navEl.getBoundingClientRect(), at = orb.getBoundingClientRect();
-            return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6 } : null;
+            return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6, cx: at.left + at.width / 2, cy: at.top + at.height / 2 } : null;
         };
         const go = () => {
             if (orb) orb.classList.remove('is-busy');
@@ -2070,7 +2070,7 @@
         const anchor = () => {
             if (!_navEl || !btn || !btn.getBoundingClientRect) return null;
             const bar = _navEl.getBoundingClientRect(), at = btn.getBoundingClientRect();
-            return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6 } : null;
+            return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6, cx: at.left + at.width / 2, cy: at.top + at.height / 2 } : null;
         };
         const go = () => {
             const S = root.OpenVibeSiteSwitcher;

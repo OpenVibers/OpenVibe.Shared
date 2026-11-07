@@ -1,5 +1,55 @@
 # Changelog
 
+## 4.128.0 — 2026-11-07
+
+- **The menu, rethought around real use** (the owner, 11-07: Jump back in came first, people opened Sites every time just to
+  reach Live, and it "doesn't spread traffic … not smartly done based on what's popular"). Network's data that day: Video,
+  Live and Community take nearly all the page views, 48 of 67 signed-in people used one site, and people move Live ↔
+  Community, Live ↔ Tools, Chat → Live, Live → Bot and Live → Video. One calm scroll, no tabs, in this order:
+  - **Who is live**: "3 streams live now · 41 watching" and the live channels when Network names them (`pulse.live`).
+  - **Your places**: a dock of eight big icons, the places this person uses most (else the network's most used, without
+    developer services). One tap to Live from any site.
+  - **On <this site>**: the bar's own links, two to a row, the rest behind "More on <site> (N)".
+  - **Next from <this site>**: where people really go next (Network's moves; the Frame's `next` when it sends one).
+  - **New to you**: two places this person never used, picked fairly from the ranked network so every place gets its
+    turn; developer services only for people who use one. The pick holds for the whole opening.
+  - **You** (signed in): your agents and Vibe (they open in the Dock), account, wallet, themes, machines.
+  - **Tools**, **Recent searches**, then **Every OpenVibe site (N)** as one counted fold (this site's group first), and
+    **Jump back in** last.
+- `open({ tab: 'sites' })` opens the list of every site and `tab: 'tools'` scrolls to the tools, so old callers keep
+  working.
+- **A click beacon, only when Network asks for it** (`frame.menu.beacon`): the section, the position, where it led and
+  the kind; no person and no page, so the menu can learn what helps and the ranking can spread people across the network.
+- Touch screens get 44 px chips and header links.
+- **Sites put their own content in the menu** (the owner, 11-07: "content aware … sites can interact and create their own
+  content in the bar"), two ways:
+  - **On their own pages, a card:** a site pushes `{ id, title, render(el, api) }` onto `window.OpenVibeMenuCards`
+    (a queue that works before `search.js` loads) or calls `OpenVibeSearch.registerCard()`. The card draws itself
+    under the workspace: Download's drop zone, Live's go-live status, Codes' new task. It is the site's own code on
+    its own page. A card that throws is left out.
+  - **On every site, from Network:** the Frame's `cards` (Network collects each site's
+    `/.well-known/openvibe-menu.json`). The menu draws at most two, as a rail, rows or chips: Live's channels with
+    their viewers, Games' new worlds, Video's trending. They are text and links only, re-checked here, and never
+    another site's code.
+- **Back closes the menu first** (the owner: Back on a phone left the page). Opening adds one history entry; Back pops
+  it and only closes the menu. Choosing a link leaves cleanly.
+- **The whole screen on a phone,** opened from the bar's orb as a circle that grows from the orb, under the safe area.
+  No motion when reduced motion is asked for.
+- **Your workspace** (signed in), right under your places: Agents and Vibe (open in the Dock), Codes, Files, Machines,
+  Wallet, Account and Themes, one tap from every site (the owner: "access codes through this menu easily, and talk to
+  your agent … less having to hop between sites").
+- **What's new**: the newest real change on each site from the network changelog (library bumps left out), newest first,
+  marked **New** when it shipped after your last visit there, each linking to that site's `/updates`.
+- **The full list of sites**: the flagships first (Live, Video, Codes, Design, Space, Games, Chat, Tools), then every group;
+  each site with its icon, a two-line description (no more cut-off words on a phone) and its own domain.
+- **Every site has its own icon** (`ov-icons.js`, regenerated from Font Awesome Free 6 by `scripts/build-nav-icons.py`):
+  Cam a camera, Casino dice, Surf waves, Fun masks, Meme a laughing face, Tours a compass, Vision binoculars, Shoes, Today,
+  Report, Design, Domains, Exchange and Bench. Until now they borrowed a neighbour's (Cam showed Video's, Casino and Surf
+  the gamepad, Fun Quest's trophy).
+- **No spinning rings anywhere** (`ov-icons.js`; the owner, 10-31 and again 11-07 on Surf's and Space's cards: "things only
+  spin if they're active"). The ring icons' comet spun forever on every icon on every site. Now the comet, the pulse and
+  the bounce run only while `data-state="busy"`; at rest an icon is its ring and glyph with a small lift on hover.
+  `data-fx` now says what *busy* looks like. Every site loses the idle spin with this release.
 ## 4.127.0 — 2026-11-07
 
 - **The Dock's Agent panel** (design 2026-11-07, one agent behind the Dock): Now says what the agent is doing this moment (the mode, the step in plain words, how long, and Stop/Resume), Needs you lists every approval and question from any mode with its buttons in place, and the timeline below shows one entry per step — the mode, the title, where it ran and why, the outcome, the time, the cost and a link to the step's own page. A mode change is a line of its own.

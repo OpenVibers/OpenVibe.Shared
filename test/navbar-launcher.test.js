@@ -52,24 +52,25 @@ const server = http.createServer((req, res) => {
         // The navbar asks for the Frame at render; the launcher paints from what it kept.
         await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (localStorage.getItem('ov_frame_v2')) { clearInterval(t); r(true); } }, 20); })`);
         const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-        // The drawer's "All sites" opens the one menu on its Sites tab.
+        // The drawer's "All sites" opens the one menu with the list of every site open (4.128.0: one scroll, no tabs).
         await p.evaluate(`document.getElementById('openvibe-burger').click(), true`);
         await wait(150);
         await p.evaluate(`document.querySelector('#openvibe-drawer [data-open-launcher]').click(), true`);
-        await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (document.querySelector('.ovs.is-open .ovs-grid.is-sites')) { clearInterval(t); r(true); } }, 20); })`);
+        await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (document.querySelector('.ovs.is-open .ovs-grid.is-sites[data-sec="all"]')) { clearInterval(t); r(true); } }, 20); })`);
         const read = () => p.evaluate(`(() => { const l = document.querySelector('.ovs-list'); return {
-            tab: (document.querySelector('.ovs-tab[aria-selected="true"]') || {}).textContent,
+            open: (l.querySelector('[data-ovs-fold="all"]') || { getAttribute: () => null }).getAttribute('aria-expanded'),
             heads: [...l.querySelectorAll('.ovs-group')].map((e) => e.firstChild.textContent.trim()),
-            groups: [...l.querySelectorAll('.ovs-grid.is-sites')].map((g) => [...g.querySelectorAll('b')].map((x) => x.textContent)),
-            here: [...l.querySelectorAll('.ovs-tile.is-here')].map((a) => a.querySelector('b').textContent + '|' + a.getAttribute('aria-current')),
-            small: (l.querySelector('.ovs-tile small') || {}).textContent,
+            listHeads: [...l.querySelectorAll('li.ovs-group[data-sec="all"]')].map((e) => e.firstChild.textContent.trim()).filter((h) => h !== 'Flagships'),
+            groups: (() => { const hs = [...l.querySelectorAll('li.ovs-group[data-sec="all"]')].map((e) => e.firstChild.textContent.trim()); return [...l.querySelectorAll('.ovs-grid.is-sites[data-sec="all"]')].filter((g, i) => hs[i] !== 'Flagships').map((g) => [...g.querySelectorAll('b')].map((x) => x.firstChild.textContent)); })(),
+            here: [...l.querySelectorAll('.ovs-grid.is-sites[data-sec="all"] .ovs-tile.is-here')].map((a) => a.querySelector('b').firstChild.textContent + '|' + a.getAttribute('aria-current')).filter((v, i, a) => a.indexOf(v) === i),
+            small: (l.querySelector('.ovs-grid.is-sites[data-sec="all"] .ovs-tile small') || {}).textContent,
             rows: [...l.querySelectorAll('.ovs-item .ovs-title')].map((t) => t.textContent) } })()`);
         const r = await read();
-        assert.strictEqual(r.tab, 'Sites', 'the Sites tab');
-        assert.deepStrictEqual(r.heads.slice(0, 3), ['Watch & stream', 'Talk & learn', 'Your OpenVibe'], 'the Frame\'s groups, in its order');
+        assert.strictEqual(r.open, 'true', 'the list of every site is open');
+        assert.deepStrictEqual(r.listHeads.slice(0, 3), ['Talk & learn', 'Watch & stream', 'Your OpenVibe'], 'this site\'s group first, then the Frame\'s groups in its order');
         assert.strictEqual(r.groups.flat().length, 21, 'every site of the Frame (21 here; the navbar used to keep 12)');
-        assert.deepStrictEqual(r.groups[0].slice(0, 2), ['Live', 'Watch 0'], 'most used first within a group');
-        assert.ok(r.groups[0].includes('Pics'), 'a product on its own domain sits in its group');
+        assert.deepStrictEqual(r.groups[1].slice(0, 2), ['Live', 'Watch 0'], 'most used first within a group');
+        assert.ok(r.groups[1].includes('Pics'), 'a product on its own domain sits in its group');
         assert.deepStrictEqual(r.groups[2], ['Network', 'Mystery'], 'a site in a group the navbar does not know goes in the last one');
         assert.deepStrictEqual(r.here, ['Here|page'], 'the page\'s own site is marked');
         assert.strictEqual(r.small, 'Live things', 'taglines without a closing period');

@@ -52,6 +52,12 @@ OV_SOLID = {
     'fund': 'fa-hand-holding-dollar', 'play': 'fa-ranking-star',
     # Page furniture the product homes name (2.21.1).
     'gauge': 'fa-gauge-high', 'link': 'fa-link', 'shield': 'fa-shield-halved', 'plug': 'fa-plug',
+    # Sites that borrowed a neighbour's glyph until 2026-11-07 (Cam showed Video's, Casino and Surf the gamepad, Fun
+    # Quest's trophy): each its own now, so the menu reads at a glance.
+    'cam': 'fa-camera', 'casino': 'fa-dice', 'surf': 'fa-water', 'fun': 'fa-masks-theater', 'meme': 'fa-face-grin-squint-tears',
+    'tours': 'fa-compass', 'vision': 'fa-binoculars', 'shoes': 'fa-shoe-prints', 'today': 'fa-calendar-day',
+    'report': 'fa-chart-simple', 'design': 'fa-pen-ruler', 'domains': 'fa-earth-americas', 'exchange': 'fa-right-left',
+    'bench': 'fa-flag-checkered',
 }
 OVICONS = HERE.parent / 'ov-icons.js'
 OV_START, OV_END = '    // BEGIN generated solid glyphs (scripts/build-nav-icons.py)', '    // END generated solid glyphs'
