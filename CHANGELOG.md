@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.125.0 — 2026-11-07
+
+- **Audio description in the player (X1)**: a video with a `<track kind="descriptions">` gets an **AD** button beside
+  Captions. It turns the descriptions track on and is remembered per person in localStorage, like the volume; **D**
+  toggles it from the keyboard and its label says whether it is on. The active cue is shown over the picture and
+  spoken through the browser's speech synthesis, so a blind viewer hears what is on screen between the speech. No
+  descriptions track, no button. `player.js`, `player.css`, `test/player.test.js`.
+
 ## 4.124.0 — 2026-11-07
 
 - **The Dock's agent view gets the four controls** (Agent Streams S5, Co-pilot): Pause and Resume, Curtain now, Mute and Unmute, and End, each sent through Codes to Live. The owner's own view may always resume; Live still refuses a moderator resuming the owner's pause. The line says "Paused by @name" when someone else paused the stream.

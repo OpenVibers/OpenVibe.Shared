@@ -29,15 +29,22 @@ Object.defineProperties(video, {
     muted: { get: () => media.muted, set: (v) => { media.muted = v; fire('volumechange'); } },
     playbackRate: { get: () => media.playbackRate, set: (v) => { media.playbackRate = v; fire('ratechange'); } },
     buffered: { get: () => ({ length: 1, start: () => 0, end: () => 30 }) },
-    textTracks: { value: Object.assign([{ kind: 'captions', mode: 'hidden' }], { addEventListener() {} }) },
+    textTracks: { value: Object.assign([
+        { kind: 'captions', mode: 'hidden' },
+        { kind: 'descriptions', mode: 'hidden', cues: [{ text: 'A red door opens.' }], activeCues: [], readyState: 2, addEventListener() {} },
+    ], { addEventListener() {} }) },
 });
 video.play = () => { paused = false; fire('play'); fire('playing'); return Promise.resolve(); };
 video.pause = () => { paused = true; fire('pause'); };
 
 const store = {};
+const spoken = [];
+class FakeUtterance { constructor(text) { this.text = text; } }
 const ctx = {
     window, document, console, Promise, setTimeout, clearTimeout, Date, Math, Number, String, JSON, Object, Array,
     localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } },
+    speechSynthesis: { cancel() {}, speak(u) { spoken.push(u.text); } },
+    SpeechSynthesisUtterance: FakeUtterance,
 };
 ctx.window.OpenVibePlayer = undefined;
 vm.createContext(ctx);
@@ -83,6 +90,28 @@ key('m'); assert.strictEqual(media.muted, true, 'm mutes');
 assert.match($('.ov-player-mute').getAttribute('aria-label'), /^Unmute/);
 assert.deepStrictEqual(JSON.parse(store['ov-player-volume']), { volume: 0.95, muted: true }, 'volume remembered');
 
+// Audio description: the AD button reads the descriptions track, remembers the choice, speaks the active cue,
+// and the same choice is available from the keyboard (D).
+const desc = video.textTracks[1];
+const ad = $('.ov-player-ad');
+assert.ok(ad && ad.hidden === false, 'AD button shown when the video has a descriptions track');
+assert.strictEqual(ad.getAttribute('aria-label'), 'Audio description (d)');
+assert.strictEqual(ad.getAttribute('aria-pressed'), 'false');
+assert.strictEqual(desc.mode, 'hidden');
+ad.dispatchEvent(new window.Event('click'));
+assert.strictEqual(desc.mode, 'showing', 'AD turns the descriptions track on');
+assert.strictEqual(ad.getAttribute('aria-pressed'), 'true');
+assert.strictEqual(store['ov-player-descriptions'], 'on', 'the choice is remembered');
+desc.activeCues = [{ text: 'A red door opens.' }];
+fire('timeupdate');
+assert.strictEqual($('.ov-player-ad-line').textContent, 'A red door opens.', 'the active description is shown');
+assert.deepStrictEqual(spoken, ['A red door opens.'], 'and spoken through speech synthesis');
+key('d');
+assert.strictEqual(desc.mode, 'hidden', 'D turns it off');
+assert.strictEqual(ad.getAttribute('aria-pressed'), 'false');
+assert.strictEqual(store['ov-player-descriptions'], 'off');
+assert.strictEqual($('.ov-player-ad-line').textContent, '');
+
 // Captions, speed.
 key('c');
 assert.strictEqual(video.textTracks[0].mode, 'showing');
@@ -103,6 +132,7 @@ later.setAttribute('controls', '');
 document.body.appendChild(later);
 P.enhanceAll(document);
 assert.ok(later.parentNode.classList.contains('ov-player'));
+assert.strictEqual(later.parentNode.querySelector('.ov-player-ad').hidden, true, 'no descriptions track, no AD button');
 
 // The stylesheet: the theme's accent, the idle state, and the large button only before play or at the end.
 assert.match(css, /--ovp-accent: var\(--accent, #3b82f6\);/);
