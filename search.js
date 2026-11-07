@@ -62,7 +62,7 @@
         { name: 'Developer Tools', icon: 'code', url: 'https://dev.openvibe.tools/' },
         { name: 'Network Tools', icon: 'dns', url: 'https://net.openvibe.tools/' },
     ];
-    const TABS = [['you', 'Start'], ['sites', 'Sites'], ['tools', 'Tools']];
+    const TABS = [['you', 'Start'], ['sites', 'Sites'], ['tools', 'Tools'], ['here', 'Here']];
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'you', mine = null, catalog = null, completion = '';
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
@@ -238,6 +238,8 @@
 .ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
 .ovs-card { padding: 2px 6px 6px; }
 .ovs-cardbody { border-radius: 16px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); padding: 12px 14px; }
+.ovs-displayrow { padding: 4px 8px 10px; }
+.ovs-displayrow .ovnav-display { margin-top: 4px; }
 .ovs-host { display: block; margin-top: 2px; font-size: 11px; font-weight: 650; letter-spacing: .01em; color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--text-muted, #93a0b4)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-group .ovs-more { margin-left: auto; color: var(--accent-light, #8ab4ff); font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; text-decoration: none; }
 @media (hover: hover) { .ovs-app:hover, .ovs-link:hover, .ovs-live:hover, .ovs-fold:hover { background: var(--bg-hover, rgba(255,255,255,.07)); color: inherit; } .ovs-app:hover .ovs-appic { transform: translateY(-2px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } }
@@ -424,12 +426,18 @@
     function paint(groups, note) {
         items = [];
         listEl.textContent = '';
-        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card'].includes(g.as)).forEach((g) => {
+        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card', 'display'].includes(g.as)).forEach((g) => {
             if (g.as === 'route') {
                 const r = document.createElement('li'); r.className = 'ovs-route'; r.setAttribute('role', 'presentation'); r.textContent = g.text; listEl.appendChild(r);
                 return;
             }
             if (g.as === 'fold') { listEl.appendChild(foldButton(g.fold, g.section)); return; }
+            if (g.as === 'display') {
+                const li = document.createElement('li'); li.className = 'ovs-displayrow'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'display');
+                try { ctx.display(li); } catch { return; }
+                listEl.appendChild(li);
+                return;
+            }
             if (g.as === 'card') {
                 const body = document.createElement('div'); body.className = 'ovs-cardbody';
                 try {
@@ -627,7 +635,7 @@
         live: 'Streams and calls', 'media-hub': 'Recordings and clips', community: 'Forum and pastes', chat: 'Rooms and messages',
         tools: 'Free tools', bot: 'Robots and machines', vip: 'Back a streamer', pics: 'Pictures', download: 'Files and drive',
     };
-    let allOpen = false, hereOpen = false, discoverPick = null, pulseData = null;
+    let allOpen = false, hereOpen = false, leadHere = false, discoverPick = null, pulseData = null;
     /** Network's live line (GET /api/frame/pulse, kept 30 s): how many are live now, and who when the Frame sends it. */
     function loadPulse() {
         try { const c = JSON.parse(sessionStorage.getItem('ov_pulse') || 'null'); if (c && Date.now() - c.at < 30000) { pulseData = c.data; return Promise.resolve(c.data); } } catch { /* */ }
@@ -753,7 +761,8 @@
         const allPages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
         if (allPages.length) {
             const head = hereOpen ? allPages : allPages.slice(0, 6);
-            groups.push({ title: `On ${here()}`, as: 'links', items: head, section: 'here', fold: allPages.length > 6 ? { open: hereOpen, label: hereOpen ? 'Fewer' : `More on ${here()} (${allPages.length - 6})`, key: 'here' } : null });
+            const hereGroup = { title: `On ${here()}`, as: 'links', items: head, section: 'here', fold: allPages.length > 6 ? { open: hereOpen, label: hereOpen ? 'Fewer' : `More on ${here()} (${allPages.length - 6})`, key: 'here' } : null };
+            if (leadHere) groups.unshift(hereGroup); else groups.push(hereGroup);
         }
         // 4. Where people go next from here: the Frame's list, else the moves Network saw (11-07) and this site's group.
         const f = ctx.frame;
@@ -811,6 +820,8 @@
         const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5)
             .map((h) => ({ title: h.title, meta: [h.site, ago(h.at)].filter(Boolean).join(' · '), url: h.url, icon: 'back', kind: 'history' })) : [];
         groups.push({ title: 'Jump back in', items: back, section: 'back' });
+        // Display: theme, text size and motion, at the foot (the drawer's row, now in the one menu).
+        if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
         paint(groups);
     }
 
@@ -975,7 +986,8 @@
         lastFocus = document.activeElement;
         tab = TABS.some(([id]) => id === opts.tab) ? opts.tab : 'you';
         // The old tabs, kept as a way in: "sites" opens the list of every site, "tools" scrolls to the tools.
-        allOpen = tab === 'sites'; hereOpen = false; discoverPick = null;
+        // From the burger ('here'): this site's pages lead, all of them, the way the drawer had them.
+        allOpen = tab === 'sites'; hereOpen = tab === 'here'; leadHere = tab === 'here'; discoverPick = null;
         drainCards();
         el.classList.add('is-open');
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one

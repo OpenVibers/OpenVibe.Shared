@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.129.0 — 2026-11-07
+
+- **One menu** (the owner, 11-07, on the right-hand drawer: "sloppy … maybe combining this menu and the other menu and just
+  putting our main button on the right-hand side"). The burger now opens the OpenVibe menu, grown from the burger:
+  - this site's pages lead, all of them (the drawer's job);
+  - then the live bar, your places and workspace, the network, What's new, tools and Jump back in;
+  - **Display** (Light/Dark/Auto, text size, Motion/Calm) sits at the foot, drawn by the same controls the drawer had.
+
+  The orb by the logo opens the same menu with the places first. The old drawer remains only for a site that turns the
+  menu off (`search: false`) or asks for it (`drawer: 'legacy'`). The burger's `aria-expanded` follows the menu.
+
 ## 4.128.0 — 2026-11-07
 
 - **The menu, rethought around real use** (the owner, 11-07: Jump back in came first, people opened Sites every time just to

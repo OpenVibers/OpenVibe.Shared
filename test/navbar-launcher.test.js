@@ -52,9 +52,14 @@ const server = http.createServer((req, res) => {
         // The navbar asks for the Frame at render; the launcher paints from what it kept.
         await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (localStorage.getItem('ov_frame_v2')) { clearInterval(t); r(true); } }, 20); })`);
         const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-        // The drawer's "All sites" opens the one menu with the list of every site open (4.128.0: one scroll, no tabs).
+        // One menu (4.129.0, the owner 11-07): the burger opens the OpenVibe menu, this site's pages first, Display at its foot.
         await p.evaluate(`document.getElementById('openvibe-burger').click(), true`);
-        await wait(150);
+        await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (document.querySelector('.ovs.is-open .ovs-group')) { clearInterval(t); r(true); } }, 20); })`);
+        const first = await p.evaluate(`({ head: document.querySelector('.ovs-list .ovs-group').firstChild.textContent, sec: document.querySelector('.ovs-list .ovs-group').getAttribute('data-sec'), display: !!document.querySelector('.ovs-displayrow .ovnav-display'), expanded: document.getElementById('openvibe-burger').getAttribute('aria-expanded') })`);
+        assert.strictEqual(first.sec, 'here', 'from the burger, this site\'s pages lead: ' + first.head);
+        assert.strictEqual(first.display, true, 'Display (theme, text size, motion) at the menu\'s foot');
+        assert.strictEqual(first.expanded, 'true', 'the burger says the menu is open');
+        // The drawer's "All sites" (kept for sites that ask for the legacy drawer) opens the list of every site.
         await p.evaluate(`document.querySelector('#openvibe-drawer [data-open-launcher]').click(), true`);
         await p.evaluate(`new Promise((r) => { const t = setInterval(() => { if (document.querySelector('.ovs.is-open .ovs-grid.is-sites[data-sec="all"]')) { clearInterval(t); r(true); } }, 20); })`);
         const read = () => p.evaluate(`(() => { const l = document.querySelector('.ovs-list'); return {
