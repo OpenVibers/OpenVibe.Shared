@@ -8,9 +8,15 @@
  *
  * Progressive: without this script the browser's own controls stay. With it, each video[data-ov-player] is wrapped
  * in .ov-player and gets the network's controls: a scrubber (buffered, played, the time under the pointer), play,
- * volume, time, captions, speed, picture-in-picture and fullscreen, hidden while playing and idle. Keys while the
- * player has focus: Space/K play, J/L ±10 s, ←/→ ±5 s, ↑/↓ volume, M mute, F fullscreen, C captions, 0–9 jump to that
- * tenth. On touch a tap shows the controls and a double tap on either side seeks ±10 s.
+ * volume, time, audio description, captions, speed, picture-in-picture and fullscreen, hidden while playing and idle.
+ * Keys while the player has focus: Space/K play, J/L ±10 s, ←/→ ±5 s, ↑/↓ volume, M mute, F fullscreen, C captions,
+ * D audio description, 0–9 jump to that tenth. On touch a tap shows the controls and a double tap on either side seeks
+ * ±10 s.
+ *
+ * Audio description (X1, 2026-11-01): a <track kind="descriptions"> gets an AD button that turns it on, remembered
+ * per person in localStorage like the volume, with the same keyboard access (D) and a spoken screen-reader label. The
+ * player shows the active cue and speaks it through the browser's speech synthesis, so a sighted viewer reads it and a
+ * blind one hears it. A video without a descriptions track never shows the button.
  *
  * Sound: a video playing muted (autoplay) shows "Tap for sound"; the first tap on it unmutes, and so do the media
  * volume keys where a browser passes them to the page (desktop keyboards, TVs; phones keep their hardware buttons to
@@ -50,6 +56,7 @@
     };
     const SPEEDS = [1, 1.25, 1.5, 2, 0.5, 0.75];
     const VOLUME_KEY = 'ov-player-volume';
+    const DESCRIPTIONS_KEY = 'ov-player-descriptions';
 
     function fmt(s) {
         if (!Number.isFinite(s) || s < 0) s = 0;
@@ -62,6 +69,12 @@
     }
     function store(video) {
         try { localStorage.setItem(VOLUME_KEY, JSON.stringify({ volume: video.volume, muted: video.muted })); } catch { /* private window */ }
+    }
+    function descriptionsStored() {
+        try { return localStorage.getItem(DESCRIPTIONS_KEY) === 'on'; } catch { return false; }
+    }
+    function storeDescriptions(on) {
+        try { localStorage.setItem(DESCRIPTIONS_KEY, on ? 'on' : 'off'); } catch { /* private window */ }
     }
     function el(tag, cls, attrs) {
         const e = document.createElement(tag);
@@ -85,7 +98,28 @@
         } catch { return false; }
     }
     const captionTrack = (video) => Array.from(video.textTracks || []).find((t) => t.kind === 'captions' || t.kind === 'subtitles') || null;
+    const descriptionTrack = (video) => Array.from(video.textTracks || []).find((t) => t.kind === 'descriptions') || null;
     const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+
+    /** Can this browser speak a description aloud? (Speech synthesis is optional; the cue text still shows without it.) */
+    function canSpeak() {
+        return typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
+    }
+    /** Say one description cue at a time: a new cue replaces the old one instead of queueing behind it. */
+    function speakDescription(text) {
+        if (!text || !canSpeak()) return;
+        try {
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(String(text).replace(/\s+/g, ' ').trim());
+            u.lang = 'en';
+            u.rate = 1;
+            speechSynthesis.speak(u);
+        } catch { /* a browser that refuses speech (no voices, autoplay rule) still shows the text */ }
+    }
+    function stopDescriptionSpeech() {
+        if (!canSpeak()) return;
+        try { speechSynthesis.cancel(); } catch { /* nothing queued */ }
+    }
 
     // The media volume keys, where the browser passes them to the page (UI Events key names, and the older ones).
     const VOLUME_KEYS = /^(AudioVolume(Up|Down|Mute)|Volume(Up|Down|Mute))$/;
@@ -224,17 +258,23 @@
         volWrap.append(muteBtn, volSlider);
         const time = el('div', 'ov-player-time', { 'aria-hidden': 'true' });
         const spacer = el('div', 'ov-player-spacer');
+        // Audio description: a text button ("AD") because the letters say what it does in every language's player,
+        // and a screen reader hears the full label and whether it is on (aria-pressed).
+        const adBtn = el('button', 'ov-player-btn ov-player-ad', { type: 'button', 'aria-label': 'Audio description (d)', title: 'Audio description (d)', 'aria-pressed': 'false', hidden: '' });
+        adBtn.textContent = 'AD';
         const ccBtn = button('ov-player-cc', 'Captions (c)', ICON.cc);
         const speedBtn = el('button', 'ov-player-btn ov-player-speed', { type: 'button', 'aria-label': 'Playback speed: 1×', title: 'Playback speed' });
         speedBtn.textContent = '1×';
         const pipBtn = button('ov-player-pip', 'Picture in picture', ICON.pip);
         const fullBtn = button('ov-player-full', 'Fullscreen (f)', ICON.full);
-        row.append(playBtn, volWrap, time, spacer, ccBtn, speedBtn, pipBtn, fullBtn);
+        row.append(playBtn, volWrap, time, spacer, adBtn, ccBtn, speedBtn, pipBtn, fullBtn);
         bar.append(scrub, row);
         const unmute = el('button', 'ov-player-unmute', { type: 'button', hidden: '' });
         unmute.innerHTML = `${ICON.muted}<span>Tap for sound</span>`;
         const flash = el('div', 'ov-player-flash', { 'aria-hidden': 'true' });
-        root.append(spinner, big, message, unmute, flash, bar);
+        // The active description, shown over the picture and given to assistive tech when this browser cannot speak.
+        const adLine = el('div', 'ov-player-ad-line', { role: 'status', 'aria-live': canSpeak() ? 'off' : 'polite' });
+        root.append(spinner, big, message, unmute, flash, adLine, bar);
         const ambient = video.hasAttribute('data-ov-ambient') || options.ambient ? glow(root, video) : null;
         const poster = video.getAttribute('poster');
         if (poster) loadImage(poster, (img) => {
@@ -306,6 +346,38 @@
             ccBtn.classList.toggle('is-on', !!t && t.mode === 'showing');
             ccBtn.setAttribute('aria-pressed', t && t.mode === 'showing' ? 'true' : 'false');
         }
+        // Audio description: the AD button only exists when the video has a descriptions track with cues. The track
+        // loads in hidden mode so the button (and the stored preference) can be decided before anyone presses play.
+        let describedText = null;
+        function paintDescriptions() {
+            const t = descriptionTrack(video);
+            if (t && !t.__ovAdWatched && t.addEventListener) {
+                t.__ovAdWatched = true;
+                t.addEventListener('cuechange', paintDescriptionCue);
+            }
+            const empty = !!t && (t.readyState === 2 || t.readyState === 3) && !(t.cues && t.cues.length);
+            adBtn.hidden = !t || empty;
+            const on = !!t && t.mode === 'showing';
+            adBtn.classList.toggle('is-on', on);
+            adBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+            if (!on && describedText) { describedText = null; adLine.textContent = ''; stopDescriptionSpeech(); }
+        }
+        function paintDescriptionCue() {
+            const t = descriptionTrack(video);
+            const cue = t && t.mode === 'showing' && t.activeCues && t.activeCues[0];
+            const text = cue ? String(cue.text || '').replace(/\s+/g, ' ').trim() : '';
+            if (text === describedText) return;
+            describedText = text;
+            adLine.textContent = text;
+            if (text) speakDescription(text);
+            else stopDescriptionSpeech();
+        }
+        /** The person's remembered choice, applied only when the video actually has descriptions. */
+        function applyDescriptionsPreference() {
+            const t = descriptionTrack(video);
+            if (t && descriptionsStored()) t.mode = 'showing';
+            paintDescriptions();
+        }
         function paintSpeed() {
             const r = video.playbackRate || 1;
             speedBtn.textContent = `${r}×`;
@@ -360,6 +432,17 @@
             /** Sound on, at the remembered level (full when that was zero). */
             unmute() { pageMuted = false; if (video.volume === 0) video.volume = 1; video.muted = false; store(video); show(ICON.volume, `${Math.round(video.volume * 100)}%`); },
             toggleCaptions() { const t = captionTrack(video); if (t) { t.mode = t.mode === 'showing' ? 'hidden' : 'showing'; paintCaptions(); } },
+            /** Turn the descriptions track on or off, remember the choice, and stop talking when it goes off. */
+            toggleDescriptions() {
+                const t = descriptionTrack(video);
+                if (!t) return;
+                const on = t.mode !== 'showing';
+                t.mode = on ? 'showing' : 'hidden';
+                storeDescriptions(on);
+                if (!on) { stopDescriptionSpeech(); describedText = null; adLine.textContent = ''; }
+                paintDescriptions();
+                paintDescriptionCue();
+            },
             nextSpeed() { const i = SPEEDS.indexOf(video.playbackRate); video.playbackRate = SPEEDS[(i + 1) % SPEEDS.length]; paintSpeed(); },
             togglePip() {
                 if (document.pictureInPictureElement === video) document.exitPictureInPicture().catch(() => {});
@@ -401,6 +484,7 @@
         muteBtn.addEventListener('click', () => { if (silent) show(ICON.muted, 'No sound in this video', null, 2600); else api.toggleMute(); });
         volSlider.addEventListener('input', () => api.setVolume(Number(volSlider.value)));
         ccBtn.addEventListener('click', () => api.toggleCaptions());
+        adBtn.addEventListener('click', () => api.toggleDescriptions());
         speedBtn.addEventListener('click', () => api.nextSpeed());
         pipBtn.addEventListener('click', () => api.togglePip());
         fullBtn.addEventListener('click', () => api.toggleFullscreen());
@@ -472,6 +556,7 @@
             else if (k === 'm' || k === 'M') api.toggleMute();
             else if (k === 'f' || k === 'F') api.toggleFullscreen();
             else if (k === 'c' || k === 'C') api.toggleCaptions();
+            else if (k === 'd' || k === 'D') api.toggleDescriptions();
             else if (/^[0-9]$/.test(k)) api.seek(duration() * Number(k) / 10);
             else if (VOLUME_KEYS.test(k)) volumeKey(api, k);
             else handled = false;
@@ -480,28 +565,29 @@
 
         // ── Media events ─────────────────────────────────────
         video.addEventListener('play', () => { root.classList.remove('is-start'); paintPlay(); paintVolume(); current = api; session(api, options); if (ambient) ambient.start(); });
-        video.addEventListener('pause', () => { paintPlay(); paintVolume(); if (ambient) ambient.stop(); });
+        video.addEventListener('pause', () => { paintPlay(); paintVolume(); stopDescriptionSpeech(); if (ambient) ambient.stop(); });
         video.addEventListener('ended', paintPlay);
-        video.addEventListener('timeupdate', () => { paintTime(); checkSound(); });
-        video.addEventListener('emptied', () => { silent = false; soundKnown = false; playedFrom = null; paintVolume(); root.classList.remove('is-audio'); });
+        video.addEventListener('timeupdate', () => { paintTime(); checkSound(); paintDescriptionCue(); });
+        video.addEventListener('emptied', () => { silent = false; soundKnown = false; playedFrom = null; describedText = null; adLine.textContent = ''; paintVolume(); root.classList.remove('is-audio'); });
         video.addEventListener('durationchange', paintTime);
-        video.addEventListener('loadedmetadata', () => { paintTime(); paintCaptions(); paintAudioOnly(); });
+        video.addEventListener('loadedmetadata', () => { paintTime(); paintCaptions(); paintAudioOnly(); applyDescriptionsPreference(); });
         video.addEventListener('progress', paintBuffered);
         video.addEventListener('volumechange', paintVolume);
         video.addEventListener('ratechange', paintSpeed);
         video.addEventListener('waiting', () => root.classList.add('is-waiting'));
         video.addEventListener('playing', () => { root.classList.remove('is-waiting'); message.textContent = ''; if (playedFrom == null) playedFrom = video.currentTime || 0; paintPlay(); });
-        video.addEventListener('seeked', () => { if (!soundKnown) playedFrom = video.currentTime || 0; });
+        video.addEventListener('seeked', () => { stopDescriptionSpeech(); describedText = null; adLine.textContent = ''; if (!soundKnown) playedFrom = video.currentTime || 0; });
         video.addEventListener('canplay', () => root.classList.remove('is-waiting'));
         video.addEventListener('error', () => { root.classList.remove('is-waiting'); message.textContent = 'This video could not be played.'; });
         if (video.textTracks && video.textTracks.addEventListener) {
-            video.textTracks.addEventListener('addtrack', paintCaptions);
-            video.textTracks.addEventListener('change', paintCaptions);
+            const onTracks = () => { paintCaptions(); paintDescriptions(); };
+            video.textTracks.addEventListener('addtrack', onTracks);
+            video.textTracks.addEventListener('change', onTracks);
         }
         document.addEventListener('fullscreenchange', paintFull);
         document.addEventListener('webkitfullscreenchange', paintFull);
 
-        paintTime(); paintBuffered(); paintPlay(); paintVolume(); paintCaptions(); paintSpeed(); paintFull(); paintAudioOnly();
+        paintTime(); paintBuffered(); paintPlay(); paintVolume(); paintCaptions(); applyDescriptionsPreference(); paintSpeed(); paintFull(); paintAudioOnly();
         if (!video.paused) root.classList.remove('is-start');
         return api;
     }

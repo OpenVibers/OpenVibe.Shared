@@ -8,8 +8,11 @@
 
 ## 4.126.0 — 2026-11-07
 
-- Reserved: an open pull request (#312) releases 4.126.0 (the audio description in the player). This line keeps
-  the changelog's history whole; that pull request's own entry replaces it when it merges.
+- **Audio description in the player (X1)**: a video with a `<track kind="descriptions">` gets an **AD** button beside
+  Captions. It turns the descriptions track on and is remembered per person in localStorage, like the volume; **D**
+  toggles it from the keyboard and its label says whether it is on. The active cue is shown over the picture and
+  spoken through the browser's speech synthesis, so a blind viewer hears what is on screen between the speech. No
+  descriptions track, no button. `player.js`, `player.css`, `test/player.test.js`.
 
 ## 4.125.0 — 2026-11-07
 
