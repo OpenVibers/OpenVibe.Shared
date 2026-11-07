@@ -62,6 +62,8 @@ function headTags(o = {}) {
     if (o.author) out.push(`<meta name="author" content="${esc(o.author)}">`);
     if (o.themeColor) out.push(`<meta name="theme-color" content="${esc(o.themeColor)}">`);
     if (canonical) out.push(`<link rel="canonical" href="${esc(canonical)}">`);
+    // Every page's bar asks openvibe.network (the Frame, sign-in, the menu): open that connection early (4.134.0).
+    if (o.preconnect !== false && !/^https:\/\/openvibe\.network(\/|$)/.test(canonical || '')) out.push('<link rel="preconnect" href="https://openvibe.network" crossorigin>');
     for (const a of o.alternates || []) if (a && a.href) out.push(`<link rel="alternate" hreflang="${esc(a.hreflang || 'x-default')}" href="${esc(absolute(a.href))}">`);
     if (o.prev) out.push(`<link rel="prev" href="${esc(absolute(o.prev))}">`);
     if (o.next) out.push(`<link rel="next" href="${esc(absolute(o.next))}">`);

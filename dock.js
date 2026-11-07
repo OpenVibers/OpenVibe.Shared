@@ -826,6 +826,13 @@
     }
 
     // ── Open and close ───────────────────────────────────────
+    /** Open on Vibe with a question waiting in the box (a page's "Ask your agent", 4.134.0). It is never sent for the person. */
+    function ask({ text = '' } = {}) {
+        open({ tab: 'vibe' });
+        let tries = 0;
+        const put = () => { if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (tries++ < 40) setTimeout(put, 100); };
+        put();
+    }
     function isOpen() { return !!(el && !el.hidden); }
     function open(opts = {}) {
         o = { ...o, ...opts };
@@ -876,5 +883,5 @@
         if (isOpen()) layout();
     }
 
-    root.OpenVibeDock = { mount, open, close, isOpen, update, _state: () => ({ doc, tab, pending }) };
+    root.OpenVibeDock = { mount, open, close, isOpen, update, ask, _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1237,6 +1237,12 @@
     }
     /** Open the Dock on a tab: 'agent' | 'activity'. */
     function openDock(tab) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open({ tab }); }); }
+    // "Ask your agent" from any page (4.134.0): Vibe opens with the question in its box; signed out, sign in first.
+    function askAgent(text) {
+        if (!_config.token || _config.dock === false) { const u = resolveLoginHref(currentHost(), location.href); if (u) location.href = u; return; }
+        loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); });
+    }
+    if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('click', (e) => { const b = e.target && e.target.closest && e.target.closest('[data-ov-ask]'); if (!b) return; e.preventDefault(); askAgent(b.getAttribute('data-ov-ask') || ''); });
 
     /** Custom sections for the user menu: [{ label, items: [{ label, icon, href, id, elId, hidden, danger, value, onClick }] }]. */
     function sectionsHTML(sections) {
@@ -2398,6 +2404,7 @@
 
         /** Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only. */
         openDock(tab) { if (_config.token && _config.dock !== false) openDock(tab); },
+        askAgent(text) { askAgent(text); },
 
         /** Get the bell mount point for OpenVibeNotifications. */
         getBellMount() {
