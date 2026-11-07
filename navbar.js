@@ -584,10 +584,27 @@
     // first time one appears. <html data-ov-forms="off"> keeps the browser's own; data-ov-native keeps one control's.
     const FORM_CONTROLS = 'select,input[type="checkbox"],input[type="radio"],input[type="range"],input[type="file"]';
     let formWatch = null;
+    // Only a control that is drawn counts (4.141.0): a closed dialog's or a hidden box's select does not, so a page whose
+    // shell carries hidden modal forms (Live's) no longer fetches 17 KB it may never use. The hidden ones are watched,
+    // and the kit loads when one is drawn (a dialog opens, a fold unfolds).
+    let formSeen = null;
+    function formsWanted() {
+        const all = document.querySelectorAll(FORM_CONTROLS);
+        if (!all.length) return false;
+        for (let i = 0; i < all.length && i < 200; i++) if (all[i].getClientRects().length) return true;
+        if (typeof IntersectionObserver === 'function') {
+            formSeen = formSeen || new IntersectionObserver((es) => {
+                if (!es.some((e) => e.isIntersecting || e.boundingClientRect.width)) return;
+                formSeen.disconnect(); formSeen = null; loadForms();
+            });
+            for (let i = 0; i < all.length && i < 60; i++) formSeen.observe(all[i]);
+        }
+        return false;
+    }
     function loadForms() {
         if (root.OVForms || document.getElementById('ov-forms-loader')) return true;
         if (document.documentElement.getAttribute('data-ov-forms') === 'off') return true;
-        if (!document.querySelector(FORM_CONTROLS)) return false;
+        if (!formsWanted()) return false;
         try {
             if (!document.querySelector('link[href*="ov-forms.css"]')) {
                 const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = siblingV('ov-forms.css'); document.head.appendChild(ln);
