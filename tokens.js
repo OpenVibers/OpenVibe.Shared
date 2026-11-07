@@ -282,6 +282,17 @@
         ['outline', 'color.line.strong'], ['outlineVariant', 'color.line.base'],
         ['error', 'color.status.bad.base'], ['onError', 'color.accent.onStrong'],
     ];
+    // Material 3's container roles (cards, the navigation bar and its selected pill, dialogs, chips, menus). Without them
+    // Compose fills those parts with Material's own lavender: OpenVibe Link's first screens showed it (11-07). Compose
+    // only; Flutter's ColorScheme takes them only from 3.22, and SwiftUI has no such roles.
+    const M3_COMPOSE_CONTAINERS = [
+        ['surfaceContainerLowest', 'color.bg.base'], ['surfaceContainerLow', 'color.bg.raised'],
+        ['surfaceContainer', 'color.bg.raised'], ['surfaceContainerHigh', 'color.bg.surface'],
+        ['surfaceContainerHighest', 'color.bg.subtle'], ['surfaceBright', 'color.bg.hover'], ['surfaceDim', 'color.bg.base'],
+        ['surfaceTint', 'color.bg.raised'],
+        ['secondaryContainer', 'color.bg.hover'], ['onSecondaryContainer', 'color.accent.light'],
+        ['inverseSurface', 'color.text.primary'], ['inverseOnSurface', 'color.bg.base'],
+    ];
 
     function compose(input, { pkg = 'network.openvibe.theme' } = {}) {
         const docs = docsOf(input);
@@ -297,7 +308,7 @@
             for (const t of colorTokens(doc)) parts.push(`    val ${pascal(t.path)} = Color(${argb(t.c)})`);
             parts.push('}', '');
             const fn = m.mode === 'light' ? 'lightColorScheme' : 'darkColorScheme';
-            const roles = M3_ROLES.filter(([, path]) => pick(doc, path)).map(([role, path]) => `    ${role} = ${obj}.${pascal(path.split('.'))},`);
+            const roles = [...M3_ROLES, ...M3_COMPOSE_CONTAINERS].filter(([, path]) => pick(doc, path)).map(([role, path]) => `    ${role} = ${obj}.${pascal(path.split('.'))},`);
             parts.push(`/** Material 3 roles: MaterialTheme(colorScheme = ${name}${m.mode === 'light' ? 'Light' : 'Dark'}ColorScheme) { … } */`, `val ${name}${m.mode === 'light' ? 'Light' : 'Dark'}ColorScheme: ColorScheme = ${fn}(`, ...roles, ')', '');
         }
         // The kit's scales: the same on every theme (openvibe-shared/components' reference views use OvScale).

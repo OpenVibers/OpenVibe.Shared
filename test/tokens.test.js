@@ -43,6 +43,10 @@ assert.match(kt, /val ColorBgBase = Color\(0xFF0A0F1C\)/);
 assert.match(kt, /val VibeDarkColorScheme: ColorScheme = darkColorScheme\(/);
 assert.match(kt, /val VibeLightColorScheme: ColorScheme = lightColorScheme\(/);
 assert.match(kt, /primary = VibeDarkTokens\.ColorAccentBase,/);
+// 4.140.0: Material 3's container roles (cards, the bar, its selected pill) take Vibe surfaces, not Material's lavender.
+assert.match(kt, /surfaceContainer = VibeDarkTokens\.ColorBgRaised,/);
+assert.match(kt, /surfaceContainerHighest = VibeLightTokens\.ColorBgSubtle,/);
+assert.match(kt, /secondaryContainer = VibeDarkTokens\.ColorBgHover,/);
 assert.match(kt, /object OvScale \{[\s\S]*val RadiusMd = 14\.dp/, 'the scales are theme-independent: OvScale');
 assert.doesNotMatch(kt.slice(0, kt.indexOf('object OvScale')), /RadiusMd/, 'not on the theme objects');
 assert.match(kt, /val TypeSizeBody = 15\.sp/);
@@ -55,6 +59,7 @@ assert.match(swift, /public enum OvScale \{[\s\S]*public static let motionDurati
 const dart = tokens.compile(vibe, 'flutter');
 assert.match(dart, /static const colorBgBase = Color\(0xFF0A0F1C\);/);
 assert.match(dart, /const vibeDarkScheme = ColorScheme\(\n {2}brightness: Brightness\.dark,/);
+assert.doesNotMatch(dart, /surfaceContainer/, 'Flutter keeps the roles every version takes');
 const fig = JSON.parse(tokens.compile([vibe, vibeLight], 'figma'));
 assert.deepStrictEqual(fig.modes, ['dark', 'light']);
 const bg = fig.variables.find((v) => v.name === 'color/bg/base');

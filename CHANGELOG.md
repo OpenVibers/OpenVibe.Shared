@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.140.0 — 2026-11-07
+
+- **Native: no more Material lavender.**
+  - The Compose export (`tokens.compile(…, 'compose')`, `scripts/native-check.js`) now maps Material 3's container
+    roles to Vibe surfaces: `surfaceContainer*`, `surfaceBright`/`Dim`, `surfaceTint`, `secondaryContainer` (the
+    navigation bar's selected pill) and `inverseSurface`.
+  - Before, Compose filled cards, the bottom bar, dialogs and chips with its own lavender. OpenVibe Link for
+    Android's first screens showed it.
+  - Flutter's scheme is unchanged: its constructor takes these roles only from 3.22.
+  - No web change, so no pin round is needed for this release.
+
 ## 4.139.0 — 2026-11-07
 
 - **The menu's feed rows lead with their picture.** A row with a thumbnail (Trending on Video, a live channel) no
