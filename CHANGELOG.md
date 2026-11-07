@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.127.0 — 2026-11-07
+
+- **The Dock's Agent panel** (design 2026-11-07, one agent behind the Dock): Now says what the agent is doing this moment (the mode, the step in plain words, how long, and Stop/Resume), Needs you lists every approval and question from any mode with its buttons in place, and the timeline below shows one entry per step — the mode, the title, where it ran and why, the outcome, the time, the cost and a link to the step's own page. A mode change is a line of its own.
+- **Folding and filters:** today's entries are open, earlier days are counted folds ("Yesterday (14)"), and a long run of one mode folds into "12 more Code steps". A chip for each mode and for Needs you sits in the URL of the panel, and a filter never hides without a count.
+- **Only me by default:** the panel shows the person's own entries only; a step's title, outcome and link, never a prompt or a diff.
+- **It wears the site's theme:** the panel uses the site's own tokens and font (the navy of a dark site, the paper of a light one), with a 12 px gutter. Approve is the one filled button on a card and Stop is red. A running step's pill breathes; nothing else moves. Needs-you cards are tinted and labelled with their mode.
+- **The Dock's tabs always fit:** in a narrow Dock the open tab shows its icon and name and the others their icon and count, their names kept for screen readers. "Activity" was cut off at the strip's edge.
+
 ## 4.126.0 — 2026-11-07
 
 - **Audio description in the player (X1)**: a video with a `<track kind="descriptions">` gets an **AD** button beside
