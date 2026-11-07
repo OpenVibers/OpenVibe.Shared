@@ -20,7 +20,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wide</title><link rel="icon" href="data:,">
 <script src="/shared/navbar.js" defer></script></head>
 <body style="margin:0"><div id="navbar-mount"></div><main><p id="wide" style="white-space:nowrap">https://www.example.com/a-very-long-link-that-nobody-wrapped-so-it-runs-far-past-the-right-edge-of-any-phone-screen?and=more&amp;still=more</p></main>
-<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: { id: 7, username: 'probe', display_name: 'Probe' }, links: [{ label: 'Rooms', href: '/rooms' }, { label: 'Messages', href: '/messages' }, { label: 'Settings', href: '/settings' }], networkLinks: false, countViews: false, notifications: false, recent: false }); });</script>
+<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: { id: 7, username: 'probe', display_name: 'Probe' }, links: [{ label: 'Rooms', href: '/rooms' }, { label: 'Messages', href: '/messages' }, { label: 'Settings', href: '/settings' }], networkLinks: false, countViews: false, notifications: false, recent: false, drawer: 'legacy' }); });</script>
 </body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');

@@ -1052,7 +1052,14 @@
         nav.addEventListener('pointerover', place); nav.addEventListener('focusin', place);
         if (burger && drawer) {
             if (!_config.user) { bindDisplayControls(drawer.querySelector('.ovnav-display')); bindLook(drawer); }   // guests: members have them in the account menu
-            burger.addEventListener('click', (e) => { e.stopPropagation(); const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); if (open) loadOvIcons(drawer); });
+            // One menu (the owner, 11-07: "combining this menu and the other menu … the main button on the right-hand side"):
+            // the burger opens the OpenVibe menu, from the burger, leading with this site's pages. The old drawer stays for a
+            // site that turns the menu off (search: false) or asks for it (drawer: 'legacy').
+            burger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (_config.search !== false && _config.drawer !== 'legacy') { openSearch('', 'here', burger); return; }
+                const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); if (open) loadOvIcons(drawer);
+            });
             drawer.addEventListener('click', (e) => {
                 const all = e.target.closest && e.target.closest('[data-open-launcher]'); if (!all) return;
                 e.preventDefault(); e.stopPropagation(); closeDrawer();
@@ -2037,12 +2044,13 @@
     // Search (search.js, loaded on first use). _config.search: false, or { owner, label, page }.
     let _searchLoading = false;
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab) {
+    function openSearch(q, tab, fromEl) {
         const orb = _navEl && _navEl.querySelector('#openvibe-search-btn');
-        // The menu drops from the orb, under the bar (the bar stays, and the orb's × closes it).
+        // The menu drops from the button that opened it (the orb, or the burger), under the bar.
+        const from = fromEl || orb;
         const anchor = () => {
-            if (!_navEl || !orb || !orb.getBoundingClientRect) return null;
-            const bar = _navEl.getBoundingClientRect(), at = orb.getBoundingClientRect();
+            if (!_navEl || !from || !from.getBoundingClientRect) return null;
+            const bar = _navEl.getBoundingClientRect(), at = from.getBoundingClientRect();
             return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6, cx: at.left + at.width / 2, cy: at.top + at.height / 2 } : null;
         };
         const go = () => {
@@ -2051,8 +2059,10 @@
             if (_navEl) _navEl.classList.remove('ovnav-hide');
             root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon,
-                onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); } });
-            const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'true');
+                // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
+                display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
+                onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
+            const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
         };
         if (root.OpenVibeSearch) return go();
         if (_searchLoading) return;
