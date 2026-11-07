@@ -233,6 +233,17 @@
 .ovs-foldrow { padding: 6px 4px 2px; }
 .ovs-fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border, rgba(255,255,255,.16)); background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; text-align: left; cursor: pointer; }
 .ovs-fold svg { width: 16px; height: 16px; flex: none; transition: transform .2s; }
+.ovs-feeds { display: grid; gap: 4px; padding: 4px 6px 8px; }
+.ovs-feed { display: grid; grid-template-columns: minmax(0, 1fr) 40px 40px; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
+.ovs-feed label { display: flex; align-items: center; gap: 12px; min-height: 44px; min-width: 0; cursor: pointer; }
+.ovs-feed input { width: 18px; height: 18px; flex: none; accent-color: var(--accent, #3b82f6); }
+.ovs-feed label span { display: grid; min-width: 0; }
+.ovs-feed b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-feed small { font-size: 12px; color: var(--text-muted, #8b95a7); text-transform: capitalize; }
+.ovs-feed button { width: 40px; height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 16px; cursor: pointer; }
+.ovs-feed button:hover:not(:disabled) { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
+.ovs-feed button:disabled { opacity: .3; cursor: default; }
+.ovs-feeds-note { margin: 2px 6px 0; font-size: 12px; color: var(--text-muted, #8b95a7); }
 .ovs-fold[aria-expanded="true"] svg { transform: rotate(90deg); }
 .ovs-fold:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
@@ -321,8 +332,28 @@
             if (fold) {
                 e.preventDefault();
                 const key = fold.getAttribute('data-ovs-fold');
-                if (key === 'all') allOpen = !allOpen; else if (key === 'here') hereOpen = !hereOpen;
+                if (key === 'all') allOpen = !allOpen; else if (key === 'here') hereOpen = !hereOpen; else if (key === 'feeds') feedsOpen = !feedsOpen;
                 render(''); const back = listEl.querySelector(`[data-ovs-fold="${key}"]`); if (back) back.focus(); return;
+            }
+            const tick = e.target.closest && e.target.closest('[data-ovs-feed]');
+            const move = e.target.closest && e.target.closest('[data-ovs-feed-move]');
+            if (tick || move) {
+                const shown = [...listEl.querySelectorAll('[data-ovs-feed]')];
+                let on = shown.filter((x) => x.checked).map((x) => x.getAttribute('data-ovs-feed'));
+                const cur = feedPref();
+                if (cur) on = cur.filter((id) => on.includes(id)).concat(on.filter((id) => !cur.includes(id)));
+                let focusSel = tick ? `[data-ovs-feed="${tick.getAttribute('data-ovs-feed')}"]` : null;
+                if (move) {
+                    e.preventDefault();
+                    const [dir, id] = move.getAttribute('data-ovs-feed-move').split('|');
+                    const i = on.indexOf(id), j = dir === 'up' ? i - 1 : i + 1;
+                    if (i >= 0 && j >= 0 && j < on.length) { [on[i], on[j]] = [on[j], on[i]]; }
+                    focusSel = `[data-ovs-feed-move="${dir}|${id}"]`;
+                }
+                saveFeeds(on);
+                render('');
+                const back = focusSel && listEl.querySelector(focusSel); if (back) back.focus();
+                return;
             }
             const a = e.target.closest && e.target.closest('a[data-i]');
             const it = a && items[Number(a.getAttribute('data-i'))];
@@ -426,12 +457,31 @@
     function paint(groups, note) {
         items = [];
         listEl.textContent = '';
-        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card', 'display'].includes(g.as)).forEach((g) => {
+        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card', 'display', 'feeds'].includes(g.as)).forEach((g) => {
             if (g.as === 'route') {
                 const r = document.createElement('li'); r.className = 'ovs-route'; r.setAttribute('role', 'presentation'); r.textContent = g.text; listEl.appendChild(r);
                 return;
             }
             if (g.as === 'fold') { listEl.appendChild(foldButton(g.fold, g.section)); return; }
+            if (g.as === 'feeds') {
+                const li = document.createElement('li'); li.className = 'ovs-feeds'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'feeds');
+                const onCount = g.items.filter((x) => x.on).length;
+                g.items.forEach((f) => {
+                    const row = document.createElement('div'); row.className = 'ovs-feed';
+                    const lab = document.createElement('label');
+                    const box = document.createElement('input'); box.type = 'checkbox'; box.checked = f.on; box.setAttribute('data-ovs-feed', f.id);
+                    if (!f.on && onCount >= FEEDS_MAX) box.disabled = true;
+                    const t = document.createElement('span'); const b = document.createElement('b'); b.textContent = f.title; const m = document.createElement('small'); m.textContent = f.meta;
+                    t.append(b, m); lab.append(box, t); row.appendChild(lab);
+                    [['up', '↑', 'Show it earlier'], ['down', '↓', 'Show it later']].forEach(([dir, glyph, name]) => {
+                        const mv = document.createElement('button'); mv.type = 'button'; mv.textContent = glyph; mv.setAttribute('aria-label', `${name}: ${f.title}`); mv.setAttribute('data-ovs-feed-move', `${dir}|${f.id}`); mv.disabled = !f.on; row.appendChild(mv);
+                    });
+                    li.appendChild(row);
+                });
+                const note = document.createElement('p'); note.className = 'ovs-feeds-note'; note.textContent = `Up to ${FEEDS_MAX}, in your order. Kept on this device.`; li.appendChild(note);
+                listEl.appendChild(li);
+                return;
+            }
             if (g.as === 'display') {
                 const li = document.createElement('li'); li.className = 'ovs-displayrow'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'display');
                 try { ctx.display(li); } catch { return; }
@@ -635,7 +685,13 @@
         live: 'Streams and calls', 'media-hub': 'Recordings and clips', community: 'Forum and pastes', chat: 'Rooms and messages',
         tools: 'Free tools', bot: 'Robots and machines', vip: 'Back a streamer', pics: 'Pictures', download: 'Files and drive',
     };
-    let allOpen = false, hereOpen = false, leadHere = false, discoverPick = null, pulseData = null;
+    let allOpen = false, hereOpen = false, leadHere = false, discoverPick = null, pulseData = null, feedsOpen = false;
+    // Your feeds (11-07, the owner: "the user should be able to configure which data feed streams are shown"): the sites'
+    // cards you chose and their order, on this device ({ on: ['media-hub:trending', …] }); none chosen = Network's first two.
+    const FEEDS_KEY = 'ovs-feeds', FEEDS_MAX = 4;
+    const feedId = (c) => `${String(c.site || '').slice(0, 30)}:${String(c.id || '').slice(0, 30)}`;
+    const feedPref = () => { try { const v = JSON.parse(localStorage.getItem(FEEDS_KEY) || 'null'); return v && Array.isArray(v.on) ? v.on.filter((x) => typeof x === 'string').slice(0, FEEDS_MAX) : null; } catch { return null; } };
+    const saveFeeds = (on) => { try { localStorage.setItem(FEEDS_KEY, JSON.stringify({ on: on.slice(0, FEEDS_MAX) })); } catch { /* private window */ } };
     /** Network's live line (GET /api/frame/pulse, kept 30 s): how many are live now, and who when the Frame sends it. */
     function loadPulse() {
         try { const c = JSON.parse(sessionStorage.getItem('ov_pulse') || 'null'); if (c && Date.now() - c.at < 30000) { pulseData = c.data; return Promise.resolve(c.data); } } catch { /* */ }
@@ -740,12 +796,19 @@
         // 1b. The network's cards: what sites publish for every menu (Network collects each site's
         // /.well-known/openvibe-menu.json into the Frame's `cards`): Live's channels, Games' new worlds, Video's trending.
         // Text and links only (never another site's code), checked here again; at most two, Network's order.
-        const netCards = f0 && Array.isArray(f0.cards) ? f0.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 2) : [];
+        const feeds = f0 && Array.isArray(f0.cards) ? f0.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
+        const chosen = feedPref();
+        const netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds.slice(0, 2);
         netCards.forEach((c) => {
             const as = c.kind === 'rail' ? 'livebar' : c.kind === 'chips' ? 'chips' : 'rows';
             const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url), site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
             if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
+        // 1c. Choose your feeds: every card a site offers, a tick to show it, arrows to order it (four at most).
+        if (feeds.length > 1 || chosen) {
+            groups.push({ as: 'fold', fold: { key: 'feeds', open: feedsOpen, label: feedsOpen ? 'Done choosing' : `Choose your feeds (${feeds.length})` }, section: 'feeds' });
+            if (feedsOpen) groups.push({ as: 'feeds', section: 'feeds', items: feeds.map((c) => ({ id: feedId(c), title: String(c.title).slice(0, 60), meta: String(c.site || '').replace('media-hub', 'Video'), on: netCards.includes(c) })) });
+        }
         // 2. The places this person uses most (else the network's most used): a dock of big icons.
         const yours = mine && mine.services.some((x) => x.count > 0);
         const ranked = all.map((s, i) => [useOf(s.id) * 1000 - i, s]).sort((a, b) => b[0] - a[0]).map(([, s]) => s);

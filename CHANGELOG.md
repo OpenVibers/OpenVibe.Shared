@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.132.0 — 2026-11-07
+
+- **Your feeds in the menu** (the owner, 11-07: "integrate OpenVibe.Today and OpenVibe.News … the user should be able to
+  configure which data feed streams are shown"):
+  - every card a site publishes (`frame.menu-card@1`, collected by Network into the Frame's `cards`) is a feed you can
+    choose;
+  - "Choose your feeds (N)" under them lists each with a tick and two arrows: tick to show it, arrows to order it, four
+    at most;
+  - the choice is kept on this device (`ovs-feeds`). With none chosen, the Network's first two show, as before.
+- **Fixed: the menu's Frame fields were dropped.** The navbar's Frame cache kept only `nav`, `groups`, `soon` and
+  `footer`, so since 4.128.0 the menu never saw:
+  - `cards`: the sites' cards (Live now, Trending, New worlds);
+  - `next`: where people go next;
+  - `discover_ids`: New to you;
+  - `menu.beacon`: the click beacon.
+
+  It now keeps them, and search.js still checks every entry. The navbar budget is 43 KB brotli (42.8 KB).
+
 ## 4.131.0 — 2026-11-07
 
 - **Your online status, on every site** (the owner, 11-07: "we could have online status, especially in DMs … Discord

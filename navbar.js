@@ -886,7 +886,10 @@
             const f = d.footer || {}, lg = f.legal || {};
             return { nav: d.nav.map(link).filter(Boolean).slice(0, 60), groups: (Array.isArray(d.groups) ? d.groups : []).filter(g => g && typeof g.id === 'string' && typeof g.name === 'string').slice(0, 10).map(g => ({ id: g.id.slice(0, 20), name: g.name.slice(0, 40) })), soon: (d.soon || []).map(link).filter(Boolean).slice(0, 24),
                 footer: { blurb: String(f.blurb || '').slice(0, 200), discover: (f.discover || []).map(link).filter(Boolean).slice(0, 6), popular: (f.popular || []).map(link).filter(Boolean).slice(0, 10),
-                    legal: https(lg.terms) && https(lg.privacy) && https(lg.dmca) ? { terms: lg.terms, privacy: lg.privacy, dmca: lg.dmca } : null } };
+                    legal: https(lg.terms) && https(lg.privacy) && https(lg.dmca) ? { terms: lg.terms, privacy: lg.privacy, dmca: lg.dmca } : null },
+                // The menu's fields (dropped here until 4.132.0); search.js checks each entry.
+                cards: Array.isArray(d.cards) ? d.cards.slice(0, 12) : [], next: d.next && typeof d.next === 'object' ? d.next : null,
+                discover_ids: Array.isArray(d.discover_ids) ? d.discover_ids.slice(0, 40) : [], menu: d.menu && https(d.menu.beacon) ? { beacon: d.menu.beacon } : null };
         }
         function cached() { try { const c = JSON.parse(localStorage.getItem(KEY) || 'null'); return c && c.host === host() && c.data ? c : null; } catch { return null; } }
         function refresh() {
