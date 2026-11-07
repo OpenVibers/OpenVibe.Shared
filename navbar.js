@@ -1224,6 +1224,14 @@
         try { const k = JSON.parse(localStorage.getItem('ov-dock') || 'null'); if (!on || (k && k.off > Date.now())) return; } catch { if (!on) return; }
         loadDock(() => root.OpenVibeDock.mount(dockOpts()));
     }
+    // Your online status (presence.js, 4.131.0): its dot on your picture, a heartbeat, the picker. presence: false turns it off.
+    function mountPresence(u) {
+        if (_config.presence === false || !u || u.is_anon || !_config.token) return;
+        const go = () => root.OpenVibePresence && root.OpenVibePresence.start({ token: () => _config.token, apiBase: dockBase(), user: u });
+        if (root.OpenVibePresence) return go();
+        if (document.getElementById('ov-presence-loader')) return;
+        const sc = document.createElement('script'); sc.id = 'ov-presence-loader'; sc.src = sibling('presence.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
+    }
     /** Open the Dock on a tab: 'agent' | 'activity'. */
     function openDock(tab) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open({ tab }); }); }
 
@@ -1906,7 +1914,7 @@
         queueFx();
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
-        setTimeout(() => { mountBell(nav, u); mountDock(u); }, 0);
+        setTimeout(() => { mountBell(nav, u); mountDock(u); mountPresence(u); }, 0);
 
         // Dropdown
         if (u) {

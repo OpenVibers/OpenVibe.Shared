@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.131.0 — 2026-11-07
+
+- **Your online status, on every site** (the owner, 11-07: "we could have online status, especially in DMs … Discord
+  … people should be able to easily change it off"). New `presence.js`, loaded by the navbar beside itself for a
+  signed-in person (`presence: false` turns it off):
+  - **a dot on your picture** in the bar: online, away, do not disturb, invisible, or live — Network's own answer
+    (`network.presence@1`, the self view), saved per person so every tab paints at once;
+  - **a heartbeat** (`POST /api/v1/me/presence/heartbeat`) while a tab is visible, once a minute across tabs, and
+    `idle: true` after five minutes without input so Network shows Away; the first input after that beats at once;
+  - **Your status** in the account menu: Online (automatic), Do not disturb, Invisible, and a status line of your own
+    (`PUT /api/v1/me/presence`). A card under the bar on a computer, a sheet from the bottom on a phone. Only people
+    you follow or message can see it (Network's rule).
+
 ## 4.130.0 — 2026-11-07
 
 - **Your things on every site** (the owner, 11-07: "make sure DMs are accessible across all sites … same with open coins
