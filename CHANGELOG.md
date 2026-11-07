@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.136.0 — 2026-11-07
+## 4.137.0 — 2026-11-07
 
 - **Releases reach phones at once.** The bar loaded the menu (`search.js`), the Dock, presence, panels, notifications,
   history, the site switcher, the app bar, the release watcher, the icons and the sign-in client without a version.
@@ -19,6 +19,15 @@
 - **The menu opens at once.** search.js is prefetched at idle once the page settles (not on Save-Data or 2G), and as
   soon as a finger or pointer reaches the burger or the orb. By its hashed URL it is cached until the next release.
 - Budgets: navbar.js 44 KB brotli (43.5 with the hashes, which do not compress, and the warm-up), dock.js 16.0 KB.
+
+## 4.136.0 — 2026-11-07
+
+- **One Computer in the Dock** (plan 2026-11-07: "Surf, Computer and Actor are one experience"): a timeline step
+  that works on a Computer shows its machine and cost hint (`computer.machine`, `computer.cost_hint`) — the same
+  object the task record and Surf's card carry, never a copy. The Now card offers **Take over** (and **Give it
+  back** while you drive) on a step that names its task (`ref`) and its Computer: one call to OpenVibe.Actor's
+  `POST /api/v1/tasks/{id}/takeover` or `…/giveback`, the same hand-off the agent's own `hand_to_person` uses.
+  No new layout and no new CSS: the line is an existing meta row and the button an existing Dock button.
 
 ## 4.135.0 — 2026-11-07
 

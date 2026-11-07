@@ -14,7 +14,7 @@ assert.ok(src.includes("sc.src = siblingV('ov-mark.js')") && src.includes("url($
 assert.ok(/GLYPH_ICONS = 'i\[class\*="fa-"\]/.test(src), 'the glyphs load where Font Awesome is used, unless a site says glyphs: false');
 assert.ok(/glyphWatch = new MutationObserver[\s\S]{0,300}glyphWatch\.disconnect\(\)/.test(src), 'and when the page adds its first icon later, then the watch ends');
 assert.ok(/_config\.glyphs !== false\) watchGlyphs\(\)/.test(src), 'the render only asks; the one watch lives outside it (a Boost page move re-renders the bar)');
-// 4.136.0 (2026-11-07): every script the navbar, the Dock and the notifications load from beside themselves goes by its
+// 4.137.0 (2026-11-07): every script the navbar, the Dock and the notifications load from beside themselves goes by its
 // content hash. Without it a release reached phones up to a day late (max-age=300, stale-while-revalidate=86400).
 assert.strictEqual((src.match(/[^V]sibling\('[a-z0-9-]+\.(js|css)'\)/g) || []).filter((m) => !/nav-icons\.js/.test(m)).length, 0, 'no sibling script loads without its hash (use siblingV)');
 for (const [file, { name, files }] of Object.entries(OWN)) {

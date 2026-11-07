@@ -72,10 +72,10 @@ const MEASURE = `(() => {
                 assert.ok(last[1][1] <= width, `${at}: ${last[0]} runs off the screen`);
                 if (width >= 360) assert.ok(!v.clipped && /Games/.test(v.visibleText), `${at}: the site's word reads whole (${v.visibleText})`);
                 if (who === 'in') assert.strictEqual(v.minis, 2, `${at}: the folded balances show both, OpenCoins and Vibes (4.25.0)`);
-                // One menu button on a phone (4.136.0, the owner: "these buttons do the same shit"): the burger opens the
+                // One menu button on a phone (4.137.0, the owner: "these buttons do the same shit"): the burger opens the
                 // OpenVibe menu, and the orb that opened the same menu steps aside.
                 assert.ok(v.parts.some(([k]) => k === 'menu'), `${at}: the burger is the menu button`);
-                assert.ok(!v.parts.some(([k]) => k === 'search'), `${at}: no second button for the same menu (4.136.0)`);
+                assert.ok(!v.parts.some(([k]) => k === 'search'), `${at}: no second button for the same menu (4.137.0)`);
                 assert.ok(!v.parts.some(([k]) => k === 'launcher'), `${at}: no launcher button: the magnifier opens the one menu (4.23.0)`);
                 await p.close();
             }

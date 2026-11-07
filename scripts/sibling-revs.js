@@ -9,7 +9,7 @@ const path = require('path');
 const { hashAsset } = require('../assets');
 
 const ROOT = path.join(__dirname, '..');
-// 4.136.0: every file the navbar loads from beside itself, not ten of them. search.js, dock.js, presence.js and the rest
+// 4.137.0: every file the navbar loads from beside itself, not ten of them. search.js, dock.js, presence.js and the rest
 // went out without ?v=, so a release reached phones up to a day late (max-age=300, stale-while-revalidate=86400): the
 // owner still saw the old menu hours after the new one shipped (11-07).
 const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov-fx.js', 'ov-labels.js', 'ov-forms.js', 'ov-forms.css', 'ov-share.js', 'ov-share.css',

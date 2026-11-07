@@ -62,7 +62,7 @@ const MEASURE = `(() => {
     const firstRight = right && [...right.querySelectorAll('a, button')].find((el) => el.getBoundingClientRect().width > 0);
     const fr = firstRight && firstRight.getBoundingClientRect();
     const rightKeepsItsStart = !firstRight || on(firstRight, fr.left + 2, fr.top + fr.height / 2);
-    // The menu's way in on a phone is the burger when the bar has page links (4.136.0: the orb steps aside), else the orb.
+    // The menu's way in on a phone is the burger when the bar has page links (4.137.0: the orb steps aside), else the orb.
     const orbEl = bar.querySelector('.ovnav-orb');
     const menuEl = orbEl && getComputedStyle(orbEl).display !== 'none' ? orbEl : bar.querySelector('#openvibe-burger');
     const out = { signIn: size(bar.querySelector('#openvibe-login-btn')), orb: size(menuEl), nameKeepsItsEnd, rightKeepsItsStart };

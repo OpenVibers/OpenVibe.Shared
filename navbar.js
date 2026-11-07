@@ -513,7 +513,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '715972edd968', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '7d4affbb5093', 'ov-share.css': 'cbd18e6ce991', 'search.js': '08f0452e6a79', 'dock.js': '3d1810c6716f', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': '3ceb5266e7b8', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '715972edd968', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '7d4affbb5093', 'ov-share.css': 'cbd18e6ce991', 'search.js': '08f0452e6a79', 'dock.js': 'e13066db0aac', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': '3ceb5266e7b8', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2077,7 +2077,7 @@
 
     // Search (search.js, loaded on first use). _config.search: false, or { owner, label, page }.
     let _searchLoading = false;
-    // Warm the menu (4.136.0): search.js by its hashed URL is cached for good, so fetching it early costs one download per
+    // Warm the menu (4.137.0): search.js by its hashed URL is cached for good, so fetching it early costs one download per
     // release. At idle after the page settles (not on Save-Data or 2G), and at once when a finger or pointer reaches the
     // burger or the orb; the first open then has nothing to wait for.
     let _menuWarm = false;

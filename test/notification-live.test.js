@@ -263,7 +263,7 @@ const created = (subject, over = {}) => ({
         const bell = N.createBell(p.document.body);
         await p.settle();
         assert.strictEqual(p.out.scripts.length, 1, 'one script');
-        assert.match(p.out.scripts[0], /^https:\/\/openvibe\.live\/shared\/notification-live\.js\?v=[0-9a-f]{12}$/, 'loaded from beside notification-ui.js, by its content hash (4.136.0)');
+        assert.match(p.out.scripts[0], /^https:\/\/openvibe\.live\/shared\/notification-live\.js\?v=[0-9a-f]{12}$/, 'loaded from beside notification-ui.js, by its content hash (4.137.0)');
         assert.strictEqual(p.tickets().length, 1);
         assert.strictEqual(p.tickets()[0].headers.Authorization, 'Bearer jwt-alice');
         assert.strictEqual(p.tickets()[0].credentials, 'omit', 'cross-site: the token, never cookies');
@@ -362,7 +362,7 @@ const created = (subject, over = {}) => ({
         p.ctx.OpenVibeNotifications.init({ apiBase: API, realtime: true });
         await p.settle();
         assert.strictEqual(p.out.scripts.length, 1);
-        assert.match(p.out.scripts[0], /^https:\/\/openvibe\.network\/shared\/notification-live\.js\?v=[0-9a-f]{12}$/, 'by its content hash (4.136.0)');
+        assert.match(p.out.scripts[0], /^https:\/\/openvibe\.network\/shared\/notification-live\.js\?v=[0-9a-f]{12}$/, 'by its content hash (4.137.0)');
         assert.strictEqual(p.tickets()[0].credentials, 'include', 'on openvibe.network the session cookie asks for the ticket');
         assert.strictEqual(p.tickets()[0].headers.Authorization, undefined);
     }
@@ -487,7 +487,7 @@ const created = (subject, over = {}) => ({
     // bell's rich list). It loads only after sign-in, when the bell mounts, never on first paint; measured 19.16 KB.
     // 20 → 24 KB on 2026-10-28 (4.30.0, the bell center: tabs with counts, the Unread filter, thumbnails, swipe to read or
     // clear, the phone sheet; quiet hours); measured 22.56 KB.
-    // 24 → 24.5 KB on 2026-11-07 (4.136.0): notification-live.js by its content hash (24.04 KB measured).
+    // 24 → 24.5 KB on 2026-11-07 (4.137.0): notification-live.js by its content hash (24.04 KB measured).
     assert.ok(size('notification-ui.js') <= 24.5 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 24.5 KB`);
 
     console.log('notification live: all checks passed');
