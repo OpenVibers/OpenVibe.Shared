@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.141.0 — 2026-11-07
+## 4.142.0 — 2026-11-07
 
 - Add `ov-sync.js` (seven domains plan B4): `OVSync.attach(mediaEl, { room, socket })` follows a `common.sync-clock@1` timeline over Chat's room socket. It measures the server clock with five `time` samples (best round trip, refreshed every 60 s), computes the room's position from `position_ms + (serverNow - at_ms) * rate`, holds the element within ±80 ms (a 0.95–1.05 playback-rate nudge between 80 and 400 ms, a seek past 400 ms), pauses and plays with the room, and puts a non-holder's own seek, play, pause or rate change back with a short notice while a holder's change becomes a `sync`. No dependencies; served as `/shared/ov-sync.js` and imported as `openvibe-shared/ov-sync`.
 
