@@ -1,12 +1,20 @@
 # Changelog
 
-## 4.125.0 — 2026-11-07
+## 4.126.0 — 2026-11-07
 
 - **Audio description in the player (X1)**: a video with a `<track kind="descriptions">` gets an **AD** button beside
   Captions. It turns the descriptions track on and is remembered per person in localStorage, like the volume; **D**
   toggles it from the keyboard and its label says whether it is on. The active cue is shown over the picture and
   spoken through the browser's speech synthesis, so a blind viewer hears what is on screen between the speech. No
   descriptions track, no button. `player.js`, `player.css`, `test/player.test.js`.
+
+## 4.125.0 — 2026-11-07
+
+- **The owner's Setup page and clear settings** (`openvibe-shared/config`; OWNER-SETUP-AND-ADMIN-CLARITY-DESIGN, 2026-11-07). New schema annotations, passed through to the summary: `x-owner-input { group, unlocks, get_it_at, get_it_how, test }` marks a field for Network's Setup tab (the groups are `config.OWNER_INPUT_GROUPS`), `x-required-for` makes an unset field **Needed**, `x-enum-labels` gives every option of a choice words and a line, `x-advanced` folds a field under a counted "Advanced settings (N)", and `x-example` is a placeholder. A secret-class property loses `x-example` and `x-enum-labels` in the summary, as it already lost its default, examples and enum.
+- **A wrong Setup annotation never refuses the store.** `x-owner-input`, `x-required-for`, `x-enum-labels`, `x-advanced` and `x-example` only change how a field is presented, so a wrong shape is left out of the summary with one warning (and `lintSchema` names it) instead of taking a service down at boot after a pin bump. A group given by its display name (`Voices`) is read as its id (`voices`), and `lintSchema` asks for the id. The D11 annotations (`x-env`, `x-danger`, `x-bind`, `x-unit`) still refuse the store: they decide where a value comes from and how it is guarded.
+- **`config.lintSchema(schema)`** for each service's own test: it lists a field without a title, a description under 30 characters, or a choice without a label for every option. Empty means the admin panel can explain every field.
+- **The summary classifies every schema property**, set or not: an unset secret key was missing from `classification`, so a form drew it as a plain field and the service then refused the value (422 `config.secret_write_only`). `classification` still names every key of `values` too.
+- **A test hook in the admin routes:** `POST <base>/:namespace/test/:key` calls the service's `test` option with the stored value on the server and answers `{ ok, message }` in one line, scrubbed of every secret of the namespace; 409 `config.not_set` with no value, 404 `config.test_not_available` without a tester. `authorize` sees the action `'test'`.
 
 ## 4.124.0 — 2026-11-07
 
