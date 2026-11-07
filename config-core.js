@@ -298,10 +298,66 @@ function isHttpsUrl(v) {
 }
 const text = (v) => typeof v === 'string' && v.trim().length > 0;
 
+/** A Setup group as an id: the id itself, or its display name in any case ("Voices" → voices). Else null. */
+function ownerGroupId(g) {
+    if (typeof g !== 'string') return null;
+    if (has(OWNER_INPUT_GROUPS, g)) return g;
+    const want = g.trim().toLowerCase();
+    for (const [id, label] of Object.entries(OWNER_INPUT_GROUPS)) if (label.toLowerCase() === want || id === want) return id;
+    return null;
+}
+
 /**
- * The owner-settings annotations of the summary. D11: x-env, x-danger, x-bind, x-unit, x-group. Setup and the clear
- * admin panel (2026-11-07): x-owner-input, x-required-for, x-enum-labels, x-advanced, x-example. A wrong shape refuses
- * the store at creation, like any other schema mistake, so a typo never silently drops a Setup row.
+ * The Setup page's annotations (2026-11-07): x-owner-input, x-required-for, x-enum-labels, x-advanced, x-example.
+ * They only change how a field is presented, so a wrong shape never refuses the store (that would take a service down
+ * at boot over a label): the problem is returned here, the summary leaves that annotation out, the store warns once,
+ * and lintSchema reports it so the service's own tests fail. → [{ key, message }]
+ */
+function setupAnnotationProblems(s, at) {
+    const out = [];
+    const bad = (key, message) => out.push({ key, message: `config schema ${at}: ${message}` });
+    const owner = s['x-owner-input'];
+    if (owner !== undefined) {
+        if (!isPlainObject(owner)) bad('x-owner-input', 'x-owner-input must be an object { group, unlocks, get_it_at, get_it_how, test }');
+        else {
+            const unknown = Object.keys(owner).find((k) => !OWNER_INPUT_MEMBERS.has(k));
+            if (unknown !== undefined) bad('x-owner-input', `x-owner-input has an unknown member "${String(unknown).slice(0, 40)}"`);
+            else if (!ownerGroupId(owner.group)) bad('x-owner-input', `x-owner-input.group must be one of ${Object.keys(OWNER_INPUT_GROUPS).join(', ')}`);
+            else if (!text(owner.unlocks)) bad('x-owner-input', 'x-owner-input.unlocks must say what it turns on');
+            else if (owner.get_it_at !== undefined && !isHttpsUrl(owner.get_it_at)) bad('x-owner-input', 'x-owner-input.get_it_at must be an https URL');
+            else if (owner.get_it_how !== undefined && !text(owner.get_it_how)) bad('x-owner-input', 'x-owner-input.get_it_how must be one line of words');
+            else if (owner.test !== undefined && typeof owner.test !== 'boolean') bad('x-owner-input', 'x-owner-input.test must be true or false');
+        }
+    }
+    if (s['x-required-for'] !== undefined && (!text(s['x-required-for']) || s['x-required-for'].length > 200)) bad('x-required-for', 'x-required-for must name the feature that waits on it (at most 200 characters)');
+    if (s['x-advanced'] !== undefined && typeof s['x-advanced'] !== 'boolean') bad('x-advanced', 'x-advanced must be true or false');
+    if (s['x-example'] !== undefined && !['string', 'number', 'boolean'].includes(typeof s['x-example'])) bad('x-example', 'x-example must be a string, a number or true/false');
+    const labels = s['x-enum-labels'];
+    if (labels !== undefined) {
+        if (!isPlainObject(labels)) bad('x-enum-labels', 'x-enum-labels must be an object { value: { label, description } }');
+        else {
+            const choices = enumOf(s);
+            const known = choices ? new Set(choices.map(enumKey)) : null;
+            for (const [v, l] of Object.entries(labels)) {
+                const name = `x-enum-labels["${String(v).slice(0, 40)}"]`;
+                if (!isPlainObject(l) || !text(l.label)) { bad('x-enum-labels', `${name} needs a label`); break; }
+                const m = Object.keys(l).find((k) => !ENUM_LABEL_MEMBERS.has(k));
+                if (m !== undefined) { bad('x-enum-labels', `${name} has an unknown member "${String(m).slice(0, 40)}"`); break; }
+                if (l.description !== undefined && typeof l.description !== 'string') { bad('x-enum-labels', `${name}.description must be a string`); break; }
+                if (known && !known.has(v)) { bad('x-enum-labels', `x-enum-labels names "${String(v).slice(0, 40)}", which is not one of the enum values`); break; }
+            }
+        }
+    }
+    return out;
+}
+// The Setup annotations left out of a schema node's summary (a node warns once per key: a second store built from
+// the same schema object stays quiet).
+const droppedSetup = new WeakMap();
+
+/**
+ * The owner-settings annotations. D11 (x-env, x-danger, x-bind, x-unit, x-group, title, description): a wrong shape
+ * refuses the store at creation, like any other schema mistake, because these decide where a value comes from and how
+ * it is guarded. The Setup ones (setupAnnotationProblems) are presentation: left out of the summary with a warning.
  */
 function checkAnnotations(s, at) {
     if (s['x-env'] !== undefined && (typeof s['x-env'] !== 'string' || !ENV_NAME.test(s['x-env']))) throw new TypeError(`config schema ${at}: x-env must be an env name (A-Z, 0-9, _)`);
@@ -311,33 +367,15 @@ function checkAnnotations(s, at) {
     if (s['x-group'] !== undefined && typeof s['x-group'] !== 'string') throw new TypeError(`config schema ${at}: x-group must be a string`);
     if (s.title !== undefined && typeof s.title !== 'string') throw new TypeError(`config schema ${at}: title must be a string`);
     if (s.description !== undefined && typeof s.description !== 'string') throw new TypeError(`config schema ${at}: description must be a string`);
-    const owner = s['x-owner-input'];
-    if (owner !== undefined) {
-        if (!isPlainObject(owner)) throw new TypeError(`config schema ${at}: x-owner-input must be an object { group, unlocks, get_it_at, get_it_how, test }`);
-        for (const k of Object.keys(owner)) if (!OWNER_INPUT_MEMBERS.has(k)) throw new TypeError(`config schema ${at}: x-owner-input has an unknown member "${String(k).slice(0, 40)}"`);
-        if (!has(OWNER_INPUT_GROUPS, owner.group)) throw new TypeError(`config schema ${at}: x-owner-input.group must be one of ${Object.keys(OWNER_INPUT_GROUPS).join(', ')}`);
-        if (!text(owner.unlocks)) throw new TypeError(`config schema ${at}: x-owner-input.unlocks must say what it turns on`);
-        if (owner.get_it_at !== undefined && !isHttpsUrl(owner.get_it_at)) throw new TypeError(`config schema ${at}: x-owner-input.get_it_at must be an https URL`);
-        if (owner.get_it_how !== undefined && !text(owner.get_it_how)) throw new TypeError(`config schema ${at}: x-owner-input.get_it_how must be one line of words`);
-        if (owner.test !== undefined && typeof owner.test !== 'boolean') throw new TypeError(`config schema ${at}: x-owner-input.test must be true or false`);
+    const problems = setupAnnotationProblems(s, at);
+    if (!problems.length) return;
+    const keys = droppedSetup.get(s) || new Set();
+    for (const p of problems) {
+        if (keys.has(p.key)) continue;
+        keys.add(p.key);
+        console.warn(`[config] ${p.message}; the Setup page leaves it out (fix it: config.lintSchema)`);
     }
-    if (s['x-required-for'] !== undefined && (!text(s['x-required-for']) || s['x-required-for'].length > 200)) throw new TypeError(`config schema ${at}: x-required-for must name the feature that waits on it (at most 200 characters)`);
-    if (s['x-advanced'] !== undefined && typeof s['x-advanced'] !== 'boolean') throw new TypeError(`config schema ${at}: x-advanced must be true or false`);
-    if (s['x-example'] !== undefined && !['string', 'number', 'boolean'].includes(typeof s['x-example'])) throw new TypeError(`config schema ${at}: x-example must be a string, a number or true/false`);
-    const labels = s['x-enum-labels'];
-    if (labels !== undefined) {
-        if (!isPlainObject(labels)) throw new TypeError(`config schema ${at}: x-enum-labels must be an object { value: { label, description } }`);
-        for (const [v, l] of Object.entries(labels)) {
-            if (!isPlainObject(l) || !text(l.label)) throw new TypeError(`config schema ${at}: x-enum-labels["${String(v).slice(0, 40)}"] needs a label`);
-            for (const m of Object.keys(l)) if (!ENUM_LABEL_MEMBERS.has(m)) throw new TypeError(`config schema ${at}: x-enum-labels["${String(v).slice(0, 40)}"] has an unknown member "${String(m).slice(0, 40)}"`);
-            if (l.description !== undefined && typeof l.description !== 'string') throw new TypeError(`config schema ${at}: x-enum-labels["${String(v).slice(0, 40)}"].description must be a string`);
-        }
-        const choices = enumOf(s);
-        if (choices) {
-            const known = new Set(choices.map(enumKey));
-            for (const v of Object.keys(labels)) if (!known.has(v)) throw new TypeError(`config schema ${at}: x-enum-labels names "${String(v).slice(0, 40)}", which is not one of the enum values`);
-        }
-    }
+    droppedSetup.set(s, keys);
 }
 
 /** A field's choices: its own enum, or its items' (a list of choices). */
@@ -382,6 +420,11 @@ function lintSchema(input) {
                     const missing = choices.map(enumKey).filter((v) => !isPlainObject(labels[v]) || !text(labels[v].label));
                     if (missing.length) errors.push({ path, key, message: `has no x-enum-labels label for ${missing.map((v) => `"${v}"`).join(', ')}` });
                 }
+            }
+            // The Setup annotations' shape (the store only warns about these, so the service's tests are where they fail).
+            for (const pr of setupAnnotationProblems(p, path)) errors.push({ path, key, message: pr.message.replace(/^config schema [^:]*: /, '') });
+            if (isPlainObject(p['x-owner-input']) && has(OWNER_INPUT_GROUPS, p['x-owner-input'].group) === false && ownerGroupId(p['x-owner-input'].group)) {
+                errors.push({ path, key, message: `x-owner-input.group "${String(p['x-owner-input'].group).slice(0, 40)}" is a display name: use its id "${ownerGroupId(p['x-owner-input'].group)}"` });
             }
             if (isPlainObject(p.properties)) walk(p.properties, path, key);
         }
@@ -433,6 +476,22 @@ function schemaAnnotations(schema) {
 function summarySchema(schema, isSecret) {
     if (schema == null) return null;
     const out = clone(schema);
+    // The Setup annotations checkAnnotations found wrong are left out (one warning at creation), and a group named by
+    // its display name is given as its id, so Network's Setup page groups it.
+    const tidy = (orig, copy) => {
+        if (!isPlainObject(orig) || !isPlainObject(copy)) return;
+        const dropped = droppedSetup.get(orig);
+        if (dropped) for (const k of dropped) delete copy[k];
+        if (isPlainObject(copy['x-owner-input'])) {
+            const id = ownerGroupId(copy['x-owner-input'].group);
+            if (id) copy['x-owner-input'].group = id;
+        }
+        if (isPlainObject(orig.properties) && isPlainObject(copy.properties)) {
+            for (const k of Object.keys(orig.properties)) tidy(orig.properties[k], copy.properties[k]);
+        }
+        if (isPlainObject(orig.items) && isPlainObject(copy.items)) tidy(orig.items, copy.items);
+    };
+    tidy(schema, out);
     if (isPlainObject(out.properties)) {
         for (const [k, p] of Object.entries(out.properties)) {
             if (!isPlainObject(p) || !isSecret(k)) continue;

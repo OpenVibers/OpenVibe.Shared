@@ -1,7 +1,8 @@
 'use strict';
 // The owner's Setup page and the clear admin panel (OWNER-SETUP-AND-ADMIN-CLARITY-DESIGN, 2026-11-07):
-//   - the annotations x-owner-input, x-required-for, x-enum-labels, x-advanced and x-example are checked when the store
-//     is created and pass through to the summary's schema (a secret property loses x-example and x-enum-labels);
+//   - the annotations x-owner-input, x-required-for, x-enum-labels, x-advanced and x-example pass through to the
+//     summary's schema (a secret property loses x-example and x-enum-labels); a wrong one is left out with a warning,
+//     never a refused store, and lintSchema names it; a group's display name is read as its id;
 //   - lintSchema fails a field without a title, a description under 30 characters, and a choice without labels;
 //   - POST <base>/:namespace/test/:key calls the service's tester with the stored value and answers { ok, message } in
 //     one line, never echoing a secret, on Express and on a plain http server.
@@ -52,27 +53,50 @@ const classify = (k) => (/_(token|secret)$/.test(k) ? 'secret' : undefined);
     const db = createDb({ pglite: true, log: { log() {}, warn() {} } });
     await db.query(configSchema());
 
-    // ── A wrong annotation refuses the store, naming the rule ──
+    // ── A wrong Setup annotation never refuses the store (a label must not take a service down at boot): the store
+    //    starts, warns once, the summary leaves that annotation out, and lintSchema names the rule for the tests ──
     let n = 0;
-    const refused = async (prop, re) => {
+    const warned = [];
+    const realWarn = console.warn;
+    const leftOut = async (prop, key, re) => {
         n += 1;
-        await assert.rejects(createConfigStore({ db, service: 'chat', namespace: `chat.bad${n}`, schema: { type: 'object', properties: { k: { type: 'string', ...prop } } }, log: false }), re);
+        const schema = { type: 'object', properties: { k: { type: 'string', title: 'K', description: 'A field used only to check one annotation rule.', ...prop } } };
+        warned.length = 0;
+        console.warn = (...a) => warned.push(a.join(' '));
+        let st;
+        try { st = await createConfigStore({ db, service: 'chat', namespace: `chat.bad${n}`, schema, log: false }); } finally { console.warn = realWarn; }
+        assert.ok(warned.some((w) => re.test(w)), `the store warns about ${key}: ${warned.join(' | ')}`);
+        const sum = await st.summary();
+        assert.strictEqual(sum.schema.properties.k[key], undefined, `the summary leaves out the wrong ${key}`);
+        assert.strictEqual(sum.schema.properties.k.title, 'K', 'the rest of the field is untouched');
+        assert.ok(lintSchema(schema).some((e) => re.test(e.message)), `lintSchema names the rule for ${key}`);
     };
-    await refused({ 'x-owner-input': 'yes' }, /x-owner-input must be an object/);
-    await refused({ 'x-owner-input': { group: 'snacks', unlocks: 'x' } }, /x-owner-input\.group must be one of money/);
-    await refused({ 'x-owner-input': { group: 'money' } }, /x-owner-input\.unlocks/);
-    await refused({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_at: 'http://example.com' } }, /get_it_at must be an https URL/);
-    await refused({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_at: 'https://user:pw@example.com' } }, /get_it_at must be an https URL/);
-    await refused({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_how: '  ' } }, /get_it_how/);
-    await refused({ 'x-owner-input': { group: 'money', unlocks: 'x', test: 'yes' } }, /x-owner-input\.test must be true or false/);
-    await refused({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_url: 'https://a.example' } }, /unknown member "get_it_url"/);
-    await refused({ 'x-required-for': '' }, /x-required-for/);
-    await refused({ 'x-advanced': 'yes' }, /x-advanced must be true or false/);
-    await refused({ 'x-example': { a: 1 } }, /x-example must be/);
-    await refused({ enum: ['a'], 'x-enum-labels': ['a'] }, /x-enum-labels must be an object/);
-    await refused({ enum: ['a'], 'x-enum-labels': { a: { description: 'no label' } } }, /x-enum-labels\["a"\] needs a label/);
-    await refused({ enum: ['a'], 'x-enum-labels': { a: { label: 'A', note: 'x' } } }, /unknown member "note"/);
-    await refused({ enum: ['a'], 'x-enum-labels': { b: { label: 'B' } } }, /names "b", which is not one of the enum values/);
+    await leftOut({ 'x-owner-input': 'yes' }, 'x-owner-input', /x-owner-input must be an object/);
+    await leftOut({ 'x-owner-input': { group: 'snacks', unlocks: 'x' } }, 'x-owner-input', /x-owner-input\.group must be one of money/);
+    await leftOut({ 'x-owner-input': { group: 'money' } }, 'x-owner-input', /x-owner-input\.unlocks/);
+    await leftOut({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_at: 'http://example.com' } }, 'x-owner-input', /get_it_at must be an https URL/);
+    await leftOut({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_at: 'https://user:pw@example.com' } }, 'x-owner-input', /get_it_at must be an https URL/);
+    await leftOut({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_how: '  ' } }, 'x-owner-input', /get_it_how/);
+    await leftOut({ 'x-owner-input': { group: 'money', unlocks: 'x', test: 'yes' } }, 'x-owner-input', /x-owner-input\.test must be true or false/);
+    await leftOut({ 'x-owner-input': { group: 'money', unlocks: 'x', get_it_url: 'https://a.example' } }, 'x-owner-input', /unknown member "get_it_url"/);
+    await leftOut({ 'x-required-for': '' }, 'x-required-for', /x-required-for/);
+    await leftOut({ 'x-advanced': 'yes' }, 'x-advanced', /x-advanced must be true or false/);
+    await leftOut({ 'x-example': { a: 1 } }, 'x-example', /x-example must be/);
+    await leftOut({ enum: ['a'], 'x-enum-labels': ['a'] }, 'x-enum-labels', /x-enum-labels must be an object/);
+    await leftOut({ enum: ['a'], 'x-enum-labels': { a: { description: 'no label' } } }, 'x-enum-labels', /x-enum-labels\["a"\] needs a label/);
+    await leftOut({ enum: ['a'], 'x-enum-labels': { a: { label: 'A', note: 'x' } } }, 'x-enum-labels', /unknown member "note"/);
+    await leftOut({ enum: ['a'], 'x-enum-labels': { b: { label: 'B' } } }, 'x-enum-labels', /names "b", which is not one of the enum values/);
+
+    // A group given by its display name still groups (as its id), and lintSchema asks for the id.
+    {
+        const schema = { type: 'object', properties: { k: { type: 'string', title: 'K', description: 'A voice key the owner gives on the Setup page.', 'x-owner-input': { group: 'Voices', unlocks: 'Speech in chat' } } } };
+        const st = await createConfigStore({ db, service: 'chat', namespace: 'chat.voicesname', schema, log: false });
+        assert.strictEqual((await st.summary()).schema.properties.k['x-owner-input'].group, 'voices');
+        assert.ok(lintSchema(schema).some((e) => /display name: use its id "voices"/.test(e.message)));
+    }
+    // The D11 annotations still refuse: they decide where a value comes from and how it is guarded.
+    await assert.rejects(createConfigStore({ db, service: 'chat', namespace: 'chat.badenv', schema: { type: 'object', properties: { k: { type: 'string', 'x-env': 'lower-case' } } }, log: false }), /x-env must be an env name/);
+    await assert.rejects(createConfigStore({ db, service: 'chat', namespace: 'chat.baddanger', schema: { type: 'object', properties: { k: { type: 'string', 'x-danger': 'yes' } } }, log: false }), /x-danger must be true or false/);
 
     // ── A good schema: the annotations reach the summary; a secret property loses its example and labels ──
     const store = await createConfigStore({ db, service: 'chat', namespace: 'chat.apps', schema: SCHEMA, classify, keks: KEKS, log });
