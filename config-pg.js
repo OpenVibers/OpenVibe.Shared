@@ -806,6 +806,11 @@ async function createPgConfigStore(opts = {}) {
             for (const [k, p] of Object.entries(pins)) values[k] = clone(p.value);
             const classification = classesFor(values, current ? current.classification : {});
             const shown = redact(values, classification);
+            // Every property the schema names is classified too, set or not (4.125.0): a form then knows a key is a
+            // secret before anyone has entered it, and offers the write-only route instead of a plain field.
+            if (schema && isPlainObject(schema.properties)) {
+                for (const k of Object.keys(schema.properties)) if (!has(classification, k)) classification[k] = classOf(k, undefined);
+            }
             const secrets = {};
             for (const k of Object.keys(classification)) {
                 if (classification[k] !== 'secret' || !has(values, k)) continue;

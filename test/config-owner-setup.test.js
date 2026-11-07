@@ -77,6 +77,9 @@ const classify = (k) => (/_(token|secret)$/.test(k) ? 'secret' : undefined);
     // ── A good schema: the annotations reach the summary; a secret property loses its example and labels ──
     const store = await createConfigStore({ db, service: 'chat', namespace: 'chat.apps', schema: SCHEMA, classify, keks: KEKS, log });
     let summary = await store.summary();
+    assert.strictEqual(summary.values.telegram_bot_token, undefined, 'nothing is set yet');
+    assert.strictEqual(summary.classification.telegram_bot_token, 'secret', 'an unset secret is classified, so a form offers the write-only route');
+    assert.strictEqual(summary.classification.slack_client_id, 'internal', 'every schema property is classified');
     const props = summary.schema.properties;
     assert.deepStrictEqual(props.telegram_bot_token['x-owner-input'], SCHEMA.properties.telegram_bot_token['x-owner-input'], 'x-owner-input passes through');
     assert.strictEqual(props.telegram_bot_token['x-required-for'], 'Agents in Telegram');
