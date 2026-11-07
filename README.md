@@ -1122,5 +1122,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 
 <!-- versions:start -->
 - openvibe-contracts: v0.289.1
-- openvibe-sdk: v0.92.0
+- openvibe-sdk: v0.93.0
 <!-- versions:end -->

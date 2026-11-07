@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.289.1 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.92.0",
+  "sdk": "openvibe-sdk v0.93.0",
   "features": [
     "the OpenVibe Frame: navbar, footer, panels, account switcher, notification UI with realtime",
     "the launcher beside the brand lists every site of the network, in groups; Ask Actor and the Vibes chip in the account menu",
@@ -31,5 +31,5 @@
     "openvibe-shared/config accepts x-unit seconds for an integer owner setting, so an owner form can label the input in seconds",
     "a navbar link can be the site's one featured piece (featured: true): a quiet accent pill with its glyph, first in the phone's menu (4.117.0)"
   ],
-  "updated": "2026-11-06"
+  "updated": "2026-11-07"
 }
