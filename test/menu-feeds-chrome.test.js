@@ -17,7 +17,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
     process.exit(0);
 }
 
-const card = (site, id, title, n) => ({ id, site, title, kind: 'rows', items: Array.from({ length: n }, (_, i) => ({ title: `${title} ${i + 1}`, url: `https://openvibe.${site === 'media-hub' ? 'video' : site}/x/${i}`, meta: `${i + 1} things` })) });
+const card = (site, id, title, n) => ({ id, site, title, kind: 'rows', items: Array.from({ length: n }, (_, i) => ({ title: `${title} ${i + 1}`, url: `https://openvibe.${site === 'media-hub' ? 'video' : site}/x/${i}`, meta: `${i + 1} things`, ...(site === 'media-hub' && i < 2 ? { image: { src: `https://openvibe.video/t/${i}.jpg` } } : {}) })) });
 const FRAME = { nav: [{ id: 'live', name: 'Live', url: 'https://openvibe.live/', icon: 'live', group: 'watch' }], groups: [{ id: 'watch', name: 'Watch' }], soon: [], footer: {},
     cards: [card('media-hub', 'trending', 'Trending', 3), card('games', 'new-worlds', 'New worlds', 2), card('news', 'top', 'Top stories', 4), card('today', 'today', 'Today', 2), card('bad', 'empty', 'Nothing', 0)] };
 const PAGE_IN = (saved) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Feeds</title><link rel="icon" href="data:,">
@@ -65,6 +65,10 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`), 'the menu opened');
         await wait(150);
         assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds'], 'by default, the Network\'s first two');
+        // 4.139.0: a row with a picture has no site icon beside it; in its group a row without one carries the icon in a
+        // picture-sized tile, so the titles line up. A group with no pictures keeps plain icons.
+        const looks = await p.evaluate(`[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="net:"]')].map((g) => [...document.querySelectorAll('.ovs-list li.ovs-item')].filter((li) => li.getAttribute('data-sec') === g.getAttribute('data-sec')).map((li) => { const a = li.firstElementChild; const first = a && a.firstElementChild; return first ? (first.tagName === 'IMG' ? 'img' : first.classList.contains('ovs-thumb--ico') ? 'tile' : first.classList.contains('ovs-ic') ? 'icon' : first.className) : '?'; }))`);
+        assert.deepStrictEqual(looks, [['img', 'img', 'tile'], ['icon', 'icon']], 'pictures replace icons; titles line up');
         const fold = await p.evaluate(`(document.querySelector('[data-ovs-fold="feeds"]') || {}).textContent`);
         assert.strictEqual(fold, 'Choose your feeds (4)', 'every card with entries can be chosen; the empty one is not offered');
 

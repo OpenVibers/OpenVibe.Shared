@@ -163,12 +163,13 @@ const server = http.createServer((req, res) => {
             ], more: { label: 'Watch more', url: 'https://openvibe.video/' } },
         ] } }); 1`);
         await wait(300);
-        v = await p.evaluate(`(() => { const imgs = [...document.querySelectorAll('.ovs-thumb')]; const row = imgs[0] && imgs[0].closest('.ovs-item');
-            return { count: imgs.length, attrs: imgs[0] && ['src', 'width', 'height', 'loading', 'decoding', 'alt'].map((k) => imgs[0].getAttribute(k)),
+        v = await p.evaluate(`(() => { const imgs = [...document.querySelectorAll('img.ovs-thumb')]; const tiles = document.querySelectorAll('.ovs-thumb--ico').length; const row = imgs[0] && imgs[0].closest('.ovs-item');
+            return { count: imgs.length, tiles, attrs: imgs[0] && ['src', 'width', 'height', 'loading', 'decoding', 'alt'].map((k) => imgs[0].getAttribute(k)),
                 href: row && row.querySelector('a').getAttribute('href'), title: row && row.querySelector('.ovs-title').textContent,
                 beforeTitle: !!(imgs[0] && imgs[0].nextElementSibling && imgs[0].nextElementSibling.classList.contains('ovs-main')) }; })()`);
         assert.strictEqual(v.count, 1, 'only the https picture is drawn');
-        assert.deepStrictEqual(v.attrs, ['https://openvibe.media/t/1.jpg?w=640', '64', '36', 'lazy', 'async', ''], 'a 64x36 lazy thumbnail with empty alt');
+        assert.ok(v.tiles >= 1, 'the rows without a picture in that group keep their icon in a picture-sized tile (4.139.0)');
+        assert.deepStrictEqual(v.attrs, ['https://openvibe.media/t/1.jpg?w=640', '72', '40', 'lazy', 'async', ''], 'a 72x40 lazy thumbnail with empty alt (4.139.0)');
         assert.deepStrictEqual([v.href, v.title, v.beforeTitle], ['https://openvibe.video/v/1', 'A walk', true], 'the same row, picture before its title');
         await p.evaluate('OpenVibeSearch.close(); 1');
 
