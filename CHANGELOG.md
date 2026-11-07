@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.124.0 — 2026-11-07
+
+- **The Dock's agent view gets the four controls** (Agent Streams S5, Co-pilot): Pause and Resume, Curtain now, Mute and Unmute, and End, each sent through Codes to Live. The owner's own view may always resume; Live still refuses a moderator resuming the owner's pause. The line says "Paused by @name" when someone else paused the stream.
+
 ## 4.123.0 — 2026-11-06
 
 - **The "not on the list" gate from markup**: `<div data-ov-share-gate data-kind data-id data-signed-in-as data-sign-in-url>` is started by `ov-share.js` when it loads (and by `OVShare.startGates()` for markup added later), once per element. Sites no longer write an inline script for it: an inline script needs a CSP nonce on most sites, and a value written into one with an HTML-escaping template turns its quotes into `&quot;` and breaks the script, so the gate never drew. The values are plain attributes, escaped like any other.
