@@ -134,6 +134,20 @@ P.enhanceAll(document);
 assert.ok(later.parentNode.classList.contains('ov-player'));
 assert.strictEqual(later.parentNode.querySelector('.ov-player-ad').hidden, true, 'no descriptions track, no AD button');
 
+// Remembered per person: a player created later applies the stored choice to its own descriptions track.
+{
+    store['ov-player-descriptions'] = 'on';
+    const remembered = document.createElement('video');
+    remembered.setAttribute('data-ov-player', '');
+    remembered.setAttribute('controls', '');
+    const track = { kind: 'descriptions', mode: 'hidden', cues: [{ text: 'A cat jumps onto the table.' }], activeCues: [], readyState: 2, addEventListener() {} };
+    Object.defineProperty(remembered, 'textTracks', { value: Object.assign([track], { addEventListener() {} }) });
+    document.body.appendChild(remembered);
+    P.enhance(remembered);
+    assert.strictEqual(track.mode, 'showing', 'a stored on turns the new video\'s descriptions on');
+    assert.strictEqual(remembered.parentNode.querySelector('.ov-player-ad').getAttribute('aria-pressed'), 'true');
+}
+
 // The stylesheet: the theme's accent, the idle state, and the large button only before play or at the end.
 assert.match(css, /--ovp-accent: var\(--accent, #3b82f6\);/);
 assert.match(css, /\.ov-player\.is-idle \.ov-player-bar, \.ov-player\.is-idle \.ov-player-bar > \* \{ opacity: 0; pointer-events: none; \}/);
