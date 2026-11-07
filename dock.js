@@ -454,9 +454,8 @@
             return;
         }
         if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
-        // The Agent panel's own timeline refreshes on its own clock, but the panel is opened on a task
-        // (o.task): it reads the step at once, so the person lands on the right one.
-        if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (id === 'agent' && mounts[id + 'Timeline'] && mounts[id + 'Timeline'].refresh) mounts[id + 'Timeline'].refresh(); return; }
+        // The Agent panel reads the step.
+        if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (mounts[id + 'Timeline']) mounts[id + 'Timeline'].refresh(); return; }
         mounts[id] = { refresh: null };
         panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
         if (id === 'agent') {
