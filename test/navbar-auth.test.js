@@ -159,7 +159,8 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.strictEqual(user.username, 'vibe');
         assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-avatar'), 'renders the avatar chip');
         assert.ok(!navbar.getElement().innerHTML.includes('openvibe-navbar-login'), 'no Sign In button');
-        assert.strictEqual(calls.length, 1, 'exactly one auth call');
+        // The balances and the unread count (4.130.0, on for every signed-in page) are not auth calls.
+        assert.strictEqual(calls.filter((c) => /\/api\/auth\//.test(c.url)).length, 1, 'exactly one auth call');
     }
 
     // ── 5b. An openvibe.media object avatar is asked for in the chip's size, as WebP (Media's /o/:id?w=&fmt=) ─
@@ -370,7 +371,7 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         });
         navbar.init({ service: 'network', token: 'whatever', user: USER });
         await new Promise((r) => setImmediate(r));
-        assert.strictEqual(calls.length, 0, 'pages that pass a user keep full control');
+        assert.strictEqual(calls.filter((c) => /\/api\/auth\//.test(c.url)).length, 0, 'pages that pass a user keep full control (no auth traffic; the balances and unread count are not auth)');
         assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-avatar'));
     }
 
