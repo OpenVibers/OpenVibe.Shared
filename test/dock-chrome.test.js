@@ -95,13 +95,15 @@ const server = http.createServer((req, res) => {
             res.writeHead(200, { 'content-type': 'image/jpeg' });
             return res.end(JPEG);
         }
-        const ctl = /^\/api\/v1\/me\/agent-view\/(curtain|end)$/.exec(u.pathname);
+        const ctl = /^\/api\/v1\/me\/agent-view\/(pause|curtain|mute|end)$/.exec(u.pathname);
         if (ctl && req.method === 'POST') {
             assert.strictEqual(req.headers.authorization, 'Bearer tok_user', `${ctl[1]} is pressed with the person's own token`);
             controls.push(ctl[1]);
-            agentView = ctl[1] === 'curtain'
-                ? { ...agentView, curtain: { up: true } }
-                : { ...agentView, state: 'ended', embed_url: null, last_frame_url: '/api/v1/me/agent-view/frame' };
+            const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+            agentView = ctl[1] === 'pause' ? { ...agentView, paused: !!body.paused, paused_by: body.paused ? 'ada' : null }
+                : ctl[1] === 'curtain' ? { ...agentView, curtain: { up: true } }
+                : ctl[1] === 'mute' ? { ...agentView, voice_muted: !!body.muted }
+                : { ...agentView, state: 'ended', paused: false, paused_by: null, embed_url: null, last_frame_url: '/api/v1/me/agent-view/frame' };
             return json(200, { agent: agentView });
         }
         const m = /^\/api\/v1\/me\/actions\/(\w+)\/(\w+)\/(approve|decline)$/.exec(u.pathname);
@@ -309,18 +311,23 @@ async function drag(p, from, to) {
             assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda-line').textContent"), 'Fix the flaky upload test', 'the task, one line');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Live · 2 watching · worked 12 min');
-            assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovda-acts button')].map((b) => b.dataset.act)"), ['curtain', 'end'], 'the owner\'s two buttons');
+            assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovda-acts button')].map((b) => b.dataset.act)"), ['pause', 'curtain', 'mute', 'end'], 'the owner\'s four controls (S5)');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), true, 'the view is shown above the list');
             // Curtain now: Live is asked, and the line says so.
             await p.evaluate("document.querySelector('.ovda-acts button[data-act=curtain]').click()");
             await until(p, "document.querySelector('.ovda-meta').textContent.includes('Private screen')", 'the curtain in the line');
             assert.deepStrictEqual(controls, ['curtain'], 'Curtain now reached Codes, which puts it to Live');
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovda-acts button[data-act=curtain]')"), false, 'no Curtain now while the curtain is up');
+            // S5: Pause and Mute reach Codes, which puts them to Live; the line says whose pause it is.
+            await p.evaluate("document.querySelector('.ovda-acts button[data-act=pause]').click()");
+            await until(p, "document.querySelector('.ovda-acts button[data-act=pause]').textContent.includes('Resume')", 'the pause in the button');
+            await p.evaluate("document.querySelector('.ovda-acts button[data-act=mute]').click()");
+            await until(p, "document.querySelector('.ovda-acts button[data-act=mute]').textContent.includes('Unmute')", 'the mute in the button');
             // End: the stream becomes the last frame, and the list is still there under it.
             await p.evaluate("document.querySelector('.ovda-acts button[data-act=end]').click()");
             const stillSrc = await until(p, "document.querySelector('.ovda img') && document.querySelector('.ovda img').getAttribute('src')", 'the still after End');
             assert.ok(stillSrc.startsWith('blob:'), 'the still is read with the token, never a bare <img> URL');
-            assert.deepStrictEqual(controls, ['curtain', 'end'], 'End reached Codes, which puts it to Live');
+            assert.deepStrictEqual(controls, ['curtain', 'pause', 'mute', 'end'], 'Pause, Mute and End reached Codes, which puts them to Live');
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovda iframe')"), false, 'no player once it has ended');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Ended · worked 12 min');
             assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovac-item').length"), 3, 'the agents list is untouched under the stream');

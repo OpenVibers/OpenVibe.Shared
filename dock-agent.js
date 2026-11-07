@@ -5,7 +5,9 @@
 // tab opens:
 //   OpenVibeDockAgent.mount(container, { token, base, active })  → { refresh(), destroy() }
 //
-// `base` is OpenVibe.Codes' API (GET /api/v1/me/agent-view, the same POST for Curtain now and End, and the frame).
+// `base` is OpenVibe.Codes' API (GET /api/v1/me/agent-view, the same POST for pause, Curtain now, mute and End, and
+// the frame). Agent Streams S5 adds the four controls: a moderator cannot resume the owner's pause on Live, and the
+// Dock is the owner's own view, so it may always resume.
 // Codes mints the view ticket server-side with the person's own token — an iframe on another site has no Live cookie —
 // so the frame it answers is already Live's /embed/agent/<ags_id>?vt=wvt_…: the picture, the "AI agent" label, the
 // curtain state and the viewer count. The embed renews its own ticket while it plays.
@@ -23,6 +25,10 @@
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const G = {
         eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/>',
+        pause: '<rect x="7" y="5" width="3.5" height="14" rx="1"/><rect x="13.5" y="5" width="3.5" height="14" rx="1"/>',
+        play: '<path d="M8 5.5v13l10-6.5z"/>',
+        mute: '<path d="M4 9.5h4L13 5v14l-5-4.5H4z"/><path d="M17 9l4 4m0-4l-4 4"/>',
+        sound: '<path d="M4 9.5h4L13 5v14l-5-4.5H4z"/><path d="M17 9.5a4 4 0 0 1 0 5"/>',
         stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/>',
         open: '<path d="M14 4h6v6M20 4l-9 9M19 14v5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H10"/>',
     };
@@ -89,7 +95,7 @@
             const base = String(o.base || 'https://openvibe.codes').replace(/\/+$/, '');
             const t = typeof o.token === 'function' ? await o.token() : o.token;
             const headers = { accept: 'application/json', ...(init.json ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
-            const r = await fetch(base + path, { ...init, headers, credentials: 'omit', body: init.json ? '{}' : undefined });
+            const r = await fetch(base + path, { ...init, headers, credentials: 'omit', body: init.json ? JSON.stringify(init.body || {}) : undefined });
             const b = await r.json().catch(() => ({}));
             if (!r.ok) throw Object.assign(new Error(b.detail || `HTTP ${r.status}`), { status: r.status });
             return b;
@@ -156,12 +162,21 @@
             meta.textContent = '';
             const bits = [live ? 'Live' : ended ? 'Ended' : 'Waiting for the desk'];
             if (live && agent.viewers > 0) bits.push(`${agent.viewers} watching`);
+            if (agent.paused) bits.push(agent.paused_by ? `Paused by @${agent.paused_by}` : 'Paused');
             if (live && agent.curtain && agent.curtain.up) bits.push('Private screen');
             bits.push(`worked ${mins(agent.worked_seconds)}`);
             meta.textContent = bits.join(' · ');
 
-            // The owner's buttons.
+            // S5: the four controls, for the owner (the Dock is their own view, so resume is always theirs).
             acts.innerHTML = '';
+            if (!ended) {
+                const pause = h('button', null);
+                pause.type = 'button';
+                pause.dataset.act = 'pause';
+                pause.innerHTML = `${svg(agent.paused ? G.play : G.pause)}${agent.paused ? 'Resume' : 'Pause'}`;
+                pause.title = agent.paused && agent.paused_by ? `Paused by @${agent.paused_by}` : 'Pause the agent at the next safe point';
+                acts.append(pause);
+            }
             if (live && !(agent.curtain && agent.curtain.up)) {
                 const b = h('button', null);
                 b.type = 'button';
@@ -169,6 +184,14 @@
                 b.innerHTML = `${svg(G.eye)}Curtain now`;
                 b.title = 'Hide the screen now; your desk lifts it when it is clear';
                 acts.append(b);
+            }
+            if (!ended) {
+                const mute = h('button', null);
+                mute.type = 'button';
+                mute.dataset.act = 'mute';
+                mute.innerHTML = `${svg(agent.voice_muted ? G.sound : G.mute)}${agent.voice_muted ? 'Unmute' : 'Mute'}`;
+                mute.title = agent.voice_muted ? 'Let the agent speak again' : 'Mute the agent\'s voice';
+                acts.append(mute);
             }
             if (!ended) {
                 const b = h('button', null);
@@ -212,11 +235,11 @@
             if (!gone && agent && agent.state !== 'ended') timer = setTimeout(refresh, POLL_MS);
         }
 
-        async function control(what, btn) {
+        async function control(what, btn, body = {}) {
             if (!btn || btn.disabled) return;
             btn.disabled = true;
             try {
-                const doc = await api(`/api/v1/me/agent-view/${what}`, { method: 'POST', json: true });
+                const doc = await api(`/api/v1/me/agent-view/${what}`, { method: 'POST', json: true, body });
                 agent = doc && doc.agent ? doc.agent : agent;
                 if (what === 'end') frameUrl = '';
                 paint();
@@ -231,7 +254,9 @@
         acts.addEventListener('click', (e) => {
             const b = e.target.closest('button[data-act]');
             if (!b) return;
-            if (b.dataset.act === 'curtain') control('curtain', b);
+            if (b.dataset.act === 'pause') control('pause', b, { paused: !(agent && agent.paused) });
+            else if (b.dataset.act === 'curtain') control('curtain', b);
+            else if (b.dataset.act === 'mute') control('mute', b, { muted: !(agent && agent.voice_muted) });
             else if (b.dataset.act === 'end') control('end', b);
         });
 
