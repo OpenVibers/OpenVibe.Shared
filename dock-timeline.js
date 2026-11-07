@@ -1,11 +1,15 @@
 // ═══════════════════════════════════════════════════════════════
 // OpenVibe — the Dock's Agent panel (design 2026-11-07: one agent, one timeline behind the Dock), Shared 4.126.0
 //
-//   OpenVibeDockTimeline.mount(container, { token, base, active })  → { refresh(), destroy() }
+//   OpenVibeDockTimeline.mount(container, { token, base, active, focus })  → { refresh(), destroy() }
 //
+// `token` is the person's own Network token: a string, or the function the navbar hands over (which
+// resolves it when it is needed).
 // `base` is OpenVibe.Actor's API: GET /api/v1/agent/timeline (the person's own steps, newest first, with the cursor
 // and the mode and needs-you filters), POST /api/v1/agent/approvals/:product/:id/decide (an approval is answered in
 // the mode that owns it) and POST /api/v1/agent/kill-switch (stop what is open and pause the agent).
+// `focus` is the id of the step to point at (the task id a site opened the Dock with): the entry that
+// carries it is marked and brought into view.
 //
 // The panel is what the person reads:
 //   Now       one card for what the agent is doing this moment: the mode's word, the step in plain words, how long,
@@ -90,6 +94,7 @@
             '.ovdt-chips{display:flex;gap:8px;overflow-x:auto;margin:4px -12px 0;padding:6px 12px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}',
             '.ovdt-chips::-webkit-scrollbar{display:none}',
             '.ovdt-fold{width:100%;text-align:left;min-height:44px;margin:0 0 8px;padding:0 14px;border-radius:12px;border:1px dashed var(--border,rgba(255,255,255,.16));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-weight:650;cursor:pointer}',
+            '.ovdt-card.ovdt-focus{border-color:color-mix(in srgb,var(--accent,#3b82f6) 55%,transparent)}',
             '.ovdt-empty{color:var(--text-muted,#93a0b4);padding:4px 2px 6px}',
             '.ovdt-card.ovdt-empty{padding:12px 14px}',
             '.ovdt-link{color:color-mix(in srgb,var(--accent,#3b82f6) 72%,var(--text-primary,#ececf1));font-weight:650;text-decoration:none}',
@@ -103,11 +108,19 @@
         const doc = container.ownerDocument || document;
         styles(doc);
         const base = String(opts.base || 'https://openvibe.actor').replace(/\/+$/, '');
-        const token = opts.token;
+        const rawToken = opts.token;
         const active = typeof opts.active === 'function' ? opts.active : () => true;
+        const focus = typeof opts.focus === 'function' ? opts.focus : () => opts.focus || null;
         const filters = new Set();
         let timer = null;
         let destroyed = false;
+
+        // The navbar hands the Dock a function (the token may change when the person signs in again),
+        // so it is resolved when a call is made, never read once at mount.
+        async function bearer() {
+            const t = typeof rawToken === 'function' ? await rawToken() : rawToken;
+            return t ? 'Bearer ' + t : null;
+        }
 
         const wrap = el(doc, 'div', 'ovdt');
         const nowHead = el(doc, 'h3', null, 'Now');
@@ -120,7 +133,8 @@
         container.appendChild(wrap);
 
         async function api(path, options = {}) {
-            const res = await fetch(base + path, Object.assign({ headers: { Accept: 'application/json', Authorization: 'Bearer ' + token } }, options));
+            const auth = await bearer();
+            const res = await fetch(base + path, Object.assign({ headers: { Accept: 'application/json', ...(auth ? { Authorization: auth } : {}) } }, options));
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error((body && (body.detail || body.title)) || ('HTTP ' + res.status));
             return body;
@@ -165,7 +179,8 @@
             stop.type = 'button';
             stop.addEventListener('click', async () => {
                 stop.disabled = true;
-                try { await api('/api/v1/agent/kill-switch', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ action: 'stop' }) }); } catch (err) { /* the panel refreshes either way */ }
+                const auth = await bearer();
+                try { await api('/api/v1/agent/kill-switch', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth ? { Authorization: auth } : {}) }, body: JSON.stringify({ action: 'stop' }) }); } catch (err) { /* the panel refreshes either way */ }
                 refresh();
             });
             buttons.appendChild(stop);
@@ -191,10 +206,11 @@
                     b.addEventListener('click', async () => {
                         b.disabled = true;
                         const approval = item.approval || {};
+                        const auth = await bearer();
                         try {
                             await api('/api/v1/agent/approvals/' + encodeURIComponent(approval.product || item.product) + '/' + encodeURIComponent(approval.id) + '/decide', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                                headers: { 'Content-Type': 'application/json', ...(auth ? { Authorization: auth } : {}) },
                                 body: JSON.stringify({ decision }),
                             });
                         } catch (err) { /* the panel refreshes either way */ }
@@ -229,7 +245,24 @@
                 a.target = '_blank';
                 card.appendChild(a);
             }
+            // The step a site opened the Dock at (its task id): it is marked, so the person sees where they landed.
+            const wanted = focusId();
+            if (wanted && (entry.id === wanted || entry.ref === wanted)) card.classList.add('ovdt-focus');
             return card;
+        }
+
+        /** The step to point at: the id (a task id) a site opened the Dock with, if it is still there. */
+        function focusId() {
+            try { return String(focus() || '').trim() || null; } catch (err) { return null; }
+        }
+
+        /** Bring the focused step into view (the Dock's panel is short; the step may be below the fold). */
+        function scrollToFocus() {
+            const wanted = focusId();
+            if (!wanted) return;
+            const node = list.querySelector('.ovdt-focus');
+            if (!node || !node.scrollIntoView) return;
+            try { node.scrollIntoView({ block: 'nearest' }); } catch (err) { node.scrollIntoView(); }
         }
 
         function renderList(entries) {
@@ -322,6 +355,7 @@
             renderNeeds(data.needs_you || []);
             renderChips(data.counts || {});
             renderList(data.entries || []);
+            scrollToFocus();
             writeUrl();
         }
 

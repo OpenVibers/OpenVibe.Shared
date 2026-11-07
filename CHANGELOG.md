@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.134.0 — 2026-11-07
+
+- **Fixed: the Dock's Agent panel could not read the timeline.** The navbar hands the Dock the person's token as a function (it may change when they sign in again); the panel used it as a string, so every call went out as `Bearer function…` and the panel said the agent was not reachable. The token is now resolved when a call is made.
+- The Dock can open at a step: `OpenVibeNavbar.openDock('agent', { task: 'tsk_…' })` marks that entry in the timeline and brings it into view, so a site can send the person to the exact task it started for them.
+
 ## 4.133.0 — 2026-11-07
 
 - The menu's network cards draw an entry's picture when the site sent one (`frame.menu-card@1`'s optional item `image`, openvibe-contracts 0.320.0): a 64×36 rounded thumbnail, `object-fit: cover`, `loading="lazy"`, `decoding="async"`, empty alt, before the title and after the site's icon. The `src` is checked again in the menu (https only); a card or entry without a picture renders exactly as before.

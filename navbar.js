@@ -1235,8 +1235,11 @@
         if (document.getElementById('ov-presence-loader')) return;
         const sc = document.createElement('script'); sc.id = 'ov-presence-loader'; sc.src = sibling('presence.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
     }
-    /** Open the Dock on a tab: 'agent' | 'activity'. */
-    function openDock(tab) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open({ tab }); }); }
+    /**
+     * Open the Dock on a tab: 'agent' | 'activity'. opts may name the step to point at (opts.task): the
+     * Agent panel marks that entry and brings it into view, so a site can open the Dock at its own task.
+     */
+    function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }
 
     /** Custom sections for the user menu: [{ label, items: [{ label, icon, href, id, elId, hidden, danger, value, onClick }] }]. */
     function sectionsHTML(sections) {
@@ -2396,8 +2399,12 @@
          *  settles; a page that draws such a box later may call this). Returns how many it marked. */
         focusScrollers() { try { return focusScrollers(); } catch { return 0; } },
 
-        /** Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only. */
-        openDock(tab) { if (_config.token && _config.dock !== false) openDock(tab); },
+        /**
+         * Open the Dock (your agents and activity), on a tab: 'agent' | 'activity'. Signed-in people only.
+         * opts may name the step to point at (opts.task): the Agent panel marks that entry and brings it
+         * into view, so a site can open the Dock at its own task.
+         */
+        openDock(tab, opts) { if (_config.token && _config.dock !== false) openDock(tab, opts); },
 
         /** Get the bell mount point for OpenVibeNotifications. */
         getBellMount() {
