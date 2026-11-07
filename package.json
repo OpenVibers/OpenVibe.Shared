@@ -50,6 +50,7 @@
     "./dock-vibe": "./dock-vibe.js",
     "./dock-timer": "./dock-timer.js",
     "./dock-agent": "./dock-agent.js",
+    "./dock-timeline": "./dock-timeline.js",
     "./notification-ui": "./notification-ui.js",
     "./notifications": "./notifications.js",
     "./openvibe-sw": "./openvibe-sw.js",
@@ -149,6 +150,6 @@
     "@electric-sql/pglite": "^0.5.8",
     "express": "^4.22.3",
     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.312.0",
-    "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.93.0"
+    "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.94.0"
   }
 }

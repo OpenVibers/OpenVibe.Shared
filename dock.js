@@ -65,6 +65,8 @@
     const sibling = (name) => (typeof o.sibling === 'function' ? o.sibling(name) : `https://openvibe.network/shared/${name}`);
     // K-D3: the agent stream comes from OpenVibe.Codes' API (it mints the view ticket with the person's own token).
     const agentBase = () => String(o.agentBase || 'https://openvibe.codes').replace(/\/+$/, '');
+    // The one timeline behind the Dock (design 2026-11-07): OpenVibe.Actor keeps it.
+    const actorBase = () => String(o.actorBase || 'https://openvibe.actor').replace(/\/+$/, '');
 
     async function call(path, init = {}) {
         const base = String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '');
@@ -195,7 +197,13 @@
             .ovdk[data-corner="top-left"] .ovdk-size::after { top: auto; bottom: 9px; left: auto; right: 9px; border: 0; border-bottom: 2px solid var(--text-muted, #8b8b96); border-right: 2px solid var(--text-muted, #8b8b96); border-radius: 0 0 3px 0; }
             @media (pointer: coarse) { .ovdk-acts button { width: 44px; height: 44px; } .ovdk-tabs button { height: 40px; } }
             .ovdk { container-type: inline-size; }
-            @container (max-width: 440px) { .ovdk-tabs button { padding: 0 8px; gap: 6px; font-size: 13px; } .ovdk-tabs button svg { display: none; } .ovdk-acts { gap: 0; } .ovdk-acts button { width: 34px; } }
+            @container (max-width: 440px) { .ovdk-tabs button { padding: 0 8px; gap: 6px; font-size: 13px; } .ovdk-acts { gap: 0; } .ovdk-acts button { width: 34px; } }
+            /* A narrow Dock (Opus, 11-07: "Activity" was cut off at the strip's edge): the open tab keeps its icon and name,
+               the others show their icon and count only, their names kept for screen readers. All four always fit. */
+            @container (max-width: 480px) {
+                .ovdk-tabs button:not([aria-selected="true"]) { padding: 0 10px; gap: 4px; }
+                .ovdk-tabs button:not([aria-selected="true"]) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+            }
             .ovdk-muted { color: var(--text-muted, #8b8b96); }
             .ovdk-i { display: inline-grid; place-items: center; }
             .ovdk-i svg { width: 18px; height: 18px; }
@@ -244,6 +252,10 @@
                 .ovdk-head::before { content: ''; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--border-light, var(--border, rgba(255,255,255,.22))); }
                 .ovdk-size { display: none; }
                 .ovdk-tabs { flex: 1; } .ovdk-tabs button { flex: 1; justify-content: center; }
+                /* A thumb, not a cursor: every control on the sheet is 44 px (design 2026-11-07 §1, Phone). */
+                .ovdk-tabs button { height: 44px; }
+                .ovdk-acts button { width: 44px; height: 44px; }
+                .ovdk-foot a, .ovdk-foot button { min-height: 44px; }
             }
             html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }
             @media (prefers-reduced-motion: reduce) { .ovdk.is-in, .ovdk-wait span { animation: none; } }
@@ -449,7 +461,12 @@
             const ok = await load('action-center.js', () => !!(root.OpenVibeActionCenter && root.OpenVibeActionCenter.mount));
             if (!ok) return failed(panel, id);
             // K-D3: the person's own agent stream above the list; it hides itself when there is none.
-            panel.innerHTML = `<div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            panel.innerHTML = `<div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
+            // phone Now and Needs you are on screen before anything else.
+            load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
+                if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent' });
+            });
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
                 if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.firstChild, { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
             });
