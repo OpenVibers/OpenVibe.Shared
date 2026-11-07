@@ -26,6 +26,10 @@ assert.ok(panel.includes('placement'), 'the entry says where it ran and why');
 assert.ok(panel.includes('transition'), 'a mode change is a line of its own');
 assert.ok(panel.includes('cost_usd'), 'the cost is shown when there was one');
 assert.ok(panel.includes('entry.link'), 'the entry links to the step\'s own page');
+// One Computer (plan 2026-11-07): the step reads the same fields the task record carries, and Now can hand over.
+assert.ok(panel.includes('entry.computer'), 'a step names its Computer');
+assert.ok(panel.includes('now.computer'), 'Now names the Computer');
+assert.ok(panel.includes('/takeover') && panel.includes('/giveback'), 'the Dock calls the one take-over API');
 
 // The folds and the filters.
 assert.ok(panel.includes('Yesterday ('), 'earlier days fold with a count');
