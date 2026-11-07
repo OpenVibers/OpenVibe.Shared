@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.136.0 — 2026-11-07
+
+- **Releases reach phones at once.** The bar loaded the menu (`search.js`), the Dock, presence, panels, notifications,
+  history, the site switcher, the app bar, the release watcher, the icons and the sign-in client without a version.
+  - They went out as `max-age=300, stale-while-revalidate=86400`, so a phone could keep the old menu for up to a day
+    after a release. The owner still saw the menu without feeds hours after 4.135.0.
+  - Every one now loads by its content hash (`?v=`), which sites serve `immutable`: each release is new URLs, and no
+    edge or browser has an old copy to give.
+  - The Dock's add-ons (Vibe, the Action Center, the timeline, the agent view, the timer) and the notifications'
+    realtime file go the same way.
+  - `scripts/sibling-revs.js` writes all three tables. `test/sibling-revs.test.js` fails on any sibling loaded
+    without its hash.
+- **One menu button on a phone** (the owner, 11-07: "these buttons do the same shit"). Where the burger shows (860 px
+  and narrower, on a bar with page links), the orb that opened the same menu steps aside. A bar without page links
+  keeps its orb, its only way in.
+- **One Close.** On a phone the menu's in-box "Close" steps aside for the burger's ✕.
+- Budgets: navbar.js 43.5 KB brotli (43.2 with the hashes, which do not compress), dock.js 16.0 KB.
+
 ## 4.135.0 — 2026-11-07
 
 - **Ask your agent, from any page** (plan Z3; the owner, 11-07: "have your agent with you wherever you go"):

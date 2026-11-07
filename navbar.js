@@ -172,7 +172,7 @@
                 .openvibe-navbar-right.has-chips-all .ovnav-chip[data-chip-id] { display: none; }
                 .openvibe-navbar-right.has-chips-all .ovnav-chip--all { display: inline-flex; }
             }
-            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
+            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar:has(.ovnav-burger) .ovnav-orb { display: none; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
                in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 440px
@@ -513,7 +513,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '715972edd968', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '7d4affbb5093', 'ov-share.css': 'cbd18e6ce991' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '715972edd968', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '7d4affbb5093', 'ov-share.css': 'cbd18e6ce991', 'search.js': '08f0452e6a79', 'dock.js': '3d1810c6716f', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': '3ceb5266e7b8', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -742,7 +742,7 @@
             const rw = _config.releaseWatch;
             if (rw === false || root.OVRelease || document.querySelector('script[src*="release-watch.js"]')) return;
             if (rw && typeof rw === 'object' && !root.OVReleaseConfig) root.OVReleaseConfig = rw;
-            const sc = document.createElement('script'); sc.src = sibling('release-watch.js'); sc.async = true;
+            const sc = document.createElement('script'); sc.src = siblingV('release-watch.js'); sc.async = true;
             try { sc.fetchPriority = 'low'; } catch { /* */ }
             document.head.appendChild(sc);
         } catch { /* optional */ }
@@ -1002,7 +1002,7 @@
     function loadOvIcons(scope) {
         if (root.OpenVibeIcons) { if (scope && root.OpenVibeIcons.mount) root.OpenVibeIcons.mount(scope); return; }
         if (document.getElementById('ov-icons-loader')) return;
-        try { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = sibling('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
+        try { const sc = document.createElement('script'); sc.id = 'ov-icons-loader'; sc.src = siblingV('ov-icons.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ }
     }
     function queueIcons() {
         if (_iconsQueued || root.OpenVibeIcons) return;
@@ -1038,6 +1038,8 @@
     function bindLinks(nav, links) {
         const byId = new Map(flatLinks(links).filter(l => l.id).map(l => [l.id, l]));
         const drawer = nav.querySelector('#openvibe-drawer'), burger = nav.querySelector('#openvibe-burger');
+        // The menu's own Close is the burger's ✕ on a phone (search.js hides its in-box Close then).
+        try { document.documentElement.classList.toggle('ovnav-has-burger', !!burger); } catch { /* */ }
         const closeDrawer = () => { if (drawer) drawer.classList.remove('open'); if (burger) burger.setAttribute('aria-expanded', 'false'); };
         nav.addEventListener('click', (e) => {
             const a = e.target.closest && e.target.closest('a.ovnav-link, .ovnav-net'); if (!a || !nav.contains(a)) return;
@@ -1094,7 +1096,7 @@
         if (root.OpenVibePanels) return root.OpenVibePanels.register(opts);
         _panelQueue.push(opts);
         if (document.getElementById('ov-panels-loader')) return;
-        const sc = document.createElement('script'); sc.id = 'ov-panels-loader'; sc.src = sibling('panels.js'); sc.async = true;
+        const sc = document.createElement('script'); sc.id = 'ov-panels-loader'; sc.src = siblingV('panels.js'); sc.async = true;
         sc.onload = () => { while (_panelQueue.length) root.OpenVibePanels && root.OpenVibePanels.register(_panelQueue.shift()); };
         document.head.appendChild(sc);
     }
@@ -1206,7 +1208,7 @@
         };
         if (root.OpenVibeNotifications) return go();
         if (document.getElementById('ov-notify-loader')) return;
-        const sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = sibling('notification-ui.js'); sc.async = true; sc.onload = () => setTimeout(go, 0); document.head.appendChild(sc);
+        const sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = siblingV('notification-ui.js'); sc.async = true; sc.onload = () => setTimeout(go, 0); document.head.appendChild(sc);
     }
 
     // ── The Dock (Dock plan K-D1): your agents and activity at the screen's edge. dock.js draws its pill and the Dock;
@@ -1218,7 +1220,7 @@
     function loadDock(then) {
         if (root.OpenVibeDock) return then();
         let sc = document.getElementById('ov-dock-loader');
-        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-dock-loader'; sc.src = sibling('dock.js'); sc.async = true; document.head.appendChild(sc); }
+        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-dock-loader'; sc.src = siblingV('dock.js'); sc.async = true; document.head.appendChild(sc); }
         sc.addEventListener('load', () => setTimeout(() => { try { then(); } catch { /* */ } }, 0));
     }
     function mountDock(u) {
@@ -1233,7 +1235,7 @@
         const go = () => root.OpenVibePresence && root.OpenVibePresence.start({ token: () => _config.token, apiBase: dockBase(), user: u });
         if (root.OpenVibePresence) return go();
         if (document.getElementById('ov-presence-loader')) return;
-        const sc = document.createElement('script'); sc.id = 'ov-presence-loader'; sc.src = sibling('presence.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
+        const sc = document.createElement('script'); sc.id = 'ov-presence-loader'; sc.src = siblingV('presence.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
     }
     // The Dock on a tab ('agent' | 'activity'); opts.task marks that step and brings it into view.
     function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }
@@ -1627,7 +1629,7 @@
         if (root.OpenVibeSSO) return Promise.resolve(root.OpenVibeSSO);
         if (_ssoClientLoading) return _ssoClientLoading;
         _ssoClientLoading = new Promise((resolve) => {
-            const sc = document.createElement('script'); sc.async = true; sc.src = sibling('sso-client.js');
+            const sc = document.createElement('script'); sc.async = true; sc.src = siblingV('sso-client.js');
             sc.onload = () => resolve(root.OpenVibeSSO || null); sc.onerror = () => resolve(null);
             document.head.appendChild(sc);
         });
@@ -1706,7 +1708,7 @@
         if (H && typeof H.record === 'function') { H.record(rec, { token: _config.token, apiBase: _config.apiBase }); return; }
         if (!document.getElementById('ov-history-loader')) {
             const sc = document.createElement('script'); sc.id = 'ov-history-loader'; sc.async = true;
-            sc.src = sibling('history.js');
+            sc.src = siblingV('history.js');
             sc.onload = () => { try { root.OpenVibeHistory.record(rec, { token: _config.token, apiBase: _config.apiBase }); } catch { /* */ } };
             document.head.appendChild(sc);
         } else {
@@ -2098,7 +2100,7 @@
         if (_searchLoading) return;
         _searchLoading = true;
         if (orb) orb.classList.add('is-busy');
-        try { const sc = document.createElement('script'); sc.src = sibling('search.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _searchLoading = false; if (orb) orb.classList.remove('is-busy'); }; document.head.appendChild(sc); } catch { _searchLoading = false; }
+        try { const sc = document.createElement('script'); sc.src = siblingV('search.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _searchLoading = false; if (orb) orb.classList.remove('is-busy'); }; document.head.appendChild(sc); } catch { _searchLoading = false; }
     }
     const menuOpen = () => !!(typeof document !== 'undefined' && document.querySelector && document.querySelector('.ovs.is-open'));
 
@@ -2125,7 +2127,7 @@
         if (root.OpenVibeSiteSwitcher) return go();
         if (_switcherLoading) return;
         _switcherLoading = true;
-        try { const sc = document.createElement('script'); sc.src = sibling('site-switcher.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _switcherLoading = false; }; document.head.appendChild(sc); } catch { _switcherLoading = false; }
+        try { const sc = document.createElement('script'); sc.src = siblingV('site-switcher.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _switcherLoading = false; }; document.head.appendChild(sc); } catch { _switcherLoading = false; }
     }
     // A signed-in person's visit moves this site to the front of their Recent, at most once in 30 minutes, and never
     // under Global Privacy Control or Do Not Track (as the page-view beacon).
@@ -2175,7 +2177,7 @@
         if (ab) { ab.render({ config: _config, links: rawLinks(), activePage: _activePage, nav: _navEl, navIcon, escapeAttr, escapeHtml, flatLinks }); return; }
         if (!_config.appBar || _appBarLoading) return;
         _appBarLoading = true;
-        try { const sc = document.createElement('script'); sc.src = sibling('appbar.js'); sc.async = true; sc.onload = () => renderAppBar(); document.head.appendChild(sc); } catch { /* no bar */ }
+        try { const sc = document.createElement('script'); sc.src = siblingV('appbar.js'); sc.async = true; sc.onload = () => renderAppBar(); document.head.appendChild(sc); } catch { /* no bar */ }
     }
 
     // The bar's at-the-top state (ovnav-top, see injectStyles), on every render and scroll. One window listener pair for

@@ -1190,6 +1190,8 @@
     }
     function stopPolling() { if (_pollTimer) clearInterval(_pollTimer); _pollTimer = null; }
 
+    // notification-live.js's content hash (scripts/sibling-revs.js writes it), so a release gives it a new URL.
+    const NOTIFY_REV = { 'notification-live.js': 'cd2d64cc77d0' };
     // ── Realtime (notification-live.js) ─────────────────────
     function liveOpen() { return !!(_live && _live.state().state === 'open'); }
     /** One re-read for a burst of events (a go-live fan-out, a replay after a reconnect); a gap re-reads open lists too. */
@@ -1207,7 +1209,7 @@
     function liveSrc() {
         if (_config.liveSrc) return _config.liveSrc;
         const m = /^(https?:\/\/[^?#]*\/)notification-ui\.js(?:[?#]|$)/.exec(SELF_SRC);
-        return `${m ? m[1] : 'https://openvibe.network/shared/'}notification-live.js`;
+        return `${m ? m[1] : 'https://openvibe.network/shared/'}notification-live.js${NOTIFY_REV['notification-live.js'] ? `?v=${NOTIFY_REV['notification-live.js']}` : ''}`;
     }
     let _liveLoading = null;
     function loadLive() {
