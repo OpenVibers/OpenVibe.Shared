@@ -8,6 +8,12 @@
     never sent for them: they read it, change it and press Send.
   - Signed out, the navbar sends them to sign in.
   - New calls: `OpenVibeNavbar.askAgent(text)` and `OpenVibeDock.ask({ text })`.
+- **Your feeds follow you** (the menu's "Choose your feeds", 4.132.0):
+  - signed in, the choice is saved to Network (`PUT /api/v1/me/menu-feeds`, network.menu-feeds@1);
+  - it is read back on a new device the first time the menu opens there;
+  - a first choice made before signing in is sent up then;
+  - this device's copy paints at once and stands whenever Network does not answer, and the route is new, so until
+    Network ships it nothing changes.
 - **Every page opens its connection to openvibe.network early** (`seo.headTags()` adds
   `<link rel="preconnect" href="https://openvibe.network" crossorigin>`, except on the Network itself;
   `preconnect: false` turns it off). The phone-speed report of 11-07 found 102 of 108 pages asking openvibe.network for

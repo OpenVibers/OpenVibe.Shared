@@ -699,7 +699,32 @@
     const FEEDS_KEY = 'ovs-feeds', FEEDS_MAX = 4;
     const feedId = (c) => `${String(c.site || '').slice(0, 30)}:${String(c.id || '').slice(0, 30)}`;
     const feedPref = () => { try { const v = JSON.parse(localStorage.getItem(FEEDS_KEY) || 'null'); return v && Array.isArray(v.on) ? v.on.filter((x) => typeof x === 'string').slice(0, FEEDS_MAX) : null; } catch { return null; } };
-    const saveFeeds = (on) => { try { localStorage.setItem(FEEDS_KEY, JSON.stringify({ on: on.slice(0, FEEDS_MAX) })); } catch { /* private window */ } };
+    const saveFeedsLocal = (on) => { try { localStorage.setItem(FEEDS_KEY, JSON.stringify({ on: on.slice(0, FEEDS_MAX) })); } catch { /* private window */ } };
+    // The choice follows the person (4.134.0): Network keeps it (GET/PUT /api/v1/me/menu-feeds, network.menu-feeds@1);
+    // this device's copy paints at once and stands whenever Network does not answer.
+    let feedsSynced = false, feedsPut = 0;
+    const feedsUrl = () => `${ctx.apiBase || 'https://openvibe.network'}/api/v1/me/menu-feeds`;
+    const signedInCtx = () => !!(ctx.token && ctx.user && !ctx.user.is_anon);
+    function pushFeeds(on) {
+        if (!signedInCtx() || typeof fetch !== 'function') return;
+        clearTimeout(feedsPut);
+        feedsPut = setTimeout(() => { fetch(feedsUrl(), { method: 'PUT', headers: { Authorization: `Bearer ${ctx.token}`, 'Content-Type': 'application/json' }, credentials: 'omit', body: JSON.stringify({ on: on.slice(0, FEEDS_MAX) }) }).catch(() => {}); }, 800);
+    }
+    const saveFeeds = (on) => { saveFeedsLocal(on); pushFeeds(on); };
+    async function syncFeeds() {
+        if (feedsSynced || !signedInCtx() || typeof fetch !== 'function') return;
+        feedsSynced = true;
+        try {
+            const r = await fetch(feedsUrl(), { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' });
+            if (!r.ok) return;
+            const j = await r.json();
+            const local = feedPref();
+            if (Array.isArray(j.on)) {
+                const remote = j.on.filter((x) => typeof x === 'string').slice(0, FEEDS_MAX);
+                if (JSON.stringify(remote) !== JSON.stringify(local)) { saveFeedsLocal(remote); if (el && el.classList.contains('is-open') && !input.value) render(''); }
+            } else if (local) pushFeeds(local);
+        } catch { /* the device copy stands */ }
+    }
     /** Network's live line (GET /api/frame/pulse, kept 30 s): how many are live now, and who when the Frame sends it. */
     function loadPulse() {
         try { const c = JSON.parse(sessionStorage.getItem('ov_pulse') || 'null'); if (c && Date.now() - c.at < 30000) { pulseData = c.data; return Promise.resolve(c.data); } } catch { /* */ }
@@ -1063,6 +1088,7 @@
         // From the burger ('here'): this site's pages lead, all of them, the way the drawer had them.
         allOpen = tab === 'sites'; hereOpen = tab === 'here'; leadHere = tab === 'here'; discoverPick = null;
         drainCards();
+        syncFeeds();
         el.classList.add('is-open');
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.

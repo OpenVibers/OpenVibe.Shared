@@ -20,6 +20,18 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 const card = (site, id, title, n) => ({ id, site, title, kind: 'rows', items: Array.from({ length: n }, (_, i) => ({ title: `${title} ${i + 1}`, url: `https://openvibe.${site === 'media-hub' ? 'video' : site}/x/${i}`, meta: `${i + 1} things` })) });
 const FRAME = { nav: [{ id: 'live', name: 'Live', url: 'https://openvibe.live/', icon: 'live', group: 'watch' }], groups: [{ id: 'watch', name: 'Watch' }], soon: [], footer: {},
     cards: [card('media-hub', 'trending', 'Trending', 3), card('games', 'new-worlds', 'New worlds', 2), card('news', 'top', 'Top stories', 4), card('today', 'today', 'Today', 2), card('bad', 'empty', 'Nothing', 0)] };
+const PAGE_IN = (saved) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Feeds</title><link rel="icon" href="data:,">
+<script>
+  const realFetch = window.fetch; window.__puts = [];
+  window.fetch = (u, o) => { u = String(u);
+    if (u.startsWith('https://openvibe.network/api/frame?')) return Promise.resolve({ ok: true, json: async () => (${JSON.stringify(FRAME)}) });
+    if (u === 'https://openvibe.network/api/v1/me/menu-feeds') { if (o && o.method === 'PUT') { window.__puts.push(JSON.parse(o.body)); return Promise.resolve({ ok: true, json: async () => ({}) }); } return Promise.resolve({ ok: true, json: async () => (${JSON.stringify(saved)}) }); }
+    if (u.startsWith('https://')) return Promise.resolve({ ok: false, status: 404, json: async () => ({}) });
+    return realFetch(u, o); };
+</script>
+<script src="/shared/navbar.js" defer></script></head><body><div id="navbar-mount"></div>
+<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', auth: 'external', token: 'tok', user: { id: 7, username: 'maya' }, links: [{ label: 'Home', href: '/' }], countViews: false, notifications: false, dock: false, wallet: false, messages: false, presence: false }); });</script>
+</body></html>`;
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Feeds</title><link rel="icon" href="data:,">
 <script>
   const realFetch = window.fetch;
@@ -31,6 +43,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
+    if (u.pathname === '/in') { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE_IN({ on: ['news:top', 'today:today'] })); }
     const m = /^\/shared\/([a-z0-9-]+\.js)$/.exec(u.pathname);
     if (m && fs.existsSync(path.join(ROOT, m[1]))) { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, m[1]))); }
     res.writeHead(404); return res.end();
@@ -88,7 +101,21 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`));
         await wait(150);
         assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories'], 'your feeds, in your order');
-        console.log('menu-feeds-chrome: two by default, every card choosable, tick, reorder, four at most, kept on this device');
+        // Signed in on a new device: the person's saved feeds come from Network, and a change is saved back.
+        const ctx2 = await browser.newContext();
+        const q = await h.openPage(browser, ctx2, { width: 390, block: ['*openvibe.tools*', '*openvibe.media*', '*jsdelivr*'] });
+        await q.goto(`http://127.0.0.1:${server.address().port}/in`, { maxMs: 5000 });
+        await until(q, `!!localStorage.getItem('ov_frame_v2')`);
+        await q.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
+        assert.ok(await until(q, `!!document.querySelector('.ovs.is-open .ovs-group')`), 'the menu opened (signed in)');
+        assert.ok(await until(q, `JSON.stringify(${SHOWN}) === JSON.stringify(['Top stories', 'Today'])`), 'the feeds saved on Network show on a new device');
+        await q.evaluate(`document.querySelector('[data-ovs-fold="feeds"]').click(), true`);
+        await until(q, `!!document.querySelector('.ovs-feeds')`);
+        await q.evaluate(`document.querySelector('[data-ovs-feed="games:new-worlds"]').click(), true`);
+        assert.ok(await until(q, `window.__puts.length > 0`, 4000), 'the change is saved to Network');
+        assert.deepStrictEqual(await q.evaluate(`window.__puts[window.__puts.length - 1]`), { on: ['news:top', 'today:today', 'games:new-worlds'] });
+        await q.close();
+        console.log('menu-feeds-chrome: two by default, every card choosable, tick, reorder, four at most, kept on this device and on Network for a signed-in person');
     } finally {
         await browser.close();
         server.close();
