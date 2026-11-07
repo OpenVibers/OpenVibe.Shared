@@ -197,7 +197,13 @@
             .ovdk[data-corner="top-left"] .ovdk-size::after { top: auto; bottom: 9px; left: auto; right: 9px; border: 0; border-bottom: 2px solid var(--text-muted, #8b8b96); border-right: 2px solid var(--text-muted, #8b8b96); border-radius: 0 0 3px 0; }
             @media (pointer: coarse) { .ovdk-acts button { width: 44px; height: 44px; } .ovdk-tabs button { height: 40px; } }
             .ovdk { container-type: inline-size; }
-            @container (max-width: 440px) { .ovdk-tabs button { padding: 0 8px; gap: 6px; font-size: 13px; } .ovdk-tabs button svg { display: none; } .ovdk-acts { gap: 0; } .ovdk-acts button { width: 34px; } }
+            @container (max-width: 440px) { .ovdk-tabs button { padding: 0 8px; gap: 6px; font-size: 13px; } .ovdk-acts { gap: 0; } .ovdk-acts button { width: 34px; } }
+            /* A narrow Dock (Opus, 11-07: "Activity" was cut off at the strip's edge): the open tab keeps its icon and name,
+               the others show their icon and count only, their names kept for screen readers. All four always fit. */
+            @container (max-width: 480px) {
+                .ovdk-tabs button:not([aria-selected="true"]) { padding: 0 10px; gap: 4px; }
+                .ovdk-tabs button:not([aria-selected="true"]) span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+            }
             .ovdk-muted { color: var(--text-muted, #8b8b96); }
             .ovdk-i { display: inline-grid; place-items: center; }
             .ovdk-i svg { width: 18px; height: 18px; }

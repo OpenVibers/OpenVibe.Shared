@@ -60,24 +60,41 @@
         const st = doc.createElement('style');
         st.id = 'ovdt-styles';
         st.textContent = [
-            '.ovdt{font:14px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ov-fg,#1b1c1e);padding:8px 2px 20px}',
-            '.ovdt h3{margin:0 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ov-muted,#6b6f76)}',
-            '.ovdt-card{border:1px solid var(--ov-line,#e2e4e8);border-radius:12px;padding:10px 12px;margin:0 0 8px;background:var(--ov-card,#fff)}',
-            '.ovdt-row{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}',
-            '.ovdt-mode{font-weight:600}',
-            '.ovdt-title{flex:1 1 100%;min-width:0;overflow-wrap:anywhere}',
-            '.ovdt-meta{color:var(--ov-muted,#6b6f76);font-size:12px;overflow-wrap:anywhere}',
-            '.ovdt-outcome{font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ov-muted,#6b6f76)}',
-            '.ovdt-buttons{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}',
-            '.ovdt-btn{min-height:44px;min-width:44px;padding:10px 14px;border-radius:10px;border:1px solid var(--ov-line,#e2e4e8);background:var(--ov-card,#fff);color:inherit;font:inherit;cursor:pointer}',
-            '.ovdt-chip{min-height:44px;padding:10px 12px;border-radius:999px;border:1px solid var(--ov-line,#e2e4e8);background:transparent;color:inherit;font:inherit;cursor:pointer;white-space:nowrap;flex:none}',
-            '.ovdt-chip[aria-pressed="true"]{background:var(--ov-chip-bg,#eef1f6);border-color:var(--ov-line,#c9ced8)}',
-            '.ovdt-chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;-webkit-overflow-scrolling:touch}',
-            '.ovdt-fold{width:100%;text-align:left;min-height:44px;padding:10px 12px;border-radius:10px;border:1px dashed var(--ov-line,#e2e4e8);background:transparent;color:var(--ov-muted,#6b6f76);font:inherit;cursor:pointer}',
-            '.ovdt-empty{color:var(--ov-muted,#6b6f76);padding:6px 2px}',
-            '.ovdt-link{color:inherit}',
+            // The site's own theme (Opus, 11-07): the Dock's tokens, so the panel is the navy of a dark site and the paper
+            // of a light one, never a grey card of its own. The site's font, a gutter that clears the panel's edge, one
+            // primary button per card, and a breathing dot only on what is really running.
+            '.ovdt{font:inherit;font-size:14px;line-height:1.45;color:var(--text-primary,#ececf1);padding:4px 12px 20px}',
+            '.ovdt h3{margin:14px 2px 8px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted,#93a0b4)}',
+            '.ovdt h3:first-child{margin-top:6px}',
+            '.ovdt-card{border:1px solid var(--border,rgba(255,255,255,.1));border-radius:14px;padding:12px 14px;margin:0 0 8px;background:color-mix(in srgb,var(--text-primary,#ececf1) 4%,transparent)}',
+            '.ovdt-needs .ovdt-card{border-color:color-mix(in srgb,var(--warning,#f5a524) 38%,var(--border,rgba(255,255,255,.1)));background:color-mix(in srgb,var(--warning,#f5a524) 7%,transparent)}',
+            '.ovdt-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}',
+            '.ovdt-needs .ovdt-card>.ovdt-mode{margin-bottom:2px;font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:color-mix(in srgb,var(--warning,#f5a524) 70%,var(--text-primary,#ececf1))}',
+            '.ovdt-mode{font-weight:750}',
+            '.ovdt-title{flex:1 1 100%;min-width:0;overflow-wrap:anywhere;font-size:14.5px;font-weight:550}',
+            '.ovdt-meta{color:var(--text-muted,#93a0b4);font-size:12.5px;overflow-wrap:anywhere}',
+            '.ovdt-outcome{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:750;letter-spacing:.04em;text-transform:uppercase;color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#ececf1) 7%,transparent)}',
+            '.ovdt-outcome[data-s="running"]{color:color-mix(in srgb,var(--accent,#3b82f6) 72%,var(--text-primary,#ececf1));background:color-mix(in srgb,var(--accent,#3b82f6) 16%,transparent)}',
+            '.ovdt-outcome[data-s="running"]::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:ovdt-breathe 1.8s ease-in-out infinite}',
+            '.ovdt-outcome[data-s="failed"]{color:var(--danger-light,#f87171);background:color-mix(in srgb,var(--danger,#ef4444) 14%,transparent)}',
+            '@keyframes ovdt-breathe{50%{opacity:.35;transform:scale(.8)}}',
+            '.ovdt-buttons{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}',
+            '.ovdt-btn{min-height:44px;min-width:44px;padding:0 16px;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.14));background:transparent;color:inherit;font:inherit;font-weight:650;cursor:pointer}',
+            '.ovdt-btn.is-primary{border-color:transparent;background:var(--accent,#3b82f6);color:var(--on-accent,#fff)}',
+            '.ovdt-btn.is-stop{border-color:color-mix(in srgb,var(--danger,#ef4444) 45%,transparent);color:var(--danger-light,#f87171)}',
+            '.ovdt-btn:disabled{opacity:.55;cursor:default}',
+            '.ovdt-btn:focus-visible,.ovdt-chip:focus-visible,.ovdt-fold:focus-visible{outline:2px solid var(--accent-light,var(--accent,#3b82f6));outline-offset:1px}',
+            '@media (hover:hover){.ovdt-btn:not(.is-primary):hover,.ovdt-chip:hover{background:color-mix(in srgb,var(--text-primary,#ececf1) 7%,transparent)}.ovdt-btn.is-primary:hover{filter:brightness(1.08)}}',
+            '.ovdt-chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;white-space:nowrap;flex:none}',
+            '.ovdt-chip[aria-pressed="true"]{color:color-mix(in srgb,var(--accent,#3b82f6) 72%,var(--text-primary,#ececf1));border-color:color-mix(in srgb,var(--accent,#3b82f6) 55%,transparent);background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent)}',
+            '.ovdt-chips{display:flex;gap:8px;overflow-x:auto;margin:4px -12px 0;padding:6px 12px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}',
+            '.ovdt-chips::-webkit-scrollbar{display:none}',
+            '.ovdt-fold{width:100%;text-align:left;min-height:44px;margin:0 0 8px;padding:0 14px;border-radius:12px;border:1px dashed var(--border,rgba(255,255,255,.16));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-weight:650;cursor:pointer}',
+            '.ovdt-empty{color:var(--text-muted,#93a0b4);padding:4px 2px 6px}',
+            '.ovdt-card.ovdt-empty{padding:12px 14px}',
+            '.ovdt-link{color:color-mix(in srgb,var(--accent,#3b82f6) 72%,var(--text-primary,#ececf1));font-weight:650;text-decoration:none}',
             '@media (max-width:640px){.ovdt-link{display:inline-flex;align-items:center;min-height:44px;padding:0 4px}}',
-            '@media (prefers-color-scheme: dark){.ovdt{color:#e9eaee}.ovdt-card,.ovdt-btn,.ovdt-chip{background:#1c1d21;border-color:#33363c}.ovdt-chip[aria-pressed="true"]{background:#2a2d33}.ovdt-empty{color:#9aa0a8}}',
+            '@media (prefers-reduced-motion:reduce){.ovdt-outcome[data-s="running"]::before{animation:none}}',
         ].join('');
         (doc.head || doc.documentElement).appendChild(st);
     }
@@ -120,6 +137,13 @@
             return b;
         }
 
+        /** The step's state as a small pill; data-s lets a running step breathe and a failed one show red. */
+        function outcome(status) {
+            const o = el(doc, 'span', 'ovdt-outcome', OUTCOME[status] || status);
+            o.setAttribute('data-s', String(status || '').toLowerCase());
+            return o;
+        }
+
         function renderNow(now) {
             nowBox.textContent = '';
             if (!now) {
@@ -129,7 +153,7 @@
             const card = el(doc, 'div', 'ovdt-card');
             const row = el(doc, 'div', 'ovdt-row');
             row.appendChild(el(doc, 'span', 'ovdt-mode', word(now.mode)));
-            row.appendChild(el(doc, 'span', 'ovdt-outcome', OUTCOME[now.status] || now.status));
+            row.appendChild(outcome(now.status));
             row.appendChild(el(doc, 'span', 'ovdt-title', now.title));
             row.appendChild(el(doc, 'span', 'ovdt-meta', since(now.started_at)));
             card.appendChild(row);
@@ -137,7 +161,7 @@
                 card.appendChild(el(doc, 'div', 'ovdt-meta', [now.placement.where, now.placement.why].filter(Boolean).join(': ')));
             }
             const buttons = el(doc, 'div', 'ovdt-buttons');
-            const stop = el(doc, 'button', 'ovdt-btn', 'Stop');
+            const stop = el(doc, 'button', 'ovdt-btn is-stop', 'Stop');
             stop.type = 'button';
             stop.addEventListener('click', async () => {
                 stop.disabled = true;
@@ -162,7 +186,7 @@
                 if (item.reason) card.appendChild(el(doc, 'div', 'ovdt-meta', item.reason));
                 const buttons = el(doc, 'div', 'ovdt-buttons');
                 for (const [label, decision] of [['Approve', 'approve'], ['Decline', 'decline']]) {
-                    const b = el(doc, 'button', 'ovdt-btn', label);
+                    const b = el(doc, 'button', decision === 'approve' ? 'ovdt-btn is-primary' : 'ovdt-btn', label);
                     b.type = 'button';
                     b.addEventListener('click', async () => {
                         b.disabled = true;
@@ -187,7 +211,7 @@
             const card = el(doc, 'div', 'ovdt-card');
             const row = el(doc, 'div', 'ovdt-row');
             row.appendChild(el(doc, 'span', 'ovdt-mode', word(entry.mode)));
-            row.appendChild(el(doc, 'span', 'ovdt-outcome', OUTCOME[entry.status] || entry.status));
+            row.appendChild(outcome(entry.status));
             row.appendChild(el(doc, 'span', 'ovdt-title', entry.title));
             const when = new Date(entry.started_at || 0);
             row.appendChild(el(doc, 'span', 'ovdt-meta', Number.isNaN(when.getTime()) ? '' : when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
