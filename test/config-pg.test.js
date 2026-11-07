@@ -629,11 +629,12 @@ function counting(db) {
     direct.list({ url: '/api/admin/config', admin: true }, allowedRes);
     await sleep(5);
     assert.strictEqual(allowedRes.statusCode, 200);
-    assert.strictEqual(direct.routes.length, 7);
+    assert.strictEqual(direct.routes.length, 8);
     assert.deepStrictEqual(direct.routes.map((x) => `${x.method.toUpperCase()} ${x.path}`), [
         'GET /api/admin/config', 'GET /api/admin/config/:namespace', 'GET /api/admin/config/:namespace/history',
         'POST /api/admin/config/:namespace', 'POST /api/admin/config/:namespace/rollback',
         'PUT /api/admin/config/:namespace/secrets/:key', 'DELETE /api/admin/config/:namespace/secrets/:key',
+        'POST /api/admin/config/:namespace/test/:key',
     ]);
 
     assertNoLeak(logs.join('\n'), (await leakForms(db)).concat(await leakForms(legacyDb)), 'the whole log');

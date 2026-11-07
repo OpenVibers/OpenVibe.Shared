@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.124.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.125.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -345,6 +345,27 @@ settings.sealed; settings.kek;           // false / null without a KEK
   Schema to draw the form from; a secret property's `default`, `examples`, `enum` and `const` are
   removed from that copy. The annotations are `title`, `description`, `x-group`, `x-env`, `x-danger`,
   `x-bind` and `x-unit` (`nano_usd`, `ms`, `bps`, `seconds`).
+- **The owner's Setup page and clear settings (4.125.0).** Network's admin panel draws every namespace
+  from its summary schema, and lists on its Setup tab every field only the owner can give. These
+  annotations are checked when the store is created (a wrong shape refuses it, naming the rule) and pass
+  through to the summary as written:
+
+  | Annotation | Shape | What the panel does with it |
+  |---|---|---|
+  | `x-owner-input` | `{ group, unlocks, get_it_at?, get_it_how?, test? }` | A row on Setup. `group` is one of `config.OWNER_INPUT_GROUPS` (`money`, `ai-providers`, `gpus`, `voices`, `chat-apps`, `sign-in-apps`, `data-sources`, `design-publishing`, `domains`, `legal`); `unlocks` is the sentence "what it turns on"; `get_it_at` the https page at the provider; `get_it_how` one line on what to choose there; `test: true` when the service's tester (below) tests this key. |
+  | `x-required-for` | `"<feature>"` | Setup says **Needed** while the key is unset, naming what waits on it. Without it an unset key is **Optional**. |
+  | `x-enum-labels` | `{ <value>: { label, description? } }` | Every option of a choice in words and a line, never a raw value. Keys are the enum values (a non-string as its JSON: `"null"`, `"5"`); a label for a value the enum lacks is refused. |
+  | `x-advanced` | `true` | The field folds under a counted "Advanced settings (N)". |
+  | `x-example` | a string, number or boolean | The input's placeholder. Never a real value. |
+
+  A secret-class property loses `x-example` and `x-enum-labels` in the summary, with `default`,
+  `examples`, `enum` and `const` (say a key's shape in `get_it_how` instead: "It starts with sk-").
+- **`config.lintSchema(schema)`** returns `[{ path, key, message }]`, empty when every field reads
+  clearly: a field without a `title`, with a `description` under 30 characters (what it does, what
+  the default means, an example), or a choice (`enum`, or `items.enum`) without an `x-enum-labels`
+  label for every option is one entry. Fields are the top-level properties and the properties of an
+  object field; a summary is read through its `schema`. Run it in the service's own test on each
+  namespace it publishes: `assert.deepStrictEqual(config.lintSchema(SCHEMA), [])`.
 - **Hooks.** `onChange({ namespace, keys, actor, revision })` runs after every successful activation
   (never for a proposal or the seed), and a throwing hook is logged and never refuses the revision.
   `requireFresh(req, { namespace, keys })`, an `adminRoutes` option, runs before a secret write, a
@@ -359,6 +380,7 @@ config.adminRoutes([settings, other], {
     actor: (req) => ({ type: 'user', id: req.user.subject_id }),  // default: req.actor, req.subject, req.user.subject(_id)
     authorize: (req, { action, namespace, keys }) => action === 'read' || isOwner(req.user) || !keys.some(isSecret),
     requireFresh: (req, { namespace, keys }) => isFreshSignIn(req),  // secrets and x-danger keys; false → 403
+    test: async ({ namespace, key, value }) => ({ ok, message }),    // optional: the Setup page's Test button
     basePath: '/api/admin/config',
 }).mount(app);                                // or { router }, the handlers, or handle(req, res, next) on plain http
 ```
@@ -372,10 +394,20 @@ config.adminRoutes([settings, other], {
 | `POST /api/admin/config/:namespace/rollback` `{ to?, reason }` | the new active snapshot; 409 `config.no_previous`, `config.not_good` |
 | `PUT /api/admin/config/:namespace/secrets/:key` `{ value, reason }` | the marker `{ redacted, fingerprint, hint, set_at, set_by, bound_to }`; write-only |
 | `DELETE /api/admin/config/:namespace/secrets/:key` `{ reason }` | the empty marker; a new revision without the key |
+| `POST /api/admin/config/:namespace/test/:key` | `{ ok, message }`: the service's `test` hook tried the stored value; 409 `config.not_set` when the key has no value, 404 `config.test_not_available` when there is no tester or it answers null for that key |
 
 Errors are `application/problem+json` (`errors.problem@1`). Mount it after a JSON body parser, or
 let it read the body itself. A normal POST cannot write a secret-class value: the two `/secrets`
 routes are the only write path, and they answer a marker, never the value.
+
+The test hook is how the Setup page's **Test** button reaches a provider. `test({ namespace, key,
+value, values, store, req })` gets the stored value (a secret opened) on the server, calls the
+provider, and answers `{ ok, message }`, or null when it does not test that key. The route answers
+that in one line of at most 300 characters, scrubbed of every secret value of the namespace (a
+client id's tester may hold the client secret too), so it never echoes a key; a tester that throws
+is a failed test with its scrubbed message, and one that runs past `testTimeoutMs` (15 s) is a failed
+test as well. `authorize` sees the action `'test'`, and the route needs an actor like a write. It
+changes nothing and keeps nothing: the caller (Network's proxy) records the result.
 
 ### Releases: `/release.json`, open tabs and the mixed-version test (ADR-016, Track R)
 

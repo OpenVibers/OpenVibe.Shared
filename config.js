@@ -1,6 +1,9 @@
 'use strict';
 /** Configuration store on an openvibe-sdk/db handle. The store is ready when the promise resolves. */
-const { fromRows, canonical, ConfigError, subjectRef, isPlainObject, isMarker, makeLog, scrub, errText } = require('./config-core');
+const { fromRows, canonical, ConfigError, subjectRef, isPlainObject, isMarker, makeLog, scrub, errText, lintSchema, OWNER_INPUT_GROUPS } = require('./config-core');
+
+const TEST_TIMEOUT_MS = 15000;
+const TEST_MESSAGE_MAX = 300;
 
 function createConfigStore(opts = {}) {
     if (!opts.db || typeof opts.db.prepare !== 'function' || typeof opts.db.tx !== 'function') {
@@ -63,6 +66,7 @@ function readBody(req, limit = 256 * 1024) {
  *   POST   <base>/:namespace/rollback     { to?, reason } → the new revision
  *   PUT    <base>/:namespace/secrets/:key { value, reason } → the marker (write-only)
  *   DELETE <base>/:namespace/secrets/:key { reason } → the empty marker (write-only)
+ *   POST   <base>/:namespace/test/:key    → { ok, message }: the service's tester tried the stored value
  * requireAdmin (a middleware or a list) guards every handler, mounted or called directly. actor(req)
  * names who acts (default: req.user.subject_id and friends; none → 403). authorize(req, { action:
  * 'read' | 'write', namespace, keys }) may refuse more (false → 403). requireFresh(req, { namespace,
@@ -72,6 +76,13 @@ function readBody(req, limit = 256 * 1024) {
  * pass `router` (anything with get/post/put/delete) or call mount(router), use the handlers, or
  * handle(req, res, next) for a plain http server. The body is req.body when a JSON parser ran, else
  * read from the request.
+ *
+ * test (optional) is the service's tester for the owner's Setup page: async ({ namespace, key, value, values, store,
+ * req }) → { ok, message }, or null/undefined when it does not test that key (404 config.test_not_available). It gets
+ * the stored value (a secret opened) and calls the provider with it on the server; the answer is one line, at most
+ * 300 characters, scrubbed of every secret value of the namespace, so it can never echo a key. A tester that throws is
+ * a failed test with its message (scrubbed the same way); one that runs longer than testTimeoutMs (15 s) is a failed
+ * test too. authorize sees action 'test'. A key with no value is 409 config.not_set and the tester is not called.
  */
 function adminRoutes(stores, o = {}) {
     const list = [].concat(stores || []);
@@ -88,6 +99,9 @@ function adminRoutes(stores, o = {}) {
     const authorize = o.authorize || null;
     const requireFresh = o.requireFresh || null;
     if (requireFresh !== null && typeof requireFresh !== 'function') throw new TypeError('adminRoutes: requireFresh must be a function');
+    const tester = o.test || null;
+    if (tester !== null && typeof tester !== 'function') throw new TypeError('adminRoutes: test must be a function');
+    const testTimeoutMs = Number.isInteger(o.testTimeoutMs) && o.testTimeoutMs > 0 ? o.testTimeoutMs : TEST_TIMEOUT_MS;
     const log = makeLog(o.log);
 
     const allowed = async (req, ctx) => !authorize || (await authorize(req, ctx)) !== false;
@@ -186,6 +200,48 @@ function adminRoutes(stores, o = {}) {
             await fresh(req, s, [key]);
             send(res, 200, await s.deleteSecret(key, { actor, reason: body.reason }));
         },
+        async test(req, res) {
+            const s = storeFor(req);
+            const key = keyOf(req);
+            if (!(await allowed(req, { action: 'test', namespace: s.namespace, keys: [key] }))) throw new ConfigError('config.forbidden', 'not allowed to test this key', { status: 403 });
+            const actor = await actorOf(req);
+            if (!subjectRef(actor)) throw new ConfigError('config.actor_required', 'the request does not name the acting subject', { status: 403 });
+            if (!tester) throw new ConfigError('config.test_not_available', 'this service has no tests for its settings', { status: 404 });
+            const values = s.get();
+            const value = values[key];
+            if (value === undefined || value === null || value === '') throw new ConfigError('config.not_set', `${key} is not set, so there is nothing to test`, { status: 409 });
+            // Every secret value of the namespace is scrubbed from the answer, not only the tested one: a tester for a
+            // client id may well have the client secret in hand.
+            const classes = await s.classes({}, { merge: true });
+            const secrets = Object.entries(values)
+                .filter(([k, v]) => (classes[k] || s.classify(k, v)) === 'secret')
+                .map(([, v]) => (typeof v === 'string' ? v : canonical(v)))
+                .filter((v) => v.length >= 4)
+                .sort((a, b) => b.length - a.length);
+            const line = (m) => {
+                const one = String(m == null ? '' : m).replace(/\s+/g, ' ').trim();
+                return one ? scrub(one, secrets).slice(0, TEST_MESSAGE_MAX) : '';
+            };
+            const seconds = Math.max(1, Math.ceil(testTimeoutMs / 1000));
+            let timer = null;
+            let result;
+            try {
+                result = await Promise.race([
+                    Promise.resolve().then(() => tester({ namespace: s.namespace, key, value, values, store: s, req })),
+                    new Promise((resolve) => { timer = setTimeout(() => resolve({ ok: false, message: `The test did not finish in ${seconds} second${seconds === 1 ? '' : 's'}.` }), testTimeoutMs); }),
+                ]);
+            } catch (err) {
+                if (err instanceof ConfigError) throw err;
+                result = { ok: false, message: errText(err) };
+            } finally {
+                clearTimeout(timer);
+            }
+            if (result == null) throw new ConfigError('config.test_not_available', `${key} has no test`, { status: 404 });
+            const ok = result === true || (isPlainObject(result) && result.ok === true);
+            const message = line(isPlainObject(result) ? result.message : '') || (ok ? 'It works.' : 'It did not work.');
+            log.info(`[config] ${s.namespace} ${key}: test ${ok ? 'passed' : 'failed'}`);
+            send(res, 200, { ok, message });
+        },
     };
 
     function fail(res, err) {
@@ -216,12 +272,13 @@ function adminRoutes(stores, o = {}) {
         { method: 'post', path: `${basePath}/:namespace/rollback`, handler: out.rollback },
         { method: 'put', path: `${basePath}/:namespace/secrets/:key`, handler: out.secretPut },
         { method: 'delete', path: `${basePath}/:namespace/secrets/:key`, handler: out.secretDelete },
+        { method: 'post', path: `${basePath}/:namespace/test/:key`, handler: out.test },
     ];
     function mount(router) {
         for (const r of routes) router[r.method](r.path, r.handler);
         return router;
     }
-    /** For a plain http server: dispatches the seven routes, calls next() (or answers 404) for anything else. */
+    /** For a plain http server: dispatches the eight routes, calls next() (or answers 404) for anything else. */
     function handle(req, res, next) {
         const url = new URL(req.url || '/', 'http://x');
         const method = String(req.method || 'GET').toLowerCase();
@@ -236,6 +293,7 @@ function adminRoutes(stores, o = {}) {
             else if (parts.length === 2 && parts[1] === 'rollback' && method === 'post') m = ['rollback', parts[0]];
             else if (parts.length === 3 && parts[1] === 'secrets' && method === 'put') m = ['secretPut', parts[0], parts[2]];
             else if (parts.length === 3 && parts[1] === 'secrets' && method === 'delete') m = ['secretDelete', parts[0], parts[2]];
+            else if (parts.length === 3 && parts[1] === 'test' && method === 'post') m = ['test', parts[0], parts[2]];
         }
         if (!m) return typeof next === 'function' ? next() : sendProblem(res, 404, 'config.route_not_found', { detail: 'no such configuration route' });
         let ns = m[1] || '';
@@ -250,4 +308,4 @@ function adminRoutes(stores, o = {}) {
     return { ...out, routes, mount, handle };
 }
 
-module.exports = { createConfigStore, adminRoutes, fromRows, canonical, ConfigError, problem, configSchema: (...a) => require('./config-pg').configSchema(...a) };
+module.exports = { createConfigStore, adminRoutes, fromRows, canonical, ConfigError, problem, lintSchema, OWNER_INPUT_GROUPS, configSchema: (...a) => require('./config-pg').configSchema(...a) };

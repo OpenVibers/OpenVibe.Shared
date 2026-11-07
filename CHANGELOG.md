@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.125.0 — 2026-11-07
+
+- **The owner's Setup page and clear settings** (`openvibe-shared/config`; OWNER-SETUP-AND-ADMIN-CLARITY-DESIGN, 2026-11-07). New schema annotations, checked when a store is created and passed through to the summary: `x-owner-input { group, unlocks, get_it_at, get_it_how, test }` marks a field for Network's Setup tab (the groups are `config.OWNER_INPUT_GROUPS`), `x-required-for` makes an unset field **Needed**, `x-enum-labels` gives every option of a choice words and a line, `x-advanced` folds a field under a counted "Advanced settings (N)", and `x-example` is a placeholder. A secret-class property loses `x-example` and `x-enum-labels` in the summary, as it already lost its default, examples and enum.
+- **`config.lintSchema(schema)`** for each service's own test: it lists a field without a title, a description under 30 characters, or a choice without a label for every option. Empty means the admin panel can explain every field.
+- **A test hook in the admin routes:** `POST <base>/:namespace/test/:key` calls the service's `test` option with the stored value on the server and answers `{ ok, message }` in one line, scrubbed of every secret of the namespace; 409 `config.not_set` with no value, 404 `config.test_not_available` without a tester. `authorize` sees the action `'test'`.
+
 ## 4.124.0 — 2026-11-07
 
 - **The Dock's agent view gets the four controls** (Agent Streams S5, Co-pilot): Pause and Resume, Curtain now, Mute and Unmute, and End, each sent through Codes to Live. The owner's own view may always resume; Live still refuses a moderator resuming the owner's pause. The line says "Paused by @name" when someone else paused the stream.
