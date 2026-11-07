@@ -246,6 +246,10 @@
                 .ovdk-head::before { content: ''; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--border-light, var(--border, rgba(255,255,255,.22))); }
                 .ovdk-size { display: none; }
                 .ovdk-tabs { flex: 1; } .ovdk-tabs button { flex: 1; justify-content: center; }
+                /* A thumb, not a cursor: every control on the sheet is 44 px (design 2026-11-07 §1, Phone). */
+                .ovdk-tabs button { height: 44px; }
+                .ovdk-acts button { width: 44px; height: 44px; }
+                .ovdk-foot a, .ovdk-foot button { min-height: 44px; }
             }
             html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }
             @media (prefers-reduced-motion: reduce) { .ovdk.is-in, .ovdk-wait span { animation: none; } }
