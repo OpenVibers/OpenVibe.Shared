@@ -21,6 +21,10 @@
 - **A click beacon, only when Network asks for it** (`frame.menu.beacon`): the section, the position, where it led and
   the kind; no person and no page, so the menu can learn what helps and the ranking can spread people across the network.
 - Touch screens get 44 px chips and header links.
+- **No spinning rings anywhere** (`ov-icons.js`; the owner, 10-31 and again 11-07 on Surf's and Space's cards: "things only
+  spin if they're active"). The ring icons' comet spun forever on every icon on every site. Now the comet, the pulse and
+  the bounce run only while `data-state="busy"`; at rest an icon is its ring and glyph with a small lift on hover.
+  `data-fx` now says what *busy* looks like. Every site loses the idle spin with this release.
 
 ## 4.126.0 — 2026-11-07
 

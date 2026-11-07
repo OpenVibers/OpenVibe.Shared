@@ -15,7 +15,10 @@
  *   OpenVibeIcons.set(el, { progress, state, icon })
  *   OpenVibeIcons.svg(name, size)                  markup string, for server-side / templates
  *
- * Effects (data-fx): orbit (default) · pulse · draw · bounce · none. Motion is opacity/stroke inside the
+ * Nothing moves at rest (the owner, 10-31 and 11-07: "things only spin if they're active"; the comet spun forever on
+ * every icon until 4.128.0). The comet, the pulse and the bounce run only while data-state="busy"; at rest an icon is
+ * its ring and glyph, with a small lift on hover where a pointer hovers. "draw" plays once when an icon appears.
+ * Effects (data-fx, what busy looks like): orbit (default) · pulse · draw · bounce · none. Motion is opacity/stroke inside the
  * SVG and transform on the <svg> element only: no CSS transform ever touches an element inside the SVG
  * (transform-box/transform-origin on SVG children left glyphs and whole icons unpainted on phones while
  * scrolling), and hover effects apply only where a pointer can hover, so a thumb scrolling over a link
@@ -120,7 +123,7 @@
 .ov-icon svg{width:100%;height:100%;overflow:visible;display:block;transition:transform .25s cubic-bezier(.2,1.4,.3,1)}
 .ov-icon .ovi-bg{fill:currentColor;opacity:.1;transition:opacity .25s}
 .ov-icon .ovi-ring{fill:none;stroke:currentColor;stroke-width:2.4;opacity:.26}
-.ov-icon .ovi-comet{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:26 99.66;animation:oviSpin 3.6s linear infinite}
+.ov-icon .ovi-comet{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:26 99.66;display:none}
 .ov-icon .ovi-prog{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-dasharray:125.7;stroke-dashoffset:125.7;transition:stroke-dashoffset .35s cubic-bezier(.2,.8,.2,1),opacity .2s;opacity:0}
 .ov-icon .ovi-glyph{fill:none;stroke:var(--ovi-glyph,var(--text-primary,#e6edf7));stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
 .ov-icon .ovi-glyph--solid{fill:var(--ovi-glyph,var(--text-primary,#e6edf7));stroke:none;transition:fill .2s}
@@ -130,12 +133,13 @@
 @media (hover:hover){.ov-icon:hover svg,a:hover>.ov-icon svg,button:hover>.ov-icon svg{transform:scale(1.06)}.ov-icon:hover .ovi-bg,a:hover>.ov-icon .ovi-bg{opacity:.18}}
 .ov-icon[data-fx=none] .ovi-comet{display:none}
 .ov-icon[data-fx=pulse] .ovi-comet{display:none}
-.ov-icon[data-fx=pulse] .ovi-bg{animation:oviPulse 2s ease-in-out infinite}
+.ov-icon[data-fx=pulse][data-state=busy] .ovi-bg{animation:oviPulse 2s ease-in-out infinite}
 .ov-icon[data-fx=draw] .ovi-glyph path{stroke-dasharray:80;animation:oviDraw 1.2s cubic-bezier(.2,.8,.2,1) both}
-.ov-icon[data-fx=bounce] svg{animation:oviBounce 1.8s cubic-bezier(.3,1.4,.4,1) infinite}
+.ov-icon[data-fx=bounce][data-state=busy] svg{animation:oviBounce 1.8s cubic-bezier(.3,1.4,.4,1) infinite}
 .ov-icon[data-progress] .ovi-prog{opacity:1}
 .ov-icon[data-progress] .ovi-comet{opacity:0}
-.ov-icon[data-state=busy] .ovi-comet{animation-duration:1.1s;opacity:1;stroke-dasharray:40 85.66}
+.ov-icon[data-state=busy] .ovi-comet{display:inline;animation:oviSpin 1.1s linear infinite;opacity:1;stroke-dasharray:40 85.66}
+.ov-icon[data-state=busy][data-fx=none] .ovi-comet,.ov-icon[data-state=busy][data-fx=pulse] .ovi-comet{display:none}
 .ov-icon[data-state=busy][data-progress] .ovi-comet{opacity:.35}
 .ov-icon[data-state=ok]{--ovi-accent:var(--success,#22c55e)}
 .ov-icon[data-state=error]{--ovi-accent:var(--danger,#ef4444)}
