@@ -526,7 +526,7 @@
         }
         try { if (typeof window !== 'undefined' && typeof window.ovMarkMount === 'function') window.ovMarkMount(_mounted); } catch { /* */ }
         fillAccount({ ..._cfg, variant });
-        if (_cfg.shipped !== false) loadShipped();
+        if (_cfg.shipped !== false) shippedWhenNear(_mounted);
         watchPulse();
     }
 
@@ -585,6 +585,16 @@
 
     // shipped.js mounts every [data-ov-shipped] element when it loads; loaded once, lazily, after the footer.
     let _shippedLoading = false;
+    // shipped.js's content hash (scripts/sibling-revs.js writes it), and the footer's "shipped" line is fetched only when the
+    // footer comes near the screen (4.138.0): most visits never scroll there, and it is 12 KB.
+    const FOOTER_REV = { 'shipped.js': 'ee1a121fe4f7' };
+    let _shippedSeen = null;
+    function shippedWhenNear(el) {
+        if (typeof IntersectionObserver !== 'function' || !el || !el.getBoundingClientRect) { loadShipped(); return; }
+        if (_shippedSeen) return;
+        _shippedSeen = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { _shippedSeen.disconnect(); _shippedSeen = null; loadShipped(); } }, { rootMargin: '900px 0px' });
+        _shippedSeen.observe(el);
+    }
     function loadShipped() {
         if (typeof document === 'undefined') return;
         if (root.OpenVibeShipped && typeof root.OpenVibeShipped.scan === 'function') { try { root.OpenVibeShipped.scan(document); } catch { /* */ } return; }
@@ -593,7 +603,7 @@
         const sc = document.createElement('script');
         let src = `${NETWORK_URL}/shared/shipped.js`;
         try { if (OWN_SRC) src = new URL('shipped.js', OWN_SRC).href; } catch { /* */ }
-        sc.src = src;
+        sc.src = src + (FOOTER_REV['shipped.js'] ? `?v=${FOOTER_REV['shipped.js']}` : '');
         sc.defer = true;
         sc.setAttribute('data-ov-shipped-src', '');
         (document.head || document.documentElement).appendChild(sc);

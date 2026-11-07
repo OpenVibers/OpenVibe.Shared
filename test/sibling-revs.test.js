@@ -23,4 +23,13 @@ for (const [file, { name, files }] of Object.entries(OWN)) {
 }
 const dock = fs.readFileSync(path.join(__dirname, '..', 'dock.js'), 'utf8');
 assert.ok(dock.includes("sc.src = sibling(src) + (DOCK_REV[src] ? `?v=${DOCK_REV[src]}` : '');"), 'the Dock loads its siblings by hash');
-console.log('sibling revs: every script the navbar, the Dock and the notifications load goes by its content hash');
+// 4.138.0: the footer, Boost and the glyphs load theirs by hash too; the footer's shipped.js and the glyphs' brands.js
+// wait until the footer (or a logo) comes near the screen.
+const footer = fs.readFileSync(path.join(__dirname, '..', 'footer.js'), 'utf8');
+assert.ok(/if \(_cfg\.shipped !== false\) shippedWhenNear\(_mounted\);/.test(footer), 'the footer fetches shipped.js when it nears the screen');
+assert.ok(footer.includes("sc.src = src + (FOOTER_REV['shipped.js'] ? `?v=${FOOTER_REV['shipped.js']}` : '');"), 'and by its hash');
+const glyphsOut = fs.readFileSync(path.join(__dirname, '..', 'ov-glyphs.js'), 'utf8');
+assert.ok(/const BRANDS_REV = '[0-9a-f]{12}';/.test(glyphsOut) && glyphsOut.includes('waiting.add(el); wantBrands(el);'), 'brands.js by hash, when a logo nears the screen');
+const boost = fs.readFileSync(path.join(__dirname, '..', 'boost.js'), 'utf8');
+assert.ok(/BOOST_REV\['route-transition\.js'\]/.test(boost), 'route-transition.js by hash');
+console.log('sibling revs: every script the navbar, the Dock, the notifications, the footer, Boost and the glyphs load goes by its content hash');

@@ -46,8 +46,17 @@ function updatesBody({ service, siteName = null, base = NETWORK } = {}) {
         + `</section>`;
 }
 
+// shipped.js by its content hash (4.138.0), so an updates page never runs a copy an edge kept from before a release.
+let _shippedRev = null;
+function shippedRev() {
+    if (_shippedRev === null) {
+        try { _shippedRev = require('./assets').hashAsset(require('fs').readFileSync(require('path').join(__dirname, 'shipped.js'))); } catch { _shippedRev = ''; }
+    }
+    return _shippedRev;
+}
 function shippedScript({ base = NETWORK } = {}) {
-    return `<script src="${esc(String(base).replace(/\/+$/, ''))}/shared/shipped.js" defer></script>`;
+    const v = shippedRev();
+    return `<script src="${esc(String(base).replace(/\/+$/, ''))}/shared/shipped.js${v ? `?v=${v}` : ''}" defer></script>`;
 }
 
 module.exports = { footer: (cfg) => footerModule.ssr(cfg), noscriptNav, shipped, updatesBody, shippedScript };

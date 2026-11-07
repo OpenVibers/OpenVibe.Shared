@@ -16,7 +16,8 @@ const body = frame.updatesBody({ service: 'wiki' });
 assert.ok(body.includes('<h1>What shipped on OpenVibe.Wiki</h1>'));
 assert.ok(body.includes('data-ov-shipped="log" data-service="wiki"'));
 assert.ok(body.includes('https://openvibe.network/updates?site=wiki'), 'the no-JavaScript fallback is the network log');
-assert.strictEqual(frame.shippedScript(), '<script src="https://openvibe.network/shared/shipped.js" defer></script>');
+// By its content hash (4.138.0), so an updates page never runs a copy an edge kept from before a release.
+assert.match(frame.shippedScript(), /^<script src="https:\/\/openvibe\.network\/shared\/shipped\.js\?v=[0-9a-f]{12}" defer><\/script>$/);
 
 const foot = frame.footer({ service: 'wiki', variant: 'full', updates: '/updates' });
 assert.ok(foot.includes('data-ov-shipped="latest"') && foot.includes('href="/updates"'));
