@@ -174,7 +174,27 @@
             if (now.placement && (now.placement.where || now.placement.why)) {
                 card.appendChild(el(doc, 'div', 'ovdt-meta', [now.placement.where, now.placement.why].filter(Boolean).join(': ')));
             }
+            // The Computer this step works on (plan 2026-11-07): the same machine and cost the task record carries.
+            if (now.computer) card.appendChild(el(doc, 'div', 'ovdt-meta', [now.computer.machine, now.computer.cost_hint].filter(Boolean).join(' · ')));
             const buttons = el(doc, 'div', 'ovdt-buttons');
+            // Take over / Give it back: one API on the task at Actor, the same hand-off the agent's own
+            // hand_to_person tool uses. Only a step that names its task (ref) and its Computer offers it.
+            if (now.computer && now.ref) {
+                const driving = now.computer.driving === true || /^You took over/.test(String(now.title || ''));
+                const take = el(doc, 'button', 'ovdt-btn is-primary', driving ? 'Give it back' : 'Take over');
+                take.type = 'button';
+                take.addEventListener('click', async () => {
+                    take.disabled = true;
+                    const auth = await bearer();
+                    try {
+                        await api('/api/v1/tasks/' + encodeURIComponent(now.ref) + (driving ? '/giveback' : '/takeover'), {
+                            method: 'POST', headers: { 'Content-Type': 'application/json', ...(auth ? { Authorization: auth } : {}) }, body: '{}',
+                        });
+                    } catch (err) { /* the panel refreshes either way */ }
+                    refresh();
+                });
+                buttons.appendChild(take);
+            }
             const stop = el(doc, 'button', 'ovdt-btn is-stop', 'Stop');
             stop.type = 'button';
             stop.addEventListener('click', async () => {
@@ -236,6 +256,7 @@
             else if (entry.placement && (entry.placement.where || entry.placement.why)) {
                 card.appendChild(el(doc, 'div', 'ovdt-meta', [entry.placement.where, entry.placement.why].filter(Boolean).join(': ')));
             }
+            if (entry.computer) card.appendChild(el(doc, 'div', 'ovdt-meta', [entry.computer.machine, entry.computer.cost_hint].filter(Boolean).join(' · ')));
             if (entry.reason) card.appendChild(el(doc, 'div', 'ovdt-meta', entry.reason));
             if (entry.cost_usd !== null && entry.cost_usd !== undefined) card.appendChild(el(doc, 'div', 'ovdt-meta', '$' + Number(entry.cost_usd).toFixed(2)));
             if (entry.link) {
