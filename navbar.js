@@ -513,7 +513,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '7d4affbb5093', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'c9c68464d19e', 'dock.js': 'e13066db0aac', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': '3ceb5266e7b8', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '7d4affbb5093', 'ov-share.css': 'cbd18e6ce991', 'search.js': '295b2fffb4e1', 'dock.js': 'e13066db0aac', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': '3ceb5266e7b8', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -584,10 +584,27 @@
     // first time one appears. <html data-ov-forms="off"> keeps the browser's own; data-ov-native keeps one control's.
     const FORM_CONTROLS = 'select,input[type="checkbox"],input[type="radio"],input[type="range"],input[type="file"]';
     let formWatch = null;
+    // Only a control that is drawn counts (4.141.0): a closed dialog's or a hidden box's select does not, so a page whose
+    // shell carries hidden modal forms (Live's) no longer fetches 17 KB it may never use. The hidden ones are watched,
+    // and the kit loads when one is drawn (a dialog opens, a fold unfolds).
+    let formSeen = null;
+    function formsWanted() {
+        const all = document.querySelectorAll(FORM_CONTROLS);
+        if (!all.length) return false;
+        for (let i = 0; i < all.length && i < 200; i++) if (all[i].getClientRects().length) return true;
+        if (typeof IntersectionObserver === 'function') {
+            formSeen = formSeen || new IntersectionObserver((es) => {
+                if (!es.some((e) => e.isIntersecting || e.boundingClientRect.width)) return;
+                formSeen.disconnect(); formSeen = null; loadForms();
+            });
+            for (let i = 0; i < all.length && i < 60; i++) formSeen.observe(all[i]);
+        }
+        return false;
+    }
     function loadForms() {
         if (root.OVForms || document.getElementById('ov-forms-loader')) return true;
         if (document.documentElement.getAttribute('data-ov-forms') === 'off') return true;
-        if (!document.querySelector(FORM_CONTROLS)) return false;
+        if (!formsWanted()) return false;
         try {
             if (!document.querySelector('link[href*="ov-forms.css"]')) {
                 const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = siblingV('ov-forms.css'); document.head.appendChild(ln);

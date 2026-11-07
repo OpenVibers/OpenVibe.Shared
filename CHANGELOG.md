@@ -1,8 +1,29 @@
 # Changelog
 
-## 4.142.0 — 2026-11-07
+## 4.143.0 — 2026-11-07
 
 - Add `ov-sync.js` (seven domains plan B4): `OVSync.attach(mediaEl, { room, socket })` follows a `common.sync-clock@1` timeline over Chat's room socket. It measures the server clock with five `time` samples (best round trip, refreshed every 60 s), computes the room's position from `position_ms + (serverNow - at_ms) * rate`, holds the element within ±80 ms (a 0.95–1.05 playback-rate nudge between 80 and 400 ms, a seek past 400 ms), pauses and plays with the room, and puts a non-holder's own seek, play, pause or rate change back with a short notice while a holder's change becomes a `sync`. No dependencies; served as `/shared/ov-sync.js` and imported as `openvibe-shared/ov-sync`.
+- ov-sync follows an https source only; Chat already keeps a room's clock on OpenVibe's own hosts.
+
+## 4.142.0 — 2026-11-07
+
+- **The menu has a close button on a phone** (the owner, 11-07: "This needs a close button"). Since 4.129.0 the menu
+  covers the whole phone screen, the navbar's burger included, but `search.js` still hid its Close button at 860 px and
+  below on a site with a burger, so only Back closed it. Now a round x (40 px, a 48 px hit area, "Close the menu" for a
+  screen reader) sits at the end of the search pill at 860 px and below; a wide screen keeps the word Close. Test:
+  `test/menu-close-chrome.test.js` (a phone layout: shown, on screen, the hit area, a tap closes; wide: the word).
+
+## 4.141.0 — 2026-11-07
+
+- **The forms kit loads when a form control is drawn, not merely present** (the owner, 11-07: "make things faster and
+  more optimized").
+  - A closed dialog's or a hidden box's select, checkbox or file input no longer counts.
+  - Live's shell carries hidden modal forms, so every Live page fetched `ov-forms.js` and `.css` (17 KB) for
+    controls nobody saw.
+  - Hidden controls are watched with an IntersectionObserver, and the kit loads when one is drawn (a dialog opens, a
+    fold unfolds).
+  - A page with a drawn control loads it once it settles, as before.
+  - Test: `test/forms-when-seen-chrome.test.js`.
 
 ## 4.140.0 — 2026-11-07
 
