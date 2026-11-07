@@ -53,6 +53,17 @@
     const SRC = (document.currentScript && document.currentScript.src) || '';
     let brandState = 0;   // 0 idle, 1 loading, 2 ready, 3 unavailable
     const waiting = new Set();
+    const BRANDS_REV = '0da501c80e60';
+    // A logo far below the fold (a footer's social links) waits until it comes near the screen (4.138.0): most visits
+    // never get there, and brands.js is 26 KB. One that is in view, or hidden in a closed fold that opens, loads then.
+    let brandSeen = null;
+    function wantBrands(el) {
+        if (brandState || typeof IntersectionObserver !== 'function' || !el.getBoundingClientRect) { loadBrands(); return; }
+        const r = el.getBoundingClientRect();
+        if ((r.width || r.height) && r.bottom > -800 && r.top < (window.innerHeight || 0) + 800) { loadBrands(); return; }
+        brandSeen = brandSeen || new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { brandSeen.disconnect(); brandSeen = null; loadBrands(); } }, { rootMargin: '800px 0px' });
+        brandSeen.observe(el);
+    }
     function loadBrands() {
         if (brandState) return;
         if (window.OVBrands) { brandState = 2; return; }
@@ -61,7 +72,7 @@
         const base = SRC ? SRC.split(/[?#]/)[0] : '';
         const dir = base && /ov-glyphs[.]js$/.test(base) ? base.slice(0, base.lastIndexOf('/') + 1) : 'https://openvibe.network/shared/';
         const sc = document.createElement('script');
-        sc.src = dir + 'brands.js';
+        sc.src = dir + 'brands.js' + (BRANDS_REV ? '?v=' + BRANDS_REV : '');
         sc.async = true;
         sc.onload = () => { brandState = window.OVBrands ? 2 : 3; waiting.forEach((el) => drawBrand(el)); waiting.clear(); };
         sc.onerror = () => { brandState = 3; waiting.clear(); };
@@ -73,7 +84,7 @@
         if (!fa) return;
         const slug = FB[fa];
         if (el.dataset.ovg === 'brand:' + slug) return;
-        if (!window.OVBrands) { if (brandState !== 3) { waiting.add(el); loadBrands(); } return; }
+        if (!window.OVBrands) { if (brandState !== 3) { waiting.add(el); wantBrands(el); } return; }
         const b = window.OVBrands.get(slug);
         if (!b || (!el.dataset.ovg && el.textContent.trim())) return;
         el.classList.add('ovg', 'ovg-brand');

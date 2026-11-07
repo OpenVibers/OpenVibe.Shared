@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.138.0 — 2026-11-07
+
+- **38 KB off most first visits** (the owner, 11-07: "make things faster and more optimized"):
+  - the footer's "shipped" line (`shipped.js`, 12 KB) is fetched only when the footer comes near the screen;
+  - brand logos (`brands.js`, 26 KB, the footer's social links) wait until a logo is near the screen, or opens
+    from a fold;
+  - most visits never scroll that far.
+- **The rest of the files loaded from beside Shared's scripts go by content hash** (4.137.0 did the bar's):
+  - `shipped.js` from the footer and from `frame.js`'s updates pages;
+  - `brands.js` from the glyphs, through their build;
+  - `route-transition.js` from Boost.
+  - `scripts/sibling-revs.js` writes FOOTER_REV and BOOST_REV; `scripts/build-glyphs.js` writes BRANDS_REV.
+  - Run the glyph build first, then sibling-revs.
+
 ## 4.137.0 — 2026-11-07
 
 - **Releases reach phones at once.** The bar loaded the menu (`search.js`), the Dock, presence, panels, notifications,

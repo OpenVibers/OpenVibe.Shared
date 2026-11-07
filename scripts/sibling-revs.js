@@ -16,15 +16,16 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     'search.js', 'dock.js', 'presence.js', 'panels.js', 'notification-ui.js', 'history.js', 'site-switcher.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
 const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'action-center.js', 'dock-timeline.js', 'dock-agent.js', 'dock-timer.js'] },
-    'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] } };
+    'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },
+    'footer.js': { name: 'FOOTER_REV', files: ['shipped.js'] }, 'boost.js': { name: 'BOOST_REV', files: ['route-transition.js'] } };
 const table = (name, files) => `    const ${name} = { ${files.map((f) => `'${f}': '${hashAsset(fs.readFileSync(path.join(ROOT, f)))}'`).join(', ')} };`;
 function writeOwn() {
     for (const [file, { name, files }] of Object.entries(OWN)) {
         const p = path.join(ROOT, file);
         const src = fs.readFileSync(p, 'utf8');
-        const re = new RegExp(`^ {4}const ${name} = \\{[^\\n]*\\};$`, 'm');
+        const re = new RegExp(`^( *)const ${name} = \\{[^\\n]*\\};$`, 'm');
         if (!re.test(src)) throw new Error(`${file} has no ${name} line to update`);
-        fs.writeFileSync(p, src.replace(re, table(name, files)));
+        fs.writeFileSync(p, src.replace(re, (m, indent) => indent + table(name, files).trimStart()));
     }
 }
 const revs = () => Object.fromEntries(FILES.map((f) => [f, hashAsset(fs.readFileSync(path.join(ROOT, f)))]));

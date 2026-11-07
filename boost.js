@@ -112,13 +112,15 @@
             });
         }
 
+        // route-transition.js's content hash (scripts/sibling-revs.js writes it), so a release gives it a new URL (4.138.0).
+        const BOOST_REV = { 'route-transition.js': '776674802ce8' };
         function fx(mainEl) {
             if (o.fx === false) return Promise.resolve(null);
             if (root.OVRouteFx) return Promise.resolve(root.OVRouteFx);
             if (!selfSrc) return Promise.resolve(null);
             return new Promise((done) => {
                 const t = document.createElement('script');
-                t.src = selfSrc.replace(/boost\.js(\?.*)?$/, 'route-transition.js');
+                t.src = selfSrc.replace(/boost\.js(\?.*)?$/, 'route-transition.js') + (BOOST_REV['route-transition.js'] ? `?v=${BOOST_REV['route-transition.js']}` : '');
                 t.onload = () => done(root.OVRouteFx || null); t.onerror = () => done(null);
                 document.head.appendChild(t);
             });
