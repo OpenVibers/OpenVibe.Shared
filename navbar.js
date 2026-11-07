@@ -952,34 +952,20 @@
         a.addEventListener('click', (e) => {
             const m = _config.messages || {};
             if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-            // Every site's default (4.130.0): your conversations open in place, in the Dock's Chats tab, read and
-            // answered there; a site without the Dock follows the link to openvibe.chat/messages.
+            // The default (4.130.0): the Dock's Chats tab; without the Dock, the link.
             if (m.__default && _config.dock !== false && _config.token) { e.preventDefault(); openDock('chats'); return; }
             if (typeof m.onOpen !== 'function') return;
             e.preventDefault(); try { m.onOpen(e); } catch { /* the link still works */ }
         });
     }
-    /**
-     * The unread count for the default Messages button: OpenVibe.Chat's own count (GET /api/dm/unread, the one the
-     * Dock reads), on load and when the tab comes back, at most once a minute. A site with its own messages
-     * (setMessages) keeps its count; Chat away or refusing leaves the button without a number.
-     */
-    let _unreadAt = 0, _unreadWatch = false;
+    // The default Messages button's count: Chat's GET /api/dm/unread, at most once a minute (README, "The navbar").
+    let _unreadAt = 0;
     function loadUnread() {
-        const m = _config.messages;
-        const u = _config.user;
-        if (!m || !m.__default || !u || u.is_anon || !_config.token || typeof fetch !== 'function') return;
-        if (Date.now() - _unreadAt < 60000) return;
+        const m = _config.messages, u = _config.user;
+        if (!m || !m.__default || !u || u.is_anon || !_config.token || typeof fetch !== 'function' || Date.now() - _unreadAt < 60000) return;
         _unreadAt = Date.now();
-        if (!_unreadWatch && typeof document !== 'undefined' && document.addEventListener) {
-            _unreadWatch = true;
-            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadUnread(); });
-        }
-        const chat = String(_config.dockChatBase || 'https://openvibe.chat').replace(/\/+$/, '');
-        fetch(`${chat}/api/dm/unread`, { headers: { Authorization: `Bearer ${_config.token}` }, credentials: 'omit' })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((b) => { if (b && _config.messages && _config.messages.__default) OpenVibeNavbar.setMessages(Number(b.unread) || 0); })
-            .catch(() => { /* no count */ });
+        fetch(`${String(_config.dockChatBase || 'https://openvibe.chat').replace(/\/+$/, '')}/api/dm/unread`, { headers: { Authorization: `Bearer ${_config.token}` }, credentials: 'omit' })
+            .then((r) => (r.ok ? r.json() : null)).then((b) => { if (b && _config.messages.__default) OpenVibeNavbar.setMessages(Number(b.unread) || 0); }).catch(() => {});
     }
 
     function chipsAllHTML(chips) {
@@ -1831,7 +1817,7 @@
         _walletFor = key; _walletAt = Date.now();
         if (!_walletWatch && typeof document !== 'undefined' && document.addEventListener) {
             _walletWatch = true;
-            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadWalletChips(); });
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
         const auth = { Authorization: `Bearer ${_config.token}` };
         const saved = savedWallet(u);
@@ -2287,9 +2273,7 @@
 
         init(opts = {}) {
             Object.assign(_config, opts);
-            // Your things on every site (the owner, 2026-11-07: "make sure DMs are accessible across all sites … same
-            // with open coins and vibes … visible everywhere"): the balances and Messages are on unless a site says
-            // wallet: false / messages: false, or brings its own.
+            // Balances and Messages on every site unless it says false or brings its own (4.130.0).
             if (opts.wallet === undefined) _config.wallet = true;
             if (opts.messages === undefined) _config.messages = { __default: true };
             injectStyles();
