@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.133.0 — 2026-11-07
+
+- The menu's network cards draw an entry's picture when the site sent one (`frame.menu-card@1`'s optional item `image`, openvibe-contracts 0.320.0): a 64×36 rounded thumbnail, `object-fit: cover`, `loading="lazy"`, `decoding="async"`, empty alt, before the title and after the site's icon. The `src` is checked again in the menu (https only); a card or entry without a picture renders exactly as before.
+
 ## 4.132.0 — 2026-11-07
 
 - **Your feeds in the menu** (the owner, 11-07: "integrate OpenVibe.Today and OpenVibe.News … the user should be able to

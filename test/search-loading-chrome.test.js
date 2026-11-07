@@ -155,6 +155,23 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Back closes the menu');
         assert.strictEqual(await p.evaluate('location.href'), before, 'and stays on the page');
 
+        // ── The network's cards: a picture before the title, exactly as the entry sent it (Contracts 0.320.0) ──
+        await p.evaluate(`OpenVibeSearch.open({ service: 'chat', scope: { label: 'Chat', page: '/search' }, links: [], frame: { cards: [
+            { id: 'trending', site: 'media-hub', title: 'Trending', kind: 'rows', items: [
+                { title: 'A walk', meta: '9 views this week', url: 'https://openvibe.video/v/1', image: { src: 'https://openvibe.media/t/1.jpg?w=640', w: 640, h: 360 } },
+                { title: 'No picture', url: 'https://openvibe.video/v/2', image: { src: 'javascript:alert(1)' } },
+            ], more: { label: 'Watch more', url: 'https://openvibe.video/' } },
+        ] } }); 1`);
+        await wait(300);
+        v = await p.evaluate(`(() => { const imgs = [...document.querySelectorAll('.ovs-thumb')]; const row = imgs[0] && imgs[0].closest('.ovs-item');
+            return { count: imgs.length, attrs: imgs[0] && ['src', 'width', 'height', 'loading', 'decoding', 'alt'].map((k) => imgs[0].getAttribute(k)),
+                href: row && row.querySelector('a').getAttribute('href'), title: row && row.querySelector('.ovs-title').textContent,
+                beforeTitle: !!(imgs[0] && imgs[0].nextElementSibling && imgs[0].nextElementSibling.classList.contains('ovs-main')) }; })()`);
+        assert.strictEqual(v.count, 1, 'only the https picture is drawn');
+        assert.deepStrictEqual(v.attrs, ['https://openvibe.media/t/1.jpg?w=640', '64', '36', 'lazy', 'async', ''], 'a 64x36 lazy thumbnail with empty alt');
+        assert.deepStrictEqual([v.href, v.title, v.beforeTitle], ['https://openvibe.video/v/1', 'A walk', true], 'the same row, picture before its title');
+        await p.evaluate('OpenVibeSearch.close(); 1');
+
         // ── Loading ──
         v = await p.evaluate(`new Promise((done) => {
             const l = OpenVibeLoading.mount(document.getElementById('player'), { label: 'Connecting', sub: 'Getting your viewer ready', steps: 4,

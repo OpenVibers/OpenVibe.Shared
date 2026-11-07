@@ -197,6 +197,7 @@
 .ovs-ic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--accent-light, #8ab4ff); font-size: 12px; font-weight: 800; }
 .ovs-ic > svg { width: 16px; height: 16px; }
 .ovs-ic.ovs-site { background: none; }
+.ovs-thumb { flex: none; width: 64px; height: 36px; border-radius: 9px; object-fit: cover; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); }
 .ovs .ov-icon:empty { border-radius: 50%; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
 .ovs-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .ovs-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
@@ -526,7 +527,14 @@
                     if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; t.appendChild(tg); }
                     if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
                     if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
-                    a.append(icon(it), main);
+                    a.append(icon(it));
+                    if (it.image) {
+                        const im = document.createElement('img');
+                        im.className = 'ovs-thumb'; im.src = it.image; im.alt = '';
+                        im.width = 64; im.height = 36; im.loading = 'lazy'; im.decoding = 'async';
+                        a.appendChild(im);
+                    }
+                    a.appendChild(main);
                     const q = input.value.trim();
                     if (q && view !== 'results' && (it.kind === 'results' || (items.length === 1 && exact(it, q)))) { const k = document.createElement('span'); k.className = 'ovs-key'; k.textContent = 'Enter'; a.appendChild(k); }
                     li.appendChild(a); listEl.appendChild(li);
@@ -795,13 +803,16 @@
         }
         // 1b. The network's cards: what sites publish for every menu (Network collects each site's
         // /.well-known/openvibe-menu.json into the Frame's `cards`): Live's channels, Games' new worlds, Video's trending.
-        // Text and links only (never another site's code), checked here again; at most two, Network's order.
+        // Text and links only (never another site's code), checked here again, with an entry's https picture when it
+        // sent one; at most two, Network's order.
         const feeds = f0 && Array.isArray(f0.cards) ? f0.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
         const chosen = feedPref();
         const netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds.slice(0, 2);
         netCards.forEach((c) => {
             const as = c.kind === 'rail' ? 'livebar' : c.kind === 'chips' ? 'chips' : 'rows';
-            const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url), site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
+            const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url),
+                image: x.image && /^https:\/\//.test(String(x.image.src || '')) ? String(x.image.src) : null,
+                site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
             if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
         // 1c. Choose your feeds: every card a site offers, a tick to show it, arrows to order it (four at most).
