@@ -232,9 +232,13 @@
                 fold.addEventListener('click', () => {
                     const open = fold.getAttribute('aria-expanded') === 'true';
                     fold.setAttribute('aria-expanded', open ? 'false' : 'true');
-                    const box = el(doc, 'div', 'ovdt-fold-body');
-                    if (!open) for (const entry of group) box.appendChild(entryNode(entry));
-                    fold.after(box);
+                    const shown = fold.nextElementSibling;
+                    if (shown && shown.classList.contains('ovdt-fold-body')) shown.remove();
+                    if (!open) {
+                        const box = el(doc, 'div', 'ovdt-fold-body');
+                        for (const entry of group) box.appendChild(entryNode(entry));
+                        fold.after(box);
+                    }
                 });
                 list.appendChild(fold);
             }
