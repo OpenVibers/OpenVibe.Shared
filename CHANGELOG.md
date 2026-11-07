@@ -21,6 +21,17 @@
 - **A click beacon, only when Network asks for it** (`frame.menu.beacon`): the section, the position, where it led and
   the kind; no person and no page, so the menu can learn what helps and the ranking can spread people across the network.
 - Touch screens get 44 px chips and header links.
+- **Your workspace** (signed in), right under your places: Agents and Vibe (open in the Dock), Codes, Files, Machines,
+  Wallet, Account and Themes, one tap from every site (the owner: "access codes through this menu easily, and talk to
+  your agent … less having to hop between sites").
+- **What's new**: the newest real change on each site from the network changelog (library bumps left out), newest first,
+  marked **New** when it shipped after your last visit there, each linking to that site's `/updates`.
+- **The full list of sites**: the flagships first (Live, Video, Codes, Design, Space, Games, Chat, Tools), then every group;
+  each site with its icon, a two-line description (no more cut-off words on a phone) and its own domain.
+- **Every site has its own icon** (`ov-icons.js`, regenerated from Font Awesome Free 6 by `scripts/build-nav-icons.py`):
+  Cam a camera, Casino dice, Surf waves, Fun masks, Meme a laughing face, Tours a compass, Vision binoculars, Shoes, Today,
+  Report, Design, Domains, Exchange and Bench. Until now they borrowed a neighbour's (Cam showed Video's, Casino and Surf
+  the gamepad, Fun Quest's trophy).
 - **No spinning rings anywhere** (`ov-icons.js`; the owner, 10-31 and again 11-07 on Surf's and Space's cards: "things only
   spin if they're active"). The ring icons' comet spun forever on every icon on every site. Now the comet, the pulse and
   the bounce run only while `data-state="busy"`; at rest an icon is its ring and glyph with a small lift on hover.

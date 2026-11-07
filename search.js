@@ -236,6 +236,7 @@
 .ovs-fold[aria-expanded="true"] svg { transform: rotate(90deg); }
 .ovs-fold:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
+.ovs-host { display: block; margin-top: 2px; font-size: 11px; font-weight: 650; letter-spacing: .01em; color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--text-muted, #93a0b4)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-group .ovs-more { margin-left: auto; color: var(--accent-light, #8ab4ff); font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; text-decoration: none; }
 @media (hover: hover) { .ovs-app:hover, .ovs-link:hover, .ovs-live:hover, .ovs-fold:hover { background: var(--bg-hover, rgba(255,255,255,.07)); color: inherit; } .ovs-app:hover .ovs-appic { transform: translateY(-2px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } }
 @media (max-width: 640px) { .ovs-apps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
@@ -261,7 +262,7 @@
   .ovs-panel { top: 0; left: 0; width: 100vw; height: 100dvh; max-height: none; transform: none; border-radius: 0; border: 0; }
   .ovs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ovs-grid.is-sites { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ovs-tile small { -webkit-line-clamp: 1; }
+  .ovs-grid:not(.is-sites) .ovs-tile small { -webkit-line-clamp: 1; }
 }
 /* Dropped from the navbar's orb (4.25.0): under the bar, from the orb's side, the bar still showing. */
 .ovs.ovs-anchored { top: var(--ovs-top, 0px); background: rgba(3, 6, 12, .45); }
@@ -444,6 +445,7 @@
                     const a = option('a', '', it);
                     const main = document.createElement('span'); main.className = 'ovs-main';
                     const t = document.createElement('span'); t.className = 'ovs-title'; t.textContent = it.title; main.appendChild(t);
+                    if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; t.appendChild(tg); }
                     if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
                     if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
                     a.append(icon(it), main);
@@ -493,6 +495,7 @@
                 const b = document.createElement('b'); b.textContent = it.title; txt.appendChild(b);
                 if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; b.appendChild(tg); }
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
+                if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
                 a.append(icon(it), txt);
                 box.appendChild(a);
             });
@@ -613,6 +616,27 @@
             return d;
         }).catch(() => null);
     }
+    /** What shipped lately, every site (Network's GET /api/v1/changelog, the feed OpenVibe.Blog keeps; kept 5 minutes):
+     *  the newest real change per site, library bumps left out (the same rule as shipped.js). */
+    let changesData = null;
+    const HOUSEKEEPING = /^(?:openvibe-(?:shared|sdk|contracts|publishing)|openvibe-codes-cli)\s+v?\d|^(?:bump|pin)\b|\(was v\d/i;
+    function loadChanges() {
+        try { const c = JSON.parse(sessionStorage.getItem('ov_changes') || 'null'); if (c && Date.now() - c.at < 300000) { changesData = c.data; return Promise.resolve(c.data); } } catch { /* */ }
+        return fetch('https://openvibe.network/api/v1/changelog?limit=100', { credentials: 'omit', headers: { accept: 'application/json' } }).then((r) => (r.ok ? r.json() : null)).then((d) => {
+            if (d && Array.isArray(d.entries)) { changesData = d.entries; try { sessionStorage.setItem('ov_changes', JSON.stringify({ at: Date.now(), data: d.entries })); } catch { /* */ } }
+            return changesData;
+        }).catch(() => null);
+    }
+    /** A commit subject in plain words: no PR number, no stage tag ("A6: "), no trailing period. */
+    const plainChange = (t) => String(t || '').replace(/\s*\(#\d+\)\s*$/, '').replace(/^[A-Z]{1,3}\d{0,3}(?:-\d+)?:\s+/, '').replace(/\.$/, '').slice(0, 110);
+    /** When this person was last on a site (their history), for "new since your last visit". */
+    function lastVisit(id) {
+        if (!mine) return 0;
+        let t = 0;
+        for (const h of mine.items) if (h.service === id || (id === 'media-hub' && h.service === 'media')) { const v = Date.parse(h.at || ''); if (v > t) t = v; }
+        return t;
+    }
+
     /** Two places this person has never used, picked fairly from the network's ranked list: better-used places come up
      *  more often, but every place gets its turn (the pick changes each time the menu opens). */
     function pickDiscover(pool) {
@@ -632,19 +656,25 @@
         discoverPick = picked.map((s) => s.id);
         return picked;
     }
-    /** The person's own corner of the network (signed in). The Dock opens in place where the bar can open it. */
+    /** The person's workspace (signed in): their agents and Vibe (the Dock opens in place), Codes, their files, their
+     *  machines, wallet, account and themes, one tap from every site (the owner, 11-07: "access codes through this menu
+     *  easily, and talk to your agent … less having to hop between sites"). */
     function youItems() {
         const f = ctx.frame;
-        if (f && Array.isArray(f.you) && f.you.length) return f.you.map((y) => ({ title: String(y.name || ''), url: safeUrl(y.url), icon: 'go', drawn: '', kind: 'you' })).filter((x) => x.url && x.title);
+        if (f && Array.isArray(f.you) && f.you.length) return f.you.map((y) => ({ title: String(y.name || ''), url: safeUrl(y.url), site: y.icon || 'ov', kind: y.dock ? 'dock' : 'you', dock: y.dock || null })).filter((x) => x.url && x.title);
         return [
-            { title: 'Your agents', url: 'https://openvibe.actor/', icon: 'spark', kind: 'dock', dock: 'agent' },
-            { title: 'Ask Vibe', url: 'https://openvibe.chat/vibe', icon: 'spark', kind: 'dock', dock: 'vibe' },
-            { title: 'Account', url: 'https://openvibe.network/my', icon: 'go', kind: 'you' },
-            { title: 'Wallet', url: 'https://openvibe.network/wallet', icon: 'go', kind: 'you' },
-            { title: 'Themes', url: 'https://openvibe.network/themes', icon: 'go', kind: 'you' },
-            { title: 'Your machines', url: 'https://node.openvibe.network', icon: 'go', kind: 'you' },
+            { title: 'Agents', url: 'https://openvibe.actor/', site: 'actor', kind: 'dock', dock: 'agent' },
+            { title: 'Vibe', url: 'https://openvibe.chat/vibe', site: 'ov', kind: 'dock', dock: 'vibe' },
+            { title: 'Codes', url: 'https://openvibe.codes/', site: 'codes', kind: 'you' },
+            { title: 'Files', url: 'https://openvibe.download/files', site: 'drive', kind: 'you' },
+            { title: 'Machines', url: 'https://node.openvibe.network', site: 'plug', kind: 'you' },
+            { title: 'Wallet', url: 'https://openvibe.network/wallet', site: 'billing', kind: 'you' },
+            { title: 'Account', url: 'https://openvibe.network/my', site: 'account', kind: 'you' },
+            { title: 'Themes', url: 'https://openvibe.network/themes', site: 'theme', kind: 'you' },
         ];
     }
+    // The network's flagships, first in the full list (the owner, 11-07: "show our most coolest products front facing").
+    const FLAGSHIPS = ['live', 'media-hub', 'codes', 'design', 'space', 'games', 'chat', 'tools'];
 
     function renderTab() {
         // This site: by its address, else by the service the bar names (www., a preview host, a stand-in page).
@@ -667,6 +697,8 @@
         // the full list and come up here only once the person uses them.
         const dockPool = yours ? ranked : ranked.filter((s) => s.group !== 'build' || useOf(s.id));
         groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((s) => siteItem(s)), section: 'places' });
+        // 2b. Their workspace, right under their places: agents and Vibe, Codes, files, machines, wallet, account, themes.
+        if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
         // 3. This site's own pages: the bar's links, two to a row; more behind a count.
         const allPages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
         if (allPages.length) {
@@ -686,8 +718,25 @@
         const disc = pickDiscover(discoverPool);
         disc.forEach((s) => shown.add(s.id));
         if (disc.length) groups.push({ title: 'New to you', as: 'sites', items: disc.map((s) => Object.assign(siteItem(s), { tag: 'New' })), section: 'discover' });
-        // 6. Their own corner: agents and Vibe (in the Dock), account, wallet, themes, machines.
-        if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'You', as: 'chips', items: youItems(), section: 'you' });
+        // 5b. What's new (the owner, 11-07: "check which of the sites got updates recently, and if the user has been on
+        // since … sort them by last update … bring you to the /updates page"): the newest real change per site,
+        // newest first, "New" when it shipped after this person's last visit there.
+        if (Array.isArray(changesData) && changesData.length) {
+            const newest = new Map();
+            for (const e of changesData) {
+                if (!e || !e.service || HOUSEKEEPING.test(String(e.subject || '')) || newest.has(e.service)) continue;
+                const site = byId.get(e.service) || (e.service === 'media' ? byId.get('media-hub') : null);
+                if (!site || (site.group === 'build' && !useOf(site.id))) continue;
+                newest.set(e.service, { e, site });
+            }
+            const rows = [...newest.values()].sort((a, b) => Date.parse(b.e.deployed_at || b.e.committed_at || 0) - Date.parse(a.e.deployed_at || a.e.committed_at || 0)).slice(0, 4).map(({ e, site }) => {
+                const at = e.deployed_at || e.committed_at;
+                const seen = lastVisit(site.id);
+                const fresh = seen && Date.parse(at) > seen;
+                return { title: site.name, meta: `${plainChange(e.subject)} · ${ago(at)}`, url: safeUrl(`${site.url.replace(/\/$/, '')}/updates`), site: site.icon || site.id, kind: 'update', tag: fresh ? 'New' : '' };
+            }).filter((x) => x.url);
+            if (rows.length) groups.push({ title: "What's new", items: rows, section: 'news', more: { label: 'All updates', href: 'https://openvibe.network/updates' } });
+        }
         // 7. Tools: the ones they use, then the everyday ones.
         const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
         groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
@@ -700,7 +749,10 @@
         groups.push({ title: '', as: 'fold', items: [], fold: { open: allOpen, label: allOpen ? 'Hide the list of sites' : `Every OpenVibe site (${all.length})`, key: 'all' }, section: 'all' });
         if (allOpen) {
             const inGroup = (s, g) => !g.id || s.group === g.id || (!fgroups.some((x) => x.id === s.group) && g === fgroups[fgroups.length - 1]);
-            fgroups.forEach((g) => groups.push({ title: g.name, as: 'sites', items: all.filter((s) => inGroup(s, g)).map((s) => siteItem(s, all)), section: 'all' }));
+            const full = (s) => Object.assign(siteItem(s, all), { host: hostOf(s.url).replace(/^www\./, '') });
+            const flag = FLAGSHIPS.map((id) => byId.get(id)).filter(Boolean);
+            if (flag.length) groups.push({ title: 'Flagships', as: 'sites', items: flag.map(full), section: 'all' });
+            fgroups.forEach((g) => groups.push({ title: g.name, as: 'sites', items: all.filter((s) => inGroup(s, g)).map(full), section: 'all' }));
             const soon = f && Array.isArray(f.soon) ? f.soon : [];
             if (soon.length) groups.push({ title: 'Opening soon', as: 'chips', items: soon.map((x) => ({ title: x.name, url: safeUrl(x.url), kind: 'site' })).filter((x) => x.url), section: 'all' });
         }
@@ -891,6 +943,7 @@
         loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); render(input.value); } });
         if (!catalog) loadCatalog().then((c) => { if (c) { catalog = c; if (el.classList.contains('is-open')) render(input.value); } });
         loadPulse().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
+        loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         if (tab === 'tools' || tab === 'sites') setTimeout(() => { const t = listEl.querySelector(`[data-sec="${tab === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
     function close() {
