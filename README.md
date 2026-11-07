@@ -341,13 +341,13 @@ settings.sealed; settings.kek;           // false / null without a KEK
   until the owner enters it again for the new value. `x-env: "NAME"` pins a key to the process
   environment: the summary shows the env value with `pinned: true`, and a write to it is 409
   `config.pinned_in_env`. `summary()`'s `classification` names every key of `values` and, since
-  4.126.0, every property of the schema, set or not, so a form knows a key is a secret before it is
+  4.125.0, every property of the schema, set or not, so a form knows a key is a secret before it is
   entered. `summary()` now carries `sealed`, `kek`, `pins`, `secrets` (each secret's
   marker with its four-character `hint`, `set_at`, `set_by`, `bound_to`) and `schema`, the JSON
   Schema to draw the form from; a secret property's `default`, `examples`, `enum` and `const` are
   removed from that copy. The annotations are `title`, `description`, `x-group`, `x-env`, `x-danger`,
   `x-bind` and `x-unit` (`nano_usd`, `ms`, `bps`, `seconds`).
-- **The owner's Setup page and clear settings (4.126.0).** Network's admin panel draws every namespace
+- **The owner's Setup page and clear settings (4.125.0).** Network's admin panel draws every namespace
   from its summary schema, and lists on its Setup tab every field only the owner can give. These
   annotations are checked when the store is created (a wrong shape refuses it, naming the rule) and pass
   through to the summary as written:
