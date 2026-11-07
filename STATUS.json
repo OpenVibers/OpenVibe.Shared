@@ -4,7 +4,7 @@
   "code": true,
   "wave": "W2",
   "package": "openvibe-shared",
-  "version": "4.124.0",
+  "version": "4.125.0",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
@@ -20,6 +20,7 @@
     "showcase sections for product home pages (openvibe-shared/showcase)",
     "share cards for every site and for its big pages (openvibe-shared/social)",
     "the shared video player (player.js, player.css): one look for every <video>",
+    "the player's AD control: a descriptions track is remembered per person, toggled with D and spoken through speech synthesis (4.125.0)",
     "items.js: what people wear from OpenVibe.Inventory (name effects, hats, particles, community badges), drawn the same on every site",
     "shipped pill, recent list and /updates log",
     "server helpers: ready, metrics, trace, egress, config, analytics, legal, SEO (sitemaps with video entries, IndexNow in requests of 100 URLs), frame SSR",
@@ -31,5 +32,5 @@
     "openvibe-shared/config accepts x-unit seconds for an integer owner setting, so an owner form can label the input in seconds",
     "a navbar link can be the site's one featured piece (featured: true): a quiet accent pill with its glyph, first in the phone's menu (4.117.0)"
   ],
-  "updated": "2026-11-06"
+  "updated": "2026-11-07"
 }
