@@ -19,7 +19,7 @@ const DOCK_PATH = path.join(ROOT, 'dock.js');
 // (the embed, Curtain now, End, the still) is dock-agent.js, 3.9 KB brotli, loaded the first time the Agents tab opens.
 // The timer itself (menu, countdown, chime, focus rounds) is dock-timer.js (3.7 KB brotli), loaded only while a timer
 // runs or its menu opens; the header's tab rail and narrow-width rules came with it.
-const DOCK_BROTLI_BUDGET = 15872;   // 15.50 KB (15435 after 4.120.0 + 437 bytes of headroom)
+const DOCK_BROTLI_BUDGET = 16077;   // 15.70 KB: 15.55 KB with Ask your agent (4.134.0, 2026-11-07) + headroom; was 15.50 KB (15435 after 4.120.0)
 const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js', 'dock-timer.js', 'dock-agent.js'];
 
 // ── the budget ──────────────────────────────────────────────

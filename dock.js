@@ -826,13 +826,8 @@
     }
 
     // ── Open and close ───────────────────────────────────────
-    /** Open on Vibe with a question waiting in the box (a page's "Ask your agent", 4.134.0). It is never sent for the person. */
-    function ask({ text = '' } = {}) {
-        open({ tab: 'vibe' });
-        let tries = 0;
-        const put = () => { if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (tries++ < 40) setTimeout(put, 100); };
-        put();
-    }
+    // Ask your agent (4.134.0): Vibe opens with the question in its box, unsent.
+    function ask({ text = '' } = {}, n = 0) { if (!n) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!(el && !el.hidden); }
     function open(opts = {}) {
         o = { ...o, ...opts };
