@@ -49,5 +49,18 @@ assert.ok(dock.includes("panel.querySelector('.ovdk-timeline')"), 'the panel has
 assert.ok(dock.indexOf('ovdk-timeline') < dock.indexOf('ovdk-agent'), 'the panel comes before the desk view');
 assert.ok(dock.includes('https://openvibe.actor'), 'the panel reads OpenVibe.Actor');
 
+// The person's token: the navbar hands the Dock a function, so the panel resolves it when it calls.
+assert.ok(/typeof rawToken === 'function' \? await rawToken\(\)/.test(panel), 'a token given as a function is resolved at the call');
+assert.ok(!panel.includes("'Bearer ' + token }"), 'the panel never sends a function as a bearer');
+assert.ok(panel.includes('async function bearer()'), 'the bearer is resolved once per call');
+
+// Opening the Dock at a task: the entry that carries it is marked and brought into view.
+assert.ok(panel.includes('ovdt-focus'), 'the focused entry is marked');
+assert.ok(panel.includes('scrollIntoView'), 'the focused entry is brought into view');
+assert.ok(panel.includes('entry.ref === wanted'), 'the step is found by the id the site opened the Dock with');
+assert.ok(dock.includes('focus: () => o.task || null'), 'the Dock tells the panel which step to point at');
+const navbar = fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8');
+assert.ok(/function openDock\(tab, opts\)/.test(navbar), 'the navbar opens the Dock with the step to point at');
+
 console.log('dock timeline: now, needs you, the timeline, the folds and the filters');
 console.log('all passed');

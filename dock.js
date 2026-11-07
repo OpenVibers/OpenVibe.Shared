@@ -454,7 +454,8 @@
             return;
         }
         if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
-        if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); return; }
+        // The Agent panel reads the step.
+        if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (mounts[id + 'Timeline']) mounts[id + 'Timeline'].refresh(); return; }
         mounts[id] = { refresh: null };
         panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
         if (id === 'agent') {
@@ -465,7 +466,7 @@
             // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
             // phone Now and Needs you are on screen before anything else.
             load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
-                if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent' });
+                if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent', focus: () => o.task || null });
             });
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
                 if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.firstChild, { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
@@ -826,7 +827,7 @@
     }
 
     // ── Open and close ───────────────────────────────────────
-    // Ask your agent (4.134.0): Vibe opens with the question in its box, unsent.
+    // Ask your agent (4.135.0): Vibe opens with the question in its box, unsent.
     function ask({ text = '' } = {}, n = 0) { if (!n) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!(el && !el.hidden); }
     function open(opts = {}) {

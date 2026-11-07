@@ -608,7 +608,7 @@ async function drag(p, from, to) {
             assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all');
             await p.close();
         }
-        // ── Ask your agent (4.134.0): a page's [data-ov-ask] chip opens Vibe with the question in the box, unsent. ──
+        // ── Ask your agent (4.135.0): a page's [data-ov-ask] chip opens Vibe with the question in the box, unsent. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: false } };
             const before = asked.length;

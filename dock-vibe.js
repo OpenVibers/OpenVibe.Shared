@@ -284,7 +284,7 @@
             refresh: () => { vibe.panel = panel; return openVibe(); },
             pause: () => { clearTimeout(vibe.timer); if (vibe.rec) { try { vibe.rec.abort(); } catch { /* */ } } },
             talk: () => { if (vibe.talk) vibe.talk(); },
-            // A page's "Ask your agent" (4.134.0): the question waits in the box, with its context, for the person to send.
+            // A page's "Ask your agent" (4.135.0): the question waits in the box, with its context, for the person to send.
             ask: (text) => { if (vibe.fill) vibe.fill(text); else vibe.pendingAsk = text; },
         };
     }

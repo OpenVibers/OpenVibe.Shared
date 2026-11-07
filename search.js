@@ -700,7 +700,7 @@
     const feedId = (c) => `${String(c.site || '').slice(0, 30)}:${String(c.id || '').slice(0, 30)}`;
     const feedPref = () => { try { const v = JSON.parse(localStorage.getItem(FEEDS_KEY) || 'null'); return v && Array.isArray(v.on) ? v.on.filter((x) => typeof x === 'string').slice(0, FEEDS_MAX) : null; } catch { return null; } };
     const saveFeedsLocal = (on) => { try { localStorage.setItem(FEEDS_KEY, JSON.stringify({ on: on.slice(0, FEEDS_MAX) })); } catch { /* private window */ } };
-    // The choice follows the person (4.134.0): Network keeps it (GET/PUT /api/v1/me/menu-feeds, network.menu-feeds@1);
+    // The choice follows the person (4.135.0): Network keeps it (GET/PUT /api/v1/me/menu-feeds, network.menu-feeds@1);
     // this device's copy paints at once and stands whenever Network does not answer.
     let feedsSynced = false, feedsPut = 0;
     const feedsUrl = () => `${ctx.apiBase || 'https://openvibe.network'}/api/v1/me/menu-feeds`;

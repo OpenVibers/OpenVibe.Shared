@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.134.0 — 2026-11-07
+## 4.135.0 — 2026-11-07
 
 - **Ask your agent, from any page** (plan Z3; the owner, 11-07: "have your agent with you wherever you go"):
   - `kit.askAgent({ text })` draws a chip ("✦ Ask your agent"). Any control with `data-ov-ask="…"` works the same way.
@@ -18,6 +18,11 @@
   `<link rel="preconnect" href="https://openvibe.network" crossorigin>`, except on the Network itself;
   `preconnect: false` turns it off). The phone-speed report of 11-07 found 102 of 108 pages asking openvibe.network for
   the bar, sign-in and the menu without one.
+
+## 4.134.0 — 2026-11-07
+
+- **Fixed: the Dock's Agent panel could not read the timeline.** The navbar hands the Dock the person's token as a function (it may change when they sign in again); the panel used it as a string, so every call went out as `Bearer function…` and the panel said the agent was not reachable. The token is now resolved when a call is made.
+- The Dock can open at a step: `OpenVibeNavbar.openDock('agent', { task: 'tsk_…' })` marks that entry in the timeline and brings it into view, so a site can send the person to the exact task it started for them.
 
 ## 4.133.0 — 2026-11-07
 

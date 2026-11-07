@@ -1,5 +1,5 @@
 'use strict';
-// 4.134.0: every page opens its connection to openvibe.network early (the bar, sign-in and the menu all ask it), except
+// 4.135.0: every page opens its connection to openvibe.network early (the bar, sign-in and the menu all ask it), except
 // the Network's own pages and a page that says preconnect: false. And kit.askAgent draws the "Ask your agent" chip.
 const assert = require('assert');
 const seo = require('../seo');

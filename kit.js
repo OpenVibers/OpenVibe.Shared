@@ -172,7 +172,7 @@
                 'data-image': image ? url(image) : null, 'data-embed': embed ? url(embed) : null, 'data-kind': kind || null, 'data-id': id || null } });
     }
     /**
-     * "Ask your agent" (4.134.0, plan Z3): one chip any page can carry. A tap opens the person's Vibe in the Dock with the
+     * "Ask your agent" (4.135.0, plan Z3): one chip any page can carry. A tap opens the person's Vibe in the Dock with the
      * question waiting in its box, this page's context included, for them to read and send; it never sends for them.
      * Signed out, the navbar sends them to sign in. text: the prefilled question ("About this stream: …").
      */
