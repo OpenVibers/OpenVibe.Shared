@@ -236,6 +236,8 @@
 .ovs-fold[aria-expanded="true"] svg { transform: rotate(90deg); }
 .ovs-fold:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
+.ovs-card { padding: 2px 6px 6px; }
+.ovs-cardbody { border-radius: 16px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); padding: 12px 14px; }
 .ovs-host { display: block; margin-top: 2px; font-size: 11px; font-weight: 650; letter-spacing: .01em; color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--text-muted, #93a0b4)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-group .ovs-more { margin-left: auto; color: var(--accent-light, #8ab4ff); font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; text-decoration: none; }
 @media (hover: hover) { .ovs-app:hover, .ovs-link:hover, .ovs-live:hover, .ovs-fold:hover { background: var(--bg-hover, rgba(255,255,255,.07)); color: inherit; } .ovs-app:hover .ovs-appic { transform: translateY(-2px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } }
@@ -268,7 +270,13 @@
 .ovs.ovs-anchored { top: var(--ovs-top, 0px); background: rgba(3, 6, 12, .45); }
 .ovs.ovs-anchored .ovs-panel { top: 8px; left: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); transform: none; transform-origin: 24px 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .22s cubic-bezier(.2,1.15,.3,1); }
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
-@media (max-width: 640px) { .ovs.ovs-anchored .ovs-panel { top: 0; left: 0; width: 100vw; height: auto; max-height: calc(100dvh - var(--ovs-top, 0px) - 12px); border-radius: 0 0 22px 22px; border-top: 0; } }
+@media (max-width: 640px) {
+  /* The whole screen on a phone (the owner, 11-07: "make full use of the height, not compensate for the navbar"),
+     opening as a circle that grows from the button that opened it. */
+  .ovs.ovs-anchored { top: 0; }
+  .ovs.ovs-anchored .ovs-panel { top: 0; left: 0; width: 100vw; height: 100dvh; max-height: none; border-radius: 0; border: 0; padding-top: env(safe-area-inset-top, 0px); animation: ovs-reveal .38s cubic-bezier(.2,.9,.25,1) both; }
+}
+@keyframes ovs-reveal { from { clip-path: circle(28px at var(--ovs-cx, 40px) var(--ovs-cy, 28px)); } to { clip-path: circle(150% at var(--ovs-cx, 40px) var(--ovs-cy, 28px)); } }
 @media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel, .ovs-list > li { animation: none; } }`;
         document.head.appendChild(st);
     }
@@ -353,6 +361,7 @@
     }
     const exact = (it, q) => !!it && ['site', 'family', 'tool', 'page'].includes(it.kind) && String(it.title).toLowerCase() === q.toLowerCase();
     function remember(it) {
+        if (pushed) { pushed = false; try { history.replaceState(Object.assign({}, history.state || {}, { ovsMenu: false }), ''); } catch { /* */ } }
         const q = input && input.value.trim();
         if (q && it && it.kind !== 'recent') recent.add(q);
     }
@@ -415,12 +424,23 @@
     function paint(groups, note) {
         items = [];
         listEl.textContent = '';
-        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold'].includes(g.as)).forEach((g) => {
+        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card'].includes(g.as)).forEach((g) => {
             if (g.as === 'route') {
                 const r = document.createElement('li'); r.className = 'ovs-route'; r.setAttribute('role', 'presentation'); r.textContent = g.text; listEl.appendChild(r);
                 return;
             }
             if (g.as === 'fold') { listEl.appendChild(foldButton(g.fold, g.section)); return; }
+            if (g.as === 'card') {
+                const body = document.createElement('div'); body.className = 'ovs-cardbody';
+                try {
+                    g.card.render(body, { close, here: here(), user: ctx.user || null, signedIn: !!(ctx.token && ctx.user && !ctx.user.is_anon) });
+                } catch { return; }
+                if (!body.childNodes.length) return;
+                if (g.title) { const h = document.createElement('li'); h.className = 'ovs-group'; h.setAttribute('role', 'presentation'); h.setAttribute('data-sec', g.section); h.textContent = g.title; listEl.appendChild(h); }
+                const li = document.createElement('li'); li.className = 'ovs-card'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', g.section);
+                li.appendChild(body); listEl.appendChild(li);
+                return;
+            }
             const h = document.createElement('li');
             h.className = 'ovs-group';
             h.setAttribute('role', 'presentation');
@@ -673,6 +693,24 @@
             { title: 'Themes', url: 'https://openvibe.network/themes', site: 'theme', kind: 'you' },
         ];
     }
+    // ── Site cards: a site's own live piece of the menu (the owner, 11-07: "content aware … on Download, a little
+    // download thing … or create custom elements"). A page pushes { id, title, render(el, api) } onto
+    // window.OpenVibeMenuCards (a queue, so it works before search.js loads) or calls OpenVibeSearch.registerCard().
+    // render() gets an empty element and { close, here, user, signedIn } and draws with DOM nodes; it runs on the
+    // site's own page, so it is the site's code and its own responsibility. A card that throws is left out.
+    const cards = [];
+    function registerCard(c) {
+        if (!c || typeof c.render !== 'function' || !c.id || cards.some((x) => x.id === c.id)) return () => {};
+        cards.push(c);
+        return () => { const i = cards.indexOf(c); if (i >= 0) cards.splice(i, 1); };
+    }
+    function drainCards() {
+        const q = root.OpenVibeMenuCards;
+        if (Array.isArray(q)) { while (q.length) registerCard(q.shift()); }
+        // Later pushes go straight in.
+        root.OpenVibeMenuCards = { push: (c) => { registerCard(c); return cards.length; } };
+    }
+
     // The network's flagships, first in the full list (the owner, 11-07: "show our most coolest products front facing").
     const FLAGSHIPS = ['live', 'media-hub', 'codes', 'design', 'space', 'games', 'chat', 'tools'];
 
@@ -683,6 +721,7 @@
         const shown = new Set(mineSite ? [mineSite.id] : []);
         const take = (list, n) => { const out = []; for (const s of list) { if (out.length >= n) break; if (s && !shown.has(s.id)) { out.push(s); shown.add(s.id); } } return out; };
         const groups = [];
+        const f0 = ctx.frame;
         // 1. Who is live (Network's pulse): the network's heart, one tap from every site.
         const p = pulseData;
         const liveNow = p && Number(p.live_now) > 0 ? Number(p.live_now) : 0;
@@ -690,6 +729,15 @@
             const chans = Array.isArray(p.live) ? p.live.slice(0, 8).map((c) => ({ title: String(c.name || ''), meta: c.viewers ? `${c.viewers} watching` : 'Live', url: safeUrl(c.url), site: 'live', kind: 'live' })).filter((x) => x.url && x.title) : [];
             groups.push({ title: '', as: 'livebar', items: [{ title: liveNow === 1 ? '1 stream live now' : `${liveNow} streams live now`, meta: p.watching ? `${p.watching} watching` : 'Watch on Live', url: 'https://openvibe.live/', site: 'live', kind: 'live' }, ...chans] });
         }
+        // 1b. The network's cards: what sites publish for every menu (Network collects each site's
+        // /.well-known/openvibe-menu.json into the Frame's `cards`): Live's channels, Games' new worlds, Video's trending.
+        // Text and links only (never another site's code), checked here again; at most two, Network's order.
+        const netCards = f0 && Array.isArray(f0.cards) ? f0.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 2) : [];
+        netCards.forEach((c) => {
+            const as = c.kind === 'rail' ? 'livebar' : c.kind === 'chips' ? 'chips' : 'rows';
+            const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url), site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
+            if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
+        });
         // 2. The places this person uses most (else the network's most used): a dock of big icons.
         const yours = mine && mine.services.some((x) => x.count > 0);
         const ranked = all.map((s, i) => [useOf(s.id) * 1000 - i, s]).sort((a, b) => b[0] - a[0]).map(([, s]) => s);
@@ -699,6 +747,8 @@
         groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((s) => siteItem(s)), section: 'places' });
         // 2b. Their workspace, right under their places: agents and Vibe, Codes, files, machines, wallet, account, themes.
         if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
+        // 2c. This site's own cards (a drop zone on Download, go-live status on Live, a new task on Codes…).
+        for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
         // 3. This site's own pages: the bar's links, two to a row; more behind a count.
         const allPages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
         if (allPages.length) {
@@ -926,11 +976,20 @@
         tab = TABS.some(([id]) => id === opts.tab) ? opts.tab : 'you';
         // The old tabs, kept as a way in: "sites" opens the list of every site, "tools" scrolls to the tools.
         allOpen = tab === 'sites'; hereOpen = false; discoverPick = null;
+        drainCards();
         el.classList.add('is-open');
+        // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
+        // history entry; Back pops it and only closes the menu.
+        try { if (!(history.state && history.state.ovsMenu)) { history.pushState(Object.assign({}, history.state || {}, { ovsMenu: true }), ''); pushed = true; } } catch { pushed = false; }
         // Opened from the navbar's orb: the menu drops from it, under the bar; otherwise centred.
         const at = opts.anchor;
         el.classList.toggle('ovs-anchored', !!at);
-        if (at) { el.style.setProperty('--ovs-top', `${Math.max(0, Math.round(at.top))}px`); el.style.setProperty('--ovs-left', `${Math.max(8, Math.round(at.left))}px`); }
+        if (at) {
+            el.style.setProperty('--ovs-top', `${Math.max(0, Math.round(at.top))}px`); el.style.setProperty('--ovs-left', `${Math.max(8, Math.round(at.left))}px`);
+            const cx = Number.isFinite(at.cx) ? at.cx : (Number.isFinite(at.left) ? at.left + 20 : 40);
+            const cy = Number.isFinite(at.cy) ? at.cy : (Number.isFinite(at.top) ? Math.max(20, at.top - 28) : 28);
+            el.style.setProperty('--ovs-cx', `${Math.round(cx)}px`); el.style.setProperty('--ovs-cy', `${Math.round(cy)}px`);
+        }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: true } })); } catch { /* */ }
         document.documentElement.style.overflow = 'hidden';
         input.placeholder = `Search ${here()}, or ask Vibe`;
@@ -946,9 +1005,13 @@
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         if (tab === 'tools' || tab === 'sites') setTimeout(() => { const t = listEl.querySelector(`[data-sec="${tab === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
+    let pushed = false, popping = false;
+    if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close() {
         if (view === 'results' && rtabsEl) leaveResults();
         if (!el) return;
+        // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
+        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) history.back(); } catch { /* */ } }
         el.classList.remove('is-open');
         document.documentElement.style.overflow = '';
         if (inflight) { inflight.abort(); inflight = null; }
@@ -957,7 +1020,7 @@
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
 
-    const api = { open, close, suggest, siteOf };
+    const api = { open, close, suggest, siteOf, registerCard };
     root.OpenVibeSearch = api;
     if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

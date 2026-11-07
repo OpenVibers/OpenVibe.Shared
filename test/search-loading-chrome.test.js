@@ -145,6 +145,15 @@ const server = http.createServer((req, res) => {
         assert.notStrictEqual(await p.evaluate('document.querySelector(".ovs-opt.is-active .ovs-title").textContent'), 'night room', 'arrows move');
         await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); 1');
         assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Escape closes');
+        // Back closes the menu and stays on the page (4.128.0, the owner 11-07: Back on a phone left the page).
+        const before = await p.evaluate('location.href');
+        await p.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true })); 1');
+        for (let i = 0; i < 30 && !(await p.evaluate('!!document.querySelector(".ovs.is-open")')); i++) await wait(100);
+        assert.strictEqual(await p.evaluate('!!(history.state && history.state.ovsMenu)'), true, 'opening adds one history entry');
+        await p.evaluate('history.back(); 1');
+        await wait(400);
+        assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Back closes the menu');
+        assert.strictEqual(await p.evaluate('location.href'), before, 'and stays on the page');
 
         // ── Loading ──
         v = await p.evaluate(`new Promise((done) => {

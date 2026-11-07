@@ -21,6 +21,20 @@
 - **A click beacon, only when Network asks for it** (`frame.menu.beacon`): the section, the position, where it led and
   the kind; no person and no page, so the menu can learn what helps and the ranking can spread people across the network.
 - Touch screens get 44 px chips and header links.
+- **Sites put their own content in the menu** (the owner, 11-07: "content aware … sites can interact and create their own
+  content in the bar"), two ways:
+  - **On their own pages, a card:** a site pushes `{ id, title, render(el, api) }` onto `window.OpenVibeMenuCards`
+    (a queue that works before `search.js` loads) or calls `OpenVibeSearch.registerCard()`. The card draws itself
+    under the workspace: Download's drop zone, Live's go-live status, Codes' new task. It is the site's own code on
+    its own page. A card that throws is left out.
+  - **On every site, from Network:** the Frame's `cards` (Network collects each site's
+    `/.well-known/openvibe-menu.json`). The menu draws at most two, as a rail, rows or chips: Live's channels with
+    their viewers, Games' new worlds, Video's trending. They are text and links only, re-checked here, and never
+    another site's code.
+- **Back closes the menu first** (the owner: Back on a phone left the page). Opening adds one history entry; Back pops
+  it and only closes the menu. Choosing a link leaves cleanly.
+- **The whole screen on a phone,** opened from the bar's orb as a circle that grows from the orb, under the safe area.
+  No motion when reduced motion is asked for.
 - **Your workspace** (signed in), right under your places: Agents and Vibe (open in the Dock), Codes, Files, Machines,
   Wallet, Account and Themes, one tap from every site (the owner: "access codes through this menu easily, and talk to
   your agent … less having to hop between sites").
