@@ -87,13 +87,15 @@ const server = http.createServer((req, res) => {
         for (let i = 0; i < 50 && !(await p.evaluate('!!document.querySelector(".ovs.is-open .ovs-input")')); i++) await wait(100);
         await wait(150);
         let v = await p.evaluate(`({ open: !!document.querySelector('.ovs.is-open'), focused: document.activeElement && document.activeElement.className,
-            tabs: [...document.querySelectorAll('.ovs-tab[data-tab]')].map((t) => t.textContent + (t.getAttribute('aria-selected') === 'true' ? '*' : '')),
-            groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), chips: [...document.querySelectorAll('.ovs-chip span')].map((t) => t.textContent),
-            sites: [...document.querySelectorAll('.ovs-tile b')].map((t) => t.textContent), placeholder: document.querySelector('.ovs-input').placeholder })`);
+            tabs: document.querySelectorAll('.ovs-tab[data-tab]').length,
+            groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), links: [...document.querySelectorAll('.ovs-link span')].map((t) => t.textContent),
+            sites: [...document.querySelectorAll('.ovs-appname')].map((t) => t.textContent), fold: (document.querySelector('[data-ovs-fold="all"]') || {}).textContent,
+            placeholder: document.querySelector('.ovs-input').placeholder })`);
         assert.ok(v.open && v.focused === 'ovs-input', '"/" opened the panel and focused the box');
-        assert.deepStrictEqual(v.tabs, ['Start*', 'Sites', 'Tools'], 'one menu, three tabs (the launcher and search together, 4.23.0)');
-        assert.deepStrictEqual([v.groups, v.chips], [['On Chat', 'Popular on OpenVibe'], ['Rooms', 'Servers']], 'nothing typed: this site\'s pages (by its short name, 4.48.0), then the sites');
+        assert.strictEqual(v.tabs, 0, 'one calm scroll, no tabs (4.128.0, the owner 11-07: "rethink the whole idea of this whole menu")');
+        assert.deepStrictEqual([v.groups, v.links], [['Popular on OpenVibe', 'On Chat'], ['Rooms', 'Servers']], 'nothing typed: the places first (one tap to Live), then this site\'s own pages');
         assert.ok(v.sites.includes('Live') && v.sites.includes('Tools'), 'the main sites even before the Frame answers');
+        assert.strictEqual(v.fold, 'Every OpenVibe site (6)', 'every site behind one counted fold');
         assert.strictEqual(v.placeholder, 'Search Chat, or ask Vibe', 'the site by its short name (4.48.0)');
         // The box completes from this site's pages (and the person's searches, history and sites); Tab takes it.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'Roo'; i.dispatchEvent(new Event('input')); return 1; })()`);
@@ -102,8 +104,8 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('document.querySelector(".ovs-input").value'), 'Rooms', 'Tab takes it');
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = ''; i.dispatchEvent(new Event('input')); return 1; })()`);
         await wait(100);
-        await p.evaluate('document.querySelector(".ovs-tab[data-tab=sites]").click(); 1');
-        assert.ok(await p.evaluate('!!document.querySelector(".ovs-grid.is-sites .ovs-tile")'), 'the Sites tab lists the sites');
+        await p.evaluate('document.querySelector("[data-ovs-fold=all]").click(); 1');
+        assert.ok(await p.evaluate('!!document.querySelector(".ovs-grid.is-sites .ovs-tile") && document.querySelector("[data-ovs-fold=all]").getAttribute("aria-expanded") === "true"'), 'the fold opens the list of every site in place');
         // Typing: one request for the latest text (the earlier one cancelled), this site's results first.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'slow'; i.dispatchEvent(new Event('input')); setTimeout(() => { i.value = 'night'; i.dispatchEvent(new Event('input')); }, 250); })(); 1`);
         await wait(1200);

@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.128.0 — 2026-11-07
+
+- **The menu, rethought around real use** (the owner, 11-07: Jump back in came first, people opened Sites every time just to
+  reach Live, and it "doesn't spread traffic … not smartly done based on what's popular"). Network's data that day: Video,
+  Live and Community take nearly all the page views, 48 of 67 signed-in people used one site, and people move Live ↔
+  Community, Live ↔ Tools, Chat → Live, Live → Bot and Live → Video. One calm scroll, no tabs, in this order:
+  - **Who is live**: "3 streams live now · 41 watching" and the live channels when Network names them (`pulse.live`).
+  - **Your places**: a dock of eight big icons, the places this person uses most (else the network's most used, without
+    developer services). One tap to Live from any site.
+  - **On <this site>**: the bar's own links, two to a row, the rest behind "More on <site> (N)".
+  - **Next from <this site>**: where people really go next (Network's moves; the Frame's `next` when it sends one).
+  - **New to you**: two places this person never used, picked fairly from the ranked network so every place gets its
+    turn; developer services only for people who use one. The pick holds for the whole opening.
+  - **You** (signed in): your agents and Vibe (they open in the Dock), account, wallet, themes, machines.
+  - **Tools**, **Recent searches**, then **Every OpenVibe site (N)** as one counted fold (this site's group first), and
+    **Jump back in** last.
+- `open({ tab: 'sites' })` opens the list of every site and `tab: 'tools'` scrolls to the tools, so old callers keep
+  working.
+- **A click beacon, only when Network asks for it** (`frame.menu.beacon`): the section, the position, where it led and
+  the kind; no person and no page, so the menu can learn what helps and the ranking can spread people across the network.
+- Touch screens get 44 px chips and header links.
+
 ## 4.126.0 — 2026-11-07
 
 - **Audio description in the player (X1)**: a video with a `<track kind="descriptions">` gets an **AD** button beside
