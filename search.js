@@ -198,7 +198,8 @@
 .ovs-ic { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--accent-light, #8ab4ff); font-size: 12px; font-weight: 800; }
 .ovs-ic > svg { width: 16px; height: 16px; }
 .ovs-ic.ovs-site { background: none; }
-.ovs-thumb { flex: none; width: 64px; height: 36px; border-radius: 9px; object-fit: cover; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); }
+.ovs-thumb { flex: none; width: 72px; height: 40px; border-radius: 9px; object-fit: cover; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); }
+.ovs-thumb--ico { display: grid; place-items: center; }
 .ovs .ov-icon:empty { border-radius: 50%; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
 .ovs-main { flex: 1; min-width: 0; display: grid; gap: 1px; }
 .ovs-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
@@ -519,6 +520,9 @@
                 return;
             }
             if (as === 'rows') {
+                // A row with a picture needs no site icon beside it (4.139.0); in a group where some rows have one, the
+                // others carry their icon in a picture-sized tile so the titles line up.
+                const pictured = g.items.some((x) => x.image);
                 g.items.forEach((it) => {
                     const li = document.createElement('li'); li.className = 'ovs-item'; li.setAttribute('role', 'presentation');
                     if (g.section) li.setAttribute('data-sec', g.section);
@@ -528,13 +532,15 @@
                     if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; t.appendChild(tg); }
                     if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
                     if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
-                    a.append(icon(it));
                     if (it.image) {
                         const im = document.createElement('img');
                         im.className = 'ovs-thumb'; im.src = it.image; im.alt = '';
-                        im.width = 64; im.height = 36; im.loading = 'lazy'; im.decoding = 'async';
+                        im.width = 72; im.height = 40; im.loading = 'lazy'; im.decoding = 'async';
                         a.appendChild(im);
-                    }
+                    } else if (pictured) {
+                        const tile = document.createElement('span'); tile.className = 'ovs-thumb ovs-thumb--ico';
+                        tile.append(icon(it)); a.appendChild(tile);
+                    } else a.append(icon(it));
                     a.appendChild(main);
                     const q = input.value.trim();
                     if (q && view !== 'results' && (it.kind === 'results' || (items.length === 1 && exact(it, q)))) { const k = document.createElement('span'); k.className = 'ovs-key'; k.textContent = 'Enter'; a.appendChild(k); }

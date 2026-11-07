@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.139.0 — 2026-11-07
+
+- **The menu's feed rows lead with their picture.** A row with a thumbnail (Trending on Video, a live channel) no
+  longer shows the site's icon beside it: the picture is larger (72 × 40) and the title moves left. In a group where
+  some rows have a picture, the others carry their icon in a picture-sized tile, so the titles line up. A group with
+  no pictures (New worlds) keeps its icons.
+- `navbar.js`'s SIBLING_REV carries search.js's new hash.
+
 ## 4.138.0 — 2026-11-07
 
 - **38 KB off most first visits** (the owner, 11-07: "make things faster and more optimized"):
