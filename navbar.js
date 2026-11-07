@@ -951,9 +951,21 @@
         const a = nav.querySelector('#openvibe-messages-btn'); if (!a || typeof a.addEventListener !== 'function') return;
         a.addEventListener('click', (e) => {
             const m = _config.messages || {};
-            if (typeof m.onOpen !== 'function' || e.metaKey || e.ctrlKey || e.shiftKey) return;
+            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+            // The default (4.130.0): the Dock's Chats tab; without the Dock, the link.
+            if (m.__default && _config.dock !== false && _config.token) { e.preventDefault(); openDock('chats'); return; }
+            if (typeof m.onOpen !== 'function') return;
             e.preventDefault(); try { m.onOpen(e); } catch { /* the link still works */ }
         });
+    }
+    // The default Messages button's count: Chat's GET /api/dm/unread, at most once a minute (README, "The navbar").
+    let _unreadAt = 0;
+    function loadUnread() {
+        const m = _config.messages, u = _config.user;
+        if (!m || !m.__default || !u || u.is_anon || !_config.token || typeof fetch !== 'function' || Date.now() - _unreadAt < 60000) return;
+        _unreadAt = Date.now();
+        fetch(`${String(_config.dockChatBase || 'https://openvibe.chat').replace(/\/+$/, '')}/api/dm/unread`, { headers: { Authorization: `Bearer ${_config.token}` }, credentials: 'omit' })
+            .then((r) => (r.ok ? r.json() : null)).then((b) => { if (b && _config.messages.__default) OpenVibeNavbar.setMessages(Number(b.unread) || 0); }).catch(() => {});
     }
 
     function chipsAllHTML(chips) {
@@ -1805,7 +1817,7 @@
         _walletFor = key; _walletAt = Date.now();
         if (!_walletWatch && typeof document !== 'undefined' && document.addEventListener) {
             _walletWatch = true;
-            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') loadWalletChips(); });
+            document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
         const auth = { Authorization: `Bearer ${_config.token}` };
         const saved = savedWallet(u);
@@ -2033,6 +2045,7 @@
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
+        loadUnread();
         renderAppBar();
         return nav;
     }
@@ -2260,6 +2273,9 @@
 
         init(opts = {}) {
             Object.assign(_config, opts);
+            // Balances and Messages on every site unless it says false or brings its own (4.130.0).
+            if (opts.wallet === undefined) _config.wallet = true;
+            if (opts.messages === undefined) _config.messages = { __default: true };
             injectStyles();
             hookBoost();
             hookMoves();

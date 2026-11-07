@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.130.0 — 2026-11-07
+
+- **Your things on every site** (the owner, 11-07: "make sure DMs are accessible across all sites … same with open coins
+  and vibes … visible everywhere too"). For a signed-in person, every site's bar now shows:
+  - **Messages**, beside the bell, with OpenVibe.Chat's unread count (`GET /api/dm/unread`, on load and when the tab
+    comes back, at most once a minute). A click opens your conversations in place, in the Dock's Chats tab, read and
+    answered there; with the Dock off it is a link to openvibe.chat/messages.
+  - **The OpenCoins and Vibes balances** (the `wallet` chips of 4.24), folded into one pill on a phone as before.
+
+  Both are on unless a site says `wallet: false` / `messages: false`, or brings its own (Live's chips, Chat's
+  messages keep theirs, with their own counts). A signed-out page shows and asks nothing.
+
 ## 4.129.0 — 2026-11-07
 
 - **One menu** (the owner, 11-07, on the right-hand drawer: "sloppy … maybe combining this menu and the other menu and just
