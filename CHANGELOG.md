@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.123.0 — 2026-11-06
+
+- **The "not on the list" gate from markup**: `<div data-ov-share-gate data-kind data-id data-signed-in-as data-sign-in-url>` is started by `ov-share.js` when it loads (and by `OVShare.startGates()` for markup added later), once per element. Sites no longer write an inline script for it: an inline script needs a CSP nonce on most sites, and a value written into one with an HTML-escaping template turns its quotes into `&quot;` and breaks the script, so the gate never drew. The values are plain attributes, escaped like any other.
+
 ## 4.122.0 — 2026-11-06
 
 - A thread start page (`page({ center })`) keeps its head at the top on wide screens: only the welcome and the composer are centred, by auto margins. Centring the whole column floated the head into the middle of a tall screen above an empty band (seen on openvibe.exchange/chat at 1280 px). Phones are unchanged.
