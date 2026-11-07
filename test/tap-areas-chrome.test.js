@@ -62,7 +62,10 @@ const MEASURE = `(() => {
     const firstRight = right && [...right.querySelectorAll('a, button')].find((el) => el.getBoundingClientRect().width > 0);
     const fr = firstRight && firstRight.getBoundingClientRect();
     const rightKeepsItsStart = !firstRight || on(firstRight, fr.left + 2, fr.top + fr.height / 2);
-    const out = { signIn: size(bar.querySelector('#openvibe-login-btn')), orb: size(bar.querySelector('.ovnav-orb')), nameKeepsItsEnd, rightKeepsItsStart };
+    // The menu's way in on a phone is the burger when the bar has page links (4.137.0: the orb steps aside), else the orb.
+    const orbEl = bar.querySelector('.ovnav-orb');
+    const menuEl = orbEl && getComputedStyle(orbEl).display !== 'none' ? orbEl : bar.querySelector('#openvibe-burger');
+    const out = { signIn: size(bar.querySelector('#openvibe-login-btn')), orb: size(menuEl), nameKeepsItsEnd, rightKeepsItsStart };
     out.flame = size(bar.querySelector('.flame'));
     out.tld = size(bar.querySelector('a.b-tld'));
     out.tldBox = bar.querySelector('a.b-tld').getBoundingClientRect().width;
@@ -88,7 +91,7 @@ const MEASURE = `(() => {
                 const v = await p.evaluate(MEASURE);
                 const at = `${width}px signed ${who}`;
                 if (who === 'out') assert.ok(v.signIn && v.signIn.h >= 44 && v.signIn.w >= 44, `${at}: Sign In ${JSON.stringify(v.signIn)}`);
-                assert.ok(v.orb && v.orb.w >= 44 && v.orb.h >= 44, `${at}: the orb ${JSON.stringify(v.orb)}`);
+                assert.ok(v.orb && v.orb.w >= 44 && v.orb.h >= 44, `${at}: the menu button ${JSON.stringify(v.orb)}`);
                 assert.ok(v.flame.w >= 44 && v.flame.h >= 44, `${at}: site switcher ${JSON.stringify(v.flame)}`);
                 assert.ok(v.nameKeepsItsEnd, `${at}: the site's name keeps the taps on its last letters`);
                 assert.ok(v.rightKeepsItsStart, `${at}: the right-hand group keeps its own first taps`);

@@ -95,8 +95,8 @@ function page({ url = 'https://openvibe.live/', eventSource = true, random = 0.5
         if (src) {
             out.scripts.push(src);
             setImmediate(() => {
-                if (/action-center\.js$/.test(src)) { vm.runInContext(AC_SRC, ctx, { filename: 'action-center.js' }); if (node.onload) node.onload(new ctx.Event('load')); return; }
-                if (!/notification-live\.js$/.test(src)) { if (node.onerror) node.onerror(new ctx.Event('error')); return; }
+                if (/action-center\.js(\?|$)/.test(src)) { vm.runInContext(AC_SRC, ctx, { filename: 'action-center.js' }); if (node.onload) node.onload(new ctx.Event('load')); return; }
+                if (!/notification-live\.js(\?|$)/.test(src)) { if (node.onerror) node.onerror(new ctx.Event('error')); return; }
                 vm.runInContext(LIVE_SRC, ctx, { filename: 'notification-live.js' });
                 if (node.onload) node.onload(new ctx.Event('load'));
             });
@@ -262,7 +262,8 @@ const created = (subject, over = {}) => ({
         N.init({ token: 'jwt-alice', apiBase: API, realtime: true });
         const bell = N.createBell(p.document.body);
         await p.settle();
-        assert.deepStrictEqual(p.out.scripts, ['https://openvibe.live/shared/notification-live.js'], 'loaded from beside notification-ui.js');
+        assert.strictEqual(p.out.scripts.length, 1, 'one script');
+        assert.match(p.out.scripts[0], /^https:\/\/openvibe\.live\/shared\/notification-live\.js\?v=[0-9a-f]{12}$/, 'loaded from beside notification-ui.js, by its content hash (4.137.0)');
         assert.strictEqual(p.tickets().length, 1);
         assert.strictEqual(p.tickets()[0].headers.Authorization, 'Bearer jwt-alice');
         assert.strictEqual(p.tickets()[0].credentials, 'omit', 'cross-site: the token, never cookies');
@@ -360,7 +361,8 @@ const created = (subject, over = {}) => ({
         p.run(UI_SRC, 'notification-ui.js', 'https://openvibe.network/shared/notification-ui.js');
         p.ctx.OpenVibeNotifications.init({ apiBase: API, realtime: true });
         await p.settle();
-        assert.deepStrictEqual(p.out.scripts, ['https://openvibe.network/shared/notification-live.js']);
+        assert.strictEqual(p.out.scripts.length, 1);
+        assert.match(p.out.scripts[0], /^https:\/\/openvibe\.network\/shared\/notification-live\.js\?v=[0-9a-f]{12}$/, 'by its content hash (4.137.0)');
         assert.strictEqual(p.tickets()[0].credentials, 'include', 'on openvibe.network the session cookie asks for the ticket');
         assert.strictEqual(p.tickets()[0].headers.Authorization, undefined);
     }
@@ -485,7 +487,8 @@ const created = (subject, over = {}) => ({
     // bell's rich list). It loads only after sign-in, when the bell mounts, never on first paint; measured 19.16 KB.
     // 20 → 24 KB on 2026-10-28 (4.30.0, the bell center: tabs with counts, the Unread filter, thumbnails, swipe to read or
     // clear, the phone sheet; quiet hours); measured 22.56 KB.
-    assert.ok(size('notification-ui.js') <= 24 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 24 KB`);
+    // 24 → 24.5 KB on 2026-11-07 (4.137.0): notification-live.js by its content hash (24.04 KB measured).
+    assert.ok(size('notification-ui.js') <= 24.5 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 24.5 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

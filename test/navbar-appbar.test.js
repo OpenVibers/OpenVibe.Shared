@@ -61,8 +61,9 @@ const LINKS = [
     const { navbar, head } = load('/rooms', { preload: false });
     navbar.init({ service: 'chat', links: LINKS, appBar: true });
     navbar.setActive('rooms');
-    const scripts = head.children.filter((c) => c.tag === 'script' && /appbar\.js$/.test(c.src || ''));
+    const scripts = head.children.filter((c) => c.tag === 'script' && /appbar\.js(\?v=[0-9a-f]{12})?$/.test(c.src || ''));
     assert.strictEqual(scripts.length, 1, 'fetched once');
+    assert.match(scripts[0].src, /appbar\.js\?v=[0-9a-f]{12}$/, 'by its content hash (4.137.0), so a release is a new URL');
     assert.strictEqual(typeof scripts[0].onload, 'function');
 }
 {   // appBar: true → the first four links with icons and More (six links); the open page marked, under its path too.

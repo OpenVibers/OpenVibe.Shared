@@ -9,11 +9,29 @@ const path = require('path');
 const { hashAsset } = require('../assets');
 
 const ROOT = path.join(__dirname, '..');
-const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov-fx.js', 'ov-labels.js', 'ov-forms.js', 'ov-forms.css', 'ov-share.js', 'ov-share.css'];
+// 4.137.0: every file the navbar loads from beside itself, not ten of them. search.js, dock.js, presence.js and the rest
+// went out without ?v=, so a release reached phones up to a day late (max-age=300, stale-while-revalidate=86400): the
+// owner still saw the old menu hours after the new one shipped (11-07).
+const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov-fx.js', 'ov-labels.js', 'ov-forms.js', 'ov-forms.css', 'ov-share.js', 'ov-share.css',
+    'search.js', 'dock.js', 'presence.js', 'panels.js', 'notification-ui.js', 'history.js', 'site-switcher.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js'];
+// The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
+const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'action-center.js', 'dock-timeline.js', 'dock-agent.js', 'dock-timer.js'] },
+    'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] } };
+const table = (name, files) => `    const ${name} = { ${files.map((f) => `'${f}': '${hashAsset(fs.readFileSync(path.join(ROOT, f)))}'`).join(', ')} };`;
+function writeOwn() {
+    for (const [file, { name, files }] of Object.entries(OWN)) {
+        const p = path.join(ROOT, file);
+        const src = fs.readFileSync(p, 'utf8');
+        const re = new RegExp(`^ {4}const ${name} = \\{[^\\n]*\\};$`, 'm');
+        if (!re.test(src)) throw new Error(`${file} has no ${name} line to update`);
+        fs.writeFileSync(p, src.replace(re, table(name, files)));
+    }
+}
 const revs = () => Object.fromEntries(FILES.map((f) => [f, hashAsset(fs.readFileSync(path.join(ROOT, f)))]));
 const line = (r) => `    const SIBLING_REV = { ${FILES.map((f) => `'${f}': '${r[f]}'`).join(', ')} };`;
 
 if (require.main === module) {
+    writeOwn();
     const p = path.join(ROOT, 'navbar.js');
     const src = fs.readFileSync(p, 'utf8');
     const next = src.replace(/^ {4}const SIBLING_REV = \{[^\n]*\};$/m, line(revs()));
@@ -21,4 +39,4 @@ if (require.main === module) {
     fs.writeFileSync(p, next);
     console.log(line(revs()).trim());
 }
-module.exports = { FILES, revs, line };
+module.exports = { FILES, OWN, revs, line, table };

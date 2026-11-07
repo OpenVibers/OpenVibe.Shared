@@ -98,12 +98,14 @@
         } catch { /* offline, or no route yet: the copy stands and the next change tries again */ }
     }
 
+    // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
+    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '49938c0551cc', 'dock-timer.js': 'f5d9fee28824' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
             const id = `ov-dock-${src.replace(/\W/g, '')}`;
             let sc = document.getElementById(id);
-            if (!sc) { sc = document.createElement('script'); sc.id = id; sc.src = sibling(src); sc.async = true; document.head.appendChild(sc); }
+            if (!sc) { sc = document.createElement('script'); sc.id = id; sc.src = sibling(src) + (DOCK_REV[src] ? `?v=${DOCK_REV[src]}` : ''); sc.async = true; document.head.appendChild(sc); }
             sc.addEventListener('load', () => ok(test()));
             sc.addEventListener('error', () => ok(false));
         });
