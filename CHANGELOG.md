@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.142.0 — 2026-11-07
+
+- **The menu has a close button on a phone** (the owner, 11-07: "This needs a close button"). Since 4.129.0 the menu
+  covers the whole phone screen, the navbar's burger included, but `search.js` still hid its Close button at 860 px and
+  below on a site with a burger, so only Back closed it. Now a round x (40 px, a 48 px hit area, "Close the menu" for a
+  screen reader) sits at the end of the search pill at 860 px and below; a wide screen keeps the word Close. Test:
+  `test/menu-close-chrome.test.js` (a phone layout: shown, on screen, the hit area, a tap closes; wide: the word).
+
 ## 4.141.0 — 2026-11-07
 
 - **The forms kit loads when a form control is drawn, not merely present** (the owner, 11-07: "make things faster and
