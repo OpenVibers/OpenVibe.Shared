@@ -184,7 +184,11 @@
             const m = state.media;
             if (typeof m === 'string') {
                 let url;
-                try { url = new URL(m, typeof location !== 'undefined' ? location.href : undefined).href; } catch (e) { return; }
+                try { url = new URL(m, typeof location !== 'undefined' ? location.href : undefined); } catch (e) { return; }
+                // Only an https source: Chat already refuses media off OpenVibe's own hosts, and the player never
+                // follows a clock to http, data: or blob: whatever a server says.
+                if (url.protocol !== 'https:') return;
+                url = url.href;
                 if (mediaKey === url) return;
                 mediaKey = url;
                 const current = media.currentSrc || media.src;
