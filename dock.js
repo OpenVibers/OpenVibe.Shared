@@ -65,6 +65,8 @@
     const sibling = (name) => (typeof o.sibling === 'function' ? o.sibling(name) : `https://openvibe.network/shared/${name}`);
     // K-D3: the agent stream comes from OpenVibe.Codes' API (it mints the view ticket with the person's own token).
     const agentBase = () => String(o.agentBase || 'https://openvibe.codes').replace(/\/+$/, '');
+    // The one timeline behind the Dock (design 2026-11-07): OpenVibe.Actor keeps it.
+    const actorBase = () => String(o.actorBase || 'https://openvibe.actor').replace(/\/+$/, '');
 
     async function call(path, init = {}) {
         const base = String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '');
@@ -449,7 +451,12 @@
             const ok = await load('action-center.js', () => !!(root.OpenVibeActionCenter && root.OpenVibeActionCenter.mount));
             if (!ok) return failed(panel, id);
             // K-D3: the person's own agent stream above the list; it hides itself when there is none.
-            panel.innerHTML = `<div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            panel.innerHTML = `<div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
+            // phone Now and Needs you are on screen before anything else.
+            load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
+                if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent' });
+            });
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
                 if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.firstChild, { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
             });

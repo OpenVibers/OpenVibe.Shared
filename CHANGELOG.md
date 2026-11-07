@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.126.0 — 2026-11-07
+
+- **The Dock's Agent panel** (design 2026-11-07, one agent behind the Dock): Now says what the agent is doing this moment (the mode, the step in plain words, how long, and Stop/Resume), Needs you lists every approval and question from any mode with its buttons in place, and the timeline below shows one entry per step — the mode, the title, where it ran and why, the outcome, the time, the cost and a link to the step's own page. A mode change is a line of its own.
+- **Folding and filters:** today's entries are open, earlier days are counted folds ("Yesterday (14)"), and a long run of one mode folds into "12 more Code steps". A chip for each mode and for Needs you sits in the URL of the panel, and a filter never hides without a count.
+- **Only me by default:** the panel shows the person's own entries only; a step's title, outcome and link, never a prompt or a diff.
+
 ## 4.125.0 — 2026-11-07
 
 - **The owner's Setup page and clear settings** (`openvibe-shared/config`; OWNER-SETUP-AND-ADMIN-CLARITY-DESIGN, 2026-11-07). New schema annotations, passed through to the summary: `x-owner-input { group, unlocks, get_it_at, get_it_how, test }` marks a field for Network's Setup tab (the groups are `config.OWNER_INPUT_GROUPS`), `x-required-for` makes an unset field **Needed**, `x-enum-labels` gives every option of a choice words and a line, `x-advanced` folds a field under a counted "Advanced settings (N)", and `x-example` is a placeholder. A secret-class property loses `x-example` and `x-enum-labels` in the summary, as it already lost its default, examples and enum.
