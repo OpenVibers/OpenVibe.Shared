@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.141.0 — 2026-11-07
+
+- **The forms kit loads when a form control is drawn, not merely present** (the owner, 11-07: "make things faster and
+  more optimized").
+  - A closed dialog's or a hidden box's select, checkbox or file input no longer counts.
+  - Live's shell carries hidden modal forms, so every Live page fetched `ov-forms.js` and `.css` (17 KB) for
+    controls nobody saw.
+  - Hidden controls are watched with an IntersectionObserver, and the kit loads when one is drawn (a dialog opens, a
+    fold unfolds).
+  - A page with a drawn control loads it once it settles, as before.
+  - Test: `test/forms-when-seen-chrome.test.js`.
+
 ## 4.140.0 — 2026-11-07
 
 - **Native: no more Material lavender.**
