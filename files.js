@@ -22,7 +22,7 @@ const BROWSER = Object.freeze([
     'notification-live.js', // the bell's realtime feed over OpenVibe.Events; notification-ui loads it on demand (realtime on)
     'action-center.js',     // the ✦ Action Center; notification-ui loads it on the first click
     'dock.js',              // the Dock and its pill; navbar.js loads it for a signed-in person
-    'presence.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
+    'presence.js', 'overlay.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
     'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
     'dock-share.js',        // the Dock's Send to… (4.144.0); dock.js loads it the first time something is sent

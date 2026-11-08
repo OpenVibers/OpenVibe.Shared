@@ -539,7 +539,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'fa4ded2928f4', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'c036db4ac93a', 'dock.js': 'ef5c198edf47', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'fa4ded2928f4', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'c036db4ac93a', 'dock.js': 'ef5c198edf47', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '09f79a2bb136' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1297,6 +1297,38 @@
         if (document.getElementById('ov-presence-loader')) return;
         const sc = document.createElement('script'); sc.id = 'ov-presence-loader'; sc.src = siblingV('presence.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
     }
+    // Floating cards (overlay.js, 4.152.0): a live picture, a chat or an agent that follows the person across pages and
+    // OpenVibe sites. Loaded only when a card is coming (a link carried one in its #ovo=, or one was open before this
+    // page's reload) or a page asks for one with OpenVibeNavbar.overlay(…).
+    function loadOverlay(then) {
+        if (root.OVOverlay) { if (then) then(root.OVOverlay); return; }
+        let sc = document.getElementById('ov-overlay-loader');
+        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-overlay-loader'; sc.src = siblingV('overlay.js'); sc.async = true; document.head.appendChild(sc); }
+        if (then) sc.addEventListener('load', () => { if (root.OVOverlay) then(root.OVOverlay); }, { once: true });
+    }
+    function watchOverlays() {
+        let waiting = false;
+        try { waiting = /(?:^#|&)ovo=/.test(root.location.hash || '') || !!sessionStorage.getItem('ov-overlay'); } catch { /* private mode */ }
+        if (waiting) loadOverlay();
+    }
+    // Faster to the next OpenVibe site: when a pointer or finger reaches for a link to another one, connect to it then.
+    function warmLinks() {
+        if (root.__ovWarm || typeof document.addEventListener !== 'function') return;
+        root.__ovWarm = true;
+        const done = new Set();
+        const warm = (e) => {
+            const a = e.target && e.target.closest && e.target.closest('a[href]');
+            if (!a) return;
+            let u; try { u = new URL(a.href, root.location.href); } catch { return; }
+            if (u.protocol !== 'https:' || u.origin === root.location.origin || done.has(u.origin) || !/(^|\.)openvibe\.[a-z]+$/.test(u.hostname) || done.size > 12) return;
+            done.add(u.origin);
+            const l = document.createElement('link'); l.rel = 'preconnect'; l.href = u.origin; l.crossOrigin = ''; document.head.appendChild(l);
+            const d = document.createElement('link'); d.rel = 'dns-prefetch'; d.href = u.origin; document.head.appendChild(d);
+        };
+        document.addEventListener('pointerover', warm, { passive: true, capture: true });
+        document.addEventListener('touchstart', warm, { passive: true, capture: true });
+        document.addEventListener('focusin', warm, { passive: true, capture: true });
+    }
     // The Dock on a tab ('agent' | 'activity'); opts.task marks that step and brings it into view.
     function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }
     // Ask your agent (4.135.0): Vibe opens with the question in its box; signed out, sign in first.
@@ -1955,6 +1987,7 @@
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
         if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) watchForms();
         if (!root.__ovShareClick) { root.__ovShareClick = true; document.addEventListener('click', shareClick); }
+        watchOverlays(); warmLinks();
         nav.innerHTML = `
             ${brandHTML(brand)}
             <div class="openvibe-navbar-links">
@@ -2364,6 +2397,10 @@
     const OpenVibeNavbar = {
         /** The mark works while something loads (an SPA's route, a long action): busy(true), then busy(false). */
         busy(on) { busy(!!on); },
+        /** A floating card (overlay.js): OpenVibeNavbar.overlay({ id, src, title, href, live, side }) → Promise<handle|null>. */
+        overlay(desc) { return new Promise((ok) => loadOverlay((O) => ok(O.open(desc)))); },
+        /** The overlay host itself, loaded (for declare / close / list): Promise<OVOverlay>. */
+        overlays() { return new Promise((ok) => loadOverlay(ok)); },
 
         init(opts = {}) {
             Object.assign(_config, opts);
