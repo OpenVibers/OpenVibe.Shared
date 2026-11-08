@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.156.0 — 2026-11-08
+
+- **Locker unlocks with a passkey on this device.** Setting up a locker can use a passkey instead of a passphrase:
+  the passkey's PRF output (user verification required) seals the private keys, and only the credential id and its
+  salt are kept in this browser; the 24-word recovery kit stays the way back on any other device. Unlocking offers
+  "Unlock with this device's passkey" when one is set up. The kit can also be printed.
+- **Shared files open as streams** (`OVLocker.openStream`): large locked files are read chunk by chunk, each one
+  verified, without holding the whole file in memory. No private key is handed to a service or a caller.
+- `ov-locker-core.js` is regenerated from openvibe-sdk 0.101.0 (bounded header checks against a stored byte count,
+  key export after recovery).
+
 ## 4.155.0 — 2026-11-08
 
 - **The menu names each site by a short product name** (the owner, 11-08: "the names of websites … not cut off …
