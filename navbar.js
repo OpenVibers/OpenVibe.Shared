@@ -333,6 +333,22 @@
                 transition: filter .15s; text-decoration: none; display: inline-flex; align-items: center;
             }
             .openvibe-navbar-login:hover { filter: brightness(1.12); }
+            /* 4.148.0 (the owner, 11-08: "the things need to be more consistent in the nav bar in size"): one height for
+               every control at the bar's right, 36 px (34 px on a phone under 400 px): Sign In, the orb, messages, the
+               picture, the balances and a featured link. The orb draws its dots at 26 px (24) so it reads as large as
+               Sign In beside it; Sign In's corners follow the orb's. */
+            .openvibe-navbar .ovnav-orb { width: 36px; height: 36px; }
+            .openvibe-navbar .ovnav-orb svg { width: 26px; height: 26px; }
+            .openvibe-navbar .ovnav-msgs, .openvibe-navbar .ovnav-featured-phone { width: 36px; height: 36px; }
+            .openvibe-navbar .openvibe-navbar-avatar { width: 36px; height: 36px; box-sizing: border-box; }
+            .openvibe-navbar .ovnav-chip { height: 36px; }
+            .openvibe-navbar .openvibe-navbar-login { box-sizing: border-box; height: 36px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
+            @media (max-width: 400px) {
+                .openvibe-navbar .ovnav-orb, .openvibe-navbar .ovnav-msgs, .openvibe-navbar .ovnav-featured-phone, .openvibe-navbar .openvibe-navbar-avatar { width: 34px; height: 34px; }
+                .openvibe-navbar .ovnav-orb svg { width: 24px; height: 24px; }
+                .openvibe-navbar .ovnav-chip, .openvibe-navbar .openvibe-navbar-login { height: 34px; }
+                .openvibe-navbar .openvibe-navbar-login { padding: 0 13px; }
+            }
 
             .openvibe-navbar-dropdown {
                 position: absolute; top: 48px; right: 8px;
