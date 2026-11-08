@@ -318,7 +318,35 @@
   .ovs.ovs-anchored .ovs-panel { top: 0; left: 0; width: 100vw; height: 100dvh; max-height: none; border-radius: 0; border: 0; padding-top: env(safe-area-inset-top, 0px); animation: ovs-reveal .38s cubic-bezier(.2,.9,.25,1) both; }
 }
 @keyframes ovs-reveal { from { clip-path: circle(28px at var(--ovs-cx, 40px) var(--ovs-cy, 28px)); } to { clip-path: circle(150% at var(--ovs-cx, 40px) var(--ovs-cy, 28px)); } }
-@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel, .ovs-list > li { animation: none; } }`;
+@keyframes ovs-fold { from { clip-path: circle(150% at var(--ovs-cx, 40px) var(--ovs-cy, 28px)); } to { clip-path: circle(20px at var(--ovs-cx, 40px) var(--ovs-cy, 28px)); } }
+@keyframes ovs-fade { to { opacity: 0; } }
+/* The orb, on top of the phone's menu, in the button's place (4.150.0): it glides into the search pill as the menu grows
+   from it, its nine dots turning into an x (the corners and the centre stay, the edges fold away); closing, it glides
+   back and the menu folds into it. */
+.ovs-orb { display: none; }
+@media (max-width: 640px) {
+  .ovs.ovs-anchored .ovs-x { display: none; }
+  .ovs.ovs-anchored .ovs-bar { padding-right: 52px; }
+  .ovs.ovs-anchored .ovs-orb { position: fixed; z-index: 3; left: var(--orb-x, calc(100vw - 52px)); top: var(--orb-y, 12px); width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+    background: color-mix(in srgb, var(--accent, #3b82f6) 16%, var(--bg-primary, #0b0f19)); color: var(--text-primary, #e6edf7); -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 35%, transparent), 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent);
+    --ovo-a: var(--accent-light, var(--accent, #60a5fa)); --ovo-b: color-mix(in oklab, var(--accent, #3b82f6) 45%, #e879f9);
+    transform: none; transition: transform .42s cubic-bezier(.2, 1.1, .3, 1), background-color .3s, box-shadow .3s; }
+  .ovs.ovs-anchored .ovs-orb.is-from { transform: translate(var(--orb-dx, 0px), var(--orb-dy, 0px)) scale(.9); background: transparent; box-shadow: none; }
+  .ovs.ovs-anchored .ovs-orb::after { content: ""; position: absolute; inset: -4px; }
+  .ovs.ovs-anchored .ovs-orb:active { transform: scale(.9); }
+  .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; }
+  .ovs.is-closing .ovs-panel { animation: ovs-fold .28s cubic-bezier(.5, 0, .75, .2) both; }
+  .ovs.is-closing { animation: ovs-fade .28s ease-in both; }
+}
+.ovs-orb .ovo-g { transform-origin: 12px 12px; transform: rotate(45deg) scale(.8); transition: transform .5s cubic-bezier(.2, 1.35, .3, 1); }
+.ovs-orb .ovo-d { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: fill .3s, opacity .25s, transform .32s cubic-bezier(.2, 1.4, .3, 1); }
+.ovs-orb .ovo-r0 { fill: var(--ovo-a); }
+.ovs-orb .ovo-r2 { opacity: .6; }
+.ovs-orb.is-x .ovo-g { transform: rotate(180deg) scale(.95); }
+.ovs-orb.is-x .ovo-r1 { opacity: 0; transform: scale(0); }
+.ovs-orb.is-x :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; transform: scale(1.12); }
+@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel, .ovs-list > li { animation: none; } .ovs-orb, .ovs-orb .ovo-g, .ovs-orb .ovo-d { transition: none !important; } }`;
         document.head.appendChild(st);
     }
 
@@ -331,6 +359,15 @@
         back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg>',
         grid: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>',
     };
+
+    // The orb (navbar.js draws the same nine dots): on a phone the menu covers the bar, so the menu draws the orb in the
+    // button's own place, on top, and it turns into the menu's close (4.150.0, the owner: "it renders on top … turns into
+    // the close button when it's open … a cool effect as it goes in and out").
+    const ORB_DOTS = [[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]];
+    const orbSvg = () => `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><g class="ovo-g">${ORB_DOTS.map(([x, y, r]) => `<circle class="ovo-d ovo-r${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('')}</g></svg>`;
+    let orbEl = null, closing = 0;
+    const phoneSheet = () => { try { return !!(el && el.classList.contains('ovs-anchored') && root.matchMedia('(max-width: 640px)').matches); } catch { return false; } };
+    const calm = () => { try { return root.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced'; } catch { return false; } };
 
     function build() {
         styles();
@@ -351,6 +388,11 @@
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
         el.addEventListener('mousedown', (e) => { if (e.target === el) close(); });
         el.querySelector('.ovs-x').addEventListener('click', close);
+        orbEl = document.createElement('button');
+        orbEl.type = 'button'; orbEl.className = 'ovs-orb'; orbEl.setAttribute('aria-label', 'Close the menu'); orbEl.title = 'Close (Esc)';
+        orbEl.innerHTML = orbSvg();
+        orbEl.addEventListener('click', close);
+        el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
             tab = b.getAttribute('data-tab'); saveTab(tab); render(''); listEl.scrollTop = 0;
@@ -1178,6 +1220,21 @@
             el.style.setProperty('--ovs-cx', `${Math.round(cx)}px`); el.style.setProperty('--ovs-cy', `${Math.round(cy)}px`);
         }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: true } })); } catch { /* */ }
+        if (closing) { clearTimeout(closing); closing = 0; el.classList.remove('is-closing'); }
+        if (orbEl) {
+            orbEl.classList.remove('is-x');
+            if (phoneSheet()) {
+                // From the button's centre to the pill's right end: the same orb, moving into the menu.
+                const cx = Number.isFinite(at && at.cx) ? at.cx : innerWidth - 24, cy = Number.isFinite(at && at.cy) ? at.cy : 28;
+                const bar = el.querySelector('.ovs-bar'), br = bar ? bar.getBoundingClientRect() : null;
+                const tx = br ? br.right - 26 : cx, ty = br ? br.top + br.height / 2 : cy;
+                orbEl.style.setProperty('--orb-x', `${Math.round(tx - 20)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 20)}px`);
+                orbEl.style.setProperty('--orb-dx', `${Math.round(cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(cy - ty)}px`);
+                orbEl.classList.add('is-from');
+                void orbEl.offsetWidth;
+                requestAnimationFrame(() => { orbEl.classList.remove('is-from'); orbEl.classList.add('is-x'); });
+            }
+        }
         document.documentElement.style.overflow = 'hidden';
         input.placeholder = `Search ${here()}, or ask Vibe`;
         input.value = opts.q || '';
@@ -1196,10 +1253,18 @@
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close() {
         if (view === 'results' && rtabsEl) leaveResults();
-        if (!el) return;
+        if (!el || closing) return;
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
         if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) history.back(); } catch { /* */ } }
-        el.classList.remove('is-open');
+        // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
+        if (phoneSheet() && !calm() && el.classList.contains('is-open')) {
+            el.classList.add('is-closing');
+            if (orbEl) { orbEl.classList.remove('is-x'); orbEl.classList.add('is-from'); }
+            closing = setTimeout(() => { closing = 0; el.classList.remove('is-open', 'is-closing'); if (orbEl) orbEl.classList.remove('is-from'); }, 280);
+        } else {
+            el.classList.remove('is-open');
+            if (orbEl) orbEl.classList.remove('is-x', 'is-from');
+        }
         document.documentElement.style.overflow = '';
         if (inflight) { inflight.abort(); inflight = null; }
         if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
