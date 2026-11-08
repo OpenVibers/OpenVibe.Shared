@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════
-// OpenVibe — the Dock's agent view (Dock plan 2026-10-30, K-D3; Agent Streams S1), Shared 4.120.0
+// OpenVibe — the Dock's agent view (Dock plan 2026-10-30, K-D3; Agent Streams S1), Shared 4.120.0; Float 4.154.0
 //
 // The person's own agent desk stream at the top of the Dock's Agents tab. dock.js loads this file the first time that
 // tab opens:
@@ -31,6 +31,7 @@
         sound: '<path d="M4 9.5h4L13 5v14l-5-4.5H4z"/><path d="M17 9.5a4 4 0 0 1 0 5"/>',
         stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/>',
         open: '<path d="M14 4h6v6M20 4l-9 9M19 14v5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H10"/>',
+        float: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><rect x="11.5" y="11" width="7" height="6" rx="1.2" fill="currentColor" stroke="none"/>',
     };
 
     // The style goes into the document the view lives in: the page, or the Dock's own window when it is popped out.
@@ -200,6 +201,16 @@
                 b.innerHTML = `${svg(G.stop)}End`;
                 acts.append(b);
             }
+            // 4.154.0: Float puts the agent's screen in a floating card (overlay.js) that stays on screen as the person
+            // moves around this site and on to other OpenVibe sites, so the Dock can close while they watch.
+            if (embed && !ended) {
+                const b = h('button', null);
+                b.type = 'button';
+                b.dataset.act = 'float';
+                b.innerHTML = `${svg(G.float)}Float`;
+                b.title = 'Keep watching in a small window that follows you';
+                acts.append(b);
+            }
             if (agent.page_url && /^https:\/\/openvibe\.live\//.test(agent.page_url)) {
                 const a = h('a');
                 a.href = agent.page_url;
@@ -258,7 +269,18 @@
             else if (b.dataset.act === 'curtain') control('curtain', b);
             else if (b.dataset.act === 'mute') control('mute', b, { muted: !(agent && agent.voice_muted) });
             else if (b.dataset.act === 'end') control('end', b);
+            else if (b.dataset.act === 'float') floatIt(b);
         });
+
+        function floatIt(btn) {
+            const embed = agent && typeof agent.embed_url === 'string' && EMBED.test(agent.embed_url) ? agent.embed_url : null;
+            const nav = root.OpenVibeNavbar;
+            if (!embed || !nav || typeof nav.overlay !== 'function') { btn.title = 'Floating is not available on this page.'; return; }
+            const pageUrl = agent.page_url && /^https:\/\/openvibe\.live\//.test(agent.page_url) ? agent.page_url : null;
+            nav.overlay({ id: 'agent', src: embed, title: (agent.task && agent.task.title) || agent.title || 'Your agent', live: agent.state === 'live', href: pageUrl || undefined })
+                .then((card) => { if (card && root.OpenVibeDock && typeof root.OpenVibeDock.close === 'function') root.OpenVibeDock.close(); })
+                .catch(() => { btn.title = 'That did not work. Try again.'; });
+        }
 
         refresh();
         return { refresh, destroy() { gone = true; clearTimeout(timer); if (lastFrame) URL.revokeObjectURL(lastFrame); container.innerHTML = ''; container.classList.remove('ovda'); } };
