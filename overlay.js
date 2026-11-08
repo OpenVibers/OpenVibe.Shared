@@ -30,7 +30,8 @@
     if (!root || root.OVOverlay || typeof document === 'undefined') return;
 
     // Every source a card may frame, and every site a card may follow the person to.
-    const FIRST_PARTY = /^(?:[a-z0-9-]+\.)*openvibe\.(?:live|chat|actor|codes|network|games|video|design|report|my|link|computer|tools|services|space|community|news|wiki|blog|mail|email|events|help|quest|rent|work|food|host|deals|coupons|trade|tips|vip|zone|run|search|today|surf|meme|vision|exchange|fun|cam|casino|tours|shoes|connect|media|pics|download|domains|studio|party|locker|watch|bot|inventory)$/;
+    // Link shares are user-run apps; only its apex and Connect control panel are first-party.
+    const FIRST_PARTY = /^(?:(?:connect\.)?openvibe\.link|(?:[a-z0-9-]+\.)*openvibe\.(?:live|chat|actor|codes|network|games|video|design|report|my|computer|tools|services|space|community|news|wiki|blog|mail|email|events|help|quest|rent|work|food|host|deals|coupons|trade|tips|vip|zone|run|search|today|surf|meme|vision|exchange|fun|cam|casino|tours|shoes|connect|media|pics|download|domains|studio|party|locker|watch|bot|inventory))$/;
     const KEY = 'ov-overlay';
     const MAX_CARDS = 3;
     const cards = new Map();      // id → card
@@ -45,6 +46,7 @@
     function safeSrc(u) {
         try {
             const url = new URL(String(u || ''), root.location.href);
+            if (/--[^.]+\.openvibe\.(?:link|website)$/.test(url.hostname)) return null;
             if (url.protocol !== 'https:' && !(url.origin === root.location.origin && /^https?:$/.test(url.protocol))) return null;
             if (url.origin !== root.location.origin && !FIRST_PARTY.test(url.hostname)) return null;
             return url.href;
