@@ -299,6 +299,8 @@
                burger's place at the bar's right. Hidden on a wide bar (its links are there), shown at 860 px and below;
                the orb's glow is its hover, not the burger's square. */
             .openvibe-navbar .ovnav-orb.ovnav-burger { display: none; }
+            /* At the bar's right edge its tap area grows to the left (the brand orb's reached 12 px right, past the screen). */
+            .openvibe-navbar .ovnav-orb.ovnav-burger::after { inset: -6px -4px -6px -10px; }
             .openvibe-navbar .ovnav-orb.ovnav-burger:hover, .openvibe-navbar .ovnav-orb.ovnav-burger[aria-expanded="true"] { background: none; }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-orb.ovnav-burger { display: inline-grid; } }
             @media (max-width: 400px) { .openvibe-navbar .ovnav-orb { width: 28px; height: 32px; } }

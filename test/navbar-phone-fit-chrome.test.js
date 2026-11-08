@@ -48,7 +48,7 @@ const MEASURE = `(() => {
     const minis = [...bar.querySelectorAll('.ovnav-chip--all .ovnav-chip-mini')].filter(vis).length;
     const menu = bar.querySelector('#openvibe-burger');
     const orbMenu = !!(menu && menu.classList.contains('ovnav-orb') && menu.querySelectorAll('.ovo-g .ovo-d').length === 9 && !menu.querySelector('span'));
-    return { parts, clipped: name.scrollWidth > name.clientWidth + 1, visibleText: name.innerText, minis, width: innerWidth, orbMenu };
+    return { parts, clipped: name.scrollWidth > name.clientWidth + 1, visibleText: name.innerText, minis, width: innerWidth, orbMenu, docW: document.documentElement.scrollWidth };
 })()`;
 
 (async () => {
@@ -80,6 +80,8 @@ const MEASURE = `(() => {
                 // …and it is the orb, the network's own nine dots with its ripple and turn, not three lines (4.148.0, the
                 // owner: "replace the hamburger with that button").
                 assert.ok(v.orbMenu, `${at}: the menu button draws the orb, not a burger`);
+                // Nothing in the bar (a tap area included) pushes the page past the screen (4.148.0: the orb's reached 6 px past it).
+                assert.ok(v.docW <= width, `${at}: the page is ${v.docW} px wide`);
                 assert.ok(!v.parts.some(([k]) => k === 'search'), `${at}: no second button for the same menu (4.137.0)`);
                 assert.ok(!v.parts.some(([k]) => k === 'launcher'), `${at}: no launcher button: the magnifier opens the one menu (4.23.0)`);
                 await p.close();
