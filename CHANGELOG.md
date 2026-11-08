@@ -16,6 +16,10 @@
   orb draws its dots at 26 px (24 on a phone), and Sign In's corners follow the orb's (10 px).
   Tests: navbar-phone-fit-chrome checks, 320 to 430 px, that the one menu button draws the orb's nine dots and no
   burger lines and that nothing in the bar overlaps; navbar-brand checks the markup.
+- **The phone's menu button keeps the bar's edge.** The orb's tap area reaches 12 px past the button, which pushed the
+  bar 6 px past a 390 px phone: the page zoomed out to fit it and the Dock's pill sat 10 px from the edge instead of
+  16. The button's tap area now stops inside the bar.
+- Budgets: navbar.js 45 KB brotli (44.3 with the phone's menu button drawn as the orb).
 
 ## 4.147.0 — 2026-11-08
 
