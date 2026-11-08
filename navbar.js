@@ -1708,14 +1708,15 @@
     }
 
     /**
-     * Signed in to the network but not here: the 'account' hint cookie goes straight to the silent sign-in (one quick
-     * redirect); otherwise a hidden iframe asks GET /sso/check and redirects only on yes (partitioned cookies: no).
+     * Use a top-level prompt=none round trip so Network's session is first-party even when
+     * third-party cookies are blocked. An iframe's negative answer cannot distinguish a guest
+     * from a signed-in person in those browsers, and first-use FedCM needs interaction.
      * At most once per tab per 10 minutes; never after a sign-out ('guest'); never for bots.
+     * The SDK returns guests with sso=none instead of showing an interactive login page.
      */
     function maybeSilentLogin() {
         if (!_config.silentLogin || typeof location === 'undefined') return false;
-        const hint = ssoHint();
-        if (hint === 'guest') return false;
+        if (ssoHint() === 'guest') return false;
         if (/bot|crawl|spider|slurp|headless/i.test(navigator.userAgent || '')) return false;
         if (/[?&]sso=none\b/.test(location.search)) return false;
         try {
@@ -1723,20 +1724,7 @@
             if (Date.now() - last < 10 * 60 * 1000) return false;
             sessionStorage.setItem('ov_silent_sso_at', String(Date.now()));
         } catch { return false; }
-        if (hint === 'account') return silentLoginNow();
-        checkNetworkSession().then((state) => {
-            if (state && state.signedIn) return silentLoginNow();
-            // No answer or "not signed in" — either a guest, or a browser that keeps the network's
-            // cookie away from iframes. FedCM asks the browser itself; the network's login status
-            // makes it a no-op for guests, a native chip (then silent re-auth) for signed-in users.
-            if (_config.fedcm === false) return;
-            loadSsoClient().then(async (sso) => {
-                if (!sso || !sso.fedcmAvailable()) return;
-                const r = await sso.fedcm({ apiBase: _config.apiBase, fedcmLogin: _config.fedcmLogin || undefined, mediation: _config.fedcm === 'silent' ? 'silent' : 'optional' });
-                if (r && r.ok) { try { sessionStorage.removeItem('ov_silent_sso_at'); } catch { /* */ } location.reload(); }
-            });
-        });
-        return false;
+        return silentLoginNow();
     }
 
     /** Ask the network (hidden iframe + postMessage) whether this browser is signed in there. */

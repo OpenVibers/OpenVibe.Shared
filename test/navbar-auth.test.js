@@ -46,6 +46,15 @@ function loadNavbar(opts) {
         hostname: opts.hostname,
         href: opts.href || `https://${opts.hostname}/`,
         protocol: 'https:',
+        origin: `https://${opts.hostname}`,
+        search: new URL(opts.href || `https://${opts.hostname}/`).search,
+        replace: url => calls.push({ navigation: url }),
+    };
+    Object.defineProperty(global, 'navigator', { configurable: true, value: { userAgent: opts.userAgent || 'Chrome' } });
+    const tab = { ...(opts.tab || {}) };
+    global.sessionStorage = {
+        getItem: k => { if (opts.storageBlocked) throw new Error('blocked'); return tab[k] || null; },
+        setItem: (k, v) => { tab[k] = String(v); },
     };
     global.window = { location: global.location };
     global.document = {
@@ -373,6 +382,37 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         await new Promise((r) => setImmediate(r));
         assert.strictEqual(calls.filter((c) => /\/api\/auth\//.test(c.url)).length, 0, 'pages that pass a user keep full control (no auth traffic; the balances and unread count are not auth)');
         assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-avatar'));
+    }
+
+    // A first visit needs no local hint, iframe cookie or FedCM grant. The top-level SDK
+    // route can read Network's first-party session; a guest comes back with sso=none.
+    for (const scenario of [
+        { name: 'first visit', navigate: true },
+        { name: 'known account', cookie: 'ov_sso_hint=account', navigate: true },
+        { name: 'explicit sign-out cookie', cookie: 'ov_sso_hint=guest' },
+        { name: 'explicit sign-out storage', storage: { ov_sso_hint: 'guest' } },
+        { name: 'guest callback', href: 'https://openvibe.blog/post?sso=none' },
+        { name: 'recent attempt', tab: { ov_silent_sso_at: String(Date.now()) } },
+        { name: 'expired attempt', tab: { ov_silent_sso_at: String(Date.now() - 600001) }, navigate: true },
+        { name: 'crawler', userAgent: 'Googlebot' },
+        { name: 'storage unavailable', storageBlocked: true },
+        { name: 'site opted out', disabled: true },
+        { name: 'existing site session', signedIn: true },
+    ]) {
+        const href = scenario.href || 'https://openvibe.blog/post?q=1#comments';
+        const { navbar, calls } = loadNavbar({
+            hostname: 'openvibe.blog', href, ...scenario,
+            fetch: async url => jsonResponse(scenario.signedIn && url === '/auth/me' ? 200 : 401,
+                scenario.signedIn && url === '/auth/me' ? { user: USER } : {}),
+        });
+        navbar.init({ service: 'blog', sessionUrl: '/auth/me', fedcm: false,
+            silentLogin: scenario.disabled ? false : '/auth/login?silent=1&next={url}' });
+        await navbar.refreshAuth();
+        await navbar.refreshAuth();
+        const navigations = calls.filter(c => c.navigation);
+        assert.strictEqual(navigations.length, scenario.navigate ? 1 : 0, scenario.name);
+        if (scenario.navigate) assert.strictEqual(navigations[0].navigation,
+            '/auth/login?silent=1&next=' + encodeURIComponent(href), 'preserves the page, query and fragment');
     }
 
     console.log('navbar-auth: all tests passed');
