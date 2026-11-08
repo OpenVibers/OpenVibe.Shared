@@ -62,7 +62,7 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
 
         // Its chat opens as a sheet above the app bar on a phone.
         await p.evaluate(`document.querySelector('[data-ovo="side"]').click(), true`);
-        await wait(400);
+        assert.ok(await until(p, `getComputedStyle(document.querySelector('.ovo-side')).transform === 'none'`), 'the sheet has finished opening');
         const side = await p.evaluate(`(() => { const s = document.querySelector('.ovo-side'); const r = s.getBoundingClientRect(); return { open: s.classList.contains('is-open'), bottom: Math.round(r.bottom), src: s.querySelector('iframe').getAttribute('src') }; })()`);
         assert.deepStrictEqual(side, { open: true, bottom: 844 - 58 - 10, src: `${base}/frame-chat` }, 'the chat sheet, above the app bar');
         await p.evaluate(`document.querySelector('[data-ovo="side"]').click(), true`);
@@ -96,6 +96,11 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
         await wait(200);
         assert.strictEqual(await e.evaluate(`document.querySelectorAll('.ovo-card').length`), 0, 'a foreign source is refused');
         assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'javascript:alert(1)' })`), null);
+        for (const host of ['portal--alex.openvibe.link', 'portal--alex.openvibe.website', 'nested.portal--alex.openvibe.link', 'unknown.openvibe.link']) {
+            assert.strictEqual(await e.evaluate(`OVOverlay.safeSrc('https://${host}/')`), null, host);
+            assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('https://${host}/')`), `https://${host}/`, 'no card carried to a share');
+        }
+        for (const host of ['openvibe.link', 'connect.openvibe.link']) assert.ok(await e.evaluate(`OVOverlay.safeSrc('https://${host}/')`), host);
         assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'http://openvibe.live/embed/x' })`), null, 'plain http to another site is refused');
         assert.ok(await e.evaluate(`!!OVOverlay.safeSrc('https://openvibe.live/embed/maticus')`), "Live's embed is first-party");
         console.log('overlay-chrome: ok');
