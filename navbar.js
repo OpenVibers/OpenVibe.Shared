@@ -172,7 +172,7 @@
                 .openvibe-navbar-right.has-chips-all .ovnav-chip[data-chip-id] { display: none; }
                 .openvibe-navbar-right.has-chips-all .ovnav-chip--all { display: inline-flex; }
             }
-            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar:has(.ovnav-burger) .ovnav-orb { display: none; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
+            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar:has(.ovnav-burger) .ovnav-orb:not(.ovnav-burger) { display: none; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
                in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 440px
@@ -295,6 +295,14 @@
             @media (prefers-reduced-motion: reduce) { .ovnav-orb .ovo-g, .ovnav-orb .ovo-d, .ovnav-orb::before { transition: none; animation: none !important; } }
             html[data-ov-motion="reduced"] .ovnav-orb .ovo-d { animation: none !important; }
             .openvibe-navbar .openvibe-navbar-brand .ovnav-orb { margin-left: 1px; }
+            /* 4.148.0 (the owner: "replace the hamburger with that button"): the phone's menu button is the orb, in the
+               burger's place at the bar's right. Hidden on a wide bar (its links are there), shown at 860 px and below;
+               the orb's glow is its hover, not the burger's square. */
+            .openvibe-navbar .ovnav-orb.ovnav-burger { display: none; }
+            /* At the bar's right edge its tap area grows to the left (the brand orb's reached 12 px right, past the screen). */
+            .openvibe-navbar .ovnav-orb.ovnav-burger::after { inset: -6px -4px -6px -10px; }
+            .openvibe-navbar .ovnav-orb.ovnav-burger:hover, .openvibe-navbar .ovnav-orb.ovnav-burger[aria-expanded="true"] { background: none; }
+            @media (max-width: 860px) { .openvibe-navbar .ovnav-orb.ovnav-burger { display: inline-grid; } }
             @media (max-width: 400px) { .openvibe-navbar .ovnav-orb { width: 28px; height: 32px; } }
             /* Messages (4.25.0; the owner, 2026-10-28: the floating DM button was "buggy as hell on mobile… app style"): a
                site that has messages puts them in the bar beside the bell, with the unread count, instead of a bubble
@@ -327,6 +335,22 @@
                 transition: filter .15s; text-decoration: none; display: inline-flex; align-items: center;
             }
             .openvibe-navbar-login:hover { filter: brightness(1.12); }
+            /* 4.148.0 (the owner, 11-08: "the things need to be more consistent in the nav bar in size"): one height for
+               every control at the bar's right, 36 px (34 px on a phone under 400 px): Sign In, the orb, messages, the
+               picture, the balances and a featured link. The orb draws its dots at 26 px (24) so it reads as large as
+               Sign In beside it; Sign In's corners follow the orb's. */
+            .openvibe-navbar .ovnav-orb { width: 36px; height: 36px; }
+            .openvibe-navbar .ovnav-orb svg { width: 26px; height: 26px; }
+            .openvibe-navbar .ovnav-msgs, .openvibe-navbar .ovnav-featured-phone { width: 36px; height: 36px; }
+            .openvibe-navbar .openvibe-navbar-avatar { width: 36px; height: 36px; box-sizing: border-box; }
+            .openvibe-navbar .ovnav-chip { height: 36px; }
+            .openvibe-navbar .openvibe-navbar-login { box-sizing: border-box; height: 36px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
+            @media (max-width: 400px) {
+                .openvibe-navbar .ovnav-orb, .openvibe-navbar .ovnav-msgs, .openvibe-navbar .ovnav-featured-phone, .openvibe-navbar .openvibe-navbar-avatar { width: 34px; height: 34px; }
+                .openvibe-navbar .ovnav-orb svg { width: 24px; height: 24px; }
+                .openvibe-navbar .ovnav-chip, .openvibe-navbar .openvibe-navbar-login { height: 34px; }
+                .openvibe-navbar .openvibe-navbar-login { padding: 0 13px; }
+            }
 
             .openvibe-navbar-dropdown {
                 position: absolute; top: 48px; right: 8px;
@@ -882,9 +906,12 @@
     // The OpenVibe menu's button: nine dots as a diamond (the old launcher's, which the owner liked), the centre in the
     // accent. Rings: 0 the centre, 1 the edges, 2 the corners (the ripple's order; corners and centre make the ×).
     const ORB_DOTS = [[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]];
-    function orbHTML() {
+    function orbSVG() {
         const dots = ORB_DOTS.map(([x, y, r]) => `<circle class="ovo-d ovo-r${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('');
-        return `<button type="button" class="ovnav-search ovnav-orb" id="openvibe-search-btn" aria-label="OpenVibe menu: search, every site and tool (/)" title="Search and every OpenVibe site (/)" aria-haspopup="dialog" aria-expanded="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g class="ovo-g">${dots}</g></svg></button>`;
+        return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g class="ovo-g">${dots}</g></svg>`;
+    }
+    function orbHTML() {
+        return `<button type="button" class="ovnav-search ovnav-orb" id="openvibe-search-btn" aria-label="OpenVibe menu: search, every site and tool (/)" title="Search and every OpenVibe site (/)" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>`;
     }
 
 
@@ -1929,7 +1956,7 @@
                 <div id="openvibe-bell-mount"></div>
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}
-                ${links.length ? '<button type="button" class="ovnav-burger" id="openvibe-burger" aria-label="Menu" aria-haspopup="true" aria-expanded="false"><span></span><span></span><span></span></button>' : ''}
+                ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
@@ -2110,7 +2137,8 @@
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
     function openSearch(q, tab, fromEl) {
-        const orb = _navEl && _navEl.querySelector('#openvibe-search-btn');
+        // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
+        const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
         const from = fromEl || orb;
         const anchor = () => {
@@ -2194,8 +2222,8 @@
             // One ripple a tab, a moment after the first paint: here is the menu.
             let seen = _orbIntro; try { seen = seen || sessionStorage.getItem('ov-orb-intro') === '1'; sessionStorage.setItem('ov-orb-intro', '1'); } catch { /* */ }
             // The timers look the orb up when they fire: holding this one would keep a swapped-out bar alive (boost).
-            const orbNow = () => _navEl && _navEl.querySelector && _navEl.querySelector('#openvibe-search-btn');
-            if (!seen && b.classList) { _orbIntro = true; setTimeout(() => { const o = orbNow(); if (o) o.classList.add('ovo-intro'); setTimeout(() => { const o2 = orbNow(); if (o2) o2.classList.remove('ovo-intro'); }, 1100); }, 700); }
+            const orbsNow = () => (_navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-search-btn, #openvibe-burger.ovnav-orb')] : []);
+            if (!seen && b.classList) { _orbIntro = true; setTimeout(() => { orbsNow().forEach((o) => o.classList.add('ovo-intro')); setTimeout(() => { orbsNow().forEach((o) => o.classList.remove('ovo-intro')); }, 1100); }, 700); }
         }
         if (_searchKeys || _config.search === false || typeof document === 'undefined') return;
         _searchKeys = true;

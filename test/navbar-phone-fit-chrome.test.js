@@ -46,7 +46,9 @@ const MEASURE = `(() => {
         ['balances', bar.querySelector('.ovnav-chip--all')], ['sign in', bar.querySelector('#openvibe-login-btn')],
         ['picture', bar.querySelector('#openvibe-avatar-btn')], ['menu', bar.querySelector('#openvibe-burger')]].filter(([, el]) => vis(el)).map(([k, el]) => [k, box(el)]);
     const minis = [...bar.querySelectorAll('.ovnav-chip--all .ovnav-chip-mini')].filter(vis).length;
-    return { parts, clipped: name.scrollWidth > name.clientWidth + 1, visibleText: name.innerText, minis, width: innerWidth };
+    const menu = bar.querySelector('#openvibe-burger');
+    const orbMenu = !!(menu && menu.classList.contains('ovnav-orb') && menu.querySelectorAll('.ovo-g .ovo-d').length === 9 && !menu.querySelector('span'));
+    return { parts, clipped: name.scrollWidth > name.clientWidth + 1, visibleText: name.innerText, minis, width: innerWidth, orbMenu, docW: document.documentElement.scrollWidth };
 })()`;
 
 (async () => {
@@ -74,7 +76,12 @@ const MEASURE = `(() => {
                 if (who === 'in') assert.strictEqual(v.minis, 2, `${at}: the folded balances show both, OpenCoins and Vibes (4.25.0)`);
                 // One menu button on a phone (4.137.0, the owner: "these buttons do the same shit"): the burger opens the
                 // OpenVibe menu, and the orb that opened the same menu steps aside.
-                assert.ok(v.parts.some(([k]) => k === 'menu'), `${at}: the burger is the menu button`);
+                assert.ok(v.parts.some(([k]) => k === 'menu'), `${at}: the menu button is there`);
+                // …and it is the orb, the network's own nine dots with its ripple and turn, not three lines (4.148.0, the
+                // owner: "replace the hamburger with that button").
+                assert.ok(v.orbMenu, `${at}: the menu button draws the orb, not a burger`);
+                // Nothing in the bar (a tap area included) pushes the page past the screen (4.148.0: the orb's reached 6 px past it).
+                assert.ok(v.docW <= width, `${at}: the page is ${v.docW} px wide`);
                 assert.ok(!v.parts.some(([k]) => k === 'search'), `${at}: no second button for the same menu (4.137.0)`);
                 assert.ok(!v.parts.some(([k]) => k === 'launcher'), `${at}: no launcher button: the magnifier opens the one menu (4.23.0)`);
                 await p.close();

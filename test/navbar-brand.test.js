@@ -251,7 +251,7 @@ function load(hostname, opts = {}) {
     assert.ok(nav.innerHTML.includes('class="b-sub">Pastes<') && nav.innerHTML.includes('class="b-tld">Tools<'), 'segments rendered');
     assert.ok(nav.innerHTML.includes('data-variant="tools"'), 'ov-mark variant');
     assert.ok(/href="\/mine" class="ovnav-link active"/.test(nav.innerHTML), 'current path marked active');
-    assert.ok(/class="ovnav-burger"/.test(nav.innerHTML) && /class="ovnav-drawer"/.test(nav.innerHTML), 'links get a mobile drawer');
+    assert.ok(/class="ovnav-burger ovnav-orb"/.test(nav.innerHTML) && /class="ovnav-drawer"/.test(nav.innerHTML), 'links get a phone menu button, drawn as the orb (4.148.0)');
     assert.ok(/<span class="icon"><svg class="ovnav-ic[ "]/.test(nav.innerHTML), 'link icon rendered inline (no icon font needed)');
     assert.ok(/<span class="icon"><svg class="ovnav-ic ovnav-ovg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="/.test(nav.innerHTML), 'a glyph the OpenVibe set has is drawn from it, on its 24-unit grid (4.71.0)');
     assert.ok(!/fa-solid fa-plus/.test(nav.innerHTML), 'known icons do not depend on Font Awesome');

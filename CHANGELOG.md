@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.148.0 — 2026-11-08
+
+- **On a phone the menu button is the orb, in the burger's place** (the owner, 11-08: "replace the hamburger with
+  that button… we don't need both"). 4.137.0 kept one menu button on a phone but drew it as a plain three-line burger
+  and hid the orb, the network's own nine dots with their ripple, wave and turn. The phone's menu button, at the bar's
+  right where the burger was, now draws the orb: the same dots, the first-visit ripple, the wave while the menu loads,
+  the glow on a press and the turn into a ✕ while the menu is open. Still one button: the orb beside the site's name
+  steps aside at 860 px and below, as before; a wide bar is unchanged. The button opens the menu on this site's pages
+  first, and the menu's round ✕ (4.142.0) closes it.
+- **One size for the bar's controls** (the owner: "it should be a little bigger so it matches the sign in button…
+  the things need to be more consistent in the nav bar in size"). Sign In, the orb, messages, the picture, the
+  balances and a featured link are all 36 px tall (34 px on a phone under 400 px); before, Sign In was 33, the orb 34
+  (28 by 32 on a phone, its dots drawn at 22 px), messages 32 to 36, the picture 32 and the balances 30 to 32. The
+  orb draws its dots at 26 px (24 on a phone), and Sign In's corners follow the orb's (10 px).
+  Tests: navbar-phone-fit-chrome checks, 320 to 430 px, that the one menu button draws the orb's nine dots and no
+  burger lines and that nothing in the bar overlaps; navbar-brand checks the markup.
+- **The phone's menu button keeps the bar's edge.** The orb's tap area reaches 12 px past the button, which pushed the
+  bar 6 px past a 390 px phone: the page zoomed out to fit it and the Dock's pill sat 10 px from the edge instead of
+  16. The button's tap area now stops inside the bar.
+- Budgets: navbar.js 45 KB brotli (44.3 with the phone's menu button drawn as the orb).
+
 ## 4.147.0 — 2026-11-08
 
 - **A link in a Dock message shows its card.** OpenVibe.Chat now resolves a known OpenVibe link when a message is sent
