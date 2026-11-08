@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.145.1 — 2026-11-08
+
+- **The Dock stays open when a tap on the page opens it, on a phone.** The phone sheet closes on a tap outside it, and
+  the tap that opened it (the share sheet's OpenVibe Chat, Ask your agent, any page button calling the Dock) was still
+  on its way up when the sheet opened, so it read as outside and the sheet closed at once. A click made before the
+  sheet opened is never "a tap outside" now. Found in the production proof of a party's Invite → OpenVibe Chat.
+
 ## 4.145.0 — 2026-11-08
 
 - **ov-canvas.js: an agent's live panel, drawn the same on every site** (`actor.canvas@1`, Contracts 0.340.0, ADR-059,

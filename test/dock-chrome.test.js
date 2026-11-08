@@ -319,6 +319,18 @@ async function drag(p, from, to) {
             await until(p, `document.querySelector('.ovdk-send textarea') && document.querySelector('.ovdk-send textarea').value === ${JSON.stringify(TEXT)}`, 'a new conversation with the message in the box');
             assert.deepStrictEqual(started, [[4]], 'the conversation is started with Mia, by her id');
             assert.deepStrictEqual(said, [], 'still nothing sent');
+            // On a phone, a page button that sends something opens the sheet and it stays open (the opening tap is not
+            // "a tap outside"); a later tap outside still closes it.
+            await p.evaluate("(() => { OpenVibeDock.close(); const b = document.createElement('button'); b.id = 'pagesend'; b.textContent = 'Send it'; b.addEventListener('click', () => OpenVibeDock.share({ text: 'From a page button' })); document.body.prepend(b); })()");
+            await p.evaluate("document.getElementById('pagesend').click()");
+            await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar, opened by a tap on the page');
+            await wait(300);
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'the opening tap does not close the sheet');
+            await p.evaluate("document.body.click()");
+            await wait(150);
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), false, 'a later tap outside closes it');
+            await share();
+            await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar again');
             // Cancel: back to the list, nothing waiting.
             await share();
             await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar');
