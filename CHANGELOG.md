@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.145.0 — 2026-11-08
+
+- **ov-canvas.js: an agent's live panel, drawn the same on every site** (`actor.canvas@1`, Contracts 0.340.0, ADR-059,
+  plan HO9). `OVCanvas.render(host, doc, { onAsk, onCheck })` draws headings, text, lists, checklists, tables,
+  metrics, bar and line charts (inline SVG, their numbers also a table for screen readers), pictures and links.
+  Every block is built node by node and text is plain. A picture is drawn only from openvibe.media (one that fails to
+  load is removed), a link only when it is https, with its host shown. A button only calls `onAsk` with its label (the
+  page sends it to the agent as the person's message); a tick calls `onCheck`. Without the callbacks the canvas only
+  shows. An older version never replaces a newer one. A wide table scrolls inside its own box, so a phone's page never
+  scrolls sideways. A bar chart stands on zero; a line spans its own range.
+
 ## 4.144.0 — 2026-11-08
 
 - **Send it on OpenVibe.** The share sheet (ov-share.js) offers **OpenVibe Chat** first to a signed-in person (the Dock
