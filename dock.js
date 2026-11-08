@@ -961,5 +961,6 @@
         if (isOpen()) layout();
     }
 
-    root.OpenVibeDock = { mount, open, close, isOpen, update, ask, share, _state: () => ({ doc, tab, pending }) };
+    // canSend(): whether this Dock may send a message (a Dock-only token reads chats and never sends).
+    root.OpenVibeDock = { mount, open, close, isOpen, update, ask, share, canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);

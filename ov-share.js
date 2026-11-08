@@ -353,7 +353,8 @@
         });
         // OpenVibe Chat (4.144.0): to someone on OpenVibe, first, for a signed-in person (the Dock is theirs). The sheet
         // closes and the Dock opens on "Send to…"; nothing is sent until they press Send in the conversation.
-        const dock = root.OpenVibeDock && typeof root.OpenVibeDock.share === 'function' ? root.OpenVibeDock : null;
+        const dock = root.OpenVibeDock && typeof root.OpenVibeDock.share === 'function'
+            && (typeof root.OpenVibeDock.canSend !== 'function' || root.OpenVibeDock.canSend()) ? root.OpenVibeDock : null;
         const first = dock ? [['ovchat', 'OpenVibe Chat', null, null, () => {
             sent(st, 'ovchat');
             close(st, true);

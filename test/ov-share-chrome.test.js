@@ -237,6 +237,13 @@ const server = http.createServer((req, res) => {
         await wait(320);
         assert.deepStrictEqual(await p.evaluate('window.__docked'), [{ text: 'A robot & a wave https://video.test/v/1', title: 'A robot & a wave' }], 'the Dock gets the title and the link');
         assert.strictEqual(await p.evaluate("!!document.querySelector('dialog.ov-share')"), false, 'the sheet closes');
+        // A Dock that may not send (a read-only Dock token): no OpenVibe Chat.
+        await p.evaluate("window.OpenVibeDock = { share: () => {}, isOpen: () => false, canSend: () => false }");
+        await p.evaluate("document.getElementById('send').click()");
+        await wait(300);
+        assert.strictEqual(await p.evaluate(`!!${q('to-ovchat')}`), false, 'no OpenVibe Chat when the Dock cannot send');
+        await p.evaluate(`${q('close')}.click()`);
+        await wait(320);
         await p.evaluate("delete window.OpenVibeDock");
         // Somebody else's paste: they can send it; who can open it is not theirs to see, and nothing says it failed.
         await p.evaluate("document.getElementById('theirs').click()");
