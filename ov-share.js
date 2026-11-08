@@ -822,7 +822,6 @@
         const L = await locker();
         if (!L) throw new Error('The Locker could not load. Check your connection and try again.');
         await L.ensure();
-        const bytes = await envelopeBytes(st);
         const publicKey = async (m) => {
             if (m._publicKey) return m._publicKey;
             const keys = await L.keys(m.subject);
@@ -836,9 +835,13 @@
         const keys = [];
         const me = await L.publicKeys();
         const my = st.server.you && st.server.you.subject;
-        if (remove.length && my && me) keys.push({ subject: my, publicKey: me.ecdh });
-        if (remove.length) for (const m of after) keys.push({ subject: m.subject, publicKey: await publicKey(m) });
-        const out = await L.rewrap(bytes, { add, remove, keys });
+        if ((remove.length || st.o.prepareEnvelope) && my && me) keys.push({ subject: my, publicKey: me.ecdh });
+        if (remove.length || st.o.prepareEnvelope) for (const m of after) keys.push({ subject: m.subject, publicKey: await publicKey(m) });
+        // File services may stream a new envelope to their ciphertext store and return a short receipt.
+        // The sheet still supplies the recipients and saves their slots and access list together.
+        const out = typeof st.o.prepareEnvelope === 'function'
+            ? await st.o.prepareEnvelope({ keys, remove, add })
+            : await L.rewrap(await envelopeBytes(st), { add, remove, keys });
         const slots = new Map((out.header.slots.people || []).map((slot) => [sid(slot.subject), slot]));
         const list = after.map((m) => {
             const slot = slots.get(sid(m.subject));
@@ -847,7 +850,7 @@
             if (m.expires_at) r.expires_at = m.expires_at;
             return r;
         });
-        return { members: list, envelope: b64(out.bytes) };
+        return { members: list, ...(out.envelope_ref ? { envelope_ref: out.envelope_ref } : { envelope: b64(out.bytes) }) };
     }
 
     // The @name field: Enter or Add checks the name with Network (through the service), then adds a chip-row.
@@ -1209,7 +1212,7 @@
             // sealed again. The bytes go up with the list, and this browser is the only place they were opened.
             if (isLocked(st) && st.server.lock === 'people') {
                 const sealed = await resealIfNeeded(st);
-                if (sealed) { body.members = sealed.members; body.envelope = sealed.envelope; }
+                if (sealed) { body.members = sealed.members; if (sealed.envelope_ref) body.envelope_ref = sealed.envelope_ref; else body.envelope = sealed.envelope; }
             }
             const out = await call(st.o, 'PUT', endpoint(st.o).path, body, st.etag ? { 'if-match': st.etag } : null);
             take(st, out && out.audience ? out : await call(st.o, 'GET', endpoint(st.o).path));

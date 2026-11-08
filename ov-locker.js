@@ -179,10 +179,43 @@
         msg.appendChild(el('a', 'ovl-btn is-quiet', { href }, 'Sign in again'));
     }
 
+    // Only the public credential id and PRF input are remembered on this origin. The PRF result,
+    // passphrase and private keys never enter localStorage or a network request.
+    const passkeyStorage = () => `ov-locker-passkey:${cfg().subject || 'device'}`;
+    const randomBytes = () => root.crypto.getRandomValues(new Uint8Array(32));
+    function devicePasskey() {
+        try { return JSON.parse(root.localStorage.getItem(passkeyStorage()) || 'null'); } catch (_) { return null; }
+    }
+    async function passkeySecret(saved) {
+        const assertion = await root.navigator.credentials.get({ publicKey: {
+            challenge: randomBytes(), rpId: root.location.hostname, userVerification: 'required',
+            allowCredentials: [{ type: 'public-key', id: unb64(saved.id) }],
+            extensions: { prf: { eval: { first: unb64(saved.salt) } } },
+        } });
+        const first = assertion && assertion.getClientExtensionResults().prf?.results?.first;
+        if (!first || first.byteLength !== 32) throw new Error('This passkey cannot unlock a locker. Use your passphrase or recovery kit.');
+        return b64(new Uint8Array(first));
+    }
+    async function makePasskey() {
+        const salt = randomBytes();
+        const credential = await root.navigator.credentials.create({ publicKey: {
+            challenge: randomBytes(), rp: { id: root.location.hostname, name: 'OpenVibe Locker' },
+            user: { id: randomBytes(), name: cfg().subject || 'My locker', displayName: 'My OpenVibe locker' },
+            pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+            authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
+            extensions: { prf: { eval: { first: salt } } },
+        } });
+        if (!credential?.getClientExtensionResults().prf?.enabled) throw new Error('This passkey does not support Locker. Set up with a passphrase instead.');
+        const saved = { id: b64(new Uint8Array(credential.rawId)), salt: b64(salt) };
+        // Some authenticators only evaluate a PRF on get(), not on create(). Always confirm it here.
+        return { saved, secret: await passkeySecret(saved) };
+    }
+
     // ── Make your locker ────────────────────────────────────────────────────────────────────────────────────
     async function setup(opts) {
         const o = Object.assign({}, opts || {});
         const s = sheet('Make your locker');
+        let device = null;
         const step1 = () => {
             s.body.replaceChildren();
             s.body.appendChild(el('p', 'ovl-lead', null, 'Your locker holds the keys that open what people lock for you. OpenVibe keeps only a locked copy: nobody here can open it, and nobody can reset it.'));
@@ -204,6 +237,16 @@
                 step2(p1.input.value);
             });
             s.body.appendChild(f);
+            s.body.appendChild(el('p', 'ovl-hint', null, 'If you lose the password (or your locker passphrase and recovery kit), nobody can open this, including OpenVibe.'));
+            if (root.PublicKeyCredential && root.navigator.credentials) {
+                const pk = button('Use a passkey on this device', 'quiet', { 'data-k': 'setup-passkey' });
+                pk.addEventListener('click', async () => {
+                    pk.disabled = true;
+                    try { device = await makePasskey(); await step2(null); }
+                    catch (e) { device = null; say(msg, e.message, true); pk.disabled = false; }
+                });
+                s.body.appendChild(pk);
+            }
             setTimeout(() => p1.input.focus(), 0);
         };
         const step2 = async (passphrase) => {
@@ -235,7 +278,9 @@
                 const a = el('a', null, { href: URL.createObjectURL(new Blob([text], { type: 'text/plain' })), download: 'openvibe-locker-recovery-kit.txt' });
                 doc.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
             });
-            acts.appendChild(copy); acts.appendChild(save);
+            const print = button('Print the kit', 'quiet', { 'data-k': 'print' });
+            print.addEventListener('click', () => root.print());
+            acts.appendChild(copy); acts.appendChild(save); acts.appendChild(print);
             s.body.appendChild(acts);
             // Two words back, so the kit was really kept.
             const pick = [3 + Math.floor(Math.random() * 8), 13 + Math.floor(Math.random() * 10)];
@@ -258,14 +303,18 @@
                     const pub = await c.exportPersonKeys(person);
                     const priv = utf8(JSON.stringify(await c.exportPrivateKeys(person)));
                     // seal() answers { header, bytes, … }: the bytes are the envelope that goes on the wire.
-                    const byPass = (await c.seal(priv, { lock: 'password', password: passphrase })).bytes;
+                    const byPass = (await c.seal(priv, { lock: 'password', password: device ? device.secret : passphrase })).bytes;
                     const byWords = (await c.seal(priv, { lock: 'password', password: words.join(' ') })).bytes;
                     await network('PUT', '/api/v1/me/keys', {
                         ecdh_public: pub.ecdh, signing_public: pub.signing, self_signature: pub.fingerprint_signature, fingerprint: pub.fingerprint,
                         ...(o.reset ? { reset: true } : {}),
-                        backups: { passphrase: { format: 'locker.envelope.v1', envelope: b64(byPass) }, recovery: { format: 'locker.envelope.v1', envelope: b64(byWords) } },
+                        backups: { [device ? 'passkey' : 'passphrase']: { format: 'locker.envelope.v1', envelope: b64(byPass) }, recovery: { format: 'locker.envelope.v1', envelope: b64(byWords) } },
                     });
-                    session = { person, subject: null, fingerprint: pub.fingerprint };
+                    if (device) {
+                        root.localStorage.setItem(passkeyStorage(), JSON.stringify(device.saved));
+                        device.secret = null;
+                    }
+                    session = { person, subject: cfg().subject || null, fingerprint: pub.fingerprint };
                     doc.dispatchEvent(new CustomEvent('ov-locker:change', { detail: state() }));
                     step4(pub.fingerprint);
                 } catch (err) {
@@ -339,7 +388,7 @@
                 try {
                     const c = await core();
                     if (!backups) backups = await network('GET', '/api/v1/me/keys/backup');
-                    const b = backups[mode === 'words' ? 'recovery' : 'passphrase'];
+                    const b = (backups.backups || backups)[mode === 'words' ? 'recovery' : 'passphrase'];
                     if (!b || !b.envelope) throw Object.assign(new Error('nothing'), { status: 404 });
                     const priv = JSON.parse(fromUtf8(await c.open(unb64(b.envelope), { password: secret })));
                     const person = await c.importPersonKeys(priv);
@@ -382,6 +431,27 @@
             s.body.appendChild(go);
         };
         draw('pass');
+        const saved = devicePasskey();
+        if (saved && root.navigator.credentials) {
+            const pk = button('Unlock with this device’s passkey', 'quiet', { 'data-k': 'unlock-passkey' });
+            const msg = el('p', 'ovl-msg', { 'aria-live': 'polite' });
+            pk.addEventListener('click', async () => {
+                pk.disabled = true;
+                try {
+                    const secret = await passkeySecret(saved);
+                    const c = await core();
+                    const backup = await network('GET', '/api/v1/me/keys/backup');
+                    const b = (backup.backups || backup).passkey;
+                    if (!b) throw new Error('This locker has no passkey backup. Use the recovery kit.');
+                    const person = await c.importPersonKeys(JSON.parse(fromUtf8(await c.open(unb64(b.envelope), { password: secret }))));
+                    session = { person, subject: backup.subject || null, fingerprint: await c.fingerprintOf(person.ecdhPublic, person.signingPublic) };
+                    doc.dispatchEvent(new CustomEvent('ov-locker:change', { detail: state() }));
+                    s.close(state());
+                    if (typeof o.onDone === 'function') o.onDone(state());
+                } catch (e) { pk.disabled = false; say(msg, e.message, true); }
+            });
+            s.body.appendChild(pk); s.body.appendChild(msg);
+        }
         return s.finished;
     }
 
@@ -512,8 +582,16 @@
         });
     }
 
+    /** Opens verified chunks with this tab's keys. No private key is exported to a service or caller. */
+    async function openStream(stream, credentials) {
+        const c = await core();
+        if (credentials) return c.openStream(stream, credentials);
+        await ensure();
+        return c.openStream(stream, { person: session.person });
+    }
+
     root.OVLocker = {
-        open, setup, unlock, ensure, keys, publicKeys, rewrap, seal, inspect: inspectBytes,
+        open, openStream, setup, unlock, ensure, keys, publicKeys, rewrap, seal, inspect: inspectBytes,
         state, forget, keyFromLink, strength, version: 2,
     };
 })(typeof window !== 'undefined' ? window : null);
