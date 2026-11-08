@@ -1120,7 +1120,8 @@ A bad release is undone by pinning the previous tag; a released tag is never mov
 
 Part of the [OpenVibe network](https://openvibe.network). Built in the open by [OpenVibers](https://github.com/OpenVibers).
 
+The Locker browser core currently uses the immutable SDK review commit `80f212323869347385e34545d6ee0a911017f5af` (OpenVibe.SDK #141). Replace it with the reviewed release pin before the next library release.
+
 <!-- versions:start -->
 - openvibe-contracts: v0.338.0
-- openvibe-sdk: v0.94.0
 <!-- versions:end -->
