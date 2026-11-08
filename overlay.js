@@ -455,5 +455,7 @@
     });
     root.addEventListener('resize', () => { for (const c of cards.values()) settle(c, c.corner, clampW(c.w)); });
     root.OVOverlay = { open, close, list, declare, handoffUrl, restore, safeSrc, _travelling: travelling };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', restore, { once: true }); else restore();
+    // After the page's own start-up (its scripts may set OVOverlayHere on DOMContentLoaded).
+    const later = () => setTimeout(restore, 0);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', later, { once: true }); else later();
 })(typeof window !== 'undefined' ? window : null);
