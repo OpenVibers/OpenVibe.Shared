@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.154.0 — 2026-11-08
+
+- **Float your agent's screen** (the owner: overlays "usable for agents, Vibe chat, Codes"). The Dock's Agents tab
+  gains **Float** beside Pause, Curtain, Mute and End: the agent's live screen (Live's agent embed, with its own
+  renewing view ticket) moves into a floating card that follows the person around this site and on to other OpenVibe
+  sites, and the Dock closes while they watch.
+- **Link shares are not first-party** (ahead of Connect's shares moving to `<label>--<user>.openvibe.link`): a share
+  is a person's own app, so `*--*.openvibe.link` and `*--*.openvibe.website` are never a card's source or a card's
+  destination; only openvibe.link itself and connect.openvibe.link are.
+- Tests: `test/overlay-chrome.test.js` (share hosts refused, Link's apex and Connect allowed).
+
 ## 4.153.0 — 2026-11-08
 
 - **Signed in to the network, signed in here — on phones too** (the owner: "Why am I not auto signed into some domains
