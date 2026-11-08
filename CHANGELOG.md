@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.155.0 — 2026-11-08
+
+- **The menu names each site by a short product name** (the owner, 11-08: "the names of websites … not cut off …
+  cleaner and nicer across all the websites"). On openvibe.website the first tab read "Websites that l…", the box
+  "Search Websites that look finished, or a…" and the heading "On Websites that look finished": the page title's last
+  part, a tagline. The name now comes, in order, from the site's own short label, the network's name for the address,
+  the "OpenVibe.X" in the title, then the address itself (openvibe.website → Website, openvibe.party → Party), and a
+  title part only when it is short. Website, My, Link, Party and Computer read right now; every other site keeps its name.
+- **A site under a path is that site only on that path:** Inventory lives at openvibe.my/inventory, so openvibe.my
+  itself is My, not Inventory (the match was by host alone).
+- Tests: `test/search-site-name-chrome.test.js` (a tagline title, a long label, and a path-aware site; it fails on
+  4.154.0 with the owner's exact text).
+
 ## 4.154.0 — 2026-11-08
 
 - **Float your agent's screen** (the owner: overlays "usable for agents, Vibe chat, Codes"). The Dock's Agents tab
