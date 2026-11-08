@@ -231,6 +231,7 @@
             .openvibe-nv-unread svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-nv-tabs { display: flex; overflow-x: auto; scrollbar-width: none; margin: 0 -12px; padding: 0 6px; }
             .openvibe-nv-tabs::-webkit-scrollbar { display: none; }
+            .openvibe-nv-tabs.is-more { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent); }
             .openvibe-nv-tabs button { flex: none; position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 10px; border: 0; background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
             .openvibe-nv-tabs button:hover, .openvibe-nv-tabs button[aria-selected="true"] { color: var(--text-primary, #ececf1); }
             .openvibe-nv-tabs button[aria-selected="true"]::after { content: ''; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2.5px; border-radius: 2px 2px 0 0; background: var(--accent, #3b82f6); }
@@ -784,13 +785,18 @@
     }
 
     // ── Bell / badge ────────────────────────────────────────
+    let _bellAction = null;
     function createBellEl() {
         const bell = document.createElement('div');
         bell.className = 'openvibe-bell';
         bell.setAttribute('role', 'button'); bell.setAttribute('aria-label', 'Notifications'); bell.tabIndex = 0;
         bell.innerHTML = `<svg class="ovnav-ovg has-s" viewBox="0 0 24 24" aria-hidden="true">${GLYPH.bell}<g class="ovg-s">${GLYPH.bellSolid}</g></svg><span class="badge hidden">0</span>`;
-        bell.addEventListener('click', () => togglePanel());
-        bell.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanel(); } });
+        // With the Dock on the page, its Activity tab is this list: the bell opens it there (4.150.0, the owner: the bell
+        // "doesn't actually open the notifications … you have to open the chat button and click this manually"); the
+        // panel opened under the Dock's sheet, so the tap seemed to do nothing.
+        const press = () => { if (_bellAction) { try { if (_bellAction() === true) return; } catch { /* the panel then */ } } togglePanel(); };
+        bell.addEventListener('click', press);
+        bell.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); press(); } });
         _bellEl = bell;
         return bell;
     }
@@ -872,6 +878,14 @@
         };
         tabs.forEach((btn) => btn.addEventListener('click', () => selectTab(btn)));
         const tabRow = root.querySelector('.openvibe-nv-tabs');
+        // More filters past the edge: a fade says the row scrolls (4.150.0; "System" was cut off with no sign of more).
+        if (tabRow && !tabRow.__more) {
+            tabRow.__more = true;
+            const more = () => tabRow.classList.toggle('is-more', tabRow.scrollWidth - tabRow.clientWidth - tabRow.scrollLeft > 4);
+            tabRow.addEventListener('scroll', more, { passive: true });
+            if (typeof ResizeObserver === 'function') new ResizeObserver(more).observe(tabRow);
+            setTimeout(more, 0);
+        }
         const fade = () => { tabRow.classList.toggle('is-more', tabRow.scrollLeft + tabRow.clientWidth < tabRow.scrollWidth - 4); };
         tabRow.addEventListener('scroll', fade, { passive: true });
         v.fade = fade;
@@ -1388,6 +1402,8 @@
             _toastContainer?.remove(); _panelEl?.remove();
             _toastContainer = null; if (_panelEl) _views.delete(_panelEl); _panelEl = null; _queue.length = 0;
         },
+        /** What a tap on the bell does instead of its own panel: fn() returns true when it handled it (navbar.js: the Dock). */
+        setBellAction(fn) { _bellAction = typeof fn === 'function' ? fn : null; },
         /** Create and inject the bell icon. Returns the DOM element. */
         createBell(container) {
             injectStyles();

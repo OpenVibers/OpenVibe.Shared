@@ -258,6 +258,17 @@
                 /* A thumb, not a cursor: every control on the sheet is 44 px (design 2026-11-07 §1, Phone). */
                 .ovdk-tabs button { height: 44px; }
                 .ovdk-acts button { width: 44px; height: 44px; }
+                /* Two rows (4.150.0, the owner: the strip was "cut off", "Activity" read "Ac"): the tools sit beside the grab
+                   handle; the four tabs share the full width below, each icon over its name, every one whole. */
+                .ovdk-head { flex-wrap: wrap; row-gap: 6px; padding: 8px 8px 8px 10px; }
+                .ovdk-head::before { top: 10px; }
+                .ovdk-acts { order: -1; width: 100%; justify-content: flex-end; gap: 2px; min-height: 44px; }
+                .ovdk-acts button[data-act="pop"] { display: none !important; }
+                .ovdk-tabs { order: 0; flex: 1 1 100%; padding: 4px; border-radius: 16px; }
+                .ovdk-tabs button, .ovdk-tabs button:not([aria-selected="true"]) { flex: 1 1 0; min-width: 0; height: 54px; padding: 4px 2px; flex-direction: column; justify-content: center; gap: 3px; border-radius: 12px; font-size: 11.5px; font-weight: 650; }
+                .ovdk-tabs button span, .ovdk-tabs button:not([aria-selected="true"]) span { position: static; width: auto; height: auto; overflow: hidden; clip: auto; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
+                .ovdk-tabs button svg { width: 19px; height: 19px; }
+                .ovdk-tabs .n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; padding: 1px 5px; font-size: 10.5px; }
                 .ovdk-foot a, .ovdk-foot button { min-height: 44px; }
             }
             html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }

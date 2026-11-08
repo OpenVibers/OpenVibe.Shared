@@ -288,6 +288,8 @@
             .openvibe-navbar .ovnav-orb[aria-expanded="true"] { color: var(--text-primary, #e6edf7); }
             .ovnav-orb[aria-expanded="true"] .ovo-g { transform: rotate(180deg) scale(.86); }
             .ovnav-orb[aria-expanded="true"] .ovo-d { animation: none; }
+            .openvibe-navbar :is(.ovnav-orb, .ovnav-msgs, .openvibe-bell, .openvibe-navbar-avatar) { transition: transform .18s cubic-bezier(.2, 1.4, .3, 1), background-color .15s, color .15s; }
+            .openvibe-navbar :is(.ovnav-orb, .ovnav-msgs, .openvibe-bell, .openvibe-navbar-avatar):active { transform: scale(.9); }
             .ovnav-orb[aria-expanded="true"] .ovo-r1 { opacity: 0; transform: scale(0); }
             .ovnav-orb[aria-expanded="true"] :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; }
             @keyframes ovo-ripple { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.55); } }
@@ -537,7 +539,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'fa4ded2928f4', 'ov-share.css': 'cbd18e6ce991', 'search.js': '6da35435c118', 'dock.js': 'b563663a49d6', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': '3ceb5266e7b8', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'fa4ded2928f4', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'cff638dd174c', 'dock.js': 'ef5c198edf47', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1250,7 +1252,7 @@
         const mount = nav.querySelector('#openvibe-bell-mount'); if (!mount || mount.childElementCount) return;
         const go = () => {
             const N = root.OpenVibeNotifications; if (!N || mount.childElementCount) return;
-            try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; } N.createBell(mount); } catch { /* */ }
+            try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; } N.createBell(mount); wireBell(); } catch { /* */ }
         };
         if (root.OpenVibeNotifications) return go();
         if (document.getElementById('ov-notify-loader')) return;
@@ -1269,8 +1271,20 @@
         if (!sc) { sc = document.createElement('script'); sc.id = 'ov-dock-loader'; sc.src = siblingV('dock.js'); sc.async = true; document.head.appendChild(sc); }
         sc.addEventListener('load', () => setTimeout(() => { try { then(); } catch { /* */ } }, 0));
     }
+    // The bell opens the Dock on Activity (the same list), and closes it from there; without the Dock, its own panel.
+    let _dockOn = false;
+    function wireBell() {
+        const N = root.OpenVibeNotifications; if (!N || typeof N.setBellAction !== 'function') return;
+        N.setBellAction(_dockOn ? () => {
+            const D = root.OpenVibeDock; if (!D || typeof D.open !== 'function') return false;
+            const st = typeof D._state === 'function' ? D._state() : {};
+            if (D.isOpen() && st.tab === 'activity') D.close(); else D.open({ tab: 'activity' });
+            return true;
+        } : null);
+    }
     function mountDock(u) {
         const on = _config.dock !== false && !!u && !u.is_anon && !!_config.token;
+        _dockOn = on; wireBell();
         if (root.OpenVibeDock) return root.OpenVibeDock.mount(on ? dockOpts() : null);
         try { const k = JSON.parse(localStorage.getItem('ov-dock') || 'null'); if (!on || (k && k.off > Date.now())) return; } catch { if (!on) return; }
         loadDock(() => root.OpenVibeDock.mount(dockOpts()));

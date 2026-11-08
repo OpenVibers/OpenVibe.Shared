@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.150.0 — 2026-11-08
+
+- **The menu's button turns into its close, on top of the menu** (the owner: "make it render on top … a cool effect as
+  it goes in and out of the menu … turns it into the close button when it's open"). On a phone the menu covers the bar,
+  so it draws the orb in the button's own place, on top: as the menu grows from it, the orb glides into the search
+  field's end and its nine dots turn into an x (the edges fold away, the corners and the centre stay). That orb is the
+  close; the separate round x is gone. Closing plays it backwards: the orb glides back, its x turns back into dots, and
+  the menu folds into it. Reduced motion: no movement.
+- **The bell opens your notifications.** With the Dock on the page, its Activity tab is the bell's list, and the bell's
+  own panel opened under the Dock's sheet, so a tap seemed to do nothing (the owner). The bell now opens the Dock on
+  Activity, and a second tap closes it; without the Dock it opens its panel as before
+  (`OpenVibeNotifications.setBellAction`).
+- **The Dock on a phone shows every tab whole.** The open tab's name was clipped ("Ac") because four tools took the row.
+  The header is two rows on a phone: the tools beside the grab handle, then the four tabs sharing the width, each icon
+  over its name. The pop-out (a separate window) is not offered on a phone. The notification filters scroll sideways,
+  and a fade now says so.
+- **Press feedback** on the bar's orb, messages, bell and picture: a small spring on a tap.
+- Budgets: dock.js 16.80 KB brotli (16.55 measured).
+  Tests: menu-close-chrome (the orb is the phone's close, its dots an x, one close, it folds and closes),
+  dock-size.
+
 ## 4.149.0 — 2026-11-08
 
 - **The menu has tabs at the top** (the owner, 11-08: "we should have tabs at the top … a feed tab, which allows the
