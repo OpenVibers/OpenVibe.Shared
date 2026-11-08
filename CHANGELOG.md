@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.147.0 — 2026-11-08
+
+- **A link in a Dock message shows its card.** OpenVibe.Chat now resolves a known OpenVibe link when a message is sent
+  (a video on OpenVibe.Video, a party invite, a shared voice or a skill on OpenVibe.Actor) and the DM API carries it on
+  the message as `card`. The Dock draws it under the message: a small picture when there is one, the title as a link,
+  one line, and the one move ("Watch together", "Join the party", "Borrow this agent", "Install"). The new sibling
+  `dock-card.js` draws it and is loaded the first time a conversation shows a card, so dock.js grows by about 200
+  bytes. Every field is data: text set as text, links only https, pictures only from openvibe.media (checked in
+  `test/dock-chrome.test.js` with a card that tries a script link, a picture from elsewhere and a script button).
+
 ## 4.146.0 — 2026-11-08
 
 - **On a phone, a home's words and its main action come first.** `showcase.hero` with an orbit put the picture above

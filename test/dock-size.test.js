@@ -21,8 +21,8 @@ const DOCK_PATH = path.join(ROOT, 'dock.js');
 // time something is sent, not on every page.
 // The timer itself (menu, countdown, chime, focus rounds) is dock-timer.js (3.7 KB brotli), loaded only while a timer
 // runs or its menu opens; the header's tab rail and narrow-width rules came with it.
-const DOCK_BROTLI_BUDGET = 16640;   // 16.25 KB: 16.07 KB with OpenVibe Chat's hooks (share(), canSend(), the draft; 4.144.0, 2026-11-08), Send to… itself is dock-share.js (1.9 KB, loaded on first use); 16.0 KB: 15.74 KB with its siblings' ?v= content hashes (4.137.0, 2026-11-07) + headroom; 15.70 KB: 15.55 KB with Ask your agent (4.135.0, 2026-11-07) + headroom; was 15.50 KB (15435 after 4.120.0)
-const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js', 'dock-timer.js', 'dock-agent.js', 'dock-share.js'];
+const DOCK_BROTLI_BUDGET = 16794;   // 16.40 KB: 16.30 KB with the link cards' loader (4.147.0, 2026-11-08; the card itself is dock-card.js, loaded the first time one shows) + headroom; 16.25 KB: 16.07 KB with OpenVibe Chat's hooks (share(), canSend(), the draft; 4.144.0, 2026-11-08), Send to… itself is dock-share.js (1.9 KB, loaded on first use); 16.0 KB: 15.74 KB with its siblings' ?v= content hashes (4.137.0, 2026-11-07) + headroom; 15.70 KB: 15.55 KB with Ask your agent (4.135.0, 2026-11-07) + headroom; was 15.50 KB (15435 after 4.120.0)
+const SIBLINGS = ['action-center.js', 'notification-ui.js', 'notification-live.js', 'ov-mark.js', 'dock-vibe.js', 'dock-timer.js', 'dock-agent.js', 'dock-share.js', 'dock-card.js'];
 
 // ── the budget ──────────────────────────────────────────────
 {
