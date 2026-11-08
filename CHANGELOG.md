@@ -1,5 +1,33 @@
 # Changelog
 
+## 4.152.0 — 2026-11-08
+
+- **Floating cards that follow you across OpenVibe** (`overlay.js`; the owner: a mini player you move and resize like
+  YouTube on Android, with the room's chat, that keeps going on other sites, and an SDK any site, agent, Vibe chat or
+  Codes can use). `OpenVibeNavbar.overlay({ id, src, title, href, live, side })` opens a card that frames a first-party
+  page (Live's `/embed/<name>`, a chat, an agent): drag it and it settles in the nearest corner (a flick carries it),
+  pull or throw it off the side to close it, resize it with its grip, two fingers or a double tap, and a tap shows
+  its controls (LIVE, its name, sound for a Live embed, chat, open the full page, close). It sits between the navbar
+  and the phone's app bar, never under either; its chat opens beside it, or as a sheet above the app bar on a phone.
+  At most three at once, each in its own corner; corner and size remembered per kind on the device.
+- **Across sites:** while a card is open (or a page declares one: `OVOverlay.declare(id, …)`, for Live's own mini
+  player), a same-tab link to another OpenVibe site carries it in `#ovo=…`; the next site's navbar loads overlay.js,
+  opens the same cards and takes the hash out of the address at once (it never reaches a server). Only first-party
+  https sources open, checked again on arrival; a reload on the same site brings the cards back.
+- **The next site starts sooner:** when a pointer, a finger or the keyboard reaches for a link to another OpenVibe
+  site, the navbar opens the connection to it then (preconnect + dns-prefetch, up to 12 origins a page).
+- Test: `test/overlay-chrome.test.js`.
+
+## 4.151.0 — 2026-11-08
+
+- **The menu marks the page you are on** (the owner, on openvibe.chat/messages: "highlight based on page"). In
+  "On <site>", the link whose path is this page's, or the longest one this page sits under (/messages/abc under
+  Messages), wears the accent and `aria-current="page"`; "/" only on the home itself; another site's link never.
+- **On a phone the menu opens without the keyboard.** The orb opens a menu, not a search, so the field is no longer
+  focused when it opens there (the keyboard covered half the menu); focus goes to the close orb until the person taps
+  the field. On a computer, and when the menu opens with "/", the field is focused as before.
+- Test: `test/menu-here-current-chrome.test.js`.
+
 ## 4.150.0 — 2026-11-08
 
 - **The menu's button turns into its close, on top of the menu** (the owner: "make it render on top … a cool effect as

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.150.0",
+  "version": "4.152.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -48,6 +48,7 @@
     "./action-center": "./action-center.js",
     "./dock": "./dock.js",
     "./presence": "./presence.js",
+    "./overlay": "./overlay.js",
     "./dock-vibe": "./dock-vibe.js",
     "./dock-timer": "./dock-timer.js",
     "./dock-share": "./dock-share.js",
