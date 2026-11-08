@@ -39,7 +39,14 @@ assert.strictEqual(applyBlock('a\n\n<!-- versions:start -->\n- openvibe-sdk: v0.
     const r = inspect(root);
     // The expectation comes from package.json itself, so a pin bump (scripts/pin-bump.js) needs no test edit.
     assert.deepStrictEqual(r.pins, pinsIn(JSON.parse(read(root, 'package.json'))));
-    assert.deepStrictEqual(Object.keys(r.pins).sort(), ['openvibe-contracts', 'openvibe-sdk']);
+    // This check lists release pins. Locker's companion SDK uses an immutable review commit until release.
+    const sdkSpec = JSON.parse(read(root, 'package.json')).devDependencies['openvibe-sdk'];
+    const reviewCommit = /OpenVibe\.SDK\/tar\.gz\/([a-f0-9]{40})$/.exec(sdkSpec);
+    assert.deepStrictEqual(Object.keys(r.pins).sort(), reviewCommit ? ['openvibe-contracts'] : ['openvibe-contracts', 'openvibe-sdk']);
+    if (reviewCommit) {
+        assert.ok(JSON.parse(read(root, 'STATUS.json')).sdk.includes(reviewCommit[1]), 'STATUS names the exact reviewed SDK commit');
+        assert.ok(read(root, 'README.md').includes(reviewCommit[1]), 'README names the exact reviewed SDK commit');
+    }
     assert.deepStrictEqual(r.findings.filter((f) => !f.ok), [], 'the checked-in STATUS.json and README block are current');
     const cli = cp.spawnSync(process.execPath, [script, root, '--check'], { encoding: 'utf8' });
     assert.strictEqual(cli.status, 0, cli.stdout + cli.stderr);

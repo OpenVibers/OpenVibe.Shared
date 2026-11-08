@@ -123,3 +123,11 @@ design rather than a web view of it:
 
 The calls the sheet makes are the same uniform API for every client: `openvibe-sdk/share`'s router,
 `GET`/`PUT /api/v1/<kind>/<id>/share` and the rest. An agent uses `sdk.share({ base, token }).for(kind, id)`.
+
+For large encrypted files, pass `prepareEnvelope({ keys, remove, add })` to `OVShare.open`. The callback receives
+public recipient keys including the owner, streams a fresh envelope with the existing Locker SDK, and uploads it
+to the service's authenticated staging endpoint. Return `{ envelope_ref, header }`; the sheet derives each
+member's key slot from that header and submits the opaque receipt alongside the complete member list. The
+service must implement the SDK's staged-reseal hooks and bind the receipt to the owner, item, current revision
+and expiry, atomically replacing ciphertext and access. The callback never sends private keys or plaintext.
+Without this option the existing inline `OVLocker.rewrap` path is unchanged.

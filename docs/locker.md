@@ -62,3 +62,25 @@ The key directory it talks to is Network's:
 - `PUT /api/v1/me/keys`
 - `GET /api/v1/me/keys/backup`
 - `GET /api/v1/people/:subject/keys`
+
+### Device passkeys and streaming (Locker v1)
+
+Setup also offers a passkey on devices with WebAuthn PRF support. The PRF output is used only as the password to the
+existing SDK password lock; cryptography stays in `ov-locker-core.js`. The credential ID and public PRF input are
+stored on this origin under a subject-specific localStorage key. Neither the PRF output nor private keys are stored
+there. This convenience unlock is specific to this device/origin; another device uses the recovery kit. If PRF is
+unavailable, setup keeps the passphrase option enabled. The recovery kit can be saved or printed and is shown only
+while it is being created. Keep it before leaving setup.
+
+`OVLocker.openStream(readable, credentials?)` delegates to the SDK's streaming opener, using the unlocked person
+keys for a people lock. Private keys remain in the Locker module. An explicit `{ key }` or `{ password }` opens a
+link or password lock. The caller must consume the authenticated stream to completion before committing a saved
+file; a cancelled prefix read is suitable only for a provisional, decrypted label.
+
+Network's backup response is `{ subject, backups: { passphrase, recovery, passkey } }`. The browser accepts that
+wrapper and the older unwrapped form. Configure `OpenVibeLockerConfig.subject` to scope the public passkey handle
+to the signed-in person.
+
+A service with an HTTP-only SSO session may set `network: ''` and proxy the three public-key / encrypted-backup
+endpoints through its own authenticated backend. Set `reauthUrl` to its reauthentication entry point; this avoids
+requiring third-party Network cookies and keeps access tokens out of JavaScript. No plaintext keys are proxied.

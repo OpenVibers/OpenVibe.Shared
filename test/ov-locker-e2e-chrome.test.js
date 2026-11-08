@@ -38,7 +38,7 @@ const server = http.createServer((req, res) => {
         if (u.pathname === '/api/v1/me/keys' && req.method === 'PUT') { stored = JSON.parse(body); res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"ok":true}'); }
         if (u.pathname === '/api/v1/me/keys/backup') {
             if (!stored) { res.writeHead(404, { 'content-type': 'application/json' }); return res.end('{"error":"no keys"}'); }
-            res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ subject: 'usr_x', ...stored.backups }));
+            res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ subject: 'usr_x', backups: stored.backups }));
         }
         if (u.pathname.startsWith('/item/') && items[u.pathname.slice(6)]) { res.writeHead(200, { 'content-type': 'application/octet-stream' }); return res.end(Buffer.from(items[u.pathname.slice(6)])); }
         res.writeHead(404); return res.end();
@@ -112,6 +112,46 @@ const server = http.createServer((req, res) => {
         await c.evaluate(type('words', words.join('  ').toUpperCase())); await c.evaluate(press('unlock'));
         await wait(5000);
         assert.strictEqual(await c.evaluate('OVLocker.state().fingerprint'), fp, 'the recovery words open the same locker');
+        // A PRF-capable authenticator is stubbed at the browser boundary; sealing and opening remain real WebCrypto.
+        // Hardware availability varies, so the unsupported case must leave setup usable too.
+        const d = await h.openPage(browser, await browser.newContext(), { width: 390 });
+        await d.goto(`${base}/`, { maxMs: 5000 });
+        await d.evaluate(`(() => {
+            window.__prf = crypto.getRandomValues(new Uint8Array(32));
+            Object.defineProperty(navigator, 'credentials', { configurable: true, value: {
+                create: async () => ({ rawId: new Uint8Array([1,2,3,4]).buffer, getClientExtensionResults: () => ({ prf: { enabled: true } }) }),
+                get: async (options) => {
+                    if (options.publicKey.userVerification !== 'required') throw new Error('verification missing');
+                    return { getClientExtensionResults: () => ({ prf: { results: { first: window.__prf.buffer } } }) };
+                },
+            } });
+            OVLocker.setup();
+        })()`);
+        await wait(300); await d.evaluate(press('setup-passkey')); await wait(1500);
+        const recovery = await d.evaluate("[...document.querySelectorAll('.ovl-words li')].map(x => x.textContent)");
+        assert.strictEqual(recovery.length, 24);
+        assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=print]')"), true);
+        const ask = await d.evaluate("[...document.querySelectorAll('dialog .ovl-pair .ovl-label')].map(x => Number(x.textContent.replace(/\\D/g, '')))");
+        await d.evaluate(type('w1', recovery[ask[0] - 1])); await d.evaluate(type('w2', recovery[ask[1] - 1])); await d.evaluate(press('make')); await wait(9000);
+        assert.ok(stored.backups.passkey && stored.backups.recovery && !stored.backups.passphrase);
+        const storage = await d.evaluate("JSON.parse(localStorage.getItem('ov-locker-passkey:device'))");
+        assert.deepStrictEqual(Object.keys(storage).sort(), ['id', 'salt'], 'only public passkey lookup data stays on the device');
+        const pkFp = await d.evaluate('OVLocker.state().fingerprint');
+        await d.evaluate(press('done'));
+        await d.evaluate('(() => { OVLocker.forget(); OVLocker.unlock(); })()'); await wait(300);
+        await d.evaluate(press('unlock-passkey')); await wait(5000);
+        assert.strictEqual(await d.evaluate('OVLocker.state().fingerprint'), pkFp, 'PRF opens the same SDK-protected keys');
+        items.stream = (await locker.seal('streamed on device', { lock: 'people', keys: [{ subject: { type: 'user', id: 'usr_x' }, publicKey: stored.ecdh_public }] })).bytes;
+        assert.strictEqual(await d.evaluate("(async () => new Response(await OVLocker.openStream((await fetch('/item/stream')).body)).text())()"), 'streamed on device');
+        await d.evaluate('(() => { OVLocker.forget(); OVLocker.unlock(); })()'); await wait(300);
+        await d.evaluate(type('pass', PASS)); await d.evaluate(press('unlock')); await wait(300);
+        assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /recovery kit/);
+        assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=make-instead]')"), false, 'an existing passkey locker is never described as missing');
+        await d.evaluate("document.querySelector('dialog button[aria-label=Close]').click()");
+        await d.evaluate(`(() => { OVLocker.forget(); navigator.credentials.create = async () => ({ getClientExtensionResults: () => ({}) }); OVLocker.setup(); })()`);
+        await wait(300); await d.evaluate(press('setup-passkey')); await wait(300);
+        assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /does not support Locker/);
+        assert.strictEqual(await d.evaluate("document.querySelector('[data-k=setup-passkey]').disabled"), false);
         console.log('ov-locker-e2e-chrome: real crypto: make a locker, unlock it on a new device by passphrase and by recovery words, open what was locked for you, refuse what was not');
     } finally {
         await browser.close();

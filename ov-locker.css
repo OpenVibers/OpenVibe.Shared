@@ -121,3 +121,11 @@ html.ovl-locked, html.ovl-locked body { overflow: hidden; }
     .ovl-done .ovl-ico.is-big { animation: none; }
 }
 @media (forced-colors: active) { .ovl-sheet, .ovl-card { border: 1px solid CanvasText; } }
+
+/* The one-time recovery kit is the only printed content. */
+@media print {
+  body:has(.ovl-words) > :not(dialog) { display: none !important; }
+  dialog:has(.ovl-words) { position: static; max-height: none; border: 0; box-shadow: none; }
+  dialog:has(.ovl-words) .ovl-acts, dialog:has(.ovl-words) form, dialog:has(.ovl-words) button { display: none !important; }
+  .ovl-words { color: #111; background: #fff; }
+}
