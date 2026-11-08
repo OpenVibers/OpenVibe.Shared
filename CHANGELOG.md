@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.151.0 — 2026-11-08
+
+- **The menu marks the page you are on** (the owner, on openvibe.chat/messages: "highlight based on page"). In
+  "On <site>", the link whose path is this page's, or the longest one this page sits under (/messages/abc under
+  Messages), wears the accent and `aria-current="page"`; "/" only on the home itself; another site's link never.
+- **On a phone the menu opens without the keyboard.** The orb opens a menu, not a search, so the field is no longer
+  focused when it opens there (the keyboard covered half the menu); focus goes to the close orb until the person taps
+  the field. On a computer, and when the menu opens with "/", the field is focused as before.
+- Test: `test/menu-here-current-chrome.test.js`.
+
 ## 4.150.0 — 2026-11-08
 
 - **The menu's button turns into its close, on top of the menu** (the owner: "make it render on top … a cool effect as

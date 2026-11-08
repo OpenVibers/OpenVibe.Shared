@@ -251,6 +251,8 @@
 .ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; padding: 0 10px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; }
 .ovs-link svg { width: 16px; height: 16px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-link.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 42%, transparent); color: var(--text-primary, #e6edf3); }
+.ovs-link.is-here svg { color: var(--accent, #3b82f6); }
 .ovs-livebar { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 8px 6px 2px; }
 .ovs-livebar::-webkit-scrollbar { display: none; }
 .ovs-live { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13.5px; font-weight: 650; }
@@ -941,6 +943,17 @@
         // This site's own cards (a drop zone on Download, go-live status on Live, a new task on Codes…).
         for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
         const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
+        // The page the person is on wears the highlight (owner 11-08): the link whose path is this page's, or the longest one
+        // this page sits under (/messages/abc under Messages); "/" only on the home itself.
+        let best = -1, bestLen = -1;
+        pages.forEach((x, i) => {
+            let u; try { u = new URL(x.url, root.location.href); } catch { return; }
+            if (u.origin !== root.location.origin) return;
+            const p = u.pathname.replace(/\/+$/, '') || '/', at = root.location.pathname.replace(/\/+$/, '') || '/';
+            const len = p === at ? 10000 + p.length : (p !== '/' && at.startsWith(`${p}/`) ? p.length : -1);
+            if (len > bestLen) { best = i; bestLen = len; }
+        });
+        if (best >= 0) pages[best].here = true;
         if (pages.length) groups.push({ title: `On ${here()}`, as: 'links', items: pages, section: 'here' });
         const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
         if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
@@ -1240,7 +1253,9 @@
         input.value = opts.q || '';
         paintGhost();
         render(input.value);
-        setTimeout(() => input.focus(), 0);
+        // On a phone the orb opens a menu, not a search: focusing the field would raise the keyboard over the menu (owner
+        // 11-08), so focus stays on the close orb until the person taps the field. A query, or a computer, still types.
+        setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
         // What makes it the person's own arrives after the first paint: their history, and the tools catalog.
         mine = null;
         loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); render(input.value); } });
