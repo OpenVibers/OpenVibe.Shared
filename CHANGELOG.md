@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.148.0 — 2026-11-08
+
+- **On a phone the menu button is the orb, in the burger's place** (the owner, 11-08: "replace the hamburger with
+  that button… we don't need both"). 4.137.0 kept one menu button on a phone but drew it as a plain three-line burger
+  and hid the orb, the network's own nine dots with their ripple, wave and turn. The phone's menu button, at the bar's
+  right where the burger was, now draws the orb: the same dots, the first-visit ripple, the wave while the menu loads,
+  the glow on a press and the turn into a ✕ while the menu is open. Still one button: the orb beside the site's name
+  steps aside at 860 px and below, as before; a wide bar is unchanged. The button opens the menu on this site's pages
+  first, and the menu's round ✕ (4.142.0) closes it.
+  Tests: navbar-phone-fit-chrome checks, 320 to 430 px, that the one menu button draws the orb's nine dots and no
+  burger lines; navbar-brand checks the markup.
+
 ## 4.147.0 — 2026-11-08
 
 - **A link in a Dock message shows its card.** OpenVibe.Chat now resolves a known OpenVibe link when a message is sent
