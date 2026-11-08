@@ -4,6 +4,7 @@
 // navbar.js loads this file from beside itself for a signed-in person, after the bell, and mounts it:
 //   OpenVibeDock.mount({ token: () => jwt, apiBase, sibling })   the pill; mount(null) takes it away (signed out)
 //   OpenVibeDock.open({ tab }) · close() · isOpen()
+//   OpenVibeDock.share({ text, title }) · canSend()   Send to… (4.144.0, dock-share.js): the text waits in a box, unsent
 //
 // The pill (the mark, a word and a dot) shows only while an agent works, one needs you, or the person pinned it, in the
 // corner the Dock sits in. It paints at once from this site's copy (localStorage ov-dock), then from the Network, and
@@ -99,7 +100,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '49938c0551cc', 'dock-timer.js': 'f5d9fee28824' };
+    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '49938c0551cc', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -455,7 +456,7 @@
             vibe.api = root.OpenVibeDockVibe.mount(panel, { chatCall, active: () => isOpen() && tab === 'vibe', styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'), icons: { vibe: G.vibe, send: G.send, clock: G.clock, bell: G.bell }, refresh: () => read() });
             return;
         }
-        if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
+        if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; if (chats.draft) return chatList(); return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
         // The Agent panel reads the step.
         if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (mounts[id + 'Timeline']) mounts[id + 'Timeline'].refresh(); return; }
         mounts[id] = { refresh: null };
@@ -502,7 +503,7 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false };
+    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
@@ -549,9 +550,12 @@
         chats.open = null;
         const panel = chats.panel; if (!panel) return;
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
+        const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try { chats.list = (await chatCall('/api/dm/conversations')).conversations || []; } catch (e) { panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
+        if (sharing) await sharing;
         if (chats.open || tab !== 'chats') return;
         panel.textContent = '';
+        if (chats.draft && canWriteChat() && root.OpenVibeDockShare) panel.append(root.OpenVibeDockShare.bar({ draft: chats.draft, h, chatCall, host: el, cancel: () => { chats.draft = null; chatList(); }, open: (id) => { chats.list = null; return openChat(String(id), true); } }));
         const scroll = h('div', 'ovdk-scroll');
         if (!chats.list.length) {
             const none = h('div', 'ovdk-none');
@@ -592,6 +596,8 @@
         clearTimeout(chats.timer);
         const panel = chats.panel; if (!panel) return;
         chats.open = String(id); chats.msgs = []; chats.last = 0;
+        const draft = chats.draft && canWriteChat() ? chats.draft.text : '';
+        chats.draft = null;
         if (remember) save({ chat: chats.open });
         const conv = (chats.list || []).find((c) => String(c.id) === chats.open);
         panel.textContent = '';
@@ -614,6 +620,7 @@
             panel.append(form);
             const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
             box.addEventListener('input', fit);
+            if (draft && root.OpenVibeDockShare) root.OpenVibeDockShare.ready({ draft, h, panel, form, box, fit });
             box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -635,7 +642,7 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
-        if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
+        if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {
@@ -832,6 +839,10 @@
     // Ask your agent (4.135.0): Vibe opens with the question in its box, unsent.
     function ask({ text = '' } = {}, n = 0) { if (!n) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!(el && !el.hidden); }
+    function share({ text = '', title = '' } = {}) {
+        const t = String(text || '').trim().slice(0, 4000);
+        if (t) { chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null; open({ tab: 'chats' }); }
+    }
     function open(opts = {}) {
         o = { ...o, ...opts };
         if (opts.doc) doc = opts.doc;
@@ -881,5 +892,5 @@
         if (isOpen()) layout();
     }
 
-    root.OpenVibeDock = { mount, open, close, isOpen, update, ask, _state: () => ({ doc, tab, pending }) };
+    root.OpenVibeDock = { mount, open, close, isOpen, update, ask, share, canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);

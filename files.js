@@ -25,6 +25,7 @@ const BROWSER = Object.freeze([
     'presence.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
     'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
+    'dock-share.js',        // the Dock's Send to… (4.144.0); dock.js loads it the first time something is sent
     'dock-agent.js',        // the Dock's agent view (K-D3); dock.js loads it the first time the Agents tab opens
     'dock-timeline.js',     // the Dock's one timeline (A6); dock.js loads it with the Agent panel
     'account-switcher.js',

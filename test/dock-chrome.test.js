@@ -53,7 +53,7 @@ const NOTES = [
 
 // The stand-in's state for the scenario under way.
 let scenario = {};
-const puts = [], decided = [], said = [], reads = [];
+const puts = [], decided = [], said = [], reads = [], started = [];
 // K-D3: the agent view Codes' API answers (dock-agent.js) and the controls the Dock pressed.
 let agentView = null;
 const controls = [];
@@ -110,6 +110,8 @@ const server = http.createServer((req, res) => {
         if (m && req.method === 'POST') { decided.push(m.slice(1).join(':')); return json(200, { item: ACTIONS.buckets.waiting[0] }); }
         // Chat's DM API, as OpenVibe.Chat answers it (server/chat/dm-routes.js).
         if (u.pathname === '/api/dm/unread') return json(200, { unread: 3 });
+        if (u.pathname === '/api/dm/users/search') return json(200, { users: [{ id: 4, username: 'mia', display_name: 'Mia' }, { id: 5, username: 'miandra', display_name: 'Miandra' }] });
+        if (u.pathname === '/api/dm/conversations' && req.method === 'POST') { started.push(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').user_ids); return json(201, { conversation: { id: 13 } }); }
         if (u.pathname === '/api/dm/conversations') {
             const ada = { id: 1, username: 'ada', display_name: 'Ada' }, kai = { id: 2, username: 'kai', display_name: 'Kai Moreno' }, jo = { id: 3, username: 'jo', display_name: 'Jo' };
             return json(200, { conversations: [
@@ -285,6 +287,44 @@ async function drag(p, from, to) {
             assert.ok(puts.some((b) => b.chat === '11'), `the open chat is the Dock's state (${JSON.stringify(puts)})`);
             await p.evaluate("document.querySelector('.ovdk-back').click()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-chat').length === 2", 'back to the list');
+            await p.close();
+        }
+
+        // ── Send to a chat (4.144.0): a conversation or a name; the message waits in the box until it is sent ──
+        {
+            scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
+            said.length = 0; started.length = 0;
+            const p = await fresh(390, 780);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, PILL, 'the pill');
+            const TEXT = 'Friday film https://openvibe.party/p/friday?k=abc';
+            const share = (title) => p.evaluate(`OpenVibeDock.share({ text: ${JSON.stringify(TEXT)}${title ? `, title: ${JSON.stringify(title)}` : ''} })`);
+            await share('Friday film');
+            await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the Send to… bar');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk-share-what').textContent"), 'Friday film', 'what is being sent, by its title');
+            await until(p, "document.querySelectorAll('.ovdk .ovdk-chat').length === 2", 'your conversations under it');
+            await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
+            await until(p, "document.querySelector('.ovdk-send textarea') && document.querySelector('.ovdk-send textarea').value.length > 0", 'the message in the box');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk-send textarea').value"), TEXT, 'the link waits in the box');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk-ready')"), true, 'and says it is ready to send');
+            await wait(300);
+            assert.deepStrictEqual(said, [], 'nothing is sent until the person sends it');
+            // Someone new, by their name: a name nobody has says so; the right one starts the conversation.
+            await share('Friday film');
+            await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar again');
+            await p.evaluate("(() => { document.querySelector('.ovdk-to input').value = '@zz'; document.querySelector('.ovdk-to').requestSubmit(); })()");
+            await until(p, "!document.querySelector('.ovdk-share .ovdk-err').hidden", 'a name nobody has');
+            assert.match(await p.evaluate("document.querySelector('.ovdk-share .ovdk-err').textContent"), /Nobody is called @zz\. Did you mean @mia\?/);
+            await p.evaluate("(() => { document.querySelector('.ovdk-to input').value = 'mia'; document.querySelector('.ovdk-to').requestSubmit(); })()");
+            await until(p, `document.querySelector('.ovdk-send textarea') && document.querySelector('.ovdk-send textarea').value === ${JSON.stringify(TEXT)}`, 'a new conversation with the message in the box');
+            assert.deepStrictEqual(started, [[4]], 'the conversation is started with Mia, by her id');
+            assert.deepStrictEqual(said, [], 'still nothing sent');
+            // Cancel: back to the list, nothing waiting.
+            await share();
+            await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk-share-what').textContent"), TEXT, 'with no title, the text itself');
+            await p.evaluate("document.querySelector('.ovdk-share-x').click()");
+            await until(p, "!document.querySelector('.ovdk .ovdk-share') && document.querySelectorAll('.ovdk .ovdk-chat').length === 2", 'the list without the bar');
             await p.close();
         }
 
