@@ -6,7 +6,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const cp = require('child_process');
-const { stalePins, updateVersionLines, pinUrl, parseArgs } = require('../scripts/pin-bump');
+const { stalePins, staleSecurityPins, updateSecurityPins, updateVersionLines, pinUrl, parseArgs } = require('../scripts/pin-bump');
 
 const url = (repo, v) => `https://codeload.github.com/OpenVibers/${repo}/tar.gz/refs/tags/${v}`;
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'pin-bump-'));
@@ -17,8 +17,17 @@ write('apps/b/package.json', { dependencies: { 'openvibe-contracts': url('OpenVi
 write('node_modules/x/package.json', { dependencies: { 'openvibe-contracts': url('OpenVibe.Contracts', 'v0.1.0') } });
 write('STATUS.json', { repository: 'OpenVibers/Example', contracts: 'openvibe-contracts v0.110.0', sdk: 'openvibe-sdk v0.26.0', updated: '2026-01-01' });
 write('README.md', '- `openvibe-contracts` v0.110.0, `openvibe-sdk` v0.26.0\n\nThe manifest was first released in openvibe-contracts v0.8.0.\n');
+const oldSecurity = 'b'.repeat(40);
+const targetSecurity = 'c'.repeat(40);
+write('.github/workflows/ci.yml', [
+    'jobs:',
+    '  test:',
+    `    uses: OpenVibers/OpenVibe.Shared/.github/workflows/test.yml@${'a'.repeat(40)}`,
+    '  security:',
+    `    uses: OpenVibers/OpenVibe.Shared/.github/workflows/security.yml@${oldSecurity}`,
+].join('\n') + '\n');
 cp.execFileSync('git', ['init', '-q', dir]);
-cp.execFileSync('git', ['-C', dir, 'add', 'package.json', 'apps', 'STATUS.json', 'README.md']);
+cp.execFileSync('git', ['-C', dir, 'add', 'package.json', 'apps', 'STATUS.json', 'README.md', '.github']);
 
 // Only tracked package.json files count, and only pins below the tag; a current pin and a range are left alone.
 const stale = stalePins(dir, 'openvibe-contracts', 'v0.112.0').map((s) => s.file).sort();
@@ -26,6 +35,15 @@ assert.deepStrictEqual(stale, ['apps/b/package.json', 'package.json'], 'apps/a i
 assert.deepStrictEqual(stalePins(dir, 'openvibe-contracts', 'v0.112.0').find((x) => x.file === 'apps/b/package.json').from, ['v0.90.0']);
 assert.deepStrictEqual(stalePins(dir, 'openvibe-sdk', 'v0.26.0'), [], 'already at the tag');
 assert.deepStrictEqual(stalePins(dir, 'openvibe-shared', 'v2.13.0'), [], 'a peer range is not a pin');
+
+// The reusable security workflow is pinned by commit: a stale pin is found and moved, a current one is left alone,
+// and another Shared workflow's pin is not this bot's business.
+assert.deepStrictEqual(staleSecurityPins(dir, targetSecurity), [{ file: '.github/workflows/ci.yml', from: [oldSecurity] }]);
+assert.deepStrictEqual(staleSecurityPins(dir, oldSecurity), [], 'already at the target');
+assert.deepStrictEqual(updateSecurityPins(dir, targetSecurity), ['.github/workflows/ci.yml']);
+const ci = fs.readFileSync(path.join(dir, '.github/workflows/ci.yml'), 'utf8');
+assert.ok(ci.includes(`security.yml@${targetSecurity}`), 'the security pin moved');
+assert.ok(ci.includes(`test.yml@${'a'.repeat(40)}`), 'the test workflow pin stays as it was');
 
 // STATUS.json follows the pins once package.json moves.
 const pkg = path.join(dir, 'package.json');
