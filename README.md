@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.152.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.153.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -818,12 +818,12 @@ Sign-in and history: history: { type: 'tool'|'stream'|'paste'|'page'|…,
   title, url, icon } is recorded for the signed-in user once auth resolves
   (cross-site "Recently used" / History on the Network). silentLogin:
   'https://site/auth/login?silent=1&next={url}' — when nobody is signed in
-  here but this browser has signed in to the network before (ov_sso_hint),
-  one silent prompt=none round trip per tab, so a session on one site becomes
-  a session on all. fedcm: 'optional' (default) shows the browser's native
-  chip the first time and re-authenticates silently afterwards, 'silent' only
-  re-authenticates, false opts out; fedcmLogin is the POST target for the
-  assertion (default: this site's /auth/fedcm).
+  here, one top-level prompt=none round trip per tab per ten minutes picks up
+  the Network session, including a first visit with third-party cookies blocked.
+  Guests return with sso=none; an explicit local sign-out (ov_sso_hint=guest),
+  bots and unavailable sessionStorage suppress the attempt. The site's login
+  handler must return silent failures without showing a login form (openvibe-sdk/sso).
+  OpenVibeSSO.fedcm remains available for browser-native sign-in flows.
 Site switcher (4.48): the OpenVibe mark is a button that opens
   site-switcher.js, a compact grid of every OpenVibe site with Recent, Pinned,
   then the frame's groups. Recent and pinned follow the account (Network

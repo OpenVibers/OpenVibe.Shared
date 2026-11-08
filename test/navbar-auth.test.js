@@ -46,13 +46,25 @@ function loadNavbar(opts) {
         hostname: opts.hostname,
         href: opts.href || `https://${opts.hostname}/`,
         protocol: 'https:',
+        origin: `https://${opts.hostname}`,
+        search: new URL(opts.href || `https://${opts.hostname}/`).search,
+        replace: url => calls.push({ navigation: url }),
     };
-    global.window = { location: global.location };
+    Object.defineProperty(global, 'navigator', { configurable: true, value: { userAgent: opts.userAgent || 'Chrome' } });
+    const tab = { ...(opts.tab || {}) };
+    global.sessionStorage = {
+        getItem: k => { if (opts.storageBlocked) throw new Error('blocked'); return tab[k] || null; },
+        setItem: (k, v) => { tab[k] = String(v); },
+    };
+    global.window = { location: global.location, addEventListener() {}, removeEventListener() {} };
     global.document = {
         cookie: opts.cookie || '',
+        referrer: opts.referrer || '',
         head: stubElement(),
         body: stubElement(),
         getElementById: () => null,
+        querySelector: () => null,
+        querySelectorAll: () => [],
         createElement: () => stubElement(),
         addEventListener() {},
         removeEventListener() {},
@@ -373,6 +385,44 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         await new Promise((r) => setImmediate(r));
         assert.strictEqual(calls.filter((c) => /\/api\/auth\//.test(c.url)).length, 0, 'pages that pass a user keep full control (no auth traffic; the balances and unread count are not auth)');
         assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-avatar'));
+    }
+
+    // The top-level SDK route reads Network's first-party session even where third-party cookies are blocked; a guest
+    // comes back with sso=none. It runs when there is a reason to think the person has a session: this site signed them
+    // in before ('account'), or they came from another OpenVibe site. A first visit from elsewhere keeps the quiet
+    // iframe check (no redirect for a newcomer from a search engine).
+    for (const scenario of [
+        { name: 'first visit from another OpenVibe site', referrer: 'https://openvibe.network/', navigate: true },
+        { name: 'first visit from Shoes', referrer: 'https://open.shoes/x', navigate: true },
+        { name: 'first visit from a search engine', referrer: 'https://www.google.com/' },
+        { name: 'first visit typed in', referrer: '' },
+        { name: 'a page of this same site', referrer: 'https://openvibe.blog/other' },
+        { name: 'a look-alike host', referrer: 'https://openvibe.network.evil.example/' },
+        { name: 'known account', cookie: 'ov_sso_hint=account', navigate: true },
+        { name: 'explicit sign-out cookie', cookie: 'ov_sso_hint=guest' },
+        { name: 'explicit sign-out storage', storage: { ov_sso_hint: 'guest' } },
+        { name: 'guest callback', href: 'https://openvibe.blog/post?sso=none' },
+        { name: 'recent attempt', tab: { ov_silent_sso_at: String(Date.now()) } },
+        { name: 'expired attempt', referrer: 'https://openvibe.network/', tab: { ov_silent_sso_at: String(Date.now() - 600001) }, navigate: true },
+        { name: 'crawler', userAgent: 'Googlebot' },
+        { name: 'storage unavailable', storageBlocked: true },
+        { name: 'site opted out', disabled: true },
+        { name: 'existing site session', signedIn: true },
+    ]) {
+        const href = scenario.href || 'https://openvibe.blog/post?q=1#comments';
+        const { navbar, calls } = loadNavbar({
+            hostname: 'openvibe.blog', href, ...scenario,
+            fetch: async url => jsonResponse(scenario.signedIn && url === '/auth/me' ? 200 : 401,
+                scenario.signedIn && url === '/auth/me' ? { user: USER } : {}),
+        });
+        navbar.init({ service: 'blog', sessionUrl: '/auth/me', fedcm: false,
+            silentLogin: scenario.disabled ? false : '/auth/login?silent=1&next={url}' });
+        await navbar.refreshAuth();
+        await navbar.refreshAuth();
+        const navigations = calls.filter(c => c.navigation);
+        assert.strictEqual(navigations.length, scenario.navigate ? 1 : 0, scenario.name);
+        if (scenario.navigate) assert.strictEqual(navigations[0].navigation,
+            '/auth/login?silent=1&next=' + encodeURIComponent(href), 'preserves the page, query and fragment');
     }
 
     console.log('navbar-auth: all tests passed');

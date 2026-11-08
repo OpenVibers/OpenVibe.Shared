@@ -12,6 +12,8 @@
  *   OVOverlay.close(id) · OVOverlay.list() · OVOverlay.declare(id, descriptor | null)
  *     declare: a page that draws its own floating player (Live's mini player moves its <video>) says what to open on
  *     the next site, without this file drawing anything here.
+ *   window.OVOverlayHere = (card) => boolean: a page that already shows what a carried card would (Live's channel page
+ *     for its own embed) answers true, and that card is not opened on arrival.
  *
  * Handling (one gesture set for every card): drag anywhere and it settles in the nearest corner, a flick carries it;
  * more than half off the side, or a sideways throw past the edge, closes it; the grip on its inner corner (mouse),
@@ -427,8 +429,14 @@
             try { list = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { list = null; }
         }
         if (!Array.isArray(list)) return 0;
+        // A page that plays the same thing itself says so (window.OVOverlayHere = (card) => true): Live's channel page
+        // for a card that frames its own embed, so one stream never plays twice.
+        const here = typeof root.OVOverlayHere === 'function' ? root.OVOverlayHere : null;
         let n = 0;
-        for (const d of list.slice(0, MAX_CARDS)) if (open(d)) n += 1;
+        for (const d of list.slice(0, MAX_CARDS)) {
+            let skip = false; try { skip = !!(here && here({ ...d })); } catch { skip = false; }
+            if (!skip && open(d)) n += 1;
+        }
         return n;
     }
 
@@ -447,5 +455,7 @@
     });
     root.addEventListener('resize', () => { for (const c of cards.values()) settle(c, c.corner, clampW(c.w)); });
     root.OVOverlay = { open, close, list, declare, handoffUrl, restore, safeSrc, _travelling: travelling };
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', restore, { once: true }); else restore();
+    // After the page's own start-up (its scripts may set OVOverlayHere on DOMContentLoaded).
+    const later = () => setTimeout(restore, 0);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', later, { once: true }); else later();
 })(typeof window !== 'undefined' ? window : null);

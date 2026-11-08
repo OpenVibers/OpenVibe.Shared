@@ -539,7 +539,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'fa4ded2928f4', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'c036db4ac93a', 'dock.js': 'ef5c198edf47', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '09f79a2bb136' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': 'fa4ded2928f4', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'c036db4ac93a', 'dock.js': 'ef5c198edf47', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd3e93fe9313d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1740,14 +1740,15 @@
     }
 
     /**
-     * Signed in to the network but not here: the 'account' hint cookie goes straight to the silent sign-in (one quick
-     * redirect); otherwise a hidden iframe asks GET /sso/check and redirects only on yes (partitioned cookies: no).
+     * Use a top-level prompt=none round trip so Network's session is first-party even when
+     * third-party cookies are blocked. An iframe's negative answer cannot distinguish a guest
+     * from a signed-in person in those browsers, and first-use FedCM needs interaction.
      * At most once per tab per 10 minutes; never after a sign-out ('guest'); never for bots.
+     * The SDK returns guests with sso=none instead of showing an interactive login page.
      */
     function maybeSilentLogin() {
         if (!_config.silentLogin || typeof location === 'undefined') return false;
-        const hint = ssoHint();
-        if (hint === 'guest') return false;
+        if (ssoHint() === 'guest') return false;
         if (/bot|crawl|spider|slurp|headless/i.test(navigator.userAgent || '')) return false;
         if (/[?&]sso=none\b/.test(location.search)) return false;
         try {
@@ -1755,12 +1756,14 @@
             if (Date.now() - last < 10 * 60 * 1000) return false;
             sessionStorage.setItem('ov_silent_sso_at', String(Date.now()));
         } catch { return false; }
-        if (hint === 'account') return silentLoginNow();
+        // The top-level round trip sees Network's session even where third-party cookies are blocked (phones), but it
+        // costs a redirect. Take it when there is a reason to think this person has one: this site signed them in
+        // before ('account'), or they came here from another OpenVibe site (the owner, 11-08: signed in to the network,
+        // opened openvibe.link from the menu, saw Sign In). A first visit from a search engine keeps the quiet iframe
+        // check and FedCM instead, and Sign in is one tap.
+        if (ssoHint() === 'account' || fromOpenVibe()) return silentLoginNow();
         checkNetworkSession().then((state) => {
             if (state && state.signedIn) return silentLoginNow();
-            // No answer or "not signed in" — either a guest, or a browser that keeps the network's
-            // cookie away from iframes. FedCM asks the browser itself; the network's login status
-            // makes it a no-op for guests, a native chip (then silent re-auth) for signed-in users.
             if (_config.fedcm === false) return;
             loadSsoClient().then(async (sso) => {
                 if (!sso || !sso.fedcmAvailable()) return;
@@ -1769,6 +1772,13 @@
             });
         });
         return false;
+    }
+    /** This page was opened from another OpenVibe site (its referrer's host is first-party, and not this one). */
+    function fromOpenVibe() {
+        try {
+            const r = new URL(document.referrer);
+            return r.protocol === 'https:' && r.hostname !== location.hostname && /(^|\.)(openvibe\.[a-z]+|open\.shoes|openre\.stream)$/.test(r.hostname);
+        } catch { return false; }
     }
 
     /** Ask the network (hidden iframe + postMessage) whether this browser is signed in there. */
