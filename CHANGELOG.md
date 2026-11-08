@@ -7,7 +7,8 @@
   or writes to someone new by their OpenVibe name, and the title and link wait in that conversation's box, unsent,
   until they press Send. Every site's Share button gets it with no change of its own: a party invite, a video, a
   paste or a post goes to a friend on OpenVibe in two taps.
-- `OpenVibeDock.share({ text, title })` (dock.js) is the same move for any page: Chats opens on Send to…; Cancel
+- `OpenVibeDock.share({ text, title })` (dock.js; Send to… itself is `dock-share.js`, a sibling loaded the first time
+  something is sent, so the Dock on every signed-in page grows by 0.3 KB) is the same move for any page: Chats opens on Send to…; Cancel
   goes back to the list. A name nobody has says so (and the nearest name it found). Starting a conversation by name
   reads OpenVibe.Chat's `/api/dm/users/search` and `POST /api/dm/conversations` with the person's own token.
 

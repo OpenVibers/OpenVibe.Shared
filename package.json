@@ -50,6 +50,7 @@
     "./presence": "./presence.js",
     "./dock-vibe": "./dock-vibe.js",
     "./dock-timer": "./dock-timer.js",
+    "./dock-share": "./dock-share.js",
     "./dock-agent": "./dock-agent.js",
     "./dock-timeline": "./dock-timeline.js",
     "./notification-ui": "./notification-ui.js",

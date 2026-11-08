@@ -4,8 +4,7 @@
 // navbar.js loads this file from beside itself for a signed-in person, after the bell, and mounts it:
 //   OpenVibeDock.mount({ token: () => jwt, apiBase, sibling })   the pill; mount(null) takes it away (signed out)
 //   OpenVibeDock.open({ tab }) · close() · isOpen()
-//   OpenVibeDock.share({ text, title })   (4.144.0) send something from this page: Chats opens on "Send to…", the
-//     person picks a conversation or a name, and the message waits in the box, unsent (the share sheet's OpenVibe Chat)
+//   OpenVibeDock.share({ text, title }) · canSend()   Send to… (4.144.0, dock-share.js): the text waits in a box, unsent
 //
 // The pill (the mark, a word and a dot) shows only while an agent works, one needs you, or the person pinned it, in the
 // corner the Dock sits in. It paints at once from this site's copy (localStorage ov-dock), then from the Network, and
@@ -101,7 +100,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '49938c0551cc', 'dock-timer.js': 'f5d9fee28824' };
+    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '49938c0551cc', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -248,19 +247,6 @@
             .ovdk-err { margin: 0 14px; font-size: 12.5px; color: color-mix(in srgb, var(--live-red, #e5484d) 60%, var(--text-primary, #ececf1)); }
             .ovdk-err[hidden] { display: none; }
             .ovdk-none b { display: block; margin-bottom: 4px; font-size: 15px; color: var(--text-primary, #ececf1); }
-            .ovdk-share { flex: none; display: grid; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--border, rgba(255,255,255,.08)); background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); }
-            .ovdk-share-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-            .ovdk-share-h b { font-size: 14px; color: var(--text-primary, #ececf1); }
-            .ovdk-share-x { min-height: 32px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-            .ovdk-share-x:hover { color: var(--text-primary, #ececf1); }
-            .ovdk-share-what { margin: 0; font-size: 13px; color: var(--text-secondary, #b6b6c0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-            .ovdk-to { display: flex; gap: 8px; }
-            .ovdk-to input { flex: 1; min-width: 0; box-sizing: border-box; min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border-light, var(--border, rgba(255,255,255,.14))); background: var(--bg-primary, #12141b); color: var(--text-primary, #ececf1); font: inherit; font-size: 14px; }
-            .ovdk-to input:focus { outline: none; border-color: var(--accent, #3b82f6); }
-            .ovdk-to-go { flex: none; min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }
-            .ovdk-to-go:disabled { opacity: .55; cursor: default; }
-            .ovdk-share .ovdk-err { margin: 0; }
-            .ovdk-ready { flex: none; margin: 6px 14px 0; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); }
             @media (max-width: 640px) {
                 .ovdk, .ovdk[data-corner] { left: 0; right: 0; top: auto; bottom: 0; width: auto !important; height: min(86vh, 720px) !important; height: min(86dvh, 720px) !important; max-width: none; max-height: none;
                     border-radius: 24px 24px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 0 0 100vmax rgba(0,0,0,.5), 0 -12px 40px rgba(0,0,0,.35); transform-origin: 50% 100%; }
@@ -564,10 +550,12 @@
         chats.open = null;
         const panel = chats.panel; if (!panel) return;
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
+        const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try { chats.list = (await chatCall('/api/dm/conversations')).conversations || []; } catch (e) { panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
+        if (sharing) await sharing;
         if (chats.open || tab !== 'chats') return;
         panel.textContent = '';
-        if (chats.draft && canWriteChat()) panel.append(shareBar());
+        if (chats.draft && canWriteChat() && root.OpenVibeDockShare) panel.append(root.OpenVibeDockShare.bar({ draft: chats.draft, h, chatCall, host: el, cancel: () => { chats.draft = null; chatList(); }, open: (id) => { chats.list = null; return openChat(String(id), true); } }));
         const scroll = h('div', 'ovdk-scroll');
         if (!chats.list.length) {
             const none = h('div', 'ovdk-none');
@@ -608,7 +596,6 @@
         clearTimeout(chats.timer);
         const panel = chats.panel; if (!panel) return;
         chats.open = String(id); chats.msgs = []; chats.last = 0;
-        // Something sent from the page (share()): it goes in this conversation's box, and waits for Send.
         const draft = chats.draft && canWriteChat() ? chats.draft.text : '';
         chats.draft = null;
         if (remember) save({ chat: chats.open });
@@ -633,14 +620,7 @@
             panel.append(form);
             const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
             box.addEventListener('input', fit);
-            if (draft) {
-                box.value = draft;
-                const ready = h('p', 'ovdk-ready', 'Ready to send: change it if you like, then press Send.');
-                panel.insertBefore(ready, form);
-                box.addEventListener('input', () => ready.remove(), { once: true });
-                form.addEventListener('submit', () => ready.remove(), { once: true });
-                setTimeout(fit, 0);
-            }
+            if (draft && root.OpenVibeDockShare) root.OpenVibeDockShare.ready({ draft, h, panel, form, box, fit });
             box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -663,51 +643,6 @@
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
         if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
-    }
-    /**
-     * Send something from this page (share()): pick one of your conversations below, or write to someone new by
-     * their OpenVibe name. Nothing is sent until the person presses Send in the conversation.
-     */
-    function shareBar() {
-        const d = chats.draft;
-        const bar = h('div', 'ovdk-share');
-        const top = h('div', 'ovdk-share-h');
-        const cancel = h('button', 'ovdk-share-x', 'Cancel'); cancel.type = 'button';
-        cancel.addEventListener('click', () => { chats.draft = null; chatList(); });
-        top.append(h('b', '', 'Send to…'), cancel);
-        const what = h('p', 'ovdk-share-what', d.title || d.text); what.title = d.text;
-        const to = h('form', 'ovdk-to');
-        const name = h('input'); name.type = 'text'; name.maxLength = 40; name.autocomplete = 'off'; name.spellcheck = false;
-        name.placeholder = 'Someone new: their OpenVibe name'; name.setAttribute('aria-label', 'Their OpenVibe name');
-        const next = h('button', 'ovdk-to-go', 'Next'); next.type = 'submit';
-        const err = h('p', 'ovdk-err'); err.hidden = true;
-        to.append(name, next);
-        to.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const want = name.value.trim().replace(/^@/, '');
-            if (want.length < 2 || chats.busy) return;
-            chats.busy = true; next.disabled = true; err.hidden = true;
-            try {
-                const found = (await chatCall(`/api/dm/users/search?q=${encodeURIComponent(want)}`)).users || [];
-                const exact = found.find((u) => String(u.username || '').toLowerCase() === want.toLowerCase());
-                if (!exact) {
-                    err.textContent = found.length ? `Nobody is called @${want}. Did you mean @${found[0].username}?` : `Nobody on OpenVibe is called @${want}.`;
-                    err.hidden = false;
-                    return;
-                }
-                const made = await chatCall('/api/dm/conversations', { method: 'POST', body: JSON.stringify({ user_ids: [exact.id] }) });
-                const id = (made.conversation && made.conversation.id) || made.id;
-                if (!id) throw new Error('no conversation');
-                chats.list = null;
-                chats.busy = false;
-                await openChat(String(id), true);
-            } catch (x) {
-                err.textContent = x.status === 429 ? 'Too many new conversations just now. Try again in a little while.' : x.status === 403 ? (x.message || 'You can’t start a conversation with them.') : 'That did not work. Try again.';
-                err.hidden = false;
-            } finally { chats.busy = false; next.disabled = false; }
-        });
-        bar.append(top, what, to, err);
-        return bar;
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {
@@ -904,13 +839,9 @@
     // Ask your agent (4.135.0): Vibe opens with the question in its box, unsent.
     function ask({ text = '' } = {}, n = 0) { if (!n) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!(el && !el.hidden); }
-    /** Send something from this page (4.144.0): Chats opens on "Send to…"; nothing is sent until the person sends it. */
     function share({ text = '', title = '' } = {}) {
         const t = String(text || '').trim().slice(0, 4000);
-        if (!t) return;
-        chats.draft = { text: t, title: String(title || '').replace(/\s+/g, ' ').trim().slice(0, 140) };
-        chats.open = null;
-        open({ tab: 'chats' });   // setTab fills the panel: the list, with the share bar on top
+        if (t) { chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null; open({ tab: 'chats' }); }
     }
     function open(opts = {}) {
         o = { ...o, ...opts };
@@ -961,6 +892,5 @@
         if (isOpen()) layout();
     }
 
-    // canSend(): whether this Dock may send a message (a Dock-only token reads chats and never sends).
     root.OpenVibeDock = { mount, open, close, isOpen, update, ask, share, canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);
