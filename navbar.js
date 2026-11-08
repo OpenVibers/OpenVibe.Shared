@@ -1724,7 +1724,29 @@
             if (Date.now() - last < 10 * 60 * 1000) return false;
             sessionStorage.setItem('ov_silent_sso_at', String(Date.now()));
         } catch { return false; }
-        return silentLoginNow();
+        // The top-level round trip sees Network's session even where third-party cookies are blocked (phones), but it
+        // costs a redirect. Take it when there is a reason to think this person has one: this site signed them in
+        // before ('account'), or they came here from another OpenVibe site (the owner, 11-08: signed in to the network,
+        // opened openvibe.link from the menu, saw Sign In). A first visit from a search engine keeps the quiet iframe
+        // check and FedCM instead, and Sign in is one tap.
+        if (ssoHint() === 'account' || fromOpenVibe()) return silentLoginNow();
+        checkNetworkSession().then((state) => {
+            if (state && state.signedIn) return silentLoginNow();
+            if (_config.fedcm === false) return;
+            loadSsoClient().then(async (sso) => {
+                if (!sso || !sso.fedcmAvailable()) return;
+                const r = await sso.fedcm({ apiBase: _config.apiBase, fedcmLogin: _config.fedcmLogin || undefined, mediation: _config.fedcm === 'silent' ? 'silent' : 'optional' });
+                if (r && r.ok) { try { sessionStorage.removeItem('ov_silent_sso_at'); } catch { /* */ } location.reload(); }
+            });
+        });
+        return false;
+    }
+    /** This page was opened from another OpenVibe site (its referrer's host is first-party, and not this one). */
+    function fromOpenVibe() {
+        try {
+            const r = new URL(document.referrer);
+            return r.protocol === 'https:' && r.hostname !== location.hostname && /(^|\.)(openvibe\.[a-z]+|open\.shoes|openre\.stream)$/.test(r.hostname);
+        } catch { return false; }
     }
 
     /** Ask the network (hidden iframe + postMessage) whether this browser is signed in there. */
