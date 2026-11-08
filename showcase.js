@@ -458,8 +458,9 @@ html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow
 .sc-hero.sc-has-vis .sc-hero-vis{position:absolute;z-index:-1;top:-26px;right:0;width:180px;opacity:.36;pointer-events:none}
 .sc-hero.sc-has-vis .sc-aura .sc-vis-mark{display:none!important}
 .sc-hero.sc-has-orbit{display:flex;flex-direction:column}
-.sc-hero.sc-has-orbit .sc-hero-vis{order:-1;position:static;width:auto;opacity:1;pointer-events:auto;margin:0 0 6px}
-.sc-hero.sc-has-orbit .sc-vis{width:min(70vw,250px)}
+.sc-hero.sc-has-orbit .sc-hero-vis{order:1;position:static;width:auto;opacity:1;pointer-events:auto;margin:22px 0 0}
+.sc-hero.sc-has-orbit .sc-vis{width:min(82vw,300px)}
+.sc-hero.sc-has-orbit .sc-orb-core small{max-width:8em;font-size:10px;line-height:1.2}
 .sc-hero.sc-has-orbit .sc-orb-core .sc-vis-mark{width:50px!important;height:50px!important}
 .sc-orb-node{width:32px;height:32px;margin:-16px}.sc-orb-node.is-big{width:44px;height:44px;margin:-22px}.sc-orb-name{font-size:10.5px}
 }
