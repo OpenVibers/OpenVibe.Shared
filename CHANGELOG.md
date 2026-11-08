@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.153.0 — 2026-11-08
+
+- **Signed in to the network, signed in here — on phones too** (the owner: "Why am I not auto signed into some domains
+  even though I signed into the network?"; the audit: 3 of 56 sites signed a person in with third-party cookies
+  blocked, 46 with them allowed). The navbar's quiet check asked Network from a hidden frame, which a browser that
+  blocks third-party cookies never lets see Network's session. Now, when there is a reason to think the person has a
+  session (this site signed them in before, or they arrived from another OpenVibe site, by its referrer), the navbar
+  takes the top-level round trip (`/auth/login?silent=1` → Network `prompt=none` → back), where Network's session is
+  first-party; a guest comes back with `sso=none` and is not asked again. A first visit from anywhere else keeps the
+  quiet check and FedCM, so a newcomer from a search engine gets no redirect. At most once per tab per ten minutes,
+  never for bots, never after a sign-out.
+- **overlay.js:** a page that already plays what a carried card would (Live's channel page for its own embed) turns
+  it away with `window.OVOverlayHere = (card) => true`; cards are restored after the page's own start-up.
+- Tests: `test/navbar-auth.test.js` (referrer from OpenVibe, Shoes, a search engine, typed in, the same site, a
+  look-alike host), `test/overlay-chrome.test.js`.
+
 ## 4.152.0 — 2026-11-08
 
 - **Floating cards that follow you across OpenVibe** (`overlay.js`; the owner: a mini player you move and resize like
