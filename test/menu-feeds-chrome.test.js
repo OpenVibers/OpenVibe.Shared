@@ -63,6 +63,10 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await until(p, `!!localStorage.getItem('ov_frame_v2')`);
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`), 'the menu opened');
+        // 4.149.0 (the owner: tabs at the top, a Feed tab, remember the last one): this site's tab first, then Feed and You.
+        assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-starttabs .ovs-tab')].map((t) => t.getAttribute('data-tab') + ':' + t.getAttribute('aria-selected'))`), ['here:true', 'feed:false', 'you:false'], 'three tabs, this site first');
+        assert.deepStrictEqual(await p.evaluate(SHOWN), [], 'the feeds are the Feed tab\'s, not this site\'s');
+        await p.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click(), true`);
         await wait(150);
         assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds'], 'by default, the Network\'s first two');
         // 4.139.0: a row with a picture has no site icon beside it; in its group a row without one carries the icon in a
@@ -70,7 +74,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         const looks = await p.evaluate(`[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="net:"]')].map((g) => [...document.querySelectorAll('.ovs-list li.ovs-item')].filter((li) => li.getAttribute('data-sec') === g.getAttribute('data-sec')).map((li) => { const a = li.firstElementChild; const first = a && a.firstElementChild; return first ? (first.tagName === 'IMG' ? 'img' : first.classList.contains('ovs-thumb--ico') ? 'tile' : first.classList.contains('ovs-ic') ? 'icon' : first.className) : '?'; }))`);
         assert.deepStrictEqual(looks, [['img', 'img', 'tile'], ['icon', 'icon']], 'pictures replace icons; titles line up');
         const fold = await p.evaluate(`(document.querySelector('[data-ovs-fold="feeds"]') || {}).textContent`);
-        assert.strictEqual(fold, 'Choose your feeds (4)', 'every card with entries can be chosen; the empty one is not offered');
+        assert.strictEqual(fold, 'Choose your feeds (2 of 4)', 'every card with entries can be chosen; the empty one is not offered');
 
         await p.evaluate(`document.querySelector('[data-ovs-fold="feeds"]').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs-feeds')`), 'the chooser opens in the menu');
@@ -104,6 +108,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`));
         await wait(150);
+        assert.strictEqual(await p.evaluate(`document.querySelector('.ovs-starttabs [aria-selected="true"]').getAttribute('data-tab')`), 'feed', 'it reopens on the tab last chosen');
         assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories'], 'your feeds, in your order');
         // Signed in on a new device: the person's saved feeds come from Network, and a change is saved back.
         const ctx2 = await browser.newContext();
@@ -112,6 +117,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await until(q, `!!localStorage.getItem('ov_frame_v2')`);
         await q.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
         assert.ok(await until(q, `!!document.querySelector('.ovs.is-open .ovs-group')`), 'the menu opened (signed in)');
+        await q.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click(), true`);
         assert.ok(await until(q, `JSON.stringify(${SHOWN}) === JSON.stringify(['Top stories', 'Today'])`), 'the feeds saved on Network show on a new device');
         await q.evaluate(`document.querySelector('[data-ovs-fold="feeds"]').click(), true`);
         await until(q, `!!document.querySelector('.ovs-feeds')`);
