@@ -7,7 +7,9 @@ name: security
 #     security:
 #       uses: OpenVibers/OpenVibe.Shared/.github/workflows/security.yml@<sha>
 #
-# secrets       gitleaks (pinned binary, checksum-verified). A push scans the whole git history,
+# secrets       gitleaks (pinned binary, checksum-verified, cached by version and checksum). When the
+#               GitHub release asset is unavailable, the same release runs from its pinned container
+#               image, so the scan never silently passes. A push scans the whole git history,
 #               a pull request scans only its own commits. Findings are redacted in the log: the
 #               repositories and their CI logs are public. Proven false positives (test fixtures,
 #               doc placeholders) go in a narrow [[allowlists]] entry in the repo's .gitleaks.toml
@@ -42,17 +44,60 @@ jobs:
     env:
       GITLEAKS_VERSION: 8.30.1
       GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb   # gitleaks_8.30.1_linux_x64.tar.gz
+      GITLEAKS_IMAGE: ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: cache gitleaks
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.temp }}/gitleaks-bin/gitleaks
+            ${{ runner.temp }}/gitleaks-bin/gitleaks.sha256
+          key: gitleaks-${{ env.GITLEAKS_VERSION }}-${{ env.GITLEAKS_SHA256 }}-${{ runner.os }}-${{ runner.arch }}
       - name: install gitleaks
         run: |
-          cd "$RUNNER_TEMP"
-          curl -fsSLo gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
-          tar xzf gitleaks.tar.gz gitleaks
-          ./gitleaks version
+          set -euo pipefail
+          bin_dir="$RUNNER_TEMP/gitleaks-bin"
+          bin="$bin_dir/gitleaks"
+          mkdir -p "$bin_dir"
+          # A cached binary is trusted only while the checksum written when it was extracted still matches.
+          if [ -f "$bin" ] && [ -f "$bin_dir/gitleaks.sha256" ] && (cd "$bin_dir" && sha256sum -c --status gitleaks.sha256); then
+            chmod +x "$bin"
+            echo "gitleaks ${GITLEAKS_VERSION}: restored from cache"
+          else
+            rm -f "$bin" "$bin_dir/gitleaks.sha256"
+            if curl --fail --location --retry 4 --retry-delay 8 --retry-all-errors --connect-timeout 20 \
+                 --output "$RUNNER_TEMP/gitleaks.tar.gz" \
+                 "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+               && echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum -c - \
+               && tar xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$bin_dir" gitleaks \
+               && (cd "$bin_dir" && sha256sum gitleaks > gitleaks.sha256) \
+               && "$bin" version | grep -q "$GITLEAKS_VERSION"; then
+              echo "gitleaks ${GITLEAKS_VERSION}: downloaded and checksum-verified"
+            else
+              rm -f "$bin" "$bin_dir/gitleaks.sha256"
+              echo "::warning::the gitleaks release asset is unavailable; scanning with the pinned container image"
+            fi
+          fi
+          # The scan step calls one command either way: the verified binary, or the same release as a
+          # container. The workspace, git dir and RUNNER_TEMP keep their host paths so every argument
+          # (--report-path included) resolves inside the container too.
+          cat > "$RUNNER_TEMP/gitleaks" <<WRAPPER
+          #!/usr/bin/env bash
+          set -euo pipefail
+          if [ -x "$bin" ]; then exec "$bin" "\$@"; fi
+          mounts=(-v "\$PWD:\$PWD" -v "\$RUNNER_TEMP:\$RUNNER_TEMP")
+          if [ -f "\$PWD/.git" ]; then
+            gitdir=\$(git -C "\$PWD" rev-parse --absolute-git-dir)
+            common=\$(git -C "\$PWD" rev-parse --path-format=absolute --git-common-dir)
+            mounts+=(-v "\$gitdir:\$gitdir" -v "\$common:\$common")
+          fi
+          exec docker run --rm --user "\$(id -u):\$(id -g)" "\${mounts[@]}" -w "\$PWD" "$GITLEAKS_IMAGE" "\$@"
+          WRAPPER
+          chmod +x "$RUNNER_TEMP/gitleaks"
+          "$RUNNER_TEMP/gitleaks" version
       - name: scan
         env:
           EVENT: ${{ github.event_name }}

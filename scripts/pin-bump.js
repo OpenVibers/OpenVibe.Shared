@@ -3,8 +3,11 @@
 /**
  * Pin bump (plan T1: "a bot bumps pins on each Contracts release"): after a library release, open one pull request
  * per OpenVibers repository whose package.json files pin that library below the new tag. Each PR moves every pin of
- * the library in the repository to the tag, refreshes the lockfile that goes with it (npm or pnpm), and updates the
- * version the repository's STATUS.json and README.md name for the library. Nothing is tested here: each PR's CI runs
+ * the library in the repository to the tag, refreshes the lockfile that goes with it (npm or pnpm), updates the
+ * version the repository's STATUS.json and README.md name for the library, and moves the repository's
+ * security.yml@<sha> pin of the reusable security workflow to the newest OpenVibe.Shared commit that changed
+ * .github/workflows (also opened alone, on a ci-shared-workflows-<sha> branch, when only that pin is stale).
+ * Nothing is tested here: each PR's CI runs
  * the full suite and pin drift (scripts/pin-drift.js), and the PR is merged only when it is green.
  *
  *   node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply] [--workdir DIR]
@@ -26,6 +29,10 @@ const cp = require('child_process');
 const LIBS = { 'openvibe-contracts': 'OpenVibe.Contracts', 'openvibe-shared': 'OpenVibe.Shared', 'openvibe-sdk': 'OpenVibe.SDK', 'openvibe-publishing': 'OpenVibe.Publishing' };
 const ORG = 'OpenVibers';
 const AUTHOR = ['-c', 'user.name=OpenVibers', '-c', 'user.email=contact@openvibe.network'];
+// Every repository pins the reusable security workflow by commit (the workflow cannot pin itself by release).
+const SHARED = 'OpenVibe.Shared';
+const SECURITY_REF_RE = new RegExp(`OpenVibers/${SHARED.replace('.', '\\.')}/\\.github/workflows/security\\.yml@([0-9a-f]{40})`, 'g');
+const securityRef = (sha) => `OpenVibers/${SHARED}/.github/workflows/security.yml@${sha}`;
 const parse = (t) => { const m = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(t); return m ? m.slice(1).map(Number) : null; };
 const cmp = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 
@@ -64,6 +71,37 @@ function stalePins(dir, library, tag) {
         if (below.length) out.push({ file: f, from: [...new Set(below)] });
     }
     return out;
+}
+
+/**
+ * The newest OpenVibe.Shared main commit that changed .github/workflows. The reusable security workflow is pinned
+ * by commit, not by release, so this is the commit every repository's security.yml@<sha> should name.
+ */
+function latestWorkflowSha() {
+    const sha = run('gh', ['api', `repos/${ORG}/${SHARED}/commits?path=.github/workflows&sha=main&per_page=1`, '--jq', '.[0].sha']);
+    if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error(`could not resolve the newest ${SHARED} workflow commit (got "${sha}")`);
+    return sha;
+}
+
+/** Tracked workflow files that pin the Shared security workflow at a commit other than `sha`, with the commits they name. */
+function staleSecurityPins(dir, sha) {
+    const files = run('git', ['-C', dir, 'ls-files', '.github/workflows']).split('\n').filter(Boolean);
+    const out = [];
+    for (const f of files) {
+        const found = [...fs.readFileSync(path.join(dir, f), 'utf8').matchAll(SECURITY_REF_RE)].map((m) => m[1]);
+        const stale = [...new Set(found)].filter((v) => v !== sha);
+        if (stale.length) out.push({ file: f, from: stale });
+    }
+    return out;
+}
+
+/** Move every tracked pin of the Shared security workflow to `sha`; the rewritten files are returned so they join the commit. */
+function updateSecurityPins(dir, sha) {
+    return staleSecurityPins(dir, sha).map(({ file }) => {
+        const p = path.join(dir, file);
+        fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(SECURITY_REF_RE, securityRef(sha)));
+        return file;
+    });
 }
 
 /** Refresh the lockfile that belongs to a bumped package.json: pnpm at the root if the repository uses it, else npm beside it. */
@@ -116,6 +154,12 @@ function main() {
     if (!tags.split('\n').some((l) => l.endsWith(`refs/tags/${tag}`))) throw new Error(`${tag} is not published in ${ORG}/${LIBS[library]}`);
     const work = opts.workdir || fs.mkdtempSync(path.join(os.tmpdir(), 'pin-bump-'));
     const branch = `pin-bump/${library}-${tag}`;
+    let sharedSha = null;
+    try {
+        sharedSha = latestWorkflowSha();
+    } catch (err) {
+        console.error(`pin-bump: ${err.message}; the Shared security workflow pins are left alone`);
+    }
     let failed = 0;
     const summary = [];
     for (const repo of repositories(opts.repos)) {
@@ -125,10 +169,14 @@ function main() {
             // gh clones with the same authentication it opens the PRs with, so private repositories work too.
             run('gh', ['repo', 'clone', `${ORG}/${repo}`, dir, '--', '-q', '--depth', '1']);
             const stale = stalePins(dir, library, tag);
-            if (!stale.length) { summary.push(`${repo}: current`); continue; }
+            const staleSecurity = sharedSha ? staleSecurityPins(dir, sharedSha) : [];
+            if (!stale.length && !staleSecurity.length) { summary.push(`${repo}: current`); continue; }
+            // A repository with only a stale workflow pin gets its own small CI branch, so it never collides with a pin PR.
+            const target = stale.length ? branch : `ci-shared-workflows-${sharedSha.slice(0, 12)}`;
             if (opts.apply) {
-                const open = run('gh', ['pr', 'list', '-R', `${ORG}/${repo}`, '--head', branch, '--state', 'open', '--json', 'number']);
-                if (JSON.parse(open).length) { summary.push(`${repo}: an open PR from ${branch} already exists`); continue; }
+                const open = JSON.parse(run('gh', ['pr', 'list', '-R', `${ORG}/${repo}`, '--state', 'open', '--json', 'number,headRefName']));
+                const existing = open.find((p) => p.headRefName === target || (!stale.length && p.headRefName.startsWith('ci-shared-workflows-')));
+                if (existing) { summary.push(`${repo}: an open PR (#${existing.number}) already carries this`); continue; }
             }
             const changed = new Set();
             for (const { file } of stale) {
@@ -138,21 +186,25 @@ function main() {
                 const lock = refreshLock(dir, file);
                 if (lock) changed.add(lock);
             }
+            if (staleSecurity.length) updateSecurityPins(dir, sharedSha).forEach((f) => changed.add(f));
             const from = [...new Set(stale.flatMap((s) => s.from))].sort((a, b) => cmp(parse(a), parse(b)));
-            updateVersionLines(dir, library, from, tag).forEach((f) => changed.add(f));
-            const title = `${library} ${tag} (was ${from.join(', ')})`;
+            if (stale.length) updateVersionLines(dir, library, from, tag).forEach((f) => changed.add(f));
+            const title = stale.length
+                ? `${library} ${tag} (was ${from.join(', ')})`
+                : `CI: pin the OpenVibe.Shared security workflow at ${sharedSha.slice(0, 12)}`;
             if (!opts.apply) { summary.push(`${repo}: would open "${title}" changing ${[...changed].join(', ')}`); continue; }
-            run('git', ['-C', dir, 'checkout', '-q', '-b', branch]);
+            run('git', ['-C', dir, 'checkout', '-q', '-b', target]);
             run('git', ['-C', dir, 'add', '--', ...changed]);
             run('git', ['-C', dir, ...AUTHOR, 'commit', '-q', '-m', `${title}\n\nOpened by scripts/pin-bump.js in OpenVibers/OpenVibe.Shared after the ${tag} release.`]);
-            run('git', ['-C', dir, 'push', '-q', 'origin', branch]);
+            run('git', ['-C', dir, 'push', '-q', 'origin', target]);
             const body = [
-                `Moves every \`${library}\` pin in this repository to ${tag} (from ${from.join(', ')}), refreshes the lockfile and the`,
-                'version lines in STATUS.json / README.md. CI runs the full suite and pin drift; merge when it is green.',
+                ...(stale.length ? [`Moves every \`${library}\` pin in this repository to ${tag} (from ${from.join(', ')}), refreshes the lockfile and the`, 'version lines in STATUS.json / README.md.'] : []),
+                ...(staleSecurity.length ? [`Moves the OpenVibe.Shared security workflow pin to ${sharedSha}, the newest Shared main commit that changed \`.github/workflows\`.`] : []),
+                'CI runs the full suite and pin drift; merge when it is green.',
                 '', 'Files: ' + [...changed].map((f) => `\`${f}\``).join(', '),
                 '', `Opened by \`scripts/pin-bump.js\` (OpenVibers/OpenVibe.Shared) after the ${LIBS[library]} ${tag} release.`,
             ].join('\n');
-            const url = run('gh', ['pr', 'create', '-R', `${ORG}/${repo}`, '--head', branch, '--title', title, '--body', body]);
+            const url = run('gh', ['pr', 'create', '-R', `${ORG}/${repo}`, '--head', target, '--title', title, '--body', body]);
             summary.push(`${repo}: ${url}`);
         } catch (err) {
             failed++;
@@ -169,4 +221,4 @@ if (require.main === module) {
     try { main(); } catch (err) { console.error(`pin-bump: ${err.message}`); process.exitCode = 1; }
 }
 
-module.exports = { stalePins, updateVersionLines, pinUrl, parseArgs };
+module.exports = { stalePins, staleSecurityPins, updateSecurityPins, updateVersionLines, pinUrl, parseArgs };
