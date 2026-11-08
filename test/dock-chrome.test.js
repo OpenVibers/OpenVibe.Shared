@@ -371,7 +371,7 @@ async function drag(p, from, to) {
             assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda-line').textContent"), 'Fix the flaky upload test', 'the task, one line');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Live · 2 watching · worked 12 min');
-            assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovda-acts button')].map((b) => b.dataset.act)"), ['pause', 'curtain', 'mute', 'end'], 'the owner\'s four controls (S5)');
+            assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovda-acts button')].map((b) => b.dataset.act)"), ['pause', 'curtain', 'mute', 'end', 'float'], 'the owner\'s four controls (S5), and Float while the screen plays (4.154.0)');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), true, 'the view is shown above the list');
             // Curtain now: Live is asked, and the line says so.
             await p.evaluate("document.querySelector('.ovda-acts button[data-act=curtain]').click()");
