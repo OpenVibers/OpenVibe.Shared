@@ -206,6 +206,8 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('window.__clip'), 'https://video.test/v/1', 'Copy copies the whole link');
         assert.ok(await p.evaluate("window.__sent.includes('copy https://video.test/v/1')"), 'and says so (ov-share:sent)');
         assert.strictEqual(await p.evaluate(`${q('copy')}.textContent`), 'Copied');
+        // No Dock on this page (signed out): no OpenVibe Chat tile.
+        assert.strictEqual(await p.evaluate(`!!${q('to-ovchat')}`), false, 'no OpenVibe Chat without the Dock');
         const x = await p.evaluate(`${q('to-x')}.getAttribute('href')`);
         assert.strictEqual(x, 'https://x.com/intent/post?text=A%20robot%20%26%20a%20wave&url=https%3A%2F%2Fvideo.test%2Fv%2F1', 'X gets the title and the link, encoded');
         assert.strictEqual(await p.evaluate(`${q('to-x')}.getAttribute('rel')`), 'noopener noreferrer');
@@ -224,6 +226,18 @@ const server = http.createServer((req, res) => {
         assert.match(await p.evaluate("document.querySelector('dialog.ov-share .ov-share-panel .ov-share-addmsg').textContent"), /address of your server/, 'Mastodon asks for a real server address');
         await p.evaluate(`${q('close')}.click()`);
         await wait(320);
+        // Signed in (the Dock is on the page): OpenVibe Chat comes first; it closes the sheet and hands the Dock the title
+        // and the link, and nothing is sent from here.
+        await p.evaluate("window.__docked = []; window.OpenVibeDock = { share: (o) => { window.__docked.push(o); }, isOpen: () => false }");
+        await p.evaluate("document.getElementById('send').click()");
+        await wait(300);
+        assert.strictEqual(await p.evaluate("document.querySelector('dialog.ov-share .ov-share-grid .ov-share-tile').getAttribute('data-k')"), 'to-ovchat', 'OpenVibe Chat is the first place');
+        assert.strictEqual(await p.evaluate(`${q('to-ovchat')}.textContent`), 'OpenVibe Chat');
+        await p.evaluate(`${q('to-ovchat')}.click()`);
+        await wait(320);
+        assert.deepStrictEqual(await p.evaluate('window.__docked'), [{ text: 'A robot & a wave https://video.test/v/1', title: 'A robot & a wave' }], 'the Dock gets the title and the link');
+        assert.strictEqual(await p.evaluate("!!document.querySelector('dialog.ov-share')"), false, 'the sheet closes');
+        await p.evaluate("delete window.OpenVibeDock");
         // Somebody else's paste: they can send it; who can open it is not theirs to see, and nothing says it failed.
         await p.evaluate("document.getElementById('theirs').click()");
         await wait(300);

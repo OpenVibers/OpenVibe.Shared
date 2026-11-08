@@ -271,6 +271,7 @@
         qr: '<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/>',
         embed: '<path d="m8.5 8-4.5 4 4.5 4M15.5 8l4.5 4-4.5 4M13.5 5.5l-3 13"/>',
         more: '<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>',
+        ovchat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
     };
     function tileIcon(id, slug) {
         const s = el('span', `ov-share-tileic is-${id}`, { 'aria-hidden': 'true' });
@@ -350,7 +351,16 @@
             if (id === 'mastodon') return [id, label, slug, null, () => { st.panel = st.panel === 'mastodon' ? '' : 'mastodon'; draw(st); }];
             return [id, label, slug, fn(href, st.o.title || '', st.o), null];
         });
-        const ordered = [...tiles.slice(0, SHOWN - extra.length), ...extra, ...tiles.slice(SHOWN - extra.length)];
+        // OpenVibe Chat (4.144.0): to someone on OpenVibe, first, for a signed-in person (the Dock is theirs). The sheet
+        // closes and the Dock opens on "Send to…"; nothing is sent until they press Send in the conversation.
+        const dock = root.OpenVibeDock && typeof root.OpenVibeDock.share === 'function' ? root.OpenVibeDock : null;
+        const first = dock ? [['ovchat', 'OpenVibe Chat', null, null, () => {
+            sent(st, 'ovchat');
+            close(st, true);
+            dock.share({ text: o.title ? `${o.title} ${href}` : href, title: o.title || '' });
+        }]] : [];
+        const room = SHOWN - extra.length - first.length;
+        const ordered = [...first, ...tiles.slice(0, room), ...extra, ...tiles.slice(room)];
         const grid = el('div', 'ov-share-grid', { role: 'group', 'aria-label': 'Send it to' });
         const show = st.allTargets ? ordered : ordered.slice(0, SHOWN);
         show.forEach(([id, label, slug, h, fn], i) => grid.appendChild(tile(st, id, label, slug, h, fn, i)));

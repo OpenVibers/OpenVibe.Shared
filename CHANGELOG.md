@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.144.0 — 2026-11-08
+
+- **Send it on OpenVibe.** The share sheet (ov-share.js) offers **OpenVibe Chat** first to a signed-in person (the Dock
+  is on the page): the sheet closes and the Dock opens on **Send to…**. The person picks one of their conversations,
+  or writes to someone new by their OpenVibe name, and the title and link wait in that conversation's box, unsent,
+  until they press Send. Every site's Share button gets it with no change of its own: a party invite, a video, a
+  paste or a post goes to a friend on OpenVibe in two taps.
+- `OpenVibeDock.share({ text, title })` (dock.js) is the same move for any page: Chats opens on Send to…; Cancel
+  goes back to the list. A name nobody has says so (and the nearest name it found). Starting a conversation by name
+  reads OpenVibe.Chat's `/api/dm/users/search` and `POST /api/dm/conversations` with the person's own token.
+
 ## 4.143.0 — 2026-11-07
 
 - Add `ov-sync.js` (seven domains plan B4): `OVSync.attach(mediaEl, { room, socket })` follows a `common.sync-clock@1` timeline over Chat's room socket. It measures the server clock with five `time` samples (best round trip, refreshed every 60 s), computes the room's position from `position_ms + (serverNow - at_ms) * rate`, holds the element within ±80 ms (a 0.95–1.05 playback-rate nudge between 80 and 400 ms, a seek past 400 ms), pauses and plays with the room, and puts a non-holder's own seek, play, pause or rate change back with a short notice while a holder's change becomes a `sync`. No dependencies; served as `/shared/ov-sync.js` and imported as `openvibe-shared/ov-sync`.
