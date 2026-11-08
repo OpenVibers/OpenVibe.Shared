@@ -112,9 +112,18 @@
         return FALLBACK_SITES;
     }
     /** The site this page belongs to: the longest matching host (play.openvibe.network is Play, not Network). */
+    // The site this page is on: the longest matching address, and a site that lives under a path (openvibe.my/inventory)
+    // only on that path.
     function hereSite(list) {
-        const h = location.hostname.toLowerCase(); let best = null, len = 0;
-        for (const s of list) { const sh = hostOf(s.url); if (sh && (h === sh || h.endsWith(`.${sh}`)) && sh.length > len) { best = s; len = sh.length; } }
+        const h = location.hostname.toLowerCase(), at = location.pathname || '/'; let best = null, score = 0;
+        for (const s of list) {
+            let u; try { u = new URL(s.url); } catch { continue; }
+            const sh = u.hostname, sp = u.pathname.replace(/\/+$/, '');
+            if (!sh || !(h === sh || h.endsWith(`.${sh}`))) continue;
+            if (sp && at !== sp && !at.startsWith(`${sp}/`)) continue;
+            const n = sh.length * 1000 + sp.length + 1;
+            if (n > score) { best = s; score = n; }
+        }
         return best;
     }
     /** The person's own use of each site (their history's counts), for "your sites" and for ranking results. */
@@ -678,14 +687,27 @@
         if (typeof ctx.icons === 'function') { try { ctx.icons(listEl); } catch { /* the icons are optional */ } }
     }
 
-    // This site's short name for the field and the headings: the frame's name for this address ("Download"), not the page
-    // title ("OpenVibe.Download: a free 25 GB drive with share links" was cut off in the field and ran over two lines).
-    const shortName = (t) => String(t || '').split(/\s[·|–—-]\s|:\s/)[0].replace(/^OpenVibe\./, '').trim().slice(0, 28);
+    // This site's short name for the field, the first tab and the headings: a product name ("Download", "Space"), never a
+    // page title or a tagline ("OpenVibe.Download: a free 25 GB drive with share links" ran over two lines; on 11-08 the
+    // tab read "Websites that l…", openvibe.website's tagline). In order: the site's own short label, the network's name
+    // for this address (path-aware: openvibe.my/inventory is Inventory, openvibe.my itself is not), the "OpenVibe.X" in
+    // the title, the address (openvibe.website → Website, connect.openvibe.link → Connect), then a short title segment.
+    const SHORT_NAME = 18;
+    const shortName = (t) => String(t || '').split(/\s[·|–—-]\s|:\s/)[0].replace(/^OpenVibe\./, '').trim();
+    const brief = (t) => { const v = shortName(t); return v && v.length <= SHORT_NAME ? v : ''; };
+    const capital = (w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : '');
+    function addressName(host) {
+        const p = String(host || '').toLowerCase().replace(/^www\./, '').split('.');
+        if (p.length === 2 && p[0] === 'openvibe') return p[1] === 'ai' ? 'AI' : capital(p[1]);
+        if (p.length >= 3 && p[p.length - 2] === 'openvibe' && /^[a-z][a-z-]{1,17}$/.test(p[0])) return capital(p[0]);
+        return '';
+    }
     const here = () => {
-        if (ctx.scope && ctx.scope.label) return shortName(ctx.scope.label);
         const f = ctx.frame, list = f && Array.isArray(f.nav) ? f.nav.map((n) => ({ name: n.name, url: safeUrl(n.url) })) : [];
         const s = list.length ? hereSite(list) : null;
-        return (s && s.name) || shortName(document.title.split(/[·|–-]/).pop()) || location.hostname;
+        const titled = /OpenVibe\.([A-Za-z][A-Za-z0-9-]{0,17})\b/.exec(document.title || '');
+        return brief(ctx.scope && ctx.scope.label) || (s && brief(s.name)) || (titled && titled[1]) || addressName(location.hostname)
+            || brief(String(document.title || '').split(/\s[·|–—-]\s/).pop()) || location.hostname;
     };
     const siteItem = (s, all) => ({ title: s.name, meta: s.desc, url: s.url, site: s.icon || s.id, kind: 'site', here: all && s === hereSite(all) });
     function pagesOf(q) {
