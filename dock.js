@@ -311,6 +311,9 @@
         // chat) leaves its target detached, and must not read as outside.
         document.addEventListener('click', (e) => {
             if (!isOpen() || !phone()) return;
+            // The tap that opened the sheet (a page's button, the share sheet's OpenVibe Chat, Ask your agent) is still on
+            // its way up when the sheet opens: an event made before the sheet opened is never "a tap outside" (4.145.1).
+            if (e.timeStamp && e.timeStamp <= openedAt) return;
             const path = typeof e.composedPath === 'function' ? e.composedPath() : [e.target];
             if (path.includes(el) || (pill && path.includes(pill)) || (e.target && e.target.isConnected === false)) return;
             close();
@@ -687,7 +690,7 @@
     }
 
     // ── The pill ─────────────────────────────────────────────
-    let pill = null, readT = 0, bound = false;
+    let pill = null, readT = 0, bound = false, openedAt = 0;
     function store(v) {
         try { if (v === undefined) return JSON.parse(localStorage.getItem('ov-dock') || 'null'); localStorage.setItem('ov-dock', JSON.stringify(v)); } catch { /* */ }
         return null;
@@ -844,6 +847,7 @@
         if (t) { chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null; open({ tab: 'chats' }); }
     }
     function open(opts = {}) {
+        openedAt = typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
         o = { ...o, ...opts };
         if (opts.doc) doc = opts.doc;
         if (!el) build();
