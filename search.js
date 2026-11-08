@@ -62,9 +62,15 @@
         { name: 'Developer Tools', icon: 'code', url: 'https://dev.openvibe.tools/' },
         { name: 'Network Tools', icon: 'dns', url: 'https://net.openvibe.tools/' },
     ];
-    const TABS = [['you', 'Start'], ['sites', 'Sites'], ['tools', 'Tools'], ['here', 'Here']];
+    // The menu's three tabs (the owner, 11-08: "we should have tabs at the top … a feed tab … remember whichever tab the
+    // user last had open … the main tab should just show links that exist on that site, and under that the full list
+    // of sites"). The first is labelled with this site's own name.
+    const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
+    const TAB_KEY = 'ovs-tab';
+    const savedTab = () => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
+    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, v); } catch { /* private window */ } };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
-    let tab = 'you', mine = null, catalog = null, completion = '';
+    let tab = 'here', mine = null, catalog = null, completion = '';
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
     const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
@@ -188,6 +194,15 @@
   .ovs-x:active { background: var(--bg-active, rgba(255,255,255,.14)); color: var(--text-primary, #fff); }
 }
 .ovs-tabs { display: flex; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+/* The menu's three tabs (4.149.0): one segmented row under the field; the chosen one in the accent. */
+.ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
+.ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
+.ovs-starttabs .ovs-tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-tabdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live-red, #ef4444); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live-red, #ef4444) 22%, transparent); }
+.ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
+.ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
+.ovs-grid.is-mini .ovs-ic { width: 26px; height: 26px; border-radius: 8px; }
+.ovs-grid.is-mini .ovs-tile b { font-size: 13px; font-weight: 600; }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
 .ovs-tab[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #8ab4ff)); }
@@ -199,7 +214,7 @@
 .ovs-list > li:nth-child(5) { animation-delay: 100ms; } .ovs-list > li:nth-child(6) { animation-delay: 125ms; } .ovs-list > li:nth-child(n+7) { animation-delay: 150ms; }
 @keyframes ovs-rise { from { opacity: 0; transform: translateY(6px); } }
 .ovs-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
-.ovs-group { display: flex; align-items: center; gap: 8px; padding: 12px 10px 5px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
+.ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
 .ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .ovs-item a { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 5px 10px; border-radius: 12px; color: inherit; text-decoration: none; }
 .ovs-opt.is-active, .ovs-opt:focus-visible { background: var(--bg-hover, rgba(255,255,255,.07)); outline: none; }
@@ -336,7 +351,12 @@
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
         el.addEventListener('mousedown', (e) => { if (e.target === el) close(); });
         el.querySelector('.ovs-x').addEventListener('click', close);
-        tabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-tab]'); if (b) { tab = b.getAttribute('data-tab'); render(''); input.focus(); } });
+        tabsEl.addEventListener('click', (e) => {
+            const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
+            tab = b.getAttribute('data-tab'); saveTab(tab); render(''); listEl.scrollTop = 0;
+            let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
+            if (touch) b.focus(); else input.focus();
+        });
         input.addEventListener('input', () => { moved = false; if (view === 'results') leaveResults(); paintGhost(); schedule(input.value); });
         input.addEventListener('keydown', onKey);
         listEl.addEventListener('click', (e) => {
@@ -562,7 +582,7 @@
             const box = document.createElement('li');
             box.setAttribute('role', 'presentation');
             if (g.section) box.setAttribute('data-sec', g.section);
-            box.className = as === 'chips' ? 'ovs-chips' : as === 'apps' ? 'ovs-apps' : as === 'links' ? 'ovs-links' : as === 'livebar' ? 'ovs-livebar' : `ovs-grid${as === 'sites' ? ' is-sites' : ''}`;
+            box.className = as === 'chips' ? 'ovs-chips' : as === 'apps' ? 'ovs-apps' : as === 'links' ? 'ovs-links' : as === 'livebar' ? 'ovs-livebar' : `ovs-grid${as === 'sites' ? ' is-sites' : as === 'mini' ? ' is-mini' : ''}`;
             g.items.forEach((it, k) => {
                 if (as === 'chips') {
                     const a = option('a', 'ovs-chip', it);
@@ -600,7 +620,9 @@
                 if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; b.appendChild(tg); }
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
                 if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
-                a.append(icon(it), txt);
+                const ic = icon(it);
+                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '22'); }
+                a.append(ic, txt);
                 box.appendChild(a);
             });
             listEl.appendChild(box);
@@ -829,26 +851,80 @@
     // The network's flagships, first in the full list (the owner, 11-07: "show our most coolest products front facing").
     const FLAGSHIPS = ['live', 'media-hub', 'codes', 'design', 'space', 'games', 'chat', 'tools'];
 
-    function renderTab() {
+    /** The tab strip under the search field: this site's name, Feed (a red dot while anyone is live), You. */
+    function paintTabs() {
+        tabsEl.hidden = false;
+        tabsEl.setAttribute('role', 'tablist');
+        tabsEl.setAttribute('aria-label', 'Menu');
+        tabsEl.textContent = '';
+        const live = pulseData && Number(pulseData.live_now) > 0;
+        for (const [id, label] of TABS) {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab'); b.setAttribute('data-tab', id);
+            b.setAttribute('aria-selected', tab === id ? 'true' : 'false');
+            const t = document.createElement('span'); t.textContent = id === 'here' ? here() : label; b.appendChild(t);
+            if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); b.appendChild(d); }
+            tabsEl.appendChild(b);
+        }
+    }
+
+    /** What every tab needs: the sites, this one, and the person's ranking of them. */
+    function basis() {
         // This site: by its address, else by the service the bar names (www., a preview host, a stand-in page).
         const all = sites(), mineSite = hereSite(all) || all.find((x) => x.id === ctx.service) || null;
-        const byId = new Map(all.map((s) => [s.id, s]));
+        const byId = new Map(all.map((x) => [x.id, x]));
         const shown = new Set(mineSite ? [mineSite.id] : []);
-        const take = (list, n) => { const out = []; for (const s of list) { if (out.length >= n) break; if (s && !shown.has(s.id)) { out.push(s); shown.add(s.id); } } return out; };
-        const groups = [];
-        const f0 = ctx.frame;
-        // 1. Who is live (Network's pulse): the network's heart, one tap from every site.
+        const take = (list, n) => { const out = []; for (const x of list) { if (out.length >= n) break; if (x && !shown.has(x.id)) { out.push(x); shown.add(x.id); } } return out; };
+        const ranked = all.map((x, i) => [useOf(x.id) * 1000 - i, x]).sort((a, b) => b[0] - a[0]).map(([, x]) => x);
+        return { all, mineSite, byId, shown, take, ranked, f: ctx.frame };
+    }
+
+    /** Who is live (Network's pulse), as the live bar: the count, then the live channels when Network names them. */
+    function liveGroup() {
         const p = pulseData;
         const liveNow = p && Number(p.live_now) > 0 ? Number(p.live_now) : 0;
-        if (liveNow) {
-            const chans = Array.isArray(p.live) ? p.live.slice(0, 8).map((c) => ({ title: String(c.name || ''), meta: c.viewers ? `${c.viewers} watching` : 'Live', url: safeUrl(c.url), site: 'live', kind: 'live' })).filter((x) => x.url && x.title) : [];
-            groups.push({ title: '', as: 'livebar', items: [{ title: liveNow === 1 ? '1 stream live now' : `${liveNow} streams live now`, meta: p.watching ? `${p.watching} watching` : 'Watch on Live', url: 'https://openvibe.live/', site: 'live', kind: 'live' }, ...chans] });
-        }
-        // 1b. The network's cards: what sites publish for every menu (Network collects each site's
-        // /.well-known/openvibe-menu.json into the Frame's `cards`): Live's channels, Games' new worlds, Video's trending.
-        // Text and links only (never another site's code), checked here again, with an entry's https picture when it
-        // sent one; at most two, Network's order.
-        const feeds = f0 && Array.isArray(f0.cards) ? f0.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
+        if (!liveNow) return null;
+        const chans = Array.isArray(p.live) ? p.live.slice(0, 8).map((c) => ({ title: String(c.name || ''), meta: c.viewers ? `${c.viewers} watching` : 'Live', url: safeUrl(c.url), site: 'live', kind: 'live' })).filter((x) => x.url && x.title) : [];
+        return { title: '', as: 'livebar', section: 'live', items: [{ title: liveNow === 1 ? '1 stream live now' : `${liveNow} streams live now`, meta: p.watching ? `${p.watching} watching` : 'Watch on Live', url: 'https://openvibe.live/', site: 'live', kind: 'live' }, ...chans] };
+    }
+
+    /**
+     * This site's tab: its own pages, then every OpenVibe site, compact and grouped (this site's group first). People
+     * live show here only on Live itself; everywhere else they are the Feed's.
+     */
+    function hereGroups() {
+        const { all, mineSite, byId, f } = basis();
+        const groups = [];
+        if (mineSite && mineSite.id === 'live') { const g = liveGroup(); if (g) groups.push(g); }
+        // This site's own cards (a drop zone on Download, go-live status on Live, a new task on Codes…).
+        for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
+        const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
+        if (pages.length) groups.push({ title: `On ${here()}`, as: 'links', items: pages, section: 'here' });
+        const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
+        if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
+        const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);
+        const mini = (x) => siteItem(x, all);
+        fgroups.forEach((g, i) => {
+            const list = all.filter((x) => inGroup(x, g)).map(mini);
+            if (list.length) groups.push({ title: i === 0 && fgroups.length > 1 ? g.name : g.name, as: 'mini', items: list, section: 'all' });
+        });
+        const soon = f && Array.isArray(f.soon) ? f.soon : [];
+        if (soon.length) groups.push({ title: 'Opening soon', as: 'chips', items: soon.map((x) => ({ title: x.name, url: safeUrl(x.url), kind: 'site' })).filter((x) => x.url), section: 'all' });
+        void byId;
+        return groups;
+    }
+
+    /**
+     * The Feed: who is live, the feeds the person chose (the sites' cards: Video's trending, Games' new worlds, the
+     * forum…), what changed lately, places new to them and where people go next from here; the chooser at the end.
+     */
+    function feedGroups() {
+        const { all, mineSite, byId, shown, take, ranked, f } = basis();
+        const groups = [];
+        const live = liveGroup(); if (live) groups.push(live);
+        // The network's cards: text and links only (never another site's code), checked here again, with an entry's https
+        // picture when it sent one; the person's choice and order, else Network's first two.
+        const feeds = f && Array.isArray(f.cards) ? f.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
         const chosen = feedPref();
         const netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds.slice(0, 2);
         netCards.forEach((c) => {
@@ -858,45 +934,7 @@
                 site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
             if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
-        // 1c. Choose your feeds: every card a site offers, a tick to show it, arrows to order it (four at most).
-        if (feeds.length > 1 || chosen) {
-            groups.push({ as: 'fold', fold: { key: 'feeds', open: feedsOpen, label: feedsOpen ? 'Done choosing' : `Choose your feeds (${feeds.length})` }, section: 'feeds' });
-            if (feedsOpen) groups.push({ as: 'feeds', section: 'feeds', items: feeds.map((c) => ({ id: feedId(c), title: String(c.title).slice(0, 60), meta: String(c.site || '').replace('media-hub', 'Video'), on: netCards.includes(c) })) });
-        }
-        // 2. The places this person uses most (else the network's most used): a dock of big icons.
-        const yours = mine && mine.services.some((x) => x.count > 0);
-        const ranked = all.map((s, i) => [useOf(s.id) * 1000 - i, s]).sort((a, b) => b[0] - a[0]).map(([, s]) => s);
-        // Without their own history, developer services (Media's API, Events, Zone…) are not places to visit: they stay in
-        // the full list and come up here only once the person uses them.
-        const dockPool = yours ? ranked : ranked.filter((s) => s.group !== 'build' || useOf(s.id));
-        groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((s) => siteItem(s)), section: 'places' });
-        // 2b. Their workspace, right under their places: agents and Vibe, Codes, files, machines, wallet, account, themes.
-        if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
-        // 2c. This site's own cards (a drop zone on Download, go-live status on Live, a new task on Codes…).
-        for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
-        // 3. This site's own pages: the bar's links, two to a row; more behind a count.
-        const allPages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
-        if (allPages.length) {
-            const head = hereOpen ? allPages : allPages.slice(0, 6);
-            const hereGroup = { title: `On ${here()}`, as: 'links', items: head, section: 'here', fold: allPages.length > 6 ? { open: hereOpen, label: hereOpen ? 'Fewer' : `More on ${here()} (${allPages.length - 6})`, key: 'here' } : null };
-            if (leadHere) groups.unshift(hereGroup); else groups.push(hereGroup);
-        }
-        // 4. Where people go next from here: the Frame's list, else the moves Network saw (11-07) and this site's group.
-        const f = ctx.frame;
-        const nextIds = mineSite ? ((f && f.next && Array.isArray(f.next[mineSite.id]) && f.next[mineSite.id]) || NEXT_OF[mineSite.id] || all.filter((s) => s.group === mineSite.group).map((s) => s.id)) : [];
-        const next = take(nextIds.map((id) => byId.get(id)), 4);
-        if (next.length) groups.push({ title: `Next from ${here()}`, as: 'sites', items: next.map((s) => Object.assign(siteItem(s), { meta: NEXT_WHY[s.id] || s.desc })), section: 'next' });
-        // 5. Discover: two places new to this person, rotating fairly through the whole network.
-        // Developer services are offered to people who already use one; everyone else discovers places to visit.
-        const builder = all.some((s) => s.group === 'build' && useOf(s.id));
-        const discoverPool = (f && Array.isArray(f.discover_ids) && f.discover_ids.length ? f.discover_ids.map((id) => byId.get(id)).filter(Boolean) : ranked)
-            .filter((s) => !shown.has(s.id) && (builder || s.group !== 'build'));
-        const disc = pickDiscover(discoverPool);
-        disc.forEach((s) => shown.add(s.id));
-        if (disc.length) groups.push({ title: 'New to you', as: 'sites', items: disc.map((s) => Object.assign(siteItem(s), { tag: 'New' })), section: 'discover' });
-        // 5b. What's new (the owner, 11-07: "check which of the sites got updates recently, and if the user has been on
-        // since … sort them by last update … bring you to the /updates page"): the newest real change per site,
-        // newest first, "New" when it shipped after this person's last visit there.
+        // What's new (the owner, 11-07): the newest real change per site, newest first, "New" after this person's last visit.
         if (Array.isArray(changesData) && changesData.length) {
             const newest = new Map();
             for (const e of changesData) {
@@ -913,40 +951,57 @@
             }).filter((x) => x.url);
             if (rows.length) groups.push({ title: "What's new", items: rows, section: 'news', more: { label: 'All updates', href: 'https://openvibe.network/updates' } });
         }
-        // 7. Tools: the ones they use, then the everyday ones.
-        const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
-        groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
-        // 8. Their searches.
-        const r = recent.get();
-        groups.push({ title: 'Recent searches', as: 'chips', clear: true, items: r.map((x) => ({ title: x, url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' })), section: 'recent' });
-        // 9. Every site, grouped, behind one count (this site's group first).
-        const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
-        if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
-        groups.push({ title: '', as: 'fold', items: [], fold: { open: allOpen, label: allOpen ? 'Hide the list of sites' : `Every OpenVibe site (${all.length})`, key: 'all' }, section: 'all' });
-        if (allOpen) {
-            const inGroup = (s, g) => !g.id || s.group === g.id || (!fgroups.some((x) => x.id === s.group) && g === fgroups[fgroups.length - 1]);
-            const full = (s) => Object.assign(siteItem(s, all), { host: hostOf(s.url).replace(/^www\./, '') });
-            const flag = FLAGSHIPS.map((id) => byId.get(id)).filter(Boolean);
-            if (flag.length) groups.push({ title: 'Flagships', as: 'sites', items: flag.map(full), section: 'all' });
-            fgroups.forEach((g) => groups.push({ title: g.name, as: 'sites', items: all.filter((s) => inGroup(s, g)).map(full), section: 'all' }));
-            const soon = f && Array.isArray(f.soon) ? f.soon : [];
-            if (soon.length) groups.push({ title: 'Opening soon', as: 'chips', items: soon.map((x) => ({ title: x.name, url: safeUrl(x.url), kind: 'site' })).filter((x) => x.url), section: 'all' });
+        // Two places new to this person, rotating fairly through the network (developer services only for builders).
+        const builder = all.some((x) => x.group === 'build' && useOf(x.id));
+        const discoverPool = (f && Array.isArray(f.discover_ids) && f.discover_ids.length ? f.discover_ids.map((id) => byId.get(id)).filter(Boolean) : ranked)
+            .filter((x) => !shown.has(x.id) && (builder || x.group !== 'build'));
+        const disc = pickDiscover(discoverPool);
+        disc.forEach((x) => shown.add(x.id));
+        if (disc.length) groups.push({ title: 'New to you', as: 'sites', items: disc.map((x) => Object.assign(siteItem(x), { tag: 'New' })), section: 'discover' });
+        // Where people go next from here: the Frame's list, else the moves Network saw and this site's group.
+        const nextIds = mineSite ? ((f && f.next && Array.isArray(f.next[mineSite.id]) && f.next[mineSite.id]) || NEXT_OF[mineSite.id] || all.filter((x) => x.group === mineSite.group).map((x) => x.id)) : [];
+        const next = take(nextIds.map((id) => byId.get(id)), 4);
+        if (next.length) groups.push({ title: `Next from ${here()}`, as: 'sites', items: next.map((x) => Object.assign(siteItem(x), { meta: NEXT_WHY[x.id] || x.desc })), section: 'next' });
+        // Choose your feeds: every card a site offers, a tick to show it, arrows to order it (four at most).
+        if (feeds.length > 1 || chosen) {
+            groups.push({ as: 'fold', fold: { key: 'feeds', open: feedsOpen, label: feedsOpen ? 'Done choosing' : `Choose your feeds (${netCards.length} of ${feeds.length})` }, section: 'feeds' });
+            if (feedsOpen) groups.push({ as: 'feeds', section: 'feeds', items: feeds.map((c) => ({ id: feedId(c), title: String(c.title).slice(0, 60), meta: String(c.site || '').replace('media-hub', 'Video'), on: netCards.includes(c) })) });
         }
-        // 10. Last: the pages they were on.
+        if (!groups.length) groups.push({ as: 'note', text: 'Nothing new right now. Choose your feeds, or look around the sites on the first tab.' });
+        return groups;
+    }
+
+    /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
+    function youGroups() {
+        const { take, ranked } = basis();
+        const groups = [];
+        if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
+        const yours = mine && mine.services.some((x) => x.count > 0);
+        // Without their own history, developer services are not places to visit: they come up here once used.
+        const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
+        groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((x) => siteItem(x)), section: 'places' });
         const seen = new Set();
         const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5)
             .map((h) => ({ title: h.title, meta: [h.site, ago(h.at)].filter(Boolean).join(' · '), url: h.url, icon: 'back', kind: 'history' })) : [];
         groups.push({ title: 'Jump back in', items: back, section: 'back' });
-        // Display: theme, text size and motion, at the foot (the drawer's row, now in the one menu).
+        const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
+        groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
+        const r = recent.get();
+        groups.push({ title: 'Recent searches', as: 'chips', clear: true, items: r.map((x) => ({ title: x, url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' })), section: 'recent' });
+        // Display: theme, text size and motion.
         if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
-        paint(groups);
+        return groups;
+    }
+
+    function renderTab() {
+        paint(tab === 'feed' ? feedGroups() : tab === 'you' ? youGroups() : hereGroups());
     }
 
     function render(q) {
         q = String(q || '').trim();
         el.classList.toggle('ovs-typing', !!q);
-        tabsEl.hidden = true;
-        if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); renderTab(); return; }
+        tabsEl.hidden = !!q;
+        if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); paintTabs(); renderTab(); return; }
         const n = q.toLowerCase();
         const recentHits = recent.get().filter((x) => x.toLowerCase().startsWith(n) && x.toLowerCase() !== n).slice(0, 3).map((x) => ({ title: x, meta: 'Search again', url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' }));
         const history = mine ? mine.items.filter((h) => h.title.toLowerCase().includes(n)).slice(0, 4).map((h) => ({ title: h.title, meta: [h.site, ago(h.at)].filter(Boolean).join(' · '), url: h.url, icon: 'back', kind: 'history' })) : [];
@@ -1101,10 +1156,12 @@
         ctx = opts || {};
         if (!el) build();
         lastFocus = document.activeElement;
-        tab = TABS.some(([id]) => id === opts.tab) ? opts.tab : 'you';
-        // The old tabs, kept as a way in: "sites" opens the list of every site, "tools" scrolls to the tools.
-        // From the burger ('here'): this site's pages lead, all of them, the way the drawer had them.
-        allOpen = tab === 'sites'; hereOpen = tab === 'here'; leadHere = tab === 'here'; discoverPick = null;
+        // The tab the person last chose wins; else the one the opener asked for (old names kept: "sites" is this site's
+        // tab, whose second half is every site; "tools" is You); else this site.
+        // "sites" is a request for the list of every site (the legacy drawer's All sites): it opens this site's tab.
+        const asked = { here: 'here', sites: 'here', feed: 'feed', you: 'you', tools: 'you' }[opts.tab];
+        tab = opts.tab === 'sites' ? 'here' : (savedTab() || asked || 'here');
+        allOpen = false; hereOpen = true; leadHere = false; discoverPick = null;
         drainCards();
         syncFeeds();
         el.classList.add('is-open');

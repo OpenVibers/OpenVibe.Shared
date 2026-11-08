@@ -89,13 +89,14 @@ const server = http.createServer((req, res) => {
         let v = await p.evaluate(`({ open: !!document.querySelector('.ovs.is-open'), focused: document.activeElement && document.activeElement.className,
             tabs: document.querySelectorAll('.ovs-tab[data-tab]').length,
             groups: [...document.querySelectorAll('.ovs-group')].map((g) => g.firstChild.textContent), links: [...document.querySelectorAll('.ovs-link span')].map((t) => t.textContent),
-            sites: [...document.querySelectorAll('.ovs-appname')].map((t) => t.textContent), fold: (document.querySelector('[data-ovs-fold="all"]') || {}).textContent,
+            sites: [...document.querySelectorAll('.ovs-grid.is-mini .ovs-tile b')].map((t) => t.textContent),
             placeholder: document.querySelector('.ovs-input').placeholder })`);
         assert.ok(v.open && v.focused === 'ovs-input', '"/" opened the panel and focused the box');
-        assert.strictEqual(v.tabs, 0, 'one calm scroll, no tabs (4.128.0, the owner 11-07: "rethink the whole idea of this whole menu")');
-        assert.deepStrictEqual([v.groups, v.links], [['Popular on OpenVibe', 'On Chat'], ['Rooms', 'Servers']], 'nothing typed: the places first (one tap to Live), then this site\'s own pages');
-        assert.ok(v.sites.includes('Live') && v.sites.includes('Tools'), 'the main sites even before the Frame answers');
-        assert.strictEqual(v.fold, 'Every OpenVibe site (6)', 'every site behind one counted fold');
+        // 4.149.0 (the owner, 11-08: "tabs at the top … the main tab should just show links that exist on that site, and
+        // under that the full list of sites"): this site's tab, Feed and You; nothing typed opens on this site's tab.
+        assert.strictEqual(v.tabs, 3, 'three tabs at the top');
+        assert.deepStrictEqual([v.groups[0], v.links], ['On Chat', ['Rooms', 'Servers']], 'nothing typed: this site\'s own pages first');
+        assert.ok(v.sites.includes('Live') && v.sites.includes('Tools'), 'then every site, even before the Frame answers');
         assert.strictEqual(v.placeholder, 'Search Chat, or ask Vibe', 'the site by its short name (4.48.0)');
         // The box completes from this site's pages (and the person's searches, history and sites); Tab takes it.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'Roo'; i.dispatchEvent(new Event('input')); return 1; })()`);
@@ -104,8 +105,7 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('document.querySelector(".ovs-input").value'), 'Rooms', 'Tab takes it');
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = ''; i.dispatchEvent(new Event('input')); return 1; })()`);
         await wait(100);
-        await p.evaluate('document.querySelector("[data-ovs-fold=all]").click(); 1');
-        assert.ok(await p.evaluate('!!document.querySelector(".ovs-grid.is-sites .ovs-tile") && document.querySelector("[data-ovs-fold=all]").getAttribute("aria-expanded") === "true"'), 'the fold opens the list of every site in place');
+        assert.ok(await p.evaluate('!!document.querySelector(".ovs-grid.is-mini .ovs-tile") && !document.querySelector("[data-ovs-fold=all]")'), 'every site is in the tab itself, compact, with no fold');
         // Typing: one request for the latest text (the earlier one cancelled), this site's results first.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'slow'; i.dispatchEvent(new Event('input')); setTimeout(() => { i.value = 'night'; i.dispatchEvent(new Event('input')); }, 250); })(); 1`);
         await wait(1200);
@@ -156,7 +156,8 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('location.href'), before, 'and stays on the page');
 
         // ── The network's cards: a picture before the title, exactly as the entry sent it (Contracts 0.320.0) ──
-        await p.evaluate(`OpenVibeSearch.open({ service: 'chat', scope: { label: 'Chat', page: '/search' }, links: [], frame: { cards: [
+        // The cards are the Feed tab's (4.149.0).
+        await p.evaluate(`OpenVibeSearch.open({ service: 'chat', tab: 'feed', scope: { label: 'Chat', page: '/search' }, links: [], frame: { cards: [
             { id: 'trending', site: 'media-hub', title: 'Trending', kind: 'rows', items: [
                 { title: 'A walk', meta: '9 views this week', url: 'https://openvibe.video/v/1', image: { src: 'https://openvibe.media/t/1.jpg?w=640', w: 640, h: 360 } },
                 { title: 'No picture', url: 'https://openvibe.video/v/2', image: { src: 'javascript:alert(1)' } },
