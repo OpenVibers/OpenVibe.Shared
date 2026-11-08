@@ -80,3 +80,7 @@ file; a cancelled prefix read is suitable only for a provisional, decrypted labe
 Network's backup response is `{ subject, backups: { passphrase, recovery, passkey } }`. The browser accepts that
 wrapper and the older unwrapped form. Configure `OpenVibeLockerConfig.subject` to scope the public passkey handle
 to the signed-in person.
+
+A service with an HTTP-only SSO session may set `network: ''` and proxy the three public-key / encrypted-backup
+endpoints through its own authenticated backend. Set `reauthUrl` to its reauthentication entry point; this avoids
+requiring third-party Network cookies and keeps access tokens out of JavaScript. No plaintext keys are proxied.

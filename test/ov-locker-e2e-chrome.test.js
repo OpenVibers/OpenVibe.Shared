@@ -143,6 +143,11 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await d.evaluate('OVLocker.state().fingerprint'), pkFp, 'PRF opens the same SDK-protected keys');
         items.stream = (await locker.seal('streamed on device', { lock: 'people', keys: [{ subject: { type: 'user', id: 'usr_x' }, publicKey: stored.ecdh_public }] })).bytes;
         assert.strictEqual(await d.evaluate("(async () => new Response(await OVLocker.openStream((await fetch('/item/stream')).body)).text())()"), 'streamed on device');
+        await d.evaluate('(() => { OVLocker.forget(); OVLocker.unlock(); })()'); await wait(300);
+        await d.evaluate(type('pass', PASS)); await d.evaluate(press('unlock')); await wait(300);
+        assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /recovery kit/);
+        assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=make-instead]')"), false, 'an existing passkey locker is never described as missing');
+        await d.evaluate("document.querySelector('dialog button[aria-label=Close]').click()");
         await d.evaluate(`(() => { OVLocker.forget(); navigator.credentials.create = async () => ({ getClientExtensionResults: () => ({}) }); OVLocker.setup(); })()`);
         await wait(300); await d.evaluate(press('setup-passkey')); await wait(300);
         assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /does not support Locker/);

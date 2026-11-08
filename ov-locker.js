@@ -174,7 +174,7 @@
         || (err.status === 403 && /reauth|sign in again/i.test(err.message));
     function offerReauth(msg) {
         say(msg, 'For your safety, sign in again, then return to your locker.', true);
-        const href = `${cfg().network.replace(/\/+$/, '')}/login?reauth=1&return=${encodeURIComponent(root.location.href)}`;
+        const href = cfg().reauthUrl || `${cfg().network.replace(/\/+$/, '')}/login?reauth=1&return=${encodeURIComponent(root.location.href)}`;
         msg.appendChild(doc.createTextNode(' '));
         msg.appendChild(el('a', 'ovl-btn is-quiet', { href }, 'Sign in again'));
     }
@@ -389,7 +389,10 @@
                     const c = await core();
                     if (!backups) backups = await network('GET', '/api/v1/me/keys/backup');
                     const b = (backups.backups || backups)[mode === 'words' ? 'recovery' : 'passphrase'];
-                    if (!b || !b.envelope) throw Object.assign(new Error('nothing'), { status: 404 });
+                    if (!b || !b.envelope) {
+                        if (mode !== 'words' && (backups.backups || backups).passkey) throw Object.assign(new Error('Use the passkey on its original device or choose your recovery kit.'), { code: 'locker.use_recovery' });
+                        throw Object.assign(new Error('nothing'), { status: 404 });
+                    }
                     const priv = JSON.parse(fromUtf8(await c.open(unb64(b.envelope), { password: secret })));
                     const person = await c.importPersonKeys(priv);
                     // The fingerprint from the public keys alone (an imported set signs nothing here).
@@ -401,6 +404,7 @@
                 } catch (err) {
                     go.disabled = false;
                     if (needsReauth(err)) offerReauth(msg);
+                    else if (err.code === 'locker.use_recovery') say(msg, err.message, true);
                     else if (err.status === 404) {
                         say(msg, 'You have no locker yet.', true);
                         const mk = button('Make my locker', 'quiet', { 'data-k': 'make-instead' });
