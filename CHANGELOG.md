@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.146.0 — 2026-11-08
+
+- **On a phone, a home's words and its main action come first.** `showcase.hero` with an orbit put the picture above
+  the title on screens under 860 px, so a phone saw a 250 px diagram before it saw what the site is or its one main
+  button (Work's "Search the listings" sat at about 560 px). The orbit now follows the actions: the main button moves to
+  about 270 px at 390 px wide, and the orbit, still a row of links to the site's places, follows it. It is a little
+  bigger on a phone (up to 300 px), and the centre's caption is smaller and narrower, so it no longer runs into the
+  lower circles ("from public boards" overlapped "Your agent" and "Alerts" on Work). Wide screens are unchanged.
+  Found in the track X review of the Work home.
+
 ## 4.145.1 — 2026-11-08
 
 - **The Dock stays open when a tap on the page opens it, on a phone.** The phone sheet closes on a tap outside it, and
