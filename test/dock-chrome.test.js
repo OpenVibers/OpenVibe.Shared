@@ -124,7 +124,11 @@ const server = http.createServer((req, res) => {
         if (dm && req.method === 'POST') { said.push(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').message); return json(201, { message: { id: 900 + said.length } }); }
         if (dm) {
             const after = Number(u.searchParams.get('after')) || 0;
-            const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', created_at: iso(120e3) }]
+            // A known OpenVibe link's card, as Chat's link cards put it on a message (4.147.0, dock-card.js); and one that
+            // tries a script link, a picture from elsewhere and a script button, which draws as plain text only.
+            const card = { kind: 'video', url: 'https://openvibe.video/v/42', title: 'The studio tour', line: '12:04 · Kai Moreno', image: 'https://openvibe.media/t/abc?w=320', action: { label: 'Watch together', href: 'https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42' } };
+            const bad = { kind: 'video', url: 'javascript:alert(1)', title: '<img src=x>', line: 'x', image: 'https://evil.example/p.png', action: { label: 'Go', href: 'javascript:alert(2)' } };
+            const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', card, created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', card: bad, created_at: iso(120e3) }]
                 .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
             return json(200, { messages: all.filter((m) => m.id > after) });
         }
@@ -278,6 +282,10 @@ async function drag(p, from, to) {
             await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
             const thread = await until(p, "(() => { const m = [...document.querySelectorAll('.ovdk .ovdk-msg')]; return m.length === 2 ? m.map((x) => (x.classList.contains('is-mine') ? 'me: ' : 'them: ') + x.querySelector('.ovdk-text').textContent) : null; })()", 'the thread');
             assert.deepStrictEqual(thread, ['them: see the shots?', 'me: <b>on it</b>'], 'theirs and mine, and what people wrote is text, never markup');
+            const cards = await until(p, "(() => { const c = [...document.querySelectorAll('.ovdk .ovdk-msg .ovdk-card')]; return c.length === 2 ? c.map((x) => { const t = x.querySelector('.ovdk-card-t'), g = x.querySelector('.ovdk-card-go'), i = x.querySelector('img'); return [t.tagName, t.textContent, t.getAttribute('href'), i ? i.getAttribute('src') : null, g ? g.textContent + ' ' + g.getAttribute('href') : null]; }) : null; })()", 'the link cards');
+            assert.deepStrictEqual(cards[0], ['A', 'The studio tour', 'https://openvibe.video/v/42', 'https://openvibe.media/t/abc?w=320', 'Watch together https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42'], 'a card: its picture, its title as a link, its one move');
+            assert.deepStrictEqual(cards[1], ['B', '<img src=x>', null, null, null], 'a card is data: no script link, no picture from elsewhere, no script button, the title as text');
+            assert.strictEqual(await p.evaluate("document.querySelectorAll('script[src*=\"dock-card.js\"]').length"), 1, 'dock-card.js is loaded once, when a card first shows');
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'opening a chat on a phone is not a tap outside the sheet');
             await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'Looks good'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
