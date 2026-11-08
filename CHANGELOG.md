@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.149.0 — 2026-11-08
+
+- **The menu has tabs at the top** (the owner, 11-08: "we should have tabs at the top … a feed tab, which allows the
+  user to set the feeds … remember whichever tab the user last had open … the main tab should just show links that
+  exist on that site, and under that the full list of sites … make it nicer, more compact"). Under the search field,
+  one segmented row: **this site** (labelled with its name), **Feed** and **You**. The menu reopens on the tab last
+  chosen (this device); the legacy drawer's "All sites" still opens on this site's tab.
+  - **This site:** its own pages, then every OpenVibe site in a compact grid (a small icon and the name, three to a
+    row, two on a phone), grouped as the Frame groups them with this site's group first and this site marked. No fold.
+    Who is live shows here only on openvibe.live; everywhere else it is the Feed's (it confused people elsewhere).
+  - **Feed:** who is live (and a red dot on the tab while anyone is), the feeds the person chose (Video's trending,
+    the forum, Games' new worlds…), what changed lately, places new to them and where people go next from here; the
+    chooser ("Choose your feeds (2 of 4)") at its end.
+  - **You:** their workspace (signed in), their places (else the popular ones), the pages they were on, tools, their
+    searches, and the display controls (theme, text size, motion).
+  - Tighter section headings; switching tabs on a phone does not raise the keyboard.
+  Tests: menu-feeds-chrome (three tabs; the feeds are on Feed; it reopens on the last tab), navbar-launcher (the list
+  of every site, compact, no fold; Display on You), search-loading-chrome.
+
 ## 4.148.0 — 2026-11-08
 
 - **On a phone the menu button is the orb, in the burger's place** (the owner, 11-08: "replace the hamburger with
