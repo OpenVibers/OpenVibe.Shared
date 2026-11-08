@@ -302,6 +302,10 @@
             .openvibe-navbar .ovnav-orb.ovnav-burger:hover, .openvibe-navbar .ovnav-orb.ovnav-burger[aria-expanded="true"] { background: none; }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-orb.ovnav-burger { display: inline-grid; } }
             @media (max-width: 400px) { .openvibe-navbar .ovnav-orb { width: 28px; height: 32px; } }
+            /* The phone's menu button keeps the bar's edge: the orb's tap area (::after) reaches 12 px past the
+               button, which pushed the bar 6 px past a 390 px phone, and the page zoomed out to fit it. The button's
+               tap area stops inside the bar. */
+            .openvibe-navbar .ovnav-orb.ovnav-burger::after { inset: -6px -5px; }
             /* Messages (4.25.0; the owner, 2026-10-28: the floating DM button was "buggy as hell on mobile… app style"): a
                site that has messages puts them in the bar beside the bell, with the unread count, instead of a bubble
                over the page. */
