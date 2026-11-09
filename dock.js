@@ -897,7 +897,11 @@
     function isOpen() { return !!(el && !el.hidden); }
     function share({ text = '', title = '' } = {}) {
         const t = String(text || '').trim().slice(0, 4000);
-        if (t) { chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null; open({ tab: 'chats' }); }
+        if (!t) return;
+        chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null;
+        // A bar left from an earlier share would show the old words until the list reloads: it goes now.
+        const stale = chats.panel && chats.panel.querySelector('.ovdk-share'); if (stale) stale.remove();
+        open({ tab: 'chats' });
     }
     function open(opts = {}) {
         openedAt = typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
