@@ -1036,13 +1036,32 @@
         const feeds = f && Array.isArray(f.cards) ? f.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
         const chosen = feedPref();
         // Every feed shows until the person chooses (owner, 11-09: "by default all the feeds show, but you can configure the order").
-        const netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds;
+        let netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds;
+        // Nothing old dressed as new (11-09, the owner: "why is New in the forum first when it's 17 days ago"): a card's age
+        // is its newest item's (a timestamp when the card sends one, else its "3d ago" words); one older than 3 days drops
+        // the word "New" from its title, and until the person orders them, fresher cards come first and month-old ones last.
+        const AGE = { m: 60e3, min: 60e3, h: 3600e3, d: 86400e3, w: 604800e3, mo: 2592e6, y: 31536e6 };
+        const ageOf = (c) => {
+            let best = Infinity;
+            for (const x of c.items || []) {
+                const t = Date.parse(x && (x.at || x.updated_at || x.published_at) || '');
+                if (t) { best = Math.min(best, Date.now() - t); continue; }
+                const m = /(\d+)\s*(min|mo|m|h|d|w|y)\b[^·]*ago/.exec(String(x && x.meta || ''));
+                if (m) best = Math.min(best, Number(m[1]) * AGE[m[2]]);
+            }
+            return best;
+        };
+        const ages = new Map(netCards.map((c) => [c, ageOf(c)]));
+        const later = [];   // cards older than two weeks: after What's new
+        if (!chosen) netCards = netCards.slice().sort((a, b) => (ages.get(a) === Infinity ? 1e15 : ages.get(a)) - (ages.get(b) === Infinity ? 1e15 : ages.get(b)));
         netCards.forEach((c) => {
             const as = c.kind === 'rail' ? 'livebar' : c.kind === 'chips' ? 'chips' : 'rows';
             const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url),
                 image: x.image && /^https:\/\//.test(String(x.image.src || '')) ? String(x.image.src) : null,
                 site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
-            if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
+            const stale = ages.get(c) > 3 * 86400e3;
+            const title = stale ? String(c.title).replace(/^New\s+(in|on|from)\s+/i, (m0, w) => `${w[0].toUpperCase()}${w.slice(1)} `).replace(/^New\s+/i, '') : String(c.title);
+            if (rows.length) (ages.get(c) > 14 * 86400e3 && !chosen ? later : groups).push({ title: title.slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
         // What's new (the owner, 11-07): the newest real change per site, newest first, "New" after this person's last visit.
         if (Array.isArray(changesData) && changesData.length) {
@@ -1067,6 +1086,7 @@
             const today = changesData.filter((e) => e && e.service && !HOUSEKEEPING.test(String(e.subject || '')) && Date.parse(at(e) || 0) > dayAgo).length;
             if (rows.length) groups.push({ title: today ? `What's new (${today} today)` : "What's new", items: rows, section: 'news', more: { label: 'All updates', href: 'https://openvibe.network/updates' } });
         }
+        groups.push(...later);
         // Two places new to this person, rotating fairly through the network (developer services only for builders).
         const builder = all.some((x) => x.group === 'build' && useOf(x.id));
         const discoverPool = (f && Array.isArray(f.discover_ids) && f.discover_ids.length ? f.discover_ids.map((id) => byId.get(id)).filter(Boolean) : ranked)

@@ -75,6 +75,7 @@
     background: var(--bg-secondary, #141a24); box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 0 0 1px var(--border, rgba(255,255,255,.14)); transform: scale(1.08); }
 @keyframes ovh-wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
 .ovh-hint { margin: 2px 6px 6px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovh-all[hidden], .ovh[hidden] { display: none !important; }
 .ovh-all { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 8px); min-height: 44px; margin: 6px 4px 2px; border: 1px solid var(--border, rgba(255,255,255,.12));
     border-radius: 14px; background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .ovh-head { display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
@@ -578,7 +579,10 @@
         const draw = (j, append) => {
             if (!append) list.textContent = '';
             const items = (j && Array.isArray(j.items) ? j.items : []).filter((x) => x && typeof x.title === 'string' && safe(x.url));
-            if (!items.length && !append) { list.append(h('p', 'ovh-note', 'Nothing new on the network yet today.')); return; }
+            // Nothing to show: the section goes, not a line saying so (11-09, the owner: "why does it say show more if there's
+            // nothing new").
+            if (!items.length && !append) { el.hidden = true; more.hidden = true; return; }
+            el.hidden = false;
             // Went live, back to back: one row of names.
             let lives = null;
             items.forEach((x) => {

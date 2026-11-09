@@ -30,7 +30,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <script>document.addEventListener('submit', (e) => e.preventDefault());</script>
 <script src="/navbar.js"></script><script>OpenVibeNavbar.init({ mount: '#nav', site: 'codes', siteName: 'Codes', dock: false, messages: false, links: [] });</script>
 <script src="/kit-web.js"></script><script src="/ov-thread.js"></script></body></html>`;
-const FILES = new Set(['/kit.css', '/thread.css', '/navbar.js', '/kit-web.js', '/ov-thread.js']);
+const FILES = new Set(['/kit.css', '/thread.css', '/navbar.js', '/nav-slots.js', '/kit-web.js', '/ov-thread.js']);
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
