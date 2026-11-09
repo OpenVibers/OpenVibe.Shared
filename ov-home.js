@@ -110,7 +110,9 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-ghost { position: fixed; z-index: 10040; pointer-events: none; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 19px; display: grid; place-items: center;
     background: var(--bg-secondary, #141a24); box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 0 0 1px var(--border, rgba(255,255,255,.14)); transform: scale(1.08); }
 @keyframes ovh-wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
-.ovh-hint { margin: 2px 6px 12px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovh-hint { margin: 10px 6px 4px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovh-calm { transition: opacity .2s; }
+.ovh.is-edit .ovh-calm { opacity: .38; pointer-events: none; }
 .ovh-all[hidden], .ovh[hidden] { display: none !important; }
 .ovh-all { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 8px); min-height: 44px; margin: 6px 4px 2px; border: 1px solid var(--border, rgba(255,255,255,.12));
     border-radius: 14px; background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -472,9 +474,13 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         function paintHome() {
             el.textContent = '';
             el.classList.toggle('is-edit', state.edit);
-            if (signedIn(o) && !state.edit) el.append(me());
+            // Edit keeps everything where it was: a long-press goes straight on to drag the app under the finger, so
+            // nothing above the grid may come or go (the macOS run of #394 dropped onto the wrong place when the hint
+            // pushed the grid down mid-drag). The cards above stay, quiet and inert; the hint goes under the grid.
+            const calm = (x) => { x.classList.add('ovh-calm'); x.inert = state.edit; return x; };
+            if (signedIn(o)) el.append(calm(me()));
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
-            if (!state.edit) { const b = backRail(); if (b) el.append(b); const u = usage(); if (u) el.append(u); }
+            { const b = backRail(); if (b) el.append(calm(b)); const u = usage(); if (u) el.append(calm(u)); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
             const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
             edit.type = 'button';
@@ -486,10 +492,10 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             edit.addEventListener('click', () => setEdit(!state.edit));
             head.append(edit);
             el.append(head);
-            if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All apps puts it back.'));
             const grid = h('div', 'ovh-grid'); grid.setAttribute('aria-label', 'Your home');
             L.home.forEach((id, i) => grid.append(homeTile(id, i)));
             el.append(grid);
+            if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All apps puts it back.'));
             const total = L.byId.size;
             const all = h('button', 'ovh-all', `All apps (${total})`); all.type = 'button';
             all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
