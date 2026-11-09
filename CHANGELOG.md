@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- **Footer legal links are 44 px wide to a finger.** On a touch screen, Terms, Privacy, DMCA and the compact links
+  reached 36 px across (11-09 tap audit on six sites, `tools/tap-audit.js`); their hit area now extends 5 px each side
+  (they sit 20 px apart, so the areas never meet).
+
 ## 4.157.0 — 2026-11-09
 
 - **Every shell page has a tab icon.** `shell.page()` adds the service's OpenVibe mark (`openvibe-shared/app-icon`
