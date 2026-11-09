@@ -12,6 +12,7 @@
      * A hosted checkout is followed only to a host Billing names for the chosen provider (checkout.providers:
      * [{ name, hosts }]) or to Billing itself. Anything else — http, a URL with a username, a foreign host — is refused.
      */
+    const maker = (issuer) => { const n = String(issuer || '').replace(/^(service|app):/, '').replace(/[-_]+/g, ' ').trim(); return n ? n.charAt(0).toUpperCase() + n.slice(1) : 'OpenVibe'; };
     function checkoutAllowed(value, providers) {
         let url;
         try { url = new URL(String(value)); } catch { return false; }
@@ -33,7 +34,7 @@
         const dialog = el('dialog', 'ov-wallet');
         dialog.setAttribute('aria-labelledby', 'ov-wallet-title');
         const header = el('header', 'ov-wallet-head'), heading = el('div');
-        heading.append(el('p', 'ov-wallet-eyebrow', 'YOURS, ACROSS OPENVIBE'), el('h2', '', 'Wallet'));
+        heading.append(el('h2', '', 'Wallet'));
         heading.lastChild.id = 'ov-wallet-title';
         const exit = el('button', 'ov-wallet-close', '×'); exit.type = 'button'; exit.setAttribute('aria-label', 'Close wallet');
         header.append(heading, exit);
@@ -154,7 +155,7 @@
             const grid = el('div', 'ov-wallet-grid'); store.append(grid);
             if (!storeItems.length) grid.append(el('p', 'ov-wallet-muted', 'New items will appear here after review.'));
             for (const item of storeItems) {
-                const card = el('article', 'ov-wallet-item'); card.append(preview(item.preview, item.name), el('h4', '', item.name), el('p', 'ov-wallet-muted', `By ${item.issuer.replace(/^(service|app):/, '')}`));
+                const card = el('article', 'ov-wallet-item'); card.append(preview(item.preview, item.name), el('h4', '', item.name), el('p', 'ov-wallet-muted', `By ${maker(item.issuer)}`));
                 const owned = item.owned || (allItems && allItems.instances.some((i) => i.definition_id === item.id && i.state === 'owned'));
                 if (owned) card.append(el('span', 'ov-wallet-owned', '✓ Owned'));
                 else for (const [currency, price] of Object.entries(item.prices)) {
