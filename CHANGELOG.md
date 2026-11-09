@@ -28,6 +28,13 @@
   pills, the rest under a dots button. The tiles lead with their number (11 runs) and dots for done and failed. The Vibe
   list gives each conversation its mark and its site's name (Blog, not openvibe.blog) and New conversation is a button.
   The AI chats row has a Vibe avatar like every other row; group faces are ringed in the panel's own colour.
+- The one-tap skills are read through Network (`/api/v1/me/actions/skills`): every site's CSP refuses openvibe.actor.
+- The extension's read-only Dock offers no approve, decline, stop or retry.
+- **The Feed's composer takes pictures** (the owner, 11-09: "you can make posts and put images"). Up to four, each
+  with a line saying what it shows (Community requires the alt text; Post stays off until each has one). Big phone
+  photos are scaled to 2560 px before they go. Each picture uploads through Network (`POST /api/frame/attachments`,
+  Network #719) and the post names them (`POST /api/frame/posts`). Previews are small data: images, because not
+  every site's img-src allows blob:.
 
 ## 4.167.0 — 2026-11-09
 
