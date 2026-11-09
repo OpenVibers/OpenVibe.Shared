@@ -463,3 +463,5 @@ html[data-ov-motion=reduced] .ovk-skel { animation: none; }
  .ovk-page-about summary b{flex:none;font-size:.8rem;color:var(--text-primary);text-decoration:underline;text-underline-offset:3px}
  .ovk-page-about p{margin:4px 0 0;overflow-wrap:anywhere}
 }
+/* A phone hero's 1fr track must shrink around the single-line disclosure. */
+.sc-hero-main:has(>.ovk-page-head),.sc-room-main:has(>.ovk-page-head){min-width:0}
