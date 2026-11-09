@@ -1,9 +1,9 @@
 # Changelog
 
-## 4.174.0 — 2026-11-09
+## 4.175.0 — 2026-11-09
 
 - **OpenVibe Link**: the shared navigation's Machines entry points at openvibe.link/machines instead of the old
-  node host, and the shipped-services list names the product Link. The Contracts pin moves to v0.372.0. No API changes.
+  node host, and the shipped-services list names the product Link. The Contracts pin moves to v0.373.0. No API changes.
 
 ## 4.173.0 — 2026-11-09
 
