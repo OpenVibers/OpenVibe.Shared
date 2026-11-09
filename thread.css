@@ -278,3 +278,30 @@ html.ovt-sheet-open, html.ovt-sheet-open body { overflow: hidden; }
     .ovt-opts-panel, .ovt-opt-chip, .ovt-opts[open]::before { animation: none; }
     :where([data-ovt-fold]) { transition: none; }
 }
+
+/* Answers' actions are icon buttons (11-09): 32 px, the word as tooltip; a copy shows a tick for a moment. */
+.ovt-acts .ovt-act { width: 32px; padding: 0; justify-content: center; }
+.ovt-acts .ovt-act .ovt-ic { width: 17px; height: 17px; }
+.ovt-act.is-done { color: var(--success, #22c55e); }
+
+/* Attach: one + button; with a menu, the choices in a small pop-over above it (a sheet's look on a phone). */
+.ovt-attach { display: inline-grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 14px; cursor: pointer; color: var(--text-secondary, #96a7c2); transition: background-color .15s, color .15s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
+.ovt-attach:hover, .ovt-attach-menu[open] > .ovt-attach { background: color-mix(in srgb, var(--ovt-accent) 14%, transparent); color: var(--text-primary, #e6edf7); }
+.ovt-attach:active { transform: scale(.92); }
+.ovt-attach .ovt-ic { width: 20px; height: 20px; }
+.ovt-attach-menu { position: relative; flex: none; }
+.ovt-attach-menu > summary { list-style: none; }
+.ovt-attach-menu > summary::-webkit-details-marker { display: none; }
+.ovt-attach-pop { position: absolute; z-index: 40; left: -6px; bottom: calc(100% + 10px); min-width: 230px; padding: 6px; border-radius: 16px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); animation: ovt-opts-in .18s cubic-bezier(.2, .9, .3, 1) both; transform-origin: 20px 100%; }
+.ovt.is-start .ovt-attach-pop { bottom: auto; top: calc(100% + 10px); transform-origin: 20px 0; }
+.ovt-attach-row { position: relative; display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 12px; border-radius: 11px; color: var(--text-primary, #e6edf7); font-size: 14.5px; text-decoration: none; cursor: pointer; }
+.ovt-attach-row:hover, .ovt-attach-row:focus-within { background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
+.ovt-attach-row .ovt-ic { width: 19px; height: 19px; color: var(--text-secondary, #96a7c2); }
+.ovt-attach-cam { display: none; }
+@media (pointer: coarse) { .ovt-attach-cam { display: flex; } }
+
+/* The quiet line ("can get things wrong", "Sending…") sits under the box, not inside it. */
+.ovt-composer { position: relative; }
+.ovt-composer > .ovt-c-note { position: absolute; left: 14px; right: 14px; top: calc(100% + 6px); margin: 0; text-align: center; font-size: 12px; line-height: 1.4; }
+.ovt-dock:has(.ovt-c-note:not(:empty)) { padding-bottom: calc(30px + env(safe-area-inset-bottom, 0px)); }
+.ovt.is-start .ovt-dock:has(.ovt-c-note:not(:empty)) { padding-bottom: max(40px, env(safe-area-inset-bottom, 0px)); }

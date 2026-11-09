@@ -41,7 +41,11 @@
             var label = btn.querySelector('span') || btn;
             var was = label.textContent;
             label.textContent = 'Copied';
-            setTimeout(function () { label.textContent = was; }, 1400);
+            // An icon button shows a tick for a moment (its word is only for screen readers and the tooltip).
+            var path = btn.querySelector('svg path'); var d = path && path.getAttribute('d');
+            if (path) path.setAttribute('d', 'M5 12.5l4.5 4.5L19 7.5');
+            btn.classList.add('is-done'); if (btn.title) btn.title = 'Copied';
+            setTimeout(function () { label.textContent = was; if (path) path.setAttribute('d', d); btn.classList.remove('is-done'); if (btn.title) btn.title = was; }, 1400);
         }).catch(function () { /* a refused clipboard changes nothing */ });
     }
 
@@ -365,6 +369,14 @@
                 d.addEventListener('change', paint);
                 if (form) form.addEventListener('ovt:options', paint);
                 paint();
+            });
+
+            // Attach's menu: a tap outside or a chosen file closes it.
+            qa(box, '[data-ovt-attach]').forEach(function (d) {
+                if (d.__ovt) return; d.__ovt = true;
+                document.addEventListener('pointerdown', function (e) { if (d.open && !d.contains(e.target)) d.open = false; }, true);
+                d.addEventListener('change', function () { d.open = false; });
+                d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && d.open) { e.stopPropagation(); d.open = false; var s = q(d, 'summary'); if (s) s.focus(); } });
             });
 
             // A kit sidebar's button goes into the navbar, before the brand, on a phone (11-09, the owner: the button on a
