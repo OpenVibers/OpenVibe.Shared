@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- `kit.pageHead` provides a named back chip, page icon, title and actions, with a native description disclosure on phones. Showcase heroes can opt into the same page identity.
+- `kit.pageHead` provides a named back chip, page icon, title and actions, with one whole description on every screen. Showcase heroes can opt into the same page identity.
 
 ## 4.163.0 — 2026-11-09
 

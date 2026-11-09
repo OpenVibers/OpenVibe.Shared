@@ -193,11 +193,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
 
 console.log('showcase: all checks passed');
 
-// A product can use the shared page identity while retaining the hero's visual and calls to action.
-{
-    const html = require('../showcase').hero({ title: 'Record a video', lede: 'Review it before sharing.', pageHead: { icon: 'video', back: { href: '/', label: 'Home' } }, visual: false });
-    require('assert').ok(html.includes('ovk-page-head') && html.includes('About this') && html.includes('Review it before sharing.'));
-}
+
 
 // 4.160.0 (owner, 11-09: section titles need an icon, sections should read as separate things): each section's heading
 // carries an icon tile, its kind's by default, a site's own when given; the network section's live strip and every site.
@@ -208,4 +204,9 @@ console.log('showcase: all checks passed');
     assert.ok(sc.features({ title: 'X', icon: 'rocket', items: [{ title: 'A', text: 'B' }] }).includes('sc-h-ic'), 'a site may choose the icon');
     assert.ok(/border-top:1px solid/.test(sc.CSS) && /\.sc-hero\+\.sc-sec/.test(sc.CSS), 'sections stand apart, the first after the hero without a rule');
     assert.ok(/api\/frame\/pulse/.test(sc.NETWORK_JS) && /textContent/.test(sc.NETWORK_JS) && !/innerHTML/.test(sc.NETWORK_JS), 'the live strip reads the Frame and writes text only');
+}
+// A product can use the shared page identity while retaining the hero's visual and calls to action.
+{
+    const html = require('../showcase').hero({ title: 'Record a video', lede: 'Review it before sharing.', pageHead: { icon: 'video', back: { href: '/', label: 'Home' } }, visual: false });
+    require('assert').ok(html.includes('ovk-page-head') && html.split('Review it before sharing.').length === 2);
 }

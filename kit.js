@@ -211,7 +211,7 @@
             + (actions && actions.length ? `<div class="ovk-head-tools">${actions.join('')}</div>` : '')
             + `</div>${tabs || ''}</header>`;
     }
-    /** A page identity, with a named parent and a native, script-free mobile description disclosure.
+    /** A page identity with a named parent, an icon and one whole description on every screen.
      * actions accepts iconButton options or trusted control markup, like head(). */
     function pageHead({ back = null, icon: ic = 'home', title = '', lede = '', actions = [] } = {}) {
         const tools = (actions || []).map(a => typeof a === 'string' ? a : iconButton(a)).join('');
@@ -219,7 +219,7 @@
             + (back ? `<a class="ovk-page-back" href="${esc(url(back.href))}">${icon('back')}<span>${esc(back.label || 'Back')}</span></a>` : '')
             + `<div class="ovk-page-head-row"><span class="ovk-heading-icon">${icon(ic)}</span><h1>${esc(title)}</h1>`
             + (tools ? `<div class="ovk-page-actions">${tools}</div>` : '') + `</div>`
-            + (lede ? `<p class="ovk-page-lede">${esc(lede)}</p><details class="ovk-page-about"><summary><span>${esc(lede)}</span><b>About this</b></summary><p>${esc(lede)}</p></details>` : '')
+            + (lede ? `<p class="ovk-page-lede">${esc(lede)}</p>` : '')   // one copy, whole, on every screen
             + `</header>`;
     }
     // ── The left sidebar (L35) ──

@@ -730,4 +730,4 @@ prints any sideways scroll, so the gallery doubles as the visual test.
 
 ### Page identity
 
-`kit.pageHead({ back: { label: 'Home', href: '/' }, icon: 'video', title: 'Record a video', lede: 'Record, review and share your video.', actions: [{ href: '/videos', icon: 'video', label: 'Your videos' }] })` renders the named back chip, page icon tile, H1 and accessible icon actions. On phones the lede is one line with a native **About this** disclosure; all its words remain server-rendered and work without JavaScript. Keep breadcrumb structured data in the site's BreadcrumbList JSON-LD. `head()` remains available for sticky application toolbars.
+`kit.pageHead({ back: { label: 'Home', href: '/' }, icon: 'video', title: 'Record a video', lede: 'Record, review and share your video.', actions: [{ href: '/videos', icon: 'video', label: 'Your videos' }] })` renders the named back chip, page icon tile, H1 and accessible icon actions. The lede appears once, whole on every screen, with server-rendered words and no JavaScript requirement. Keep breadcrumb structured data in the site's BreadcrumbList JSON-LD. `head()` remains available for sticky application toolbars.

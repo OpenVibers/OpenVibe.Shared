@@ -317,12 +317,12 @@ console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, ti
     assert.ok(h.includes('ovk-heading-icon') && h.includes('ovk-btn--quiet') && h.includes('id="recent-h"'));
 }
 
-// A page head keeps its description available without JS and refuses unsafe parent/action URLs.
+// A page head keeps one whole description and refuses unsafe parent/action URLs.
 {
     const h = kit.pageHead({ title: '<Record>', icon: 'video', lede: 'One line & all the detail.', back: { label: 'Home', href: 'javascript:bad' }, actions: [{ icon: 'plus', label: 'Create', href: '/new' }] });
     assert.ok(h.includes('<h1>&lt;Record&gt;</h1>'));
     assert.ok(h.includes('href="#"') && !h.includes('javascript:'));
-    assert.ok(h.includes('<details class="ovk-page-about">') && h.includes('About this'));
+    assert.ok(!h.includes('<details') && (h.match(/class="ovk-page-lede"/g) || []).length === 1, 'the lede once, whole (no About-this copy)');
     assert.ok(h.includes('aria-label="Create"') && h.includes('One line &amp; all the detail.'));
     assert.ok(!kit.pageHead({ title: 'Home' }).includes('<details'));
 }
