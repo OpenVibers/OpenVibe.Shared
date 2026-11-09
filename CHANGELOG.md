@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.174.0 — 2026-11-09
+
+- **The model chip and its choice sheet** (`ai-choice.js`, `ov-ai-choice.js`, `ov-ai-choice.css`): a chip beside any
+  Generate button showing the maker mark and the model's name, opening a sheet grouped Recommended, Fastest, Cheapest,
+  Best quality, Uncensored 18+ (only where the person confirmed), Your keys and Your machines. Each row says what it
+  costs a run and how fast it is; a check marks the choice. The footer saves "Use this for every <task>" and links to
+  Exchange. Server rendering keeps the control named before hydration; the sheet traps no scroll behind it and an
+  outside tap closes it.
+
 ## 4.173.0 — 2026-11-09
 
 - **The wallet works on sites that keep the access cookie from page scripts** (`navbar.js`, `ov-wallet.js`). 4.170's

@@ -13,6 +13,7 @@
 const path = require('path');
 
 const BROWSER = Object.freeze([
+    'ov-ai-choice.js',      // the model chip and its choice sheet (openvibe-shared/ov-ai-choice)
     'navbar.js',            // shared top bar (eager on every site)
     'nav-icons.js',         // navbar glyphs beyond its own, fetched by navbar.js after first paint
     'theme-loader.js',      // applies the theme before first paint
@@ -94,6 +95,7 @@ const STYLES = Object.freeze([
     'ov-forms.css',         // the look of ov-forms.js's select, the site-coloured checkboxes, switches and sliders, .ov-field (docs/forms.md)
     'ov-locker.css',        // ov-locker.js's look: the locked card, the locker sheets, the recovery kit (docs/locker.md)
     'ov-wallet.css',
+    'ov-ai-choice.css',     // the model chip and its choice sheet (ov-ai-choice.js)
     'ov-share.css',         // ov-share.js's look: the sheet, the recipient's offer banner, the not-on-the-list gate (docs/share.md)
     'ov-upload.css',        // picker, queue and ov-progress states
     'messages.css',         // the room and bubble views' look
