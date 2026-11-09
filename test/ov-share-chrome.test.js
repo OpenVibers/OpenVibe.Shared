@@ -213,7 +213,7 @@ const server = http.createServer((req, res) => {
         assert.ok(comm, 'the Community tile');
         assert.strictEqual(comm.text, 'Community');
         assert.ok(comm.first, 'first-party places lead the grid');
-        assert.ok(/^https:\/\/openvibe\.community\/discuss\?title=[^&]*&body=/.test(comm.href), comm.href);
+        assert.ok(/^https:\/\/openvibe\.community\/forum\/discuss\?title=[^&]*&body=/.test(comm.href), comm.href);
         assert.ok(decodeURIComponent(comm.href.split('&body=')[1]).includes('http'), 'the body carries the link');
         const x = await p.evaluate(`${q('to-x')}.getAttribute('href')`);
         assert.strictEqual(x, 'https://x.com/intent/post?text=A%20robot%20%26%20a%20wave&url=https%3A%2F%2Fvideo.test%2Fv%2F1', 'X gets the title and the link, encoded');
