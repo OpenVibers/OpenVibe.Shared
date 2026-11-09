@@ -153,7 +153,21 @@
     "type": "git",
     "url": "git+https://github.com/OpenVibers/OpenVibe.Shared.git"
   },
-  "homepage": "https://github.com/OpenVibers/OpenVibe.Shared#readme",
+  "homepage": "https://openvibe.network",
+  "keywords": [
+    "openvibe",
+    "ui",
+    "components",
+    "navbar",
+    "footer",
+    "themes",
+    "icons",
+    "seo",
+    "json-ld",
+    "llms-txt",
+    "feeds",
+    "self-hosted"
+  ],
   "license": "MIT",
   "dependencies": {
     "jsonwebtoken": "^9.0.0",
