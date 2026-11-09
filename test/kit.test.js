@@ -54,10 +54,21 @@ const kit = require('../kit');
 // ── Settings rows, folds, menus ──
 {
     assert.ok(kit.switchRow({ name: 'compact', label: 'Compact', hint: 'Less space', on: true }).includes('class="ovk-switch" name="compact" value="1" checked'));
+    const sw = kit.switchRow({ name: 'burn', icon: 'flame', title: 'Burn after reading', line: 'Gone once it is read', checked: true });
+    assert.ok(sw.startsWith('<label class="ovk-set-row ovk-set-switch">') && sw.includes('class="ovk-set-ic" aria-hidden="true"><svg'));
+    assert.ok(sw.includes('role="switch"') && sw.includes('type="checkbox"') && sw.includes('value="1" checked'), 'the switch is a working checkbox');
+    assert.ok(sw.includes('Burn after reading') && sw.includes('Gone once it is read'), 'title and one line');
+    assert.ok(!kit.switchRow({ name: 'n', title: 'No icon', line: 'x' }).includes('ovk-set-ic'), 'no icon, no tile');
+    assert.ok(kit.switchRow({ name: 'n', label: 'Old name', hint: 'Old hint', on: true }).includes('>Old name<small>Old hint</small>'), 'label/hint/on still work');
     assert.ok(kit.rangeRow({ name: 'v', label: 'Volume', value: 40 }).includes('value="40"') && kit.rangeRow({ name: 'v', label: 'V', value: 40 }).includes('aria-valuetext="40 percent"'));
     assert.ok(kit.selectRow({ name: 'who', label: 'Who', options: [['all', 'Everyone'], ['none', 'Nobody']], value: 'none' }).includes('<option value="none" selected>Nobody</option>'));
     const seg = kit.seg({ name: 'size', label: 'Text size', options: [['s', 'Small'], ['m', 'Default']], value: 'm' });
     assert.ok(seg.includes('role="radiogroup"') && seg.includes('value="m" checked'));
+    const segments = kit.segmented({ name: 'visibility', value: 'unlisted', items: [{ value: 'public', label: 'Public', icon: 'globe' }, { value: 'unlisted', label: 'Unlisted', icon: 'link' }, { value: 'private', label: 'Private', icon: 'lock' }] });
+    assert.ok(segments.startsWith('<span class="ovk-seg ovk-seg--fill" role="radiogroup"') && segments.includes('aria-label="visibility"'));
+    assert.ok(segments.includes('value="unlisted" checked') && segments.includes('class="ovk-seg-item"') && segments.includes('class="ovk-i"'), 'segments carry icons');
+    assert.ok(kit.segmented({ name: 'v', ariaLabel: 'Who sees it', items: [{ value: 'a', label: 'A' }] }).includes('aria-label="Who sees it"'), 'a standalone group still has words');
+    assert.ok(kit.segmented({ name: 'v', label: 'Who sees it', items: [{ value: 'a', label: 'A' }] }).includes('aria-labelledby="ovk-seg-v"'), 'a label names the group');
     assert.ok(kit.chips({ name: 'src', options: [['kick', 'Kick', true], ['yt', 'YouTube', false]] }).includes('name="src_kick" value="1" checked'));
     const f = kit.fold({ id: 'oc-ai', title: 'AI members', meta: '2', body: '<p>x</p>' });
     assert.ok(f.startsWith('<details class="ovk-fold" id="oc-ai">') && !f.includes(' open'));

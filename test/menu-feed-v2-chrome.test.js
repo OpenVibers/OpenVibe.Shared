@@ -42,6 +42,14 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (s.startsWith('https://openvibe.network/api/v1/me/home-screen')) return (o && o.method === 'PUT') ? J({ ok: true }) : J({}, false, 404);
     if (s.startsWith('https://openvibe.network/api/frame/feed')) { window.__feedCalls = (window.__feedCalls || []).concat([s]); const u = new URL(s); const kind = u.searchParams.get('kind') || ''; const page = u.searchParams.get('cursor') ? 2 : 1;
       const mk = (i, k) => ({ id: k + i + '-' + page, kind: k, live_now: k === 'live', url: 'https://openvibe.video/c/' + i, title: (k === 'post' ? '<b>bold</b> ' : '') + k + ' ' + i + ' page ' + page, text: 'words', at: new Date(Date.now() - i * 60000).toISOString(), site: k === 'pic' ? 'pics' : 'video', site_name: 'Video', actor: { name: 'ada' }, media: k === 'post' || k === 'update' ? {} : { thumb: 'https://openvibe.media/t/x.webp', ratio: 1.7778, length: '0:30' }, counts: { views: 1200, likes: 3 } });
+      if (kind === 'event') { const at = (h) => new Date(Date.now() - h * 3600e3).toISOString(); const y = new Date(Date.now() - 86400e3); y.setHours(12, 0, 0, 0);
+        return J({ items: [
+          { id: 'm', kind: 'member', url: 'https://openvibe.network/stats', title: '3 people joined today', text: '520 people on OpenVibe so far', at: at(0.01), site: 'network', site_name: 'Network', actor: null, media: null, counts: {} },
+          { id: 'c', kind: 'chat', url: 'https://openvibe.chat/rooms/general', title: '#general: 15 messages this hour', text: '', at: at(0.02), site: 'chat', site_name: 'Chat', actor: null, media: null, counts: {} },
+          { id: 'q', kind: 'quest', url: 'https://openvibe.quest/', title: 'Finished a quest: First Post', text: '', at: y.toISOString(), site: 'quest', site_name: 'Quest', actor: { name: 'Josh', avatar: null }, media: null, counts: {} },
+          { id: 'e', kind: 'event', url: 'https://openvibe.today/e/1', title: 'Event: Launch party', text: 'Starts 2026-11-12 18:00 UTC', at: y.toISOString(), site: 'today', site_name: 'Today', actor: null, media: null, counts: {} },
+          { id: 'w', kind: 'wiki', url: 'https://openvibe.wiki/openvibe/japanese-old-guy', title: 'Wiki: openvibe / japanese-old-guy', text: '', at: y.toISOString(), site: 'wiki', site_name: 'Wiki', actor: { name: '2fat', avatar: '' }, media: null, counts: {} },
+        ], next_cursor: null }); }
       const kinds = kind ? [kind] : ['live', 'clip', 'pic', 'post', 'update'];
       return J({ items: Array.from({ length: 12 }, (_, i) => mk(i, kinds[i % kinds.length])), next_cursor: page === 1 ? 'c2' : null }); }
     if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
@@ -79,14 +87,14 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`document.getElementById('openvibe-burger').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open [data-tab="feed"]')`), 'the menu opened');
         await p.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);
-        assert.ok(await until(p, `document.querySelectorAll('.ovf-list > a').length >= 12`), 'the feed painted');
-        const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovf-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovf-chip[aria-selected=true]') || {}).textContent,
-            kinds: [...new Set([...document.querySelectorAll('.ovf-list > a')].map((a) => a.className))], live: !!document.querySelector('.ovf-livechip'), media: document.querySelectorAll('.ovf-media img').length,
-            bolds: document.querySelectorAll('.ovf-list b b').length, posts: [...document.querySelectorAll('.ovf-k-post .ovf-title')].map((b) => b.textContent)[0],
+        assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a').length >= 12`), 'the feed painted');
+        const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovfd-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovfd-chip[aria-selected=true]') || {}).textContent,
+            kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
+            bolds: document.querySelectorAll('.ovfd-list b b').length, posts: [...document.querySelectorAll('.ovfd-k-post .ovfd-title')].map((b) => b.textContent)[0],
             sections: [...document.querySelectorAll('.ovs-group')].map((g) => g.textContent.trim()).filter(Boolean), scroll: document.documentElement.scrollWidth })`);
-        assert.deepStrictEqual(first.chips, ['For you', 'Live', 'Clips', 'Videos', 'Pics', 'Posts', 'Memes', 'Games', 'Updates']);
+        assert.deepStrictEqual(first.chips, ['For you', 'Live', 'Videos', 'Clips', 'Pics', 'Posts', 'Memes', 'Games', 'Chat', 'Events', 'Wiki', 'Quests', 'Updates'], 'signed out: no Following chip');
         assert.strictEqual(first.selected, 'For you');
-        assert.ok(first.kinds.some((c) => /\bovf-k-live\b/.test(c)) && first.kinds.includes('ovf-update') && first.kinds.some((c) => /\bovf-k-pic\b/.test(c)), `cards by kind (${first.kinds})`);
+        assert.ok(first.kinds.some((c) => /\bovfd-k-live\b/.test(c)) && first.kinds.some((c) => /\bovfd-act\b/.test(c) && /\bovfd-k-update\b/.test(c)) && first.kinds.some((c) => /\bovfd-k-pic\b/.test(c)), `cards by kind (${first.kinds})`);
         assert.ok(first.live, 'a channel live now says LIVE (live_now)');
         assert.ok(first.media >= 6, 'media cards show their picture');
         assert.strictEqual(first.bolds, 0, 'what people wrote is text');
@@ -94,11 +102,22 @@ const server = http.createServer((req, res) => {
         assert.ok(!first.sections.some((t) => /New to you|Next from|What's new/.test(t)), `the Feed tab is the stream when the feed answers (${first.sections})`);
         assert.ok(first.scroll <= 390, 'no sideways scroll');
         await p.evaluate(`(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; })()`);
-        assert.ok(await until(p, `document.querySelectorAll('.ovf-list > a').length >= 24`), 'the next page loads as the end comes near');
-        assert.ok(await until(p, `!!document.querySelector('.ovf-caught')`), 'the end says so');
-        await p.evaluate(`[...document.querySelectorAll('.ovf-chip')].find((b) => b.textContent === 'Clips').click(), true`);
+        assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a').length >= 24`), 'the next page loads as the end comes near');
+        assert.ok(await until(p, `!!document.querySelector('.ovfd-caught')`), 'the end says so');
+        await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Clips').click(), true`);
         assert.ok(await until(p, `(window.__feedCalls || []).some((u) => u.includes('kind=clip'))`), 'the chip asks for its kind');
-        assert.ok(await until(p, `[...document.querySelectorAll('.ovf-list > a')].every((a) => a.className === 'ovf-card ovf-k-clip') && document.querySelectorAll('.ovf-list > a').length === 12`), 'only clips, from the first page');
-        console.log('menu-feed-v2-chrome: chips, cards by kind, text only, the next page, caught up, a chip by kind, the stream alone ok');
+        assert.ok(await until(p, `[...document.querySelectorAll('.ovfd-list > a')].every((a) => a.className === 'ovfd-card ovfd-k-clip') && document.querySelectorAll('.ovfd-list > a').length === 12`), 'only clips, from the first page');
+        await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Events').click(), true`);
+        assert.ok(await until(p, `document.querySelectorAll('.ovfd-act').length === 5`), 'every activity kind is one row');
+        const acts = await p.evaluate(`({ titles: [...document.querySelectorAll('.ovfd-act-txt > b')].map((b) => b.textContent), days: [...document.querySelectorAll('.ovfd-day')].map((d) => d.textContent),
+            plus: (document.querySelector('.ovfd-tile-num b') || {}).textContent, date: (document.querySelector('.ovfd-tile-date') || {}).textContent || '', badge: !!document.querySelector('.ovfd-badge svg'),
+            selfImages: [...document.querySelectorAll('.ovfd-list img')].filter((i) => !i.getAttribute('src') || i.src === location.href).length })`);
+        assert.deepStrictEqual(acts.titles, ['3 people joined today', '#general is busy', 'First Post', 'Launch party', 'Japanese old guy'], `rows say what happened (${acts.titles})`);
+        assert.deepStrictEqual(acts.days, ['Today', 'Yesterday'], 'a day line where the day changes');
+        assert.strictEqual(acts.plus, '+3', 'people joined: the count on the tile');
+        assert.ok(/^Nov1[12]$/.test(acts.date), `an event with a start: the date tile (${acts.date})`);
+        assert.ok(acts.badge, 'a quest: the trophy on the face');
+        assert.strictEqual(acts.selfImages, 0, 'no picture means no image (an empty address drew the page itself)');
+        console.log('menu-feed-v2-chrome: chips, cards by kind, text only, the next page, caught up, a chip by kind, the stream alone, activity rows and day lines ok');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((e) => { console.error(e); process.exit(1); });
