@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **The menu's Home.** A site whose links never name its home (Exchange: Models, Chat, Arena…) now gets Home first in
+  "On <site>", and on the home page Home wears the highlight like every other page's link (owner, 11-09). A site that
+  already names its home gets no second one.
+
 - **Footer legal links are 44 px wide to a finger.** On a touch screen, Terms, Privacy, DMCA and the compact links
   reached 36 px across (11-09 tap audit on six sites, `tools/tap-audit.js`); their hit area now extends 5 px each side
   (they sit 20 px apart, so the areas never meet).

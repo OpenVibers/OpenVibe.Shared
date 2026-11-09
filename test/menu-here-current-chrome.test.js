@@ -19,13 +19,13 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 
 const FRAME = { nav: [{ id: 'chat', name: 'Chat', url: 'https://openvibe.chat/', icon: 'chat', group: 'talk' }], groups: [{ id: 'talk', name: 'Talk' }], soon: [], footer: {} };
 const LINKS = [{ label: 'Vibe', href: '/' }, { label: 'Global chat', href: '/global' }, { label: 'Messages', href: '/messages' }, { label: 'Message settings', href: '/messages/settings' }, { label: 'Elsewhere', href: 'https://example.test/messages/abc' }];
-const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Here</title><link rel="icon" href="data:,">
+const PAGE_OF = (links) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Here</title><link rel="icon" href="data:,">
 <script>
   const realFetch = window.fetch;
   window.fetch = (u, o) => (String(u).startsWith('https://openvibe.network/api/frame?') ? Promise.resolve({ ok: true, json: async () => (${JSON.stringify(FRAME)}) }) : String(u).startsWith('https://') ? Promise.resolve({ ok: false, status: 404, json: async () => ({}) }) : realFetch(u, o));
 </script>
 <script src="/shared/navbar.js" defer></script></head><body><div id="navbar-mount"></div>
-<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: null, links: ${JSON.stringify(LINKS)}, countViews: false, notifications: false }); });</script>
+<script>document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: null, links: ${JSON.stringify(links)}, countViews: false, notifications: false }); });</script>
 </body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
         if (!fs.existsSync(path.join(ROOT, m[1]))) { res.writeHead(404); return res.end(); }
         res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, m[1])));
     }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE);
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE_OF(u.searchParams.has('nohome') ? LINKS.filter((l) => l.href !== '/') : LINKS));
 });
 const HERE = `[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.classList.contains('is-here') || a.getAttribute('aria-current')).map((a) => a.textContent + ':' + a.getAttribute('aria-current'))`;
 
@@ -69,6 +69,12 @@ const HERE = `[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) 
         assert.deepStrictEqual(await visit(p, '/messages/settings'), ['Message settings:page'], 'the exact page');
         assert.deepStrictEqual(await visit(p, '/'), ['Vibe:page'], 'the home');
         assert.deepStrictEqual(await visit(p, '/nowhere'), [], 'a page with no link of its own marks none');
+        // A site whose links never name its home (Exchange, 11-09) gets Home first, and the home page wears it.
+        assert.deepStrictEqual(await visit(p, '/?nohome=1'), ['Home:page'], 'Home is added and marked on the home');
+        assert.strictEqual(await p.evaluate(`(document.querySelector('.ovs-links .ovs-link') || {}).textContent`), 'Home', 'Home leads the list');
+        assert.deepStrictEqual(await visit(p, '/messages?nohome=1'), ['Messages:page'], 'elsewhere Home is not marked');
+        assert.strictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.textContent === 'Home').length`), 1, 'one Home');
+        assert.strictEqual(await (async () => { await visit(p, '/'); return p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.textContent === 'Home').length`); })(), 0, 'a site that names its home gets no second one');
 
         // On a computer the menu is a search: the field is focused.
         const d = await h.openPage(browser, context, { width: 1280, height: 900, block: blocked });

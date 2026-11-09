@@ -965,6 +965,11 @@
         // This site's own cards (a drop zone on Download, go-live status on Live, a new task on Codes…).
         for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
         const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
+        // A site's links that never name its home get one first, so the home page has a place of its own in the menu
+        // and wears the highlight there too (owner 11-09, on openvibe.exchange: "shouldn't there be a link to home that's
+        // highlighted").
+        const rootHere = (x) => { try { const u = new URL(x.url, root.location.href); return u.origin === root.location.origin && (u.pathname.replace(/\/+$/, '') || '/') === '/'; } catch { return false; } };
+        if (pages.length && !pages.some(rootHere)) pages.unshift({ title: 'Home', url: '/', icon: 'go', drawn: typeof ctx.navIcon === 'function' ? ctx.navIcon('fa-house') : '', kind: 'page' });
         // The page the person is on wears the highlight (owner 11-08): the link whose path is this page's, or the longest one
         // this page sits under (/messages/abc under Messages); "/" only on the home itself.
         let best = -1, bestLen = -1;
