@@ -227,6 +227,12 @@
 .ovs-starttabs .ovs-tab .ovs-tab-ic { position: relative; flex: none; display: grid; place-items: center; width: 22px; height: 22px; overflow: visible; }
 .ovs-tab-ic > svg { width: 20px; height: 20px; }
 .ovs-tab-ic .ov-icon { display: grid; place-items: center; }
+/* The site's tab wears its glyph like Feed and You (owner, 11-09): no disc and no ring, the glyph at their weight and in
+   the label's colour. The icon's box is drawn larger than the slot so the solid glyph itself is about 18 px. */
+.ovs-tab-ic .ov-icon .ovi-bg, .ovs-tab-ic .ov-icon .ovi-ring, .ovs-tab-ic .ov-icon .ovi-comet, .ovs-tab-ic .ov-icon .ovi-prog { display: none; }
+.ovs-tab-ic .ov-icon { --ovi-glyph: currentColor; color: currentColor; width: 22px; height: 22px; overflow: visible; }
+.ovs-tab-ic .ov-icon svg { width: 40px; height: 40px; margin: -9px; flex: none; }
+@media (max-width: 420px) { .ovs-starttabs .ovs-tab { padding: 0 7px; gap: 6px; font-size: 13.5px; } }
 .ovs-tab-av { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: block; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 18%, transparent); }
 .ovs-tab[aria-selected="true"] .ovs-tab-av { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
 .ovs-tab-on { position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
