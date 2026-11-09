@@ -1059,9 +1059,9 @@
             const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url),
                 image: x.image && /^https:\/\//.test(String(x.image.src || '')) ? String(x.image.src) : null,
                 site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
-            const stale = ages.get(c) > 3 * 86400e3;
+            const stale = isFinite(ages.get(c)) && ages.get(c) > 3 * 86400e3;   // an unknown age is never called old
             const title = stale ? String(c.title).replace(/^New\s+(in|on|from)\s+/i, (m0, w) => `${w[0].toUpperCase()}${w.slice(1)} `).replace(/^New\s+/i, '') : String(c.title);
-            if (rows.length) (ages.get(c) > 14 * 86400e3 && !chosen ? later : groups).push({ title: title.slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
+            if (rows.length) (isFinite(ages.get(c)) && ages.get(c) > 14 * 86400e3 && !chosen ? later : groups).push({ title: title.slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
         // What's new (the owner, 11-07): the newest real change per site, newest first, "New" after this person's last visit.
         if (Array.isArray(changesData) && changesData.length) {
