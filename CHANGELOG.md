@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.158.0 — 2026-11-09
 
 - **The menu's Home.** A site whose links never name its home (Exchange: Models, Chat, Arena…) now gets Home first in
   "On <site>", and on the home page Home wears the highlight like every other page's link (owner, 11-09). A site that
