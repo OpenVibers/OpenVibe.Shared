@@ -396,7 +396,9 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             if (rows.length < 2) return null;
             const wrap = h('div');
             const head = sec('Most used');
-            head.append(h('small', '', 'pages you opened'));
+            // Your stats on Report (private by default; you choose what is public), as the section's link.
+            const more = h('a', 'ovh-link', 'Your stats'); more.href = 'https://openvibe.report/me';
+            head.append(more);
             wrap.append(head);
             const box = h('div', 'ovh-use');
             const bar = h('div', 'ovh-use-bar'); bar.setAttribute('role', 'img');
