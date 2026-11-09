@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.164.0 — 2026-11-09
+
+- **The shell's cache, on every site** (the owner, 11-09: "how come when you change sites it doesn't load more asynchronously
+  and dynamically, so it's faster across sites? … better caching on the client, cross-site and smarter, intelligent, so it's
+  faster, while staying SEO friendly and crawlable?"). `openvibe-sw.js` — the file the notification bell already registered
+  for Web Push — now keeps the shell's files as well: a content-addressed file (a `?v=<hash>`) is served from the cache and
+  never asked for again, any other file is served from the cache and refreshed behind the reader, and a page is always
+  fetched from the network first (3 s) so a crawler and a person read the HTML the server just wrote. The API is never
+  touched; nothing with `Set-Cookie`, `private`, `no-store` or a `Vary` on the reader is ever stored. A site opts in with
+  `OpenVibeNavbar.init({ sw: true })`.
+- **The kill switch**: every worker asks `https://openvibe.network/api/v1/sw-config`; the answer `{ "enabled": false }` makes
+  every worker on every site unregister itself and drop its caches, without a deploy anywhere. A worker that cannot reach the
+  switch keeps working.
+- **103 Early Hints** (`openvibe-shared/sw`): the shell's URLs go out before the HTML does, so the browser starts the navbar
+  and the kit CSS while the server is still writing the page. The same links ride in the page's `Link` header for a proxy
+  that drops the 103. Cloudflare's Early Hints has to be on for the zone.
+- **The rules before the click**: the navbar hands the browser a same-site **prerender** rule beside the prefetch it already
+  had, and prefetches the links to the other OpenVibe sites (`data-ov-net-link`), so the next site is warm when the person
+  arrives. Sign-in, sign-out, the API and the downloads are never fetched ahead of the click.
+
 ## 4.163.0 — 2026-11-09
 
 - **You, redone** (the owner, 11-09: "the U tab still sucks, and you didn't do all the improvements"). You on top: your
