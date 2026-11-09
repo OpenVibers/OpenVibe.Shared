@@ -16,14 +16,15 @@
 .ovrt-wait i{display:block;width:min(200px,50vw);height:3px;border-radius:3px;overflow:hidden;position:relative;background:color-mix(in srgb,var(--accent,#3b82f6) 18%,transparent)}
 .ovrt-wait i::after{content:'';position:absolute;inset:0;width:38%;border-radius:3px;background:var(--accent,#3b82f6);animation:ovrtSlide 1.05s cubic-bezier(.45,0,.2,1) infinite}
 .ovrt-wait small{font-weight:500;font-size:.76rem;opacity:.85;min-height:1.2em;transition:opacity .2s}
-.ovrt-bar{position:fixed;left:0;top:0;height:2px;width:100%;z-index:2147483000;pointer-events:none;transform-origin:0 50%;transform:scaleX(0);opacity:0;background:linear-gradient(90deg,var(--accent,#3b82f6),var(--accent-light,#60a5fa));box-shadow:0 0 8px color-mix(in srgb,var(--accent,#3b82f6) 55%,transparent)}
-.ovrt-bar.is-run{opacity:1;transform:scaleX(.85);transition:transform 2.6s cubic-bezier(.1,.7,.2,1)}
-.ovrt-bar.is-done{opacity:0;transform:scaleX(1);transition:transform .18s ease,opacity .35s .12s}
+.ovrt-bar{position:fixed;left:0;top:0;height:3px;width:100%;z-index:2147483000;pointer-events:none;transform-origin:0 50%;transform:scaleX(0);opacity:0;background:linear-gradient(90deg,var(--accent,#3b82f6),var(--accent-light,#60a5fa) 60%,var(--accent-2,#a78bfa));box-shadow:0 0 10px color-mix(in srgb,var(--accent,#3b82f6) 70%,transparent),0 0 3px var(--accent-light,#60a5fa);border-radius:0 3px 3px 0}
+.ovrt-bar::after{content:'';position:absolute;right:0;top:-2px;width:90px;height:7px;border-radius:50%;background:var(--accent-light,#93c5fd);filter:blur(4px);opacity:.9}
+.ovrt-bar.is-run{opacity:1;transform:scaleX(.88);transition:transform 3s cubic-bezier(.08,.7,.2,1),opacity .1s}
+.ovrt-bar.is-done{opacity:0;transform:scaleX(1);transition:transform .2s ease,opacity .35s .15s}
 .ovrt-enter{animation:ovrtEnter .28s cubic-bezier(.22,1,.36,1) both}
 @keyframes ovrtEnter{from{opacity:0}to{opacity:1}}
 @keyframes ovrtIn{from{opacity:0}to{opacity:1}}
 @keyframes ovrtSlide{from{transform:translateX(-100%)}to{transform:translateX(265%)}}
-@media (prefers-reduced-motion:reduce){.ovrt-enter,.ovrt-wait,.ovrt-wait i::after{animation:none}.ovrt-bar.is-run,.ovrt-bar.is-done{transition:none}}`;
+@media (prefers-reduced-motion:reduce){.ovrt-enter,.ovrt-wait,.ovrt-wait i::after{animation:none}.ovrt-bar.is-run,.ovrt-bar.is-done{transition:none}.ovrt-bar::after{display:none}}`;
     const st = document.createElement('style');
     st.id = 'ovrt-css';
     st.textContent = css;

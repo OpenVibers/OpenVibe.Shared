@@ -36,6 +36,14 @@
                improved"). Never while one of its menus is open. A site turns it off with autoHide: false. */
             .openvibe-navbar.ovnav-hide { transform: translateY(calc(-100% - 10px)); box-shadow: none; }
             #navbar-mount:has(> .ovnav-hide) { pointer-events: none; }
+            /* The top bar while a page changes (4.159.0): the OpenVibe gradient with a soft glow and a bright head that runs. */
+            .ovrt-bar { position: fixed; left: 0; top: 0; height: 3px; width: 100%; z-index: 2147483000; pointer-events: none; transform-origin: 0 50%; transform: scaleX(0); opacity: 0;
+                background: linear-gradient(90deg, var(--accent, #3b82f6), var(--accent-light, #60a5fa) 60%, var(--accent-2, #a78bfa));
+                box-shadow: 0 0 10px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent), 0 0 3px var(--accent-light, #60a5fa); border-radius: 0 3px 3px 0; }
+            .ovrt-bar::after { content: ''; position: absolute; right: 0; top: -2px; width: 90px; height: 7px; border-radius: 50%; background: var(--accent-light, #93c5fd); filter: blur(4px); opacity: .9; }
+            .ovrt-bar.is-run { opacity: 1; transform: scaleX(.88); transition: transform 3s cubic-bezier(.08, .7, .2, 1), opacity .1s; }
+            .ovrt-bar.is-done { opacity: 0; transform: scaleX(1); transition: transform .2s ease, opacity .35s .15s; }
+            @media (prefers-reduced-motion: reduce) { .ovrt-bar.is-run, .ovrt-bar.is-done { transition: none; } .ovrt-bar::after { display: none; } }
             .openvibe-navbar::before { content: ""; position: absolute; inset: 0 0 -28px; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .45s cubic-bezier(.2,.7,.2,1); background: linear-gradient(180deg, rgba(4,7,14,.62), rgba(4,7,14,.28) 55%, rgba(4,7,14,0)); }
             .openvibe-navbar:not(.ovnav-top) { background-color: color-mix(in srgb, var(--bg-secondary, #252530) 84%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px); box-shadow: 0 12px 32px -14px rgba(0,0,0,.6); }
             .openvibe-navbar.ovnav-top { background-color: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -539,7 +547,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'b113a2fd8e93', 'dock.js': 'd1354be66c41', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '267bf753169d' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '04ac8238e9ed', 'dock.js': 'd1354be66c41', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '267bf753169d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1328,6 +1336,23 @@
         document.addEventListener('pointerover', warm, { passive: true, capture: true });
         document.addEventListener('touchstart', warm, { passive: true, capture: true });
         document.addEventListener('focusin', warm, { passive: true, capture: true });
+        // A link that leaves this page shows the top bar at once (the owner, 11-09: "a progress indicator at the very
+        // top… a glow… OpenVibe looking"); Boost's own moves draw the same bar (route-transition.js). Listening on the
+        // window, after the page's own handlers: a click a page or Boost took (defaultPrevented) draws nothing here.
+        if (typeof root.addEventListener !== 'function') return;
+        root.addEventListener('click', (e) => {
+            if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target && e.target.closest && e.target.closest('a[href]');
+            if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
+            let u; try { u = new URL(a.href, root.location.href); } catch { return; }
+            const here = root.location;
+            if (!/^https?:$/.test(u.protocol) || (u.origin === here.origin && u.pathname === here.pathname && u.search === here.search)) return;
+            let b = document.getElementById('ovnav-leave');
+            if (!b) { b = document.createElement('div'); b.id = 'ovnav-leave'; b.className = 'ovrt-bar'; b.setAttribute('aria-hidden', 'true'); document.body.appendChild(b); }
+            b.classList.remove('is-done'); void b.offsetWidth; b.classList.add('is-run');
+        });
+        // Back from the next page (the browser's page cache): the bar is gone.
+        root.addEventListener('pageshow', () => { const b = document.getElementById('ovnav-leave'); if (b) b.classList.remove('is-run'); });
     }
     // The Dock on a tab ('agent' | 'activity'); opts.task marks that step and brings it into view.
     function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }

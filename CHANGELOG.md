@@ -37,6 +37,11 @@
 - **No pill above the headline.** `sc.hero()` no longer draws an eyebrow (the owner, 11-09: the pill above every home's
   headline "looks really cheesy… generic"); the headline and its lede say what the site is. `eyebrow` is ignored.
 
+- **Changing pages feels like one app** (owner, 11-09). A page chosen in the menu closes it (folding into the orb on a
+  phone) without spending Back; a menu still open when a page is swapped in place marks the new page; a link that leaves
+  the page draws the top bar at once. The bar (navbar and Boost alike) is 3 px of the OpenVibe gradient from the theme's
+  accents, with a soft glow and a bright running head; reduced motion keeps it still.
+
 ## 4.158.0 — 2026-11-09
 
 - **The menu's Home.** A site whose links never name its home (Exchange: Models, Chat, Arena…) now gets Home first in
