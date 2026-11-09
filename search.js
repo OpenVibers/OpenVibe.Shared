@@ -1180,10 +1180,8 @@
         const groups = [];
         if (homeLib()) {
             groups.push({ as: 'home', items: [], section: 'home' });
-            const seenH = new Set();
-            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5).map(backRow) : [];
-            groups.push({ title: 'Jump back in', items: backH, section: 'back' });
-            if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
+            // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
+            if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
         }
         if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
@@ -1232,8 +1230,12 @@
             seen.add(id); recentIds.push(id);
             if (recentIds.length >= 5) break;
         }
-        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+        // Jump back in (the last places, newest first) and what this person uses most (pages opened per site).
+        const seenB = new Set();
+        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
+        const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
+        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
             feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
