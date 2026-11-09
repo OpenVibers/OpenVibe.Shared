@@ -556,7 +556,7 @@
                 if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); return; }
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
                 let api = null;
-                try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : H.timeline)(li, homeOpts()); } catch { return; }
+                try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : (H.feed || H.timeline))(li, homeOpts()); } catch { return; }
                 homeViews[g.as] = { li, api };
                 listEl.appendChild(li);
                 return;
@@ -1030,18 +1030,38 @@
         if (wall) groups.push({ as: 'walltop', items: [], section: 'wall-top' });
         const live = liveGroup(); if (live) groups.push(live);
         if (wall) groups.push({ as: 'wall', items: [], section: 'wall' });
+        if (wall && feedV2) return groups;   // Feed v2: the composer, today, the live bar and the stream
         // The network's cards: text and links only (never another site's code), checked here again, with an entry's https
         // picture when it sent one; the person's choice and order, else Network's first two.
         const feeds = f && Array.isArray(f.cards) ? f.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
         const chosen = feedPref();
         // Every feed shows until the person chooses (owner, 11-09: "by default all the feeds show, but you can configure the order").
-        const netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds;
+        let netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds;
+        // Nothing old dressed as new (11-09, the owner: "why is New in the forum first when it's 17 days ago"): a card's age
+        // is its newest item's (a timestamp when the card sends one, else its "3d ago" words); one older than 3 days drops
+        // the word "New" from its title, and until the person orders them, fresher cards come first and month-old ones last.
+        const AGE = { m: 60e3, min: 60e3, h: 3600e3, d: 86400e3, w: 604800e3, mo: 2592e6, y: 31536e6 };
+        const ageOf = (c) => {
+            let best = Infinity;
+            for (const x of c.items || []) {
+                const t = Date.parse(x && (x.at || x.updated_at || x.published_at) || '');
+                if (t) { best = Math.min(best, Date.now() - t); continue; }
+                const m = /(\d+)\s*(min|mo|m|h|d|w|y)\b[^·]*ago/.exec(String(x && x.meta || ''));
+                if (m) best = Math.min(best, Number(m[1]) * AGE[m[2]]);
+            }
+            return best;
+        };
+        const ages = new Map(netCards.map((c) => [c, ageOf(c)]));
+        const later = [];   // cards older than two weeks: after What's new
+        if (!chosen) netCards = netCards.slice().sort((a, b) => (ages.get(a) === Infinity ? 1e15 : ages.get(a)) - (ages.get(b) === Infinity ? 1e15 : ages.get(b)));
         netCards.forEach((c) => {
             const as = c.kind === 'rail' ? 'livebar' : c.kind === 'chips' ? 'chips' : 'rows';
             const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url),
                 image: x.image && /^https:\/\//.test(String(x.image.src || '')) ? String(x.image.src) : null,
                 site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
-            if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
+            const stale = isFinite(ages.get(c)) && ages.get(c) > 3 * 86400e3;   // an unknown age is never called old
+            const title = stale ? String(c.title).replace(/^New\s+(in|on|from)\s+/i, (m0, w) => `${w[0].toUpperCase()}${w.slice(1)} `).replace(/^New\s+/i, '') : String(c.title);
+            if (rows.length) (isFinite(ages.get(c)) && ages.get(c) > 14 * 86400e3 && !chosen ? later : groups).push({ title: title.slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
         // What's new (the owner, 11-07): the newest real change per site, newest first, "New" after this person's last visit.
         if (Array.isArray(changesData) && changesData.length) {
@@ -1066,6 +1086,7 @@
             const today = changesData.filter((e) => e && e.service && !HOUSEKEEPING.test(String(e.subject || '')) && Date.parse(at(e) || 0) > dayAgo).length;
             if (rows.length) groups.push({ title: today ? `What's new (${today} today)` : "What's new", items: rows, section: 'news', more: { label: 'All updates', href: 'https://openvibe.network/updates' } });
         }
+        groups.push(...later);
         // Two places new to this person, rotating fairly through the network (developer services only for builders).
         const builder = all.some((x) => x.group === 'build' && useOf(x.id));
         const discoverPool = (f && Array.isArray(f.discover_ids) && f.discover_ids.length ? f.discover_ids.map((id) => byId.get(id)).filter(Boolean) : ranked)
@@ -1120,7 +1141,7 @@
     // ── The home screen and the wall (ov-home.js, 2026-11-09): loaded beside this file the first time You or Feed
     // paints; until it arrives (or if it cannot), the tabs paint as before.
     // One view of each per opening: a repaint (history or the catalogue arriving) keeps edit mode, a drag, a half-typed post.
-    let homeLoading = false, pulseReady = null, homeViews = {};
+    let homeLoading = false, pulseReady = null, homeViews = {}, feedV2 = false;
     function homeLib() {
         if (root.OpenVibeHome) return root.OpenVibeHome;
         if (homeLoading || typeof ctx.sibling !== 'function') return null;
@@ -1148,7 +1169,9 @@
         }
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, groups: f && Array.isArray(f.groups) ? f.groups : [],
             token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
-            pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })) };
+            pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
+            // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
+            feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
     }
 
     function renderTab() {

@@ -31,6 +31,16 @@ const P = {
     menu: 'M4 7h16M4 12h16M4 17h16',
     chev: 'M8 10l4 4 4-4',
     copy: 'M9 9h10v10H9zM5 15V5h10',
+    retry: 'M4 12a8 8 0 0 1 14-5.3M20 4v4.5h-4.5M20 12a8 8 0 0 1-14 5.3M4 20v-4.5h4.5',
+    like: 'M7 11v9H4v-9zM7 11l4-7c1.5 0 2.5 1 2.5 2.5L13 10h5.5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.3 20H7',
+    dislike: 'M7 13V4H4v9zM7 13l4 7c1.5 0 2.5-1 2.5-2.5L13 14h5.5a2 2 0 0 0 2-2.3l-1.2-6A2 2 0 0 0 17.3 4H7',
+    share: 'M12 15V4M8 8l4-4 4 4M5 13v6h14v-6',
+    edit: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
+    photo: 'M4 6h16v12H4zM4 15l4.5-4 3.5 3 2.5-2 5.5 4.5M15.5 9.5h.01',
+    camera: 'M4 8h3.5L9 5.5h6L16.5 8H20v11H4zM12 11a3 3 0 1 1 0 6 3 3 0 0 1 0-6z',
+    file: 'M6 3h8l4 4v14H6zM14 3v4h4',
+    cloud: 'M7 18h10.5a3.5 3.5 0 0 0 .3-7 5.5 5.5 0 0 0-10.6-1.5A4 4 0 0 0 7 18z',
+    add: 'M12 5v14M5 12h14',
     more: 'M5 12h.01M12 12h.01M19 12h.01',
     tool: 'M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z',
     ok: 'M5 12l5 5 9-10',
@@ -42,6 +52,7 @@ const P = {
     send: 'M5 12l14-7-5 14-2.5-5.5z',
     stop: 'M7 7h10v10H7z',
     attach: 'M16.5 6.5l-8 8a2.5 2.5 0 0 0 3.5 3.5l8-8a4.5 4.5 0 0 0-6.4-6.4l-8 8',
+    options: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5',
     handover: 'M4 8h13l-3-3M20 16H7l3 3',
     wait: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
     panel: 'M4 4h16v16H4zM15 4v16',
@@ -192,8 +203,10 @@ ${r.output != null ? `<pre class="ovt-w-out">${esc(clip(r.output, 1500))}</pre>`
 function answer({ html = '', files: att = [], sources = [], meta = [], actions = [], copy = true } = {}) {
     const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return clip(u, 40); } };
     const acts = [
-        copy ? `<button type="button" class="ovt-act" data-ovt-copy hidden>${icon('copy')}<span>Copy</span></button>` : '',
-        ...actions.map((a) => `<a class="ovt-act" href="${esc(a.href)}">${icon(a.icon || 'more')}<span>${esc(a.label)}</span></a>`),
+        // Icon buttons, as every assistant draws them (11-09, the owner: "Copy and Try again should be actual icons"): the
+        // word is the tooltip and the accessible name.
+        copy ? `<button type="button" class="ovt-act" data-ovt-copy title="Copy" aria-label="Copy" hidden>${icon('copy')}<span class="ovt-sr">Copy</span></button>` : '',
+        ...actions.map((a) => `<a class="ovt-act" href="${esc(a.href)}" title="${esc(a.label)}" aria-label="${esc(a.label)}">${icon(a.icon || (/again|retry/i.test(String(a.label)) ? 'retry' : 'more'))}<span class="ovt-sr">${esc(a.label)}</span></a>`),
     ].join('');
     return `<div class="ovt-answer" data-ovt-answer>${html}</div>
 ${files(att)}
@@ -231,6 +244,32 @@ function panel({ id = 'ovt-panel', title = 'Details', sections = [] } = {}) {
 }
 
 /**
+ * Attach (11-09, the owner: "a better file attach button… support all file types"): one + button. Every file type by
+ * default (attach.accept narrows it). With attach.menu, a small menu: Files, Photos and videos, Take a photo (a phone's
+ * camera), and From your OpenVibe files when the site gives attach.library (an href). All the inputs share one name, so
+ * the plain form posts them all.
+ */
+function attachHtml(attach) {
+    const name = esc(attach.name || 'files');
+    const input = (accept, extra = '') => `<input type="file" name="${name}"${accept ? ` accept="${esc(accept)}"` : ''} multiple data-ovt-files${extra} hidden>`;
+    if (!attach.menu) return `<label class="ovt-btn ovt-attach" title="Attach files">${icon('add')}<span class="ovt-sr">Attach files</span>${input(attach.accept)}</label>`;
+    const row = (ic, label, inner) => `<label class="ovt-attach-row" role="menuitem">${icon(ic)}<span>${esc(label)}</span>${inner}</label>`;
+    return `<details class="ovt-attach-menu" data-ovt-attach><summary class="ovt-btn ovt-attach" title="Attach" aria-label="Attach">${icon('add')}</summary><div class="ovt-attach-pop" role="menu">`
+        + row('file', 'Files', input(attach.accept))
+        + row('photo', 'Photos and videos', input('image/*,video/*'))
+        + `<label class="ovt-attach-row ovt-attach-cam" role="menuitem">${icon('camera')}<span>Take a photo</span>${input('image/*', ' capture="environment"')}</label>`
+        + (attach.library ? `<a class="ovt-attach-row" role="menuitem" href="${esc(attach.library)}">${icon('cloud')}<span>From your OpenVibe files</span></a>` : '')
+        + '</div></details>';
+}
+
+/** The composer's Options: one button, the pickers behind it, and the chips of what differs from the defaults. */
+function optionsHtml({ html, label = 'Options' }) {
+    return `<details class="ovt-opts" data-ovt-opts><summary class="ovt-btn ovt-opts-btn" aria-label="${esc(label)}" title="${esc(label)}">${icon('options')}<i class="ovt-opts-dot" aria-hidden="true"></i></summary>`
+        + `<div class="ovt-opts-panel" role="group" aria-label="${esc(label)}"><div class="ovt-opts-head"><b>${esc(label)}</b><button type="button" class="ovt-btn ovt-opts-x" data-ovt-opts-close aria-label="Done">${icon('close')}</button></div><div class="ovt-opts-body">${html}</div></div></details>`
+        + '<span class="ovt-opts-chips" data-ovt-opts-chips></span>';
+}
+
+/**
  * The composer, at the bottom of the screen: a box that grows as you type, the caller's tools (a mode chip, a model
  * chip, attach), and Send, which becomes Stop while a turn works (busy). Works as a plain form without script.
  *   hidden: { parent: 'tsk_…' };  starters: ['Plan a weekend in Lisbon', …] (shown on an empty chat)
@@ -239,15 +278,20 @@ function panel({ id = 'ovt-panel', title = 'Details', sections = [] } = {}) {
  *   id, attrs: the form's id (inputs outside it join it with form="id") and the site's data attributes
  *   foot: the site's safe markup under the bar (where the work runs, recent repositories); note: a quiet line under that,
  *   which is also the form's status line (role="status": a site's script says "Sending…" there)
+ *   options: { html, label } the site's safe pickers behind one Options button (11-09, the owner: "too many options…
+ *   hidden under a cog"): a panel on a computer, a sheet on a phone, a <details> without script. A picker whose
+ *   <select> or radio group carries data-ovt-default="<value>" shows as a chip beside the button while it differs
+ *   (its × puts the default back), and the button wears a dot.
+ *   examples: ['Make the home page faster on phones', …] the box's placeholder walks through them while it is empty
  */
-function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '' } = {}) {
+function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '', options = null, examples = [] } = {}) {
     const extra = Object.entries(attrs || {}).map(([k, v]) => attr(k, v)).join('');
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
     return `${starters.length ? `<div class="ovt-starters">${starters.map((s) => `<button type="button" class="ovt-starter" data-ovt-starter="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
 <form class="ovt-composer${busy ? ' is-busy' : ''}"${attr('id', id)} method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}${extra}>${hid}
 ${top || ''}<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
-<textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
-<div class="ovt-c-row"><div class="ovt-c-tools">${attach ? `<label class="ovt-btn ovt-attach" title="Attach files">${icon('attach')}<span class="ovt-sr">Attach files</span><input type="file" name="${esc(attach.name || 'files')}"${attach.accept ? ` accept="${esc(attach.accept)}"` : ''} multiple data-ovt-files hidden></label>` : ''}${tools || ''}</div>
+<textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''}${examples && examples.length ? ` data-ovt-examples="${esc(JSON.stringify(examples.slice(0, 12).map((x) => String(x).slice(0, 140))))}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
+<div class="ovt-c-row"><div class="ovt-c-tools">${attach ? attachHtml(attach) : ''}${tools || ''}${options && options.html ? optionsHtml(options) : ''}</div>
 ${stopAction != null ? `<button type="submit" class="ovt-stop"${stopAction ? ` formaction="${esc(stopAction)}" formnovalidate` : ''}${busy && stopAction ? '' : ' hidden'} data-ovt-stop>${icon('stop')}<span>Stop</span></button>` : ''}<button type="submit" class="ovt-send" data-ovt-send aria-label="${esc(sendLabel)}">${icon('send')}<span class="ovt-sr">${esc(sendLabel)}</span></button></div>
 ${foot || ''}<p class="ovt-c-note" data-ovt-note role="status">${esc(note || '')}</p>
 </form>`;

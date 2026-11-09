@@ -7,7 +7,7 @@ const fs = require('fs');
 const path = require('path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'ov-home.js'), 'utf8');
-assert.ok(/root\.OpenVibeHome = \{ home, wallTop, timeline, loadPulse/.test(src), 'it exposes the home screen and the wall');
+assert.ok(/root\.OpenVibeHome = \{ home, wallTop, timeline, feed, loadPulse/.test(src), 'it exposes the home screen, the wall and the feed');
 assert.ok(!/\.innerHTML\s*=/.test(src) && !/insertAdjacentHTML/.test(src), 'it never writes markup');
 assert.ok(/const safe = \(u\) =>/.test(src) && /x\.protocol === 'https:' \|\| x\.origin === location\.origin/.test(src), 'links are https or this site only');
 assert.ok(/localStorage\.setItem\(HOME_KEY/.test(src) && /\/api\/v1\/me\/home-screen/.test(src), 'the arrangement is kept here and on Network');
