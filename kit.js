@@ -344,11 +344,12 @@
     /**
      * A segmented choice (three or four) as radios that look like one control: items [{ value, label, icon }]. The
      * value still posts as the radio group's; the input is the browser's, only drawn differently, so it works without
-     * JavaScript. Without a label the control stands alone (a form puts its own label above it).
+     * JavaScript. Without a label the control stands alone (a form puts its own label above it) and `ariaLabel` names
+     * the group; label draws a labelled row.
      */
-    function segmented({ name, items = [], value = '', label = '' } = {}) {
+    function segmented({ name, items = [], value = '', label = '', ariaLabel = '' } = {}) {
         const id = `ovk-seg-${String(name).replace(/[^A-Za-z0-9_-]/g, '-')}`;
-        const control = `<span class="ovk-seg ovk-seg--fill" role="radiogroup"${label ? ` aria-labelledby="${id}"` : ` aria-label="${esc(name)}"`}>${items.map((it) => `<label class="ovk-seg-item"><input type="radio" name="${esc(name)}" value="${esc(it.value)}"${String(it.value) === String(value) ? ' checked' : ''}><span>${it.icon ? icon(it.icon) : ''}${esc(it.label)}</span></label>`).join('')}</span>`;
+        const control = `<span class="ovk-seg ovk-seg--fill" role="radiogroup"${label ? ` aria-labelledby="${id}"` : ` aria-label="${esc(ariaLabel || name)}"`}>${items.map((it) => `<label class="ovk-seg-item"><input type="radio" name="${esc(name)}" value="${esc(it.value)}"${String(it.value) === String(value) ? ' checked' : ''}><span>${it.icon ? icon(it.icon) : ''}${esc(it.label)}</span></label>`).join('')}</span>`;
         return label ? `<div class="ovk-set-row ovk-set-seg"><span class="ovk-set-text" id="${id}">${esc(label)}</span>${control}</div>` : control;
     }
     /** Chips: checkboxes (or radios: single) that look like small pills, for filters and "which of these". options: [[value, label, checked]]. */

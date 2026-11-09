@@ -67,6 +67,7 @@ const kit = require('../kit');
     const segments = kit.segmented({ name: 'visibility', value: 'unlisted', items: [{ value: 'public', label: 'Public', icon: 'globe' }, { value: 'unlisted', label: 'Unlisted', icon: 'link' }, { value: 'private', label: 'Private', icon: 'lock' }] });
     assert.ok(segments.startsWith('<span class="ovk-seg ovk-seg--fill" role="radiogroup"') && segments.includes('aria-label="visibility"'));
     assert.ok(segments.includes('value="unlisted" checked') && segments.includes('class="ovk-seg-item"') && segments.includes('class="ovk-i"'), 'segments carry icons');
+    assert.ok(kit.segmented({ name: 'v', ariaLabel: 'Who sees it', items: [{ value: 'a', label: 'A' }] }).includes('aria-label="Who sees it"'), 'a standalone group still has words');
     assert.ok(kit.segmented({ name: 'v', label: 'Who sees it', items: [{ value: 'a', label: 'A' }] }).includes('aria-labelledby="ovk-seg-v"'), 'a label names the group');
     assert.ok(kit.chips({ name: 'src', options: [['kick', 'Kick', true], ['yt', 'YouTube', false]] }).includes('name="src_kick" value="1" checked'));
     const f = kit.fold({ id: 'oc-ai', title: 'AI members', meta: '2', body: '<p>x</p>' });
