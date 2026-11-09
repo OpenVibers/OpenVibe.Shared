@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.178.0 — 2026-11-09
+
+**What's new reads like news (plan §9).** `shipped.js` uses the tags Blog now writes on every change (`kind`: new,
+better, fixed, internal; `areas`; `plain` words) and the newest devblog Network's changelog proxy carries.
+- The card (`render`): titled "What's new"; the newest devblog leads it with its picture, title and summary; each row
+  shows its kind as a word tag and up to two area chips, in plain words with the commit subject as its title;
+  internal changes count as housekeeping and stay out of the card, like pin bumps.
+- The updates page (`log`): the same row; a second chip row filters by kind (All changes, New, Better, Fixed, and
+  `?kind=` in the address); internal work gathers at the end of its day in one fold that says how many
+  ("3 housekeeping changes"); pin bumps keep their grouped row ("Shared 4.177.0 reached 41 sites").
+- Without the tags (older entries), rows read as before.
+
 ## 4.177.0 — 2026-11-09
 
 - **`openvibe-shared/offer-card`: one offer from the network's shops** (`offer-card.js`, styles in `kit-data.css`). It
