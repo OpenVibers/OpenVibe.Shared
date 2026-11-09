@@ -91,9 +91,8 @@
         function rows(items, target) { const list = h('ul', 'ovdk-runs'); grouped(items).forEach((group) => { if (group.length === 1) list.append(row(group[0])); else { const li = row(group[0]); const b = h('button', 'ovdk-run-repeat', `×${group.length} similar runs · Show all`); const details = h('ul', 'ovdk-runs'); details.hidden = true; group.slice(1).forEach((it) => details.append(row(it))); b.addEventListener('click', () => { details.hidden = !details.hidden; b.textContent = details.hidden ? `×${group.length} similar runs · Show all` : 'Hide repeats'; }); li.querySelector('.ovdk-run-sub').append(b, details); list.append(li); } }); target.append(list); }
         async function skills(box) {
             try {
-                const res = await fetch(`${String(o.actorBase).replace(/\/+$/,'')}/api/v1/skills`, { headers: { accept: 'application/json' } });
-                if (!res.ok) return;
-                const data = await res.json();
+                // Through Network (every site's connect-src reaches openvibe.network and refuses openvibe.actor).
+                const data = await request('/api/v1/me/actions/skills');
                 const available = (data.listings || []).filter((x) => x && x.skill && x.scan && x.scan.state === 'passed' && x.curator && x.curator.state === 'active').slice(0, 6);
                 if (!available.length) return;
                 box.append(h('h3', '', 'Things agents can do for you'));

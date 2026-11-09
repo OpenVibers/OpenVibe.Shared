@@ -72,7 +72,7 @@ assert.ok(runs.includes('Today'), "the overview says today's numbers");
 assert.ok(runs.includes('This week'), 'and this week\'s');
 assert.ok(runs.includes('Last results'), 'the overview keeps the last results');
 assert.ok(runs.includes('Things agents can do for you'), 'the overview offers the catalogue');
-assert.ok(runs.includes('/api/v1/skills'), 'the catalogue is Actor\'s');
+assert.ok(runs.includes('/api/v1/me/actions/skills'), 'the catalogue is Actor\'s, read through Network');
 assert.ok(runs.includes("'All runs'"), 'the foot keeps All runs');
 assert.ok(runs.includes("'Give an agent a task'"), 'and Give an agent a task');
 

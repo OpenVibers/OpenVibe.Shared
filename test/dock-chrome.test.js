@@ -129,8 +129,8 @@ const server = http.createServer((req, res) => {
             return json(200, { state: scenario.state || defaultState(), counts: scenario.counts || { running: 0, waiting: 0, unread: 0 }, sources_partial: false });
         }
         if (u.pathname === '/api/v1/me/actions') return json(200, scenario.actions || ACTIONS);
-        // Actor's skill catalogue, as the Dock's overview reads it.
-        if (u.pathname === '/api/v1/skills') return json(200, { listings: (scenario.skills || [1, 2, 3, 4, 5, 6]).map((n) => ({
+        // Actor's skill catalogue, as the Dock's overview reads it: through Network's actions.
+        if (u.pathname === '/api/v1/me/actions/skills') return json(200, { listings: (scenario.skills || [1, 2, 3, 4, 5, 6]).map((n) => ({
             id: `skl_${n}`, skill: { slug: `skill-${n}`, name: ['Make an image', 'Make a wiki article', 'Write a blog post', 'Improve an article', 'Make a meme', 'Summarise a thread'][n - 1] },
             scan: { state: 'passed' }, curator: { state: 'active' } })) });
         // Codes' agent view (K-D3): the stream, its two controls, and the still.
