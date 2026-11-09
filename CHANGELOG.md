@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Homes v2: `openvibe-shared/showcase-stage`** (plan `OpenVibe_Homes_v2_Plan_2026-11-09.md`; the owner, 11-09: "make the
+  home pages more unique… show the features… custom animations… infographics… a shared, modular system… still SEO
+  friendly"). `stage()` is a hero with one H1, the lede and a live demo panel of the product (the site's own HTML in a
+  window, phone or card frame) over the site's motif (13 drawn motifs: wave, planes, strip, shutter, bubbles, converge,
+  rise, path, stickers, grid, pen, orbit, cursor); `reel()` features as cards that swipe on a phone with a small motion
+  each; `numbers()` real numbers that roll up once with 30-day lines; `flow()` how it works with a line that draws.
+  Server-rendered words and numbers; motion only adds, never inside an SVG's children, and stops for reduced motion and
+  Calm. Its CSS (`CSS`) and starter (`MOTION_JS`) are separate, so homes that do not use it do not grow.
+
+## Unreleased
+
 - **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
   the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
   places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
