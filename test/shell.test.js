@@ -93,4 +93,17 @@ assert.ok(withSummary.indexOf('</head>') < withSummary.indexOf('<noscript><secti
     assert.match(shellLib.page({ name: 'X', navbar: { service: 'games' }, body: '' }), /data-ov-service="games"/);
     assert.doesNotMatch(shellLib.page({ name: 'OpenVibe.Design', body: '' }), /data-ov-service/, 'a display name is not an id');
 }
+// ── The tab icon (4.157.0): the service's mark unless the page brings its own; `favicon: false` opts out ──
+{
+    const withIcon = shell.page({ name: 'OpenVibe.Email', service: 'mail', body: '' });
+    const icons = withIcon.match(/<link rel="icon"[^>]*>/g) || [];
+    assert.equal(icons.length, 1, 'one tab icon');
+    assert.match(icons[0], /type="image\/svg\+xml" data-ov-icon="[a-z0-9-]+" href="data:image\/svg\+xml,%3Csvg/, 'an inline SVG of the mark');
+    assert.ok(!/['"<>]/.test(icons[0].slice(icons[0].indexOf('href="') + 6, -2)), 'the data URI is fully encoded');
+    assert.ok(withIcon.indexOf(icons[0]) < withIcon.indexOf('</head>'), 'in the head');
+    const own = shell.page({ name: 'X', service: 'mail', head: '<link rel="icon" href="/icon.svg">', body: '' });
+    assert.equal((own.match(/rel="icon"/g) || []).length, 1, 'a page with its own icon keeps only that one');
+    assert.doesNotMatch(shell.page({ name: 'X', service: 'mail', favicon: false, body: '' }), /rel="icon"/, 'favicon: false opts out');
+    assert.match(shell.page({ name: 'Plain', body: '' }), /data-ov-icon="network"/, 'no service: the network mark');
+}
 console.log('shell: all checks passed');
