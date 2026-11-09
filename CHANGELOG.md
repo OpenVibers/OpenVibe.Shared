@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.173.0 — 2026-11-09
+
+- **OpenVibe Link**: the shared navigation's Machines entry points at openvibe.link/machines instead of the old
+  node host, and the shipped-services list names the product Link. No API changes.
+
 ## 4.171.0 — 2026-11-09
 
 - **The page head's icon and actions sit on the title's first line** (`kit.pageHead`): a title that wraps to three
