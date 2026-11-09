@@ -444,3 +444,22 @@ html[data-ov-motion=reduced] .ovk-skel { animation: none; }
 .ovk-ask { border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, var(--border, #2a3345)); }
 .ovk-ask .ovk-i { color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovk-ask:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+
+/* Page identity: a named way back, an icon and actions; the full lede stays in the HTML. */
+.ovk-page-head{margin:0 0 24px;min-width:0}
+.ovk-page-back{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;margin-bottom:12px;border:1px solid var(--border);border-radius:999px;color:var(--text-secondary);text-decoration:none;font-weight:650}
+.ovk-page-head-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+.ovk-page-head-row h1{flex:1 1 160px;min-width:0;margin:0;font-size:clamp(1.5rem,3vw,2.2rem);line-height:1.2;overflow-wrap:anywhere}
+.ovk-page-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
+.ovk-page-lede{color:var(--text-secondary);margin:12px 0 0;max-width:70ch}
+.ovk-page-about{display:none}
+.ovk-page-back:focus-visible,.ovk-page-about summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:760px){
+ .ovk-page-lede{display:none}
+ .ovk-page-about{display:block;color:var(--text-secondary);margin-top:8px}
+ .ovk-page-about summary{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;list-style:none}
+ .ovk-page-about summary::-webkit-details-marker{display:none}
+ .ovk-page-about summary span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .ovk-page-about summary b{flex:none;font-size:.8rem;color:var(--text-primary);text-decoration:underline;text-underline-offset:3px}
+ .ovk-page-about p{margin:4px 0 0;overflow-wrap:anywhere}
+}
