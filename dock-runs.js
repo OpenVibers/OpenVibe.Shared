@@ -27,6 +27,8 @@
     const cash = (n) => n == null ? '' : Number(n) < .01 ? `$${Number(n).toFixed(4)}` : `$${Number(n).toFixed(2)}`;
     const iconOf = (it) => { const s = String(it.skill || it.subject && it.subject.kind || it.kind || ''); return /post|blog|write|changelog|draft|patch/.test(s) ? ['fa-pen','#d7974d'] : /wiki|article|research/.test(s) ? ['fa-book','#9875d8'] : /image|pic|meme/.test(s) ? ['fa-image','#d66bad'] : /chat|thread/.test(s) ? ['fa-comments','#61a9d7'] : /code|repo/.test(s) ? ['fa-code','#63b89c'] : /clip|stream|video/.test(s) ? ['fa-film','#dc866a'] : /quest/.test(s) ? ['fa-flag','#b9a74b'] : ['fa-sparkles','#8b92d9']; };
     const isUrl = (u) => /^https:\/\//.test(String(u || ''));
+    // Where a person picks the model a run uses, or adds their own key.
+    const MODEL_PAGE = 'https://openvibe.actor/chat/model';
     function mount(panel, o) {
         const st = o.styles && o.styles(); if (st && !st.textContent.includes('.ovdk-overview{')) st.textContent += CSS;
         let doc = null, busy = false, timer = 0, filter = o.state().agent_filter || 'all';
@@ -53,10 +55,13 @@
                 b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/${action}`, { method: 'POST', body: '{}' }); b.textContent = action === 'approve' ? 'Approved' : 'Declined'; } catch { b.disabled = false; b.textContent = 'Try again'; } }); acts.append(b);
             }
             const url = it.subject && it.subject.url || it.href; if (isUrl(url)) { const a = h('a', '', 'Open'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; acts.append(a); }
+            // The error's own action says what the person can do about it: pick a model, add a key, or wait.
+            const what = error && error.action;
+            if (it.bucket === 'failed' && (what === 'pick_model' || what === 'add_key')) { const a = h('a', '', what === 'pick_model' ? 'Pick a model' : 'Add a key'); a.href = MODEL_PAGE; a.target = '_blank'; a.rel = 'noopener'; acts.append(a); }
             if (it.bucket === 'running' && (it.actions || []).includes('cancel')) { const b = h('button', '', 'Stop'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/cancel`, { method: 'POST', body: '{}' }); refresh(); } catch { b.disabled = false; } }); acts.append(b); }
             if (it.bucket === 'failed' && (it.actions || []).includes('retry')) { const b = h('button', '', 'Retry'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/retry`, { method: 'POST', body: '{}' }); refresh(); } catch { b.disabled = false; } }); acts.append(b); }
             if (it.service === 'actor' && (it.kind === 'agent_task') && ['done', 'failed'].includes(it.bucket)) { const menu = h('details'); const summary = h('summary', '', 'More'); menu.append(summary); const list = h('menu');
-                const choose = h('li'); const a = h('a', '', 'Choose another model'); a.href = 'https://openvibe.actor/chat/model'; a.target = '_blank'; a.rel = 'noopener'; choose.append(a); list.append(choose);
+                const choose = h('li'); const a = h('a', '', 'Run again with another model'); a.href = MODEL_PAGE; a.target = '_blank'; a.rel = 'noopener'; choose.append(a); list.append(choose);
                 const rerun = h('li'); const b = h('button', '', 'Run again'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/actor/${encodeURIComponent(it.id)}/retry`, { method: 'POST', body: '{}' }); menu.open = false; refresh(); } catch { b.disabled = false; b.textContent = 'Try again'; } }); rerun.append(b); list.append(rerun); menu.append(list); acts.append(menu); }
             body.append(acts); li.append(ic, body); if (root.OVGlyphs) root.OVGlyphs.swap(li); return li;
         }

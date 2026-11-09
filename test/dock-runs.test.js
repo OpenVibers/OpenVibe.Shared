@@ -56,7 +56,9 @@ assert.ok(!/innerHTML\s*=\s*[^;]*error/.test(runs), 'no error is written as mark
 assert.ok(runs.includes("'Open'"), 'a row can be opened');
 assert.ok(runs.includes("'Retry'"), 'a failed run can be retried');
 assert.ok(runs.includes("'Stop'"), 'a running run can be stopped');
-assert.ok(runs.includes('Choose another model'), 'a run can be made again with another model');
+assert.ok(runs.includes('Run again with another model'), 'a run can be made again with another model');
+assert.ok(runs.includes('Pick a model'), 'a failure that needs a model says so');
+assert.ok(runs.includes('Add a key'), 'and one that needs a key says so');
 
 // ── repeats fold into one row ───────────────────────────────────────────────
 assert.ok(runs.includes('grouped'), 'the runs are grouped');

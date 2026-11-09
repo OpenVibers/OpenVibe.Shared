@@ -106,7 +106,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '91f5eeb6e25d', 'dock-runs.js': 'd51559539b4b', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '91f5eeb6e25d', 'dock-runs.js': 'd16044fb2a5d', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
