@@ -447,6 +447,9 @@
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(6):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .openvibe-navbar-dropdown-menu .ud-grid .ud-tile { min-height: 60px; padding: 7px 2px 6px; gap: 5px; }
+            .openvibe-navbar-dropdown-header { padding-top: 12px; padding-bottom: 10px; }
+            .openvibe-navbar-dropdown-header .ud-me img { width: 52px; height: 52px; }
             /* The balances in the header: OpenCoins and Vibes side by side, each a coloured icon, a number and its name. */
             .openvibe-navbar-dropdown-header .ud-wallet a small { font-weight: 600; opacity: .75; font-size: 10.5px; }
             /* On a phone the menu is a sheet the width of the screen under the bar, not a narrow card off to the right. */
@@ -2120,6 +2123,9 @@
                 !isAnon ? { id: 'ov-work', label: 'Work together', short: 'Work', drawn: navIcon('fa-people-group'), href: 'https://openvibe.chat/work', mark: 'data-ov-work' } : null,
                 bell && _config.dock !== false ? { id: 'ov-dock', label: 'The Dock: your agents and activity on every page', short: 'Dock', drawn: DOCK_GLYPH, mark: 'data-ov-dock' } : null,
                 admin ? { id: 'ov-admin', label: 'Admin', drawn: navIcon('fa-shield-halved'), href: 'https://openvibe.network/admin' } : null,
+                // 11-09, the owner: "wasted space… more buttons": your wallet and your profile, so the grid fills its rows.
+                !isAnon ? { id: 'ov-wallet', label: 'Wallet', drawn: navIcon('fa-wallet'), href: 'https://openvibe.network/my#wallet' } : null,
+                !isAnon && u.username ? { id: 'ov-profile', label: 'Profile', drawn: navIcon('fa-id-card'), href: `https://openvibe.network/@${encodeURIComponent(u.username)}` } : null,
             ].filter(Boolean));
             const ranked = byUse(places), grid = ranked.slice(0, 8), more = ranked.slice(8);
             const others = otherAccounts.filter(a => switcher || !a.is_anon);
