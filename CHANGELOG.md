@@ -2,12 +2,13 @@
 
 ## 4.173.0 — 2026-11-09
 
-- **The wallet works on sites that sign people in with their own cookie** (`navbar.js`, `ov-wallet.js`). 4.170's
-  chips and sheet sent only a Bearer token. Events, Space, Design and most sites hand the navbar none, so since the
-  4.172 round their chips sat at "…" and Wallet did not open. With no token, the chips and the sheet now ask Network's
-  relay with the person's Network session cookie (`credentials: 'include'`; Network #724 turns it into the Bearer, only
-  for allowed origins). A wallet that cannot be read hides the chips instead of leaving "…". `OpenVibeWallet.open`
-  takes `cookieSession: true`.
+- **The wallet works on sites that keep the access cookie from page scripts** (`navbar.js`, `ov-wallet.js`). 4.170's
+  chips and sheet sent only a Bearer token. The sites on `openvibe-sdk/sso` with `httpOnlyAccess` (Actor, Bench, Casino,
+  Codes, Connect, Design, Exchange, Vision) hand the navbar none, so their chips sat at "…" and Wallet did not open.
+  With no token, the chips and the sheet now ask Network's relay with the person's Network session cookie
+  (`credentials: 'include'`; Network #724 turns it into the Bearer, only for allowed origins). A wallet that cannot be
+  read hides the chips instead of leaving "…". `OpenVibeWallet.open` takes `cookieSession: true`. Sites whose navbar
+  reads `ov_token` are unchanged.
 - **The wallet sheet goes by its content hash** (`scripts/sibling-revs.js`): `ov-wallet.js` and `ov-wallet.css` were
   loaded without `?v=` since 4.170, so a fix reached phones up to a day late.
 
