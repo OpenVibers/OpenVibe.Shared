@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.169.0 — 2026-11-09
+
+- **kit.switchRow, redrawn** (ask 44, the paste form: "polish and align it: switches, sizes"): an icon tile, a title and
+  one muted line, then an iOS-style switch; the whole 56 px row is the target and the switch is the checkbox itself
+  (`role="switch"`), so a form still posts without JavaScript. The older `label`/`hint`/`on` names still work.
+- **kit.segmented**: three or four equal choices in one 44 px control, icons before the words; radios underneath, so
+  the value posts as a radio group's. Without a label it stands alone (a form puts its own label above it).
+- Glyphs: `flame` and `eye-off` (Burn after reading, Hide).
+
 ## 4.168.0 — 2026-11-09
 
 - **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows

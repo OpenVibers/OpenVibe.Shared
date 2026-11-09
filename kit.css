@@ -236,6 +236,8 @@ div.ovk-set-row { cursor: default; }
 .ovk-seg--fill .ovk-seg-item { flex: 1 1 0; min-width: 0; }
 .ovk-seg--fill span { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ovk-seg--fill .ovk-i { flex: none; width: 16px; height: 16px; }
+/* Straight in a section (no label row around it), it keeps the rows' inset instead of running to the card's edges. */
+.ovk-section > .ovk-seg--fill { width: auto; margin: 10px 12px 6px; }
 .ovk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ovk-chip span { display: inline-flex; align-items: center; min-height: 32px; box-sizing: border-box; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--ovk-line); color: var(--ovk-muted); font-size: .86rem; font-weight: 650; cursor: pointer; }
 .ovk-chip input:checked + span { border-color: color-mix(in srgb, var(--ovk-accent) 55%, transparent); background: color-mix(in srgb, var(--ovk-accent) 14%, transparent); color: var(--ovk-text); }
