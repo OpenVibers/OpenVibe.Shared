@@ -20,13 +20,14 @@
  *              tabs: kit.tabs({ base: '/settings', items: [{ key: 'look', label: 'Look' }, …], active }) })
  *   kit.tabOf(req.query, ['look', 'sound'])                     → the open tab (the first when none or unknown)
  *   kit.list([kit.row({ href, mark: kit.mark({ name }), title, meta: kit.when(ts).text, sub, unread: 2 }), …])
- *   kit.section({ title: 'Messages look', body: kit.switchRow({ name, label, hint, on }) + kit.rangeRow(…) + … })
+ *   kit.section({ title: 'Messages look', body: kit.switchRow({ name, icon, title, line, checked }) + kit.rangeRow(…) + … })
+ *   kit.segmented({ name, items: [{ value, label, icon }] })     three or four equal choices in one control
  *   kit.fold({ id, title, meta, open, body })                    a card that opens: setup, extras, danger
  *   kit.find({ action, name, placeholder, icon: 'search' })      a search or "add by name" row
  *   kit.dock({ action, name, placeholder, label })               the composer pinned at the bottom
  *   kit.stats([[1234, 'messages this week'], …])                 a strip of numbers (scrolls sideways on phones)
  *   kit.empty({ title, text, action: { href, label } }) · kit.notice({ kind, text }) · kit.more({ label, items })
- *   kit.button({ href | type, label, icon, kind }) · kit.share({ title, url, kind, id }) · kit.askAgent({ text }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.icon(name)
+ *   kit.button({ href | type, label, icon, kind }) · kit.share({ title, url, kind, id }) · kit.askAgent({ text }) · kit.iconButton(…) · kit.chips(…) · kit.seg(…) · kit.segmented(…) · kit.icon(name)
  *   kit.mark({ name, src, hue, square }) · kit.when(ts) → { iso, text } · kit.esc(text) · kit.ICONS (names)
  *   kit.mediaW(url, width)                                      a Media object at a resize width (64/96/160/320/480/640)
  *   kit.sidebar({ id, label, action, find, nav, sections, foot }) · kit.sidebarButton({ id }) · kit.withSidebar({ sidebar,
@@ -96,6 +97,8 @@
         gift: '<rect x="4" y="9" width="16" height="11" rx="1"/><path d="M3 9h18M12 9v11M12 9c-1.5-3-5-4-5-1.5S12 9 12 9s5-1 5-3.5S13.5 6 12 9"/>',
         trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>',
         flag: '<path d="M6.5 21V4M6.5 4h11l-2 4 2 4H6.5"/>', eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+        'eye-off': '<path d="M2.5 12S6 5.5 12 5.5c1.6 0 3 .5 4.2 1.2M21.5 12S18 18.5 12 18.5c-1.6 0-3-.5-4.2-1.2M4 4l16 16"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+        flame: '<path d="M12 21c3.6 0 6-2.4 6-5.7 0-4.2-4.4-7.7-6-12.3-1.6 4.6-6 8.1-6 12.3C6 18.6 8.4 21 12 21Z"/><path d="M12 17.5c1.4 0 2.4-1 2.4-2.3 0-1.4-1.2-2.6-2.4-4.2-1.2 1.6-2.4 2.8-2.4 4.2 0 1.3 1 2.3 2.4 2.3Z"/>',
         map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2Z"/><path d="M9 4v14M15 6v14"/>', book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M4 19V5"/>',
         game: '<rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 12h.01M18 13.5h.01"/>',
         leave: '<path d="M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-4M9 16l-4 -4 4 -4M5 12h10"/>',
@@ -326,8 +329,17 @@
     }
 
     // ── Settings rows ──
-    /** A switch row: what it does (one muted hint line when needed) on the left, the switch on the right. */
-    const switchRow = ({ name, label, hint = '', on = false, value = '1' }) => `<label class="ovk-set-row"><span class="ovk-set-text">${esc(label)}${hint ? `<small>${esc(hint)}</small>` : ''}</span><input type="checkbox" class="ovk-switch" name="${esc(name)}" value="${esc(value)}"${on ? ' checked' : ''}></label>`;
+    /**
+     * A switch row: an icon tile, a title and one muted line on the left, an iOS-style switch on the right. The whole
+     * row is the target (56 px), and the switch is the checkbox itself (role="switch"), so the form works without
+     * JavaScript. `label`/`hint`/`on` are the older names, kept working.
+     */
+    const switchRow = ({ name, icon: ic = null, title = null, line = null, label = null, hint = null, checked = null, on = null, value = '1' } = {}) => {
+        const t = title != null ? title : (label != null ? label : '');
+        const l = line != null ? line : (hint || '');
+        const c = checked != null ? !!checked : !!on;
+        return `<label class="ovk-set-row ovk-set-switch">${ic ? `<span class="ovk-set-ic" aria-hidden="true">${icon(ic)}</span>` : ''}<span class="ovk-set-text">${esc(t)}${l ? `<small>${esc(l)}</small>` : ''}</span><input type="checkbox" role="switch" class="ovk-switch" name="${esc(name)}" value="${esc(value)}"${c ? ' checked' : ''}></label>`;
+    };
     /** A slider row (0-100 by 5 unless told otherwise); the value is spoken as a percent when unit is '%'. */
     function rangeRow({ name, label, value = 0, min = 0, max = 100, step = 5, unit = '%' }) {
         const v = Number(value);
@@ -339,6 +351,17 @@
     function seg({ name, options = [], value = '', label = '' }) {
         const id = `ovk-seg-${esc(name)}`;
         return `<div class="ovk-set-row"><span class="ovk-set-text" id="${id}">${esc(label)}</span><span class="ovk-seg" role="radiogroup" aria-labelledby="${id}">${options.map(([v, l]) => `<label><input type="radio" name="${esc(name)}" value="${esc(v)}"${String(v) === String(value) ? ' checked' : ''}><span>${esc(l)}</span></label>`).join('')}</span></div>`;
+    }
+    /**
+     * A segmented choice (three or four) as radios that look like one control: items [{ value, label, icon }]. The
+     * value still posts as the radio group's; the input is the browser's, only drawn differently, so it works without
+     * JavaScript. Without a label the control stands alone (a form puts its own label above it) and `ariaLabel` names
+     * the group; label draws a labelled row.
+     */
+    function segmented({ name, items = [], value = '', label = '', ariaLabel = '' } = {}) {
+        const id = `ovk-seg-${String(name).replace(/[^A-Za-z0-9_-]/g, '-')}`;
+        const control = `<span class="ovk-seg ovk-seg--fill" role="radiogroup"${label ? ` aria-labelledby="${id}"` : ` aria-label="${esc(ariaLabel || name)}"`}>${items.map((it) => `<label class="ovk-seg-item"><input type="radio" name="${esc(name)}" value="${esc(it.value)}"${String(it.value) === String(value) ? ' checked' : ''}><span>${it.icon ? icon(it.icon) : ''}${esc(it.label)}</span></label>`).join('')}</span>`;
+        return label ? `<div class="ovk-set-row ovk-set-seg"><span class="ovk-set-text" id="${id}">${esc(label)}</span>${control}</div>` : control;
     }
     /** Chips: checkboxes (or radios: single) that look like small pills, for filters and "which of these". options: [[value, label, checked]]. */
     function chips({ name, options = [], single = false, label = '' }) {
@@ -915,7 +938,7 @@
         skeleton,
         esc, url, mediaW, icon, ICONS, PATHS, when, hueOf, mark, button, share, askAgent, iconButton, action, badge, dot, card, rail, CARD_RATIO,
         head, pageHead, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
-        switchRow, rangeRow, selectRow, seg, chips, saveBar, find, dock, stats, labels, labelsAttr, LABEL_NAMES, empty, notice, snippet, sheet, sheetButton,
+        switchRow, rangeRow, selectRow, seg, segmented, chips, saveBar, find, dock, stats, labels, labelsAttr, LABEL_NAMES, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,
         num, steps, table, chart, rank, meter, drop, receipt, page,
         toolHead, toolInput, tries, answer, family, tool,
