@@ -2,6 +2,15 @@
 
 ## 4.159.0 — 2026-11-09
 
+- **Feed v2: the menu's Feed is a real feed** (the owner, 11-09: "a real feed… you scroll through easy content… a filter
+  system… clean, intuitive"). When Community's `/api/v1/feed` answers, the Feed tab is the composer, today's numbers, the
+  live bar and one stream of cards by kind (live, clips and videos with a muted preview that plays only in view and never
+  with reduced motion or data saver, pictures, posts, memes, games, compact updates), chips on top (For you, Live, Clips,
+  Videos, Pics, Posts, Memes, Games, Updates), more as the end comes near, "You're all caught up" at the end; without
+  the API, the wall and its sections stand as before.
+
+## Unreleased
+
 - **Homes v2: `openvibe-shared/showcase-stage`** (plan `OpenVibe_Homes_v2_Plan_2026-11-09.md`; the owner, 11-09: "make the
   home pages more unique… show the features… custom animations… infographics… a shared, modular system… still SEO
   friendly"). `stage()` is a hero with one H1, the lede and a live demo panel of the product (the site's own HTML in a

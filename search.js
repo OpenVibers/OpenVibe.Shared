@@ -556,7 +556,7 @@
                 if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); return; }
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
                 let api = null;
-                try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : H.timeline)(li, homeOpts()); } catch { return; }
+                try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : (H.feed || H.timeline))(li, homeOpts()); } catch { return; }
                 homeViews[g.as] = { li, api };
                 listEl.appendChild(li);
                 return;
@@ -1030,6 +1030,7 @@
         if (wall) groups.push({ as: 'walltop', items: [], section: 'wall-top' });
         const live = liveGroup(); if (live) groups.push(live);
         if (wall) groups.push({ as: 'wall', items: [], section: 'wall' });
+        if (wall && feedV2) return groups;   // Feed v2: the composer, today, the live bar and the stream
         // The network's cards: text and links only (never another site's code), checked here again, with an entry's https
         // picture when it sent one; the person's choice and order, else Network's first two.
         const feeds = f && Array.isArray(f.cards) ? f.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
@@ -1120,7 +1121,7 @@
     // ── The home screen and the wall (ov-home.js, 2026-11-09): loaded beside this file the first time You or Feed
     // paints; until it arrives (or if it cannot), the tabs paint as before.
     // One view of each per opening: a repaint (history or the catalogue arriving) keeps edit mode, a drag, a half-typed post.
-    let homeLoading = false, pulseReady = null, homeViews = {};
+    let homeLoading = false, pulseReady = null, homeViews = {}, feedV2 = false;
     function homeLib() {
         if (root.OpenVibeHome) return root.OpenVibeHome;
         if (homeLoading || typeof ctx.sibling !== 'function') return null;
@@ -1148,7 +1149,9 @@
         }
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, groups: f && Array.isArray(f.groups) ? f.groups : [],
             token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
-            pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })) };
+            pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
+            // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
+            feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
     }
 
     function renderTab() {
