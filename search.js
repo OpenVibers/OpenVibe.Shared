@@ -451,6 +451,11 @@
             if (it && it.kind === 'results') { e.preventDefault(); showResults(input.value.trim()); input.focus(); return; }
             if (it && it.kind === 'recent') { e.preventDefault(); input.value = it.title; paintGhost(); showResults(it.title); input.focus(); return; }
             if (it) remember(it);
+            // A page chosen in the menu (owner, 11-09: "it doesn't update the navigation that's highlighted… the menu
+            // should animate closed when you change pages"): the menu closes as the page changes, whether Boost swaps it in
+            // place or the browser loads the next one. Its Back entry stays, so Back is not spent on it during the move.
+            const link = e.target.closest && e.target.closest('a[href]');
+            if (link && !e.defaultPrevented && !e.button && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && (!link.target || link.target === '_self') && !/^#/.test(link.getAttribute('href'))) close({ navigating: true });
         });
         document.body.appendChild(el);
     }
@@ -1365,9 +1370,10 @@
     }
     let pushed = false, popping = false;
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
-    function close() {
+    function close({ navigating = false } = {}) {
         if (view === 'results' && rtabsEl) leaveResults();
         if (!el || closing) return;
+        if (navigating) pushed = false;
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
         if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) history.back(); } catch { /* */ } }
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
@@ -1385,6 +1391,8 @@
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
+
+    document.addEventListener('ov:boost:load', () => { if (el && el.classList.contains('is-open') && !input.value) render(''); });
 
     const api = { open, close, suggest, siteOf, registerCard };
     root.OpenVibeSearch = api;
