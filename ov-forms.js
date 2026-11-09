@@ -253,6 +253,12 @@
             raise(wrap, st.btn);
             doc.documentElement.classList.add('ov-sel-locked');
         } else raise(wrap, st.btn);
+        if (root.OVSurfaces) {
+            st.surface = sheet
+                ? root.OVSurfaces.sheet({ el: wrap, opener: st.btn, body: list, close: () => close(true) })
+                : root.OVSurfaces.popover({ el: wrap, trigger: st.btn, close: () => close(false) });
+            st.surface.open();
+        }
         draw(st);
         st.btn.setAttribute('aria-expanded', 'true');
         st.btn.setAttribute('aria-controls', `${st.id}-pop`);
@@ -394,6 +400,7 @@
         const st = open;
         if (!st) return;
         open = null;
+        if (st.surface) { st.surface.destroy(); st.surface = null; }
         st.btn.setAttribute('aria-expanded', 'false');
         st.btn.removeAttribute('aria-controls');
         const wrap = st.wrap; const scrim = st.scrim;

@@ -115,7 +115,7 @@ path, a query or a fragment; anything else becomes `#`.
 ### Head and tabs
 
 ```js
-kit.head({ title, sub, back: { href, label }, actions: [kit.iconButton(…), kit.more(…)], tabs: kit.tabs(…) })
+kit.head({ title, sub, icon: 'gear', back: { href, label }, actions: [kit.iconButton(…), kit.more(…)], tabs: kit.tabs(…) })
 kit.tabs({ base: '/settings', items: [{ key: 'look', label: 'Look', count, icon }], active, param: 'tab' })
 kit.tabOf(req.query, ['look', 'sound'])   // the open tab: a known key, else the first
 ```
@@ -141,10 +141,19 @@ Yesterday, a weekday this week, `Oct 20` this year, else the date.
 ### Sections, folds, menus
 
 ```js
-kit.section({ title: 'Members', count: 12, note: 'Who can do what', body, id })
+kit.section({ title: 'Members', icon: 'members', count: 12, note: 'Who can do what', body, id,
+              actions: [kit.button({ href: '/members', label: 'Manage members', icon: 'gear', kind: 'quiet' })] })
 kit.fold({ id, title: 'Put this room on your site', meta: 'two ways', open, body, tone: 'danger' })
 kit.more({ label: 'More', items: [{ href, label, icon }, { action: '/x/delete', label, icon, danger, confirm }] })
 ```
+
+Give each page section an icon and put its actions in `actions` as buttons with icons. Section actions wrap on
+narrow screens; the heading keeps its semantic `h2` and `aria-labelledby`. Without `icon` or `actions`, existing
+section markup stays unchanged. For an empty section, use `kit.empty({ icon: 'members', text: 'Your members will appear here.',
+action: { href: '/members/new', label: 'Invite a member', icon: 'plus' } })` as its body. Empty-state actions default
+to primary buttons. Keep headings and explanatory words server-rendered. For a horizontal list, `kit.rail({ title, icon, more: { href, label, icon }, items })`
+uses the same icon tile and a labelled action button. Handwritten headings can use `class="ovk-titled"` with
+`kit.icon(name, { cls: "ovk-heading-icon" })` to keep their existing IDs and layout.
 
 ### Settings rows
 

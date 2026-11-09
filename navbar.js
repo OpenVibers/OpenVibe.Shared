@@ -545,23 +545,23 @@
     // The glyphs the navbar draws itself: [0, line, solid] is an OpenVibe glyph (24-unit grid); [w, path] a Font
     // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 <w> 512 viewBox. The rest of the set is nav-icons.js.
     const NAV_ICONS = {
-        'fa-bell': [0, '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>', '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>'],
+        'fa-bell': [0, '<path d="M6 14.5V9.5a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 18.5a2 2 0 0 0 4 0"/>', '<path d="M5.8 14.7V9.5a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 18.1h4.2a2.1 2.1 0 0 1 -4.2 0Z"/>'],
         'fa-clock-rotate-left': [0, '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4.5v4.1h4.1"/><path d="M12 8v4.2l3 1.8"/>', '<path d="M6.06 6.06A8.4 8.4 0 1 1 3.6 12h2.8a5.6 5.6 0 1 0 1.64-3.96ZM3 3.2v6.6h6.6ZM11 8.2h2v3.4l2.5 1.5-1 1.7-3.5-2.1Z"/>'],
         'fa-coins': [0, '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"/>', '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM11 6h2v1.2c1.1.2 2 .8 2.5 1.7l-1.7 1c-.3-.6-1-1-1.8-1-.9 0-1.5.4-1.5 1s.5.8 1.8 1.1c1.8.4 3.4 1 3.4 3 0 1.4-1 2.4-2.7 2.7V18h-2v-1.3c-1.2-.2-2.2-.9-2.7-1.9l1.7-1c.4.7 1.1 1.1 2 1.1 1 0 1.6-.4 1.6-1s-.6-.8-1.9-1.1c-1.7-.4-3.3-1-3.3-2.9 0-1.3 1-2.3 2.6-2.6Z"/>'],
         'fa-id-card': [0, '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-1.5 1.7-2.3 3-2.3s2.5.8 3 2.3M15 10h3M15 13.5h3"/>', '<path fill-rule="evenodd" d="M5 4.8h14a2.2 2.2 0 0 1 2.2 2.2v10a2.2 2.2 0 0 1-2.2 2.2H5A2.2 2.2 0 0 1 2.8 17V7A2.2 2.2 0 0 1 5 4.8Zm4 4.1a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm-3.1 7.5h6.2c-.6-1.7-1.8-2.6-3.1-2.6s-2.5.9-3.1 2.6Zm8.6-7v1.5h3.9V9.4Zm0 3.5v1.5h3.9v-1.5Z"/>'],
         'fa-palette': [0, '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', '<path fill-rule="evenodd" d="M12 2.7a9.3 9.3 0 1 0 0 18.6c1.3 0 2-.9 2-1.9 0-1.2-1-1.5-1-2.5s.8-1.6 2-1.6H17a4.3 4.3 0 0 0 4.3-4.3C21.3 6.5 17.2 2.7 12 2.7ZM7.5 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm2.5-3.7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>'],
         'fa-people-group': [0, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.6 3 2.4 3 5.2"/>', '<circle cx="9" cy="7.9" r="3.6"/><path d="M2.4 20.8c0-3.8 3-6.5 6.6-6.5s6.6 2.7 6.6 6.5Z"/><circle cx="16.6" cy="7.4" r="2.9"/><path d="M16.8 13.4c2.9.4 4.8 2.8 4.8 6.4V20.8h-4.4c0-2.9-1-5.2-2.8-6.7Z"/>'],
         'fa-plus': [0, '<path d="M12 5v14M5 12h14"/>', ''],
-        'fa-right-from-bracket': [0, '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>', ''],
+        'fa-right-from-bracket': [0, '<path d="M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-4M9 16l-4 -4 4 -4M5 12h10"/>', ''],
         'fa-shield-halved': [0, '<path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6Z"/>', '<path d="M12 2.6 4.6 5.8V12c0 4.6 3.1 8 7.4 9.5 4.3-1.5 7.4-4.9 7.4-9.5V5.8Z"/>'],
-        'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
+        'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.15"/><path d="M8.4 8.4a5.15 5.15 0 0 0 0 7.55M15.6 8.4a5.15 5.15 0 0 1 0 7.55M6 6a8.55 8.55 0 0 0 0 12.6M18 6a8.55 8.55 0 0 1 0 12.6"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
         'fa-user-secret': [0, '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>', '<circle cx="12" cy="7.8" r="4.1"/><path d="M4.2 21c0-4.3 3.5-7.2 7.8-7.2s7.8 2.9 7.8 7.2Z"/>'],
         'fa-wallet': [0, '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4M4 7.5V18a2 2 0 0 0 2 2h14V9H6.5A2.5 2.5 0 0 1 4 7.5Z"/><path d="M16 14.5h.01"/>', '<path fill-rule="evenodd" d="M6.5 4.6H18v4h1.4a.8.8 0 0 1 .8.8v10.8H6a2.2 2.2 0 0 1-2.2-2.2V7.3a2.7 2.7 0 0 1 2.7-2.7Zm0 1.8a.9.9 0 0 0 0 1.8h9.7V6.4ZM16 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>'],
-        'fa-chevron-down': [0, '<path d="m6 9 6 6 6-6"/>', ''],
-        'fa-gear': [0, '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>', '<path fill-rule="evenodd" d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/>'],
+        'fa-chevron-down': [0, '<path d="m6.6 9.9 6.6 6.6 6.6 -6.6"/>', ''],
+        'fa-gear': [0, '<circle cx="12" cy="12" r="2.4"/><path d="M17.85 14.4a1.35 1.35 0 0 0 0.25 1.6l0.1 0.1a1.6 1.6 0 1 1 -2.5 2.5l-0.1 -0.1a1.35 1.35 0 0 0 -1.6 -0.25 1.35 1.35 0 0 0 -0.9 1.35V19.1a1.6 1.6 0 1 1 -3.6 0v-0.1a1.35 1.35 0 0 0 -1 -1.35 1.35 1.35 0 0 0 -1.6 0.25l-0.1 0.1a1.6 1.6 0 1 1 -2.5 -2.5l0.1 -0.1a1.35 1.35 0 0 0 0.25 -1.6 1.35 1.35 0 0 0 -1.35 -0.9H4.95a1.6 1.6 0 1 1 0 -3.6h0.1a1.35 1.35 0 0 0 1.35 -1 1.35 1.35 0 0 0 -0.25 -1.6l-0.1 -0.1a1.6 1.6 0 1 1 2.5 -2.5l0.1 0.1a1.35 1.35 0 0 0 1.6 0.25H9.65a1.35 1.35 0 0 0 0.9 -1.35V4.95a1.6 1.6 0 1 1 3.6 0v0.1a1.35 1.35 0 0 0 0.9 1.35 1.35 1.35 0 0 0 1.6 -0.25l0.1 -0.1a1.6 1.6 0 1 1 2.5 2.5l-0.1 0.1a1.35 1.35 0 0 0 -0.25 1.6V9.65a1.35 1.35 0 0 0 1.35 0.9H19.1a1.6 1.6 0 1 1 0 3.6h-0.1a1.35 1.35 0 0 0 -1.35 0.9Z"/>', '<path fill-rule="evenodd" d="M18.5 14.65a1.5 1.5 0 0 0 0.3 1.8l0.1 0.1a1.75 1.75 0 1 1 -2.8 2.8l-0.1 -0.1a1.5 1.5 0 0 0 -1.8 -0.3 1.5 1.5 0 0 0 -1 1.5V19.9a1.75 1.75 0 1 1 -4 0v-0.1a1.5 1.5 0 0 0 -1.1 -1.5 1.5 1.5 0 0 0 -1.8 0.3l-0.1 0.1a1.75 1.75 0 1 1 -2.8 -2.8l0.1 -0.1a1.5 1.5 0 0 0 0.3 -1.8 1.5 1.5 0 0 0 -1.5 -1H4.15a1.75 1.75 0 1 1 0 -4h0.1a1.5 1.5 0 0 0 1.5 -1.1 1.5 1.5 0 0 0 -0.3 -1.8l-0.1 -0.1a1.75 1.75 0 1 1 2.8 -2.8l0.1 0.1a1.5 1.5 0 0 0 1.8 0.3H9.4a1.5 1.5 0 0 0 1 -1.5V4.15a1.75 1.75 0 1 1 4 0v0.1a1.5 1.5 0 0 0 1 1.5 1.5 1.5 0 0 0 1.8 -0.3l0.1 -0.1a1.75 1.75 0 1 1 2.8 2.8l-0.1 0.1a1.5 1.5 0 0 0 -0.3 1.8V9.4a1.5 1.5 0 0 0 1.5 1H19.9a1.75 1.75 0 1 1 0 4h-0.1a1.5 1.5 0 0 0 -1.5 1ZM12 9.05a3 3 0 1 0 0 6.8 3 3 0 0 0 0 -6.8Z"/>'],
         'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', ''],
         'fa-moon': [0, '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>'],
-        'fa-sun': [0, '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
+        'fa-sun': [0, '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2M12 19.6v2M5.25 5.25l1.4 1.4M17.4 17.4l1.4 1.4M2.5 12h2M19.6 12h2M5.25 18.75l1.4 -1.4M17.4 6.6l1.4 -1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
         'fa-comment-dots': [0, '<path d="M4 5h16v11H8l-4 4Z"/>', '<path d="M3.5 5.6A1.6 1.6 0 0 1 5.1 4h13.8a1.6 1.6 0 0 1 1.6 1.6v9.8a1.6 1.6 0 0 1-1.6 1.6H8.6L3.5 21Z"/>'],
         'fa-brain': [0, '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1.2V5.5A2 2 0 0 0 9 4ZM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1.2"/>', '<path d="M9 3.8a3.1 3.1 0 0 0-3.1 3 3 3 0 0 0-2.1 5.2 3 3 0 0 0 2.1 5.1 3.1 3.1 0 0 0 5.5 1.3V5.5A2.2 2.2 0 0 0 9 3.8Z"/><path d="M15 3.8a3.1 3.1 0 0 1 3.1 3 3 3 0 0 1 2.1 5.2 3 3 0 0 1-2.1 5.1 3.1 3.1 0 0 1-5.5 1.3V5.5A2.2 2.2 0 0 1 15 3.8Z"/>'],
     };
@@ -569,10 +569,10 @@
     const NAV_ICONS_LAZY = {
         0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-text-height fa-user fa-video fa-wand-magic-sparkles fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
     };
-    const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '1091daee9c7e';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '45c4a9a66249', 'dock.js': 'e3a24221e4ef', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': 'b85341c89bd9', 'nav-slots.js': 'a5af310d62e0' };
+    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '185fc639597f', 'dock.js': '8cb19fa57961', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': 'b85341c89bd9', 'nav-slots.js': 'a5af310d62e0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1083,7 +1083,15 @@
             const m = _config.messages || {};
             if (e.metaKey || e.ctrlKey || e.shiftKey) return;
             // The default (4.130.0): the Dock's Chats tab; without the Dock, the link.
-            if (m.__default && _config.dock !== false && _config.token) { e.preventDefault(); openDock('chats'); return; }
+            if (m.__default && _config.dock !== false) {
+                e.preventDefault();
+                if (_config.token) openDock('chats');
+                else refreshAuthState().then(() => {
+                    if (_config.token) openDock('chats');
+                    else root.location.href = a.href;
+                });
+                return;
+            }
             if (typeof m.onOpen !== 'function') return;
             e.preventDefault(); try { m.onOpen(e); } catch { /* the link still works */ }
         });
@@ -1112,7 +1120,7 @@
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (pop && pop.classList.contains('open')) return close();
-            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close); }
+            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close, btn); }
             const list = (_config.chips || []).filter((c) => c && !c.hidden);
             pop.innerHTML = list.map((c) => `<button type="button" role="menuitem" data-chip-row="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span>${escapeAttr(chipLabel(c))}</span><b>${escapeAttr(c.value == null ? '' : c.value)}</b></button>`).join('');
             pop.querySelectorAll('[data-chip-row]').forEach((row) => row.addEventListener('click', (ev) => {
@@ -1185,7 +1193,7 @@
             }
             closeDrawer();
         });
-        document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('.ovnav-dd')) nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); }, onDocument());
+        nav.querySelectorAll('.ovnav-dd').forEach((dd) => regPanel(dd, 'nav-dropdown', () => dd.classList.remove('open'), dd.querySelector(':scope > a')));
         // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
         const placeDd = (dd) => {
             const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
@@ -1212,16 +1220,16 @@
                 openSearch('', 'sites');
             });
             document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); }, onDocument());
-            regPanel(drawer, 'nav-drawer', closeDrawer);
+            regPanel(drawer, 'nav-drawer', closeDrawer, burger);
         }
     }
 
     /** Dropdown, launcher and notifications share one coordinator (panels.js): one open at a time, Escape, rotation.
      *  Panels are registered where they are created (no page-wide observers); registrations queue until the script loads. */
     const _panelQueue = [];
-    function regPanel(el, id, close) {
+    function regPanel(el, id, close, trigger) {
         if (!el) return;
-        const opts = Object.assign({ el, openClass: 'open', id, close }, onDocument());
+        const opts = Object.assign({ el, openClass: 'open', id, close, trigger }, onDocument());
         if (root.OpenVibePanels) return root.OpenVibePanels.register(opts);
         _panelQueue.push(opts);
         if (document.getElementById('ov-panels-loader')) return;
@@ -1792,7 +1800,18 @@
                 if (res.ok) {
                     const data = await res.json();
                     const user = (data && (data.user || data)) || null;
-                    if (user && (user.username || user.id)) return { user, token: null };
+                    if (user && (user.username || user.id)) {
+                        let token = data && data.token || null;
+                        // Sites with HTTP-only access cookies expose a verified access token through a
+                        // same-origin, no-store endpoint for the Dock and the notification bell.
+                        if (!token && _config.tokenUrl) {
+                            try {
+                                const tokenRes = await fetch(_config.tokenUrl, { credentials: 'same-origin', cache: 'no-store' });
+                                if (tokenRes.ok) token = (await tokenRes.json()).token || null;
+                            } catch { /* the account menu still works without the Dock */ }
+                        }
+                        return { user, token };
+                    }
                 }
             } catch { /* signed out */ }
         }
@@ -2194,7 +2213,7 @@
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
             bindLook(dropdown);
-            regPanel(dropdown, 'user-menu');
+            regPanel(dropdown, 'user-menu', () => dropdown.classList.remove('open'), nav.querySelector('#openvibe-avatar-btn'));
 
             // Avatar click toggles dropdown (the selection for Ask Vibe is read on pointerdown: the press can clear it)
             const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
@@ -2206,10 +2225,7 @@
                 if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; loadOvIcons(dropdown); }
             });
 
-            // Close on outside click
-            document.addEventListener('click', e => {
-                if (!nav.contains(e.target)) dropdown.classList.remove('open');
-            }, onDocument());
+            // panels.js closes this on an outside pointerdown, including another control in the navbar.
 
             dropdown.querySelectorAll('[data-account-id]').forEach(el => {
                 el.addEventListener('click', () => {
@@ -2513,6 +2529,9 @@
             if (opts.wallet === undefined) _config.wallet = true;
             if (opts.messages === undefined) _config.messages = { __default: true };
             injectStyles();
+            if (!root.OVSurfaces && !document.getElementById('ov-surfaces-loader')) {
+                const sc = document.createElement('script'); sc.id = 'ov-surfaces-loader'; sc.src = siblingV('surfaces.js'); sc.async = true; document.head.appendChild(sc);
+            }
             hookBoost();
             hookMoves();
             const el = render();

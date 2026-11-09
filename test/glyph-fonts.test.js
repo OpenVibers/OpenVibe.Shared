@@ -26,6 +26,12 @@ const source = JSON.stringify(glyphs.NAMES.map((n) => [n, glyphs.path(n), cps[n]
 assert.strictEqual(manifest.source_sha256, crypto.createHash('sha256').update(source).digest('hex'), 'the fonts are current: run scripts/build-glyph-fonts.py');
 assert.strictEqual(manifest.glyphs, glyphs.NAMES.length);
 for (const [f, size] of Object.entries(manifest.files)) assert.strictEqual(read(f).length, size, `${f} is the file the build wrote`);
+for (const style of ['thin', 'light', 'bold', 'solid']) {
+    const f = `ov-glyphs-${style}.woff2`;
+    assert.strictEqual(read(f).subarray(0, 4).toString('latin1'), 'wOF2', `${style} is WOFF2`);
+    assert.ok(files.FONTS.includes(f), `${f} is served`);
+    assert.ok(read('ov-glyphs-font.css').toString().includes(`url(${f})`), `${style} has an @font-face`);
+}
 assert.strictEqual(read('ov-glyphs.woff2').subarray(0, 4).toString('latin1'), 'wOF2', 'a WOFF2 file');
 assert.strictEqual(read('glyph-fonts/ov-glyphs.ttf').readUInt32BE(0), 0x00010000, 'a TrueType file');
 assert.strictEqual(read('glyph-fonts/ov-glyphs.otf').subarray(0, 4).toString('latin1'), 'OTTO', 'an OpenType (CFF) file');

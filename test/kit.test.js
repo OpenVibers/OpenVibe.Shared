@@ -31,6 +31,7 @@ const kit = require('../kit');
     assert.ok(/^<header class="ovk-head">/.test(h) && h.indexOf('ovk-tabs') > h.indexOf('ovk-head-row'), 'the tabs sit inside the sticky head');
     assert.ok(h.includes('<h1>Settings</h1>') && h.includes('aria-label="Help" title="Help"'));
     assert.ok(kit.head({ title: 'x', sticky: false }).includes('ovk-head--static'));
+    assert.ok(kit.head({ title: 'Settings', icon: 'gear' }).includes('class="ovk-heading-icon"><svg'));
 }
 
 // ── Rows and lists ──
@@ -64,6 +65,11 @@ const kit = require('../kit');
     const m = kit.more({ label: 'More', items: [{ href: '/a', label: 'Open' }, { action: '/b/delete', label: 'Delete', danger: true, confirm: 'Delete it?' }, null] });
     assert.ok(m.includes('role="menu"') && m.includes('data-ovk-confirm="Delete it?"') && m.includes('ovk-pop-item--danger'));
     assert.ok(kit.section({ title: 'Members', count: 3, note: 'Who', body: '<ul></ul>', id: 'mem' }).includes('aria-labelledby="mem-h"'));
+    const section = kit.section({ title: 'Members & guests', icon: 'members', id: 'members', actions: [kit.button({ href: '/members', label: 'Manage members', icon: 'gear', kind: 'quiet' })], body: kit.empty({ icon: 'members', text: 'Members will appear here.', action: { href: '/invite', label: 'Invite', icon: 'plus' } }) });
+    assert.ok(section.includes('aria-labelledby="members-h"') && section.includes('<h2 id="members-h">Members &amp; guests</h2>'));
+    assert.ok(section.includes('ovk-section-actions') && section.includes('href="/members"') && section.includes('href="/invite"'));
+    assert.ok(section.includes('ovk-heading-icon') && section.includes('ovk-empty'));
+    assert.ok(kit.section({ title: 'Legacy' }).includes('><h2>Legacy</h2></section>'), 'existing sections keep their markup');
 }
 
 // ── Find, dock, numbers, notices ──
@@ -304,3 +310,9 @@ const kit = require('../kit');
 }
 
 console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page), the tool frame and the sidebar ok');
+
+// A rail's optional heading icon also turns its action into a labelled button.
+{
+    const h = kit.rail({ id: 'recent', title: 'Recent', icon: 'clock', more: { href: '/all', label: 'See all' }, items: ['<p>One</p>'] });
+    assert.ok(h.includes('ovk-heading-icon') && h.includes('ovk-btn--quiet') && h.includes('id="recent-h"'));
+}

@@ -25,6 +25,15 @@
     'use strict';
     // The V's two strokes, and the "!" it becomes when loading fails (openvibe-shared/mark shapes('pair').v and .err).
     const V = ['M71.13 70L54.17 30', 'M71.13 70L88.62 30'], BANG = ['M71.4 30L71.4 53.36', 'M71.4 70L71.4 70.01'];
+    // The tick it becomes when the picture arrives (mark.js shapes('pair').ok).
+    const TICK = ['M70.02 70L59.68 50.8', 'M70.02 70L90.69 30'];
+    // Actions carry an icon (by name, or guessed from the word): Try again turns, Copy copies (11-09, the owner: "icons
+    // for the buttons").
+    const ACT_ICONS = {
+        retry: 'M4 12a8 8 0 0 1 14-5.3M20 4v4.5h-4.5M20 12a8 8 0 0 1-14 5.3M4 20v-4.5h4.5',
+        copy: 'M9 9h10v10H9zM5 15V5h10',
+        report: 'M5 4h10l4 4v12H5zM9 12h6M9 16h4',
+    };
     let marks = 0;
     const CSS = `
 .ovld { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; overflow: hidden; background: #05070c; color: #f4f6fb; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: opacity .38s ease; contain: strict; }
@@ -32,7 +41,18 @@
 .ovld-poster { position: absolute; inset: -8%; background-size: cover; background-position: center; filter: blur(22px) saturate(1.25) brightness(.5); transform: scale(1.06); opacity: 0; transition: opacity .6s ease; animation: ovld-drift 16s ease-in-out infinite alternate; }
 .ovld-poster.is-in { opacity: 1; }
 .ovld::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(5,7,12,0) 0%, rgba(5,7,12,.35) 55%, rgba(5,7,12,.75) 100%); pointer-events: none; }
-.ovld-core { position: relative; z-index: 1; display: grid; justify-items: center; gap: 10px; max-width: min(86%, 420px); text-align: center; text-shadow: 0 1px 12px rgba(0,0,0,.45); }
+.ovld { container-type: size; }
+.ovld-core { position: relative; z-index: 1; display: grid; justify-items: center; gap: 10px; max-width: min(86%, 420px); text-align: center; text-shadow: 0 1px 12px rgba(0,0,0,.45); animation: ovld-in .42s cubic-bezier(.2, .9, .3, 1) both; }
+@keyframes ovld-in { from { opacity: 0; transform: translateY(6px) scale(.97); } }
+.ovld-hint { max-width: 34ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.ovld-acts button { display: inline-flex; align-items: center; gap: 7px; }
+.ovld-acts button svg { width: 16px; height: 16px; flex: none; }
+.ovld-acts button.is-icon { width: 38px; padding: 0; justify-content: center; }
+.ovld.is-ok .ovld-ring { --ovm-o: var(--success, #22c55e); --ovm-v: var(--success, #22c55e); filter: drop-shadow(0 0 14px rgba(34, 197, 94, .45)); }
+.ovld.is-ok .ovld-ring .og, .ovld.is-ok .ovld-ring .vg { animation: none; }
+.ovld.is-ok .ovld-line i { background: var(--success, #22c55e); box-shadow: 0 0 10px rgba(34, 197, 94, .6); }
+@container (max-height: 300px) { .ovld-ring { width: 44px; height: 44px; } .ovld-core { gap: 6px; } .ovld-label { font-size: 14px; } .ovld-sub { font-size: 12px; } .ovld-hint { display: none; } .ovld-acts button { min-height: 34px; } }
+@container (max-height: 210px) { .ovld-ring { display: none; } .ovld-sub { display: none; } }
 .ovld-ring { position: relative; width: 60px; height: 60px; --ovm-o: #4f7cff; --ovm-v: #8b5cf6; filter: drop-shadow(0 0 12px rgba(124, 108, 255, .4)); }
 .ovld-ring svg { width: 100%; height: 100%; overflow: visible; }
 .ovld-ring .o { fill: none; stroke: var(--ovm-o); stroke-width: 13; transition: stroke .35s; } .ovld-ring .va, .ovld-ring .vb { fill: none; stroke: var(--ovm-v); stroke-width: 13; stroke-linecap: round; transition: stroke .35s; } .ovld-ring .ha, .ovld-ring .hb { fill: none; stroke: #000; stroke-width: 20; stroke-linecap: round; }
@@ -125,10 +145,14 @@
         }
         function setActions(list) {
             acts.textContent = '';
-            (list || []).slice(0, 3).forEach((a) => {
+            (list || []).slice(0, 3).forEach((a, i) => {
                 if (!a || !a.label) return;
-                const b = el('button', '', a.label);
+                const name = a.icon || (/again|retry|reload/i.test(a.label) ? 'retry' : /copy/i.test(a.label) ? 'copy' : /report|details|log/i.test(a.label) ? 'report' : '');
+                const b = el('button', '');
                 b.type = 'button';
+                if (ACT_ICONS[name]) b.insertAdjacentHTML('beforeend', `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ACT_ICONS[name]}"/></svg>`);
+                // The first action is the button with its word; the others are icon buttons whose word is the tooltip.
+                if (i === 0 || !ACT_ICONS[name]) b.appendChild(el('span', '', a.label)); else { b.classList.add('is-icon'); b.setAttribute('aria-label', a.label); b.title = a.title || a.label; }
                 if (typeof a.onClick === 'function') b.addEventListener('click', (e) => a.onClick(e));
                 acts.appendChild(b);
             });
@@ -171,8 +195,13 @@
                 if (gone) return;
                 gone = true;
                 box.style.setProperty('--ovld-p', '100%');
-                box.classList.add('is-done');
-                setTimeout(() => box.remove(), reduced() ? 0 : 400);
+                // The V becomes a tick and turns green, then the screen fades (Calm keeps it short).
+                if (!box.classList.contains('is-failed')) {
+                    box.classList.add('is-ok');
+                    ring.querySelectorAll('.va, .ha').forEach((p) => p.setAttribute('d', TICK[0]));
+                    ring.querySelectorAll('.vb, .hb').forEach((p) => p.setAttribute('d', TICK[1]));
+                }
+                setTimeout(() => { box.classList.add('is-done'); setTimeout(() => box.remove(), 400); }, reduced() ? 160 : 420);
             },
             destroy() { gone = true; box.remove(); },
             get element() { return box; },

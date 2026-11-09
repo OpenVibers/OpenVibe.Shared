@@ -1,5 +1,43 @@
 # Changelog
 
+## 4.162.0 — 2026-11-09
+
+- `kit.head` accepts an icon tile; `kit.section` accepts an icon and an action row that wraps on phones.
+  Rails accept an icon and use a labelled button for their action. Existing section markup is preserved when neither option is supplied. Empty-state actions already use primary
+  icon buttons. `tools/plain-sections-sweep.js` audits public pages for plain UI headings, empty lines and action links.
+- **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
+  the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
+  places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
+  its own icon) and Build as folders. A long-press (or Edit) starts arranging: drag an app to move it, arrow keys move
+  the focused one, − takes it off Home, All apps (N) lists every app and puts one back with +. The arrangement is kept
+  on the device and on Network (`GET/PUT /api/v1/me/home-screen`, once Network serves it). Recent searches are gone
+  from You (the field shows them).
+- **The Feed tab is a wall.** What's new with you (the composer, when Community says you can post), today's numbers
+  (people, streams, posts, new videos, with 14-day lines), the live bar, then the network's pulse: newest first,
+  back-to-back "went live" in one row of names, Show more. Every feed card shows until you turn some off (was the
+  first two); What's new names each site, what changed in plain words, when, "New" since your visit and "Big update",
+  and counts today's changes.
+- **The first tab is the site's name, never a page's word for itself** ("Home", "Welcome").
+
+- **The Dock fills the phone, and its header is one row** (owner, 11-09: "go all the way to the top… wasted space", "I
+  don't really understand what the pin does", "clicked off… it didn't close the pop over"). Phones: the Dock is the
+  whole screen, over the bar, inside the notch area; tablets: a full-height panel on the right; desktops: a 420 × 640
+  card by default. The header is the four tabs, then More and Close; More holds Start a timer, "Keep the Dock's button
+  on every page" (a switch that says what off means) and Open in a window of its own. More and the timer close on a tap
+  anywhere else, in the Dock or on the page, and on Escape. The Chats tab is **Messages**.
+
+- **No pill above the headline.** `sc.hero()` no longer draws an eyebrow (the owner, 11-09: the pill above every home's
+  headline "looks really cheesy… generic"); the headline and its lede say what the site is. `eyebrow` is ignored.
+
+- **Changing pages feels like one app** (owner, 11-09). A page chosen in the menu closes it (folding into the orb on a
+  phone) without spending Back; a menu still open when a page is swapped in place marks the new page; a link that leaves
+  the page draws the top bar at once. The bar (navbar and Boost alike) is 3 px of the OpenVibe gradient from the theme's
+  accents, with a soft glow and a bright running head; reduced motion keeps it still.
+- **Loading fits a short player** (the owner, 11-09): under 300 px the mark, words and buttons shrink and the hint goes;
+  Try again carries the retry arrows and other actions are icon buttons; the V ticks green before the screen fades.
+- **The Dock's Actor tab** (#351, under the name Agents), **Dock chats from a site's session** (#364), **one sheet
+  behaviour for scroll and dismissal** (#371), **six glyph styles** (#367) and **section headings with icons** (#369).
+
 ## 4.161.0 — 2026-11-09
 
 - **Menus open from where you tapped** (the owner, 11-09: "custom animations… content aware… where you're clicking"):
@@ -71,35 +109,6 @@
   each; `numbers()` real numbers that roll up once with 30-day lines; `flow()` how it works with a line that draws.
   Server-rendered words and numbers; motion only adds, never inside an SVG's children, and stops for reduced motion and
   Calm. Its CSS (`CSS`) and starter (`MOTION_JS`) are separate, so homes that do not use it do not grow.
-
-- **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
-  the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
-  places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
-  its own icon) and Build as folders. A long-press (or Edit) starts arranging: drag an app to move it, arrow keys move
-  the focused one, − takes it off Home, All apps (N) lists every app and puts one back with +. The arrangement is kept
-  on the device and on Network (`GET/PUT /api/v1/me/home-screen`, once Network serves it). Recent searches are gone
-  from You (the field shows them).
-- **The Feed tab is a wall.** What's new with you (the composer, when Community says you can post), today's numbers
-  (people, streams, posts, new videos, with 14-day lines), the live bar, then the network's pulse: newest first,
-  back-to-back "went live" in one row of names, Show more. Every feed card shows until you turn some off (was the
-  first two); What's new names each site, what changed in plain words, when, "New" since your visit and "Big update",
-  and counts today's changes.
-- **The first tab is the site's name, never a page's word for itself** ("Home", "Welcome").
-
-- **The Dock fills the phone, and its header is one row** (owner, 11-09: "go all the way to the top… wasted space", "I
-  don't really understand what the pin does", "clicked off… it didn't close the pop over"). Phones: the Dock is the
-  whole screen, over the bar, inside the notch area; tablets: a full-height panel on the right; desktops: a 420 × 640
-  card by default. The header is the four tabs, then More and Close; More holds Start a timer, "Keep the Dock's button
-  on every page" (a switch that says what off means) and Open in a window of its own. More and the timer close on a tap
-  anywhere else, in the Dock or on the page, and on Escape. The Chats tab is **Messages**.
-
-- **No pill above the headline.** `sc.hero()` no longer draws an eyebrow (the owner, 11-09: the pill above every home's
-  headline "looks really cheesy… generic"); the headline and its lede say what the site is. `eyebrow` is ignored.
-
-- **Changing pages feels like one app** (owner, 11-09). A page chosen in the menu closes it (folding into the orb on a
-  phone) without spending Back; a menu still open when a page is swapped in place marks the new page; a link that leaves
-  the page draws the top bar at once. The bar (navbar and Boost alike) is 3 px of the OpenVibe gradient from the theme's
-  accents, with a soft glow and a bright running head; reduced motion keeps it still.
 
 ## 4.158.0 — 2026-11-09
 

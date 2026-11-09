@@ -20,7 +20,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Overlay</title><link rel="icon" href="data:,">
 <style>body{margin:0;background:#0b0f19} .openvibe-navbar{position:sticky;top:0;height:56px;background:#111827} .ovnav-appbar{position:fixed;left:0;right:0;bottom:0;height:58px;background:#111827}</style>
 </head><body><nav class="openvibe-navbar"></nav><p style="height:2000px"><a id="away" href="https://openvibe.games/achievements">Games</a> <a id="here" href="/b">here</a></p><div class="ovnav-appbar"></div>
-<script src="/shared/overlay.js"></script></body></html>`;
+<script src="/shared/surfaces.js"></script><script src="/shared/overlay.js"></script></body></html>`;
 const FRAME = '<!doctype html><body style="margin:0;background:#2b6;color:#fff;font:20px sans-serif">LIVE</body>';
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
@@ -65,7 +65,9 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
         assert.ok(await until(p, `getComputedStyle(document.querySelector('.ovo-side')).transform === 'none'`), 'the sheet has finished opening');
         const side = await p.evaluate(`(() => { const s = document.querySelector('.ovo-side'); const r = s.getBoundingClientRect(); return { open: s.classList.contains('is-open'), bottom: Math.round(r.bottom), src: s.querySelector('iframe').getAttribute('src') }; })()`);
         assert.deepStrictEqual(side, { open: true, bottom: 844 - 58 - 10, src: `${base}/frame-chat` }, 'the chat sheet, above the app bar');
+        assert.strictEqual(await p.evaluate('document.body.style.position'), 'fixed', 'the chat sheet locks the page');
         await p.evaluate(`document.querySelector('[data-ovo="side"]').click(), true`);
+        assert.strictEqual(await p.evaluate('document.body.style.position'), '', 'closing the chat sheet unlocks the page');
 
         // A link to another OpenVibe site carries it; one on this site does not.
         const away = await p.evaluate(`OVOverlay.handoffUrl('https://openvibe.games/achievements')`);
