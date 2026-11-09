@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.175.0 — 2026-11-09
+
+- **OpenVibe Link**: the shared navigation's Machines entry points at openvibe.link/machines instead of the old
+  node host, and the shipped-services list names the product Link. The Contracts pin moves to v0.373.0. No API changes.
+
 ## 4.174.0 — 2026-11-09
 
 - **Home fills its width** (`ov-home.js`; the owner, 11-09: the icons were "offset and need to utilize more of the

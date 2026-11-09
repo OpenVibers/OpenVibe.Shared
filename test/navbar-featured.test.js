@@ -1,5 +1,5 @@
 'use strict';
-// navbar.js 4.117.0 — a featured link: the piece a site is built around (the Node on the Network) draws as one
+// navbar.js 4.117.0 — a featured link: the piece a site is built around (the Link on the Network) draws as one
 // quiet accent pill with its glyph on the bar, and leads the phone's menu. Deliberate, not loud: no animation.
 const assert = require('assert');
 const path = require('path');
@@ -36,24 +36,24 @@ const barHtml = (created) => (created.filter((e) => e.tag === 'nav' && /openvibe
 const between = (html, a, b) => { const i = html.indexOf(a); const j = html.indexOf(b, i); return i < 0 ? '' : html.slice(i, j < 0 ? undefined : j); };
 
 {
-    // The Node is the piece the Network is built around: it leads, and it is a pill with its glyph.
+    // The Link is the piece the Network is built around: it leads, and it is a pill with its glyph.
     const { navbar, created } = load();
     navbar.init({ service: 'network', user: null, links: [
-        { label: 'Node', href: 'https://node.openvibe.network', icon: 'fa-house', featured: true },
+        { label: 'Link', href: 'https://openvibe.link', icon: 'fa-house', featured: true },
         { label: 'My Account', href: '/my' },
         { label: 'Themes', href: '/themes' },
     ] });
     const bar = between(barHtml(created), 'openvibe-navbar-links', 'openvibe-navbar-spacer');
     assert.ok(bar.includes('ovnav-link--featured'), 'the featured link is drawn as the pill');
-    assert.ok(/href="https:\/\/node\.openvibe\.network"[^>]*class="ovnav-link ovnav-link--featured"/.test(bar), 'the pill links to the Node');
+    assert.ok(/href="https:\/\/openvibe\.link"[^>]*class="ovnav-link ovnav-link--featured"/.test(bar), 'the pill links to Link');
     assert.ok(bar.includes('fa-house') || bar.includes('ovnav-ic'), 'the pill carries its glyph');
     // Deliberate, not loud: one accent, no animation on the pill.
     assert.ok(!/ovnav-link--featured[^}]*animation/.test(bar), 'the pill does not animate');
     const drawer = between(barHtml(created), 'id="openvibe-drawer"', 'ovnav-drawer-net');
-    assert.ok(drawer.indexOf('>Node<') >= 0 && drawer.indexOf('>Node<') < drawer.indexOf('>My Account<'), 'on a phone the Node is the first entry of the menu');
+    assert.ok(drawer.indexOf('>Link<') >= 0 && drawer.indexOf('>Link<') < drawer.indexOf('>My Account<'), 'on a phone the Link is the first entry of the menu');
     // 4.119.0: on a phone the links row folds away, so the featured link keeps an icon button on the bar itself.
     const right = between(barHtml(created), 'openvibe-navbar-right', 'openvibe-bell-mount');
-    assert.ok(/<a class="ovnav-featured-phone" href="https:\/\/node\.openvibe\.network" aria-label="Node"/.test(right), 'the phone bar has the Node button, named for readers');
+    assert.ok(/<a class="ovnav-featured-phone" href="https:\/\/openvibe\.link" aria-label="Link"/.test(right), 'the phone bar has the Link button, named for readers');
     assert.strictEqual((barHtml(created).match(/ovnav-featured-phone"/g) || []).length, 1, 'one phone button');
 }
 {
@@ -61,12 +61,12 @@ const between = (html, a, b) => { const i = html.indexOf(a); const j = html.inde
     const { navbar, created } = load();
     navbar.init({ service: 'network', user: null, links: [
         { label: 'My Account', href: '/my' },
-        { label: 'Node', href: 'https://node.openvibe.network', icon: 'fa-house' },
+        { label: 'Link', href: 'https://openvibe.link', icon: 'fa-house' },
     ] });
     const bar = between(barHtml(created), 'openvibe-navbar-links', 'openvibe-navbar-spacer');
     assert.ok(!bar.includes('ovnav-link--featured'), 'a plain link is not a pill');
     const drawer = between(barHtml(created), 'id="openvibe-drawer"', 'ovnav-drawer-net');
-    assert.ok(drawer.indexOf('>My Account<') < drawer.indexOf('>Node<'), 'and it keeps its place in the menu');
+    assert.ok(drawer.indexOf('>My Account<') < drawer.indexOf('>Link<'), 'and it keeps its place in the menu');
     assert.ok(!barHtml(created).includes('ovnav-featured-phone"'), 'no phone button without a featured link');
 }
 {
