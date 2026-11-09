@@ -964,7 +964,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             }
             if (first && o.feedLive) o.feedLive();
             // Back-to-back go-lives that are over fold into one card of faces (a wall of "X went live" was the whole feed).
-            const past = (x) => x && x.kind === 'live' && !x.live_now && safe(x.url);
+            const past = (x) => x && (x.kind === 'stream' || (x.kind === 'live' && !x.live_now)) && safe(x.url);
             let run = [];
             const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => { const c = feedCard(x); if (c) list.append(c); }); run = []; };
             j.items.forEach((x) => { if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
