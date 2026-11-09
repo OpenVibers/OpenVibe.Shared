@@ -1,13 +1,28 @@
 # Changelog
 
-## 4.174.0 — 2026-11-09
+## 4.175.0 — 2026-11-09
 
 - **The model chip and its choice sheet** (`ai-choice.js`, `ov-ai-choice.js`, `ov-ai-choice.css`): a chip beside any
   Generate button showing the maker mark and the model's name, opening a sheet grouped Recommended, Fastest, Cheapest,
   Best quality, Uncensored 18+ (only where the person confirmed), Your keys and Your machines. Each row says what it
   costs a run and how fast it is; a check marks the choice. The footer saves "Use this for every <task>" and links to
-  Exchange. Server rendering keeps the control named before hydration; the sheet traps no scroll behind it and an
+  Exchange. Server rendering keeps the control named before hydration; the sheet sets no scroll behind it and an
   outside tap closes it.
+
+
+## 4.174.0 — 2026-11-09
+
+- **Home fills its width** (`ov-home.js`; the owner, 11-09: the icons were "offset and need to utilize more of the
+  space"). The apps on the menu's Home grow with their cell up to 72 px (they were a fixed 56 px in a wider cell), the
+  glyph is about half the tile, folders scale their four minis with the tile, and the grid lines up with the cards
+  above it. The names are a touch larger and brighter.
+- **An Edit button on Home** (`ov-home.js`). A small pencil beside "Your home" starts arranging: move apps, remove
+  them, make folders. Press and hold still works. While arranging, the button is a Done pill with a check, and Home
+  stays where it was: the hint is under the grid and the cards above it stay (quieted), so a long-press that turns into
+  a drag never has the grid move under the finger.
+- **The site's tab matches Feed and You** (`search.js`). The first tab of the menu showed the site's coloured app mark
+  (a disc and ring around the glyph); it now shows the glyph alone, in the label's colour and at the other tabs'
+  weight. On a phone the three tabs are tighter, so a long name like "Community" fits whole.
 
 ## 4.173.0 — 2026-11-09
 
