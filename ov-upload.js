@@ -54,7 +54,8 @@
             var pct = current.total ? Math.min(100, Math.floor(current.done / current.total * 100)) : 0;
             el.dataset.state = state;
             label.textContent = ({ waiting: 'Waiting', sending: 'Uploading', paused: 'Paused: no connection', processing: 'Processing: making it playable', done: 'Uploaded', failed: 'Upload failed' })[state] || state;
-            percent.textContent = state === 'done' ? '✓' : pct + '%';
+            if (state === 'done') percent.innerHTML = '<svg class="ov-progress__check" viewBox="0 0 24 24" role="img" aria-label="Done"><path d="M4 12l5 5L20 6"/></svg>';
+            else percent.textContent = pct + '%';
             fill.style.width = (state === 'done' ? 100 : pct) + '%';
             track.setAttribute('aria-valuenow', String(pct));
             track.setAttribute('aria-valuetext', label.textContent + ', ' + pct + '%');
@@ -100,7 +101,7 @@
         var rows = node('div', 'ov-upload__rows');
         root.classList.add('ov-upload'); root.append(input, card, rows);
         function add(files) {
-            Array.prototype.forEach.call(files, function (file) {
+            Array.prototype.forEach.call(options.multiple ? files : Array.prototype.slice.call(files, 0, 1), function (file) {
                 var row = node('div', 'ov-upload__row');
                 var preview = node('div', 'ov-upload__preview', '↑');
                 if (file.type.indexOf('image/') === 0 || file.type.indexOf('video/') === 0) {
@@ -125,5 +126,67 @@
         root.addEventListener('drop', function (e) { e.preventDefault(); root.classList.remove('is-dragging'); if (e.dataTransfer && e.dataTransfer.files) add(e.dataTransfer.files); });
         return { input: input, add: add, rows: rows };
     }
-    return { progress: progress, picker: picker, rate: rate, timeLeft: timeLeft, size: size };
+    function queue(root, options) {
+        options = options || {};
+        if (typeof options.upload !== 'function') throw new TypeError('OVUpload.queue: upload(file, {onProgress, signal}) is required');
+        var pickRoot = node('div');
+        var totalRoot = node('div');
+        root.append(pickRoot, totalRoot);
+        var items = [], active = 0;
+        var total = progress(totalRoot);
+        function refresh() {
+            var bytes = items.reduce(function (n, item) { return n + item.file.size; }, 0);
+            var done = items.reduce(function (n, item) { return n + item.done; }, 0);
+            var state = items.some(function (item) { return item.state === 'sending'; }) ? 'sending'
+                : items.some(function (item) { return item.state === 'failed'; }) ? 'failed'
+                    : items.length && items.every(function (item) { return item.state === 'done'; }) ? 'done' : 'waiting';
+            total.update({ done: done, total: bytes, state: state, message: state === 'failed' ? 'A file needs a retry.' : '' });
+        }
+        function pump() {
+            while (active < (options.concurrency || 3)) {
+                var item = items.find(function (x) { return x.state === 'waiting'; });
+                if (!item) break;
+                item.state = 'sending'; active++;
+                item.meter.update({ state: 'sending', done: item.done, total: item.file.size }); refresh();
+                (function (entry) {
+                    entry.controller = new AbortController();
+                    Promise.resolve().then(function () { return options.upload(entry.file, {
+                        signal: entry.controller.signal,
+                        onProgress: function (value) {
+                            entry.done = Math.max(0, Math.min(entry.file.size, Number(value.uploadedBytes == null ? value.done : value.uploadedBytes) || 0));
+                            entry.meter.update({ state: 'sending', done: entry.done, total: entry.file.size }); refresh();
+                        }
+                    }); }).then(function (result) {
+                        if (entry.removed) return;
+                        entry.done = entry.file.size; entry.state = 'done';
+                        entry.meter.update({ state: 'done', done: entry.done, total: entry.file.size });
+                        if (options.onDone) options.onDone(entry.file, result);
+                    }).catch(function (error) {
+                        if (entry.removed) return;
+                        entry.state = 'failed';
+                        entry.meter.update({ state: 'failed', message: error && error.message || 'The upload did not go through.' });
+                    }).finally(function () { active--; refresh(); pump(); });
+                })(item);
+            }
+        }
+        var pick = picker(pickRoot, {
+            label: options.label, accept: options.accept, multiple: options.multiple !== false,
+            onFile: function (file, row) {
+                var meterRoot = node('div'); row.insertAdjacentElement('afterend', meterRoot);
+                var item = { file: file, row: row, meterRoot: meterRoot, done: 0, state: 'waiting' };
+                item.meter = progress(meterRoot, { onRetry: function () { item.state = 'waiting'; pump(); } });
+                items.push(item); refresh(); pump();
+            },
+            onRemove: function (file) {
+                var item = items.find(function (x) { return x.file === file; });
+                if (!item) return;
+                item.removed = true;
+                if (item.controller) item.controller.abort();
+                item.meter.destroy(); item.meterRoot.remove();
+                items.splice(items.indexOf(item), 1); refresh();
+            }
+        });
+        return { picker: pick, total: total, items: items };
+    }
+    return { progress: progress, picker: picker, queue: queue, rate: rate, timeLeft: timeLeft, size: size };
 });
