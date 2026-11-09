@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.177.0 — 2026-11-09
+
+- **`openvibe-shared/offer-card`: one offer from the network's shops** (`offer-card.js`, styles in `kit-data.css`). It
+  shows the title and the shop, the all-in price formatted as money (`$90.00`, `€50.00`) with what it includes ("Free
+  shipping", "+ $4.99 shipping", "Shipping not stated"), and how fresh the price is ("Checked 3 hours ago"). Nothing
+  unknown is invented: no price or check time says so. A stale offer says "may have changed". Only http(s) links are
+  kept. On a phone the price goes under the title.
+
 ## 4.175.0 — 2026-11-09
 
 - **OpenVibe Link**: the shared navigation's Machines entry points at openvibe.link/machines instead of the old
