@@ -51,6 +51,7 @@
 .ovh-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px; }
 @media (min-width: 400px) { .ovh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 @media (min-width: 861px) { .ovh-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); } }
+.ovh-grid { position: relative; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) { touch-action: none; -webkit-user-select: none; user-select: none; }
 .ovh-recent .ovh-app { min-height: 80px; }
 .ovh-app { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; min-height: 88px; padding: 8px 2px 6px; border: 0; border-radius: 16px;
@@ -78,7 +79,10 @@
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-app { touch-action: none; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { animation: ovh-wiggle .32s ease-in-out infinite alternate; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-app:nth-child(2n) .ovh-ic { animation-delay: -.16s; }
-.ovh-app.is-lifted { opacity: .25; }
+.ovh-app.is-lifted { opacity: .18; transform: scale(.92); }
+.ovh-ghost .ovh-ic { width: 64px; height: 64px; border-radius: 19px; }
+html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { animation-name: ovh-wiggle-calm !important; }
+@keyframes ovh-wiggle-calm { from { transform: rotate(-.6deg); } to { transform: rotate(.6deg); } }
 .ovh-ghost { position: fixed; z-index: 10040; pointer-events: none; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 19px; display: grid; place-items: center;
     background: var(--bg-secondary, #141a24); box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 0 0 1px var(--border, rgba(255,255,255,.14)); transform: scale(1.08); }
 @keyframes ovh-wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
@@ -137,7 +141,7 @@
 .ovh-lives { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .ovh-lives a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--live, #ef4444) 12%, transparent); color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; }
 .ovh-lives a::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #ef4444); }
-@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic, .ovh-chip.is-working .ovh-dot { animation: none !important; } .ovh-ic { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic { animation-name: ovh-wiggle-calm !important; } .ovh-chip.is-working .ovh-dot { animation: none !important; } }
 `;
         document.head.appendChild(st);
     }
@@ -345,7 +349,7 @@
             if (state.drag) return;
             const ghost = h('div', 'ovh-ghost');
             const src = el.querySelector(`.ovh-grid:not(.ovh-recent) [data-id="${CSS.escape(id)}"] .ovh-ic`);
-            if (src) ghost.append(src.cloneNode(true).firstChild || h('span'));
+            if (src) { const c = src.cloneNode(true); c.style.animation = 'none'; ghost.append(c); }
             document.body.append(ghost);
             state.drag = { id, ghost };
             const at = (m) => { ghost.style.left = `${m.clientX}px`; ghost.style.top = `${m.clientY}px`; };
@@ -359,15 +363,28 @@
                 if (m.cancelable) m.preventDefault();
                 if (scroller) { const r = scroller.getBoundingClientRect(); if (m.clientY < r.top + 56) scroller.scrollTop -= 12; else if (m.clientY > r.bottom - 56) scroller.scrollTop += 12; }
                 at(m);
-                const under = document.elementFromPoint(m.clientX, m.clientY);
-                const cell = under && under.closest && under.closest('.ovh-grid:not(.ovh-recent) .ovh-app');
-                if (!cell || !el.contains(cell)) return;
+                // Which app's place the finger is over, by layout (offsets ignore the slide in progress), and only well
+                // inside it (the middle 60%), so the grid never flickers between two places.
+                const grid = el.querySelector('.ovh-grid:not(.ovh-recent)');
+                if (!grid) return;
+                const cell = [...grid.children].find((n) => { const r = n.getBoundingClientRect(); return m.clientX >= r.left && m.clientX < r.right && m.clientY >= r.top && m.clientY < r.bottom; });
+                if (!cell) return;
                 const to = L.home.indexOf(cell.getAttribute('data-id')), from = L.home.indexOf(id);
                 if (to < 0 || to === from) return;
+                const cr = cell.getBoundingClientRect();
+                if (Math.abs(m.clientX - (cr.left + cr.width / 2)) > cr.width * 0.35 || Math.abs(m.clientY - (cr.top + cr.height / 2)) > cr.height * 0.4) return;
+                const before = new Map([...grid.children].map((n) => [n.getAttribute('data-id'), n.getBoundingClientRect()]));
                 L.home.splice(from, 1); L.home.splice(to, 0, id);
-                const grid = el.querySelector('.ovh-grid:not(.ovh-recent)');
                 grid.textContent = ''; L.home.forEach((x, i) => grid.append(homeTile(x, i)));
                 icons(); lift();
+                // Each app slides from where it was to where it now is (FLIP), so the grid moves like a phone's.
+                [...grid.children].forEach((n) => {
+                    const b = before.get(n.getAttribute('data-id')); if (!b) return;
+                    const a = n.getBoundingClientRect(); const dx = b.left - a.left, dy = b.top - a.top;
+                    if (!dx && !dy) return;
+                    n.style.transition = 'none'; n.style.transform = `translate(${dx}px, ${dy}px)`;
+                    requestAnimationFrame(() => { n.style.transition = 'transform .26s cubic-bezier(.2, .9, .3, 1)'; n.style.transform = ''; });
+                });
             };
             const end = () => {
                 window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);

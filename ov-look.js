@@ -1,5 +1,5 @@
 /**
- * openvibe-shared/ov-look.js — the Look panel (plan L42, 4.64.0): change your look from any OpenVibe site, signed in
+ * openvibe-shared/ov-look.js - the Look panel (plan L42, 4.64.0): change your look from any OpenVibe site, signed in
  * or not, without leaving it. navbar.js loads it from beside itself the first time someone opens Look (the palette in
  * the account menu, or Look in a guest's menu), so it costs nothing on first paint.
  *
@@ -90,12 +90,17 @@
             const choice = (id, label, solid) => { const b = el('button', { type: 'button', role: 'radio', 'aria-checked': String(now === id), 'data-look-icons': id }, []); if (solid != null) b.append(sample(solid)); b.append(label); return b; };
             panel.append(el('div', { class: 'ovlk-icons' }, [el('b', {}, ['Icons']), el('div', { class: 'ovlk-seg', role: 'radiogroup', 'aria-label': 'Icons' }, [choice('auto', 'Auto', null), choice('line', 'Line', false), choice('solid', 'Solid', true)])]));
         }
-        // Text size and motion live here, with the theme (11-09, the owner: "the typography and the Calm button… should
-        // just be in the settings… keep day and night"): the account menu keeps only light, dark and auto.
+        // Text size and motion live here, with the theme (11-09, the owner: "the typography and the Calm button... should
+        // just be in the settings... keep day and night"): the account menu keeps only light, dark and auto.
         if (L.display && L.display.get && L.display.options) {
             const d = L.display.get();
             const row = (key, label, items) => el('div', { class: 'ovlk-icons' }, [el('b', {}, [label]), el('div', { class: 'ovlk-seg', role: 'radiogroup', 'aria-label': label },
                 items.filter(([v]) => (L.display.options[key] || []).map(String).includes(String(v))).map(([v, t]) => el('button', { type: 'button', role: 'radio', 'aria-checked': String(String(d[key]) === String(v)), 'data-look-set': `${key}:${v}` }, [t])))]);
+            if (L.scheme && L.scheme.get) {
+                const sch = L.scheme.get();
+                panel.append(el('div', { class: 'ovlk-icons' }, [el('b', {}, ['Appearance']), el('div', { class: 'ovlk-seg', role: 'radiogroup', 'aria-label': 'Appearance' },
+                    [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']].map(([v, t]) => el('button', { type: 'button', role: 'radio', 'aria-checked': String(sch === v), 'data-look-scheme': v }, [t])))]));
+            }
             panel.append(row('text', 'Text size', [[100, 'Default'], [112, 'Large'], [125, 'Largest']]));
             panel.append(row('motion', 'Motion', [['auto', 'Animated'], ['reduced', 'Calm']]));
         }
@@ -137,6 +142,8 @@
             if (sh) { e.stopPropagation(); return share(sh); }
             const ic = e.target.closest && e.target.closest('[data-look-icons]');
             if (ic) { e.stopPropagation(); L.display.set({ icons: ic.getAttribute('data-look-icons') }); return draw(box, opts); }
+            const sc = e.target.closest && e.target.closest('[data-look-scheme]');
+            if (sc && L.scheme) { e.stopPropagation(); L.scheme.set(sc.getAttribute('data-look-scheme')); return draw(box, opts); }
             const ds = e.target.closest && e.target.closest('[data-look-set]');
             if (ds) { e.stopPropagation(); const [k, v] = ds.getAttribute('data-look-set').split(':'); L.display.set({ [k]: /^\d+$/.test(v) ? Number(v) : v }); return draw(box, opts); }
             const s = e.target.closest && e.target.closest('[data-look-season]');

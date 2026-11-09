@@ -17,7 +17,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
 const ROOT = path.join(__dirname, '..');
 const chips = (n) => Array.from({ length: n }, (_, i) => `<span style="flex:none;padding:10px 16px;border:1px solid #444;border-radius:999px">Chip number ${i + 1}</span>`).join('');
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rails</title><link rel="icon" href="data:,">
-<link rel="stylesheet" href="/kit.css"></head><body style="margin:0;padding:16px">
+<link rel="stylesheet" href="/kit.css"><link rel="stylesheet" href="/room.css"></head><body style="margin:0;padding:16px">
 <div id="plain" data-ovk-scroll style="display:flex;gap:8px">${chips(12)}</div>
 <div id="drift" data-ovk-scroll="drift" style="display:flex;gap:8px;margin-top:24px">${chips(12)}</div>
 <div id="short" data-ovk-scroll style="display:flex;gap:8px;margin-top:24px">${chips(1)}</div>
@@ -25,7 +25,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
-    if (u.pathname === '/kit.css' || u.pathname === '/kit-web.js') { res.writeHead(200, { 'content-type': u.pathname.endsWith('.css') ? 'text/css' : 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, u.pathname.slice(1)))); }
+    if (u.pathname === '/kit.css' || u.pathname === '/room.css' || u.pathname === '/kit-web.js') { res.writeHead(200, { 'content-type': u.pathname.endsWith('.css') ? 'text/css' : 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, u.pathname.slice(1)))); }
     res.writeHead(404); return res.end();
 });
 

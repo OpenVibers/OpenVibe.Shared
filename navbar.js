@@ -154,6 +154,11 @@
             .ovnav-display .ovnav-seg button[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .ovnav-display .ovnav-seg button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
             .ovnav-drawer .ovnav-display a { display: inline; padding: 6px 4px; margin-left: auto; font-size: 12px; color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovnav-display a.ovnav-disp-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; margin: 0; padding: 4px 6px; border-radius: 14px; color: var(--text-primary, #e6edf7); text-decoration: none; }
+            .ovnav-display a.ovnav-disp-row:hover { background: var(--bg-hover, rgba(255,255,255,.06)); }
+            .ovnav-disp-ic { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(150deg, hsl(285 72% 58% / .34), hsl(285 70% 38% / .18)); color: hsl(285 90% 82%); }
+            .ovnav-disp-row > span:nth-child(2) { flex: 1; display: grid; gap: 1px; } .ovnav-disp-row b { font-size: 14px; } .ovnav-disp-row small { font-size: 12px; color: var(--text-muted, #7d8aa0); }
+            .ovnav-disp-row[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
             .ovnav-display .ovnav-disp { display: flex; align-items: center; gap: 8px; width: 100%; }
             .ovnav-display .ovnav-disp .ovnav-dl { flex-basis: auto; margin-right: auto; }
             .ovnav-display .ovnav-seg-ic button { display: inline-grid; place-items: center; width: 40px; height: 34px; padding: 0; }
@@ -567,7 +572,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '656197b4f379', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '45c4a9a66249', 'dock.js': 'e3a24221e4ef', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '917a057e2658', 'nav-slots.js': 'a5af310d62e0' };
+    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '45c4a9a66249', 'dock.js': 'e3a24221e4ef', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': 'b85341c89bd9', 'nav-slots.js': 'a5af310d62e0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1307,13 +1312,12 @@
      *  icons) in place, the same as the account menu's (11-09, the owner: "moved to a settings menu… more compact"). */
     function bindDisplayControls(box) {
         const L = root.OpenVibeThemeLoader; if (!box || !L || !L.display) return;
-        const sch = L.scheme ? L.scheme.get() : null;
-        const ss = (val, ic, title) => `<button type="button" data-s="${val}" aria-pressed="${sch === val}" title="${title}" aria-label="${title}">${navIcon(ic)}</button>`;
-        box.innerHTML = `<div class="ovnav-disp"><span class="ovnav-dl">Display</span>${sch ? `<span class="ovnav-seg ovnav-seg-ic" role="group" aria-label="Light or dark">${ss('light', 'fa-sun', 'Light')}${ss('dark', 'fa-moon', 'Dark')}${ss('auto', 'fa-circle-half-stroke', 'Auto: follow this device')}</span>` : ''}<a class="ovnav-disp-more" href="https://openvibe.design/look" data-ov-look-open aria-expanded="false" title="Theme, text size, motion and icons">${navIcon('fa-palette')}<span>Settings</span></a></div><div class="ud-look" hidden></div>`;
-        const paint = () => { const now = L.scheme ? L.scheme.get() : null; box.querySelectorAll('button[data-s]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === now))); };
-        box.addEventListener('click', (e) => { const s2 = e.target.closest('button[data-s]'); if (s2 && L.scheme) { L.scheme.set(s2.dataset.s); paint(); } });
+        const say = () => { const sch = L.scheme ? L.scheme.get() : null; const d = L.display.get(); return [{ light: 'Light', dark: 'Dark', auto: 'Auto' }[sch] || '', d.motion === 'reduced' ? 'Calm' : '', String(d.text) !== '100' ? 'Large text' : ''].filter(Boolean).join(' · '); };
+        box.innerHTML = `<a class="ovnav-disp-row" href="https://openvibe.design/look" data-ov-look-open aria-expanded="false"><span class="ovnav-disp-ic">${navIcon('fa-palette')}</span><span><b>Display and theme</b><small data-disp-say></small></span>${navIcon('fa-chevron-down')}</a><div class="ud-look" hidden></div>`;
+        const paint = () => { const s = box.querySelector('[data-disp-say]'); if (s) s.textContent = say(); };
         bindLook(box);
-        if (typeof root.addEventListener === 'function') root.addEventListener('ov:theme', paint, onDocument());
+        if (typeof root.addEventListener === 'function') { root.addEventListener('ov:theme', paint, onDocument()); root.addEventListener('ov:display', paint, onDocument()); }
+        paint();
         box.hidden = false;
     }
 
@@ -2196,7 +2200,7 @@
             const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
             avatarBtn.addEventListener('pointerdown', () => { sel = selectedText(); });
             avatarBtn.addEventListener('click', () => {
-                if (dropdown.classList.contains('open')) { unpop(dropdown, () => dropdown.classList.remove('open')); return; }
+                if (dropdown.classList.contains('open') && !dropdown.classList.contains('ov-pop-out')) { unpop(dropdown, () => { if (!dropdown.classList.contains('ov-pop')) dropdown.classList.remove('open'); }); return; }
                 dropdown.classList.add('open'); popFrom(dropdown, avatarBtn);
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; loadOvIcons(dropdown); }
