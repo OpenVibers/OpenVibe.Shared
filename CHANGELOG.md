@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.177.0 — 2026-11-09
+
+- **`openvibe-shared/offer-card`: one offer from the network's shops** (`offer-card.js`, styles in `kit-data.css`). It
+  shows the title and the shop, the all-in price formatted as money (`$90.00`, `€50.00`) with what it includes ("Free
+  shipping", "+ $4.99 shipping", "Shipping not stated"), and how fresh the price is ("Checked 3 hours ago"). Nothing
+  unknown is invented: no price or check time says so. A stale offer says "may have changed". Only http(s) links are
+  kept. On a phone the price goes under the title.
+- **A section's line sits under its title** (`showcase.css`). The line under a showcase section's heading was always
+  indented to clear a heading icon, so a heading without one (Blog's "Latest from the OpenVibe blog") had its line
+  pushed right. It is indented only when the heading has its icon.
 ## 4.176.0 — 2026-11-09
 
 - **The model chip and its choice sheet** (`ai-choice.js`, `ov-ai-choice.js`, `ov-ai-choice.css`): a chip beside any
