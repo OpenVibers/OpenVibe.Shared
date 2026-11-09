@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.179.0 — 2026-11-09
+
+**Share to OpenVibe Community.** The share sheet (`ov-share.js`) has a Community tile beside OpenVibe Chat: it opens
+Community's new-topic form (`/forum/discuss?title=&body=`) with the title and the link filled in; the person picks the
+forum and posts it themselves. OpenVibe's own places lead the grid and wear the accent. Not shown on Community's own
+pages.
+
 ## 4.178.0 — 2026-11-09
 
 **What's new reads like news (plan §9).** `shipped.js` uses the tags Blog now writes on every change (`kind`: new,
