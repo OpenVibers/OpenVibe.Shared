@@ -26,7 +26,10 @@
     const LONG_MS = 450;
     const HOME_MAX = 40;
     const ACTOR = 'https://openvibe.actor';
-    const COMMUNITY = 'https://openvibe.community';
+    // The Feed, the wall and the composer go through Network's frame relay (/api/frame/feed, /wall, /status): every
+    // site's connect-src lets the navbar reach openvibe.network and refuses openvibe.community (11-09: the Feed fell back
+    // to its old sections on every site but five). o.frameBase overrides it (tests, staging).
+    const FRAME = 'https://openvibe.network/api/frame';
 
     const safe = (u) => { try { const x = new URL(String(u || ''), location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -736,7 +739,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             const text = ta.value.trim(); if (!text) return;
             post.disabled = true;
             try {
-                const r = await fetch(`${o.communityBase || COMMUNITY}/api/v1/me/status`, { method: 'POST', credentials: 'omit', headers: { Authorization: `Bearer ${o.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                const r = await fetch(`${o.frameBase || FRAME}/status`, { method: 'POST', credentials: 'omit', headers: { Authorization: `Bearer ${o.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
                 const j = await r.json().catch(() => ({}));
                 if (!r.ok) throw new Error(j.detail || 'It did not post. Try again in a moment.');
                 ta.value = ''; note.hidden = false; note.textContent = 'Posted. It is on your profile and in your followers’ feeds.';
@@ -778,7 +781,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         const p = new URLSearchParams({ limit: '20' });
         if (signedIn(o)) p.set('for', 'me');
         if (cursor) p.set('after', cursor);
-        return `${o.communityBase || COMMUNITY}/api/v1/pulse?${p}`;
+        return `${o.frameBase || FRAME}/wall?${p}`;
     }
     function loadPulse(o, cursor) {
         return fetch(pulseUrl(o, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })
@@ -845,7 +848,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         const p = new URLSearchParams({ limit: '12' });
         if (kind) p.set('kind', kind);
         if (cursor) p.set('cursor', cursor);
-        return `${o.communityBase || COMMUNITY}/api/v1/feed?${p}`;
+        return `${o.frameBase || FRAME}/feed?${p}`;
     }
     function loadFeed(o, kind, cursor) {
         return fetch(feedUrl(o, kind, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })

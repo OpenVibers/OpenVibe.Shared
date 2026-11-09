@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.166.0 — 2026-11-09
+
+- **The Feed on every site** (the owner: "I still don't see the custom doom scrollable feed"): the menu's Feed, wall and
+  composer reach Community through Network's frame relay (`https://openvibe.network/api/frame/feed`, `/wall`,
+  `/status`; Network #714). Every site's Content-Security-Policy allows openvibe.network and refused
+  openvibe.community, so on every site but five the Feed fell back to its old sections. `o.frameBase` overrides the
+  relay (tests, staging); the menu no longer calls openvibe.community directly.
+
 ## 4.165.0 — 2026-11-09
 
 - **Faster between pages and sites** (the owner, 11-09: "when you change sites… faster across sites… better caching on

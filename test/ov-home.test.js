@@ -12,8 +12,9 @@ assert.ok(!/\.innerHTML\s*=/.test(src) && !/insertAdjacentHTML/.test(src), 'it n
 assert.ok(/const safe = \(u\) =>/.test(src) && /x\.protocol === 'https:' \|\| x\.origin === location\.origin/.test(src), 'links are https or this site only');
 assert.ok(/localStorage\.setItem\(HOME_KEY/.test(src) && /\/api\/v1\/me\/home-screen/.test(src), 'the arrangement is kept here and on Network');
 assert.ok(/credentials: 'omit'/.test(src) && !/credentials: 'include'/.test(src), 'no cookies go with any call');
-assert.ok(/\/api\/v1\/me\/status/.test(src) && /viewer\.can_post/.test(src), 'the composer posts to Community only when it says the person can');
-assert.ok(/\/api\/v1\/pulse\?/.test(src) && /for', 'me'/.test(src), 'the wall reads the pulse, personal when signed in');
+assert.ok(/\/status`/.test(src) && /viewer\.can_post/.test(src), 'the composer posts (through Network to Community) only when Community says the person can');
+assert.ok(/\/wall\?/.test(src) && /for', 'me'/.test(src), 'the wall reads the pulse (through Network), personal when signed in');
+assert.ok(/const FRAME = 'https:\/\/openvibe\.network\/api\/frame'/.test(src) && !/openvibe\.community\/api/.test(src), 'the menu reaches Community only through Network (every site allows openvibe.network)');
 assert.ok(/LONG_MS = 450/.test(src) && /ArrowLeft/.test(src) && /Delete/.test(src), 'long-press, and keys for people who cannot drag');
 assert.ok(/prefers-reduced-motion: reduce/.test(src), 'the wiggle and the pulse stop for reduced motion');
 assert.ok(!/@keyframes [a-z-]*spin|ovh-spin|rotate\(360deg\)/i.test(src), 'no spinners');
