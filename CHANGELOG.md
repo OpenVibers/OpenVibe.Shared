@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.163.0 — 2026-11-09
+
+- The menu's You tab opens with **Most used**: the person's top eight sites by their own use this month, as app icons, above Recent, with **Your stats** linking OpenVibe.Report's `/me` (the owner, 11-09). Report's `GET /api/v1/me/stats` answers with the person's own token and the top eight are kept on the device for an hour. A Report that cannot answer (offline, or a site whose CSP does not allow it) leaves the menu on the history counts it already has; the row is never made up.
+
 ## 4.162.0 — 2026-11-09
 
 - `kit.head` accepts an icon tile; `kit.section` accepts an icon and an action row that wraps on phones.

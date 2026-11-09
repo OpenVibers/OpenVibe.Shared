@@ -249,6 +249,20 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
             el.textContent = '';
             el.classList.toggle('is-edit', state.edit);
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
+            // Most used: the person's top eight sites by their own use this month (Report's stats, or the history counts
+            // when Report cannot answer). The owner, 11-09: "your most used platforms across all of them… top 8 sites by
+            // your own use this month, as app icons… with Your stats linking Report /me". It sits above Recent.
+            const most = (o.mostUsed || []).filter((a) => a && a.url).slice(0, 8);
+            if (most.length && !state.edit) {
+                const head = sec('Most used');
+                const stats = h('a', 'ovh-link', 'Your stats');
+                stats.href = safe(o.statsHref) || 'https://openvibe.report/me';
+                head.append(stats);
+                el.append(head);
+                const row = h('div', 'ovh-grid'); row.setAttribute('aria-label', 'Most used this month');
+                most.forEach((a) => row.append(appTile(o, a, { small: true })));
+                el.append(row);
+            }
             // Recent: the last places opened, newest first.
             const recent = (o.recent || []).map((id) => L.byId.get(id)).filter(Boolean).slice(0, 5);
             if (recent.length && !state.edit) {

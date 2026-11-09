@@ -38,6 +38,11 @@
 (function (root) {
     'use strict';
     const API = 'https://search.openvibe.network';
+    // The person's most-used sites: Report's own GET /api/v1/me/stats (the sections the person's token may read). The
+    // menu keeps the top eight for an hour on this device; a network that does not answer falls back to the history
+    // counts the menu already holds, never to a made-up list.
+    const STATS_API = 'https://openvibe.report/api/v1/me/stats';
+    const STATS_TTL_MS = 3600000;
     const SUGGEST = 'https://openvibe.network/api/frame/suggest';
     const CATALOG_URL = 'https://openvibe.network/api/catalog.json';
     const TOOLS_SEARCH = 'https://openvibe.tools/search?q=';
@@ -78,6 +83,7 @@
     const markFeedSeen = () => { try { localStorage.setItem(FEED_SEEN, String(Date.now())); } catch { /* */ } };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
+    let statsTop = null;   // the person's top eight sites from Report, or null until it answers
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
     const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
@@ -136,6 +142,28 @@
     /** The person's own use of each site (their history's counts), for "your sites" and for ranking results. */
     const useOf = (id) => { const s = mine && mine.services.find((x) => x.service === id); return s ? s.count : 0; };
 
+    /**
+     * The top eight sites by the person's own use this month, for the You tab's Most used row (the owner, 11-09:
+     * "your top 8 sites by your own use this month, as app icons"). Report's stats answer first, because they name the
+     * month's ranking; the history's own counts stand in when Report cannot answer.
+     */
+    function mostUsedSites(all = sites()) {
+        const byId = new Map(all.map((x) => [x.id, x]));
+        const siteId = (id) => (id === 'media' ? 'media-hub' : id);
+        const fromStats = (Array.isArray(statsTop) ? statsTop : []).map((s) => {
+            const id = siteId(s.id);
+            const site = byId.get(id);
+            const url = site ? site.url : safeUrl(s.url);
+            return url ? { id, title: (site && site.name) || s.label || id, url, site: (site && (site.icon || site.id)) || id } : null;
+        }).filter(Boolean);
+        if (fromStats.length) return fromStats.slice(0, 8);
+        return ((mine && mine.services) || []).map((s) => {
+            const id = siteId(s.service);
+            const site = byId.get(id);
+            return site && site.url ? { id, title: site.name, url: site.url, site: site.icon || site.id } : null;
+        }).filter(Boolean).slice(0, 8);
+    }
+
     /** The person's history: one request per opening, kept two minutes (signed in only; anonymous sessions keep none). */
     async function loadHistory() {
         if (!ctx.token || !ctx.user || ctx.user.is_anon) return null;
@@ -153,6 +181,29 @@
             return data;
         } catch { return null; }
     }
+
+    /**
+     * The person's most-used sites from Report's GET /api/v1/me/stats (the person's own token, so only they read it),
+     * kept an hour on this device. A Report that cannot answer (offline, or a site whose CSP does not allow it) leaves
+     * the menu on the history counts it already has. Only the top eight are kept, never the whole document.
+     */
+    async function loadStats() {
+        if (!ctx.token || !ctx.user || ctx.user.is_anon) return null;
+        const key = `ov_stats:${ctx.user.id || ctx.user.username || ''}`;
+        try { const c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && Date.now() - c.at < STATS_TTL_MS) return Array.isArray(c.top) ? c.top : null; } catch { /* */ }
+        try {
+            const r = await fetch(ctx.statsUrl || STATS_API, { headers: { Authorization: `Bearer ${ctx.token}`, Accept: 'application/json' }, credentials: 'omit' });
+            if (!r.ok) return null;
+            const j = await r.json();
+            const sites = j && j.sections && j.sections.sites ? j.sections.sites : null;
+            const top = (sites && Array.isArray(sites.top) ? sites.top : []).slice(0, 8).map((s) => ({
+                id: String((s && s.service) || ''), label: String((s && s.label) || ''), url: safeUrl(s && s.url), visits: Number(s && s.visits) || 0,
+            })).filter((s) => s.id && s.url);
+            try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), top })); } catch { /* */ }
+            return top;
+        } catch { return null; }
+    }
+
     /** OpenVibe.Tools' catalog (families and tools), kept 30 minutes; the same copy the navbar used to keep. */
     async function loadCatalog() {
         try { const c = JSON.parse(sessionStorage.getItem('ov_catalog2') || 'null'); if (c && Date.now() - c.at < 30 * 60000) return c.data; } catch { /* */ }
@@ -1177,6 +1228,8 @@
             return groups;
         }
         if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
+        const most = mostUsedSites();
+        if (most.length) groups.push({ title: 'Most used', as: 'apps', more: { label: 'Your stats', href: 'https://openvibe.report/me' }, items: most.map((x) => siteItem(x)), section: 'most' });
         const yours = mine && mine.services.some((x) => x.count > 0);
         // Without their own history, developer services are not places to visit: they come up here once used.
         const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
@@ -1223,6 +1276,7 @@
             if (recentIds.length >= 5) break;
         }
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, groups: f && Array.isArray(f.groups) ? f.groups : [],
+            mostUsed: mostUsedSites(all), statsHref: 'https://openvibe.report/me',
             token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
@@ -1444,7 +1498,9 @@
         setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
         // What makes it the person's own arrives after the first paint: their history, and the tools catalog.
         mine = null;
+        statsTop = null;
         loadHistory().then((h) => { if (h && el.classList.contains('is-open')) { mine = h; paintGhost(); render(input.value); } });
+        loadStats().then((top) => { if (top && el.classList.contains('is-open')) { statsTop = top; render(input.value); } });
         if (!catalog) loadCatalog().then((c) => { if (c) { catalog = c; if (el.classList.contains('is-open')) render(input.value); } });
         loadPulse().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
