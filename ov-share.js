@@ -272,6 +272,7 @@
         embed: '<path d="m8.5 8-4.5 4 4.5 4M15.5 8l4.5 4-4.5 4M13.5 5.5l-3 13"/>',
         more: '<circle cx="6" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18" cy="12" r="1.4"/>',
         ovchat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
+        ovcommunity: '<path d="M4 5.5h9.5A1.5 1.5 0 0 1 15 7v5a1.5 1.5 0 0 1-1.5 1.5H9l-3 2.5v-2.5H4A1.5 1.5 0 0 1 2.5 12V7A1.5 1.5 0 0 1 4 5.5z"/><path d="M18 9.5h2a1.5 1.5 0 0 1 1.5 1.5v4.5A1.5 1.5 0 0 1 20 17h-1v2.5L16 17h-3.5"/>',
     };
     function tileIcon(id, slug) {
         const s = el('span', `ov-share-tileic is-${id}`, { 'aria-hidden': 'true' });
@@ -360,6 +361,14 @@
             close(st, true);
             dock.share({ text: o.title ? `${o.title} ${href}` : href, title: o.title || '' });
         }]] : [];
+        // OpenVibe Community (4.179.0): start a topic about it. The link opens Community's new-topic form with the title
+        // and the link filled in; the person picks the forum, reads it over and posts it themselves. Not on Community's
+        // own pages, which have their own Discuss.
+        const onCommunity = /(^|\.)openvibe\.community$/.test(String(root.location && root.location.hostname || ''));
+        if (!onCommunity) {
+            const body = `${o.text ? `${o.text}\n\n` : ''}${href}`;
+            first.push(['ovcommunity', 'Community', null, `https://openvibe.community/forum/discuss?title=${E(String(o.title || '').slice(0, 200))}&body=${E(body.slice(0, 4000))}`, null]);
+        }
         const room = SHOWN - extra.length - first.length;
         const ordered = [...first, ...tiles.slice(0, room), ...extra, ...tiles.slice(room)];
         const grid = el('div', 'ov-share-grid', { role: 'group', 'aria-label': 'Send it to' });

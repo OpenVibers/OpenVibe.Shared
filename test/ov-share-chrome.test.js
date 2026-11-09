@@ -208,6 +208,13 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate(`${q('copy')}.textContent`), 'Copied');
         // No Dock on this page (signed out): no OpenVibe Chat tile.
         assert.strictEqual(await p.evaluate(`!!${q('to-ovchat')}`), false, 'no OpenVibe Chat without the Dock');
+        // OpenVibe Community is offered to everyone (4.179.0): a link to its new-topic form, the title and the link filled in.
+        const comm = await p.evaluate(`(() => { const a = ${q('to-ovcommunity')}; return a ? { href: a.getAttribute('href'), text: a.textContent, first: document.querySelector('dialog.ov-share .ov-share-grid .ov-share-tile') === a } : null; })()`);
+        assert.ok(comm, 'the Community tile');
+        assert.strictEqual(comm.text, 'Community');
+        assert.ok(comm.first, 'first-party places lead the grid');
+        assert.ok(/^https:\/\/openvibe\.community\/forum\/discuss\?title=[^&]*&body=/.test(comm.href), comm.href);
+        assert.ok(decodeURIComponent(comm.href.split('&body=')[1]).includes('http'), 'the body carries the link');
         const x = await p.evaluate(`${q('to-x')}.getAttribute('href')`);
         assert.strictEqual(x, 'https://x.com/intent/post?text=A%20robot%20%26%20a%20wave&url=https%3A%2F%2Fvideo.test%2Fv%2F1', 'X gets the title and the link, encoded');
         assert.strictEqual(await p.evaluate(`${q('to-x')}.getAttribute('rel')`), 'noopener noreferrer');
