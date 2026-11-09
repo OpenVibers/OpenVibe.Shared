@@ -236,7 +236,7 @@ function load(hostname, opts = {}) {
 {
     const src = require('fs').readFileSync(NAVBAR_PATH, 'utf8');
     assert.ok(src.includes('<span class="ud-label">Across OpenVibe</span>') && src.includes('data-open-launcher>All sites</button>'), 'a header with All sites');
-    assert.ok(/class="ovnav-net-grid">\$\{pick\.map\(n => `<a class="ovnav-net" href="\$\{escapeAttr\(n\.url\)\}" title="\$\{escapeAttr\(n\.tagline\)\}"><span class="ov-icon" data-icon=/.test(src), 'each site with its mark');
+    assert.ok(/class="ovnav-net-grid">\$\{pick\.map\(n => `<a class="ovnav-net" data-ov-net-link href="\$\{escapeAttr\(n\.url\)\}" title="\$\{escapeAttr\(n\.tagline\)\}"><span class="ov-icon" data-icon=/.test(src), 'each site with its mark');
     assert.ok(src.includes('.ovnav-drawer .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px;'), 'icon slots are sized before they are drawn');
     assert.strictEqual((src.match(/function loadIcons\(/g) || []).length, 1, 'one loadIcons (the nav glyphs); the ov-icons loader has its own name');
     assert.ok(/function queueIcons\(\)[\s\S]*?requestIdleCallback\(go/.test(src), 'ov-icons.js loads when the page settles');
