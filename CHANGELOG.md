@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.163.0 — 2026-11-09
+
+- **You, redone** (the owner, 11-09: "the U tab still sucks, and you didn't do all the improvements"). You on top: your
+  picture (online), name and @handle linking to your profile, with **Display** beside it (the Look panel: theme, icons,
+  appearance, text size, motion, opening in place; navbar passes `look` to the menu) and **Settings** (Account). Display
+  leaves the foot of the tab for signed-in people.
+- **Jump back in** is a row of cards you swipe: each place's own hue icon, a two-line title, a time that keeps up while the
+  menu is open, and LIVE with a breathing ring for a stream that is on now. It replaces Recent, which repeated the grid.
+- **Most used**: the pages you opened per site, as one bar and its key (five colours that tell apart in dark and light).
+- **Your own AI** is one compact row (mark, words, Set it up, an ×): a third of the height.
+- **Smart folders**: until you arrange your home, the sites past the first page sit in folders from the network's groups
+  (Watch, People, Make, Read, Play, Shop). A folder shows four different icons (Quick tools showed `</>` four times).
+- **Drag lands where you drop**: the drop is found by the grid's slots, not the sliding apps' drawn boxes (an app sliding
+  under the finger took the drop, so it landed one place off now and then).
+- **The video player's bar matches Live's**: 40 px buttons (44 on touch), centred icons.
+- Calm keeps the cards' fade and a slower live breath.
+
 ## 4.162.0 — 2026-11-09
 
 - `kit.head` accepts an icon tile; `kit.section` accepts an icon and an action row that wraps on phones.
