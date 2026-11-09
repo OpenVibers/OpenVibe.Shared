@@ -612,5 +612,164 @@
         more.addEventListener('click', async () => { more.disabled = true; const j = await loadPulse(o, next); more.disabled = false; if (j) draw(j, true); });
     }
 
-    root.OpenVibeHome = { home, wallTop, timeline, loadPulse, _defaultHome: defaultHome };
+
+    // ── Feed v2: a real feed (owner, 11-09: "a real feed… you scroll through easy content… sections or a filter system…
+    // clean, intuitive"). Community's GET /api/v1/feed (plan "Feed v2"): one stream of cards by kind, chips on top, more as
+    // you near the end. When the API is not there yet, the pulse wall above stands (timeline()).
+    const KINDS = [['', 'For you'], ['live', 'Live'], ['clip', 'Clips'], ['video', 'Videos'], ['pic', 'Pics'], ['post', 'Posts'], ['meme', 'Memes'], ['game', 'Games'], ['update', 'Updates']];
+    function feedUrl(o, kind, cursor) {
+        const p = new URLSearchParams({ limit: '12' });
+        if (kind) p.set('kind', kind);
+        if (cursor) p.set('cursor', cursor);
+        return `${o.communityBase || COMMUNITY}/api/v1/feed?${p}`;
+    }
+    function loadFeed(o, kind, cursor) {
+        return fetch(feedUrl(o, kind, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })
+            .then((r) => (r.ok ? r.json() : null)).then((j) => (j && Array.isArray(j.items) ? j : null)).catch(() => null);
+    }
+    const still = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced' || !!(navigator.connection && navigator.connection.saveData); } catch { return false; } };
+    const count = (n) => { const v = Number(n) || 0; return v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : String(v); };
+    let player = null;   // one IntersectionObserver plays the preview in view and pauses the rest
+    function watchPreview(box, c) {
+        const media = c.media || {};
+        const preview = safe(media.preview);
+        if (!preview || still() || typeof IntersectionObserver !== 'function') return;
+        player = player || new IntersectionObserver((es) => es.forEach((x) => {
+            const v = x.target.querySelector('video');
+            if (x.isIntersecting && x.intersectionRatio >= 0.6) {
+                if (!v) { const nv = document.createElement('video'); nv.muted = true; nv.loop = true; nv.playsInline = true; nv.setAttribute('playsinline', ''); nv.preload = 'none'; nv.src = x.target.getAttribute('data-preview'); nv.className = 'ovf-video'; x.target.append(nv); nv.play().catch(() => {}); }
+                else v.play().catch(() => {});
+            } else if (v) v.pause();
+        }), { threshold: [0, 0.6] });
+        box.setAttribute('data-preview', preview);
+        player.observe(box);
+    }
+    function feedCard(c) {
+        const kind = String(c.kind || 'post');
+        const url = safe(c.url);
+        if (!url) return null;
+        if (kind === 'update') {
+            const a = h('a', 'ovf-update'); a.href = url;
+            const ic = h('span', 'ovh-ic'); ic.append(siteIcon(c.site || 'ov', 20));
+            const t = h('span', 'ovf-update-txt'); t.append(h('b', '', String(c.title || '').slice(0, 160)), h('small', '', [c.site_name || c.site, ago(c.at)].filter(Boolean).join(' · ')));
+            a.append(ic, t); return a;
+        }
+        const a = h('a', `ovf-card ovf-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
+        const head = h('span', 'ovf-head');
+        const face = h('span', 'ovf-face');
+        const av = c.actor && safe(c.actor.avatar);
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); } else face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase();
+        const who = h('span', 'ovf-who');
+        who.append(h('b', '', String((c.actor && c.actor.name) || c.site_name || '').slice(0, 60)));
+        const meta = h('small', '');
+        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', ago(c.at)].filter(Boolean).join(' · ')}`));
+        who.append(meta);
+        head.append(face, who);
+        if (kind === 'live') head.append(h('span', 'ovf-livechip', 'LIVE'));
+        a.append(head);
+        const media = c.media || {};
+        const thumb = safe(media.thumb);
+        if (thumb && /^https:/.test(thumb)) {
+            const box = h('span', 'ovf-media');
+            const r = Number(media.ratio) > 0 ? Math.max(0.8, Math.min(1.91, Number(media.ratio))) : (kind === 'pic' || kind === 'meme' ? 1 : 16 / 9);
+            box.style.aspectRatio = String(r);
+            const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = thumb; box.append(img);
+            if (media.length) box.append(h('span', 'ovf-len', String(media.length).slice(0, 10)));
+            if (kind === 'live' && c.counts && c.counts.viewers) box.append(h('span', 'ovf-len ovf-viewers', `${count(c.counts.viewers)} watching`));
+            a.append(box);
+            if (kind === 'clip' || kind === 'video' || kind === 'live') watchPreview(box, c);
+        }
+        if (c.title) a.append(h('b', 'ovf-title', String(c.title).slice(0, 200)));
+        if (c.text && (kind === 'post' || !thumb)) a.append(h('p', 'ovf-text', String(c.text).slice(0, 500)));
+        const n = c.counts || {};
+        const bits = [n.views ? `${count(n.views)} views` : '', n.likes ? `♥ ${count(n.likes)}` : '', n.comments ? `${count(n.comments)} replies` : ''].filter(Boolean);
+        if (bits.length) a.append(h('small', 'ovf-counts', bits.join(' · ')));
+        return a;
+    }
+    function feed(el, o) {
+        styles(); feedStyles();
+        el.classList.add('ovh', 'ovf');
+        el.setAttribute('data-sec', 'wall');
+        el.textContent = '';
+        const chips = h('div', 'ovf-chips'); chips.setAttribute('role', 'tablist'); chips.setAttribute('aria-label', 'Feed');
+        const list = h('div', 'ovf-list');
+        const sentinel = h('div', 'ovf-more');
+        el.append(chips, list, sentinel);
+        let kind = '', cursor = null, busy = false, done = false, seq = 0;
+        const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovf-skel')); };
+        const clearSkels = () => list.querySelectorAll('.ovf-skel').forEach((x) => x.remove());
+        async function more(first) {
+            if (busy || done) return;
+            busy = true; const my = ++seq;
+            if (first) { list.textContent = ''; skeletons(); } else skeletons();
+            const j = await loadFeed(o, kind, cursor);
+            if (my !== seq) return;
+            clearSkels(); busy = false;
+            if (!j) {
+                if (first && !kind) { el.textContent = ''; if (o.feedMissing) o.feedMissing(); timeline(el, o); return; }   // the API is not there: the wall stands
+                done = true; sentinel.textContent = ''; sentinel.append(h('p', 'ovh-note', 'That did not load. Pull the menu again to retry.')); return;
+            }
+            if (first && o.feedLive) o.feedLive();
+            j.items.map(feedCard).filter(Boolean).forEach((c) => list.append(c));
+            if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
+            cursor = j.next_cursor || null;
+            done = !cursor;
+            sentinel.textContent = '';
+            if (done) sentinel.append(h('p', 'ovh-note ovf-caught', list.childNodes.length ? "You're all caught up." : 'Nothing here yet.'));
+        }
+        KINDS.forEach(([k, label]) => {
+            const b = h('button', 'ovf-chip', label); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
+            b.addEventListener('click', () => {
+                if (k === kind) return;
+                kind = k; cursor = null; done = false; busy = false;
+                chips.querySelectorAll('.ovf-chip').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+                more(true);
+            });
+            chips.append(b);
+        });
+        if (typeof IntersectionObserver === 'function') {
+            const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
+            io.observe(sentinel);
+        }
+        more(true);
+        return { update() {} };
+    }
+    function feedStyles() {
+        if (document.getElementById('ovf-styles')) return;
+        const st = document.createElement('style'); st.id = 'ovf-styles';
+        st.textContent = `
+.ovf-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
+.ovf-chips::-webkit-scrollbar{display:none}
+.ovf-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
+.ovf-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
+.ovf-list{display:grid;gap:10px;padding:4px 0}
+@media (min-width:861px){.ovf-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ovf-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
+@media (hover:hover){.ovf-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
+.ovf-head{display:flex;align-items:center;gap:8px;min-width:0}
+.ovf-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
+.ovf-face img{width:100%;height:100%;object-fit:cover}
+.ovf-who{min-width:0;display:grid}
+.ovf-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovf-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovf-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em}
+.ovf-media{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--bg-tertiary,#1f2633)}
+.ovf-media img,.ovf-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ovf-len{position:absolute;right:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-weight:700}
+.ovf-viewers{left:8px;right:auto}
+.ovf-title{font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ovf-text{margin:0;font-size:14px;line-height:1.5;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ovf-counts{font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovf-update{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;color:inherit;text-decoration:none}
+.ovf-update .ovh-ic{width:34px;height:34px;border-radius:10px;flex:none}
+.ovf-update-txt{min-width:0;display:grid;gap:2px}.ovf-update-txt b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovf-update-txt small{font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovf-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovf-shimmer 1.4s ease-in-out infinite}
+.ovf-more{min-height:1px}.ovf-caught{text-align:center;padding:10px 0}
+@keyframes ovf-shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ovf-skel{animation:none}}
+`;
+        document.head.appendChild(st);
+    }
+
+    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, _defaultHome: defaultHome };
 })(typeof window !== 'undefined' ? window : globalThis);
