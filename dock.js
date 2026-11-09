@@ -101,7 +101,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '40a5f8e3970b', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -261,7 +261,7 @@
             .ovdk-err[hidden] { display: none; }
             .ovdk-none b { display: block; margin-bottom: 4px; font-size: 15px; color: var(--text-primary, #ececf1); }
             @media (max-width: 640px) {
-                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: 0; width: auto !important; height: auto !important; max-width: none; max-height: none;
+                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: var(--ov-kb, 0px); width: auto !important; height: auto !important; max-width: none; max-height: none;
                     border: 0; border-radius: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: none; transform-origin: 50% 100%; }
                 .ovdk.is-in { animation-name: ovdk-rise; animation-duration: .3s; }
                 .ovdk-head { cursor: default; }
@@ -698,7 +698,7 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
-        if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
+        if (canWriteChat() && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {

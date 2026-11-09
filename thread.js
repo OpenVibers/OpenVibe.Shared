@@ -42,6 +42,7 @@ const P = {
     send: 'M5 12l14-7-5 14-2.5-5.5z',
     stop: 'M7 7h10v10H7z',
     attach: 'M16.5 6.5l-8 8a2.5 2.5 0 0 0 3.5 3.5l8-8a4.5 4.5 0 0 0-6.4-6.4l-8 8',
+    options: 'M4 7h9M17 7h3M4 17h3M11 17h9M15 4.5v5M9 14.5v5',
     handover: 'M4 8h13l-3-3M20 16H7l3 3',
     wait: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
     panel: 'M4 4h16v16H4zM15 4v16',
@@ -230,6 +231,13 @@ function panel({ id = 'ovt-panel', title = 'Details', sections = [] } = {}) {
     return `<aside class="ovt-panel" id="${esc(id)}" aria-label="${esc(title)}" data-ovt-panel><div class="ovt-panel-head"><h2>${esc(title)}</h2><button type="button" class="ovt-btn ovt-panel-close" data-ovt-panel-close aria-label="Close">${icon('close')}</button></div>${secs}</aside>`;
 }
 
+/** The composer's Options: one button, the pickers behind it, and the chips of what differs from the defaults. */
+function optionsHtml({ html, label = 'Options' }) {
+    return `<details class="ovt-opts" data-ovt-opts><summary class="ovt-btn ovt-opts-btn" aria-label="${esc(label)}" title="${esc(label)}">${icon('options')}<i class="ovt-opts-dot" aria-hidden="true"></i></summary>`
+        + `<div class="ovt-opts-panel" role="group" aria-label="${esc(label)}"><div class="ovt-opts-head"><b>${esc(label)}</b><button type="button" class="ovt-btn ovt-opts-x" data-ovt-opts-close aria-label="Done">${icon('close')}</button></div><div class="ovt-opts-body">${html}</div></div></details>`
+        + '<span class="ovt-opts-chips" data-ovt-opts-chips></span>';
+}
+
 /**
  * The composer, at the bottom of the screen: a box that grows as you type, the caller's tools (a mode chip, a model
  * chip, attach), and Send, which becomes Stop while a turn works (busy). Works as a plain form without script.
@@ -239,15 +247,20 @@ function panel({ id = 'ovt-panel', title = 'Details', sections = [] } = {}) {
  *   id, attrs: the form's id (inputs outside it join it with form="id") and the site's data attributes
  *   foot: the site's safe markup under the bar (where the work runs, recent repositories); note: a quiet line under that,
  *   which is also the form's status line (role="status": a site's script says "Sending…" there)
+ *   options: { html, label } the site's safe pickers behind one Options button (11-09, the owner: "too many options…
+ *   hidden under a cog"): a panel on a computer, a sheet on a phone, a <details> without script. A picker whose
+ *   <select> or radio group carries data-ovt-default="<value>" shows as a chip beside the button while it differs
+ *   (its × puts the default back), and the button wears a dot.
+ *   examples: ['Make the home page faster on phones', …] the box's placeholder walks through them while it is empty
  */
-function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '' } = {}) {
+function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '', options = null, examples = [] } = {}) {
     const extra = Object.entries(attrs || {}).map(([k, v]) => attr(k, v)).join('');
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
     return `${starters.length ? `<div class="ovt-starters">${starters.map((s) => `<button type="button" class="ovt-starter" data-ovt-starter="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
 <form class="ovt-composer${busy ? ' is-busy' : ''}"${attr('id', id)} method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}${extra}>${hid}
 ${top || ''}<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
-<textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
-<div class="ovt-c-row"><div class="ovt-c-tools">${attach ? `<label class="ovt-btn ovt-attach" title="Attach files">${icon('attach')}<span class="ovt-sr">Attach files</span><input type="file" name="${esc(attach.name || 'files')}"${attach.accept ? ` accept="${esc(attach.accept)}"` : ''} multiple data-ovt-files hidden></label>` : ''}${tools || ''}</div>
+<textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''}${examples && examples.length ? ` data-ovt-examples="${esc(JSON.stringify(examples.slice(0, 12).map((x) => String(x).slice(0, 140))))}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
+<div class="ovt-c-row"><div class="ovt-c-tools">${attach ? `<label class="ovt-btn ovt-attach" title="Attach files">${icon('attach')}<span class="ovt-sr">Attach files</span><input type="file" name="${esc(attach.name || 'files')}"${attach.accept ? ` accept="${esc(attach.accept)}"` : ''} multiple data-ovt-files hidden></label>` : ''}${tools || ''}${options && options.html ? optionsHtml(options) : ''}</div>
 ${stopAction != null ? `<button type="submit" class="ovt-stop"${stopAction ? ` formaction="${esc(stopAction)}" formnovalidate` : ''}${busy && stopAction ? '' : ' hidden'} data-ovt-stop>${icon('stop')}<span>Stop</span></button>` : ''}<button type="submit" class="ovt-send" data-ovt-send aria-label="${esc(sendLabel)}">${icon('send')}<span class="ovt-sr">${esc(sendLabel)}</span></button></div>
 ${foot || ''}<p class="ovt-c-note" data-ovt-note role="status">${esc(note || '')}</p>
 </form>`;
