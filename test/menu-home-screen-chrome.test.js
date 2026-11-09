@@ -141,7 +141,7 @@ const server = http.createServer((req, res) => {
 
         // The Tools folder: tools with their own icons, and the count of all.
         await p.evaluate(`document.querySelector('.ovh-grid .ovh-app[data-id="folder:tools"]').click(), true`);
-        assert.ok(await until(p, `!!document.querySelector('.ovh-head b') && document.querySelector('.ovh-head b').textContent === 'Tools'`), 'the folder opened');
+        assert.ok(await until(p, `!!document.querySelector('.ovh-head b') && document.querySelector('.ovh-head b').textContent === 'Quick tools'`), 'the folder opened');
         const folder = await p.evaluate(`({ n: document.querySelectorAll('.ovh-grid .ovh-app').length, icons: [...document.querySelectorAll('.ovh-grid .ovh-app .ov-icon')].slice(0, 4).map((i) => i.getAttribute('data-icon')), more: (document.querySelector('a.ovh-all') || {}).textContent })`);
         assert.strictEqual(folder.n, 24, 'the folder shows two dozen tools');
         assert.deepStrictEqual(folder.icons, ['pdf', 'image', 'qr', 'audio'], 'each tool wears its own icon');

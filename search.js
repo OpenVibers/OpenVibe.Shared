@@ -67,8 +67,10 @@
     // of sites"). The first is labelled with this site's own name.
     const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
     const TAB_KEY = 'ovs-tab';
-    const savedTab = () => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
-    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, v); } catch { /* private window */ } };
+    // The tab is remembered per site (11-09, the owner: on a new site the menu opened on You, "confusing"): another site
+    // opens on its own tab first; the same site opens where the person left it.
+    const savedTab = () => { try { const [v, host] = String(localStorage.getItem(TAB_KEY) || '').split('|'); if (host && host !== location.hostname) return null; return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
+    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, `${v}|${location.hostname}`); } catch { /* private window */ } };
     // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
     // since last time you've looked… a badge").
     const FEED_SEEN = 'ovs-feed-seen';
@@ -1151,6 +1153,17 @@
         return groups;
     }
 
+    /**
+     * A page they were on (11-09, the owner: "more like live data… smart and aware… better info, looks nicer"): the site's
+     * own icon, the title without the site's name glued on, when, and "Live now" for a channel that is live this minute.
+     */
+    function backRow(x) {
+        const title = String(x.title || '').replace(/\s*[·|–—-]\s*(?:OpenVibe\.\w+|open\.\w+)\s*$/i, '').replace(/^OpenVibe\.\w+:\s*/i, '').trim() || x.title;
+        const live = pulseData && Array.isArray(pulseData.live) && pulseData.live.some((c) => c && c.url && safeUrl(c.url) && hostOf(c.url) === hostOf(x.url) && String(c.url).replace(/\/$/, '').toLowerCase() === String(x.url).replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase());
+        const svc = x.service === 'media' ? 'media-hub' : x.service;
+        return { title: title.slice(0, 90), meta: [live ? 'Live now' : '', x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
+    }
+
     /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
     function youGroups() {
         const { take, ranked } = basis();
@@ -1158,8 +1171,7 @@
         if (homeLib()) {
             groups.push({ as: 'home', items: [], section: 'home' });
             const seenH = new Set();
-            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5)
-                .map((x) => ({ title: x.title, meta: [x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, icon: 'back', kind: 'history' })) : [];
+            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5).map(backRow) : [];
             groups.push({ title: 'Jump back in', items: backH, section: 'back' });
             if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
@@ -1170,8 +1182,7 @@
         const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
         groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((x) => siteItem(x)), section: 'places' });
         const seen = new Set();
-        const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5)
-            .map((h) => ({ title: h.title, meta: [h.site, ago(h.at)].filter(Boolean).join(' · '), url: h.url, icon: 'back', kind: 'history' })) : [];
+        const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5).map(backRow) : [];
         groups.push({ title: 'Jump back in', items: back, section: 'back' });
         const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
         groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
