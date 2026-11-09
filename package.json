@@ -85,6 +85,7 @@
     "./serve": "./serve.js",
     "./shell": "./shell.js",
     "./showcase": "./showcase.js",
+    "./showcase-stage": "./showcase-stage.js",
     "./kit": "./kit.js",
     "./kit-web": "./kit-web.js",
     "./kit-data-web": "./kit-data-web.js",
