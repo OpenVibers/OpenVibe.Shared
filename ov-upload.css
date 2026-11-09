@@ -20,11 +20,14 @@
 .ov-progress[data-state="sending"] .ov-progress__fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.28) 45%, transparent 65%); animation: ov-upload-sheen 1.8s linear infinite; }
 .ov-progress[data-state="processing"] .ov-progress__fill { width: 100% !important; animation: ov-upload-pulse 1.8s ease-in-out infinite; }
 .ov-progress[data-state="done"] .ov-progress__percent { color: #34c78c; animation: ov-upload-check .38s ease-out both; }
+.ov-progress__check { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ov-progress__check path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: ov-upload-draw .45s ease-out forwards; }
 .ov-progress[data-state="failed"] .ov-progress__fill { background: #de627d; }
 .ov-progress__detail { min-height: 1.4em; margin: 0; opacity: .8; font-size: .85rem; }
 .ov-progress__retry { justify-self: start; border: 1px solid currentColor; border-radius: 8px; padding: 5px 12px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
 @keyframes ov-upload-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 @keyframes ov-upload-pulse { 50% { opacity: .5; } }
 @keyframes ov-upload-check { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes ov-upload-draw { to { stroke-dashoffset: 0; } }
 @media (pointer: coarse), (max-width: 700px) { .ov-upload__picker { min-height: 120px; } .ov-upload__drop { display: none; } }
-@media (prefers-reduced-motion: reduce) { .ov-progress__fill, .ov-progress[data-state="processing"] .ov-progress__fill, .ov-progress[data-state="done"] .ov-progress__percent { transition: none; animation: none; } .ov-progress[data-state="sending"] .ov-progress__fill::after { display: none; } }
+@media (prefers-reduced-motion: reduce) { .ov-progress__fill, .ov-progress[data-state="processing"] .ov-progress__fill, .ov-progress[data-state="done"] .ov-progress__percent, .ov-progress__check path { transition: none; animation: none; } .ov-progress__check path { stroke-dashoffset: 0; } .ov-progress[data-state="sending"] .ov-progress__fill::after { display: none; } }
