@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.176.0 — 2026-11-09
+
+- **The model chip and its choice sheet** (`ai-choice.js`, `ov-ai-choice.js`, `ov-ai-choice.css`): a chip beside any
+  Generate button showing the maker mark and the model's name, opening a sheet with one list of the models in the
+  order the person picks (Recommended, Fastest, Cheapest, Best quality; the owner's recommendation badged), then Your
+  keys, Your machines and Uncensored 18+ (only where the person confirmed). Each row says what it costs a run and how
+  fast it is; a check marks the choice. The footer saves "Use this for every <task>" and links to
+  Exchange. Server rendering keeps the control named before hydration; the sheet sets no scroll behind it and an
+  outside tap closes it.
+
 ## 4.175.0 — 2026-11-09
 
 - **OpenVibe Link**: the shared navigation's Machines entry points at openvibe.link/machines instead of the old
