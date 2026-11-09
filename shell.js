@@ -84,6 +84,8 @@ function scripts(o = {}) {
  *   head                extra <head> markup appended verbatim (already trusted/escaped)
  *   manifest            the installable web app links (manifest + apple-touch-icon) are added when the
  *                       page's service has an icon set; `false` opts out
+ *   favicon             the tab icon: the service's OpenVibe mark (openvibe-shared/app-icon favicon) as an inline
+ *                       SVG, added unless `head` already has a rel=icon link; `false` opts out (4.157.0)
  *   body                the page's main content (trusted markup — the caller escaped it)
  *   bodyAttributes      attributes for <body>, escaped; bodyClass is shorthand for `class`
  *   navLinks, home      the `frame.noscriptNav` no-JavaScript navigation
@@ -124,6 +126,19 @@ function manifestLinks(o) {
     return `<link rel="manifest" href="${esc(manifest)}">\n<link rel="apple-touch-icon" href="${esc(touch)}">`;
 }
 
+// The tab icon (4.157.0): without one the browser asks /favicon.ico, which most sites answer 404, and the tab shows a
+// blank page icon (11-09: Computer, Email and Studio, all on this shell). The service's mark, the same tint as its app
+// icons; a page whose `head` already has an icon keeps its own.
+function faviconLink(o) {
+    if (o.favicon === false) return '';
+    if (typeof o.head === 'string' && /rel=["']?(?:shortcut )?icon\b/i.test(o.head)) return '';
+    const service = siteId(o) || 'network';
+    const known = appIcons.site(service);
+    const variant = String((known && known.icon) || service).replace(/[^a-z0-9-]/g, '');
+    const uri = 'data:image/svg+xml,' + encodeURIComponent(require('./app-icon').favicon({ site: variant })).replace(/'/g, '%27');
+    return `<link rel="icon" type="image/svg+xml" data-ov-icon="${esc(variant)}" href="${uri}">`;
+}
+
 // The shared navbar's script is deferred and mounts into the page's #navbar-mount: the mount holds the bar's 52px from
 // the first paint so the page does not drop when it lands (layout shift), and without JavaScript it goes away. The body
 // has no browser margin, so the Frame's navbar and footer meet the window's edges on a page with no stylesheet of its own
@@ -156,6 +171,7 @@ function page(o = {}) {
         o.agentLayer && o.canonical ? require('./agent-layer').linkHeaderTags(o.canonical, o.llms).head : '',
         summary ? summary.head : '',
         o.head || '',
+        faviconLink(o),
         manifestLinks(o),
         NAVBAR_RESERVE,
         scripts(o),

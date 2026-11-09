@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.157.0 — 2026-11-09
+
+- **Every shell page has a tab icon.** `shell.page()` adds the service's OpenVibe mark (`openvibe-shared/app-icon`
+  `favicon`, the same tint as its app icons) as an inline SVG `<link rel="icon">` when the page's `head` has none.
+  Without one the browser asked `/favicon.ico`, which most sites answer 404, and the tab showed a blank page icon
+  (11-09: openvibe.computer, openvibe.email and openvibe.studio). A page with its own icon keeps it; `favicon: false`
+  opts out.
+
 ## 4.156.0 — 2026-11-08
 
 - **Locker unlocks with a passkey on this device.** Setting up a locker can use a passkey instead of a passphrase:
