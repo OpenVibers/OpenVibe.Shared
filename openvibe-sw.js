@@ -5,24 +5,24 @@
  * Served by every OpenVibe site at /openvibe-sw.js (same origin, scope "/"), from openvibe-shared. Two jobs in one file:
  *
  *   1. Web Push (the job it always had): the network sends a notification, the worker shows it.
- *   2. The shell's cache: the shared files every page loads (the navbar, the theme loader, the footer, the kit CSS, the brand
- *      face, the glyphs) are kept by their content hash and served from the cache without asking the network again; a page
- *      is always fetched from the network first, and the copy in the cache is only there for when the network does not answer.
+ *   2. The cache of content-addressed files: a shared or site file served under its content hash (?v=<hash> or a hash in
+ *      the name: what serve.url() hands out) is kept and answered from the cache without asking the network again. Its
+ *      bytes cannot change under that URL, and it is public, so this is safe for everyone this worker runs for.
  *
- * The rules that keep it honest:
+ * The rules that keep it honest (review 11-09):
  *
- *   - Hashed assets (a ?v=<hash> or a hash in the name — what serve.url() hands out) are immutable: cache first, forever.
- *     Their bytes cannot change under the same URL, so the cache is right to keep them.
- *   - A page is never served from the cache while the network answers. The network is asked first (3 s), so a crawler and a
- *     person both read the same HTML the server just wrote. Only when the network does not answer does the cached copy show.
- *   - Nothing private is ever stored: a response with Set-Cookie, with Cache-Control: private or no-store, or with a Vary on
- *     Cookie or Authorization is passed straight through and never written to the cache.
- *   - The API is never touched. /api/ and anything that is not a plain GET goes to the network untouched.
- *   - The kill switch: GET <kill switch> says { "enabled": false } and every worker on every site unregisters itself and drops
- *     its caches. A worker that cannot reach the switch keeps working (a network hiccup must not take the cache away).
- *   - A new VERSION is a new cache: the old one is deleted when the new worker takes over, so a release never serves stale
- *     shell bytes.
+ *   - Only content-addressed files are answered by the worker. Pages and every other file go to the network exactly as
+ *     the browser sends them: no copy of a page is ever kept (a signed-in page could outlive a sign-out on a shared
+ *     device), nothing cuts a slow page off, and a file without a hash is never served stale against new HTML.
+ *   - Nothing private is stored: a response with Set-Cookie, Cache-Control: private or no-store, or a Vary on Cookie or
+ *     Authorization passes through and is never written to the cache.
+ *   - The API is never touched: /api/ and anything that is not a plain GET go to the network untouched.
+ *   - The kill switch: GET <kill switch> says { "enabled": false } and every worker on every site unregisters itself and
+ *     drops its caches. A worker that cannot reach the switch keeps working.
+ *   - A new VERSION is a new cache, and the cache keeps the newest MAX_ENTRIES files.
  *
+ * This file is also the Web Push worker the notification bell registers for anyone who turns push on, so whatever it does
+ * reaches them without any other opt-in: that is why it only keeps immutable public bytes.
  * The site that wants this says so: OpenVibeNavbar.init({ sw: true }). A site can also point the worker elsewhere
  * ({ sw: { path: '/my-sw.js' } }) or leave it alone.
  */
@@ -32,7 +32,6 @@ const VERSION = '4.164.0';                                  // the release this 
 const CACHE_PREFIX = 'ov-shell-';
 const CACHE_NAME = CACHE_PREFIX + VERSION;
 const KILL_SWITCH = 'https://openvibe.network/api/v1/sw-config';
-const PAGE_TIMEOUT_MS = 3000;                               // a page waits this long for the network before the cached copy shows
 const STATIC_TYPES = ['javascript', 'ecmascript', 'css', 'woff2', 'woff', 'ttf', 'otf', 'svg+xml', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'ico'];
 
 const self_ = typeof self !== 'undefined' ? self : globalThis;
@@ -74,11 +73,6 @@ function cacheable(res) {
     return true;
 }
 
-/** True when the response is a page (a document the browser renders), not a file. */
-function isPage(res) {
-    const type = String(res.headers.get('content-type') || '');
-    return type.indexOf('text/html') >= 0;
-}
 
 /** True when the response is a file the shell keeps (a script, a stylesheet, a font, an image). */
 function staticType(res) {
@@ -94,45 +88,18 @@ async function cacheFirst(req, cache) {
     const hit = await cache.match(req);
     if (hit) return hit;
     const res = await fetch(req);
-    if (cacheable(res) && staticType(res)) await cache.put(req, res.clone());
+    if (cacheable(res) && staticType(res)) { try { await cache.put(req, res.clone()); await trim(cache); } catch { /* full or gone */ } }
     return res;
 }
 
-/** The other files: the cached copy now, the fresh one in the background. */
-async function staleWhileRevalidate(req, cache, event) {
-    const hit = await cache.match(req);
-    const fresh = fetch(req).then(async (res) => {
-        if (cacheable(res) && staticType(res)) await cache.put(req, res.clone());
-        return res;
-    }).catch(() => null);
-    if (hit) { event.waitUntil(fresh); return hit; }
-    const res = await fresh;
-    return res || new Response('', { status: 504, statusText: 'Offline' });
+/** Each release adds files under new hashes: the oldest go once the cache holds more than MAX_ENTRIES. */
+const MAX_ENTRIES = 400;
+async function trim(cache) {
+    const keys = await cache.keys();
+    for (let i = 0; i < keys.length - MAX_ENTRIES; i++) await cache.delete(keys[i]);
 }
 
-/**
- * A page: the network first, so a crawler and a person read the HTML the server just wrote. The cached copy is only the
- * answer when the network does not answer within PAGE_TIMEOUT_MS.
- */
-async function networkFirst(req, cache) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => { try { controller.abort(); } catch { /* */ } }, PAGE_TIMEOUT_MS);
-    let res = null;
-    try {
-        // 'no-cache': the page is revalidated with the server every time, so a person and a crawler read the HTML the
-        // server just wrote. The browser's own cache still keeps the bytes it validated.
-        res = await fetch(req, { signal: controller.signal, cache: 'no-cache' });
-    } catch { /* the network did not answer */ } finally { clearTimeout(timer); }
-    if (res) {
-        if (cacheable(res) && isPage(res)) { try { await cache.put(req, res.clone()); } catch { /* the cache is full or gone */ } }
-        return res;
-    }
-    const hit = await cache.match(req);
-    if (hit) return hit;
-    return new Response('<!doctype html><meta charset="utf-8"><title>Offline</title><p style="font:16px system-ui;padding:2rem">This page is not available offline yet.</p>', {
-        status: 503, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' },
-    });
-}
+
 
 // ── The shell's own files ────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -149,7 +116,8 @@ async function shellUrls() {
 
 /** Put the shell in the cache so the next page does not wait for it. One file that fails never stops the rest. */
 async function warmShell(cache) {
-    const urls = await shellUrls();
+    // Only the content-addressed ones: the worker never answers for any other file (see the fetch handler).
+    const urls = (await shellUrls()).filter((u) => { try { return isHashed(new URL(u, self_.location.origin)); } catch { return false; } });
     await Promise.all(urls.map(async (url) => {
         try {
             const res = await fetch(new Request(url, { cache: 'reload' }));
@@ -198,17 +166,13 @@ self_.addEventListener('fetch', (event) => {
     if (url.pathname.startsWith('/api/')) return;                         // the API is never cached
     if (url.pathname === '/ov-sw.js' || url.pathname === '/openvibe-sw.js') return;
 
-    event.respondWith((async () => {
-        const cache = await caches.open(CACHE_NAME);
-        // A page: the network first, the cached copy only when the network does not answer.
-        if (req.destination === 'document' || req.mode === 'navigate'
-            || String(req.headers.get('accept') || '').indexOf('text/html') >= 0) {
-            return networkFirst(req, cache);
-        }
-        // A content-addressed file: the cache first, for good.
-        if (isHashed(url)) return cacheFirst(req, cache);
-        return staleWhileRevalidate(req, cache, event);
-    })());
+    // Only content-addressed files (a hash in the name, or ?v=<hash>): their bytes never change and are public, so the
+    // cache answers first, for good. Pages and every other file go to the network exactly as the browser sends them.
+    // (Review 11-09: this file is also the Web Push worker every signed-in person with push already runs, so whatever it
+    // does reaches people who never opted in. Kept copies of pages could outlive a sign-out on a shared device, a 3 s
+    // cut-off turned slow pages into "offline", and stale unhashed scripts could run against new HTML after a deploy.)
+    if (req.destination === 'document' || req.mode === 'navigate' || !isHashed(url)) return;
+    event.respondWith((async () => cacheFirst(req, await caches.open(CACHE_NAME)))());
 });
 
 self_.addEventListener('message', (event) => {

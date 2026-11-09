@@ -45,14 +45,14 @@ const server = http.createServer((req, res) => {
     }
     if (u.pathname === '/slow') {
         const send = () => {
-            res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' });
+            res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });   // HTML revalidates, as on every site
             res.end('<!doctype html><title>slow</title><p id="m">cached page</p>');
         };
         if (state.slow) setTimeout(send, 6000); else send();
         return undefined;
     }
     // A page: public, and its body changes on every write, so a fresh copy is visible.
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300', etag: 'W/"' + state.body + '"' });
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache', etag: 'W/"' + state.body + '"' });
     res.end('<!doctype html><title>home</title><p id="m">body ' + state.body + '</p><script src="/shared/navbar.js?v=abcdef123456"></script>');
 });
 
@@ -99,15 +99,16 @@ async function waitFor(fn, ms = 5000) {
         const api2 = await p.evaluate('fetch("/api/thing").then((r) => r.json()).then((j) => j.n)');
         assert.notStrictEqual(api1, api2, 'the API is asked every time');
 
-        // ── A slow network falls back to the cached page ──────────────────────────────────────────────────────
+        // ── A slow page is never cut off, and no page is kept (review 11-09) ──────────────────────────────────
         await p.goto(base + '/slow', { maxMs: 12000 });
-        assert.strictEqual(await p.evaluate('document.getElementById("m").textContent'), 'cached page', 'the slow page loaded');
         state.slow = true;
         const started = Date.now();
-        await p.goto(base + '/slow', { maxMs: 12000 });
+        await p.goto(base + '/slow', { maxMs: 15000 });
         const waited = Date.now() - started;
-        assert.strictEqual(await p.evaluate('document.getElementById("m").textContent'), 'cached page', 'the cached page showed when the network was too slow');
-        assert.ok(waited >= 2500 && waited < 6000, 'the page waited for the network first (' + waited + ' ms)');
+        assert.strictEqual(await p.evaluate('document.getElementById("m").textContent'), 'cached page', 'the slow page arrived from the server');
+        assert.ok(waited >= 5500, 'the page waited for the network as long as it took (' + waited + ' ms), never a 3 s cut-off');
+        const pagesKept = await p.evaluate('caches.keys().then((ks) => Promise.all(ks.map((k) => caches.open(k).then((c) => c.keys())))).then((all) => all.flat().map((r) => new URL(r.url).pathname).filter((x) => x === "/" || x === "/slow"))');
+        assert.deepStrictEqual(pagesKept, [], 'no copy of a page is in the worker cache');
         state.slow = false;
 
         // ── The kill switch takes the worker away ─────────────────────────────────────────────────────────────
