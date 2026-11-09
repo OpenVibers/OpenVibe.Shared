@@ -344,7 +344,7 @@ async function drag(p, from, to) {
             // Cancel: back to the list, nothing waiting.
             await share();
             await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar');
-            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk-share-what').textContent"), TEXT, 'with no title, the text itself');
+            await until(p, `(document.querySelector('.ovdk-share-what') || {}).textContent === ${JSON.stringify(TEXT)}`, 'with no title, the text itself');
             await p.evaluate("document.querySelector('.ovdk-share-x').click()");
             await until(p, "!document.querySelector('.ovdk .ovdk-share') && document.querySelectorAll('.ovdk .ovdk-chat').length === 2", 'the list without the bar');
             await p.close();
