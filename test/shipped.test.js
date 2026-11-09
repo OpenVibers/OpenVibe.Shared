@@ -20,7 +20,7 @@ const data = {
     const node = document.getElementById('s');
     shipped.render(node, data, { limit: 5 });
     assert.strictEqual(node.hidden, false);
-    assert.strictEqual(node.querySelector('h3').textContent, 'Recently shipped');
+    assert.strictEqual(node.querySelector('h3').textContent, "What's new");
     const items = node.querySelectorAll('li');
     assert.strictEqual(items.length, 2);
     assert.strictEqual(node.querySelectorAll('img').length, 0, 'commit text is text, never markup');
@@ -83,6 +83,25 @@ const data = {
     assert.strictEqual(box.querySelectorAll('.ov-shipped-site').length, 2);
     assert.ok(!box.querySelector('.ov-shipped-meta').textContent.includes('OpenVibers'), 'the account every commit shares is not named on each row (4.47.2)');
     assert.strictEqual(box.querySelectorAll('.ov-shipped-hash')[1].textContent, 'bbbbbbb', 'short sha from the full sha');
+
+    // 4.178: a row says its kind, its plain words (the subject as its title) and up to two areas; internal work
+    // gathers in one counted fold at the end of its day, and pin bumps keep their own grouped row.
+    const tagged = document.createElement('div');
+    shipped.appendDays(tagged, [
+        { service: 'chat', sha: 'e'.repeat(40), subject: 'Onboarding when joining a server (#441)', plain: 'Joining a server shows its rules first', kind: 'new', areas: ['Chat', 'Moderation', 'Phone'], deployed_at: at(9) },
+        { service: 'chat', sha: 'f'.repeat(40), subject: 'workspace test: shell channel (#441)', kind: 'internal', deployed_at: at(9) },
+        { service: 'chat', sha: '1'.repeat(40), subject: 'refactor the feed store (#442)', kind: 'internal', deployed_at: at(8) },
+    ], false);
+    const taggedRow = tagged.querySelector('.ov-shipped-day > .ov-shipped-entries > .ov-shipped-entry');
+    assert.strictEqual(taggedRow.getAttribute('data-kind'), 'new');
+    assert.strictEqual(taggedRow.querySelector('.ov-shipped-kind').textContent, 'New');
+    assert.ok(taggedRow.querySelector('.ov-shipped-text').textContent.includes('Joining a server shows its rules first'), 'plain words');
+    assert.strictEqual(taggedRow.querySelector('.ov-shipped-text').getAttribute('title'), 'Onboarding when joining a server (#441)');
+    assert.strictEqual(taggedRow.querySelectorAll('.ov-shipped-areas span').length, 2, 'two areas at most');
+    const house = tagged.querySelector('.ov-shipped-house');
+    assert.ok(house, 'a housekeeping fold');
+    assert.strictEqual(house.querySelector('summary').textContent, '2 housekeeping changes (library updates and internal work)');
+    assert.strictEqual(house.querySelectorAll('.ov-shipped-entry').length, 2, 'every internal change is in it, counted');
 
     // 4.47.2: the same change on many sites is one row, across "Load more" pages too.
     const g = document.createElement('div');
@@ -147,7 +166,8 @@ const data = {
     assert.strictEqual(logEl.querySelector('.ov-shipped-posts a').getAttribute('href'), 'https://openvibe.blog/@openvibe/x');
     const more = logEl.querySelector('.ov-shipped-more');
     assert.strictEqual(more.hidden, false);
-    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe']);
+    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-bar:not(.ov-shipped-kinds) .ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe']);
+    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-kinds .ov-shipped-chip')].map((b) => b.textContent), ['All changes', 'New', 'Better', 'Fixed'], 'the kind filter');
     more.dispatchEvent(new window.Event('click'));
     await new Promise((r) => setTimeout(r, 20));
     assert.ok(calls.some((u) => u.includes('before=CUR') && u.includes('service=wiki')));
@@ -161,8 +181,8 @@ const data = {
     const steady = document.createElement('div');
     const done = shipped.log(steady, { service: 'wiki', api: 'https://example.test/api/v1/changelog-steady' });
     await new Promise((r) => setTimeout(r, 0));
-    assert.deepStrictEqual([...steady.querySelectorAll('.ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe'], 'own chips before the data');
-    assert.deepStrictEqual([...steady.children].map((c) => c.className), ['ov-shipped-bar', 'ov-shipped-posts', 'ov-shipped-empty', 'ov-shipped-days', 'ov-shipped-more']);
+    assert.deepStrictEqual([...steady.querySelectorAll('.ov-shipped-bar:not(.ov-shipped-kinds) .ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe'], 'own chips before the data');
+    assert.deepStrictEqual([...steady.children].map((c) => c.className), ['ov-shipped-bar', 'ov-shipped-bar ov-shipped-kinds', 'ov-shipped-posts', 'ov-shipped-empty', 'ov-shipped-days', 'ov-shipped-more']);
     assert.strictEqual(steady.querySelector('.ov-shipped-days').children.length, 0, 'the days stay empty while loading');
     release();
     await done;
@@ -191,7 +211,7 @@ const data = {
     assert.ok(pill2.textContent.includes('Wiki: page history shows who changed what'), 'the newest real change, not a pin bump');
     const list2 = document.createElement('section');
     shipped.render(list2, mixed, { service: 'wiki', limit: 5 });
-    assert.deepStrictEqual([...list2.querySelectorAll('li .ov-shipped-subject')].map((a) => a.textContent), ['Wiki: page history shows who changed what', 'Sitemaps: every entry carries an honest lastmod']);
+    assert.deepStrictEqual([...list2.querySelectorAll('li .ov-shipped-subject')].map((a) => a.textContent), ['Page history shows who changed what', 'Sitemaps: every entry carries an honest lastmod']);
     const onlyBumps = { entries: [mixed.entries[0], mixed.entries[1]] };
     const list3 = document.createElement('section');
     shipped.render(list3, onlyBumps, { service: 'wiki', limit: 5 });

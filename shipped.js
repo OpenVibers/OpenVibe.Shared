@@ -59,6 +59,8 @@
         `.ov-shipped-latest b{color:${TEXT};font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0}`,
         '[data-ov-shipped][hidden],.ov-shipped[hidden],.ov-shipped-latest[hidden]{display:none!important}',
         '.ov-shipped-home{display:grid;gap:12px;justify-items:start;margin:16px 0;min-width:0}.ov-shipped-home>.ov-shipped{justify-self:stretch}',
+        `.ov-shipped-days[data-kind=new] .ov-shipped-entries>.ov-shipped-entry:not([data-kind=new]),.ov-shipped-days[data-kind=better] .ov-shipped-entries>.ov-shipped-entry:not([data-kind=better]),.ov-shipped-days[data-kind=fixed] .ov-shipped-entries>.ov-shipped-entry:not([data-kind=fixed]){display:none}`,
+        `.ov-shipped-kinds{margin-top:-4px}.ov-shipped-house{margin-top:6px;border-top:1px dashed var(--border,rgba(255,255,255,.12));padding-top:6px}.ov-shipped-house>summary{cursor:pointer;color:${MUTED};font-size:13px;padding:6px 0}.ov-shipped-house .ov-shipped-entry{opacity:.85}`,
         `.ov-updates{min-width:0}.ov-updates h1{margin:.2em 0 .3em}.ov-updates-lede{color:${MUTED};line-height:1.55;margin:0 0 18px}`,
         '.ov-shipped{font-size:.92rem;min-width:0}.ov-shipped h3{font-size:1rem;margin:0 0 .5rem;display:flex;gap:.4rem;align-items:center}',
         '.ov-shipped ul{list-style:none;margin:0;padding:0;display:grid;gap:.35rem}.ov-shipped li{display:flex;gap:.5rem;align-items:baseline;min-width:0}',
@@ -94,6 +96,18 @@
         `.ov-shipped-fold{flex-basis:100%;min-width:0;font-size:.82rem;color:${MUTED}}.ov-shipped-fold summary{cursor:pointer;padding:3px 0;overflow-wrap:anywhere}`,
         `.ov-shipped-fold .ov-shipped-entries{margin:4px 0 2px;padding-left:10px;border-left:2px solid ${BORDER}}.ov-shipped-fold .ov-shipped-entry{padding:5px 8px}`,
         '@media (max-width:600px){.ov-shipped-entry{flex-wrap:wrap;gap:4px 8px}.ov-shipped-meta{width:100%}}',
+        // 11-09 (Opus): the "What's new" card: a devblog lead with its picture, rows with a kind tag and area chips.
+        `.ov-shipped-dev{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;margin:0 0 12px;padding:8px;border:1px solid ${BORDER};border-radius:14px;text-decoration:none;color:${TEXT}}`,
+        '.ov-shipped-dev:not(:has(img)){grid-template-columns:minmax(0,1fr)}',
+        `.ov-shipped-dev:hover{border-color:var(--accent,#3b82f6)}.ov-shipped-dev img{width:96px;height:64px;object-fit:cover;border-radius:10px;display:block;background:${BORDER}}`,
+        `.ov-shipped-dev-text{display:grid;gap:2px;min-width:0}.ov-shipped-dev-text small{font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:${ACCENT}}`,
+        '.ov-shipped-dev-text b{font-size:.95rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
+        `.ov-shipped-dev-text>span{font-size:.82rem;color:${MUTED};display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}`,
+        '.ov-shipped .ov-shipped-row{display:flex;align-items:center;gap:8px;min-width:0}',
+        '.ov-shipped-kind{flex:none;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px}',
+        `.ov-shipped-kind.is-new{background:color-mix(in srgb,#22c55e 20%,transparent);color:${TEXT}}.ov-shipped-kind.is-better{background:color-mix(in srgb,var(--accent,#3b82f6) 20%,transparent);color:${TEXT}}.ov-shipped-kind.is-fixed{background:color-mix(in srgb,#f59e0b 22%,transparent);color:${TEXT}}`,
+        `.ov-shipped-areas{display:inline-flex;gap:4px;flex:none}.ov-shipped-areas span{font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid ${BORDER};color:${MUTED};white-space:nowrap}`,
+        '@media (max-width:520px){.ov-shipped .ov-shipped-row{flex-wrap:wrap;row-gap:2px}.ov-shipped .ov-shipped-row .ov-shipped-subject{flex:1 1 60%;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ov-shipped-areas{order:5}}',
     ].join('');
     const ROCKET = 'M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2zM9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5';
 
@@ -193,7 +207,7 @@
     // says nothing to a visitor: the one-liner and the short list pass over them, while the full log keeps every
     // deployed commit. If nothing else shipped, the newest entry is shown anyway, so a site never looks dead.
     const PIN_BUMP = /^openvibe-[a-z][a-z0-9-]* v\d+\.\d+\.\d+ \(was v\d+\.\d+\.\d+\)/;
-    function isHousekeeping(e) { return Boolean(e && PIN_BUMP.test(String(e.subject || ''))); }
+    function isHousekeeping(e) { return Boolean(e && (e.kind === 'internal' || PIN_BUMP.test(String(e.subject || '')))); }
     function forVisitors(entries, n) {
         const all = Array.isArray(entries) ? entries : [];
         const told = all.filter((e) => !isHousekeeping(e));
@@ -231,27 +245,60 @@
         return renderLatest(node, await feed({ service: o.service, limit: 12, api: o.api }), o);
     }
 
-    // ── list: the newest few ────────────────────────────────────
+    // ── list: the newest few (the "What's new" card) ─────────────
+    // Opus's design (11-09, the owner: "show the latest blog post… rich content… with the image… elegant… use AI for
+    // tags or topics"): the site's newest devblog post leads with its picture, then the last changes as rows, each with
+    // what kind of change it is (New, Better, Fixed: Blog's blog.changelog.tag task), its plain words and up to two
+    // areas. Entries without those fields (before the task ran) read as before: their subject, no kind, no areas.
+    const KINDS = { new: 'New', better: 'Better', fixed: 'Fixed' };
+    function kindTag(e) { const k = e && KINDS[e.kind]; return k ? el('span', { class: `ov-shipped-kind is-${e.kind}` }, k) : null; }
+    function areaChips(e, n) {
+        const areas = Array.isArray(e && e.areas) ? e.areas.filter((a) => typeof a === 'string' && a).slice(0, n) : [];
+        if (!areas.length) return null;
+        const box = el('span', { class: 'ov-shipped-areas' });
+        for (const a of areas) box.appendChild(el('span', {}, a));
+        return box;
+    }
+    function words(e) { return typeof (e && e.plain) === 'string' && e.plain.trim() ? e.plain.trim() : plainSubject(e); }
+    function devblogCard(post) {
+        const href = post && safeUrl(post.url);
+        if (!href || !post.title) return null;
+        const a = el('a', { class: 'ov-shipped-dev', href });
+        const fig = safeUrl(post.figure);
+        if (fig) { const img = el('img', { src: fig, alt: '', loading: 'lazy', decoding: 'async' }); a.appendChild(img); }
+        const text = el('span', { class: 'ov-shipped-dev-text' });
+        text.appendChild(el('small', {}, 'Devblog'));
+        text.appendChild(el('b', {}, String(post.title)));
+        if (post.summary) text.appendChild(el('span', {}, String(post.summary)));
+        a.appendChild(text);
+        return a;
+    }
     /** Render a changelog answer into `node` (exported for tests). */
     function render(node, data, opts) {
         const o = opts || {};
         const entries = forVisitors(data && data.entries, clamp(o.limit, 1, 20, 5));
+        const lead = devblogCard(data && data.latest_devblog);
+        if (typeof document !== 'undefined') style();
         node.textContent = '';
-        if (!entries.length) { node.hidden = true; return node; }
+        if (!entries.length && !lead) { node.hidden = true; return node; }
         node.classList.add('ov-shipped');
-        if (o.title !== '') node.appendChild(el('h3', {}, o.title || 'Recently shipped'));
-        const ul = el('ul');
+        if (o.title !== '') node.appendChild(el('h3', {}, o.title || "What's new"));
+        if (lead) node.appendChild(lead);
+        const ul = el('ul', { class: 'ov-shipped-rows' });
         const showSite = o.showSite != null ? o.showSite : !o.service;
         for (const e of entries) {
-            const li = el('li');
+            const li = el('li', { class: 'ov-shipped-row' });
+            const k = kindTag(e); if (k) li.appendChild(k);
             if (showSite) li.appendChild(el('span', { class: 'ov-shipped-site' }, siteName(e.service)));
             const href = safeUrl(e.url);
-            const a = el(href ? 'a' : 'span', href ? { href, class: `ov-shipped-subject${e.major ? ' ov-shipped-major' : ''}`, rel: 'noopener', target: '_blank', title: e.subject } : { class: 'ov-shipped-subject' }, e.subject);
+            const text = words(e);
+            const a = el(href ? 'a' : 'span', href ? { href, class: `ov-shipped-subject${e.major ? ' ov-shipped-major' : ''}`, rel: 'noopener', target: '_blank', title: e.subject || text } : { class: `ov-shipped-subject${e.major ? ' ov-shipped-major' : ''}` }, text);
             li.appendChild(a);
+            const chips = areaChips(e, 2); if (chips) li.appendChild(chips);
             if (e.deployed_at) li.appendChild(timeEl(e.deployed_at));
             ul.appendChild(li);
         }
-        node.appendChild(ul);
+        if (entries.length) node.appendChild(ul);
         const links = el('div', { class: 'ov-shipped-links' });
         const more = localHref(o.more);
         if (more) links.appendChild(el('a', { href: more }, 'All updates →'));
@@ -322,7 +369,14 @@
         const href = safeUrl(e.url);
         row.appendChild(el(href ? 'a' : 'span', href ? { class: 'ov-shipped-hash', href, target: '_blank', rel: 'noopener', title: 'The change on GitHub' } : { class: 'ov-shipped-hash' }, e.short || String(e.sha || '').slice(0, 7)));
         if (showSite) row.appendChild(el('span', { class: 'ov-shipped-site' }, siteName(e.service)));
-        row.appendChild(el('span', { class: `ov-shipped-text${e.major ? ' ov-shipped-major' : ''}` }, e.subject));
+        const text = el('span', { class: `ov-shipped-text${e.major ? ' ov-shipped-major' : ''}`, title: String(e.subject || '') });
+        const kind = kindTag(e);
+        if (kind) text.appendChild(kind);
+        text.appendChild(document.createTextNode(words(e)));
+        const areas = areaChips(e, 2);
+        if (areas) text.appendChild(areas);
+        row.appendChild(text);
+        if (e.kind) row.setAttribute('data-kind', String(e.kind));
         const meta = el('span', { class: 'ov-shipped-meta' });
         const time = new Date(e.deployed_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
         // Every commit is the OpenVibers account's: naming it on each row says nothing.
@@ -371,10 +425,21 @@
                 const fresh = groupRow(hit.g, Boolean(det && det.open));
                 hit.node.replaceWith(fresh);
                 hit.node = fresh;
+            } else if (e.kind === 'internal' && !pinOf(e)) {
+                let fold = day.querySelector(':scope > .ov-shipped-house');
+                if (!fold) {
+                    fold = el('details', { class: 'ov-shipped-house' });
+                    fold.appendChild(el('summary', {}, ''));
+                    fold.appendChild(el('div', { class: 'ov-shipped-entries' }));
+                    day.appendChild(fold);
+                }
+                fold.lastElementChild.appendChild(entryRow(e, showSite));
+                const n = fold.lastElementChild.children.length;
+                fold.firstElementChild.textContent = `${n} housekeeping ${n === 1 ? 'change' : 'changes'} (library updates and internal work)`;
             } else {
                 const node = entryRow(e, showSite);
                 day._groups.set(k, { g: { key: k, entries: [e], pin: pinOf(e) }, node });
-                day.lastElementChild.appendChild(node);
+                day.querySelector(':scope > .ov-shipped-entries').appendChild(node);
             }
         }
     }
@@ -395,6 +460,8 @@
         node.textContent = '';
         node.classList.add('ov-shipped-log');
         const bar = el('div', { class: 'ov-shipped-bar', role: 'group', 'aria-label': 'Which site' });
+        const kinds = el('div', { class: 'ov-shipped-bar ov-shipped-kinds', role: 'group', 'aria-label': 'Which kind of change' });
+        let kindNow = KINDS[params.get('kind')] ? params.get('kind') : '';
         const posts = el('aside', { class: 'ov-shipped-posts', hidden: '' });
         const days = el('div', { class: 'ov-shipped-days' });
         days.style.cssText = 'display:flex;flex-direction:column;gap:24px;min-width:0';
@@ -402,7 +469,26 @@
         // The first load shows one "Loading…" line on its own (and a site's own chips, known up front), so the chips,
         // the patch notes and the days arrive together instead of pushing a visible line down the page (layout shift).
         const loading = el('p', { class: 'ov-shipped-empty' }, 'Loading…');
-        node.append(bar, posts, loading, days, more);
+        function drawKinds() {
+            kinds.textContent = '';
+            for (const [k, label] of [['', 'All changes'], ['new', 'New'], ['better', 'Better'], ['fixed', 'Fixed']]) {
+                const b = el('button', { type: 'button', class: 'ov-shipped-chip', 'aria-pressed': String(kindNow === k) }, label);
+                b.addEventListener('click', () => {
+                    kindNow = k;
+                    if (k) days.setAttribute('data-kind', k); else days.removeAttribute('data-kind');
+                    if (o.syncUrl !== false && typeof history !== 'undefined' && history.replaceState) {
+                        const u = new URL(location.href);
+                        if (k) u.searchParams.set('kind', k); else u.searchParams.delete('kind');
+                        history.replaceState(history.state, '', u.pathname + u.search + u.hash);
+                    }
+                    drawKinds();
+                });
+                kinds.appendChild(b);
+            }
+        }
+        drawKinds();
+        if (kindNow) days.setAttribute('data-kind', kindNow);
+        node.append(bar, kinds, posts, loading, days, more);
         let next = null;
         let seq = 0;
 
