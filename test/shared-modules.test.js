@@ -7,6 +7,9 @@ const head = seo.headTags({ title: 'A very long title that certainly goes past t
 assert.ok(/<title>[^<]{1,62}<\/title>/.test(head), 'title is clipped');
 assert.ok(!head.includes('</script><script>alert'), 'JSON-LD cannot close its script tag');
 assert.ok(seo.robotsTxt({ sitemaps: ['https://x.test/sitemap.xml'] }).includes('GPTBot'), 'AI crawlers are named');
+for (const bot of ['Googlebot', 'Bingbot', 'OAI-SearchBot', 'ChatGPT-User', 'GPTBot', 'PerplexityBot', 'Perplexity-User', 'ClaudeBot', 'Claude-User', 'Claude-SearchBot', 'Applebot', 'DuckDuckBot']) {
+    assert.ok(seo.robotsTxt({}).includes(`User-agent: ${bot}\n`), `${bot} is welcomed by name`);
+}
 assert.ok(seo.robotsTxt({}).includes('Content-Signal: search=yes, ai-input=yes, ai-train=yes'), 'AI use allowed in so many words');
 assert.ok(!seo.robotsTxt({ allowAI: false }).includes('Content-Signal'), 'and not when a site opts out');
 assert.ok(!seo.sitemapXml([{ loc: '/relative' }, { loc: 'https://ok.test/' }]).includes('/relative'), 'sitemaps hold absolute URLs only');

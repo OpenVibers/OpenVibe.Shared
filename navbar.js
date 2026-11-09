@@ -572,7 +572,7 @@
     const NAV_ICONS_REV = '1091daee9c7e';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '8d00547b413c', 'dock.js': '496a40c534ce', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': '184115c2aa7f', 'nav-slots.js': 'a5af310d62e0' };
+    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '8d00547b413c', 'dock.js': '496a40c534ce', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': '455179332bc2', 'nav-slots.js': 'a5af310d62e0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1311,9 +1311,9 @@
         if (!pick.length) return '';
         if (inDrawer) {
             return `<div class="ovnav-net-head"><span class="ov-icon" data-icon="ov" data-size="22" data-fx="none"></span><span class="ud-label">Across OpenVibe</span>${_config.launcher === false ? '' : '<button type="button" class="ovnav-net-all" data-open-launcher>All sites</button>'}</div>`
-                + `<div class="ovnav-net-grid">${pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}"><span class="ov-icon" data-icon="${escapeAttr(n.icon || n.id)}" data-size="22" data-fx="none"></span><span>${escapeAttr(n.name)}</span></a>`).join('')}</div>`;
+                + `<div class="ovnav-net-grid">${pick.map(n => `<a class="ovnav-net" data-ov-net-link href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}"><span class="ov-icon" data-icon="${escapeAttr(n.icon || n.id)}" data-size="22" data-fx="none"></span><span>${escapeAttr(n.name)}</span></a>`).join('')}</div>`;
         }
-        return `<span class="ovnav-sep" aria-hidden="true"></span>` + pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
+        return `<span class="ovnav-sep" aria-hidden="true"></span>` + pick.map(n => `<a class="ovnav-net" data-ov-net-link href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
     }
 
     /** The menu's Display row: light, dark or auto as icons, and Settings opening the Look panel (text size, motion, theme,
@@ -2490,7 +2490,19 @@
                 // its nonced scripts (the attribute is blanked once parsed; the property keeps it).
                 const nonce = [].slice.call(document.scripts || []).map((x) => x.nonce).find(Boolean);
                 if (nonce) sr.nonce = nonce;
-                sr.textContent = JSON.stringify({ prefetch: [{ where: { and: [{ href_matches: '/*' }, { not: { href_matches: ['/auth/*', '/api/*', '/logout*', '/*logout*', '/signout*', '/internal/*', '/*.zip', '/*.pdf'] } }, { not: { selector_matches: '[data-no-prefetch], [download], [rel~=nofollow]' } }] }, eagerness: 'moderate' }] });
+                // The rules (the owner, 2026-11-09: "how come when you change sites it doesn't load more asynchronously and
+                // dynamically, so it's faster across sites?"): a same-site page is prefetched, and — where the browser has
+                // prerendering — rendered in the background before the click lands; a link to another OpenVibe site is
+                // prefetched too, so the next site is already warm when the person arrives.
+                const sameSite = { and: [{ href_matches: '/*' }, { not: { href_matches: ['/auth/*', '/api/*', '/logout*', '/*logout*', '/signout*', '/internal/*', '/*.zip', '/*.pdf'] } }, { not: { selector_matches: '[data-no-prefetch], [download], [rel~=nofollow]' } }] };
+                const rules = { prefetch: [{ where: sameSite, eagerness: 'moderate' }] };
+                // Prerendering a page the site's own router draws would be work thrown away: a site says no with
+                // prerender: false, and marks the links it draws itself with data-no-prefetch.
+                if (_config.prerender !== false) rules.prerender = [{ where: sameSite, eagerness: 'moderate' }];
+                // Another OpenVibe site: the browser fetches it when the pointer arrives (Chrome leaves a site alone when
+                // the person has cookies on it, which is right: that page is theirs, not a public copy).
+                rules.prefetch.push({ where: { selector_matches: '[data-ov-net-link]' }, eagerness: 'moderate' });
+                sr.textContent = JSON.stringify(rules);
                 document.head.appendChild(sr);
             } catch { /* an old browser: links load as they always did */ }
         }
@@ -2505,6 +2517,24 @@
         }, true);
         // Back from the browser's page cache: whatever was loading is done.
         window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) busy(false); });
+    }
+    // ── The shared worker (openvibe-sw.js): the shell's cache, and the push notifications it always carried ──
+    // A site opts in: OpenVibeNavbar.init({ sw: true }). The worker is the same file the notification bell registers for
+    // push, so there is one registration at scope "/" and nothing is unregistered by accident.
+    let _workerHooked = false;
+    function hookWorker() {
+        const spec = _config.sw;
+        if (_workerHooked || !spec) return;
+        if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+        if (typeof window !== 'undefined' && window.isSecureContext === false) return;
+        _workerHooked = true;
+        const opts = (spec === true) ? {} : (spec || {});
+        const url = opts.path || '/openvibe-sw.js';
+        const scope = opts.scope || '/';
+        // After the load: registering early would compete with the page's own files for the network.
+        const go = () => { try { navigator.serviceWorker.register(url, { scope }).catch(() => { /* no worker, no cache */ }); } catch { /* */ } };
+        if (document.readyState === 'complete') go();
+        else window.addEventListener('load', go, { once: true });
     }
     let _busyTimer = 0, _busyOn = false;
     function busy(on) {
@@ -2535,6 +2565,7 @@
             }
             hookBoost();
             hookMoves();
+            hookWorker();
             const el = render();
             upgradeIconsWhenFontsReady();
             if (typeof document !== 'undefined') setTimeout(loadReleaseWatch, 4000);
