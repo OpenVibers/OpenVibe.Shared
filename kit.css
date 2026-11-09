@@ -452,23 +452,26 @@ html[data-ov-motion=reduced] .ovk-skel { animation: none; }
     .ovk-sidebar { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
     .ovk-sidebar-scrim { touch-action: none; overscroll-behavior: contain; }
 }
-/* Page identity: a named way back, an icon and actions; the full lede stays in the HTML. */
-.ovk-page-head{margin:0 0 24px;min-width:0}
-.ovk-page-back{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;margin-bottom:12px;border:1px solid var(--border);border-radius:999px;color:var(--text-secondary);text-decoration:none;font-weight:650}
-.ovk-page-head-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
-.ovk-page-head-row h1{flex:1 1 160px;min-width:0;margin:0;font-size:clamp(1.5rem,3vw,2.2rem);line-height:1.2;overflow-wrap:anywhere}
-.ovk-page-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto}
-.ovk-page-lede{color:var(--text-secondary);margin:12px 0 0;max-width:70ch}
-.ovk-page-about{display:none}
-.ovk-page-back:focus-visible,.ovk-page-about summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-@media(max-width:760px){
- .ovk-page-lede{display:none}
- .ovk-page-about{display:block;color:var(--text-secondary);margin-top:8px}
- .ovk-page-about summary{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;list-style:none}
- .ovk-page-about summary::-webkit-details-marker{display:none}
- .ovk-page-about summary span{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
- .ovk-page-about summary b{flex:none;font-size:.8rem;color:var(--text-primary);text-decoration:underline;text-underline-offset:3px}
- .ovk-page-about p{margin:4px 0 0;overflow-wrap:anywhere}
-}
-/* A phone hero's 1fr track must shrink around the single-line disclosure. */
+/* A page's head (kit.pageHead; designed 11-09, the owner: "less websitey… modern… an icon system"): a small named way
+   back, the page's icon tile and name with its actions, and one line about it, whole (one copy: readers and search see
+   the same words; nothing behind an "About this"). */
+.ovk-page-head { margin: 0 0 20px; min-width: 0; }
+.ovk-page-back { position: relative; display: inline-flex; align-items: center; gap: 2px; height: 32px; margin: 0 0 12px; padding: 0 12px 0 8px;
+    border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); color: var(--text-secondary, #a8b3c4);
+    font-size: 13.5px; font-weight: 650; text-decoration: none; transition: background .15s, color .15s; }
+.ovk-page-back::after { content: ""; position: absolute; inset: -6px -4px; }   /* 44 px under the finger */
+.ovk-page-back .ovk-i { width: 18px; height: 18px; }
+@media (hover: hover) { .ovk-page-back:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 11%, transparent); color: var(--text-primary, #e8ecf3); } }
+.ovk-page-head-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.ovk-page-head-row > .ovk-heading-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 13px;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent), color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
+.ovk-page-head-row > .ovk-heading-icon > .ovk-i { width: 24px; height: 24px; }
+.ovk-page-head-row h1 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: clamp(1.45rem, 2.4vw + .7rem, 2.2rem); line-height: 1.15; letter-spacing: -.015em; overflow-wrap: anywhere; }
+.ovk-page-actions { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+.ovk-page-actions .ovk-icon-btn { width: 44px; height: 44px; border-radius: 50%; }
+.ovk-page-lede { max-width: 68ch; margin: 10px 0 0; color: var(--text-secondary, #a8b3c4); font-size: 15.5px; line-height: 1.5; }
+.ovk-page-back:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 3px; }
+@media (max-width: 760px) { .ovk-page-head { margin-bottom: 16px; } .ovk-page-lede { margin-top: 8px; font-size: 14.5px; } }
+/* A phone hero's 1fr track shrinks around the head. */
 .sc-hero-main:has(>.ovk-page-head),.sc-room-main:has(>.ovk-page-head){min-width:0}

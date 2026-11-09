@@ -206,5 +206,5 @@ console.log('showcase: all checks passed');
 // A product can use the shared page identity while retaining the hero's visual and calls to action.
 {
     const html = require('../showcase').hero({ title: 'Record a video', lede: 'Review it before sharing.', pageHead: { icon: 'video', back: { href: '/', label: 'Home' } }, visual: false });
-    require('assert').ok(html.includes('ovk-page-head') && html.includes('About this') && html.includes('Review it before sharing.'));
+    require('assert').ok(html.includes('ovk-page-head') && html.split('Review it before sharing.').length === 2);
 }
