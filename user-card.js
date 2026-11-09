@@ -273,10 +273,8 @@
         close: () => OpenVibeUserCard.close(),
     };
 
-    if (typeof module !== 'undefined' && module.exports) {
-        module.exports = OpenVibeUserCard;
-        module.exports.OpenVibeUserMenu = OpenVibeUserMenu;
-    }
+    if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeUserCard;
+    if (typeof module !== 'undefined' && module.exports) module.exports.OpenVibeUserMenu = OpenVibeUserMenu;
     root.OpenVibeUserCard = OpenVibeUserCard;
     root.OpenVibeUserMenu = OpenVibeUserMenu;
 
