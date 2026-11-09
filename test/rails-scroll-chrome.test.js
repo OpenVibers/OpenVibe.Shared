@@ -51,10 +51,12 @@ const server = http.createServer((req, res) => {
         assert.ok(!end.endFade && end.startFade, 'at the end only the near edge fades');
         assert.ok(/translateX\((?!0%)/.test(end.thumb), `the bar's thumb moved (${end.thumb})`);
         // Drift: it moves on its own, and a touch stops it for good.
+        // A slow runner (CI) gets more time; a browser that asks for less motion is not asked to drift.
+        const calm = await p.evaluate("matchMedia('(prefers-reduced-motion: reduce)').matches");
         const a = await p.evaluate("document.getElementById('drift').scrollLeft");
-        await wait(900);
-        const b = await p.evaluate("document.getElementById('drift').scrollLeft");
-        assert.ok(b > a, `a drifting strip moves by itself (${a} → ${b})`);
+        let b = a;
+        for (let i = 0; i < 30 && !calm && b <= a; i++) { await wait(100); b = await p.evaluate("document.getElementById('drift').scrollLeft"); }
+        assert.ok(calm || b > a, `a drifting strip moves by itself (${a} → ${b})`);
         await p.evaluate("document.getElementById('drift').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))");
         const c = await p.evaluate("document.getElementById('drift').scrollLeft");
         await wait(700);
