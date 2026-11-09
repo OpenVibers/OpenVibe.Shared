@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.180.0 — 2026-11-10
+
+- **A demo scope for motion: `data-fx-demo`** (`ov-fx.js`, `ov-mark.js`, `theme-loader.js`). Inside a container
+  with this attribute the effects and the mark play even when motion is reduced, by the device or by Calm. It is for
+  a page that exists to show motion, and only after the person presses a button that says so: openvibe.design's
+  Motion page was completely still on a phone that asks for less motion, and never said why. Outside the container
+  nothing changes: the setting holds for the rest of the page and for every other page.
+  - `OVFx.confetti({ from: el })` names the element it comes from, so confetti inside a demo scope plays; without
+    `from` it follows the setting as before.
+  - Calm's blanket rule, the effects' reduced-motion rules and the mark's now exclude `[data-fx-demo] *`, and a demo
+    scope gets its `--ov-dur-*` lengths back under Calm.
+
 ## 4.179.0 — 2026-11-09
 
 **Share to OpenVibe Community.** The share sheet (`ov-share.js`) has a Community tile beside OpenVibe Chat: it opens

@@ -41,7 +41,9 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         const css = t.document.getElementById('ov-fx-css').textContent;
         assert.match(css, /--ov-dur-1:\.12s;--ov-dur-2:\.2s;--ov-dur-3:\.32s;--ov-dur-4:\.52s/, 'the motion tokens');
         assert.match(css, /html\[data-ov-motion=reduced\]\{--ov-dur-1:0s/, 'Calm zeroes them');
-        assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{\.ovfx-glint::after\{display:none\}/);
+        assert.ok(css.includes('@media (prefers-reduced-motion:reduce){.ovfx-glint:not([data-fx-demo] *)::after{display:none}'), 'the device asking for less motion stops the glint, outside a demo scope');
+        assert.ok(css.includes('html[data-ov-motion=reduced] [data-fx-demo]{--ov-dur-1:.12s'), 'a demo scope gets its lengths back under Calm');
+        assert.ok(css.indexOf('html[data-ov-motion=reduced] [data-fx-demo]{') > css.indexOf('html[data-ov-motion=reduced]{--ov-dur-1:0s'), 'and it comes after Calm, so it wins');
         assert.ok(!/infinite/.test(css.replace(/\.ovfx-shimmer\{[^}]*\}/, '')), 'nothing loops but a placeholder\'s shimmer');
         assert.strictEqual(typeof t.window.OVFx.confetti, 'function');
         // A feel per look (4.67.0): quiet themes move calmly (no overshoot), neon ones snap; Calm still wins.
@@ -84,6 +86,14 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         assert.strictEqual(t.observed.length, 0, 'nothing waits to count');
         assert.strictEqual(t.document.getElementById('n').textContent, '900');
         assert.strictEqual(t.window.OVFx.confetti({ x: 1, y: 1 }), false, 'no confetti');
+    }
+
+    // ── the demo scope: a page that shows motion may play it inside [data-fx-demo], when the person asks ──
+    for (const opts of [{ reduce: true }, { calm: true }]) {
+        const t = setup({ ...opts, html: '<div data-fx-demo><ul id="in" data-fx="reveal" data-top="1400"><li>a</li></ul></div><ul id="out" data-fx="reveal" data-top="1400"><li>b</li></ul>' });
+        assert.strictEqual(t.document.querySelectorAll('#in .ovfx-hide').length, 1, 'inside the scope the reveal waits to play');
+        assert.strictEqual(t.document.querySelectorAll('#out .ovfx-hide').length, 0, 'outside it nothing is hidden: the setting holds for the rest of the page');
+        assert.strictEqual(t.window.OVFx.confetti({ x: 1, y: 1 }), false, 'confetti with no source element stays off');
     }
 
     // ── markup added later is wired ──
