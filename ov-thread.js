@@ -303,10 +303,92 @@
                 b.addEventListener('click', function () { if (!text) return; text.value = b.getAttribute('data-ovt-starter'); grow(); syncSend(); text.focus(); });
             });
 
+            // The examples: while the box is empty and not being typed in, its placeholder walks through them (a fade).
+            if (text && text.getAttribute('data-ovt-examples') && !text.__ovtEx) {
+                text.__ovtEx = true;
+                var exI = 0;
+                var exTimer = setInterval(function () {
+                    if (!text.isConnected) { clearInterval(exTimer); return; }
+                    var list; try { list = JSON.parse(text.getAttribute('data-ovt-examples') || '[]'); } catch (e) { list = []; }
+                    if (!list.length || text.value || document.activeElement === text || document.hidden) return;
+                    exI = (exI + 1) % list.length;
+                    text.classList.add('is-ph-out');
+                    setTimeout(function () { text.placeholder = list[exI]; text.classList.remove('is-ph-out'); }, 220);
+                }, 3600);
+            }
+
+            // Options: one button, the pickers behind it (a <details>, so it opens without script too). A tap outside,
+            // Escape or Done closes it; on a phone it is a sheet and the page behind stays put; a changed picker shows as
+            // a chip beside the button, and its × puts the default back.
+            qa(box, '[data-ovt-opts]').forEach(function (d) {
+                if (d.__ovt) return; d.__ovt = true;
+                var chips = d.parentNode ? q(d.parentNode, '[data-ovt-opts-chips]') : null;
+                var dot = q(d, '.ovt-opts-dot');
+                function phone() { return root.matchMedia && root.matchMedia('(max-width: 640px)').matches; }
+                function lock(on) { document.documentElement.classList.toggle('ovt-sheet-open', !!on && phone()); }
+                function close() { if (d.open) { d.open = false; } }
+                d.addEventListener('toggle', function () {
+                    lock(d.open);
+                    if (d.open) { var f = q(d, '.ovt-opts-body select, .ovt-opts-body input, .ovt-opts-body button'); if (f && !phone()) f.focus({ preventScroll: true }); }
+                });
+                document.addEventListener('pointerdown', function (e) { if (d.open && !d.contains(e.target)) close(); }, true);
+                d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && d.open) { e.stopPropagation(); close(); var s = q(d, 'summary'); if (s) s.focus(); } });
+                var x = q(d, '[data-ovt-opts-close]'); if (x) x.addEventListener('click', function (e) { e.preventDefault(); close(); });
+                function label(el) {
+                    if (el.tagName === 'SELECT') { var o = el.options[el.selectedIndex]; return o ? o.textContent.trim() : el.value; }
+                    var l = el.closest('label'); return l ? l.textContent.trim() : el.value;
+                }
+                function paint() {
+                    if (!chips) return;
+                    chips.textContent = '';
+                    var any = false;
+                    qa(d, '[data-ovt-default]').forEach(function (el) {
+                        if (el.closest('[hidden]') || (el.offsetParent === null && !d.open && getComputedStyle(el.closest('label, .ovt-opt') || el).display === 'none')) return;
+                        var def = el.getAttribute('data-ovt-default');
+                        var cur = el.tagName === 'SELECT' ? el : q(el, 'input:checked');
+                        var val = cur ? cur.value : def;
+                        if (val === def) return;
+                        any = true;
+                        var chip = document.createElement('span'); chip.className = 'ovt-opt-chip';
+                        var t = document.createElement('span'); t.textContent = label(cur).slice(0, 40); chip.appendChild(t);
+                        var b = document.createElement('button'); b.type = 'button'; b.className = 'ovt-opt-chip-x'; b.setAttribute('aria-label', 'Back to the default: ' + t.textContent); b.textContent = '×';
+                        b.addEventListener('click', function () {
+                            if (el.tagName === 'SELECT') el.value = def; else { var r = q(el, 'input[value="' + (root.CSS && CSS.escape ? CSS.escape(def) : def) + '"]'); if (r) r.checked = true; }
+                            (el.tagName === 'SELECT' ? el : q(el, 'input:checked') || el).dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                        chip.appendChild(b);
+                        chip.addEventListener('click', function (e) { if (e.target === b) return; d.open = true; });
+                        chips.appendChild(chip);
+                    });
+                    if (dot) dot.hidden = !any;
+                }
+                d.addEventListener('change', paint);
+                if (form) form.addEventListener('ovt:options', paint);
+                paint();
+            });
+
+            // A kit sidebar's button goes into the navbar, before the brand, on a phone (11-09, the owner: the button on a
+            // row of its own under the bar wasted the space): the bar's lead slot opens the same drawer.
+            var sbBtn = q(box, '.ovt-head [data-ovk-sidebar-open]');
+            if (sbBtn) navLead(box, sbBtn, 0);
+
             enhance(box);
             if (!location.hash && q(box, '[data-ovt-thread] > li')) toBottom(false);
         });
     }
+
+    // The navbar may draw after this script: try for a few seconds. The slot goes when a page without a thread loads.
+    var leadOn = false;
+    function navLead(box, btn, n) {
+        var nav = root.OpenVibeNavbar;
+        if (!nav || typeof nav.lead !== 'function' || !nav.getElement || !nav.getElement()) { if (n < 40) setTimeout(function () { navLead(box, btn, n + 1); }, 125); return; }
+        nav.lead({ icon: 'sidebar', label: btn.getAttribute('aria-label') || 'Your conversations', sidebar: btn.getAttribute('aria-controls') || '', phoneOnly: true });
+        leadOn = true;
+        box.classList.add('has-nav-lead');
+    }
+    document.addEventListener('ov:boost:load', function () {
+        if (leadOn && !document.querySelector('[data-ovt] .ovt-head [data-ovk-sidebar-open]') && root.OpenVibeNavbar && root.OpenVibeNavbar.lead) { root.OpenVibeNavbar.lead(null); leadOn = false; }
+    });
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
     document.addEventListener('ov:boost:load', start);

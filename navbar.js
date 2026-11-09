@@ -13,6 +13,10 @@
     const _runtimeMenu = { before: [], after: [] };
     let _runtimeLinks = null;
     let _navEl = null;
+    // A site's own buttons in the bar (11-09, the owner: "this button… to the left of the logo… the navbar SDK and API
+    // implemented… other people can modify it… add icons"): one lead button before the brand, actions before the bell.
+    let _lead = null;
+    const _actions = new Map();
 
     function injectStyles() {
         if (document.getElementById('openvibe-navbar-styles')) return;
@@ -329,6 +333,19 @@
             .openvibe-navbar .ovnav-msgs b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
             .openvibe-navbar .ovnav-msgs b:empty { display: none; }
             @media (max-width: 400px) { .openvibe-navbar .ovnav-msgs { width: 32px; height: 32px; } }
+            .openvibe-navbar .ovnav-slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; cursor: pointer; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
+            .openvibe-navbar .ovnav-slot:hover, .openvibe-navbar .ovnav-slot:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--text-primary, #e6edf7); }
+            .openvibe-navbar .ovnav-slot:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+            .openvibe-navbar .ovnav-slot:active { transform: scale(.9); }
+            .openvibe-navbar .ovnav-slot[aria-expanded="true"], .openvibe-navbar .ovnav-slot[aria-pressed="true"] { color: var(--accent-light, #60a5fa); background: var(--accent-glow, rgba(59,130,246,.14)); }
+            .openvibe-navbar .ovnav-slot svg { width: 22px; height: 22px; }
+            .openvibe-navbar .ovnav-slot b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
+            .openvibe-navbar .ovnav-slot b:empty { display: none; }
+            .openvibe-navbar .ovnav-lead { margin-left: -6px; animation: ovnav-slot-in .22s cubic-bezier(.2, .9, .3, 1) both; }
+            @keyframes ovnav-slot-in { from { opacity: 0; transform: translateX(-6px); } }
+            @media (prefers-reduced-motion: reduce) { .openvibe-navbar .ovnav-lead { animation: none; } }
+            @media (max-width: 400px) { .openvibe-navbar .ovnav-slot { width: 32px; height: 32px; } }
+            @media (min-width: 761px) { .openvibe-navbar .ovnav-slot.ovnav-phone-only { display: none; } }
 
             .openvibe-navbar-avatar {
                 width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
@@ -547,7 +564,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '942afcad94b1', 'dock.js': '0fe128f1992a', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '69b1b40649da' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '942afcad94b1', 'dock.js': '4d29a2d5ecb4', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '69b1b40649da' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -905,12 +922,93 @@
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
             : `<span class="ov-mark" data-size="34" data-wide data-variant="${escapeAttr(brand.variant)}"></span>`;
         return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
-                ${_config.switcher === false
+                ${slotHTML(_lead, 'ovnav-lead', 'ovnav-lead')}${_config.switcher === false
         ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>`
         : `<button type="button" class="flame" id="openvibe-switch-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Switch to another OpenVibe site" title="Every OpenVibe site">${mark}</button>`}
                 <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
                 ${_config.search === false ? '' : orbHTML()}
             </div>`;
+    }
+
+    // The on-screen keyboard (11-09, the owner: it "takes up a lot of space… be more aware when the keyboard's open"):
+    // html.ov-kb-open while a text field has the focus and a keyboard covers the screen, and --ov-kb its height, so any
+    // page can fold what it does not need and keep the field in view (thread.css folds a start page's greeting). The
+    // height is measured against the tallest view seen without a keyboard, so it holds with interactive-widget too.
+    let _kbWatch = false;
+    function watchKeyboard() {
+        if (_kbWatch || typeof window === 'undefined' || !window.visualViewport || typeof document === 'undefined') return;
+        _kbWatch = true;
+        const vv = window.visualViewport; const html = document.documentElement;
+        let raf = 0; let base = 0; let turned = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type : '';
+        const typing = () => { const a = document.activeElement; return !!a && (a.isContentEditable || a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(a.type || ''))); };
+        const paint = () => {
+            raf = 0;
+            const o = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type : '';
+            if (o !== turned) { turned = o; base = 0; }
+            const t = typing();
+            if (!t) base = Math.max(base, vv.height);
+            const kb = Math.max(0, Math.round(Math.max(base, window.innerHeight) - vv.height - vv.offsetTop));
+            const on = t && kb > 120;
+            if (html.classList.contains('ov-kb-open') !== on) html.classList.toggle('ov-kb-open', on);
+            html.style.setProperty('--ov-kb', `${on ? kb : 0}px`);
+        };
+        const later = () => { if (!raf) raf = requestAnimationFrame(paint); };
+        vv.addEventListener('resize', later); vv.addEventListener('scroll', later);
+        document.addEventListener('focusin', later); document.addEventListener('focusout', () => setTimeout(later, 60));
+        later();
+    }
+
+    // ── A site's buttons in the bar ─────────────────────────────────────────────────────────────────────────────
+    // Known icons by name (24-unit strokes, the house weight); a site may pass its own path data instead (letters, numbers
+    // and path commands only: no markup ever goes into the bar from a site).
+    const SLOT_ICONS = {
+        sidebar: 'M4 5.5h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1zM9.5 5.5v13',
+        back: 'M15 5l-7 7 7 7',
+        close: 'M6 6l12 12M18 6L6 18',
+        plus: 'M12 5v14M5 12h14',
+        search: 'M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13zM15.5 15.5L20 20',
+        settings: 'M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7',
+        filter: 'M4 6h16M7 12h10M10 18h4',
+        share: 'M12 15V4M8 8l4-4 4 4M5 13v6h14v-6',
+        star: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z',
+        info: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM12 11v5.5M12 7.6v.4',
+    };
+    const PATH_OK = /^[MmLlHhVvCcSsQqTtAaZz0-9 ,.\-]{1,2000}$/;
+    function slotPath(spec) { const d = spec.path && PATH_OK.test(spec.path) ? spec.path : SLOT_ICONS[spec.icon] || SLOT_ICONS.info; return d; }
+    function slotHTML(spec, cls, id) {
+        if (!spec) return '';
+        const label = escapeAttr(spec.label || 'Menu');
+        // sidebar: the id of a kit sidebar (kit.sidebar): the kit's own script opens it and keeps aria-expanded.
+        const ctl = spec.sidebar || spec.controls;
+        const state = (spec.sidebar ? ' data-ovk-sidebar-open' : '') + (ctl ? ` aria-controls="${escapeAttr(ctl)}" aria-expanded="${spec.expanded ? 'true' : 'false'}"` : spec.pressed != null ? ` aria-pressed="${spec.pressed ? 'true' : 'false'}"` : '');
+        if (spec.phoneOnly) cls += ' ovnav-phone-only';
+        const svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${slotPath(spec)}"/></svg>`;
+        const badge = spec.badge != null ? `<b>${escapeAttr(String(spec.badge).slice(0, 3))}</b>` : '';
+        const tag = spec.href ? `a href="${escapeAttr(spec.href)}"` : 'button type="button"';
+        return `<${tag} class="ovnav-slot ${cls}" id="${escapeAttr(id)}" aria-label="${label}" title="${label}"${state}>${svg}${badge}</${spec.href ? 'a' : 'button'}>`;
+    }
+    /** Clicks on the bar's slots go to the site's handler (one listener on the bar; it survives re-renders). */
+    function bindSlots(nav) {
+        if (!nav || nav.__ovSlots) return;
+        nav.__ovSlots = true;
+        nav.addEventListener('click', (e) => {
+            const b = e.target && e.target.closest ? e.target.closest('.ovnav-slot') : null;
+            if (!b) return;
+            const spec = b.id === 'ovnav-lead' ? _lead : _actions.get(b.id.replace(/^ovnav-act-/, ''));
+            if (spec && typeof spec.onClick === 'function') { if (!spec.href) e.preventDefault(); try { spec.onClick(e, b); } catch (err) { console.error(err); } }
+        });
+    }
+    /** Re-draw one slot in place (or put it where it belongs), without re-rendering the bar. */
+    function paintSlot(kind, id) {
+        if (!_navEl) return;
+        const old = _navEl.querySelector(`#${id}`);
+        const spec = kind === 'lead' ? _lead : _actions.get(id.replace(/^ovnav-act-/, ''));
+        const html = spec ? slotHTML(spec, kind === 'lead' ? 'ovnav-lead' : 'ovnav-act', id) : '';
+        if (old) { if (html) old.outerHTML = html; else old.remove(); return; }
+        if (!html) return;
+        const where = kind === 'lead' ? _navEl.querySelector('.openvibe-navbar-brand') : _navEl.querySelector('#openvibe-bell-mount');
+        if (where) where.insertAdjacentHTML(kind === 'lead' ? 'afterbegin' : 'beforebegin', html);
+        bindSlots(_navEl);
     }
 
     // The OpenVibe menu's button: nine dots as a diamond (the old launcher's, which the owner liked), the centre in the
@@ -2035,7 +2133,7 @@
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 ${u && !isAnon && _config.messages ? messagesHTML() : ''}
                 ${featuredPhoneHTML(links)}
-                <div id="openvibe-bell-mount"></div>
+                ${[..._actions.values()].map((a) => slotHTML(a, 'ovnav-act', `ovnav-act-${a.id}`)).join('')}<div id="openvibe-bell-mount"></div>
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}
                 ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
@@ -2189,6 +2287,8 @@
             document.body.prepend(nav);
         }
         _navEl = nav;
+        bindSlots(nav);
+        watchKeyboard();
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
@@ -2551,6 +2651,27 @@
         /** Give every box that scrolls with nothing focusable inside it tabindex="0" now (the bar does it when the page
          *  settles; a page that draws such a box later may call this). Returns how many it marked. */
         focusScrollers() { try { return focusScrollers(); } catch { return 0; } },
+
+        /**
+         * A site's own button before the brand: a sidebar toggle, a back arrow (11-09). spec: { icon: 'sidebar' | 'back' |
+         * 'close' | 'plus' | 'search' | 'settings' | 'filter' | 'share' | 'star' | 'info', or path: '<24-unit path data>',
+         * label, controls (the id it opens; then expanded says if it is open), sidebar (a kit.sidebar's id: the kit opens
+         * it), phoneOnly (hidden above 760 px, where a kit sidebar is always shown), pressed, href, onClick(event, button) }.
+         * null takes it away. Returns a handle: set(patch) changes it in place (set({ expanded: true }) as the panel opens).
+         */
+        lead(spec) {
+            _lead = spec ? { ...spec } : null;
+            paintSlot('lead', 'ovnav-lead');
+            return { set(patch) { if (_lead) { Object.assign(_lead, patch || {}); paintSlot('lead', 'ovnav-lead'); } }, remove() { _lead = null; paintSlot('lead', 'ovnav-lead'); } };
+        },
+        /** A site's own icon button on the right, before the bell: the same spec as lead() plus id and badge (a count). */
+        action(spec) {
+            if (!spec || !spec.id || !/^[a-z0-9-]{1,40}$/.test(spec.id)) throw new Error('OpenVibeNavbar.action needs an id: a-z, 0-9 and -');
+            _actions.set(spec.id, { ...spec });
+            const id = `ovnav-act-${spec.id}`;
+            paintSlot('action', id);
+            return { set(patch) { const a = _actions.get(spec.id); if (a) { Object.assign(a, patch || {}); paintSlot('action', id); } }, remove() { _actions.delete(spec.id); paintSlot('action', id); } };
+        },
 
         /** The Dock on a tab, signed in only; opts.task points at that step (see openDock above). */
         openDock(tab, opts) { if (_config.token && _config.dock !== false) openDock(tab, opts); },
