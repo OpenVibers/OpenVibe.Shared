@@ -10,6 +10,9 @@
 - **Faces per service**: Actor's notices wear an agent, Watch's an eye, Connect's and Link's a computer, Billing's a
   coin and the welcome a spark, instead of every service sharing the grid; their rows say Agents, Watch, Connect,
   Link, Community, Wallet, Blog, Design, AI or Events. The bell script's budget is 25.5 KB brotli (25.24 measured).
+- **The account menu asks only the Network for Vibes** (`navbar.js`): the direct `billing.openvibe.network/api/me/vibes`
+  fallback (for a Network older than 10-28) and the `billingBase` option are gone. No site's CSP allowed that host, so
+  it could only fail. A Network answer without Vibes shows no Vibes chip.
 
 ## 4.171.0 — 2026-11-09
 
