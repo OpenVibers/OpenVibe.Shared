@@ -134,7 +134,7 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-head-tools form { margin: 0; }
 .ovk-heading-icon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--ovk-radius-sm); color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); }
 .ovk-heading-icon > .ovk-i { width: 22px; height: 22px; }
-.ovk-heading-icon.ovk-i { box-sizing: content-box; width: 22px; height: 22px; padding: 9px; vertical-align: middle; }
+.ovk-heading-icon.ovk-i { box-sizing: border-box; width: 40px; height: 40px; padding: 9px; vertical-align: middle; }
 .ovk-titled.ovk-titled { display: flex; align-items: center; gap: 10px; white-space: normal; overflow-wrap: anywhere; }
 .ovk-tabs { position: relative; display: flex; gap: 4px; margin: 0 -16px; padding: 0 16px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .ovk-tabs::-webkit-scrollbar { display: none; }
