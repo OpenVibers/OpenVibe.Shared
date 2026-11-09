@@ -13,22 +13,24 @@ function stubElement() {
         style: {}, textContent: '', className: '', id: '', innerHTML: '', dataset: {}, attrs: {}, children: [],
         classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
         setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
-        appendChild(c) { this.children.push(c); }, prepend(c) { this.children.unshift(c); }, remove() {}, addEventListener() {},
+        appendChild(c) { this.children.push(c); }, prepend(c) { this.children.unshift(c); }, remove() {}, addEventListener(type, fn) { (this.listeners ||= {})[type] = fn; },
         querySelector() { return stubElement(); }, querySelectorAll() { return []; },
     };
 }
 
 function load(answers) {
+    delete global.OpenVibeDock;
     global.location = { hostname: 'openvibe.games', href: 'https://openvibe.games/', pathname: '/', protocol: 'https:' };
     global.window = { location: global.location };
     try { Object.defineProperty(global, 'navigator', { value: { userAgent: 'test' }, configurable: true }); } catch { /* */ }
     const navs = [];
     const badge = Object.assign(stubElement(), { parentElement: stubElement() });
+    const messageButton = stubElement();
     global.document = {
         cookie: '', head: stubElement(), body: stubElement(), title: 'T', visibilityState: 'visible',
         getElementById: () => null, querySelectorAll: () => [],
         querySelector: (sel) => (sel === '#openvibe-messages-btn b' ? badge : null),
-        createElement: (tag) => { const e = stubElement(); e.tag = tag; if (tag === 'nav') navs.push(e); return e; },
+        createElement: (tag) => { const e = stubElement(); e.tag = tag; if (tag === 'nav') { e.querySelector = (sel) => sel === '#openvibe-messages-btn' ? messageButton : stubElement(); navs.push(e); } return e; },
         addEventListener() {}, removeEventListener() {}, dispatchEvent() {},
     };
     global.CustomEvent = class { constructor(t, i) { this.type = t; this.detail = i && i.detail; } };
@@ -44,7 +46,7 @@ function load(answers) {
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
     };
     delete require.cache[require.resolve(NAVBAR_PATH)];
-    return { navbar: require(NAVBAR_PATH), navs, calls, badge };
+    return { navbar: require(NAVBAR_PATH), navs, calls, badge, messageButton };
 }
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const user = { id: 7, subject: 'usr_7', username: 'maya' };
@@ -54,8 +56,14 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
 
 (async () => {
     // Nothing said: the balances and Messages, and one question to Chat for the unread count.
-    let { navbar, navs, calls, badge } = load(answers);
+    let { navbar, navs, calls, badge, messageButton } = load(answers);
     navbar.init(base);
+    const dockOpens = [];
+    global.OpenVibeDock = { mount() {}, open(options) { dockOpens.push(options); } };
+    let prevented = false;
+    messageButton.listeners.click({ preventDefault() { prevented = true; }, metaKey: false, ctrlKey: false, shiftKey: false });
+    assert.strictEqual(prevented, true, 'signed-in Messages stays on this page');
+    assert.deepStrictEqual(dockOpens, [{ tab: 'chats' }], 'the default action opens the Dock Chats tab');
     let bar = navs[navs.length - 1].innerHTML;
     assert.match(bar, /id="openvibe-messages-btn"/, 'Messages is in the bar');
     assert.match(bar, /href="https:\/\/openvibe\.chat\/messages"/, 'and is a real link (a site without the Dock follows it)');
