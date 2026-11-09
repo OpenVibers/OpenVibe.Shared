@@ -46,6 +46,7 @@ const BROWSER = Object.freeze([
     'ov-share.js',          // the one Share sheet (plan track Q): who can open a thing, people by @name, transfer; navbar.js loads it on the first press of a [data-ov-share-sheet] button
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
+    'ov-home.js',           // the menu's home screen and wall (search.js loads it for You and Feed)
     'history.js',           // cross-site history
     'sso-client.js',        // link hand-off, FedCM
     'panels.js',            // one-open-at-a-time panel coordinator
