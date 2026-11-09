@@ -243,7 +243,9 @@ async function drag(p, from, to) {
             await p.evaluate("document.getElementById('ovdk-pill').click()");
             const card = await until(p, `(() => { const c = ${CARD}; return c && c.items ? c : null; })()`, 'the Agents tab');
             assert.deepStrictEqual([card.tab, card.groups, card.items], ['agent', ['waiting', 'running'], 3], 'what needs you first, then what runs');
-            assert.ok(card.w === 390 && card.t > 60, 'a sheet across the phone, under the bar');
+            await new Promise((ok) => setTimeout(ok, 450));   // the sheet has finished rising
+            const placed = await p.evaluate(CARD);
+            assert.ok(placed.w === 390 && placed.t === 0 && placed.h === 780, `the whole phone, over the bar (owner, 11-09: "all the way to the top"; ${placed.t}, ${placed.h})`);
             assert.strictEqual(await p.evaluate('document.getElementById("ovdk-pill").hidden'), true, 'the pill steps aside while the Dock is open');
             await p.evaluate("document.querySelector('.ovdk .ovac-item[data-bucket=waiting] button[data-do=approve]').click()");
             await until(p, "document.querySelector('.ovdk .ovac-item[data-bucket=waiting] .primary').textContent === 'Approved'", 'approved in place');
@@ -428,7 +430,7 @@ async function drag(p, from, to) {
             await until(p, `(() => { const c = ${CARD}; return c && c.items ? c : null; })()`, 'the desktop card');
             await wait(400); // past the grow-in (a transform), so the box is the card's own
             let card = await p.evaluate(CARD);
-            assert.deepStrictEqual([card.corner, card.w, card.h], ['bottom-right', 400, 560], 'a 400 × 560 card in the pill\'s corner');
+            assert.deepStrictEqual([card.corner, card.w, card.h], ['bottom-right', 420, 640], 'a 420 × 640 card in the pill\'s corner');
             // Drag the head from its middle to near the top left: it snaps to that corner.
             await drag(p, [card.l + 120, card.t + 26], [180, 90]); // from the Activity tab: a drag, not a tap
             card = await until(p, `(() => { const c = ${CARD}; return c && c.corner === 'top-left' ? c : null; })()`, 'the card snaps to the top left');
