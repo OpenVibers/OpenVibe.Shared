@@ -127,6 +127,8 @@
     "./thread": "./thread.js",
     "./messages": "./messages.js",
     "./ov-thread": "./ov-thread.js",
+    "./ov-ai-choice": "./ai-choice.js",
+    "./ov-ai-choice.js": "./ov-ai-choice.js",
     "./ov-wallet": "./ov-wallet.js",
     "./sw": "./sw.js"
   },
