@@ -184,6 +184,7 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(s, `document.querySelectorAll('.ovh-rail .ovh-card').length === 2`), 'Jump back in shows the places opened lately');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-rail .ovh-card')].map((a) => a.getAttribute('href'))`), ['https://openvibe.live/ada', 'https://openvibe.pics/1']);
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].map((k) => k.textContent)`), ['Live5', 'Pics2'], 'Most used: pages opened per site');
+        assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec a.ovh-link[href="https://openvibe.report/me"]') || {}).textContent`), 'Your stats', 'Most used links to your stats on Report');
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec:not(:first-child) span, .ovh-grid:not(.ovh-recent)') && [...document.querySelectorAll('.ovh-sec span')].map((x) => x.textContent).find((x) => /home|Popular/i.test(x)))`), 'Your home', 'signed in, Home is theirs from the start');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons');
         await s.evaluate(`document.querySelector('.ovh-sec button').click(), true`);

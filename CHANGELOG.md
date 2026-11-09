@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.165.0 — 2026-11-09
+## 4.166.0 — 2026-11-09
 
 - **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows
   'Draft a blog post · Done · AI · gpt-5-nano', 25 failed rows 'AI is resting for a moment' and raw JSON errors; an empty
@@ -23,6 +23,19 @@
   shows up to three faces, not a number sign.
 - **The Dock keeps its size and corner per person** and its grip is always visible; the Vibe conversation and the
   Agents filter are restored with it.
+
+## 4.165.0 — 2026-11-09
+
+- **Faster between pages and sites** (the owner, 11-09: "when you change sites… faster across sites… better caching on
+  the client"): the navbar adds a same-site prerender rule beside its prefetch, and prefetches links to the other
+  OpenVibe sites; `openvibe-shared/sw` sends the shell's files in a 103 Early Hint. The shared worker
+  (`/openvibe-sw.js`, also the Web Push worker) keeps **only content-addressed files** (a hash in the name or
+  `?v=<hash>`: immutable, public) and answers them from its cache; pages and every other file go to the network as the
+  browser sends them, so no page copy outlives a sign-out, nothing cuts a slow page off, and no stale script meets new
+  HTML (security review). A kill switch (`/api/v1/sw-config` on Network) unregisters it everywhere. Sites opt in to
+  registering it with `OpenVibeNavbar.init({ sw: true })`.
+- `robots.txt` welcomes Perplexity-User, Claude-User and Claude-SearchBot by name (discoverability, ask 93).
+- You: **Most used** links to **Your stats** on OpenVibe Report (`/me`: private by default, each section publishable).
 
 ## 4.164.0 — 2026-11-09
 

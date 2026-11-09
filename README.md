@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.165.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.166.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -844,6 +844,65 @@ Re-renders (each openvibe-shared/boost page move re-renders the bar) end the
 ```
 
 Dropdowns under a top link (`children`) are fixed-positioned under their link when they show (hover, keyboard focus, a tap), because the links row scrolls sideways and would clip them.
+
+### The shell's cache: the worker (`openvibe-sw.js`, `sw.js`, 4.164.0)
+
+The owner, 2026-11-09: *"how come when you change sites it doesn't load more asynchronously and dynamically, so it's faster
+across sites? … better caching on the client, cross-site and smarter, intelligent, so it's faster, while staying SEO friendly
+and crawlable?"*
+
+One worker, every site, at `/openvibe-sw.js` (same origin, scope "/"), from this package. It is the file the notification
+bell already registered for Web Push, so there is one registration and nothing is unregistered by accident. A site opts in:
+
+```js
+// in the site's navbar options
+OpenVibeNavbar.init({ service: 'live', sw: true });            // or sw: { path: '/my-sw.js', scope: '/' }
+```
+
+The rules it keeps, and why:
+
+| Request | What happens | Why |
+|---|---|---|
+| A content-addressed file (`?v=<hash>`, or a hash in the name) | the cache first, for good | the bytes cannot change under that URL |
+| Any other file (a script, a stylesheet, a font, an image) | the cached copy now, the fresh one in the background | a visit never waits twice |
+| A page (a navigation) | the network first (3 s), the cached copy only when the network does not answer | a crawler and a person read the HTML the server just wrote |
+| `/api/`, anything that is not a GET, a range request | untouched | the API is never the cache's business |
+| A response with `Set-Cookie`, `Cache-Control: private` or `no-store`, or a `Vary` on Cookie or Authorization | passed through, never stored | nothing private is ever written down |
+
+Nothing moves behind JavaScript: the HTML the server writes is the HTML the browser shows. The worker only decides *when* a
+file is asked for, never *what* it says, and it never serves a cached page while the network answers.
+
+The **kill switch**: the worker asks `https://openvibe.network/api/v1/sw-config` (cached 5 minutes by the browser; a worker
+that cannot reach it keeps working — a hiccup must not take the cache away). The answer `{ "enabled": false }` makes every
+worker on every site unregister itself and drop its caches. A release that needs to be undone does not need a deploy on
+every site.
+
+The server's half is `openvibe-shared/sw`:
+
+```js
+const sw = require('openvibe-shared/sw');
+app.get('/openvibe-sw.js', (req, res) => res.sendFile(sw.workerPath()));       // the worker
+app.get('/ov-sw-manifest.json', (req, res) => res.json(sw.manifest()));       // the shell, by content hash
+app.use(sw.hints({ links: (req) => [ { href: assets.url('/shared/navbar.js'), as: 'script' } ] }));
+```
+
+`sw.hints()` sends the **103 Early Hints** (RFC 8297): the browser gets the shell's URLs before the HTML arrives and starts
+fetching them while the server is still writing the page. The same links ride in the `Link` header of the page itself, so a
+proxy that drops the 103 still hands the browser the hint. Cloudflare's Early Hints has to be on for the zone (the origin's
+103 is passed through when it is).
+
+### The rules the browser gets before the click
+
+The navbar hands the browser **speculation rules** (Chrome 103 and later):
+
+- a **same-site** page is prefetched on hover or touch, and — where the browser has prerendering — rendered in the
+  background before the click lands (`prerender: false` turns that off for a site whose own router draws its pages; a link
+  marked `data-no-prefetch` is left alone);
+- a link to **another OpenVibe site** (the ones marked `data-ov-net-link`) is prefetched too, so the next site is already
+  warm when the person arrives. Chrome leaves a site alone when the person has cookies on it, which is right: that page is
+  theirs, not a public copy.
+
+The sign-in, the sign-out, the API, the internal pages and the downloads are never fetched ahead of the click.
 
 ### Vibes Pay (`vibes-pay.js`, 4.111.0)
 
