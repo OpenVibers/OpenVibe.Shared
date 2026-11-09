@@ -29,7 +29,7 @@
     'use strict';
     if (typeof document === 'undefined' || root.OpenVibeDock) return;
 
-    const W = [320, 720], H = [360, 900], DEF = { width: 400, height: 560 };
+    const W = [320, 720], H = [360, 900], DEF = { width: 420, height: 640 };
     const CORNERS = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const G = {
@@ -42,10 +42,11 @@
         back: '<path d="M14.5 6.5L9 12l5.5 5.5"/>',
         send: '<path d="M4.5 12h11M11 6.5l5.5 5.5-5.5 5.5"/>',
         vibe: '<path d="M12 4.5a7.5 7.5 0 0 1 6.4 11.4L19.5 19.5l-3.6-1.1A7.5 7.5 0 1 1 12 4.5z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/>',
+        more: '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',
         clock: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/>',
     };
     // Vibe first (L48 V2): the person's AI, on every site.
-    const TABS = [['vibe', 'Vibe', G.vibe], ['agent', 'Agents', G.spark], ['chats', 'Chats', G.chat], ['activity', 'Activity', G.bell]];
+    const TABS = [['vibe', 'Vibe', G.vibe], ['agent', 'Agents', G.spark], ['chats', 'Messages', G.chat], ['activity', 'Activity', G.bell]];
     // The tabs the Network keeps in the person's Dock state (network.dock-state@1; vibe since contracts 0.270.0); a
     // newer one stays on this site's copy until the Network learns it.
     const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
@@ -172,8 +173,20 @@
             .ovdk-acts button { width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
             .ovdk-acts button:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
             .ovdk-acts button svg { width: 19px; height: 19px; }
-            .ovdk-acts [data-act="pin"][aria-pressed="true"] { color: var(--accent-light, var(--accent, #60a5fa)); }
-            .ovdk-acts [data-act="pin"][aria-pressed="true"] svg { fill: color-mix(in srgb, currentColor 22%, transparent); }
+            .ovdk-more { position: absolute; z-index: 6; right: 8px; top: calc(100% - 4px); width: min(320px, calc(100% - 16px)); display: grid; gap: 2px; padding: 6px; border-radius: 16px;
+                border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55); cursor: default; }
+            .ovdk-more[hidden] { display: none; }
+            .ovdk-more button { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 10px; border: 0; border-radius: 12px; background: transparent; color: var(--text-primary, #ececf1); font: inherit; text-align: left; cursor: pointer; }
+            .ovdk-more button[hidden] { display: none; }
+            .ovdk-more button:hover, .ovdk-more button:focus-visible { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); outline: none; }
+            .ovdk-more button > svg { flex: none; width: 20px; height: 20px; color: var(--text-muted, #8b8b96); }
+            .ovdk-more span { flex: 1; min-width: 0; display: grid; gap: 2px; }
+            .ovdk-more b { font-size: 14px; font-weight: 650; }
+            .ovdk-more small { font-size: 12px; color: var(--text-muted, #8b8b96); line-height: 1.35; }
+            .ovdk-sw { flex: none; position: relative; width: 38px; height: 22px; border-radius: 11px; background: var(--bg-tertiary, rgba(255,255,255,.14)); transition: background .15s; }
+            .ovdk-sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+            .ovdk-more [aria-checked="true"] .ovdk-sw { background: var(--accent-strong, var(--accent, #2563eb)); }
+            .ovdk-more [aria-checked="true"] .ovdk-sw::after { transform: translateX(16px); }
             .ovdk-body { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; border-top: 1px solid var(--border, rgba(255,255,255,.08)); }
             .ovdk-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
             .ovdk-panel[hidden] { display: none; }
@@ -248,11 +261,10 @@
             .ovdk-err[hidden] { display: none; }
             .ovdk-none b { display: block; margin-bottom: 4px; font-size: 15px; color: var(--text-primary, #ececf1); }
             @media (max-width: 640px) {
-                .ovdk, .ovdk[data-corner] { left: 0; right: 0; top: auto; bottom: 0; width: auto !important; height: min(86vh, 720px) !important; height: min(86dvh, 720px) !important; max-width: none; max-height: none;
-                    border-radius: 24px 24px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: 0 0 0 100vmax rgba(0,0,0,.5), 0 -12px 40px rgba(0,0,0,.35); transform-origin: 50% 100%; }
+                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: 0; width: auto !important; height: auto !important; max-width: none; max-height: none;
+                    border: 0; border-radius: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: none; transform-origin: 50% 100%; }
                 .ovdk.is-in { animation-name: ovdk-rise; animation-duration: .3s; }
-                .ovdk-head { padding-top: 22px; cursor: default; }
-                .ovdk-head::before { content: ''; position: absolute; top: 8px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--border-light, var(--border, rgba(255,255,255,.22))); }
+                .ovdk-head { cursor: default; }
                 .ovdk-size { display: none; }
                 .ovdk-tabs { flex: 1; } .ovdk-tabs button { flex: 1; justify-content: center; }
                 /* A thumb, not a cursor: every control on the sheet is 44 px (design 2026-11-07 §1, Phone). */
@@ -260,16 +272,22 @@
                 .ovdk-acts button { width: 44px; height: 44px; }
                 /* Two rows (4.150.0, the owner: the strip was "cut off", "Activity" read "Ac"): the tools sit beside the grab
                    handle; the four tabs share the full width below, each icon over its name, every one whole. */
-                .ovdk-head { flex-wrap: wrap; row-gap: 6px; padding: 8px 8px 8px 10px; }
-                .ovdk-head::before { top: 10px; }
-                .ovdk-acts { order: -1; width: 100%; justify-content: flex-end; gap: 2px; min-height: 44px; }
+                .ovdk-head { flex-wrap: nowrap; gap: 4px; padding: 6px 6px 6px 8px; }
+                .ovdk-acts { flex: none; gap: 0; }
                 .ovdk-acts button[data-act="pop"] { display: none !important; }
-                .ovdk-tabs { order: 0; flex: 1 1 100%; padding: 4px; border-radius: 16px; }
+                .ovdk-tabs { order: 0; flex: 1 1 auto; min-width: 0; padding: 3px; border-radius: 16px; }
                 .ovdk-tabs button, .ovdk-tabs button:not([aria-selected="true"]) { flex: 1 1 0; min-width: 0; height: 54px; padding: 4px 2px; flex-direction: column; justify-content: center; gap: 3px; border-radius: 12px; font-size: 11.5px; font-weight: 650; }
                 .ovdk-tabs button span, .ovdk-tabs button:not([aria-selected="true"]) span { position: static; width: auto; height: auto; overflow: hidden; clip: auto; max-width: 100%; text-overflow: ellipsis; white-space: nowrap; }
                 .ovdk-tabs button svg { width: 19px; height: 19px; }
                 .ovdk-tabs .n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; padding: 1px 5px; font-size: 10.5px; }
                 .ovdk-foot a, .ovdk-foot button { min-height: 44px; }
+            }
+            @media (min-width: 641px) and (max-width: 1023px) {
+                .ovdk, .ovdk[data-corner] { z-index: 10010; top: 0; bottom: 0; right: 0; left: auto; width: min(460px, calc(100vw - 48px)) !important; height: auto !important;
+                    max-width: none; max-height: none; border-radius: 22px 0 0 22px; border-right: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+                    box-shadow: 0 0 0 100vmax rgba(0,0,0,.4), -16px 0 40px rgba(0,0,0,.3); transform-origin: 100% 50%; }
+                .ovdk-size { display: none; }
+                .ovdk-head { cursor: default; }
             }
             html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }
             @media (prefers-reduced-motion: reduce) { .ovdk.is-in, .ovdk-wait span { animation: none; } }
@@ -296,10 +314,13 @@
             <header class="ovdk-head">
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
-                    <button type="button" data-act="timer" title="A timer" aria-label="Start a timer">${svg(G.clock)}</button>
-                    <button type="button" data-act="pop" hidden title="Open the Dock in a window of its own" aria-label="Open the Dock in a window of its own">${svg(G.open)}</button>
-                    <button type="button" data-act="pin" aria-pressed="false" title="Keep the Dock's button on every page" aria-label="Keep the Dock's button on every page">${svg(G.pin)}</button>
+                    <button type="button" data-act="more" aria-haspopup="true" aria-expanded="false" title="More" aria-label="More: a timer, the Dock's button">${svg(G.more)}</button>
                     <button type="button" data-act="close" title="Close" aria-label="Close the Dock">${svg(G.close)}</button>
+                </div>
+                <div class="ovdk-more" role="menu" aria-label="More" hidden>
+                    <button type="button" role="menuitem" data-act="timer">${svg(G.clock)}<span><b>Start a timer</b><small>A countdown or a focus round, on the Dock's button</small></span></button>
+                    <button type="button" role="menuitemcheckbox" aria-checked="false" data-act="pin">${svg(G.pin)}<span><b>Keep the Dock's button on every page</b><small>When off, it shows only while something works or needs you</small></span><i class="ovdk-sw" aria-hidden="true"></i></button>
+                    <button type="button" role="menuitem" data-act="pop" hidden>${svg(G.open)}<span><b>Open the Dock in a window of its own</b><small>Keep it beside whatever you are doing</small></span></button>
                 </div>
             </header>
             <div class="ovdk-body">${TABS.map(([id]) => `<div class="ovdk-panel" role="tabpanel" id="ovdk-panel-${id}" aria-labelledby="ovdk-tab-${id}" data-panel="${id}" hidden></div>`).join('')}</div>
@@ -316,7 +337,27 @@
         el.querySelector('[data-act="close"]').addEventListener('click', () => close());
         el.querySelector('[data-act="pop"]').addEventListener('click', () => { if (popped) backToPage(); else popOut(); });
         el.querySelector('[data-act="pin"]').addEventListener('click', () => { save({ pinned: !state().pinned }); paintPin(); });
-        el.querySelector('[data-act="timer"]').addEventListener('click', (e) => { const a = e.currentTarget; withTimer((t) => t.menu(a)); });
+        el.querySelector('[data-act="timer"]').addEventListener('click', () => { const a = el.querySelector('[data-act="more"]'); closeMore(); withTimer((t) => t.menu(a)); });
+        const moreBtn = el.querySelector('[data-act="more"]'), moreMenu = el.querySelector('.ovdk-more');
+        function closeMore() { moreMenu.hidden = true; moreBtn.setAttribute('aria-expanded', 'false'); }
+        moreBtn.addEventListener('click', () => {
+            const open = moreMenu.hidden;
+            closeMore();
+            const tm = el.querySelector('.ovdk-tmenu'); if (tm) tm.remove();
+            if (open) { moreMenu.hidden = false; moreBtn.setAttribute('aria-expanded', 'true'); const first = moreMenu.querySelector('button:not([hidden])'); if (first) first.focus(); }
+        });
+        moreMenu.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && b.dataset.act !== 'pin') closeMore(); });
+        moreMenu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeMore(); moreBtn.focus(); } });
+        // A pop-over (More, the timer) closes on a tap anywhere else, in the Dock or on the page (owner, 11-09: "clicked off
+        // something else, and it didn't actually close").
+        const awayFrom = (e) => {
+            const path = typeof e.composedPath === 'function' ? e.composedPath() : [e.target];
+            if (!moreMenu.hidden && !path.includes(moreMenu) && !path.includes(moreBtn)) closeMore();
+            const tm = el.querySelector('.ovdk-tmenu');
+            if (tm && !path.includes(tm) && !path.includes(moreMenu) && !path.includes(moreBtn)) tm.remove();
+        };
+        el.addEventListener('pointerdown', awayFrom, true);
+        document.addEventListener('pointerdown', (e) => { if (!el.contains(e.target)) awayFrom(e); }, true);
         el.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } });
         // A tap outside closes the phone sheet. The path is the one at dispatch: a tap that redraws its own panel (opening a
         // chat) leaves its target detached, and must not read as outside.
@@ -395,7 +436,7 @@
             setTimeout(() => { el.style.transition = ''; }, 300);
         };
         head.addEventListener('pointerdown', (e) => {
-            if (e.button || e.target.closest('.ovdk-acts')) return;
+            if (e.button || e.target.closest('.ovdk-acts, .ovdk-more')) return;
             s = { x: e.clientX, y: e.clientY, r: el.getBoundingClientRect(), dx: 0, dy: 0, id: e.pointerId, live: false };
             root.addEventListener('pointermove', move); root.addEventListener('pointerup', end); root.addEventListener('pointercancel', end);
         });
@@ -439,15 +480,14 @@
         n('agent', agent, c.waiting ? 'waiting' : '');
         n('activity', c.unread || 0);
         n('chats', chats.unread || 0);
-        el.querySelector('#ovdk-tab-chats').setAttribute('aria-label', chats.unread ? `Chats, ${chats.unread} unread` : 'Chats');
+        el.querySelector('#ovdk-tab-chats').setAttribute('aria-label', chats.unread ? `Messages, ${chats.unread} unread` : 'Messages');
         el.querySelector('#ovdk-tab-agent').setAttribute('aria-label', [`Agents`, c.waiting ? `${c.waiting} need${c.waiting === 1 ? 's' : ''} you` : '', c.running ? `${c.running} working` : ''].filter(Boolean).join(', '));
         el.querySelector('#ovdk-tab-activity').setAttribute('aria-label', c.unread ? `Activity, ${c.unread} unread` : 'Activity');
     }
     function paintPin() {
         const b = el.querySelector('[data-act="pin"]'), on = !!state().pinned;
-        b.setAttribute('aria-pressed', String(on));
-        const t = on ? "The Dock's button stays on every page" : "Keep the Dock's button on every page";
-        b.title = t; b.setAttribute('aria-label', t);
+        b.setAttribute('aria-checked', String(on));
+        b.title = on ? "On: the Dock's button stays on every page" : "Off: the Dock's button shows only while something works or needs you";
     }
     function setTab(id, remember) {
         tab = TABS.some(([t]) => t === id) ? id : 'activity';
@@ -790,7 +830,7 @@
         if (!b) return;
         b.hidden = !pip();
         const t = popped ? 'Bring the Dock back to the page' : 'Open the Dock in a window of its own';
-        b.title = t; b.setAttribute('aria-label', t);
+        b.title = t; const name = b.querySelector('b'); if (name) name.textContent = t;
     }
 
     /** The window gets the Dock's styles, the theme's colours and the page's own type: the Dock looks the same there. */

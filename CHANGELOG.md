@@ -16,6 +16,13 @@
   and counts today's changes.
 - **The first tab is the site's name, never a page's word for itself** ("Home", "Welcome").
 
+- **The Dock fills the phone, and its header is one row** (owner, 11-09: "go all the way to the top… wasted space", "I
+  don't really understand what the pin does", "clicked off… it didn't close the pop over"). Phones: the Dock is the
+  whole screen, over the bar, inside the notch area; tablets: a full-height panel on the right; desktops: a 420 × 640
+  card by default. The header is the four tabs, then More and Close; More holds Start a timer, "Keep the Dock's button
+  on every page" (a switch that says what off means) and Open in a window of its own. More and the timer close on a tap
+  anywhere else, in the Dock or on the page, and on Escape. The Chats tab is **Messages**.
+
 ## 4.158.0 — 2026-11-09
 
 - **The menu's Home.** A site whose links never name its home (Exchange: Models, Chat, Arena…) now gets Home first in
@@ -2030,7 +2037,6 @@ What the front-page passes of 10-29 (Media, Quest, Actor, Rent, Services, Commun
   positioning are untouched — unlike `overflow-x: hidden`, `clip` does not create a scroll container. Four
   sites had patched this in their own stylesheets on 2026-10-29; the kit now owns it for every site that
   includes `showcase.css`.
-
 
 ## 4.34.0 — 2026-10-29
 
