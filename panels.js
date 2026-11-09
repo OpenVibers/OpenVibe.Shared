@@ -67,6 +67,7 @@
     }, true);
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || !anyOpen()) return;
+        e.preventDefault();
         const trigger = panels.find(p => isOpen(p) && p.trigger)?.trigger;
         closeAll();
         if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });

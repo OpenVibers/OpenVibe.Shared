@@ -37,11 +37,11 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <dialog id="dlg"><label for="indlg">In a dialog</label><select id="indlg"><option>one</option><option>two</option></select></dialog>
 <script>window.__changes = 0; document.getElementById('agent').addEventListener('change', () => window.__changes++);
 document.getElementById('f').addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(e.target); window.__sent = { agent: d.get('agent'), many: d.getAll('many'), long: d.get('long') }; });</script>
-<script src="/ov-forms.js"></script></body></html>`;
+<script src="/surfaces.js"></script><script src="/ov-forms.js"></script></body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
-    if (u.pathname === '/ov-forms.js' || u.pathname === '/ov-forms.css') {
+    if (u.pathname === '/ov-forms.js' || u.pathname === '/ov-forms.css' || u.pathname === '/surfaces.js') {
         res.writeHead(200, { 'content-type': u.pathname.endsWith('.css') ? 'text/css' : 'application/javascript' });
         return res.end(fs.readFileSync(path.join(ROOT, u.pathname.slice(1))));
     }
@@ -155,11 +155,13 @@ const key = (k, target = 'document.activeElement') => `(${target}).dispatchEvent
         assert.strictEqual(await phone.evaluate("!!document.querySelector('.ov-sel-sheet.is-open') && !!document.querySelector('.ov-sel-scrim.is-open')"), true, 'a phone gets a sheet over a scrim');
         assert.strictEqual(await phone.evaluate("document.querySelector('.ov-sel-sheet-title').textContent"), 'Agent', 'titled with the select\'s label');
         assert.strictEqual(await phone.evaluate("document.documentElement.classList.contains('ov-sel-locked')"), true, 'the page under it does not scroll');
+        assert.strictEqual(await phone.evaluate('document.body.style.position'), 'fixed', 'the shared helper locks the page in place');
         assert.ok(await phone.evaluate("document.querySelector('.ov-sel-sheet .ov-sel-opt').getBoundingClientRect().height") >= 44, 'rows are a finger tall');
         await phone.evaluate("document.querySelectorAll('.ov-sel-sheet .ov-sel-opt')[1].click()");
         await wait(320);
         assert.strictEqual(await phone.evaluate("document.getElementById('agent').value"), 'claude-code');
         assert.strictEqual(await phone.evaluate("!!document.querySelector('.ov-sel-sheet') || document.documentElement.classList.contains('ov-sel-locked')"), false, 'choosing closes the sheet and frees the page');
+        assert.strictEqual(await phone.evaluate('document.body.style.position'), '', 'closing restores the page');
         assert.strictEqual(await phone.evaluate('document.documentElement.scrollWidth'), 390, 'nothing is wider than the phone');
         await phone.close();
         console.log('ov-forms-chrome: the menu, the sheet, the keyboard, search, several choices, the form\'s values and native opt-outs ok');

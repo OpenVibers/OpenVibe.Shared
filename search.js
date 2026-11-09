@@ -1352,7 +1352,11 @@
                 requestAnimationFrame(() => { orbEl.classList.remove('is-from'); orbEl.classList.add('is-x'); });
             }
         }
-        document.documentElement.style.overflow = 'hidden';
+        if (root.OVSurfaces) {
+            surface = root.OVSurfaces.sheet({ el: el.querySelector('.ovs-panel'), opener: lastFocus,
+                header: el.querySelector('.ovs-bar'), body: listEl, close });
+            surface.open();
+        } else document.documentElement.style.overflow = 'hidden';
         input.placeholder = `Search ${here()}, or ask Vibe`;
         input.value = opts.q || '';
         paintGhost();
@@ -1368,7 +1372,7 @@
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         if (tab === 'tools' || tab === 'sites') setTimeout(() => { const t = listEl.querySelector(`[data-sec="${tab === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
-    let pushed = false, popping = false;
+    let pushed = false, popping = false, surface = null;
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         if (view === 'results' && rtabsEl) leaveResults();
@@ -1385,12 +1389,18 @@
             el.classList.remove('is-open');
             if (orbEl) orbEl.classList.remove('is-x', 'is-from');
         }
-        document.documentElement.style.overflow = '';
+        if (surface) { surface.destroy(); surface = null; }
+        else document.documentElement.style.overflow = '';
         if (inflight) { inflight.abort(); inflight = null; }
         if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
+
+    // On a phone the empty menu keeps focus on its orb to avoid raising the keyboard. Escape must still close it.
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !e.defaultPrevented && el && el.classList.contains('is-open')) { e.preventDefault(); close(); }
+    });
 
     document.addEventListener('ov:boost:load', () => { if (el && el.classList.contains('is-open') && !input.value) render(''); });
 

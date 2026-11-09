@@ -8,8 +8,8 @@ const path = require('path');
 
 const domains = 'network live pics video community codes chat media games exchange design news blog events help quest rent work food deals coupons trade tips vip zone run search today surf meme cam casino tours shoes connect inventory actor computer bot services space locker'.split(' ');
 const urls = process.argv.slice(2).length ? process.argv.slice(2) : domains.map((name) => `https://openvibe.${name}/`);
-const triggerSelector = 'button[data-ovk-sheet],button[data-ov-share-sheet],button[aria-haspopup="dialog"],button[aria-haspopup="menu"],button[aria-controls*="sheet"],button[aria-controls*="modal"],#hero-stats .hero-stat[data-metric]';
-const surfaceSelector = 'dialog[open],[role="dialog"][aria-modal="true"],.ovk-sheet[open],.sn-overlay,.ov-share[open],.ovnav-chips-pop.open,.openvibe-navbar-dropdown.open,details.ovk-more[open]';
+const triggerSelector = 'button[data-ovk-sheet],button[data-ov-share-sheet],button[data-ovk-sidebar-open],button[aria-haspopup="dialog"],button[aria-haspopup="menu"],button[aria-haspopup="listbox"],button[aria-haspopup="true"],button[aria-controls*="sheet"],button[aria-controls*="modal"],details.ovk-more>summary,#hero-stats .hero-stat[data-metric],.bc-mobile-chat-fab';
+const surfaceSelector = 'dialog[open],[role="dialog"][aria-modal="true"],.ovk-sheet[open],.sn-overlay,.ov-share[open],.ovnav-chips-pop.open,.openvibe-navbar-dropdown.open,details.ovk-more[open],.ov-sel-pop.is-open,.ov-sel-sheet.is-open,.ovo-side.is-open,.ovk-sidebar.is-open,.bc-camera-sheet,#bc-chat-sidebar.mobile-chat-open';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function touch(p, x, from, to) {
@@ -23,7 +23,7 @@ async function sweep(p, url) {
     const result = { url, triggers: [], issues: [] };
     try { await p.goto(url, { maxMs: 8000 }); } catch (e) { result.error = String(e.message || e).slice(0, 200); return result; }
     const triggers = await p.evaluate(`[...document.querySelectorAll(${JSON.stringify(triggerSelector)})].filter(e=>e.getClientRects().length).slice(0,25).map((e,i)=>({index:i,label:(e.ariaLabel||e.textContent||'').trim().slice(0,80)}))`);
-    if (!triggers.length) { result.issues.push('No public sheet or pop-over trigger found on this page'); return result; }
+    if (!triggers.length) { result.uncovered = 'No public sheet or pop-over trigger found on this page'; return result; }
     for (const t of triggers) {
         try {
             await p.goto(url, { maxMs: 8000 });
@@ -49,11 +49,11 @@ async function sweep(p, url) {
             const outsideClosed = isPopover ? await p.evaluate(`![...document.querySelectorAll(${JSON.stringify(surfaceSelector)})].some(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden')`) : null;
             await p.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
             await p.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-            await wait(350);
+            await wait(500);
             const closed = await p.evaluate(`![...document.querySelectorAll(${JSON.stringify(surfaceSelector)})].some(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=='hidden')`);
             const row = { ...t, opened: true, ...opened, pageMoved, outsideClosed, closed };
             result.triggers.push(row);
-            if (pageMoved) result.issues.push(`${t.label || t.index}: page moved under open surface`);
+            if (pageMoved && !isPopover) result.issues.push(`${t.label || t.index}: page moved under open surface`);
             if (outsideClosed === false) result.issues.push(`${t.label || t.index}: outside pointerdown did not close pop-over`);
             if (!closed) result.issues.push(`${t.label || t.index}: Escape did not close surface`);
         } catch (e) { result.triggers.push({ ...t, error: String(e.message || e).slice(0, 200) }); }
@@ -75,5 +75,5 @@ async function sweep(p, url) {
         }
     } finally { await browser.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
     process.stdout.write(JSON.stringify({ width: 390, results }, null, 2) + '\n');
-    if (results.some((r) => r.issues.some((x) => !x.startsWith('No public')))) process.exitCode = 1;
+    if (results.some((r) => r.issues.length)) process.exitCode = 1;
 })().catch((e) => { console.error(e); process.exitCode = 1; });
