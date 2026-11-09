@@ -24,6 +24,10 @@
         var sample = deltaBytes / deltaSeconds;
         return previous > 0 ? (alpha || 0.25) * sample + (1 - (alpha || 0.25)) * previous : sample;
     }
+    // Line icons (constants, never data): upload, a file, close.
+    var ICON_UP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m0 0-4.5 4.5M12 4l4.5 4.5"/><path d="M4 14v3a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-3"/></svg>';
+    var ICON_FILE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>';
+    var ICON_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
     function node(tag, className, text) {
         var el = document.createElement(tag);
         if (className) el.className = className;
@@ -33,6 +37,7 @@
     function progress(el, options) {
         options = options || {};
         el.classList.add('ov-progress');
+        if (options.compact) el.classList.add('ov-progress--row');
         var label = node('span', 'ov-progress__label', 'Waiting');
         var percent = node('strong', 'ov-progress__percent', '0%');
         var heading = node('div', 'ov-progress__heading');
@@ -95,7 +100,7 @@
         input.setAttribute('aria-label', options.label || 'Choose a file');
         var card = node('button', 'ov-upload__picker');
         card.type = 'button';
-        card.innerHTML = '<span class="ov-upload__icon" aria-hidden="true">↑</span><strong></strong><span class="ov-upload__drop">or drop it here</span>';
+        card.innerHTML = '<span class="ov-upload__icon" aria-hidden="true">' + ICON_UP + '</span><strong></strong><span class="ov-upload__drop">or drop ' + (options.multiple ? 'them' : 'it') + ' here</span>';
         card.querySelector('strong').textContent = options.label || 'Choose a file';
         card.addEventListener('click', function () { input.click(); });
         var rows = node('div', 'ov-upload__rows');
@@ -103,7 +108,7 @@
         function add(files) {
             Array.prototype.forEach.call(options.multiple ? files : Array.prototype.slice.call(files, 0, 1), function (file) {
                 var row = node('div', 'ov-upload__row');
-                var preview = node('div', 'ov-upload__preview', '↑');
+                var preview = node('div', 'ov-upload__preview'); preview.innerHTML = ICON_FILE;
                 if (file.type.indexOf('image/') === 0 || file.type.indexOf('video/') === 0) {
                     var url = URL.createObjectURL(file);
                     var media = node(file.type.indexOf('image/') === 0 ? 'img' : 'video');
@@ -114,7 +119,8 @@
                 }
                 var text = node('div', 'ov-upload__file');
                 text.append(node('strong', '', file.name), node('small', '', size(file.size)));
-                var remove = node('button', 'ov-upload__remove', 'Remove'); remove.type = 'button';
+                var remove = node('button', 'ov-upload__remove'); remove.type = 'button'; remove.innerHTML = ICON_X;
+                remove.setAttribute('aria-label', 'Remove ' + file.name); remove.title = 'Remove';
                 remove.addEventListener('click', function () { row.dispatchEvent(new Event('remove')); row.remove(); if (options.onRemove) options.onRemove(file); });
                 row.append(preview, text, remove); rows.append(row);
                 if (options.onFile) options.onFile(file, row);
@@ -130,8 +136,9 @@
         options = options || {};
         if (typeof options.upload !== 'function') throw new TypeError('OVUpload.queue: upload(file, {onProgress, signal}) is required');
         var pickRoot = node('div');
-        var totalRoot = node('div');
-        root.append(pickRoot, totalRoot);
+        var totalRoot = node('div', 'ov-upload__total');
+        totalRoot.hidden = true;
+        root.append(pickRoot);
         var items = [], active = 0;
         var total = progress(totalRoot);
         function refresh() {
@@ -141,6 +148,7 @@
                 : items.some(function (item) { return item.state === 'failed'; }) ? 'failed'
                     : items.length && items.every(function (item) { return item.state === 'done'; }) ? 'done' : 'waiting';
             total.update({ done: done, total: bytes, state: state, message: state === 'failed' ? 'A file needs a retry.' : '' });
+            totalRoot.hidden = items.length < 2;
         }
         function pump() {
             while (active < (options.concurrency || 3)) {
@@ -172,9 +180,9 @@
         var pick = picker(pickRoot, {
             label: options.label, accept: options.accept, multiple: options.multiple !== false,
             onFile: function (file, row) {
-                var meterRoot = node('div'); row.insertAdjacentElement('afterend', meterRoot);
+                var meterRoot = node('div', 'ov-upload__meter'); row.append(meterRoot); row.classList.add('has-meter');
                 var item = { file: file, row: row, meterRoot: meterRoot, done: 0, state: 'waiting' };
-                item.meter = progress(meterRoot, { onRetry: function () { item.state = 'waiting'; pump(); } });
+                item.meter = progress(meterRoot, { compact: true, onRetry: function () { item.state = 'waiting'; pump(); } });
                 items.push(item); refresh(); pump();
             },
             onRemove: function (file) {
@@ -186,6 +194,7 @@
                 items.splice(items.indexOf(item), 1); refresh();
             }
         });
+        pick.rows.before(totalRoot);   // the total sits between the picker and the files
         return { picker: pick, total: total, items: items };
     }
     return { progress: progress, picker: picker, queue: queue, rate: rate, timeLeft: timeLeft, size: size };
