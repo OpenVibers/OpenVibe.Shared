@@ -219,7 +219,7 @@
             + (back ? `<a class="ovk-page-back" href="${esc(url(back.href))}">${icon('back')}<span>${esc(back.label || 'Back')}</span></a>` : '')
             + `<div class="ovk-page-head-row"><span class="ovk-heading-icon">${icon(ic)}</span><h1>${esc(title)}</h1>`
             + (tools ? `<div class="ovk-page-actions">${tools}</div>` : '') + `</div>`
-            + (lede ? `<p class="ovk-page-lede">${esc(lede)}</p><details class="ovk-page-about"><summary><span>${esc(lede)}</span><b>About this</b></summary><p>${esc(lede)}</p></details>` : '')
+            + (lede ? `<p class="ovk-page-lede">${esc(lede)}</p>` : '')   // one copy, whole, on every screen
             + `</header>`;
     }
     // ── The left sidebar (L35) ──
