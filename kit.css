@@ -132,6 +132,10 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-sub { margin: 2px 0 0; color: var(--ovk-muted); font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovk-head-tools { display: flex; align-items: center; gap: 2px; margin-right: -8px; }
 .ovk-head-tools form { margin: 0; }
+.ovk-heading-icon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--ovk-radius-sm); color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); }
+.ovk-heading-icon > .ovk-i { width: 22px; height: 22px; }
+.ovk-heading-icon.ovk-i { box-sizing: border-box; width: 40px; height: 40px; padding: 9px; vertical-align: middle; }
+.ovk-titled.ovk-titled { display: flex; align-items: center; gap: 10px; white-space: normal; overflow-wrap: anywhere; }
 .ovk-tabs { position: relative; display: flex; gap: 4px; margin: 0 -16px; padding: 0 16px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .ovk-tabs::-webkit-scrollbar { display: none; }
 .ovk-tabs a { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; padding: 6px 14px; border-radius: 999px; color: var(--ovk-muted); font-size: .9rem; font-weight: 650; text-decoration: none; white-space: nowrap; }
@@ -173,6 +177,12 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 /* ── Sections (settings groups, a page's parts) and folds ── */
 .ovk-section { margin: 0 0 12px; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); overflow: hidden; color: var(--ovk-text); }
 .ovk-section.ovk-section > h2 { display: flex; align-items: center; gap: 6px; margin: 0; padding: 12px 14px 6px; color: var(--ovk-muted); font-family: inherit; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.ovk-section-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px; }
+.ovk-section-head.ovk-section-head > h2 { flex: 1 1 160px; min-width: 0; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--ovk-text); font-family: var(--ovk-font); font-size: 1rem; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.ovk-section-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; max-width: 100%; }
+.ovk-section-actions .ovk-btn { min-height: 44px; white-space: normal; text-align: center; }
+.ovk-section-actions form { margin: 0; }
+.ovk-section > .ovk-empty { margin: 0 14px 14px; }
 .ovk-count { color: var(--ovk-text); font-weight: 800; letter-spacing: 0; }
 .ovk-note { margin: 0; padding: 0 14px 10px; color: var(--ovk-muted); font-size: .86rem; }
 .ovk-section > .ovk-form, .ovk-section > form:not(.ovk-find):not(.ovk-inline) { padding: 4px 14px 14px; }

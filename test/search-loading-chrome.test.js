@@ -191,7 +191,7 @@ const server = http.createServer((req, res) => {
                 setTimeout(() => {
                     r.failed = box.classList.contains('is-failed'); r.alert = box.getAttribute('role'); r.title = box.querySelector('.ovld-label').textContent; r.retry = box.querySelector('.ovld-acts button').textContent;
                     l.done(); setTimeout(() => { r.gone = !document.querySelector('.ovld');
-                        const s = OpenVibeLoading.skeleton(document.getElementById('list'), { rows: 3 }); r.skel = document.querySelectorAll('.ovld-skel-row').length; s.done(); r.skelGone = !document.querySelector('.ovld-skel'); done(r); }, 600);
+                        const s = OpenVibeLoading.skeleton(document.getElementById('list'), { rows: 3 }); r.skel = document.querySelectorAll('.ovld-skel-row').length; s.done(); r.skelGone = !document.querySelector('.ovld-skel'); done(r); }, 1100);   // the tick shows (420 ms), then the fade (400 ms)
                 }, 400);
             }, 400);
         })`);

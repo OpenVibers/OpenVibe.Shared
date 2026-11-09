@@ -44,6 +44,9 @@
         if (typeof document === 'undefined') return;
         const scope = rootEl || document;
         const all = (sel) => Array.prototype.slice.call(scope.querySelectorAll ? scope.querySelectorAll(sel) : []);
+        if (scope.querySelector && scope.querySelector('dialog.ovk-sheet, details.ovk-more') && !root.OVSurfaces && !document.getElementById('ov-surfaces-loader')) {
+            const sc = document.createElement('script'); sc.id = 'ov-surfaces-loader'; sc.src = SHARE_SRC ? SHARE_SRC.replace('ov-share.js', 'surfaces.js') : '/shared/surfaces.js'; sc.async = true; document.head.appendChild(sc);
+        }
         // Marks an element as wired. The mark has its own name (…Wired): `data-ovk-copy="#id"` is dataset.ovkCopy, so a mark
         // under that same name was already set by the markup, and copy, sheets, confirms and titled shares never wired.
         const once = (el, key) => { const k = `${key}Wired`; if (el.dataset[k]) return false; el.dataset[k] = '1'; return true; };
@@ -65,6 +68,10 @@
             if (!once(d, 'ovkMore')) return;
             d.addEventListener('toggle', () => {
                 if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; });
+                if (root.OVSurfaces) {
+                    if (!d.__ovSurface) d.__ovSurface = root.OVSurfaces.popover({ el: d, trigger: d.querySelector('summary'), close: () => { d.open = false; } });
+                    if (d.open) d.__ovSurface.open(); else d.__ovSurface.close();
+                }
                 // Inside a rail (a sideways scroller clips anything that hangs out of it) the menu is placed on the screen.
                 const pop = d.querySelector('.ovk-pop');
                 if (!pop || !d.closest('.ovk-rail-track')) return;
@@ -82,9 +89,9 @@
         });
         if (!document.documentElement.dataset.ovkDoc) {
             document.documentElement.dataset.ovkDoc = '1';
-            document.addEventListener('click', (e) => {
+            document.addEventListener('pointerdown', (e) => {
                 Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { if (!d.contains(e.target)) d.open = false; });
-            });
+            }, true);
             document.addEventListener('keydown', (e) => {
                 if (e.key !== 'Escape') return;
                 Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { d.open = false; const s = d.querySelector('summary'); if (s) s.focus(); });

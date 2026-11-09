@@ -58,19 +58,19 @@
 
     // ── Icons: 24-unit line drawings in the text's colour (stroke 2, round), one set for every site ──
     const P = {
-        back: '<path d="M15 5l-7 7 7 7"/>', forward: '<path d="m9 5 7 7-7 7"/>', chevron: '<path d="m9 6 6 6-6 6"/>',
-        up: '<path d="m6 15 6-6 6 6"/>', down: '<path d="m6 9 6 6 6-6"/>', close: '<path d="M6 6l12 12M18 6 6 18"/>',
+        back: '<path d="M15 5l-7 7 7 7"/>', forward: '<path d="m9 5 7 7-7 7"/>', chevron: '<path d="m9.9 6.6 6.6 6.6 -6.6 6.6"/>',
+        up: '<path d="m5.4 15.3 6.6-6.6 6.6 6.6"/>', down: '<path d="m6.6 9.9 6.6 6.6 6.6 -6.6"/>', close: '<path d="M5.4 5.4l13.2 13.2M18.6 5.4 5.4 18.6"/>',
         plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
         send: '<path d="M12 19V5M5 12l7-7 7 7"/>', search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
         more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
         menu: '<path d="M4 7h16M4 12h16M4 17h16"/>', sidebar: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/>', filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',
         home: '<path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"/>',
         chat: '<path d="M4 5h16v11H8l-4 4Z"/>', mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>',
-        bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>',
+        bell: '<path d="M6 14.5V9.5a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 18.5a2 2 0 0 0 4 0"/>',
         user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>',
         members: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.6 3 2.4 3 5.2"/>',
         invite: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M19 8v6M16 11h6"/>',
-        gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+        gear: '<circle cx="12" cy="12" r="2.4"/><path d="M17.85 14.4a1.35 1.35 0 0 0 0.25 1.6l0.1 0.1a1.6 1.6 0 1 1 -2.5 2.5l-0.1 -0.1a1.35 1.35 0 0 0 -1.6 -0.25 1.35 1.35 0 0 0 -0.9 1.35V19.1a1.6 1.6 0 1 1 -3.6 0v-0.1a1.35 1.35 0 0 0 -1 -1.35 1.35 1.35 0 0 0 -1.6 0.25l-0.1 0.1a1.6 1.6 0 1 1 -2.5 -2.5l0.1 -0.1a1.35 1.35 0 0 0 0.25 -1.6 1.35 1.35 0 0 0 -1.35 -0.9H4.95a1.6 1.6 0 1 1 0 -3.6h0.1a1.35 1.35 0 0 0 1.35 -1 1.35 1.35 0 0 0 -0.25 -1.6l-0.1 -0.1a1.6 1.6 0 1 1 2.5 -2.5l0.1 0.1a1.35 1.35 0 0 0 1.6 0.25H9.65a1.35 1.35 0 0 0 0.9 -1.35V4.95a1.6 1.6 0 1 1 3.6 0v0.1a1.35 1.35 0 0 0 0.9 1.35 1.35 1.35 0 0 0 1.6 -0.25l0.1 -0.1a1.6 1.6 0 1 1 2.5 2.5l-0.1 0.1a1.35 1.35 0 0 0 -0.25 1.6V9.65a1.35 1.35 0 0 0 1.35 0.9H19.1a1.6 1.6 0 1 1 0 3.6h-0.1a1.35 1.35 0 0 0 -1.35 0.9Z"/>',
         pencil: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>', trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>',
         copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
         open: '<path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/>',
@@ -81,35 +81,35 @@
         ban: '<circle cx="12" cy="12" r="8.5"/><path d="m6 6 12 12"/>', help: '<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8M12 17h.01"/>',
         info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>', alert: '<path d="M12 4 2.8 19.5h18.4Z"/><path d="M12 10v4M12 17h.01"/>',
         clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>', calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
-        spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/>',
-        star: '<path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z"/>', heart: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
-        play: '<path d="M8 5v14l11-7Z"/>', pause: '<path d="M8 5v14M16 5v14"/>', stop: '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 8.5 7 7"/>',
-        live: '<circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>',
+        spark: '<path d="M11.5 3l1.8 5.2L18.5 10l-5.2 1.8L11.5 17l-1.8 -5.2L4.5 10l5.2 -1.8ZM18.5 15l0.8 2.2L21.5 18l-2.2 0.8L18.5 21l-0.8 -2.2L15.5 18l2.2 -0.8Z"/>',
+        star: '<path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6Z"/>', heart: '<path d="M12 19.5s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/>',
+        play: '<path d="M7 5v14l11 -7Z"/>', pause: '<path d="M8 5v14M16 5v14"/>', stop: '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 8.5 7 7"/>',
+        live: '<circle cx="12" cy="12" r="2.15"/><path d="M8.4 8.4a5.15 5.15 0 0 0 0 7.55M15.6 8.4a5.15 5.15 0 0 1 0 7.55M6 6a8.55 8.55 0 0 0 0 12.6M18 6a8.55 8.55 0 0 1 0 12.6"/>',
         video: '<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>', mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
         image: '<rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/>',
         file: '<path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4"/>', folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
         code: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/>', terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/>',
         computer: '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
         globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
-        tag: '<path d="M3 12V4h8l10 10-8 8Z"/><circle cx="7.5" cy="8.5" r="1.3"/>', cart: '<path d="M3 4h2l2.4 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
+        tag: '<path d="M3 11V3h8l10 10 -8 8Z"/><circle cx="7.5" cy="7.5" r="1.3"/>', cart: '<path d="M3 4h2l2.4 11h11L21 7H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/>',
         coin: '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"/>',
         gift: '<rect x="4" y="9" width="16" height="11" rx="1"/><path d="M3 9h18M12 9v11M12 9c-1.5-3-5-4-5-1.5S12 9 12 9s5-1 5-3.5S13.5 6 12 9"/>',
         trophy: '<path d="M8 4h8v5a4 4 0 0 1-8 0ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/>',
-        flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>', eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+        flag: '<path d="M6.5 21V4M6.5 4h11l-2 4 2 4H6.5"/>', eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
         map: '<path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2Z"/><path d="M9 4v14M15 6v14"/>', book: '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2Z"/><path d="M4 19V5"/>',
         game: '<rect x="2.5" y="7" width="19" height="11" rx="5"/><path d="M7 11v3M5.5 12.5h3M15.5 12h.01M18 13.5h.01"/>',
-        leave: '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>',
+        leave: '<path d="M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-4M9 16l-4 -4 4 -4M5 12h10"/>',
         retry: '<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.7L4 15.5M4 20v-4.5h4.5"/>',
         task: '<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/>', steps: '<path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1.5 1.5L7 5M3 12l1.5 1.5L7 11M3 18l1.5 1.5L7 17"/>',
-        hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7c0 4-2.5 7-6.5 7-2.6 0-4.2-1.3-5.7-3.6L3 13.6a1.5 1.5 0 0 1 2.4-1.8L8 15"/>',
+        hand: '<path d="M10 13V5.5a1.5 1.5 0 0 1 3 0V11M13 10V4.5a1.5 1.5 0 0 1 3 0V11M16 10.5V6a1.5 1.5 0 0 1 3 0v7c0 4 -2.5 7 -6.5 7 -2.6 0 -4.2 -1.3 -5.7 -3.6L5 13.6a1.5 1.5 0 0 1 2.4 -1.8L10 15"/>',
         shield: '<path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6Z"/>', zap: '<path d="M13 3 5 13h6l-1 8 8-10h-6Z"/>',
         cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18Z"/>', server: '<rect x="4" y="4" width="16" height="7" rx="2"/><rect x="4" y="13" width="16" height="7" rx="2"/><path d="M8 7.5h.01M8 16.5h.01"/>',
-        sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+        sun: '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2M12 19.6v2M5.25 5.25l1.4 1.4M17.4 17.4l1.4 1.4M2.5 12h2M19.6 12h2M5.25 18.75l1.4 -1.4M17.4 6.6l1.4 -1.4"/>',
         moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', grid: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
         list: '<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
         chart: '<path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-4 3 2.5 5-6"/>', swap: '<path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/>',
-        wave: '<path d="M2 16c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M5.5 11.5A7 7 0 0 1 18 8.6c-2.3-.5-4.2.4-4.8 2.4"/>',
-        shoe: '<path d="M2.5 17v-5.5l4-.5 3-4 3.2 1.4-.9 2.6 4 2.2 4.7 1a2 2 0 0 1 1.5 1.9V17Z"/><path d="M2.5 20h19"/>',
+        wave: '<path d="M3.45 16.3c2.25 0 2.25 -1.8 4.5 -1.8s2.25 1.8 4.5 1.8 2.25 -1.8 4.5 -1.8 2.25 1.8 4.5 1.8"/><path d="M6.45 12.5A6 6 0 0 1 17.15 8.95c-2.05 -0.45 -3.8 0.35 -4.3 2.15"/>',
+        shoe: '<path d="M2.5 15.5v-5.5l4 -0.5 3 -4 3.2 1.4 -0.9 2.6 4 2.2 4.7 1a2 2 0 0 1 1.5 1.9V15.5Z"/><path d="M2.5 18.5h19"/>',
         palette: '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', robot: '<rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M9.5 16.5h5M3 13v2M21 13v2"/>',
     };
     const ICONS = Object.freeze(Object.keys(P));
@@ -202,10 +202,11 @@
      * The sticky head every app page starts with: back (an icon), the title and one muted line, icon actions on the right,
      * and the page's tabs under it (kit.tabs). It stays under the navbar while the page scrolls.
      */
-    function head({ title = '', titleHtml = null, sub = '', subHtml = null, back = null, actions = [], tabs = '', level = 1, sticky = true } = {}) {
+    function head({ title = '', titleHtml = null, sub = '', subHtml = null, back = null, icon: ic = '', actions = [], tabs = '', level = 1, sticky = true } = {}) {
         const h = level === 2 ? 'h2' : 'h1';
         return `<header class="ovk-head${sticky ? '' : ' ovk-head--static'}"><div class="ovk-head-row">`
             + (back ? `<a class="ovk-icon-btn ovk-back" href="${esc(url(back.href))}" aria-label="${esc(back.label || 'Back')}" title="${esc(back.label || 'Back')}">${icon('back')}</a>` : '')
+            + (ic ? `<span class="ovk-heading-icon">${icon(ic)}</span>` : '')
             + `<div class="ovk-head-id"><${h}>${titleHtml != null ? titleHtml : esc(title)}</${h}>${subHtml != null ? `<p class="ovk-sub">${subHtml}</p>` : sub ? `<p class="ovk-sub">${esc(sub)}</p>` : ''}</div>`
             + (actions && actions.length ? `<div class="ovk-head-tools">${actions.join('')}</div>` : '')
             + `</div>${tabs || ''}</header>`;
@@ -290,10 +291,11 @@
 
     // ── Cards, sections, folds ──
     /** A card with a small heading (settings groups, a page's parts): body is markup; note: one muted line under the title. */
-    function section({ title = '', count = null, note = '', body = '', id = null, cls = '' } = {}) {
+    function section({ title = '', count = null, note = '', body = '', id = null, cls = '', icon: ic = '', actions = [] } = {}) {
         const hid = id ? `${id}-h` : null;
+        const heading = title ? `<h2${hid ? ` id="${esc(hid)}"` : ''}>${esc(title)}${count != null ? `<span class="ovk-count">${esc(count)}</span>` : ''}</h2>` : '';
         return `<section class="ovk-section${cls ? ` ${esc(cls)}` : ''}"${id ? ` id="${esc(id)}"` : ''}${hid && title ? ` aria-labelledby="${esc(hid)}"` : ''}>`
-            + (title ? `<h2${hid ? ` id="${esc(hid)}"` : ''}>${esc(title)}${count != null ? `<span class="ovk-count">${esc(count)}</span>` : ''}</h2>` : '')
+            + (ic || actions.length ? `<header class="ovk-section-head">${ic ? `<span class="ovk-heading-icon">${icon(ic)}</span>` : ''}${heading}${actions.length ? `<div class="ovk-section-actions">${actions.join('')}</div>` : ''}</header>` : heading)
             + (note ? `<p class="ovk-note">${esc(note)}</p>` : '') + body + '</section>';
     }
     /** A card that opens and closes (setup, extras, the danger zone): closed unless open; meta: a muted word after the title. */
@@ -485,11 +487,11 @@
      * size: 's' square things (memes, shoes, deals), 'm' (default) pictures 16:9, 'l' wide features. wrap: from 760 px
      * the row becomes a grid that shows every item (no arrows, no kit-web.js needed); phones still swipe. Empty → ''.
      */
-    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '', wrap = false } = {}) {
+    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '', wrap = false, icon: ic = '' } = {}) {
         const list = (items || []).filter(Boolean);
         if (!list.length) return '';
         const hid = id ? `${String(id).replace(/[^a-z0-9_-]/gi, '')}-h` : '';
-        const head = title || m ? `<div class="ovk-rail-head">${title ? `<h2${hid ? ` id="${hid}"` : ''}>${esc(title)}</h2>` : ''}${m && m.href ? `<a class="ovk-rail-more" href="${esc(url(m.href))}">${esc(m.label || 'See all')}${icon('chevron')}</a>` : ''}</div>` : '';
+        const head = title || m ? `<div class="ovk-rail-head">${title ? `<h2${ic ? ' class="ovk-titled"' : ''}${hid ? ` id="${hid}"` : ''}>${ic ? icon(ic, { cls: 'ovk-heading-icon' }) : ''}${esc(title)}</h2>` : ''}${m && m.href ? (ic ? button({ href: m.href, label: m.label || 'See all', icon: m.icon || 'forward', kind: 'quiet' }) : `<a class="ovk-rail-more" href="${esc(url(m.href))}">${esc(m.label || 'See all')}${icon('chevron')}</a>`) : ''}</div>` : '';
         const named = hid && title ? ` aria-labelledby="${hid}"` : ` aria-label="${esc(label || title || 'More')}"`;
         return `<section class="ovk-rail ovk-rail--${size === 's' || size === 'l' ? size : 'm'}${wrap ? ' ovk-rail--wrap' : ''}"${id ? ` id="${esc(id)}"` : ''}${named}>${head}`
             + `<div class="ovk-rail-wrap"><ul class="ovk-rail-track" role="list">${list.map((x) => `<li>${x}</li>`).join('')}</ul>`
