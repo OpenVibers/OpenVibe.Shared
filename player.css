@@ -229,3 +229,10 @@
     .ov-player-time { padding: 0 4px; font-size: 12px; }
     .ov-player-big { width: 60px; height: 60px; }
 }
+
+/* One control bar across OpenVibe (11-09, with Live's: the owner asked for buttons "better sized and centred"): 40 px
+   square buttons (44 on a touch screen) with the icon centred at 22 px; readouts as glass chips. */
+.ov-player-btn { width: 40px; min-width: 40px; height: 40px; padding: 0; border-radius: 12px; display: inline-grid; place-items: center; }
+.ov-player-btn svg { width: 22px; height: 22px; display: block; }
+@media (pointer: coarse) { .ov-player-btn { width: 44px; min-width: 44px; height: 44px; } }
+.ov-player-time { height: 28px; display: inline-flex; align-items: center; padding: 0 10px; border-radius: 999px; background: rgba(255, 255, 255, .12); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }

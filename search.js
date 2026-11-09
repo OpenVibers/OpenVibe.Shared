@@ -171,6 +171,15 @@
         } catch { return null; }
     }
 
+    // Times that keep up while the menu is open (once a minute; nothing runs while it is closed).
+    let agoTimer = 0;
+    function tickAgo() {
+        clearInterval(agoTimer);
+        agoTimer = setInterval(() => {
+            if (!el || !el.classList.contains('is-open')) { clearInterval(agoTimer); agoTimer = 0; return; }
+            el.querySelectorAll('[data-at]').forEach((m) => { const t = ago(m.dataset.at); if (t) m.textContent = [m.dataset.pre, t].filter(Boolean).join(' · '); });
+        }, 60000);
+    }
     function ago(iso) {
         const t = Date.parse(iso || ''); if (!isFinite(t)) return '';
         const m = Math.max(0, Math.round((Date.now() - t) / 60000));
@@ -645,7 +654,7 @@
                     const main = document.createElement('span'); main.className = 'ovs-main';
                     const t = document.createElement('span'); t.className = 'ovs-title'; t.textContent = it.title; main.appendChild(t);
                     if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; t.appendChild(tg); }
-                    if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
+                    if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; if (it.at) { m.dataset.at = it.at; m.dataset.pre = it.metaPre || ''; } main.appendChild(m); }
                     if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
                     if (it.image) {
                         const im = document.createElement('img');
@@ -1161,7 +1170,8 @@
         const title = String(x.title || '').replace(/\s*[·|–—-]\s*(?:OpenVibe\.\w+|open\.\w+)\s*$/i, '').replace(/^OpenVibe\.\w+:\s*/i, '').trim() || x.title;
         const live = pulseData && Array.isArray(pulseData.live) && pulseData.live.some((c) => c && c.url && safeUrl(c.url) && hostOf(c.url) === hostOf(x.url) && String(c.url).replace(/\/$/, '').toLowerCase() === String(x.url).replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase());
         const svc = x.service === 'media' ? 'media-hub' : x.service;
-        return { title: title.slice(0, 90), meta: [live ? 'Live now' : '', x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
+        const pre = [live ? 'Live now' : '', x.site].filter(Boolean).join(' · ');
+        return { title: title.slice(0, 90), meta: [pre, ago(x.at)].filter(Boolean).join(' · '), metaPre: pre, at: x.at, url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
     }
 
     /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
@@ -1402,6 +1412,7 @@
         drainCards();
         syncFeeds();
         el.classList.add('is-open');
+        tickAgo();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.
         try { if (!(history.state && history.state.ovsMenu)) { history.pushState(Object.assign({}, history.state || {}, { ovsMenu: true }), ''); pushed = true; } } catch { pushed = false; }

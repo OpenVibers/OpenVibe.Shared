@@ -179,19 +179,28 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
         (o.yours || []).forEach((a) => { if (a && a.id && safe(a.url)) byId.set(a.id, a); });
         return byId;
     }
+    // The network's groups, as folders for the sites past the first page (until the person arranges their home).
+    const GROUP_FOLDERS = [['streams', 'Watch'], ['people', 'People'], ['make', 'Make'], ['answers', 'Read'], ['games', 'Play'], ['shop', 'Shop']];
+    function topSites(o) {
+        const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id));
+        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
+        return sites.slice(0, Math.max(6, 12 - 2 - mineFirst.length));
+    }
     function folderDefs(o) {
         const apps = o.apps || [];
-        return [
+        const top = new Set(topSites(o));
+        const groups = GROUP_FOLDERS.map(([g, name]) => ({ id: `g-${g}`, name, apps: apps.filter((a) => a.group === g && !top.has(a.id)).map((a) => a.id), glyph: 'grid' }))
+            .filter((f) => f.apps.length >= 2);
+        return groups.concat([
             { id: 'tools', name: 'Quick tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
             { id: 'build', name: 'Build', apps: apps.filter((a) => a.group === 'build').map((a) => a.id), glyph: 'code' },
-        ].filter((f) => f.apps.length);
+        ]).filter((f) => f.apps.length);
     }
     /** Until the person arranges it: their own places first (signed in), then the most used and popular sites. */
     function defaultHome(o) {
         const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id)).map((y) => y.id);
-        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
-        const room = 12 - 2 - mineFirst.length;
-        return mineFirst.concat(sites.slice(0, Math.max(6, room)), ['folder:tools', 'folder:build']);
+        const groupFolders = folderDefs(o).filter((f) => f.id.startsWith('g-')).map((f) => `folder:${f.id}`);
+        return mineFirst.concat(topSites(o), groupFolders, ['folder:tools', 'folder:build']);
     }
     function layoutOf(o) {
         const byId = universe(o);
