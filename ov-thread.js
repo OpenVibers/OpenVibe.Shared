@@ -333,6 +333,8 @@
                 function close() { if (d.open) { d.open = false; } }
                 d.addEventListener('toggle', function () {
                     lock(d.open);
+                    // On a computer the panel grows out of its button (the navbar's shared motion); a phone's sheet rises.
+                    if (d.open && !phone() && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) { var pnl = q(d, '.ovt-opts-panel'); if (pnl) root.OpenVibeNavbar.pop(pnl, q(d, 'summary')); }
                     if (d.open) { var f = q(d, '.ovt-opts-body select, .ovt-opts-body input, .ovt-opts-body button'); if (f && !phone()) f.focus({ preventScroll: true }); }
                 });
                 document.addEventListener('pointerdown', function (e) { if (d.open && !d.contains(e.target)) close(); }, true);
@@ -376,6 +378,7 @@
                 if (d.__ovt) return; d.__ovt = true;
                 document.addEventListener('pointerdown', function (e) { if (d.open && !d.contains(e.target)) d.open = false; }, true);
                 d.addEventListener('change', function () { d.open = false; });
+                d.addEventListener('toggle', function () { if (d.open && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) { var pp = q(d, '.ovt-attach-pop'); if (pp) root.OpenVibeNavbar.pop(pp, q(d, 'summary')); } });
                 d.addEventListener('keydown', function (e) { if (e.key === 'Escape' && d.open) { e.stopPropagation(); d.open = false; var s = q(d, 'summary'); if (s) s.focus(); } });
             });
 

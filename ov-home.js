@@ -50,7 +50,9 @@
 .ovh-sec button.is-done { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
 .ovh-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px; }
 @media (min-width: 400px) { .ovh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-@media (min-width: 861px) { .ovh-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 861px) { .ovh-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); } }
+.ovh-grid { position: relative; }
+.ovh.is-edit .ovh-grid:not(.ovh-recent) { touch-action: none; -webkit-user-select: none; user-select: none; }
 .ovh-recent .ovh-app { min-height: 80px; }
 .ovh-app { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; min-height: 88px; padding: 8px 2px 6px; border: 0; border-radius: 16px;
     background: transparent; color: inherit; font: inherit; text-decoration: none; cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -58,6 +60,13 @@
 .ovh-ic { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 17px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent);
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1); }
 .ovh-recent .ovh-ic { width: 48px; height: 48px; border-radius: 15px; }
+/* App icons: the ring goes, the glyph fills the tile, each app keeps its own hue (11-09). */
+.ovh-grid .ovh-ic, .ovh-recent .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
+.ovh-ic .ovi-ring, .ovh-ic .ovi-bg, .ovh-ic .ovi-comet, .ovh-ic .ovi-prog { display: none; }
+.ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 90% 82%); color: hsl(var(--ovh-h, 215) 90% 82%); }
+:root[data-theme="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
+.ovh-folder .ovh-ic { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 7%, transparent); grid-template-columns: repeat(2, 22px); grid-auto-rows: 22px; gap: 3px; }
+.ovh-folder .ovh-ic > span { width: 22px; height: 22px; border-radius: 7px; overflow: hidden; background: hsl(var(--ovh-h, 215) 70% 50% / .3); }
 .ovh-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
 .ovh-folder .ovh-ic { display: grid; grid-template-columns: repeat(2, 18px); grid-auto-rows: 18px; gap: 4px; place-content: center; }
 .ovh-folder .ovh-ic > span { display: grid; place-items: center; width: 18px; height: 18px; }
@@ -70,7 +79,10 @@
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-app { touch-action: none; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { animation: ovh-wiggle .32s ease-in-out infinite alternate; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-app:nth-child(2n) .ovh-ic { animation-delay: -.16s; }
-.ovh-app.is-lifted { opacity: .25; }
+.ovh-app.is-lifted { opacity: .18; transform: scale(.92); }
+.ovh-ghost .ovh-ic { width: 64px; height: 64px; border-radius: 19px; }
+html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { animation-name: ovh-wiggle-calm !important; }
+@keyframes ovh-wiggle-calm { from { transform: rotate(-.6deg); } to { transform: rotate(.6deg); } }
 .ovh-ghost { position: fixed; z-index: 10040; pointer-events: none; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 19px; display: grid; place-items: center;
     background: var(--bg-secondary, #141a24); box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 0 0 1px var(--border, rgba(255,255,255,.14)); transform: scale(1.08); }
 @keyframes ovh-wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
@@ -83,7 +95,7 @@
 .ovh-back { min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--accent, #3b82f6); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .ovh-filter { width: calc(100% - 8px); min-height: 44px; margin: 2px 4px 4px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.14));
     background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 15px; }
-.ovh-actor { display: flex; align-items: center; gap: 12px; width: calc(100% - 8px); min-height: 64px; margin: 6px 4px 4px; padding: 10px 12px; border-radius: 16px; border: 0; text-align: left; cursor: pointer;
+.ovh-actor { box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: calc(100% - 8px); min-height: 64px; margin: 6px 4px 4px; padding: 10px 12px; border-radius: 16px; border: 0; text-align: left; cursor: pointer;
     background: color-mix(in srgb, var(--accent, #3b82f6) 11%, var(--bg-secondary, #141a24)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); color: inherit; font: inherit; }
 .ovh-face { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: var(--accent, #3b82f6); color: #fff; font-weight: 800; font-size: 17px; }
 .ovh-face img { width: 100%; height: 100%; object-fit: cover; }
@@ -97,6 +109,13 @@
 .ovh-go { flex: none; color: var(--accent, #3b82f6); font-weight: 700; font-size: 13px; }
 .ovh-x { flex: none; min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--text-muted, #93a0b4); font: inherit; font-size: 12.5px; cursor: pointer; }
 @keyframes ovh-pulse { 50% { opacity: .35; } }
+.ovh-actor.is-invite { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px 12px; padding: 12px 14px; cursor: default; }
+.ovh-actor.is-invite .ovh-face { width: 48px; height: 48px; border-radius: 15px; background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 45%, #a855f7)); box-shadow: 0 6px 18px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+.ovh-actor.is-invite .ovh-actor-txt small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; }
+.ovh-actor.is-invite .ovh-acts { grid-column: 2; display: flex; gap: 8px; }
+.ovh-actor.is-invite .ovh-go { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); text-decoration: none; font-size: 13.5px; }
+.ovh-actor.is-invite .ovh-x { min-height: 36px; height: 36px; padding: 0 14px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); color: var(--text-secondary, #a8b3c4); font-weight: 600; }
+@media (min-width: 560px) { .ovh-actor.is-invite { grid-template-columns: 48px minmax(0, 1fr) auto; } .ovh-actor.is-invite .ovh-acts { grid-column: auto; } }
 .ovh-skel { display: block; height: 14px; margin: 10px 8px; border-radius: 7px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
 .ovh-compose { display: flex; gap: 10px; align-items: flex-start; margin: 6px 4px; padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); }
@@ -122,7 +141,7 @@
 .ovh-lives { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .ovh-lives a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--live, #ef4444) 12%, transparent); color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; }
 .ovh-lives a::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #ef4444); }
-@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic, .ovh-chip.is-working .ovh-dot { animation: none !important; } .ovh-ic { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic { animation-name: ovh-wiggle-calm !important; } .ovh-chip.is-working .ovh-dot { animation: none !important; } }
 `;
         document.head.appendChild(st);
     }
@@ -163,7 +182,7 @@
     function folderDefs(o) {
         const apps = o.apps || [];
         return [
-            { id: 'tools', name: 'Tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
+            { id: 'tools', name: 'Quick tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
             { id: 'build', name: 'Build', apps: apps.filter((a) => a.group === 'build').map((a) => a.id), glyph: 'code' },
         ].filter((f) => f.apps.length);
     }
@@ -188,12 +207,17 @@
         const s = h('span', 'ov-icon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', String(size)); s.setAttribute('data-fx', 'none');
         return s;
     }
+    /** A steady hue per site (the same on every page and device), so each app has its own colour. */
+    function hueOf(id) { let x = 7; const t = String(id || 'ov'); let i = 0; while (i < t.length) { x = (x * 31 + t.charCodeAt(i)) % 360; i++; } return x; }
     function appTile(o, a, { tag = 'a', size = 40, small = false } = {}) {
         const el = h(tag, 'ovh-app');
         if (tag === 'a') el.href = safe(a.url) || '#'; else el.type = 'button';
         el.setAttribute('data-id', a.id);
+        // An app icon, not a ring (11-09, the owner: "icons need major improvement, make use of the full space… more
+        // consistent"): the site's glyph large on a squircle tinted with its own steady hue.
         const ic = h('span', 'ovh-ic');
-        ic.append(siteIcon(a.site, small ? 32 : size));
+        ic.style.setProperty('--ovh-h', String(hueOf(a.site || a.id)));
+        ic.append(siteIcon(a.site, small ? 44 : 60));
         el.append(ic, h('span', 'ovh-name', a.title));
         if (tag === 'a') el.addEventListener('click', () => { if (o.onOpen) o.onOpen(a); });
         return el;
@@ -204,7 +228,8 @@
         el.setAttribute('data-id', `folder:${f.id}`);
         el.setAttribute('aria-label', `${f.name} folder, ${f.apps.length} apps`);
         const ic = h('span', 'ovh-ic');
-        f.apps.slice(0, 4).forEach((id) => { const a = byId.get(id) || (o.tools || []).find((t) => t.id === id); const cell = h('span'); cell.append(siteIcon(a ? a.site : f.glyph, 16)); ic.append(cell); });
+        // Each app's own icon (a tool's own glyph, not the folder's: four identical </> was the owner's complaint, 11-09).
+        f.apps.slice(0, 4).forEach((id) => { const a = byId.get(id) || (o.tools || []).find((t) => t.id === id); const cell = h('span'); const g = a ? (a.site || a.icon || f.glyph) : f.glyph; cell.style.setProperty('--ovh-h', String(hueOf(g + id))); cell.append(siteIcon(g, 26)); ic.append(cell); });
         el.append(ic, h('span', 'ovh-name', f.name));
         return el;
     }
@@ -317,28 +342,49 @@
             t.addEventListener('click', (e) => { if (Date.now() < state.suppress && !(e.target.closest && e.target.closest('.ovh-badge'))) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
         }
 
+        // While editing, a finger on the grid never scrolls the page (11-09, the owner: holding an icon "scrolled up and
+        // down… even though I'm in edit mode").
+        if (!el.__ovhTouch) { el.__ovhTouch = true; el.addEventListener('touchmove', (e) => { if ((state.edit || state.drag) && e.target.closest && e.target.closest('.ovh-grid:not(.ovh-recent)') && e.cancelable) e.preventDefault(); }, { passive: false }); }
         function beginDrag(id, e) {
             if (state.drag) return;
             const ghost = h('div', 'ovh-ghost');
             const src = el.querySelector(`.ovh-grid:not(.ovh-recent) [data-id="${CSS.escape(id)}"] .ovh-ic`);
-            if (src) ghost.append(src.cloneNode(true).firstChild || h('span'));
+            if (src) { const c = src.cloneNode(true); c.style.animation = 'none'; ghost.append(c); }
             document.body.append(ghost);
             state.drag = { id, ghost };
             const at = (m) => { ghost.style.left = `${m.clientX}px`; ghost.style.top = `${m.clientY}px`; };
             at(e);
             const lift = () => { const n = el.querySelector(`.ovh-grid:not(.ovh-recent) [data-id="${CSS.escape(id)}"]`); if (n) n.classList.add('is-lifted'); };
             lift();
+            // Near the top or bottom of the menu's list, the list scrolls under the finger (one page of apps can be longer
+            // than the screen); nothing else scrolls while an app is held.
+            const scroller = (() => { let n = el.parentElement; while (n && n !== document.body) { const st = getComputedStyle(n); if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight) return n; n = n.parentElement; } return null; })();
             const move = (m) => {
+                if (m.cancelable) m.preventDefault();
+                if (scroller) { const r = scroller.getBoundingClientRect(); if (m.clientY < r.top + 56) scroller.scrollTop -= 12; else if (m.clientY > r.bottom - 56) scroller.scrollTop += 12; }
                 at(m);
-                const under = document.elementFromPoint(m.clientX, m.clientY);
-                const cell = under && under.closest && under.closest('.ovh-grid:not(.ovh-recent) .ovh-app');
-                if (!cell || !el.contains(cell)) return;
+                // Which app's place the finger is over, by layout (offsets ignore the slide in progress), and only well
+                // inside it (the middle 60%), so the grid never flickers between two places.
+                const grid = el.querySelector('.ovh-grid:not(.ovh-recent)');
+                if (!grid) return;
+                const cell = [...grid.children].find((n) => { const r = n.getBoundingClientRect(); return m.clientX >= r.left && m.clientX < r.right && m.clientY >= r.top && m.clientY < r.bottom; });
+                if (!cell) return;
                 const to = L.home.indexOf(cell.getAttribute('data-id')), from = L.home.indexOf(id);
                 if (to < 0 || to === from) return;
+                const cr = cell.getBoundingClientRect();
+                if (Math.abs(m.clientX - (cr.left + cr.width / 2)) > cr.width * 0.35 || Math.abs(m.clientY - (cr.top + cr.height / 2)) > cr.height * 0.4) return;
+                const before = new Map([...grid.children].map((n) => [n.getAttribute('data-id'), n.getBoundingClientRect()]));
                 L.home.splice(from, 1); L.home.splice(to, 0, id);
-                const grid = el.querySelector('.ovh-grid:not(.ovh-recent)');
                 grid.textContent = ''; L.home.forEach((x, i) => grid.append(homeTile(x, i)));
                 icons(); lift();
+                // Each app slides from where it was to where it now is (FLIP), so the grid moves like a phone's.
+                [...grid.children].forEach((n) => {
+                    const b = before.get(n.getAttribute('data-id')); if (!b) return;
+                    const a = n.getBoundingClientRect(); const dx = b.left - a.left, dy = b.top - a.top;
+                    if (!dx && !dy) return;
+                    n.style.transition = 'none'; n.style.transform = `translate(${dx}px, ${dy}px)`;
+                    requestAnimationFrame(() => { n.style.transition = 'transform .26s cubic-bezier(.2, .9, .3, 1)'; n.style.transform = ''; });
+                });
             };
             const end = () => {
                 window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
@@ -475,13 +521,18 @@
         // No Actor yet: one invitation, which the person can put away.
         try { if (localStorage.getItem(INVITE_KEY) === 'off') return; } catch { /* */ }
         const card = h('div', 'ovh-actor'); card.setAttribute('role', 'group'); card.setAttribute('aria-label', 'Your own AI');
-        const face = h('span', 'ovh-face'); face.append(siteIcon('actor', 28));
+        // 11-09, the owner: the line was cut off, the icon small, the buttons plain words: the whole sentence on two lines,
+        // a bigger mark, and two real buttons (beside the words on a wide menu, under them on a phone).
+        card.classList.add('is-invite');
+        const face = h('span', 'ovh-face'); face.append(siteIcon('actor', 30));
         const txt = h('span', 'ovh-actor-txt');
         txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch: finds work, posts, runs your channel.'));
+        const acts = h('span', 'ovh-acts');
         const go = h('a', 'ovh-go', 'Set it up'); go.href = `${base}/you`;
         const no = h('button', 'ovh-x', 'Not now'); no.type = 'button';
         no.addEventListener('click', () => { try { localStorage.setItem(INVITE_KEY, 'off'); } catch { /* */ } box.textContent = ''; });
-        card.append(face, txt, go, no);
+        acts.append(go, no);
+        card.append(face, txt, acts);
         box.append(card);
         if (typeof o.mountIcons === 'function') { try { o.mountIcons(box); } catch { /* */ } }
     }

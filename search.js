@@ -67,8 +67,15 @@
     // of sites"). The first is labelled with this site's own name.
     const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
     const TAB_KEY = 'ovs-tab';
-    const savedTab = () => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
-    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, v); } catch { /* private window */ } };
+    // The tab is remembered per site (11-09, the owner: on a new site the menu opened on You, "confusing"): another site
+    // opens on its own tab first; the same site opens where the person left it.
+    const savedTab = () => { try { const [v, host] = String(localStorage.getItem(TAB_KEY) || '').split('|'); if (host && host !== location.hostname) return null; return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
+    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, `${v}|${location.hostname}`); } catch { /* private window */ } };
+    // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
+    // since last time you've looked… a badge").
+    const FEED_SEEN = 'ovs-feed-seen';
+    const feedSeen = () => { try { return Number(localStorage.getItem(FEED_SEEN)) || 0; } catch { return 0; } };
+    const markFeedSeen = () => { try { localStorage.setItem(FEED_SEEN, String(Date.now())); } catch { /* */ } };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
@@ -207,6 +214,14 @@
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
 .ovs-starttabs .ovs-tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-starttabs .ovs-tab { height: 42px; gap: 8px; transition: background-color .18s, color .18s; }
+.ovs-starttabs .ovs-tab .ovs-tab-ic { position: relative; flex: none; display: grid; place-items: center; width: 22px; height: 22px; overflow: visible; }
+.ovs-tab-ic > svg { width: 20px; height: 20px; }
+.ovs-tab-ic .ov-icon { display: grid; place-items: center; }
+.ovs-tab-av { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: block; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 18%, transparent); }
+.ovs-tab[aria-selected="true"] .ovs-tab-av { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
+.ovs-tab-on { position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
+.ovs-tabnew { flex: none; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: 700 11px/18px Inter, system-ui, sans-serif; text-align: center; }
 .ovs-tabdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live-red, #ef4444); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live-red, #ef4444) 22%, transparent); }
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
@@ -406,7 +421,7 @@
         el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
-            tab = b.getAttribute('data-tab'); saveTab(tab); render(''); listEl.scrollTop = 0;
+            tab = b.getAttribute('data-tab'); saveTab(tab); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -940,21 +955,52 @@
     // The network's flagships, first in the full list (the owner, 11-07: "show our most coolest products front facing").
     const FLAGSHIPS = ['live', 'media-hub', 'codes', 'design', 'space', 'games', 'chat', 'tools'];
 
-    /** The tab strip under the search field: this site's name, Feed (a red dot while anyone is live), You. */
+    /** What is new in the Feed since it was last looked at: the network's real changes after that moment (0 on a first look). */
+    function feedNew() {
+        const seen = feedSeen();
+        if (!seen || !Array.isArray(changesData)) return 0;
+        let n = 0;
+        for (const e of changesData) { const t = Date.parse(e.deployed_at || e.committed_at || ''); if (t > seen && !HOUSEKEEPING.test(String(e.subject || ''))) n++; }
+        return n;
+    }
+    const TAB_SVG = {
+        feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"/><path d="M4 15.5h16M4 19.5h10"/></svg>',
+        you: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.2-3.3 3.9-5 7-5s5.8 1.7 7 5"/></svg>',
+    };
+    /**
+     * The tab strip under the search field (11-09, the owner: "these icons should be visually improved… your avatar…
+     * the feed content aware… each site its own icon"): this site's own mark and name, Feed with a red dot while anyone is
+     * live or a count of what is new since you last looked, and You with your picture and an online dot.
+     */
     function paintTabs() {
         tabsEl.hidden = false;
         tabsEl.setAttribute('role', 'tablist');
         tabsEl.setAttribute('aria-label', 'Menu');
         tabsEl.textContent = '';
         const live = pulseData && Number(pulseData.live_now) > 0;
+        const fresh = tab === 'feed' ? 0 : feedNew();
+        const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        let siteId = ctx.service || '';
+        try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
         for (const [id, label] of TABS) {
             const b = document.createElement('button');
             b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab'); b.setAttribute('data-tab', id);
             b.setAttribute('aria-selected', tab === id ? 'true' : 'false');
+            const ic = document.createElement('span'); ic.className = 'ovs-tab-ic';
+            if (id === 'here' && siteId) { const g = document.createElement('span'); g.className = 'ov-icon'; g.setAttribute('data-icon', siteId); g.setAttribute('data-size', '20'); g.setAttribute('data-fx', 'none'); ic.appendChild(g); }
+            else if (id === 'you' && me && me.avatar_url && /^https:\/\//.test(me.avatar_url)) {
+                const img = document.createElement('img'); img.src = me.avatar_url; img.alt = ''; img.width = 22; img.height = 22; img.decoding = 'async'; img.className = 'ovs-tab-av';
+                img.onerror = () => { ic.innerHTML = TAB_SVG.you; };
+                ic.appendChild(img);
+                const on = document.createElement('i'); on.className = 'ovs-tab-on'; on.setAttribute('aria-hidden', 'true'); ic.appendChild(on);
+            } else if (TAB_SVG[id]) ic.innerHTML = TAB_SVG[id];
+            if (ic.firstChild) b.appendChild(ic);
             const t = document.createElement('span'); t.textContent = id === 'here' ? here() : label; b.appendChild(t);
             if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); b.appendChild(d); }
+            else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); b.appendChild(n); }
             tabsEl.appendChild(b);
         }
+        if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
     }
 
     /** What every tab needs: the sites, this one, and the person's ranking of them. */
@@ -1107,6 +1153,17 @@
         return groups;
     }
 
+    /**
+     * A page they were on (11-09, the owner: "more like live data… smart and aware… better info, looks nicer"): the site's
+     * own icon, the title without the site's name glued on, when, and "Live now" for a channel that is live this minute.
+     */
+    function backRow(x) {
+        const title = String(x.title || '').replace(/\s*[·|–—-]\s*(?:OpenVibe\.\w+|open\.\w+)\s*$/i, '').replace(/^OpenVibe\.\w+:\s*/i, '').trim() || x.title;
+        const live = pulseData && Array.isArray(pulseData.live) && pulseData.live.some((c) => c && c.url && safeUrl(c.url) && hostOf(c.url) === hostOf(x.url) && String(c.url).replace(/\/$/, '').toLowerCase() === String(x.url).replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase());
+        const svc = x.service === 'media' ? 'media-hub' : x.service;
+        return { title: title.slice(0, 90), meta: [live ? 'Live now' : '', x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
+    }
+
     /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
     function youGroups() {
         const { take, ranked } = basis();
@@ -1114,8 +1171,7 @@
         if (homeLib()) {
             groups.push({ as: 'home', items: [], section: 'home' });
             const seenH = new Set();
-            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5)
-                .map((x) => ({ title: x.title, meta: [x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, icon: 'back', kind: 'history' })) : [];
+            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5).map(backRow) : [];
             groups.push({ title: 'Jump back in', items: backH, section: 'back' });
             if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
@@ -1126,8 +1182,7 @@
         const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
         groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((x) => siteItem(x)), section: 'places' });
         const seen = new Set();
-        const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5)
-            .map((h) => ({ title: h.title, meta: [h.site, ago(h.at)].filter(Boolean).join(' · '), url: h.url, icon: 'back', kind: 'history' })) : [];
+        const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5).map(backRow) : [];
         groups.push({ title: 'Jump back in', items: back, section: 'back' });
         const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
         groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
