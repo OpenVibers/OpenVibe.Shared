@@ -4,7 +4,7 @@
     'use strict';
 
     let _config = {
-        service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', billingBase: null, frameBase: null,
+        service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', frameBase: null,
         onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
         brand: null, brandName: null, brandIcon: null, compact: 'auto',
         links: null, menu: null, recent: true,
@@ -572,7 +572,7 @@
     const NAV_ICONS_REV = '1091daee9c7e';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'd3fa9e4bf5e2', 'dock.js': '7ff462f31951', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': 'fddb428eb75a', 'nav-slots.js': 'a5af310d62e0' };
+    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'd3fa9e4bf5e2', 'dock.js': '7ff462f31951', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'e06f1388b696', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': 'fddb428eb75a', 'nav-slots.js': 'a5af310d62e0', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1293,10 +1293,8 @@
             const bal = Number(both.balance ?? (both.wallet && both.wallet.balance));
             if (isFinite(bal)) chip('#openvibe-wallet', `<a href="https://openvibe.network/my#coins" title="OpenCoins">${navIcon('fa-coins')} ${bal.toLocaleString()} <small>OpenCoins</small></a>`);
         }
-        if (both && 'vibes' in both) { if (both.vibes != null) showVibes(Number(both.vibes)); return; }
-        // An older Network: Billing itself (409 until it is the ledger: no chip then).
-        await fetch(`${_config.billingBase || 'https://billing.openvibe.network'}/api/me/vibes`, { headers: auth, credentials: 'omit' })
-            .then(async (r) => { if (r.ok) showVibes(Number((await r.json()).credit)); }).catch(() => {});
+        // Vibes only from the Network: no site's CSP allows billing.openvibe.network (no direct fallback since 4.172.0).
+        if (both && both.vibes != null) showVibes(Number(both.vibes));
     }
 
     /** The network's most used sites, after the page's own links (networkLinks: false turns it off). */
@@ -2045,8 +2043,9 @@
         if (!_config.wallet) return;
         const u = _config.user;
         let chips = (_config.chips || []).filter((c) => !(c && (c.__wallet || ['coins', 'vibes', 'balance'].includes(c.id))));
-        if (u && !u.is_anon) {
-            const data = _walletFor === walletKey(u) ? _walletData : null;
+        // false: unreadable, nothing kept: no chips, never a "…" that stays.
+        const data = u && !u.is_anon && _walletFor === walletKey(u) ? _walletData : null;
+        if (u && !u.is_anon && data !== false) {
             chips = walletOrder(data).map((id) => Object.assign({}, WALLET_CHIPS.find((w) => w.id === id), {
                 __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: openWallet,
             })).concat(chips);
@@ -2054,7 +2053,7 @@
         _config.chips = chips;
     }
     async function openWallet() {
-        if (!_config.token) return;
+        if (!_config.user || _config.user.is_anon) return;
         if (!root.OpenVibeWallet) {
             if (!_walletScript) _walletScript = new Promise((resolve, reject) => {
                 const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = siblingV('ov-wallet.css'); document.head.appendChild(css);
@@ -2063,13 +2062,13 @@
             });
             try { await _walletScript; } catch { if (_walletScript === null) root.location.assign('https://openvibe.network/wallet'); return; }
         }
-        return root.OpenVibeWallet.open({ getToken: () => _config.token, frameBase: _config.frameBase || 'https://openvibe.network/api/frame',
+        return root.OpenVibeWallet.open({ getToken: () => _config.token || null, cookieSession: !_config.token, frameBase: _config.frameBase || 'https://openvibe.network/api/frame',
             onWallet: (data) => { if (!_config.user) return; _walletFor = walletKey(_config.user); _walletData = data; _walletAt = Date.now(); if (_navEl) render(); } });
     }
     function loadWalletChips() {
         const u = _config.user;
-        if (!_config.wallet || !u || u.is_anon || !_config.token || typeof fetch !== 'function') return;
-        const key = walletKey(u), token = _config.token;
+        if (!_config.wallet || !u || u.is_anon || typeof fetch !== 'function') return;
+        const key = walletKey(u), token = _config.token || null;
         if (_walletFor === key && Date.now() - _walletAt < 60000) return;
         if (_walletFor !== key) _walletData = null;
         _walletFor = key; _walletAt = Date.now();
@@ -2077,9 +2076,13 @@
             _walletWatch = true;
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
-        fetch(`${(_config.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet/api/v1/me/wallet`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' })
-            .then(async (r) => { if (!r.ok) return; const data = await r.json(); if (_config.user !== u || _config.token !== token) return;
-                _walletData = data; if (_navEl) render(); }).catch(() => {});
+        // No token (httpOnlyAccess sites): the Network cookie reads it. Unreadable with nothing kept hides the chips.
+        const same = () => _config.user === u && (_config.token || null) === token;
+        const failed = () => { if (!same() || _walletData) return; _walletData = false; if (_navEl) render(); };
+        fetch(`${(_config.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet/api/v1/me/wallet`,
+            token ? { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' } : { credentials: 'include' })
+            .then(async (r) => { if (!r.ok) return failed(); const data = await r.json(); if (!same()) return;
+                _walletData = data; if (_navEl) render(); }).catch(failed);
     }
 
     function render() {

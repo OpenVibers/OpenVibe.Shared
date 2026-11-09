@@ -49,7 +49,10 @@
         stream: 'Live', social: 'Social', chat: 'Chat', game: 'Games', economy: 'Money & deals',
         achievement: 'Achievements', service: 'Services', moderation: 'Moderation', system: 'System', admin: 'Announcements',
     };
-    const SERVICE_LABELS = { live: 'Live', tools: 'Tools', games: 'Games', media: 'Media', network: 'Network', host: 'Host', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', chat: 'Chat' };
+    const SERVICE_LABELS = {
+        live: 'Live', tools: 'Tools', games: 'Games', media: 'Media', network: 'Network', host: 'Host', deals: 'Deals', coupons: 'Coupons', trade: 'Trade', chat: 'Chat',
+        actor: 'Agents', watch: 'Watch', connect: 'Connect', link: 'Link', community: 'Community', billing: 'Wallet', blog: 'Blog', design: 'Design', ai: 'AI', events: 'Events',
+    };
 
     // Line glyphs (24×24, stroked like the open-loop mark): one per kind of notice.
     const GLYPH = {
@@ -70,7 +73,12 @@
         bellSolid: '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>',
         key: '<circle cx="8.2" cy="14.8" r="4"/><path d="M11.1 12l8.2-8.2M16.4 6.7l2.3 2.3M14.2 8.9l1.8 1.8"/>',
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
+        agent: '<rect x="5" y="8.2" width="14" height="10.8" rx="3.6"/><path d="M12 8.2V5.4M9.4 13.4h.01M14.6 13.4h.01M3 12.6v2.6M21 12.6v2.6"/><circle cx="12" cy="4.4" r="1"/>',
+        eye: '<path d="M2.8 12s3.4-6.2 9.2-6.2 9.2 6.2 9.2 6.2-3.4 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.8"/>',
+        screen: '<rect x="3.5" y="4.5" width="17" height="11.5" rx="2.2"/><path d="M9 20h6M12 16v4"/>',
     };
+    const SERVICE_GLYPH = { actor: 'agent', watch: 'eye', connect: 'screen', link: 'screen', billing: 'coin' };
+    const TYPE_GLYPH = { WELCOME: 'spark', AGENT_TASK_DONE: 'agent', AGENT_TASK_FAILED: 'agent', AGENT_NEEDS_YOU: 'agent' };
     const CATEGORY_GLYPH = { stream: 'live', social: 'people', chat: 'chat', game: 'game', economy: 'coin', achievement: 'trophy', moderation: 'shield', system: 'gear', service: 'grid', admin: 'bell' };
     const TONE = {
         live: 'var(--live-red, #e5484d)', danger: 'var(--live-red, #e5484d)', warn: 'var(--warning, #f5a524)', ok: 'var(--success, #30a46c)',
@@ -408,17 +416,54 @@
             label: 'System', url: rich.runbook_url || urlOf(n), actionLabel: 'Open status',
         };
     }
+    // JSON in a message (a watch sends a feed entry, cut short): its title and summary, never code.
+    function readableMessage(raw) {
+        const s = String(raw || '').trim();
+        if (!/^[{[]\s*"/.test(s)) return s;
+        const field = (name) => {
+            const m = new RegExp(`"${name}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)`).exec(s);
+            if (!m) return '';
+            try { return JSON.parse(`"${m[1].replace(/\\$/, '')}"`); } catch { return m[1]; }
+        };
+        const title = field('title') || field('name');
+        const summary = field('summary') || field('description');
+        return [title, summary].filter(Boolean).join(' — ').replace(/\s+/g, ' ').trim();
+    }
+    const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+    // What kind of step it is, as a label (a noun, so it never reads as a button).
+    const ASK_CHIP = { approve: 'Approval', confirm: 'Approval', answer: 'Question', choose: 'Choice', pick: 'Choice', review: 'Review', 'sign in': 'Sign-in', 'log in': 'Sign-in' };
+    // An agent's notice: the task, not its wording ("Done: x" → x; "approve: step (task)" → step + chip).
+    function agentText(n, rich) {
+        const t = String(n.type || '');
+        let msg = String(n.message || '').trim();
+        const chips = [];
+        if (t === 'AGENT_TASK_DONE') msg = rich.task_title || msg.replace(/^Done:\s*/i, '');
+        else if (t === 'AGENT_TASK_FAILED') msg = rich.task_title ? `${rich.task_title}${rich.detail ? ` — ${rich.detail}` : ''}` : msg.replace(/^Not finished:\s*/i, '');
+        else if (t === 'AGENT_NEEDS_YOU') {
+            if (rich.step) msg = String(rich.step);
+            else if (/\)$/.test(msg) && msg.lastIndexOf(' (') > 0) msg = msg.slice(0, msg.lastIndexOf(' ('));
+            const m = /^(approve|answer|confirm|choose|pick|review|sign in|log in)\s*:\s*/i.exec(msg);
+            const k = (m ? m[1] : String(rich.kind || '')).toLowerCase();
+            if (m) msg = msg.slice(m[0].length);
+            if (ASK_CHIP[k]) chips.push(ASK_CHIP[k]);
+        }
+        return { message: cap(msg.trim()), chips };
+    }
     function present(n) {
         const rich = richOf(n);
         if (isOpsAlert(n, rich)) return presentOps(n, rich);
         const cat = n.category || 'system';
         const t = String(n.type || '');
-        const glyph = /DEAL|COUPON|PRICE|TRADE/.test(t) ? 'tag' : /CONFIRM|APPROV|SECUR|SIGN/.test(t) ? 'key' : (CATEGORY_GLYPH[cat] || 'bell');
-        const tone = n.priority === 'critical' ? 'danger' : (CATEGORY_TONE[cat] || 'accent');
-        const chips = Array.isArray(rich.chips) ? rich.chips.filter(c => typeof c === 'string').slice(0, 4) : [];
+        const agent = /^AGENT_/.test(t);
+        const glyph = /DEAL|COUPON|PRICE|TRADE/.test(t) ? 'tag' : /CONFIRM|APPROV|SECUR|SIGN/.test(t) ? 'key'
+            : (TYPE_GLYPH[t] || SERVICE_GLYPH[n.service] || CATEGORY_GLYPH[cat] || 'bell');
+        const tone = n.priority === 'critical' ? 'danger'
+            : t === 'AGENT_TASK_DONE' ? 'ok' : t === 'AGENT_TASK_FAILED' ? 'warn' : (CATEGORY_TONE[cat] || 'accent');
+        const said = agent ? agentText(n, rich) : { message: readableMessage(n.message), chips: [] };
+        const chips = said.chips.concat(Array.isArray(rich.chips) ? rich.chips.filter(c => typeof c === 'string') : []).slice(0, 4);
         return {
-            kind: 'plain', key: [t, n.title || '', n.service || '', cat].join('\u0001'), tone, glyph,
-            title: String(n.title || ''), message: String(n.message || ''), chips, severity: null, command: null,
+            kind: 'plain', key: [t, n.title || '', n.service || '', cat, rich.task_id || ''].join('\u0001'), tone, glyph,
+            title: String(n.title || ''), message: said.message, chips, severity: null, command: null,
             label: SERVICE_LABELS[n.service] || (n.service && n.service !== 'network' ? n.service : '') || CATEGORY_LABELS[cat] || '',
             url: urlOf(n), actionLabel: null,
         };
