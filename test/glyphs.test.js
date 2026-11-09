@@ -31,6 +31,12 @@ for (const [name, d] of Object.entries(glyphs.SOLID)) {
     assert.ok(glyphs.inner(name).includes('<g class="ovg-s">'), `${name}: inner() carries it`);
 }
 assert.ok(Object.keys(glyphs.SOLID).length >= 100, 'the glyphs most often shown small have a solid drawing (4.73.0: the most-used shapes too; 4.80.0: the next ones)');
+assert.ok(glyphs.svg('eye', { style: 'thin' }).includes('stroke-width="1"'));
+assert.ok(glyphs.svg('eye', { style: 'light' }).includes('stroke-width="1.5"'));
+assert.ok(glyphs.svg('eye', { style: 'bold' }).includes('stroke-width="2.5"'));
+assert.ok(glyphs.svg('bell', { style: 'solid' }).includes('fill="currentColor"') && glyphs.svg('bell', { style: 'solid' }).includes('stroke="none"'));
+assert.ok(glyphs.svg('bell', { style: 'duotone' }).includes('opacity=".2"'));
+assert.throws(() => glyphs.svg('eye', { style: 'heavy' }), /unsupported style/);
 for (const n of ['globe', 'mail', 'key', 'server', 'phone', 'help', 'cart', 'store', 'terminal', 'database', 'eye-off', 'mic-off']) assert.ok(glyphs.solid(n), `${n}: one of the next most-used shapes has its solid drawing (4.80.0)`);
 for (const n of ['copy', 'scissors', 'volume', 'robot', 'film', 'gear', 'search', 'pencil', 'save', 'chart']) assert.ok(glyphs.solid(n), `${n}: one of the sites' most-used shapes has its solid drawing`);
 for (const n of ['check', 'close', 'plus', 'link', 'code', 'ban', 'stop']) assert.strictEqual(glyphs.solid(n), '', `${n}: a glyph made of lines thickens when small instead`);
@@ -54,7 +60,7 @@ const SRC = fs.readFileSync(path.join(__dirname, '..', 'ov-glyphs.js'), 'utf8');
 assert.strictEqual(SRC, builder.build(), 'ov-glyphs.js is current: run node scripts/build-glyphs.js');
 const SPRITE = fs.readFileSync(path.join(__dirname, '..', 'ov-glyphs.svg'), 'utf8');
 assert.strictEqual(SPRITE, builder.sprite(), 'ov-glyphs.svg is current: run node scripts/build-glyphs.js');
-assert.strictEqual((SPRITE.match(/<symbol id="ovg-/g) || []).length, glyphs.NAMES.length + Object.keys(glyphs.SOLID).length, 'the sprite has every glyph, and each solid one as ovg-<name>-solid');
+assert.strictEqual((SPRITE.match(/<symbol id="ovg-/g) || []).length, glyphs.NAMES.length * 5 + Object.keys(glyphs.SOLID).length * 2, 'the sprite keeps the regular alias, adds four line weights and each available solid/duotone glyph');
 assert.ok(SPRITE.includes(`<symbol id="ovg-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${glyphs.path('eye')}</symbol>`));
 
 // Font Awesome's features, kept (4.62.0): every documented class has a rule, with Font Awesome's own variables.

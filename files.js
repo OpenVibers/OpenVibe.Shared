@@ -100,6 +100,7 @@ const STYLES = Object.freeze([
 const FONTS = Object.freeze([
     'ov-brand.woff2',       // Nunito (SIL OFL 1.1, OFL-Nunito.txt), Latin, weights 700-900: the OpenVibe names (4.59.0)
     'ov-glyphs.woff2',      // the OpenVibe glyphs as a font (4.62.0; TTF and OTF for desktop apps are in glyph-fonts/)
+    'ov-glyphs-thin.woff2', 'ov-glyphs-light.woff2', 'ov-glyphs-bold.woff2', 'ov-glyphs-solid.woff2',
 ]);
 // Pictures sites serve at /shared/<file>.
 const IMAGES = Object.freeze([
