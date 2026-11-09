@@ -43,7 +43,7 @@ function load(answers) {
         const a = url === '/auth/navbar-token' ? answers.sessionToken
             : url === '/auth/me' ? answers.session
             : /\/api\/dm\/unread$/.test(url) ? answers.unread
-            : /\/api\/coins\/me(\?|$)/.test(url) ? answers.coins
+            : /\/api\/frame\/wallet\/api\/v1\/me\/wallet$|\/api\/coins\/me(\?|$)/.test(url) ? answers.coins
                 : { status: 404, body: {} };
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
     };
@@ -53,7 +53,7 @@ function load(answers) {
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const user = { id: 7, subject: 'usr_7', username: 'maya' };
 const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.network', user, token: 'tok' };
-const answers = { coins: { status: 200, body: { balance: 1200, vibes: 300 } }, unread: { status: 200, body: { unread: 3 } } };
+const answers = { coins: { status: 200, body: { balances: { coins: { amount: '1200', scale: 0, currency: 'opencoins' }, vibes: { amount: '300', scale: 0, currency: 'vibes-bits' }, balance: { amount: '0', scale: 9, currency: 'USD' } }, used_ai_this_month: false } }, unread: { status: 200, body: { unread: 3 } } };
 const asked = (calls, re) => calls.filter((u) => re.test(u));
 
 (async () => {
@@ -73,7 +73,7 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
     assert.match(bar, /data-chip-id="vibes"/, 'the Vibes chip');
     await settle();
     assert.deepStrictEqual(asked(calls, /\/api\/dm\/unread$/), ['https://openvibe.chat/api/dm/unread'], 'Chat is asked for the count');
-    assert.strictEqual(asked(calls, /\/api\/coins\/me/).length, 1, 'and the Network for the balances');
+    assert.strictEqual(asked(calls, /\/api\/frame\/wallet\/api\/v1\/me\/wallet$/).length, 1, 'and the Network (its wallet relay) for the balances');
     assert.strictEqual(badge.textContent, '3', 'the count shows on the button');
     navbar.init(base);
     await settle();
@@ -110,14 +110,14 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
     await settle();
     bar = navs[navs.length - 1].innerHTML;
     assert.doesNotMatch(bar, /openvibe-messages-btn|data-chip-id="coins"/);
-    assert.strictEqual(asked(calls, /\/api\/(dm\/unread|coins\/me)/).length, 0);
+    assert.strictEqual(asked(calls, /\/api\/(dm\/unread|coins\/me|frame\/wallet)/).length, 0);
 
     // Signed out: nothing shown, nothing asked.
     ({ navbar, navs, calls } = load(answers));
     navbar.init({ ...base, user: null, token: null });
     await settle();
     assert.doesNotMatch(navs.map((n) => n.innerHTML).join(''), /openvibe-messages-btn|data-chip-id="coins"/);
-    assert.strictEqual(asked(calls, /\/api\/(dm\/unread|coins\/me)/).length, 0);
+    assert.strictEqual(asked(calls, /\/api\/(dm\/unread|coins\/me|frame\/wallet)/).length, 0);
 
     // A site with its own Messages (Live, Chat) keeps its own count: Chat is not asked by the navbar.
     ({ navbar, navs, calls } = load(answers));

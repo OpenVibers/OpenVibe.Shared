@@ -8,12 +8,27 @@
         return b.currency === 'USD' ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(value) : value.toLocaleString();
     }
     function close() { if (active) active.close(); }
+    /**
+     * A hosted checkout is followed only to a host Billing names for the chosen provider (checkout.providers:
+     * [{ name, hosts }]) or to Billing itself. Anything else — http, a URL with a username, a foreign host — is refused.
+     */
+    function checkoutAllowed(value, providers) {
+        let url;
+        try { url = new URL(String(value)); } catch { return false; }
+        if (url.protocol !== 'https:' || url.username || url.password) return false;
+        const hosts = new Set(['billing.openvibe.network']);
+        for (const provider of providers || []) for (const host of (provider && provider.hosts) || []) {
+            if (typeof host === 'string' && host) hosts.add(host.toLowerCase());
+        }
+        return hosts.has(url.hostname.toLowerCase());
+    }
     async function open(options) {
         close();
         const token = options.getToken ? options.getToken() : options.token;
         if (!token) throw new Error('Sign in to open your wallet');
-        const billing = (options.billingBase || 'https://billing.openvibe.network').replace(/\/+$/, '');
-        const inventory = (options.inventoryBase || 'https://inventory.openvibe.network').replace(/\/+$/, '');
+        // Every site's connect-src allows openvibe.network and refuses billing./inventory.openvibe.network, so the
+        // sheet asks Network's relays (/api/frame/wallet/…); Network forwards the bearer and never a cookie.
+        const walletApi = `${(options.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet`;
         const controller = new AbortController();
         const dialog = el('dialog', 'ov-wallet');
         dialog.setAttribute('aria-labelledby', 'ov-wallet-title');
@@ -25,11 +40,14 @@
         const body = el('div', 'ov-wallet-body'), status = el('p', 'ov-wallet-status', 'Opening your wallet…');
         status.setAttribute('role', 'status'); body.append(status); dialog.append(header, body);
         const previousFocus = document.activeElement, previousOverflow = document.documentElement.style.overflow;
+        // A site's surfaces.js locks the page for any modal dialog and restores it on close; locking here as well would
+        // make its saved state "hidden". Only a page without it needs the wallet's own lock.
+        const ownLock = !root.OVSurfaces;
         let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [];
         const pending = new Map();
         const session = { close() {
             if (disposed) return; disposed = true; controller.abort(); dialog.close(); dialog.remove();
-            document.documentElement.style.overflow = previousOverflow;
+            if (ownLock) document.documentElement.style.overflow = previousOverflow;
             document.removeEventListener('openvibe-auth-changed', session.close);
             if (active === session) active = null;
             if (previousFocus && previousFocus.isConnected) previousFocus.focus();
@@ -38,9 +56,9 @@
         const identity = () => {
             if (disposed || (options.getToken && options.getToken() !== token)) { session.close(); throw new Error('Your account changed. Open Wallet again.'); }
         };
-        async function request(base, path, method = 'GET', payload, publicRead = false) {
+        async function request(path, method = 'GET', payload, publicRead = false) {
             identity();
-            const r = await fetch(base + path, { method, credentials: 'omit', signal: controller.signal,
+            const r = await fetch(walletApi + path, { method, credentials: 'omit', signal: controller.signal,
                 headers: { ...(publicRead ? {} : { Authorization: `Bearer ${token}` }), ...(payload ? { 'Content-Type': 'application/json' } : {}) },
                 ...(payload ? { body: JSON.stringify(payload) } : {}) });
             const value = await r.json(); identity();
@@ -68,25 +86,28 @@
             return p;
         }
         async function refreshWallet() {
-            data = await request(billing, '/api/v1/me/wallet');
+            data = await request('/api/v1/me/wallet');
             if (options.onWallet) options.onWallet(data);
         }
         async function refreshItems() {
             [allItems, equipped] = await Promise.all([
-                request(inventory, '/api/v1/me/items?limit=100'),
-                request(inventory, `/api/v1/people/${encodeURIComponent(data.subject.id)}/equipped`, 'GET', null, true),
+                request('/api/v1/me/items?limit=100'),
+                request(`/api/v1/people/${encodeURIComponent(data.subject.id)}/equipped`, 'GET', null, true),
             ]);
         }
         function checkout(kind) {
             const old = body.querySelector('.ov-wallet-checkout'); if (old) old.remove();
             const form = el('form', 'ov-wallet-checkout');
             form.append(el('h3', '', kind === 'vibes' ? 'Buy Vibes' : 'Top up Balance'));
-            const offers = data.checkout || {}, topup = offers.topup || {}, providers = offers.providers || [];
+            const offers = data.checkout || {}, topup = offers.topup || {};
+            // Billing names each provider and the hosts its hosted checkout may use; an older answer (plain names)
+            // still lists the provider but allows no checkout host, so the sheet fails closed rather than guess.
+            const providers = (offers.providers || []).map((p) => (typeof p === 'string' ? { name: p, hosts: [] } : p)).filter((p) => p && p.name);
             if (!providers.length || (kind === 'topup' && !topup.enabled)) {
                 form.append(el('p', '', 'Checkout is not available right now. Please try again later.')); body.prepend(form); return;
             }
             const providerLabel = el('label', '', 'Pay with'), provider = el('select');
-            for (const name of providers) { const option = el('option', '', name === 'stripe' ? 'Card' : name); option.value = name; provider.append(option); }
+            for (const p of providers) { const option = el('option', '', p.name === 'stripe' ? 'Card' : p.name); option.value = p.name; provider.append(option); }
             providerLabel.append(provider);
             const amountLabel = el('label', '', kind === 'vibes' ? 'Vibes' : 'Amount to add');
             const input = el(kind === 'vibes' ? 'input' : 'select');
@@ -110,10 +131,9 @@
                     if (!attempt) attempt = { idempotency_key: root.crypto.randomUUID(), provider: provider.value,
                         ...(kind === 'vibes' ? { vibes: Number(input.value) } : { amount_cents: Number(input.value) }) };
                     input.disabled = true; provider.disabled = true;
-                    const result = await request(billing, kind === 'vibes' ? '/api/v1/me/vibes/buy' : '/api/v1/me/wallet/topups', 'POST', attempt);
-                    const url = new URL(result.checkout_url);
-                    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Checkout is unavailable. Please try again.');
-                    root.location.assign(url.href);
+                    const result = await request(kind === 'vibes' ? '/api/v1/me/vibes/buy' : '/api/v1/me/wallet/topups', 'POST', attempt);
+                    if (!checkoutAllowed(result.checkout_url, providers)) throw new Error('Checkout is unavailable.');
+                    root.location.assign(result.checkout_url);
                 } catch (e) { message(e); submit.disabled = false; }
             });
             body.prepend(form); form.scrollIntoView({ block: 'start' }); input.focus();
@@ -142,7 +162,7 @@
                         let attempt = pending.get(item.id);
                         if (!attempt) { attempt = { currency, idempotency_key: root.crypto.randomUUID() }; pending.set(item.id, attempt); }
                         if (attempt.currency !== currency) throw new Error('Retry this item in the currency you chose first.');
-                        await request(inventory, `/api/v1/store/${encodeURIComponent(item.id)}/buy`, 'POST', attempt);
+                        await request(`/api/v1/store/${encodeURIComponent(item.id)}/buy`, 'POST', attempt);
                         await Promise.all([refreshWallet(), refreshItems()]); render();
                     }); buy.disabled = data.money_writes_frozen || !item.available; card.append(buy);
                 }
@@ -160,14 +180,14 @@
                     const worn = equipped.slots && equipped.slots[`${def.kind}:${slot}`];
                     const isWorn = worn && worn.instance_id === item.id;
                     row.append(button(isWorn ? 'Unequip' : 'Equip', async () => {
-                        equipped = await request(inventory, '/api/v1/me/equipped', 'PUT', { kind: def.kind, slot, instance_id: isWorn ? null : item.id });
+                        equipped = await request('/api/v1/me/equipped', 'PUT', { kind: def.kind, slot, instance_id: isWorn ? null : item.id });
                         document.dispatchEvent(new CustomEvent('openvibe-items-changed')); render();
                     }));
                 }
                 mine.append(row);
             }
             if (allItems && allItems.next_cursor) mine.append(button('More items', async () => {
-                const page = await request(inventory, '/api/v1/me/items?limit=100&cursor=' + encodeURIComponent(allItems.next_cursor));
+                const page = await request('/api/v1/me/items?limit=100&cursor=' + encodeURIComponent(allItems.next_cursor));
                 allItems = { ...page, instances: allItems.instances.concat(page.instances), definitions: { ...allItems.definitions, ...page.definitions } }; render();
             }));
             const recent = section('Recent activity', 'Your last five money events.');
@@ -182,17 +202,17 @@
         dialog.addEventListener('cancel', (e) => { e.preventDefault(); session.close(); });
         dialog.addEventListener('click', (e) => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) session.close(); });
         document.addEventListener('openvibe-auth-changed', session.close);
-        document.body.append(dialog); dialog.showModal(); document.documentElement.style.overflow = 'hidden'; exit.focus();
+        document.body.append(dialog); dialog.showModal(); if (ownLock) document.documentElement.style.overflow = 'hidden'; exit.focus();
         try {
             await refreshWallet();
-            const results = await Promise.allSettled([request(inventory, '/api/v1/store'), refreshItems(), request(inventory, '/api/v1/kinds', 'GET', null, true)]);
+            const results = await Promise.allSettled([request('/api/v1/store'), refreshItems(), request('/api/v1/kinds', 'GET', null, true)]);
             identity(); storeItems = results[0].status === 'fulfilled' ? results[0].value.items : [];
             kinds = results[2].status === 'fulfilled' ? results[2].value.kinds : [];
             render(); if (results.some((r) => r.status === 'rejected')) message(new Error('Your balances are ready. The store or your items could not load. Close and reopen Wallet to retry.'));
         } catch (error) { message(error); }
         return session;
     }
-    const api = { open, close, amount };
+    const api = { open, close, amount, checkoutAllowed };
     root.OpenVibeWallet = api;
     if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

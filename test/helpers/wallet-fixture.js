@@ -17,7 +17,7 @@ const wallet = {
         vibes: { label: 'Vibes', amount: '400', currency: 'vibes-bits', scale: 0, purpose: 'Support creators and buy items across OpenVibe.', action: 'Buy Vibes' },
         balance: { label: 'Balance', amount: '0', currency: 'USD', scale: 9, held: '0', purpose: 'Real money for AI and paid features.', action: 'Top up' },
     },
-    checkout: { providers: ['stripe'], vibes: { minimum: 100, maximum: 100000, price_tiers: [{ min: 100, usd_per_bit: 0.012 }] }, topup: { enabled: true, amounts_cents: [1000, 2500], fee_bps: 0 } },
+    checkout: { providers: [{ name: 'stripe', hosts: ['checkout.stripe.com'] }], vibes: { minimum: 100, maximum: 100000, price_tiers: [{ min: 100, usd_per_bit: 0.012 }] }, topup: { enabled: true, amounts_cents: [1000, 2500], fee_bps: 0 } },
     recent_activity: [
         { id: 'a', at: '2026-11-08T12:00:00Z', kind: 'coins', amount: '50', label: 'Daily quest completed', site: 'quest', detail: '' },
         { id: 'b', at: '2026-11-08T10:00:00Z', kind: 'vibes', amount: '-25', label: 'Tipped a creator', site: 'live', detail: '' },
@@ -27,7 +27,9 @@ function fixture() {
     const calls = [], owned = new Set([definitions[1].id]);
     let slots = {}, base;
     const server = http.createServer(async (req, res) => {
-        const url = new URL(req.url, 'http://localhost'), pathname = url.pathname;
+        const url = new URL(req.url, 'http://localhost');
+        // The sheet asks Network's relay (/api/frame/wallet/…); the fixture answers as Billing and Inventory would.
+        const pathname = url.pathname.startsWith('/api/frame/wallet/') ? url.pathname.slice('/api/frame/wallet'.length) : url.pathname;
         const json = (x, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(x)); };
         if (pathname.startsWith('/api/')) {
             const chunks = []; for await (const chunk of req) chunks.push(chunk);
@@ -43,7 +45,7 @@ function fixture() {
         }
         if (pathname === '/') {
             res.writeHead(200, { 'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'" });
-            return res.end(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wallet preview</title><link rel="icon" href="data:,"><style>body{margin:0;background:#111820;color:#e9edf2;font:16px system-ui;min-height:150vh}main{padding:90px 7%}h1{font-size:50px;letter-spacing:-2px}p{max-width:470px;line-height:1.6}@media(prefers-color-scheme:light){body{background:#f1f4f6;color:#25303d}}</style><script>const originalFetch=window.fetch.bind(window);window.fetch=(u,o)=>new URL(u,location.href).origin===location.origin?originalFetch(u,o):Promise.resolve(new Response(JSON.stringify({items:[],notifications:[],unread:0}),{headers:{'Content-Type':'application/json'}}));</script><script src="/navbar.js"></script><main><p>OPENVIBE LIVE</p><h1>Good company.<br>Anywhere.</h1><p>A local fixture for the shared Wallet. Balances, store items and activity below are sample data.</p></main><script>OpenVibeNavbar.init({service:'live',auth:'external',apiBase:${JSON.stringify(base)},billingBase:${JSON.stringify(base)},inventoryBase:${JSON.stringify(base)},user:{id:1,subject:${JSON.stringify(subject)},display_name:'Maya'},token:'wallet-fixture',wallet:true,search:false,presence:false,dock:false,networkBase:${JSON.stringify(base)}});</script></html>`);
+            return res.end(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wallet preview</title><link rel="icon" href="data:,"><style>body{margin:0;background:#111820;color:#e9edf2;font:16px system-ui;min-height:150vh}main{padding:90px 7%}h1{font-size:50px;letter-spacing:-2px}p{max-width:470px;line-height:1.6}@media(prefers-color-scheme:light){body{background:#f1f4f6;color:#25303d}}</style><script>const originalFetch=window.fetch.bind(window);window.fetch=(u,o)=>new URL(u,location.href).origin===location.origin?originalFetch(u,o):Promise.resolve(new Response(JSON.stringify({items:[],notifications:[],unread:0}),{headers:{'Content-Type':'application/json'}}));</script><script src="/navbar.js"></script><main><p>OPENVIBE LIVE</p><h1>Good company.<br>Anywhere.</h1><p>A local fixture for the shared Wallet. Balances, store items and activity below are sample data.</p></main><script>OpenVibeNavbar.init({service:'live',auth:'external',apiBase:${JSON.stringify(base)},frameBase:${JSON.stringify(base + '/api/frame')},user:{id:1,subject:${JSON.stringify(subject)},display_name:'Maya'},token:'wallet-fixture',wallet:true,search:false,presence:false,dock:false,networkBase:${JSON.stringify(base)}});</script></html>`);
         }
         const name = pathname.slice(1);
         if (/^[a-z0-9-]+\.(js|css|woff2)$/.test(name) && fs.existsSync(path.join(root, name))) {

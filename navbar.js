@@ -4,7 +4,7 @@
     'use strict';
 
     let _config = {
-        service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', billingBase: null,
+        service: 'network', token: null, user: null, apiBase: 'https://openvibe.network', billingBase: null, frameBase: null,
         onLogin: null, onLogout: null, loginUrl: null, sessionUrl: null, logoutUrl: null,
         brand: null, brandName: null, brandIcon: null, compact: 'auto',
         links: null, menu: null, recent: true,
@@ -2063,7 +2063,7 @@
             });
             try { await _walletScript; } catch { if (_walletScript === null) root.location.assign('https://openvibe.network/wallet'); return; }
         }
-        return root.OpenVibeWallet.open({ getToken: () => _config.token, billingBase: _config.billingBase, inventoryBase: _config.inventoryBase,
+        return root.OpenVibeWallet.open({ getToken: () => _config.token, frameBase: _config.frameBase || 'https://openvibe.network/api/frame',
             onWallet: (data) => { if (!_config.user) return; _walletFor = walletKey(_config.user); _walletData = data; _walletAt = Date.now(); if (_navEl) render(); } });
     }
     function loadWalletChips() {
@@ -2077,7 +2077,7 @@
             _walletWatch = true;
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
-        fetch(`${_config.billingBase || 'https://billing.openvibe.network'}/api/v1/me/wallet`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' })
+        fetch(`${(_config.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet/api/v1/me/wallet`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' })
             .then(async (r) => { if (!r.ok) return; const data = await r.json(); if (_config.user !== u || _config.token !== token) return;
                 _walletData = data; if (_navEl) render(); }).catch(() => {});
     }
