@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.171.0 — 2026-11-09
+
+- **The page head's icon and actions sit on the title's first line** (`kit.pageHead`): a title that wraps to three
+  lines (a home page's hero, openvibe.space) kept them floating beside its middle. The row aligns to the top and
+  both are centred on the first line (`--ovk-page-line`, in rem and vw, so a text button in the actions keeps its size).
+
 ## 4.170.0 — 2026-11-09
 
 - **The wallet, one sheet on every site** (`ov-wallet.js`, opened from the navbar's balance chips): OpenCoins, Vibes
