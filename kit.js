@@ -202,10 +202,11 @@
      * The sticky head every app page starts with: back (an icon), the title and one muted line, icon actions on the right,
      * and the page's tabs under it (kit.tabs). It stays under the navbar while the page scrolls.
      */
-    function head({ title = '', titleHtml = null, sub = '', subHtml = null, back = null, actions = [], tabs = '', level = 1, sticky = true } = {}) {
+    function head({ title = '', titleHtml = null, sub = '', subHtml = null, back = null, icon: ic = '', actions = [], tabs = '', level = 1, sticky = true } = {}) {
         const h = level === 2 ? 'h2' : 'h1';
         return `<header class="ovk-head${sticky ? '' : ' ovk-head--static'}"><div class="ovk-head-row">`
             + (back ? `<a class="ovk-icon-btn ovk-back" href="${esc(url(back.href))}" aria-label="${esc(back.label || 'Back')}" title="${esc(back.label || 'Back')}">${icon('back')}</a>` : '')
+            + (ic ? `<span class="ovk-heading-icon">${icon(ic)}</span>` : '')
             + `<div class="ovk-head-id"><${h}>${titleHtml != null ? titleHtml : esc(title)}</${h}>${subHtml != null ? `<p class="ovk-sub">${subHtml}</p>` : sub ? `<p class="ovk-sub">${esc(sub)}</p>` : ''}</div>`
             + (actions && actions.length ? `<div class="ovk-head-tools">${actions.join('')}</div>` : '')
             + `</div>${tabs || ''}</header>`;
@@ -290,10 +291,11 @@
 
     // ── Cards, sections, folds ──
     /** A card with a small heading (settings groups, a page's parts): body is markup; note: one muted line under the title. */
-    function section({ title = '', count = null, note = '', body = '', id = null, cls = '' } = {}) {
+    function section({ title = '', count = null, note = '', body = '', id = null, cls = '', icon: ic = '', actions = [] } = {}) {
         const hid = id ? `${id}-h` : null;
+        const heading = title ? `<h2${hid ? ` id="${esc(hid)}"` : ''}>${esc(title)}${count != null ? `<span class="ovk-count">${esc(count)}</span>` : ''}</h2>` : '';
         return `<section class="ovk-section${cls ? ` ${esc(cls)}` : ''}"${id ? ` id="${esc(id)}"` : ''}${hid && title ? ` aria-labelledby="${esc(hid)}"` : ''}>`
-            + (title ? `<h2${hid ? ` id="${esc(hid)}"` : ''}>${esc(title)}${count != null ? `<span class="ovk-count">${esc(count)}</span>` : ''}</h2>` : '')
+            + (ic || actions.length ? `<header class="ovk-section-head">${ic ? `<span class="ovk-heading-icon">${icon(ic)}</span>` : ''}${heading}${actions.length ? `<div class="ovk-section-actions">${actions.join('')}</div>` : ''}</header>` : heading)
             + (note ? `<p class="ovk-note">${esc(note)}</p>` : '') + body + '</section>';
     }
     /** A card that opens and closes (setup, extras, the danger zone): closed unless open; meta: a muted word after the title. */
@@ -485,11 +487,11 @@
      * size: 's' square things (memes, shoes, deals), 'm' (default) pictures 16:9, 'l' wide features. wrap: from 760 px
      * the row becomes a grid that shows every item (no arrows, no kit-web.js needed); phones still swipe. Empty → ''.
      */
-    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '', wrap = false } = {}) {
+    function rail({ id = '', title = '', more: m = null, items = [], size = 'm', label = '', wrap = false, icon: ic = '' } = {}) {
         const list = (items || []).filter(Boolean);
         if (!list.length) return '';
         const hid = id ? `${String(id).replace(/[^a-z0-9_-]/gi, '')}-h` : '';
-        const head = title || m ? `<div class="ovk-rail-head">${title ? `<h2${hid ? ` id="${hid}"` : ''}>${esc(title)}</h2>` : ''}${m && m.href ? `<a class="ovk-rail-more" href="${esc(url(m.href))}">${esc(m.label || 'See all')}${icon('chevron')}</a>` : ''}</div>` : '';
+        const head = title || m ? `<div class="ovk-rail-head">${title ? `<h2${ic ? ' class="ovk-titled"' : ''}${hid ? ` id="${hid}"` : ''}>${ic ? icon(ic, { cls: 'ovk-heading-icon' }) : ''}${esc(title)}</h2>` : ''}${m && m.href ? (ic ? button({ href: m.href, label: m.label || 'See all', icon: m.icon || 'forward', kind: 'quiet' }) : `<a class="ovk-rail-more" href="${esc(url(m.href))}">${esc(m.label || 'See all')}${icon('chevron')}</a>`) : ''}</div>` : '';
         const named = hid && title ? ` aria-labelledby="${hid}"` : ` aria-label="${esc(label || title || 'More')}"`;
         return `<section class="ovk-rail ovk-rail--${size === 's' || size === 'l' ? size : 'm'}${wrap ? ' ovk-rail--wrap' : ''}"${id ? ` id="${esc(id)}"` : ''}${named}>${head}`
             + `<div class="ovk-rail-wrap"><ul class="ovk-rail-track" role="list">${list.map((x) => `<li>${x}</li>`).join('')}</ul>`

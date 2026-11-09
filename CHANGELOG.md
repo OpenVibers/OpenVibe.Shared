@@ -13,6 +13,10 @@
 
 ## Unreleased
 
+- `kit.head` accepts an icon tile; `kit.section` accepts an icon and an action row that wraps on phones.
+  Rails accept an icon and use a labelled button for their action. Existing section markup is preserved when neither option is supplied. Empty-state actions already use primary
+  icon buttons. `tools/plain-sections-sweep.js` audits public pages for plain UI headings, empty lines and action links.
+
 - **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
   the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
   places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
