@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.170.0 — 2026-11-09
+
+- **The wallet, one sheet on every site** (`ov-wallet.js`, opened from the navbar's balance chips): OpenCoins, Vibes
+  and Balance with how to earn, buy or top up; the store (items travel with the account, priced in Vibes or
+  OpenCoins); your items with Equip and Unequip.
+- **Through Network**: every call goes to `https://openvibe.network/api/frame/wallet/…` (Network #718, nine fixed
+  Billing and Inventory paths, the person's token only). Every site's CSP refuses billing. and inventory. hosts.
+- **Checkout only on a named host**: the sheet follows a checkout URL only when it is https, carries no credentials,
+  and its host is one Billing names for its providers (Billing #228) or billing.openvibe.network. Anything else is
+  "Checkout is unavailable."
+- Each purchase carries its own idempotency key and keeps it across a retry, so a double tap never charges twice.
+- Designed here: no eyebrow, makers by name ("By Live"), the close ring for the keyboard only, 44 px controls,
+  phone sheet from the bottom.
+
 ## 4.169.0 — 2026-11-09
 
 - **kit.switchRow, redrawn** (ask 44, the paste form: "polish and align it: switches, sizes"): an icon tile, a title and
