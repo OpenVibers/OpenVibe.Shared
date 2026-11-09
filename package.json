@@ -60,6 +60,7 @@
     "./notifications": "./notifications.js",
     "./openvibe-sw": "./openvibe-sw.js",
     "./ov-icons": "./ov-icons.js",
+    "./ov-home": "./ov-home.js",
     "./ov-glyphs": "./ov-glyphs.js",
     "./ov-forms": "./ov-forms.js",
     "./ov-qr": "./ov-qr.js",

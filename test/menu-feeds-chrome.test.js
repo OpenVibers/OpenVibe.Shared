@@ -68,18 +68,24 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         assert.deepStrictEqual(await p.evaluate(SHOWN), [], 'the feeds are the Feed tab\'s, not this site\'s');
         await p.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click(), true`);
         await wait(150);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds'], 'by default, the Network\'s first two');
+        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds', 'Top stories', 'Today'], 'by default, every feed (owner, 11-09)');
         // 4.139.0: a row with a picture has no site icon beside it; in its group a row without one carries the icon in a
         // picture-sized tile, so the titles line up. A group with no pictures keeps plain icons.
         const looks = await p.evaluate(`[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="net:"]')].map((g) => [...document.querySelectorAll('.ovs-list li.ovs-item')].filter((li) => li.getAttribute('data-sec') === g.getAttribute('data-sec')).map((li) => { const a = li.firstElementChild; const first = a && a.firstElementChild; return first ? (first.tagName === 'IMG' ? 'img' : first.classList.contains('ovs-thumb--ico') ? 'tile' : first.classList.contains('ovs-ic') ? 'icon' : first.className) : '?'; }))`);
-        assert.deepStrictEqual(looks, [['img', 'img', 'tile'], ['icon', 'icon']], 'pictures replace icons; titles line up');
+        assert.deepStrictEqual(looks.slice(0, 2), [['img', 'img', 'tile'], ['icon', 'icon']], 'pictures replace icons; titles line up');
         const fold = await p.evaluate(`(document.querySelector('[data-ovs-fold="feeds"]') || {}).textContent`);
-        assert.strictEqual(fold, 'Choose your feeds (2 of 4)', 'every card with entries can be chosen; the empty one is not offered');
+        assert.strictEqual(fold, 'Choose your feeds (4 of 4)', 'every card with entries can be chosen; the empty one is not offered');
 
         await p.evaluate(`document.querySelector('[data-ovs-fold="feeds"]').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs-feeds')`), 'the chooser opens in the menu');
         assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-feed b')].map((b) => b.textContent)`), ['Trending', 'New worlds', 'Top stories', 'Today']);
-        assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('[data-ovs-feed]')].map((x) => x.checked)`), [true, true, false, false]);
+        assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('[data-ovs-feed]')].map((x) => x.checked)`), [true, true, true, true]);
+        // Turn two off: the rest show.
+        await p.evaluate(`document.querySelector('[data-ovs-feed="news:top"]').click(), true`);
+        await wait(80);
+        await p.evaluate(`document.querySelector('[data-ovs-feed="today:today"]').click(), true`);
+        await wait(100);
+        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds'], 'a feed turned off goes');
 
         // Tick Today: it shows, after the two.
         await p.evaluate(`document.querySelector('[data-ovs-feed="today:today"]').click(), true`);
@@ -125,7 +131,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         assert.ok(await until(q, `window.__puts.length > 0`, 4000), 'the change is saved to Network');
         assert.deepStrictEqual(await q.evaluate(`window.__puts[window.__puts.length - 1]`), { on: ['news:top', 'today:today', 'games:new-worlds'] });
         await q.close();
-        console.log('menu-feeds-chrome: two by default, every card choosable, tick, reorder, four at most, kept on this device and on Network for a signed-in person');
+        console.log('menu-feeds-chrome: every feed by default, every card choosable, tick, reorder, four at most, kept on this device and on Network for a signed-in person');
     } finally {
         await browser.close();
         server.close();

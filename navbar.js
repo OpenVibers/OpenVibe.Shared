@@ -539,7 +539,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'ad94f524fa45', 'dock.js': '4dacf614797b', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': 'b113a2fd8e93', 'dock.js': '4dacf614797b', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '267bf753169d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2208,7 +2208,7 @@
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
             root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab,
-                frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon,
+                frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });

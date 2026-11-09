@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
+  the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
+  places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
+  its own icon) and Build as folders. A long-press (or Edit) starts arranging: drag an app to move it, arrow keys move
+  the focused one, − takes it off Home, All apps (N) lists every app and puts one back with +. The arrangement is kept
+  on the device and on Network (`GET/PUT /api/v1/me/home-screen`, once Network serves it). Recent searches are gone
+  from You (the field shows them).
+- **The Feed tab is a wall.** What's new with you (the composer, when Community says you can post), today's numbers
+  (people, streams, posts, new videos, with 14-day lines), the live bar, then the network's pulse: newest first,
+  back-to-back "went live" in one row of names, Show more. Every feed card shows until you turn some off (was the
+  first two); What's new names each site, what changed in plain words, when, "New" since your visit and "Big update",
+  and counts today's changes.
+- **The first tab is the site's name, never a page's word for itself** ("Home", "Welcome").
+
 ## 4.158.0 — 2026-11-09
 
 - **The menu's Home.** A site whose links never name its home (Exchange: Models, Chat, Arena…) now gets Home first in
