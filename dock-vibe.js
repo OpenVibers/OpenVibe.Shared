@@ -13,11 +13,16 @@
     const CSS = `
             .ovdk-vibe-h .ovdk-i { color: var(--accent, #3b82f6); margin-left: 6px; }
             .ovdk-vibe-list { list-style: none; padding: 6px; margin: 0; display: grid; gap: 3px; }
-            .ovdk-vibe-list button { width: 100%; min-height: 58px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 3px 10px; align-items: center; padding: 9px 12px; border: 0; border-radius: 12px; background: transparent; color: var(--text-primary,#ececf1); text-align: left; cursor: pointer; font: inherit; }
+            .ovdk-vibe-list button { width: 100%; min-height: 60px; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; grid-template-rows: auto auto; gap: 2px 12px; align-items: center; padding: 9px 10px; border: 0; border-radius: 14px; background: transparent; color: var(--text-primary,#ececf1); text-align: left; cursor: pointer; font: inherit; }
+            .ovdk-vibe-list .ovdk-vibe-site { grid-row: 1 / 3; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-vibe-list .ovdk-vibe-site svg { width: 19px; height: 19px; }
+            .ovdk-vibe-list b { font-size: 14px; } .ovdk-vibe-list span { font-size: 12.5px; color: var(--text-secondary, #b6b6c0); }
+            .ovdk-vibe-list small { justify-self: end; }
             .ovdk-vibe-list button:hover, .ovdk-vibe-list button:focus-visible { background: var(--hover-bg,rgba(127,127,127,.12)); }
             .ovdk-vibe-list b, .ovdk-vibe-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .ovdk-vibe-list small, .ovdk-vibe-list time { color: var(--text-muted,#8b8b96); font-size: 12px; }
-            .ovdk-vibe-list .ovdk-vibe-new { min-height: 48px; color: var(--accent,#3b82f6); font-weight: 750; }
+            .ovdk-vibe-list .ovdk-vibe-new { display: flex; gap: 8px; justify-content: center; min-height: 44px; margin: 2px 0 6px; border-radius: 999px; color: var(--on-accent, #fff); background: var(--accent, #3b82f6); font-weight: 750; font-size: 14px; }
+            .ovdk-vibe-list .ovdk-vibe-new:hover, .ovdk-vibe-list .ovdk-vibe-new:focus-visible { background: var(--accent-strong, var(--accent, #2563eb)); }
             .ovdk-vibe-back { min-width: 44px; min-height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: inherit; cursor: pointer; }
             .ovdk-away { margin-left: auto; font-size: 12.5px; font-weight: 650; color: var(--accent, #3b82f6); text-decoration: none; white-space: nowrap; }
             .ovdk-away:hover { text-decoration: underline; }
@@ -131,7 +136,7 @@
         const head = h('div', 'ovdk-thread-h ovdk-vibe-h'); head.append(icon(G.vibe), h('b', '', 'Vibe conversations'));
         const away = h('a', 'ovdk-away', 'Open in Chat'); away.href = 'https://openvibe.chat/vibe'; away.target = '_blank'; away.rel = 'noopener'; head.append(away);
         const scroll = h('div', 'ovdk-scroll'); const list = h('ul', 'ovdk-vibe-list');
-        const newer = h('button', 'ovdk-vibe-new', '＋ New conversation'); newer.type = 'button'; newer.addEventListener('click', () => { vibe.fresh = true; vibe.chat = null; ctx.save({ vibe: null }); openVibe(); });
+        const newer = h('button', 'ovdk-vibe-new', 'New conversation'); newer.type = 'button'; newer.addEventListener('click', () => { vibe.fresh = true; vibe.chat = null; ctx.save({ vibe: null }); openVibe(); });
         const first = h('li'); first.append(newer); list.append(first); scroll.append(list); panel.append(head, scroll);
         try {
             const out = await ctx.chatCall('/api/vibe/conversations');
@@ -141,8 +146,13 @@
             conversations.forEach((c) => {
                 const li = h('li'), b = h('button'); b.type = 'button';
                 const title = h('b', '', c.name || 'Conversation'); const time = h('time', '', age(c.last_message_at));
-                const line = h('span', '', c.last_line || 'No messages yet'); const site = h('small', '', c.site || '');
-                b.append(title, time, line, site);
+                const line = h('span', '', c.last_line || 'No messages yet');
+                // The site it began on, by name ("Blog", not openvibe.blog), beside the time.
+                const host = String(c.site || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+                const name = host ? (/^openvibe\.([a-z]+)$/.exec(host) || [])[1] : '';
+                const site = h('small', '', name ? name.charAt(0).toUpperCase() + name.slice(1) : host);
+                const mark = h('span', 'ovdk-vibe-site'); mark.append(icon(G.vibe));
+                b.append(mark, title, time, line, site);
                 b.setAttribute('aria-label', `${c.name || 'Conversation'}, ${age(c.last_message_at)}`);
                 b.addEventListener('click', () => { vibe.fresh = false; vibe.chat = { slug: c.slug }; ctx.save({ vibe: { slug: c.slug, at: new Date().toISOString() } }); openVibe(); });
                 li.append(b); list.append(li);

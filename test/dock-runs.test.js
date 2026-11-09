@@ -34,10 +34,10 @@ for (const [skill, glyph] of [['post', 'fa-pen'], ['wiki', 'fa-book'], ['image',
 assert.ok(/--run-color/.test(runs), 'the icon is in the skill\'s own colour');
 
 // ── one status line per state ───────────────────────────────────────────────
-assert.ok(runs.includes('Running: '), 'a running run says what it is doing');
-assert.ok(runs.includes('Waiting: '), 'a waiting run says what it needs');
-assert.ok(runs.includes('Scheduled: '), 'a scheduled run says when');
-assert.ok(runs.includes('Failed: '), 'a failed run says why');
+assert.ok(runs.includes("st = 'Running'"), 'a running run says what it is doing');
+assert.ok(runs.includes("st = 'Waiting'"), 'a waiting run says what it needs');
+assert.ok(runs.includes("st = 'Scheduled'"), 'a scheduled run says when');
+assert.ok(runs.includes("st = 'Failed'"), 'a failed run says why');
 assert.ok(runs.includes('cost_usd'), 'a finished run says what it cost');
 assert.ok(runs.includes('duration_ms'), 'a finished run says how long it took');
 assert.ok(runs.includes('it.model'), 'a finished run names the model');
@@ -53,7 +53,7 @@ assert.ok(!runs.includes('it.error_detail'), 'the raw provider text never reache
 assert.ok(!/innerHTML\s*=\s*[^;]*error/.test(runs), 'no error is written as markup');
 
 // ── the row's actions ───────────────────────────────────────────────────────
-assert.ok(runs.includes("'Open'"), 'a row can be opened');
+assert.ok(runs.includes("h('a', 'ovdk-run-title')"), 'a row opens from its title');
 assert.ok(runs.includes("'Retry'"), 'a failed run can be retried');
 assert.ok(runs.includes("'Stop'"), 'a running run can be stopped');
 assert.ok(runs.includes('Run again with another model'), 'a run can be made again with another model');
@@ -66,7 +66,7 @@ assert.ok(runs.includes('`×${group.length}'), 'a group says how many it holds')
 assert.ok(runs.includes('ovdk-run-repeat'), 'a group expands');
 
 // ── the overview, instead of an empty middle ────────────────────────────────
-assert.ok(runs.includes('Next scheduled'), 'the overview says what runs next');
+assert.ok(runs.includes("h('small', '', 'Next')") && runs.includes('Nothing scheduled'), 'the overview says what runs next');
 assert.ok(runs.includes('ovdk-tile'), 'the numbers are small tiles');
 assert.ok(runs.includes('Today'), "the overview says today's numbers");
 assert.ok(runs.includes('This week'), 'and this week\'s');

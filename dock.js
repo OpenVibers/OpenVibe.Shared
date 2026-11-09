@@ -106,7 +106,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '91f5eeb6e25d', 'dock-runs.js': 'd16044fb2a5d', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '3dc4a69f0678', 'dock-runs.js': '5f07abab4aed', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -249,8 +249,10 @@
             .ovdk-av { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; font-weight: 800; font-size: 15px;
                 color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
             .ovdk-av img { width: 100%; height: 100%; object-fit: cover; }
+            .ovdk-av-vibe { color: #fff; background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent, #3b82f6) 70%, #a78bfa), var(--accent-strong, var(--accent, #2563eb))); }
+            .ovdk-av-vibe svg { width: 22px; height: 22px; }
             .ovdk-av-group { display: flex; align-items: center; overflow: visible; background: transparent; }
-            .ovdk-av-group .ovdk-av { width: 27px; height: 27px; margin-left: -12px; border: 2px solid var(--surface, #19191f); font-size: 11px; }
+            .ovdk-av-group .ovdk-av { width: 27px; height: 27px; margin-left: -12px; border: 2px solid var(--bg-elevated, var(--bg-secondary, #1d1f27)); font-size: 11px; }
             .ovdk-av-group .ovdk-av:first-child { margin-left: 0; }
             .ovdk-chat-b { display: grid; gap: 1px; min-width: 0; }
             .ovdk-chat-b b { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -656,8 +658,10 @@
                 if (c.kind === 'vibe') {
                     const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
                     const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'AI chats'), h('span', 'ovdk-chat-p', `${c.count} conversation${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
-                    const meta = h('span', 'ovdk-chat-m'); meta.append(h('time', '', c.latest && c.latest.last_answer_at ? answered(c.latest.last_answer_at) : when(c.last_message_at)));
-                    b.append(icon(G.vibe), body, meta); b.setAttribute('aria-label', `AI chats, ${c.count} conversations`);
+                    const meta = h('span', 'ovdk-chat-m'); const at = c.latest && c.latest.last_answer_at;
+                    const t = h('time', '', when(at || c.last_message_at)); if (at) t.title = answered(at); meta.append(t);
+                    const av = h('span', 'ovdk-av ovdk-av-vibe'); av.append(icon(G.vibe));
+                    b.append(av, body, meta); b.setAttribute('aria-label', `AI chats, ${c.count} conversations${at ? `, ${answered(at)}` : ''}`);
                     b.addEventListener('click', () => { vibeOnList = true; save({ vibe: null }); setTab('vibe', true); });
                     li.append(b); ul.append(li); return;
                 }
