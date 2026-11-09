@@ -67,6 +67,8 @@ const SITE_NAME_RE = /^(?:OpenVibe\.[A-Za-z]+|OpenRestream|[A-Za-z]+\.OpenVibe\.
 // "OpenVibe.Food · What should we eat?": the name repeats the navbar's, so the eyebrow keeps only what follows it
 // (4.26.1; the owner, 2026-10-28: "why is [the name] twice… in the navbar and then right after it").
 const SITE_NAME_LEAD_RE = /^(?:OpenVibe\.[A-Za-z]+|OpenRestream|[A-Za-z]+\.OpenVibe\.[A-Za-z]+)\s*[·•|—–:-]\s*/;
+// 4.159.0: the hero shows no eyebrow at all (the owner, 11-09, on the pill above every home's headline: "looks really
+// cheesy… lame… every site has this generic look"). The headline and its lede say what the site is; `eyebrow` is ignored.
 function eyebrowHTML(eyebrow) {
     const e = eyebrow && typeof eyebrow === 'object' ? eyebrow : { text: eyebrow };
     let text = String(e.text || '').trim();
@@ -111,7 +113,7 @@ function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html, 
     // the aura. visual: false keeps it plain.
     const vis = !aside && html == null && visual !== false;
     const hasOrbit = vis && orbit && (has(orbit.inner) || has(orbit.outer));
-    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main">${eyebrowHTML(eyebrow)}<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
+    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main"><h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
 }
 
 /** A grid of what the product does; each card may link to where it starts. */

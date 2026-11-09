@@ -23,6 +23,9 @@
   on every page" (a switch that says what off means) and Open in a window of its own. More and the timer close on a tap
   anywhere else, in the Dock or on the page, and on Escape. The Chats tab is **Messages**.
 
+- **No pill above the headline.** `sc.hero()` no longer draws an eyebrow (the owner, 11-09: the pill above every home's
+  headline "looks really cheesy… generic"); the headline and its lede say what the site is. `eyebrow` is ignored.
+
 ## 4.158.0 — 2026-11-09
 
 - **The menu's Home.** A site whose links never name its home (Exchange: Models, Chat, Arena…) now gets Home first in

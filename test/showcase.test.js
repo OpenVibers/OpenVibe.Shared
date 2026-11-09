@@ -134,12 +134,13 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
 }
 
 // The hero on a phone (4.23.0; the owner on openvibe.quest: "why is openvibe.quest twice… empty space at the top"): an
+// 4.159.0 (owner, 11-09: the pill above every headline "looks really cheesy"): the hero never shows an eyebrow.
+['OpenVibe.Quest', 'Free, nothing to install', { icon: 'fa-star', text: 'New' }, 'OpenVibe.Food · What should we eat?'].forEach((e) => {
+    assert.ok(!sc.hero({ eyebrow: e, title: 'T' }).includes('sc-eyebrow'), `no eyebrow for ${JSON.stringify(e)}`);
+});
 // eyebrow that is only the site's name is left out (the navbar shows it), any other eyebrow stays, with an icon when
 // given; numbers take an icon; phones start the hero near the bar, put the buttons side by side and the numbers three across.
 {
-    ['OpenVibe.Quest', 'OpenRestream', 'Play.OpenVibe.Network'].forEach((name) => assert.ok(!sc.hero({ eyebrow: name, title: 'T' }).includes('sc-eyebrow'), `${name}: no eyebrow under the navbar's own brand`));
-    assert.ok(/<p class="sc-eyebrow">Free, nothing to install<\/p>/.test(sc.hero({ eyebrow: 'Free, nothing to install', title: 'T' })), 'an eyebrow that says something stays');
-    assert.ok(/<p class="sc-eyebrow"><(i|span)[^>]*>.*<\/(i|span)>New<\/p>/.test(sc.hero({ eyebrow: { icon: 'fa-star', text: 'New' }, title: 'T' })), 'an eyebrow can carry an icon');
     assert.ok(/<dd><span class="sc-stat-ic">.*<\/span>39<\/dd>/.test(sc.stats({ items: [{ value: 39, label: 'quests', icon: 'fa-star' }] })), 'a number can carry an icon');
     const phone = sc.CSS.slice(sc.CSS.indexOf('@media (max-width:640px){'));
     assert.ok(/\.sc-hero\{padding-top:14px\}/.test(phone) && /\.sc-actions\{display:grid;grid-template-columns:repeat\(auto-fit,minmax\(0,1fr\)\)/.test(phone) && /\.sc-stats\{grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/.test(phone), 'phones: near the bar, buttons side by side, numbers three across');
@@ -163,14 +164,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(/@media \(prefers-reduced-motion:reduce\)\{\.sc-ring,\.sc-aura-glow,\.sc-orb-ring,\.sc-orb-face\{animation:none\}\}/.test(sc.CSS), 'still under reduced motion');
 }
 
-// The site's name leading an eyebrow is left out, the rest kept (4.26.1): 14 homes said "OpenVibe.X · …" under a navbar
-// that already says it.
-{
-    assert.ok(/<p class="sc-eyebrow">What should we eat\?<\/p>/.test(sc.hero({ eyebrow: 'OpenVibe.Food · What should we eat?', title: 'T' })), 'the name leaves, the phrase stays');
-    assert.ok(/<p class="sc-eyebrow">Open restreaming<\/p>/.test(sc.hero({ eyebrow: 'OpenRestream · open restreaming', title: 'T' })), 'and starts with a capital');
-    assert.ok(/<p class="sc-eyebrow">Alpha<\/p>/.test(sc.hero({ eyebrow: 'OpenVibe.Bot · alpha', title: 'T' })));
-    assert.ok(/<p class="sc-eyebrow">Free for OpenVibe\.Live streamers<\/p>/.test(sc.hero({ eyebrow: 'Free for OpenVibe.Live streamers', title: 'T' })), 'a name later in the phrase stays');
-}
+// (4.26.1 kept the eyebrow without the site name; 4.159.0 drops the eyebrow from the hero altogether, tested above.)
 
 // ── apps(): the launcher ──
 {
