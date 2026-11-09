@@ -30,6 +30,10 @@
   The AI chats row has a Vibe avatar like every other row; group faces are ringed in the panel's own colour.
 - The one-tap skills are read through Network (`/api/v1/me/actions/skills`): every site's CSP refuses openvibe.actor.
 - The extension's read-only Dock offers no approve, decline, stop or retry.
+- **Early hints: the Link header only, by default** (`openvibe-shared/sw` `earlyHints`). nginx 1.28, the host's, takes an
+  upstream 103 as the final response and sends the real 200 as its body (tried 11-09 against nginx:1.28-alpine). The 103
+  goes out only with `{ send103: true }` or `OV_EARLY_HINTS=1`, for a proxy that passes it on (nginx 1.29+ with
+  `early_hints`). Cloudflare's Early Hints read the Link header.
 - **The Feed's composer takes pictures** (the owner, 11-09: "you can make posts and put images"). Up to four, each
   with a line saying what it shows (Community requires the alt text; Post stays off until each has one). Big phone
   photos are scaled to 2560 px before they go. Each picture uploads through Network (`POST /api/frame/attachments`,
