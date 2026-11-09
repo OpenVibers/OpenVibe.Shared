@@ -1,0 +1,10 @@
+'use strict';
+const assert = require('assert');
+const card = require('../user-card');
+const menu = card.OpenVibeUserMenu;
+assert.ok(menu && typeof menu.register === 'function');
+const release = menu.register({ id: 'chat-message', label: 'Message', icon: '✉', onSelect() {} });
+assert.strictEqual(typeof release, 'function');
+assert.throws(() => menu.register({ id: '../unsafe', label: '<img>', onSelect() {} }), TypeError);
+release();
+console.log('user menu: site actions register and validate safely');

@@ -106,7 +106,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '40a5f8e3970b', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '3dc4a69f0678', 'dock-runs.js': '8df917372f19', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -222,7 +222,7 @@
             .ovdk-none { padding: 40px 24px; text-align: center; color: var(--text-muted, #8b8b96); font-size: 13.5px; line-height: 1.45; }
             .ovdk-size { position: absolute; z-index: 2; width: 22px; height: 22px; top: 0; left: 0; cursor: nwse-resize; touch-action: none; }
             .ovdk-size::after { content: ''; position: absolute; top: 9px; left: 9px; width: 7px; height: 7px; border-top: 2px solid var(--text-muted, #8b8b96); border-left: 2px solid var(--text-muted, #8b8b96); border-top-left-radius: 3px; opacity: 0; transition: opacity .15s; }
-            .ovdk:hover .ovdk-size::after, .ovdk-size:active::after { opacity: .75; }
+            .ovdk .ovdk-size::after { opacity: .75; }
             .ovdk[data-corner="bottom-left"] .ovdk-size { left: auto; right: 0; cursor: nesw-resize; }
             .ovdk[data-corner="bottom-left"] .ovdk-size::after { left: auto; right: 9px; border-left: 0; border-right: 2px solid var(--text-muted, #8b8b96); border-top-left-radius: 0; border-top-right-radius: 3px; }
             .ovdk[data-corner="top-right"] .ovdk-size { top: auto; bottom: 0; cursor: nesw-resize; }
@@ -249,6 +249,11 @@
             .ovdk-av { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden; font-weight: 800; font-size: 15px;
                 color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
             .ovdk-av img { width: 100%; height: 100%; object-fit: cover; }
+            .ovdk-av-vibe { color: #fff; background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent, #3b82f6) 70%, #a78bfa), var(--accent-strong, var(--accent, #2563eb))); }
+            .ovdk-av-vibe svg { width: 22px; height: 22px; }
+            .ovdk-av-group { display: flex; align-items: center; overflow: visible; background: transparent; }
+            .ovdk-av-group .ovdk-av { width: 27px; height: 27px; margin-left: -12px; border: 2px solid var(--bg-elevated, var(--bg-secondary, #1d1f27)); font-size: 11px; }
+            .ovdk-av-group .ovdk-av:first-child { margin-left: 0; }
             .ovdk-chat-b { display: grid; gap: 1px; min-width: 0; }
             .ovdk-chat-b b { font-size: 14px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             .ovdk-chat-p { font-size: 12.5px; color: var(--text-secondary, #b6b6c0); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -272,7 +277,7 @@
                 border: 1px solid var(--border-light, var(--border, rgba(255,255,255,.14))); background: var(--bg-primary, #12141b); }
             .ovdk-send:focus-within { border-color: var(--accent, #3b82f6); }
             .ovdk-send textarea { flex: 1; min-width: 0; box-sizing: border-box; min-height: 36px; max-height: 140px; padding: 8px 0; resize: none; border: 0; outline: none; background: transparent; color: var(--text-primary, #ececf1); font: inherit; font-size: 14px; line-height: 1.4; }
-            .ovdk-go { width: 40px; height: 40px; flex: none; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center;
+            .ovdk-go { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center;
                 color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }
             .ovdk-go:disabled { opacity: .55; cursor: default; }
             .ovdk-err { margin: 0 14px; font-size: 12.5px; color: color-mix(in srgb, var(--live-red, #e5484d) 60%, var(--text-primary, #ececf1)); }
@@ -525,7 +530,7 @@
             panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
             const ok = await load('dock-vibe.js', () => !!(root.OpenVibeDockVibe && root.OpenVibeDockVibe.mount));
             if (!ok) { panel.innerHTML = '<div class="ovdk-none">Vibe did not load. Check your connection, then open it again.</div>'; return; }
-            vibe.api = root.OpenVibeDockVibe.mount(panel, { chatCall, active: () => isOpen() && tab === 'vibe', styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'), icons: { vibe: G.vibe, send: G.send, clock: G.clock, bell: G.bell }, refresh: () => read() });
+            vibe.api = root.OpenVibeDockVibe.mount(panel, { chatCall, active: () => isOpen() && tab === 'vibe', state, save, wantList: () => { const v = vibeOnList; vibeOnList = false; return v; }, styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'), icons: { vibe: G.vibe, send: G.send, clock: G.clock, bell: G.bell }, refresh: () => read() });
             return;
         }
         if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; if (chats.draft) return chatList(); return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
@@ -534,10 +539,10 @@
         mounts[id] = { refresh: null };
         panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
         if (id === 'agent') {
-            const ok = await load('action-center.js', () => !!(root.OpenVibeActionCenter && root.OpenVibeActionCenter.mount));
+            const ok = await load('dock-runs.js', () => !!(root.OpenVibeDockRuns && root.OpenVibeDockRuns.mount));
             if (!ok) return failed(panel, id);
             // K-D3: the person's own agent stream above the list; it hides itself when there is none.
-            panel.innerHTML = `<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            panel.innerHTML = '<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-runs-foot ovdk-foot"></div>';
             // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
             // phone Now and Needs you are on screen before anything else.
             load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
@@ -550,16 +555,13 @@
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
                 if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
             });
-            const m = root.OpenVibeActionCenter.mount(panel.querySelector('.ovdk-scroll'), {
-                token: o.token, apiBase: o.apiBase, scopes: o.scopes, buckets: ['waiting', 'running'],
+            const m = root.OpenVibeDockRuns.mount(panel.querySelector('.ovdk-scroll'), {
+                call, state, save, scopes: o.scopes, active: () => isOpen() && tab === 'agent', actorBase: actorBase(), loadMarks: () => load('ai-marks-client.js', () => !!root.OpenVibeAIMarks),
+                styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'),
+                foot: panel.querySelector('.ovdk-runs-foot'),
                 onCounts: (c) => { doc = { ...(doc || {}), state: state(), counts: { ...counts(), running: c.running || 0, waiting: c.waiting || 0 } }; badges(); notify(); },
             });
             mounts[id] = m;
-            panel.querySelector('[data-act="all"]').addEventListener('click', (e) => {
-                const anchor = e.currentTarget;
-                close();
-                try { root.OpenVibeActionCenter.open({ token: o.token, apiBase: o.apiBase, scopes: o.scopes, anchor: (pill && !pill.hidden) ? pill : anchor }); } catch { /* */ }
-            });
             return;
         }
         const ok = await load('notification-ui.js', () => !!(root.OpenVibeNotifications && root.OpenVibeNotifications.renderDock));
@@ -579,7 +581,7 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null };
+    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
@@ -592,7 +594,7 @@
         const { type: _type, ...rest } = init;
         return fetch(chatBase() + path, { ...rest, headers, credentials: 'omit' }).then(async (r) => {
             const b = await r.json().catch(() => ({}));
-            if (!r.ok) { const e = new Error(b.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
+            if (!r.ok) { const e = new Error(b.error || `HTTP ${r.status}`); e.status = r.status; e.code = b.code || null; throw e; }
             return b;
         });
     }
@@ -606,12 +608,21 @@
         const m = Math.max(0, Math.round((Date.now() - t) / 60000));
         return m < 1 ? 'now' : m < 60 ? `${m} min` : m < 1440 ? `${Math.floor(m / 60)} h` : `${Math.floor(m / 1440)} d`;
     };
+    // "answered 4 min ago", and "answered just now" when it was this minute.
+    const answered = (iso) => { const w = when(iso); return !w ? '' : w === 'now' ? 'answered just now' : `answered ${w} ago`; };
     function avatar(p, group) {
         const a = h('span', 'ovdk-av');
         const url = p && /^https:\/\//.test(String(p.avatar_url || '')) ? p.avatar_url : '';
         if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; a.append(img); }
         else a.textContent = group ? '#' : String((p && (p.display_name || p.username)) || '?').trim().charAt(0).toUpperCase() || '?';
         return a;
+    }
+    function groupAvatar(c) {
+        const people = others(c).slice(0, 3);
+        if (!people.length) return avatar({}, false);
+        const stack = h('span', 'ovdk-av ovdk-av-group');
+        people.forEach((p) => stack.append(avatar(p, false)));
+        return stack;
     }
     const others = (c) => (c.participants || []).filter((p) => p.username !== me());
     const titleOf = (c) => c.name || others(c).map((p) => p.display_name || p.username).join(', ') || 'Just you';
@@ -627,19 +638,33 @@
         const panel = chats.panel; if (!panel) return;
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
-        try { chats.list = (await chatCall('/api/dm/conversations')).conversations || []; } catch (e) { panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
+        try {
+            const [dm, ai] = await Promise.all([chatCall('/api/dm/conversations'), chatCall('/api/vibe/conversations').catch(() => null)]);
+            chats.list = dm.conversations || [];
+            chats.vibeSummary = ai && ai.count ? { kind: 'vibe', count: ai.count, latest: ai.conversations && ai.conversations[0], last_message_at: ai.conversations && ai.conversations[0] && ai.conversations[0].last_message_at } : null;
+        } catch (e) { panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
         if (sharing) await sharing;
         if (chats.open || tab !== 'chats') return;
         panel.textContent = '';
         if (chats.draft && canWriteChat() && root.OpenVibeDockShare) panel.append(root.OpenVibeDockShare.bar({ draft: chats.draft, h, chatCall, host: el, cancel: () => { chats.draft = null; chatList(); }, open: (id) => { chats.list = null; return openChat(String(id), true); } }));
         const scroll = h('div', 'ovdk-scroll');
-        if (!chats.list.length) {
+        if (!chats.list.length && !chats.vibeSummary) {
             const none = h('div', 'ovdk-none');
             none.append(h('b', '', 'No conversations yet'), document.createTextNode('A message to someone on OpenVibe starts one, and it shows here on every site.'));
             scroll.append(none);
         } else {
             const ul = h('ul', 'ovdk-chats');
-            chats.list.forEach((c) => {
+            [...chats.list, ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
+                if (c.kind === 'vibe') {
+                    const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
+                    const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'AI chats'), h('span', 'ovdk-chat-p', `${c.count} conversation${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
+                    const meta = h('span', 'ovdk-chat-m'); const at = c.latest && c.latest.last_answer_at;
+                    const t = h('time', '', when(at || c.last_message_at)); if (at) t.title = answered(at); meta.append(t);
+                    const av = h('span', 'ovdk-av ovdk-av-vibe'); av.append(icon(G.vibe));
+                    b.append(av, body, meta); b.setAttribute('aria-label', `AI chats, ${c.count} conversations${at ? `, ${answered(at)}` : ''}`);
+                    b.addEventListener('click', () => { vibeOnList = true; save({ vibe: null }); setTab('vibe', true); });
+                    li.append(b); ul.append(li); return;
+                }
                 const li = h('li'), b = h('button', 'ovdk-chat');
                 b.type = 'button';
                 const unread = Number(c.unread_count) || 0;
@@ -649,7 +674,7 @@
                 const meta = h('span', 'ovdk-chat-m');
                 meta.append(h('time', '', when(c.last_message_at || c.updated_at)));
                 if (unread) meta.append(h('b', 'ovdk-unread', unread > 99 ? '99+' : String(unread)));
-                b.append(avatar(others(c)[0] || {}, !!c.is_group), body, meta);
+                b.append(c.is_group ? groupAvatar(c) : avatar(others(c)[0] || {}, false), body, meta);
                 b.setAttribute('aria-label', `${titleOf(c)}${unread ? `, ${unread} unread` : ''}`);
                 if (unread) li.className = 'is-unread';
                 b.addEventListener('click', () => openChat(String(c.id), true));
@@ -745,6 +770,8 @@
     // every page for signed-in people; Vibe's conversation and mic are not needed until then). Alt+V talks to Vibe from
     // any page: it opens the Dock on Vibe and starts listening (only where the browser can listen).
     const vibe = { panel: null, api: null };
+    // The Chats tab's AI chats row opens the Vibe tab on its list, not on the last conversation.
+    let vibeOnList = false;
     const canListen = () => !!(root.SpeechRecognition || root.webkitSpeechRecognition);
     document.addEventListener('keydown', (e) => {
         if (!e.altKey || e.ctrlKey || e.metaKey || String(e.key).toLowerCase() !== 'v' || !canListen() || !o || typeof o.token !== 'function') return;

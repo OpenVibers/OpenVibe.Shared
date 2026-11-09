@@ -1,5 +1,102 @@
 # Changelog
 
+## 4.168.0 — 2026-11-09
+
+- **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows
+  'Draft a blog post · Done · AI · gpt-5-nano', 25 failed rows 'AI is resting for a moment' and raw JSON errors; an empty
+  Agents tab that is wasted space for no reason"). `dock-runs.js` (loaded with the tab) draws each run as a row: the
+  skill's icon in its own colour, the subject as the title, and one status line — Running (the live step and a thin
+  bar), Waiting (what it needs), Scheduled (when), Done (the result, the cost, the time, the model with its maker's
+  mark) or Failed (the words and what happens next). Open, Retry, Stop and "run again with another model" are on the
+  row. Six identical failures in a day are one row, `×6`, that expands. A failure never shows the provider's own text.
+- **The Agents overview** (instead of an empty middle): the next scheduled run with a countdown, today's and this
+  week's numbers (runs, done, failed, spend) as three small tiles, the last three results as rows, and "Things agents
+  can do for you": a grid of six skills from Actor's catalogue that start a run in one tap. The foot stays one row:
+  "All runs" and "Give an agent a task".
+- **The Vibe tab has a conversation list** (`dock-vibe.js`): New conversation at the top, then each chat with its last
+  line, its time and the site it began on; a back arrow in a conversation. The tab opens on the conversation you had
+  open within the last twenty minutes, else on the list, and the choice is the Dock's synced state, so it follows you
+  across pages and sites. "Vibe did not answer" says why and offers a retry. The composer shows at once, with the
+  attach and the mic.
+- **The Chats tab has an AI chats row** among the DMs, placed by date like the others: the Vibe mark, "AI chats", the
+  count, the last conversation's title and when Vibe answered; tapping it opens the Vibe tab on its list. A group's row
+  shows up to three faces, not a number sign.
+- **The Dock keeps its size and corner per person** and its grip is always visible; the Vibe conversation and the
+  Agents filter are restored with it.
+- **Restyled here (Opus):** a run is a row, not a box: the state as a coloured word (Running blue with a moving bar,
+  Waiting amber, Done green, Failed red), its words on two lines at most, the title opens it, Approve and Retry as filled
+  pills, the rest under a dots button. The tiles lead with their number (11 runs) and dots for done and failed. The Vibe
+  list gives each conversation its mark and its site's name (Blog, not openvibe.blog) and New conversation is a button.
+  The AI chats row has a Vibe avatar like every other row; group faces are ringed in the panel's own colour.
+- The one-tap skills are read through Network (`/api/v1/me/actions/skills`): every site's CSP refuses openvibe.actor.
+- The extension's read-only Dock offers no approve, decline, stop or retry.
+- **Early hints: the Link header only, by default** (`openvibe-shared/sw` `earlyHints`). nginx 1.28, the host's, takes an
+  upstream 103 as the final response and sends the real 200 as its body (tried 11-09 against nginx:1.28-alpine). The 103
+  goes out only with `{ send103: true }` or `OV_EARLY_HINTS=1`, for a proxy that passes it on (nginx 1.29+ with
+  `early_hints`). Cloudflare's Early Hints read the Link header.
+- **The Feed's composer takes pictures** (the owner, 11-09: "you can make posts and put images"). Up to four, each
+  with a line saying what it shows (Community requires the alt text; Post stays off until each has one). Big phone
+  photos are scaled to 2560 px before they go. Each picture uploads through Network (`POST /api/frame/attachments`,
+  Network #719) and the post names them (`POST /api/frame/posts`). Previews are small data: images, because not
+  every site's img-src allows blob:.
+
+## 4.167.0 — 2026-11-09
+
+- **The Feed, everything on the network, day by day** (the owner: "one huge feed of everything… all kinds of events and
+  even global chat… everything date by date… filter it by different things"). Community #310's kinds draw as rows of
+  what happened: people who joined (the count on a green tile), a busy chat room ("#general is busy", 15 messages this
+  hour), a quest badge (the person's face with a trophy), a calendar event (a date tile, the start in your own time), a
+  wiki page (its name, not its address), a stream that is over and the network's updates. Pictures, videos and posts
+  stay cards; their views, likes and replies show as icons with numbers.
+- A quiet **day line** (Today, Yesterday, the weekday, then the date) where the day changes; under an earlier day a row
+  says its clock time, not "yesterday" again.
+- New chips: **Following** (signed in: the people you follow), Chat, Events, Wiki, Quests.
+- One centred column on a computer (two columns left holes beside tall cards).
+- Fixed: a card with no picture (or a person with no avatar) drew a broken image of the page itself: `safe('')` resolved
+  an empty address against the page. Fixed: the Feed's root class `ovf` was the footer's, so the Feed took the
+  footer's margin, padding and top border (the gap above the chips); the Feed's classes are now `ovfd-*`.
+- Past go-lives fold into one card again now that Community sends them as kind `stream`.
+
+## 4.166.0 — 2026-11-09
+
+- **The Feed on every site** (the owner: "I still don't see the custom doom scrollable feed"): the menu's Feed, wall and
+  composer reach Community through Network's frame relay (`https://openvibe.network/api/frame/feed`, `/wall`,
+  `/status`; Network #714). Every site's Content-Security-Policy allows openvibe.network and refused
+  openvibe.community, so on every site but five the Feed fell back to its old sections. `o.frameBase` overrides the
+  relay (tests, staging); the menu no longer calls openvibe.community directly.
+
+## 4.165.0 — 2026-11-09
+
+- **Faster between pages and sites** (the owner, 11-09: "when you change sites… faster across sites… better caching on
+  the client"): the navbar adds a same-site prerender rule beside its prefetch, and prefetches links to the other
+  OpenVibe sites; `openvibe-shared/sw` sends the shell's files in a 103 Early Hint. The shared worker
+  (`/openvibe-sw.js`, also the Web Push worker) keeps **only content-addressed files** (a hash in the name or
+  `?v=<hash>`: immutable, public) and answers them from its cache; pages and every other file go to the network as the
+  browser sends them, so no page copy outlives a sign-out, nothing cuts a slow page off, and no stale script meets new
+  HTML (security review). A kill switch (`/api/v1/sw-config` on Network) unregisters it everywhere. Sites opt in to
+  registering it with `OpenVibeNavbar.init({ sw: true })`.
+- `robots.txt` welcomes Perplexity-User, Claude-User and Claude-SearchBot by name (discoverability, ask 93).
+- You: **Most used** links to **Your stats** on OpenVibe Report (`/me`: private by default, each section publishable).
+
+## 4.164.0 — 2026-11-09
+
+- **Chat's two views** (`openvibe-shared/messages`, `OVMessages.render(el, { messages, view: 'room' | 'bubbles', me })`;
+  the owner, 11-09: "texting bubbles like Android/iOS Messages, and the live chat room… switchable"). Bubbles: runs join
+  on the inner corners, the avatar beside the first with its column kept through the run, a coloured initial when there
+  is no picture, the time under the last, read ticks, sticky day chips. Room: one line per message wrapping under the
+  name on a phone, each person's name in a steady colour (tuned for dark and light). Only the newest message animates.
+  `OpenVibeUserMenu.register()` lets a site add actions to the shared user card.
+- **Page head** (`kit.pageHead({ back, icon, title, lede, actions })`; ask 64: "less websitey… an icon system"): a small
+  named back chip (44 px to the finger), the page's icon tile and name, 44 px actions, and the lede once and whole on
+  every screen. Product heroes can opt in (`showcase.hero({ pageHead })`).
+- **Upload kit** (`ov-upload.js`/`.css`: `OVUpload.picker`, `.queue`, `.progress`): drag and drop or choose, each file a
+  row with its picture or a file glyph, an × and its own progress (speed and time left smoothed); the total above for two
+  files or more; done draws a tick; Calm drops the sheen. Sites bring the transport (`upload(file, { onProgress, signal })`).
+- **The Feed, fixed for real data** (Community's /api/v1/feed is live): LIVE shows only while a channel is live now
+  (`live_now`, with a breathing chip and a red edge); back-to-back go-lives that are over fold into one card of faces and
+  names; a trending picture shows its site's icon and "Trending" (not a "?"); video cards no longer leave the flow (their
+  class collided with the preview video's, `.ovf-video`; cards are `.ovf-k-<kind>` now).
+
 ## 4.163.0 — 2026-11-09
 
 - **You, redone** (the owner, 11-09: "the U tab still sucks, and you didn't do all the improvements"). You on top: your

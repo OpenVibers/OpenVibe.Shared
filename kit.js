@@ -214,6 +214,17 @@
             + (actions && actions.length ? `<div class="ovk-head-tools">${actions.join('')}</div>` : '')
             + `</div>${tabs || ''}</header>`;
     }
+    /** A page identity, with a named parent and a native, script-free mobile description disclosure.
+     * actions accepts iconButton options or trusted control markup, like head(). */
+    function pageHead({ back = null, icon: ic = 'home', title = '', lede = '', actions = [] } = {}) {
+        const tools = (actions || []).map(a => typeof a === 'string' ? a : iconButton(a)).join('');
+        return `<header class="ovk-page-head">`
+            + (back ? `<a class="ovk-page-back" href="${esc(url(back.href))}">${icon('back')}<span>${esc(back.label || 'Back')}</span></a>` : '')
+            + `<div class="ovk-page-head-row"><span class="ovk-heading-icon">${icon(ic)}</span><h1>${esc(title)}</h1>`
+            + (tools ? `<div class="ovk-page-actions">${tools}</div>` : '') + `</div>`
+            + (lede ? `<p class="ovk-page-lede">${esc(lede)}</p>` : '')   // one copy, whole, on every screen
+            + `</header>`;
+    }
     // ── The left sidebar (L35) ──
     /**
      * An app's left sidebar, one for every OpenVibe product (the owner, 2026-10-31: "the navigation makes more sense
@@ -926,7 +937,7 @@
     return {
         skeleton,
         esc, url, mediaW, icon, ICONS, PATHS, when, hueOf, mark, button, share, askAgent, iconButton, action, badge, dot, card, rail, CARD_RATIO,
-        head, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
+        head, pageHead, tabs, tabOf, list, row, section, fold, more, sidebar, sidebarButton, withSidebar,
         switchRow, rangeRow, selectRow, seg, segmented, chips, saveBar, find, dock, stats, labels, labelsAttr, LABEL_NAMES, empty, notice, snippet, sheet, sheetButton,
         enhance, VERSION: 2,
         num, steps, table, chart, rank, meter, drop, receipt, page,

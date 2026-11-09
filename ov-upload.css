@@ -1,0 +1,64 @@
+/* openvibe-shared ov-upload (designed 11-09): a picker that says what to do, each file a row with its own progress,
+   the total above them for two or more. The network's theme variables; dark and light; Calm keeps the fill, not the sheen. */
+.ov-upload { display: grid; gap: 12px; color: var(--text-primary, #e8ecf3); }
+.ov-upload__input { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.ov-upload__picker { display: grid; place-items: center; align-content: center; gap: 6px; width: 100%; min-height: 148px; padding: 22px; border: 1.5px dashed color-mix(in srgb, var(--accent, #3b82f6) 45%, var(--border, rgba(255,255,255,.14)));
+    border-radius: 18px; background: color-mix(in srgb, var(--accent, #3b82f6) 5%, transparent); color: inherit; font: inherit; cursor: pointer; transition: background .18s, border-color .18s, transform .18s; }
+.ov-upload__picker strong { font-size: 15.5px; }
+.ov-upload__picker:hover, .ov-upload.is-dragging .ov-upload__picker { border-color: var(--accent, #3b82f6); background: color-mix(in srgb, var(--accent, #3b82f6) 11%, transparent); }
+.ov-upload.is-dragging .ov-upload__picker { transform: scale(1.01); border-style: solid; }
+.ov-upload__picker:active { transform: scale(.99); }
+.ov-upload__picker:focus-visible, .ov-upload__remove:focus-visible, .ov-progress__retry:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 3px; }
+.ov-upload__icon { display: grid; place-items: center; width: 52px; height: 52px; margin-bottom: 4px; border-radius: 16px; color: var(--on-accent-strong, #fff);
+    background: linear-gradient(150deg, var(--accent, #3b82f6), var(--accent-strong, #2563eb)); box-shadow: 0 8px 22px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+.ov-upload__icon svg, .ov-upload__preview svg, .ov-upload__remove svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ov-upload__icon svg { width: 26px; height: 26px; }
+.ov-upload.is-dragging .ov-upload__icon { animation: ov-upload-bob .9s ease-in-out infinite; }
+.ov-upload__drop { font-size: 13px; color: var(--text-muted, #93a0b4); }
+.ov-upload__total { padding: 0 2px; }
+.ov-upload__total[hidden] { display: none; }
+.ov-upload__rows { display: grid; gap: 8px; }
+.ov-upload__row { display: grid; grid-template-columns: 52px minmax(0, 1fr) 40px; align-items: center; gap: 4px 12px; min-width: 0; padding: 10px;
+    border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.08));
+    animation: ov-upload-in .26s cubic-bezier(.2, .8, .2, 1) both; }
+.ov-upload__preview { display: grid; place-items: center; width: 52px; height: 52px; overflow: hidden; border-radius: 10px; color: var(--accent-light, var(--accent, #60a5fa));
+    background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+.ov-upload__preview svg { width: 24px; height: 24px; }
+.ov-upload__preview img, .ov-upload__preview video { width: 100%; height: 100%; object-fit: cover; }
+.ov-upload__file { display: grid; gap: 1px; min-width: 0; }
+.ov-upload__file strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14.5px; }
+.ov-upload__file small { font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ov-upload__remove { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #a8b3c4); cursor: pointer; }
+.ov-upload__remove svg { width: 18px; height: 18px; }
+@media (hover: hover) { .ov-upload__remove:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 9%, transparent); color: var(--text-primary, #e8ecf3); } }
+.ov-upload__meter { grid-column: 1 / -1; }
+/* Progress */
+.ov-progress { display: grid; gap: 7px; }
+.ov-progress__heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14px; font-weight: 650; }
+.ov-progress__percent { font-variant-numeric: tabular-nums; }
+.ov-progress__track { height: 8px; overflow: hidden; border-radius: 99px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 10%, transparent); }
+.ov-progress__fill { position: relative; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-strong, #2563eb), var(--accent, #3b82f6)); transition: width .65s cubic-bezier(.2, .7, .2, 1); }
+.ov-progress[data-state="sending"] .ov-progress__fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.3) 45%, transparent 65%); animation: ov-upload-sheen 1.8s linear infinite; }
+.ov-progress[data-state="processing"] .ov-progress__fill { width: 100% !important; animation: ov-upload-pulse 1.8s ease-in-out infinite; }
+.ov-progress[data-state="done"] .ov-progress__fill { background: var(--success, #22c55e); }
+.ov-progress[data-state="done"] .ov-progress__percent { color: var(--success, #22c55e); animation: ov-upload-check .38s ease-out both; }
+.ov-progress__check { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ov-progress__check path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: ov-upload-draw .45s ease-out forwards; }
+.ov-progress[data-state="failed"] .ov-progress__fill { background: var(--danger, #ef4444); }
+.ov-progress[data-state="failed"] .ov-progress__label { color: var(--danger, #ef4444); }
+.ov-progress__detail { min-height: 1.4em; margin: 0; font-size: 12.5px; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; }
+.ov-progress__retry { justify-self: start; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 9%, transparent); color: inherit; font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
+/* Inside a file's row: one line of state and percent, a thin bar, the numbers. */
+.ov-progress--row { gap: 5px; margin-top: 6px; }
+.ov-progress--row .ov-progress__heading { font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ov-progress--row .ov-progress__track { height: 5px; }
+.ov-progress--row .ov-progress__detail { font-size: 12px; }
+@keyframes ov-upload-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes ov-upload-pulse { 50% { opacity: .5; } }
+@keyframes ov-upload-check { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes ov-upload-draw { to { stroke-dashoffset: 0; } }
+@keyframes ov-upload-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes ov-upload-bob { 50% { transform: translateY(-3px); } }
+@media (pointer: coarse), (max-width: 700px) { .ov-upload__picker { min-height: 120px; } .ov-upload__drop { display: none; } }
+html[data-ov-motion=reduced] .ov-progress[data-state="sending"] .ov-progress__fill::after { animation: none; }
+@media (prefers-reduced-motion: reduce) { .ov-progress__fill, .ov-progress[data-state="processing"] .ov-progress__fill, .ov-progress[data-state="done"] .ov-progress__percent, .ov-progress__check path, .ov-upload__row, .ov-upload.is-dragging .ov-upload__icon { transition: none; animation: none; } .ov-progress__check path { stroke-dashoffset: 0; } .ov-progress[data-state="sending"] .ov-progress__fill::after { display: none; } }

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.163.0",
+  "version": "4.168.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -51,6 +51,8 @@
     "./nav-slots": "./nav-slots.js",
     "./overlay": "./overlay.js",
     "./dock-vibe": "./dock-vibe.js",
+    "./dock-runs": "./dock-runs.js",
+    "./ai-marks-client": "./ai-marks-client.js",
     "./dock-timer": "./dock-timer.js",
     "./dock-share": "./dock-share.js",
     "./dock-card": "./dock-card.js",
@@ -67,6 +69,7 @@
     "./ov-forms": "./ov-forms.js",
     "./ov-qr": "./ov-qr.js",
     "./ov-share": "./ov-share.js",
+    "./ov-upload": "./ov-upload.js",
     "./ov-sync": "./ov-sync.js",
     "./ov-locker": "./ov-locker.js",
     "./ov-locker-core": "./ov-locker-core.js",
@@ -121,7 +124,9 @@
     "./motion": "./motion.js",
     "./agent-layer": "./agent-layer.js",
     "./thread": "./thread.js",
-    "./ov-thread": "./ov-thread.js"
+    "./messages": "./messages.js",
+    "./ov-thread": "./ov-thread.js",
+    "./sw": "./sw.js"
   },
   "files": [
     "*.js",
@@ -153,7 +158,21 @@
     "type": "git",
     "url": "git+https://github.com/OpenVibers/OpenVibe.Shared.git"
   },
-  "homepage": "https://github.com/OpenVibers/OpenVibe.Shared#readme",
+  "homepage": "https://openvibe.network",
+  "keywords": [
+    "openvibe",
+    "ui",
+    "components",
+    "navbar",
+    "footer",
+    "themes",
+    "icons",
+    "seo",
+    "json-ld",
+    "llms-txt",
+    "feeds",
+    "self-hosted"
+  ],
   "license": "MIT",
   "dependencies": {
     "jsonwebtoken": "^9.0.0",

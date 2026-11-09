@@ -731,3 +731,7 @@ set the `--bg-*`, `--text-*` and `--accent` variables yourself, or keep the fall
 `node scripts/kit-gallery.js > gallery.html` writes one page with every piece and the app bar on.
 `node scripts/kit-gallery.js --shots <dir>` serves the package folder and screenshots it at 390, 768 and 1280 px. It
 prints any sideways scroll, so the gallery doubles as the visual test.
+
+### Page identity
+
+`kit.pageHead({ back: { label: 'Home', href: '/' }, icon: 'video', title: 'Record a video', lede: 'Record, review and share your video.', actions: [{ href: '/videos', icon: 'video', label: 'Your videos' }] })` renders the named back chip, page icon tile, H1 and accessible icon actions. On phones the lede is one line with a native **About this** disclosure; all its words remain server-rendered and work without JavaScript. Keep breadcrumb structured data in the site's BreadcrumbList JSON-LD. `head()` remains available for sticky application toolbars.
