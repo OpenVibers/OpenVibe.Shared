@@ -2,7 +2,7 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
-**Status:** alpha, v4.161.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.175.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -21,7 +21,7 @@ were reconciled first.
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `player.js`, `vibes-pay.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
 | Fonts, served at `/shared/<file>` (`files.FONTS`) | `ov-brand.woff2`: the brand face the names are set in (Nunito, SIL OFL 1.1, `OFL-Nunito.txt`; Latin, 700–900), declared by `navbar.js` |
-| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `glyphs` (the network's icons, one registry: `NAMES`, `path(name)`, `svg(name, { size, title })`, `fromFa(name)`, `FA`; the browser drop-in `ov-glyphs.js` shows them in place of Font Awesome's and keeps Font Awesome's classes, animations and `data-fa-transform`; also as fonts, `/shared/ov-glyphs.woff2` with `ov-glyphs-font.css` (`ovi ovi-<name>`) or `ov-glyphs-fa.css` (Font Awesome's names), `glyph-fonts/ov-glyphs.{ttf,otf}` and `glyph-codepoints.json`, and as the sprite `/shared/ov-glyphs.svg#ovg-<name>`), `mark` (the OpenVibe mark, the Pair, as static SVG: `svg({ form, tone, wide, size, title })`, `art()`, `geo()`, `shapes()`, `COLORS`; the browser drop-in `ov-mark.js` draws the same numbers), `app-icons` (every site's installable app icon set: `has(service)`, `url(service, size, { maskable })`, `isIcon(name)`, `path(name)`; the pre-rendered PNGs are served at `/shared/icons/<service>[-maskable]-<size>.png` and named by the web app manifest `serve.js` serves at `/shared/manifest/<service>.webmanifest`), `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `social` (every site's 1200×630 share card: `url(service)`, served by `serve.js` at `/shared/social/<service>.jpg` and used by `shell.page()` for `og:image` when a page names none), `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Node its pure `plan()` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `glyphs` (the network's icons, one registry: `NAMES`, `path(name)`, `svg(name, { size, title })`, `fromFa(name)`, `FA`; the browser drop-in `ov-glyphs.js` shows them in place of Font Awesome's and keeps Font Awesome's classes, animations and `data-fa-transform`; also as fonts, `/shared/ov-glyphs.woff2` with `ov-glyphs-font.css` (`ovi ovi-<name>`) or `ov-glyphs-fa.css` (Font Awesome's names), `glyph-fonts/ov-glyphs.{ttf,otf}` and `glyph-codepoints.json`, and as the sprite `/shared/ov-glyphs.svg#ovg-<name>`), `mark` (the OpenVibe mark, the Pair, as static SVG: `svg({ form, tone, wide, size, title })`, `art()`, `geo()`, `shapes()`, `COLORS`; the browser drop-in `ov-mark.js` draws the same numbers), `app-icons` (every site's installable app icon set: `has(service)`, `url(service, size, { maskable })`, `isIcon(name)`, `path(name)`; the pre-rendered PNGs are served at `/shared/icons/<service>[-maskable]-<size>.png` and named by the web app manifest `serve.js` serves at `/shared/manifest/<service>.webmanifest`), `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `social` (every site's 1200×630 share card: `url(service)`, served by `serve.js` at `/shared/social/<service>.jpg` and used by `shell.page()` for `og:image` when a page names none), `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Link its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-glyphs.js` (`ov-glyphs.js` and `ov-glyphs.svg` from `glyphs.js`), `scripts/build-glyph-fonts.py` (the glyph fonts and their CSS; Python with picosvg, fonttools and brotli), `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js`, `scripts/build-icons.js`, `scripts/build-social-cards.js` (share cards from the Contracts manifests; Chrome + ImageMagick) |
 | Pin bot | `scripts/pin-bump.js` (`node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply]`): after a release, one PR per repository that pins the library below the tag, with the lockfile refreshed and the docs-status fields rewritten; a dry run unless `--apply`; CI tests each PR |
@@ -845,6 +845,65 @@ Re-renders (each openvibe-shared/boost page move re-renders the bar) end the
 
 Dropdowns under a top link (`children`) are fixed-positioned under their link when they show (hover, keyboard focus, a tap), because the links row scrolls sideways and would clip them.
 
+### The shell's cache: the worker (`openvibe-sw.js`, `sw.js`, 4.164.0)
+
+The owner, 2026-11-09: *"how come when you change sites it doesn't load more asynchronously and dynamically, so it's faster
+across sites? … better caching on the client, cross-site and smarter, intelligent, so it's faster, while staying SEO friendly
+and crawlable?"*
+
+One worker, every site, at `/openvibe-sw.js` (same origin, scope "/"), from this package. It is the file the notification
+bell already registered for Web Push, so there is one registration and nothing is unregistered by accident. A site opts in:
+
+```js
+// in the site's navbar options
+OpenVibeNavbar.init({ service: 'live', sw: true });            // or sw: { path: '/my-sw.js', scope: '/' }
+```
+
+The rules it keeps, and why:
+
+| Request | What happens | Why |
+|---|---|---|
+| A content-addressed file (`?v=<hash>`, or a hash in the name) | the cache first, for good | the bytes cannot change under that URL |
+| Any other file (a script, a stylesheet, a font, an image) | the cached copy now, the fresh one in the background | a visit never waits twice |
+| A page (a navigation) | the network first (3 s), the cached copy only when the network does not answer | a crawler and a person read the HTML the server just wrote |
+| `/api/`, anything that is not a GET, a range request | untouched | the API is never the cache's business |
+| A response with `Set-Cookie`, `Cache-Control: private` or `no-store`, or a `Vary` on Cookie or Authorization | passed through, never stored | nothing private is ever written down |
+
+Nothing moves behind JavaScript: the HTML the server writes is the HTML the browser shows. The worker only decides *when* a
+file is asked for, never *what* it says, and it never serves a cached page while the network answers.
+
+The **kill switch**: the worker asks `https://openvibe.network/api/v1/sw-config` (cached 5 minutes by the browser; a worker
+that cannot reach it keeps working — a hiccup must not take the cache away). The answer `{ "enabled": false }` makes every
+worker on every site unregister itself and drop its caches. A release that needs to be undone does not need a deploy on
+every site.
+
+The server's half is `openvibe-shared/sw`:
+
+```js
+const sw = require('openvibe-shared/sw');
+app.get('/openvibe-sw.js', (req, res) => res.sendFile(sw.workerPath()));       // the worker
+app.get('/ov-sw-manifest.json', (req, res) => res.json(sw.manifest()));       // the shell, by content hash
+app.use(sw.hints({ links: (req) => [ { href: assets.url('/shared/navbar.js'), as: 'script' } ] }));
+```
+
+`sw.hints()` sends the **103 Early Hints** (RFC 8297): the browser gets the shell's URLs before the HTML arrives and starts
+fetching them while the server is still writing the page. The same links ride in the `Link` header of the page itself, so a
+proxy that drops the 103 still hands the browser the hint. Cloudflare's Early Hints has to be on for the zone (the origin's
+103 is passed through when it is).
+
+### The rules the browser gets before the click
+
+The navbar hands the browser **speculation rules** (Chrome 103 and later):
+
+- a **same-site** page is prefetched on hover or touch, and — where the browser has prerendering — rendered in the
+  background before the click lands (`prerender: false` turns that off for a site whose own router draws its pages; a link
+  marked `data-no-prefetch` is left alone);
+- a link to **another OpenVibe site** (the ones marked `data-ov-net-link`) is prefetched too, so the next site is already
+  warm when the person arrives. Chrome leaves a site alone when the person has cookies on it, which is right: that page is
+  theirs, not a public copy.
+
+The sign-in, the sign-out, the API, the internal pages and the downloads are never fetched ahead of the click.
+
 ### Vibes Pay (`vibes-pay.js`, 4.111.0)
 
 The browser half of Vibes Pay (MONEY.md, D12): a page on any site can sell something for Vibes.
@@ -1076,7 +1135,7 @@ vendored or rsynced from Network.
 ## Depends on
 
 - `jsonwebtoken` (the only runtime dependency, for `auth-client`)
-- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.338.0 is a devDependency
+- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.373.0 is a devDependency
   the tests validate against)
 - in the browser, at run time: OpenVibe.Network (sessions, notifications and realtime tickets, the
   changelog feed) and OpenVibe.Events (the realtime stream for the notification bell)
@@ -1123,6 +1182,6 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 The Locker browser core currently uses the immutable SDK review commit `80f212323869347385e34545d6ee0a911017f5af` (OpenVibe.SDK #141). Replace it with the reviewed release pin before the next library release.
 
 <!-- versions:start -->
-- openvibe-contracts: v0.338.0
+- openvibe-contracts: v0.373.0
 - openvibe-sdk: v0.101.0
 <!-- versions:end -->

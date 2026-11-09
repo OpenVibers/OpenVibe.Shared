@@ -31,6 +31,7 @@ const kit = require('../kit');
     assert.ok(/^<header class="ovk-head">/.test(h) && h.indexOf('ovk-tabs') > h.indexOf('ovk-head-row'), 'the tabs sit inside the sticky head');
     assert.ok(h.includes('<h1>Settings</h1>') && h.includes('aria-label="Help" title="Help"'));
     assert.ok(kit.head({ title: 'x', sticky: false }).includes('ovk-head--static'));
+    assert.ok(kit.head({ title: 'Settings', icon: 'gear' }).includes('class="ovk-heading-icon"><svg'));
 }
 
 // ── Rows and lists ──
@@ -53,10 +54,21 @@ const kit = require('../kit');
 // ── Settings rows, folds, menus ──
 {
     assert.ok(kit.switchRow({ name: 'compact', label: 'Compact', hint: 'Less space', on: true }).includes('class="ovk-switch" name="compact" value="1" checked'));
+    const sw = kit.switchRow({ name: 'burn', icon: 'flame', title: 'Burn after reading', line: 'Gone once it is read', checked: true });
+    assert.ok(sw.startsWith('<label class="ovk-set-row ovk-set-switch">') && sw.includes('class="ovk-set-ic" aria-hidden="true"><svg'));
+    assert.ok(sw.includes('role="switch"') && sw.includes('type="checkbox"') && sw.includes('value="1" checked'), 'the switch is a working checkbox');
+    assert.ok(sw.includes('Burn after reading') && sw.includes('Gone once it is read'), 'title and one line');
+    assert.ok(!kit.switchRow({ name: 'n', title: 'No icon', line: 'x' }).includes('ovk-set-ic'), 'no icon, no tile');
+    assert.ok(kit.switchRow({ name: 'n', label: 'Old name', hint: 'Old hint', on: true }).includes('>Old name<small>Old hint</small>'), 'label/hint/on still work');
     assert.ok(kit.rangeRow({ name: 'v', label: 'Volume', value: 40 }).includes('value="40"') && kit.rangeRow({ name: 'v', label: 'V', value: 40 }).includes('aria-valuetext="40 percent"'));
     assert.ok(kit.selectRow({ name: 'who', label: 'Who', options: [['all', 'Everyone'], ['none', 'Nobody']], value: 'none' }).includes('<option value="none" selected>Nobody</option>'));
     const seg = kit.seg({ name: 'size', label: 'Text size', options: [['s', 'Small'], ['m', 'Default']], value: 'm' });
     assert.ok(seg.includes('role="radiogroup"') && seg.includes('value="m" checked'));
+    const segments = kit.segmented({ name: 'visibility', value: 'unlisted', items: [{ value: 'public', label: 'Public', icon: 'globe' }, { value: 'unlisted', label: 'Unlisted', icon: 'link' }, { value: 'private', label: 'Private', icon: 'lock' }] });
+    assert.ok(segments.startsWith('<span class="ovk-seg ovk-seg--fill" role="radiogroup"') && segments.includes('aria-label="visibility"'));
+    assert.ok(segments.includes('value="unlisted" checked') && segments.includes('class="ovk-seg-item"') && segments.includes('class="ovk-i"'), 'segments carry icons');
+    assert.ok(kit.segmented({ name: 'v', ariaLabel: 'Who sees it', items: [{ value: 'a', label: 'A' }] }).includes('aria-label="Who sees it"'), 'a standalone group still has words');
+    assert.ok(kit.segmented({ name: 'v', label: 'Who sees it', items: [{ value: 'a', label: 'A' }] }).includes('aria-labelledby="ovk-seg-v"'), 'a label names the group');
     assert.ok(kit.chips({ name: 'src', options: [['kick', 'Kick', true], ['yt', 'YouTube', false]] }).includes('name="src_kick" value="1" checked'));
     const f = kit.fold({ id: 'oc-ai', title: 'AI members', meta: '2', body: '<p>x</p>' });
     assert.ok(f.startsWith('<details class="ovk-fold" id="oc-ai">') && !f.includes(' open'));
@@ -64,6 +76,11 @@ const kit = require('../kit');
     const m = kit.more({ label: 'More', items: [{ href: '/a', label: 'Open' }, { action: '/b/delete', label: 'Delete', danger: true, confirm: 'Delete it?' }, null] });
     assert.ok(m.includes('role="menu"') && m.includes('data-ovk-confirm="Delete it?"') && m.includes('ovk-pop-item--danger'));
     assert.ok(kit.section({ title: 'Members', count: 3, note: 'Who', body: '<ul></ul>', id: 'mem' }).includes('aria-labelledby="mem-h"'));
+    const section = kit.section({ title: 'Members & guests', icon: 'members', id: 'members', actions: [kit.button({ href: '/members', label: 'Manage members', icon: 'gear', kind: 'quiet' })], body: kit.empty({ icon: 'members', text: 'Members will appear here.', action: { href: '/invite', label: 'Invite', icon: 'plus' } }) });
+    assert.ok(section.includes('aria-labelledby="members-h"') && section.includes('<h2 id="members-h">Members &amp; guests</h2>'));
+    assert.ok(section.includes('ovk-section-actions') && section.includes('href="/members"') && section.includes('href="/invite"'));
+    assert.ok(section.includes('ovk-heading-icon') && section.includes('ovk-empty'));
+    assert.ok(kit.section({ title: 'Legacy' }).includes('><h2>Legacy</h2></section>'), 'existing sections keep their markup');
 }
 
 // ── Find, dock, numbers, notices ──
@@ -304,3 +321,19 @@ const kit = require('../kit');
 }
 
 console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, time and Kit 2 (steps, table, chart, rank, meter, drop, receipt, page), the tool frame and the sidebar ok');
+
+// A rail's optional heading icon also turns its action into a labelled button.
+{
+    const h = kit.rail({ id: 'recent', title: 'Recent', icon: 'clock', more: { href: '/all', label: 'See all' }, items: ['<p>One</p>'] });
+    assert.ok(h.includes('ovk-heading-icon') && h.includes('ovk-btn--quiet') && h.includes('id="recent-h"'));
+}
+
+// A page head keeps its description available without JS and refuses unsafe parent/action URLs.
+{
+    const h = kit.pageHead({ title: '<Record>', icon: 'video', lede: 'One line & all the detail.', back: { label: 'Home', href: 'javascript:bad' }, actions: [{ icon: 'plus', label: 'Create', href: '/new' }] });
+    assert.ok(h.includes('<h1>&lt;Record&gt;</h1>'));
+    assert.ok(h.includes('href="#"') && !h.includes('javascript:'));
+    assert.ok(!h.includes('<details') && (h.match(/class="ovk-page-lede"/g) || []).length === 1, 'the lede once, whole (no About-this copy)');
+    assert.ok(h.includes('aria-label="Create"') && h.includes('One line &amp; all the detail.'));
+    assert.ok(!kit.pageHead({ title: 'Home' }).includes('<details'));
+}

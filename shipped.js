@@ -41,7 +41,7 @@
         blog: 'Blog', wiki: 'Wiki', news: 'News', reviews: 'Reviews', deals: 'Deals', coupons: 'Coupons', trade: 'Trade',
         codes: 'Codes', host: 'Host', ai: 'AI', search: 'Search', sources: 'Sources', events: 'Events', billing: 'Billing',
         tips: 'Tips', vip: 'VIP', openre: 'Restream', bot: 'Bot', sites: 'Sites', realtime: 'Realtime', space: 'Space',
-        services: 'Services', actor: 'Actor', run: 'Run', watch: 'Watch', node: 'Node', zone: 'Zone', download: 'Download',
+        services: 'Services', actor: 'Actor', run: 'Run', watch: 'Watch', link: 'Link', zone: 'Zone', download: 'Download',
         video: 'Video', pics: 'Pics', rent: 'Rent', homes: 'Homes', work: 'Work', food: 'Food', help: 'Help', quest: 'Quest',
         website: 'Website', fund: 'Fund', 'media-hub': 'Media Hub', extensions: 'Extensions', contracts: 'Contracts', sdk: 'SDK',
         shared: 'Shared', examples: 'Examples', publishing: 'Publishing', play: 'Play', inventory: 'Inventory',

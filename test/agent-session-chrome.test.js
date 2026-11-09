@@ -127,9 +127,9 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(v.pill, 'Finished');
         assert.strictEqual(v.problems, 1, 'only the hand-off counts as a problem, not the passed check');
         // link(url): a site whose agents read untrusted pages links only its own addresses; the rest stay text.
-        await p.evaluate(`(() => { const d = document.createElement('div'); d.id = 'own'; document.body.appendChild(d); const w = OpenVibeAgentSession.mount(d, { title: 'x', link: (u) => u.startsWith('https://openvibe.bot/') }); w.push({ t: 'text', text: 'Your desk: https://openvibe.bot/machines/m/screen and https://evil.example/login' }); return 1; })()`);
+        await p.evaluate(`(() => { const d = document.createElement('div'); d.id = 'own'; document.body.appendChild(d); const w = OpenVibeAgentSession.mount(d, { title: 'x', link: (u) => u.startsWith('https://openvibe.link/') }); w.push({ t: 'text', text: 'Your desk: https://openvibe.link/machines/m/screen and https://evil.example/login' }); return 1; })()`);
         v = await p.evaluate(`[...document.querySelectorAll('#own .ovas-msg a')].map((a) => a.href)`);
-        assert.deepStrictEqual(v, ['https://openvibe.bot/machines/m/screen'], 'only the site\'s own address links');
+        assert.deepStrictEqual(v, ['https://openvibe.link/machines/m/screen'], 'only the site\'s own address links');
         assert.ok(await p.evaluate(`document.querySelector('#own .ovas-msg').textContent.includes('https://evil.example/login')`), 'the other stays as text');
         // The action bar (4.32.0): the page's actions, sticky; a press reports its id and waits for the page's promise.
         v = await p.evaluate(`(async () => {

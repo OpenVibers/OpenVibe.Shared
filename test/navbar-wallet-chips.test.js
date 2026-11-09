@@ -34,13 +34,15 @@ function load(store, answers) {
     global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
     global.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
     const calls = [];
-    global.fetch = async (url) => {
+    const inits = [];
+    global.fetch = async (url, init = {}) => {
         calls.push(url);
-        const a = /\/api\/me\/vibes$/.test(url) ? answers.vibes : /\/api\/coins\/me(\?|$)/.test(url) ? answers.coins : { status: 404, body: {} };
+        inits.push(init);
+        const a = url.endsWith('/api/v1/me/wallet') ? answers.wallet : { status: 404, body: {} };
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
     };
     delete require.cache[require.resolve(NAVBAR_PATH)];
-    return { navbar: require(NAVBAR_PATH), navs, calls };
+    return { navbar: require(NAVBAR_PATH), navs, calls, inits };
 }
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const wallet = (calls) => calls.filter((u) => /\/api\/(coins\/me|me\/vibes)(\?|$)/.test(u));
@@ -49,77 +51,40 @@ const user = { id: 7, subject: 'usr_7', username: 'maya' };
 const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.network', user, token: 'tok', wallet: true };
 
 (async () => {
-    const store = {};
-    const answers = { coins: { status: 200, body: { balance: 160774 } }, vibes: { status: 200, body: { credit: 2500 } } };
-
-    // First visit: no balances known yet, so the chips wait (hidden), then appear with the numbers and fold on a phone.
-    let { navbar, navs, calls } = load(store, answers);
+    const data = { balances: { coins: { amount: '160799', scale: 0, currency: 'opencoins' }, vibes: { amount: '400', scale: 0, currency: 'vibes-bits' }, balance: { amount: '0', scale: 9, currency: 'USD' } }, used_ai_this_month: false };
+    const { navbar, navs, calls } = load({}, { wallet: { status: 200, body: data } });
     navbar.init(base);
-    assert.match(chip(navs[0].innerHTML, 'coins'), /hidden/, 'nothing to show before the balances arrive');
     await settle();
-    // An older Network answers the coins only: Vibes come from Billing itself (4.25.0 asks the Network for both first).
-    assert.deepStrictEqual(wallet(calls).sort(), ['https://billing.openvibe.network/api/me/vibes', 'https://openvibe.network/api/coins/me?with=vibes']);
-    const last = navs[navs.length - 1].innerHTML;
-    assert.ok(navs.length >= 2, 'drawn again once the chips appeared');
-    assert.doesNotMatch(chip(last, 'coins'), /hidden/);
-    assert.match(last, /data-chip-id="coins"[^>]*>[\s\S]*?160,774/);
-    assert.match(last, /data-chip-id="vibes"[^>]*>[\s\S]*?2,500/);
-    assert.match(last, /id="openvibe-chips-all"/, 'one folded chip for phones');
-    assert.match(last, /aria-label="Your balances: OpenCoins 160,774, Vibes 2,500"/);
-    assert.deepStrictEqual(JSON.parse(store['ov-wallet:usr_7']), { coins: '160,774', vibes: '2,500' });
+    assert.strictEqual(calls.filter((u) => u.endsWith('/api/v1/me/wallet')).length, 1);
+    assert(!calls.some((u) => u.includes('/api/coins/me') || u.includes('/api/me/vibes')));
+    const html = navs[navs.length - 1].innerHTML;
+    assert.match(html, /160,799/); assert.match(html, /400/);
+    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['coins', 'vibes']);
+    data.used_ai_this_month = true;
+    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['balance', 'coins']);
+    data.balances.coins.amount = '0'; data.balances.vibes.amount = '0';
+    assert.strictEqual(navbar._wallet.walletOrder(data)[0], 'balance');
+    navbar.setUser(null, null); await settle();
+    assert(!navs[navs.length - 1].innerHTML.includes('data-chip-id="coins"'));
 
-    // A Network that answers both (4.25.0): one request, Billing never asked (no site's connect-src allowed it).
+    // A site that signs people in with its own cookie gives the navbar no token: the chips read the wallet with the
+    // person's Network cookie (credentials: 'include', no Authorization), and a wallet that cannot be read hides them:
+    // never a "…" that stays (2026-11-09: 4.170's chips sat at "…" on every such site).
     {
-        const store2 = {};
-        const both = { coins: { status: 200, body: { balance: 160774, vibes: 2500 } }, vibes: { status: 500, body: {} } };
-        const r = load(store2, both);
-        r.navbar.init(base);
+        const cookieSite = load({}, { wallet: { status: 200, body: data } });
+        cookieSite.navbar.init({ ...base, token: null });
         await settle();
-        assert.deepStrictEqual(wallet(r.calls), ['https://openvibe.network/api/coins/me?with=vibes'], 'one request for both balances');
-        assert.match(r.navs[r.navs.length - 1].innerHTML, /data-chip-id="vibes"[^>]*>[\s\S]*?2,500/);
+        const i = cookieSite.calls.findIndex((u) => u.endsWith('/api/v1/me/wallet'));
+        assert(i >= 0, 'asked without a token');
+        assert.strictEqual(cookieSite.inits[i].credentials, 'include', "the person's Network cookie goes along");
+        assert(!(cookieSite.inits[i].headers && cookieSite.inits[i].headers.Authorization), 'no Authorization header');
+        assert.match(cookieSite.navs[cookieSite.navs.length - 1].innerHTML, /data-chip-id="(coins|vibes|balance)"/, "the chips show");
+        const signedOut = load({}, { wallet: { status: 401, body: { error: 'sign in' } } });
+        signedOut.navbar.init({ ...base, token: null });
+        await settle();
+        const last = signedOut.navs[signedOut.navs.length - 1].innerHTML;
+        assert(!/data-chip-id="(coins|vibes|balance)"/.test(last), 'no chips when the wallet cannot be read');
+        assert(!last.includes('…'), 'and no "…" left behind');
     }
-    ({ navbar, navs, calls } = load(store, answers));
-    navbar.init(base);
-    await settle();
-
-    // Drawn again on the same page within a minute: no second request.
-    const before = wallet(calls).length;
-    navbar.init(base);
-    await settle();
-    assert.strictEqual(wallet(calls).length, before, 'at most once a minute');
-
-    // Next page: the kept balances paint at once.
-    ({ navbar, navs, calls } = load(store, answers));
-    navbar.init(base);
-    assert.doesNotMatch(chip(navs[0].innerHTML, 'coins'), /hidden/);
-    assert.match(navs[0].innerHTML, /data-chip-id="coins"[^>]*>[\s\S]*?160,774/, 'painted from the kept balance');
-    await settle();
-
-    // Billing not the ledger yet (409): the Vibes chip goes away and is forgotten; OpenCoins stay.
-    answers.vibes = { status: 409, body: { code: 'billing.not_authoritative' } };
-    ({ navbar, navs, calls } = load(store, answers));
-    navbar.init(base);
-    await settle();
-    const after409 = navs[navs.length - 1].innerHTML;
-    assert.match(chip(after409, 'vibes'), /hidden/);
-    assert.doesNotMatch(chip(after409, 'coins'), /hidden/);
-    assert.doesNotMatch(after409, /id="openvibe-chips-all"/, 'one chip left: nothing to fold');
-    assert.deepStrictEqual(JSON.parse(store['ov-wallet:usr_7']), { coins: '160,774' });
-
-    // Signed out, or a site that did not ask: no chips, no requests.
-    ({ navbar, navs, calls } = load({}, answers));
-    navbar.init({ ...base, user: null, token: null });
-    navbar.init({ ...base, wallet: false });
-    await settle();
-    assert.strictEqual(wallet(calls).length, 0);
-    assert.doesNotMatch(navs.map((n) => n.innerHTML).join(''), /data-chip-id="coins"/);
-
-    // Live sets its own coins and vibes chips: they stay, with no second pair.
-    ({ navbar, navs, calls } = load({}, answers));
-    navbar.init({ ...base, chips: [{ id: 'coins', icon: 'fa-coins', value: '9' }, { id: 'vibes', icon: 'fa-wallet', value: '1' }] });
-    await settle();
-    const live = navs[navs.length - 1].innerHTML;
-    assert.strictEqual((live.match(/data-chip-id="coins"/g) || []).length, 1);
-    assert.match(live, /data-chip-id="coins"[^>]*>[\s\S]*?>9</);
-    console.log('navbar-wallet-chips: all checks passed');
+    console.log('wallet chips: one Billing read, all zeros supported, Balance promoted for AI users, signout clears chips, cookie sites read by cookie');
 })().catch((e) => { console.error(e); process.exit(1); });

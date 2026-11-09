@@ -35,7 +35,7 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(PAGE); }
-    if (u.pathname === '/kit-web.js' || u.pathname === '/kit-data-web.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, u.pathname.slice(1)))); }
+    if (u.pathname === '/kit-web.js' || u.pathname === '/kit-data-web.js' || u.pathname === '/surfaces.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, u.pathname.slice(1)))); }
     res.writeHead(404); return res.end();
 });
 

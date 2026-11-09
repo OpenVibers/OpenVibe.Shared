@@ -50,7 +50,9 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
       { service: 'video', subject: 'Clips play from where you left off.', deployed_at: new Date(Date.now() - 7200e3).toISOString() } ] });
     if (s.startsWith('https://openvibe.network/api/history')) return J({ items: [{ title: 'A stream', url: 'https://openvibe.live/ada', service: 'live', updated_at: new Date().toISOString() }, { title: 'A pic', url: 'https://openvibe.pics/1', service: 'pics', updated_at: new Date(Date.now() - 1000).toISOString() }], services: [{ service: 'live', count: 5 }, { service: 'pics', count: 2 }] });
     if (s.startsWith('https://openvibe.network/api/v1/me/home-screen')) return (o && o.method === 'PUT') ? J({ ok: true }) : J({}, false, 404);
-    if (s.startsWith('https://openvibe.community/api/v1/pulse')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
+    if (s === 'https://openvibe.network/api/frame/attachments') return J({ attachment: { media_id: 'med_01ABCDEFGHJKMNPQRSTVWXYZ0' + (window.__calls.filter((c) => c.u === s).length) } }, true, 201);
+    if (s === 'https://openvibe.network/api/frame/posts') return J({ id: 7 }, true, 201);
+    if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
     if (s.startsWith('https://openvibe.actor/api/v1/me/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
     if (s.startsWith('https://')) return J({}, false, 404);
     return realFetch(u, o);
@@ -177,8 +179,14 @@ const server = http.createServer((req, res) => {
         await openTab(s, 'you');
         assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
         assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /Juniper.*Working.*Reading job posts/, 'it names the Actor, its state and its step');
-        assert.ok(await until(s, `document.querySelectorAll('.ovh-recent .ovh-app').length === 2`), 'Recent shows the places opened lately');
-        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-recent .ovh-app')].map((a) => a.getAttribute('data-id'))`), ['live', 'pics']);
+        // You on top: the name, Display (the Look panel) and Settings beside it; Jump back in as cards; Most used as one bar.
+        assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-me .ovh-who-txt b').textContent`), 'Ada', 'your name on top');
+        assert.ok(await s.evaluate(`!!document.querySelector('.ovh-me [data-ov-look-open]') && !!document.querySelector('.ovh-me a[href="https://openvibe.network/my"]')`), 'Display and Settings beside it');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow')`), 'Display is not at the foot any more');
+        assert.ok(await until(s, `document.querySelectorAll('.ovh-rail .ovh-card').length === 2`), 'Jump back in shows the places opened lately');
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-rail .ovh-card')].map((a) => a.getAttribute('href'))`), ['https://openvibe.live/ada', 'https://openvibe.pics/1']);
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].map((k) => k.textContent)`), ['Live5', 'Pics2'], 'Most used: pages opened per site');
+        assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec a.ovh-link[href="https://openvibe.report/me"]') || {}).textContent`), 'Your stats', 'Most used links to your stats on Report');
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec:not(:first-child) span, .ovh-grid:not(.ovh-recent)') && [...document.querySelectorAll('.ovh-sec span')].map((x) => x.textContent).find((x) => /home|Popular/i.test(x)))`), 'Your home', 'signed in, Home is theirs from the start');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons');
         await s.evaluate(`document.querySelector('.ovh-sec button').click(), true`);
@@ -187,8 +195,27 @@ const server = http.createServer((req, res) => {
         await s.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);
         assert.ok(await until(s, `!!document.querySelector('.ovh-compose textarea')`), 'the composer shows when Community says you can post');
         assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-compose textarea').placeholder`), "What's new, Ada?");
+        // Pictures (11-09: "you can make posts and put images"): two picked, each must say what it shows, then each
+        // uploads through Network and the post names them with that text.
+        await s.evaluate(`(async () => {
+            const ta = document.querySelector('.ovh-compose textarea'); ta.value = 'Golden hour'; ta.dispatchEvent(new Event('input'));
+            const c = document.createElement('canvas'); c.width = 40; c.height = 30; c.getContext('2d').fillRect(0, 0, 40, 30);
+            const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+            const dt = new DataTransfer(); dt.items.add(new File([blob], 'a.png', { type: 'image/png' })); dt.items.add(new File([blob], 'b.png', { type: 'image/png' }));
+            const input = document.querySelector('.ovh-compose input[type=file]'); input.files = dt.files; input.dispatchEvent(new Event('change'));
+        })(), true`);
+        assert.ok(await until(s, `document.querySelectorAll('.ovh-pic img[src^="data:"]').length === 2`), 'two pictures, each with a preview');
+        assert.ok(await s.evaluate(`document.querySelector('.ovh-post').disabled && document.querySelector('.ovh-compose-hint').textContent === 'Describe each picture'`), 'no post until each picture says what it shows');
+        await s.evaluate(`[...document.querySelectorAll('.ovh-pic input')].forEach((x, i) => { x.value = ['A dark sky', 'The same sky'][i]; x.dispatchEvent(new Event('input')); }), true`);
+        assert.ok(!(await s.evaluate(`document.querySelector('.ovh-post').disabled`)), 'described: Post is on');
+        await s.evaluate(`document.querySelector('.ovh-post').click(), true`);
+        assert.ok(await until(s, `/Posted/.test(document.querySelector('.ovh-compose ~ .ovh-note, .ovh-note').textContent)`), 'it posts');
+        const sent = await s.evaluate(`window.__calls.filter((c) => c.u.endsWith('/api/frame/attachments') || c.u.endsWith('/api/frame/posts')).map((c) => ({ u: c.u.replace('https://openvibe.network/api/frame/', ''), auth: c.auth, body: typeof c.body === 'string' ? c.body : '' }))`);
+        assert.deepStrictEqual(sent.map((c) => c.u), ['attachments', 'attachments', 'posts'], 'each picture, then the post');
+        assert.ok(sent.every((c) => c.auth === 'Bearer tok-1'), 'with the person\'s token');
+        assert.deepStrictEqual(JSON.parse(sent[2].body).pictures.map((x) => x.alt), ['A dark sky', 'The same sky']);
         await s.close();
-        console.log('menu-home-screen-chrome: home grid, long-press and drag, keys, remove and put back, folders with tool icons, the wall, today, the composer, Network sync ok');
+        console.log('menu-home-screen-chrome: home grid, long-press and drag, keys, remove and put back, folders with tool icons, the wall, today, the composer with pictures, Network sync ok');
     } finally {
         await browser.close();
         server.close();

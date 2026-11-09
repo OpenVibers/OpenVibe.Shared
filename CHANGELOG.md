@@ -1,5 +1,231 @@
 # Changelog
 
+## 4.175.0 — 2026-11-09
+
+- **OpenVibe Link**: the shared navigation's Machines entry points at openvibe.link/machines instead of the old
+  node host, and the shipped-services list names the product Link. The Contracts pin moves to v0.373.0. No API changes.
+
+## 4.174.0 — 2026-11-09
+
+- **Home fills its width** (`ov-home.js`; the owner, 11-09: the icons were "offset and need to utilize more of the
+  space"). The apps on the menu's Home grow with their cell up to 72 px (they were a fixed 56 px in a wider cell), the
+  glyph is about half the tile, folders scale their four minis with the tile, and the grid lines up with the cards
+  above it. The names are a touch larger and brighter.
+- **An Edit button on Home** (`ov-home.js`). A small pencil beside "Your home" starts arranging: move apps, remove
+  them, make folders. Press and hold still works. While arranging, the button is a Done pill with a check, and Home
+  stays where it was: the hint is under the grid and the cards above it stay (quieted), so a long-press that turns into
+  a drag never has the grid move under the finger.
+- **The site's tab matches Feed and You** (`search.js`). The first tab of the menu showed the site's coloured app mark
+  (a disc and ring around the glyph); it now shows the glyph alone, in the label's colour and at the other tabs'
+  weight. On a phone the three tabs are tighter, so a long name like "Community" fits whole.
+
+## 4.173.0 — 2026-11-09
+
+- **The wallet works on sites that keep the access cookie from page scripts** (`navbar.js`, `ov-wallet.js`). 4.170's
+  chips and sheet sent only a Bearer token. The sites on `openvibe-sdk/sso` with `httpOnlyAccess` (Actor, Bench, Casino,
+  Codes, Connect, Design, Exchange, Vision) hand the navbar none, so their chips sat at "…" and Wallet did not open.
+  With no token, the chips and the sheet now ask Network's relay with the person's Network session cookie
+  (`credentials: 'include'`; Network #724 turns it into the Bearer, only for allowed origins). A wallet that cannot be
+  read hides the chips instead of leaving "…". `OpenVibeWallet.open` takes `cookieSession: true`. Sites whose navbar
+  reads `ov_token` are unchanged.
+- **The wallet sheet goes by its content hash** (`scripts/sibling-revs.js`): `ov-wallet.js` and `ov-wallet.css` were
+  loaded without `?v=` since 4.170, so a fix reached phones up to a day late.
+
+## 4.172.0 — 2026-11-09
+
+- **Notices read as what happened** (`notification-ui.js`, the bell, its toasts and the Dock's Activity tab): an
+  agent's notice shows its task, not the words it was given ("Done: <prompt>" is the prompt; "approve: <step>
+  (<task>)" is the step with an "Approval" label), and rich_content's `task_title` and `step` win when Actor sends
+  them; two finished tasks are two rows. A message holding a value's JSON (a watch on a feed sends the entry, cut at
+  300 characters) reads as its title and summary, and JSON with neither is left out instead of shown as code.
+- **Faces per service**: Actor's notices wear an agent, Watch's an eye, Connect's and Link's a computer, Billing's a
+  coin and the welcome a spark, instead of every service sharing the grid; their rows say Agents, Watch, Connect,
+  Link, Community, Wallet, Blog, Design, AI or Events. The bell script's budget is 25.5 KB brotli (25.24 measured).
+- **The account menu asks only the Network for Vibes** (`navbar.js`): the direct `billing.openvibe.network/api/me/vibes`
+  fallback (for a Network older than 10-28) and the `billingBase` option are gone. No site's CSP allowed that host, so
+  it could only fail. A Network answer without Vibes shows no Vibes chip.
+
+## 4.171.0 — 2026-11-09
+
+- **The page head's icon and actions sit on the title's first line** (`kit.pageHead`): a title that wraps to three
+  lines (a home page's hero, openvibe.space) kept them floating beside its middle. The row aligns to the top and
+  both are centred on the first line (`--ovk-page-line`, in rem and vw, so a text button in the actions keeps its size).
+
+## 4.170.0 — 2026-11-09
+
+- **The wallet, one sheet on every site** (`ov-wallet.js`, opened from the navbar's balance chips): OpenCoins, Vibes
+  and Balance with how to earn, buy or top up; the store (items travel with the account, priced in Vibes or
+  OpenCoins); your items with Equip and Unequip.
+- **Through Network**: every call goes to `https://openvibe.network/api/frame/wallet/…` (Network #718, nine fixed
+  Billing and Inventory paths, the person's token only). Every site's CSP refuses billing. and inventory. hosts.
+- **Checkout only on a named host**: the sheet follows a checkout URL only when it is https, carries no credentials,
+  and its host is one Billing names for its providers (Billing #228) or billing.openvibe.network. Anything else is
+  "Checkout is unavailable."
+- Each purchase carries its own idempotency key and keeps it across a retry, so a double tap never charges twice.
+- Designed here: no eyebrow, makers by name ("By Live"), the close ring for the keyboard only, 44 px controls,
+  phone sheet from the bottom.
+
+## 4.169.0 — 2026-11-09
+
+- **kit.switchRow, redrawn** (ask 44, the paste form: "polish and align it: switches, sizes"): an icon tile, a title and
+  one muted line, then an iOS-style switch; the whole 56 px row is the target and the switch is the checkbox itself
+  (`role="switch"`), so a form still posts without JavaScript. The older `label`/`hint`/`on` names still work.
+- **kit.segmented**: three or four equal choices in one 44 px control, icons before the words; radios underneath, so
+  the value posts as a radio group's. Without a label it stands alone (a form puts its own label above it).
+- Glyphs: `flame` and `eye-off` (Burn after reading, Hide).
+
+## 4.168.0 — 2026-11-09
+
+- **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows
+  'Draft a blog post · Done · AI · gpt-5-nano', 25 failed rows 'AI is resting for a moment' and raw JSON errors; an empty
+  Agents tab that is wasted space for no reason"). `dock-runs.js` (loaded with the tab) draws each run as a row: the
+  skill's icon in its own colour, the subject as the title, and one status line — Running (the live step and a thin
+  bar), Waiting (what it needs), Scheduled (when), Done (the result, the cost, the time, the model with its maker's
+  mark) or Failed (the words and what happens next). Open, Retry, Stop and "run again with another model" are on the
+  row. Six identical failures in a day are one row, `×6`, that expands. A failure never shows the provider's own text.
+- **The Agents overview** (instead of an empty middle): the next scheduled run with a countdown, today's and this
+  week's numbers (runs, done, failed, spend) as three small tiles, the last three results as rows, and "Things agents
+  can do for you": a grid of six skills from Actor's catalogue that start a run in one tap. The foot stays one row:
+  "All runs" and "Give an agent a task".
+- **The Vibe tab has a conversation list** (`dock-vibe.js`): New conversation at the top, then each chat with its last
+  line, its time and the site it began on; a back arrow in a conversation. The tab opens on the conversation you had
+  open within the last twenty minutes, else on the list, and the choice is the Dock's synced state, so it follows you
+  across pages and sites. "Vibe did not answer" says why and offers a retry. The composer shows at once, with the
+  attach and the mic.
+- **The Chats tab has an AI chats row** among the DMs, placed by date like the others: the Vibe mark, "AI chats", the
+  count, the last conversation's title and when Vibe answered; tapping it opens the Vibe tab on its list. A group's row
+  shows up to three faces, not a number sign.
+- **The Dock keeps its size and corner per person** and its grip is always visible; the Vibe conversation and the
+  Agents filter are restored with it.
+- **Restyled here (Opus):** a run is a row, not a box: the state as a coloured word (Running blue with a moving bar,
+  Waiting amber, Done green, Failed red), its words on two lines at most, the title opens it, Approve and Retry as filled
+  pills, the rest under a dots button. The tiles lead with their number (11 runs) and dots for done and failed. The Vibe
+  list gives each conversation its mark and its site's name (Blog, not openvibe.blog) and New conversation is a button.
+  The AI chats row has a Vibe avatar like every other row; group faces are ringed in the panel's own colour.
+- The one-tap skills are read through Network (`/api/v1/me/actions/skills`): every site's CSP refuses openvibe.actor.
+- The extension's read-only Dock offers no approve, decline, stop or retry.
+- **Early hints: the Link header only, by default** (`openvibe-shared/sw` `earlyHints`). nginx 1.28, the host's, takes an
+  upstream 103 as the final response and sends the real 200 as its body (tried 11-09 against nginx:1.28-alpine). The 103
+  goes out only with `{ send103: true }` or `OV_EARLY_HINTS=1`, for a proxy that passes it on (nginx 1.29+ with
+  `early_hints`). Cloudflare's Early Hints read the Link header.
+- **The Feed's composer takes pictures** (the owner, 11-09: "you can make posts and put images"). Up to four, each
+  with a line saying what it shows (Community requires the alt text; Post stays off until each has one). Big phone
+  photos are scaled to 2560 px before they go. Each picture uploads through Network (`POST /api/frame/attachments`,
+  Network #719) and the post names them (`POST /api/frame/posts`). Previews are small data: images, because not
+  every site's img-src allows blob:.
+
+## 4.167.0 — 2026-11-09
+
+- **The Feed, everything on the network, day by day** (the owner: "one huge feed of everything… all kinds of events and
+  even global chat… everything date by date… filter it by different things"). Community #310's kinds draw as rows of
+  what happened: people who joined (the count on a green tile), a busy chat room ("#general is busy", 15 messages this
+  hour), a quest badge (the person's face with a trophy), a calendar event (a date tile, the start in your own time), a
+  wiki page (its name, not its address), a stream that is over and the network's updates. Pictures, videos and posts
+  stay cards; their views, likes and replies show as icons with numbers.
+- A quiet **day line** (Today, Yesterday, the weekday, then the date) where the day changes; under an earlier day a row
+  says its clock time, not "yesterday" again.
+- New chips: **Following** (signed in: the people you follow), Chat, Events, Wiki, Quests.
+- One centred column on a computer (two columns left holes beside tall cards).
+- Fixed: a card with no picture (or a person with no avatar) drew a broken image of the page itself: `safe('')` resolved
+  an empty address against the page. Fixed: the Feed's root class `ovf` was the footer's, so the Feed took the
+  footer's margin, padding and top border (the gap above the chips); the Feed's classes are now `ovfd-*`.
+- Past go-lives fold into one card again now that Community sends them as kind `stream`.
+
+## 4.166.0 — 2026-11-09
+
+- **The Feed on every site** (the owner: "I still don't see the custom doom scrollable feed"): the menu's Feed, wall and
+  composer reach Community through Network's frame relay (`https://openvibe.network/api/frame/feed`, `/wall`,
+  `/status`; Network #714). Every site's Content-Security-Policy allows openvibe.network and refused
+  openvibe.community, so on every site but five the Feed fell back to its old sections. `o.frameBase` overrides the
+  relay (tests, staging); the menu no longer calls openvibe.community directly.
+
+## 4.165.0 — 2026-11-09
+
+- **Faster between pages and sites** (the owner, 11-09: "when you change sites… faster across sites… better caching on
+  the client"): the navbar adds a same-site prerender rule beside its prefetch, and prefetches links to the other
+  OpenVibe sites; `openvibe-shared/sw` sends the shell's files in a 103 Early Hint. The shared worker
+  (`/openvibe-sw.js`, also the Web Push worker) keeps **only content-addressed files** (a hash in the name or
+  `?v=<hash>`: immutable, public) and answers them from its cache; pages and every other file go to the network as the
+  browser sends them, so no page copy outlives a sign-out, nothing cuts a slow page off, and no stale script meets new
+  HTML (security review). A kill switch (`/api/v1/sw-config` on Network) unregisters it everywhere. Sites opt in to
+  registering it with `OpenVibeNavbar.init({ sw: true })`.
+- `robots.txt` welcomes Perplexity-User, Claude-User and Claude-SearchBot by name (discoverability, ask 93).
+- You: **Most used** links to **Your stats** on OpenVibe Report (`/me`: private by default, each section publishable).
+
+## 4.164.0 — 2026-11-09
+
+- **Chat's two views** (`openvibe-shared/messages`, `OVMessages.render(el, { messages, view: 'room' | 'bubbles', me })`;
+  the owner, 11-09: "texting bubbles like Android/iOS Messages, and the live chat room… switchable"). Bubbles: runs join
+  on the inner corners, the avatar beside the first with its column kept through the run, a coloured initial when there
+  is no picture, the time under the last, read ticks, sticky day chips. Room: one line per message wrapping under the
+  name on a phone, each person's name in a steady colour (tuned for dark and light). Only the newest message animates.
+  `OpenVibeUserMenu.register()` lets a site add actions to the shared user card.
+- **Page head** (`kit.pageHead({ back, icon, title, lede, actions })`; ask 64: "less websitey… an icon system"): a small
+  named back chip (44 px to the finger), the page's icon tile and name, 44 px actions, and the lede once and whole on
+  every screen. Product heroes can opt in (`showcase.hero({ pageHead })`).
+- **Upload kit** (`ov-upload.js`/`.css`: `OVUpload.picker`, `.queue`, `.progress`): drag and drop or choose, each file a
+  row with its picture or a file glyph, an × and its own progress (speed and time left smoothed); the total above for two
+  files or more; done draws a tick; Calm drops the sheen. Sites bring the transport (`upload(file, { onProgress, signal })`).
+- **The Feed, fixed for real data** (Community's /api/v1/feed is live): LIVE shows only while a channel is live now
+  (`live_now`, with a breathing chip and a red edge); back-to-back go-lives that are over fold into one card of faces and
+  names; a trending picture shows its site's icon and "Trending" (not a "?"); video cards no longer leave the flow (their
+  class collided with the preview video's, `.ovf-video`; cards are `.ovf-k-<kind>` now).
+
+## 4.163.0 — 2026-11-09
+
+- **You, redone** (the owner, 11-09: "the U tab still sucks, and you didn't do all the improvements"). You on top: your
+  picture (online), name and @handle linking to your profile, with **Display** beside it (the Look panel: theme, icons,
+  appearance, text size, motion, opening in place; navbar passes `look` to the menu) and **Settings** (Account). Display
+  leaves the foot of the tab for signed-in people.
+- **Jump back in** is a row of cards you swipe: each place's own hue icon, a two-line title, a time that keeps up while the
+  menu is open, and LIVE with a breathing ring for a stream that is on now. It replaces Recent, which repeated the grid.
+- **Most used**: the pages you opened per site, as one bar and its key (five colours that tell apart in dark and light).
+- **Your own AI** is one compact row (mark, words, Set it up, an ×): a third of the height.
+- **Smart folders**: until you arrange your home, the sites past the first page sit in folders from the network's groups
+  (Watch, People, Make, Read, Play, Shop). A folder shows four different icons (Quick tools showed `</>` four times).
+- **Drag lands where you drop**: the drop is found by the grid's slots, not the sliding apps' drawn boxes (an app sliding
+  under the finger took the drop, so it landed one place off now and then).
+- **The video player's bar matches Live's**: 40 px buttons (44 on touch), centred icons.
+- Calm keeps the cards' fade and a slower live breath.
+
+## 4.162.0 — 2026-11-09
+
+- `kit.head` accepts an icon tile; `kit.section` accepts an icon and an action row that wraps on phones.
+  Rails accept an icon and use a labelled button for their action. Existing section markup is preserved when neither option is supplied. Empty-state actions already use primary
+  icon buttons. `tools/plain-sections-sweep.js` audits public pages for plain UI headings, empty lines and action links.
+- **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
+  the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
+  places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
+  its own icon) and Build as folders. A long-press (or Edit) starts arranging: drag an app to move it, arrow keys move
+  the focused one, − takes it off Home, All apps (N) lists every app and puts one back with +. The arrangement is kept
+  on the device and on Network (`GET/PUT /api/v1/me/home-screen`, once Network serves it). Recent searches are gone
+  from You (the field shows them).
+- **The Feed tab is a wall.** What's new with you (the composer, when Community says you can post), today's numbers
+  (people, streams, posts, new videos, with 14-day lines), the live bar, then the network's pulse: newest first,
+  back-to-back "went live" in one row of names, Show more. Every feed card shows until you turn some off (was the
+  first two); What's new names each site, what changed in plain words, when, "New" since your visit and "Big update",
+  and counts today's changes.
+- **The first tab is the site's name, never a page's word for itself** ("Home", "Welcome").
+
+- **The Dock fills the phone, and its header is one row** (owner, 11-09: "go all the way to the top… wasted space", "I
+  don't really understand what the pin does", "clicked off… it didn't close the pop over"). Phones: the Dock is the
+  whole screen, over the bar, inside the notch area; tablets: a full-height panel on the right; desktops: a 420 × 640
+  card by default. The header is the four tabs, then More and Close; More holds Start a timer, "Keep the Dock's button
+  on every page" (a switch that says what off means) and Open in a window of its own. More and the timer close on a tap
+  anywhere else, in the Dock or on the page, and on Escape. The Chats tab is **Messages**.
+
+- **No pill above the headline.** `sc.hero()` no longer draws an eyebrow (the owner, 11-09: the pill above every home's
+  headline "looks really cheesy… generic"); the headline and its lede say what the site is. `eyebrow` is ignored.
+
+- **Changing pages feels like one app** (owner, 11-09). A page chosen in the menu closes it (folding into the orb on a
+  phone) without spending Back; a menu still open when a page is swapped in place marks the new page; a link that leaves
+  the page draws the top bar at once. The bar (navbar and Boost alike) is 3 px of the OpenVibe gradient from the theme's
+  accents, with a soft glow and a bright running head; reduced motion keeps it still.
+- **Loading fits a short player** (the owner, 11-09): under 300 px the mark, words and buttons shrink and the hint goes;
+  Try again carries the retry arrows and other actions are icon buttons; the V ticks green before the screen fades.
+- **The Dock's Actor tab** (#351, under the name Agents), **Dock chats from a site's session** (#364), **one sheet
+  behaviour for scroll and dismissal** (#371), **six glyph styles** (#367) and **section headings with icons** (#369).
+
 ## 4.161.0 — 2026-11-09
 
 - **Menus open from where you tapped** (the owner, 11-09: "custom animations… content aware… where you're clicking"):
@@ -71,35 +297,6 @@
   each; `numbers()` real numbers that roll up once with 30-day lines; `flow()` how it works with a line that draws.
   Server-rendered words and numbers; motion only adds, never inside an SVG's children, and stops for reduced motion and
   Calm. Its CSS (`CSS`) and starter (`MOTION_JS`) are separate, so homes that do not use it do not grow.
-
-- **The menu's You tab is a home screen** (owner, 11-09: "make it more like a phone"). `ov-home.js` (a sibling, loaded
-  the first time You or Feed opens): your Actor on top (its state and step, or one invitation), Recent (the last five
-  places opened), then Home: your places in a grid, the most popular until you arrange it, with Tools (every tool with
-  its own icon) and Build as folders. A long-press (or Edit) starts arranging: drag an app to move it, arrow keys move
-  the focused one, − takes it off Home, All apps (N) lists every app and puts one back with +. The arrangement is kept
-  on the device and on Network (`GET/PUT /api/v1/me/home-screen`, once Network serves it). Recent searches are gone
-  from You (the field shows them).
-- **The Feed tab is a wall.** What's new with you (the composer, when Community says you can post), today's numbers
-  (people, streams, posts, new videos, with 14-day lines), the live bar, then the network's pulse: newest first,
-  back-to-back "went live" in one row of names, Show more. Every feed card shows until you turn some off (was the
-  first two); What's new names each site, what changed in plain words, when, "New" since your visit and "Big update",
-  and counts today's changes.
-- **The first tab is the site's name, never a page's word for itself** ("Home", "Welcome").
-
-- **The Dock fills the phone, and its header is one row** (owner, 11-09: "go all the way to the top… wasted space", "I
-  don't really understand what the pin does", "clicked off… it didn't close the pop over"). Phones: the Dock is the
-  whole screen, over the bar, inside the notch area; tablets: a full-height panel on the right; desktops: a 420 × 640
-  card by default. The header is the four tabs, then More and Close; More holds Start a timer, "Keep the Dock's button
-  on every page" (a switch that says what off means) and Open in a window of its own. More and the timer close on a tap
-  anywhere else, in the Dock or on the page, and on Escape. The Chats tab is **Messages**.
-
-- **No pill above the headline.** `sc.hero()` no longer draws an eyebrow (the owner, 11-09: the pill above every home's
-  headline "looks really cheesy… generic"); the headline and its lede say what the site is. `eyebrow` is ignored.
-
-- **Changing pages feels like one app** (owner, 11-09). A page chosen in the menu closes it (folding into the orb on a
-  phone) without spending Back; a menu still open when a page is swapped in place marks the new page; a link that leaves
-  the page draws the top bar at once. The bar (navbar and Boost alike) is 3 px of the OpenVibe gradient from the theme's
-  accents, with a soft glow and a bright running head; reduced motion keeps it still.
 
 ## 4.158.0 — 2026-11-09
 

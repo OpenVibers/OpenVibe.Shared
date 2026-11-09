@@ -22,12 +22,15 @@ const BROWSER = Object.freeze([
     'notification-live.js', // the bell's realtime feed over OpenVibe.Events; notification-ui loads it on demand (realtime on)
     'action-center.js',     // the ✦ Action Center; notification-ui loads it on the first click
     'dock.js',              // the Dock and its pill; navbar.js loads it for a signed-in person
+    'dock-runs.js',         // the Dock's content-aware Agents rows and overview, loaded with that tab
+    'ai-marks-client.js',   // maker marks on a run receipt, loaded only in Agents
     'presence.js', 'overlay.js', 'nav-slots.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
     'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
     'dock-share.js',        // the Dock's Send to… (4.144.0); dock.js loads it the first time something is sent
     'dock-card.js',         // a known OpenVibe link's card under a Dock message (4.147.0); loaded the first time one shows
     'ov-canvas.js',         // an agent's live panel (actor.canvas@1, 4.145.0); a page that shows canvases loads it
+    'dock-actor.js',        // the Dock's Actor block (Actor v3 A3); dock.js loads it the first time the Actor tab opens
     'dock-agent.js',        // the Dock's agent view (K-D3); dock.js loads it the first time the Agents tab opens
     'dock-timeline.js',     // the Dock's one timeline (A6); dock.js loads it with the Agent panel
     'account-switcher.js',
@@ -43,13 +46,17 @@ const BROWSER = Object.freeze([
     'ov-qr.js',             // a QR code from a link, on the device: the Share sheet's QR code (ov-share.js loads it on first use)
     'ov-locker-core.js',    // openvibe-sdk/locker for the browser, generated (scripts/build-locker-core.js): WebCrypto only, the SDK's own vectors
     'ov-locker.js',         // Locker in the browser (plan Q2): a locked item's card, making and unlocking your locker; crypto in ov-locker-core.js
+    'ov-wallet.js',
     'ov-share.js',          // the one Share sheet (plan track Q): who can open a thing, people by @name, transfer; navbar.js loads it on the first press of a [data-ov-share-sheet] button
+    'ov-upload.js',         // shared file picker, upload queue and ov-progress
+    'messages.js',          // Chat's two views: room lines and texting bubbles (openvibe-shared/messages)
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'ov-home.js',           // the menu's home screen and wall (search.js loads it for You and Feed)
     'history.js',           // cross-site history
     'sso-client.js',        // link hand-off, FedCM
     'panels.js',            // one-open-at-a-time panel coordinator
+    'surfaces.js',          // scroll locking and gestures for sheets; outside pointer for pop-overs
     'ui.js',                // toasts and page notices
     'route-transition.js',  // page-move bar, loading line and fade-in; web-runtime.js fetches it on the first move
     'boost.js',             // smooth same-site page moves for a server-rendered site (OVBoost; plan T11)
@@ -86,7 +93,10 @@ const STYLES = Object.freeze([
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
     'ov-forms.css',         // the look of ov-forms.js's select, the site-coloured checkboxes, switches and sliders, .ov-field (docs/forms.md)
     'ov-locker.css',        // ov-locker.js's look: the locked card, the locker sheets, the recovery kit (docs/locker.md)
+    'ov-wallet.css',
     'ov-share.css',         // ov-share.js's look: the sheet, the recipient's offer banner, the not-on-the-list gate (docs/share.md)
+    'ov-upload.css',        // picker, queue and ov-progress states
+    'messages.css',         // the room and bubble views' look
     'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
     'thread.css',           // the conversation UI's look (openvibe-shared/thread, ov-thread.js; plan L55 C4)
     'kit-layout.css',       // the fluid scale, the layout primitives (.ov-stack, .ov-switcher…) and the opt-in .ov-base (4.78.0; after kit.css)
@@ -100,6 +110,7 @@ const STYLES = Object.freeze([
 const FONTS = Object.freeze([
     'ov-brand.woff2',       // Nunito (SIL OFL 1.1, OFL-Nunito.txt), Latin, weights 700-900: the OpenVibe names (4.59.0)
     'ov-glyphs.woff2',      // the OpenVibe glyphs as a font (4.62.0; TTF and OTF for desktop apps are in glyph-fonts/)
+    'ov-glyphs-thin.woff2', 'ov-glyphs-light.woff2', 'ov-glyphs-bold.woff2', 'ov-glyphs-solid.woff2',
 ]);
 // Pictures sites serve at /shared/<file>.
 const IMAGES = Object.freeze([

@@ -171,6 +171,15 @@
         } catch { return null; }
     }
 
+    // Times that keep up while the menu is open (once a minute; nothing runs while it is closed).
+    let agoTimer = 0;
+    function tickAgo() {
+        clearInterval(agoTimer);
+        agoTimer = setInterval(() => {
+            if (!el || !el.classList.contains('is-open')) { clearInterval(agoTimer); agoTimer = 0; return; }
+            el.querySelectorAll('[data-at]').forEach((m) => { const t = ago(m.dataset.at); if (t) m.textContent = [m.dataset.pre, t].filter(Boolean).join(' · '); });
+        }, 60000);
+    }
     function ago(iso) {
         const t = Date.parse(iso || ''); if (!isFinite(t)) return '';
         const m = Math.max(0, Math.round((Date.now() - t) / 60000));
@@ -218,6 +227,12 @@
 .ovs-starttabs .ovs-tab .ovs-tab-ic { position: relative; flex: none; display: grid; place-items: center; width: 22px; height: 22px; overflow: visible; }
 .ovs-tab-ic > svg { width: 20px; height: 20px; }
 .ovs-tab-ic .ov-icon { display: grid; place-items: center; }
+/* The site's tab wears its glyph like Feed and You (owner, 11-09): no disc and no ring, the glyph at their weight and in
+   the label's colour. The icon's box is drawn larger than the slot so the solid glyph itself is about 18 px. */
+.ovs-tab-ic .ov-icon .ovi-bg, .ovs-tab-ic .ov-icon .ovi-ring, .ovs-tab-ic .ov-icon .ovi-comet, .ovs-tab-ic .ov-icon .ovi-prog { display: none; }
+.ovs-tab-ic .ov-icon { --ovi-glyph: currentColor; color: currentColor; width: 22px; height: 22px; overflow: visible; }
+.ovs-tab-ic .ov-icon svg { width: 40px; height: 40px; margin: -9px; flex: none; }
+@media (max-width: 420px) { .ovs-starttabs .ovs-tab { padding: 0 7px; gap: 6px; font-size: 13.5px; } }
 .ovs-tab-av { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: block; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 18%, transparent); }
 .ovs-tab[aria-selected="true"] .ovs-tab-av { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
 .ovs-tab-on { position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
@@ -645,7 +660,7 @@
                     const main = document.createElement('span'); main.className = 'ovs-main';
                     const t = document.createElement('span'); t.className = 'ovs-title'; t.textContent = it.title; main.appendChild(t);
                     if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; t.appendChild(tg); }
-                    if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
+                    if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; if (it.at) { m.dataset.at = it.at; m.dataset.pre = it.metaPre || ''; } main.appendChild(m); }
                     if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
                     if (it.image) {
                         const im = document.createElement('img');
@@ -928,7 +943,7 @@
             { title: 'Vibe', url: 'https://openvibe.chat/vibe', site: 'ov', kind: 'dock', dock: 'vibe' },
             { title: 'Codes', url: 'https://openvibe.codes/', site: 'codes', kind: 'you' },
             { title: 'Files', url: 'https://openvibe.download/files', site: 'drive', kind: 'you' },
-            { title: 'Machines', url: 'https://node.openvibe.network', site: 'plug', kind: 'you' },
+            { title: 'Machines', url: 'https://openvibe.link/machines', site: 'plug', kind: 'you' },
             { title: 'Wallet', url: 'https://openvibe.network/wallet', site: 'billing', kind: 'you' },
             { title: 'Account', url: 'https://openvibe.network/my', site: 'account', kind: 'you' },
             { title: 'Themes', url: 'https://openvibe.network/themes', site: 'theme', kind: 'you' },
@@ -1161,7 +1176,8 @@
         const title = String(x.title || '').replace(/\s*[·|–—-]\s*(?:OpenVibe\.\w+|open\.\w+)\s*$/i, '').replace(/^OpenVibe\.\w+:\s*/i, '').trim() || x.title;
         const live = pulseData && Array.isArray(pulseData.live) && pulseData.live.some((c) => c && c.url && safeUrl(c.url) && hostOf(c.url) === hostOf(x.url) && String(c.url).replace(/\/$/, '').toLowerCase() === String(x.url).replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase());
         const svc = x.service === 'media' ? 'media-hub' : x.service;
-        return { title: title.slice(0, 90), meta: [live ? 'Live now' : '', x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
+        const pre = [live ? 'Live now' : '', x.site].filter(Boolean).join(' · ');
+        return { title: title.slice(0, 90), meta: [pre, ago(x.at)].filter(Boolean).join(' · '), metaPre: pre, at: x.at, url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
     }
 
     /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
@@ -1170,10 +1186,8 @@
         const groups = [];
         if (homeLib()) {
             groups.push({ as: 'home', items: [], section: 'home' });
-            const seenH = new Set();
-            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5).map(backRow) : [];
-            groups.push({ title: 'Jump back in', items: backH, section: 'back' });
-            if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
+            // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
+            if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
         }
         if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
@@ -1222,8 +1236,12 @@
             seen.add(id); recentIds.push(id);
             if (recentIds.length >= 5) break;
         }
-        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+        // Jump back in (the last places, newest first) and what this person uses most (pages opened per site).
+        const seenB = new Set();
+        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
+        const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
+        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
             feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
@@ -1402,6 +1420,7 @@
         drainCards();
         syncFeeds();
         el.classList.add('is-open');
+        tickAgo();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.
         try { if (!(history.state && history.state.ovsMenu)) { history.pushState(Object.assign({}, history.state || {}, { ovsMenu: true }), ''); pushed = true; } } catch { pushed = false; }
@@ -1430,7 +1449,11 @@
                 requestAnimationFrame(() => { orbEl.classList.remove('is-from'); orbEl.classList.add('is-x'); });
             }
         }
-        document.documentElement.style.overflow = 'hidden';
+        if (root.OVSurfaces) {
+            surface = root.OVSurfaces.sheet({ el: el.querySelector('.ovs-panel'), opener: lastFocus,
+                header: el.querySelector('.ovs-bar'), body: listEl, close });
+            surface.open();
+        } else document.documentElement.style.overflow = 'hidden';
         input.placeholder = `Search ${here()}, or ask Vibe`;
         input.value = opts.q || '';
         paintGhost();
@@ -1446,7 +1469,7 @@
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         if (tab === 'tools' || tab === 'sites') setTimeout(() => { const t = listEl.querySelector(`[data-sec="${tab === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
-    let pushed = false, popping = false;
+    let pushed = false, popping = false, surface = null;
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         if (view === 'results' && rtabsEl) leaveResults();
@@ -1463,12 +1486,18 @@
             el.classList.remove('is-open');
             if (orbEl) orbEl.classList.remove('is-x', 'is-from');
         }
-        document.documentElement.style.overflow = '';
+        if (surface) { surface.destroy(); surface = null; }
+        else document.documentElement.style.overflow = '';
         if (inflight) { inflight.abort(); inflight = null; }
         if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
+
+    // On a phone the empty menu keeps focus on its orb to avoid raising the keyboard. Escape must still close it.
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !e.defaultPrevented && el && el.classList.contains('is-open')) { e.preventDefault(); close(); }
+    });
 
     document.addEventListener('ov:boost:load', () => { if (el && el.classList.contains('is-open') && !input.value) render(''); });
 

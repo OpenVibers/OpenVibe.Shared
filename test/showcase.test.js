@@ -203,3 +203,8 @@ console.log('showcase: all checks passed');
     assert.ok(/border-top:1px solid/.test(sc.CSS) && /\.sc-hero\+\.sc-sec/.test(sc.CSS), 'sections stand apart, the first after the hero without a rule');
     assert.ok(/api\/frame\/pulse/.test(sc.NETWORK_JS) && /textContent/.test(sc.NETWORK_JS) && !/innerHTML/.test(sc.NETWORK_JS), 'the live strip reads the Frame and writes text only');
 }
+// A product can use the shared page identity while retaining the hero's visual and calls to action.
+{
+    const html = require('../showcase').hero({ title: 'Record a video', lede: 'Review it before sharing.', pageHead: { icon: 'video', back: { href: '/', label: 'Home' } }, visual: false });
+    require('assert').ok(html.includes('ovk-page-head') && html.split('Review it before sharing.').length === 2);
+}
