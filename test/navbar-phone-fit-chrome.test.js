@@ -22,7 +22,10 @@ const PAGE = (signedIn) => `<!doctype html><html lang="en"><head><meta charset="
 <body><div id="navbar-mount"></div><main><h1>Games</h1></main>
 <script>
   localStorage.setItem('ov-wallet:42', JSON.stringify({ coins: 161000, vibes: 400 }));
-  window.fetch = async () => new Response('{}', { status: 404 });
+  // The signed-in bar's balances come from the wallet read (4.173: an unreadable wallet shows no chips at all).
+  window.fetch = async (u) => (String(u).endsWith('/api/v1/me/wallet')
+    ? new Response(JSON.stringify({ balances: { coins: { amount: '161000', scale: 0, currency: 'opencoins' }, vibes: { amount: '400', scale: 0, currency: 'vibes-bits' }, balance: { amount: '0', scale: 9, currency: 'USD' } } }), { status: 200, headers: { 'content-type': 'application/json' } })
+    : new Response('{}', { status: 404 }));
 </script>
 <script src="/navbar.js"></script>
 <script>

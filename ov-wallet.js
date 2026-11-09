@@ -26,8 +26,7 @@
     async function open(options) {
         close();
         const token = (options.getToken ? options.getToken() : options.token) || null;
-        // cookieSession: a site that signs people in with its own cookie has no token for the page; the sheet then asks
-        // with the person's Network session cookie (credentials: 'include'), which Network's relay turns into the Bearer.
+        // cookieSession: no token for the page (httpOnlyAccess sites): ask with the person's Network cookie instead.
         const cookie = !token && options.cookieSession === true;
         if (!token && !cookie) throw new Error('Sign in to open your wallet');
         // Every site's connect-src allows openvibe.network and refuses billing./inventory.openvibe.network, so the
