@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.166.0 — 2026-11-09
+## 4.168.0 — 2026-11-09
 
 - **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows
   'Draft a blog post · Done · AI · gpt-5-nano', 25 failed rows 'AI is resting for a moment' and raw JSON errors; an empty
@@ -23,6 +23,36 @@
   shows up to three faces, not a number sign.
 - **The Dock keeps its size and corner per person** and its grip is always visible; the Vibe conversation and the
   Agents filter are restored with it.
+- **Restyled here (Opus):** a run is a row, not a box: the state as a coloured word (Running blue with a moving bar,
+  Waiting amber, Done green, Failed red), its words on two lines at most, the title opens it, Approve and Retry as filled
+  pills, the rest under a dots button. The tiles lead with their number (11 runs) and dots for done and failed. The Vibe
+  list gives each conversation its mark and its site's name (Blog, not openvibe.blog) and New conversation is a button.
+  The AI chats row has a Vibe avatar like every other row; group faces are ringed in the panel's own colour.
+
+## 4.167.0 — 2026-11-09
+
+- **The Feed, everything on the network, day by day** (the owner: "one huge feed of everything… all kinds of events and
+  even global chat… everything date by date… filter it by different things"). Community #310's kinds draw as rows of
+  what happened: people who joined (the count on a green tile), a busy chat room ("#general is busy", 15 messages this
+  hour), a quest badge (the person's face with a trophy), a calendar event (a date tile, the start in your own time), a
+  wiki page (its name, not its address), a stream that is over and the network's updates. Pictures, videos and posts
+  stay cards; their views, likes and replies show as icons with numbers.
+- A quiet **day line** (Today, Yesterday, the weekday, then the date) where the day changes; under an earlier day a row
+  says its clock time, not "yesterday" again.
+- New chips: **Following** (signed in: the people you follow), Chat, Events, Wiki, Quests.
+- One centred column on a computer (two columns left holes beside tall cards).
+- Fixed: a card with no picture (or a person with no avatar) drew a broken image of the page itself: `safe('')` resolved
+  an empty address against the page. Fixed: the Feed's root class `ovf` was the footer's, so the Feed took the
+  footer's margin, padding and top border (the gap above the chips); the Feed's classes are now `ovfd-*`.
+- Past go-lives fold into one card again now that Community sends them as kind `stream`.
+
+## 4.166.0 — 2026-11-09
+
+- **The Feed on every site** (the owner: "I still don't see the custom doom scrollable feed"): the menu's Feed, wall and
+  composer reach Community through Network's frame relay (`https://openvibe.network/api/frame/feed`, `/wall`,
+  `/status`; Network #714). Every site's Content-Security-Policy allows openvibe.network and refused
+  openvibe.community, so on every site but five the Feed fell back to its old sections. `o.frameBase` overrides the
+  relay (tests, staging); the menu no longer calls openvibe.community directly.
 
 ## 4.165.0 — 2026-11-09
 

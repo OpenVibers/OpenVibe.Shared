@@ -26,9 +26,14 @@
     const LONG_MS = 450;
     const HOME_MAX = 40;
     const ACTOR = 'https://openvibe.actor';
-    const COMMUNITY = 'https://openvibe.community';
+    // The Feed, the wall and the composer go through Network's frame relay (/api/frame/feed, /wall, /status): every
+    // site's connect-src lets the navbar reach openvibe.network and refuses openvibe.community (11-09: the Feed fell back
+    // to its old sections on every site but five). o.frameBase overrides it (tests, staging).
+    const FRAME = 'https://openvibe.network/api/frame';
 
-    const safe = (u) => { try { const x = new URL(String(u || ''), location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
+    // Nothing in, nothing out: an empty value resolved against the page would be the page's own address (a card with no
+    // picture drew a broken image of the page itself, 11-09).
+    const safe = (u) => { if (u == null || String(u).trim() === '') return null; try { const x = new URL(String(u), location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     const ago = (iso) => {
         const t = Date.parse(iso || ''); if (!t) return '';
@@ -282,6 +287,15 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
         gear: [['circle', { cx: 12, cy: 12, r: 3 }], ['path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z' }]],
         x: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+        eye: [['path', { d: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z' }], ['circle', { cx: 12, cy: 12, r: 2.8 }]],
+        heart: [['path', { d: 'M12 20s-7.2-4.4-8.9-8.8C1.9 7.9 4 4.8 7.2 4.8c1.9 0 3.4 1 4.8 2.9 1.4-1.9 2.9-2.9 4.8-2.9 3.2 0 5.3 3.1 4.1 6.4C19.2 15.6 12 20 12 20Z' }]],
+        reply: [['path', { d: 'M20.5 11.6a8 8 0 0 1-11.7 7.1L4 20l1.3-4.4a8 8 0 1 1 15.2-4Z' }]],
+        people: [['circle', { cx: 9, cy: 8.5, r: 3.2 }], ['path', { d: 'M3 19.5c.8-3.2 3.1-5 6-5s5.2 1.8 6 5' }], ['circle', { cx: 16.8, cy: 9.2, r: 2.4 }], ['path', { d: 'M16.6 14.6c2.2.2 3.8 1.7 4.4 4.4' }]],
+        trophy: [['path', { d: 'M8 4h8v5.2a4 4 0 0 1-8 0V4Z' }], ['path', { d: 'M8 6H5.2c0 2.3 1.2 3.8 3.1 4.1M16 6h2.8c0 2.3-1.2 3.8-3.1 4.1M12 13.2V17M8.8 20h6.4M10 17h4' }]],
+        calendar: [['rect', { x: 3.5, y: 5, width: 17, height: 15.5, rx: 3 }], ['path', { d: 'M3.5 10h17M8 3v4M16 3v4' }]],
+        chat: [['path', { d: 'M5 5h11a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 16 16H10l-4.5 3.5V16H5a2.5 2.5 0 0 1-2.5-2.5v-6A2.5 2.5 0 0 1 5 5Z' }], ['path', { d: 'M7 9.5h7M7 12.5h4' }]],
+        page: [['path', { d: 'M6.5 3h7.5l4 4v14h-11.5Z' }], ['path', { d: 'M14 3v4h4M9.5 12h5M9.5 15.5h5' }]],
+        play: [['path', { d: 'M8 5.5v13l10.5-6.5Z' }]],
     };
     function svgIcon(name) {
         const NS = 'http://www.w3.org/2000/svg';
@@ -736,7 +750,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             const text = ta.value.trim(); if (!text) return;
             post.disabled = true;
             try {
-                const r = await fetch(`${o.communityBase || COMMUNITY}/api/v1/me/status`, { method: 'POST', credentials: 'omit', headers: { Authorization: `Bearer ${o.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                const r = await fetch(`${o.frameBase || FRAME}/status`, { method: 'POST', credentials: 'omit', headers: { Authorization: `Bearer ${o.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
                 const j = await r.json().catch(() => ({}));
                 if (!r.ok) throw new Error(j.detail || 'It did not post. Try again in a moment.');
                 ta.value = ''; note.hidden = false; note.textContent = 'Posted. It is on your profile and in your followers’ feeds.';
@@ -778,7 +792,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         const p = new URLSearchParams({ limit: '20' });
         if (signedIn(o)) p.set('for', 'me');
         if (cursor) p.set('after', cursor);
-        return `${o.communityBase || COMMUNITY}/api/v1/pulse?${p}`;
+        return `${o.frameBase || FRAME}/wall?${p}`;
     }
     function loadPulse(o, cursor) {
         return fetch(pulseUrl(o, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })
@@ -840,12 +854,14 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
     // ── Feed v2: a real feed (owner, 11-09: "a real feed… you scroll through easy content… sections or a filter system…
     // clean, intuitive"). Community's GET /api/v1/feed (plan "Feed v2"): one stream of cards by kind, chips on top, more as
     // you near the end. When the API is not there yet, the pulse wall above stands (timeline()).
-    const KINDS = [['', 'For you'], ['live', 'Live'], ['clip', 'Clips'], ['video', 'Videos'], ['pic', 'Pics'], ['post', 'Posts'], ['meme', 'Memes'], ['game', 'Games'], ['update', 'Updates']];
+    // Following needs a signed-in person (the feed reads their Network follows); the rest are the feed's kinds (Community
+    // #310: wiki pages, quest badges, busy chat rooms, calendar events and the people who joined, beside the media kinds).
+    const KINDS = [['', 'For you'], ['following', 'Following'], ['live', 'Live'], ['video', 'Videos'], ['clip', 'Clips'], ['pic', 'Pics'], ['post', 'Posts'], ['meme', 'Memes'], ['game', 'Games'], ['chat', 'Chat'], ['event', 'Events'], ['wiki', 'Wiki'], ['quest', 'Quests'], ['update', 'Updates']];
     function feedUrl(o, kind, cursor) {
         const p = new URLSearchParams({ limit: '12' });
-        if (kind) p.set('kind', kind);
+        if (kind === 'following') p.set('following', '1'); else if (kind) p.set('kind', kind);
         if (cursor) p.set('cursor', cursor);
-        return `${o.communityBase || COMMUNITY}/api/v1/feed?${p}`;
+        return `${o.frameBase || FRAME}/feed?${p}`;
     }
     function loadFeed(o, kind, cursor) {
         return fetch(feedUrl(o, kind, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })
@@ -861,78 +877,172 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         player = player || new IntersectionObserver((es) => es.forEach((x) => {
             const v = x.target.querySelector('video');
             if (x.isIntersecting && x.intersectionRatio >= 0.6) {
-                if (!v) { const nv = document.createElement('video'); nv.muted = true; nv.loop = true; nv.playsInline = true; nv.setAttribute('playsinline', ''); nv.preload = 'none'; nv.src = x.target.getAttribute('data-preview'); nv.className = 'ovf-video'; x.target.append(nv); nv.play().catch(() => {}); }
+                if (!v) { const nv = document.createElement('video'); nv.muted = true; nv.loop = true; nv.playsInline = true; nv.setAttribute('playsinline', ''); nv.preload = 'none'; nv.src = x.target.getAttribute('data-preview'); nv.className = 'ovfd-video'; x.target.append(nv); nv.play().catch(() => {}); }
                 else v.play().catch(() => {});
             } else if (v) v.pause();
         }), { threshold: [0, 0.6] });
         box.setAttribute('data-preview', preview);
         player.observe(box);
     }
+    const glyph = (name) => { const g = svgIcon(name); g.setAttribute('class', 'ovfd-gl'); return g; };
+    const when = (iso) => {
+        const t = Date.parse(iso || ''); if (!t) return '';
+        const d = new Date(t);
+        return d.toDateString() === new Date().toDateString() ? ago(iso) : d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    };
+    /** "Starts 2026-11-12 18:00 UTC" (Today's line when an event has no description) in the reader's own time. */
+    const startsLocal = (text) => {
+        const m = /^Starts (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC$/.exec(String(text || ''));
+        if (!m) return text;
+        const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
+        return `Starts ${d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+    };
+    const tidy = (v) => String(v || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const cap = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+    /** A face: the person's picture, else their initial; the site's icon on its hue when nobody is behind the card. */
+    function faceOf(c, cls) {
+        const face = h('span', cls || 'ovfd-face');
+        const av = c.actor && safe(c.actor.avatar);
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
+        else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 22)); }
+        else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
+        return face;
+    }
+    /**
+     * Something that happened, as one row (11-09, the owner: "all kinds of events and even global chat… everything date
+     * by date"): who or what on the left, what happened in words, then the kind, the site and when. A thing to look at
+     * (a video, a picture, a post) stays a card; a busy room, people joining, a badge, a calendar entry, a wiki edit
+     * and a stream that is over read better as a line.
+     */
+    function actRow(c, { tile, title, what, icon, text, site = true }) {
+        const a = h('a', `ovfd-act ovfd-k-${String(c.kind || '').replace(/[^a-z]/g, '')}`); a.href = safe(c.url);
+        const body = h('span', 'ovfd-act-txt');
+        body.append(h('b', '', String(title || c.title || '').slice(0, 200)));
+        const meta = h('small', '');
+        if (icon) meta.append(glyph(icon));
+        meta.append(document.createTextNode(` ${[what, site ? (c.site_name || c.site) : '', when(c.at)].filter(Boolean).join(' · ')}`));
+        body.append(meta);
+        if (text) body.append(h('span', 'ovfd-act-more', String(text).slice(0, 200)));
+        a.append(tile, body);
+        return a;
+    }
+    function activity(c) {
+        const kind = String(c.kind || '');
+        const title = String(c.title || '');
+        const who = String((c.actor && c.actor.name) || '').slice(0, 60);
+        if (kind === 'member') {
+            const n = (/^(\d[\d,]*)\s/.exec(title) || [])[1];
+            const tile = h('span', 'ovfd-tile ovfd-tile-num'); tile.append(h('b', '', n ? `+${n}` : '+'), glyph('people'));
+            return actRow(c, { tile, what: 'New on OpenVibe', icon: 'people', text: c.text, site: false });
+        }
+        if (kind === 'chat') {
+            const m = /^#(\S{1,64}):\s*(\d+) messages this hour$/.exec(title);
+            return actRow(c, { tile: faceOf({ site: c.site || 'chat' }), title: m ? `#${m[1]} is busy` : title, what: m ? `${m[2]} messages this hour` : 'Chat', icon: 'chat', text: c.text });
+        }
+        if (kind === 'event') {
+            const m = /^(Live|Event):\s*(.+)$/.exec(title);
+            const st = /^Starts (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC$/.exec(String(c.text || ''));
+            let tile;
+            if (st) {
+                const d = new Date(Date.UTC(+st[1], +st[2] - 1, +st[3], +st[4], +st[5]));
+                tile = h('span', 'ovfd-tile ovfd-tile-date');
+                tile.append(h('small', '', d.toLocaleDateString('en-US', { month: 'short' })), h('b', '', String(d.getDate())));
+            } else tile = faceOf(c.actor ? c : { site: c.site || 'today' });
+            return actRow(c, { tile, title: m ? m[2] : title, what: m && m[1] === 'Live' ? 'Stream on the calendar' : 'Event', icon: 'calendar', text: startsLocal(c.text), site: false });
+        }
+        if (kind === 'quest') {
+            const m = /^Finished a quest:\s*(.+)$/.exec(title);
+            const tile = h('span', 'ovfd-tile-wrap'); tile.append(faceOf(c), h('span', 'ovfd-badge')); tile.lastChild.append(glyph('trophy'));
+            return actRow(c, { tile, title: m ? m[1] : title, what: who ? `${who} finished a quest` : 'Quest finished', icon: 'trophy' });
+        }
+        if (kind === 'wiki') {
+            const m = /^Wiki:\s*([^/]{1,40}?)\s*\/\s*(.+)$/.exec(title);
+            return actRow(c, { tile: faceOf(c), title: m ? cap(tidy(m[2])) : title, what: m ? `${who ? `${who} · ` : ''}Wiki page in ${tidy(m[1])}` : `${who ? `${who} · ` : ''}Wiki page`, icon: 'page', text: c.text, site: false });
+        }
+        if (kind === 'update') return actRow(c, { tile: faceOf({ site: c.site || 'ov' }), what: 'Update', text: c.text });
+        if (kind === 'stream') {
+            const t = title.replace(/^.{1,60}? went live:?\s*/i, '');
+            return actRow(c, { tile: faceOf(c), title: t || `${who} streamed`, what: who ? `${who} streamed` : 'Stream', icon: 'play' });
+        }
+        return null;
+    }
+    const ACTS = new Set(['member', 'chat', 'event', 'quest', 'wiki', 'stream', 'update']);
+    function countsRow(n) {
+        const parts = [['views', 'eye', 'views'], ['likes', 'heart', 'likes'], ['comments', 'reply', 'replies']]
+            .filter(([k]) => Number(n && n[k]) > 0);
+        if (!parts.length) return null;
+        const row = h('span', 'ovfd-counts');
+        parts.forEach(([k, g, word]) => { const s = h('span', ''); s.setAttribute('aria-label', `${num(n[k])} ${word}`); s.title = `${num(n[k])} ${word}`; s.append(glyph(g), document.createTextNode(count(n[k]))); row.append(s); });
+        return row;
+    }
     function feedCard(c) {
         const kind = String(c.kind || 'post');
         const url = safe(c.url);
         if (!url) return null;
+        if (ACTS.has(kind) && !(c.media && safe(c.media.thumb))) return activity(c);
         if (kind === 'update') {
-            const a = h('a', 'ovf-update'); a.href = url;
+            const a = h('a', 'ovfd-update'); a.href = url;
             const ic = h('span', 'ovh-ic'); ic.append(siteIcon(c.site || 'ov', 20));
-            const t = h('span', 'ovf-update-txt'); t.append(h('b', '', String(c.title || '').slice(0, 160)), h('small', '', [c.site_name || c.site, ago(c.at)].filter(Boolean).join(' · ')));
+            const t = h('span', 'ovfd-update-txt'); t.append(h('b', '', String(c.title || '').slice(0, 160)), h('small', '', [c.site_name || c.site, ago(c.at)].filter(Boolean).join(' · ')));
             a.append(ic, t); return a;
         }
-        const a = h('a', `ovf-card ovf-k-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
-        const head = h('span', 'ovf-head');
-        const face = h('span', 'ovf-face');
+        const a = h('a', `ovfd-card ovfd-k-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
+        const head = h('span', 'ovfd-head');
+        const face = h('span', 'ovfd-face');
         const av = c.actor && safe(c.actor.avatar);
         // No person behind it (the network's trending pictures): the site's icon and the card's label, not a "?".
         if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
         else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 20)); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
-        const who = h('span', 'ovf-who');
+        const who = h('span', 'ovfd-who');
         who.append(h('b', '', String((c.actor && c.actor.name) || c.label || c.site_name || '').slice(0, 60)));
         const meta = h('small', '');
-        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', c.actor ? ago(c.at) : String(c.text || ago(c.at) || '').slice(0, 60)].filter(Boolean).join(' · ')}`));
+        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', c.actor ? when(c.at) : String(c.text || when(c.at) || '').slice(0, 60)].filter(Boolean).join(' · ')}`));
         who.append(meta);
         head.append(face, who);
-        if (kind === 'live' && c.live_now) { a.classList.add('is-on'); head.append(h('span', 'ovf-livechip', 'LIVE')); }
+        if (kind === 'live' && c.live_now) { a.classList.add('is-on'); head.append(h('span', 'ovfd-livechip', 'LIVE')); }
         a.append(head);
         const media = c.media || {};
         const thumb = safe(media.thumb);
         if (thumb && /^https:/.test(thumb)) {
-            const box = h('span', 'ovf-media');
+            const box = h('span', 'ovfd-media');
             const r = Number(media.ratio) > 0 ? Math.max(0.8, Math.min(1.91, Number(media.ratio))) : (kind === 'pic' || kind === 'meme' ? 1 : 16 / 9);
             box.style.aspectRatio = String(r);
             const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = thumb; box.append(img);
-            if (media.length) box.append(h('span', 'ovf-len', String(media.length).slice(0, 10)));
-            if (kind === 'live' && c.counts && c.counts.viewers) box.append(h('span', 'ovf-len ovf-viewers', `${count(c.counts.viewers)} watching`));
+            if (media.length) box.append(h('span', 'ovfd-len', String(media.length).slice(0, 10)));
+            if (kind === 'live' && c.counts && c.counts.viewers) box.append(h('span', 'ovfd-len ovfd-viewers', `${count(c.counts.viewers)} watching`));
             a.append(box);
             if (kind === 'clip' || kind === 'video' || kind === 'live') watchPreview(box, c);
         }
-        if (c.title) a.append(h('b', 'ovf-title', String(c.title).slice(0, 200)));
-        if (c.text && (kind === 'post' || !thumb)) a.append(h('p', 'ovf-text', String(c.text).slice(0, 500)));
-        const n = c.counts || {};
-        const bits = [n.views ? `${count(n.views)} views` : '', n.likes ? `♥ ${count(n.likes)}` : '', n.comments ? `${count(n.comments)} replies` : ''].filter(Boolean);
-        if (bits.length) a.append(h('small', 'ovf-counts', bits.join(' · ')));
+        let title = String(c.title || '');
+        if (kind === 'post' && /^Status:\s*/.test(title) && c.text && String(c.text).startsWith(title.replace(/^Status:\s*/, '').replace(/…$/, '').slice(0, 40))) title = '';
+        if (kind === 'live') title = title.replace(/^.{1,60}? went live:?\s*/i, '') || title;
+        if (title) a.append(h('b', 'ovfd-title', title.slice(0, 200)));
+        if (c.text && (kind === 'post' || !thumb)) a.append(h('p', 'ovfd-text', String(c.text).slice(0, 500)));
+        const counts = countsRow(c.counts);
+        if (counts) a.append(counts);
         return a;
     }
     /** Several streamers who went live (and are not live now), as one card: their faces, then each name to their channel. */
     function livesCard(items) {
-        const box = h('div', 'ovf-card ovf-lives');
-        const head = h('div', 'ovf-head');
-        const faces = h('span', 'ovf-faces');
+        const box = h('div', 'ovfd-card ovfd-lives');
+        const head = h('div', 'ovfd-head');
+        const faces = h('span', 'ovfd-faces');
         items.slice(0, 4).forEach((x) => {
-            const f = h('span', 'ovf-face');
+            const f = h('span', 'ovfd-face');
             const av = x.actor && safe(x.actor.avatar);
             if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; f.append(img); } else f.textContent = String((x.actor && x.actor.name) || '?').charAt(0).toUpperCase();
             faces.append(f);
         });
         const names = items.map((x) => String((x.actor && x.actor.name) || '').slice(0, 40)).filter(Boolean);
-        const who = h('span', 'ovf-who');
+        const who = h('span', 'ovfd-who');
         who.append(h('b', '', names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more went live` : `${names.join(' and ')} went live`));
-        const meta = h('small'); meta.append(siteIcon('live', 14), document.createTextNode(` Live · ${[ago(items[0].at), items.length > 1 ? ago(items[items.length - 1].at) : ''].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(' – ')}`));
+        const meta = h('small'); meta.append(siteIcon('live', 14), document.createTextNode(` Live · ${[when(items[items.length - 1].at), items.length > 1 ? when(items[0].at) : ''].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(' – ')}`));
         who.append(meta);
         head.append(faces, who);
-        const row = h('div', 'ovf-lives-row');
+        const row = h('div', 'ovfd-lives-row');
         items.forEach((x) => {
-            const l = h('a', 'ovf-pill'); l.href = safe(x.url);
+            const l = h('a', 'ovfd-pill'); l.href = safe(x.url);
             const t = String(x.title || '').replace(/^.*?went live:\s*/i, '');
             l.append(h('b', '', String((x.actor && x.actor.name) || '').slice(0, 40)));
             if (t) l.append(h('span', '', t.slice(0, 60)));
@@ -941,18 +1051,27 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         box.append(head, row);
         return box;
     }
+    function dayLine(t) {
+        const d = new Date(t); const now = new Date();
+        const start = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+        const diff = Math.round((start(now) - start(d)) / 86400000);
+        const label = diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : diff < 7 ? d.toLocaleDateString('en-US', { weekday: 'long' })
+            : d.toLocaleDateString('en-US', d.getFullYear() === now.getFullYear() ? { day: 'numeric', month: 'long' } : { day: 'numeric', month: 'long', year: 'numeric' });
+        const line = h('div', 'ovfd-day'); line.setAttribute('role', 'separator'); line.append(h('span', '', label));
+        return line;
+    }
     function feed(el, o) {
         styles(); feedStyles();
-        el.classList.add('ovh', 'ovf');
+        el.classList.add('ovh', 'ovfd');
         el.setAttribute('data-sec', 'wall');
         el.textContent = '';
-        const chips = h('div', 'ovf-chips'); chips.setAttribute('role', 'tablist'); chips.setAttribute('aria-label', 'Feed');
-        const list = h('div', 'ovf-list');
-        const sentinel = h('div', 'ovf-more');
+        const chips = h('div', 'ovfd-chips'); chips.setAttribute('role', 'tablist'); chips.setAttribute('aria-label', 'Feed');
+        const list = h('div', 'ovfd-list');
+        const sentinel = h('div', 'ovfd-more');
         el.append(chips, list, sentinel);
-        let kind = '', cursor = null, busy = false, done = false, seq = 0;
-        const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovf-skel')); };
-        const clearSkels = () => list.querySelectorAll('.ovf-skel').forEach((x) => x.remove());
+        let kind = '', cursor = null, busy = false, done = false, seq = 0, lastDay = '';
+        const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovfd-skel')); };
+        const clearSkels = () => list.querySelectorAll('.ovfd-skel').forEach((x) => x.remove());
         async function more(first) {
             if (busy || done) return;
             busy = true; const my = ++seq;
@@ -966,23 +1085,29 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             }
             if (first && o.feedLive) o.feedLive();
             // Back-to-back go-lives that are over fold into one card of faces (a wall of "X went live" was the whole feed).
-            const past = (x) => x && x.kind === 'live' && !x.live_now && safe(x.url);
+            const past = (x) => x && (x.kind === 'stream' || (x.kind === 'live' && !x.live_now)) && safe(x.url);
             let run = [];
             const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => { const c = feedCard(x); if (c) list.append(c); }); run = []; };
-            j.items.forEach((x) => { if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
+            // Date by date (the owner, 11-09): a quiet day line where the day changes. The network's trending cards
+            // (no time of their own) sit between, under the day they were woven into.
+            const day = (x) => { const t = Date.parse(String((x && x.at) || '')); return Number.isFinite(t) ? new Date(t).toDateString() : ''; };
+            const mark = (x) => { const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
+            j.items.forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
             flush();
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
             done = !cursor;
             sentinel.textContent = '';
-            if (done) sentinel.append(h('p', 'ovh-note ovf-caught', list.childNodes.length ? "You're all caught up." : 'Nothing here yet.'));
+            if (done) sentinel.append(h('p', 'ovh-note ovfd-caught', list.querySelector('.ovfd-card,.ovfd-act,.ovfd-update') ? "You're all caught up."
+                : (kind === 'following' ? 'Nothing yet from the people you follow. Follow someone on their profile and what they share shows here.' : 'Nothing here yet.')));
         }
         KINDS.forEach(([k, label]) => {
-            const b = h('button', 'ovf-chip', label); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
+            if (k === 'following' && !signedIn(o)) return;
+            const b = h('button', 'ovfd-chip', label); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
             b.addEventListener('click', () => {
                 if (k === kind) return;
-                kind = k; cursor = null; done = false; busy = false;
-                chips.querySelectorAll('.ovf-chip').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+                kind = k; cursor = null; done = false; busy = false; lastDay = '';
+                chips.querySelectorAll('.ovfd-chip').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
                 more(true);
             });
             chips.append(b);
@@ -995,47 +1120,71 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         return { update() {} };
     }
     function feedStyles() {
-        if (document.getElementById('ovf-styles')) return;
-        const st = document.createElement('style'); st.id = 'ovf-styles';
+        if (document.getElementById('ovfd-styles')) return;
+        const st = document.createElement('style'); st.id = 'ovfd-styles';
         st.textContent = `
-.ovf-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
-.ovf-chips::-webkit-scrollbar{display:none}
-.ovf-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
-.ovf-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
-.ovf-list{display:grid;gap:10px;padding:4px 0}
-@media (min-width:861px){.ovf-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.ovf-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
-@media (hover:hover){.ovf-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
-.ovf-head{display:flex;align-items:center;gap:8px;min-width:0}
-.ovf-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
-.ovf-face img{width:100%;height:100%;object-fit:cover}
-.ovf-face.is-site{border-radius:10px;background:linear-gradient(150deg,hsl(var(--ovh-h,215) 72% 58% / .34),hsl(var(--ovh-h,215) 70% 38% / .18))}.ovf-face.is-site .ov-icon{color:hsl(var(--ovh-h,215) 90% 82%)}
-.ovf-who{min-width:0;display:grid}
-.ovf-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ovf-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
-.ovf-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovf-onair 2.4s ease-in-out infinite}
-.ovf-card.is-on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--live,#ef4444) 45%,transparent);background:color-mix(in srgb,var(--live,#ef4444) 7%,transparent)}
-@keyframes ovf-onair{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--live,#ef4444) 25%,transparent)}}
-.ovf-faces{display:flex;flex:none}.ovf-faces .ovf-face{width:30px;height:30px;box-shadow:0 0 0 2px var(--bg-secondary,#141a24)}.ovf-faces .ovf-face+.ovf-face{margin-left:-9px}
-.ovf-lives-row{display:flex;flex-wrap:wrap;gap:6px}
-.ovf-lives .ovf-who b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
-.ovf-pill{box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent);color:inherit;text-decoration:none;font-size:13px;line-height:1.2}
-.ovf-pill b{flex:none;font-weight:700}.ovf-pill span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted,#93a0b4)}
-@media (hover:hover){.ovf-pill:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 11%,transparent)}}
-.ovf-media{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--bg-tertiary,#1f2633)}
-.ovf-media img,.ovf-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.ovf-len{position:absolute;right:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-weight:700}
-.ovf-viewers{left:8px;right:auto}
-.ovf-title{font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ovf-text{margin:0;font-size:14px;line-height:1.5;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.ovf-counts{font-size:12px;color:var(--text-muted,#93a0b4)}
-.ovf-update{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;color:inherit;text-decoration:none}
-.ovf-update .ovh-ic{width:34px;height:34px;border-radius:10px;flex:none}
-.ovf-update-txt{min-width:0;display:grid;gap:2px}.ovf-update-txt b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovf-update-txt small{font-size:12px;color:var(--text-muted,#93a0b4)}
-.ovf-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovf-shimmer 1.4s ease-in-out infinite}
-.ovf-more{min-height:1px}.ovf-caught{text-align:center;padding:10px 0}
-@keyframes ovf-shimmer{to{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.ovf-skel{animation:none}.ovf-livechip{animation-duration:4s}}
+.ovfd-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
+.ovfd-chips::-webkit-scrollbar{display:none}
+.ovfd-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
+.ovfd-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
+.ovfd-list{display:grid;gap:10px;padding:4px 0}
+@media (min-width:861px){.ovfd{max-width:720px;margin-inline:auto}}
+.ovfd-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
+@media (hover:hover){.ovfd-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
+.ovfd-head{display:flex;align-items:center;gap:8px;min-width:0}
+.ovfd-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
+.ovfd-face img{width:100%;height:100%;object-fit:cover}
+.ovfd-face.is-site{border-radius:10px;background:linear-gradient(150deg,hsl(var(--ovh-h,215) 72% 58% / .34),hsl(var(--ovh-h,215) 70% 38% / .18))}.ovfd-face.is-site .ov-icon{color:hsl(var(--ovh-h,215) 90% 82%)}
+.ovfd-who{min-width:0;display:grid}
+.ovfd-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovfd-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
+.ovfd-card.is-on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--live,#ef4444) 45%,transparent);background:color-mix(in srgb,var(--live,#ef4444) 7%,transparent)}
+@keyframes ovfd-onair{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--live,#ef4444) 25%,transparent)}}
+.ovfd-faces{display:flex;flex:none}.ovfd-faces .ovfd-face{width:30px;height:30px;box-shadow:0 0 0 2px var(--bg-secondary,#141a24)}.ovfd-faces .ovfd-face+.ovfd-face{margin-left:-9px}
+.ovfd-lives-row{display:flex;flex-wrap:wrap;gap:6px}
+.ovfd-lives .ovfd-who b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
+.ovfd-pill{box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent);color:inherit;text-decoration:none;font-size:13px;line-height:1.2}
+.ovfd-pill b{flex:none;font-weight:700}.ovfd-pill span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted,#93a0b4)}
+@media (hover:hover){.ovfd-pill:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 11%,transparent)}}
+.ovfd-media{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--bg-tertiary,#1f2633)}
+.ovfd-media img,.ovfd-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ovfd-len{position:absolute;right:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-weight:700}
+.ovfd-viewers{left:8px;right:auto}
+.ovfd-title{font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ovfd-text{margin:0;font-size:14px;line-height:1.5;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ovfd-counts{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;font-weight:650;color:var(--text-muted,#93a0b4);font-variant-numeric:tabular-nums}
+.ovfd-counts span{display:inline-flex;align-items:center;gap:5px}
+.ovfd svg.ovfd-gl{flex:none;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ovfd-act{display:flex;gap:12px;align-items:flex-start;padding:10px;border-radius:16px;color:inherit;text-decoration:none;min-width:0}
+@media (hover:hover){.ovfd-act:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent)}}
+.ovfd-act .ovfd-face,.ovfd-tile,.ovfd-tile-wrap{flex:none;width:40px;height:40px}
+.ovfd-act .ovfd-face.is-site{border-radius:12px}
+.ovfd-act-txt{min-width:0;display:grid;gap:3px;padding-top:1px}
+.ovfd-act-txt b{font-size:14px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ovfd-act-txt small{display:flex;align-items:center;gap:5px;min-width:0;font-size:12px;color:var(--text-muted,#93a0b4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ovfd-act-more{font-size:13px;line-height:1.45;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ovfd-tile{box-sizing:border-box;display:grid;place-items:center;border-radius:12px;font-variant-numeric:tabular-nums}
+.ovfd-tile-num{position:relative;background:linear-gradient(150deg,hsl(152 62% 48% / .32),hsl(152 60% 32% / .16));color:hsl(152 70% 78%)}
+.ovfd-tile-num b{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.ovfd-tile-num svg.ovfd-gl{position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;padding:2px;border-radius:50%;background:var(--bg-secondary,#141a24);color:hsl(152 70% 70%)}
+.ovfd-tile-date{grid-template-rows:auto 1fr;place-items:stretch;overflow:hidden;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent);text-align:center}
+.ovfd-tile-date small{display:block;padding:1px 0;background:var(--live,#ef4444);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.ovfd-tile-date b{display:grid;place-items:center;font-size:16px;font-weight:800;line-height:1}
+.ovfd-tile-wrap{position:relative}
+.ovfd-tile-wrap .ovfd-face{width:40px;height:40px}
+.ovfd-badge{position:absolute;right:-4px;bottom:-4px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:hsl(43 92% 56%);color:#3a2600;box-shadow:0 0 0 2px var(--bg-secondary,#141a24)}
+.ovfd-badge svg.ovfd-gl{width:12px;height:12px;stroke-width:2.4}
+.ovfd-day{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:8px 2px 0;font-size:12px;font-weight:750;letter-spacing:.04em;color:var(--text-muted,#93a0b4)}
+.ovfd-day::after{content:"";flex:1;height:1px;background:var(--border,rgba(255,255,255,.1))}
+.ovfd-list>.ovfd-day:first-child{margin-top:0}
+.ovfd-update{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;color:inherit;text-decoration:none}
+.ovfd-update .ovh-ic{width:34px;height:34px;border-radius:10px;flex:none}
+.ovfd-update-txt{min-width:0;display:grid;gap:2px}.ovfd-update-txt b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovfd-update-txt small{font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovfd-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovfd-shimmer 1.4s ease-in-out infinite}
+.ovfd-more{min-height:1px}.ovfd-caught{text-align:center;padding:10px 0}
+@keyframes ovfd-shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ovfd-skel{animation:none}.ovfd-livechip{animation-duration:4s}}
 `;
         document.head.appendChild(st);
     }
