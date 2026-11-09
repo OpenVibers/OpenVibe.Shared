@@ -40,7 +40,8 @@ function load(answers) {
     const calls = [];
     global.fetch = async (url) => {
         calls.push(url);
-        const a = url === '/auth/me' ? answers.session
+        const a = url === '/auth/navbar-token' ? answers.sessionToken
+            : url === '/auth/me' ? answers.session
             : /\/api\/dm\/unread$/.test(url) ? answers.unread
             : /\/api\/coins\/me(\?|$)/.test(url) ? answers.coins
                 : { status: 404, body: {} };
@@ -87,6 +88,12 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
     global.OpenVibeDock = { mount() {}, open(options) { fromSession.push(options); } };
     messageButton.listeners.click({ preventDefault() {}, metaKey: false, ctrlKey: false, shiftKey: false });
     assert.deepStrictEqual(fromSession, [{ tab: 'chats' }], 'the site session opens Chats in place');
+
+    ({ navbar, calls } = load({ ...answers, session: { status: 200, body: { user } }, sessionToken: { status: 200, body: { token: 'short-access-token' } } }));
+    navbar.init({ service: 'actor', sessionUrl: '/auth/me', tokenUrl: '/auth/navbar-token', notifications: false, wallet: false });
+    await settle();
+    assert.strictEqual(navbar.session.token, 'short-access-token', 'HTTP-only sessions use the same-origin token route');
+    assert.ok(calls.includes('/auth/navbar-token'), 'the token route is requested after the session identifies the person');
 
     // A site that says no.
     ({ navbar, navs, calls } = load(answers));

@@ -1725,7 +1725,18 @@
                 if (res.ok) {
                     const data = await res.json();
                     const user = (data && (data.user || data)) || null;
-                    if (user && (user.username || user.id)) return { user, token: data && data.token || null };
+                    if (user && (user.username || user.id)) {
+                        let token = data && data.token || null;
+                        // Sites with HTTP-only access cookies expose a verified access token through a
+                        // same-origin, no-store endpoint for the Dock and the notification bell.
+                        if (!token && _config.tokenUrl) {
+                            try {
+                                const tokenRes = await fetch(_config.tokenUrl, { credentials: 'same-origin', cache: 'no-store' });
+                                if (tokenRes.ok) token = (await tokenRes.json()).token || null;
+                            } catch { /* the account menu still works without the Dock */ }
+                        }
+                        return { user, token };
+                    }
                 }
             } catch { /* signed out */ }
         }
