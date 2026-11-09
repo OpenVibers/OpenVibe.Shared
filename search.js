@@ -913,7 +913,7 @@
             { title: 'Vibe', url: 'https://openvibe.chat/vibe', site: 'ov', kind: 'dock', dock: 'vibe' },
             { title: 'Codes', url: 'https://openvibe.codes/', site: 'codes', kind: 'you' },
             { title: 'Files', url: 'https://openvibe.download/files', site: 'drive', kind: 'you' },
-            { title: 'Machines', url: 'https://node.openvibe.network', site: 'plug', kind: 'you' },
+            { title: 'Machines', url: 'https://openvibe.link/machines', site: 'plug', kind: 'you' },
             { title: 'Wallet', url: 'https://openvibe.network/wallet', site: 'billing', kind: 'you' },
             { title: 'Account', url: 'https://openvibe.network/my', site: 'account', kind: 'you' },
             { title: 'Themes', url: 'https://openvibe.network/themes', site: 'theme', kind: 'you' },

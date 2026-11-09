@@ -26,7 +26,7 @@ where they are.
    served beside `navbar.js`. Until Live's allowlist includes that file, lazy icons 404 and fall
    back to `<i class="fa-solid">`. Live loads Font Awesome, so the icons still show.
 4. **Community, Media, Tools** in any order. Their browsers already load from the Network. Their
-   servers only `require()` Node modules: legal, footer SSR, app-icon, auth-client, analytics
+   servers only `require()` Link modules: legal, footer SSR, app-icon, auth-client, analytics
    and icons.
 5. **Sites**, optionally. It has no `package.json` today.
 
@@ -166,7 +166,7 @@ The `server/…` requires that use `require('openvibe-shared/...')` need no chan
 ```
 
    Behaviour changes here, all intended. `/shared/package.json`, `/shared/test/*`,
-   `/shared/scripts/*` and the Node modules (`/shared/auth-client.js`, `/shared/middleware.js`, …)
+   `/shared/scripts/*` and the Link modules (`/shared/auth-client.js`, `/shared/middleware.js`, …)
    stop being public. Every file any site loads is in the allowlist: `navbar`, `theme-loader`,
    `footer`, `notification-ui`, `account-switcher`, `ov-mark`, `ov-icons`, `history`,
    `sso-client`, `panels`, `ui`, `island`, and `user-card` from the README example.

@@ -691,7 +691,7 @@ form fields a finger tall. Every selector is inside `:where()`, so a site's own 
 
 ## Using it
 
-**An OpenVibe site (Node, server-rendered):**
+**An OpenVibe site (Link, server-rendered):**
 
 ```js
 const kit = require('openvibe-shared/kit');

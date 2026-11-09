@@ -28,7 +28,7 @@ agents… in a smart way… way better than this idea."
 </script>
 ```
 
-**From Node:**
+**From Link:**
 - `require('openvibe-shared/agent-session')` gives `normalize(event)`, which turns one stream-json event into lines.
 - `kindOf(toolName)` returns the step's kind.
 - `diffLines(a, b)` returns the line diff behind an edit's +/− counts.
