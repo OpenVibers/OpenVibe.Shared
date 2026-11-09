@@ -115,7 +115,7 @@ path, a query or a fragment; anything else becomes `#`.
 ### Head and tabs
 
 ```js
-kit.head({ title, sub, back: { href, label }, actions: [kit.iconButton(…), kit.more(…)], tabs: kit.tabs(…) })
+kit.head({ title, sub, icon: 'gear', back: { href, label }, actions: [kit.iconButton(…), kit.more(…)], tabs: kit.tabs(…) })
 kit.tabs({ base: '/settings', items: [{ key: 'look', label: 'Look', count, icon }], active, param: 'tab' })
 kit.tabOf(req.query, ['look', 'sound'])   // the open tab: a known key, else the first
 ```
@@ -141,24 +141,37 @@ Yesterday, a weekday this week, `Oct 20` this year, else the date.
 ### Sections, folds, menus
 
 ```js
-kit.section({ title: 'Members', count: 12, note: 'Who can do what', body, id })
+kit.section({ title: 'Members', icon: 'members', count: 12, note: 'Who can do what', body, id,
+              actions: [kit.button({ href: '/members', label: 'Manage members', icon: 'gear', kind: 'quiet' })] })
 kit.fold({ id, title: 'Put this room on your site', meta: 'two ways', open, body, tone: 'danger' })
 kit.more({ label: 'More', items: [{ href, label, icon }, { action: '/x/delete', label, icon, danger, confirm }] })
 ```
 
+Give each page section an icon and put its actions in `actions` as buttons with icons. Section actions wrap on
+narrow screens; the heading keeps its semantic `h2` and `aria-labelledby`. Without `icon` or `actions`, existing
+section markup stays unchanged. For an empty section, use `kit.empty({ icon: 'members', text: 'Your members will appear here.',
+action: { href: '/members/new', label: 'Invite a member', icon: 'plus' } })` as its body. Empty-state actions default
+to primary buttons. Keep headings and explanatory words server-rendered. For a horizontal list, `kit.rail({ title, icon, more: { href, label, icon }, items })`
+uses the same icon tile and a labelled action button. Handwritten headings can use `class="ovk-titled"` with
+`kit.icon(name, { cls: "ovk-heading-icon" })` to keep their existing IDs and layout.
+
 ### Settings rows
 
 ```js
-kit.switchRow({ name, label, hint, on })
+kit.switchRow({ name, icon, title, line, checked })      // also label/hint/on, the older names
 kit.rangeRow({ name, label, value, min, max, step, unit: '%' })
 kit.selectRow({ name, label, hint, options: [[value, label]], value })
 kit.seg({ name, label, options: [[value, label]], value })
+kit.segmented({ name, items: [{ value, label, icon }], value, label })
 kit.chips({ name, label, options: [[value, label, checked]], single })
 kit.saveBar({ label: 'Save settings' })
 ```
 
-Inside `<form class="ovk-form">`, each row keeps its label on the left and its control on the right. The save bar
-stays in reach above the app bar.
+A switch row is 56 px tall and the whole row is the target: an icon tile (`kit.ICONS`), the title and one muted line,
+and an iOS-style switch on the right. The switch is the native checkbox with `role="switch"`, so a form still works
+without JavaScript. A segmented control puts three or four equal choices in one 44 px control (icons before the
+words); without a `label` it is the control alone, its radio group named by the field name. The save bar stays in
+reach above the app bar.
 
 ### Search, add, compose
 
@@ -718,3 +731,7 @@ set the `--bg-*`, `--text-*` and `--accent` variables yourself, or keep the fall
 `node scripts/kit-gallery.js > gallery.html` writes one page with every piece and the app bar on.
 `node scripts/kit-gallery.js --shots <dir>` serves the package folder and screenshots it at 390, 768 and 1280 px. It
 prints any sideways scroll, so the gallery doubles as the visual test.
+
+### Page identity
+
+`kit.pageHead({ back: { label: 'Home', href: '/' }, icon: 'video', title: 'Record a video', lede: 'Record, review and share your video.', actions: [{ href: '/videos', icon: 'video', label: 'Your videos' }] })` renders the named back chip, page icon tile, H1 and accessible icon actions. On phones the lede is one line with a native **About this** disclosure; all its words remain server-rendered and work without JavaScript. Keep breadcrumb structured data in the site's BreadcrumbList JSON-LD. `head()` remains available for sticky application toolbars.

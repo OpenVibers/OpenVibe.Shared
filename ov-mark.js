@@ -186,8 +186,8 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
-@media (prefers-reduced-motion:reduce){.ov-mark *{animation:none!important}.ov-mark,.ov-mark *,.ov-mark::before{transition:none!important}.ovm-fall{display:none}}
-html[data-ov-motion=reduced] .ov-mark *{animation:none!important}
+@media (prefers-reduced-motion:reduce){.ov-mark *{animation-iteration-count:1!important}.ov-mark::before{transition:none!important}.ovm-fall{display:none}}
+html[data-ov-motion=reduced] .ov-mark *{animation-iteration-count:1!important}
 .ov-busy{cursor:progress;pointer-events:none}
 .ov-busy-mark{display:inline-block;vertical-align:-.2em;margin-right:.45em;flex:none}
 `;
@@ -259,13 +259,14 @@ html[data-ov-motion=reduced] .ov-mark *{animation:none!important}
         const svgEl = el.querySelector('svg');
         if (!el.isConnected || !svgEl) { forget(el); return; }
         const now = Date.now();
-        const may = !reduced() && !el.hasAttribute('data-static') && !document.hidden && st.onScreen === true;
-        if (may && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
+        // Calm (the Motion setting, or the device asking for less) is gentle, not still: a state still animates, once.
+        const may = !el.hasAttribute('data-static') && !document.hidden && st.onScreen === true;
+        if (may && !reduced() && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
         const s = el.getAttribute('data-state');
         // Anything the mark is showing keeps it moving: a state, a page on its way, a known progress.
         const showing = (s && s !== 'idle') || el.hasAttribute('data-nav') || el.hasAttribute('data-progress');
         const intro = now < st.introEnd;
-        const run = may && (intro || st.hover || st.focus || now < st.lingerEnd || showing);
+        const run = may && (showing || (!reduced() && (intro || st.hover || st.focus || now < st.lingerEnd)));
         if (run !== el.hasAttribute('data-ovm-run')) { if (run) el.setAttribute('data-ovm-run', ''); else el.removeAttribute('data-ovm-run'); }
         // The intro's pop and growth are on only inside the intro (paused with the rest while the mark cannot move).
         if ((may && intro) !== el.hasAttribute('data-ovm-intro') && (may || !intro)) { if (may && intro) el.setAttribute('data-ovm-intro', ''); else el.removeAttribute('data-ovm-intro'); }

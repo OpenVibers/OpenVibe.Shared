@@ -217,7 +217,7 @@ function load(hostname, opts = {}) {
 // ── balance chips fold into one on a phone (owner, 2026-10-27): the folded chip, its short values, and setChip ──
 {
     const { navbar, created } = load('openvibe.live');
-    navbar.init({ service: 'live', user: { id: 1, username: 'x' }, chips: [
+    navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [
         { id: 'coins', icon: 'fa-coins', tone: 'gold', value: '160,774', label: 'OpenCoins', onClick() {} },
         { id: 'vibes', icon: 'fa-wallet', tone: 'green', value: '400', title: 'Vibes balance', onClick() {} },
     ] });
@@ -229,14 +229,14 @@ function load(hostname, opts = {}) {
     assert.ok(/@media \(max-width: 560px\) \{\s*\.openvibe-navbar-right\.has-chips-all \.ovnav-chip\[data-chip-id\] \{ display: none; \}/.test(require('fs').readFileSync(NAVBAR_PATH, 'utf8')), 'the chips fold on a phone');
     // One chip: nothing to fold.
     const one = load('openvibe.live');
-    one.navbar.init({ service: 'live', user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
+    one.navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
     assert.ok(!/ovnav-chip--all/.test(one.created.find(e => e.tag === 'nav').innerHTML));
 }
 // ── "Across OpenVibe" in the drawer, and the icon slots that have their size before ov-icons.js arrives ──
 {
     const src = require('fs').readFileSync(NAVBAR_PATH, 'utf8');
     assert.ok(src.includes('<span class="ud-label">Across OpenVibe</span>') && src.includes('data-open-launcher>All sites</button>'), 'a header with All sites');
-    assert.ok(/class="ovnav-net-grid">\$\{pick\.map\(n => `<a class="ovnav-net" href="\$\{escapeAttr\(n\.url\)\}" title="\$\{escapeAttr\(n\.tagline\)\}"><span class="ov-icon" data-icon=/.test(src), 'each site with its mark');
+    assert.ok(/class="ovnav-net-grid">\$\{pick\.map\(n => `<a class="ovnav-net" data-ov-net-link href="\$\{escapeAttr\(n\.url\)\}" title="\$\{escapeAttr\(n\.tagline\)\}"><span class="ov-icon" data-icon=/.test(src), 'each site with its mark');
     assert.ok(src.includes('.ovnav-drawer .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px;'), 'icon slots are sized before they are drawn');
     assert.strictEqual((src.match(/function loadIcons\(/g) || []).length, 1, 'one loadIcons (the nav glyphs); the ov-icons loader has its own name');
     assert.ok(/function queueIcons\(\)[\s\S]*?requestIdleCallback\(go/.test(src), 'ov-icons.js loads when the page settles');
@@ -265,7 +265,7 @@ function load(hostname, opts = {}) {
     // 4.23.0 (the owner: "a plus button… better use of icons… compactness"): + and the gear beside the name, your places
     // as a grid of icons, and one row at the foot for light/dark, text size, motion and themes; Sign out by the gear.
     assert.ok(/class="ud-hbtn add-account" id="openvibe-add-account"[^>]*aria-label="Add another account"/.test(dd.innerHTML), 'Add another account is a + beside the name');
-    assert.ok(dd.innerHTML.includes('aria-label="Account &amp; settings"') && dd.innerHTML.includes('aria-label="Look"') && dd.innerHTML.includes('data-ov-look-open') && /id="openvibe-logout-btn"[^>]*aria-label="Sign out"/.test(dd.innerHTML), 'the gear, Look (4.64.0: opens in place) and Sign out are icon buttons');
+    assert.ok(dd.innerHTML.includes('aria-label="Account &amp; settings"') && dd.innerHTML.includes('aria-label="Display settings"') && dd.innerHTML.includes('data-ov-look-open') && /id="openvibe-logout-btn"[^>]*aria-label="Sign out"/.test(dd.innerHTML), 'the gear, Look (4.64.0: opens in place) and Sign out are icon buttons');
     assert.ok(/<div class="ud-grid">/.test(dd.innerHTML) && /class="ud-tile"[^>]*data-menu-id="mp"/.test(dd.innerHTML), 'the places are a grid of tiles, the site\'s own first');
     assert.ok(!dd.innerHTML.includes('Recently used'), 'the places you went are the search menu\'s');
     assert.ok(!dd.innerHTML.includes('Across OpenVibe'), 'the other sites are the launcher\'s and the drawer\'s, not the account menu\'s');

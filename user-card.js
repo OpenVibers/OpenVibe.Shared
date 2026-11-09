@@ -12,6 +12,8 @@
     let _config = { apiBase: 'https://openvibe.network', token: null, currentUserId: null, currentRole: 'user' };
     let _cardEl = null;
     let _cache = new Map();
+    const _menuItems = new Map();
+    const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
 
     function injectStyles() {
         if (document.getElementById('openvibe-usercard-styles')) return;
@@ -140,6 +142,9 @@
             actions += `<button data-act="profile"><span class="icon">⚙️</span> Edit Profile</button>`;
             actions += `<button data-act="accounts"><span class="icon">🔄</span> Switch Account</button>`;
         }
+        for (const item of _menuItems.values()) {
+            actions += `<button data-act="site" data-site-id="${escapeHtml(item.id)}"><span class="icon">${escapeHtml(item.icon || '↗')}</span> ${escapeHtml(item.label)}</button>`;
+        }
 
         const card = document.createElement('div');
         card.className = 'openvibe-usercard';
@@ -180,8 +185,11 @@
         card.querySelectorAll('[data-act]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const act = btn.dataset.act;
+                const siteItem = act === 'site' ? _menuItems.get(btn.dataset.siteId) : null;
                 closeCard();
-                if (act === 'profile') {
+                if (siteItem) {
+                    try { siteItem.onSelect(user); } catch (err) { console.error('[OpenVibeUserMenu] item failed:', err); }
+                } else if (act === 'profile') {
                     const url = isSelf ? `${_config.apiBase}/my`
                         : `${_config.apiBase}/user/${user.username}`;
                     window.open(url, '_blank');
@@ -248,7 +256,26 @@
         },
     };
 
+    const OpenVibeUserMenu = {
+        /** Add a host site's safe action to the shared user card. Returns an unregister function. */
+        register({ id, label, icon, onSelect } = {}) {
+            const key = String(id || '');
+            if (!/^[a-zA-Z0-9_-]{1,48}$/.test(key) || typeof label !== 'string' || !label.trim() || typeof onSelect !== 'function') {
+                throw new TypeError('register requires an id, label and onSelect function');
+            }
+            const item = { id: key, label: label.trim().slice(0, 80), icon: typeof icon === 'string' ? icon.slice(0, 8) : '', onSelect };
+            _menuItems.set(key, item);
+            return () => { if (_menuItems.get(key) === item) _menuItems.delete(key); };
+        },
+        unregister(id) { return _menuItems.delete(String(id || '')); },
+        attach: (...args) => OpenVibeUserCard.attach(...args),
+        show: (...args) => OpenVibeUserCard.show(...args),
+        close: () => OpenVibeUserCard.close(),
+    };
+
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeUserCard;
-    else root.OpenVibeUserCard = OpenVibeUserCard;
+    if (typeof module !== 'undefined' && module.exports) module.exports.OpenVibeUserMenu = OpenVibeUserMenu;
+    root.OpenVibeUserCard = OpenVibeUserCard;
+    root.OpenVibeUserMenu = OpenVibeUserMenu;
 
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this);

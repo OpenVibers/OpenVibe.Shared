@@ -132,6 +132,10 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 .ovk-sub { margin: 2px 0 0; color: var(--ovk-muted); font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovk-head-tools { display: flex; align-items: center; gap: 2px; margin-right: -8px; }
 .ovk-head-tools form { margin: 0; }
+.ovk-heading-icon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--ovk-radius-sm); color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); }
+.ovk-heading-icon > .ovk-i { width: 22px; height: 22px; }
+.ovk-heading-icon.ovk-i { box-sizing: border-box; width: 40px; height: 40px; padding: 9px; vertical-align: middle; }
+.ovk-titled.ovk-titled { display: flex; align-items: center; gap: 10px; white-space: normal; overflow-wrap: anywhere; }
 .ovk-tabs { position: relative; display: flex; gap: 4px; margin: 0 -16px; padding: 0 16px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .ovk-tabs::-webkit-scrollbar { display: none; }
 .ovk-tabs a { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; padding: 6px 14px; border-radius: 999px; color: var(--ovk-muted); font-size: .9rem; font-weight: 650; text-decoration: none; white-space: nowrap; }
@@ -173,6 +177,12 @@ html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; -
 /* ── Sections (settings groups, a page's parts) and folds ── */
 .ovk-section { margin: 0 0 12px; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius); background: var(--ovk-panel); overflow: hidden; color: var(--ovk-text); }
 .ovk-section.ovk-section > h2 { display: flex; align-items: center; gap: 6px; margin: 0; padding: 12px 14px 6px; color: var(--ovk-muted); font-family: inherit; font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.ovk-section-head { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 14px; }
+.ovk-section-head.ovk-section-head > h2 { flex: 1 1 160px; min-width: 0; margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--ovk-text); font-family: var(--ovk-font); font-size: 1rem; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+.ovk-section-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; max-width: 100%; }
+.ovk-section-actions .ovk-btn { min-height: 44px; white-space: normal; text-align: center; }
+.ovk-section-actions form { margin: 0; }
+.ovk-section > .ovk-empty { margin: 0 14px 14px; }
 .ovk-count { color: var(--ovk-text); font-weight: 800; letter-spacing: 0; }
 .ovk-note { margin: 0; padding: 0 14px 10px; color: var(--ovk-muted); font-size: .86rem; }
 .ovk-section > .ovk-form, .ovk-section > form:not(.ovk-find):not(.ovk-inline) { padding: 4px 14px 14px; }
@@ -205,6 +215,12 @@ div.ovk-set-row { cursor: default; }
 .ovk-set-row select { flex: none; max-width: 52%; margin: 0; padding: 7px 8px; border-radius: var(--ov-radius-1); border: 1px solid var(--ovk-line); background: var(--ovk-input); color: var(--ovk-text); font: inherit; font-size: .9rem; }
 .ovk-set-range input[type=range] { flex: 0 1 45%; min-width: 120px; margin: 0; accent-color: var(--ovk-fill); }
 .ovk-set-chips { flex-wrap: wrap; }
+/* A switch row (4.164.0): the icon tile, the title and its one line, then the switch; the whole 56 px row is the
+   target, and the switch is the native checkbox (role="switch") drawn as one, so it works without JavaScript. */
+.ovk-set-switch { min-height: 56px; }
+.ovk-set-ic { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--ov-radius-1); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); color: var(--ovk-accent); }
+.ovk-set-ic .ovk-i { width: 19px; height: 19px; }
+.ovk-set-row .ovk-switch { margin-left: auto; }
 .ovk-switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 44px; height: 26px; margin: 0; padding: 0; border-radius: 999px; border: 0; background: var(--ovk-line); cursor: pointer; transition: background .15s; }
 .ovk-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: var(--ov-elev-1); transition: transform .15s; }
 .ovk-switch:checked { background: var(--ovk-fill); }
@@ -215,6 +231,13 @@ div.ovk-set-row { cursor: default; }
 .ovk-seg span { display: block; padding: 6px 12px; border-radius: max(0px, calc(var(--ov-radius-1) - 2px)); color: var(--ovk-muted); font-size: .86rem; font-weight: 650; cursor: pointer; }
 .ovk-seg input:checked + span { background: var(--ovk-fill); color: var(--ovk-on-fill); }
 .ovk-seg input:focus-visible + span, .ovk-chip input:focus-visible + span { outline: 2px solid var(--ovk-accent); outline-offset: 1px; }
+/* A segmented control (4.164.0): three or four equal choices in one 44 px control; the icons sit before the words. */
+.ovk-seg--fill { display: flex; flex: 1 1 auto; flex-wrap: nowrap; width: 100%; min-width: 0; }
+.ovk-seg--fill .ovk-seg-item { flex: 1 1 0; min-width: 0; }
+.ovk-seg--fill span { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ovk-seg--fill .ovk-i { flex: none; width: 16px; height: 16px; }
+/* Straight in a section (no label row around it), it keeps the rows' inset instead of running to the card's edges. */
+.ovk-section > .ovk-seg--fill { width: auto; margin: 10px 12px 6px; }
 .ovk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ovk-chip span { display: inline-flex; align-items: center; min-height: 32px; box-sizing: border-box; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--ovk-line); color: var(--ovk-muted); font-size: .86rem; font-weight: 650; cursor: pointer; }
 .ovk-chip input:checked + span { border-color: color-mix(in srgb, var(--ovk-accent) 55%, transparent); background: color-mix(in srgb, var(--ovk-accent) 14%, transparent); color: var(--ovk-text); }
@@ -434,3 +457,38 @@ html[data-ov-motion=reduced] .ovk-skel { animation: none; }
 .ovk-ask { border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, var(--border, #2a3345)); }
 .ovk-ask .ovk-i { color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovk-ask:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+
+/* A phone's drawer holds the page still: the page cannot scroll behind it, the drawer scrolls on its own and never hands
+   the scroll on to the page, and the scrim takes no scroll gestures (11-09). */
+@media (max-width: 760px) {
+    html.ovk-drawer-open, html.ovk-drawer-open body { overflow: hidden; overscroll-behavior: none; }
+    .ovk-sidebar { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .ovk-sidebar-scrim { touch-action: none; overscroll-behavior: contain; }
+}
+/* A page's head (kit.pageHead; designed 11-09, the owner: "less websitey… modern… an icon system"): a small named way
+   back, the page's icon tile and name with its actions, and one line about it, whole (one copy: readers and search see
+   the same words; nothing behind an "About this"). */
+.ovk-page-head { margin: 0 0 20px; min-width: 0; }
+.ovk-page-back { position: relative; display: inline-flex; align-items: center; gap: 2px; height: 32px; margin: 0 0 12px; padding: 0 12px 0 8px;
+    border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); color: var(--text-secondary, #a8b3c4);
+    font-size: 13.5px; font-weight: 650; text-decoration: none; transition: background .15s, color .15s; }
+.ovk-page-back::after { content: ""; position: absolute; inset: -6px -4px; }   /* 44 px under the finger */
+.ovk-page-back .ovk-i { width: 18px; height: 18px; }
+@media (hover: hover) { .ovk-page-back:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 11%, transparent); color: var(--text-primary, #e8ecf3); } }
+/* The icon and the actions sit on the title's FIRST line (centred on it), so a title that wraps to three lines (a home
+   page's hero, Space 11-09) keeps them beside its start instead of floating in the middle. --ovk-page-line is the
+   title's line (1.15 × its size, in rem and vw so it means the same on every child). */
+.ovk-page-head-row { --ovk-page-line: calc(1.15 * clamp(1.45rem, 2.4vw + .7rem, 2.2rem)); display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.ovk-page-head-row > .ovk-heading-icon, .ovk-page-head-row > .ovk-page-actions { margin-top: calc(var(--ovk-page-line) / 2 - 22px); }
+.ovk-page-head-row > .ovk-heading-icon { flex-basis: 44px; width: 44px; height: 44px; border-radius: 13px;
+    background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent), color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
+.ovk-page-head-row > .ovk-heading-icon > .ovk-i { width: 24px; height: 24px; }
+.ovk-page-head-row h1 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: clamp(1.45rem, 2.4vw + .7rem, 2.2rem); line-height: 1.15; letter-spacing: -.015em; overflow-wrap: anywhere; }
+.ovk-page-actions { display: flex; align-items: center; gap: 6px; flex: none; margin-left: auto; }
+.ovk-page-actions .ovk-icon-btn { width: 44px; height: 44px; border-radius: 50%; }
+.ovk-page-lede { max-width: 68ch; margin: 10px 0 0; color: var(--text-secondary, #a8b3c4); font-size: 15.5px; line-height: 1.5; }
+.ovk-page-back:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 3px; }
+@media (max-width: 760px) { .ovk-page-head { margin-bottom: 16px; } .ovk-page-lede { margin-top: 8px; font-size: 14.5px; } }
+/* A phone hero's 1fr track shrinks around the head. */
+.sc-hero-main:has(>.ovk-page-head),.sc-room-main:has(>.ovk-page-head){min-width:0}

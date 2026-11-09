@@ -51,7 +51,17 @@ function icon(name, size = 22) {
     return `<i class="fa-solid ${esc(n.replace(/[^a-z0-9 -]/gi, ''))}" aria-hidden="true"></i>`;
 }
 const id = (s) => (s ? ` id="${esc(String(s).replace(/[^a-z0-9_-]/gi, '-'))}"` : '');
-const head = (title, lede, hid) => `${title ? `<h2${hid ? ` id="${hid}"` : ''}>${esc(title)}</h2>` : ''}${lede ? `<p class="sc-lede">${esc(lede)}</p>` : ''}`;
+// Every section's heading carries an icon tile (the owner, 11-09: "these section titles should have an icon… look nicer
+// and more consistent, separate things"): the section's kind gives a default, a site may pass its own (icon: 'name').
+let headGlyphs = null;
+const headIcon = (name) => {
+    if (!name) return '';
+    headGlyphs = headGlyphs || require('./glyphs');
+    const n = String(name).replace(/^ov:/, '');
+    const key = headGlyphs.NAMES.includes(n) ? n : (headGlyphs.fromFa ? headGlyphs.fromFa(n) : null);
+    return key && headGlyphs.path(key) ? `<span class="sc-h-ic" aria-hidden="true">${headGlyphs.svg(key, { size: 18 })}</span>` : '';
+};
+const head = (title, lede, hid, ic) => `${title ? `<h2${hid ? ` id="${hid}"` : ''}>${headIcon(ic)}<span>${esc(title)}</span></h2>` : ''}${lede ? `<p class="sc-lede">${esc(lede)}</p>` : ''}`;
 // Heading ids come from the title, so a page renders the same bytes every time (ETags, caches).
 const slug = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'section';
 const labelled = (title, h) => (title ? ` aria-labelledby="${h}"` : '');
@@ -108,19 +118,19 @@ function visualHTML(orbit) {
         + `${coreHref ? `<a class="sc-orb-core" href="${esc(coreHref)}">${core}</a>` : `<span class="sc-orb-core">${core}</span>`}</div>`;
 }
 
-function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html, orbit, visual } = {}) {
+function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html, orbit, visual, pageHead: ph = null } = {}) {
     // Without an aside of its own the hero gets a visual (4.26.0): an orbit of the site's places when it names them, else
     // the aura. visual: false keeps it plain.
     const vis = !aside && html == null && visual !== false;
     const hasOrbit = vis && orbit && (has(orbit.inner) || has(orbit.outer));
-    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main"><h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
+    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main">${ph ? require('./kit').pageHead({ ...ph, title: [title, accent].filter(Boolean).join(' '), lede }) : `<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}`}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
 }
 
 /** A grid of what the product does; each card may link to where it starts. */
-function features({ id: sid, title, lede, items } = {}) {
+function features({ id: sid, title, lede, items, icon: secIcon } = {}) {
     if (!has(items)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-grid">${items.map((f) => {
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'grid')}<div class="sc-grid">${items.map((f) => {
         // A ring icon (ov:…) is its own 40 px tile, so it fills the slot instead of sitting small inside a second tile.
         const ring = f.icon && String(f.icon).startsWith('ov:');
         const inner = `${f.icon ? `<span class="sc-ic${ring ? ' sc-ic-ov' : ''}">${icon(f.icon, ring ? 40 : 22)}</span>` : ''}<span><b>${esc(f.title)}</b>${f.text ? `<small>${esc(f.text)}</small>` : ''}</span>`;
@@ -129,27 +139,27 @@ function features({ id: sid, title, lede, items } = {}) {
 }
 
 /** A numbered path from nothing to done. */
-function steps({ id: sid, title, lede, items } = {}) {
+function steps({ id: sid, title, lede, items, icon: secIcon } = {}) {
     if (!has(items)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<ol class="sc-steps">${items.map((s) => `<li><b>${s.href ? `<a href="${esc(s.href)}">${esc(s.title)}</a>` : esc(s.title)}</b>${s.text ? `<span>${esc(s.text)}</span>` : ''}</li>`).join('')}</ol></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'steps')}<ol class="sc-steps">${items.map((s) => `<li><b>${s.href ? `<a href="${esc(s.href)}">${esc(s.title)}</a>` : esc(s.title)}</b>${s.text ? `<span>${esc(s.text)}</span>` : ''}</li>`).join('')}</ol></section>`;
 }
 
 /** Code the reader can copy: one or more samples, each labelled with its language. */
-function code({ id: sid, title, lede, samples } = {}) {
+function code({ id: sid, title, lede, samples, icon: secIcon } = {}) {
     if (!has(samples)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-code">${samples.map((c, i) => `<figure><figcaption>${esc(c.label || c.lang || `Sample ${i + 1}`)}</figcaption><pre tabindex="0" aria-label="${esc(c.label || c.lang || `Sample ${i + 1}`)}"><code${c.lang ? ` class="language-${esc(c.lang)}"` : ''}>${esc(String(c.code || '').replace(/^\n+|\s+$/g, ''))}</code></pre></figure>`).join('')}</div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'code')}<div class="sc-code">${samples.map((c, i) => `<figure><figcaption>${esc(c.label || c.lang || `Sample ${i + 1}`)}</figcaption><pre tabindex="0" aria-label="${esc(c.label || c.lang || `Sample ${i + 1}`)}"><code${c.lang ? ` class="language-${esc(c.lang)}"` : ''}>${esc(String(c.code || '').replace(/^\n+|\s+$/g, ''))}</code></pre></figure>`).join('')}</div></section>`;
 }
 
 /** A live demo: the product itself in a frame, or the caller's own markup. */
-function demo({ id: sid, title, lede, iframe, html } = {}) {
+function demo({ id: sid, title, lede, iframe, html, icon: secIcon } = {}) {
     if (!iframe && html == null) return '';
     const h = `sc-${slug(title)}`;
     const body = iframe
         ? `<iframe src="${esc(iframe.src)}" title="${esc(iframe.title || title || 'Live demo')}" loading="lazy" style="height:${Math.max(160, Math.min(900, Number(iframe.height) || 420))}px" referrerpolicy="strict-origin-when-cross-origin"${iframe.sandbox ? ` sandbox="${esc(iframe.sandbox)}"` : ''}></iframe>`
         : html;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-demo">${body}</div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'play')}<div class="sc-demo">${body}</div></section>`;
 }
 
 /**
@@ -171,34 +181,34 @@ const cell = (v) => (v === true ? '<span class="sc-yes" aria-label="yes">✓</sp
 const tableWrap = (title, h) => `<div class="sc-table-wrap" tabindex="0" role="region" ${title ? `aria-labelledby="${h}"` : 'aria-label="Table"'}>`;
 
 /** How the product compares, feature by feature. The first column is this product. */
-function compare({ id: sid, title, lede, columns, rows } = {}) {
+function compare({ id: sid, title, lede, columns, rows, icon: secIcon } = {}) {
     if (!has(rows) || !has(columns)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${tableWrap(title, h)}<table class="sc-table"><thead><tr><th scope="col"><span class="sr-only">Feature</span></th>${columns.map((c, i) => `<th scope="col"${i === 0 ? ' class="sc-us"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td${i === 0 ? ' class="sc-us"' : ''}>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'chart')}${tableWrap(title, h)}<table class="sc-table"><thead><tr><th scope="col"><span class="sr-only">Feature</span></th>${columns.map((c, i) => `<th scope="col"${i === 0 ? ' class="sc-us"' : ''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td${i === 0 ? ' class="sc-us"' : ''}>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`;
 }
 
 /** Plans side by side. A price of 0 reads "Free". */
-function pricing({ id: sid, title, lede, tiers, note } = {}) {
+function pricing({ id: sid, title, lede, tiers, note, icon: secIcon } = {}) {
     if (!has(tiers)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-tiers">${tiers.map((t) => `<div class="sc-tier${t.highlight ? ' sc-hl' : ''}"><b class="sc-tier-name">${esc(t.name)}</b><p class="sc-price">${t.price === 0 || t.price === '0' ? 'Free' : esc(t.price)}${t.per && !(t.price === 0 || t.price === '0') ? `<small> / ${esc(t.per)}</small>` : ''}</p>${has(t.items) ? `<ul>${t.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${t.action ? actions([{ ...t.action, primary: t.highlight }], 'sc-actions sc-tier-act') : ''}</div>`).join('')}</div>${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'coin')}<div class="sc-tiers">${tiers.map((t) => `<div class="sc-tier${t.highlight ? ' sc-hl' : ''}"><b class="sc-tier-name">${esc(t.name)}</b><p class="sc-price">${t.price === 0 || t.price === '0' ? 'Free' : esc(t.price)}${t.per && !(t.price === 0 || t.price === '0') ? `<small> / ${esc(t.per)}</small>` : ''}</p>${has(t.items) ? `<ul>${t.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${t.action ? actions([{ ...t.action, primary: t.highlight }], 'sc-actions sc-tier-act') : ''}</div>`).join('')}</div>${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</section>`;
 }
 
 /**
  * The limits a caller really gets, as a table: pricing that equals the API's limits. `source` names where the numbers
  * come from (a /limits.json URL), so the page can never promise more than the service enforces.
  */
-function limits({ id: sid, title, lede, columns, rows, source } = {}) {
+function limits({ id: sid, title, lede, columns, rows, source, icon: secIcon } = {}) {
     if (!has(rows) || !has(columns)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${tableWrap(title, h)}<table class="sc-table sc-limits"><thead><tr><th scope="col">Limit</th>${columns.map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${source ? `<p class="sc-note">These are the limits the service enforces, read from <a href="${esc(source)}">${esc(source.replace(/^https?:\/\//, ''))}</a>.</p>` : ''}</section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'gauge')}${tableWrap(title, h)}<table class="sc-table sc-limits"><thead><tr><th scope="col">Limit</th>${columns.map((c) => `<th scope="col">${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><th scope="row">${esc(r.label)}</th>${columns.map((_, i) => `<td>${cell((r.values || [])[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${source ? `<p class="sc-note">These are the limits the service enforces, read from <a href="${esc(source)}">${esc(source.replace(/^https?:\/\//, ''))}</a>.</p>` : ''}</section>`;
 }
 
 /** What people do with it, in their words. Only real uses: the caller passes nothing it cannot stand behind. */
-function stories({ id: sid, title, lede, items } = {}) {
+function stories({ id: sid, title, lede, items, icon: secIcon } = {}) {
     if (!has(items)) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-stories">${items.map((s) => `<figure class="sc-story"><blockquote>${esc(s.text)}</blockquote><figcaption>${esc(s.who)}${s.outcome ? `<span>${esc(s.outcome)}</span>` : ''}</figcaption></figure>`).join('')}</div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'quote')}<div class="sc-stories">${items.map((s) => `<figure class="sc-story"><blockquote>${esc(s.text)}</blockquote><figcaption>${esc(s.who)}${s.outcome ? `<span>${esc(s.outcome)}</span>` : ''}</figcaption></figure>`).join('')}</div></section>`;
 }
 
 // A next step's target names: the service id → the product name the card says it opens ("on OpenVibe.Media").
@@ -241,7 +251,7 @@ function nextSteps({ id: sid, title = 'Next steps', lede, items } = {}) {
 }
 
 /** A strip of real numbers ("12,400 streams", "184 tools"). The page passes what it measured; nothing is invented here. */
-function stats({ id: sid, title, items } = {}) {
+function stats({ id: sid, title, items, icon: secIcon } = {}) {
     const usable = (items || []).filter((x) => x && x.value != null && x.label);
     if (!usable.length) return '';
     const h = `sc-${slug(title || 'numbers')}`;
@@ -258,13 +268,13 @@ const RATIOS = { '16/9': '16 / 9', '4/3': '4 / 3', '1/1': '1 / 1', '3/4': '3 / 4
  * the top of a page; 'grid' (the default) wraps. Images are lazy and hold their space (`ratio`), so nothing jumps.
  * `live: true` adds the red LIVE badge; `badge` is any short label, `meta` a quiet line under the title.
  */
-function cards({ id: sid, title, lede, items, layout = 'grid', ratio = '16/9', more } = {}) {
+function cards({ id: sid, title, lede, items, layout = 'grid', ratio = '16/9', more, icon: secIcon } = {}) {
     const usable = (items || []).filter((c) => c && c.title && safeHref(c.href));
     if (!usable.length) return '';
     const h = `sc-${slug(title)}`;
     const ar = RATIOS[ratio] || RATIOS['16/9'];
     const moreHref = more && safeHref(more.href);
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${title || moreHref ? `<div class="sc-head-row"><div>${head(title, lede, h)}</div>${moreHref ? `<a class="sc-more" href="${esc(moreHref)}">${esc(more.label || 'See all')} <span aria-hidden="true">→</span></a>` : ''}</div>` : ''}<ul class="sc-cards sc-${layout === 'rail' ? 'rail' : 'wrap'}" style="--sc-ar:${ar}">${usable.map((c) => {
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${title || moreHref ? `<div class="sc-head-row"><div>${head(title, lede, h, secIcon || 'image')}</div>${moreHref ? `<a class="sc-more" href="${esc(moreHref)}">${esc(more.label || 'See all')} <span aria-hidden="true">→</span></a>` : ''}</div>` : ''}<ul class="sc-cards sc-${layout === 'rail' ? 'rail' : 'wrap'}" style="--sc-ar:${ar}">${usable.map((c) => {
         const img = /^(https:\/\/|\/(?!\/))/.test(c.image || '') ? `<img src="${esc(c.image)}" alt="${esc(c.alt || '')}" loading="lazy" decoding="async">` : '';
         const badge = c.live ? '<span class="sc-badge sc-live">LIVE</span>' : c.badge ? `<span class="sc-badge">${esc(c.badge)}</span>` : '';
         return `<li><a class="sc-tile" href="${esc(safeHref(c.href))}"><span class="sc-thumb">${img}${badge}</span><span class="sc-tile-body"><b>${esc(c.title)}</b>${c.meta ? `<small>${esc(c.meta)}</small>` : ''}${c.text ? `<span class="sc-tile-text">${esc(c.text)}</span>` : ''}</span></a></li>`;
@@ -272,11 +282,11 @@ function cards({ id: sid, title, lede, items, layout = 'grid', ratio = '16/9', m
 }
 
 /** Features, shown rather than listed: a picture or a short muted loop beside each, alternating sides. */
-function spotlight({ id: sid, title, lede, items } = {}) {
+function spotlight({ id: sid, title, lede, items, icon: secIcon } = {}) {
     const usable = (items || []).filter((x) => x && x.title);
     if (!usable.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-spots">${usable.map((x) => {
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'star')}<div class="sc-spots">${usable.map((x) => {
         const video = /^(https:\/\/|\/(?!\/))/.test(x.video || '') ? `<video src="${esc(x.video)}" muted loop playsinline autoplay preload="none"${x.image ? ` poster="${esc(x.image)}"` : ''} aria-label="${esc(x.alt || x.title)}"></video>` : '';
         const img = !video && /^(https:\/\/|\/(?!\/))/.test(x.image || '') ? `<img src="${esc(x.image)}" alt="${esc(x.alt || '')}" loading="lazy" decoding="async">` : '';
         const href = safeHref(x.href);
@@ -285,11 +295,11 @@ function spotlight({ id: sid, title, lede, items } = {}) {
 }
 
 /** Questions people ask, as an accordion that works without JavaScript. Pair it with faqJsonLd(items) in the head. */
-function faq({ id: sid, title = 'Questions', lede, items } = {}) {
+function faq({ id: sid, title = 'Questions', lede, items, icon: secIcon } = {}) {
     const usable = (items || []).filter((q) => Array.isArray(q) && q[0] && q[1]);
     if (!usable.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<div class="sc-faq">${usable.map(([q, a], i) => `<details${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>`;
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'help')}<div class="sc-faq">${usable.map(([q, a], i) => `<details${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>`;
 }
 /** A JSON-LD block that cannot close its script early. */
 const jsonLd = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
@@ -340,13 +350,13 @@ const DEFAULT_RELATED = RELATED.network;
  * "Part of OpenVibe": up to four related products for this one (RELATED, or the caller's own items in the same
  * [to, what, href] or { to, what, href } shape), each a ring icon, its name and why to go there.
  */
-function network({ id: sid, service, title = 'Part of OpenVibe', lede = 'One account across every OpenVibe site. Related places to go next:', items } = {}) {
+function network({ id: sid, service, title = 'More on OpenVibe', lede = 'One account across every OpenVibe site.', items, icon: secIcon } = {}) {
     const list = (items || RELATED[String(service || '').toLowerCase()] || DEFAULT_RELATED)
         .map((x) => (Array.isArray(x) ? { to: x[0], what: x[1], href: x[2] } : x))
         .filter((x) => x && x.what && safeHref(x.href) && x.to !== service).slice(0, 4);
     if (!list.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}"><span class="sc-ic sc-ic-ov">${icon(`ov:${String(x.to).toLowerCase()}`, 40)}</span><span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul></section>`;
+    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}"><span class="sc-ic sc-ic-ov">${icon(`ov:${String(x.to).toLowerCase()}`, 40)}</span><span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul><div class="sc-net-now" data-ov-now hidden></div><p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site →</a></p></section>`;
 }
 
 /**
@@ -358,7 +368,7 @@ function network({ id: sid, service, title = 'Part of OpenVibe', lede = 'One acc
  * gets a column count that fills its rows (four tiles: four across on a phone, two by two from 600 px, four from
  * 960 px), so no tile sits alone on a row. Empty → ''.
  */
-function apps({ id: sid, title = '', lede = '', groups = null, items = null, more = null } = {}) {
+function apps({ id: sid, title = '', lede = '', groups = null, items = null, more = null, icon: secIcon } = {}) {
     const sets = (groups || [{ name: '', items: items || [] }]).map((g) => ({ name: g.name || '', items: (g.items || []).filter((x) => x && x.name && safeHref(x.href)) })).filter((g) => g.items.length);
     if (!sets.length) return '';
     const h = `sc-${slug(title || 'apps')}`;
@@ -367,7 +377,7 @@ function apps({ id: sid, title = '', lede = '', groups = null, items = null, mor
     const cols = (n) => (n >= 2 && n <= 4 ? n : n % 4 === 0 ? 4 : n % 3 === 0 ? 3 : 0);
     const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps${cols(g.items.length) ? ` sc-apps--c${cols(g.items.length)}` : ''}">${g.items.map(tile).join('')}</ul>`).join('');
     const end = more && safeHref(more.href) ? `<p class="sc-apps-more"><a href="${esc(safeHref(more.href))}">${esc(more.label || 'See all')} →</a></p>` : '';
-    return `<section class="sc-sec sc-apps-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h)}${body}${end}</section>`;
+    return `<section class="sc-sec sc-apps-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'grid')}${body}${end}</section>`;
 }
 
 /** The closing call to action. */
@@ -414,8 +424,8 @@ function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq
         + `<b${typeof p.value === 'number' ? ` data-ov-ticker="${p.value}"` : ''}>${esc(fmtNum(p.value))}</b> <span>${esc(p.label)}</span>`
         + `${p.live ? '<em class="sc-room-live">live</em>' : p.asOf ? `<em>${esc(p.asOf)}</em>` : ''}</li>`).join('')}</ul>` : '';
     const heroHTML = h.title ? `<section class="sc-room-hero" aria-labelledby="sc-room-h">`
-        + `<div class="sc-room-main"><h1 id="sc-room-h">${esc(h.title)}</h1>${h.lede ? `<p class="sc-room-lede">${esc(h.lede)}</p>` : ''}${box}${start}`
-        + `${chips.length ? `<nav class="sc-room-chips" aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
+        + `<div class="sc-room-main">${h.pageHead ? kitLib.pageHead({ ...h.pageHead, title: h.title, lede: h.lede }).replace('<h1>', '<h1 id="sc-room-h">') : `<h1 id="sc-room-h">${esc(h.title)}</h1>${h.lede ? `<p class="sc-room-lede">${esc(h.lede)}</p>` : ''}`}${box}${start}`
+        + `${chips.length ? `<nav class="sc-room-chips" data-ovk-scroll aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
         + `<div class="sc-room-pic">${h.motif != null ? h.motif : roomMotif(r)}</div></section>` : '';
     const railsHTML = (rails || []).map((x) => kitLib.rail(x)).join('');
     const sceneList = (scenes || []).filter((x) => x && x.title && x.html != null);
@@ -427,6 +437,18 @@ function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq
     return `<div class="ov-room sc-room"${r ? ` data-room="${esc(r.id)}" style="${roomsLib.style(r.id)}"` : ''}>${heroHTML}${railsHTML}${scenesHTML}${html != null ? html : ''}`
         + `${explore ? features(explore) : ''}${devHTML}${q ? faq(q) : ''}${net ? network(net) : ''}</div>`;
 }
+
+// More on OpenVibe's live strip: up to four things happening across the network, filled in the browser from Network's
+// Frame (the same data the menu shows: who is live, the sites' trending cards). Text only; https links only; nothing
+// shows when Network does not answer. A page that renders network() includes this once: `<script>${sc.NETWORK_JS}</script>`.
+const NETWORK_JS = "(function(){try{var box=document.querySelector('[data-ov-now]');if(!box||!window.fetch)return;var here=location.hostname;"
+    + "function ok(u){try{var x=new URL(u);return x.protocol==='https:'&&x.hostname!==here?x.href:null}catch(e){return null}}"
+    + "function row(tag,name,title,href,live){var a=document.createElement('a');a.href=href;var s=document.createElement('span');s.textContent=tag;if(live)s.className='live';a.appendChild(s);var t=document.createElement('em');t.style.fontStyle='normal';t.textContent=title;a.appendChild(t);box.appendChild(a)}"
+    + "Promise.all([fetch('https://openvibe.network/api/frame/pulse',{credentials:'omit'}).then(function(r){return r.ok?r.json():null}).catch(function(){return null}),fetch('https://openvibe.network/api/frame?v=2',{credentials:'omit',headers:{accept:'application/json'}}).then(function(r){return r.ok?r.json():null}).catch(function(){return null})]).then(function(v){var n=0,p=v[0],f=v[1];"
+    + "var h=document.createElement('b');h.textContent='Happening on OpenVibe';box.appendChild(h);"
+    + "if(p&&Number(p.live_now)>0){var names=(p.live||[]).slice(0,3).map(function(c){return c.name}).filter(Boolean).join(', ');row('Live',null,(p.live_now==1?'1 stream live now':p.live_now+' streams live now')+(names?': '+names:''),'https://openvibe.live/',true);n++}"
+    + "(f&&f.cards||[]).forEach(function(c){if(n>=4||!c||!c.items||!c.items.length)return;var it=c.items[0],u=ok(it.url);if(!u||!it.title)return;row(String(c.title||c.site||'').slice(0,24),null,String(it.title).slice(0,90),u,false);n++});"
+    + "if(n)box.hidden=false})}catch(e){}})();";
 
 const CSS = `
 /* The hero's visual (4.26.0): the aura (rings, dots, the mark) or an orbit of the site's places. */
@@ -482,8 +504,13 @@ html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow
 .sc-btn.sc-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
 .sc-note{margin:14px 0 0;font-size:13.5px;color:var(--text-muted,#7386a3)}
 .sc-note a{color:var(--accent-light,#60a5fa)}
-.sc-sec{margin-top:56px;container-type:inline-size}
-.sc-sec>h2,.sc-cta>h2{font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;margin:0 0 6px}
+.sc-sec{margin-top:48px;padding-top:32px;border-top:1px solid color-mix(in srgb,var(--border,#263244) 70%,transparent);container-type:inline-size}
+.sc-hero+.sc-sec,.sc-sec:first-child{border-top:0;padding-top:0}
+.sc-sec>h2,.sc-cta>h2{display:flex;align-items:center;gap:12px;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;margin:0 0 6px}
+.sc-h-ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent);color:var(--accent-light,#60a5fa)}
+.sc-h-ic svg{display:block}
+.sc-sec>h2+.sc-lede{margin-left:48px}
+@media (max-width:520px){.sc-sec>h2+.sc-lede{margin-left:0}}
 .sc-lede{color:var(--text-secondary,#96a7c2);margin:0 0 18px;max-width:760px;line-height:1.55}
 .sc-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 @container (min-width:520px) and (max-width:1035px){.sc-grid:has(>:nth-child(4):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -611,6 +638,13 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-apps--c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (min-width:960px){.sc-apps--c4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.sc-net-now{display:grid;gap:8px;margin:14px 0 0;padding:12px;border-radius:14px;background:color-mix(in srgb,var(--accent,#3b82f6) 6%,var(--bg-secondary,#101828));border:1px solid color-mix(in srgb,var(--accent,#3b82f6) 22%,var(--border,#263244))}
+.sc-net-now[hidden]{display:none}
+.sc-net-now b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted,#8a96a8)}
+.sc-net-now a{display:flex;gap:10px;align-items:baseline;min-height:36px;color:inherit;text-decoration:none;font-size:14px;line-height:1.4}
+.sc-net-now a span{flex:none;min-width:64px;font-weight:700;color:var(--accent-light,#60a5fa)}
+.sc-net-now a .live{color:var(--live,#ef4444)}
+.sc-net-all{margin:12px 0 0;font-weight:700}.sc-net-all a{color:var(--accent-light,#60a5fa);text-decoration:none}
 .sc-net{list-style:none;margin:0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .sc-net a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 .sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
@@ -646,4 +680,4 @@ html{overflow-x:clip}
 @media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a,.sc-apps a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 
-module.exports = { icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };

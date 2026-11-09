@@ -252,6 +252,7 @@
         const btn = c.el.querySelector('[data-ovo="side"]');
         if (!open) {
             const s = c.side; c.side = null;
+            if (c.sideSurface) { c.sideSurface.destroy(); c.sideSurface = null; }
             if (btn) btn.setAttribute('aria-pressed', 'false');
             if (s) { s.classList.remove('is-open'); setTimeout(() => s.remove(), reduced() ? 0 : 260); if (cards.has(c.id)) settle(c, c.corner, c.w); }
             return;
@@ -276,6 +277,11 @@
     }
     function placeSide(c) {
         const s = c.side; if (!s) return;
+        if (phone() && root.OVSurfaces && !c.sideSurface) {
+            c.sideSurface = root.OVSurfaces.sheet({ el: s, opener: c.el.querySelector('[data-ovo="side"]'),
+                header: s.querySelector('.ovo-side-h'), body: s.querySelector('iframe'), close: () => toggleSide(c, false) });
+            c.sideSurface.open();
+        } else if (!phone() && c.sideSurface) { c.sideSurface.destroy(); c.sideSurface = null; }
         const b = bounds(), h = heightOf(c, c.w);
         if (phone()) {
             const sh = Math.round(Math.min(root.innerHeight * 0.55, b.bottom - b.top - h - 12));

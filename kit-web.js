@@ -31,6 +31,8 @@
     function setSidebar(sb, on) {
         if (!sb) return;
         sb.classList.toggle('is-open', on);
+        // The page behind a phone's drawer stays put (11-09, the owner: a swipe on the drawer "scrolls the actual page").
+        document.documentElement.classList.toggle('ovk-drawer-open', !!on);
         const wrap = sb.closest('.ovk-with-sidebar') || document;
         const scrim = wrap.querySelector('[data-ovk-sidebar-scrim]');
         if (scrim) scrim.hidden = !on;
@@ -42,6 +44,9 @@
         if (typeof document === 'undefined') return;
         const scope = rootEl || document;
         const all = (sel) => Array.prototype.slice.call(scope.querySelectorAll ? scope.querySelectorAll(sel) : []);
+        if (scope.querySelector && scope.querySelector('dialog.ovk-sheet, details.ovk-more') && !root.OVSurfaces && !document.getElementById('ov-surfaces-loader')) {
+            const sc = document.createElement('script'); sc.id = 'ov-surfaces-loader'; sc.src = SHARE_SRC ? SHARE_SRC.replace('ov-share.js', 'surfaces.js') : '/shared/surfaces.js'; sc.async = true; document.head.appendChild(sc);
+        }
         // Marks an element as wired. The mark has its own name (…Wired): `data-ovk-copy="#id"` is dataset.ovkCopy, so a mark
         // under that same name was already set by the markup, and copy, sheets, confirms and titled shares never wired.
         const once = (el, key) => { const k = `${key}Wired`; if (el.dataset[k]) return false; el.dataset[k] = '1'; return true; };
@@ -63,6 +68,10 @@
             if (!once(d, 'ovkMore')) return;
             d.addEventListener('toggle', () => {
                 if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; });
+                if (root.OVSurfaces) {
+                    if (!d.__ovSurface) d.__ovSurface = root.OVSurfaces.popover({ el: d, trigger: d.querySelector('summary'), close: () => { d.open = false; } });
+                    if (d.open) d.__ovSurface.open(); else d.__ovSurface.close();
+                }
                 // Inside a rail (a sideways scroller clips anything that hangs out of it) the menu is placed on the screen.
                 const pop = d.querySelector('.ovk-pop');
                 if (!pop || !d.closest('.ovk-rail-track')) return;
@@ -80,9 +89,9 @@
         });
         if (!document.documentElement.dataset.ovkDoc) {
             document.documentElement.dataset.ovkDoc = '1';
-            document.addEventListener('click', (e) => {
+            document.addEventListener('pointerdown', (e) => {
                 Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { if (!d.contains(e.target)) d.open = false; });
-            });
+            }, true);
             document.addEventListener('keydown', (e) => {
                 if (e.key !== 'Escape') return;
                 Array.prototype.forEach.call(document.querySelectorAll('details.ovk-more[open]'), (d) => { d.open = false; const s = d.querySelector('summary'); if (s) s.focus(); });
@@ -174,6 +183,66 @@
             track.addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
             if (typeof ResizeObserver === 'function') new ResizeObserver(update).observe(track); else window.addEventListener('resize', update);
             update();
+        });
+        // Every sideways strip says it scrolls (11-09, the owner: "it's not very apparent you can horizontal scroll… a little
+        // bounce… or auto scroll until you tap"): a kit rail's track, or any element marked data-ovk-scroll. Its edges fade
+        // where more is hidden (is-more-start / is-more-end); on a touch screen it nudges once when it first comes into view;
+        // data-ovk-scroll="drift" drifts slowly while in view (back and forth) and stops for good at the first touch,
+        // wheel or keyboard focus. Reduced motion: fades only.
+        all('.ovk-rail-track, [data-ovk-scroll]').forEach((track) => {
+            if (!once(track, 'ovkScroll')) return;
+            // A thin position bar under the strip (a thumb as wide as the share in view), shown while there is more.
+            let bar = null, thumb = null;
+            if (track.getAttribute('data-ovk-scroll-bar') !== 'off') {
+                bar = document.createElement('span'); bar.className = 'ovk-scroll-bar'; bar.setAttribute('aria-hidden', 'true'); bar.hidden = true;
+                thumb = document.createElement('i'); bar.appendChild(thumb);
+                track.insertAdjacentElement('afterend', bar);
+            }
+            const edges = () => {
+                const max = track.scrollWidth - track.clientWidth;
+                track.classList.toggle('is-more-start', max > 4 && track.scrollLeft > 4);
+                track.classList.toggle('is-more-end', max > 4 && track.scrollLeft < max - 4);
+                if (bar) {
+                    bar.hidden = max <= 4;
+                    if (max > 4) { const share = track.clientWidth / track.scrollWidth; thumb.style.width = `${Math.max(14, share * 100)}%`; thumb.style.transform = `translateX(${(track.scrollLeft / max) * ((1 / Math.max(share, 0.14)) - 1) * 100}%)`; }
+                }
+            };
+            track.addEventListener('scroll', () => requestAnimationFrame(edges), { passive: true });
+            if (typeof ResizeObserver === 'function') new ResizeObserver(edges).observe(track);
+            edges();
+            if (still() || typeof IntersectionObserver !== 'function') return;
+            const drift = track.getAttribute('data-ovk-scroll') === 'drift';
+            let touched = false, inView = false, raf = 0, dir = 1, last = 0, pos = -1;
+            const stop = () => { touched = true; cancelAnimationFrame(raf); raf = 0; };
+            ['pointerdown', 'wheel', 'focusin', 'touchstart'].forEach((ev) => track.addEventListener(ev, stop, { passive: true, once: true }));
+            const step = (t) => {
+                raf = 0;
+                if (touched || !inView || document.hidden) return;
+                const dt = last ? Math.min(64, t - last) : 16; last = t;
+                const max = track.scrollWidth - track.clientWidth;
+                if (max <= 4) return;
+                // A float of its own: a browser rounds scrollLeft, and under a pixel a frame would never move.
+                if (pos < 0 || Math.abs(pos - track.scrollLeft) > 2) pos = track.scrollLeft;
+                pos = Math.max(0, Math.min(max, pos + dir * dt * 0.028));
+                track.scrollLeft = pos;
+                if (pos >= max - 1) dir = -1; else if (pos <= 0) dir = 1;
+                raf = requestAnimationFrame(step);
+            };
+            let nudged = false;
+            new IntersectionObserver((entries) => {
+                for (const e of entries) {
+                    inView = e.isIntersecting && e.intersectionRatio >= 0.6;
+                    if (!inView || touched) continue;
+                    const max = track.scrollWidth - track.clientWidth;
+                    if (max <= 4) continue;
+                    if (drift) { last = 0; if (!raf) raf = requestAnimationFrame(step); continue; }
+                    // One nudge, phones only (a computer has the ‹ › buttons): 48 px along and back.
+                    if (!nudged && !fine && track.scrollLeft < 4) {
+                        nudged = true;
+                        setTimeout(() => { if (touched) return; track.scrollBy({ left: 48, behavior: 'smooth' }); setTimeout(() => { if (!touched) track.scrollBy({ left: -48, behavior: 'smooth' }); }, 420); }, 350);
+                    }
+                }
+            }, { threshold: [0, 0.6] }).observe(track);
         });
         // Share: the system sheet where there is one, else the link copied, said in the item itself.
         all('[data-ovk-share]').forEach((a) => {

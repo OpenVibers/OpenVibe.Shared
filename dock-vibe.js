@@ -12,6 +12,18 @@
     const MIC = '<rect x="9" y="3.5" width="6" height="10.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3"/>';
     const CSS = `
             .ovdk-vibe-h .ovdk-i { color: var(--accent, #3b82f6); margin-left: 6px; }
+            .ovdk-vibe-list { list-style: none; padding: 6px; margin: 0; display: grid; gap: 3px; }
+            .ovdk-vibe-list button { width: 100%; min-height: 60px; display: grid; grid-template-columns: 36px minmax(0,1fr) auto; grid-template-rows: auto auto; gap: 2px 12px; align-items: center; padding: 9px 10px; border: 0; border-radius: 14px; background: transparent; color: var(--text-primary,#ececf1); text-align: left; cursor: pointer; font: inherit; }
+            .ovdk-vibe-list .ovdk-vibe-site { grid-row: 1 / 3; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-vibe-list .ovdk-vibe-site svg { width: 19px; height: 19px; }
+            .ovdk-vibe-list b { font-size: 14px; } .ovdk-vibe-list span { font-size: 12.5px; color: var(--text-secondary, #b6b6c0); }
+            .ovdk-vibe-list small { justify-self: end; }
+            .ovdk-vibe-list button:hover, .ovdk-vibe-list button:focus-visible { background: var(--hover-bg,rgba(127,127,127,.12)); }
+            .ovdk-vibe-list b, .ovdk-vibe-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .ovdk-vibe-list small, .ovdk-vibe-list time { color: var(--text-muted,#8b8b96); font-size: 12px; }
+            .ovdk-vibe-list .ovdk-vibe-new { display: flex; gap: 8px; justify-content: center; min-height: 44px; margin: 2px 0 6px; border-radius: 999px; color: var(--on-accent, #fff); background: var(--accent, #3b82f6); font-weight: 750; font-size: 14px; }
+            .ovdk-vibe-list .ovdk-vibe-new:hover, .ovdk-vibe-list .ovdk-vibe-new:focus-visible { background: var(--accent-strong, var(--accent, #2563eb)); }
+            .ovdk-vibe-back { min-width: 44px; min-height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: inherit; cursor: pointer; }
             .ovdk-away { margin-left: auto; font-size: 12.5px; font-weight: 650; color: var(--accent, #3b82f6); text-decoration: none; white-space: nowrap; }
             .ovdk-away:hover { text-decoration: underline; }
             .ovdk-msg.is-vibe .ovdk-text a { color: var(--accent, #3b82f6); text-decoration: underline; word-break: break-all; }
@@ -23,7 +35,8 @@
             .ovdk-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
             .ovdk-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-primary, #ececf1); font: inherit; font-size: 12.5px; cursor: pointer; }
             .ovdk-chip:hover { border-color: var(--accent, #3b82f6); }
-            .ovdk-mic { width: 40px; height: 40px; flex: none; margin-left: -8px; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--text-muted, #8b8b96); touch-action: none; }
+            .ovdk-mic, .ovdk-attach { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--text-muted, #8b8b96); touch-action: none; }
+            .ovdk-attach:hover { color: var(--text-primary,#ececf1); }
             .ovdk-mic:hover { color: var(--text-primary, #ececf1); }
             .ovdk-mic.is-on { color: var(--on-accent, #fff); background: var(--live-red, #e5484d); box-shadow: 0 0 0 4px color-mix(in srgb, var(--live-red, #e5484d) 28%, transparent); }
             .ovdk-res { display: grid; gap: 6px; margin-top: 6px; max-width: 100%; }
@@ -54,7 +67,7 @@
     // browser without it (Firefox) records instead, up to 30 s, and Chat's /api/vibe/listen turns that into text
     // (OpenVibe.AI's speech-to-text on this network's own machines; the recording is never kept).
     // Everything is set as text; a link is a link only when it is https.
-    const vibe = { panel: null, chat: null, msgs: [], last: 0, timer: 0, busy: false, waitUntil: 0, rec: null, talk: null };
+    const vibe = { panel: null, chat: null, view: 'list', fresh: false, msgs: [], last: 0, timer: 0, busy: false, waitUntil: 0, rec: null, talk: null };
     const SR = root.SpeechRecognition || root.webkitSpeechRecognition || null;
     const MR = !SR && root.MediaRecorder && root.navigator && root.navigator.mediaDevices && root.navigator.mediaDevices.getUserMedia ? root.MediaRecorder : null;
     const TALK = Boolean(SR || MR);
@@ -115,15 +128,48 @@
         if (m.at) li.title = new Date(m.at).toLocaleString();
         return li;
     }
+    const age = (iso) => { const n = Date.parse(iso || ''); if (!Number.isFinite(n)) return ''; const m = Math.max(0, Math.floor((Date.now() - n) / 60000)); return m < 1 ? 'now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.floor(m / 60)} h ago` : `${Math.floor(m / 1440)} d ago`; };
+    async function openList() {
+        clearTimeout(vibe.timer); vibe.view = 'list'; vibe.chat = null;
+        const panel = vibe.panel; if (!panel) return;
+        panel.textContent = '';
+        const head = h('div', 'ovdk-thread-h ovdk-vibe-h'); head.append(icon(G.vibe), h('b', '', 'Vibe conversations'));
+        const away = h('a', 'ovdk-away', 'Open in Chat'); away.href = 'https://openvibe.chat/vibe'; away.target = '_blank'; away.rel = 'noopener'; head.append(away);
+        const scroll = h('div', 'ovdk-scroll'); const list = h('ul', 'ovdk-vibe-list');
+        const newer = h('button', 'ovdk-vibe-new', 'New conversation'); newer.type = 'button'; newer.addEventListener('click', () => { vibe.fresh = true; vibe.chat = null; ctx.save({ vibe: null }); openVibe(); });
+        const first = h('li'); first.append(newer); list.append(first); scroll.append(list); panel.append(head, scroll);
+        try {
+            const out = await ctx.chatCall('/api/vibe/conversations');
+            if (vibe.view !== 'list' || vibe.panel !== panel) return;
+            const conversations = Array.isArray(out.conversations) ? out.conversations : [];
+            if (!conversations.length) list.append(h('li', 'ovdk-none', 'Your Vibe conversations will appear here.'));
+            conversations.forEach((c) => {
+                const li = h('li'), b = h('button'); b.type = 'button';
+                const title = h('b', '', c.name || 'Conversation'); const time = h('time', '', age(c.last_message_at));
+                const line = h('span', '', c.last_line || 'No messages yet');
+                // The site it began on, by name ("Blog", not openvibe.blog), beside the time.
+                const host = String(c.site || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+                const name = host ? (/^openvibe\.([a-z]+)$/.exec(host) || [])[1] : '';
+                const site = h('small', '', name ? name.charAt(0).toUpperCase() + name.slice(1) : host);
+                const mark = h('span', 'ovdk-vibe-site'); mark.append(icon(G.vibe));
+                b.append(mark, title, time, line, site);
+                b.setAttribute('aria-label', `${c.name || 'Conversation'}, ${age(c.last_message_at)}`);
+                b.addEventListener('click', () => { vibe.fresh = false; vibe.chat = { slug: c.slug }; ctx.save({ vibe: { slug: c.slug, at: new Date().toISOString() } }); openVibe(); });
+                li.append(b); list.append(li);
+            });
+        } catch (e) { list.append(h('li', 'ovdk-none', e && e.status === 401 ? 'Sign in to see your conversations.' : 'Conversations did not load. Open Vibe again to retry.')); }
+    }
     async function openVibe() {
         clearTimeout(vibe.timer);
+        vibe.view = 'conversation';
         const panel = vibe.panel; if (!panel) return;
         vibe.msgs = []; vibe.last = 0;
         panel.textContent = '';
         const head = h('div', 'ovdk-thread-h ovdk-vibe-h');
         const title = h('b', '', 'Vibe');
         const away = h('a', 'ovdk-away', 'Open in Chat'); away.href = 'https://openvibe.chat/vibe'; away.target = '_blank'; away.rel = 'noopener';
-        head.append(icon(G.vibe), title, away);
+        const back = h('button', 'ovdk-vibe-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to Vibe conversations'); back.textContent = '←'; back.addEventListener('click', () => { ctx.save({ vibe: null }); openList(); });
+        head.append(back, icon(G.vibe), title, away);
         const list = h('ol', 'ovdk-msgs'); list.setAttribute('aria-live', 'polite');
         const scroll = h('div', 'ovdk-scroll ovdk-thread'); scroll.append(list);
         const typing = h('li', 'ovdk-msg is-vibe ovdk-typing'); typing.innerHTML = '<span class="ovdk-text"><i></i><i></i><i></i></span>'; typing.setAttribute('aria-label', 'Vibe is writing');
@@ -131,6 +177,29 @@
         const box = h('textarea'); box.rows = 1; box.maxLength = 8000; box.placeholder = TALK ? 'Ask Vibe, or hold the mic' : 'Ask Vibe'; box.setAttribute('aria-label', 'Message Vibe');
         const go = h('button', 'ovdk-go'); go.type = 'submit'; go.setAttribute('aria-label', 'Send'); go.append(icon(G.send));
         const err = h('p', 'ovdk-err'); err.hidden = true;
+        const reason = (e) => e && e.status === 401 ? 'Your sign in expired. Sign in again to continue.'
+            : e && e.status === 429 ? 'Too many requests were sent. Wait a minute, then retry.'
+            : e && e.code === 'vibe.off' ? 'Vibe is unavailable right now. Retry when it returns.'
+            : e && e.status === 503 ? 'The AI service is unavailable right now. Retry shortly.'
+            : 'The request could not reach Vibe. Check your connection and retry.';
+        const showFailure = (e, retry) => { err.textContent = `Vibe did not answer: ${reason(e)} `; err.hidden = false;
+            if (retry) { const b = h('button', '', 'Retry'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await retry(); } catch (x) { showFailure(x, retry); } finally { b.disabled = false; } }); err.append(b); }
+        };
+        const attach = h('button', 'ovdk-attach', '＋'); attach.type = 'button'; attach.setAttribute('aria-label', 'Attach a picture'); attach.title = 'Attach a picture';
+        const file = h('input'); file.type = 'file'; file.accept = 'image/*'; file.hidden = true;
+        attach.addEventListener('click', () => file.click());
+        file.addEventListener('change', async () => {
+            const picture = file.files && file.files[0]; if (!picture) return;
+            attach.disabled = true; err.hidden = true;
+            try {
+                const path = vibe.chat ? `/api/chat/rooms/${encodeURIComponent(vibe.chat.slug)}/pictures` : '/api/chat/vibe/picture';
+                const out = await ctx.chatCall(path, { method: 'POST', body: picture, type: picture.type || 'image/jpeg' });
+                if (out.room && out.room.slug) { vibe.chat = { slug: out.room.slug }; vibe.fresh = false; ctx.save({ vibe: { slug: out.room.slug, at: new Date().toISOString() } }); }
+                openVibe();
+            } catch { err.textContent = 'That picture could not be attached. Try again.'; err.hidden = false; }
+            finally { attach.disabled = false; file.value = ''; }
+        });
+        form.append(attach, file);
         let mic = null;
         if (TALK) {
             mic = h('button', 'ovdk-mic'); mic.type = 'button'; mic.append(icon(G.mic));
@@ -150,8 +219,8 @@
             vibe.busy = true; go.disabled = true; err.hidden = true;
             try {
                 let timezone = null; try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* */ }
-                const out = await ctx.chatCall('/api/vibe/ask', { method: 'POST', body: JSON.stringify({ message: text, slug: vibe.chat ? vibe.chat.slug : undefined, timezone }) });
-                if (out.chat) { vibe.chat = out.chat; away.href = out.chat.url; }
+                const out = await ctx.chatCall('/api/vibe/ask', { method: 'POST', body: JSON.stringify({ message: text, slug: vibe.chat ? vibe.chat.slug : undefined, fresh: vibe.fresh, timezone }) });
+                if (out.chat) { vibe.chat = out.chat; vibe.fresh = false; away.href = out.chat.url; ctx.save({ vibe: { slug: out.chat.slug, at: new Date().toISOString() } }); }
                 box.value = ''; fit();
                 const empty = list.querySelector('.ovdk-vibe-start'); if (empty) empty.remove();
                 if (out.message && !vibe.msgs.some((x) => x.id === out.message.id)) { list.append(vbubble(out.message, vibe.msgs[vibe.msgs.length - 1])); vibe.msgs.push(out.message); vibe.last = Math.max(vibe.last, out.message.id || 0); }
@@ -160,8 +229,7 @@
                 scroll.scrollTop = scroll.scrollHeight;
                 clearTimeout(vibe.timer); vibe.timer = setTimeout(() => pull(), 1200);
             } catch (x) {
-                err.textContent = x.status === 429 ? 'That is a lot of questions at once: wait a minute, then ask again.' : x.status === 401 ? 'Sign in again to talk to Vibe.' : 'That did not reach Vibe. Try again.';
-                err.hidden = false;
+                showFailure(x, () => send(text));
             } finally { vibe.busy = false; go.disabled = false; box.focus(); }
         }
         form.addEventListener('submit', (e) => { e.preventDefault(); send(box.value.trim()); });
@@ -169,13 +237,13 @@
         async function pull(first) {
             let got;
             try {
-                got = await ctx.chatCall(`/api/vibe/chat${vibe.chat ? `?slug=${encodeURIComponent(vibe.chat.slug)}${vibe.last ? `&after=${vibe.last}` : ''}` : ''}`);
+                got = vibe.fresh && !vibe.chat ? { chat: null, messages: [] } : await ctx.chatCall(`/api/vibe/chat${vibe.chat ? `?slug=${encodeURIComponent(vibe.chat.slug)}${vibe.last ? `&after=${vibe.last}` : ''}` : ''}`);
             } catch (e) {
-                if (first) { list.textContent = ''; list.append(h('li', 'ovdk-none', e.status === 401 ? 'Sign in to OpenVibe.Chat to talk to Vibe.' : 'Vibe did not answer just now. Try again in a moment.')); }
+                if (first) { list.textContent = ''; showFailure(e, () => pull(true)); }
                 return;
             }
             if (!ctx.active() || vibe.panel !== panel) return;
-            if (got.chat) { vibe.chat = got.chat; away.href = got.chat.url; }
+            if (got.chat) { vibe.chat = got.chat; away.href = got.chat.url; title.textContent = got.chat.name || 'Vibe'; }
             if (first) list.textContent = '';
             const atEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 40;
             let answered = false;
@@ -186,7 +254,13 @@
                 if (m.from === 'vibe') answered = true;
                 if (!first && Array.isArray(m.results) && m.results.some((r) => r && r.kind === 'timer') && ctx.refresh) ctx.refresh();
             });
-            if (answered || Date.now() > vibe.waitUntil) { typing.remove(); vibe.waitUntil = 0; }
+            if (answered || Date.now() > vibe.waitUntil) {
+                typing.remove();
+                if (!answered && vibe.waitUntil && Date.now() > vibe.waitUntil) {
+                    showFailure({ status: 503 }, vibe.chat ? async () => { await ctx.chatCall(`/api/chat/vibe/${encodeURIComponent(vibe.chat.slug)}/retry`, { method: 'POST', body: '{}' }); err.hidden = true; vibe.waitUntil = Date.now() + 90000; list.append(typing); pull(); } : null);
+                }
+                vibe.waitUntil = 0;
+            }
             if (first && !vibe.msgs.length) {
                 const start = h('li', 'ovdk-vibe-start');
                 start.append(h('b', '', 'Ask Vibe anything'), h('span', '', TALK ? 'Type, or hold the mic and say it. It sets reminders, finds what is live, and answers from the whole network.' : 'It sets reminders, finds what is live, and answers from the whole network.'));
@@ -269,7 +343,9 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(true);
-        setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
+        // A touch screen does not get the keyboard on opening (11-09, the owner: it "immediately opens the keyboard… you
+        // can't see the chat input or what it did"): the answer and the box show first; a tap on the box types.
+        if (!(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
     }
 
     function mount(panel, c) {
@@ -279,13 +355,18 @@
         if (st && !st.textContent.includes('.ovdk-vibe-start')) st.textContent += CSS;
         else if (!st && !document.getElementById('ovdk-vibe-styles')) { const s = document.createElement('style'); s.id = 'ovdk-vibe-styles'; s.textContent = CSS; document.head.appendChild(s); }
         vibe.panel = panel;
-        openVibe();
+        // The Chats tab's AI chats row asks for the list, not for the last conversation.
+        const onList = ctx.wantList ? ctx.wantList() : false;
+        const selected = ctx.state && ctx.state().vibe;
+        if (!onList && selected && selected.slug && Date.now() - Date.parse(selected.at) < 20 * 60000) { vibe.chat = { slug: selected.slug }; openVibe(); }
+        else openList();
         return {
-            refresh: () => { vibe.panel = panel; return openVibe(); },
+            refresh: () => { vibe.panel = panel; const list = ctx.wantList ? ctx.wantList() : false; if (list) return openList(); return vibe.view === 'list' ? openList() : openVibe(); },
+            list: () => { vibe.panel = panel; return openList(); },
             pause: () => { clearTimeout(vibe.timer); if (vibe.rec) { try { vibe.rec.abort(); } catch { /* */ } } },
             talk: () => { if (vibe.talk) vibe.talk(); },
             // A page's "Ask your agent" (4.135.0): the question waits in the box, with its context, for the person to send.
-            ask: (text) => { if (vibe.fill) vibe.fill(text); else vibe.pendingAsk = text; },
+            ask: (text) => { if (vibe.view === 'list') { vibe.pendingAsk = text; vibe.fresh = true; openVibe(); } else if (vibe.fill) vibe.fill(text); else vibe.pendingAsk = text; },
         };
     }
     root.OpenVibeDockVibe = { mount };
