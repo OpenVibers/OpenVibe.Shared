@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.172.0 — 2026-11-09
+
+- **Notices read as what happened** (`notification-ui.js`, the bell, its toasts and the Dock's Activity tab): an
+  agent's notice shows its task, not the words it was given ("Done: <prompt>" is the prompt; "approve: <step>
+  (<task>)" is the step with an "Approval" label), and rich_content's `task_title` and `step` win when Actor sends
+  them; two finished tasks are two rows. A message holding a value's JSON (a watch on a feed sends the entry, cut at
+  300 characters) reads as its title and summary, and JSON with neither is left out instead of shown as code.
+- **Faces per service**: Actor's notices wear an agent, Watch's an eye, Connect's and Link's a computer, Billing's a
+  coin and the welcome a spark, instead of every service sharing the grid; their rows say Agents, Watch, Connect,
+  Link, Community, Wallet, Blog, Design, AI or Events. The bell script's budget is 25.5 KB brotli (25.24 measured).
+- **The account menu asks only the Network for Vibes** (`navbar.js`): the direct `billing.openvibe.network/api/me/vibes`
+  fallback (for a Network older than 10-28) and the `billingBase` option are gone. No site's CSP allowed that host, so
+  it could only fail. A Network answer without Vibes shows no Vibes chip.
+
 ## 4.171.0 — 2026-11-09
 
 - **The page head's icon and actions sit on the title's first line** (`kit.pageHead`): a title that wraps to three
