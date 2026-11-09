@@ -11,7 +11,14 @@
             const same = (a,b) => a && b && a.model === b.model && a.source === b.source && a.machine === b.machine;
             function mark(model) {
                 const family = /anthropic|claude/i.test(model) ? 'Anthropic' : /gpt|openai/i.test(model) ? 'OpenAI' : /gemini|google/i.test(model) ? 'Google' : /deepseek/i.test(model) ? 'DeepSeek' : /qwen/i.test(model) ? 'Qwen' : /llama|meta/i.test(model) ? 'Meta' : /mistral/i.test(model) ? 'Mistral' : /minimax/i.test(model) ? 'MiniMax' : /kimi|moonshot/i.test(model) ? 'Kimi' : /glm|zai/i.test(model) ? 'GLM' : 'Other';
-                return host.querySelector(`template[data-maker="${family}"]`).content.cloneNode(true);
+                // The server render carries one template per maker. A page that placed the chip by hand has none: the
+                // chip still names the model, with a neutral mark, rather than breaking on the first click.
+                const template = host.querySelector(`template[data-maker="${family}"]`) || host.querySelector('template[data-maker="Other"]');
+                if (template) return template.content.cloneNode(true);
+                const span = document.createElement('span');
+                span.className = 'ov-aim ov-aim--other';
+                span.setAttribute('aria-hidden', 'true');
+                return span;
             }
             function choose(row, picked = true) {
                 selected = {model:row.model,source:row.source,...(row.machine ? {machine:row.machine}: {})};
