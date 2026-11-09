@@ -51,6 +51,8 @@
     "./nav-slots": "./nav-slots.js",
     "./overlay": "./overlay.js",
     "./dock-vibe": "./dock-vibe.js",
+    "./dock-runs": "./dock-runs.js",
+    "./ai-marks-client": "./ai-marks-client.js",
     "./dock-timer": "./dock-timer.js",
     "./dock-share": "./dock-share.js",
     "./dock-card": "./dock-card.js",

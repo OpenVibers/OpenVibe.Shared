@@ -367,11 +367,11 @@
             let data;
             try { data = await api(path); } catch (err) {
                 if (destroyed) return;
-                nowBox.textContent = '';
-                nowBox.appendChild(el(doc, 'div', 'ovdt-card ovdt-empty', 'The agent is not reachable right now.'));
+                container.hidden = true;
                 return;
             }
             if (destroyed) return;
+            container.hidden = !data.now && !(data.needs_you || []).length && !(data.entries || []).length;
             renderNow(data.now);
             renderNeeds(data.needs_you || []);
             renderChips(data.counts || {});

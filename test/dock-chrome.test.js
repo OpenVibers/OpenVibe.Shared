@@ -65,7 +65,7 @@ const vibeMsgs = [], asked = [], listened = [], undone = [];
 const defaultState = () => ({ open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } }, updated_at: iso(0) });
 
 const PAGE = (o) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tasks</title><link rel="icon" href="data:,">
-<style>body{margin:0;font:15px system-ui}main{padding:16px}p{margin:0 0 12px}</style></head>
+<style>body{margin:0;font:15px system-ui}main{padding:16px}p{margin:0 0 12px}@media(prefers-color-scheme:light){:root{--bg:#fff;--bg-primary:#fff;--bg-elevated:#fff;--bg-secondary:#f4f6fa;--text-primary:#18202f;--text-secondary:#5d6779;--border:#dce0e8;--accent:#2365dc;--on-accent:#fff}}</style></head>
 <body><div id="navbar-mount"></div><main>${'<p>Fix the flaky upload test in the Media client and add a regression case.</p>'.repeat(30)}</main>
 <script src="/navbar.js"></script>
 <script>OpenVibeNavbar.init({ service: 'codes', brandName: 'OpenVibe.Codes', notifications: false, dockApiBase: location.origin, dockChatBase: location.origin, dockAgentBase: location.origin,
@@ -132,6 +132,7 @@ const server = http.createServer((req, res) => {
                 .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
             return json(200, { messages: all.filter((m) => m.id > after) });
         }
+        if (u.pathname === '/api/vibe/conversations') return json(200, { conversations: [], count: 0 });
         if (u.pathname === '/api/vibe/chat') {
             assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'Vibe is asked with the person\'s own token');
             const after = Number(u.searchParams.get('after')) || 0;
@@ -183,7 +184,7 @@ const PILL = `(() => { const p = document.getElementById('ovdk-pill'); if (!p ||
         clear: getComputedStyle(document.documentElement).getPropertyValue('--ov-dock-clear').trim() }; })()`;
 const CARD = `(() => { const c = document.querySelector('.ovdk'); if (!c || c.hidden) return null; const b = c.getBoundingClientRect();
     return { corner: c.dataset.corner, w: Math.round(b.width), h: Math.round(b.height), l: b.left, t: b.top, tab: (c.querySelector('[role=tab][aria-selected=true]') || {}).dataset?.tab,
-        groups: [...c.querySelectorAll('.ovac-group')].map((g) => g.dataset.bucket), items: c.querySelectorAll('.ovac-item').length, notes: c.querySelectorAll('.openvibe-notif-item').length }; })()`;
+        groups: [...new Set([...c.querySelectorAll('.ovdk-run[data-bucket]')].map((g) => g.dataset.bucket))], items: c.querySelectorAll('.ovac-item').length, notes: c.querySelectorAll('.openvibe-notif-item').length }; })()`;
 
 // A stand-in for the browser's Document Picture-in-Picture window: a same-origin frame with a real document, so the
 // Dock can move into it (K-D4) and be seen coming back. `__pip.close()` is the person closing that window.
@@ -216,6 +217,25 @@ async function drag(p, from, to) {
     const browser = await h.launch({ tmpDir });
     const fresh = async (width, height = 860) => { const context = await browser.newContext(); const p = await h.openPage(browser, context, { width, height }); return p; };
     try {
+        if (process.env.DOCK_SHOTS_DIR) {
+            fs.mkdirSync(process.env.DOCK_SHOTS_DIR, { recursive: true });
+            for (const width of [390, 1280]) for (const scheme of ['dark', 'light']) {
+                scenario = { counts: { running: 2, waiting: 1, unread: 0 } };
+                const p = await fresh(width, 900);
+                await p.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+                await p.goto(`${base}/page`, { maxMs: 5000 });
+                await until(p, PILL, 'the screenshot pill');
+                await p.evaluate("document.getElementById('ovdk-pill').click()");
+                await until(p, "document.querySelectorAll('.ovdk-run').length >= 3", 'the screenshot runs');
+                await wait(400);
+                const docWidth = await p.evaluate('document.documentElement.scrollWidth');
+                assert.ok(docWidth <= width && docWidth >= width - 20, `${width} px ${scheme}: no sideways scroll (${docWidth})`);
+                const shot = await p.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+                fs.writeFileSync(path.join(process.env.DOCK_SHOTS_DIR, `agents-${width}-${scheme}.png`), Buffer.from(shot.data, 'base64'));
+                await p.close();
+            }
+            if (process.env.DOCK_SHOTS_ONLY) return;
+        }
         // ── Nothing runs, nothing waits, not pinned: no pill. Pinned: the pill, a mark alone. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 3 } };
@@ -537,6 +557,8 @@ async function drag(p, from, to) {
             await until(p, CARD, 'the card');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [role=tab]').dataset.tab"), 'vibe', 'Vibe is the first tab');
             await p.evaluate("document.querySelector('#ovdk-tab-vibe').click()");
+            await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the conversation list');
+            await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
             await until(p, "document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip').length === 4", 'the starters before the first message');
             await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] .ovdk-chip').click()");
             await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-mine')", 'my question in place');
@@ -582,6 +604,8 @@ async function drag(p, from, to) {
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, PILL, 'the pinned pill');
             await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the Vibe list');
+            await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
             await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-mic')", 'a mic, though the browser has no speech recognition');
             assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] textarea').placeholder"), 'Ask Vibe, or hold the mic');
             await p.evaluate("document.querySelector('.ovdk .ovdk-mic').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))");
