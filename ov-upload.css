@@ -26,5 +26,5 @@
 @keyframes ov-upload-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 @keyframes ov-upload-pulse { 50% { opacity: .5; } }
 @keyframes ov-upload-check { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-@media (pointer: coarse) { .ov-upload__picker { min-height: 120px; } .ov-upload__drop { display: none; } }
+@media (pointer: coarse), (max-width: 700px) { .ov-upload__picker { min-height: 120px; } .ov-upload__drop { display: none; } }
 @media (prefers-reduced-motion: reduce) { .ov-progress__fill, .ov-progress[data-state="processing"] .ov-progress__fill, .ov-progress[data-state="done"] .ov-progress__percent { transition: none; animation: none; } .ov-progress[data-state="sending"] .ov-progress__fill::after { display: none; } }
