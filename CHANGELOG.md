@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.161.0 — 2026-11-09
+
+- **Menus open from where you tapped** (the owner, 11-09: "custom animations… content aware… where you're clicking"):
+  `OpenVibeNavbar.pop(el, trigger)` / `.unpop(el, done)`, a clip reveal with a small spring from the trigger and a quick
+  close; the account menu, the Display panel, the composer's Options and Attach, and the Dock (from its pill on a
+  computer) use it.
+- **Calm is gentle, not still** (the owner: "the animations need to work even on calm mode"): the mark still animates a
+  state (its loops play once) and menus pop small and short; only intros, hover plays and the season's leaves rest.
+- **The menu's tabs show what they are**: this site's own mark, Feed with a live dot or a count of what changed since
+  you last looked, You with your picture and an online dot; the tab is remembered per site.
+- **You**: app icons (no ring; the glyph fills a squircle tinted with each app's own hue), Quick tools named apart from
+  the Tools site with each tool's own icon, a grid that fills a computer's width, editing that never scrolls the page
+  and scrolls the list near its edges, the AI invite redesigned; Jump back in with each site's icon, cleaner titles and
+  Live now.
+- **The account menu**: Wallet and Profile tiles; the footer keeps light, dark and auto with one Display button; the
+  Look panel holds text size and motion with the theme and icons; the menu's Display row matches.
+- **The Dock**: Close is the menu orb in its x form; More's dots sit on the centre line.
+- **Sideways strips say they scroll**: kit rails and `[data-ovk-scroll]` fade at the edges where more is hidden, show a
+  position bar, nudge once on a phone, and `drift` moves until the first touch.
+
 ## 4.160.0 — 2026-11-09
 
 - **Feed v2: the menu's Feed is a real feed** (the owner, 11-09: "a real feed… you scroll through easy content… a filter
@@ -1456,8 +1476,6 @@ From a phone sweep of every site's home (11-02):
   align left, and slash, plus 40 names mapped onto glyphs that already stand for the same thing. Brand logos stay
   Font Awesome Brands. ov-glyphs.js, the glyph font (22.3 KB woff2), its Font Awesome stylesheet and the sprite are
   rebuilt; existing code points are unchanged.
-
-## Unreleased
 
 ## 4.113.0 — 2026-11-06
 
