@@ -122,12 +122,28 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-actor.is-invite .ovh-x { min-height: 36px; height: 36px; padding: 0 14px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); color: var(--text-secondary, #a8b3c4); font-weight: 600; }
 @media (min-width: 560px) { .ovh-actor.is-invite { grid-template-columns: 48px minmax(0, 1fr) auto; } .ovh-actor.is-invite .ovh-acts { grid-column: auto; } }
 .ovh-skel { display: block; height: 14px; margin: 10px 8px; border-radius: 7px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
-.ovh-compose { display: flex; gap: 10px; align-items: flex-start; margin: 6px 4px; padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
+.ovh-compose { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; align-items: start; margin: 6px 4px; padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); }
 .ovh-compose textarea { flex: 1; min-width: 0; min-height: 44px; max-height: 160px; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.14));
     background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 15px; line-height: 1.4; resize: none; overflow-y: auto; }
 .ovh-post { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); font: inherit; font-weight: 700; cursor: pointer; }
 .ovh-post:disabled { opacity: .5; cursor: default; }
+.ovh-compose-main { display: grid; gap: 8px; min-width: 0; }
+.ovh-compose-bar { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ovh-compose-bar .ovh-post { margin-left: auto; }
+.ovh-compose-hint { flex: 1; min-width: 0; font-size: 12px; color: var(--text-muted, #93a0b4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-pic-btn { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--accent-light, var(--accent, #60a5fa)); cursor: pointer; }
+.ovh-pic-btn:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+.ovh-pic-btn:disabled { opacity: .4; cursor: default; background: transparent; }
+.ovh-pic-btn svg, .ovh-pic-x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-pics { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ovh-pics[hidden] { display: none; }
+.ovh-pic { display: grid; grid-template-columns: 56px minmax(0, 1fr) 40px; gap: 8px; align-items: center; }
+.ovh-pic img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
+.ovh-pic input { min-width: 0; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.14)); background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 14px; }
+.ovh-pic-x { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted, #93a0b4); cursor: pointer; }
+.ovh-pic-x svg { width: 18px; height: 18px; }
+.ovh-pic-x:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); }
 .ovh-note { margin: 2px 8px 6px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
 .ovh-today { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 4px 4px 6px; }
 .ovh-stat { display: grid; gap: 2px; align-content: start; min-width: 0; padding: 10px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
@@ -287,6 +303,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
         gear: [['circle', { cx: 12, cy: 12, r: 3 }], ['path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z' }]],
         x: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+        image: [['rect', { x: 3.5, y: 4.5, width: 17, height: 15, rx: 3 }], ['circle', { cx: 9, cy: 10, r: 1.8 }], ['path', { d: 'M4 17.5l4.6-4.4a1.5 1.5 0 0 1 2 0l2.4 2.3 2.2-2a1.5 1.5 0 0 1 2 0l3.3 3' }]],
         eye: [['path', { d: 'M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z' }], ['circle', { cx: 12, cy: 12, r: 2.8 }]],
         heart: [['path', { d: 'M12 20s-7.2-4.4-8.9-8.8C1.9 7.9 4 4.8 7.2 4.8c1.9 0 3.4 1 4.8 2.9 1.4-1.9 2.9-2.9 4.8-2.9 3.2 0 5.3 3.1 4.1 6.4C19.2 15.6 12 20 12 20Z' }]],
         reply: [['path', { d: 'M20.5 11.6a8 8 0 0 1-11.7 7.1L4 20l1.3-4.4a8 8 0 1 1 15.2-4Z' }]],
@@ -734,28 +751,101 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         fetch(`${o.apiBase || 'https://openvibe.network'}/api/v1/frame/today`, { credentials: 'omit', headers: { Accept: 'application/json' } })
             .then((r) => (r.ok ? r.json() : null)).then((t) => { if (t && today.isConnected) paintToday(today, t); }).catch(() => {});
     }
+    // A picture for a post: scaled to at most 2560 px on its long side (phone photos are often 12 MB; Community takes 8 MB),
+    // and a small preview drawn to a data: address (every site's img-src allows data:, not all allow blob:).
+    async function preparePicture(file) {
+        const out = { file, thumb: '' };
+        try {
+            const bmp = await createImageBitmap(file);
+            const draw = (w, hgt) => { const c = document.createElement('canvas'); c.width = w; c.height = hgt; c.getContext('2d').drawImage(bmp, 0, 0, w, hgt); return c; };
+            const t = 112 / Math.max(bmp.width, bmp.height);
+            out.thumb = draw(Math.max(1, Math.round(bmp.width * t)), Math.max(1, Math.round(bmp.height * t))).toDataURL('image/jpeg', 0.8);
+            const k = Math.min(1, 2560 / Math.max(bmp.width, bmp.height));
+            if ((k < 1 || file.size > 7.5e6) && !/gif/i.test(file.type)) {
+                const blob = await new Promise((ok) => draw(Math.round(bmp.width * k), Math.round(bmp.height * k)).toBlob(ok, 'image/jpeg', 0.86));
+                if (blob) out.file = new File([blob], `${String(file.name || 'picture').replace(/\.[a-z0-9]+$/i, '')}.jpg`, { type: 'image/jpeg' });
+            }
+        } catch { /* the original goes as it is */ }
+        return out;
+    }
     function composer(box, o) {
         const form = h('form', 'ovh-compose');
         const face = h('span', 'ovh-face');
         const pic = o.user && /^https:\/\//.test(String(o.user.avatar_url || o.user.avatar || '')) ? (o.user.avatar_url || o.user.avatar) : '';
         if (pic) { const img = h('img'); img.alt = ''; img.src = pic; face.append(img); } else face.textContent = String((o.user && (o.user.display_name || o.user.username)) || 'Y').charAt(0).toUpperCase();
         const first = String((o.user && (o.user.display_name || o.user.username)) || '').split(/\s+/)[0];
+        const main = h('div', 'ovh-compose-main');
         const ta = h('textarea'); ta.name = 'text'; ta.maxLength = 500; ta.rows = 1; ta.placeholder = first ? `What's new, ${first}?` : "What's new?"; ta.setAttribute('aria-label', "What's new");
+        // Pictures (owner, 11-09: "you can make posts and put images"): up to four, each with a line saying what it shows,
+        // which Community requires (alt text, for people who cannot see it).
+        const pics = []; const list = h('ul', 'ovh-pics'); list.hidden = true;
+        const bar = h('div', 'ovh-compose-bar');
+        const add = h('button', 'ovh-pic-btn'); add.type = 'button'; add.setAttribute('aria-label', 'Add pictures'); add.title = 'Add pictures (up to 4)'; add.append(svgIcon('image'));
+        const file = h('input'); file.type = 'file'; file.accept = 'image/jpeg,image/png,image/webp,image/gif'; file.multiple = true; file.hidden = true;
+        const hint = h('small', 'ovh-compose-hint');
         const post = h('button', 'ovh-post', 'Post'); post.type = 'submit'; post.disabled = true;
-        ta.addEventListener('input', () => { post.disabled = !ta.value.trim(); ta.style.height = 'auto'; ta.style.height = `${Math.min(160, ta.scrollHeight + 2)}px`; });
-        form.append(face, ta, post);
+        const ready = () => {
+            const missing = pics.some((p) => !p.alt.value.trim());
+            post.disabled = !ta.value.trim() || missing;
+            hint.textContent = missing ? 'Describe each picture' : '';
+            add.disabled = pics.length >= 4;
+            list.hidden = !pics.length;
+        };
+        ta.addEventListener('input', () => { ready(); ta.style.height = 'auto'; ta.style.height = `${Math.min(160, ta.scrollHeight + 2)}px`; });
+        add.addEventListener('click', () => file.click());
+        file.addEventListener('change', async () => {
+            const chosen = [...(file.files || [])].slice(0, 4 - pics.length); file.value = '';
+            for (const f of chosen) {
+                if (!/^image\//.test(f.type)) continue;
+                const pr = await preparePicture(f);
+                if (pr.file.size > 8 * 1024 * 1024) { note.hidden = false; note.textContent = `${f.name} is over 8 MB.`; continue; }
+                const li = h('li', 'ovh-pic');
+                const im = h('img'); im.alt = ''; if (pr.thumb) im.src = pr.thumb;
+                const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What does it show?'; alt.setAttribute('aria-label', `What ${f.name} shows`);
+                const x = h('button', 'ovh-pic-x'); x.type = 'button'; x.setAttribute('aria-label', 'Remove this picture'); x.title = 'Remove'; x.append(svgIcon('x'));
+                const entry = { file: pr.file, alt, li };
+                x.addEventListener('click', () => { pics.splice(pics.indexOf(entry), 1); li.remove(); ready(); });
+                alt.addEventListener('input', ready);
+                li.append(im, alt, x); list.append(li); pics.push(entry);
+            }
+            ready();
+            const empty = pics.find((p) => !p.alt.value.trim()); if (empty) empty.alt.focus();
+        });
+        bar.append(add, file, hint, post);
+        main.append(ta, list, bar);
+        form.append(face, main);
         const note = h('p', 'ovh-note'); note.hidden = true;
+        const auth = { Authorization: `Bearer ${o.token}` };
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const text = ta.value.trim(); if (!text) return;
-            post.disabled = true;
+            const text = ta.value.trim(); if (!text || post.disabled) return;
+            post.disabled = true; add.disabled = true; note.hidden = true;
+            const label = post.textContent;
             try {
-                const r = await fetch(`${o.frameBase || FRAME}/status`, { method: 'POST', credentials: 'omit', headers: { Authorization: `Bearer ${o.token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+                let r;
+                if (pics.length) {
+                    const named = [];
+                    for (let k = 0; k < pics.length; k++) {
+                        post.textContent = pics.length > 1 ? `Picture ${k + 1} of ${pics.length}` : 'Sending the picture';
+                        const fd = new FormData(); fd.append('file', pics[k].file, pics[k].file.name || 'picture.jpg');
+                        const up = await fetch(`${o.frameBase || FRAME}/attachments`, { method: 'POST', credentials: 'omit', headers: auth, body: fd });
+                        const uj = await up.json().catch(() => ({}));
+                        const id = uj && uj.attachment && uj.attachment.media_id;
+                        if (!up.ok || !id) throw new Error(uj.detail || 'A picture did not upload. Try again in a moment.');
+                        named.push({ media_id: id, alt: pics[k].alt.value.trim() });
+                    }
+                    post.textContent = 'Posting';
+                    r = await fetch(`${o.frameBase || FRAME}/posts`, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify({ text, pictures: named }) });
+                } else {
+                    r = await fetch(`${o.frameBase || FRAME}/status`, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify({ text }) });
+                }
                 const j = await r.json().catch(() => ({}));
                 if (!r.ok) throw new Error(j.detail || 'It did not post. Try again in a moment.');
-                ta.value = ''; note.hidden = false; note.textContent = 'Posted. It is on your profile and in your followers’ feeds.';
+                ta.value = ''; ta.style.height = ''; pics.splice(0).forEach((p) => p.li.remove());
+                note.hidden = false; note.textContent = 'Posted. It is on your profile and in the Feed.';
                 if (o.onPosted) o.onPosted(j);
-            } catch (err) { note.hidden = false; note.textContent = String(err.message || err); post.disabled = false; }
+            } catch (err) { note.hidden = false; note.textContent = String(err.message || err); }
+            post.textContent = label; ready();
         });
         box.append(form, note);
     }

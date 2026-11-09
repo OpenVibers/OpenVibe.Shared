@@ -36,22 +36,23 @@ const sw = require('../sw');
     assert.strictEqual(sw.linkHeader({ href: '/x.css', as: 'style', type: 'text/css' }), '</x.css>; rel=preload; as=style; type=text/css');
     assert.strictEqual(sw.linkHeader(null), '');
 
-    // The 103 goes out first, and the Link header rides on the page so a proxy that drops the 103 still hints.
+    // By default only the Link header: nginx 1.28 takes an upstream 103 as the final answer (11-09).
     let hints103 = null; const headers = {};
     const res = {
         headersSent: false,
         writeEarlyHints(h) { hints103 = h; return true; },
         setHeader(k, v) { headers[k] = v; },
     };
-    assert.strictEqual(sw.earlyHints(res, [{ href: '/shared/navbar.js', as: 'script' }]), true);
-    assert.deepStrictEqual(hints103, { link: ['</shared/navbar.js>; rel=preload; as=script'] });
+    assert.strictEqual(sw.earlyHints(res, [{ href: '/shared/navbar.js', as: 'script' }]), false, 'no 103 by default');
+    assert.strictEqual(hints103, null);
     assert.strictEqual(headers.Link, '</shared/navbar.js>; rel=preload; as=script');
 
-    // A runtime that cannot send a 103 still gets the header.
+    // Where the proxy passes a 103 on (send103 or OV_EARLY_HINTS=1), it goes first and the header still rides.
     let noHints = null; const headers2 = {};
     const res2 = { headersSent: false, writeEarlyHints(h) { noHints = h; }, setHeader(k, v) { headers2[k] = v; } };
-    assert.strictEqual(sw.earlyHints(res2, [{ href: '/a.css', as: 'style' }]), true);
-    assert.ok(noHints, 'the 103 was sent');
+    assert.strictEqual(sw.earlyHints(res2, [{ href: '/a.css', as: 'style' }], { send103: true }), true);
+    assert.deepStrictEqual(noHints, { link: ['</a.css>; rel=preload; as=style'] }, 'the 103 was sent');
+    assert.strictEqual(headers2.Link, '</a.css>; rel=preload; as=style');
     const res3 = { headersSent: true, setHeader() { throw new Error('the header was already sent'); } };
     assert.strictEqual(sw.earlyHints(res3, [{ href: '/a.css', as: 'style' }]), false, 'a response already on its way is left alone');
     assert.strictEqual(sw.earlyHints(res, []), false, 'no links, no hint');

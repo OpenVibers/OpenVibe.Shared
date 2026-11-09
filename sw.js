@@ -72,14 +72,16 @@ function linkHeader(link) {
  *
  *   sw.earlyHints(res, [ { href: '/shared/navbar.js?v=abc123', as: 'script' } ]);
  *
- * The 103 goes out first when the runtime can send one (Node 18.11 and later); the Link header rides on the page itself so
- * the hint survives a proxy that drops the 103. Returns true when a 103 was sent.
+ * The Link header rides on the page. The 103 itself goes out only where the proxy in front passes it on: `{ send103: true }`
+ * or OV_EARLY_HINTS=1 (nginx 1.29+ with `early_hints`). nginx 1.28 (the host's, 11-09) takes an upstream 103 as the final
+ * response and sends the real 200 as its body, so the default is the header only; Cloudflare's Early Hints read it.
+ * Returns true when a 103 was sent.
  */
-function earlyHints(res, links) {
+function earlyHints(res, links, { send103 = process.env.OV_EARLY_HINTS === '1' } = {}) {
     const list = (Array.isArray(links) ? links : []).filter((l) => l && l.href);
     if (!list.length || !res) return false;
     let sent = false;
-    if (typeof res.writeEarlyHints === 'function') {
+    if (send103 && typeof res.writeEarlyHints === 'function') {
         try {
             res.writeEarlyHints({ link: list.map(linkHeader).filter(Boolean) });
             sent = true;

@@ -1,5 +1,45 @@
 # Changelog
 
+## 4.168.0 — 2026-11-09
+
+- **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows
+  'Draft a blog post · Done · AI · gpt-5-nano', 25 failed rows 'AI is resting for a moment' and raw JSON errors; an empty
+  Agents tab that is wasted space for no reason"). `dock-runs.js` (loaded with the tab) draws each run as a row: the
+  skill's icon in its own colour, the subject as the title, and one status line — Running (the live step and a thin
+  bar), Waiting (what it needs), Scheduled (when), Done (the result, the cost, the time, the model with its maker's
+  mark) or Failed (the words and what happens next). Open, Retry, Stop and "run again with another model" are on the
+  row. Six identical failures in a day are one row, `×6`, that expands. A failure never shows the provider's own text.
+- **The Agents overview** (instead of an empty middle): the next scheduled run with a countdown, today's and this
+  week's numbers (runs, done, failed, spend) as three small tiles, the last three results as rows, and "Things agents
+  can do for you": a grid of six skills from Actor's catalogue that start a run in one tap. The foot stays one row:
+  "All runs" and "Give an agent a task".
+- **The Vibe tab has a conversation list** (`dock-vibe.js`): New conversation at the top, then each chat with its last
+  line, its time and the site it began on; a back arrow in a conversation. The tab opens on the conversation you had
+  open within the last twenty minutes, else on the list, and the choice is the Dock's synced state, so it follows you
+  across pages and sites. "Vibe did not answer" says why and offers a retry. The composer shows at once, with the
+  attach and the mic.
+- **The Chats tab has an AI chats row** among the DMs, placed by date like the others: the Vibe mark, "AI chats", the
+  count, the last conversation's title and when Vibe answered; tapping it opens the Vibe tab on its list. A group's row
+  shows up to three faces, not a number sign.
+- **The Dock keeps its size and corner per person** and its grip is always visible; the Vibe conversation and the
+  Agents filter are restored with it.
+- **Restyled here (Opus):** a run is a row, not a box: the state as a coloured word (Running blue with a moving bar,
+  Waiting amber, Done green, Failed red), its words on two lines at most, the title opens it, Approve and Retry as filled
+  pills, the rest under a dots button. The tiles lead with their number (11 runs) and dots for done and failed. The Vibe
+  list gives each conversation its mark and its site's name (Blog, not openvibe.blog) and New conversation is a button.
+  The AI chats row has a Vibe avatar like every other row; group faces are ringed in the panel's own colour.
+- The one-tap skills are read through Network (`/api/v1/me/actions/skills`): every site's CSP refuses openvibe.actor.
+- The extension's read-only Dock offers no approve, decline, stop or retry.
+- **Early hints: the Link header only, by default** (`openvibe-shared/sw` `earlyHints`). nginx 1.28, the host's, takes an
+  upstream 103 as the final response and sends the real 200 as its body (tried 11-09 against nginx:1.28-alpine). The 103
+  goes out only with `{ send103: true }` or `OV_EARLY_HINTS=1`, for a proxy that passes it on (nginx 1.29+ with
+  `early_hints`). Cloudflare's Early Hints read the Link header.
+- **The Feed's composer takes pictures** (the owner, 11-09: "you can make posts and put images"). Up to four, each
+  with a line saying what it shows (Community requires the alt text; Post stays off until each has one). Big phone
+  photos are scaled to 2560 px before they go. Each picture uploads through Network (`POST /api/frame/attachments`,
+  Network #719) and the post names them (`POST /api/frame/posts`). Previews are small data: images, because not
+  every site's img-src allows blob:.
+
 ## 4.167.0 — 2026-11-09
 
 - **The Feed, everything on the network, day by day** (the owner: "one huge feed of everything… all kinds of events and
