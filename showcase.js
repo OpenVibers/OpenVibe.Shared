@@ -425,7 +425,7 @@ function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq
         + `${p.live ? '<em class="sc-room-live">live</em>' : p.asOf ? `<em>${esc(p.asOf)}</em>` : ''}</li>`).join('')}</ul>` : '';
     const heroHTML = h.title ? `<section class="sc-room-hero" aria-labelledby="sc-room-h">`
         + `<div class="sc-room-main">${h.pageHead ? kitLib.pageHead({ ...h.pageHead, title: h.title, lede: h.lede }).replace('<h1>', '<h1 id="sc-room-h">') : `<h1 id="sc-room-h">${esc(h.title)}</h1>${h.lede ? `<p class="sc-room-lede">${esc(h.lede)}</p>` : ''}`}${box}${start}`
-        + `${chips.length ? `<nav data-ovk-scroll class="sc-room-chips" aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
+        + `${chips.length ? `<nav class="sc-room-chips" data-ovk-scroll aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
         + `<div class="sc-room-pic">${h.motif != null ? h.motif : roomMotif(r)}</div></section>` : '';
     const railsHTML = (rails || []).map((x) => kitLib.rail(x)).join('');
     const sceneList = (scenes || []).filter((x) => x && x.title && x.html != null);
