@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.164.0 — 2026-11-09
+
+- **Chat's two views** (`openvibe-shared/messages`, `OVMessages.render(el, { messages, view: 'room' | 'bubbles', me })`;
+  the owner, 11-09: "texting bubbles like Android/iOS Messages, and the live chat room… switchable"). Bubbles: runs join
+  on the inner corners, the avatar beside the first with its column kept through the run, a coloured initial when there
+  is no picture, the time under the last, read ticks, sticky day chips. Room: one line per message wrapping under the
+  name on a phone, each person's name in a steady colour (tuned for dark and light). Only the newest message animates.
+  `OpenVibeUserMenu.register()` lets a site add actions to the shared user card.
+- **Page head** (`kit.pageHead({ back, icon, title, lede, actions })`; ask 64: "less websitey… an icon system"): a small
+  named back chip (44 px to the finger), the page's icon tile and name, 44 px actions, and the lede once and whole on
+  every screen. Product heroes can opt in (`showcase.hero({ pageHead })`).
+- **Upload kit** (`ov-upload.js`/`.css`: `OVUpload.picker`, `.queue`, `.progress`): drag and drop or choose, each file a
+  row with its picture or a file glyph, an × and its own progress (speed and time left smoothed); the total above for two
+  files or more; done draws a tick; Calm drops the sheen. Sites bring the transport (`upload(file, { onProgress, signal })`).
+- **The Feed, fixed for real data** (Community's /api/v1/feed is live): LIVE shows only while a channel is live now
+  (`live_now`, with a breathing chip and a red edge); back-to-back go-lives that are over fold into one card of faces and
+  names; a trending picture shows its site's icon and "Trending" (not a "?"); video cards no longer leave the flow (their
+  class collided with the preview video's, `.ovf-video`; cards are `.ovf-k-<kind>` now).
+
 ## 4.163.0 — 2026-11-09
 
 - **You, redone** (the owner, 11-09: "the U tab still sucks, and you didn't do all the improvements"). You on top: your

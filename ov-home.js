@@ -876,18 +876,21 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
             const t = h('span', 'ovf-update-txt'); t.append(h('b', '', String(c.title || '').slice(0, 160)), h('small', '', [c.site_name || c.site, ago(c.at)].filter(Boolean).join(' · ')));
             a.append(ic, t); return a;
         }
-        const a = h('a', `ovf-card ovf-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
+        const a = h('a', `ovf-card ovf-k-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
         const head = h('span', 'ovf-head');
         const face = h('span', 'ovf-face');
         const av = c.actor && safe(c.actor.avatar);
-        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); } else face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase();
+        // No person behind it (the network's trending pictures): the site's icon and the card's label, not a "?".
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
+        else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 20)); }
+        else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovf-who');
-        who.append(h('b', '', String((c.actor && c.actor.name) || c.site_name || '').slice(0, 60)));
+        who.append(h('b', '', String((c.actor && c.actor.name) || c.label || c.site_name || '').slice(0, 60)));
         const meta = h('small', '');
-        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', ago(c.at)].filter(Boolean).join(' · ')}`));
+        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', c.actor ? ago(c.at) : String(c.text || ago(c.at) || '').slice(0, 60)].filter(Boolean).join(' · ')}`));
         who.append(meta);
         head.append(face, who);
-        if (kind === 'live') head.append(h('span', 'ovf-livechip', 'LIVE'));
+        if (kind === 'live' && c.live_now) { a.classList.add('is-on'); head.append(h('span', 'ovf-livechip', 'LIVE')); }
         a.append(head);
         const media = c.media || {};
         const thumb = safe(media.thumb);
@@ -907,6 +910,34 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         const bits = [n.views ? `${count(n.views)} views` : '', n.likes ? `♥ ${count(n.likes)}` : '', n.comments ? `${count(n.comments)} replies` : ''].filter(Boolean);
         if (bits.length) a.append(h('small', 'ovf-counts', bits.join(' · ')));
         return a;
+    }
+    /** Several streamers who went live (and are not live now), as one card: their faces, then each name to their channel. */
+    function livesCard(items) {
+        const box = h('div', 'ovf-card ovf-lives');
+        const head = h('div', 'ovf-head');
+        const faces = h('span', 'ovf-faces');
+        items.slice(0, 4).forEach((x) => {
+            const f = h('span', 'ovf-face');
+            const av = x.actor && safe(x.actor.avatar);
+            if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; f.append(img); } else f.textContent = String((x.actor && x.actor.name) || '?').charAt(0).toUpperCase();
+            faces.append(f);
+        });
+        const names = items.map((x) => String((x.actor && x.actor.name) || '').slice(0, 40)).filter(Boolean);
+        const who = h('span', 'ovf-who');
+        who.append(h('b', '', names.length > 2 ? `${names.slice(0, 2).join(', ')} and ${names.length - 2} more went live` : `${names.join(' and ')} went live`));
+        const meta = h('small'); meta.append(siteIcon('live', 14), document.createTextNode(` Live · ${[ago(items[0].at), items.length > 1 ? ago(items[items.length - 1].at) : ''].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(' – ')}`));
+        who.append(meta);
+        head.append(faces, who);
+        const row = h('div', 'ovf-lives-row');
+        items.forEach((x) => {
+            const l = h('a', 'ovf-pill'); l.href = safe(x.url);
+            const t = String(x.title || '').replace(/^.*?went live:\s*/i, '');
+            l.append(h('b', '', String((x.actor && x.actor.name) || '').slice(0, 40)));
+            if (t) l.append(h('span', '', t.slice(0, 60)));
+            row.append(l);
+        });
+        box.append(head, row);
+        return box;
     }
     function feed(el, o) {
         styles(); feedStyles();
@@ -932,7 +963,12 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
                 done = true; sentinel.textContent = ''; sentinel.append(h('p', 'ovh-note', 'That did not load. Pull the menu again to retry.')); return;
             }
             if (first && o.feedLive) o.feedLive();
-            j.items.map(feedCard).filter(Boolean).forEach((c) => list.append(c));
+            // Back-to-back go-lives that are over fold into one card of faces (a wall of "X went live" was the whole feed).
+            const past = (x) => x && x.kind === 'live' && !x.live_now && safe(x.url);
+            let run = [];
+            const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => { const c = feedCard(x); if (c) list.append(c); }); run = []; };
+            j.items.forEach((x) => { if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
+            flush();
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
             done = !cursor;
@@ -971,10 +1007,19 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
 .ovf-head{display:flex;align-items:center;gap:8px;min-width:0}
 .ovf-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
 .ovf-face img{width:100%;height:100%;object-fit:cover}
+.ovf-face.is-site{border-radius:10px;background:linear-gradient(150deg,hsl(var(--ovh-h,215) 72% 58% / .34),hsl(var(--ovh-h,215) 70% 38% / .18))}.ovf-face.is-site .ov-icon{color:hsl(var(--ovh-h,215) 90% 82%)}
 .ovf-who{min-width:0;display:grid}
 .ovf-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ovf-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
-.ovf-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em}
+.ovf-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovf-onair 2.4s ease-in-out infinite}
+.ovf-card.is-on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--live,#ef4444) 45%,transparent);background:color-mix(in srgb,var(--live,#ef4444) 7%,transparent)}
+@keyframes ovf-onair{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--live,#ef4444) 25%,transparent)}}
+.ovf-faces{display:flex;flex:none}.ovf-faces .ovf-face{width:30px;height:30px;box-shadow:0 0 0 2px var(--bg-secondary,#141a24)}.ovf-faces .ovf-face+.ovf-face{margin-left:-9px}
+.ovf-lives-row{display:flex;flex-wrap:wrap;gap:6px}
+.ovf-lives .ovf-who b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
+.ovf-pill{box-sizing:border-box;display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:36px;padding:6px 12px;border-radius:999px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent);color:inherit;text-decoration:none;font-size:13px;line-height:1.2}
+.ovf-pill b{flex:none;font-weight:700}.ovf-pill span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted,#93a0b4)}
+@media (hover:hover){.ovf-pill:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 11%,transparent)}}
 .ovf-media{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--bg-tertiary,#1f2633)}
 .ovf-media img,.ovf-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .ovf-len{position:absolute;right:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-weight:700}
@@ -988,7 +1033,7 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
 .ovf-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovf-shimmer 1.4s ease-in-out infinite}
 .ovf-more{min-height:1px}.ovf-caught{text-align:center;padding:10px 0}
 @keyframes ovf-shimmer{to{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.ovf-skel{animation:none}}
+@media (prefers-reduced-motion:reduce){.ovf-skel{animation:none}.ovf-livechip{animation-duration:4s}}
 `;
         document.head.appendChild(st);
     }

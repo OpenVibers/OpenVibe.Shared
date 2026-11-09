@@ -118,12 +118,12 @@ function visualHTML(orbit) {
         + `${coreHref ? `<a class="sc-orb-core" href="${esc(coreHref)}">${core}</a>` : `<span class="sc-orb-core">${core}</span>`}</div>`;
 }
 
-function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html, orbit, visual } = {}) {
+function hero({ eyebrow, title, accent, lede, actions: acts, note, aside, html, orbit, visual, pageHead: ph = null } = {}) {
     // Without an aside of its own the hero gets a visual (4.26.0): an orbit of the site's places when it names them, else
     // the aura. visual: false keeps it plain.
     const vis = !aside && html == null && visual !== false;
     const hasOrbit = vis && orbit && (has(orbit.inner) || has(orbit.outer));
-    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main"><h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
+    return `<section class="sc-hero${aside || html || vis ? ' sc-split' : ''}${vis ? ` sc-has-vis${hasOrbit ? ' sc-has-orbit' : ''}` : ''}"><div class="sc-hero-main">${ph ? require('./kit').pageHead({ ...ph, title: [title, accent].filter(Boolean).join(' '), lede }) : `<h1>${esc(title)}${accent ? `<span class="sc-accent"> ${esc(accent)}</span>` : ''}</h1>${lede ? `<p class="sc-hero-lede">${esc(lede)}</p>` : ''}`}${actions(acts)}${note ? `<p class="sc-note">${esc(note)}</p>` : ''}</div>${aside ? `<div class="sc-hero-aside">${aside.html != null ? aside.html : esc(aside)}</div>` : html != null ? `<div class="sc-hero-aside">${html}</div>` : vis ? `<div class="sc-hero-aside sc-hero-vis">${visualHTML(hasOrbit ? orbit : null)}</div>` : ''}</section>`;
 }
 
 /** A grid of what the product does; each card may link to where it starts. */
@@ -424,8 +424,8 @@ function room({ room: key, hero: h = {}, proof, rails, scenes, explore, dev, faq
         + `<b${typeof p.value === 'number' ? ` data-ov-ticker="${p.value}"` : ''}>${esc(fmtNum(p.value))}</b> <span>${esc(p.label)}</span>`
         + `${p.live ? '<em class="sc-room-live">live</em>' : p.asOf ? `<em>${esc(p.asOf)}</em>` : ''}</li>`).join('')}</ul>` : '';
     const heroHTML = h.title ? `<section class="sc-room-hero" aria-labelledby="sc-room-h">`
-        + `<div class="sc-room-main"><h1 id="sc-room-h">${esc(h.title)}</h1>${h.lede ? `<p class="sc-room-lede">${esc(h.lede)}</p>` : ''}${box}${start}`
-        + `${chips.length ? `<nav class="sc-room-chips" aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
+        + `<div class="sc-room-main">${h.pageHead ? kitLib.pageHead({ ...h.pageHead, title: h.title, lede: h.lede }).replace('<h1>', '<h1 id="sc-room-h">') : `<h1 id="sc-room-h">${esc(h.title)}</h1>${h.lede ? `<p class="sc-room-lede">${esc(h.lede)}</p>` : ''}`}${box}${start}`
+        + `${chips.length ? `<nav class="sc-room-chips" data-ovk-scroll aria-label="Try">${chips.map((c) => `<a href="${esc(safeHref(c.href))}">${esc(c.label)}</a>`).join('')}</nav>` : ''}${proofHTML}</div>`
         + `<div class="sc-room-pic">${h.motif != null ? h.motif : roomMotif(r)}</div></section>` : '';
     const railsHTML = (rails || []).map((x) => kitLib.rail(x)).join('');
     const sceneList = (scenes || []).filter((x) => x && x.title && x.html != null);
