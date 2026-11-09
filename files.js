@@ -46,6 +46,7 @@ const BROWSER = Object.freeze([
     'ov-qr.js',             // a QR code from a link, on the device: the Share sheet's QR code (ov-share.js loads it on first use)
     'ov-locker-core.js',    // openvibe-sdk/locker for the browser, generated (scripts/build-locker-core.js): WebCrypto only, the SDK's own vectors
     'ov-locker.js',         // Locker in the browser (plan Q2): a locked item's card, making and unlocking your locker; crypto in ov-locker-core.js
+    'ov-wallet.js',
     'ov-share.js',          // the one Share sheet (plan track Q): who can open a thing, people by @name, transfer; navbar.js loads it on the first press of a [data-ov-share-sheet] button
     'ov-upload.js',         // shared file picker, upload queue and ov-progress
     'messages.js',          // Chat's two views: room lines and texting bubbles (openvibe-shared/messages)
@@ -92,6 +93,7 @@ const STYLES = Object.freeze([
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
     'ov-forms.css',         // the look of ov-forms.js's select, the site-coloured checkboxes, switches and sliders, .ov-field (docs/forms.md)
     'ov-locker.css',        // ov-locker.js's look: the locked card, the locker sheets, the recovery kit (docs/locker.md)
+    'ov-wallet.css',
     'ov-share.css',         // ov-share.js's look: the sheet, the recipient's offer banner, the not-on-the-list gate (docs/share.md)
     'ov-upload.css',        // picker, queue and ov-progress states
     'messages.css',         // the room and bubble views' look
