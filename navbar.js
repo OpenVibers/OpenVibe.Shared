@@ -398,7 +398,9 @@
             @keyframes ov-pop { 0% { opacity: 0; transform: scale(.88); clip-path: circle(0 at var(--ov-pop-x, 50%) var(--ov-pop-y, 0)); filter: blur(5px); } 55% { opacity: 1; filter: blur(0); } 100% { opacity: 1; transform: none; clip-path: circle(150% at var(--ov-pop-x, 50%) var(--ov-pop-y, 0)); } }
             @keyframes ov-pop-out { to { opacity: 0; transform: scale(.94); filter: blur(3px); } }
             @keyframes ov-fade { from { opacity: 0; } }
-            @media (prefers-reduced-motion: reduce) { .ov-pop, .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; } }
+            @keyframes ov-pop-calm { from { opacity: 0; transform: scale(.97); } }
+            @media (prefers-reduced-motion: reduce) { .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; } .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; animation-direction: reverse !important; } }
+            html[data-ov-motion=reduced] .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; }
 
             .openvibe-navbar-dropdown-header {
                 padding: 12px 10px 12px 14px; border-bottom: 1px solid var(--border, #333340);
@@ -565,7 +567,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '656197b4f379', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '45c4a9a66249', 'dock.js': 'e3a24221e4ef', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '917a057e2658', 'nav-slots.js': 'a5af310d62e0' };
+    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '656197b4f379', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '45c4a9a66249', 'dock.js': 'e3a24221e4ef', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '917a057e2658', 'nav-slots.js': 'a5af310d62e0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
