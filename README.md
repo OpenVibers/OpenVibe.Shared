@@ -21,7 +21,7 @@ were reconciled first.
 |---|---|
 | Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `player.js`, `vibes-pay.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
 | Fonts, served at `/shared/<file>` (`files.FONTS`) | `ov-brand.woff2`: the brand face the names are set in (Nunito, SIL OFL 1.1, `OFL-Nunito.txt`; Latin, 700–900), declared by `navbar.js` |
-| Link modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `glyphs` (the network's icons, one registry: `NAMES`, `path(name)`, `svg(name, { size, title })`, `fromFa(name)`, `FA`; the browser drop-in `ov-glyphs.js` shows them in place of Font Awesome's and keeps Font Awesome's classes, animations and `data-fa-transform`; also as fonts, `/shared/ov-glyphs.woff2` with `ov-glyphs-font.css` (`ovi ovi-<name>`) or `ov-glyphs-fa.css` (Font Awesome's names), `glyph-fonts/ov-glyphs.{ttf,otf}` and `glyph-codepoints.json`, and as the sprite `/shared/ov-glyphs.svg#ovg-<name>`), `mark` (the OpenVibe mark, the Pair, as static SVG: `svg({ form, tone, wide, size, title })`, `art()`, `geo()`, `shapes()`, `COLORS`; the browser drop-in `ov-mark.js` draws the same numbers), `app-icons` (every site's installable app icon set: `has(service)`, `url(service, size, { maskable })`, `isIcon(name)`, `path(name)`; the pre-rendered PNGs are served at `/shared/icons/<service>[-maskable]-<size>.png` and named by the web app manifest `serve.js` serves at `/shared/manifest/<service>.webmanifest`), `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `social` (every site's 1200×630 share card: `url(service)`, served by `serve.js` at `/shared/social/<service>.jpg` and used by `shell.page()` for `og:image` when a page names none), `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Link 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Link its pure `plan()` |
+| Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `glyphs` (the network's icons, one registry: `NAMES`, `path(name)`, `svg(name, { size, title })`, `fromFa(name)`, `FA`; the browser drop-in `ov-glyphs.js` shows them in place of Font Awesome's and keeps Font Awesome's classes, animations and `data-fa-transform`; also as fonts, `/shared/ov-glyphs.woff2` with `ov-glyphs-font.css` (`ovi ovi-<name>`) or `ov-glyphs-fa.css` (Font Awesome's names), `glyph-fonts/ov-glyphs.{ttf,otf}` and `glyph-codepoints.json`, and as the sprite `/shared/ov-glyphs.svg#ovg-<name>`), `mark` (the OpenVibe mark, the Pair, as static SVG: `svg({ form, tone, wide, size, title })`, `art()`, `geo()`, `shapes()`, `COLORS`; the browser drop-in `ov-mark.js` draws the same numbers), `app-icons` (every site's installable app icon set: `has(service)`, `url(service, size, { maskable })`, `isIcon(name)`, `path(name)`; the pre-rendered PNGs are served at `/shared/icons/<service>[-maskable]-<size>.png` and named by the web app manifest `serve.js` serves at `/shared/manifest/<service>.webmanifest`), `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `social` (every site's 1200×630 share card: `url(service)`, served by `serve.js` at `/shared/social/<service>.jpg` and used by `shell.page()` for `og:image` when a page names none), `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Link its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
 | Generators | `scripts/build-glyphs.js` (`ov-glyphs.js` and `ov-glyphs.svg` from `glyphs.js`), `scripts/build-glyph-fonts.py` (the glyph fonts and their CSS; Python with picosvg, fonttools and brotli), `scripts/build-nav-icons.py` (Font Awesome glyphs → `nav-icons.js`, `ov-icons.js`), `scripts/build-navbar-icons.js` (navbar.js's built-in glyphs), `scripts/build-theme-loader.js`, `scripts/build-app-icons.js`, `scripts/build-icons.js`, `scripts/build-social-cards.js` (share cards from the Contracts manifests; Chrome + ImageMagick) |
 | Pin bot | `scripts/pin-bump.js` (`node scripts/pin-bump.js <library> <tag> [--repos A,B] [--apply]`): after a release, one PR per repository that pins the library below the tag, with the lockfile refreshed and the docs-status fields rewritten; a dry run unless `--apply`; CI tests each PR |
@@ -227,7 +227,7 @@ m.registry.gauge({ name: 'jobs', help: 'Jobs by state', labelNames: ['state'], c
 // collect may be async (a database read): /metrics awaits it, up to 2 s, and leaves out one that fails.
 m.registry.gauge({ name: 'docs', help: 'Documents', collect: async () => (await db.one(sql`SELECT count(*)::int AS n FROM docs`)).n });
 // instrument() also routes an async handler's rejection to next(err) (openvibe-shared/express-async): Express 4
-// would leave it unhandled, and Link 22 ends the process on an unhandled rejection.
+// would leave it unhandled, and Node 22 ends the process on an unhandled rejection.
 
 const ready = require('openvibe-shared/ready').createReadiness({
     service: 'community', release: release.release,
@@ -318,7 +318,7 @@ settings.sealed; settings.kek;           // false / null without a KEK
   - The KEKs come from `opts.keks` (`{ current, keys: { k1: Buffer } }`) or, by default, from
     `OV_CONFIG_KEKS=k1:<base64 32 bytes>[,k2:…]` and `OV_CONFIG_KEK_CURRENT=k2`. A value that does not
     decode to exactly 32 bytes refuses startup with an error that names the variable and the KEK id,
-    never a byte of the key. Only `link:crypto` is used.
+    never a byte of the key. Only `node:crypto` is used.
   - No KEK means today's behaviour, untouched and unflagged: `sealed: false`, `kek: null`, the value
     stays in the row. `reseal()` moves plaintext secrets and envelopes under an older KEK to the
     current KEK revision by revision (it never resurrects one whose bind changed) and reports
@@ -1028,7 +1028,7 @@ python3 scripts/build-nav-icons.py --font …/fa-solid-900.woff2 --css …/fonta
 node scripts/build-theme-loader.js
 ```
 
-Tests are plain Link with stubbed browser globals. Some tests guard the release:
+Tests are plain Node with stubbed browser globals. Some tests guard the release:
 
 - **navbar.js size budget**: 29 KB brotli (`test/nav-icons.test.js`). release-watch.js and
   release-update.js: 5 KB and 3.5 KB (`test/release-update.test.js`).
@@ -1039,14 +1039,14 @@ Tests are plain Link with stubbed browser globals. Some tests guard the release:
 - **Built-in icons**: every icon the default navbar renders must be built in and drawn with no
   fetch.
 - **Generated blocks**: the generated navbar and theme-loader blocks must be up to date.
-- **Browser bundles**: browser files must be free of `require()` and Link globals
+- **Browser bundles**: browser files must be free of `require()` and Node globals
   (`test/browser-bundles.test.js`).
 - **Exports**: every export must resolve, and every public module file must
   have one. Internal `config-core.js` and `analytics/core.js` are private.
 - **Analytics (ADR-021)**: PostgreSQL tests cover request privacy, opt-out, rollups, and raw-event retention;
   pure privacy and event helpers have their own tests.
 
-CI runs on Link 22.22.1 and installs a tag-style tarball into an empty project.
+CI runs on Node 22.22.1 and installs a tag-style tarball into an empty project.
 
 ## Releasing
 
@@ -1148,10 +1148,10 @@ their consumer configures with the consumer's own credentials.
 
 ## Acceptance
 
-`npm test` runs every `test/*.test.js` (plain Link with stubbed browser globals; the `*-chrome` tests
+`npm test` runs every `test/*.test.js` (plain Node with stubbed browser globals; the `*-chrome` tests
 need Chrome). What the release-guarding tests prove is listed under [Development](#development): size
 budgets, releases and the mixed-version matrix, built-in icons, generated blocks, browser bundles free of
-Link code, every export resolving, analytics privacy. The charter's two acceptance points hold: Live,
+Node code, every export resolving, analytics privacy. The charter's two acceptance points hold: Live,
 Community, Media, Tools and Sites consume pinned versions with no manual copies, and
 `openvibe.network/shared/*` keeps serving version-pinned files.
 
@@ -1159,7 +1159,7 @@ Community, Media, Tools and Sites consume pinned versions with no manual copies,
 
 Reporting a vulnerability: [SECURITY.md](SECURITY.md). Shared's code runs on every site, so:
 
-- browser files carry no secrets and no Link code (`test/browser-bundles.test.js`);
+- browser files carry no secrets and no Node code (`test/browser-bundles.test.js`);
 - `egress` gives services SSRF-safe addresses and connect-time DNS checks for user-chosen hosts
   (`test/egress.test.js`); `trace` forwards the W3C trace only to loopback and OpenVibe hosts;
 - analytics stores no personal data and honours opt-out (`test/analytics-privacy.test.js`);
