@@ -509,7 +509,7 @@ html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow
 .sc-sec>h2,.sc-cta>h2{display:flex;align-items:center;gap:12px;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;margin:0 0 6px}
 .sc-h-ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent);color:var(--accent-light,#60a5fa)}
 .sc-h-ic svg{display:block}
-.sc-sec>h2+.sc-lede{margin-left:48px}
+.sc-sec>h2:has(.sc-h-ic)+.sc-lede{margin-left:48px}
 @media (max-width:520px){.sc-sec>h2+.sc-lede{margin-left:0}}
 .sc-lede{color:var(--text-secondary,#96a7c2);margin:0 0 18px;max-width:760px;line-height:1.55}
 .sc-grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
