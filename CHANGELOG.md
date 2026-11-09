@@ -2,6 +2,16 @@
 
 ## 4.159.0 — 2026-11-09
 
+- **Every section heading has an icon, and sections stand apart** (the owner, 11-09: "these section titles should have an
+  icon… look nicer and more consistent, separate things… a universal system"). The showcase kit's headings carry an icon
+  tile (features: grid, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, questions, network,
+  apps each have a default; `icon:` picks another); each section has a hairline and room above it.
+- **More on OpenVibe** (was "Part of OpenVibe"): the related sites with their icons, a live "Happening on OpenVibe" strip
+  (who is live and the sites' trending items, from Network's Frame, text only) when the page includes `sc.NETWORK_JS`,
+  and "Every OpenVibe site →" to openvibe.network/sites.
+
+## Unreleased
+
 - **Homes v2: `openvibe-shared/showcase-stage`** (plan `OpenVibe_Homes_v2_Plan_2026-11-09.md`; the owner, 11-09: "make the
   home pages more unique… show the features… custom animations… infographics… a shared, modular system… still SEO
   friendly"). `stage()` is a hero with one H1, the lede and a live demo panel of the product (the site's own HTML in a
