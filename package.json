@@ -55,6 +55,7 @@
     "./dock-card": "./dock-card.js",
     "./ov-canvas": "./ov-canvas.js",
     "./dock-agent": "./dock-agent.js",
+    "./dock-actor": "./dock-actor.js",
     "./dock-timeline": "./dock-timeline.js",
     "./notification-ui": "./notification-ui.js",
     "./notifications": "./notifications.js",

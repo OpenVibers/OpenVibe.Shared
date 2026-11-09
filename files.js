@@ -28,6 +28,7 @@ const BROWSER = Object.freeze([
     'dock-share.js',        // the Dock's Send to… (4.144.0); dock.js loads it the first time something is sent
     'dock-card.js',         // a known OpenVibe link's card under a Dock message (4.147.0); loaded the first time one shows
     'ov-canvas.js',         // an agent's live panel (actor.canvas@1, 4.145.0); a page that shows canvases loads it
+    'dock-actor.js',        // the Dock's Actor block (Actor v3 A3); dock.js loads it the first time the Actor tab opens
     'dock-agent.js',        // the Dock's agent view (K-D3); dock.js loads it the first time the Agents tab opens
     'dock-timeline.js',     // the Dock's one timeline (A6); dock.js loads it with the Agent panel
     'account-switcher.js',
