@@ -14,6 +14,10 @@
 - **Upload kit** (`ov-upload.js`/`.css`: `OVUpload.picker`, `.queue`, `.progress`): drag and drop or choose, each file a
   row with its picture or a file glyph, an × and its own progress (speed and time left smoothed); the total above for two
   files or more; done draws a tick; Calm drops the sheen. Sites bring the transport (`upload(file, { onProgress, signal })`).
+- **The Feed, fixed for real data** (Community's /api/v1/feed is live): LIVE shows only while a channel is live now
+  (`live_now`, with a breathing chip and a red edge); back-to-back go-lives that are over fold into one card of faces and
+  names; a trending picture shows its site's icon and "Trending" (not a "?"); video cards no longer leave the flow (their
+  class collided with the preview video's, `.ovf-video`; cards are `.ovf-k-<kind>` now).
 
 ## 4.163.0 — 2026-11-09
 

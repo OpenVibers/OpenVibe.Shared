@@ -41,7 +41,7 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (s.startsWith('https://openvibe.network/api/history')) return J({ items: [{ title: 'A stream', url: 'https://openvibe.live/ada', service: 'live', updated_at: new Date().toISOString() }, { title: 'A pic', url: 'https://openvibe.pics/1', service: 'pics', updated_at: new Date(Date.now() - 1000).toISOString() }], services: [{ service: 'live', count: 5 }, { service: 'pics', count: 2 }] });
     if (s.startsWith('https://openvibe.network/api/v1/me/home-screen')) return (o && o.method === 'PUT') ? J({ ok: true }) : J({}, false, 404);
     if (s.startsWith('https://openvibe.community/api/v1/feed')) { window.__feedCalls = (window.__feedCalls || []).concat([s]); const u = new URL(s); const kind = u.searchParams.get('kind') || ''; const page = u.searchParams.get('cursor') ? 2 : 1;
-      const mk = (i, k) => ({ id: k + i + '-' + page, kind: k, url: 'https://openvibe.video/c/' + i, title: (k === 'post' ? '<b>bold</b> ' : '') + k + ' ' + i + ' page ' + page, text: 'words', at: new Date(Date.now() - i * 60000).toISOString(), site: k === 'pic' ? 'pics' : 'video', site_name: 'Video', actor: { name: 'ada' }, media: k === 'post' || k === 'update' ? {} : { thumb: 'https://openvibe.media/t/x.webp', ratio: 1.7778, length: '0:30' }, counts: { views: 1200, likes: 3 } });
+      const mk = (i, k) => ({ id: k + i + '-' + page, kind: k, live_now: k === 'live', url: 'https://openvibe.video/c/' + i, title: (k === 'post' ? '<b>bold</b> ' : '') + k + ' ' + i + ' page ' + page, text: 'words', at: new Date(Date.now() - i * 60000).toISOString(), site: k === 'pic' ? 'pics' : 'video', site_name: 'Video', actor: { name: 'ada' }, media: k === 'post' || k === 'update' ? {} : { thumb: 'https://openvibe.media/t/x.webp', ratio: 1.7778, length: '0:30' }, counts: { views: 1200, likes: 3 } });
       const kinds = kind ? [kind] : ['live', 'clip', 'pic', 'post', 'update'];
       return J({ items: Array.from({ length: 12 }, (_, i) => mk(i, kinds[i % kinds.length])), next_cursor: page === 1 ? 'c2' : null }); }
     if (s.startsWith('https://openvibe.community/api/v1/pulse')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
@@ -82,12 +82,12 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(p, `document.querySelectorAll('.ovf-list > a').length >= 12`), 'the feed painted');
         const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovf-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovf-chip[aria-selected=true]') || {}).textContent,
             kinds: [...new Set([...document.querySelectorAll('.ovf-list > a')].map((a) => a.className))], live: !!document.querySelector('.ovf-livechip'), media: document.querySelectorAll('.ovf-media img').length,
-            bolds: document.querySelectorAll('.ovf-list b b').length, posts: [...document.querySelectorAll('.ovf-post .ovf-title')].map((b) => b.textContent)[0],
+            bolds: document.querySelectorAll('.ovf-list b b').length, posts: [...document.querySelectorAll('.ovf-k-post .ovf-title')].map((b) => b.textContent)[0],
             sections: [...document.querySelectorAll('.ovs-group')].map((g) => g.textContent.trim()).filter(Boolean), scroll: document.documentElement.scrollWidth })`);
         assert.deepStrictEqual(first.chips, ['For you', 'Live', 'Clips', 'Videos', 'Pics', 'Posts', 'Memes', 'Games', 'Updates']);
         assert.strictEqual(first.selected, 'For you');
-        assert.ok(first.kinds.includes('ovf-card ovf-live') && first.kinds.includes('ovf-update') && first.kinds.includes('ovf-card ovf-pic'), `cards by kind (${first.kinds})`);
-        assert.ok(first.live, 'a live card says LIVE');
+        assert.ok(first.kinds.some((c) => /\bovf-k-live\b/.test(c)) && first.kinds.includes('ovf-update') && first.kinds.some((c) => /\bovf-k-pic\b/.test(c)), `cards by kind (${first.kinds})`);
+        assert.ok(first.live, 'a channel live now says LIVE (live_now)');
         assert.ok(first.media >= 6, 'media cards show their picture');
         assert.strictEqual(first.bolds, 0, 'what people wrote is text');
         assert.ok(/^<b>bold<\/b> post/.test(first.posts), 'the markup shows as words');
@@ -98,7 +98,7 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(p, `!!document.querySelector('.ovf-caught')`), 'the end says so');
         await p.evaluate(`[...document.querySelectorAll('.ovf-chip')].find((b) => b.textContent === 'Clips').click(), true`);
         assert.ok(await until(p, `(window.__feedCalls || []).some((u) => u.includes('kind=clip'))`), 'the chip asks for its kind');
-        assert.ok(await until(p, `[...document.querySelectorAll('.ovf-list > a')].every((a) => a.className === 'ovf-card ovf-clip') && document.querySelectorAll('.ovf-list > a').length === 12`), 'only clips, from the first page');
+        assert.ok(await until(p, `[...document.querySelectorAll('.ovf-list > a')].every((a) => a.className === 'ovf-card ovf-k-clip') && document.querySelectorAll('.ovf-list > a').length === 12`), 'only clips, from the first page');
         console.log('menu-feed-v2-chrome: chips, cards by kind, text only, the next page, caught up, a chip by kind, the stream alone ok');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((e) => { console.error(e); process.exit(1); });
