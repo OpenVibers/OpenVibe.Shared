@@ -481,7 +481,8 @@ async function drag(p, from, to) {
             assert.deepStrictEqual(await p.evaluate("window.__pip.opts"), { width: 360, height: 520 }, 'a window of about 360 × 520');
             const inWindow = await until(p, PILL, 'the pill stays');
             assert.strictEqual(inWindow.text, 'In a window', 'the page keeps the pill, and it says where the Dock went');
-            await wait(900);
+            // The state write is debounced; a slow runner (macOS CI) needs more than a fixed wait.
+            for (let i = 0; i < 50 && !puts.some((b) => b.open === true); i++) await wait(100);
             assert.ok(puts.some((b) => b.open === true), `the Network is told the Dock is open (${JSON.stringify(puts)})`);
             assert.ok(!puts.some((b) => 'popped' in b), `and never where its window is: that stays with this page (${JSON.stringify(puts)})`);
             // The window is closed: the panel comes back to the page.
