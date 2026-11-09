@@ -13,7 +13,7 @@ const ROOT = path.join(__dirname, '..');
 // went out without ?v=, so a release reached phones up to a day late (max-age=300, stale-while-revalidate=86400): the
 // owner still saw the old menu hours after the new one shipped (11-07).
 const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov-fx.js', 'ov-labels.js', 'ov-forms.js', 'ov-forms.css', 'ov-share.js', 'ov-share.css',
-    'search.js', 'dock.js', 'presence.js', 'panels.js', 'notification-ui.js', 'history.js', 'site-switcher.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js', 'overlay.js', 'ov-home.js'];
+    'search.js', 'dock.js', 'presence.js', 'panels.js', 'surfaces.js', 'notification-ui.js', 'history.js', 'site-switcher.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js', 'overlay.js', 'ov-home.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
 const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'action-center.js', 'dock-timeline.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },

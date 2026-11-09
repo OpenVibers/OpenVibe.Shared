@@ -50,6 +50,7 @@ const BROWSER = Object.freeze([
     'history.js',           // cross-site history
     'sso-client.js',        // link hand-off, FedCM
     'panels.js',            // one-open-at-a-time panel coordinator
+    'surfaces.js',          // scroll locking and gestures for sheets; outside pointer for pop-overs
     'ui.js',                // toasts and page notices
     'route-transition.js',  // page-move bar, loading line and fade-in; web-runtime.js fetches it on the first move
     'boost.js',             // smooth same-site page moves for a server-rendered site (OVBoost; plan T11)

@@ -547,7 +547,7 @@
     const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '04ac8238e9ed', 'dock.js': '45215d0d60f4', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '267bf753169d' };
+    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '04ac8238e9ed', 'dock.js': '25f7f7bc3fef', 'presence.js': '1b675c37d888', 'panels.js': '747f07fb3df3', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '267bf753169d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1039,7 +1039,7 @@
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (pop && pop.classList.contains('open')) return close();
-            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close); }
+            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close, btn); }
             const list = (_config.chips || []).filter((c) => c && !c.hidden);
             pop.innerHTML = list.map((c) => `<button type="button" role="menuitem" data-chip-row="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span>${escapeAttr(chipLabel(c))}</span><b>${escapeAttr(c.value == null ? '' : c.value)}</b></button>`).join('');
             pop.querySelectorAll('[data-chip-row]').forEach((row) => row.addEventListener('click', (ev) => {
@@ -1112,7 +1112,7 @@
             }
             closeDrawer();
         });
-        document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('.ovnav-dd')) nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); }, onDocument());
+        nav.querySelectorAll('.ovnav-dd').forEach((dd) => regPanel(dd, 'nav-dropdown', () => dd.classList.remove('open'), dd.querySelector(':scope > a')));
         // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
         const placeDd = (dd) => {
             const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
@@ -1139,16 +1139,16 @@
                 openSearch('', 'sites');
             });
             document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); }, onDocument());
-            regPanel(drawer, 'nav-drawer', closeDrawer);
+            regPanel(drawer, 'nav-drawer', closeDrawer, burger);
         }
     }
 
     /** Dropdown, launcher and notifications share one coordinator (panels.js): one open at a time, Escape, rotation.
      *  Panels are registered where they are created (no page-wide observers); registrations queue until the script loads. */
     const _panelQueue = [];
-    function regPanel(el, id, close) {
+    function regPanel(el, id, close, trigger) {
         if (!el) return;
-        const opts = Object.assign({ el, openClass: 'open', id, close }, onDocument());
+        const opts = Object.assign({ el, openClass: 'open', id, close, trigger }, onDocument());
         if (root.OpenVibePanels) return root.OpenVibePanels.register(opts);
         _panelQueue.push(opts);
         if (document.getElementById('ov-panels-loader')) return;
@@ -2127,7 +2127,7 @@
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
             bindLook(dropdown);
-            regPanel(dropdown, 'user-menu');
+            regPanel(dropdown, 'user-menu', () => dropdown.classList.remove('open'), nav.querySelector('#openvibe-avatar-btn'));
 
             // Avatar click toggles dropdown (the selection for Ask Vibe is read on pointerdown: the press can clear it)
             const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
@@ -2138,10 +2138,7 @@
                 if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; loadOvIcons(dropdown); }
             });
 
-            // Close on outside click
-            document.addEventListener('click', e => {
-                if (!nav.contains(e.target)) dropdown.classList.remove('open');
-            }, onDocument());
+            // panels.js closes this on an outside pointerdown, including another control in the navbar.
 
             dropdown.querySelectorAll('[data-account-id]').forEach(el => {
                 el.addEventListener('click', () => {
@@ -2443,6 +2440,9 @@
             if (opts.wallet === undefined) _config.wallet = true;
             if (opts.messages === undefined) _config.messages = { __default: true };
             injectStyles();
+            if (!root.OVSurfaces && !document.getElementById('ov-surfaces-loader')) {
+                const sc = document.createElement('script'); sc.id = 'ov-surfaces-loader'; sc.src = siblingV('surfaces.js'); sc.async = true; document.head.appendChild(sc);
+            }
             hookBoost();
             hookMoves();
             const el = render();

@@ -52,7 +52,7 @@
     const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
-    let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null;
+    let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null, dockSurface = null;
     // Pop out (K-D4): the window the panel lives in while it is popped out, and whether it is in one.
     let pipWin = null, popped = false, pipClosing = false, popOk = true;
     const mounts = {};
@@ -917,7 +917,10 @@
         paintPop();
         el.hidden = false;
         el.classList.remove('is-in'); void el.offsetWidth; el.classList.add('is-in');
-        if (phone()) { el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open'); } else el.removeAttribute('aria-modal');
+        if (phone()) {
+            el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open');
+            if (root.OVSurfaces && !dockSurface) { dockSurface = root.OVSurfaces.sheet({ el, body: el.querySelector('.ovdk-body'), close }); dockSurface.open(); }
+        } else { el.removeAttribute('aria-modal'); if (dockSurface) { dockSurface.destroy(); dockSurface = null; } }
         setTab(want, false);
         readUnread();
         if (!state().open || (state().tab !== tab && SAVED_TABS.includes(tab))) save({ open: true, ...(SAVED_TABS.includes(tab) ? { tab } : {}) }); else notify();
@@ -929,6 +932,7 @@
         if (wasPopped) { popped = false; const w = pipWin; pipWin = null; pipClosing = true; try { if (w) w.close(); } catch { /* already gone */ } pipClosing = false; if (el.parentNode !== document.body) document.body.appendChild(el); }
         const inside = el.contains(document.activeElement);
         el.hidden = true;
+        if (dockSurface) { dockSurface.destroy(); dockSurface = null; }
         el.style.transform = '';
         el.removeAttribute('aria-modal');
         document.documentElement.classList.remove('ovdk-sheet-open');
