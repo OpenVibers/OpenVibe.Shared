@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.165.0 — 2026-11-09
+
+- **The Dock's Agents tab, content-aware** (plan 2026-11-09 §7–8; the owner, 11-09: "the Agents tab's 34 identical rows
+  'Draft a blog post · Done · AI · gpt-5-nano', 25 failed rows 'AI is resting for a moment' and raw JSON errors; an empty
+  Agents tab that is wasted space for no reason"). `dock-runs.js` (loaded with the tab) draws each run as a row: the
+  skill's icon in its own colour, the subject as the title, and one status line — Running (the live step and a thin
+  bar), Waiting (what it needs), Scheduled (when), Done (the result, the cost, the time, the model with its maker's
+  mark) or Failed (the words and what happens next). Open, Retry, Stop and "run again with another model" are on the
+  row. Six identical failures in a day are one row, `×6`, that expands. A failure never shows the provider's own text.
+- **The Agents overview** (instead of an empty middle): the next scheduled run with a countdown, today's and this
+  week's numbers (runs, done, failed, spend) as three small tiles, the last three results as rows, and "Things agents
+  can do for you": a grid of six skills from Actor's catalogue that start a run in one tap. The foot stays one row:
+  "All runs" and "Give an agent a task".
+- **The Vibe tab has a conversation list** (`dock-vibe.js`): New conversation at the top, then each chat with its last
+  line, its time and the site it began on; a back arrow in a conversation. The tab opens on the conversation you had
+  open within the last twenty minutes, else on the list, and the choice is the Dock's synced state, so it follows you
+  across pages and sites. "Vibe did not answer" says why and offers a retry. The composer shows at once, with the
+  attach and the mic.
+- **The Chats tab has an AI chats row** among the DMs, placed by date like the others: the Vibe mark, "AI chats", the
+  count, the last conversation's title and when Vibe answered; tapping it opens the Vibe tab on its list. A group's row
+  shows up to three faces, not a number sign.
+- **The Dock keeps its size and corner per person** and its grip is always visible; the Vibe conversation and the
+  Agents filter are restored with it.
+
 ## 4.164.0 — 2026-11-09
 
 - **Chat's two views** (`openvibe-shared/messages`, `OVMessages.render(el, { messages, view: 'room' | 'bubbles', me })`;

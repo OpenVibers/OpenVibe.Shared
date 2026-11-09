@@ -345,11 +345,13 @@
         if (st && !st.textContent.includes('.ovdk-vibe-start')) st.textContent += CSS;
         else if (!st && !document.getElementById('ovdk-vibe-styles')) { const s = document.createElement('style'); s.id = 'ovdk-vibe-styles'; s.textContent = CSS; document.head.appendChild(s); }
         vibe.panel = panel;
+        // The Chats tab's AI chats row asks for the list, not for the last conversation.
+        const onList = ctx.wantList ? ctx.wantList() : false;
         const selected = ctx.state && ctx.state().vibe;
-        if (selected && selected.slug && Date.now() - Date.parse(selected.at) < 20 * 60000) { vibe.chat = { slug: selected.slug }; openVibe(); }
+        if (!onList && selected && selected.slug && Date.now() - Date.parse(selected.at) < 20 * 60000) { vibe.chat = { slug: selected.slug }; openVibe(); }
         else openList();
         return {
-            refresh: () => { vibe.panel = panel; return vibe.view === 'list' ? openList() : openVibe(); },
+            refresh: () => { vibe.panel = panel; const list = ctx.wantList ? ctx.wantList() : false; if (list) return openList(); return vibe.view === 'list' ? openList() : openVibe(); },
             list: () => { vibe.panel = panel; return openList(); },
             pause: () => { clearTimeout(vibe.timer); if (vibe.rec) { try { vibe.rec.abort(); } catch { /* */ } } },
             talk: () => { if (vibe.talk) vibe.talk(); },

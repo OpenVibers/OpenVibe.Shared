@@ -46,6 +46,49 @@ const ACTIONS = {
         scheduled: [], done: [], failed: [],
     },
 };
+// The Dock v2's rows (plan 2026-11-09 §8): a skill, a subject, a model, a maker, a cost, a duration, a live step and,
+// for a failure, safe words and the next step. Six identical failures in a day are one row.
+const DOCK_ACTIONS = {
+    generated_at: iso(2000), sources: { actor: 'ok', codes: 'ok' },
+    counts: { running: 1, waiting: 1, scheduled: 1, done: 2, failed: 6 },
+    buckets: {
+        waiting: [item({ id: 'apr_1', service: 'actor', agent: 'Actor', kind: 'agent_task', bucket: 'waiting', state: 'waiting',
+            skill: 'blog.write', subject: { kind: 'post', title: 'Patch notes draft', url: 'https://openvibe.blog/posts/42' },
+            title: 'Patch notes draft', summary: 'It needs the release name to finish the notes.', href: 'https://openvibe.actor/tasks/t3',
+            actions: ['approve', 'decline'] })],
+        running: [item({ id: 'tsk_1', service: 'actor', agent: 'Actor', kind: 'agent_task', bucket: 'running', state: 'running',
+            skill: 'changelog-draft', subject: { kind: 'post', title: 'Patch notes draft · OpenVibe blog', url: 'https://openvibe.blog/posts/42' },
+            title: 'Patch notes draft · OpenVibe blog', step: 'Writing the release notes…', model: 'gpt-5-nano', maker: 'OpenAI',
+            duration_ms: 42000, href: 'https://openvibe.actor/tasks/tsk_1', steps: 14 })],
+        scheduled: [item({ id: 'tsk_4', service: 'actor', agent: 'Actor', kind: 'agent_task', bucket: 'scheduled', state: 'scheduled',
+            skill: 'wiki-article', subject: { kind: 'wiki', title: 'The Dock, for beginners', url: 'https://openvibe.wiki/a/dock' },
+            title: 'Make a wiki article', next_run_at: new Date(Date.now() + 42 * 60e3).toISOString(), href: 'https://openvibe.actor/tasks/tsk_4' })],
+        done: [
+            item({ id: 'tsk_5', service: 'actor', agent: 'Actor', kind: 'agent_task', bucket: 'done', state: 'succeeded',
+                skill: 'changelog-draft', subject: { kind: 'post', title: '4.162.0 release notes', url: 'https://openvibe.blog/posts/39' },
+                title: '4.162.0 release notes', summary: 'The draft is ready for review.', cost_usd: 0.0031, duration_ms: 68000,
+                model: 'gpt-5-nano', maker: 'OpenAI', href: 'https://openvibe.blog/posts/39' }),
+            item({ id: 'tsk_6', service: 'actor', agent: 'Actor', kind: 'agent_task', bucket: 'done', state: 'succeeded',
+                skill: 'wiki-article', subject: { kind: 'wiki', title: 'What is a Dock?', url: 'https://openvibe.wiki/a/dock' },
+                title: 'What is a Dock?', summary: 'The article is a draft with its sources.', cost_usd: 0.0124, duration_ms: 154000,
+                model: 'claude-sonnet-4-5', maker: 'Anthropic', href: 'https://openvibe.wiki/a/dock' }),
+        ],
+        failed: Array.from({ length: 6 }, (_, i) => item({ id: `fail_${i}`, service: 'actor', agent: 'Actor', kind: 'agent_task', bucket: 'failed', state: 'failed',
+            skill: 'blog.write', subject: { kind: 'post', title: 'Draft a blog post', url: null }, title: 'Draft a blog post',
+            error: 'No model could take this task.',
+            run_error: { code: 'route.unavailable', words: 'No model could take this task.', next: 'Pick a model or add an AI key, then retry.', action: 'pick_model' },
+            href: 'https://openvibe.actor/tasks/fail_0', updated_at: iso(3600e3 * (i + 1)) })),
+    },
+};
+// The Dock v2's Chats row and the Vibe list: a person's AI conversations, newest first.
+const DOCK_VIBE = {
+    count: 12,
+    conversations: [
+        { slug: 'v-1', name: 'Patch notes for 4.162', last_message_at: iso(4 * 60e3), created_at: iso(2 * 3600e3), last_line: 'I wrote the first draft.', last_answer_at: iso(4 * 60e3), site: 'openvibe.blog' },
+        { slug: 'v-2', name: 'What is on today?', last_message_at: iso(90 * 60e3), created_at: iso(26 * 3600e3), last_line: 'Three things, starting with the release.', last_answer_at: iso(90 * 60e3), site: 'openvibe.today' },
+        { slug: 'v-3', name: 'Memes for the launch', last_message_at: iso(2 * 86400e3), created_at: iso(9 * 86400e3), last_line: 'Here are three, pick one.', last_answer_at: iso(2 * 86400e3), site: 'openvibe.meme' },
+    ],
+};
 const NOTES = [
     { id: 1, type: 'agent_done', category: 'agents', service: 'codes', title: 'Codes finished a task', message: 'The suite passed.', priority: 'normal', is_read: 0, created_at: iso(300e3) },
     { id: 2, type: 'mention', category: 'social', service: 'chat', title: 'kai mentioned you', message: 'look at the shots?', priority: 'normal', is_read: 0, created_at: iso(900e3) },
@@ -85,7 +128,11 @@ const server = http.createServer((req, res) => {
             if (req.method === 'PUT') { const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); puts.push(b); scenario.state = { ...(scenario.state || defaultState()), ...b, place: { ...((scenario.state || defaultState()).place), ...(b.place || {}) } }; }
             return json(200, { state: scenario.state || defaultState(), counts: scenario.counts || { running: 0, waiting: 0, unread: 0 }, sources_partial: false });
         }
-        if (u.pathname === '/api/v1/me/actions') return json(200, ACTIONS);
+        if (u.pathname === '/api/v1/me/actions') return json(200, scenario.actions || ACTIONS);
+        // Actor's skill catalogue, as the Dock's overview reads it.
+        if (u.pathname === '/api/v1/skills') return json(200, { listings: (scenario.skills || [1, 2, 3, 4, 5, 6]).map((n) => ({
+            id: `skl_${n}`, skill: { slug: `skill-${n}`, name: ['Make an image', 'Make a wiki article', 'Write a blog post', 'Improve an article', 'Make a meme', 'Summarise a thread'][n - 1] },
+            scan: { state: 'passed' }, curator: { state: 'active' } })) });
         // Codes' agent view (K-D3): the stream, its two controls, and the still.
         if (u.pathname === '/api/v1/me/agent-view' && req.method === 'GET') {
             assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'the agent view is read with the person\'s own token');
@@ -132,7 +179,7 @@ const server = http.createServer((req, res) => {
                 .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
             return json(200, { messages: all.filter((m) => m.id > after) });
         }
-        if (u.pathname === '/api/vibe/conversations') return json(200, { conversations: [], count: 0 });
+        if (u.pathname === '/api/vibe/conversations') return json(200, scenario.vibe || { conversations: [], count: 0 });
         if (u.pathname === '/api/vibe/chat') {
             assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'Vibe is asked with the person\'s own token');
             const after = Number(u.searchParams.get('after')) || 0;
@@ -219,19 +266,43 @@ async function drag(p, from, to) {
     try {
         if (process.env.DOCK_SHOTS_DIR) {
             fs.mkdirSync(process.env.DOCK_SHOTS_DIR, { recursive: true });
-            for (const width of [390, 1280]) for (const scheme of ['dark', 'light']) {
-                scenario = { counts: { running: 2, waiting: 1, unread: 0 } };
-                const p = await fresh(width, 900);
-                await p.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
-                await p.goto(`${base}/page`, { maxMs: 5000 });
-                await until(p, PILL, 'the screenshot pill');
-                await p.evaluate("document.getElementById('ovdk-pill').click()");
-                await until(p, "document.querySelectorAll('.ovdk-run').length >= 3", 'the screenshot runs');
+            const shot = async (p, name) => {
                 await wait(400);
                 const docWidth = await p.evaluate('document.documentElement.scrollWidth');
-                assert.ok(docWidth <= width && docWidth >= width - 20, `${width} px ${scheme}: no sideways scroll (${docWidth})`);
-                const shot = await p.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
-                fs.writeFileSync(path.join(process.env.DOCK_SHOTS_DIR, `agents-${width}-${scheme}.png`), Buffer.from(shot.data, 'base64'));
+                assert.ok(docWidth <= p.width && docWidth >= p.width - 20, `${p.width} px: no sideways scroll (${docWidth})`);
+                const pic = await p.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+                fs.writeFileSync(path.join(process.env.DOCK_SHOTS_DIR, `${name}-${p.width}-${p.scheme}.png`), Buffer.from(pic.data, 'base64'));
+            };
+            for (const width of [390, 1280]) for (const scheme of ['dark', 'light']) {
+                // The Agents list: a running run, one waiting, one scheduled, two done and six identical failures.
+                scenario = { counts: { running: 1, waiting: 1, unread: 0 }, actions: DOCK_ACTIONS, vibe: DOCK_VIBE };
+                const p = await fresh(width, 900);
+                p.width = width; p.scheme = scheme;
+                await p.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: scheme }] });
+                await p.goto(`${base}/page`, { maxMs: 5000 });
+                await until(p, "!!window.OpenVibeDock", 'the Dock');
+                await p.evaluate("window.OpenVibeDock.open({ tab: 'agent' })");
+                await until(p, "document.querySelectorAll('.ovdk-run').length >= 4", 'the screenshot runs');
+                await shot(p, 'agents');
+
+                // The overview: nothing runs, so the tab says what is next, what happened and what agents can do.
+                scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true },
+                    actions: { ...DOCK_ACTIONS, counts: { running: 0, waiting: 0, scheduled: 1, done: 2, failed: 6 } }, vibe: DOCK_VIBE };
+                await p.goto(`${base}/page`, { maxMs: 5000 });
+                await until(p, "!!window.OpenVibeDock", 'the Dock');
+                await p.evaluate("window.OpenVibeDock.open({ tab: 'agent' })");
+                await until(p, "!!document.querySelector('.ovdk-overview')", 'the overview');
+                await shot(p, 'overview');
+
+                // The Vibe tab: the list of the person's conversations.
+                await p.evaluate("document.querySelector('#ovdk-tab-vibe').click()");
+                await until(p, "document.querySelectorAll('.ovdk-vibe-list button').length >= 3", 'the Vibe list');
+                await shot(p, 'vibe');
+
+                // The Chats tab: the AI chats row among the DMs.
+                await p.evaluate("document.querySelector('#ovdk-tab-chats').click()");
+                await until(p, "!!document.querySelector('.ovdk-chat-b b')", 'the Chats rows');
+                await shot(p, 'chats');
                 await p.close();
             }
             if (process.env.DOCK_SHOTS_ONLY) return;

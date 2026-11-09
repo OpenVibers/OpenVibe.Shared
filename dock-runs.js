@@ -8,7 +8,7 @@
 .ovdk-tile b{display:block;font-size:12px}.ovdk-tile span{display:block;margin-top:5px;font-size:12px;color:var(--text-secondary,#a8a8b2);line-height:1.4}
 .ovdk-overview h3{font-size:13px;margin:10px 0 0}.ovdk-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 .ovdk-skills button{min-height:44px;padding:9px;border-radius:10px;border:1px solid var(--border,rgba(127,127,127,.2));background:transparent;color:inherit;text-align:left;cursor:pointer;font:inherit;font-size:12px}
-.ovdk-skills button:hover{border-color:var(--accent,#3b82f6)}.ovdk-run-filters{display:flex;gap:4px;overflow-x:auto;padding:8px 10px}
+.ovdk-skills button:hover{border-color:var(--accent,#3b82f6)}.ovdk-run-filters{display:flex;gap:4px;overflow-x:auto;padding:8px 10px;scrollbar-width:none}.ovdk-run-filters::-webkit-scrollbar{display:none}
 .ovdk-run-filters button{min-height:36px;padding:0 11px;border:1px solid var(--border,rgba(127,127,127,.2));border-radius:99px;background:transparent;color:inherit;cursor:pointer;white-space:nowrap;font:inherit;font-size:12px}
 .ovdk-run-filters button[aria-pressed=true]{background:var(--accent,#3b82f6);color:var(--on-accent,#fff)}
 .ovdk-runs{list-style:none;margin:0;padding:0 10px 10px;display:grid;gap:6px}.ovdk-run{display:grid;grid-template-columns:36px minmax(0,1fr);gap:9px;padding:10px;border:1px solid var(--border,rgba(127,127,127,.2));border-radius:12px;min-width:0}
@@ -25,7 +25,7 @@
     const ago = (at) => { const n = Date.parse(at || ''); if (!Number.isFinite(n)) return ''; const m = Math.max(0, Math.round((Date.now() - n) / 60000)); return m < 1 ? 'now' : m < 60 ? `${m} min` : m < 1440 ? `${Math.floor(m / 60)} h` : `${Math.floor(m / 1440)} d`; };
     const until = (at) => { const m = Math.max(0, Math.ceil((Date.parse(at || '') - Date.now()) / 60000)); return m < 1 ? 'now' : m < 60 ? `in ${m} min` : m < 1440 ? `in ${Math.ceil(m / 60)} h` : `in ${Math.ceil(m / 1440)} d`; };
     const cash = (n) => n == null ? '' : Number(n) < .01 ? `$${Number(n).toFixed(4)}` : `$${Number(n).toFixed(2)}`;
-    const iconOf = (it) => { const s = String(it.skill || it.subject && it.subject.kind || it.kind || ''); return /post|blog|write/.test(s) ? ['fa-pen','#d7974d'] : /wiki|article|research/.test(s) ? ['fa-book','#9875d8'] : /image|pic|meme/.test(s) ? ['fa-image','#d66bad'] : /chat|thread/.test(s) ? ['fa-comments','#61a9d7'] : /code|repo/.test(s) ? ['fa-code','#63b89c'] : /clip|stream|video/.test(s) ? ['fa-film','#dc866a'] : /quest/.test(s) ? ['fa-flag','#b9a74b'] : ['fa-sparkles','#8b92d9']; };
+    const iconOf = (it) => { const s = String(it.skill || it.subject && it.subject.kind || it.kind || ''); return /post|blog|write|changelog|draft|patch/.test(s) ? ['fa-pen','#d7974d'] : /wiki|article|research/.test(s) ? ['fa-book','#9875d8'] : /image|pic|meme/.test(s) ? ['fa-image','#d66bad'] : /chat|thread/.test(s) ? ['fa-comments','#61a9d7'] : /code|repo/.test(s) ? ['fa-code','#63b89c'] : /clip|stream|video/.test(s) ? ['fa-film','#dc866a'] : /quest/.test(s) ? ['fa-flag','#b9a74b'] : ['fa-sparkles','#8b92d9']; };
     const isUrl = (u) => /^https:\/\//.test(String(u || ''));
     function mount(panel, o) {
         const st = o.styles && o.styles(); if (st && !st.textContent.includes('.ovdk-overview{')) st.textContent += CSS;
@@ -41,7 +41,7 @@
             const error = it.run_error; let line = '';
             if (it.bucket === 'running') line = `Running: ${it.step || it.summary || 'Working'}`;
             else if (it.bucket === 'waiting') line = `Waiting: ${it.summary || 'Your answer is needed'}`;
-            else if (it.bucket === 'scheduled') line = `Scheduled: ${it.next_run_at ? new Date(it.next_run_at).toLocaleString() : 'Time pending'}`;
+            else if (it.bucket === 'scheduled') line = `Scheduled: ${it.next_run_at ? until(it.next_run_at) : 'Time pending'}`;
             else if (it.bucket === 'failed') line = `Failed: ${error ? error.words + ' ' + error.next : 'This run could not finish. Open it for details.'}`;
             else line = ['Done', it.summary, cash(it.cost_usd), it.duration_ms != null ? `${Math.round(it.duration_ms / 1000)}s` : ''].filter(Boolean).join(' · ');
             body.append(h('span', 'ovdk-run-line', line));
@@ -94,7 +94,7 @@
         function paint() { if (!doc) return; panel.textContent = ''; const items = all(); const filters = h('div', 'ovdk-run-filters'); for (const [id,label] of [['all','All'],['running','Running'],['waiting','Waiting'],['scheduled','Scheduled'],['done','Done'],['failed','Failed']]) { const b = h('button', '', label); b.type='button'; b.setAttribute('aria-pressed', String(filter===id)); b.addEventListener('click', () => { filter=id; o.save({agent_filter:id}); paint(); }); filters.append(b); } panel.append(filters);
             if (filter==='all' && !(doc.counts.running || doc.counts.waiting)) panel.append(overview());
             else { const shown = filter==='all' ? items : (doc.buckets[filter] || []); if (shown.length) rows(shown,panel); else panel.append(h('p','ovdk-none','No runs in this view.')); }
-            const foot = h('div','ovdk-foot'); const allLink = h('a','','All runs'); allLink.href='https://openvibe.actor/tasks'; const give = h('a','','Give an agent a task'); give.href='https://openvibe.actor/skills'; foot.append(allLink,give); (o.foot || panel).append(foot); }
+            const foot = o.foot || h('div','ovdk-foot'); foot.textContent=''; const allLink = h('a','','All runs'); allLink.href='https://openvibe.actor/tasks'; const give = h('a','','Give an agent a task'); give.href='https://openvibe.actor/skills'; foot.append(allLink,give); if (!o.foot) panel.append(foot); }
         async function refresh() { if (busy || !o.active()) return; busy=true; clearTimeout(timer); try { doc = await request('/api/v1/me/actions'); if (doc && doc.buckets) { paint(); if (o.onCounts) o.onCounts(doc.counts || {}); } } catch { panel.textContent=''; panel.append(h('div','ovdk-none','Your runs did not load. Open Agents again to retry.')); } finally { busy=false; if (o.active() && doc && doc.counts && doc.counts.running) timer=setTimeout(refresh,15000); } }
         refresh(); if (o.loadMarks) o.loadMarks().then((ok) => { if (ok && doc) paint(); });
         return { refresh, destroy: () => clearTimeout(timer) };

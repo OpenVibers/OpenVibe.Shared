@@ -106,7 +106,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '43652e58f2c3', 'dock-runs.js': '03dba4ac00e8', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '91f5eeb6e25d', 'dock-runs.js': 'd51559539b4b', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -528,7 +528,7 @@
             panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
             const ok = await load('dock-vibe.js', () => !!(root.OpenVibeDockVibe && root.OpenVibeDockVibe.mount));
             if (!ok) { panel.innerHTML = '<div class="ovdk-none">Vibe did not load. Check your connection, then open it again.</div>'; return; }
-            vibe.api = root.OpenVibeDockVibe.mount(panel, { chatCall, active: () => isOpen() && tab === 'vibe', state, save, styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'), icons: { vibe: G.vibe, send: G.send, clock: G.clock, bell: G.bell }, refresh: () => read() });
+            vibe.api = root.OpenVibeDockVibe.mount(panel, { chatCall, active: () => isOpen() && tab === 'vibe', state, save, wantList: () => { const v = vibeOnList; vibeOnList = false; return v; }, styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'), icons: { vibe: G.vibe, send: G.send, clock: G.clock, bell: G.bell }, refresh: () => read() });
             return;
         }
         if (id === 'chats') { chats.panel = panel; mounts.chats = mounts.chats || { refresh: null }; if (chats.draft) return chatList(); return state().chat && chats.open !== state().chat ? openChat(state().chat, false) : chats.open ? openChat(chats.open, false) : chatList(); }
@@ -540,7 +540,7 @@
             const ok = await load('dock-runs.js', () => !!(root.OpenVibeDockRuns && root.OpenVibeDockRuns.mount));
             if (!ok) return failed(panel, id);
             // K-D3: the person's own agent stream above the list; it hides itself when there is none.
-            panel.innerHTML = '<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-runs-foot"></div>';
+            panel.innerHTML = '<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-runs-foot ovdk-foot"></div>';
             // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
             // phone Now and Needs you are on screen before anything else.
             load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
@@ -579,7 +579,7 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null };
+    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
@@ -606,6 +606,8 @@
         const m = Math.max(0, Math.round((Date.now() - t) / 60000));
         return m < 1 ? 'now' : m < 60 ? `${m} min` : m < 1440 ? `${Math.floor(m / 60)} h` : `${Math.floor(m / 1440)} d`;
     };
+    // "answered 4 min ago", and "answered just now" when it was this minute.
+    const answered = (iso) => { const w = when(iso); return !w ? '' : w === 'now' ? 'answered just now' : `answered ${w} ago`; };
     function avatar(p, group) {
         const a = h('span', 'ovdk-av');
         const url = p && /^https:\/\//.test(String(p.avatar_url || '')) ? p.avatar_url : '';
@@ -653,10 +655,10 @@
             [...chats.list, ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
                 if (c.kind === 'vibe') {
                     const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
-                    const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', `AI chats · ${c.count} conversation${c.count === 1 ? '' : 's'}`), h('span', 'ovdk-chat-p', c.latest && c.latest.name || 'Vibe'));
-                    const meta = h('span', 'ovdk-chat-m'); meta.append(h('time', '', c.latest && c.latest.last_answer_at ? `answered ${when(c.latest.last_answer_at)} ago` : when(c.last_message_at)));
+                    const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'AI chats'), h('span', 'ovdk-chat-p', `${c.count} conversation${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
+                    const meta = h('span', 'ovdk-chat-m'); meta.append(h('time', '', c.latest && c.latest.last_answer_at ? answered(c.latest.last_answer_at) : when(c.last_message_at)));
                     b.append(icon(G.vibe), body, meta); b.setAttribute('aria-label', `AI chats, ${c.count} conversations`);
-                    b.addEventListener('click', () => { save({ vibe: null }); setTab('vibe', true); if (vibe.api && vibe.api.list) vibe.api.list(); });
+                    b.addEventListener('click', () => { vibeOnList = true; save({ vibe: null }); setTab('vibe', true); });
                     li.append(b); ul.append(li); return;
                 }
                 const li = h('li'), b = h('button', 'ovdk-chat');
@@ -764,6 +766,8 @@
     // every page for signed-in people; Vibe's conversation and mic are not needed until then). Alt+V talks to Vibe from
     // any page: it opens the Dock on Vibe and starts listening (only where the browser can listen).
     const vibe = { panel: null, api: null };
+    // The Chats tab's AI chats row opens the Vibe tab on its list, not on the last conversation.
+    let vibeOnList = false;
     const canListen = () => !!(root.SpeechRecognition || root.webkitSpeechRecognition);
     document.addEventListener('keydown', (e) => {
         if (!e.altKey || e.ctrlKey || e.metaKey || String(e.key).toLowerCase() !== 'v' || !canListen() || !o || typeof o.token !== 'function') return;
