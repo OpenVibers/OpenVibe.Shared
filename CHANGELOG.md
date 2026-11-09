@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 4.159.0 — 2026-11-09
 
 - **Homes v2: `openvibe-shared/showcase-stage`** (plan `OpenVibe_Homes_v2_Plan_2026-11-09.md`; the owner, 11-09: "make the
   home pages more unique… show the features… custom animations… infographics… a shared, modular system… still SEO
