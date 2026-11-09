@@ -2,6 +2,9 @@
 
 > Versioned UI, the OpenVibe Frame (the navbar, footer and "shipped" views every site sits in), SEO, legal and release-client packages every OpenVibe site renders.
 
+**Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
+**Install and test:** `npm ci && npm test`
+
 **Status:** alpha, v4.179.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names

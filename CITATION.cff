@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use OpenVibe.Shared in research or a product, cite it as below."
+title: openvibe-shared
+type: software
+authors:
+  - name: OpenVibe
+    alias: OpenVibers
+    website: https://openvibe.network
+repository-code: https://github.com/OpenVibers/OpenVibe.Shared
+url: https://openvibe.network
+license: MIT
+abstract: "The UI, Frame, SEO and release packages that every OpenVibe site renders."
+keywords:
+  - openvibe
+  - components
+  - feeds
+  - icons
+  - json-ld
