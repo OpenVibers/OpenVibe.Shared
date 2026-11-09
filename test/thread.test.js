@@ -46,7 +46,11 @@ assert.strictEqual(t.work({ rows: [] }), '', 'nothing to fold, nothing drawn');
 const ans = t.answer({ html: '<p>The <b>answer</b></p>', sources: ['https://www.example.com/a', 'not a url'], meta: ['Balanced · DeepSeek', '$0.002'], actions: [{ label: 'Details', href: '/tasks/1?view=details' }] });
 assert.ok(ans.includes('<div class="ovt-answer" data-ovt-answer><p>The <b>answer</b></p></div>'), 'the answer is the caller\'s safe markup');
 assert.ok(ans.includes('>example.com</a>') && ans.includes('>not a url</a>'), 'sources by host');
-assert.ok(ans.includes('<button type="button" class="ovt-act" data-ovt-copy hidden>'), 'Copy waits for the script');
+assert.ok(ans.includes('<button type="button" class="ovt-act" data-ovt-copy title="Copy" aria-label="Copy" hidden>'), 'Copy waits for the script, an icon button named by its word');
+assert.ok(ans.includes('title="Details" aria-label="Details"'), 'a site action is an icon button with its word as the name');
+const menu = t.composer({ action: '/chat', attach: { menu: true, library: 'https://openvibe.media/me' } });
+assert.ok(menu.includes('data-ovt-attach') && menu.includes('Photos and videos') && menu.includes('capture="environment"') && menu.includes('From your OpenVibe files'), 'attach as a menu: files, photos, the camera, your OpenVibe files');
+assert.ok(!/accept=/.test(menu.split('Photos and videos')[0]), 'Files takes every file type');
 assert.ok(ans.includes('<span>Balanced · DeepSeek</span><span>$0.002</span>') && ans.includes('href="/tasks/1?view=details"'));
 assert.ok(t.card({ tone: 'bad', title: 'Could not finish', text: 'It <ran> too long.' }).includes('<div class="ovt-card is-bad"><p><b>Could not finish</b> It &lt;ran&gt; too long.</p>'));
 

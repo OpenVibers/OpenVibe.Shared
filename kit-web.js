@@ -31,6 +31,8 @@
     function setSidebar(sb, on) {
         if (!sb) return;
         sb.classList.toggle('is-open', on);
+        // The page behind a phone's drawer stays put (11-09, the owner: a swipe on the drawer "scrolls the actual page").
+        document.documentElement.classList.toggle('ovk-drawer-open', !!on);
         const wrap = sb.closest('.ovk-with-sidebar') || document;
         const scrim = wrap.querySelector('[data-ovk-sidebar-scrim]');
         if (scrim) scrim.hidden = !on;

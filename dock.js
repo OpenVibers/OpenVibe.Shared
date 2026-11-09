@@ -35,7 +35,8 @@
     const G = {
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
         bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
-        pin: '<path d="M14.5 3.5l6 6-3 1.5-3.5 3.5.5 4-1.5 1.5-4-4-4.5 4.5M9 15l-4-4 1.5-1.5 4 .5L14 6.5z"/>',
+        // An upright pushpin whose lines never cross (owner, 11-09: the old one had "a line going through it").
+        pin: '<path d="M7.5 3.5h9M10 3.5v5.3L6.5 13h11L14 8.8V3.5M12 13v7.5"/>',
         close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
         open: '<path d="M13.5 5.5h5v5M18.5 5.5l-8 8M16.5 13.5v4a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h4"/>',
         chat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
@@ -101,7 +102,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '40a5f8e3970b', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -261,7 +262,7 @@
             .ovdk-err[hidden] { display: none; }
             .ovdk-none b { display: block; margin-bottom: 4px; font-size: 15px; color: var(--text-primary, #ececf1); }
             @media (max-width: 640px) {
-                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: 0; width: auto !important; height: auto !important; max-width: none; max-height: none;
+                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: var(--ov-kb, 0px); width: auto !important; height: auto !important; max-width: none; max-height: none;
                     border: 0; border-radius: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: none; transform-origin: 50% 100%; }
                 .ovdk.is-in { animation-name: ovdk-rise; animation-duration: .3s; }
                 .ovdk-head { cursor: default; }
@@ -698,7 +699,7 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
-        if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
+        if (canWriteChat() && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {
@@ -897,7 +898,11 @@
     function isOpen() { return !!(el && !el.hidden); }
     function share({ text = '', title = '' } = {}) {
         const t = String(text || '').trim().slice(0, 4000);
-        if (t) { chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null; open({ tab: 'chats' }); }
+        if (!t) return;
+        chats.draft = { text: t, title: String(title || '').trim().slice(0, 140) }; chats.open = null;
+        // A bar left from an earlier share would show the old words until the list reloads: it goes now.
+        const stale = chats.panel && chats.panel.querySelector('.ovdk-share'); if (stale) stale.remove();
+        open({ tab: 'chats' });
     }
     function open(opts = {}) {
         openedAt = typeof performance !== 'undefined' && performance.now ? performance.now() : 0;
