@@ -1725,7 +1725,7 @@
                 if (res.ok) {
                     const data = await res.json();
                     const user = (data && (data.user || data)) || null;
-                    if (user && (user.username || user.id)) return { user, token: null };
+                    if (user && (user.username || user.id)) return { user, token: data && data.token || null };
                 }
             } catch { /* signed out */ }
         }

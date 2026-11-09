@@ -40,7 +40,8 @@ function load(answers) {
     const calls = [];
     global.fetch = async (url) => {
         calls.push(url);
-        const a = /\/api\/dm\/unread$/.test(url) ? answers.unread
+        const a = url === '/auth/me' ? answers.session
+            : /\/api\/dm\/unread$/.test(url) ? answers.unread
             : /\/api\/coins\/me(\?|$)/.test(url) ? answers.coins
                 : { status: 404, body: {} };
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
@@ -76,6 +77,16 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
     navbar.init(base);
     await settle();
     assert.strictEqual(asked(calls, /\/api\/dm\/unread$/).length, 1, 'at most once a minute');
+
+    // A site with an HTTP-only session can hand its verified token back from /auth/me.
+    ({ navbar, navs, calls, messageButton } = load({ ...answers, session: { status: 200, body: { user, token: 'session-token' } } }));
+    navbar.init({ service: 'actor', sessionUrl: '/auth/me', notifications: false, wallet: false });
+    await settle();
+    assert.strictEqual(navbar.session.token, 'session-token', 'the navbar receives the site session token');
+    const fromSession = [];
+    global.OpenVibeDock = { mount() {}, open(options) { fromSession.push(options); } };
+    messageButton.listeners.click({ preventDefault() {}, metaKey: false, ctrlKey: false, shiftKey: false });
+    assert.deepStrictEqual(fromSession, [{ tab: 'chats' }], 'the site session opens Chats in place');
 
     // A site that says no.
     ({ navbar, navs, calls } = load(answers));
