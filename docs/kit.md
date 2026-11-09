@@ -158,16 +158,20 @@ uses the same icon tile and a labelled action button. Handwritten headings can u
 ### Settings rows
 
 ```js
-kit.switchRow({ name, label, hint, on })
+kit.switchRow({ name, icon, title, line, checked })      // also label/hint/on, the older names
 kit.rangeRow({ name, label, value, min, max, step, unit: '%' })
 kit.selectRow({ name, label, hint, options: [[value, label]], value })
 kit.seg({ name, label, options: [[value, label]], value })
+kit.segmented({ name, items: [{ value, label, icon }], value, label })
 kit.chips({ name, label, options: [[value, label, checked]], single })
 kit.saveBar({ label: 'Save settings' })
 ```
 
-Inside `<form class="ovk-form">`, each row keeps its label on the left and its control on the right. The save bar
-stays in reach above the app bar.
+A switch row is 56 px tall and the whole row is the target: an icon tile (`kit.ICONS`), the title and one muted line,
+and an iOS-style switch on the right. The switch is the native checkbox with `role="switch"`, so a form still works
+without JavaScript. A segmented control puts three or four equal choices in one 44 px control (icons before the
+words); without a `label` it is the control alone, its radio group named by the field name. The save bar stays in
+reach above the app bar.
 
 ### Search, add, compose
 
