@@ -34,13 +34,15 @@ function load(store, answers) {
     global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
     global.sessionStorage = { getItem: () => null, setItem() {}, removeItem() {} };
     const calls = [];
-    global.fetch = async (url) => {
+    const inits = [];
+    global.fetch = async (url, init = {}) => {
         calls.push(url);
+        inits.push(init);
         const a = url.endsWith('/api/v1/me/wallet') ? answers.wallet : { status: 404, body: {} };
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
     };
     delete require.cache[require.resolve(NAVBAR_PATH)];
-    return { navbar: require(NAVBAR_PATH), navs, calls };
+    return { navbar: require(NAVBAR_PATH), navs, calls, inits };
 }
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const wallet = (calls) => calls.filter((u) => /\/api\/(coins\/me|me\/vibes)(\?|$)/.test(u));
@@ -64,5 +66,25 @@ const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.ne
     assert.strictEqual(navbar._wallet.walletOrder(data)[0], 'balance');
     navbar.setUser(null, null); await settle();
     assert(!navs[navs.length - 1].innerHTML.includes('data-chip-id="coins"'));
-    console.log('wallet chips: one Billing read, all zeros supported, Balance promoted for AI users, signout clears chips');
+
+    // A site that signs people in with its own cookie gives the navbar no token: the chips read the wallet with the
+    // person's Network cookie (credentials: 'include', no Authorization), and a wallet that cannot be read hides them:
+    // never a "…" that stays (2026-11-09: 4.170's chips sat at "…" on every such site).
+    {
+        const cookieSite = load({}, { wallet: { status: 200, body: data } });
+        cookieSite.navbar.init({ ...base, token: null });
+        await settle();
+        const i = cookieSite.calls.findIndex((u) => u.endsWith('/api/v1/me/wallet'));
+        assert(i >= 0, 'asked without a token');
+        assert.strictEqual(cookieSite.inits[i].credentials, 'include', "the person's Network cookie goes along");
+        assert(!(cookieSite.inits[i].headers && cookieSite.inits[i].headers.Authorization), 'no Authorization header');
+        assert.match(cookieSite.navs[cookieSite.navs.length - 1].innerHTML, /data-chip-id="(coins|vibes|balance)"/, "the chips show");
+        const signedOut = load({}, { wallet: { status: 401, body: { error: 'sign in' } } });
+        signedOut.navbar.init({ ...base, token: null });
+        await settle();
+        const last = signedOut.navs[signedOut.navs.length - 1].innerHTML;
+        assert(!/data-chip-id="(coins|vibes|balance)"/.test(last), 'no chips when the wallet cannot be read');
+        assert(!last.includes('…'), 'and no "…" left behind');
+    }
+    console.log('wallet chips: one Billing read, all zeros supported, Balance promoted for AI users, signout clears chips, cookie sites read by cookie');
 })().catch((e) => { console.error(e); process.exit(1); });

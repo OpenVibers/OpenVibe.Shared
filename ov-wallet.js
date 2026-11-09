@@ -25,8 +25,10 @@
     }
     async function open(options) {
         close();
-        const token = options.getToken ? options.getToken() : options.token;
-        if (!token) throw new Error('Sign in to open your wallet');
+        const token = (options.getToken ? options.getToken() : options.token) || null;
+        // cookieSession: no token for the page (httpOnlyAccess sites): ask with the person's Network cookie instead.
+        const cookie = !token && options.cookieSession === true;
+        if (!token && !cookie) throw new Error('Sign in to open your wallet');
         // Every site's connect-src allows openvibe.network and refuses billing./inventory.openvibe.network, so the
         // sheet asks Network's relays (/api/frame/wallet/…); Network forwards the bearer and never a cookie.
         const walletApi = `${(options.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet`;
@@ -55,12 +57,12 @@
         } };
         active = session;
         const identity = () => {
-            if (disposed || (options.getToken && options.getToken() !== token)) { session.close(); throw new Error('Your account changed. Open Wallet again.'); }
+            if (disposed || (options.getToken && (options.getToken() || null) !== token)) { session.close(); throw new Error('Your account changed. Open Wallet again.'); }
         };
         async function request(path, method = 'GET', payload, publicRead = false) {
             identity();
-            const r = await fetch(walletApi + path, { method, credentials: 'omit', signal: controller.signal,
-                headers: { ...(publicRead ? {} : { Authorization: `Bearer ${token}` }), ...(payload ? { 'Content-Type': 'application/json' } : {}) },
+            const r = await fetch(walletApi + path, { method, credentials: cookie && !publicRead ? 'include' : 'omit', signal: controller.signal,
+                headers: { ...(publicRead || !token ? {} : { Authorization: `Bearer ${token}` }), ...(payload ? { 'Content-Type': 'application/json' } : {}) },
                 ...(payload ? { body: JSON.stringify(payload) } : {}) });
             const value = await r.json(); identity();
             if (!r.ok) throw new Error(value.detail || 'This is temporarily unavailable. Please try again.');
