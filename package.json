@@ -75,6 +75,7 @@
     "./ov-mark": "./ov-mark.js",
     "./package.json": "./package.json",
     "./panels": "./panels.js",
+    "./surfaces": "./surfaces.js",
     "./perf-budget": "./perf-budget.js",
     "./ready": "./ready.js",
     "./release": "./release.js",
