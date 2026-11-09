@@ -367,7 +367,7 @@
         const onCommunity = /(^|\.)openvibe\.community$/.test(String(root.location && root.location.hostname || ''));
         if (!onCommunity) {
             const body = `${o.text ? `${o.text}\n\n` : ''}${href}`;
-            first.push(['ovcommunity', 'Community', null, `https://openvibe.community/discuss?title=${E(String(o.title || '').slice(0, 200))}&body=${E(body.slice(0, 4000))}`, null]);
+            first.push(['ovcommunity', 'Community', null, `https://openvibe.community/forum/discuss?title=${E(String(o.title || '').slice(0, 200))}&body=${E(body.slice(0, 4000))}`, null]);
         }
         const room = SHOWN - extra.length - first.length;
         const ordered = [...first, ...tiles.slice(0, room), ...extra, ...tiles.slice(room)];
