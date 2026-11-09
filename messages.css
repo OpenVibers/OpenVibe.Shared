@@ -1,1 +1,52 @@
-.ovm-messages{list-style:none;margin:0;padding:16px clamp(12px,3vw,28px);display:flex;flex-direction:column;gap:4px;overflow:auto;min-height:0;overscroll-behavior:contain}.ovm-day{align-self:center;margin:16px 0 8px;padding:4px 10px;border-radius:999px;background:var(--ov-surface-raised,rgba(127,127,127,.14));font-size:.78rem;color:var(--ov-muted,currentColor);opacity:.8}.ovm-group{display:flex;gap:9px;align-items:flex-end;max-width:min(78%,680px);margin:5px 0}.ovm-group[data-mine="true"]{align-self:flex-end;flex-direction:row-reverse}.ovm-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;align-self:flex-end}.ovm-avatar:empty{display:block;background:var(--ov-surface-raised,rgba(127,127,127,.2))}.ovm-group-body{min-width:0}.ovm-author{font-size:.78rem;font-weight:650;margin:0 0 3px 10px;color:var(--ov-muted,currentColor)}.ovm-bubble{position:relative;padding:9px 12px;border-radius:17px;background:var(--ov-surface-raised,#25252b);overflow-wrap:anywhere}.ovm-group[data-mine="true"] .ovm-bubble{background:var(--ov-accent,#5879f6);color:var(--ov-accent-contrast,#fff)}.ovm-group[data-tail="true"] .ovm-bubble{border-bottom-left-radius:5px}.ovm-group[data-mine="true"][data-tail="true"] .ovm-bubble{border-bottom-left-radius:17px;border-bottom-right-radius:5px}.ovm-text{white-space:pre-wrap}.ovm-meta{font-size:.7rem;text-align:right;opacity:.68;margin:3px 3px 0}.ovm-meta time{font-variant-numeric:tabular-nums}.ovm-tick{letter-spacing:-.18em;margin-left:5px}.ovm-room{display:grid;grid-template-columns:3.4em minmax(5em,max-content) 1fr;gap:0 8px;align-items:baseline;padding:2px 6px;border-radius:6px}.ovm-room:hover{background:var(--ov-surface-raised,rgba(127,127,127,.08))}.ovm-room time{font-size:.72rem;opacity:.6;font-variant-numeric:tabular-nums}.ovm-room-author{font-weight:650;color:var(--ov-author-color,var(--ov-accent,#7c90ff));overflow:hidden;text-overflow:ellipsis}.ovm-room-text{overflow-wrap:anywhere}.ovm-room .ovm-avatar{display:none}.ovm-emoji-only{font-size:2.3rem;line-height:1.2;background:transparent!important;padding:4px}.ovm-reply{display:block;border-left:2px solid currentColor;padding-left:8px;margin-bottom:6px;opacity:.72;font-size:.85em}.ovm-link{color:inherit;text-decoration:underline;text-underline-offset:2px}
+/* openvibe-shared/messages — Chat's two views (the owner, 11-09): a live room (lines like a stream's chat, wrapping
+   under the name on a phone) and texting bubbles (Android/iOS Messages: runs of bubbles with joined corners, the
+   avatar beside the first, the time under the last). The network's theme variables; dark and light; Calm fades. */
+.ovm-messages { list-style: none; margin: 0; padding: 12px clamp(10px, 3vw, 24px) 16px; display: flex; flex-direction: column; gap: 2px;
+    overflow: auto; min-height: 0; overscroll-behavior: contain; font-size: 15px; line-height: 1.42; color: var(--text-primary, #e8ecf3); }
+.ovm-day { position: sticky; top: 6px; z-index: 1; align-self: center; margin: 14px 0 6px; padding: 4px 12px; border-radius: 999px;
+    background: color-mix(in srgb, var(--bg-secondary, #141a24) 84%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: inset 0 0 0 1px var(--border, rgba(255, 255, 255, .08)); font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
+
+/* Bubbles */
+.ovm-group { display: flex; gap: 8px; align-items: flex-start; max-width: min(82%, 640px); margin: 8px 0 0; }
+.ovm-group[data-continued="true"] { margin-top: 2px; }
+.ovm-group[data-mine="true"] { align-self: flex-end; flex-direction: row-reverse; }
+.ovm-avatar { flex: none; display: block; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: var(--bg-tertiary, #2a3140); }
+.ovm-group:not([data-continued="true"]) .ovm-avatar { margin-top: 19px; }   /* level with the first bubble, under the name */
+.ovm-avatar.is-gap { height: 1px; background: none; }                        /* a run keeps the avatar's column */
+.ovm-avatar.is-initial { display: grid; place-items: center; background: hsl(var(--ovm-h, 215) 55% 46%); color: #fff; font-size: 13px; font-weight: 800; }
+.ovm-group-body { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.ovm-group[data-mine="true"] .ovm-group-body { align-items: flex-end; }
+.ovm-author { margin: 0 0 3px 12px; font-size: 12px; font-weight: 700; color: var(--text-muted, #93a0b4); }
+.ovm-bubble { position: relative; max-width: 100%; padding: 8px 13px; border-radius: 20px; background: var(--bg-tertiary, #2a3140); overflow-wrap: anywhere; }
+.ovm-group[data-mine="true"] .ovm-bubble { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
+/* A run of bubbles from one person joins on the inner side. */
+.ovm-group:not([data-mine="true"])[data-continued="true"] .ovm-bubble { border-top-left-radius: 6px; }
+.ovm-group:not([data-mine="true"])[data-tail="false"] .ovm-bubble { border-bottom-left-radius: 6px; }
+.ovm-group[data-mine="true"][data-continued="true"] .ovm-bubble { border-top-right-radius: 6px; }
+.ovm-group[data-mine="true"][data-tail="false"] .ovm-bubble { border-bottom-right-radius: 6px; }
+.ovm-text { white-space: pre-wrap; }
+.ovm-meta { display: flex; align-items: center; gap: 4px; margin: 3px 8px 0; font-size: 11px; color: var(--text-muted, #93a0b4); }
+.ovm-meta time { font-variant-numeric: tabular-nums; }
+.ovm-tick { letter-spacing: -.2em; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovm-emoji-only { padding: 0 2px; background: transparent !important; font-size: 2.2rem; line-height: 1.15; }
+.ovm-reply { display: block; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid currentColor; font-size: .86em; opacity: .75; }
+.ovm-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
+/* Room: one line per message, the name in its colour, the words wrapping under it on a phone. */
+.ovm-messages[data-view="room"] { gap: 0; }
+.ovm-room { display: block; padding: 3px 8px; border-radius: 8px; overflow-wrap: anywhere; }
+@media (hover: hover) { .ovm-room:hover { background: var(--bg-hover, rgba(255, 255, 255, .05)); } }
+.ovm-room time { margin-right: 7px; font-size: 11.5px; color: var(--text-muted, #93a0b4); font-variant-numeric: tabular-nums; }
+.ovm-room-author { font-weight: 750; color: var(--ov-author-color, hsl(var(--ovm-h, 215) 80% 68%)); }
+:root[data-theme="light"] .ovm-room-author { color: var(--ov-author-color, hsl(var(--ovm-h, 215) 72% 36%)); }
+.ovm-room-author::after { content: ":"; margin-right: 6px; font-weight: 600; color: var(--text-muted, #93a0b4); }
+.ovm-room .ovm-avatar { display: none; }
+
+/* The newest message arrives (only the last: a repaint never replays the whole list). */
+.ovm-group:last-child { animation: ovm-in .24s cubic-bezier(.2, .8, .2, 1) both; }
+.ovm-room:last-child { animation: ovm-fade .2s ease-out both; }
+@keyframes ovm-in { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+@keyframes ovm-fade { from { opacity: 0; } }
+html[data-ov-motion=reduced] .ovm-group:last-child { animation-name: ovm-fade; }
+@media (prefers-reduced-motion: reduce) { .ovm-group:last-child { animation-name: ovm-fade; animation-duration: .15s; } }

@@ -13,6 +13,8 @@ function safeLinkify(node, value) {
 }
 function timeValue(message) { let raw = String(message.created_at || message.at || '').replace(' ', 'T'); if (raw && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) raw += 'Z'; const d = new Date(raw); return Number.isNaN(d.getTime()) ? null : d; }
 function safeAvatar(value) { try { const u = new URL(String(value || '')); return u.protocol === 'https:' && !u.port && u.hostname.toLowerCase() === 'openvibe.media' ? u.href : ''; } catch { return ''; } }
+/** A steady hue per person: their name in the room and their initial's circle keep one colour everywhere. */
+function hueOf(id) { let x = 7; for (const c of String(id || '')) x = (x * 31 + c.codePointAt(0)) % 360; return x; }
 function dayLabel(date, now) {
     const days = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())) / 86400000);
     if (days === 0) return 'Today'; if (days === 1) return 'Yesterday';
@@ -33,13 +35,14 @@ function render(root, { messages = [], view = 'room', me = null, now = new Date(
         if (view === 'room') {
             const row = document.createElement('li'); row.className = 'ovm-room'; row.dataset.id = String(message.id || '');
             const time = document.createElement('time'); if (date) { time.dateTime = date.toISOString(); text(time, new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date)); } row.appendChild(time);
-            const author = document.createElement('span'); author.className = 'ovm-room-author'; text(author, message.display_name || message.username || 'Someone'); row.appendChild(author);
+            const author = document.createElement('span'); author.className = 'ovm-room-author'; author.style.setProperty('--ovm-h', String(hueOf(sender))); text(author, message.display_name || message.username || 'Someone'); row.appendChild(author);
             const body = document.createElement('span'); body.className = 'ovm-room-text'; safeLinkify(body, message.message || message.text); row.appendChild(body); root.appendChild(row);
         } else {
             const group = document.createElement('li'); group.className = 'ovm-group'; group.dataset.id = String(message.id || ''); group.dataset.mine = String(mine); group.dataset.tail = String(!messages[index + 1] || String(messages[index + 1].sender_id || messages[index + 1].user_id || messages[index + 1].from || messages[index + 1].username || '') !== sender);
             if (same) group.dataset.continued = 'true';
             if (!mine && !same && safeAvatar(message.avatar_url)) { const avatar = document.createElement('img'); avatar.className = 'ovm-avatar'; avatar.alt = ''; avatar.loading = 'lazy'; avatar.referrerPolicy = 'no-referrer'; avatar.src = safeAvatar(message.avatar_url); group.appendChild(avatar); }
-            else if (!mine && !same) { const spacer = document.createElement('span'); spacer.className = 'ovm-avatar'; spacer.setAttribute('aria-hidden', 'true'); group.appendChild(spacer); }
+            else if (!mine && !same) { const spacer = document.createElement('span'); spacer.className = 'ovm-avatar is-initial'; spacer.setAttribute('aria-hidden', 'true'); spacer.style.setProperty('--ovm-h', String(hueOf(sender))); text(spacer, String(message.display_name || message.username || '?').trim().charAt(0).toUpperCase()); group.appendChild(spacer); }
+            else if (!mine) { const gap = document.createElement('span'); gap.className = 'ovm-avatar is-gap'; gap.setAttribute('aria-hidden', 'true'); group.appendChild(gap); }   // a run keeps the avatar's column
             const body = document.createElement('div'); body.className = 'ovm-group-body';
             if (!mine && !same) { const author = document.createElement('div'); author.className = 'ovm-author'; text(author, message.display_name || message.username || 'Someone'); body.appendChild(author); }
             const bubble = document.createElement('div'); bubble.className = 'ovm-bubble';
