@@ -36,6 +36,14 @@
                improved"). Never while one of its menus is open. A site turns it off with autoHide: false. */
             .openvibe-navbar.ovnav-hide { transform: translateY(calc(-100% - 10px)); box-shadow: none; }
             #navbar-mount:has(> .ovnav-hide) { pointer-events: none; }
+            /* The top bar while a page changes (4.159.0): the OpenVibe gradient with a soft glow and a bright head that runs. */
+            .ovrt-bar { position: fixed; left: 0; top: 0; height: 3px; width: 100%; z-index: 2147483000; pointer-events: none; transform-origin: 0 50%; transform: scaleX(0); opacity: 0;
+                background: linear-gradient(90deg, var(--accent, #3b82f6), var(--accent-light, #60a5fa) 60%, var(--accent-2, #a78bfa));
+                box-shadow: 0 0 10px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent), 0 0 3px var(--accent-light, #60a5fa); border-radius: 0 3px 3px 0; }
+            .ovrt-bar::after { content: ''; position: absolute; right: 0; top: -2px; width: 90px; height: 7px; border-radius: 50%; background: var(--accent-light, #93c5fd); filter: blur(4px); opacity: .9; }
+            .ovrt-bar.is-run { opacity: 1; transform: scaleX(.88); transition: transform 3s cubic-bezier(.08, .7, .2, 1), opacity .1s; }
+            .ovrt-bar.is-done { opacity: 0; transform: scaleX(1); transition: transform .2s ease, opacity .35s .15s; }
+            @media (prefers-reduced-motion: reduce) { .ovrt-bar.is-run, .ovrt-bar.is-done { transition: none; } .ovrt-bar::after { display: none; } }
             .openvibe-navbar::before { content: ""; position: absolute; inset: 0 0 -28px; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .45s cubic-bezier(.2,.7,.2,1); background: linear-gradient(180deg, rgba(4,7,14,.62), rgba(4,7,14,.28) 55%, rgba(4,7,14,0)); }
             .openvibe-navbar:not(.ovnav-top) { background-color: color-mix(in srgb, var(--bg-secondary, #252530) 84%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px); box-shadow: 0 12px 32px -14px rgba(0,0,0,.6); }
             .openvibe-navbar.ovnav-top { background-color: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -1328,6 +1336,23 @@
         document.addEventListener('pointerover', warm, { passive: true, capture: true });
         document.addEventListener('touchstart', warm, { passive: true, capture: true });
         document.addEventListener('focusin', warm, { passive: true, capture: true });
+        // A link that leaves this page shows the top bar at once (the owner, 11-09: "a progress indicator at the very
+        // top… a glow… OpenVibe looking"); Boost's own moves draw the same bar (route-transition.js). Listening on the
+        // window, after the page's own handlers: a click a page or Boost took (defaultPrevented) draws nothing here.
+        if (typeof root.addEventListener !== 'function') return;
+        root.addEventListener('click', (e) => {
+            if (e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target && e.target.closest && e.target.closest('a[href]');
+            if (!a || (a.target && a.target !== '_self') || a.hasAttribute('download')) return;
+            let u; try { u = new URL(a.href, root.location.href); } catch { return; }
+            const here = root.location;
+            if (!/^https?:$/.test(u.protocol) || (u.origin === here.origin && u.pathname === here.pathname && u.search === here.search)) return;
+            let b = document.getElementById('ovnav-leave');
+            if (!b) { b = document.createElement('div'); b.id = 'ovnav-leave'; b.className = 'ovrt-bar'; b.setAttribute('aria-hidden', 'true'); document.body.appendChild(b); }
+            b.classList.remove('is-done'); void b.offsetWidth; b.classList.add('is-run');
+        });
+        // Back from the next page (the browser's page cache): the bar is gone.
+        root.addEventListener('pageshow', () => { const b = document.getElementById('ovnav-leave'); if (b) b.classList.remove('is-run'); });
     }
     // The Dock on a tab ('agent' | 'activity'); opts.task marks that step and brings it into view.
     function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }

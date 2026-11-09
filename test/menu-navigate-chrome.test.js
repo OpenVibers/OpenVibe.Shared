@@ -38,7 +38,8 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 </script>
 <script src="/shared/navbar.js" defer></script></head><body><div id="navbar-mount"></div><main><a id="plain" href="/stay">A plain link</a> <a id="handled" href="/elsewhere">Handled</a></main>
 <script>document.getElementById('handled').addEventListener('click', (e) => e.preventDefault());
-document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: null, links: ${JSON.stringify(LINKS)}, countViews: false, notifications: false }); });</script>
+document.addEventListener('DOMContentLoaded', function () { OpenVibeNavbar.init({ service: 'site', user: null, links: ${JSON.stringify(LINKS)}, countViews: false, notifications: false });
+  setTimeout(function () { window.addEventListener('click', function (e) { if (e.target && e.target.id === 'plain') { window.__left = true; e.preventDefault(); } }); }, 0); });</script>
 </body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
@@ -89,6 +90,7 @@ const server = http.createServer((req, res) => {
         await wait(100);
         assert.strictEqual(await p.evaluate(`!!document.querySelector('#ovnav-leave.is-run')`), false, 'a handled click draws nothing');
         await p.evaluate(`document.getElementById('plain').click(), true`);
+        assert.ok(await until(p, `window.__left === true`, 1500), 'the plain link was clicked');
         assert.ok(await until(p, `(() => { const b = document.getElementById('ovnav-leave'); return !!b && b.classList.contains('is-run') && getComputedStyle(b).position === 'fixed' && parseFloat(getComputedStyle(b).height) === 3; })()`, 1500), 'the top bar runs as the page is left');
         console.log('menu-navigate-chrome: a chosen page closes the menu without spending Back, a swapped page is marked, the top bar runs on leaving ok');
     } finally {
