@@ -121,6 +121,7 @@
     "./motion": "./motion.js",
     "./agent-layer": "./agent-layer.js",
     "./thread": "./thread.js",
+    "./messages": "./messages.js",
     "./ov-thread": "./ov-thread.js"
   },
   "files": [
