@@ -7,7 +7,9 @@
   glyph is about half the tile, folders scale their four minis with the tile, and the grid lines up with the cards
   above it. The names are a touch larger and brighter.
 - **An Edit button on Home** (`ov-home.js`). A small pencil beside "Your home" starts arranging: move apps, remove
-  them, make folders. Press and hold still works. While arranging, the button is a Done pill with a check.
+  them, make folders. Press and hold still works. While arranging, the button is a Done pill with a check, and Home
+  stays where it was: the hint is under the grid and the cards above it stay (quieted), so a long-press that turns into
+  a drag never has the grid move under the finger.
 - **The site's tab matches Feed and You** (`search.js`). The first tab of the menu showed the site's coloured app mark
   (a disc and ring around the glyph); it now shows the glyph alone, in the label's colour and at the other tabs'
   weight. On a phone the three tabs are tighter, so a long name like "Community" fits whole.
