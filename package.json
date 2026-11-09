@@ -8,6 +8,7 @@
   },
   "exports": {
     ".": "./index.js",
+    "./offer-card": "./offer-card.js",
     "./account-switcher": "./account-switcher.js",
     "./analytics": "./analytics/index.js",
     "./analytics/event": "./analytics/event.js",
