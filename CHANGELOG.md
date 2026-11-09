@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.167.0 — 2026-11-09
+
+- **The Feed, everything on the network, day by day** (the owner: "one huge feed of everything… all kinds of events and
+  even global chat… everything date by date… filter it by different things"). Community #310's kinds draw as rows of
+  what happened: people who joined (the count on a green tile), a busy chat room ("#general is busy", 15 messages this
+  hour), a quest badge (the person's face with a trophy), a calendar event (a date tile, the start in your own time), a
+  wiki page (its name, not its address), a stream that is over and the network's updates. Pictures, videos and posts
+  stay cards; their views, likes and replies show as icons with numbers.
+- A quiet **day line** (Today, Yesterday, the weekday, then the date) where the day changes; under an earlier day a row
+  says its clock time, not "yesterday" again.
+- New chips: **Following** (signed in: the people you follow), Chat, Events, Wiki, Quests.
+- One centred column on a computer (two columns left holes beside tall cards).
+- Fixed: a card with no picture (or a person with no avatar) drew a broken image of the page itself: `safe('')` resolved
+  an empty address against the page. Fixed: the Feed's root class `ovf` was the footer's, so the Feed took the
+  footer's margin, padding and top border (the gap above the chips); the Feed's classes are now `ovfd-*`.
+- Past go-lives fold into one card again now that Community sends them as kind `stream`.
+
 ## 4.166.0 — 2026-11-09
 
 - **The Feed on every site** (the owner: "I still don't see the custom doom scrollable feed"): the menu's Feed, wall and
