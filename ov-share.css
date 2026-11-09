@@ -366,3 +366,5 @@ html.ov-share-locked, html.ov-share-locked body { overflow: hidden; overscroll-b
     .ov-share { border: 1px solid CanvasText; }
     .ov-share-segopt:has(input:checked), .ov-share-radio:has(input:checked) { outline: 2px solid Highlight; }
 }
+/* OpenVibe’s own places (Chat, Community) wear the accent, so they read apart from the outside networks. */
+.ov-share-tileic.is-ovchat, .ov-share-tileic.is-ovcommunity { background: color-mix(in srgb, var(--ovs-accent) 16%, transparent); color: var(--ovs-accent); }
