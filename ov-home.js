@@ -57,6 +57,25 @@
 @media (min-width: 400px) { .ovh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 @media (min-width: 861px) { .ovh-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); } }
 .ovh-grid { position: relative; }
+/* Home fills its width (owner, 11-09: "offset … use more of the space"): the tile grows with its cell up to 72 px,
+   its glyph is about half the tile, folders scale their four with it, and the grid lines up with the cards above. */
+.ovh-grid:not(.ovh-recent) { gap: 4px 2px; padding: 2px 0 0; justify-items: stretch; }
+.ovh-grid:not(.ovh-recent) .ovh-app { min-height: 0; padding: 6px 0 8px; gap: 7px; }
+.ovh-grid:not(.ovh-recent) .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: 29%; }
+.ovh-grid:not(.ovh-recent) .ovh-app:not(.ovh-folder) .ovh-ic > .ov-icon { display: grid; place-items: center; width: 104%; height: 104%; }
+.ovh-grid:not(.ovh-recent) .ovh-app:not(.ovh-folder) .ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { grid-template-columns: repeat(2, 36%); grid-auto-rows: 36%; gap: 7%; place-content: center; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { width: 100%; height: 100%; border-radius: 30%; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span .ov-icon { display: grid; place-items: center; width: 100%; height: 100%; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span .ov-icon svg { width: 150%; height: 150%; }
+.ovh-grid:not(.ovh-recent) .ovh-name { font-size: 12.5px; color: var(--text-primary, #e8ecf3); opacity: .86; }
+.ovh-sec .ovh-edit { display: inline-grid; place-items: center; width: 36px; min-height: 36px; padding: 0; border-radius: 50%;
+    background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-secondary, #a8b3c4); }
+.ovh-sec .ovh-edit svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-sec .ovh-edit:hover { color: var(--text-primary, #e8ecf3); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 13%, transparent); }
+.ovh-sec .ovh-edit.is-done { display: inline-flex; gap: 6px; width: auto; padding: 0 14px 0 11px; border-radius: 999px; background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
+.ovh-sec .ovh-edit:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (pointer: coarse) { .ovh-sec .ovh-edit { width: 44px; min-height: 44px; } .ovh-sec .ovh-edit.is-done { width: auto; } }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) { touch-action: none; -webkit-user-select: none; user-select: none; }
 .ovh-recent .ovh-app { min-height: 80px; }
 .ovh-app { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; min-height: 88px; padding: 8px 2px 6px; border: 0; border-radius: 16px;
@@ -91,7 +110,9 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-ghost { position: fixed; z-index: 10040; pointer-events: none; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 19px; display: grid; place-items: center;
     background: var(--bg-secondary, #141a24); box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 0 0 1px var(--border, rgba(255,255,255,.14)); transform: scale(1.08); }
 @keyframes ovh-wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
-.ovh-hint { margin: 2px 6px 6px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovh-hint { margin: 10px 6px 4px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovh-calm { transition: opacity .2s; }
+.ovh.is-edit .ovh-calm { opacity: .38; pointer-events: none; }
 .ovh-all[hidden], .ovh[hidden] { display: none !important; }
 .ovh-all { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 8px); min-height: 44px; margin: 6px 4px 2px; border: 1px solid var(--border, rgba(255,255,255,.12));
     border-radius: 14px; background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -299,6 +320,8 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
 
     // Line icons for the buttons beside your name (24-unit boxes, optically centred), built as nodes.
     const ICON = {
+        pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
+        check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
         look: [['path', { d: 'M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.7-.4-1.1 0-1 .8-1.7 1.7-1.7h2.1A4.4 4.4 0 0 0 21 11c0-4.4-4-8-9-8Z' }],
             ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
         gear: [['circle', { cx: 12, cy: 12, r: 3 }], ['path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z' }]],
@@ -451,20 +474,28 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         function paintHome() {
             el.textContent = '';
             el.classList.toggle('is-edit', state.edit);
-            if (signedIn(o) && !state.edit) el.append(me());
+            // Edit keeps everything where it was: a long-press goes straight on to drag the app under the finger, so
+            // nothing above the grid may come or go (the macOS run of #394 dropped onto the wrong place when the hint
+            // pushed the grid down mid-drag). The cards above stay, quiet and inert; the hint goes under the grid.
+            const calm = (x) => { x.classList.add('ovh-calm'); x.inert = state.edit; return x; };
+            if (signedIn(o)) el.append(calm(me()));
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
-            if (!state.edit) { const b = backRail(); if (b) el.append(b); const u = usage(); if (u) el.append(u); }
+            { const b = backRail(); if (b) el.append(calm(b)); const u = usage(); if (u) el.append(calm(u)); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
-            const edit = h('button', state.edit ? 'is-done' : '', state.edit ? 'Done' : 'Edit');
+            const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
             edit.type = 'button';
+            edit.append(svgIcon(state.edit ? 'check' : 'pencil'));
+            if (state.edit) edit.append(h('span', '', 'Done'));
+            edit.setAttribute('aria-label', state.edit ? 'Done arranging Home' : 'Edit Home');
+            edit.title = state.edit ? 'Done' : 'Edit Home: move apps, remove them, add folders';
             edit.setAttribute('aria-pressed', state.edit ? 'true' : 'false');
             edit.addEventListener('click', () => setEdit(!state.edit));
             head.append(edit);
             el.append(head);
-            if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All apps puts it back.'));
             const grid = h('div', 'ovh-grid'); grid.setAttribute('aria-label', 'Your home');
             L.home.forEach((id, i) => grid.append(homeTile(id, i)));
             el.append(grid);
+            if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All apps puts it back.'));
             const total = L.byId.size;
             const all = h('button', 'ovh-all', `All apps (${total})`); all.type = 'button';
             all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
