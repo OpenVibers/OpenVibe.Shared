@@ -1010,7 +1010,15 @@
             const m = _config.messages || {};
             if (e.metaKey || e.ctrlKey || e.shiftKey) return;
             // The default (4.130.0): the Dock's Chats tab; without the Dock, the link.
-            if (m.__default && _config.dock !== false && _config.token) { e.preventDefault(); openDock('chats'); return; }
+            if (m.__default && _config.dock !== false) {
+                e.preventDefault();
+                if (_config.token) openDock('chats');
+                else refreshAuthState().then(() => {
+                    if (_config.token) openDock('chats');
+                    else root.location.href = a.href;
+                });
+                return;
+            }
             if (typeof m.onOpen !== 'function') return;
             e.preventDefault(); try { m.onOpen(e); } catch { /* the link still works */ }
         });

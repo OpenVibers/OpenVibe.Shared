@@ -95,6 +95,15 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
     assert.strictEqual(navbar.session.token, 'short-access-token', 'HTTP-only sessions use the same-origin token route');
     assert.ok(calls.includes('/auth/navbar-token'), 'the token route is requested after the session identifies the person');
 
+    // The button can be pressed while the signed-in page is still resolving its HTTP-only session.
+    ({ navbar, messageButton } = load({ ...answers, session: { status: 200, body: { user } }, sessionToken: { status: 200, body: { token: 'late-token' } } }));
+    navbar.init({ service: 'actor', user, token: null, sessionUrl: '/auth/me', tokenUrl: '/auth/navbar-token', notifications: false, wallet: false });
+    const afterWait = [];
+    global.OpenVibeDock = { mount() {}, open(options) { afterWait.push(options); } };
+    messageButton.listeners.click({ preventDefault() {}, metaKey: false, ctrlKey: false, shiftKey: false });
+    await settle();
+    assert.deepStrictEqual(afterWait, [{ tab: 'chats' }], 'a click during session loading opens Chats when the token arrives');
+
     // A site that says no.
     ({ navbar, navs, calls } = load(answers));
     navbar.init({ ...base, wallet: false, messages: false });
