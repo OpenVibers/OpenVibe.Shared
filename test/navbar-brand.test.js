@@ -217,7 +217,7 @@ function load(hostname, opts = {}) {
 // ── balance chips fold into one on a phone (owner, 2026-10-27): the folded chip, its short values, and setChip ──
 {
     const { navbar, created } = load('openvibe.live');
-    navbar.init({ service: 'live', user: { id: 1, username: 'x' }, chips: [
+    navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [
         { id: 'coins', icon: 'fa-coins', tone: 'gold', value: '160,774', label: 'OpenCoins', onClick() {} },
         { id: 'vibes', icon: 'fa-wallet', tone: 'green', value: '400', title: 'Vibes balance', onClick() {} },
     ] });
@@ -229,7 +229,7 @@ function load(hostname, opts = {}) {
     assert.ok(/@media \(max-width: 560px\) \{\s*\.openvibe-navbar-right\.has-chips-all \.ovnav-chip\[data-chip-id\] \{ display: none; \}/.test(require('fs').readFileSync(NAVBAR_PATH, 'utf8')), 'the chips fold on a phone');
     // One chip: nothing to fold.
     const one = load('openvibe.live');
-    one.navbar.init({ service: 'live', user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
+    one.navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
     assert.ok(!/ovnav-chip--all/.test(one.created.find(e => e.tag === 'nav').innerHTML));
 }
 // ── "Across OpenVibe" in the drawer, and the icon slots that have their size before ov-icons.js arrives ──

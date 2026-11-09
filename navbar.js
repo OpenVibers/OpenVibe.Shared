@@ -1119,6 +1119,7 @@
         const close = () => { if (pop) pop.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (_config.wallet) { close(); openWallet(); return; }
             if (pop && pop.classList.contains('open')) return close();
             if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close, btn); }
             const list = (_config.chips || []).filter((c) => c && !c.hidden);
@@ -2022,58 +2023,63 @@
      * Network and Billing in the background and when the tab returns after a minute; on a phone they fold into one.
      */
     const WALLET_CHIPS = [
-        { id: 'coins', icon: 'fa-coins', tone: 'gold', label: 'OpenCoins', title: 'OpenCoins', href: 'https://openvibe.network/my#coins' },
-        { id: 'vibes', icon: 'fa-wallet', tone: 'green', label: 'Vibes', title: 'Your Vibes', href: 'https://openvibe.live/#vibes' },
+        { id: 'coins', icon: 'fa-coins', tone: 'gold', label: 'OpenCoins', title: 'Open Wallet' },
+        { id: 'vibes', icon: 'fa-wallet', tone: 'green', label: 'Vibes', title: 'Open Wallet' },
+        { id: 'balance', icon: 'fa-wallet', label: 'Balance', title: 'Open Wallet' },
     ];
-    let _walletFor = null, _walletAt = 0, _walletWatch = false;
-    const walletKey = (u) => `ov-wallet:${u.subject || u.id || u.username || ''}`;
-    function savedWallet(u) { try { return JSON.parse(localStorage.getItem(walletKey(u)) || '{}') || {}; } catch { return {}; } }
+    let _walletFor = null, _walletAt = 0, _walletWatch = false, _walletData = null, _walletScript = null;
+    const walletKey = (u) => `${u.subject || u.id || u.username || ''}:${_config.token || ''}`;
+    function walletAmount(b) {
+        const n = Number(b.amount) / Math.pow(10, b.scale || 0);
+        return b.currency === 'USD' ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n) : n.toLocaleString();
+    }
+    function walletOrder(data) {
+        const order = ['coins', 'vibes', 'balance'];
+        if (!data) return order.slice(0, 2);
+        const value = (id) => Number(data.balances[id].amount) / Math.pow(10, data.balances[id].scale) / (id === 'vibes' ? data.bits_per_usd || 100 : 1);
+        order.sort((a, b) => value(b) - value(a));
+        if (data.used_ai_this_month && BigInt(data.balances.balance.amount) === 0n) return ['balance', ...order.filter((id) => id !== 'balance')].slice(0, 2);
+        return order.slice(0, 2);
+    }
     function syncWalletChips() {
         if (!_config.wallet) return;
         const u = _config.user;
-        let chips = (_config.chips || []).filter((c) => !(c && c.__wallet));
+        let chips = (_config.chips || []).filter((c) => !(c && (c.__wallet || ['coins', 'vibes', 'balance'].includes(c.id))));
         if (u && !u.is_anon) {
-            const saved = savedWallet(u), have = new Set(chips.map((c) => c && c.id));
-            chips = WALLET_CHIPS.filter((w) => !have.has(w.id)).map((w) => Object.assign({}, w, {
-                __wallet: true, value: saved[w.id] == null ? '' : saved[w.id], hidden: saved[w.id] == null,
-                onClick: () => { try { root.location.href = w.href; } catch { /* */ } },
+            const data = _walletFor === walletKey(u) ? _walletData : null;
+            chips = walletOrder(data).map((id) => Object.assign({}, WALLET_CHIPS.find((w) => w.id === id), {
+                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: openWallet,
             })).concat(chips);
         }
         _config.chips = chips;
     }
+    async function openWallet() {
+        if (!_config.token) return;
+        if (!root.OpenVibeWallet) {
+            if (!_walletScript) _walletScript = new Promise((resolve, reject) => {
+                const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = siblingV('ov-wallet.css'); document.head.appendChild(css);
+                const js = document.createElement('script'); js.src = siblingV('ov-wallet.js'); js.onload = resolve;
+                js.onerror = () => { _walletScript = null; css.remove(); js.remove(); reject(new Error('Wallet could not load')); }; document.head.appendChild(js);
+            });
+            try { await _walletScript; } catch { if (_walletScript === null) root.location.assign('https://openvibe.network/wallet'); return; }
+        }
+        return root.OpenVibeWallet.open({ getToken: () => _config.token, billingBase: _config.billingBase, inventoryBase: _config.inventoryBase,
+            onWallet: (data) => { if (!_config.user) return; _walletFor = walletKey(_config.user); _walletData = data; _walletAt = Date.now(); if (_navEl) render(); } });
+    }
     function loadWalletChips() {
         const u = _config.user;
         if (!_config.wallet || !u || u.is_anon || !_config.token || typeof fetch !== 'function') return;
-        const key = walletKey(u);
+        const key = walletKey(u), token = _config.token;
         if (_walletFor === key && Date.now() - _walletAt < 60000) return;
+        if (_walletFor !== key) _walletData = null;
         _walletFor = key; _walletAt = Date.now();
         if (!_walletWatch && typeof document !== 'undefined' && document.addEventListener) {
             _walletWatch = true;
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
-        const auth = { Authorization: `Bearer ${_config.token}` };
-        const saved = savedWallet(u);
-        let shown = false;
-        const put = (id, n) => {
-            const mine = (_config.chips || []).find((c) => c && c.id === id && c.__wallet);
-            if (!mine) return;
-            if (n == null) { delete saved[id]; if (!mine.hidden) { mine.hidden = true; shown = true; } return; }
-            saved[id] = n.toLocaleString();
-            if (mine.hidden) shown = true;
-            OpenVibeNavbar.setChip(id, saved[id], { hidden: false });
-        };
-        const num = (v) => (isFinite(v) ? v : null);
-        // Both from the Network (it asks Billing); an older Network without vibes: Billing itself (409 = not the ledger).
-        let vibesKnown = false;
-        const coins = fetch(`${_config.apiBase}/api/coins/me?with=vibes`, { headers: auth, credentials: 'include' })
-            .then(async (r) => { if (!r.ok) return; const j = await r.json(); put('coins', num(Number(j.balance ?? (j.wallet && j.wallet.balance)))); if ('vibes' in j && j.vibes != null) { vibesKnown = true; put('vibes', num(Number(j.vibes))); } });
-        const vibes = coins.catch(() => {}).then(() => (vibesKnown ? null : fetch(`${_config.billingBase || 'https://billing.openvibe.network'}/api/me/vibes`, { headers: auth, credentials: 'omit' })
-            .then(async (r) => { if (r.ok) put('vibes', num(Number((await r.json()).credit))); else if (r.status === 409) put('vibes', null); })));
-        Promise.all([coins.catch(() => {}), vibes.catch(() => {})]).then(() => {
-            try { localStorage.setItem(walletKey(u), JSON.stringify(saved)); } catch { /* */ }
-            // A chip that appeared or went away changes the folded phone chip: draw the bar once more.
-            if (shown && _config.user === u && _navEl) render();
-        });
+        fetch(`${_config.billingBase || 'https://billing.openvibe.network'}/api/v1/me/wallet`, { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' })
+            .then(async (r) => { if (!r.ok) return; const data = await r.json(); if (_config.user !== u || _config.token !== token) return;
+                _walletData = data; if (_navEl) render(); }).catch(() => {});
     }
 
     function render() {
@@ -2630,7 +2636,9 @@
         brand() { return resolveBrand(); },
 
         /** The signed-in user changed (sites with auth: 'external'). Pass null for signed out. */
-        setUser(user, token) { _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; return render(); },
+        openWallet,
+        refreshWallet() { _walletAt = 0; loadWalletChips(); },
+        setUser(user, token) { if (root.OpenVibeWallet && (_config.user !== user || (token !== undefined && token !== _config.token))) root.OpenVibeWallet.close(); _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; return render(); },
         /** Single-page apps: mark the link whose `page` matches as active. */
         setActive(page) { _activePage = page || null; renderAppBar(); if (!_navEl) return; _navEl.querySelectorAll('.ovnav-link[data-page]').forEach(a => a.classList.toggle('active', a.getAttribute('data-page') === _activePage)); },
         /** Change a status chip's text (navbar and menu header): setChip('coins', '1,234'). */
@@ -2718,7 +2726,7 @@
             fillUrl,
         },
         _ask: { selectedText, askVibeHref },
-        _wallet: { loadWallet, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
+        _wallet: { loadWallet, walletOrder, syncWalletChips, loadWalletChips, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;
