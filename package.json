@@ -67,6 +67,7 @@
     "./ov-forms": "./ov-forms.js",
     "./ov-qr": "./ov-qr.js",
     "./ov-share": "./ov-share.js",
+    "./ov-upload": "./ov-upload.js",
     "./ov-sync": "./ov-sync.js",
     "./ov-locker": "./ov-locker.js",
     "./ov-locker-core": "./ov-locker-core.js",
