@@ -50,7 +50,9 @@
 .ovh-sec button.is-done { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
 .ovh-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px; }
 @media (min-width: 400px) { .ovh-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-@media (min-width: 861px) { .ovh-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 861px) { .ovh-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); } }
+.ovh-grid { position: relative; }
+.ovh.is-edit .ovh-grid:not(.ovh-recent) { touch-action: none; -webkit-user-select: none; user-select: none; }
 .ovh-recent .ovh-app { min-height: 80px; }
 .ovh-app { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; min-height: 88px; padding: 8px 2px 6px; border: 0; border-radius: 16px;
     background: transparent; color: inherit; font: inherit; text-decoration: none; cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -58,6 +60,13 @@
 .ovh-ic { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 17px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent);
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1); }
 .ovh-recent .ovh-ic { width: 48px; height: 48px; border-radius: 15px; }
+/* App icons: the ring goes, the glyph fills the tile, each app keeps its own hue (11-09). */
+.ovh-grid .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
+.ovh-ic .ovi-ring, .ovh-ic .ovi-bg, .ovh-ic .ovi-comet, .ovh-ic .ovi-prog { display: none; }
+.ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 90% 82%); color: hsl(var(--ovh-h, 215) 90% 82%); }
+:root[data-theme="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
+.ovh-folder .ovh-ic { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 7%, transparent); grid-template-columns: repeat(2, 22px); grid-auto-rows: 22px; gap: 3px; }
+.ovh-folder .ovh-ic > span { width: 22px; height: 22px; border-radius: 7px; overflow: hidden; background: hsl(var(--ovh-h, 215) 70% 50% / .3); }
 .ovh-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
 .ovh-folder .ovh-ic { display: grid; grid-template-columns: repeat(2, 18px); grid-auto-rows: 18px; gap: 4px; place-content: center; }
 .ovh-folder .ovh-ic > span { display: grid; place-items: center; width: 18px; height: 18px; }
@@ -70,11 +79,15 @@
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-app { touch-action: none; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { animation: ovh-wiggle .32s ease-in-out infinite alternate; }
 .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-app:nth-child(2n) .ovh-ic { animation-delay: -.16s; }
-.ovh-app.is-lifted { opacity: .25; }
+.ovh-app.is-lifted { opacity: .18; transform: scale(.92); }
+.ovh-ghost .ovh-ic { width: 64px; height: 64px; border-radius: 19px; }
+html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { animation-name: ovh-wiggle-calm !important; }
+@keyframes ovh-wiggle-calm { from { transform: rotate(-.6deg); } to { transform: rotate(.6deg); } }
 .ovh-ghost { position: fixed; z-index: 10040; pointer-events: none; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 19px; display: grid; place-items: center;
     background: var(--bg-secondary, #141a24); box-shadow: 0 12px 30px rgba(0,0,0,.35), inset 0 0 0 1px var(--border, rgba(255,255,255,.14)); transform: scale(1.08); }
 @keyframes ovh-wiggle { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
 .ovh-hint { margin: 2px 6px 6px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovh-all[hidden], .ovh[hidden] { display: none !important; }
 .ovh-all { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 8px); min-height: 44px; margin: 6px 4px 2px; border: 1px solid var(--border, rgba(255,255,255,.12));
     border-radius: 14px; background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .ovh-head { display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
@@ -82,7 +95,7 @@
 .ovh-back { min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--accent, #3b82f6); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .ovh-filter { width: calc(100% - 8px); min-height: 44px; margin: 2px 4px 4px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.14));
     background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 15px; }
-.ovh-actor { display: flex; align-items: center; gap: 12px; width: calc(100% - 8px); min-height: 64px; margin: 6px 4px 4px; padding: 10px 12px; border-radius: 16px; border: 0; text-align: left; cursor: pointer;
+.ovh-actor { box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: calc(100% - 8px); min-height: 64px; margin: 6px 4px 4px; padding: 10px 12px; border-radius: 16px; border: 0; text-align: left; cursor: pointer;
     background: color-mix(in srgb, var(--accent, #3b82f6) 11%, var(--bg-secondary, #141a24)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); color: inherit; font: inherit; }
 .ovh-face { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; overflow: hidden; background: var(--accent, #3b82f6); color: #fff; font-weight: 800; font-size: 17px; }
 .ovh-face img { width: 100%; height: 100%; object-fit: cover; }
@@ -96,6 +109,13 @@
 .ovh-go { flex: none; color: var(--accent, #3b82f6); font-weight: 700; font-size: 13px; }
 .ovh-x { flex: none; min-width: 44px; min-height: 44px; border: 0; background: transparent; color: var(--text-muted, #93a0b4); font: inherit; font-size: 12.5px; cursor: pointer; }
 @keyframes ovh-pulse { 50% { opacity: .35; } }
+.ovh-actor.is-invite { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px 12px; padding: 12px 14px; cursor: default; }
+.ovh-actor.is-invite .ovh-face { width: 48px; height: 48px; border-radius: 15px; background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 45%, #a855f7)); box-shadow: 0 6px 18px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+.ovh-actor.is-invite .ovh-actor-txt small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.4; }
+.ovh-actor.is-invite .ovh-acts { grid-column: 2; display: flex; gap: 8px; }
+.ovh-actor.is-invite .ovh-go { display: inline-flex; align-items: center; height: 36px; padding: 0 16px; border-radius: 999px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); text-decoration: none; font-size: 13.5px; }
+.ovh-actor.is-invite .ovh-x { min-height: 36px; height: 36px; padding: 0 14px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); color: var(--text-secondary, #a8b3c4); font-weight: 600; }
+@media (min-width: 560px) { .ovh-actor.is-invite { grid-template-columns: 48px minmax(0, 1fr) auto; } .ovh-actor.is-invite .ovh-acts { grid-column: auto; } }
 .ovh-skel { display: block; height: 14px; margin: 10px 8px; border-radius: 7px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
 .ovh-compose { display: flex; gap: 10px; align-items: flex-start; margin: 6px 4px; padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); }
@@ -121,7 +141,72 @@
 .ovh-lives { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .ovh-lives a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--live, #ef4444) 12%, transparent); color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; }
 .ovh-lives a::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #ef4444); }
-@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic, .ovh-chip.is-working .ovh-dot { animation: none !important; } .ovh-ic { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic { animation-name: ovh-wiggle-calm !important; } .ovh-chip.is-working .ovh-dot { animation: none !important; } }
+
+/* You (11-09, the owner: "the U tab still sucks"): you on top, with Display and Settings beside your name; what you were
+   doing as a rail of cards; what you use most as one bar; then your home. */
+.ovh-me { display: flex; align-items: center; gap: 10px; margin: 4px 4px 8px; padding: 10px 10px 10px 12px; border-radius: 20px;
+    background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent, #3b82f6) 20%, transparent), transparent 60%), color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 18%, var(--border, rgba(255,255,255,.08))); }
+.ovh-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 48px; border-radius: 14px; color: inherit; text-decoration: none; }
+.ovh-av { position: relative; flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 50%, #a855f7)); color: #fff; font-size: 19px; font-weight: 800; }
+.ovh-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovh-av::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 3px var(--bg-secondary, #141a24); }
+.ovh-who-txt { min-width: 0; display: grid; gap: 2px; }
+.ovh-who-txt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16.5px; font-weight: 800; letter-spacing: -.01em; }
+.ovh-who-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovh-ib { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; text-decoration: none;
+    background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); transition: background .16s, color .16s, transform .16s cubic-bezier(.2,1.4,.4,1); }
+.ovh-ib svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-ib[aria-expanded="true"] { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
+.ovh-ib:active { transform: scale(.9); }
+.ovh-ib:focus-visible, .ovh-who:focus-visible, .ovh-card:focus-visible, .ovh-key:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) { .ovh-ib:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 14%, transparent); } .ovh-ib[aria-expanded="true"]:hover { background: var(--accent-strong, var(--accent, #2563eb)); } }
+.ovh-me-look { margin: -2px 4px 8px; }
+.ovh-rail { display: flex; gap: 8px; margin: 0 -2px; padding: 2px 6px 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding: 0 6px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.ovh-rail::-webkit-scrollbar { display: none; }
+.ovh-rail.is-end { -webkit-mask-image: none; mask-image: none; }
+.ovh-card { position: relative; flex: 0 0 auto; display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; column-gap: 10px; row-gap: 3px; align-items: center;
+    box-sizing: border-box; width: min(74%, 240px); min-height: 68px; padding: 10px 12px 10px 10px; border-radius: 16px; scroll-snap-align: start; color: inherit; text-decoration: none;
+    background: color-mix(in srgb, var(--text-primary, #e8ecf3) 5%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.08));
+    animation: ovh-rise .38s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.ovh-card .ovh-ic { grid-row: 1 / 3; width: 40px; height: 40px; border-radius: 12px; }
+.ovh-card b { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13.5px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.ovh-card small { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11.5px; color: var(--text-muted, #93a0b4); }
+.ovh-card small > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-card.is-live { background: color-mix(in srgb, var(--live, #ef4444) 9%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live, #ef4444) 40%, transparent); }
+.ovh-card.is-live .ovh-ic { animation: ovh-onair 2.4s ease-in-out infinite; }
+.ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: var(--live, #ef4444); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
+@media (hover: hover) { .ovh-card:hover { background: var(--bg-hover, rgba(255,255,255,.08)); } }
+@media (min-width: 861px) { .ovh-card { width: 232px; } }
+.ovh-use { margin: 0 4px 8px; padding: 12px 12px 6px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
+.ovh-use-bar { display: flex; gap: 3px; height: 12px; border-radius: 999px; overflow: hidden; }
+.ovh-use-bar > span { flex: var(--n, 1) 1 0; min-width: 8px; background: var(--c, #3b82f6); transform-origin: left center; animation: ovh-grow .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.ovh-use-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0 4px; margin: 6px -6px 0; }
+.ovh-key { display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 38px; padding: 0 8px; border-radius: 10px; color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.ovh-key::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--c, #3b82f6); }
+.ovh-key small { color: var(--text-muted, #93a0b4); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .ovh-key:hover { background: var(--bg-hover, rgba(255,255,255,.07)); } }
+.ovh-sec small { flex: none; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-muted, #93a0b4); }
+@keyframes ovh-rise { from { opacity: 0; transform: translateY(6px) scale(.98); } }
+@keyframes ovh-grow { from { transform: scaleX(0); } }
+@keyframes ovh-onair { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--live, #ef4444) 55%, transparent), 0 0 18px color-mix(in srgb, var(--live, #ef4444) 35%, transparent); } }
+/* Calm is gentle, not still (the owner, 11-09): shorter travel, slower breath. */
+html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-duration: .5s; }
+html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s; }
+@keyframes ovh-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ovh-card { animation-name: ovh-fade; } .ovh-use-bar > span { animation-duration: .4s; } }
+/* The invitation, one compact row (11-09): mark, words, Set it up, and an × to put it away. */
+.ovh-actor.is-invite { grid-template-columns: 44px minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 10px; align-items: center; min-height: 0; padding: 10px 6px 12px 12px; }
+.ovh-actor.is-invite .ovh-face { grid-row: 1 / 3; align-self: start; width: 44px; height: 44px; border-radius: 14px; }
+.ovh-actor.is-invite .ovh-actor-txt { display: contents; }
+.ovh-actor.is-invite .ovh-actor-txt b { grid-column: 2; grid-row: 1; font-size: 15px; }
+.ovh-actor.is-invite .ovh-actor-txt small { grid-column: 2 / 5; grid-row: 2; -webkit-line-clamp: 3; }
+.ovh-actor.is-invite .ovh-acts { display: contents; }
+.ovh-actor.is-invite .ovh-go { grid-column: 3; grid-row: 1; }
+.ovh-actor.is-invite .ovh-x { grid-column: 4; grid-row: 1; display: grid; place-items: center; width: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
+.ovh-actor.is-invite .ovh-x svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 `;
         document.head.appendChild(st);
     }
@@ -159,19 +244,28 @@
         (o.yours || []).forEach((a) => { if (a && a.id && safe(a.url)) byId.set(a.id, a); });
         return byId;
     }
+    // The network's groups, as folders for the sites past the first page (until the person arranges their home).
+    const GROUP_FOLDERS = [['streams', 'Watch'], ['people', 'People'], ['make', 'Make'], ['answers', 'Read'], ['games', 'Play'], ['shop', 'Shop']];
+    function topSites(o) {
+        const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id));
+        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
+        return sites.slice(0, Math.max(6, 12 - 2 - mineFirst.length));
+    }
     function folderDefs(o) {
         const apps = o.apps || [];
-        return [
-            { id: 'tools', name: 'Tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
+        const top = new Set(topSites(o));
+        const groups = GROUP_FOLDERS.map(([g, name]) => ({ id: `g-${g}`, name, apps: apps.filter((a) => a.group === g && !top.has(a.id)).map((a) => a.id), glyph: 'grid' }))
+            .filter((f) => f.apps.length >= 2);
+        return groups.concat([
+            { id: 'tools', name: 'Quick tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
             { id: 'build', name: 'Build', apps: apps.filter((a) => a.group === 'build').map((a) => a.id), glyph: 'code' },
-        ].filter((f) => f.apps.length);
+        ]).filter((f) => f.apps.length);
     }
     /** Until the person arranges it: their own places first (signed in), then the most used and popular sites. */
     function defaultHome(o) {
         const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id)).map((y) => y.id);
-        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
-        const room = 12 - 2 - mineFirst.length;
-        return mineFirst.concat(sites.slice(0, Math.max(6, room)), ['folder:tools', 'folder:build']);
+        const groupFolders = folderDefs(o).filter((f) => f.id.startsWith('g-')).map((f) => `folder:${f.id}`);
+        return mineFirst.concat(topSites(o), groupFolders, ['folder:tools', 'folder:build']);
     }
     function layoutOf(o) {
         const byId = universe(o);
@@ -182,17 +276,36 @@
         return { home, folders, arranged: !!l, byId };
     }
 
+    // Line icons for the buttons beside your name (24-unit boxes, optically centred), built as nodes.
+    const ICON = {
+        look: [['path', { d: 'M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.7-.4-1.1 0-1 .8-1.7 1.7-1.7h2.1A4.4 4.4 0 0 0 21 11c0-4.4-4-8-9-8Z' }],
+            ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
+        gear: [['circle', { cx: 12, cy: 12, r: 3 }], ['path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z' }]],
+        x: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+    };
+    function svgIcon(name) {
+        const NS = 'http://www.w3.org/2000/svg';
+        const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+        ICON[name].forEach(([tag, at]) => { const n = document.createElementNS(NS, tag); Object.keys(at).forEach((k) => n.setAttribute(k, String(at[k]))); s.append(n); });
+        return s;
+    }
+
     // ── Drawing an icon ────────────────────────────────────────────────────────────────────────────────────────
     function siteIcon(site, size) {
         const s = h('span', 'ov-icon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', String(size)); s.setAttribute('data-fx', 'none');
         return s;
     }
+    /** A steady hue per site (the same on every page and device), so each app has its own colour. */
+    function hueOf(id) { let x = 7; const t = String(id || 'ov'); let i = 0; while (i < t.length) { x = (x * 31 + t.charCodeAt(i)) % 360; i++; } return x; }
     function appTile(o, a, { tag = 'a', size = 40, small = false } = {}) {
         const el = h(tag, 'ovh-app');
         if (tag === 'a') el.href = safe(a.url) || '#'; else el.type = 'button';
         el.setAttribute('data-id', a.id);
+        // An app icon, not a ring (11-09, the owner: "icons need major improvement, make use of the full space… more
+        // consistent"): the site's glyph large on a squircle tinted with its own steady hue.
         const ic = h('span', 'ovh-ic');
-        ic.append(siteIcon(a.site, small ? 32 : size));
+        ic.style.setProperty('--ovh-h', String(hueOf(a.site || a.id)));
+        ic.append(siteIcon(a.site, small ? 44 : 60));
         el.append(ic, h('span', 'ovh-name', a.title));
         if (tag === 'a') el.addEventListener('click', () => { if (o.onOpen) o.onOpen(a); });
         return el;
@@ -203,7 +316,12 @@
         el.setAttribute('data-id', `folder:${f.id}`);
         el.setAttribute('aria-label', `${f.name} folder, ${f.apps.length} apps`);
         const ic = h('span', 'ovh-ic');
-        f.apps.slice(0, 4).forEach((id) => { const a = byId.get(id) || (o.tools || []).find((t) => t.id === id); const cell = h('span'); cell.append(siteIcon(a ? a.site : f.glyph, 16)); ic.append(cell); });
+        // Each app's own icon (a tool's own glyph, not the folder's: four identical </> was the owner's complaint, 11-09).
+        const glyphOf = (id) => { const a = byId.get(id) || (o.tools || []).find((t) => t.id === id); return a ? (a.site || a.icon || f.glyph) : f.glyph; };
+        const seenG = new Set(), cells = [];
+        f.apps.forEach((id) => { const g = glyphOf(id); if (cells.length < 4 && !seenG.has(g)) { seenG.add(g); cells.push([id, g]); } });
+        f.apps.forEach((id) => { if (cells.length < 4 && !cells.some((c) => c[0] === id)) cells.push([id, glyphOf(id)]); });
+        cells.forEach(([id, g]) => { const cell = h('span'); cell.style.setProperty('--ovh-h', String(hueOf(g + id))); cell.append(siteIcon(g, 26)); ic.append(cell); });
         el.append(ic, h('span', 'ovh-name', f.name));
         return el;
     }
@@ -217,20 +335,92 @@
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
-        let actorBox = null;
+        let actorBox = null, meBox = null;
+        // The Look panel (theme, text size, motion, icons) opens under your name, drawn by the navbar (the account menu's).
+        if (typeof o.look === 'function') { try { o.look(el); } catch { /* the button stays a link to openvibe.design/look */ } }
+
+        /** You: your picture (online), your name, and Display and Settings beside it. Made once per opening, so an open
+         *  Look panel survives the repaints that come as history and the catalogue arrive. */
+        function me() {
+            if (meBox) return meBox;
+            const u = o.user || {};
+            meBox = h('div');
+            const bar = h('div', 'ovh-me');
+            const who = h('a', 'ovh-who'); who.href = u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
+            const av = h('span', 'ovh-av');
+            const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
+            if (pic) { const img = h('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; av.append(img); } else av.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase();
+            const txt = h('span', 'ovh-who-txt');
+            txt.append(h('b', '', u.display_name || u.username || 'You'), h('small', '', [u.username ? `@${u.username}` : '', 'Online'].filter(Boolean).join(' · ')));
+            who.append(av, txt);
+            const look = h('a', 'ovh-ib'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
+            look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.title = 'Display';
+            const gear = h('a', 'ovh-ib'); gear.append(svgIcon('gear')); gear.href = 'https://openvibe.network/my'; gear.setAttribute('aria-label', 'Account and settings'); gear.title = 'Account and settings';
+            bar.append(who, look, gear);
+            const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
+            meBox.append(bar, panel);
+            return meBox;
+        }
+
+        /** Jump back in: the last places, as cards you swipe; a stream that is live now says so. */
+        function backRail() {
+            const items = (o.back || []).filter((x) => x && safe(x.url)).slice(0, 8);
+            if (!items.length) return null;
+            const wrap = h('div');
+            const head = sec('Jump back in');
+            wrap.append(head);
+            const rail = h('div', 'ovh-rail'); rail.setAttribute('role', 'list'); rail.setAttribute('aria-label', 'Jump back in');
+            items.forEach((x, i) => {
+                const live = x.tag === 'Live';
+                const c = h('a', `ovh-card${live ? ' is-live' : ''}`); c.href = safe(x.url); c.setAttribute('role', 'listitem'); c.style.setProperty('--i', String(i));
+                const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov'))); ic.append(siteIcon(x.site || 'ov', 44));
+                const meta = h('small');
+                if (live) meta.append(h('span', 'ovh-live', 'LIVE'));
+                const pre = String(x.metaPre || '').replace(/^Live now(?: · )?/, '');
+                const when = h('span', '', [pre, ago(x.at)].filter(Boolean).join(' · ') || x.meta || '');
+                if (x.at) { when.dataset.at = x.at; when.dataset.pre = pre; }   // search.js keeps the times current
+                meta.append(when);
+                c.append(ic, h('b', '', x.title), meta);
+                rail.append(c);
+            });
+            const ends = () => rail.classList.toggle('is-end', rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 4);
+            rail.addEventListener('scroll', ends, { passive: true });
+            requestAnimationFrame(ends);
+            wrap.append(rail);
+            return wrap;
+        }
+
+        /** Most used: the pages you opened, by site, as one bar and its key. */
+        function usage() {
+            const rows = (o.usage || []).map((u) => ({ a: L.byId.get(u.id), n: u.count })).filter((r) => r.a && r.n > 0).sort((x, y) => y.n - x.n).slice(0, 5);
+            if (rows.length < 2) return null;
+            const wrap = h('div');
+            const head = sec('Most used');
+            head.append(h('small', '', 'pages you opened'));
+            wrap.append(head);
+            const box = h('div', 'ovh-use');
+            const bar = h('div', 'ovh-use-bar'); bar.setAttribute('role', 'img');
+            bar.setAttribute('aria-label', rows.map((r) => `${r.a.title} ${r.n}`).join(', '));
+            const keys = h('div', 'ovh-use-keys');
+            const CHART = ['#3b82f6', '#a855f7', '#f59e0b', '#14b8a6', '#ec4899'];   // five that tell apart in dark and light
+            rows.forEach((r, i) => {
+                const c = CHART[i % CHART.length];
+                const seg = h('span'); seg.style.setProperty('--n', String(r.n)); seg.style.setProperty('--c', c); seg.style.setProperty('--i', String(i)); bar.append(seg);
+                const k = h('a', 'ovh-key', r.a.title); k.href = safe(r.a.url) || '#'; k.style.setProperty('--c', c);
+                k.append(h('small', '', num(r.n)));
+                keys.append(k);
+            });
+            box.append(bar, keys);
+            wrap.append(box);
+            return wrap;
+        }
 
         function paintHome() {
             el.textContent = '';
             el.classList.toggle('is-edit', state.edit);
+            if (signedIn(o) && !state.edit) el.append(me());
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
-            // Recent: the last places opened, newest first.
-            const recent = (o.recent || []).map((id) => L.byId.get(id)).filter(Boolean).slice(0, 5);
-            if (recent.length && !state.edit) {
-                el.append(sec('Recent'));
-                const row = h('div', 'ovh-grid ovh-recent'); row.setAttribute('aria-label', 'Recent');
-                recent.forEach((a) => row.append(appTile(o, a, { small: true })));
-                el.append(row);
-            }
+            if (!state.edit) { const b = backRail(); if (b) el.append(b); const u = usage(); if (u) el.append(u); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
             const edit = h('button', state.edit ? 'is-done' : '', state.edit ? 'Done' : 'Edit');
             edit.type = 'button';
@@ -316,28 +506,52 @@
             t.addEventListener('click', (e) => { if (Date.now() < state.suppress && !(e.target.closest && e.target.closest('.ovh-badge'))) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
         }
 
+        // While editing, a finger on the grid never scrolls the page (11-09, the owner: holding an icon "scrolled up and
+        // down… even though I'm in edit mode").
+        if (!el.__ovhTouch) { el.__ovhTouch = true; el.addEventListener('touchmove', (e) => { if ((state.edit || state.drag) && e.target.closest && e.target.closest('.ovh-grid:not(.ovh-recent)') && e.cancelable) e.preventDefault(); }, { passive: false }); }
         function beginDrag(id, e) {
             if (state.drag) return;
             const ghost = h('div', 'ovh-ghost');
             const src = el.querySelector(`.ovh-grid:not(.ovh-recent) [data-id="${CSS.escape(id)}"] .ovh-ic`);
-            if (src) ghost.append(src.cloneNode(true).firstChild || h('span'));
+            if (src) { const c = src.cloneNode(true); c.style.animation = 'none'; ghost.append(c); }
             document.body.append(ghost);
             state.drag = { id, ghost };
             const at = (m) => { ghost.style.left = `${m.clientX}px`; ghost.style.top = `${m.clientY}px`; };
             at(e);
             const lift = () => { const n = el.querySelector(`.ovh-grid:not(.ovh-recent) [data-id="${CSS.escape(id)}"]`); if (n) n.classList.add('is-lifted'); };
             lift();
+            // Near the top or bottom of the menu's list, the list scrolls under the finger (one page of apps can be longer
+            // than the screen); nothing else scrolls while an app is held.
+            const scroller = (() => { let n = el.parentElement; while (n && n !== document.body) { const st = getComputedStyle(n); if (/(auto|scroll)/.test(st.overflowY) && n.scrollHeight > n.clientHeight) return n; n = n.parentElement; } return null; })();
             const move = (m) => {
+                if (m.cancelable) m.preventDefault();
+                if (scroller) { const r = scroller.getBoundingClientRect(); if (m.clientY < r.top + 56) scroller.scrollTop -= 12; else if (m.clientY > r.bottom - 56) scroller.scrollTop += 12; }
                 at(m);
-                const under = document.elementFromPoint(m.clientX, m.clientY);
-                const cell = under && under.closest && under.closest('.ovh-grid:not(.ovh-recent) .ovh-app');
-                if (!cell || !el.contains(cell)) return;
-                const to = L.home.indexOf(cell.getAttribute('data-id')), from = L.home.indexOf(id);
-                if (to < 0 || to === from) return;
-                L.home.splice(from, 1); L.home.splice(to, 0, id);
+                // Which place the finger is over, by the grid's slots (offsetLeft/offsetTop: where each place IS, not where
+                // a sliding app is drawn this frame; the old hit test read the slide in progress, so an app passing under
+                // the finger took the drop and it landed one place off), and only well inside it (the middle 70% by 80%),
+                // so the grid never flickers between two places.
                 const grid = el.querySelector('.ovh-grid:not(.ovh-recent)');
+                if (!grid) return;
+                const gr = grid.getBoundingClientRect();
+                const kids = [...grid.children];
+                const to = kids.findIndex((n) => { const x = gr.left + n.offsetLeft, y = gr.top + n.offsetTop; return m.clientX >= x && m.clientX < x + n.offsetWidth && m.clientY >= y && m.clientY < y + n.offsetHeight; });
+                const from = L.home.indexOf(id);
+                if (to < 0 || to >= L.home.length || to === from) return;
+                const sn = kids[to], cx = gr.left + sn.offsetLeft + sn.offsetWidth / 2, cy = gr.top + sn.offsetTop + sn.offsetHeight / 2;
+                if (Math.abs(m.clientX - cx) > sn.offsetWidth * 0.35 || Math.abs(m.clientY - cy) > sn.offsetHeight * 0.4) return;
+                const before = new Map([...grid.children].map((n) => [n.getAttribute('data-id'), n.getBoundingClientRect()]));
+                L.home.splice(from, 1); L.home.splice(to, 0, id);
                 grid.textContent = ''; L.home.forEach((x, i) => grid.append(homeTile(x, i)));
                 icons(); lift();
+                // Each app slides from where it was to where it now is (FLIP), so the grid moves like a phone's.
+                [...grid.children].forEach((n) => {
+                    const b = before.get(n.getAttribute('data-id')); if (!b) return;
+                    const a = n.getBoundingClientRect(); const dx = b.left - a.left, dy = b.top - a.top;
+                    if (!dx && !dy) return;
+                    n.style.transition = 'none'; n.style.transform = `translate(${dx}px, ${dy}px)`;
+                    requestAnimationFrame(() => { n.style.transition = 'transform .26s cubic-bezier(.2, .9, .3, 1)'; n.style.transform = ''; });
+                });
             };
             const end = () => {
                 window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end);
@@ -474,13 +688,18 @@
         // No Actor yet: one invitation, which the person can put away.
         try { if (localStorage.getItem(INVITE_KEY) === 'off') return; } catch { /* */ }
         const card = h('div', 'ovh-actor'); card.setAttribute('role', 'group'); card.setAttribute('aria-label', 'Your own AI');
-        const face = h('span', 'ovh-face'); face.append(siteIcon('actor', 28));
+        // 11-09, the owner: the line was cut off, the icon small, the buttons plain words: the whole sentence on two lines,
+        // a bigger mark, and two real buttons (beside the words on a wide menu, under them on a phone).
+        card.classList.add('is-invite');
+        const face = h('span', 'ovh-face'); face.append(siteIcon('actor', 30));
         const txt = h('span', 'ovh-actor-txt');
-        txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch: finds work, posts, runs your channel.'));
+        txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch: finds work, posts and runs your channel.'));
+        const acts = h('span', 'ovh-acts');
         const go = h('a', 'ovh-go', 'Set it up'); go.href = `${base}/you`;
-        const no = h('button', 'ovh-x', 'Not now'); no.type = 'button';
+        const no = h('button', 'ovh-x'); no.append(svgIcon('x')); no.type = 'button'; no.setAttribute('aria-label', 'Not now'); no.title = 'Not now';
         no.addEventListener('click', () => { try { localStorage.setItem(INVITE_KEY, 'off'); } catch { /* */ } box.textContent = ''; });
-        card.append(face, txt, go, no);
+        acts.append(go, no);
+        card.append(face, txt, acts);
         box.append(card);
         if (typeof o.mountIcons === 'function') { try { o.mountIcons(box); } catch { /* */ } }
     }
@@ -578,7 +797,10 @@
         const draw = (j, append) => {
             if (!append) list.textContent = '';
             const items = (j && Array.isArray(j.items) ? j.items : []).filter((x) => x && typeof x.title === 'string' && safe(x.url));
-            if (!items.length && !append) { list.append(h('p', 'ovh-note', 'Nothing new on the network yet today.')); return; }
+            // Nothing to show: the section goes, not a line saying so (11-09, the owner: "why does it say show more if there's
+            // nothing new").
+            if (!items.length && !append) { el.hidden = true; more.hidden = true; return; }
+            el.hidden = false;
             // Went live, back to back: one row of names.
             let lives = null;
             items.forEach((x) => {
@@ -612,5 +834,164 @@
         more.addEventListener('click', async () => { more.disabled = true; const j = await loadPulse(o, next); more.disabled = false; if (j) draw(j, true); });
     }
 
-    root.OpenVibeHome = { home, wallTop, timeline, loadPulse, _defaultHome: defaultHome };
+
+    // ── Feed v2: a real feed (owner, 11-09: "a real feed… you scroll through easy content… sections or a filter system…
+    // clean, intuitive"). Community's GET /api/v1/feed (plan "Feed v2"): one stream of cards by kind, chips on top, more as
+    // you near the end. When the API is not there yet, the pulse wall above stands (timeline()).
+    const KINDS = [['', 'For you'], ['live', 'Live'], ['clip', 'Clips'], ['video', 'Videos'], ['pic', 'Pics'], ['post', 'Posts'], ['meme', 'Memes'], ['game', 'Games'], ['update', 'Updates']];
+    function feedUrl(o, kind, cursor) {
+        const p = new URLSearchParams({ limit: '12' });
+        if (kind) p.set('kind', kind);
+        if (cursor) p.set('cursor', cursor);
+        return `${o.communityBase || COMMUNITY}/api/v1/feed?${p}`;
+    }
+    function loadFeed(o, kind, cursor) {
+        return fetch(feedUrl(o, kind, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })
+            .then((r) => (r.ok ? r.json() : null)).then((j) => (j && Array.isArray(j.items) ? j : null)).catch(() => null);
+    }
+    const still = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced' || !!(navigator.connection && navigator.connection.saveData); } catch { return false; } };
+    const count = (n) => { const v = Number(n) || 0; return v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : String(v); };
+    let player = null;   // one IntersectionObserver plays the preview in view and pauses the rest
+    function watchPreview(box, c) {
+        const media = c.media || {};
+        const preview = safe(media.preview);
+        if (!preview || still() || typeof IntersectionObserver !== 'function') return;
+        player = player || new IntersectionObserver((es) => es.forEach((x) => {
+            const v = x.target.querySelector('video');
+            if (x.isIntersecting && x.intersectionRatio >= 0.6) {
+                if (!v) { const nv = document.createElement('video'); nv.muted = true; nv.loop = true; nv.playsInline = true; nv.setAttribute('playsinline', ''); nv.preload = 'none'; nv.src = x.target.getAttribute('data-preview'); nv.className = 'ovf-video'; x.target.append(nv); nv.play().catch(() => {}); }
+                else v.play().catch(() => {});
+            } else if (v) v.pause();
+        }), { threshold: [0, 0.6] });
+        box.setAttribute('data-preview', preview);
+        player.observe(box);
+    }
+    function feedCard(c) {
+        const kind = String(c.kind || 'post');
+        const url = safe(c.url);
+        if (!url) return null;
+        if (kind === 'update') {
+            const a = h('a', 'ovf-update'); a.href = url;
+            const ic = h('span', 'ovh-ic'); ic.append(siteIcon(c.site || 'ov', 20));
+            const t = h('span', 'ovf-update-txt'); t.append(h('b', '', String(c.title || '').slice(0, 160)), h('small', '', [c.site_name || c.site, ago(c.at)].filter(Boolean).join(' · ')));
+            a.append(ic, t); return a;
+        }
+        const a = h('a', `ovf-card ovf-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
+        const head = h('span', 'ovf-head');
+        const face = h('span', 'ovf-face');
+        const av = c.actor && safe(c.actor.avatar);
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); } else face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase();
+        const who = h('span', 'ovf-who');
+        who.append(h('b', '', String((c.actor && c.actor.name) || c.site_name || '').slice(0, 60)));
+        const meta = h('small', '');
+        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', ago(c.at)].filter(Boolean).join(' · ')}`));
+        who.append(meta);
+        head.append(face, who);
+        if (kind === 'live') head.append(h('span', 'ovf-livechip', 'LIVE'));
+        a.append(head);
+        const media = c.media || {};
+        const thumb = safe(media.thumb);
+        if (thumb && /^https:/.test(thumb)) {
+            const box = h('span', 'ovf-media');
+            const r = Number(media.ratio) > 0 ? Math.max(0.8, Math.min(1.91, Number(media.ratio))) : (kind === 'pic' || kind === 'meme' ? 1 : 16 / 9);
+            box.style.aspectRatio = String(r);
+            const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = thumb; box.append(img);
+            if (media.length) box.append(h('span', 'ovf-len', String(media.length).slice(0, 10)));
+            if (kind === 'live' && c.counts && c.counts.viewers) box.append(h('span', 'ovf-len ovf-viewers', `${count(c.counts.viewers)} watching`));
+            a.append(box);
+            if (kind === 'clip' || kind === 'video' || kind === 'live') watchPreview(box, c);
+        }
+        if (c.title) a.append(h('b', 'ovf-title', String(c.title).slice(0, 200)));
+        if (c.text && (kind === 'post' || !thumb)) a.append(h('p', 'ovf-text', String(c.text).slice(0, 500)));
+        const n = c.counts || {};
+        const bits = [n.views ? `${count(n.views)} views` : '', n.likes ? `♥ ${count(n.likes)}` : '', n.comments ? `${count(n.comments)} replies` : ''].filter(Boolean);
+        if (bits.length) a.append(h('small', 'ovf-counts', bits.join(' · ')));
+        return a;
+    }
+    function feed(el, o) {
+        styles(); feedStyles();
+        el.classList.add('ovh', 'ovf');
+        el.setAttribute('data-sec', 'wall');
+        el.textContent = '';
+        const chips = h('div', 'ovf-chips'); chips.setAttribute('role', 'tablist'); chips.setAttribute('aria-label', 'Feed');
+        const list = h('div', 'ovf-list');
+        const sentinel = h('div', 'ovf-more');
+        el.append(chips, list, sentinel);
+        let kind = '', cursor = null, busy = false, done = false, seq = 0;
+        const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovf-skel')); };
+        const clearSkels = () => list.querySelectorAll('.ovf-skel').forEach((x) => x.remove());
+        async function more(first) {
+            if (busy || done) return;
+            busy = true; const my = ++seq;
+            if (first) { list.textContent = ''; skeletons(); } else skeletons();
+            const j = await loadFeed(o, kind, cursor);
+            if (my !== seq) return;
+            clearSkels(); busy = false;
+            if (!j) {
+                if (first && !kind) { el.textContent = ''; if (o.feedMissing) o.feedMissing(); timeline(el, o); return; }   // the API is not there: the wall stands
+                done = true; sentinel.textContent = ''; sentinel.append(h('p', 'ovh-note', 'That did not load. Pull the menu again to retry.')); return;
+            }
+            if (first && o.feedLive) o.feedLive();
+            j.items.map(feedCard).filter(Boolean).forEach((c) => list.append(c));
+            if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
+            cursor = j.next_cursor || null;
+            done = !cursor;
+            sentinel.textContent = '';
+            if (done) sentinel.append(h('p', 'ovh-note ovf-caught', list.childNodes.length ? "You're all caught up." : 'Nothing here yet.'));
+        }
+        KINDS.forEach(([k, label]) => {
+            const b = h('button', 'ovf-chip', label); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
+            b.addEventListener('click', () => {
+                if (k === kind) return;
+                kind = k; cursor = null; done = false; busy = false;
+                chips.querySelectorAll('.ovf-chip').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+                more(true);
+            });
+            chips.append(b);
+        });
+        if (typeof IntersectionObserver === 'function') {
+            const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
+            io.observe(sentinel);
+        }
+        more(true);
+        return { update() {} };
+    }
+    function feedStyles() {
+        if (document.getElementById('ovf-styles')) return;
+        const st = document.createElement('style'); st.id = 'ovf-styles';
+        st.textContent = `
+.ovf-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
+.ovf-chips::-webkit-scrollbar{display:none}
+.ovf-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
+.ovf-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
+.ovf-list{display:grid;gap:10px;padding:4px 0}
+@media (min-width:861px){.ovf-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ovf-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
+@media (hover:hover){.ovf-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
+.ovf-head{display:flex;align-items:center;gap:8px;min-width:0}
+.ovf-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
+.ovf-face img{width:100%;height:100%;object-fit:cover}
+.ovf-who{min-width:0;display:grid}
+.ovf-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovf-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovf-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em}
+.ovf-media{position:relative;display:block;border-radius:12px;overflow:hidden;background:var(--bg-tertiary,#1f2633)}
+.ovf-media img,.ovf-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ovf-len{position:absolute;right:8px;bottom:8px;padding:2px 7px;border-radius:6px;background:rgba(0,0,0,.72);color:#fff;font-size:12px;font-weight:700}
+.ovf-viewers{left:8px;right:auto}
+.ovf-title{font-size:14.5px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ovf-text{margin:0;font-size:14px;line-height:1.5;color:var(--text-secondary,#a8b3c4);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.ovf-counts{font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovf-update{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;color:inherit;text-decoration:none}
+.ovf-update .ovh-ic{width:34px;height:34px;border-radius:10px;flex:none}
+.ovf-update-txt{min-width:0;display:grid;gap:2px}.ovf-update-txt b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ovf-update-txt small{font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovf-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovf-shimmer 1.4s ease-in-out infinite}
+.ovf-more{min-height:1px}.ovf-caught{text-align:center;padding:10px 0}
+@keyframes ovf-shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.ovf-skel{animation:none}}
+`;
+        document.head.appendChild(st);
+    }
+
+    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, _defaultHome: defaultHome };
 })(typeof window !== 'undefined' ? window : globalThis);

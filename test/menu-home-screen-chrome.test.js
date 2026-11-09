@@ -141,7 +141,7 @@ const server = http.createServer((req, res) => {
 
         // The Tools folder: tools with their own icons, and the count of all.
         await p.evaluate(`document.querySelector('.ovh-grid .ovh-app[data-id="folder:tools"]').click(), true`);
-        assert.ok(await until(p, `!!document.querySelector('.ovh-head b') && document.querySelector('.ovh-head b').textContent === 'Tools'`), 'the folder opened');
+        assert.ok(await until(p, `!!document.querySelector('.ovh-head b') && document.querySelector('.ovh-head b').textContent === 'Quick tools'`), 'the folder opened');
         const folder = await p.evaluate(`({ n: document.querySelectorAll('.ovh-grid .ovh-app').length, icons: [...document.querySelectorAll('.ovh-grid .ovh-app .ov-icon')].slice(0, 4).map((i) => i.getAttribute('data-icon')), more: (document.querySelector('a.ovh-all') || {}).textContent })`);
         assert.strictEqual(folder.n, 24, 'the folder shows two dozen tools');
         assert.deepStrictEqual(folder.icons, ['pdf', 'image', 'qr', 'audio'], 'each tool wears its own icon');
@@ -177,8 +177,13 @@ const server = http.createServer((req, res) => {
         await openTab(s, 'you');
         assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
         assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /Juniper.*Working.*Reading job posts/, 'it names the Actor, its state and its step');
-        assert.ok(await until(s, `document.querySelectorAll('.ovh-recent .ovh-app').length === 2`), 'Recent shows the places opened lately');
-        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-recent .ovh-app')].map((a) => a.getAttribute('data-id'))`), ['live', 'pics']);
+        // You on top: the name, Display (the Look panel) and Settings beside it; Jump back in as cards; Most used as one bar.
+        assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-me .ovh-who-txt b').textContent`), 'Ada', 'your name on top');
+        assert.ok(await s.evaluate(`!!document.querySelector('.ovh-me [data-ov-look-open]') && !!document.querySelector('.ovh-me a[href="https://openvibe.network/my"]')`), 'Display and Settings beside it');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow')`), 'Display is not at the foot any more');
+        assert.ok(await until(s, `document.querySelectorAll('.ovh-rail .ovh-card').length === 2`), 'Jump back in shows the places opened lately');
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-rail .ovh-card')].map((a) => a.getAttribute('href'))`), ['https://openvibe.live/ada', 'https://openvibe.pics/1']);
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].map((k) => k.textContent)`), ['Live5', 'Pics2'], 'Most used: pages opened per site');
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec:not(:first-child) span, .ovh-grid:not(.ovh-recent)') && [...document.querySelectorAll('.ovh-sec span')].map((x) => x.textContent).find((x) => /home|Popular/i.test(x)))`), 'Your home', 'signed in, Home is theirs from the start');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons');
         await s.evaluate(`document.querySelector('.ovh-sec button').click(), true`);

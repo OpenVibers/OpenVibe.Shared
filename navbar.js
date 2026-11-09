@@ -13,6 +13,9 @@
     const _runtimeMenu = { before: [], after: [] };
     let _runtimeLinks = null;
     let _navEl = null;
+    // A site's own buttons (lead before the brand, actions before the bell): nav-slots.js.
+    let _lead = null;
+    const _actions = new Map();
 
     function injectStyles() {
         if (document.getElementById('openvibe-navbar-styles')) return;
@@ -151,6 +154,18 @@
             .ovnav-display .ovnav-seg button[aria-pressed="true"] { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
             .ovnav-display .ovnav-seg button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
             .ovnav-drawer .ovnav-display a { display: inline; padding: 6px 4px; margin-left: auto; font-size: 12px; color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovnav-display a.ovnav-disp-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; margin: 0; padding: 4px 6px; border-radius: 14px; color: var(--text-primary, #e6edf7); text-decoration: none; }
+            .ovnav-display a.ovnav-disp-row:hover { background: var(--bg-hover, rgba(255,255,255,.06)); }
+            .ovnav-disp-ic { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(150deg, hsl(285 72% 58% / .34), hsl(285 70% 38% / .18)); color: hsl(285 90% 82%); }
+            .ovnav-disp-row > span:nth-child(2) { flex: 1; display: grid; gap: 1px; } .ovnav-disp-row b { font-size: 14px; } .ovnav-disp-row small { font-size: 12px; color: var(--text-muted, #7d8aa0); }
+            .ovnav-disp-row[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
+            .ovnav-display .ovnav-disp { display: flex; align-items: center; gap: 8px; width: 100%; }
+            .ovnav-display .ovnav-disp .ovnav-dl { flex-basis: auto; margin-right: auto; }
+            .ovnav-display .ovnav-seg-ic button { display: inline-grid; place-items: center; width: 40px; height: 34px; padding: 0; }
+            .ovnav-display .ovnav-seg-ic svg { width: 17px; height: 17px; }
+            .ovnav-display a.ovnav-disp-more { display: inline-flex; align-items: center; gap: 6px; height: 34px; margin: 0; padding: 0 12px; border-radius: 9px; background: color-mix(in srgb, var(--accent, #3b82f6) 13%, transparent); color: var(--accent-light, #60a5fa); font-size: 12.5px; font-weight: 650; text-decoration: none; }
+            .ovnav-display a.ovnav-disp-more svg { width: 16px; height: 16px; }
+            .ovnav-display .ud-look { flex-basis: 100%; }
             .ovnav-drawer .ovnav-drawer-net a.ovnav-net { gap: 9px; padding: 8px; font-size: 13.5px; min-width: 0; }
             .ovnav-drawer .ovnav-drawer-net a.ovnav-net > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             /* Icons have their size and a faint ring before ov-icons.js draws them: nothing moves or pops when they arrive. */
@@ -383,6 +398,14 @@
                 overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
             }
             @keyframes openvibe-slide-down { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            .ov-pop { transform-origin: var(--ov-pop-x, 50%) var(--ov-pop-y, 0); animation: ov-pop .34s cubic-bezier(.2, 1.1, .3, 1) both !important; }
+            .ov-pop-out { transform-origin: var(--ov-pop-x, 50%) var(--ov-pop-y, 0); animation: ov-pop-out .16s ease-in both !important; pointer-events: none; }
+            @keyframes ov-pop { 0% { opacity: 0; transform: scale(.88); clip-path: circle(0 at var(--ov-pop-x, 50%) var(--ov-pop-y, 0)); filter: blur(5px); } 55% { opacity: 1; filter: blur(0); } 100% { opacity: 1; transform: none; clip-path: circle(150% at var(--ov-pop-x, 50%) var(--ov-pop-y, 0)); } }
+            @keyframes ov-pop-out { to { opacity: 0; transform: scale(.94); filter: blur(3px); } }
+            @keyframes ov-fade { from { opacity: 0; } }
+            @keyframes ov-pop-calm { from { opacity: 0; transform: scale(.97); } }
+            @media (prefers-reduced-motion: reduce) { .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; } .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; animation-direction: reverse !important; } }
+            html[data-ov-motion=reduced] .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; }
 
             .openvibe-navbar-dropdown-header {
                 padding: 12px 10px 12px 14px; border-bottom: 1px solid var(--border, #333340);
@@ -444,6 +467,8 @@
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
             .openvibe-navbar-dropdown-menu .ud-grid:has(> .ud-tile:nth-child(6):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .openvibe-navbar-dropdown-menu .ud-grid .ud-tile { min-height: 60px; padding: 7px 2px 6px; gap: 5px; }
+            .openvibe-navbar-dropdown-header .ud-me img { width: 52px; height: 52px; }
             /* The balances in the header: OpenCoins and Vibes side by side, each a coloured icon, a number and its name. */
             .openvibe-navbar-dropdown-header .ud-wallet a small { font-weight: 600; opacity: .75; font-size: 10.5px; }
             /* On a phone the menu is a sheet the width of the screen under the bar, not a narrow card off to the right. */
@@ -459,6 +484,7 @@
             .openvibe-navbar-dropdown-menu .ud-foot { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin: 4px -8px -6px; padding: 8px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); background: color-mix(in srgb, var(--text-primary, #e6edf7) 3%, transparent); }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib { width: auto; min-width: 34px; height: 34px; padding: 0 8px; justify-content: center; gap: 3px; border-radius: 10px; color: var(--text-secondary, #a8b3c4); }
             .openvibe-navbar-dropdown-menu .ud-foot > .ud-ib { flex: 1 1 0; }
+            .openvibe-navbar-dropdown-menu .ud-foot > .ud-disp { flex: 0 0 auto; gap: 7px; padding: 0 12px; font-size: 13px; font-weight: 650; }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .icon { width: 18px; color: inherit; }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .ud-val { margin: 0; font-size: 11px; font-weight: 700; color: inherit; }
             .openvibe-navbar-dropdown-menu .ud-foot .ud-ib .ud-val:empty { display: none; }
@@ -519,35 +545,34 @@
     // The glyphs the navbar draws itself: [0, line, solid] is an OpenVibe glyph (24-unit grid); [w, path] a Font
     // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 <w> 512 viewBox. The rest of the set is nav-icons.js.
     const NAV_ICONS = {
-        'fa-bell': [0, '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>', '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>'],
+        'fa-bell': [0, '<path d="M6 14.5V9.5a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 18.5a2 2 0 0 0 4 0"/>', '<path d="M5.8 14.7V9.5a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 18.1h4.2a2.1 2.1 0 0 1 -4.2 0Z"/>'],
         'fa-clock-rotate-left': [0, '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4.5v4.1h4.1"/><path d="M12 8v4.2l3 1.8"/>', '<path d="M6.06 6.06A8.4 8.4 0 1 1 3.6 12h2.8a5.6 5.6 0 1 0 1.64-3.96ZM3 3.2v6.6h6.6ZM11 8.2h2v3.4l2.5 1.5-1 1.7-3.5-2.1Z"/>'],
         'fa-coins': [0, '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"/>', '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM11 6h2v1.2c1.1.2 2 .8 2.5 1.7l-1.7 1c-.3-.6-1-1-1.8-1-.9 0-1.5.4-1.5 1s.5.8 1.8 1.1c1.8.4 3.4 1 3.4 3 0 1.4-1 2.4-2.7 2.7V18h-2v-1.3c-1.2-.2-2.2-.9-2.7-1.9l1.7-1c.4.7 1.1 1.1 2 1.1 1 0 1.6-.4 1.6-1s-.6-.8-1.9-1.1c-1.7-.4-3.3-1-3.3-2.9 0-1.3 1-2.3 2.6-2.6Z"/>'],
+        'fa-id-card': [0, '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-1.5 1.7-2.3 3-2.3s2.5.8 3 2.3M15 10h3M15 13.5h3"/>', '<path fill-rule="evenodd" d="M5 4.8h14a2.2 2.2 0 0 1 2.2 2.2v10a2.2 2.2 0 0 1-2.2 2.2H5A2.2 2.2 0 0 1 2.8 17V7A2.2 2.2 0 0 1 5 4.8Zm4 4.1a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm-3.1 7.5h6.2c-.6-1.7-1.8-2.6-3.1-2.6s-2.5.9-3.1 2.6Zm8.6-7v1.5h3.9V9.4Zm0 3.5v1.5h3.9v-1.5Z"/>'],
         'fa-palette': [0, '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', '<path fill-rule="evenodd" d="M12 2.7a9.3 9.3 0 1 0 0 18.6c1.3 0 2-.9 2-1.9 0-1.2-1-1.5-1-2.5s.8-1.6 2-1.6H17a4.3 4.3 0 0 0 4.3-4.3C21.3 6.5 17.2 2.7 12 2.7ZM7.5 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm2.5-3.7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>'],
         'fa-people-group': [0, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.6 3 2.4 3 5.2"/>', '<circle cx="9" cy="7.9" r="3.6"/><path d="M2.4 20.8c0-3.8 3-6.5 6.6-6.5s6.6 2.7 6.6 6.5Z"/><circle cx="16.6" cy="7.4" r="2.9"/><path d="M16.8 13.4c2.9.4 4.8 2.8 4.8 6.4V20.8h-4.4c0-2.9-1-5.2-2.8-6.7Z"/>'],
         'fa-plus': [0, '<path d="M12 5v14M5 12h14"/>', ''],
-        'fa-right-from-bracket': [0, '<path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l-4-4 4-4M6 12h10"/>', ''],
+        'fa-right-from-bracket': [0, '<path d="M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-4M9 16l-4 -4 4 -4M5 12h10"/>', ''],
         'fa-shield-halved': [0, '<path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6Z"/>', '<path d="M12 2.6 4.6 5.8V12c0 4.6 3.1 8 7.4 9.5 4.3-1.5 7.4-4.9 7.4-9.5V5.8Z"/>'],
-        'fa-text-height': [0, '<path d="M5.5 20 11 4h2l5.5 16M7.6 14h8.8"/>', '<path fill-rule="evenodd" d="M10.3 3.4h3.4l6.3 17.2h-3.1l-1.5-4.3H8.6l-1.5 4.3H4ZM9.5 13.7h5L12 6.4Z"/>'],
-        'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.5"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
+        'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.15"/><path d="M8.4 8.4a5.15 5.15 0 0 0 0 7.55M15.6 8.4a5.15 5.15 0 0 1 0 7.55M6 6a8.55 8.55 0 0 0 0 12.6M18 6a8.55 8.55 0 0 1 0 12.6"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
         'fa-user-secret': [0, '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>', '<circle cx="12" cy="7.8" r="4.1"/><path d="M4.2 21c0-4.3 3.5-7.2 7.8-7.2s7.8 2.9 7.8 7.2Z"/>'],
         'fa-wallet': [0, '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4M4 7.5V18a2 2 0 0 0 2 2h14V9H6.5A2.5 2.5 0 0 1 4 7.5Z"/><path d="M16 14.5h.01"/>', '<path fill-rule="evenodd" d="M6.5 4.6H18v4h1.4a.8.8 0 0 1 .8.8v10.8H6a2.2 2.2 0 0 1-2.2-2.2V7.3a2.7 2.7 0 0 1 2.7-2.7Zm0 1.8a.9.9 0 0 0 0 1.8h9.7V6.4ZM16 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>'],
-        'fa-wand-magic-sparkles': [0, '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/>', '<path d="M12 2.6l2 5.6 5.6 2-5.6 2L12 17.8l-2-5.6-5.6-2 5.6-2ZM19 14.6l.9 2.5 2.5.9-2.5.9-.9 2.5-.9-2.5-2.5-.9 2.5-.9Z"/>'],
-        'fa-chevron-down': [0, '<path d="m6 9 6 6 6-6"/>', ''],
-        'fa-gear': [0, '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>', '<path fill-rule="evenodd" d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8Z"/>'],
+        'fa-chevron-down': [0, '<path d="m6.6 9.9 6.6 6.6 6.6 -6.6"/>', ''],
+        'fa-gear': [0, '<circle cx="12" cy="12" r="2.4"/><path d="M17.85 14.4a1.35 1.35 0 0 0 0.25 1.6l0.1 0.1a1.6 1.6 0 1 1 -2.5 2.5l-0.1 -0.1a1.35 1.35 0 0 0 -1.6 -0.25 1.35 1.35 0 0 0 -0.9 1.35V19.1a1.6 1.6 0 1 1 -3.6 0v-0.1a1.35 1.35 0 0 0 -1 -1.35 1.35 1.35 0 0 0 -1.6 0.25l-0.1 0.1a1.6 1.6 0 1 1 -2.5 -2.5l0.1 -0.1a1.35 1.35 0 0 0 0.25 -1.6 1.35 1.35 0 0 0 -1.35 -0.9H4.95a1.6 1.6 0 1 1 0 -3.6h0.1a1.35 1.35 0 0 0 1.35 -1 1.35 1.35 0 0 0 -0.25 -1.6l-0.1 -0.1a1.6 1.6 0 1 1 2.5 -2.5l0.1 0.1a1.35 1.35 0 0 0 1.6 0.25H9.65a1.35 1.35 0 0 0 0.9 -1.35V4.95a1.6 1.6 0 1 1 3.6 0v0.1a1.35 1.35 0 0 0 0.9 1.35 1.35 1.35 0 0 0 1.6 -0.25l0.1 -0.1a1.6 1.6 0 1 1 2.5 2.5l-0.1 0.1a1.35 1.35 0 0 0 -0.25 1.6V9.65a1.35 1.35 0 0 0 1.35 0.9H19.1a1.6 1.6 0 1 1 0 3.6h-0.1a1.35 1.35 0 0 0 -1.35 0.9Z"/>', '<path fill-rule="evenodd" d="M18.5 14.65a1.5 1.5 0 0 0 0.3 1.8l0.1 0.1a1.75 1.75 0 1 1 -2.8 2.8l-0.1 -0.1a1.5 1.5 0 0 0 -1.8 -0.3 1.5 1.5 0 0 0 -1 1.5V19.9a1.75 1.75 0 1 1 -4 0v-0.1a1.5 1.5 0 0 0 -1.1 -1.5 1.5 1.5 0 0 0 -1.8 0.3l-0.1 0.1a1.75 1.75 0 1 1 -2.8 -2.8l0.1 -0.1a1.5 1.5 0 0 0 0.3 -1.8 1.5 1.5 0 0 0 -1.5 -1H4.15a1.75 1.75 0 1 1 0 -4h0.1a1.5 1.5 0 0 0 1.5 -1.1 1.5 1.5 0 0 0 -0.3 -1.8l-0.1 -0.1a1.75 1.75 0 1 1 2.8 -2.8l0.1 0.1a1.5 1.5 0 0 0 1.8 0.3H9.4a1.5 1.5 0 0 0 1 -1.5V4.15a1.75 1.75 0 1 1 4 0v0.1a1.5 1.5 0 0 0 1 1.5 1.5 1.5 0 0 0 1.8 -0.3l0.1 -0.1a1.75 1.75 0 1 1 2.8 2.8l-0.1 0.1a1.5 1.5 0 0 0 -0.3 1.8V9.4a1.5 1.5 0 0 0 1.5 1H19.9a1.75 1.75 0 1 1 0 4h-0.1a1.5 1.5 0 0 0 -1.5 1ZM12 9.05a3 3 0 1 0 0 6.8 3 3 0 0 0 0 -6.8Z"/>'],
         'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', ''],
         'fa-moon': [0, '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>'],
-        'fa-sun': [0, '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
+        'fa-sun': [0, '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2M12 19.6v2M5.25 5.25l1.4 1.4M17.4 17.4l1.4 1.4M2.5 12h2M19.6 12h2M5.25 18.75l1.4 -1.4M17.4 6.6l1.4 -1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
         'fa-comment-dots': [0, '<path d="M4 5h16v11H8l-4 4Z"/>', '<path d="M3.5 5.6A1.6 1.6 0 0 1 5.1 4h13.8a1.6 1.6 0 0 1 1.6 1.6v9.8a1.6 1.6 0 0 1-1.6 1.6H8.6L3.5 21Z"/>'],
         'fa-brain': [0, '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1.2V5.5A2 2 0 0 0 9 4ZM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1.2"/>', '<path d="M9 3.8a3.1 3.1 0 0 0-3.1 3 3 3 0 0 0-2.1 5.2 3 3 0 0 0 2.1 5.1 3.1 3.1 0 0 0 5.5 1.3V5.5A2.2 2.2 0 0 0 9 3.8Z"/><path d="M15 3.8a3.1 3.1 0 0 1 3.1 3 3 3 0 0 1 2.1 5.2 3 3 0 0 1-2.1 5.1 3.1 3.1 0 0 1-5.5 1.3V5.5A2.2 2.2 0 0 1 15 3.8Z"/>'],
     };
     // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives); 0 is an OpenVibe glyph.
     const NAV_ICONS_LAZY = {
-        0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-id-card fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-user fa-video fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
+        0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-text-height fa-user fa-video fa-wand-magic-sparkles fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
     };
-    const NAV_ICONS_REV = 'd9a4febbbad7';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '1091daee9c7e';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '1e91c9c0f347', 'ov-glyphs.js': '1a0d8ce6909f', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2a6c53a7b176', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '068ce1b1c4d5', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '04ac8238e9ed', 'dock.js': '45215d0d60f4', 'presence.js': '1b675c37d888', 'panels.js': '7d8267ca8035', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': '25960cf0c075', 'ov-home.js': '267bf753169d' };
+    const SIBLING_REV = { 'ov-mark.js': 'd7e87def8fff', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': '46fce1e2b8db', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '8e55bfe93238', 'ov-share.css': 'cbd18e6ce991', 'search.js': '8d00547b413c', 'dock.js': '496a40c534ce', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'a2d37237ba0b', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': 'd0baedb2ce11', 'nav-slots.js': 'a5af310d62e0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -913,6 +938,54 @@
             </div>`;
     }
 
+    // The on-screen keyboard: html.ov-kb-open and --ov-kb (its height, against the tallest view seen without one).
+    let _kbWatch = false;
+    function watchKeyboard() {
+        if (_kbWatch || typeof window === 'undefined' || !window.visualViewport || typeof document === 'undefined') return;
+        _kbWatch = true;
+        const vv = window.visualViewport; const html = document.documentElement;
+        let raf = 0; let base = 0; let turned = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type : '';
+        const typing = () => { const a = document.activeElement; return !!a && (a.isContentEditable || a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(button|checkbox|radio|range|color|file|submit|reset|image|hidden)$/i.test(a.type || ''))); };
+        const paint = () => {
+            raf = 0;
+            const o = typeof screen !== 'undefined' && screen.orientation ? screen.orientation.type : '';
+            if (o !== turned) { turned = o; base = 0; }
+            const t = typing();
+            if (!t) base = Math.max(base, vv.height);
+            const kb = Math.max(0, Math.round(Math.max(base, window.innerHeight) - vv.height - vv.offsetTop));
+            const on = t && kb > 120;
+            if (html.classList.contains('ov-kb-open') !== on) html.classList.toggle('ov-kb-open', on);
+            html.style.setProperty('--ov-kb', `${on ? kb : 0}px`);
+        };
+        const later = () => { if (!raf) raf = requestAnimationFrame(paint); };
+        vv.addEventListener('resize', later); vv.addEventListener('scroll', later);
+        document.addEventListener('focusin', later); document.addEventListener('focusout', () => setTimeout(later, 60));
+        later();
+    }
+
+    // Panels grow out of their trigger: OpenVibeNavbar.pop(el, trigger) / .unpop(el, done).
+    function popFrom(el, from) {
+        try {
+            const r = el.getBoundingClientRect(), f = from && from.getBoundingClientRect ? from.getBoundingClientRect() : null;
+            el.style.setProperty('--ov-pop-x', `${Math.round(f ? f.left + f.width / 2 - r.left : r.width / 2)}px`);
+            el.style.setProperty('--ov-pop-y', `${Math.round(f ? f.top + f.height / 2 - r.top : 0)}px`);
+            el.classList.remove('ov-pop', 'ov-pop-out'); void el.offsetWidth; el.classList.add('ov-pop');
+        } catch { /* */ }
+    }
+    function unpop(el, done) {
+        let ended = false; const end = () => { if (ended) return; ended = true; el.classList.remove('ov-pop-out'); if (done) done(); };
+        el.classList.remove('ov-pop'); el.classList.add('ov-pop-out');
+        el.addEventListener('animationend', end, { once: true }); setTimeout(end, 220);
+    }
+    // A site's buttons: nav-slots.js draws them, loaded on first use; each render paints them again.
+    function paintSlots() {
+        if (!_navEl || typeof document === 'undefined') return;
+        if (root.OpenVibeNavSlots) { root.OpenVibeNavSlots.paint(_navEl, _lead, _actions); return; }
+        if (!_lead && !_actions.size) return;
+        if (document.getElementById('ov-slots-loader')) return;
+        try { const sc = document.createElement('script'); sc.id = 'ov-slots-loader'; sc.src = siblingV('nav-slots.js'); sc.async = true; sc.onload = () => paintSlots(); document.head.appendChild(sc); } catch { /* */ }
+    }
+
     // The OpenVibe menu's button: nine dots as a diamond (the old launcher's, which the owner liked), the centre in the
     // accent. Rings: 0 the centre, 1 the edges, 2 the corners (the ripple's order; corners and centre make the ×).
     const ORB_DOTS = [[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]];
@@ -1010,7 +1083,15 @@
             const m = _config.messages || {};
             if (e.metaKey || e.ctrlKey || e.shiftKey) return;
             // The default (4.130.0): the Dock's Chats tab; without the Dock, the link.
-            if (m.__default && _config.dock !== false && _config.token) { e.preventDefault(); openDock('chats'); return; }
+            if (m.__default && _config.dock !== false) {
+                e.preventDefault();
+                if (_config.token) openDock('chats');
+                else refreshAuthState().then(() => {
+                    if (_config.token) openDock('chats');
+                    else root.location.href = a.href;
+                });
+                return;
+            }
             if (typeof m.onOpen !== 'function') return;
             e.preventDefault(); try { m.onOpen(e); } catch { /* the link still works */ }
         });
@@ -1039,7 +1120,7 @@
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (pop && pop.classList.contains('open')) return close();
-            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close); }
+            if (!pop) { pop = document.createElement('div'); pop.className = 'ovnav-chips-pop'; pop.setAttribute('role', 'menu'); nav.appendChild(pop); regPanel(pop, 'chips', close, btn); }
             const list = (_config.chips || []).filter((c) => c && !c.hidden);
             pop.innerHTML = list.map((c) => `<button type="button" role="menuitem" data-chip-row="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span>${escapeAttr(chipLabel(c))}</span><b>${escapeAttr(c.value == null ? '' : c.value)}</b></button>`).join('');
             pop.querySelectorAll('[data-chip-row]').forEach((row) => row.addEventListener('click', (ev) => {
@@ -1112,7 +1193,7 @@
             }
             closeDrawer();
         });
-        document.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('.ovnav-dd')) nav.querySelectorAll('.ovnav-dd.open').forEach(x => x.classList.remove('open')); }, onDocument());
+        nav.querySelectorAll('.ovnav-dd').forEach((dd) => regPanel(dd, 'nav-dropdown', () => dd.classList.remove('open'), dd.querySelector(':scope > a')));
         // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
         const placeDd = (dd) => {
             const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
@@ -1139,16 +1220,16 @@
                 openSearch('', 'sites');
             });
             document.addEventListener('click', (e) => { if (drawer.classList.contains('open') && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer(); }, onDocument());
-            regPanel(drawer, 'nav-drawer', closeDrawer);
+            regPanel(drawer, 'nav-drawer', closeDrawer, burger);
         }
     }
 
     /** Dropdown, launcher and notifications share one coordinator (panels.js): one open at a time, Escape, rotation.
      *  Panels are registered where they are created (no page-wide observers); registrations queue until the script loads. */
     const _panelQueue = [];
-    function regPanel(el, id, close) {
+    function regPanel(el, id, close, trigger) {
         if (!el) return;
-        const opts = Object.assign({ el, openClass: 'open', id, close }, onDocument());
+        const opts = Object.assign({ el, openClass: 'open', id, close, trigger }, onDocument());
         if (root.OpenVibePanels) return root.OpenVibePanels.register(opts);
         _panelQueue.push(opts);
         if (document.getElementById('ov-panels-loader')) return;
@@ -1175,6 +1256,7 @@
             const box = a.parentElement && a.parentElement.parentElement && a.parentElement.parentElement.querySelector('.ud-look') || scope.querySelector('.ud-look'); if (!box) return;
             e.preventDefault(); e.stopPropagation();
             const open = box.hidden; box.hidden = !open; a.setAttribute('aria-expanded', String(open));
+            if (open) popFrom(box, a);
             if (!open || box.__ovlk) return;
             const go = () => { if (root.OVLook) root.OVLook.mount(box, { signedIn: !!_config.user, season: !!_config.user }); else location.href = a.href; };
             if (root.OVLook) return go();
@@ -1234,24 +1316,17 @@
         return `<span class="ovnav-sep" aria-hidden="true"></span>` + pick.map(n => `<a class="ovnav-net" href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
     }
 
-    /** Display settings for guests, at the foot of the phone menu (members have them in the account menu); theme-loader.js owns the state. */
+    /** The menu's Display row: light, dark or auto as icons, and Settings opening the Look panel (text size, motion, theme,
+     *  icons) in place, the same as the account menu's (11-09, the owner: "moved to a settings menu… more compact"). */
     function bindDisplayControls(box) {
         const L = root.OpenVibeThemeLoader; if (!box || !L || !L.display) return;
-        const paint = () => {
-            const d = L.display.get();
-            const seg = (key, val, label, title) => `<button type="button" data-k="${key}" data-v="${val}" aria-pressed="${String(d[key]) === val}" title="${title}">${label}</button>`;
-            const sch = L.scheme ? L.scheme.get() : null;
-            const ss = (val, label, title) => `<button type="button" data-s="${val}" aria-pressed="${sch === val}" title="${title}">${label}</button>`;
-            box.innerHTML = `<span class="ovnav-dl">Display</span>${sch ? `<span class="ovnav-seg" role="group" aria-label="Light or dark">${ss('light', 'Light', 'Light theme')}${ss('dark', 'Dark', 'Dark theme')}${ss('auto', 'Auto', 'Follow this device')}</span>` : ''}<span class="ovnav-seg" role="group" aria-label="Text size">${seg('text', '100', 'A', 'Default text size')}${seg('text', '112', 'A+', 'Larger text')}${seg('text', '125', 'A++', 'Largest text')}</span>
-                <span class="ovnav-seg" role="group" aria-label="Motion">${seg('motion', 'auto', 'Motion', 'Animations on')}${seg('motion', 'reduced', 'Calm', 'Reduce animations')}</span>${seasonState() ? `<span class="ovnav-seg" role="group" aria-label="Seasonal themes">${seg('seasonal', 'on', seasonState().s.name, 'Seasonal themes on')}${seg('seasonal', 'off', 'Off', 'Seasonal themes off')}</span>` : ''}<a href="https://openvibe.design/look" data-ov-look-open aria-expanded="false">Look</a><div class="ud-look" hidden></div>`;
-            box.hidden = false;
-        };
-        box.addEventListener('click', (e) => {
-            const s2 = e.target.closest('button[data-s]'); if (s2 && L.scheme) { L.scheme.set(s2.dataset.s); paint(); return; }
-            const b = e.target.closest('button[data-k]'); if (!b) return; L.display.set({ [b.dataset.k]: b.dataset.v }); paint();
-        });
+        const say = () => { const sch = L.scheme ? L.scheme.get() : null; const d = L.display.get(); return [{ light: 'Light', dark: 'Dark', auto: 'Auto' }[sch] || '', d.motion === 'reduced' ? 'Calm' : '', String(d.text) !== '100' ? 'Large text' : ''].filter(Boolean).join(' · '); };
+        box.innerHTML = `<a class="ovnav-disp-row" href="https://openvibe.design/look" data-ov-look-open aria-expanded="false"><span class="ovnav-disp-ic">${navIcon('fa-palette')}</span><span><b>Display and theme</b><small data-disp-say></small></span>${navIcon('fa-chevron-down')}</a><div class="ud-look" hidden></div>`;
+        const paint = () => { const s = box.querySelector('[data-disp-say]'); if (s) s.textContent = say(); };
+        bindLook(box);
         if (typeof root.addEventListener === 'function') { root.addEventListener('ov:theme', paint, onDocument()); root.addEventListener('ov:display', paint, onDocument()); }
         paint();
+        box.hidden = false;
     }
 
     // ── Notification bell (mounted by the navbar itself) ─────
@@ -1725,7 +1800,18 @@
                 if (res.ok) {
                     const data = await res.json();
                     const user = (data && (data.user || data)) || null;
-                    if (user && (user.username || user.id)) return { user, token: null };
+                    if (user && (user.username || user.id)) {
+                        let token = data && data.token || null;
+                        // Sites with HTTP-only access cookies expose a verified access token through a
+                        // same-origin, no-store endpoint for the Dock and the notification bell.
+                        if (!token && _config.tokenUrl) {
+                            try {
+                                const tokenRes = await fetch(_config.tokenUrl, { credentials: 'same-origin', cache: 'no-store' });
+                                if (tokenRes.ok) token = (await tokenRes.json()).token || null;
+                            } catch { /* the account menu still works without the Dock */ }
+                        }
+                        return { user, token };
+                    }
                 }
             } catch { /* signed out */ }
         }
@@ -2083,6 +2169,8 @@
                 !isAnon ? { id: 'ov-work', label: 'Work together', short: 'Work', drawn: navIcon('fa-people-group'), href: 'https://openvibe.chat/work', mark: 'data-ov-work' } : null,
                 bell && _config.dock !== false ? { id: 'ov-dock', label: 'The Dock: your agents and activity on every page', short: 'Dock', drawn: DOCK_GLYPH, mark: 'data-ov-dock' } : null,
                 admin ? { id: 'ov-admin', label: 'Admin', drawn: navIcon('fa-shield-halved'), href: 'https://openvibe.network/admin' } : null,
+                !isAnon ? { id: 'ov-wallet', label: 'Wallet', drawn: navIcon('fa-wallet'), href: 'https://openvibe.network/my#wallet' } : null,
+                !isAnon && u.username ? { id: 'ov-profile', label: 'Profile', drawn: navIcon('fa-id-card'), href: `https://openvibe.network/@${encodeURIComponent(u.username)}` } : null,
             ].filter(Boolean));
             const ranked = byUse(places), grid = ranked.slice(0, 8), more = ranked.slice(8);
             const others = otherAccounts.filter(a => switcher || !a.is_anon);
@@ -2112,9 +2200,7 @@
                     ${sectionsHTML(menuCfg.sections)}
                     <div class="ud-foot">
                         <div class="ud-scheme" role="group" aria-label="Light or dark" hidden>${iconBtn('', navIcon('fa-sun'), 'Light', ' data-ov-scheme="light" aria-pressed="false"')}${iconBtn('', navIcon('fa-moon'), 'Dark', ' data-ov-scheme="dark" aria-pressed="false"')}${iconBtn('', navIcon('fa-circle-half-stroke'), 'Auto: follow this device', ' data-ov-scheme="auto" aria-pressed="false"')}</div>
-                        <button type="button" class="ud-ib ud-txt" data-ov-display="text" title="Text size" aria-label="Text size"><span class="icon">${navIcon('fa-text-height')}</span><b class="ud-val"></b></button>
-                        <button type="button" class="ud-ib" data-ov-display="motion" title="Animations" aria-label="Animations"><span class="icon">${navIcon('fa-wand-magic-sparkles')}</span><b class="ud-val"></b></button>
-                        <a class="ud-ib" href="https://openvibe.design/look" data-ov-look-open aria-expanded="false" title="Look: themes, the season, and more on openvibe.design" aria-label="Look"><span class="icon">${navIcon('fa-palette')}</span></a>
+                        <a class="ud-ib ud-disp" href="https://openvibe.design/look" data-ov-look-open aria-expanded="false" title="Theme, text size, motion and icons" aria-label="Display settings"><span class="icon">${navIcon('fa-palette')}</span><span>Display</span></a>
                     </div>
                     <div class="ud-look" hidden></div>
                 </div>
@@ -2127,21 +2213,19 @@
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
             bindLook(dropdown);
-            regPanel(dropdown, 'user-menu');
+            regPanel(dropdown, 'user-menu', () => dropdown.classList.remove('open'), nav.querySelector('#openvibe-avatar-btn'));
 
             // Avatar click toggles dropdown (the selection for Ask Vibe is read on pointerdown: the press can clear it)
             const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
             avatarBtn.addEventListener('pointerdown', () => { sel = selectedText(); });
             avatarBtn.addEventListener('click', () => {
-                dropdown.classList.toggle('open');
+                if (dropdown.classList.contains('open') && !dropdown.classList.contains('ov-pop-out')) { unpop(dropdown, () => { if (!dropdown.classList.contains('ov-pop')) dropdown.classList.remove('open'); }); return; }
+                dropdown.classList.add('open'); popFrom(dropdown, avatarBtn);
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; loadOvIcons(dropdown); }
             });
 
-            // Close on outside click
-            document.addEventListener('click', e => {
-                if (!nav.contains(e.target)) dropdown.classList.remove('open');
-            }, onDocument());
+            // panels.js closes this on an outside pointerdown, including another control in the navbar.
 
             dropdown.querySelectorAll('[data-account-id]').forEach(el => {
                 el.addEventListener('click', () => {
@@ -2189,6 +2273,8 @@
             document.body.prepend(nav);
         }
         _navEl = nav;
+        paintSlots();
+        watchKeyboard();
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
@@ -2236,6 +2322,7 @@
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
+                look: bindLook,
                 onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
             const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
         };
@@ -2443,6 +2530,9 @@
             if (opts.wallet === undefined) _config.wallet = true;
             if (opts.messages === undefined) _config.messages = { __default: true };
             injectStyles();
+            if (!root.OVSurfaces && !document.getElementById('ov-surfaces-loader')) {
+                const sc = document.createElement('script'); sc.id = 'ov-surfaces-loader'; sc.src = siblingV('surfaces.js'); sc.async = true; document.head.appendChild(sc);
+            }
             hookBoost();
             hookMoves();
             const el = render();
@@ -2552,8 +2642,24 @@
          *  settles; a page that draws such a box later may call this). Returns how many it marked. */
         focusScrollers() { try { return focusScrollers(); } catch { return 0; } },
 
+        /** A button before the brand: { icon | path, label, controls, sidebar, phoneOnly, pressed, href, onClick }; null removes it. README: Navbar slots. */
+        lead(spec) {
+            _lead = spec ? { ...spec } : null;
+            paintSlots();
+            return { set(patch) { if (_lead) { Object.assign(_lead, patch || {}); paintSlots(); } }, remove() { _lead = null; paintSlots(); } };
+        },
+        /** An icon button before the bell: lead()'s spec plus id and badge. */
+        action(spec) {
+            if (!spec || !spec.id || !/^[a-z0-9-]{1,40}$/.test(spec.id)) throw new Error('OpenVibeNavbar.action needs an id: a-z, 0-9 and -');
+            _actions.set(spec.id, { ...spec });
+            paintSlots();
+            return { set(patch) { const a = _actions.get(spec.id); if (a) { Object.assign(a, patch || {}); paintSlots(); } }, remove() { _actions.delete(spec.id); paintSlots(); } };
+        },
+
         /** The Dock on a tab, signed in only; opts.task points at that step (see openDock above). */
         openDock(tab, opts) { if (_config.token && _config.dock !== false) openDock(tab, opts); },
+        pop: popFrom,
+        unpop,
         askAgent(text) { askAgent(text); },
 
         /** Get the bell mount point for OpenVibeNotifications. */

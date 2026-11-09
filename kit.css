@@ -465,3 +465,10 @@ html[data-ov-motion=reduced] .ovk-skel { animation: none; }
 }
 /* A phone hero's 1fr track must shrink around the single-line disclosure. */
 .sc-hero-main:has(>.ovk-page-head),.sc-room-main:has(>.ovk-page-head){min-width:0}
+/* A phone's drawer holds the page still: the page cannot scroll behind it, the drawer scrolls on its own and never hands
+   the scroll on to the page, and the scrim takes no scroll gestures (11-09). */
+@media (max-width: 760px) {
+    html.ovk-drawer-open, html.ovk-drawer-open body { overflow: hidden; overscroll-behavior: none; }
+    .ovk-sidebar { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .ovk-sidebar-scrim { touch-action: none; overscroll-behavior: contain; }
+}

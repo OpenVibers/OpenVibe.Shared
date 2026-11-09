@@ -223,7 +223,12 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         const u = setup();
         u.io.fire(u.mark, true);
         u.document.documentElement.setAttribute('data-ov-motion', 'reduced'); await u.flush();
-        assert.strictEqual(u.running(), false, 'html[data-ov-motion=reduced]');
+        assert.strictEqual(u.running(), false, 'html[data-ov-motion=reduced]: no intro, no hover play');
+        // Calm is gentle, not still (the owner, 11-09: "the animations need to work even on calm mode"): a state still
+        // animates (its loops play once, by CSS).
+        u.mark.setAttribute('data-state', 'busy'); await u.flush();
+        assert.strictEqual(u.running(), true, 'a state still animates under Calm');
+        u.mark.removeAttribute('data-state'); await u.flush();
         u.document.documentElement.removeAttribute('data-ov-motion'); await u.flush();
         assert.strictEqual(u.running(), true, 'back inside the intro');
 

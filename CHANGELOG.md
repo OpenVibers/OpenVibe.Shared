@@ -1,17 +1,27 @@
 # Changelog
 
-## 4.159.0 — 2026-11-09
-
-- **Homes v2: `openvibe-shared/showcase-stage`** (plan `OpenVibe_Homes_v2_Plan_2026-11-09.md`; the owner, 11-09: "make the
-  home pages more unique… show the features… custom animations… infographics… a shared, modular system… still SEO
-  friendly"). `stage()` is a hero with one H1, the lede and a live demo panel of the product (the site's own HTML in a
-  window, phone or card frame) over the site's motif (13 drawn motifs: wave, planes, strip, shutter, bubbles, converge,
-  rise, path, stickers, grid, pen, orbit, cursor); `reel()` features as cards that swipe on a phone with a small motion
-  each; `numbers()` real numbers that roll up once with 30-day lines; `flow()` how it works with a line that draws.
-  Server-rendered words and numbers; motion only adds, never inside an SVG's children, and stops for reduced motion and
-  Calm. Its CSS (`CSS`) and starter (`MOTION_JS`) are separate, so homes that do not use it do not grow.
-
 ## Unreleased
+
+- `kit.pageHead` provides a named back chip, page icon, title and actions, with a native description disclosure on phones. Showcase heroes can opt into the same page identity.
+
+## 4.163.0 — 2026-11-09
+
+- **You, redone** (the owner, 11-09: "the U tab still sucks, and you didn't do all the improvements"). You on top: your
+  picture (online), name and @handle linking to your profile, with **Display** beside it (the Look panel: theme, icons,
+  appearance, text size, motion, opening in place; navbar passes `look` to the menu) and **Settings** (Account). Display
+  leaves the foot of the tab for signed-in people.
+- **Jump back in** is a row of cards you swipe: each place's own hue icon, a two-line title, a time that keeps up while the
+  menu is open, and LIVE with a breathing ring for a stream that is on now. It replaces Recent, which repeated the grid.
+- **Most used**: the pages you opened per site, as one bar and its key (five colours that tell apart in dark and light).
+- **Your own AI** is one compact row (mark, words, Set it up, an ×): a third of the height.
+- **Smart folders**: until you arrange your home, the sites past the first page sit in folders from the network's groups
+  (Watch, People, Make, Read, Play, Shop). A folder shows four different icons (Quick tools showed `</>` four times).
+- **Drag lands where you drop**: the drop is found by the grid's slots, not the sliding apps' drawn boxes (an app sliding
+  under the finger took the drop, so it landed one place off now and then).
+- **The video player's bar matches Live's**: 40 px buttons (44 on touch), centred icons.
+- Calm keeps the cards' fade and a slower live breath.
+
+## 4.162.0 — 2026-11-09
 
 - `kit.head` accepts an icon tile; `kit.section` accepts an icon and an action row that wraps on phones.
   Rails accept an icon and use a labelled button for their action. Existing section markup is preserved when neither option is supplied. Empty-state actions already use primary
@@ -45,6 +55,82 @@
   phone) without spending Back; a menu still open when a page is swapped in place marks the new page; a link that leaves
   the page draws the top bar at once. The bar (navbar and Boost alike) is 3 px of the OpenVibe gradient from the theme's
   accents, with a soft glow and a bright running head; reduced motion keeps it still.
+- **Loading fits a short player** (the owner, 11-09): under 300 px the mark, words and buttons shrink and the hint goes;
+  Try again carries the retry arrows and other actions are icon buttons; the V ticks green before the screen fades.
+- **The Dock's Actor tab** (#351, under the name Agents), **Dock chats from a site's session** (#364), **one sheet
+  behaviour for scroll and dismissal** (#371), **six glyph styles** (#367) and **section headings with icons** (#369).
+
+## 4.161.0 — 2026-11-09
+
+- **Menus open from where you tapped** (the owner, 11-09: "custom animations… content aware… where you're clicking"):
+  `OpenVibeNavbar.pop(el, trigger)` / `.unpop(el, done)`, a clip reveal with a small spring from the trigger and a quick
+  close; the account menu, the Display panel, the composer's Options and Attach, and the Dock (from its pill on a
+  computer) use it.
+- **Calm is gentle, not still** (the owner: "the animations need to work even on calm mode"): the mark still animates a
+  state (its loops play once) and menus pop small and short; only intros, hover plays and the season's leaves rest.
+- **The menu's tabs show what they are**: this site's own mark, Feed with a live dot or a count of what changed since
+  you last looked, You with your picture and an online dot; the tab is remembered per site.
+- **You**: app icons (no ring; the glyph fills a squircle tinted with each app's own hue), Quick tools named apart from
+  the Tools site with each tool's own icon, a grid that fills a computer's width, editing that never scrolls the page
+  and scrolls the list near its edges, the AI invite redesigned; Jump back in with each site's icon, cleaner titles and
+  Live now.
+- **The account menu**: Wallet and Profile tiles; the footer keeps light, dark and auto with one Display button; the
+  Look panel holds text size and motion with the theme and icons; the menu's Display row matches.
+- **The Dock**: Close is the menu orb in its x form; More's dots sit on the centre line.
+- **Sideways strips say they scroll**: kit rails and `[data-ovk-scroll]` fade at the edges where more is hidden, show a
+  position bar, nudge once on a phone, and `drift` moves until the first touch.
+
+## 4.160.0 — 2026-11-09
+
+- **Feed v2: the menu's Feed is a real feed** (the owner, 11-09: "a real feed… you scroll through easy content… a filter
+  system… clean, intuitive"). When Community's `/api/v1/feed` answers, the Feed tab is the composer, today's numbers, the
+  live bar and one stream of cards by kind (live, clips and videos with a muted preview that plays only in view and never
+  with reduced motion or data saver, pictures, posts, memes, games, compact updates), chips on top (For you, Live, Clips,
+  Videos, Pics, Posts, Memes, Games, Updates), more as the end comes near, "You're all caught up" at the end; without
+  the API, the wall and its sections stand as before.
+
+- **Every section heading has an icon, and sections stand apart** (the owner, 11-09: "these section titles should have an
+  icon… look nicer and more consistent, separate things… a universal system"). The showcase kit's headings carry an icon
+  tile (features: grid, steps, code, demo, compare, pricing, limits, stories, stats, cards, spotlight, questions, network,
+  apps each have a default; `icon:` picks another); each section has a hairline and room above it.
+- **More on OpenVibe** (was "Part of OpenVibe"): the related sites with their icons, a live "Happening on OpenVibe" strip
+  (who is live and the sites' trending items, from Network's Frame, text only) when the page includes `sc.NETWORK_JS`,
+  and "Every OpenVibe site →" to openvibe.network/sites.
+
+- **`openvibe-shared/ai-marks`: the AI makers' marks, one place** (the AI comparison plan, R3; the owner, 11-09: our
+  hand-drawn family glyphs read as "what is it even supposed to be?"). `family(idOrName)` finds the maker from a model
+  id, slug, family or provider name (16 makers: OpenAI, Anthropic, Google, Gemma, Meta, DeepSeek, Qwen, Mistral,
+  Moonshot, Zhipu, MiniMax, Microsoft, xAI, NVIDIA, Cohere, Perplexity); `mark()` draws it monochrome in a theme tile,
+  labelled with the maker's name; anyone else gets the neutral spark. Drawings from @lobehub/icons-static-svg (MIT),
+  regenerated by `scripts/build-ai-marks.js`.
+- **The composer's Options, the navbar's own buttons, the keyboard** (the owner, 11-09, on openvibe.codes: "too many
+  options… hidden under a cog"; the sidebar button "to the left of the logo… the navbar SDK and API… other people can add
+  icons"; the keyboard "takes up a lot of space"). `thread.composer({ options, examples })`: one Options button with the
+  pickers behind it (a panel on a computer, a sheet on a phone with the page held still, a `<details>` without script),
+  changed pickers as chips with ×, a dot on the button, and a placeholder that walks through examples.
+  `OpenVibeNavbar.lead(spec)` and `.action(spec)`: a site's own buttons in the bar; a kit sidebar's toggle moves there on
+  a phone. `html.ov-kb-open` and `--ov-kb` on every site; start pages fold `data-ovt-fold`; the Dock's phone sheet ends
+  above the keyboard and no longer opens it by itself on a touch screen.
+- **The Dock's pin is an upright pushpin** whose lines never cross (it read as a pin with a line through it).
+- **The composer's attach, answers' actions and the quiet line** (the owner, 11-09, on Vibe: "the image button is broken…
+  support all file types… a better file attach button… Copy and Try again should be actual icons… 'Vibe can get things
+  wrong' should be under"): attach is one + button for every file type, and with `attach: { menu: true, library }` a
+  menu of Files, Photos and videos, Take a photo (phones) and From your OpenVibe files; Copy and a site's actions are
+  icon buttons named by their word (a tick when copied; Try again draws the retry arrows); the composer's note sits
+  under the box.
+- **A phone's drawer holds the page still** (kit.sidebar): the page behind cannot scroll and the drawer never hands its
+  scroll on (the owner: a swipe on the drawer "scrolls the actual page").
+
+## 4.159.0 — 2026-11-09
+
+- **Homes v2: `openvibe-shared/showcase-stage`** (plan `OpenVibe_Homes_v2_Plan_2026-11-09.md`; the owner, 11-09: "make the
+  home pages more unique… show the features… custom animations… infographics… a shared, modular system… still SEO
+  friendly"). `stage()` is a hero with one H1, the lede and a live demo panel of the product (the site's own HTML in a
+  window, phone or card frame) over the site's motif (13 drawn motifs: wave, planes, strip, shutter, bubbles, converge,
+  rise, path, stickers, grid, pen, orbit, cursor); `reel()` features as cards that swipe on a phone with a small motion
+  each; `numbers()` real numbers that roll up once with 30-day lines; `flow()` how it works with a line that draws.
+  Server-rendered words and numbers; motion only adds, never inside an SVG's children, and stops for reduced motion and
+  Calm. Its CSS (`CSS`) and starter (`MOTION_JS`) are separate, so homes that do not use it do not grow.
 
 ## 4.158.0 — 2026-11-09
 
@@ -1421,8 +1507,6 @@ From a phone sweep of every site's home (11-02):
   align left, and slash, plus 40 names mapped onto glyphs that already stand for the same thing. Brand logos stay
   Font Awesome Brands. ov-glyphs.js, the glyph font (22.3 KB woff2), its Font Awesome stylesheet and the sprite are
   rebuilt; existing code points are unchanged.
-
-## Unreleased
 
 ## 4.113.0 — 2026-11-06
 

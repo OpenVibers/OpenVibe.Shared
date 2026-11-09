@@ -32,17 +32,22 @@
     const W = [320, 720], H = [360, 900], DEF = { width: 420, height: 640 };
     const CORNERS = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
+    // Close is the OpenVibe menu's orb in its × form (11-09, the owner: "replace this close button with our own… the
+    // corner button… its close form… nice animations"): nine dots that fold into an × as the Dock opens.
+    const ORBX = `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="ovdk-ox">${[[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]].map(([x, y, r]) => `<circle class="ovdk-o${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('')}</g></svg>`;
     const G = {
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
         bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
-        pin: '<path d="M14.5 3.5l6 6-3 1.5-3.5 3.5.5 4-1.5 1.5-4-4-4.5 4.5M9 15l-4-4 1.5-1.5 4 .5L14 6.5z"/>',
+        // An upright pushpin whose lines never cross (owner, 11-09: the old one had "a line going through it").
+        pin: '<path d="M7.5 3.5h9M10 3.5v5.3L6.5 13h11L14 8.8V3.5M12 13v7.5"/>',
         close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
         open: '<path d="M13.5 5.5h5v5M18.5 5.5l-8 8M16.5 13.5v4a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h4"/>',
         chat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
         back: '<path d="M14.5 6.5L9 12l5.5 5.5"/>',
         send: '<path d="M4.5 12h11M11 6.5l5.5 5.5-5.5 5.5"/>',
         vibe: '<path d="M12 4.5a7.5 7.5 0 0 1 6.4 11.4L19.5 19.5l-3.6-1.1A7.5 7.5 0 1 1 12 4.5z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/>',
-        more: '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',
+        // Three filled dots on the exact centre line (a stroked h.01 path drew them a hair off centre: the owner, 11-09).
+        more: '<g fill="currentColor" stroke="none"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></g>',
         clock: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/>',
     };
     // Vibe first (L48 V2): the person's AI, on every site.
@@ -52,7 +57,7 @@
     const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
-    let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null;
+    let el = null, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null, dockSurface = null;
     // Pop out (K-D4): the window the panel lives in while it is popped out, and whether it is in one.
     let pipWin = null, popped = false, pipClosing = false, popOk = true;
     const mounts = {};
@@ -101,7 +106,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'fa6d48d86c71', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '40a5f8e3970b', 'action-center.js': '125c20e01289', 'dock-timeline.js': 'ad21e7bb4306', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -172,7 +177,20 @@
             .ovdk-acts { display: flex; gap: 2px; margin-left: auto; }
             .ovdk-acts button { width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
             .ovdk-acts button:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
-            .ovdk-acts button svg { width: 19px; height: 19px; }
+            .ovdk-acts button svg { width: 19px; height: 19px; display: block; }
+            .ovdk-orbx svg { width: 22px !important; height: 22px !important; overflow: visible; }
+            .ovdk-ox { transform-origin: 12px 12px; transform: rotate(180deg) scale(.86); transition: transform .45s cubic-bezier(.2, 1.35, .3, 1); }
+            .ovdk-ox circle { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: opacity .25s, transform .3s cubic-bezier(.2, 1.4, .3, 1), fill .2s; }
+            .ovdk-ox .ovdk-o1 { opacity: 0; transform: scale(0); }
+            .ovdk-ox .ovdk-o0 { fill: var(--accent, #3b82f6); }
+            .ovdk.is-in .ovdk-ox { animation: ovdk-ox-in .55s cubic-bezier(.2, 1.35, .3, 1) both; }
+            .ovdk.is-in .ovdk-ox .ovdk-o1 { animation: ovdk-o1-out .4s ease both; }
+            .ovdk-orbx:hover .ovdk-ox, .ovdk-orbx:focus-visible .ovdk-ox { transform: rotate(270deg) scale(.9); }
+            .ovdk-orbx:hover .ovdk-ox circle { fill: var(--accent-light, #60a5fa); }
+            .ovdk-orbx:active .ovdk-ox { transform: rotate(270deg) scale(.7); }
+            @keyframes ovdk-ox-in { from { transform: rotate(45deg) scale(.8); } }
+            @keyframes ovdk-o1-out { from { opacity: 1; transform: scale(1); } }
+            @media (prefers-reduced-motion: reduce) { .ovdk-ox, .ovdk-ox circle { transition: none; animation: none !important; } }
             .ovdk-more { position: absolute; z-index: 6; right: 8px; top: calc(100% - 4px); width: min(320px, calc(100% - 16px)); display: grid; gap: 2px; padding: 6px; border-radius: 16px;
                 border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55); cursor: default; }
             .ovdk-more[hidden] { display: none; }
@@ -261,7 +279,7 @@
             .ovdk-err[hidden] { display: none; }
             .ovdk-none b { display: block; margin-bottom: 4px; font-size: 15px; color: var(--text-primary, #ececf1); }
             @media (max-width: 640px) {
-                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: 0; width: auto !important; height: auto !important; max-width: none; max-height: none;
+                .ovdk, .ovdk[data-corner] { z-index: 10010; left: 0; right: 0; top: 0; bottom: var(--ov-kb, 0px); width: auto !important; height: auto !important; max-width: none; max-height: none;
                     border: 0; border-radius: 0; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); box-shadow: none; transform-origin: 50% 100%; }
                 .ovdk.is-in { animation-name: ovdk-rise; animation-duration: .3s; }
                 .ovdk-head { cursor: default; }
@@ -315,7 +333,7 @@
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
                     <button type="button" data-act="more" aria-haspopup="true" aria-expanded="false" title="More" aria-label="More: a timer, the Dock's button">${svg(G.more)}</button>
-                    <button type="button" data-act="close" title="Close" aria-label="Close the Dock">${svg(G.close)}</button>
+                    <button type="button" data-act="close" class="ovdk-orbx" title="Close" aria-label="Close the Dock">${ORBX}</button>
                 </div>
                 <div class="ovdk-more" role="menu" aria-label="More" hidden>
                     <button type="button" role="menuitem" data-act="timer">${svg(G.clock)}<span><b>Start a timer</b><small>A countdown or a focus round, on the Dock's button</small></span></button>
@@ -519,14 +537,18 @@
             const ok = await load('action-center.js', () => !!(root.OpenVibeActionCenter && root.OpenVibeActionCenter.mount));
             if (!ok) return failed(panel, id);
             // K-D3: the person's own agent stream above the list; it hides itself when there is none.
-            panel.innerHTML = `<div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
+            panel.innerHTML = `<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-foot"><button type="button" data-act="all">${svg(G.open)}Scheduled, done and failed</button><a href="https://openvibe.actor/">Give an agent a task →</a></div>`;
             // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
             // phone Now and Needs you are on screen before anything else.
             load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
                 if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent', focus: () => o.task || null });
             });
+            // Actor v3 (A3): your Actor first, on every site; it shows nothing for a person without one.
+            load('dock-actor.js', () => !!(root.OpenVibeDockActor && root.OpenVibeDockActor.mount)).then((on) => {
+                if (on && !mounts[id + 'Actor'] && panel.isConnected) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent' });
+            });
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
-                if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.firstChild, { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
+                if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
             });
             const m = root.OpenVibeActionCenter.mount(panel.querySelector('.ovdk-scroll'), {
                 token: o.token, apiBase: o.apiBase, scopes: o.scopes, buckets: ['waiting', 'running'],
@@ -698,7 +720,7 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
-        if (canWriteChat()) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
+        if (canWriteChat() && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {
@@ -917,7 +939,12 @@
         paintPop();
         el.hidden = false;
         el.classList.remove('is-in'); void el.offsetWidth; el.classList.add('is-in');
-        if (phone()) { el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open'); } else el.removeAttribute('aria-modal');
+        // On a computer it grows out of its pill (the navbar's shared motion); a phone's sheet rises as before.
+        if (!phone() && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) root.OpenVibeNavbar.pop(el, document.getElementById('ovdk-pill'));
+        if (phone()) {
+            el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open');
+            if (root.OVSurfaces && !dockSurface) { dockSurface = root.OVSurfaces.sheet({ el, body: el.querySelector('.ovdk-body'), close }); dockSurface.open(); }
+        } else { el.removeAttribute('aria-modal'); if (dockSurface) { dockSurface.destroy(); dockSurface = null; } }
         setTab(want, false);
         readUnread();
         if (!state().open || (state().tab !== tab && SAVED_TABS.includes(tab))) save({ open: true, ...(SAVED_TABS.includes(tab) ? { tab } : {}) }); else notify();
@@ -929,6 +956,7 @@
         if (wasPopped) { popped = false; const w = pipWin; pipWin = null; pipClosing = true; try { if (w) w.close(); } catch { /* already gone */ } pipClosing = false; if (el.parentNode !== document.body) document.body.appendChild(el); }
         const inside = el.contains(document.activeElement);
         el.hidden = true;
+        if (dockSurface) { dockSurface.destroy(); dockSurface = null; }
         el.style.transform = '';
         el.removeAttribute('aria-modal');
         document.documentElement.classList.remove('ovdk-sheet-open');

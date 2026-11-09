@@ -39,11 +39,11 @@
         const el = opts && opts.el, signal = opts && opts.signal;
         if (!el || (signal && signal.aborted)) return () => {};
         const known = panels.find(p => p.el === el); if (known) return known.unregister;
-        const p = { el, openClass: opts.openClass || 'open', id: opts.id || '', close: typeof opts.close === 'function' ? opts.close : () => el.classList.remove(opts.openClass || 'open') };
+        const p = { el, trigger: opts.trigger, openClass: opts.openClass || 'open', id: opts.id || '', close: typeof opts.close === 'function' ? opts.close : () => el.classList.remove(opts.openClass || 'open') };
         let was = isOpen(p);
         const watch = new MutationObserver(() => {
             const now = isOpen(p); if (now === was) return; was = now;
-            if (now) { closeAll(el); try { el.scrollTop = 0; } catch { /* */ } }
+            if (now) { closeAll(el); if (root.OVSurfaces) root.OVSurfaces.closePopover(); try { el.scrollTop = 0; } catch { /* */ } }
             syncBody();
         });
         p.unregister = () => {
@@ -61,7 +61,17 @@
 
     function unregister(el) { const p = panels.find(x => x.el === el); if (p) p.unregister(); }
 
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && anyOpen()) closeAll(); });
+    document.addEventListener('pointerdown', (e) => {
+        for (const p of panels) if (isOpen(p) && !p.el.contains(e.target) && !(p.trigger && p.trigger.contains(e.target))) p.close();
+        syncBody();
+    }, true);
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape' || !anyOpen()) return;
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        const trigger = panels.find(p => isOpen(p) && p.trigger)?.trigger;
+        closeAll();
+        if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
+    });
     root.addEventListener('orientationchange', () => closeAll(), { passive: true });
 
     const api = { register, unregister, closeAll, anyOpen };

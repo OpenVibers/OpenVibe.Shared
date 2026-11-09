@@ -67,8 +67,15 @@
     // of sites"). The first is labelled with this site's own name.
     const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
     const TAB_KEY = 'ovs-tab';
-    const savedTab = () => { try { const v = localStorage.getItem(TAB_KEY); return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
-    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, v); } catch { /* private window */ } };
+    // The tab is remembered per site (11-09, the owner: on a new site the menu opened on You, "confusing"): another site
+    // opens on its own tab first; the same site opens where the person left it.
+    const savedTab = () => { try { const [v, host] = String(localStorage.getItem(TAB_KEY) || '').split('|'); if (host && host !== location.hostname) return null; return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
+    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, `${v}|${location.hostname}`); } catch { /* private window */ } };
+    // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
+    // since last time you've looked… a badge").
+    const FEED_SEEN = 'ovs-feed-seen';
+    const feedSeen = () => { try { return Number(localStorage.getItem(FEED_SEEN)) || 0; } catch { return 0; } };
+    const markFeedSeen = () => { try { localStorage.setItem(FEED_SEEN, String(Date.now())); } catch { /* */ } };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
@@ -164,6 +171,15 @@
         } catch { return null; }
     }
 
+    // Times that keep up while the menu is open (once a minute; nothing runs while it is closed).
+    let agoTimer = 0;
+    function tickAgo() {
+        clearInterval(agoTimer);
+        agoTimer = setInterval(() => {
+            if (!el || !el.classList.contains('is-open')) { clearInterval(agoTimer); agoTimer = 0; return; }
+            el.querySelectorAll('[data-at]').forEach((m) => { const t = ago(m.dataset.at); if (t) m.textContent = [m.dataset.pre, t].filter(Boolean).join(' · '); });
+        }, 60000);
+    }
     function ago(iso) {
         const t = Date.parse(iso || ''); if (!isFinite(t)) return '';
         const m = Math.max(0, Math.round((Date.now() - t) / 60000));
@@ -207,6 +223,14 @@
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
 .ovs-starttabs .ovs-tab span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-starttabs .ovs-tab { height: 42px; gap: 8px; transition: background-color .18s, color .18s; }
+.ovs-starttabs .ovs-tab .ovs-tab-ic { position: relative; flex: none; display: grid; place-items: center; width: 22px; height: 22px; overflow: visible; }
+.ovs-tab-ic > svg { width: 20px; height: 20px; }
+.ovs-tab-ic .ov-icon { display: grid; place-items: center; }
+.ovs-tab-av { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: block; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 18%, transparent); }
+.ovs-tab[aria-selected="true"] .ovs-tab-av { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
+.ovs-tab-on { position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
+.ovs-tabnew { flex: none; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: 700 11px/18px Inter, system-ui, sans-serif; text-align: center; }
 .ovs-tabdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live-red, #ef4444); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live-red, #ef4444) 22%, transparent); }
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
@@ -406,7 +430,7 @@
         el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
-            tab = b.getAttribute('data-tab'); saveTab(tab); render(''); listEl.scrollTop = 0;
+            tab = b.getAttribute('data-tab'); saveTab(tab); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -556,7 +580,7 @@
                 if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); return; }
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
                 let api = null;
-                try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : H.timeline)(li, homeOpts()); } catch { return; }
+                try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : (H.feed || H.timeline))(li, homeOpts()); } catch { return; }
                 homeViews[g.as] = { li, api };
                 listEl.appendChild(li);
                 return;
@@ -630,7 +654,7 @@
                     const main = document.createElement('span'); main.className = 'ovs-main';
                     const t = document.createElement('span'); t.className = 'ovs-title'; t.textContent = it.title; main.appendChild(t);
                     if (it.tag) { const tg = document.createElement('i'); tg.className = 'ovs-tag'; tg.textContent = it.tag; t.appendChild(tg); }
-                    if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; main.appendChild(m); }
+                    if (it.meta) { const m = document.createElement('span'); m.className = 'ovs-meta'; m.textContent = it.meta; if (it.at) { m.dataset.at = it.at; m.dataset.pre = it.metaPre || ''; } main.appendChild(m); }
                     if (it.snippet) { const sn = document.createElement('span'); sn.className = 'ovs-snip'; sn.textContent = it.snippet; main.appendChild(sn); }
                     if (it.image) {
                         const im = document.createElement('img');
@@ -940,21 +964,52 @@
     // The network's flagships, first in the full list (the owner, 11-07: "show our most coolest products front facing").
     const FLAGSHIPS = ['live', 'media-hub', 'codes', 'design', 'space', 'games', 'chat', 'tools'];
 
-    /** The tab strip under the search field: this site's name, Feed (a red dot while anyone is live), You. */
+    /** What is new in the Feed since it was last looked at: the network's real changes after that moment (0 on a first look). */
+    function feedNew() {
+        const seen = feedSeen();
+        if (!seen || !Array.isArray(changesData)) return 0;
+        let n = 0;
+        for (const e of changesData) { const t = Date.parse(e.deployed_at || e.committed_at || ''); if (t > seen && !HOUSEKEEPING.test(String(e.subject || ''))) n++; }
+        return n;
+    }
+    const TAB_SVG = {
+        feed: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="7" rx="2"/><path d="M4 15.5h16M4 19.5h10"/></svg>',
+        you: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c1.2-3.3 3.9-5 7-5s5.8 1.7 7 5"/></svg>',
+    };
+    /**
+     * The tab strip under the search field (11-09, the owner: "these icons should be visually improved… your avatar…
+     * the feed content aware… each site its own icon"): this site's own mark and name, Feed with a red dot while anyone is
+     * live or a count of what is new since you last looked, and You with your picture and an online dot.
+     */
     function paintTabs() {
         tabsEl.hidden = false;
         tabsEl.setAttribute('role', 'tablist');
         tabsEl.setAttribute('aria-label', 'Menu');
         tabsEl.textContent = '';
         const live = pulseData && Number(pulseData.live_now) > 0;
+        const fresh = tab === 'feed' ? 0 : feedNew();
+        const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        let siteId = ctx.service || '';
+        try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
         for (const [id, label] of TABS) {
             const b = document.createElement('button');
             b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab'); b.setAttribute('data-tab', id);
             b.setAttribute('aria-selected', tab === id ? 'true' : 'false');
+            const ic = document.createElement('span'); ic.className = 'ovs-tab-ic';
+            if (id === 'here' && siteId) { const g = document.createElement('span'); g.className = 'ov-icon'; g.setAttribute('data-icon', siteId); g.setAttribute('data-size', '20'); g.setAttribute('data-fx', 'none'); ic.appendChild(g); }
+            else if (id === 'you' && me && me.avatar_url && /^https:\/\//.test(me.avatar_url)) {
+                const img = document.createElement('img'); img.src = me.avatar_url; img.alt = ''; img.width = 22; img.height = 22; img.decoding = 'async'; img.className = 'ovs-tab-av';
+                img.onerror = () => { ic.innerHTML = TAB_SVG.you; };
+                ic.appendChild(img);
+                const on = document.createElement('i'); on.className = 'ovs-tab-on'; on.setAttribute('aria-hidden', 'true'); ic.appendChild(on);
+            } else if (TAB_SVG[id]) ic.innerHTML = TAB_SVG[id];
+            if (ic.firstChild) b.appendChild(ic);
             const t = document.createElement('span'); t.textContent = id === 'here' ? here() : label; b.appendChild(t);
             if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); b.appendChild(d); }
+            else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); b.appendChild(n); }
             tabsEl.appendChild(b);
         }
+        if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
     }
 
     /** What every tab needs: the sites, this one, and the person's ranking of them. */
@@ -1030,18 +1085,38 @@
         if (wall) groups.push({ as: 'walltop', items: [], section: 'wall-top' });
         const live = liveGroup(); if (live) groups.push(live);
         if (wall) groups.push({ as: 'wall', items: [], section: 'wall' });
+        if (wall && feedV2) return groups;   // Feed v2: the composer, today, the live bar and the stream
         // The network's cards: text and links only (never another site's code), checked here again, with an entry's https
         // picture when it sent one; the person's choice and order, else Network's first two.
         const feeds = f && Array.isArray(f.cards) ? f.cards.filter((c) => c && typeof c.title === 'string' && Array.isArray(c.items) && c.items.length).slice(0, 12) : [];
         const chosen = feedPref();
         // Every feed shows until the person chooses (owner, 11-09: "by default all the feeds show, but you can configure the order").
-        const netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds;
+        let netCards = chosen ? chosen.map((id) => feeds.find((c) => feedId(c) === id)).filter(Boolean) : feeds;
+        // Nothing old dressed as new (11-09, the owner: "why is New in the forum first when it's 17 days ago"): a card's age
+        // is its newest item's (a timestamp when the card sends one, else its "3d ago" words); one older than 3 days drops
+        // the word "New" from its title, and until the person orders them, fresher cards come first and month-old ones last.
+        const AGE = { m: 60e3, min: 60e3, h: 3600e3, d: 86400e3, w: 604800e3, mo: 2592e6, y: 31536e6 };
+        const ageOf = (c) => {
+            let best = Infinity;
+            for (const x of c.items || []) {
+                const t = Date.parse(x && (x.at || x.updated_at || x.published_at) || '');
+                if (t) { best = Math.min(best, Date.now() - t); continue; }
+                const m = /(\d+)\s*(min|mo|m|h|d|w|y)\b[^·]*ago/.exec(String(x && x.meta || ''));
+                if (m) best = Math.min(best, Number(m[1]) * AGE[m[2]]);
+            }
+            return best;
+        };
+        const ages = new Map(netCards.map((c) => [c, ageOf(c)]));
+        const later = [];   // cards older than two weeks: after What's new
+        if (!chosen) netCards = netCards.slice().sort((a, b) => (ages.get(a) === Infinity ? 1e15 : ages.get(a)) - (ages.get(b) === Infinity ? 1e15 : ages.get(b)));
         netCards.forEach((c) => {
             const as = c.kind === 'rail' ? 'livebar' : c.kind === 'chips' ? 'chips' : 'rows';
             const rows = c.items.slice(0, 6).map((x) => ({ title: String(x.title || '').slice(0, 80), meta: String(x.meta || '').slice(0, 120), url: safeUrl(x.url),
                 image: x.image && /^https:\/\//.test(String(x.image.src || '')) ? String(x.image.src) : null,
                 site: c.site && /^[a-z0-9-]{1,30}$/.test(c.site) ? c.site : null, icon: 'go', kind: 'card' })).filter((x) => x.url && x.title);
-            if (rows.length) groups.push({ title: String(c.title).slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
+            const stale = isFinite(ages.get(c)) && ages.get(c) > 3 * 86400e3;   // an unknown age is never called old
+            const title = stale ? String(c.title).replace(/^New\s+(in|on|from)\s+/i, (m0, w) => `${w[0].toUpperCase()}${w.slice(1)} `).replace(/^New\s+/i, '') : String(c.title);
+            if (rows.length) (isFinite(ages.get(c)) && ages.get(c) > 14 * 86400e3 && !chosen ? later : groups).push({ title: title.slice(0, 60), as, items: rows, section: `net:${String(c.id || c.site || '').slice(0, 30)}`, more: c.more && safeUrl(c.more.url) ? { label: String(c.more.label || 'More').slice(0, 24), href: c.more.url } : null });
         });
         // What's new (the owner, 11-07): the newest real change per site, newest first, "New" after this person's last visit.
         if (Array.isArray(changesData) && changesData.length) {
@@ -1066,6 +1141,7 @@
             const today = changesData.filter((e) => e && e.service && !HOUSEKEEPING.test(String(e.subject || '')) && Date.parse(at(e) || 0) > dayAgo).length;
             if (rows.length) groups.push({ title: today ? `What's new (${today} today)` : "What's new", items: rows, section: 'news', more: { label: 'All updates', href: 'https://openvibe.network/updates' } });
         }
+        groups.push(...later);
         // Two places new to this person, rotating fairly through the network (developer services only for builders).
         const builder = all.some((x) => x.group === 'build' && useOf(x.id));
         const discoverPool = (f && Array.isArray(f.discover_ids) && f.discover_ids.length ? f.discover_ids.map((id) => byId.get(id)).filter(Boolean) : ranked)
@@ -1086,17 +1162,26 @@
         return groups;
     }
 
+    /**
+     * A page they were on (11-09, the owner: "more like live data… smart and aware… better info, looks nicer"): the site's
+     * own icon, the title without the site's name glued on, when, and "Live now" for a channel that is live this minute.
+     */
+    function backRow(x) {
+        const title = String(x.title || '').replace(/\s*[·|–—-]\s*(?:OpenVibe\.\w+|open\.\w+)\s*$/i, '').replace(/^OpenVibe\.\w+:\s*/i, '').trim() || x.title;
+        const live = pulseData && Array.isArray(pulseData.live) && pulseData.live.some((c) => c && c.url && safeUrl(c.url) && hostOf(c.url) === hostOf(x.url) && String(c.url).replace(/\/$/, '').toLowerCase() === String(x.url).replace(/[?#].*$/, '').replace(/\/$/, '').toLowerCase());
+        const svc = x.service === 'media' ? 'media-hub' : x.service;
+        const pre = [live ? 'Live now' : '', x.site].filter(Boolean).join(' · ');
+        return { title: title.slice(0, 90), meta: [pre, ago(x.at)].filter(Boolean).join(' · '), metaPre: pre, at: x.at, url: x.url, site: svc && /^[a-z0-9-]{1,30}$/.test(svc) ? svc : null, icon: 'back', kind: 'history', tag: live ? 'Live' : '' };
+    }
+
     /** You: their workspace, their places, the pages they were on, tools, their searches, and the display controls. */
     function youGroups() {
         const { take, ranked } = basis();
         const groups = [];
         if (homeLib()) {
             groups.push({ as: 'home', items: [], section: 'home' });
-            const seenH = new Set();
-            const backH = mine ? mine.items.filter((x) => { if (seenH.has(x.url)) return false; seenH.add(x.url); return true; }).slice(0, 5)
-                .map((x) => ({ title: x.title, meta: [x.site, ago(x.at)].filter(Boolean).join(' · '), url: x.url, icon: 'back', kind: 'history' })) : [];
-            groups.push({ title: 'Jump back in', items: backH, section: 'back' });
-            if (typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
+            // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
+            if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
         }
         if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
@@ -1105,8 +1190,7 @@
         const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
         groups.push({ title: yours ? 'Your places' : 'Popular on OpenVibe', as: 'apps', items: take(dockPool, 8).map((x) => siteItem(x)), section: 'places' });
         const seen = new Set();
-        const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5)
-            .map((h) => ({ title: h.title, meta: [h.site, ago(h.at)].filter(Boolean).join(' · '), url: h.url, icon: 'back', kind: 'history' })) : [];
+        const back = mine ? mine.items.filter((h) => { if (seen.has(h.url)) return false; seen.add(h.url); return true; }).slice(0, 5).map(backRow) : [];
         groups.push({ title: 'Jump back in', items: back, section: 'back' });
         const tools = yourTools().concat(quickTools()).filter((t, i, a) => a.findIndex((x) => x.url === t.url) === i).slice(0, 6);
         groups.push({ title: 'Tools', as: 'chips', more: { label: 'All tools', href: 'https://openvibe.tools/' }, items: tools, section: 'tools' });
@@ -1120,7 +1204,7 @@
     // ── The home screen and the wall (ov-home.js, 2026-11-09): loaded beside this file the first time You or Feed
     // paints; until it arrives (or if it cannot), the tabs paint as before.
     // One view of each per opening: a repaint (history or the catalogue arriving) keeps edit mode, a drag, a half-typed post.
-    let homeLoading = false, pulseReady = null, homeViews = {};
+    let homeLoading = false, pulseReady = null, homeViews = {}, feedV2 = false;
     function homeLib() {
         if (root.OpenVibeHome) return root.OpenVibeHome;
         if (homeLoading || typeof ctx.sibling !== 'function') return null;
@@ -1146,9 +1230,15 @@
             seen.add(id); recentIds.push(id);
             if (recentIds.length >= 5) break;
         }
-        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
-            pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })) };
+        // Jump back in (the last places, newest first) and what this person uses most (pages opened per site).
+        const seenB = new Set();
+        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
+        const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
+        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
+            // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
+            feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
     }
 
     function renderTab() {
@@ -1324,6 +1414,7 @@
         drainCards();
         syncFeeds();
         el.classList.add('is-open');
+        tickAgo();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.
         try { if (!(history.state && history.state.ovsMenu)) { history.pushState(Object.assign({}, history.state || {}, { ovsMenu: true }), ''); pushed = true; } } catch { pushed = false; }
@@ -1352,7 +1443,11 @@
                 requestAnimationFrame(() => { orbEl.classList.remove('is-from'); orbEl.classList.add('is-x'); });
             }
         }
-        document.documentElement.style.overflow = 'hidden';
+        if (root.OVSurfaces) {
+            surface = root.OVSurfaces.sheet({ el: el.querySelector('.ovs-panel'), opener: lastFocus,
+                header: el.querySelector('.ovs-bar'), body: listEl, close });
+            surface.open();
+        } else document.documentElement.style.overflow = 'hidden';
         input.placeholder = `Search ${here()}, or ask Vibe`;
         input.value = opts.q || '';
         paintGhost();
@@ -1368,7 +1463,7 @@
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         if (tab === 'tools' || tab === 'sites') setTimeout(() => { const t = listEl.querySelector(`[data-sec="${tab === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
-    let pushed = false, popping = false;
+    let pushed = false, popping = false, surface = null;
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         if (view === 'results' && rtabsEl) leaveResults();
@@ -1385,12 +1480,18 @@
             el.classList.remove('is-open');
             if (orbEl) orbEl.classList.remove('is-x', 'is-from');
         }
-        document.documentElement.style.overflow = '';
+        if (surface) { surface.destroy(); surface = null; }
+        else document.documentElement.style.overflow = '';
         if (inflight) { inflight.abort(); inflight = null; }
         if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
         if (lastFocus && lastFocus.focus) lastFocus.focus();
     }
+
+    // On a phone the empty menu keeps focus on its orb to avoid raising the keyboard. Escape must still close it.
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !e.defaultPrevented && el && el.classList.contains('is-open')) { e.preventDefault(); close(); }
+    });
 
     document.addEventListener('ov:boost:load', () => { if (el && el.classList.contains('is-open') && !input.value) render(''); });
 

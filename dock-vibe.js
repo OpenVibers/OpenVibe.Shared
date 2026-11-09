@@ -269,7 +269,9 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(true);
-        setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
+        // A touch screen does not get the keyboard on opening (11-09, the owner: it "immediately opens the keyboard… you
+        // can't see the chat input or what it did"): the answer and the box show first; a tap on the box types.
+        if (!(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); } catch { /* */ } }, 0);
     }
 
     function mount(panel, c) {

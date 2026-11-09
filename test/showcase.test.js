@@ -123,7 +123,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(ld.startsWith('<script type="application/ld+json">') && !ld.slice(35, -9).includes('<'), 'JSON-LD cannot close its script early');
     assert.ok(JSON.parse(ld.slice(35, -9).replace(/\\u003c/g, '<')).mainEntity[0].name === 'Q </script>');
     const net = sc.network({ service: 'live' });
-    assert.ok(net.includes('Part of OpenVibe') && net.includes('https://openre.stream/?ov_from=live') && net.includes('data-icon="openre"'), 'related products, with the referral tag and ring icons');
+    assert.ok(net.includes('More on OpenVibe') && net.includes('data-ov-now') && net.includes('https://openvibe.network/sites') && net.includes('https://openre.stream/?ov_from=live') && net.includes('data-icon="openre"'), 'related products, with the referral tag and ring icons');
     assert.ok(!net.includes('https://openvibe.live/'), 'never links a product to itself');
     assert.ok(sc.network({ service: 'unknown-thing' }).includes('OpenVibe.Live'), 'a product without its own list gets the core ones');
     assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'));
@@ -197,4 +197,15 @@ console.log('showcase: all checks passed');
 {
     const html = require('../showcase').hero({ title: 'Record a video', lede: 'Review it before sharing.', pageHead: { icon: 'video', back: { href: '/', label: 'Home' } }, visual: false });
     require('assert').ok(html.includes('ovk-page-head') && html.includes('About this') && html.includes('Review it before sharing.'));
+}
+
+// 4.160.0 (owner, 11-09: section titles need an icon, sections should read as separate things): each section's heading
+// carries an icon tile, its kind's by default, a site's own when given; the network section's live strip and every site.
+{
+    const f = sc.features({ title: 'What it does', items: [{ title: 'A', text: 'B' }] });
+    assert.ok(/<h2 id="[^"]+"><span class="sc-h-ic" aria-hidden="true"><svg[^>]*>.*<\/svg><\/span><span>What it does<\/span><\/h2>/.test(f), 'a features heading has its icon tile');
+    assert.ok(sc.faq({ items: [['Q?', 'A.']] }).includes('class="sc-h-ic"'), 'questions have theirs');
+    assert.ok(sc.features({ title: 'X', icon: 'rocket', items: [{ title: 'A', text: 'B' }] }).includes('sc-h-ic'), 'a site may choose the icon');
+    assert.ok(/border-top:1px solid/.test(sc.CSS) && /\.sc-hero\+\.sc-sec/.test(sc.CSS), 'sections stand apart, the first after the hero without a rule');
+    assert.ok(/api\/frame\/pulse/.test(sc.NETWORK_JS) && /textContent/.test(sc.NETWORK_JS) && !/innerHTML/.test(sc.NETWORK_JS), 'the live strip reads the Frame and writes text only');
 }
