@@ -106,7 +106,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '3dc4a69f0678', 'dock-runs.js': '5f07abab4aed', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '3dc4a69f0678', 'dock-runs.js': '8df917372f19', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -556,7 +556,7 @@
                 if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
             });
             const m = root.OpenVibeDockRuns.mount(panel.querySelector('.ovdk-scroll'), {
-                call, state, save, active: () => isOpen() && tab === 'agent', actorBase: actorBase(), loadMarks: () => load('ai-marks-client.js', () => !!root.OpenVibeAIMarks),
+                call, state, save, scopes: o.scopes, active: () => isOpen() && tab === 'agent', actorBase: actorBase(), loadMarks: () => load('ai-marks-client.js', () => !!root.OpenVibeAIMarks),
                 styles: () => (el && el.ownerDocument.getElementById('ovdk-styles')) || document.getElementById('ovdk-styles'),
                 foot: panel.querySelector('.ovdk-runs-foot'),
                 onCounts: (c) => { doc = { ...(doc || {}), state: state(), counts: { ...counts(), running: c.running || 0, waiting: c.waiting || 0 } }; badges(); notify(); },

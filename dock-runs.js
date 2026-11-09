@@ -51,6 +51,8 @@
     const MODEL_PAGE = 'https://openvibe.actor/chat/model';
     function mount(panel, o) {
         const st = o.styles && o.styles(); if (st && !st.textContent.includes('.ovdk-overview{')) st.textContent += CSS;
+        // A site's Dock passes no scopes (full behaviour); the extension passes its read-only set.
+        const canDecide = !Array.isArray(o.scopes) || o.scopes.includes('actions.decide');
         let doc = null, busy = false, timer = 0, filter = o.state().agent_filter || 'all';
         const request = async (path, init) => o.call(path, init);
         const all = () => doc ? ['waiting','running','scheduled','done','failed'].flatMap((b) => doc.buckets[b] || []) : [];
@@ -72,7 +74,7 @@
             if (it.model) { const model = h('span', 'ovdk-run-model'); const mark = root.OpenVibeAIMarks && root.OpenVibeAIMarks.mark(it.maker, it.model); if (mark) model.append(mark); model.append(String(it.model)); body.append(model); }
             if (it.bucket === 'running') body.append(h('span', 'ovdk-run-bar'));
             const acts = h('div', 'ovdk-run-actions'); let more = null;
-            if (it.bucket === 'waiting' && (it.actions || []).includes('approve')) for (const action of ['approve','decline']) {
+            if (canDecide && it.bucket === 'waiting' && (it.actions || []).includes('approve')) for (const action of ['approve','decline']) {
                 const b = h('button', action === 'approve' ? 'primary' : '', action === 'approve' ? 'Approve' : 'Decline'); b.type = 'button'; b.dataset.do = action;
                 b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/${action}`, { method: 'POST', body: '{}' }); b.textContent = action === 'approve' ? 'Approved' : 'Declined'; } catch { b.disabled = false; b.textContent = 'Try again'; } }); acts.append(b);
             }
@@ -80,9 +82,9 @@
             // The error's own action says what the person can do about it: pick a model, add a key, or wait.
             const what = error && error.action;
             if (it.bucket === 'failed' && (what === 'pick_model' || what === 'add_key')) { const a = h('a', '', what === 'pick_model' ? 'Pick a model' : 'Add a key'); a.href = MODEL_PAGE; a.target = '_blank'; a.rel = 'noopener'; acts.append(a); }
-            if (it.bucket === 'running' && (it.actions || []).includes('cancel')) { const b = h('button', '', 'Stop'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/cancel`, { method: 'POST', body: '{}' }); refresh(); } catch { b.disabled = false; } }); acts.append(b); }
-            if (it.bucket === 'failed' && (it.actions || []).includes('retry')) { const b = h('button', '', 'Retry'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/retry`, { method: 'POST', body: '{}' }); refresh(); } catch { b.disabled = false; } }); acts.append(b); }
-            if (it.service === 'actor' && (it.kind === 'agent_task') && ['done', 'failed'].includes(it.bucket)) { const menu = h('details', 'ovdk-run-more'); const summary = h('summary'); summary.setAttribute('aria-label', 'More'); summary.title = 'More'; summary.append(dots()); menu.append(summary); const list = h('menu');
+            if (canDecide && it.bucket === 'running' && (it.actions || []).includes('cancel')) { const b = h('button', '', 'Stop'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/cancel`, { method: 'POST', body: '{}' }); refresh(); } catch { b.disabled = false; } }); acts.append(b); }
+            if (canDecide && it.bucket === 'failed' && (it.actions || []).includes('retry')) { const b = h('button', '', 'Retry'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/retry`, { method: 'POST', body: '{}' }); refresh(); } catch { b.disabled = false; } }); acts.append(b); }
+            if (canDecide && it.service === 'actor' && (it.kind === 'agent_task') && ['done', 'failed'].includes(it.bucket)) { const menu = h('details', 'ovdk-run-more'); const summary = h('summary'); summary.setAttribute('aria-label', 'More'); summary.title = 'More'; summary.append(dots()); menu.append(summary); const list = h('menu');
                 const choose = h('li'); const a = h('a', '', 'Run again with another model'); a.href = MODEL_PAGE; a.target = '_blank'; a.rel = 'noopener'; choose.append(a); list.append(choose);
                 const rerun = h('li'); const b = h('button', '', 'Run again'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await request(`/api/v1/me/actions/actor/${encodeURIComponent(it.id)}/retry`, { method: 'POST', body: '{}' }); menu.open = false; refresh(); } catch { b.disabled = false; b.textContent = 'Try again'; } }); rerun.append(b); list.append(rerun); menu.append(list); more = menu; }
             if (acts.childNodes.length) body.append(acts); li.append(ic, body); if (more) li.append(more); if (root.OVGlyphs) root.OVGlyphs.swap(li); return li;
