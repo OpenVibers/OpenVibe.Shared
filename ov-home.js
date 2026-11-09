@@ -61,7 +61,7 @@
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1); }
 .ovh-recent .ovh-ic { width: 48px; height: 48px; border-radius: 15px; }
 /* App icons: the ring goes, the glyph fills the tile, each app keeps its own hue (11-09). */
-.ovh-grid .ovh-ic, .ovh-recent .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
+.ovh-grid .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
 .ovh-ic .ovi-ring, .ovh-ic .ovi-bg, .ovh-ic .ovi-comet, .ovh-ic .ovi-prog { display: none; }
 .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 90% 82%); color: hsl(var(--ovh-h, 215) 90% 82%); }
 :root[data-theme="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
@@ -142,6 +142,71 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-lives a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--live, #ef4444) 12%, transparent); color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; }
 .ovh-lives a::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #ef4444); }
 @media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic { animation-name: ovh-wiggle-calm !important; } .ovh-chip.is-working .ovh-dot { animation: none !important; } }
+
+/* You (11-09, the owner: "the U tab still sucks"): you on top, with Display and Settings beside your name; what you were
+   doing as a rail of cards; what you use most as one bar; then your home. */
+.ovh-me { display: flex; align-items: center; gap: 10px; margin: 4px 4px 8px; padding: 10px 10px 10px 12px; border-radius: 20px;
+    background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent, #3b82f6) 20%, transparent), transparent 60%), color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 18%, var(--border, rgba(255,255,255,.08))); }
+.ovh-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 48px; border-radius: 14px; color: inherit; text-decoration: none; }
+.ovh-av { position: relative; flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 50%, #a855f7)); color: #fff; font-size: 19px; font-weight: 800; }
+.ovh-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovh-av::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 3px var(--bg-secondary, #141a24); }
+.ovh-who-txt { min-width: 0; display: grid; gap: 2px; }
+.ovh-who-txt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16.5px; font-weight: 800; letter-spacing: -.01em; }
+.ovh-who-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovh-ib { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; text-decoration: none;
+    background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); transition: background .16s, color .16s, transform .16s cubic-bezier(.2,1.4,.4,1); }
+.ovh-ib svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-ib[aria-expanded="true"] { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
+.ovh-ib:active { transform: scale(.9); }
+.ovh-ib:focus-visible, .ovh-who:focus-visible, .ovh-card:focus-visible, .ovh-key:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) { .ovh-ib:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 14%, transparent); } .ovh-ib[aria-expanded="true"]:hover { background: var(--accent-strong, var(--accent, #2563eb)); } }
+.ovh-me-look { margin: -2px 4px 8px; }
+.ovh-rail { display: flex; gap: 8px; margin: 0 -2px; padding: 2px 6px 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding: 0 6px; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+.ovh-rail::-webkit-scrollbar { display: none; }
+.ovh-rail.is-end { -webkit-mask-image: none; mask-image: none; }
+.ovh-card { position: relative; flex: 0 0 auto; display: grid; grid-template-columns: 40px minmax(0, 1fr); grid-template-rows: auto auto; align-content: center; column-gap: 10px; row-gap: 3px; align-items: center;
+    box-sizing: border-box; width: min(74%, 240px); min-height: 68px; padding: 10px 12px 10px 10px; border-radius: 16px; scroll-snap-align: start; color: inherit; text-decoration: none;
+    background: color-mix(in srgb, var(--text-primary, #e8ecf3) 5%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.08));
+    animation: ovh-rise .38s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.ovh-card .ovh-ic { grid-row: 1 / 3; width: 40px; height: 40px; border-radius: 12px; }
+.ovh-card b { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: 13.5px; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+.ovh-card small { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11.5px; color: var(--text-muted, #93a0b4); }
+.ovh-card small > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-card.is-live { background: color-mix(in srgb, var(--live, #ef4444) 9%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live, #ef4444) 40%, transparent); }
+.ovh-card.is-live .ovh-ic { animation: ovh-onair 2.4s ease-in-out infinite; }
+.ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: var(--live, #ef4444); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
+@media (hover: hover) { .ovh-card:hover { background: var(--bg-hover, rgba(255,255,255,.08)); } }
+@media (min-width: 861px) { .ovh-card { width: 232px; } }
+.ovh-use { margin: 0 4px 8px; padding: 12px 12px 6px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
+.ovh-use-bar { display: flex; gap: 3px; height: 12px; border-radius: 999px; overflow: hidden; }
+.ovh-use-bar > span { flex: var(--n, 1) 1 0; min-width: 8px; background: var(--c, #3b82f6); transform-origin: left center; animation: ovh-grow .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
+.ovh-use-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0 4px; margin: 6px -6px 0; }
+.ovh-key { display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 38px; padding: 0 8px; border-radius: 10px; color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.ovh-key::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--c, #3b82f6); }
+.ovh-key small { color: var(--text-muted, #93a0b4); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (hover: hover) { .ovh-key:hover { background: var(--bg-hover, rgba(255,255,255,.07)); } }
+.ovh-sec small { flex: none; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-muted, #93a0b4); }
+@keyframes ovh-rise { from { opacity: 0; transform: translateY(6px) scale(.98); } }
+@keyframes ovh-grow { from { transform: scaleX(0); } }
+@keyframes ovh-onair { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--live, #ef4444) 55%, transparent), 0 0 18px color-mix(in srgb, var(--live, #ef4444) 35%, transparent); } }
+/* Calm is gentle, not still (the owner, 11-09): shorter travel, slower breath. */
+html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-duration: .5s; }
+html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s; }
+@keyframes ovh-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ovh-card { animation-name: ovh-fade; } .ovh-use-bar > span { animation-duration: .4s; } }
+/* The invitation, one compact row (11-09): mark, words, Set it up, and an × to put it away. */
+.ovh-actor.is-invite { grid-template-columns: 44px minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 10px; align-items: center; min-height: 0; padding: 10px 6px 12px 12px; }
+.ovh-actor.is-invite .ovh-face { grid-row: 1 / 3; align-self: start; width: 44px; height: 44px; border-radius: 14px; }
+.ovh-actor.is-invite .ovh-actor-txt { display: contents; }
+.ovh-actor.is-invite .ovh-actor-txt b { grid-column: 2; grid-row: 1; font-size: 15px; }
+.ovh-actor.is-invite .ovh-actor-txt small { grid-column: 2 / 5; grid-row: 2; -webkit-line-clamp: 3; }
+.ovh-actor.is-invite .ovh-acts { display: contents; }
+.ovh-actor.is-invite .ovh-go { grid-column: 3; grid-row: 1; }
+.ovh-actor.is-invite .ovh-x { grid-column: 4; grid-row: 1; display: grid; place-items: center; width: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
+.ovh-actor.is-invite .ovh-x svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
 `;
         document.head.appendChild(st);
     }
@@ -179,19 +244,28 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
         (o.yours || []).forEach((a) => { if (a && a.id && safe(a.url)) byId.set(a.id, a); });
         return byId;
     }
+    // The network's groups, as folders for the sites past the first page (until the person arranges their home).
+    const GROUP_FOLDERS = [['streams', 'Watch'], ['people', 'People'], ['make', 'Make'], ['answers', 'Read'], ['games', 'Play'], ['shop', 'Shop']];
+    function topSites(o) {
+        const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id));
+        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
+        return sites.slice(0, Math.max(6, 12 - 2 - mineFirst.length));
+    }
     function folderDefs(o) {
         const apps = o.apps || [];
-        return [
+        const top = new Set(topSites(o));
+        const groups = GROUP_FOLDERS.map(([g, name]) => ({ id: `g-${g}`, name, apps: apps.filter((a) => a.group === g && !top.has(a.id)).map((a) => a.id), glyph: 'grid' }))
+            .filter((f) => f.apps.length >= 2);
+        return groups.concat([
             { id: 'tools', name: 'Quick tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
             { id: 'build', name: 'Build', apps: apps.filter((a) => a.group === 'build').map((a) => a.id), glyph: 'code' },
-        ].filter((f) => f.apps.length);
+        ]).filter((f) => f.apps.length);
     }
     /** Until the person arranges it: their own places first (signed in), then the most used and popular sites. */
     function defaultHome(o) {
         const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id)).map((y) => y.id);
-        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
-        const room = 12 - 2 - mineFirst.length;
-        return mineFirst.concat(sites.slice(0, Math.max(6, room)), ['folder:tools', 'folder:build']);
+        const groupFolders = folderDefs(o).filter((f) => f.id.startsWith('g-')).map((f) => `folder:${f.id}`);
+        return mineFirst.concat(topSites(o), groupFolders, ['folder:tools', 'folder:build']);
     }
     function layoutOf(o) {
         const byId = universe(o);
@@ -200,6 +274,20 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
         const l = readLocal();
         const home = (l ? l.home : defaultHome(o)).filter((id, i, a) => known(id) && a.indexOf(id) === i).slice(0, HOME_MAX);
         return { home, folders, arranged: !!l, byId };
+    }
+
+    // Line icons for the buttons beside your name (24-unit boxes, optically centred), built as nodes.
+    const ICON = {
+        look: [['path', { d: 'M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.7-.4-1.1 0-1 .8-1.7 1.7-1.7h2.1A4.4 4.4 0 0 0 21 11c0-4.4-4-8-9-8Z' }],
+            ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
+        gear: [['circle', { cx: 12, cy: 12, r: 3 }], ['path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z' }]],
+        x: [['path', { d: 'M6 6l12 12M18 6 6 18' }]],
+    };
+    function svgIcon(name) {
+        const NS = 'http://www.w3.org/2000/svg';
+        const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+        ICON[name].forEach(([tag, at]) => { const n = document.createElementNS(NS, tag); Object.keys(at).forEach((k) => n.setAttribute(k, String(at[k]))); s.append(n); });
+        return s;
     }
 
     // ── Drawing an icon ────────────────────────────────────────────────────────────────────────────────────────
@@ -229,7 +317,11 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
         el.setAttribute('aria-label', `${f.name} folder, ${f.apps.length} apps`);
         const ic = h('span', 'ovh-ic');
         // Each app's own icon (a tool's own glyph, not the folder's: four identical </> was the owner's complaint, 11-09).
-        f.apps.slice(0, 4).forEach((id) => { const a = byId.get(id) || (o.tools || []).find((t) => t.id === id); const cell = h('span'); const g = a ? (a.site || a.icon || f.glyph) : f.glyph; cell.style.setProperty('--ovh-h', String(hueOf(g + id))); cell.append(siteIcon(g, 26)); ic.append(cell); });
+        const glyphOf = (id) => { const a = byId.get(id) || (o.tools || []).find((t) => t.id === id); return a ? (a.site || a.icon || f.glyph) : f.glyph; };
+        const seenG = new Set(), cells = [];
+        f.apps.forEach((id) => { const g = glyphOf(id); if (cells.length < 4 && !seenG.has(g)) { seenG.add(g); cells.push([id, g]); } });
+        f.apps.forEach((id) => { if (cells.length < 4 && !cells.some((c) => c[0] === id)) cells.push([id, glyphOf(id)]); });
+        cells.forEach(([id, g]) => { const cell = h('span'); cell.style.setProperty('--ovh-h', String(hueOf(g + id))); cell.append(siteIcon(g, 26)); ic.append(cell); });
         el.append(ic, h('span', 'ovh-name', f.name));
         return el;
     }
@@ -243,20 +335,92 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
-        let actorBox = null;
+        let actorBox = null, meBox = null;
+        // The Look panel (theme, text size, motion, icons) opens under your name, drawn by the navbar (the account menu's).
+        if (typeof o.look === 'function') { try { o.look(el); } catch { /* the button stays a link to openvibe.design/look */ } }
+
+        /** You: your picture (online), your name, and Display and Settings beside it. Made once per opening, so an open
+         *  Look panel survives the repaints that come as history and the catalogue arrive. */
+        function me() {
+            if (meBox) return meBox;
+            const u = o.user || {};
+            meBox = h('div');
+            const bar = h('div', 'ovh-me');
+            const who = h('a', 'ovh-who'); who.href = u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
+            const av = h('span', 'ovh-av');
+            const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
+            if (pic) { const img = h('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; av.append(img); } else av.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase();
+            const txt = h('span', 'ovh-who-txt');
+            txt.append(h('b', '', u.display_name || u.username || 'You'), h('small', '', [u.username ? `@${u.username}` : '', 'Online'].filter(Boolean).join(' · ')));
+            who.append(av, txt);
+            const look = h('a', 'ovh-ib'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
+            look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.title = 'Display';
+            const gear = h('a', 'ovh-ib'); gear.append(svgIcon('gear')); gear.href = 'https://openvibe.network/my'; gear.setAttribute('aria-label', 'Account and settings'); gear.title = 'Account and settings';
+            bar.append(who, look, gear);
+            const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
+            meBox.append(bar, panel);
+            return meBox;
+        }
+
+        /** Jump back in: the last places, as cards you swipe; a stream that is live now says so. */
+        function backRail() {
+            const items = (o.back || []).filter((x) => x && safe(x.url)).slice(0, 8);
+            if (!items.length) return null;
+            const wrap = h('div');
+            const head = sec('Jump back in');
+            wrap.append(head);
+            const rail = h('div', 'ovh-rail'); rail.setAttribute('role', 'list'); rail.setAttribute('aria-label', 'Jump back in');
+            items.forEach((x, i) => {
+                const live = x.tag === 'Live';
+                const c = h('a', `ovh-card${live ? ' is-live' : ''}`); c.href = safe(x.url); c.setAttribute('role', 'listitem'); c.style.setProperty('--i', String(i));
+                const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov'))); ic.append(siteIcon(x.site || 'ov', 44));
+                const meta = h('small');
+                if (live) meta.append(h('span', 'ovh-live', 'LIVE'));
+                const pre = String(x.metaPre || '').replace(/^Live now(?: · )?/, '');
+                const when = h('span', '', [pre, ago(x.at)].filter(Boolean).join(' · ') || x.meta || '');
+                if (x.at) { when.dataset.at = x.at; when.dataset.pre = pre; }   // search.js keeps the times current
+                meta.append(when);
+                c.append(ic, h('b', '', x.title), meta);
+                rail.append(c);
+            });
+            const ends = () => rail.classList.toggle('is-end', rail.scrollLeft + rail.clientWidth >= rail.scrollWidth - 4);
+            rail.addEventListener('scroll', ends, { passive: true });
+            requestAnimationFrame(ends);
+            wrap.append(rail);
+            return wrap;
+        }
+
+        /** Most used: the pages you opened, by site, as one bar and its key. */
+        function usage() {
+            const rows = (o.usage || []).map((u) => ({ a: L.byId.get(u.id), n: u.count })).filter((r) => r.a && r.n > 0).sort((x, y) => y.n - x.n).slice(0, 5);
+            if (rows.length < 2) return null;
+            const wrap = h('div');
+            const head = sec('Most used');
+            head.append(h('small', '', 'pages you opened'));
+            wrap.append(head);
+            const box = h('div', 'ovh-use');
+            const bar = h('div', 'ovh-use-bar'); bar.setAttribute('role', 'img');
+            bar.setAttribute('aria-label', rows.map((r) => `${r.a.title} ${r.n}`).join(', '));
+            const keys = h('div', 'ovh-use-keys');
+            const CHART = ['#3b82f6', '#a855f7', '#f59e0b', '#14b8a6', '#ec4899'];   // five that tell apart in dark and light
+            rows.forEach((r, i) => {
+                const c = CHART[i % CHART.length];
+                const seg = h('span'); seg.style.setProperty('--n', String(r.n)); seg.style.setProperty('--c', c); seg.style.setProperty('--i', String(i)); bar.append(seg);
+                const k = h('a', 'ovh-key', r.a.title); k.href = safe(r.a.url) || '#'; k.style.setProperty('--c', c);
+                k.append(h('small', '', num(r.n)));
+                keys.append(k);
+            });
+            box.append(bar, keys);
+            wrap.append(box);
+            return wrap;
+        }
 
         function paintHome() {
             el.textContent = '';
             el.classList.toggle('is-edit', state.edit);
+            if (signedIn(o) && !state.edit) el.append(me());
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
-            // Recent: the last places opened, newest first.
-            const recent = (o.recent || []).map((id) => L.byId.get(id)).filter(Boolean).slice(0, 5);
-            if (recent.length && !state.edit) {
-                el.append(sec('Recent'));
-                const row = h('div', 'ovh-grid ovh-recent'); row.setAttribute('aria-label', 'Recent');
-                recent.forEach((a) => row.append(appTile(o, a, { small: true })));
-                el.append(row);
-            }
+            if (!state.edit) { const b = backRail(); if (b) el.append(b); const u = usage(); if (u) el.append(u); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
             const edit = h('button', state.edit ? 'is-done' : '', state.edit ? 'Done' : 'Edit');
             edit.type = 'button';
@@ -363,16 +527,19 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
                 if (m.cancelable) m.preventDefault();
                 if (scroller) { const r = scroller.getBoundingClientRect(); if (m.clientY < r.top + 56) scroller.scrollTop -= 12; else if (m.clientY > r.bottom - 56) scroller.scrollTop += 12; }
                 at(m);
-                // Which app's place the finger is over, by layout (offsets ignore the slide in progress), and only well
-                // inside it (the middle 60%), so the grid never flickers between two places.
+                // Which place the finger is over, by the grid's slots (offsetLeft/offsetTop: where each place IS, not where
+                // a sliding app is drawn this frame; the old hit test read the slide in progress, so an app passing under
+                // the finger took the drop and it landed one place off), and only well inside it (the middle 70% by 80%),
+                // so the grid never flickers between two places.
                 const grid = el.querySelector('.ovh-grid:not(.ovh-recent)');
                 if (!grid) return;
-                const cell = [...grid.children].find((n) => { const r = n.getBoundingClientRect(); return m.clientX >= r.left && m.clientX < r.right && m.clientY >= r.top && m.clientY < r.bottom; });
-                if (!cell) return;
-                const to = L.home.indexOf(cell.getAttribute('data-id')), from = L.home.indexOf(id);
-                if (to < 0 || to === from) return;
-                const cr = cell.getBoundingClientRect();
-                if (Math.abs(m.clientX - (cr.left + cr.width / 2)) > cr.width * 0.35 || Math.abs(m.clientY - (cr.top + cr.height / 2)) > cr.height * 0.4) return;
+                const gr = grid.getBoundingClientRect();
+                const kids = [...grid.children];
+                const to = kids.findIndex((n) => { const x = gr.left + n.offsetLeft, y = gr.top + n.offsetTop; return m.clientX >= x && m.clientX < x + n.offsetWidth && m.clientY >= y && m.clientY < y + n.offsetHeight; });
+                const from = L.home.indexOf(id);
+                if (to < 0 || to >= L.home.length || to === from) return;
+                const sn = kids[to], cx = gr.left + sn.offsetLeft + sn.offsetWidth / 2, cy = gr.top + sn.offsetTop + sn.offsetHeight / 2;
+                if (Math.abs(m.clientX - cx) > sn.offsetWidth * 0.35 || Math.abs(m.clientY - cy) > sn.offsetHeight * 0.4) return;
                 const before = new Map([...grid.children].map((n) => [n.getAttribute('data-id'), n.getBoundingClientRect()]));
                 L.home.splice(from, 1); L.home.splice(to, 0, id);
                 grid.textContent = ''; L.home.forEach((x, i) => grid.append(homeTile(x, i)));
@@ -526,10 +693,10 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
         card.classList.add('is-invite');
         const face = h('span', 'ovh-face'); face.append(siteIcon('actor', 30));
         const txt = h('span', 'ovh-actor-txt');
-        txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch: finds work, posts, runs your channel.'));
+        txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch: finds work, posts and runs your channel.'));
         const acts = h('span', 'ovh-acts');
         const go = h('a', 'ovh-go', 'Set it up'); go.href = `${base}/you`;
-        const no = h('button', 'ovh-x', 'Not now'); no.type = 'button';
+        const no = h('button', 'ovh-x'); no.append(svgIcon('x')); no.type = 'button'; no.setAttribute('aria-label', 'Not now'); no.title = 'Not now';
         no.addEventListener('click', () => { try { localStorage.setItem(INVITE_KEY, 'off'); } catch { /* */ } box.textContent = ''; });
         acts.append(go, no);
         card.append(face, txt, acts);
