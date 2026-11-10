@@ -117,6 +117,21 @@
         fund: '<circle cx="15" cy="7.5" r="2.5"/>' + P('M3.5 14h3L10 12.5h4a1.5 1.5 0 0 1 0 3h-3M6.5 19l3-1.5H15l4.5-4a1.4 1.4 0 0 0-2-2l-3 2.5'),
         paste: '<rect x="6" y="6" width="12" height="14" rx="1.8"/>' + P('M9.5 6V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v1M9 11h6M9 14h6M9 17h3'),
         account: '<circle cx="12" cy="9" r="3.2"/>' + P('M5.5 19a6.5 6.5 0 0 1 13 0'),
+        // 4.182.0: the products that had no mark of their own drew the fallback "V" in every site grid (Live's and
+        // Network's homes showed five of them), and so did a few things sites name as marks (a shoe, a heart, a
+        // calendar, a camera). Each has its glyph now.
+        computer: '<rect x="4.5" y="6" width="15" height="10" rx="1.8"/>' + P('M9.5 19h5M12 16v3'),
+        mail: '<rect x="4" y="6.5" width="16" height="11" rx="2"/>' + P('m5 8.5 7 5 7-5'),
+        lock: '<rect x="6.5" y="11" width="11" height="8" rx="1.8"/>' + P('M9 11V8.5a3 3 0 0 1 6 0V11'),
+        git: '<circle cx="7.5" cy="6.5" r="1.8"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="8.5" r="1.8"/>' + P('M7.5 8.3v7.4M16.5 10.3c0 4-5 3.2-8.2 6'),
+        barcode: P('M5.5 7.5v9M8.5 7.5v9M11 7.5v9M14 7.5v9M16 7.5v9M18.5 7.5v9'),
+        party: '<rect x="4.5" y="5.5" width="15" height="9.5" rx="1.8"/><circle cx="8.5" cy="18.3" r="1.3"/><circle cx="15.5" cy="18.3" r="1.3"/>' + P('M10.6 8.5v3.6l3.1-1.8z'),
+        studio: '<circle cx="15" cy="8" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="16" cy="16" r="1.8"/>' + P('M5 8h8.2M16.8 8H19M5 12h2.2M10.8 12H19M5 16h9.2M17.8 16H19'),
+        home: P('M5 11.5 12 5.5l7 6M7 10.5V18h10v-7.5M10.5 18v-4h3v4'),
+        heart: P('M12 18.5s-6.5-4-6.5-9a3.6 3.6 0 0 1 6.5-2.2 3.6 3.6 0 0 1 6.5 2.2c0 5-6.5 9-6.5 9z'),
+        calendar: '<rect x="5" y="6.5" width="14" height="12.5" rx="2"/>' + P('M5 10.5h14M9 4.5v3.5M15 4.5v3.5'),
+        camera: '<circle cx="12" cy="13.5" r="2.8"/>' + P('M5 9h3l1.5-2.3h5L16 9h3v9.5H5z'),
+        shoe: P('M3.8 15.5v-4.8l3.5-.5 2.6-3.5 2.8 1.2-.8 2.3 3.5 1.9 4.1.9a1.8 1.8 0 0 1 1.3 1.7v.8zM3.8 18.2h17'),
         bell: P('M6.5 16.5h11l-1.2-2V11a4.3 4.3 0 0 0-8.6 0v3.5zM10.5 19a1.6 1.6 0 0 0 3 0'),
         history: '<circle cx="12" cy="12" r="7.5"/>' + P('M12 8v4.2l2.8 1.8'),
         theme: P('M12 4.5a7.5 7.5 0 1 0 0 15c1 0 1.6-.8 1.2-1.7-.5-1.1.3-2.3 1.5-2.3h1.6a3.2 3.2 0 0 0 3.2-3.2C19.5 8 16.2 4.5 12 4.5z') + '<circle cx="8.5" cy="11" r=".7"/><circle cx="11.5" cy="8" r=".7"/><circle cx="15" cy="9" r=".7"/>',
@@ -125,12 +140,14 @@
         clip: P('M6 6l12 12M6 18L18 6') ,
     };
     // [dx, dy] in glyph units that move each glyph's drawn bounds onto the centre of the ring. Generated.
-    const OFFSETS = {"ov":[0,-0.5],"network":[0.56,-0.39],"live":[-0.01,-0.38],"tools":[0,-0.39],"media":[0,-0.39],"games":[0,-0.39],"community":[0,-0.39],"chat":[0,-0.39],"codes":[0,-0.39],"bot":[0,-0.39],"code":[0,-0.39],"blog":[0,-0.39],"wiki":[-0.01,-0.39],"news":[0,-0.39],"reviews":[-0.02,-0.39],"tips":[0,-0.39],"vip":[-0.01,-0.39],"trade":[0,-0.39],"host":[0,-0.39],"deals":[0.19,-0.21],"coupons":[-0.01,-0.39],"stream":[0,-0.39],"video":[-0.01,-0.39],"download":[0,-0.39],"upload":[0,-0.39],"image":[0,-0.39],"audio":[0,-0.38],"pdf":[0.28,-0.39],"docs":[0,-0.39],"text":[-0.01,-0.39],"logo":[-1.25,-0.5],"dns":[0,-0.39],"ip":[0,-0.37],"ssl":[-0.01,-0.39],"ping":[0,-0.39],"whois":[0,-0.39],"search":[0,-0.39],"map":[-0.01,-0.39],"food":[-0.01,-0.39],"gauge":[0,-0.39],"link":[0,-0.39],"shield":[0,-0.33],"plug":[0,-0.39],"work":[0,0.17],"rent":[0,-0.39],"help":[0,-0.39],"quest":[-0.01,-0.39],"inventory":[0,-0.37],"play":[0,-0.39],"drive":[0,-0.39],"services":[-0.01,-0.39],"space":[0,-0.39],"watch":[-0.02,-0.39],"actor":[0,-0.39],"events":[-0.01,-0.39],"ai":[0,-0.39],"run":[-0.01,-0.39],"billing":[0,-0.39],"feeds":[-0.01,-0.39],"pics":[-0.01,-0.39],"homes":[-0.01,-0.39],"website":[0,-0.39],"zone":[-0.01,-0.39],"fund":[-0.01,-0.39],"paste":[0,-0.39],"account":[-0.01,-0.39],"bell":[-0.01,-0.39],"history":[0,-0.39],"theme":[0,-0.39],"check":[-0.01,-0.39],"error":[0,-0.39],"clip":[0.13,-0.39]};
+    const OFFSETS = {"ov":[0,-0.5],"network":[0.56,-0.39],"live":[-0.01,-0.38],"tools":[0,-0.39],"media":[0,-0.39],"games":[0,-0.39],"community":[0,-0.39],"chat":[0,-0.39],"codes":[0,-0.39],"bot":[0,-0.39],"code":[0,-0.39],"blog":[0,-0.39],"wiki":[-0.01,-0.39],"news":[0,-0.39],"reviews":[-0.02,-0.39],"tips":[0,-0.39],"vip":[-0.01,-0.39],"trade":[0,-0.39],"host":[0,-0.39],"deals":[0.19,-0.21],"coupons":[-0.01,-0.39],"stream":[0,-0.39],"video":[-0.01,-0.39],"download":[0,-0.39],"upload":[0,-0.39],"image":[0,-0.39],"audio":[0,-0.38],"pdf":[0.28,-0.39],"docs":[0,-0.39],"text":[-0.01,-0.39],"logo":[-1.25,-0.5],"dns":[0,-0.39],"ip":[0,-0.37],"ssl":[-0.01,-0.39],"ping":[0,-0.39],"whois":[0,-0.39],"search":[0,-0.39],"map":[-0.01,-0.39],"food":[-0.01,-0.39],"gauge":[0,-0.39],"link":[0,-0.39],"shield":[0,-0.33],"plug":[0,-0.39],"work":[0,0.17],"rent":[0,-0.39],"help":[0,-0.39],"quest":[-0.01,-0.39],"inventory":[0,-0.37],"play":[0,-0.39],"drive":[0,-0.39],"services":[-0.01,-0.39],"space":[0,-0.39],"watch":[-0.02,-0.39],"actor":[0,-0.39],"events":[-0.01,-0.39],"ai":[0,-0.39],"run":[-0.01,-0.39],"billing":[0,-0.39],"feeds":[-0.01,-0.39],"pics":[-0.01,-0.39],"homes":[-0.01,-0.39],"website":[0,-0.39],"zone":[-0.01,-0.39],"fund":[-0.01,-0.39],"paste":[0,-0.39],"account":[-0.01,-0.39],"bell":[-0.01,-0.39],"history":[0,-0.39],"theme":[0,-0.39],"check":[-0.01,-0.39],"error":[0,-0.39],"clip":[0.13,-0.39],"computer":[0,-0.5],"mail":[0,0],"lock":[0,-0.25],"git":[0,0],"barcode":[0,0],"party":[0,-0.55],"studio":[0,0],"home":[0,0.25],"heart":[0,-0.17],"calendar":[0,0.25],"camera":[0,-0.6],"shoe":[-0.3,-0.45]};
     const ALIASES = { yt: 'youtube', net: 'dns', dev: 'code', img: 'image', sound: 'audio', document: 'pdf', pastes: 'paste', openre: 'stream', maps: 'map', user: 'account', notifications: 'bell', 'media-hub': 'drive', mediahub: 'drive', sources: 'feeds', agent: 'actor', jobs: 'work', homes: 'homes', page: 'docs', db: 'zone', database: 'zone', location: 'ip', gamepad: 'games', robot: 'bot', deploy: 'upload', copy: 'paste', activity: 'ping',
         // The 2026-10-28 rooms, on the nearest glyph until each has its own (rooms.js): never the fallback mark.
         domains: 'dns', design: 'theme', today: 'history', report: 'gauge', surf: 'games', casino: 'games', fun: 'quest', meme: 'image', exchange: 'trade', cam: 'video', tours: 'map', vision: 'ai', shoes: 'deals',
         // OpenVibe Connect (Website Connect v0, 2026-11-02): a port on your machine, on the web.
-        connect: 'plug' };
+        connect: 'plug',
+        // 4.182.0: other names the same products go by.
+        my: 'account', locker: 'lock', email: 'mail', restream: 'stream', node: 'link', desktop: 'computer' };
     const registry = Object.create(null);
     for (const [k, g] of Object.entries(GLYPHS)) registry[k] = { glyph: g };
 
