@@ -103,7 +103,8 @@
         return n;
     };
     const iconEl = (name, cls) => { const s = el('span', cls || 'ov-share-ico'); s.innerHTML = ICON[name]; return s; };   // constants only
-    const reduce = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduce = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
     const cleanName = (s) => String(s || '').trim().replace(/^@+/, '');
     const sid = (s) => (!s ? '' : typeof s === 'string' ? s : `${s.type}:${s.id}`);
     const same = (a, b) => !!a && !!b && sid(a) === sid(b);

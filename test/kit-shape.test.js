@@ -28,8 +28,10 @@ assert.match(room, /:where\(\[data-theme=paper\][^{]*\) \{\s*--ov-radius-1: 4px;
 assert.match(room, /:where\(\[data-theme=neon-tokyo\][^{]*\) \{\s*--ov-radius-1: 14px;/);
 // Motion (4.82.0): ov-fx.js's tokens, in kit.css too, so var(--ov-dur-*) resolves on every page and Reduced reaches it.
 assert.ok(kit.includes('--ov-dur-1: .12s;') && kit.includes('--ov-dur-4: .52s;') && kit.includes('--ov-ease-out: cubic-bezier(.2, .8, .2, 1);'), 'the motion tokens, as ov-fx.js sets them');
-assert.match(kit, /html\[data-ov-motion=reduced\] \{ --ov-dur-1: 0s;/, 'Reduced motion stops them');
-assert.match(kit, /@media \(prefers-reduced-motion: reduce\) \{ :root:root \{ --ov-dur-1: 0s;/, 'and so does a device that asks for less, over ov-fx.js\'s own :root');
+assert.match(kit, /html\[data-ov-motion=reduced\] \{ --ov-move: \.35; --ov-dur-1: \.15s;/, 'Calm: a third of the distance and the calm lengths, never zero');
+assert.match(kit, /@media \(prefers-reduced-motion: reduce\) \{ html:not\(\[data-ov-motion\]\) \{ --ov-move: \.35;/, 'a page the loader has not reached is calm when the device asks');
+assert.match(kit, /:root:root\[data-ov-motion=off\] \{ --ov-move: 0; --ov-dur-1: 0s;/, 'only Off stops them, over ov-fx.js\'s own :root');
+assert.ok(!/(prefers-reduced-motion: reduce|data-ov-motion=reduced\])[^{]*\{[^}]*\{?[^}]*(animation|transition): none/.test(kit), 'the kit stops nothing under Calm');
 assert.match(kit, /:is\(\[data-theme=paper\][^{]*\) \{\s*--ov-dur-1: \.15s;/, 'Paper is calm');
 const fx = fs.readFileSync(path.join(__dirname, '..', 'ov-fx.js'), 'utf8');
 assert.ok(fx.includes('--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s'), 'the same values as ov-fx.js');

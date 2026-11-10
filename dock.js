@@ -63,7 +63,8 @@
     const mounts = {};
 
     const phone = () => { try { return root.matchMedia('(max-width: 640px)').matches; } catch { return false; } };
-    const reduced = () => { try { return root.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced'; } catch { return false; } };
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduced = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
     const state = () => (doc && doc.state) || DEFAULT_STATE;
     const counts = () => (doc && doc.counts) || {};
@@ -106,7 +107,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '3dc4a69f0678', 'dock-runs.js': '8df917372f19', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '125c20e01289', 'dock-timeline.js': '3cac6118d6e9', 'dock-actor.js': '402c006ac20f', 'dock-agent.js': '8026ded2b4e5', 'dock-timer.js': 'f5d9fee28824', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '41d5083aeeb8', 'dock-runs.js': 'b734e5e7ba11', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': '6c444a734112', 'dock-actor.js': '5c97eda588c8', 'dock-agent.js': 'aeab4b6b7ce4', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -141,8 +142,6 @@
             .ovdk-pill:has(.ovdk-t:empty) { padding-right: 8px; }
             @keyframes ovdk-in { from { opacity: 0; transform: translateY(10px) scale(.9); } }
             @keyframes ovdk-ping { to { transform: scale(2.6); opacity: 0; } }
-            @media (prefers-reduced-motion: reduce) { .ovdk-pill, .ovdk-m::before { animation: none !important; } }
-            html[data-ov-motion="reduced"] .ovdk-pill, html[data-ov-motion="reduced"] .ovdk-m::before { animation: none; }
             .ovdk { --ovdk-gap: 16px; position: fixed; z-index: 9996; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
                 right: max(var(--ovdk-gap), env(safe-area-inset-right, 0px)); bottom: calc(max(var(--ovdk-gap), env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
                 width: ${DEF.width}px; height: ${DEF.height}px; max-width: calc(100vw - 32px); max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px);
@@ -190,7 +189,6 @@
             .ovdk-orbx:active .ovdk-ox { transform: rotate(270deg) scale(.7); }
             @keyframes ovdk-ox-in { from { transform: rotate(45deg) scale(.8); } }
             @keyframes ovdk-o1-out { from { opacity: 1; transform: scale(1); } }
-            @media (prefers-reduced-motion: reduce) { .ovdk-ox, .ovdk-ox circle { transition: none; animation: none !important; } }
             .ovdk-more { position: absolute; z-index: 6; right: 8px; top: calc(100% - 4px); width: min(320px, calc(100% - 16px)); display: grid; gap: 2px; padding: 6px; border-radius: 16px;
                 border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55); cursor: default; }
             .ovdk-more[hidden] { display: none; }
@@ -313,8 +311,6 @@
                 .ovdk-head { cursor: default; }
             }
             html.ovdk-sheet-open, html.ovdk-sheet-open body { overflow: hidden; }
-            @media (prefers-reduced-motion: reduce) { .ovdk.is-in, .ovdk-wait span { animation: none; } }
-            html[data-ov-motion="reduced"] .ovdk.is-in { animation: none; }
             // In a window of its own the panel is the window: full bleed, no card, no phone sheet.
             .ovdk-pip .ovdk, .ovdk-pip .ovdk[data-corner] { left: 0 !important; top: 0 !important; right: 0 !important; bottom: 0 !important;
                 width: 100% !important; height: 100% !important; max-width: none !important; max-height: none !important;

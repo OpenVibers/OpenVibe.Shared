@@ -173,7 +173,6 @@
 .ovk-receipt-facts dt { color: var(--ovk-muted); }
 .ovk-receipt-facts dd { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .ovk-receipt-facts .ovk-meter { width: 56px; height: 6px; }
-@media (prefers-reduced-motion: reduce) { .ovk-drop-zone { transition: none; } }
 
 /* ── The tool frame (4.55.0): kit.tool and its pieces. One order on every tool page: the name and what it does, the
    box, the answer and its next step, the family, the folds. The family's tint is only on the icon tile; buttons keep

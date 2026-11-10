@@ -74,7 +74,7 @@
   .ovtip-arrow{display:none}
   .ovtip-title{font-size:1rem}
 }
-@media (prefers-reduced-motion:reduce){.ovtip{transition:opacity .12s}.ovtip.is-on::after{animation:none}}`;
+`;
 
     let tip = null, arrow = null, current = null, raf = 0, hideTimer = 0;
     const isTouch = () => window.matchMedia('(hover: none)').matches;

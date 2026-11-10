@@ -23,7 +23,7 @@ const scene = (extra = '') => `<!doctype html><html lang="en"><head><meta charse
 const server = http.createServer((req, res) => {
     if (req.url === '/motion.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(__dirname, '..', 'motion.js'))); }
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    return res.end(req.url === '/still' ? scene(' data-x="1"').replace('<html lang="en">', '<html lang="en" data-ov-motion="reduced">') : scene());
+    return res.end(req.url === '/still' ? scene(' data-x="1"').replace('<html lang="en">', '<html lang="en" data-ov-motion="off">') : scene());
 });
 
 (async () => {
@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
         await still.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
         await still.goto(`${base}/still`, { maxMs: 5000 });
         await wait(1500);
-        assert.strictEqual(await still.evaluate('!document.querySelector(".ov-ghost") && document.querySelectorAll("[data-ov-ghost-on]").length === 0'), true, 'reduced motion: no cursor at all');
+        assert.strictEqual(await still.evaluate('!document.querySelector(".ov-ghost") && document.querySelectorAll("[data-ov-ghost-on]").length === 0'), true, 'motion off: no cursor at all');
         const errors = p.state.errors.concat(still.state.errors).filter((e) => !/Failed to load resource/.test(e.text));
         assert.deepStrictEqual(errors, [], JSON.stringify(errors));
         console.log('motion-ghost-chrome: all checks passed');

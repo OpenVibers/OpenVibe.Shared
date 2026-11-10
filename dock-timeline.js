@@ -99,7 +99,7 @@
             '.ovdt-card.ovdt-empty{padding:12px 14px}',
             '.ovdt-link{color:color-mix(in srgb,var(--accent,#3b82f6) 72%,var(--text-primary,#ececf1));font-weight:650;text-decoration:none}',
             '@media (max-width:640px){.ovdt-link{display:inline-flex;align-items:center;min-height:44px;padding:0 4px}}',
-            '@media (prefers-reduced-motion:reduce){.ovdt-outcome[data-s="running"]::before{animation:none}}',
+            '',
         ].join('');
         (doc.head || doc.documentElement).appendChild(st);
     }

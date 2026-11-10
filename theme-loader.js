@@ -215,11 +215,10 @@
 
     // ── A correction fades in ─────────────────────────────────
     // A theme that changes under someone (the account's answer, another tab) crossfades for 0.4 s instead of jumping;
-    // first paint and their own picks stay instant, and calm motion (either preference) never fades.
+    // first paint and their own picks stay instant. A colour fade moves nothing, so Calm keeps it; only Off stops it.
     let _fadeTimer = 0;
     function fadeNext() {
-        if (typeof document === 'undefined' || !document.head || readDisplay().motion === 'reduced') return;
-        try { if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) { /* */ }
+        if (typeof document === 'undefined' || !document.head || motionOf() === 'off') return;
         const el = document.documentElement;
         if (!document.getElementById('ov-theme-fade-css')) {
             const st = document.createElement('style'); st.id = 'ov-theme-fade-css';
@@ -354,7 +353,7 @@
 
     // ── Display settings, one record for every OpenVibe site: display.get() → DISPLAY_OPTS' values; display.set(patch)
     // applies here and in other tabs and saves to the account. <html data-ov-*> and --ov-text-scale before first paint.
-    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'reduced'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'] };
+    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'full', 'reduced', 'off'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'] };
     // Status names some sites use (--error, --error-text, --ok, --warn, --accent-text) that no theme sets: they resolve to the theme's
     // readable status colours instead of each site's fallback literal (pale on light themes). :where() keeps them
     // below any site's own value (4.86.0).
@@ -367,6 +366,37 @@
         + 'html[data-ov-colors=cb-safe][data-theme-mode=light]{--success:#0072b2!important;--success-text:#005a8c!important;--warning:#e69f00!important;--warning-text:#8a6100!important;--danger:#d55e00!important;--danger-text:#a84400!important}'
         + 'html[data-ov-oled=on][data-theme-mode=dark]{--bg-primary:#000!important;--bg-secondary:#050608!important;--bg-tertiary:#0b0d12!important;--bg-card:#0a0c10!important;--bg-input:#0b0d12!important;--bg-hover:#12151c!important}';
     const COMFORT_ATTRS = { contrast: ['data-ov-contrast', 'normal'], font: ['data-ov-font', 'default'], colors: ['data-ov-colors', 'default'], oled: ['data-ov-oled', 'off'], icons: ['data-ov-icons', 'auto'] };
+    // ── Motion (4.183.0; the owner, 2026-11-10: "still have full motion but actually just reduce it instead of getting
+    // rid of it"). auto follows the device, full plays everything, reduced is Calm (every effect, smaller and slower),
+    // off alone stops motion. <html data-ov-motion=full|reduced|off> is the one signal; --ov-move is what a moving
+    // thing multiplies its distance by (display.move() in script); under Calm an endless loop runs at CALM_RATE.
+    const CALM_MOVE = 0.35, CALM_RATE = 0.6;
+    let _rm = null;
+    function deviceCalm() { try { _rm = _rm || window.matchMedia('(prefers-reduced-motion: reduce)'); return !!_rm.matches; } catch (e) { return false; } }
+    function motionOf(d) { const m = (d || readDisplay()).motion; return m === 'off' ? 'off' : m === 'reduced' ? 'calm' : m === 'full' ? 'full' : deviceCalm() ? 'calm' : 'full'; }
+    function moveOf() { const m = motionOf(); return m === 'off' ? 0 : m === 'calm' ? CALM_MOVE : 1; }
+    const MOTION_CSS = ':where(html){--ov-move:1}html[data-ov-motion=reduced]{--ov-move:' + CALM_MOVE + ';scroll-behavior:auto!important}html[data-ov-motion=off]{--ov-move:0}'
+        + 'html[data-ov-motion=off] *:not([data-fx-demo] *),html[data-ov-motion=off] *:not([data-fx-demo] *)::before,html[data-ov-motion=off] *:not([data-fx-demo] *)::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}'
+        + 'html[data-ov-motion=off]::view-transition-group(*),html[data-ov-motion=off]::view-transition-old(*),html[data-ov-motion=off]::view-transition-new(*){animation-duration:.001ms!important}'
+        + 'html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}';
+    const _paced = typeof WeakSet === 'function' ? new WeakSet() : null;
+    function paceLoops(scope) {
+        if (!_paced || typeof document === 'undefined') return;
+        try {
+            const calm = document.documentElement.getAttribute('data-ov-motion') === 'reduced';
+            const list = scope && scope.getAnimations ? scope.getAnimations({ subtree: true }) : document.getAnimations();
+            for (let i = 0; i < list.length; i++) {
+                const a = list[i], fx = a.effect, t = fx && fx.getComputedTiming ? fx.getComputedTiming() : null;
+                if (!t || t.iterations !== Infinity) continue;
+                const el = fx.target, slow = calm && !(el && el.closest && el.closest('[data-fx-demo]'));
+                if (slow && !_paced.has(a)) { _paced.add(a); a.updatePlaybackRate(a.playbackRate * CALM_RATE); }
+                else if (!slow && _paced.has(a)) { _paced.delete(a); a.updatePlaybackRate(a.playbackRate / CALM_RATE); }
+            }
+        } catch (e) { /* no Web Animations here: loops keep their own speed */ }
+    }
+    if (typeof document !== 'undefined' && document.addEventListener) {
+        document.addEventListener('animationstart', function (e) { if (document.documentElement.getAttribute('data-ov-motion') === 'reduced') paceLoops(e.target); }, true);
+    }
     function readDisplay() {
         const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off', icons: 'auto' };
         try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(d[k])) >= 0) out[k] = String(d[k]); } catch (e) { /* */ }
@@ -375,14 +405,16 @@
     function applyDisplay(d) {
         if (typeof document === 'undefined') return;
         const el = document.documentElement;
-        if (d.motion === 'reduced') el.setAttribute('data-ov-motion', 'reduced'); else el.removeAttribute('data-ov-motion');
+        const m = motionOf(d), attr = m === 'off' ? 'off' : m === 'calm' ? 'reduced' : d.motion === 'full' ? 'full' : '';
+        if (attr) el.setAttribute('data-ov-motion', attr); else el.removeAttribute('data-ov-motion');
         if (d.text === '100') { el.style.removeProperty('--ov-text-scale'); el.removeAttribute('data-ov-text'); } else { el.style.setProperty('--ov-text-scale', String(parseInt(d.text, 10) / 100)); el.setAttribute('data-ov-text', d.text); }
         for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *:not([data-fx-demo] *),html[data-ov-motion=reduced] *:not([data-fx-demo] *)::before,html[data-ov-motion=reduced] *:not([data-fx-demo] *)::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + ALIAS_CSS + COMFORT_CSS;
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}' + MOTION_CSS + ALIAS_CSS + COMFORT_CSS;
             document.head.appendChild(st);
         }
+        paceLoops();
         try { window.dispatchEvent(new CustomEvent('ov:display', { detail: d })); } catch (e) { /* */ }
     }
     /** When the display settings in this browser were last changed (ms), or 0 for a copy older than 4.64.0. */
@@ -594,6 +626,14 @@
         } catch (e) { /* no media queries */ }
     }
 
+    if (typeof window !== 'undefined' && window.matchMedia) {
+        try {
+            const rmq = window.matchMedia('(prefers-reduced-motion: reduce)');
+            const onMotion = function () { if (readDisplay().motion === 'auto') applyDisplay(readDisplay()); };
+            if (rmq.addEventListener) rmq.addEventListener('change', onMotion); else if (rmq.addListener) rmq.addListener(onMotion);
+        } catch (e) { /* no media queries */ }
+    }
+
     // A theme not in the built-in map (community, custom) comes from the catalog, never falls back to the default.
     function fetchThemeVars(themeId) {
         return fetch(_config.apiBase + '/api/themes/' + encodeURIComponent(themeId))
@@ -661,7 +701,7 @@
     // ── Public API ───────────────────────────────────────────
     const OpenVibeThemeLoader = {
         THEMES: THEMES,
-        display: { get: readDisplay, set: setDisplay, options: DISPLAY_OPTS },
+        display: { get: readDisplay, set: setDisplay, options: DISPLAY_OPTS, motion: function () { return motionOf(); }, move: moveOf },
         apply: applyById,
         applyVars: applyVars,
         // Seasons: SEASONS, now() → the season today (or null), showing() → the season whose theme is on screen (or null)

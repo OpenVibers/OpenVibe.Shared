@@ -212,29 +212,35 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(t.running(), false, 'idle again');
     }
 
-    // ── reduced motion (the OS setting or the network's own) and data-static: never ──
+    // ── Calm (the device asking for less, or the setting) still plays; motion off and data-static: never ──
     {
-        const t = setup({ reduce: true });
+        const c = setup({ reduce: true });
+        c.io.fire(c.mark, true);
+        c.mark.closest('a').dispatchEvent(new c.Event('pointerenter'));
+        assert.strictEqual(c.running(), true, 'the device asking for less motion: the mark still answers a hover');
+
+        const t = setup({ rootAttrs: ' data-ov-motion="off"' });
         t.io.fire(t.mark, true);
         t.mark.closest('a').dispatchEvent(new t.Event('pointerenter'));
-        assert.strictEqual(t.running(), false, 'prefers-reduced-motion');
-        assert.strictEqual(t.smilPaused(), true, 'SMIL stopped too (the V sweep used to run under reduced motion)');
+        assert.strictEqual(t.running(), false, 'motion off');
+        assert.strictEqual(t.smilPaused(), true, 'SMIL stopped too (the V sweep used to run with motion off)');
 
         // The demo scope: inside [data-fx-demo] (a motion page's own container, set when the person asks) it plays.
-        const d = setup({ reduce: true });
+        const d = setup({ rootAttrs: ' data-ov-motion="off"' });
         d.document.body.setAttribute('data-fx-demo', '');
         d.io.fire(d.mark, true);
         d.mark.closest('a').dispatchEvent(new d.Event('pointerenter'));
-        assert.strictEqual(d.running(), true, 'a mark inside a demo scope plays under prefers-reduced-motion');
+        assert.strictEqual(d.running(), true, 'a mark inside a demo scope plays with motion off');
 
         const u = setup();
         u.io.fire(u.mark, true);
         u.document.documentElement.setAttribute('data-ov-motion', 'reduced'); await u.flush();
-        assert.strictEqual(u.running(), false, 'html[data-ov-motion=reduced]: no intro, no hover play');
-        // Calm is gentle, not still (the owner, 11-09: "the animations need to work even on calm mode"): a state still
-        // animates (its loops play once, by CSS).
+        assert.strictEqual(u.running(), true, 'html[data-ov-motion=reduced]: Calm keeps the intro (the owner, 11-10: reduce it, do not get rid of it)');
+        u.document.documentElement.setAttribute('data-ov-motion', 'off'); await u.flush();
+        assert.strictEqual(u.running(), false, 'html[data-ov-motion=off]: no intro, no hover play');
+        // Even with motion off a state is shown (the loader gives its loops no length).
         u.mark.setAttribute('data-state', 'busy'); await u.flush();
-        assert.strictEqual(u.running(), true, 'a state still animates under Calm');
+        assert.strictEqual(u.running(), true, 'a state is still shown with motion off');
         u.mark.removeAttribute('data-state'); await u.flush();
         u.document.documentElement.removeAttribute('data-ov-motion'); await u.flush();
         assert.strictEqual(u.running(), true, 'back inside the intro');
@@ -244,7 +250,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(u.running(foot), false, 'data-static');
         assert.strictEqual(u.smilPaused(foot), true);
         u.mq.matches = true; u.mq.listeners.forEach((fn) => fn());
-        assert.strictEqual(u.running(), false, 'reduced-motion change applies at once');
+        assert.strictEqual(u.running(), true, 'the device asking for less mid-visit: Calm, the intro goes on');
     }
 
     // ── a removed mark is let go; one added later mounts and gets its own intro ──────
@@ -347,7 +353,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.match(css, /\.ov-mark:hover \.gr\{animation:ovmGlint|\.ov-mark:hover \.gr,/, 'and crosses on hover');
         assert.match(css, /\.ov-mark\[data-glow\]::before\{opacity:\.42/, 'data-glow keeps the glow on');
         assert.match(css, /\.ov-mark\[data-tone\]::before,\.ov-mark\[data-state=sleep\]::before\{display:none\}/);
-        assert.ok(css.includes('.ov-mark:not([data-fx-demo] *)::before{transition:none!important}'), 'reduced motion: the glow appears without moving (outside a demo scope)');
+        assert.ok(!css.includes('::before{transition:none!important}') && css.includes('html[data-ov-motion=off] .ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}'), 'the glow fades in under Calm too; only motion off holds the mark still (outside a demo scope)');
         assert.match(css, /\.ov-mark:active \.m\{transform:scale\(\.9\)/, 'a press gives a little');
         assert.ok(!/ovmPop/.test(css), 'the old pop is gone');
         // The glint's copy of the V follows the V into its shapes.

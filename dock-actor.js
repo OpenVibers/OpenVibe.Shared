@@ -61,7 +61,6 @@
                 background: var(--bg-input, transparent); color: var(--text-primary, #ececf1); font: inherit; font-size: 13px; }
             .ovdac-note { font-size: 12px; color: var(--text-muted, #8b8b96); }
             @keyframes ovdac-pulse { 50% { opacity: .4; } }
-            @media (prefers-reduced-motion: reduce) { .ovdac-state.is-working .dot, .ovdac-step .dot { animation: none; } }
         `;
         (d.head || d.documentElement).appendChild(st);
     }

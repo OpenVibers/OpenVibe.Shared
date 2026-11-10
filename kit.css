@@ -63,9 +63,16 @@
 :is([data-theme=neon-tokyo], [data-theme=vapor], [data-theme=matrix], [data-theme=hacker], [data-theme=high-contrast], [data-theme=dracula], [data-theme=monokai], [data-theme=abyss]) {
     --ov-dur-1: .09s; --ov-dur-2: .15s; --ov-dur-3: .24s; --ov-dur-4: .42s; --ov-ease-spring: cubic-bezier(.3, 1.8, .6, 1);
 }
-html[data-ov-motion=reduced] { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; --ov-dur-4: 0s; }
+/* Motion (4.183.0; the owner, 2026-11-10: "it should still have full motion but actually just reduce it instead of
+   getting rid of it"). Calm keeps every effect and makes it smaller and slower: the calm feel's lengths, no
+   overshoot, and --ov-move, the factor a moving thing multiplies its distance by (calc(12px * var(--ov-move, 1))).
+   Only Off stops motion. theme-loader.js writes data-ov-motion (reduced for Calm, the device's own setting counted
+   in; off; full); the media rule serves a page the loader has not reached. */
+:where(html) { --ov-move: 1; }
+html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25s; --ov-dur-3: .4s; --ov-dur-4: .62s; --ov-ease-spring: var(--ov-ease-out); }
+@media (prefers-reduced-motion: reduce) { html:not([data-ov-motion]) { --ov-move: .35; --ov-ease-spring: var(--ov-ease-out); } }
 /* :root:root outranks ov-fx.js's own :root and theme feels, which load later. */
-@media (prefers-reduced-motion: reduce) { :root:root { --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; --ov-dur-4: 0s; } }
+:root:root[data-ov-motion=off] { --ov-move: 0; --ov-dur-1: 0s; --ov-dur-2: 0s; --ov-dur-3: 0s; --ov-dur-4: 0s; }
 /* Shape personalities (plan L45: "Paper is quiet and square, Neon glows and bounces"). A quiet look has square corners
  * and lies flat, with a hairline where a shadow would be; a loud one is round and its raised things glow in its accent.
  * The ids are Network's theme catalog (as ov-fx.js's motion feels); any other look keeps the defaults above. */
@@ -335,7 +342,6 @@ div.ovk-set-row { cursor: default; }
     .ovk-split { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
     .ovk-split > .ovk-side { position: sticky; top: calc(var(--ovk-top) + 12px); }
 }
-@media (prefers-reduced-motion: reduce) { .ovk-switch, .ovk-switch::after, .ovk-fold > summary > .ovk-i, .ovk-head, .ovk-btn { transition: none; } }
 @media print { .ovk-head, .ovk-dock, .ovk-save { position: static; background: none; -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
 /* Touch (4.46.0, the fleet tap audit): small buttons are 44px tall on a touch screen, the find bar's go button reaches
@@ -393,12 +399,11 @@ div.ovk-set-row { cursor: default; }
 .ovk-sidebar-foot { padding-top: 8px; border-top: 1px solid var(--ovk-line); }
 @media (max-width: 760px) {
     .ovk-with-sidebar { grid-template-columns: minmax(0, 1fr); }
-    .ovk-sidebar { position: fixed; z-index: 10060; top: 0; left: 0; bottom: 0; height: auto; width: min(320px, 86vw); padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); border-right: 0; translate: -100% 0; visibility: hidden; transition: translate .25s ease, visibility 0s linear .25s; box-shadow: 12px 0 32px rgba(0, 0, 0, .25); }
-    .ovk-sidebar.is-open { translate: 0 0; visibility: visible; transition: translate .25s ease; }
+    .ovk-sidebar { position: fixed; z-index: 10060; top: 0; left: 0; bottom: 0; height: auto; width: min(320px, 86vw); padding-top: max(12px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); border-right: 0; translate: calc(-100% * var(--ov-move, 1)) 0; opacity: 0; visibility: hidden; transition: translate .25s ease, opacity .2s ease, visibility 0s linear .25s; box-shadow: 12px 0 32px rgba(0, 0, 0, .25); }
+    .ovk-sidebar.is-open { translate: 0 0; opacity: 1; visibility: visible; transition: translate .25s ease, opacity .2s ease; }
     .ovk-sidebar-close, .ovk-sidebar-open { display: inline-grid; }
     .ovk-sidebar-scrim { position: fixed; inset: 0; z-index: 10050; background: rgba(0, 0, 0, .4); }
 }
-@media (prefers-reduced-motion: reduce) { .ovk-sidebar, .ovk-sidebar.is-open { transition: none; } .ovk-sidebar-dot.is-busy { animation: none; } }
 
 /* ── Scroll areas (4.69.0; the owner, 2026-11-01: "you can't scroll down the page even when you're at the bottom of
    the chat… this should be consistent across websites"). The network's rule: a scroll area inside a page that scrolls
@@ -435,16 +440,14 @@ div.ovk-set-row { cursor: default; }
 .ovk-skel-dot { flex: none; width: 22px; height: 22px; border-radius: 50%; }
 .ovk-skel-stat { display: grid; gap: 6px; padding: 12px; border-radius: var(--ov-radius-2); border: 1px solid var(--border, rgba(255,255,255,.08)); }
 .ovk-skel-num { height: 22px; width: 48%; }
-@media (prefers-reduced-motion: reduce) { .ovk-skel { animation: none; } }
-html[data-ov-motion=reduced] .ovk-skel { animation: none; }
 
 /* ── Moving between pages (4.70.0, plan L52) ── A server-rendered site's pages cross-fade while the navbar and the app bar
-   stay put (cross-document view transitions; a browser without them just loads the page). Off under reduced motion. */
+   stay put (cross-document view transitions; a browser without them just loads the page). A cross-fade moves nothing,
+   so Calm keeps it; with motion off the loader gives it no length. */
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
 #navbar-mount, .openvibe-navbar { view-transition-name: ov-navbar; }
 .ovnav-appbar { view-transition-name: ov-appbar; }
-@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 
 /* Content labels (L1): quiet chips beside a title, the adult one in the warning colour. They say what a thing carries;
    each viewer's own choice (ov-labels.js) decides whether it shows, blurs or hides. */

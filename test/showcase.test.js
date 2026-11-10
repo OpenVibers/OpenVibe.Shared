@@ -51,7 +51,7 @@ assert.ok(code.includes('<pre tabindex="0" aria-label="Node">'), 'code samples a
 assert.ok(code.includes('class="language-js"') && code.includes('&lt;script&gt;x&lt;/script&gt;</code>'), 'code is escaped and trimmed');
 const d = sc.demo({ title: 'Try it', iframe: { src: 'https://x.example/?a=1&b=2', height: 5000 } });
 assert.ok(d.includes('loading="lazy"') && d.includes('height:900px') && d.includes('&amp;b=2'), 'a demo frame is lazy and bounded');
-assert.ok(typeof sc.CSS === 'string' && sc.CSS.includes('.sc-card') && sc.CSS.includes('prefers-reduced-motion'));
+assert.ok(typeof sc.CSS === 'string' && sc.CSS.includes('.sc-card') && sc.CSS.includes('data-ov-motion=off'));
 const { execFileSync } = require('child_process');
 execFileSync(process.execPath, [require('path').join(__dirname, '..', 'scripts', 'build-styles.js'), '--check'], { stdio: 'inherit' });
 const files = require('../files');
@@ -128,7 +128,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(sc.network({ service: 'unknown-thing' }).includes('OpenVibe.Live'), 'a product without its own list gets the core ones');
     assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'));
     for (const [svc, list] of Object.entries(sc.RELATED)) for (const [to, what, href] of list) assert.ok(to && what && /^https:\/\//.test(href) && to !== svc, `${svc} → ${to}`);
-    assert.ok(sc.CSS.includes('animation-timeline:view()') && sc.CSS.includes('prefers-reduced-motion:no-preference'), 'scroll reveal, only for people who want motion');
+    assert.ok(sc.CSS.includes('animation-timeline:view()') && sc.CSS.includes('html[data-ov-motion=off] .sc-sec{animation:none}') && sc.CSS.includes('translateY(calc(18px * var(--ov-move,1)))'), 'scroll reveal: a third as far under Calm, none with motion off');
     const rise = sc.CSS.match(/@keyframes scRise\{[^@]*?\}\}/);
     assert.ok(rise && !/opacity/.test(rise[0]), 'the reveal only moves: a section that fades in is measured half-transparent, so its text fails contrast checks (axe on every product home)');
 }
@@ -161,7 +161,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(/&lt;Chat&gt;/.test(o) && !/<Chat>/.test(o), 'names are escaped');
     assert.ok(!/javascript:/.test(o) && /<span class="sc-orb-node" style="--i:0;--n:1"/.test(o), 'an unsafe link is no link');
     assert.ok(/<b>Quests<\/b><small>every site<\/small>/.test(o), 'the centre says what it is');
-    assert.ok(/@media \(prefers-reduced-motion:reduce\)\{\.sc-ring,\.sc-aura-glow,\.sc-orb-ring,\.sc-orb-face\{animation:none\}\}/.test(sc.CSS), 'still under reduced motion');
+    assert.ok(!/sc-orb-face\{animation:none\}/.test(sc.CSS), 'the ring keeps turning under Calm (slower, by the loader)');
 }
 
 // (4.26.1 kept the eyebrow without the site name; 4.159.0 drops the eyebrow from the hero altogether, tested above.)

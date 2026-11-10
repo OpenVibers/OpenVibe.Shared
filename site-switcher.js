@@ -61,8 +61,6 @@
 .ovsw-foot a:hover { text-decoration: underline; }
 @keyframes ovsw-in { from { opacity: 0; transform: translateY(-8px) scale(.97); } }
 @keyframes ovsw-tile { from { opacity: 0; transform: translateY(6px) scale(.94); } }
-@media (prefers-reduced-motion: reduce) { .ovsw-panel, .ovsw-t { animation: none; } .ovsw-t .ov-icon { transition: none; } }
-html[data-ov-motion="reduced"] .ovsw-panel, html[data-ov-motion="reduced"] .ovsw-t { animation: none; }
 `;
 
     let el = null, panel = null, ctx = {}, lastFocus = null, mine = null, query = '';

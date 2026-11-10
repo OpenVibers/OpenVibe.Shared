@@ -73,7 +73,7 @@ ON_ICON.forEach((cls) => assert.ok(CSS.includes(`.ovg.${cls}{`) || CSS.includes(
 ['--fa-beat-scale', '--fa-bounce-height', '--fa-fade-opacity', '--fa-flip-angle', '--fa-rotate-angle', '--fa-animation-duration', '--fa-li-width',
     '--fa-border-color', '--fa-counter-background-color', '--fa-primary-color', '--fa-inverse'].forEach((v) => assert.ok(CSS.includes(v), `Font Awesome's ${v}`));
 assert.ok(!CSS.includes('360deg') && /\.ovg\.fa-spin[^{]*\{animation:ovgBreathe/.test(CSS), 'fa-spin breathes: nothing spins (L27)');
-assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ovg=busy] circle,.ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}}'), 'reduced motion stops every animation, and a drawn-in glyph is simply there');
+assert.ok(CSS.includes('html[data-ov-motion=off] .ovg,html[data-ov-motion=off] .ovg[data-ovg=busy] circle,html[data-ov-motion=off] .ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}') && !CSS.includes('prefers-reduced-motion') && !CSS.includes('data-ov-motion=reduced'), 'motion off stops every animation and a drawn-in glyph is simply there; Calm plays them');
 
 // ── In a page ──
 (async () => {

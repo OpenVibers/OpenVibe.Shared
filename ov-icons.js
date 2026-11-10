@@ -22,7 +22,7 @@
  * SVG and transform on the <svg> element only: no CSS transform ever touches an element inside the SVG
  * (transform-box/transform-origin on SVG children left glyphs and whole icons unpainted on phones while
  * scrolling), and hover effects apply only where a pointer can hover, so a thumb scrolling over a link
- * starts nothing. Motion stops under prefers-reduced-motion. Unknown names fall back to the OV mark "V".
+ * starts nothing. Calm slows the loops; only motion off stops them. Unknown names fall back to the OV mark "V".
  */
 (function (root) {
     'use strict';
@@ -169,7 +169,7 @@
 @keyframes oviBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6%)}}
 @keyframes oviPop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
 @keyframes oviShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6%)}75%{transform:translateX(6%)}}
-@media (prefers-reduced-motion:reduce){.ov-icon *, .ov-icon svg{animation:none!important;transition:none!important}.ov-icon .ovi-comet{display:none}}`;
+html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}`;
 
     // BEGIN generated solid glyphs (scripts/build-nav-icons.py)
     // Font Awesome Free 6 solid glyphs (CC BY 4.0) for the ring icons; viewBox 0 0 <w> 512.

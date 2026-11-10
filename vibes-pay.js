@@ -134,7 +134,7 @@
 .ov-vibes-pay:hover { background: var(--ov-vibes-accent-light); }
 .ov-vibes-pay:focus-visible { outline: 3px solid color-mix(in srgb, var(--ov-vibes-accent) 55%, transparent); outline-offset: 2px; }
 .ov-vibes-pay:disabled, .ov-vibes-pay[aria-busy="true"] { opacity: .62; cursor: progress; }
-@media (prefers-reduced-motion: no-preference) { .ov-vibes-pay { transition: background-color .15s ease; } }
+.ov-vibes-pay { transition: background-color .15s ease; }
 `;
 
     function ensureStyles() {

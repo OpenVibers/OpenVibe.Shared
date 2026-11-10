@@ -313,12 +313,7 @@
             }
             html.ovn-sheet-open, html.ovn-sheet-open body { overflow: hidden; }
             @media (max-height: 520px) { .openvibe-notif-item .msg { -webkit-line-clamp: 1; } }
-            @media (prefers-reduced-motion: reduce) {
-                .openvibe-toast, .ovn-phone .openvibe-toast, .openvibe-notif-panel { animation: none; }
-                .openvibe-toast.removing { animation: none; opacity: 0; }
-                .openvibe-bell.ringing svg, .openvibe-bell .badge { animation: none; }
-                .openvibe-toast-progress { display: none; }
-            }
+            html[data-ov-motion=off] .openvibe-toast.removing{opacity: 0}html[data-ov-motion=off] .openvibe-toast-progress{display: none}
         `;
         document.head.appendChild(style);
     }
