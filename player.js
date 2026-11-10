@@ -285,7 +285,9 @@
         });
 
         const pipOk = typeof document !== 'undefined' && document.pictureInPictureEnabled && !video.disablePictureInPicture;
-        if (!pipOk) pipBtn.hidden = true;
+        const comes = video.hasAttribute('data-ov-mini');
+        if (!pipOk && !comes) pipBtn.hidden = true;
+        if (comes) { pipBtn.setAttribute('aria-label', 'Keep watching while you browse'); pipBtn.title = 'Keep watching while you browse'; }
         const fsOk = !!(root.requestFullscreen || root.webkitRequestFullscreen || video.webkitEnterFullscreen);
         if (!fsOk) fullBtn.hidden = true;
 
@@ -387,7 +389,7 @@
         function paintAudioOnly() {
             const audio = video.readyState >= 1 && !video.videoWidth && !video.videoHeight;
             root.classList.toggle('is-audio', audio);
-            if (pipOk) pipBtn.hidden = audio;
+            if (pipOk || comes) pipBtn.hidden = audio;
             if (!audio || audioLayer.firstChild) return;
             const src = [video.getAttribute('data-ov-avatar'), video.getAttribute('poster')].find((u) => /^(https:\/\/|\/(?!\/))/.test(u || ''));
             if (src) {
@@ -445,6 +447,9 @@
             },
             nextSpeed() { const i = SPEEDS.indexOf(video.playbackRate); video.playbackRate = SPEEDS[(i + 1) % SPEEDS.length]; paintSpeed(); },
             togglePip() {
+                // A video that may come along (data-ov-mini, mini.js) goes on in the small player while the person
+                // browses; without that the browser's own floating window, as before.
+                if (video.hasAttribute('data-ov-mini') && window.OpenVibeMini && window.OpenVibeMini.carry(video)) return;
                 if (document.pictureInPictureElement === video) document.exitPictureInPicture().catch(() => {});
                 else if (video.requestPictureInPicture) video.requestPictureInPicture().catch(() => {});
             },
