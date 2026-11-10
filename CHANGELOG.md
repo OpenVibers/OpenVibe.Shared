@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.195.0 — 2026-11-10
+
+**The You tab gets a row of its own, and the menu grows out of the button that was pressed.** From the owner's notes of
+2026-11-10.
+
+- **The You tab: one slim row, and the old account block is gone from the menu.** The owner, with the block crossed
+  out: "When I said integrate the user drop down into this menu, I didn't mean like this … get rid of this thing … We
+  didn't really need the actual [block] here, other than like adding your account … making a new design for that."
+  The row: your face and name, add or switch account, Display, Settings, Sign out (each a full touch target, with a
+  tooltip). Under it, small, only what has no other home in the menu: this site's own items, your status, and Admin
+  for an admin. History, Ask Vibe, Work, the Dock and the wallet are not repeated: they are tiles, the search box, the
+  row of places and the balances pill. `navbar.js` hands the menu three small things (`me: { add, out, own }`) in
+  place of its dropdown; `ov-home.js` draws the row.
+- **The menu grows out of the pressed button** ("go … to the proper element … what you clicked on, and be more aware …
+  of positioning"). On a computer it unfolded from its left corner, though its button has been at the right since
+  4.193.0: its origin is now the pressed button's centre, wherever the sheet was clamped to, on the dropdown's own
+  curve.
+- Tests: `menu-home-screen-chrome` and `navbar-ask-vibe` read the row (the old block and its grid are not in the
+  menu); `menu-places-chrome` checks the sheet's origin against the pressed button. `navbar.js` is under its budget.
+
 ## 4.194.0 — 2026-11-10
 
 **One row of places in the menu, a wallet that is there at once, and a Sign in that says so.** From the owner's notes
