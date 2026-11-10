@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.187.0 — 2026-11-10
+## 4.188.0 — 2026-11-10
 
 **The history relay carries page pictures, and Jump back in links to the full timeline.** `history.js` forwards the
 site-provided `image_url` (or `picture`) through the existing signed-in Network relay. The You menu adds a plain
@@ -10,6 +10,7 @@ link to `openvibe.my/my#history`; the Network page provides the timeline and its
 the person's Bearer; Network returns rows only after the person has opted in. The read stays separate from Actor's
 prompt.
 
+## 4.187.0 — 2026-11-10
 
 **The bar the owner chose.** 2026-11-10, in the Arena: "here's the new menu button and the logo … these two, but
 improve upon and expand on it. And let's move the user … so that it's to the right of this. And instead of having
