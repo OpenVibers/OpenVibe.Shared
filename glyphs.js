@@ -230,6 +230,12 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, the "-off" family: the shape is cut along the slash (a band a little wider than the line), so the
+        // slash stays a line across it, as eye-off and mic-off already do.
+        'chat-off': '<path d="M7.1 4.4H19a1.6 1.6 0 0 1 1.6 1.6v9a1.6 1.6 0 0 1-1.3 1.6ZM3.4 6.1 13.9 16.6H8.3l-4.9 4.6Z"/><path class="ln" d="m4 4 16 16"/>',
+        'user-off': '<path d="M8.5 5.8A4.1 4.1 0 1 1 14.2 11.5ZM4.2 21c0-4.3 3.3-7.1 7-7.2L18.3 21Z"/><path class="ln" d="m4 4 16 16"/>',
+        'camera-off': '<path d="M8.1 5.4 9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v10ZM4.3 7 17.5 20.2H4.8A1.8 1.8 0 0 1 3 18.4V8.3Z"/><path class="ln" d="m4 4 16 16"/>',
+        'cloud-off': '<path d="M8.65 5.96A6.4 6.4 0 0 1 17.6 10a4.4 4.4 0 0 1 2.56 7.47ZM5.95 8.64 16.11 18.8H7A4.7 4.7 0 0 1 5.4 9.4a6.4 6.4 0 0 1 .55-.76Z"/><path class="ln" d="m4 4 16 16"/>',
         // 4.182.0, third batch: a die, a lifebuoy, cubes, a paw, a weight, and a person with a pen or a tag.
         dice: '<path fill-rule="evenodd" d="M6.4 2.9h11.2a3.5 3.5 0 0 1 3.5 3.5v11.2a3.5 3.5 0 0 1-3.5 3.5H6.4a3.5 3.5 0 0 1-3.5-3.5V6.4a3.5 3.5 0 0 1 3.5-3.5ZM6.4 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM10.1 12a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM6.4 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0Z"/>',
         lifebuoy: '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 5.4a4.2 4.2 0 1 1 0 8.4 4.2 4.2 0 0 1 0-8.4ZM14.33 16.17 17.44 19.28 19.28 17.44 16.17 14.33ZM9.67 16.17 6.56 19.28 4.72 17.44 7.83 14.33ZM14.33 7.83 17.44 4.72 19.28 6.56 16.17 9.67ZM9.67 7.83 6.56 4.72 4.72 6.56 7.83 9.67Z"/>',
