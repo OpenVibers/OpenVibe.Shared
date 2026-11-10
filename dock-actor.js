@@ -139,7 +139,7 @@
             @keyframes ovdac-pulse { 50% { opacity: .45; } }
             @keyframes ovdac-ring { 50% { opacity: .35; transform: scale(1.06); } }
             @media (pointer: coarse) { .ovdac-tell input { font-size: 16px; } }
-            @media (prefers-reduced-motion: reduce) { .ovdac *, .ovdac *::before, .ovdac *::after { animation: none !important; transition: none !important; } }
+            html[data-ov-motion=off] .ovdac *, html[data-ov-motion=off] .ovdac *::before, html[data-ov-motion=off] .ovdac *::after { animation: none !important; transition: none !important; }
         `;
         (d.head || d.documentElement).appendChild(st);
     }
