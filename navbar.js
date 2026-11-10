@@ -71,26 +71,28 @@
             .openvibe-navbar .openvibe-navbar-brand .flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
             .openvibe-navbar .openvibe-navbar-brand .name { align-items: center; gap: 0; font-family: 'OV Brand', Nunito, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 19px; letter-spacing: -.25px; }
             .openvibe-navbar .openvibe-navbar-brand .name a { padding: 3px 1px; border-radius: 6px; transition: color .15s, background .15s; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.b-sub { color: var(--text-primary, #e6edf7); font-weight: 900; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 800; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop::after { content: ""; flex: none; display: inline-block; width: 5px; height: 5px; margin: 0 2px 3px 6px; border: solid currentColor; border-width: 0 1.8px 1.8px 0; transform: rotate(45deg); opacity: .65; transition: transform .2s; }
-            .openvibe-navbar .openvibe-navbar-brand .name { overflow-clip-margin: 8px; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop { border-radius: 8px; transition: color .15s, background .15s, box-shadow .26s cubic-bezier(.2,1.4,.3,1); }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop:hover { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t); }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t), 0 0 0 7px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
-            .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
+            .openvibe-navbar .ovnav-brand { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; gap: 7px; min-width: 0; height: 40px; padding: 0 12px 0 4px; border-radius: 12px; cursor: pointer; color: inherit; transition: background-color .15s, box-shadow .26s cubic-bezier(.2,1.4,.3,1); }
+            .openvibe-navbar .ovnav-brand::before { content: ""; position: absolute; inset: -3px 0; }
+            .openvibe-navbar .ovnav-brand::after { content: ""; flex: none; width: 6px; height: 6px; margin: 0 0 3px 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); opacity: .6; transition: transform .2s; }
+            .openvibe-navbar .ovnav-brand:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            .openvibe-navbar .ovnav-brand[aria-expanded="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
+            .openvibe-navbar .ovnav-brand[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
+            .openvibe-navbar .ovnav-brand:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+            .openvibe-navbar .ovnav-brand .flame, .openvibe-navbar .ovnav-brand .flame:hover { background: none; }
+            .openvibe-navbar .openvibe-navbar-brand .name .b-sub { color: var(--text-primary, #e6edf7); font-weight: 900; }
+            .openvibe-navbar .openvibe-navbar-brand .name .b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
+            .openvibe-navbar .openvibe-navbar-brand .name .b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 800; }
+            .openvibe-navbar .openvibe-navbar-brand.has-sub .name .b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name .b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
             .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0; opacity: .5; }
-            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-core { padding-right: 0; }
-            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-tld { padding-left: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name .b-core { padding-right: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name .b-tld { padding-left: 0; }
             .openvibe-navbar .openvibe-navbar-brand a:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             /* A finger needs about 44px: on touch screens the wordmark's links reach the navbar's height and the mark
                gets a clear ring, without moving anything (they were 22px and 30px tall). */
             @media (pointer: coarse) {
                 .openvibe-navbar .openvibe-navbar-brand .name a { padding-top: 14px; padding-bottom: 14px; margin-top: -11px; margin-bottom: -11px; }
-                .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; box-sizing: border-box; }
+                .openvibe-navbar .openvibe-navbar-brand .name .b-tld { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; box-sizing: border-box; }
                 .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
@@ -934,11 +936,14 @@
         const mark = brand.icon
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
             : `<span class="ov-mark" data-size="42" data-wide data-variant="${escapeAttr(brand.variant)}"></span>`;   // 42 since 4.188.0 (was 34: beside a short name it read as smaller than the word)
+        const tag = brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : '';
+        // 347: the mark and the name are one button (the site's pages, then every site).
+        const one = (cls, t) => `<span class="${cls}">${escapeAttr(t)}</span>`;
+        const words = brand.subText ? one('b-sub', brand.subText) + dot + one('b-core', brand.core) + join + one('b-tld', brand.tldText) : one('b-core', brand.core) + join + one('b-tld', brand.tldText);
         return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
                 ${_config.switcher === false
-        ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>`
-        : `<button type="button" class="flame" id="openvibe-switch-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="OpenVibe menu: every site and tool" title="Every OpenVibe site">${mark}</button>`}
-                <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
+        ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a><span class="name">${text}${tag}</span>`
+        : `<button type="button" class="ovnav-brand" id="openvibe-brand-btn" aria-haspopup="menu" aria-expanded="false" aria-label="${escapeAttr(brand.name)}: its pages and every OpenVibe site"><span class="flame">${mark}</span><span class="name">${words}${tag}</span></button>`}
                 ${_config.search === false ? '' : orbHTML()}
             </div>`;
     }
@@ -2347,12 +2352,9 @@
     }
     const menuOpen = () => !!(typeof document !== 'undefined' && document.querySelector && document.querySelector('.ovs.is-open'));
 
-    // ── The mark opens the OpenVibe menu on its first tab (4.187.0; the owner, 2026-11-10: the mark's own panel and
-    // the menu were two lists of the same sites, drawn differently and updated apart). One menu, two ways in. ──
+    // Every site: the menu on its first tab, scrolled to the sites, out of the menu button on screen.
     function openSwitcher() {
         if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
-        // As if the menu button itself were pressed (the one on screen: beside the name on a wide bar, at the bar's end
-        // on a phone), so the sheet opens out of it and it becomes the close button, whichever way in was used.
         const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
         openSearch('', 'sites', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
     }
@@ -2369,14 +2371,11 @@
     }
     // The site's name opens its pages (ov-drop.js); with a modifier key it is a link.
     function hookPages(nav) {
-        const a = nav.querySelector('.openvibe-navbar-brand .name a.b-tld');
-        if (!a || typeof a.removeAttribute !== 'function' || !flatLinks(rawLinks()).some((l) => l && l.href && !l.hidden)) return;
-        a.classList.add('has-drop'); a.setAttribute('aria-haspopup', 'menu'); a.setAttribute('aria-expanded', 'false'); a.removeAttribute('title');
+        const a = nav.querySelector('#openvibe-brand-btn');
+        if (!a) return;
         a.addEventListener('click', (e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
-            const orb = () => [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')].find((o) => o.getBoundingClientRect().width > 0) || null;
-            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon, _config.search === false ? null : { label: 'All OpenVibe sites', onClick: () => openSearch('', 'sites', orb()) });
+            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon, _config.search === false ? null : { label: 'All OpenVibe sites', onClick: openSwitcher });
             if (root.OVDrop) return go();
             if (document.getElementById('ov-drop-loader')) return;
             const sc = document.createElement('script'); sc.id = 'ov-drop-loader'; sc.src = siblingV('ov-drop.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
@@ -2410,9 +2409,9 @@
         if (document.fonts && document.fonts.ready && document.fonts.ready.then) document.fonts.ready.then(soon, () => {});
     }
     function hookSwitcher(nav) {
-        const b = nav.querySelector('#openvibe-switch-btn');
+        const b = nav.querySelector('#openvibe-switch-btn, #openvibe-brand-btn');
         if (!b) return;
-        b.addEventListener('click', () => openSwitcher());
+        if (b.id === 'openvibe-switch-btn') b.addEventListener('click', () => openSwitcher());
         for (const ev of ['pointerenter', 'touchstart', 'focus']) b.addEventListener(ev, () => { loadOvIcons(); OVFrame.get(); }, { once: true, passive: true });
         // Once the page is idle: the visit never competes with the first paint or the sign-in check.
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(() => recordVisit(), { timeout: 8000 });

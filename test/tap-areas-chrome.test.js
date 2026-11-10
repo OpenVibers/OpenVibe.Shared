@@ -52,7 +52,8 @@ const MEASURE = `(() => {
     const bar = document.querySelector('.openvibe-navbar');
     scrollTo(0, 0);
     const name = bar.querySelector('.openvibe-navbar-brand .name');
-    const nameLinks = [...name.querySelectorAll('a')];
+    // 347: the name's parts are spans inside the one brand button (links only where a site turns the switcher off).
+    const nameLinks = [...name.querySelectorAll('a, .b-sub, .b-core, .b-tld')];
     const lastLink = nameLinks[nameLinks.length - 1];
     const lr = lastLink.getBoundingClientRect();
     // At 320px the name is cut short (it reads whole from 360px): its last link ends where the name's box does.
@@ -66,9 +67,7 @@ const MEASURE = `(() => {
     const orbEl = bar.querySelector('.ovnav-orb');
     const menuEl = orbEl && getComputedStyle(orbEl).display !== 'none' ? orbEl : bar.querySelector('#openvibe-burger');
     const out = { signIn: size(bar.querySelector('#openvibe-login-btn')), orb: size(menuEl), nameKeepsItsEnd, rightKeepsItsStart };
-    out.flame = size(bar.querySelector('.flame'));
-    out.tld = size(bar.querySelector('a.b-tld'));
-    out.tldBox = bar.querySelector('a.b-tld').getBoundingClientRect().width;
+    out.brand = size(bar.querySelector('#openvibe-brand-btn'));
     document.querySelectorAll('.ovf-fold').forEach((fold) => { fold.open = true; });
     out.footerLinks = [...document.querySelectorAll('.ovf-fold a')].map((el) => ({ ...size(el), height: el.getBoundingClientRect().height }));
     out.footerBrand = size(document.querySelector('.ovf-brand'));
@@ -92,12 +91,11 @@ const MEASURE = `(() => {
                 const at = `${width}px signed ${who}`;
                 if (who === 'out') assert.ok(v.signIn && v.signIn.h >= 44 && v.signIn.w >= 44, `${at}: Sign In ${JSON.stringify(v.signIn)}`);
                 assert.ok(v.orb && v.orb.w >= 44 && v.orb.h >= 44, `${at}: the menu button ${JSON.stringify(v.orb)}`);
-                assert.ok(v.flame.w >= 44 && v.flame.h >= 44, `${at}: site switcher ${JSON.stringify(v.flame)}`);
+                assert.ok(v.brand.w >= 44 && v.brand.h >= 44, `${at}: the brand button (the site's pages, then every site) ${JSON.stringify(v.brand)}`);
                 assert.ok(v.nameKeepsItsEnd, `${at}: the site's name keeps the taps on its last letters`);
                 assert.ok(v.rightKeepsItsStart, `${at}: the right-hand group keeps its own first taps`);
                 assert.ok(v.footerBrand && v.footerBrand.h >= 44, `${at}: the footer's brand ${JSON.stringify(v.footerBrand)}`);
                 if (width === 390) {
-                    assert.ok(v.tldBox >= 44 && v.tld.w >= 44, `${at}: TLD has its own 44px width ${JSON.stringify(v.tld)}`);
                     assert.ok(v.footerLinks.length > 0);
                     for (const link of v.footerLinks) assert.ok(link.height >= 44 && link.h >= 44, `${at}: footer link has its own 44px height ${JSON.stringify(link)}`);
                 }

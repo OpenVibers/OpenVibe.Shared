@@ -5,17 +5,18 @@
  */
 (function (root) {
     'use strict';
-    const CSS = `.openvibe-navbar .ovnav-slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; cursor: pointer; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
+    const CSS = `.openvibe-navbar .ovnav-slot { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; cursor: pointer; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
 .openvibe-navbar .ovnav-slot:hover, .openvibe-navbar .ovnav-slot:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--text-primary, #e6edf7); }
 .openvibe-navbar .ovnav-slot:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .openvibe-navbar .ovnav-slot:active { transform: scale(.9); }
 .openvibe-navbar .ovnav-slot[aria-expanded="true"], .openvibe-navbar .ovnav-slot[aria-pressed="true"] { color: var(--accent-light, #60a5fa); background: var(--accent-glow, rgba(59,130,246,.14)); }
-.openvibe-navbar .ovnav-slot svg { width: 22px; height: 22px; }
+.openvibe-navbar .ovnav-slot svg { width: 21px; height: 21px; }
 .openvibe-navbar .ovnav-slot b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
 .openvibe-navbar .ovnav-slot b:empty { display: none; }
-.openvibe-navbar .ovnav-lead { margin-left: -6px; animation: ovnav-slot-in .22s cubic-bezier(.2, .9, .3, 1) both; }
+.openvibe-navbar .ovnav-lead { margin-left: -2px; animation: ovnav-slot-in .22s cubic-bezier(.2, .9, .3, 1) both; }
 @keyframes ovnav-slot-in { from { opacity: 0; transform: translateX(-6px); } }
 @media (max-width: 400px) { .openvibe-navbar .ovnav-slot { width: 32px; height: 32px; } }
+/* 347: the site's own buttons match the menu button on the right: its size, its corner, its stroke. */
 @media (min-width: 761px) { .openvibe-navbar .ovnav-slot.ovnav-phone-only { display: none; } }`;
     const SLOT_ICONS = {
         sidebar: 'M4 5.5h16a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1zM9.5 5.5v13',
@@ -37,7 +38,7 @@
         const state = (spec.sidebar ? ' data-ovk-sidebar-open' : '') + (ctl ? ` aria-controls="${esc(ctl)}" aria-expanded="${spec.expanded ? 'true' : 'false'}"` : spec.pressed != null ? ` aria-pressed="${spec.pressed ? 'true' : 'false'}"` : '');
         if (spec.phoneOnly) cls += ' ovnav-phone-only';
         const d = spec.path && PATH_OK.test(spec.path) ? spec.path : SLOT_ICONS[spec.icon] || SLOT_ICONS.info;
-        const svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+        const svg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
         const badge = spec.badge != null ? `<b>${esc(String(spec.badge).slice(0, 3))}</b>` : '';
         const href = spec.href && /^(https?:\/\/|\/)/.test(String(spec.href)) ? spec.href : null;
         return href ? `<a class="ovnav-slot ${cls}" id="${esc(id)}" href="${esc(href)}" aria-label="${label}" title="${label}"${state}>${svg}${badge}</a>`

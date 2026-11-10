@@ -49,12 +49,12 @@ const READ = `(() => { const nav = document.querySelector('.openvibe-navbar'); i
             assert.deepEqual(v.shown, LINKS.slice(0, v.shown.length).map((l) => l[1]), `${width}: the links that stay are the first ones, in order, whole`);
             seen[width] = v.shown.length;
             // The menu button is at the right on a computer too (4.193.0): one of it, after the links, before the person;
-            // the logo (the network's sites) and the name (this site's pages) are the left end.
+            // the brand button (the mark and the name: this site's pages, then every site, 347) is the left end.
             const m = await page.evaluate(`(() => { const x = (s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return r.width > 0 ? [Math.round(r.left), Math.round(r.right)] : null; };
-                return { byName: x('#openvibe-search-btn'), right: x('#openvibe-burger'), person: x('#openvibe-avatar-btn'), logo: x('#openvibe-switch-btn'), name: x('.openvibe-navbar-brand .name'), vw: innerWidth }; })()`);
+                return { byName: x('#openvibe-search-btn'), right: x('#openvibe-burger'), person: x('#openvibe-avatar-btn'), brand: x('#openvibe-brand-btn'), name: x('.openvibe-navbar-brand .name'), vw: innerWidth }; })()`);
             assert.equal(m.byName, null, `${width}: no second menu button beside the name`);
             assert.ok(m.right && m.person && m.right[1] <= m.person[0] && m.person[1] <= m.vw && m.vw - m.person[1] < 40, `${width}: the menu button, then the person, at the right end (${JSON.stringify(m)})`);
-            assert.ok(m.logo && m.name && m.logo[1] <= m.name[0] && m.name[1] < m.right[0], `${width}: the logo, then the name, at the left`);
+            assert.ok(m.brand && m.name && m.brand[0] <= m.name[0] && m.name[1] <= m.brand[1] && m.brand[1] < m.right[0], `${width}: one brand button holds the mark and the name, at the left (${JSON.stringify(m)})`);
             await page.close();
         }
         assert.ok(seen[880] < LINKS.length, 'a narrow bar lets its last links step out');
