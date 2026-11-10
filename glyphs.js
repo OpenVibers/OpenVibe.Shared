@@ -230,6 +230,22 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0: thirteen more shapes that are shown small (frames, cards and the person in a circle). A frame's
+        // inner line becomes a gap between two filled panels, so the shape still reads at 14 px.
+        grid: '<rect x="3.4" y="3.4" width="7.4" height="7.4" rx="2"/><rect x="13.2" y="3.4" width="7.4" height="7.4" rx="2"/><rect x="3.4" y="13.2" width="7.4" height="7.4" rx="2"/><rect x="13.2" y="13.2" width="7.4" height="7.4" rx="2"/>',
+        square: '<rect x="3.4" y="3.4" width="17.2" height="17.2" rx="3"/>',
+        more: '<circle cx="5" cy="12" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="19" cy="12" r="2.1"/>',
+        record: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm0 3.2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/><circle cx="12" cy="12" r="3.6"/>',
+        window: '<path d="M2.9 6.5a2.6 2.6 0 0 1 2.6-2.6h13a2.6 2.6 0 0 1 2.6 2.6v1.5H2.9ZM2.9 10h18.2v7.5a2.6 2.6 0 0 1-2.6 2.6h-13a2.6 2.6 0 0 1-2.6-2.6Z"/>',
+        sidebar: '<path d="M2.9 6.5a2.6 2.6 0 0 1 2.6-2.6h2.7v16.2H5.5a2.6 2.6 0 0 1-2.6-2.6ZM10.2 3.9h8.3a2.6 2.6 0 0 1 2.6 2.6v11a2.6 2.6 0 0 1-2.6 2.6h-8.3Z"/>',
+        columns: '<path d="M2.9 6.5a2.6 2.6 0 0 1 2.6-2.6h13a2.6 2.6 0 0 1 2.6 2.6v1.5H2.9ZM2.9 10h8.1v10.1H5.5a2.6 2.6 0 0 1-2.6-2.6ZM13 10h8.1v7.5a2.6 2.6 0 0 1-2.6 2.6H13Z"/>',
+        table: '<path d="M2.4 6a2.6 2.6 0 0 1 2.6-2.6h14a2.6 2.6 0 0 1 2.6 2.6v2.4H2.4ZM2.4 10.4h5.4v10.2H5a2.6 2.6 0 0 1-2.6-2.6ZM9.7 10.4h4.6v10.2H9.7ZM16.2 10.4h5.4V18a2.6 2.6 0 0 1-2.6 2.6h-2.8Z"/>',
+        card: '<path fill-rule="evenodd" d="M1.9 7a2.6 2.6 0 0 1 2.6-2.6h15a2.6 2.6 0 0 1 2.6 2.6v10a2.6 2.6 0 0 1-2.6 2.6h-15a2.6 2.6 0 0 1-2.6-2.6ZM1.9 9.2v1.8h20.2V9.2ZM5.4 14.3v1.6h5.2v-1.6Z"/>',
+        briefcase: '<path d="M2.4 9a2.6 2.6 0 0 1 2.6-2.6h14a2.6 2.6 0 0 1 2.6 2.6v2.9H2.4ZM2.4 13.1h7.4v1.5h4.4v-1.5h7.4V18a2.6 2.6 0 0 1-2.6 2.6H5a2.6 2.6 0 0 1-2.6-2.6Z"/><path class="ln" d="M9 6.4V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v.9"/>',
+        inbox: '<path fill-rule="evenodd" d="M2.4 13.4 5 4.4h14l2.6 9V19a1.6 1.6 0 0 1-1.6 1.6H4A1.6 1.6 0 0 1 2.4 19ZM6.2 6.4 4.4 12.5h3.9l1.5 2.5h4.4l1.5-2.5h3.9L17.8 6.4Z"/>',
+        'user-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm0 3.8a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4ZM6.3 17.6a6.6 6.6 0 0 1 11.4 0 8 8 0 0 1-11.4 0Z"/>',
+        compass: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM16.4 7.6 13.9 13.9 7.6 16.4 10.1 10.1Z"/>',
+        print: '<path d="M6.4 2.9h11.2v4.3H6.4ZM2.9 11a2.6 2.6 0 0 1 2.6-2.6h13a2.6 2.6 0 0 1 2.6 2.6v4a2.6 2.6 0 0 1-2.6 2.6h-.3v-4.4H5.8v4.4h-.3A2.6 2.6 0 0 1 2.9 15ZM7.2 14.6h9.6v6.5H7.2Z"/>',
         // 4.73.0: the most-used shapes on the sites (Live's sweep, 2026-11-01) get their solid drawing too.
         copy: '<rect x="7.6" y="7.6" width="13" height="13" rx="2.4"/><path class="ln" d="M16 7.6V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h1.6"/>',
         scissors: '<path fill-rule="evenodd" d="M6 3.9a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4Zm0 2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4ZM6 13.7a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4Zm0 2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/><path class="ln" d="M8.5 8.8 20 18M8.5 15.2 20 6"/>',
