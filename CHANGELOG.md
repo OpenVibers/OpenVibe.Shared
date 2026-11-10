@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.187.0 — 2026-11-10
+
+**The history relay carries page pictures, and Jump back in links to the full timeline.** `history.js` forwards the
+site-provided `image_url` (or `picture`) through the existing signed-in Network relay. The You menu adds a plain
+link to `openvibe.my/my#history`; the Network page provides the timeline and its controls.
+
+**The Dock's Actor tab can read recent history on request.** Its button calls Network's agent history endpoint with
+the person's Bearer; Network returns rows only after the person has opted in. The read stays separate from Actor's
+prompt.
+
 ## 4.186.0 — 2026-11-10
 
 **The mark at work is a ring of dots, and thinking is a state of its own.** The owner, 2026-11-10: "the progress

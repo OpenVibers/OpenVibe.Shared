@@ -817,7 +817,7 @@ Menus are modular: every site keeps the shared account menu and adds its own
   ({label, href, icon, onClick, danger, external}); OpenVibeNavbar.addMenuItem()
   / setLinks() do the same at runtime. Signed-in users also get a
   "Recently used" row fed by the shared history module when it is loaded.
-Sign-in and history: history: { type: 'tool'|'stream'|'paste'|'page'|…,
+Sign-in and history: history: { type: 'tool'|'stream'|'video'|'clip'|'paste'|'thread'|'conversation'|'document'|'page'|…,
   title, url, icon } is recorded for the signed-in user once auth resolves
   (cross-site "Recently used" / History on the Network). silentLogin:
   'https://site/auth/login?silent=1&next={url}' — when nobody is signed in

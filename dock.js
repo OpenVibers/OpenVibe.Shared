@@ -111,7 +111,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '41d5083aeeb8', 'dock-runs.js': 'b734e5e7ba11', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': 'c2163d1ab4e4', 'dock-agent.js': 'de6612c136a8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '41d5083aeeb8', 'dock-runs.js': 'b734e5e7ba11', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '21c2d71b5e8e', 'dock-agent.js': 'de6612c136a8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -578,7 +578,7 @@
             });
             // Actor v3 (A3): your Actor first, on every site; it shows nothing for a person without one.
             load('dock-actor.js', () => !!(root.OpenVibeDockActor && root.OpenVibeDockActor.mount)).then((on) => {
-                if (on && !mounts[id + 'Actor'] && panel.isConnected) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), active: () => isOpen() && tab === 'agent' });
+                if (on && !mounts[id + 'Actor'] && panel.isConnected) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), networkBase: o.apiBase || 'https://openvibe.network', active: () => isOpen() && tab === 'agent' });
             });
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
                 if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: directBase(o.agentBase), frameBase: frameBase(), active: () => isOpen() && tab === 'agent' });
