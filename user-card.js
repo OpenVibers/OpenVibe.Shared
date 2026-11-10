@@ -152,7 +152,7 @@
         const avatarUrl = user.avatar_url || `${_config.apiBase}/data/avatars/default.png`;
         card.innerHTML = `
             <div class="openvibe-usercard-banner" style="${user.profile_color ? `background: linear-gradient(135deg, ${user.profile_color}88, ${user.profile_color})` : ''}"></div>
-            <img class="openvibe-usercard-avatar" src="${avatarUrl}" alt="${user.username}" onerror="this.style.display='none'">
+            <img class="openvibe-usercard-avatar" src="${avatarUrl}" alt="${user.username}" width="56" height="56" decoding="async" onerror="this.style.display='none'">
             <div class="openvibe-usercard-body">
                 <div class="openvibe-usercard-name">
                     <span class="${nameClass}" style="${nameColor}">${user.display_name || user.username}</span>

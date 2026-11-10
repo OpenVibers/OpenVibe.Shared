@@ -1996,7 +1996,7 @@
         const retry = current && current !== src ? ` data-retry-src="${escapeAttr(current)}"` : '';
         const idAttr = id ? ` id="${escapeAttr(id)}"` : '';
         const alt = escapeAttr(user?.display_name || user?.username || 'Avatar');
-        return `<img class="${escapeAttr(className)}" src="${escapeAttr(src)}"${retry} data-fallback-src="${escapeAttr(fallback)}" alt="${alt}"${idAttr}>`;
+        return `<img class="${escapeAttr(className)}" src="${escapeAttr(src)}"${retry} data-fallback-src="${escapeAttr(fallback)}" alt="${alt}"${idAttr} width="${escapeAttr(size)}" height="${escapeAttr(size)}" decoding="async">`;
     }
 
     // A picture that does not load: the current one once (data-retry-src), then the initial.
