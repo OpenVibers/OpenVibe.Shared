@@ -51,6 +51,7 @@
     "./presence": "./presence.js",
     "./purse": "./purse.js",
     "./drop": "./ov-drop.js",
+    "./machines": "./machines.js",
     "./nav-slots": "./nav-slots.js",
     "./overlay": "./overlay.js",
     "./dock-vibe": "./dock-vibe.js",
