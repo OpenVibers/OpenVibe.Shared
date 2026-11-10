@@ -5,6 +5,25 @@ on:
     tags: ['v*']
   pull_request:
 jobs:
+  # Cheap first job: a pin-only pull request (an openvibe-* pin bump with its version lines and
+  # budget raises, nothing else) needs no Windows/macOS leg; Linux still runs the whole suite.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      pin_only: ${{ steps.decide.outputs.pin_only }}
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          fetch-depth: 1
+      - id: decide
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then echo "pin_only=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git fetch -q --depth 1 origin "$BASE" || { echo "pin_only=false" >> "$GITHUB_OUTPUT"; exit 0; }
+          echo "pin_only=$(node scripts/pin-only.js --base "$BASE")" >> "$GITHUB_OUTPUT"
   test:
     runs-on: ubuntu-latest
     steps:
@@ -32,9 +51,12 @@ jobs:
           npm install --no-audit --no-fund "$RUNNER_TEMP/openvibe-shared.tgz"
           node -e "require('openvibe-shared'); require('openvibe-shared/navbar'); require('openvibe-shared/legal'); require('openvibe-shared/metrics'); require('openvibe-shared/ready'); require('openvibe-shared/release'); require('openvibe-shared/release-compat'); require('openvibe-shared/analytics'); require('openvibe-shared/analytics/pg'); require('openvibe-shared/analytics/event.v1.json'); const f = require('openvibe-shared/files'); for (const n of f.BROWSER) require('fs').accessSync(f.path(n)); console.log('ok', require('openvibe-shared/package.json').version)"
   # Sites built on these files are developed on every OS (owner, 2026-10-27: "the shared SDK and API … work well across
-  # multi-platform"): the whole suite on Windows and macOS too.
+  # multi-platform"): the whole suite on Windows and macOS too — except on a pin-only pull request,
+  # where the Linux suite is enough. The legs still run and report success (their steps are skipped,
+  # not the jobs), so the check names stay green and no merge guard hangs on a missing status.
   other-os:
     name: test (${{ matrix.os }})
+    needs: [changes]
     strategy:
       fail-fast: false
       matrix:
@@ -42,11 +64,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        if: ${{ needs.changes.outputs.pin_only != 'true' }}
       - uses: actions/setup-node@v4
+        if: ${{ needs.changes.outputs.pin_only != 'true' }}
         with:
           node-version: 22.22.1
       - run: npm ci --no-audit --no-fund
+        if: ${{ needs.changes.outputs.pin_only != 'true' }}
       - run: npm test
+        if: ${{ needs.changes.outputs.pin_only != 'true' }}
+      - run: echo "pin-only short path; the Linux suite ran, this leg is not needed."
+        if: ${{ needs.changes.outputs.pin_only == 'true' }}
   # Secret scan (gitleaks) and dependency audit, the workflow every OpenVibers repo calls (Track Q).
   security:
     uses: ./.github/workflows/security.yml

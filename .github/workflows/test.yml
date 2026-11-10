@@ -36,6 +36,15 @@ name: test
 #                every repository is clean (acorn installed first; plan T0)
 #   extra        `extra`, when set: any further commands, one per line (e.g. a budget check), with a
 #                read-only GITHUB_TOKEN
+#
+# Pin-only pull requests (an openvibe-* pin bump with its STATUS.json / README version lines and
+# size-budget raises, nothing else) take a short path: the `changes` job decides from the pull
+# request's diff (scripts/pin-only.js), and the `test` job then runs the install, the page, frame,
+# size-budget and browser test files (`pin-only-test`, or the test/run.js subset when the repository
+# uses openvibe-shared/test-runner) and pin drift, skipping syntax, contracts, docs, floating
+# promises and extra. Anything the subset does not fit (no test/run.js, a custom runner, pnpm)
+# runs the full suite exactly as before, and so does every push to main. The job and check names
+# never change: a skipped step reports success, so the merge guard sees the green check it knows.
 on:
   workflow_call:
     inputs:
@@ -95,13 +104,48 @@ on:
         description: Git history to check out (0 = everything, e.g. a compat check against the previous release tag).
         type: number
         default: 1
+      pin-only-test:
+        description: Test command for a pin-only pull request ("" = the page/frame/size/browser subset through test/run.js when the repository uses openvibe-shared/test-runner, else the full `test`).
+        type: string
+        default: ''
+      pin-script-ref:
+        description: OpenVibe.Shared ref scripts/pin-only.js is fetched from (a branch name for workflow development; consumers leave it at main).
+        type: string
+        default: main
 
 permissions:
   contents: read
 
 jobs:
+  # Cheap first job: is this pull request pin-only? scripts/pin-only.js decides from the pull
+  # request's diff (the base commit is fetched shallowly; no history, no install). Pushes to main
+  # and any detection failure run the full suite.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      pin_only: ${{ steps.decide.outputs.pin_only }}
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          fetch-depth: 1
+      - id: decide
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ inputs.pin-script-ref }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then echo "pin_only=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git fetch -q --depth 1 origin "$BASE" || { echo "::warning::pin-only detection could not fetch the base; running the full suite"; echo "pin_only=false" >> "$GITHUB_OUTPUT"; exit 0; }
+          if curl -fsSL "https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/${REF}/scripts/pin-only.js" -o "$RUNNER_TEMP/pin-only.js"; then
+            echo "pin_only=$(node "$RUNNER_TEMP/pin-only.js" --base "$BASE")" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::scripts/pin-only.js is not at OpenVibe.Shared ${REF}; running the full suite"
+            echo "pin_only=false" >> "$GITHUB_OUTPUT"
+          fi
   test:
     runs-on: ubuntu-latest
+    needs: [changes]
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -109,6 +153,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: ${{ inputs.fetch-depth }}
+      - id: plan
+        name: pin-only plan
+        run: |
+          # mode=override: the repository's own pin-only-test. mode=subset: the page, frame,
+          # size-budget and browser files through test/run.js (npm + openvibe-shared/test-runner only;
+          # a custom runner or pnpm falls through to full). mode=full: the suite exactly as before.
+          if [ "${{ needs.changes.outputs.pin_only }}" = "true" ]; then
+            if [ -n "${{ inputs.pin-only-test }}" ]; then echo "mode=override" >> "$GITHUB_OUTPUT"
+            elif [ "${{ inputs.package-manager }}" = "npm" ] && [ -f test/run.js ] && grep -q test-runner test/run.js && grep -q '"test": *"node test/run.js' package.json; then echo "mode=subset" >> "$GITHUB_OUTPUT"
+            else echo "mode=full" >> "$GITHUB_OUTPUT"; fi
+          else echo "mode=full" >> "$GITHUB_OUTPUT"; fi
       - uses: pnpm/action-setup@v4
         if: ${{ inputs.package-manager == 'pnpm' }}
       - uses: actions/setup-node@v4
@@ -124,7 +179,7 @@ jobs:
       - name: install
         run: ${{ inputs.install }}
       - name: syntax
-        if: ${{ inputs.syntax-dirs != '' }}
+        if: ${{ inputs.syntax-dirs != '' && steps.plan.outputs.mode == 'full' }}
         env:
           DIRS: ${{ inputs.syntax-dirs }}
         run: |
@@ -139,9 +194,26 @@ jobs:
           echo "node --check: $n files, $failed failed"
           [ "$failed" -eq 0 ]
       - name: test
-        run: ${{ inputs.test }}
+        run: |
+          mode="${{ steps.plan.outputs.mode }}"
+          if [ "$mode" = "override" ]; then
+            ${{ inputs.pin-only-test }}
+          elif [ "$mode" = "subset" ]; then
+            echo "pin-only: the page, frame, size-budget and browser files only (pin drift still runs below)"
+            set +e
+            out=$(npm test -- perf budget page frame layout home smoke chrome --allow-empty 2>&1); rc=$?
+            set -e
+            printf '%s\n' "$out"
+            if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q 'no test files matched'; then
+              echo "pin-only: this repository has no page/frame/budget/browser files; the subset is empty"
+            else
+              exit "$rc"
+            fi
+          else
+            ${{ inputs.test }}
+          fi
       - name: contracts
-        if: ${{ inputs.contracts-service != '' }}
+        if: ${{ inputs.contracts-service != '' && steps.plan.outputs.mode == 'full' }}
         env:
           SERVICE: ${{ inputs.contracts-service }}
           SRC: ${{ inputs.contracts-src }}
@@ -153,17 +225,19 @@ jobs:
         working-directory: .
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - "$GITHUB_WORKSPACE"
       - name: docs currency
-        if: ${{ inputs.docs-status }}
+        if: ${{ inputs.docs-status && steps.plan.outputs.mode == 'full' }}
         working-directory: .
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/docs-status.js | node - "$GITHUB_WORKSPACE" --check
       - name: install acorn (floating promises check)
+        if: ${{ steps.plan.outputs.mode == 'full' }}
         working-directory: .
         run: npm i --no-save acorn@8 acorn-walk@8
       - name: floating promises (report-only until every repository is clean; plan T0)
+        if: ${{ steps.plan.outputs.mode == 'full' }}
         working-directory: .
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/floating-promises.js | node - "$GITHUB_WORKSPACE" || echo "::warning title=floating promises::unawaited async calls found (see the list above); this step fails the build once the estate is clean"
       - name: extra
-        if: ${{ inputs.extra != '' }}
+        if: ${{ inputs.extra != '' && steps.plan.outputs.mode == 'full' }}
         env:
           GITHUB_TOKEN: ${{ github.token }}   # read-only (permissions: contents: read), for a step that asks GitHub
         run: ${{ inputs.extra }}
