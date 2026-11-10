@@ -230,6 +230,21 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, sixth batch: things with one outline (an aeroplane, a burst, a fish, a shoe, a sword, a mask, a
+        // piggy bank), a couch, a coin over a box, two folders on a tree, a chequered flag, and two people.
+        airplane: '<path d="M12 2.5c1.3 0 2 1.2 2 3V9.7l7.5 4.5v2.5L14 14.2v3.5l2 1.5v2.5L12 20.5l-4 1.2v-2.5l2-1.5v-3.5l-7.5 2.5v-2.5L10 9.7V5.5c0-1.8.7-3 2-3Z"/>',
+        burst: '<path d="M12 1.9l2.2 4.9 5-2-2 5 4.9 2.2-4.9 2.2 2 5-5-2-2.2 4.9-2.2-4.9-5 2 2-5L1.9 12l4.9-2.2-2-5 5 2Z"/>',
+        fish: '<path fill-rule="evenodd" d="M7.6 12c2.1-3.6 4.8-5.4 7.9-5.4 2.9 0 5 2.2 6.1 5.4-1.1 3.2-3.2 5.4-6.1 5.4-3.1 0-5.8-1.8-7.9-5.4ZM15.7 10.6a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0Z"/><path d="M8.4 12 2.9 7.4v9.2Z"/>',
+        shoe: '<path d="M1.9 15.9V9.5l4.3-.6 3.1-4.2 4.2 1.9-.9 2.7 3.6 2 4.4.9a2.2 2.2 0 0 1 1.5 2.1v1.6Z"/><path class="ln" d="M2.5 18.8h19"/>',
+        sword: '<path d="M20.6 3.4v4.4l-10.1 10.1-4.4-4.4L16.2 3.4Z"/><path class="ln" d="M5.5 12 12 18.5M8.5 15.5 4 20"/>',
+        donate: '<path fill-rule="evenodd" d="M12 2.9a5.6 5.6 0 1 0 0 11.2 5.6 5.6 0 0 0 0-11.2Zm-.8 3.2h1.6v4.8h-1.6ZM3.4 14.9h17.2v5.7H3.4ZM8 17v1.5h8V17Z"/>',
+        mask: '<path fill-rule="evenodd" d="M2.9 6.2c3.2 1.4 6.2 2 9.1 2s5.9-.6 9.1-2c0 6.9-2.8 11.4-5.6 11.4-1.5 0-2.1-1.5-3.5-1.5s-2 1.5-3.5 1.5c-2.8 0-5.6-4.5-5.6-11.4ZM6.9 11.5a1.6 1.1 0 1 0 3.2 0a1.6 1.1 0 1 0-3.2 0ZM13.9 11.5a1.6 1.1 0 1 0 3.2 0a1.6 1.1 0 1 0-3.2 0Z"/>',
+        couch: '<path d="M7 4.4h10A2.6 2.6 0 0 1 19.6 7v2a3.2 3.2 0 0 0-3.2 3.2v.1H7.6v-.1A3.2 3.2 0 0 0 4.4 9V7A2.6 2.6 0 0 1 7 4.4ZM2.4 12a2.6 2.6 0 0 1 5.2 0v1.9h8.8V12a2.6 2.6 0 0 1 5.2 0v5.6H2.4Z"/><path class="ln" d="M5 17.6v1.9M19 17.6v1.9"/>',
+        child: '<circle cx="12" cy="5.5" r="2.7"/><path class="ln" d="M7.5 10.5 12 9l4.5 1.5M12 9v6M9 21l3-6 3 6"/>',
+        walk: '<circle cx="12.5" cy="4.5" r="2.4"/><path class="ln" d="m8.5 21 2.6-6 2.1 2.4V21M11.1 15l1-5.6-3 1.6-1.5 3M12.1 9.4l2 3 3 1"/>',
+        finish: '<path d="M5.6 3.6h4.2v4.9H5.6ZM14.6 3.6h4.3a1 1 0 0 1 1 1v3.9h-5.3ZM9.8 8.5h4.8v4.9H9.8Z"/><path class="ln" d="M5 21V3.5"/>',
+        piggy: '<path fill-rule="evenodd" d="M4 12c0-3.3 3.4-6 8-6 1.3 0 2.5.2 3.6.6L18.5 5v3.4c.8.7 1.4 1.6 1.6 2.6h1.4v3.5H20c-.5 1-1.3 1.8-2.4 2.4V20h-3v-2c-.8.2-1.7.3-2.6.3-.8 0-1.6-.1-2.4-.3v2h-3v-3C5 15.8 4 14 4 12ZM15 10.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0ZM9.3 7.8v1.4h3.4V7.8Z"/>',
+        'folder-tree': '<path d="M9.9 4.9h3.9l1 1.5h6.3v5.2H9.9ZM9.9 13.9h3.9l1 1.5h6.3v5.2H9.9Z"/><path class="ln" d="M4.5 3.5v13a1 1 0 0 0 1 1H9.9M4.5 8.5H9.9"/>',
         // 4.182.0, fifth batch: a laughing face, a cookie, a radio, a toolbox, a task, two windows, captions, an
         // eraser, a seedling and a hammer.
         laugh: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM7 8.1l3.4 1.7-3.4 1.7-.67-1.34.72-.36-.72-.36ZM17 8.1l-3.4 1.7 3.4 1.7.67-1.34-.72-.36.72-.36ZM7.6 13.4h8.8a4.4 4.4 0 0 1-8.8 0Z"/>',
@@ -244,10 +259,10 @@
         hammer: '<path d="M13 2.7l7.3 7.3-3.6 3.6-7.3-7.3ZM12.9 8.9 3.9 17.9a2 2 0 0 0 2.8 2.8l9-9Z"/>',
         // 4.182.0, the "-off" family: the shape is cut along the slash (a band a little wider than the line), so the
         // slash stays a line across it, as eye-off and mic-off already do.
-        'chat-off': '<path d="M7.1 4.4H19a1.6 1.6 0 0 1 1.6 1.6v9a1.6 1.6 0 0 1-1.3 1.6ZM3.4 6.1 13.9 16.6H8.3l-4.9 4.6Z"/><path class="ln" d="m4 4 16 16"/>',
-        'user-off': '<path d="M8.5 5.8A4.1 4.1 0 1 1 14.2 11.5ZM4.2 21c0-4.3 3.3-7.1 7-7.2L18.3 21Z"/><path class="ln" d="m4 4 16 16"/>',
-        'camera-off': '<path d="M8.1 5.4 9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v10ZM4.3 7 17.5 20.2H4.8A1.8 1.8 0 0 1 3 18.4V8.3Z"/><path class="ln" d="m4 4 16 16"/>',
-        'cloud-off': '<path d="M8.65 5.96A6.4 6.4 0 0 1 17.6 10a4.4 4.4 0 0 1 2.56 7.47ZM5.95 8.64 16.11 18.8H7A4.7 4.7 0 0 1 5.4 9.4a6.4 6.4 0 0 1 .55-.76Z"/><path class="ln" d="m4 4 16 16"/>',
+        'chat-off': '<path d="M8.1 4.4H19a1.6 1.6 0 0 1 1.6 1.6v9.5a1.6 1.6 0 0 1-.4 1ZM3.4 7.1 12.9 16.6H8.3l-4.9 4.6Z"/><path class="ln" d="m4 4 16 16"/>',
+        'user-off': '<path d="M8.95 5.27A4.1 4.1 0 1 1 14.74 11.06ZM4.2 21c0-4.2 2.8-6.8 6.2-7.1L17.3 21Z"/><path class="ln" d="m4 4 16 16"/>',
+        'camera-off': '<path d="M8.5 4.8 9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v9ZM3.8 7.5 16.5 20.2H4.8A1.8 1.8 0 0 1 3 18.4V8.3Z"/><path class="ln" d="m4 4 16 16"/>',
+        'cloud-off': '<path d="M9.34 5.66A6.4 6.4 0 0 1 17.6 10a4.4 4.4 0 0 1 3 6.92ZM5.64 9.32 15.12 18.8H7A4.7 4.7 0 0 1 5.4 9.4Z"/><path class="ln" d="m4 4 16 16"/>',
         // 4.182.0, third batch: a die, a lifebuoy, cubes, a paw, a weight, and a person with a pen or a tag.
         dice: '<path fill-rule="evenodd" d="M6.4 2.9h11.2a3.5 3.5 0 0 1 3.5 3.5v11.2a3.5 3.5 0 0 1-3.5 3.5H6.4a3.5 3.5 0 0 1-3.5-3.5V6.4a3.5 3.5 0 0 1 3.5-3.5ZM6.4 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM10.1 12a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM6.4 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0Z"/>',
         lifebuoy: '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 5.4a4.2 4.2 0 1 1 0 8.4 4.2 4.2 0 0 1 0-8.4ZM14.33 16.17 17.44 19.28 19.28 17.44 16.17 14.33ZM9.67 16.17 6.56 19.28 4.72 17.44 7.83 14.33ZM14.33 7.83 17.44 4.72 19.28 6.56 16.17 9.67ZM9.67 7.83 6.56 4.72 4.72 6.56 7.83 9.67Z"/>',
@@ -524,7 +539,10 @@
         if (!d) return '';
         const weights = { thin: 1, light: 1.5, regular: 2, bold: 2.5, duotone: 2 };
         if (!['thin', 'light', 'regular', 'bold', 'solid', 'duotone'].includes(style)) throw new TypeError('glyphs.svg: unsupported style');
-        const solidPath = solid(name);
+        // A part of a solid drawing that must stay a line (class "ln") carries its own stroke here: this svg stands
+        // alone, with no stylesheet to give it one (ov-glyphs.js does it in CSS, the sprite inline, the same way).
+        // Without it the line was filled as a shape, or not drawn at all.
+        const solidPath = solid(name).replace(/class="ln"/g, 'class="ln" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"');
         const drawing = style === 'solid' && solidPath ? solidPath : d;
         const extra = style === 'solid' && solidPath ? ' stroke="none"' : ` stroke-width="${weights[style]}"`;
         const layered = style === 'duotone' && solidPath ? `<g fill="currentColor" stroke="none" opacity=".2">${solidPath}</g>${d}` : drawing;

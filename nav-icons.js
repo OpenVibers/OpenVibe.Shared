@@ -109,7 +109,7 @@
         'fa-microphone': [0, '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>', '<path d="M8.7 5.8a3.3 3.3 0 0 1 6.6 0V11a3.3 3.3 0 0 1-6.6 0Z"/><path class="ln" d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>'],
         'fa-infinity': [0, '<path d="M12 12c-2-2.7-3.7-4-5.5-4a4 4 0 0 0 0 8c1.8 0 3.5-1.3 5.5-4Zm0 0c2 2.7 3.7 4 5.5 4a4 4 0 0 0 0-8c-1.8 0-3.5 1.3-5.5 4Z"/>', ''],
         'fa-list': [0, '<path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>', ''],
-        'fa-flag-checkered': [0, '<path d="M5 21V3.5"/><rect x="5" y="4" width="14.5" height="9" rx="1"/><path d="M5 8.5h14.5M9.8 4v9M14.6 4v9"/>', ''],
+        'fa-flag-checkered': [0, '<path d="M5 21V3.5"/><rect x="5" y="4" width="14.5" height="9" rx="1"/><path d="M5 8.5h14.5M9.8 4v9M14.6 4v9"/>', '<path d="M5.6 3.6h4.2v4.9H5.6ZM14.6 3.6h4.3a1 1 0 0 1 1 1v3.9h-5.3ZM9.8 8.5h4.8v4.9H9.8Z"/><path class="ln" d="M5 21V3.5"/>'],
         'fa-tv': [0, '<rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="m8 3 4 4 4-4"/>', '<rect x="2.2" y="6.6" width="19.6" height="14" rx="2.4"/><path class="ln" d="m8 2.8 4 3.6 4-3.6"/>'],
         'fa-compass': [0, '<circle cx="12" cy="12" r="8.5"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1Z"/>', '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM16.4 7.6 13.9 13.9 7.6 16.4 10.1 10.1Z"/>'],
     };
