@@ -80,7 +80,7 @@ function load(host = 'openvibe.live') {
     assert.ok(f.pulseHTML({ live_now: 0, sites: 40, views_7d: 1500 }).includes('1.5k page views'));
     assert.strictEqual(f.pulseHTML({ live_now: null, watching: null, sites: null, views_7d: null }), '', 'nothing known: nothing shown');
     assert.ok(SRC.includes("new IntersectionObserver(") && SRC.includes('setInterval(readPulse, PULSE_MS)'), 'read when the footer is in view, every minute while it is');
-    assert.ok(SRC.includes('.ovf-dot{') && SRC.includes('prefers-reduced-motion:reduce){.ovf-account,.ovf-pulse,.ovf-inner--expanded,.ovf-dot{animation:none}'), 'the live dot pulses, never with reduced motion');
+    assert.ok(SRC.includes('.ovf-dot{') && !SRC.includes('prefers-reduced-motion'), 'the live dot pulses; Calm slows it (the loader) and only motion off stops it');
 }
 
 // The compact footer stays one line (4.15.1): the closed "More from OpenVibe" pill ends the compact line (the footer is a

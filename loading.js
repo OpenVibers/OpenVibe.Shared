@@ -19,7 +19,7 @@
  *
  * The element it mounts into should be positioned (relative, absolute or fixed); it fills it. Text is set with
  * textContent; the poster must be an https URL, a same-site path or a blob/data image. Motion stops under
- * prefers-reduced-motion. Works without the rest of the OpenVibe Frame; colours follow the site's theme.
+ * the Motion setting (Calm slows its loops, Off stops them). Works without the rest of the OpenVibe Frame; colours follow the site's theme.
  */
 (function (root) {
     'use strict';
@@ -86,7 +86,7 @@
 @keyframes ovld-drift { from { transform: scale(1.06) translate3d(-1.5%, -1%, 0); } to { transform: scale(1.14) translate3d(1.5%, 1%, 0); } }
 @keyframes ovld-sweep { from { left: -30%; } to { left: 100%; } }
 @keyframes ovld-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
-@media (prefers-reduced-motion: reduce) { .ovld-poster, .ovld-ring, .ovld-ring .og, .ovld-ring .vg, .ovld-line i, .ovld-skel-mark, .ovld-skel-line { animation: none !important; } }`;
+`;
 
     function styles() {
         if (typeof document === 'undefined' || document.getElementById('openvibe-loading-styles')) return;
@@ -97,7 +97,8 @@
     }
     const posterUrl = (u) => { const s = String(u || ''); if (/^(blob:|data:image\/)/.test(s)) return s; try { const x = new URL(s, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-    const reduced = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduced = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
 
     function mount(host, opts = {}) {
         styles();

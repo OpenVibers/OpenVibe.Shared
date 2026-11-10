@@ -12,7 +12,7 @@
  *   OpenVibeIsland.remove(id) · .list()
  *
  * Works without the navbar (fixed pill, top centre). All text goes through textContent; links are
- * http(s) or same-origin paths only. Motion respects prefers-reduced-motion.
+ * http(s) or same-origin paths only. Motion follows the Motion setting (Calm slows its loops, Off stops them).
  */
 (function (root) {
     'use strict';
@@ -54,7 +54,7 @@
 @keyframes ovisGrow{from{max-width:30px;opacity:0}to{opacity:1}}
 @keyframes ovisInd{0%{transform:translateX(-110%)}100%{transform:translateX(300%)}}
 @media (max-width:640px){.ov-island{margin-left:6px}.ovi-pill{max-width:40vw;padding-right:9px}.ovi-pill-pct{display:none}.ovi-card{position:fixed;top:56px;left:12px;right:12px;width:auto}}
-@media (prefers-reduced-motion:reduce){.ovi-pill,.ovi-bar.is-ind i{animation:none}.ovi-card,.ovi-bar i{transition:none}}`;
+`;
 
     const items = new Map();   // id → activity (insertion order = age)
     const timers = new Map();

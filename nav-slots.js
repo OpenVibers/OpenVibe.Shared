@@ -15,7 +15,6 @@
 .openvibe-navbar .ovnav-slot b:empty { display: none; }
 .openvibe-navbar .ovnav-lead { margin-left: -6px; animation: ovnav-slot-in .22s cubic-bezier(.2, .9, .3, 1) both; }
 @keyframes ovnav-slot-in { from { opacity: 0; transform: translateX(-6px); } }
-@media (prefers-reduced-motion: reduce) { .openvibe-navbar .ovnav-lead { animation: none; } }
 @media (max-width: 400px) { .openvibe-navbar .ovnav-slot { width: 32px; height: 32px; } }
 @media (min-width: 761px) { .openvibe-navbar .ovnav-slot.ovnav-phone-only { display: none; } }`;
     const SLOT_ICONS = {

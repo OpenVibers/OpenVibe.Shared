@@ -67,7 +67,6 @@
             .ovda-acts button[data-act="end"] { color: color-mix(in srgb, var(--live-red, #e5484d) 65%, var(--text-primary, #ececf1)); }
             .ovda svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
             @keyframes ovda-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-            @media (prefers-reduced-motion: reduce) { .ovda-line .dot.live { animation: none; } }
         `;
         (d.head || d.documentElement).appendChild(st);
     }

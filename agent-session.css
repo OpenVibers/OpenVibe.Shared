@@ -113,7 +113,6 @@ details[open] > summary .ovas-chev { transform: rotate(90deg); }
     .ovas-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 0 2px; } .ovas-bar::-webkit-scrollbar { display: none; }
     .ovas-chip { flex: none; } .ovas-icons .ovas-kind + .ovas-kind { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .ovas-spin, .ovas-spin::before, .ovas-spin::after, .ovas-plan li::before { animation: none; } }
 
 /* Files changed (4.32.0): every file the agents edited or wrote, with its +/−; a tap opens its step. */
 .ovas-files { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }

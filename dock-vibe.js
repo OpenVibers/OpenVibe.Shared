@@ -53,7 +53,6 @@
             .ovdk-res-a button:disabled { opacity: .55; cursor: default; }
             .ovdk-res-c.is-stopped { border-color: var(--border, rgba(255,255,255,.12)); background: transparent; }
             .ovdk-res-c.is-stopped .ovdk-i, .ovdk-res-c.is-stopped .ovdk-res-t { color: var(--text-muted, #8b8b96); }
-            @media (prefers-reduced-motion: reduce) { .ovdk-typing i { animation: none; } }
 `;
     let ctx = null, G = {};
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };

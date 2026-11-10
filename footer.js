@@ -461,11 +461,11 @@
   .ovf-legal-inline{justify-content:center}
   .ovf-account{flex-direction:column;align-items:flex-start}
 }
-@media (prefers-reduced-motion:reduce){.ovf-account,.ovf-pulse,.ovf-inner--expanded,.ovf-dot{animation:none}.ovf-col a:hover,.ovf-social a:hover,.ovf-account-links a:hover{transform:none}}
+html[data-ov-motion=off] .ovf-col a:hover,html[data-ov-motion=off] .ovf-social a:hover,html[data-ov-motion=off] .ovf-account-links a:hover{transform:none}
 .ovf{-webkit-tap-highlight-color:transparent}
 :where(.ovf) :where(a,button):active{scale:.97}
 :where(.ovf) :where(a,button):focus-visible{outline:2px solid var(--accent-light,var(--accent,#3b82f6));outline-offset:2px;border-radius:4px}
-@media (prefers-reduced-motion:reduce){:where(.ovf) :where(a,button):active{scale:none;opacity:.82}}`;
+html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity:.82}`;
 
     function injectCSS() {
         if (typeof document === 'undefined' || document.getElementById('ovf-css')) return;

@@ -9,7 +9,7 @@
  * items.js adds the classes from the person's equipped set; a page that already knows the token (a server-rendered
  * profile) writes the class itself. These are Live's own name effects (OpenVibe.Live public/css/cosmetics.css),
  * unchanged, so a name looks the same in Live's chat and everywhere else. The network's Calm setting
- * (html[data-ov-motion=reduced], theme-loader.js) and prefers-reduced-motion stop the animation and keep the colour.
+ * (data-ov-motion=reduced on <html>, theme-loader.js) plays them slower; with motion off the colour stays and nothing moves.
  */
 .ov-fx { display: inline-block; }
 
@@ -247,12 +247,7 @@
     28% { content: '🍋'; }
     35%, 100% { content: '7'; }
 }
-html[data-ov-motion=reduced] .name-fx-vegas, html[data-ov-motion=reduced] .name-fx-vegas::before,
-html[data-ov-motion=reduced] .name-fx-vegas::after { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-    .name-fx-vegas, .name-fx-vegas::before, .name-fx-vegas::after { animation: none !important; }
-    .name-fx-vegas { filter: drop-shadow(0 0 3px rgba(255, 207, 63, .9)); }
-}
+html[data-ov-motion=off] .name-fx-vegas{filter: drop-shadow(0 0 3px rgba(255, 207, 63, .9))}
 
 /* 2fat Bass Drop (2026-10-23, one of a kind: 2fat, who brings the old classic bangers back): the name thumps on the beat,
    a big drop then a smaller one, in club lights, with an equalizer dancing before it and a speaker after it. Only its
@@ -313,12 +308,7 @@ html[data-ov-motion=reduced] .name-fx-vegas::after { animation: none !important;
     0% { transform: scale(1.25); }
     25%, 100% { transform: scale(1); }
 }
-html[data-ov-motion=reduced] .name-fx-twofat, html[data-ov-motion=reduced] .name-fx-twofat::before,
-html[data-ov-motion=reduced] .name-fx-twofat::after { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-    .name-fx-twofat, .name-fx-twofat::before, .name-fx-twofat::after { animation: none !important; }
-    .name-fx-twofat { filter: drop-shadow(0 0 3px rgba(255, 47, 214, .9)); }
-}
+html[data-ov-motion=off] .name-fx-twofat{filter: drop-shadow(0 0 3px rgba(255, 47, 214, .9))}
 
 /* Community badges (network.badge.image@1): the reviewed image, a little larger than the text, just before the name. */
 .ov-badge { display: inline-block; width: 1.15em; height: 1.15em; margin-right: 3px; vertical-align: -0.2em; border-radius: 3px; object-fit: contain; }
@@ -392,7 +382,4 @@ html[data-theme-mode="light"] .name-fx-twofat { background-image: linear-gradien
 .px-vegas .ov-px-p { color: #ffcf3f; text-shadow: 0 0 4px rgba(255, 61, 127, .75); }
 .px-twofat .ov-px-p { color: #ff2fd6; text-shadow: 0 0 4px rgba(61, 224, 255, .8); }
 
-@media (prefers-reduced-motion: reduce) {
-    .ov-fx[class*="name-fx-"], .ov-hat { animation: none !important; }
-    .ov-px-p { display: none; }
-}
+html[data-ov-motion=off] .ov-px-p{display: none}

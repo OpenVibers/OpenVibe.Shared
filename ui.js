@@ -56,7 +56,7 @@
 @keyframes ovuiOut{to{opacity:0;transform:translateX(16px)}}
 @keyframes ovuiFade{from{opacity:0}to{opacity:1}}
 @media (max-width:560px){.ovui-toasts{left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:none}}
-@media (prefers-reduced-motion:reduce){.ovui-toast,.ovui-dialog,.ovui-back{animation:none!important}}`;
+`;
 
     function css() { if (document.getElementById('ovui-css')) return; const s = document.createElement('style'); s.id = 'ovui-css'; s.textContent = CSS; document.head.appendChild(s); }
     function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = String(text); return e; }

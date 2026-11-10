@@ -1,8 +1,10 @@
 /**
  * openvibe-shared/motion.js — the network's motion, small and opt-in (plan 2026-10-28 §3.11): a page marks what moves and
  * this makes it move, once, when it is seen. The server always renders the finished state (the real number, the whole
- * scene, the plain placeholder), so a page is complete without this file, under reduced motion (the OS setting or the
- * account's, html[data-ov-motion=reduced]) and for crawlers.
+ * scene, the plain placeholder), so a page is complete without this file, with motion off (html[data-ov-motion=off])
+ * and for crawlers. Calm (html[data-ov-motion=reduced]: the person's choice, or the device asking for less motion)
+ * plays all of it, gentler: a reveal rises a third as far, a number counts up quicker, the ghost cursor glides slower
+ * and waits longer.
  *
  *   [data-ov-reveal]          fades and rises in the first time it scrolls into view (html.ov-motion hides it until then)
  *   [data-ov-ticker="1204"]   counts up to its number when seen (the text the server wrote is the end state)
@@ -21,7 +23,9 @@
     'use strict';
     if (typeof document === 'undefined') return;
     const html = document.documentElement;
-    const still = () => (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) || html.getAttribute('data-ov-motion') === 'reduced';
+    // 'full' | 'calm' | 'off': <html data-ov-motion> is the signal (theme-loader.js); without the loader, ask the device.
+    const motion = () => { const m = html.getAttribute('data-ov-motion'); return m === 'off' ? 'off' : m === 'reduced' || (!m && typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'calm' : 'full'; };
+    const still = () => motion() === 'off';
     const seen = typeof IntersectionObserver === 'function'
         ? (el, fn, margin) => { const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); fn(e.target); } }), { rootMargin: margin || '0px 0px -8% 0px' }); io.observe(el); }
         : (el, fn) => fn(el);
@@ -30,7 +34,7 @@
         const end = Number(el.getAttribute('data-ov-ticker'));
         const text = el.textContent;
         if (!Number.isFinite(end) || end <= 0 || still()) return;
-        const t0 = performance.now(), dur = Math.min(1400, 500 + Math.log10(end + 1) * 220);
+        const t0 = performance.now(), dur = Math.min(1400, 500 + Math.log10(end + 1) * 220) * (motion() === 'calm' ? 0.6 : 1);
         const step = (t) => {
             const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
             el.textContent = k < 1 ? Math.round(end * e).toLocaleString('en-US') : text;
@@ -63,6 +67,7 @@
 .ov-ghost-host{position:relative}
 .ov-ghost{position:absolute;left:0;top:0;z-index:5;width:22px;height:22px;pointer-events:none;opacity:0;transition:transform .55s cubic-bezier(.3,.8,.3,1),opacity .3s ease;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 .ov-ghost.is-on{opacity:1}
+html[data-ov-motion=reduced] .ov-ghost{transition-duration:.9s,.3s}
 .ov-ghost svg{display:block;width:22px;height:22px}
 .ov-ghost-ring{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:50%;border:2px solid var(--room-accent,var(--accent,#3b82f6));opacity:0}
 .ov-ghost.is-click .ov-ghost-ring{animation:ovGhostRing .5s ease-out}
@@ -82,6 +87,7 @@
         cur.innerHTML = GHOST_SVG;
         scene.appendChild(cur);
         let i = 0, timer = 0, visible = false, gone = false;
+        const slow = () => (motion() === 'calm' ? 1.5 : 1);
         const mark = (el) => { steps.forEach((x) => x.removeAttribute('data-ov-ghost-on')); if (el) el.setAttribute('data-ov-ghost-on', ''); };
         const place = (el) => {
             const a = scene.getBoundingClientRect(), b = el.getBoundingClientRect();
@@ -99,8 +105,8 @@
                 cur.classList.remove('is-click'); void cur.offsetWidth; cur.classList.add('is-click');
                 mark(el);
                 i = (i + 1) % steps.length;
-                timer = setTimeout(step, i === 0 ? 2600 : 1300);
-            }, 650);
+                timer = setTimeout(step, (i === 0 ? 2600 : 1300) * slow());
+            }, 650 * slow());
         };
         const stop = () => {
             if (gone) return;

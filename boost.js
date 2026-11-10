@@ -113,7 +113,7 @@
         }
 
         // route-transition.js's content hash (scripts/sibling-revs.js writes it), so a release gives it a new URL (4.138.0).
-        const BOOST_REV = { 'route-transition.js': '7e15e1169d14' };
+        const BOOST_REV = { 'route-transition.js': '1bd3c4576b8c' };
         function fx(mainEl) {
             if (o.fx === false) return Promise.resolve(null);
             if (root.OVRouteFx) return Promise.resolve(root.OVRouteFx);

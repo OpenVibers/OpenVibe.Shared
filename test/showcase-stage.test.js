@@ -38,6 +38,6 @@ assert.strictEqual((flow.match(/<li /g) || []).length, 3);
 
 // Motion rules.
 assert.ok(!/\.sc-motif [^{]*\{[^}]*transform/.test(st.CSS), 'no CSS transform on anything inside the motif SVG');
-assert.ok(/@media \(prefers-reduced-motion:reduce\)/.test(st.CSS) && /html\[data-ov-motion=reduced\]/.test(st.CSS), 'reduced motion and Calm stop it');
-assert.ok(/IntersectionObserver/.test(st.MOTION_JS) && /prefers-reduced-motion/.test(st.MOTION_JS), 'it starts in view and stays still when asked');
+assert.ok(/html\[data-ov-motion=off\]/.test(st.CSS) && !/prefers-reduced-motion/.test(st.CSS) && !/data-ov-motion=reduced/.test(st.CSS), 'Calm plays it; only motion off stops it');
+assert.ok(/IntersectionObserver/.test(st.MOTION_JS) && /getAttribute\('data-ov-motion'\)==='off'/.test(st.MOTION_JS), 'it starts in view and stays still with motion off');
 console.log('showcase-stage: stage, reel, numbers and flow render whole, escaped, with motifs and motion that can stop');

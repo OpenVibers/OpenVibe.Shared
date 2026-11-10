@@ -42,7 +42,7 @@
         + '.ovlk .ovlk-seg button[aria-checked=true]{background:var(--accent-strong,var(--accent,#3472d8));color:var(--on-accent-strong,#fff)}'
         + '.ovlk .ovlk-seg button:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:1px}'
         + '.ovlk-seg svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.ovlk-seg svg.is-solid{fill:currentColor;stroke:none}'
-        + '@media (prefers-reduced-motion:reduce){.ovlk-switch::after{transition:none}}';
+        + '';
 
     function css() {
         if (document.getElementById('ov-look-css')) return;
@@ -102,7 +102,8 @@
                     [['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']].map(([v, t]) => el('button', { type: 'button', role: 'radio', 'aria-checked': String(sch === v), 'data-look-scheme': v }, [t])))]));
             }
             panel.append(row('text', 'Text size', [[100, 'Default'], [112, 'Large'], [125, 'Largest']]));
-            panel.append(row('motion', 'Motion', [['auto', 'Animated'], ['reduced', 'Calm']]));
+            // Motion (4.183.0): Auto follows the device; Calm keeps every effect, smaller and slower; only Off stops them.
+            panel.append(row('motion', 'Motion', [['auto', 'Auto'], ['full', 'Full'], ['reduced', 'Calm'], ['off', 'Off']]));
         }
         const signedIn = opts.signedIn != null ? !!opts.signedIn : /(?:^|; )ov_sso_hint=account/.test(document.cookie || '') || !!(root.localStorage && (() => { try { return root.localStorage.getItem('ov_token'); } catch (e) { return null; } })());
         const named = showing ? showing.name : ((PICKS.find(([id]) => id === cur) || [0, cur])[1]);

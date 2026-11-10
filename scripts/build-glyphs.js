@@ -90,7 +90,7 @@ const CSS = [
     '.ovg[data-ovg=busy] circle:nth-child(2){animation-delay:.15s}.ovg[data-ovg=busy] circle:nth-child(3){animation-delay:.3s}',
     '@keyframes ovgHop{0%,60%,100%{transform:translateY(0);opacity:.55}30%{transform:translateY(-3px);opacity:1}}',
     // Reduced motion: nothing moves.
-    '@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ovg=busy] circle,.ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}}html[data-ov-motion=reduced] .ovg,html[data-ov-motion=reduced] .ovg[data-ovg=busy] circle,html[data-ov-motion=reduced] .ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}',
+    'html[data-ov-motion=off] .ovg,html[data-ov-motion=off] .ovg[data-ovg=busy] circle,html[data-ov-motion=off] .ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}',
 ].join('');
 
 const brands = require('../brands');

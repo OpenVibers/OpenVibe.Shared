@@ -60,5 +60,4 @@
 @keyframes ov-upload-in { from { opacity: 0; transform: translateY(6px); } }
 @keyframes ov-upload-bob { 50% { transform: translateY(-3px); } }
 @media (pointer: coarse), (max-width: 700px) { .ov-upload__picker { min-height: 120px; } .ov-upload__drop { display: none; } }
-html[data-ov-motion=reduced] .ov-progress[data-state="sending"] .ov-progress__fill::after { animation: none; }
-@media (prefers-reduced-motion: reduce) { .ov-progress__fill, .ov-progress[data-state="processing"] .ov-progress__fill, .ov-progress[data-state="done"] .ov-progress__percent, .ov-progress__check path, .ov-upload__row, .ov-upload.is-dragging .ov-upload__icon { transition: none; animation: none; } .ov-progress__check path { stroke-dashoffset: 0; } .ov-progress[data-state="sending"] .ov-progress__fill::after { display: none; } }
+html[data-ov-motion=off] .ov-progress__check path{stroke-dashoffset: 0}html[data-ov-motion=off] .ov-progress[data-state="sending"] .ov-progress__fill::after{display: none}

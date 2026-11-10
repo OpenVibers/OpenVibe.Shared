@@ -10,8 +10,8 @@ const { parseHTML } = require('linkedom');
 
 const SRC = fs.readFileSync(path.join(__dirname, '..', 'ov-fx.js'), 'utf8');
 
-function setup({ reduce = false, calm = false, html = '' } = {}) {
-    const { window, document, MutationObserver } = parseHTML(`<!doctype html><html${calm ? ' data-ov-motion="reduced"' : ''}><head></head><body>${html}</body></html>`);
+function setup({ reduce = false, calm = false, off = false, html = '' } = {}) {
+    const { window, document, MutationObserver } = parseHTML(`<!doctype html><html${off ? ' data-ov-motion="off"' : calm ? ' data-ov-motion="reduced"' : ''}><head></head><body>${html}</body></html>`);
     const observed = [];
     class IO { constructor(cb) { this.cb = cb; } observe(el) { observed.push(el); } unobserve() {} fire(el) { this.cb([{ target: el, isIntersecting: true }]); } }
     let io = null;
@@ -40,16 +40,21 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         assert.ok(t.document.getElementById('s').classList.contains('ovfx-shimmer') && t.document.getElementById('r').classList.contains('ovfx-ripple'));
         const css = t.document.getElementById('ov-fx-css').textContent;
         assert.match(css, /--ov-dur-1:\.12s;--ov-dur-2:\.2s;--ov-dur-3:\.32s;--ov-dur-4:\.52s/, 'the motion tokens');
-        assert.match(css, /html\[data-ov-motion=reduced\]\{--ov-dur-1:0s/, 'Calm zeroes them');
-        assert.ok(css.includes('@media (prefers-reduced-motion:reduce){.ovfx-glint:not([data-fx-demo] *)::after{display:none}'), 'the device asking for less motion stops the glint, outside a demo scope');
-        assert.ok(css.includes('[data-fx-demo]{--ov-dur-1:.12s;--ov-dur-2:.2s'), 'a demo scope sets its own lengths, so neither Calm nor the device setting (kit.css) reaches inside it');
+        assert.match(css, /html\[data-ov-motion=reduced\]\{--ov-move:\.35;--ov-dur-1:\.15s;[^}]*--ov-ease-spring:var\(--ov-ease-out\)\}/, 'Calm: a third of the distance, the calm lengths, no overshoot; never zero');
+        assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{html:not\(\[data-ov-motion\]\)\{--ov-move:\.35;/, 'the same when the device asks and no loader has spoken');
+        assert.match(css, /html\[data-ov-motion=off\]\{--ov-move:0;--ov-dur-1:0s/, 'only Off zeroes them');
+        assert.ok(css.includes('.ovfx-lift:hover{transform:translateY(calc(-3px * var(--ov-move,1)))') && css.includes('.ovfx-hide{opacity:0;transform:translateY(calc(14px * var(--ov-move,1)))}'), 'distances are multiplied by --ov-move');
+        assert.ok(css.includes('html[data-ov-motion=reduced] .ovfx-glint:not([data-fx-demo] *)::after{opacity:.55}'), 'Calm keeps the glint, fainter and slower');
+        assert.ok(css.includes('html[data-ov-motion=off] .ovfx-glint:not([data-fx-demo] *)::after{display:none}'), 'motion off stops the glint, outside a demo scope');
+        assert.ok(!/data-ov-motion=reduced\][^{]*\{[^}]*(animation|transition):none/.test(css), 'nothing is stopped under Calm');
+        assert.ok(css.includes('[data-fx-demo]{--ov-move:1;') && css.includes('--ov-dur-1:.12s;--ov-dur-2:.2s'), 'a demo scope sets its own lengths and distance, so no setting reaches inside it');
         assert.ok(/html:is\([^)]*neon-tokyo[^)]*\) \[data-fx-demo\]\{--ov-dur-1:\.09s/.test(css), 'in the look\'s own feel');
         assert.ok(!/infinite/.test(css.replace(/\.ovfx-shimmer\{[^}]*\}/, '')), 'nothing loops but a placeholder\'s shimmer');
         assert.strictEqual(typeof t.window.OVFx.confetti, 'function');
         // A feel per look (4.67.0): quiet themes move calmly (no overshoot), neon ones snap; Calm still wins.
         assert.match(css, /html:is\(\[data-theme=paper\],[^)]*\)\{--ov-dur-1:\.15s;[^}]*--ov-ease-spring:var\(--ov-ease-out\)\}/, 'calm looks: slower, no overshoot');
         assert.match(css, /html:is\(\[data-theme=neon-tokyo\],[^)]*\)\{--ov-dur-1:\.09s;/, 'neon looks snap');
-        assert.ok(css.indexOf('html[data-ov-motion=reduced]{--ov-dur-1:0s') > css.indexOf('html:is([data-theme=neon-tokyo]'), 'Calm comes last, so it wins over any feel');
+        assert.ok(css.indexOf('html[data-ov-motion=reduced]{--ov-move:.35') > css.indexOf('html:is([data-theme=neon-tokyo]'), 'Calm comes last, so it wins over any feel');
     }
 
     // ── reveal: below the fold it waits for the screen; on screen it is never hidden ──
@@ -79,9 +84,19 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         assert.strictEqual(t.document.getElementById('w').textContent, 'soon', 'not a number: left alone');
     }
 
-    // ── reduced motion and Calm: nothing hidden, nothing counted, no confetti ──
+    // ── Calm (the setting, or the device asking for less): everything still plays, a third as far ──
     for (const opts of [{ reduce: true }, { calm: true }]) {
         const t = setup({ ...opts, html: '<ul data-fx="reveal" data-top="1400"><li>a</li></ul><b id="n" data-fx="count" data-top="1400">900</b>' });
+        assert.strictEqual(t.document.querySelectorAll('.ovfx-hide').length, 1, 'the reveal waits to play');
+        assert.strictEqual(t.observed.length, 2, 'the reveal and the number both wait for the screen');
+        assert.strictEqual(t.window.OVFx.move(), 0.35, 'a third of the distance');
+    }
+    assert.strictEqual(setup().window.OVFx.move(), 1, 'full motion: the whole distance');
+
+    // ── motion off: nothing hidden, nothing counted, no confetti ──
+    {
+        const t = setup({ off: true, reduce: true, html: '<ul data-fx="reveal" data-top="1400"><li>a</li></ul><b id="n" data-fx="count" data-top="1400">900</b>' });
+        assert.strictEqual(t.window.OVFx.move(), 0);
         assert.strictEqual(t.document.querySelectorAll('.ovfx-hide').length, 0, 'nothing hidden');
         assert.strictEqual(t.observed.length, 0, 'nothing waits to count');
         assert.strictEqual(t.document.getElementById('n').textContent, '900');
@@ -89,8 +104,8 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
     }
 
     // ── the demo scope: a page that shows motion may play it inside [data-fx-demo], when the person asks ──
-    for (const opts of [{ reduce: true }, { calm: true }]) {
-        const t = setup({ ...opts, html: '<div data-fx-demo><ul id="in" data-fx="reveal" data-top="1400"><li>a</li></ul></div><ul id="out" data-fx="reveal" data-top="1400"><li>b</li></ul>' });
+    {
+        const t = setup({ off: true, html: '<div data-fx-demo><ul id="in" data-fx="reveal" data-top="1400"><li>a</li></ul></div><ul id="out" data-fx="reveal" data-top="1400"><li>b</li></ul>' });
         assert.strictEqual(t.document.querySelectorAll('#in .ovfx-hide').length, 1, 'inside the scope the reveal waits to play');
         assert.strictEqual(t.document.querySelectorAll('#out .ovfx-hide').length, 0, 'outside it nothing is hidden: the setting holds for the rest of the page');
         assert.strictEqual(t.window.OVFx.confetti({ x: 1, y: 1 }), false, 'confetti with no source element stays off');
@@ -114,5 +129,5 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         assert.ok(require('../files').BROWSER.includes('ov-fx.js'), 'served');
     }
 
-    console.log('fx: names wire their effects; reveal waits below the fold and never hides what is on screen; numbers end on their own text; reduced motion and Calm keep still; later markup wired; loaded only on request');
+    console.log('fx: names wire their effects; reveal waits below the fold and never hides what is on screen; numbers end on their own text; Calm plays everything a third as far; only motion off keeps still; later markup wired; loaded only on request');
 })().catch((e) => { console.error(e); process.exit(1); });
