@@ -1,8 +1,12 @@
 # Changelog
 
-## 4.191.0 — 2026-11-10
+## 4.192.0 — 2026-11-10
 
 - The wallet sheet's Recent activity draws the reason Billing and Network already made (`billing.money-reason@1`): "for the quest Publish a video", not the ledger key, with the phrase linked to the thing it was for when there is a page. A reason with no page stays a plain sentence.
+
+## 4.191.0 — 2026-11-10
+
+- **A guest's page view counts at once again.** The beacon waits for the shared sign-in state only for a browser that has a token and no user yet (at most 2.5 s, so a signed-in person is not also counted as a guest); a page that knows its person, and a browser with no token at all, send it as they always did. The navbar's brotli budget follows (49.9 KB).
 
 ## 4.190.0 — 2026-11-10
 
