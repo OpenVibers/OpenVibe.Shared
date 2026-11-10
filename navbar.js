@@ -572,7 +572,7 @@
     const _selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     let _lazyWidth = null;
     let _iconState = 0;     // 0 idle, 1 loading, 2 loaded, 3 unavailable
-    // "Ask Vibe": the page's selected text (≤1000) and https address (no hash, ≤400) into a new chat with Vibe (openvibe.chat).
+    // "Ask Vibe": the selected text (≤1000) and the page's address (≤400) into a new chat with Vibe.
     function selectedText() { try { const s = root.getSelection(); return s && !s.isCollapsed ? String(s).replace(/\s+/g, ' ').trim().slice(0, 1000) : ''; } catch { return ''; } }
     function askVibeHref(t) {
         const c = 'https://openvibe.chat/vibe', u = new URL(location.href); u.hash = '';
@@ -1186,7 +1186,7 @@
             closeDrawer();
         });
         nav.querySelectorAll('.ovnav-dd').forEach((dd) => regPanel(dd, 'nav-dropdown', () => dd.classList.remove('open'), dd.querySelector(':scope > a')));
-        // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
+        // Dropdowns are fixed under their link: the links row scrolls sideways and would clip them.
         const placeDd = (dd) => {
             const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
             let cb = dd.parentElement, o = { top: 0, left: 0 };
