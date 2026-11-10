@@ -230,6 +230,86 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, the last five shapes: a car, a door, a podium, a rocket and a camera that flips. After these, every
+        // glyph without a solid drawing is one made of lines, which thickens when small instead.
+        car: '<path fill-rule="evenodd" d="M5.8 5.4h12.4l2.6 5.4H3.2ZM2.9 12.2h18.2v4.4H2.9ZM6.1 14.4a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0ZM15.7 14.4a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0ZM5.2 17.4h2.6v1.8H5.2ZM16.2 17.4h2.6v1.8h-2.6Z"/>',
+        door: '<path fill-rule="evenodd" d="M14.6 4.1 5.4 2.4v19.2l9.2-1.7ZM9.9 12a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0Z"/><path class="ln" d="M15.9 5h1.6a1 1 0 0 1 1 1v15M15.9 21H21M3 21h2.4"/>',
+        ranking: '<path d="M3.4 13.6h5V9.8h7.2v5.8h5v5.5H3.4ZM12 2l1 2 2.2.3-1.6 1.6.4 2.2L12 7.1l-2 1 .4-2.2-1.6-1.6 2.2-.3Z"/>',
+        rocket: '<path fill-rule="evenodd" d="M12.1 16.2 7.8 11.9C9.4 6 13.8 2.9 21.1 2.9c0 7.3-3.1 11.7-9 13.3ZM13.8 8.5a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0-3.4 0Z"/><path d="M4.2 11.9 7.2 7.4h3.4L7 12.3ZM11.7 17 12.1 19.8l4.5-3.2v-3.4ZM6.7 17.3c-1.9 0-3.8 1.9-3.8 3.8 1.9 0 3.8-1.9 3.8-3.8Z"/>',
+        'camera-flip': '<path fill-rule="evenodd" d="M3 8.3a1.8 1.8 0 0 1 1.8-1.8h2.5L9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v10.1a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.4ZM7.96 12.03A4.3 4.3 0 0 1 16.04 12.03L13.79 12.85A1.9 1.9 0 0 0 10.21 12.85ZM16.04 14.97A4.3 4.3 0 0 1 7.96 14.97L10.21 14.15A1.9 1.9 0 0 0 13.79 14.15Z"/>',
+        // 4.182.0, sixth batch: things with one outline (an aeroplane, a burst, a fish, a shoe, a sword, a mask, a
+        // piggy bank), a couch, a coin over a box, two folders on a tree, a chequered flag, and two people.
+        airplane: '<path d="M12 2.5c1.3 0 2 1.2 2 3V9.7l7.5 4.5v2.5L14 14.2v3.5l2 1.5v2.5L12 20.5l-4 1.2v-2.5l2-1.5v-3.5l-7.5 2.5v-2.5L10 9.7V5.5c0-1.8.7-3 2-3Z"/>',
+        burst: '<path d="M12 1.9l2.2 4.9 5-2-2 5 4.9 2.2-4.9 2.2 2 5-5-2-2.2 4.9-2.2-4.9-5 2 2-5L1.9 12l4.9-2.2-2-5 5 2Z"/>',
+        fish: '<path fill-rule="evenodd" d="M7.6 12c2.1-3.6 4.8-5.4 7.9-5.4 2.9 0 5 2.2 6.1 5.4-1.1 3.2-3.2 5.4-6.1 5.4-3.1 0-5.8-1.8-7.9-5.4ZM15.7 10.6a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0Z"/><path d="M8.4 12 2.9 7.4v9.2Z"/>',
+        shoe: '<path d="M1.9 15.9V9.5l4.3-.6 3.1-4.2 4.2 1.9-.9 2.7 3.6 2 4.4.9a2.2 2.2 0 0 1 1.5 2.1v1.6Z"/><path class="ln" d="M2.5 18.8h19"/>',
+        sword: '<path d="M20.6 3.4v4.4l-10.1 10.1-4.4-4.4L16.2 3.4Z"/><path class="ln" d="M5.5 12 12 18.5M8.5 15.5 4 20"/>',
+        donate: '<path fill-rule="evenodd" d="M12 2.9a5.6 5.6 0 1 0 0 11.2 5.6 5.6 0 0 0 0-11.2Zm-.8 3.2h1.6v4.8h-1.6ZM3.4 14.9h17.2v5.7H3.4ZM8 17v1.5h8V17Z"/>',
+        mask: '<path fill-rule="evenodd" d="M2.9 6.2c3.2 1.4 6.2 2 9.1 2s5.9-.6 9.1-2c0 6.9-2.8 11.4-5.6 11.4-1.5 0-2.1-1.5-3.5-1.5s-2 1.5-3.5 1.5c-2.8 0-5.6-4.5-5.6-11.4ZM6.9 11.5a1.6 1.1 0 1 0 3.2 0a1.6 1.1 0 1 0-3.2 0ZM13.9 11.5a1.6 1.1 0 1 0 3.2 0a1.6 1.1 0 1 0-3.2 0Z"/>',
+        couch: '<path d="M7 4.4h10A2.6 2.6 0 0 1 19.6 7v2a3.2 3.2 0 0 0-3.2 3.2v.1H7.6v-.1A3.2 3.2 0 0 0 4.4 9V7A2.6 2.6 0 0 1 7 4.4ZM2.4 12a2.6 2.6 0 0 1 5.2 0v1.9h8.8V12a2.6 2.6 0 0 1 5.2 0v5.6H2.4Z"/><path class="ln" d="M5 17.6v1.9M19 17.6v1.9"/>',
+        child: '<circle cx="12" cy="5.5" r="2.7"/><path class="ln" d="M7.5 10.5 12 9l4.5 1.5M12 9v6M9 21l3-6 3 6"/>',
+        walk: '<circle cx="12.5" cy="4.5" r="2.4"/><path class="ln" d="m8.5 21 2.6-6 2.1 2.4V21M11.1 15l1-5.6-3 1.6-1.5 3M12.1 9.4l2 3 3 1"/>',
+        finish: '<path d="M5.6 3.6h4.2v4.9H5.6ZM14.6 3.6h4.3a1 1 0 0 1 1 1v3.9h-5.3ZM9.8 8.5h4.8v4.9H9.8Z"/><path class="ln" d="M5 21V3.5"/>',
+        piggy: '<path fill-rule="evenodd" d="M4 12c0-3.3 3.4-6 8-6 1.3 0 2.5.2 3.6.6L18.5 5v3.4c.8.7 1.4 1.6 1.6 2.6h1.4v3.5H20c-.5 1-1.3 1.8-2.4 2.4V20h-3v-2c-.8.2-1.7.3-2.6.3-.8 0-1.6-.1-2.4-.3v2h-3v-3C5 15.8 4 14 4 12ZM15 10.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0ZM9.3 7.8v1.4h3.4V7.8Z"/>',
+        'folder-tree': '<path d="M9.9 4.9h3.9l1 1.5h6.3v5.2H9.9ZM9.9 13.9h3.9l1 1.5h6.3v5.2H9.9Z"/><path class="ln" d="M4.5 3.5v13a1 1 0 0 0 1 1H9.9M4.5 8.5H9.9"/>',
+        // 4.182.0, fifth batch: a laughing face, a cookie, a radio, a toolbox, a task, two windows, captions, an
+        // eraser, a seedling and a hammer.
+        laugh: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM7 8.1l3.4 1.7-3.4 1.7-.67-1.34.72-.36-.72-.36ZM17 8.1l-3.4 1.7 3.4 1.7.67-1.34-.72-.36.72-.36ZM7.6 13.4h8.8a4.4 4.4 0 0 1-8.8 0Z"/>',
+        cookie: '<path fill-rule="evenodd" d="M20.5 12.5a8.5 8.5 0 1 1-9-9 3 3 0 0 0 4 3.6 3 3 0 0 0 5 5.4ZM7.3 9.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM10.8 14a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM6.8 15.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM14.3 15.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0Z"/>',
+        radio: '<path fill-rule="evenodd" d="M5 7.4h14a2.6 2.6 0 0 1 2.6 2.6v8a2.6 2.6 0 0 1-2.6 2.6H5A2.6 2.6 0 0 1 2.4 18v-8A2.6 2.6 0 0 1 5 7.4ZM12.9 14a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0ZM6 11.3v2.1h4.8v-2.1ZM6 14.8v2.1h4.8v-2.1Z"/><path class="ln" d="M7 7.4 17 3.5"/>',
+        toolbox: '<path d="M2.4 10a2.6 2.6 0 0 1 2.6-2.6h14a2.6 2.6 0 0 1 2.6 2.6v2.3H2.4ZM2.4 13.7h4.8v1.5h1.6v-1.5h6.4v1.5h1.6v-1.5h4.8V18a2.6 2.6 0 0 1-2.6 2.6H5A2.6 2.6 0 0 1 2.4 18Z"/><path class="ln" d="M9 7.4V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v1.9"/>',
+        task: '<path fill-rule="evenodd" d="M7 3.4h10a3.6 3.6 0 0 1 3.6 3.6v10a3.6 3.6 0 0 1-3.6 3.6H7A3.6 3.6 0 0 1 3.4 17V7A3.6 3.6 0 0 1 7 3.4ZM6.9 12.1l4.2 4.2 6.1-7.3-1.7-1.4-4.6 5.5-2.4-2.4Z"/>',
+        'window-restore': '<path d="M2.9 10.5a2.6 2.6 0 0 1 2.6-2.6h8a2.6 2.6 0 0 1 2.6 2.6v7a2.6 2.6 0 0 1-2.6 2.6h-8a2.6 2.6 0 0 1-2.6-2.6ZM7.9 6.6V6.5a2.6 2.6 0 0 1 2.6-2.6h8a2.6 2.6 0 0 1 2.6 2.6v7a2.6 2.6 0 0 1-2.6 2.6h-1.1v-5.6a3.9 3.9 0 0 0-3.9-3.9Z"/>',
+        cc: '<path fill-rule="evenodd" d="M5.5 4.4h13a3.1 3.1 0 0 1 3.1 3.1v9a3.1 3.1 0 0 1-3.1 3.1h-13a3.1 3.1 0 0 1-3.1-3.1v-9a3.1 3.1 0 0 1 3.1-3.1ZM10.82 9.47A3.3 3.3 0 1 0 10.82 14.53L9.54 13A1.3 1.3 0 1 1 9.54 11ZM17.62 9.47A3.3 3.3 0 1 0 17.62 14.53L16.34 13A1.3 1.3 0 1 1 16.34 11Z"/>',
+        eraser: '<path d="M14 3.9l6.1 6.1-5.2 5.2-6.1-6.1ZM7.4 10l6.2 6.2-3.2 3.2H6.1l-2.9-2.9a1.6 1.6 0 0 1 0-2.3Z"/><path class="ln" d="M13 19.4h7"/>',
+        seedling: '<path d="M12.4 11.4C12.4 7 9.6 4 4.5 4c0 4.6 2.8 7.4 7.9 7.4ZM11.6 13.9c0-4.4 2.8-7.4 7.9-7.4 0 4.6-2.8 7.4-7.9 7.4Z"/><path class="ln" d="M12 20.5V13"/>',
+        hammer: '<path d="M13 2.7l7.3 7.3-3.6 3.6-7.3-7.3ZM12.9 8.9 3.9 17.9a2 2 0 0 0 2.8 2.8l9-9Z"/>',
+        // 4.182.0, the "-off" family: the shape is cut along the slash (a band a little wider than the line), so the
+        // slash stays a line across it, as eye-off and mic-off already do.
+        'chat-off': '<path d="M8.1 4.4H19a1.6 1.6 0 0 1 1.6 1.6v9.5a1.6 1.6 0 0 1-.4 1ZM3.4 7.1 12.9 16.6H8.3l-4.9 4.6Z"/><path class="ln" d="m4 4 16 16"/>',
+        'user-off': '<path d="M8.95 5.27A4.1 4.1 0 1 1 14.74 11.06ZM4.2 21c0-4.2 2.8-6.8 6.2-7.1L17.3 21Z"/><path class="ln" d="m4 4 16 16"/>',
+        'camera-off': '<path d="M8.5 4.8 9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v9ZM3.8 7.5 16.5 20.2H4.8A1.8 1.8 0 0 1 3 18.4V8.3Z"/><path class="ln" d="m4 4 16 16"/>',
+        'cloud-off': '<path d="M9.34 5.66A6.4 6.4 0 0 1 17.6 10a4.4 4.4 0 0 1 3 6.92ZM5.64 9.32 15.12 18.8H7A4.7 4.7 0 0 1 5.4 9.4Z"/><path class="ln" d="m4 4 16 16"/>',
+        // 4.182.0, third batch: a die, a lifebuoy, cubes, a paw, a weight, and a person with a pen or a tag.
+        dice: '<path fill-rule="evenodd" d="M6.4 2.9h11.2a3.5 3.5 0 0 1 3.5 3.5v11.2a3.5 3.5 0 0 1-3.5 3.5H6.4a3.5 3.5 0 0 1-3.5-3.5V6.4a3.5 3.5 0 0 1 3.5-3.5ZM6.4 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM10.1 12a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM6.4 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0Z"/>',
+        lifebuoy: '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 5.4a4.2 4.2 0 1 1 0 8.4 4.2 4.2 0 0 1 0-8.4ZM14.33 16.17 17.44 19.28 19.28 17.44 16.17 14.33ZM9.67 16.17 6.56 19.28 4.72 17.44 7.83 14.33ZM14.33 7.83 17.44 4.72 19.28 6.56 16.17 9.67ZM9.67 7.83 6.56 4.72 4.72 6.56 7.83 9.67Z"/>',
+        cubes: '<path d="M12 3.3 8.4 5.1v4.2l3.6 1.8 3.6-1.8V5.1ZM7.5 11.8 3.9 13.6v4.2l3.6 1.8 3.6-1.8v-4.2ZM16.5 11.8l-3.6 1.8v4.2l3.6 1.8 3.6-1.8v-4.2Z"/>',
+        paw: '<path d="M7.4 18.4c0-3.1 2-5.6 4.6-5.6s4.6 2.5 4.6 5.6c0 1.6-1.2 2.6-2.6 2.6-.8 0-1.3-.5-2-.5s-1.2.5-2 .5c-1.4 0-2.6-1-2.6-2.6Z"/><circle cx="5.8" cy="11" r="2.3"/><circle cx="9.4" cy="6.4" r="2.3"/><circle cx="14.6" cy="6.4" r="2.3"/><circle cx="18.2" cy="11" r="2.3"/>',
+        weight: '<circle cx="12" cy="5.2" r="2.6"/><path d="M6.6 9h10.8l3.3 12.1H3.3Z"/>',
+        'user-pen': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><path d="M19.9 11.9l2.2 2.2-5.3 5.3-2.9.7.7-2.9Z"/>',
+        'user-tag': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><path fill-rule="evenodd" d="M14.1 14.4h4.6l3.1 3.1-3.1 3.1h-4.6ZM15.3 17.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0Z"/>',
+        // 4.182.0, second batch: marks in a disc, the media keys, and a few things (flame, mug, clapper, a person with
+        // a badge). A mark inside a filled shape is cut out of it; a thin part that must stay a line is class "ln".
+        'plus-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm-1.2 4.2h2.4v3.8H17v2.4h-3.8V17h-2.4v-3.8H7v-2.4h3.8Z"/>',
+        'minus-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM7 10.8v2.4h10v-2.4Z"/>',
+        contrast: '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 2.2a7.4 7.4 0 0 1 0 14.8Z"/>',
+        rewind: '<path d="M21 5.7v12.6L12.3 12ZM11.7 5.7v12.6L3 12Z"/>',
+        'fast-forward': '<path d="M3 5.7v12.6L11.7 12ZM12.3 5.7v12.6L21 12Z"/>',
+        skip: '<path d="M5.4 4.3v15.4L15.6 12Z"/><rect x="17.2" y="4.4" width="2.6" height="15.2" rx="1.2"/>',
+        flame: '<path fill-rule="evenodd" d="M12 21.6c3.9 0 6.6-2.7 6.6-6.3 0-4.4-4.5-7.9-6.1-12.9h-1C9.9 7.4 5.4 10.9 5.4 15.3c0 3.6 2.7 6.3 6.6 6.3Zm0-3.4c1.2 0 2-.8 2-1.9 0-1.2-1-2.2-2-3.6-1 1.4-2 2.4-2 3.6 0 1.1.8 1.9 2 1.9Z"/>',
+        'heart-broken': '<path fill-rule="evenodd" d="M12 20.1s-7.6-4.6-7.6-10.6a4.3 4.3 0 0 1 7.6-2.9 4.3 4.3 0 0 1 7.6 2.9c0 6-7.6 10.6-7.6 10.6ZM11.1 7.4l2.2.5-1.1 2.2 2.9 2-2.1 4.8-2-.9 1.2-3-3-2Z"/>',
+        clapper: '<path fill-rule="evenodd" d="M2.4 6.1 19.7 2.9l.9 4.3L3 8.9ZM6.8 5.3 9 8.3l2.6-.2L9.4 4.8ZM12.4 4.2l2.2 3.6 2.6-.3L15 3.8Z"/><path d="M2.9 10.1h18.2v9a1.6 1.6 0 0 1-1.6 1.6h-15a1.6 1.6 0 0 1-1.6-1.6Z"/>',
+        mug: '<path d="M3.9 8.4h12.2v7.6a4.6 4.6 0 0 1-4.6 4.6h-3a4.6 4.6 0 0 1-4.6-4.6Z"/><path class="ln" d="M16.1 10.5H17a2.5 2.5 0 0 1 0 5h-.9M8 3.2c-.8 1 .8 2 0 3M11.5 3.2c-.8 1 .8 2 0 3"/>',
+        'user-minus': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><path class="ln" d="M15.8 17.5h5.4"/>',
+        'user-lock': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><rect x="14.6" y="15.2" width="6.8" height="5.6" rx="1.3"/><path class="ln" d="M16.5 15.2v-1a1.5 1.5 0 0 1 3 0v1"/>',
+        'clipboard-check': '<path fill-rule="evenodd" d="M7.4 4.4h9.2a2.1 2.1 0 0 1 2.1 2.1v13.4a2.1 2.1 0 0 1-2.1 2.1H7.4a2.1 2.1 0 0 1-2.1-2.1V6.5a2.1 2.1 0 0 1 2.1-2.1ZM7.9 13.5 11 16.6l5.1-5.1-1.6-1.6-3.5 3.5-1.5-1.5Z"/><rect x="8.6" y="2.6" width="6.8" height="3.8" rx="1.2"/>',
+        'file-code': '<path fill-rule="evenodd" d="M6 2.6h7.6v5.2h5V21.4H6ZM10 11.2l1.5 1.4-1.6 1.7 1.6 1.7-1.5 1.4-2.9-3.1ZM14.6 11.2l-1.5 1.4 1.6 1.7-1.6 1.7 1.5 1.4 2.9-3.1Z"/><path d="M15.2 2.9l3.1 3.3h-3.1Z"/>',
+        // 4.182.0: thirteen more shapes that are shown small (frames, cards and the person in a circle). A frame's
+        // inner line becomes a gap between two filled panels, so the shape still reads at 14 px.
+        grid: '<rect x="3.4" y="3.4" width="7.4" height="7.4" rx="2"/><rect x="13.2" y="3.4" width="7.4" height="7.4" rx="2"/><rect x="3.4" y="13.2" width="7.4" height="7.4" rx="2"/><rect x="13.2" y="13.2" width="7.4" height="7.4" rx="2"/>',
+        square: '<rect x="3.4" y="3.4" width="17.2" height="17.2" rx="3"/>',
+        more: '<circle cx="5" cy="12" r="2.1"/><circle cx="12" cy="12" r="2.1"/><circle cx="19" cy="12" r="2.1"/>',
+        record: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm0 3.2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/><circle cx="12" cy="12" r="3.6"/>',
+        window: '<path d="M2.9 6.5a2.6 2.6 0 0 1 2.6-2.6h13a2.6 2.6 0 0 1 2.6 2.6v1.5H2.9ZM2.9 10h18.2v7.5a2.6 2.6 0 0 1-2.6 2.6h-13a2.6 2.6 0 0 1-2.6-2.6Z"/>',
+        sidebar: '<path d="M2.9 6.5a2.6 2.6 0 0 1 2.6-2.6h2.7v16.2H5.5a2.6 2.6 0 0 1-2.6-2.6ZM10.2 3.9h8.3a2.6 2.6 0 0 1 2.6 2.6v11a2.6 2.6 0 0 1-2.6 2.6h-8.3Z"/>',
+        columns: '<path d="M2.9 6.5a2.6 2.6 0 0 1 2.6-2.6h13a2.6 2.6 0 0 1 2.6 2.6v1.5H2.9ZM2.9 10h8.1v10.1H5.5a2.6 2.6 0 0 1-2.6-2.6ZM13 10h8.1v7.5a2.6 2.6 0 0 1-2.6 2.6H13Z"/>',
+        table: '<path d="M2.4 6a2.6 2.6 0 0 1 2.6-2.6h14a2.6 2.6 0 0 1 2.6 2.6v2.4H2.4ZM2.4 10.4h5.4v10.2H5a2.6 2.6 0 0 1-2.6-2.6ZM9.7 10.4h4.6v10.2H9.7ZM16.2 10.4h5.4V18a2.6 2.6 0 0 1-2.6 2.6h-2.8Z"/>',
+        card: '<path fill-rule="evenodd" d="M1.9 7a2.6 2.6 0 0 1 2.6-2.6h15a2.6 2.6 0 0 1 2.6 2.6v10a2.6 2.6 0 0 1-2.6 2.6h-15a2.6 2.6 0 0 1-2.6-2.6ZM1.9 9.2v1.8h20.2V9.2ZM5.4 14.3v1.6h5.2v-1.6Z"/>',
+        briefcase: '<path d="M2.4 9a2.6 2.6 0 0 1 2.6-2.6h14a2.6 2.6 0 0 1 2.6 2.6v2.9H2.4ZM2.4 13.1h7.4v1.5h4.4v-1.5h7.4V18a2.6 2.6 0 0 1-2.6 2.6H5a2.6 2.6 0 0 1-2.6-2.6Z"/><path class="ln" d="M9 6.4V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v.9"/>',
+        inbox: '<path fill-rule="evenodd" d="M2.4 13.4 5 4.4h14l2.6 9V19a1.6 1.6 0 0 1-1.6 1.6H4A1.6 1.6 0 0 1 2.4 19ZM6.2 6.4 4.4 12.5h3.9l1.5 2.5h4.4l1.5-2.5h3.9L17.8 6.4Z"/>',
+        'user-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm0 3.8a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4ZM6.3 17.6a6.6 6.6 0 0 1 11.4 0 8 8 0 0 1-11.4 0Z"/>',
+        compass: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM16.4 7.6 13.9 13.9 7.6 16.4 10.1 10.1Z"/>',
+        print: '<path d="M6.4 2.9h11.2v4.3H6.4ZM2.9 11a2.6 2.6 0 0 1 2.6-2.6h13a2.6 2.6 0 0 1 2.6 2.6v4a2.6 2.6 0 0 1-2.6 2.6h-.3v-4.4H5.8v4.4h-.3A2.6 2.6 0 0 1 2.9 15ZM7.2 14.6h9.6v6.5H7.2Z"/>',
         // 4.73.0: the most-used shapes on the sites (Live's sweep, 2026-11-01) get their solid drawing too.
         copy: '<rect x="7.6" y="7.6" width="13" height="13" rx="2.4"/><path class="ln" d="M16 7.6V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h1.6"/>',
         scissors: '<path fill-rule="evenodd" d="M6 3.9a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4Zm0 2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4ZM6 13.7a3.2 3.2 0 1 1 0 6.4 3.2 3.2 0 0 1 0-6.4Zm0 2a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/><path class="ln" d="M8.5 8.8 20 18M8.5 15.2 20 6"/>',
@@ -466,7 +546,10 @@
         if (!d) return '';
         const weights = { thin: 1, light: 1.5, regular: 2, bold: 2.5, duotone: 2 };
         if (!['thin', 'light', 'regular', 'bold', 'solid', 'duotone'].includes(style)) throw new TypeError('glyphs.svg: unsupported style');
-        const solidPath = solid(name);
+        // A part of a solid drawing that must stay a line (class "ln") carries its own stroke here: this svg stands
+        // alone, with no stylesheet to give it one (ov-glyphs.js does it in CSS, the sprite inline, the same way).
+        // Without it the line was filled as a shape, or not drawn at all.
+        const solidPath = solid(name).replace(/class="ln"/g, 'class="ln" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"');
         const drawing = style === 'solid' && solidPath ? solidPath : d;
         const extra = style === 'solid' && solidPath ? ' stroke="none"' : ` stroke-width="${weights[style]}"`;
         const layered = style === 'duotone' && solidPath ? `<g fill="currentColor" stroke="none" opacity=".2">${solidPath}</g>${d}` : drawing;

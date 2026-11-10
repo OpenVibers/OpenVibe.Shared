@@ -49,4 +49,3 @@
 @keyframes ovm-in { from { opacity: 0; transform: translateY(8px) scale(.97); } }
 @keyframes ovm-fade { from { opacity: 0; } }
 html[data-ov-motion=reduced] .ovm-group:last-child { animation-name: ovm-fade; }
-@media (prefers-reduced-motion: reduce) { .ovm-group:last-child { animation-name: ovm-fade; animation-duration: .15s; } }

@@ -475,8 +475,6 @@ a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-o
 .sc-orb-core b{margin-top:6px;font-size:14px;font-weight:800}.sc-orb-core small{font-size:12px;color:var(--text-muted,#7386a3)}
 
 @keyframes sc-breathe{0%,100%{opacity:.7;transform:scale(.95)}50%{opacity:1;transform:scale(1.05)}}
-@media (prefers-reduced-motion:reduce){.sc-ring,.sc-aura-glow,.sc-orb-ring,.sc-orb-face{animation:none}}
-html[data-ov-motion=reduced] .sc-ring,html[data-ov-motion=reduced] .sc-aura-glow,html[data-ov-motion=reduced] .sc-orb-ring,html[data-ov-motion=reduced] .sc-orb-face{animation:none}
 @media (max-width:860px){
 .sc-hero.sc-has-vis{display:block}
 .sc-hero.sc-has-vis .sc-hero-vis{position:absolute;z-index:-1;top:-26px;right:0;width:180px;opacity:.36;pointer-events:none}
@@ -613,7 +611,6 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-row.sc-row>*{flex:0 0 var(--sc-row-w,82%);min-width:0;scroll-snap-align:start}
 .sc-fold-hint{display:none}
 }
-@media (prefers-reduced-motion:reduce){.sc-fold>summary::after{transition:none}}
 /* apps(): a launcher. Phones: icon tiles, name under the icon; from 600 px: rows with a one-line tagline. */
 .sc-apps-group{margin:18px 0 8px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary,#96a7c2)}
 .sc-apps-sec .sc-apps-group:first-of-type{margin-top:6px}
@@ -656,8 +653,8 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 html{overflow-x:clip}
 .sc-hero::before{content:'';position:absolute;z-index:-1;inset:-40px 0 auto;height:340px;pointer-events:none;background:radial-gradient(ellipse at 30% 20%,color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent),transparent 62%),radial-gradient(ellipse at 80% 0%,color-mix(in srgb,var(--secondary,#22d3ee) 14%,transparent),transparent 58%);filter:blur(10px);opacity:.9}
 @keyframes scPulse{50%{opacity:.35}}
-@supports (animation-timeline:view()){@media (prefers-reduced-motion:no-preference){.sc-sec{animation:scRise linear both;animation-timeline:view();animation-range:entry 0% cover 18%}}}
-@keyframes scRise{from{transform:translateY(18px)}to{transform:none}}
+@supports (animation-timeline:view()){.sc-sec{animation:scRise linear both;animation-timeline:view();animation-range:entry 0% cover 18%}html[data-ov-motion=off] .sc-sec{animation:none}}
+@keyframes scRise{from{transform:translateY(calc(18px * var(--ov-move,1)))}to{transform:none}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}.sc-spot{grid-template-columns:1fr;gap:14px}.sc-spot:nth-child(even) .sc-spot-media{order:0}}
 @media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:1fr}}
@@ -677,7 +674,6 @@ html{overflow-x:clip}
 .sc-stat dd{font-size:19px;gap:5px;letter-spacing:-.01em}.sc-stat-ic svg,.sc-stat-ic .ov-icon{width:15px;height:15px}
 .sc-stat dt{font-size:11.5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
-@media (prefers-reduced-motion:reduce){.sc-card,.sc-btn,.sc-next-main,.sc-next-go,.sc-tile,.sc-thumb img,.sc-net a,.sc-apps a{transition:none}.sc-badge.sc-live::before{animation:none}}
 `;
 
 module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };

@@ -72,26 +72,30 @@
     }
 
     const slotOf = (slots, kind) => { for (const [key, v] of Object.entries(slots || {})) if (key.split(':')[0] === kind && v) return v; return null; };
-    const calm = () => {
-        const d = root.document && root.document.documentElement;
-        if (d && d.getAttribute && d.getAttribute('data-ov-motion') === 'reduced') return true;
-        return !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // How far things move: 1 in full, .35 under Calm, 0 with motion off (<html data-ov-motion>, theme-loader.js).
+    const move = () => {
+        const d = root.document && root.document.documentElement, m = d && d.getAttribute ? d.getAttribute('data-ov-motion') : '';
+        if (m === 'off') return 0;
+        return m === 'reduced' || (!m && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0.35 : 1;
     };
 
-    /** A short burst of characters out of the name (pointer or keyboard focus); never under reduced motion. */
+    /** A short burst of characters out of the name (pointer or keyboard focus): six in full, three a shorter way under
+     *  Calm, none with motion off. */
     function burst(el) {
-        if (calm() || !el.isConnected || el.dataset.ovPxBusy) return;
+        const k = move();
+        if (!k || !el.isConnected || el.dataset.ovPxBusy) return;
         const chars = Array.from(el.dataset.ovPxChars || '').slice(0, 6);
         if (!chars.length) return;
         el.dataset.ovPxBusy = '1';
-        for (let i = 0; i < 6; i++) {
+        const far = k < 1 ? 0.5 : 1;
+        for (let i = 0; i < (k < 1 ? 3 : 6); i++) {
             const p = el.ownerDocument.createElement('span');
             p.className = 'ov-px-p';
             p.setAttribute('aria-hidden', 'true');
             p.textContent = chars[i % chars.length];
             const angle = (Math.PI * 2 * i) / 6 + Math.random() * 0.6;
-            p.style.setProperty('--px-dx', `${Math.round(Math.cos(angle) * 22)}px`);
-            p.style.setProperty('--px-dy', `${Math.round(Math.sin(angle) * 16 - 10)}px`);
+            p.style.setProperty('--px-dx', `${Math.round(Math.cos(angle) * 22 * far)}px`);
+            p.style.setProperty('--px-dy', `${Math.round((Math.sin(angle) * 16 - 10) * far)}px`);
             p.style.left = `${Math.round(30 + Math.random() * 40)}%`;
             el.appendChild(p);
             setTimeout(() => p.remove(), 1900);

@@ -18,5 +18,6 @@ assert.strictEqual(upload.timeLeft(Infinity), 'Estimating time left');
 
 assert.ok(files.isBrowserFile('ov-upload.js') && files.isBrowserFile('ov-upload.css'));
 const css = fs.readFileSync(path.join(__dirname, '../ov-upload.css'), 'utf8');
-assert.match(css, /prefers-reduced-motion: reduce/);
+assert.match(css, /html\[data-ov-motion=off\] \.ov-progress__check path\{stroke-dashoffset: 0\}/, 'with motion off the tick is simply drawn');
+assert.doesNotMatch(css, /prefers-reduced-motion/, 'Calm plays the progress');
 assert.match(css, /\.ov-upload__input\s*\{[^}]*clip:/s, 'native input is visually hidden');

@@ -46,7 +46,7 @@
             .ovrt-bar::after { content: ''; position: absolute; right: 0; top: -2px; width: 90px; height: 7px; border-radius: 50%; background: var(--accent-light, #93c5fd); filter: blur(4px); opacity: .9; }
             .ovrt-bar.is-run { opacity: 1; transform: scaleX(.88); transition: transform 3s cubic-bezier(.08, .7, .2, 1), opacity .1s; }
             .ovrt-bar.is-done { opacity: 0; transform: scaleX(1); transition: transform .2s ease, opacity .35s .15s; }
-            @media (prefers-reduced-motion: reduce) { .ovrt-bar.is-run, .ovrt-bar.is-done { transition: none; } .ovrt-bar::after { display: none; } }
+            html[data-ov-motion=off] .ovrt-bar::after{display: none}
             .openvibe-navbar::before { content: ""; position: absolute; inset: 0 0 -28px; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .45s cubic-bezier(.2,.7,.2,1); background: linear-gradient(180deg, rgba(4,7,14,.62), rgba(4,7,14,.28) 55%, rgba(4,7,14,0)); }
             .openvibe-navbar:not(.ovnav-top) { background-color: color-mix(in srgb, var(--bg-secondary, #252530) 84%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px); box-shadow: 0 12px 32px -14px rgba(0,0,0,.6); }
             .openvibe-navbar.ovnav-top { background-color: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -55,7 +55,6 @@
             body.ov-nav-overlay .openvibe-navbar.ovnav-top::before { opacity: 1; }
             body.ov-nav-overlay > #navbar-mount, body.ov-nav-overlay > .openvibe-navbar { margin-bottom: calc(-1 * var(--ovnav-real-h, 52px)); }
             body.ov-panel-open .openvibe-navbar.ovnav-top { background-color: var(--bg-secondary, #252530); border-bottom-color: var(--border, #333340); }
-            @media (prefers-reduced-motion: reduce) { .openvibe-navbar, .openvibe-navbar::before { transition: none; } }
             /* Names: the brand face (ov-brand.woff2: Nunito, Latin, 700-900). */
             @font-face { font-family: 'OV Brand'; src: url(${siblingV('ov-brand.woff2')}) format('woff2'); font-weight: 700 900; font-style: normal; font-display: swap; unicode-range: U+0020-007E, U+00A0, U+00B7, U+00E9, U+2013-2014, U+2018-2019, U+201C-201D, U+2026; }
             .openvibe-navbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; margin-right: 8px; min-width: 0; }
@@ -317,8 +316,6 @@
             .ovnav-orb[aria-expanded="true"] :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; }
             @keyframes ovo-ripple { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.55); } }
             @keyframes ovo-wave { 0%, 100% { transform: scale(.7); opacity: .5; } 50% { transform: scale(1.25); opacity: 1; } }
-            @media (prefers-reduced-motion: reduce) { .ovnav-orb .ovo-g, .ovnav-orb .ovo-d, .ovnav-orb::before { transition: none; animation: none !important; } }
-            html[data-ov-motion="reduced"] .ovnav-orb .ovo-d { animation: none !important; }
             .openvibe-navbar .openvibe-navbar-brand .ovnav-orb { margin-left: 1px; }
             /* 4.148.0 (the owner: "replace the hamburger with that button"): the phone's menu button is the orb, in the
                burger's place at the bar's right. Hidden on a wide bar (its links are there), shown at 860 px and below;
@@ -404,8 +401,8 @@
             @keyframes ov-pop-out { to { opacity: 0; transform: scale(.94); filter: blur(3px); } }
             @keyframes ov-fade { from { opacity: 0; } }
             @keyframes ov-pop-calm { from { opacity: 0; transform: scale(.97); } }
-            @media (prefers-reduced-motion: reduce) { .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; } .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; animation-direction: reverse !important; } }
             html[data-ov-motion=reduced] .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; }
+            html[data-ov-motion=reduced] .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; animation-direction: reverse !important; }
 
             .openvibe-navbar-dropdown-header {
                 padding: 12px 10px 12px 14px; border-bottom: 1px solid var(--border, #333340);
@@ -530,9 +527,7 @@
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
                 outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 2px;
             }
-            @media (prefers-reduced-motion: reduce) {
-                :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: none; opacity: .82; }
-            }
+            html[data-ov-motion=off] :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active{scale: none;opacity: .82}
         `;
         document.head.appendChild(s);
     }
@@ -559,7 +554,7 @@
         'fa-wallet': [0, '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4M4 7.5V18a2 2 0 0 0 2 2h14V9H6.5A2.5 2.5 0 0 1 4 7.5Z"/><path d="M16 14.5h.01"/>', '<path fill-rule="evenodd" d="M6.5 4.6H18v4h1.4a.8.8 0 0 1 .8.8v10.8H6a2.2 2.2 0 0 1-2.2-2.2V7.3a2.7 2.7 0 0 1 2.7-2.7Zm0 1.8a.9.9 0 0 0 0 1.8h9.7V6.4ZM16 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>'],
         'fa-chevron-down': [0, '<path d="m6.6 9.9 6.6 6.6 6.6 -6.6"/>', ''],
         'fa-gear': [0, '<circle cx="12" cy="12" r="2.4"/><path d="M17.85 14.4a1.35 1.35 0 0 0 0.25 1.6l0.1 0.1a1.6 1.6 0 1 1 -2.5 2.5l-0.1 -0.1a1.35 1.35 0 0 0 -1.6 -0.25 1.35 1.35 0 0 0 -0.9 1.35V19.1a1.6 1.6 0 1 1 -3.6 0v-0.1a1.35 1.35 0 0 0 -1 -1.35 1.35 1.35 0 0 0 -1.6 0.25l-0.1 0.1a1.6 1.6 0 1 1 -2.5 -2.5l0.1 -0.1a1.35 1.35 0 0 0 0.25 -1.6 1.35 1.35 0 0 0 -1.35 -0.9H4.95a1.6 1.6 0 1 1 0 -3.6h0.1a1.35 1.35 0 0 0 1.35 -1 1.35 1.35 0 0 0 -0.25 -1.6l-0.1 -0.1a1.6 1.6 0 1 1 2.5 -2.5l0.1 0.1a1.35 1.35 0 0 0 1.6 0.25H9.65a1.35 1.35 0 0 0 0.9 -1.35V4.95a1.6 1.6 0 1 1 3.6 0v0.1a1.35 1.35 0 0 0 0.9 1.35 1.35 1.35 0 0 0 1.6 -0.25l0.1 -0.1a1.6 1.6 0 1 1 2.5 2.5l-0.1 0.1a1.35 1.35 0 0 0 -0.25 1.6V9.65a1.35 1.35 0 0 0 1.35 0.9H19.1a1.6 1.6 0 1 1 0 3.6h-0.1a1.35 1.35 0 0 0 -1.35 0.9Z"/>', '<path fill-rule="evenodd" d="M18.5 14.65a1.5 1.5 0 0 0 0.3 1.8l0.1 0.1a1.75 1.75 0 1 1 -2.8 2.8l-0.1 -0.1a1.5 1.5 0 0 0 -1.8 -0.3 1.5 1.5 0 0 0 -1 1.5V19.9a1.75 1.75 0 1 1 -4 0v-0.1a1.5 1.5 0 0 0 -1.1 -1.5 1.5 1.5 0 0 0 -1.8 0.3l-0.1 0.1a1.75 1.75 0 1 1 -2.8 -2.8l0.1 -0.1a1.5 1.5 0 0 0 0.3 -1.8 1.5 1.5 0 0 0 -1.5 -1H4.15a1.75 1.75 0 1 1 0 -4h0.1a1.5 1.5 0 0 0 1.5 -1.1 1.5 1.5 0 0 0 -0.3 -1.8l-0.1 -0.1a1.75 1.75 0 1 1 2.8 -2.8l0.1 0.1a1.5 1.5 0 0 0 1.8 0.3H9.4a1.5 1.5 0 0 0 1 -1.5V4.15a1.75 1.75 0 1 1 4 0v0.1a1.5 1.5 0 0 0 1 1.5 1.5 1.5 0 0 0 1.8 -0.3l0.1 -0.1a1.75 1.75 0 1 1 2.8 2.8l-0.1 0.1a1.5 1.5 0 0 0 -0.3 1.8V9.4a1.5 1.5 0 0 0 1.5 1H19.9a1.75 1.75 0 1 1 0 4h-0.1a1.5 1.5 0 0 0 -1.5 1ZM12 9.05a3 3 0 1 0 0 6.8 3 3 0 0 0 0 -6.8Z"/>'],
-        'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', ''],
+        'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 2.2a7.4 7.4 0 0 1 0 14.8Z"/>'],
         'fa-moon': [0, '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>'],
         'fa-sun': [0, '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2M12 19.6v2M5.25 5.25l1.4 1.4M17.4 17.4l1.4 1.4M2.5 12h2M19.6 12h2M5.25 18.75l1.4 -1.4M17.4 6.6l1.4 -1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
         'fa-comment-dots': [0, '<path d="M4 5h16v11H8l-4 4Z"/>', '<path d="M3.5 5.6A1.6 1.6 0 0 1 5.1 4h13.8a1.6 1.6 0 0 1 1.6 1.6v9.8a1.6 1.6 0 0 1-1.6 1.6H8.6L3.5 21Z"/>'],
@@ -569,10 +564,10 @@
     const NAV_ICONS_LAZY = {
         0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-text-height fa-user fa-video fa-wand-magic-sparkles fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
     };
-    const NAV_ICONS_REV = '1091daee9c7e';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'ced6e6ecf191', 'ov-glyphs.js': '6f8c8dd2a10d', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': 'f0dc83b9c816', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '44a863d7a267', 'ov-share.css': '45b92b654148', 'search.js': 'bbae7542436f', 'dock.js': '67101584eb54', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'e06f1388b696', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'ba3981246bc0', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': '631efe800b13', 'nav-slots.js': 'a5af310d62e0', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
+    const SIBLING_REV = { 'ov-mark.js': '8cc78bde2190', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'b170f6e994fa', 'dock.js': 'd45d3e6e7c39', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'dc24929109b5', 'history.js': '1e6598f78ba4', 'site-switcher.js': 'd8980cf95157', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '093d5979ae12', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.

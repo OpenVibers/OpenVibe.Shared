@@ -50,7 +50,8 @@
         return n;
     };
     const icon = (name, cls) => { const s = el('span', cls || 'ovl-ico'); s.innerHTML = ICON[name]; return s; };   // constants only
-    const reduce = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduce = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
     const b64 = (u8) => { let s = ''; for (let i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]); return root.btoa(s); };
     const unb64 = (s) => Uint8Array.from(root.atob(String(s)), (c) => c.charCodeAt(0));
     const unb64url = (s) => unb64(String(s).replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((String(s).length + 3) % 4));

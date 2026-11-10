@@ -38,7 +38,8 @@
     const declared = new Map();   // id → descriptor (drawn by the page itself)
     let styleEl = null, clicksWired = false;
 
-    const reduced = () => { try { return root.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduced = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
     const phone = () => { try { return root.matchMedia('(max-width: 759px)').matches; } catch { return false; } };
     const fine = () => { try { return root.matchMedia('(hover: hover) and (pointer: fine)').matches; } catch { return false; } };
 
@@ -122,7 +123,7 @@
 .ovo-side-h .ovo-b{background:transparent;color:inherit;width:30px;height:30px}
 .ovo-side-h .ovo-b:hover{background:rgba(127,127,127,.18)}
 .ovo-side iframe{flex:1;width:100%;border:0;background:transparent}
-@media (prefers-reduced-motion:reduce){.ovo-card.is-settling,.ovo-side{transition:none}.ovo-card.is-entering{transform:translate3d(var(--ovo-x,0px),var(--ovo-y,0px),0)}}
+html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x,0px),var(--ovo-y,0px),0)}
 `;
         (document.head || document.documentElement).appendChild(styleEl);
     }

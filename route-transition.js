@@ -24,7 +24,7 @@
 @keyframes ovrtEnter{from{opacity:0}to{opacity:1}}
 @keyframes ovrtIn{from{opacity:0}to{opacity:1}}
 @keyframes ovrtSlide{from{transform:translateX(-100%)}to{transform:translateX(265%)}}
-@media (prefers-reduced-motion:reduce){.ovrt-enter,.ovrt-wait,.ovrt-wait i::after{animation:none}.ovrt-bar.is-run,.ovrt-bar.is-done{transition:none}.ovrt-bar::after{display:none}}`;
+html[data-ov-motion=off] .ovrt-bar::after{display:none}`;
     const st = document.createElement('style');
     st.id = 'ovrt-css';
     st.textContent = css;
@@ -37,7 +37,8 @@
         if (state === 'run') { barEl.classList.remove('is-done', 'is-run'); void barEl.offsetWidth; barEl.classList.add('is-run'); }
         else { barEl.classList.add('is-done'); barTimer = root.setTimeout(() => barEl.classList.remove('is-run', 'is-done'), 600); }
     }
-    const reduced = () => { try { return root.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduced = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
 
     const PHASES = { styles: 'applying styles', code: 'starting up' };
     function start(section, { label, prefix = 'ov' } = {}) {

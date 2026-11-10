@@ -35,6 +35,10 @@ assert.ok(glyphs.svg('eye', { style: 'thin' }).includes('stroke-width="1"'));
 assert.ok(glyphs.svg('eye', { style: 'light' }).includes('stroke-width="1.5"'));
 assert.ok(glyphs.svg('eye', { style: 'bold' }).includes('stroke-width="2.5"'));
 assert.ok(glyphs.svg('bell', { style: 'solid' }).includes('fill="currentColor"') && glyphs.svg('bell', { style: 'solid' }).includes('stroke="none"'));
+// A line inside a solid drawing keeps its stroke in the stand-alone svg (it was filled as a shape, or not drawn).
+assert.ok(glyphs.svg('calendar', { style: 'solid' }).includes('<path class="ln" fill="none" stroke="currentColor" stroke-width="2.6"'), 'a solid drawing\'s line part is stroked, not filled');
+assert.ok(!glyphs.svg('bell', { style: 'solid' }).includes('class="ln"'), 'a drawing with no line part is unchanged');
+assert.ok(glyphs.solid('calendar').includes('<path class="ln" d='), 'the stored drawing itself is unchanged (ov-glyphs.js styles .ln in CSS)');
 assert.ok(glyphs.svg('bell', { style: 'duotone' }).includes('opacity=".2"'));
 assert.throws(() => glyphs.svg('eye', { style: 'heavy' }), /unsupported style/);
 for (const n of ['globe', 'mail', 'key', 'server', 'phone', 'help', 'cart', 'store', 'terminal', 'database', 'eye-off', 'mic-off']) assert.ok(glyphs.solid(n), `${n}: one of the next most-used shapes has its solid drawing (4.80.0)`);
@@ -73,7 +77,7 @@ ON_ICON.forEach((cls) => assert.ok(CSS.includes(`.ovg.${cls}{`) || CSS.includes(
 ['--fa-beat-scale', '--fa-bounce-height', '--fa-fade-opacity', '--fa-flip-angle', '--fa-rotate-angle', '--fa-animation-duration', '--fa-li-width',
     '--fa-border-color', '--fa-counter-background-color', '--fa-primary-color', '--fa-inverse'].forEach((v) => assert.ok(CSS.includes(v), `Font Awesome's ${v}`));
 assert.ok(!CSS.includes('360deg') && /\.ovg\.fa-spin[^{]*\{animation:ovgBreathe/.test(CSS), 'fa-spin breathes: nothing spins (L27)');
-assert.ok(CSS.includes('@media (prefers-reduced-motion:reduce){.ovg,.ovg[data-ovg=busy] circle,.ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}}'), 'reduced motion stops every animation, and a drawn-in glyph is simply there');
+assert.ok(CSS.includes('html[data-ov-motion=off] .ovg,html[data-ov-motion=off] .ovg[data-ovg=busy] circle,html[data-ov-motion=off] .ovg.ovg-draw>svg>*{animation:none!important;stroke-dashoffset:0!important}') && !CSS.includes('prefers-reduced-motion') && !CSS.includes('data-ov-motion=reduced'), 'motion off stops every animation and a drawn-in glyph is simply there; Calm plays them');
 
 // ── In a page ──
 (async () => {

@@ -94,7 +94,7 @@
 /* An answer that types in (ov-thread.js reveal): only opacity, so a screen reader reads it all at once. */
 .ovt-answer.is-revealing .ovt-sw { opacity: 0; transition: opacity .28s ease-out; }
 .ovt-answer.is-revealing .ovt-sw.on { opacity: 1; }
-html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
+html[data-ov-motion=off] .ovt-answer.is-revealing .ovt-sw{opacity: 1 !important}
 .ovt-answer pre:has(.ovt-code-copy) { padding-right: 68px; }
 .ovt-code-copy { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 8px; border: 1px solid var(--ovt-line); background: var(--bg-card, #131c2e); color: var(--text-secondary, #96a7c2); font-size: 12px; cursor: pointer; }
 .ovt-files { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
@@ -211,12 +211,7 @@ html[data-ov-motion=reduced] .ovt-answer.is-revealing .ovt-sw { opacity: 1 !impo
 @keyframes ovt-rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes ovt-fade { from { opacity: 0; } }
 @keyframes ovt-shimmer { to { background-position: -300% 0; } }
-@media (prefers-reduced-motion: reduce) {
-    .ovt-dot, .ovt-turn[data-open] .ovt-avatar, .ovt-w-live, .ovt-turn.is-new .ovt-bubble, .ovt-turn.is-fresh .ovt-answer { animation: none; }
-    .ovt-answer.is-revealing .ovt-sw { opacity: 1 !important; transition: none !important; }
-    .ovt-w-live { color: var(--text-secondary, #96a7c2); background: none; }
-    .ovt-panel, .ovt-chev { transition: none; }
-}
+html[data-ov-motion=off] .ovt-answer.is-revealing .ovt-sw{opacity: 1 !important}html[data-ov-motion=off] .ovt-w-live{color: var(--text-secondary, #96a7c2);background: none}
 
 /* ── The composer's Options (11-09, the owner: "too many options… hidden under a cog… less cluttered but still has the power
    features"): one button; the pickers in a panel above it on a computer, a sheet on a phone; what differs from the defaults
@@ -273,10 +268,6 @@ html.ovt-sheet-open, html.ovt-sheet-open body { overflow: hidden; }
     /* A kit sidebar's button lives in the navbar (ov-thread.js); a head with nothing else in it goes. */
     .ovt.has-nav-lead .ovt-head [data-ovk-sidebar-open] { display: none; }
     .ovt.has-nav-lead .ovt-head:not(:has(> :not([data-ovk-sidebar-open], span.ovt-title:empty))) { display: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-    .ovt-opts-panel, .ovt-opt-chip, .ovt-opts[open]::before { animation: none; }
-    :where([data-ovt-fold]) { transition: none; }
 }
 
 /* Answers' actions are icon buttons (11-09): 32 px, the word as tooltip; a copy shows a tick for a moment. */

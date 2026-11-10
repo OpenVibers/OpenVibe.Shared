@@ -148,7 +148,7 @@ const sc = require('../showcase');
     assert.ok(!scss.includes('.sc-room-hero{'), 'showcase.css, which every product home loads, does not carry the room front door');
     const motion = fs.readFileSync(path.join(__dirname, '..', 'motion.js'), 'utf8');
     assert.ok(/el\.textContent = k < 1 \? .* : text;/.test(motion), 'the ticker ends on the server\'s text');
-    assert.ok(motion.includes("html.getAttribute('data-ov-motion') === 'reduced'"), 'the account\'s reduced motion is honoured');
+    assert.ok(motion.includes("m === 'off' ? 'off'") && motion.includes("const still = () => motion() === 'off';"), 'only motion off keeps it still; Calm plays it');
 }
 
 console.log('room kit: rooms, card, rail, sc.room and motion ok');

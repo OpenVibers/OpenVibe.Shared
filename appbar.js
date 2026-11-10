@@ -70,7 +70,6 @@
                 html.ov-has-appbar:has(:is(input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea, select, [contenteditable="true"]):focus) .ovnav-appbar,
                 body.ov-panel-open .ovnav-appbar { transform: translateY(110%); }
             }
-            @media (prefers-reduced-motion: reduce) { .ovnav-appbar, .ovnav-appbar .ovnav-ab-ic, .ovnav-appbar .ovnav-ab-pill { transition: none; } .ovnav-appbar .ovnav-ab-ic svg { animation: none !important; } }
             @media print { .ovnav-appbar { display: none !important; } }`;
         document.head.appendChild(st);
     }

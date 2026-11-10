@@ -116,10 +116,6 @@ html.ovl-locked, html.ovl-locked body { overflow: hidden; }
 .ovl-card .ovl-form { width: 100%; max-width: 340px; text-align: start; }
 .ovl-card .ovl-btn.is-primary { width: 100%; }
 
-@media (prefers-reduced-motion: reduce) {
-    .ovl-sheet, .ovl-btn, .ovl-inputrow, .ovl-meterbar::after { transition: none !important; }
-    .ovl-done .ovl-ico.is-big { animation: none; }
-}
 @media (forced-colors: active) { .ovl-sheet, .ovl-card { border: 1px solid CanvasText; } }
 
 /* The one-time recovery kit is the only printed content. */

@@ -358,10 +358,6 @@ html.ov-share-locked, html.ov-share-locked body { overflow: hidden; overscroll-b
 
 .ov-share-copybuf { position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-@media (prefers-reduced-motion: reduce) {
-    .ov-share, .ov-share-btn, .ov-share-segopt, .ov-share-addfield, .ov-share-radio, .ov-share-tile, .ov-share-tileic, .ov-share-device, .ov-share-toast, .ov-share-linkpill { transition: none !important; }
-    .ov-share *, .ov-share-box.is-first * { animation: none !important; }
-}
 @media (forced-colors: active) {
     .ov-share { border: 1px solid CanvasText; }
     .ov-share-segopt:has(input:checked), .ov-share-radio:has(input:checked) { outline: 2px solid Highlight; }

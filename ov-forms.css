@@ -216,10 +216,6 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 .ov-choice-desc { font-size: 12.5px; line-height: 1.45; color: var(--text-muted, color-mix(in srgb, CanvasText 58%, Canvas)); }
 .ov-choice .ov-sel-badge { position: absolute; top: 12px; right: 12px; }
 
-@media (prefers-reduced-motion: reduce) {
-    .ov-sel, .ov-sel-chev svg, .ov-sel-pop, .ov-sel-sheet, .ov-sel-scrim, .ov-sel-mark svg, .ov-choice, .ov-input { transition: none !important; }
-    :where(input[type="checkbox"][role="switch"]) { transition: none; }
-}
 @media (forced-colors: active) {
     .ov-sel, .ov-sel-pop, .ov-sel-sheet { border: 1px solid CanvasText; }
     .ov-sel-opt.is-active, .ov-sel-opt[aria-selected="true"] { outline: 2px solid Highlight; }
