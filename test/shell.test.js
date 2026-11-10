@@ -24,12 +24,12 @@ assert.match(html, /<title>Example &lt;site&gt;<\/title>/, 'title escaped');
 assert.match(html, /<meta name="description" content="A &lt;b&gt;description&lt;\/b&gt;">/, 'description escaped');
 assert.match(html, /<link rel="canonical" href="https:\/\/example\.com\/">/, 'canonical present');
 assert.match(html, /<meta property="og:title" content="Example &lt;site&gt;">/, 'og:title present and escaped');
-assert.match(html, /<noscript><nav aria-label="Site"/, 'no-JS nav present');
+assert.match(html, /<div id="navbar-mount"><nav class="openvibe-navbar" aria-label="Site"/, 'server nav present in the client mount');
 assert.match(html, /<footer id="ov-footer"/, 'shared footer present');
 assert.ok(html.includes('<main id="hero">Hello</main>'), 'body kept verbatim');
 assert.ok(html.includes('<script src="/shared/theme-loader.js?v='), 'theme-loader via serve.url');
 // The deferred navbar lands in a #navbar-mount that already holds its height; without JavaScript the mount goes away.
-assert.ok(html.includes('#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>'), 'navbar mount reserved');
+assert.ok(html.includes('#navbar-mount{min-height:52px}</style>'), 'navbar mount reserved');
 assert.ok(html.includes('<style>body{margin:0}'), 'no browser margin around the body');
 // A page with no stylesheet of its own reads in the network's type, not the browser's serif (4.84.0), and at zero
 // specificity, so a site's own body rule always wins.
@@ -77,6 +77,24 @@ assert.ok(evil.includes('\\u003c/script>'), 'the boot escapes <');
 // ── Body attributes are escaped ───────────────────────────────────────────────────────────────────
 const attrs = shell.page({ name: 'x', bodyClass: 'a" onload="b', bodyAttributes: { 'data-x': '" y="', hidden: true, skip: null } });
 assert.ok(attrs.includes('<body class="a&quot; onload=&quot;b" data-x="&quot; y=&quot;" hidden>'), 'body attributes escaped, bare flag kept, null dropped');
+
+// Server navigation uses the exact configured links sent to OpenVibeNavbar.init, in the mount
+// that the client replaces atomically after hydration.
+{
+    const links = [{ label: 'Places', href: '/places' }, { label: 'Elsewhere', href: 'https://openvibe.live/' }];
+    const rendered = shell.page({ name: 'example', navbar: { service: 'example', links }, body: '' });
+    assert.ok(rendered.includes('<a data-ov-nav-link="true" href="/places">Places</a>'), 'server emits configured local links');
+    assert.ok(rendered.includes('<a data-ov-nav-link="true" href="https://openvibe.live/">Elsewhere</a>'), 'server emits configured cross-site links');
+    assert.match(rendered, /OpenVibeNavbar\.init\(\{"service":"example","links":\[\{"label":"Places","href":"\/places"\}/, 'client receives same configured list');
+    assert.equal((rendered.match(/aria-label="Site"/g) || []).length, 1, 'one navigation landmark before hydration');
+}
+{
+    const defaults = require('../navbar')._defaults.linksFor('tools');
+    const rendered = shell.page({ name: 'OpenVibe.Tools', navbar: { service: 'tools' }, body: '' });
+    for (const link of defaults) assert.ok(rendered.includes(`<a data-ov-nav-link="true" href="${link.href}">${link.label}</a>`), `server uses the navbar default ${link.label}`);
+    assert.equal((rendered.match(/aria-label="Site"/g) || []).length, 1, 'one default navigation landmark');
+    assert.match(fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8'), /mount\.replaceChildren\(nav\)/, 'hydration atomically replaces the server nav');
+}
 
 // ── The AI page summary is present only when given, and its JSON-LD comes with it ────────────────
 assert.ok(!shell.page({ name: 'x' }).includes('"@type":"WebPage"'), 'no WebPage JSON-LD without a summary');

@@ -11,6 +11,7 @@
 //   shippedScript()    the <script> tag for shipped.js (the footer loads it lazily too; a page that shows the
 //                      log should load it itself)
 const footerModule = require('./footer');
+const navbarModule = require('./navbar');
 
 const SITES = [['Live', 'https://openvibe.live/'], ['Tools', 'https://openvibe.tools/'], ['Community', 'https://openvibe.community/'], ['Games', 'https://openvibe.games/'], ['Media', 'https://openvibe.media/'], ['Network', 'https://openvibe.network/']];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,6 +20,16 @@ function noscriptNav({ name, home = '/', links = [] } = {}) {
     const own = links.map(l => `<a href="${esc(l.href)}">${esc(l.label)}</a>`).join('');
     const net = SITES.filter(([n]) => !String(name || '').endsWith('.' + n)).map(([n, u]) => `<a href="${u}">${n}</a>`).join('');
     return `<noscript><nav aria-label="Site" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.1);font:500 14px/1.4 system-ui,sans-serif"><a href="${esc(home)}" style="font-weight:700;color:inherit;text-decoration:none">${esc(name || 'OpenVibe')}</a>${own}<span style="flex:1"></span>${net}</nav></noscript>`;
+}
+
+// The client navbar replaces this node on its first render. Keeping configured links in the same
+// mount makes the page useful to crawlers before any JavaScript runs.
+function serverNav({ name, service, home = '/', links } = {}) {
+    const source = Array.isArray(links) ? links : navbarModule._defaults.linksFor(service);
+    const items = source.filter(l => l && (l.href || l.url) && (l.label || l.name));
+    const own = items.map(l => `<a data-ov-nav-link="true" href="${esc(l.href || l.url)}">${esc(l.label || l.name)}</a>`).join('');
+    const brand = `<a href="${esc(home)}" style="font-weight:700;color:inherit;text-decoration:none">${esc(name || 'OpenVibe')}</a>`;
+    return `<div id="navbar-mount"><nav class="openvibe-navbar" aria-label="Site" data-ov-server-nav="true" style="box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 16px;min-height:52px;font:500 14px/1.4 system-ui,sans-serif">${brand}${own}</nav></div>`;
 }
 
 const NETWORK = 'https://openvibe.network';
@@ -59,4 +70,4 @@ function shippedScript({ base = NETWORK } = {}) {
     return `<script src="${esc(String(base).replace(/\/+$/, ''))}/shared/shipped.js${v ? `?v=${v}` : ''}" defer></script>`;
 }
 
-module.exports = { footer: (cfg) => footerModule.ssr(cfg), noscriptNav, shipped, updatesBody, shippedScript };
+module.exports = { footer: (cfg) => footerModule.ssr(cfg), noscriptNav, serverNav, shipped, updatesBody, shippedScript };
