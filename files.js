@@ -52,6 +52,7 @@ const BROWSER = Object.freeze([
     'ov-upload.js',         // shared file picker, upload queue and ov-progress
     'messages.js',          // Chat's two views: room lines and texting bubbles (openvibe-shared/messages)
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
+    'ov-composer.js',       // the one composer (4.202.0): files, / and @, voice, drafts, your settings; ov-thread.js loads it
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'ov-home.js',           // the menu's home screen and wall (search.js loads it for You and Feed)
     'history.js',           // cross-site history
