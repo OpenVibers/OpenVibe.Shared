@@ -347,8 +347,8 @@
         async function refresh() {
             if (gone) return;
             if (o.active && !o.active()) return;
-            try { paint(await api('')); }
-            catch (err) { if (err.status === 401 || err.status === 403 || err.status === 404) paint(null); }
+            try { const data = await api(''); if (!gone) paint(data); }
+            catch (err) { if (!gone && (err.status === 401 || err.status === 403 || err.status === 404)) paint(null); }
         }
         refresh();
         timer = setInterval(refresh, POLL_MS);

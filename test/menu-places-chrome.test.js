@@ -55,6 +55,34 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`);
             assert.ok(await until(`(document.querySelector('.ovs-starttabs [aria-selected="true"]') || {}).textContent.trim().startsWith('Feed')`), `${name}: Feed is chosen in place`);
             await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+            // On a phone, with the Dock able to lend its panels (OpenVibeDock.mountInto, 312 step 2): Messages and AI open
+            // INSIDE the menu, under its own head, and become the chosen place; AI has a Vibe · Agents switch; Feed and
+            // closing hand the panel back. A computer keeps the floating Dock.
+            await page.evaluate(`window.went = null; window.log = []; window.OpenVibeDock = { mountInto(host, o) { window.log.push('mount:' + o.tab); host.innerHTML = '<div class="stub"></div>';
+                return { show(t) { window.log.push('show:' + t); }, destroy() { window.log.push('destroy'); host.innerHTML = ''; } }; } }`);
+            await page.evaluate(OPEN(true)); await wait(350);
+            const inside = async () => page.evaluate(`({ door: !!document.querySelector('.ovs.ovs-in-door'), list: !document.querySelector('.ovs-list').hidden, stub: !!document.querySelector('.ovs-door-host .stub'),
+                sw: document.querySelector('.ovs-door-sw') && !document.querySelector('.ovs-door-sw').hidden ? Array.from(document.querySelectorAll('.ovs-door-sw [data-part]')).map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')).join(' ') : '',
+                chosen: Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab[aria-selected="true"]')).map((t) => t.textContent.trim()).join(' ') })`);
+            await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(120);
+            if (width <= 640) {
+                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Vibe* Agents', chosen: 'AI' }, `${name}: AI opens inside the menu, on Vibe`);
+                assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`);
+                await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
+                assert.equal((await inside()).sw, 'Vibe Agents*', `${name}: the switch goes to Agents`);
+                await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
+                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`);
+                await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`); await wait(80);
+                assert.deepEqual(await inside(), { door: false, list: true, stub: false, sw: '', chosen: 'Feed' }, `${name}: Feed hands the panel back`);
+                await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
+                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+                assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`);
+            } else {
+                assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI still opens the floating Dock`);
+                assert.deepEqual(await page.evaluate('window.log'), [], `${name}: nothing mounted in the menu`);
+                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+            }
+            await page.evaluate('delete window.OpenVibeDock');
             // Opened from a button: the sheet grows out of that button's centre, wherever the sheet itself was placed.
             if (width > 900) {
                 await page.evaluate(OPEN(true).replace("frame: {},", `frame: {}, anchor: { top: 52, left: ${width - 150}, cx: ${width - 130}, cy: 26 },`));

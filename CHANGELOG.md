@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.198.0 — 2026-11-10
+
+**On a phone the menu is one sheet: Messages and AI open inside it.** From the owner's notes of 2026-11-10, with the menu
+and the Dock side by side: "combine and consolidate these two menus into one unified menu … easier to search between",
+and a phone picture of the Dock's own head over the menu ("Menu", "…", close, then four tabs: two rows of chrome).
+
+- **The menu (`search.js`).** On a phone, Messages and AI in the row of places no longer close the menu to open the
+  Dock's second sheet. They open inside the menu, under its own head, and become the chosen place like Feed or You. AI
+  carries a small two-part switch at its top: Vibe · Agents (your Actor is the top of Agents). Feed, Here or You, typing
+  in the field, or closing the menu hand the Dock's panel back with its state. On a computer the two places still open
+  the floating Dock, which stays beside the work.
+- **The Dock (`dock.js`, new `dock-mount.js`).** `OpenVibeDock.mountInto(host, { tab })` → `{ show(tab), destroy() }`
+  shows one of the Dock's panels (chats, vibe, agents, activity) inside another sheet, with no head of its own: the same
+  panel body, state, counts, token and loaders as the floating Dock, which closes while a panel is lent. The layout
+  loads on first use (`dock-mount.js`), so `dock.js` stays inside its budget. Six mount and destroy laps leave no nodes or
+  listeners behind (`test/dock-mount-chrome.test.js`).
+- **The agent view (`dock-agent.js`).** An ended session is two lines of words with its one button beside them (it sat
+  alone on a third row), and the agent view's buttons are 44 px under a finger.
+- The bar's touch-feedback comment, which ships inside its styles, is one line now: the bar is back under its size
+  budget with room for the next hashes.
+
 ## 4.197.0 — 2026-11-10
 
 **The footer says "3 online", and the tooltip part works anywhere.** From the owner's notes of 2026-11-10: "Make it like

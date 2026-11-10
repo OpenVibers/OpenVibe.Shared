@@ -23,6 +23,7 @@ const BROWSER = Object.freeze([
     'notification-live.js', // the bell's realtime feed over OpenVibe.Events; notification-ui loads it on demand (realtime on)
     'action-center.js',     // the ✦ Action Center; notification-ui loads it on the first click
     'dock.js',              // the Dock and its pill; navbar.js loads it for a signed-in person
+    'dock-mount.js',        // the Dock body inside another sheet; dock.js loads it on first mountInto
     'dock-runs.js',         // the Dock's content-aware Agents rows and overview, loaded with that tab
     'ai-marks-client.js',   // maker marks on a run receipt, loaded only in Agents
     'presence.js', 'purse.js', 'machines.js', 'ov-drop.js', 'mini.js', 'ov-tip.js', 'overlay.js', 'nav-slots.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person

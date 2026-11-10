@@ -53,7 +53,7 @@
         const st = o.styles && o.styles(); if (st && !st.textContent.includes('.ovdk-overview{')) st.textContent += CSS;
         // A site's Dock passes no scopes (full behaviour); the extension passes its read-only set.
         const canDecide = !Array.isArray(o.scopes) || o.scopes.includes('actions.decide');
-        let doc = null, busy = false, timer = 0, filter = o.state().agent_filter || 'all';
+        let doc = null, busy = false, timer = 0, gone = false, filter = o.state().agent_filter || 'all';
         const request = async (path, init) => o.call(path, init);
         const all = () => doc ? ['waiting','running','scheduled','done','failed'].flatMap((b) => doc.buckets[b] || []) : [];
         function row(it) {
@@ -96,7 +96,7 @@
                 // Through Network (every site's connect-src reaches openvibe.network and refuses openvibe.actor).
                 const data = await request('/api/v1/me/actions/skills');
                 const available = (data.listings || []).filter((x) => x && x.skill && x.scan && x.scan.state === 'passed' && x.curator && x.curator.state === 'active').slice(0, 6);
-                if (!available.length) return;
+                if (gone || !available.length) return;
                 box.append(h('h3', '', 'Things agents can do for you'));
                 const grid = h('div', 'ovdk-skills');
                 available.forEach((s) => {
@@ -123,13 +123,13 @@
                 tile.append(h('small', '', label), n, sub); tiles.append(tile); }); box.append(tiles);
             const recent = [...(doc.buckets.done || []), ...(doc.buckets.failed || [])].sort((a,b) => String(b.updated_at).localeCompare(String(a.updated_at))).slice(0,3); if (recent.length) { box.append(h('h3', '', 'Last results')); rows(recent, box); }
             skills(box); return box; }
-        function paint() { if (!doc) return; panel.textContent = ''; const items = all(); const filters = h('div', 'ovdk-run-filters'); for (const [id,label] of [['all','All'],['running','Running'],['waiting','Waiting'],['scheduled','Scheduled'],['done','Done'],['failed','Failed']]) { const b = h('button', '', label); b.type='button'; b.setAttribute('aria-pressed', String(filter===id)); b.addEventListener('click', () => { filter=id; o.save({agent_filter:id}); paint(); }); filters.append(b); } panel.append(filters);
+        function paint() { if (gone || !doc) return; panel.textContent = ''; const items = all(); const filters = h('div', 'ovdk-run-filters'); for (const [id,label] of [['all','All'],['running','Running'],['waiting','Waiting'],['scheduled','Scheduled'],['done','Done'],['failed','Failed']]) { const b = h('button', '', label); b.type='button'; b.setAttribute('aria-pressed', String(filter===id)); b.addEventListener('click', () => { filter=id; o.save({agent_filter:id}); paint(); }); filters.append(b); } panel.append(filters);
             if (filter==='all' && !(doc.counts.running || doc.counts.waiting)) panel.append(overview());
             else { const shown = filter==='all' ? items : (doc.buckets[filter] || []); if (shown.length) rows(shown,panel); else panel.append(h('p','ovdk-none','No runs in this view.')); }
             const foot = o.foot || h('div','ovdk-foot'); foot.textContent=''; const allLink = h('a','','All runs'); allLink.href='https://openvibe.actor/tasks'; const give = h('a','','Give an agent a task'); give.href='https://openvibe.actor/skills'; foot.append(allLink,give); if (!o.foot) panel.append(foot); }
-        async function refresh() { if (busy || !o.active()) return; busy=true; clearTimeout(timer); try { doc = await request('/api/v1/me/actions'); if (doc && doc.buckets) { paint(); if (o.onCounts) o.onCounts(doc.counts || {}); } } catch { panel.textContent=''; panel.append(h('div','ovdk-none','Your runs did not load. Open Agents again to retry.')); } finally { busy=false; if (o.active() && doc && doc.counts && doc.counts.running) timer=setTimeout(refresh,15000); } }
-        refresh(); if (o.loadMarks) o.loadMarks().then((ok) => { if (ok && doc) paint(); });
-        return { refresh, destroy: () => clearTimeout(timer) };
+        async function refresh() { if (gone || busy || !o.active()) return; busy=true; clearTimeout(timer); try { doc = await request('/api/v1/me/actions'); if (gone) return; if (doc && doc.buckets) { paint(); if (o.onCounts) o.onCounts(doc.counts || {}); } } catch { if (!gone) { panel.textContent=''; panel.append(h('div','ovdk-none','Your runs did not load. Open Agents again to retry.')); } } finally { busy=false; if (!gone && o.active() && doc && doc.counts && doc.counts.running) timer=setTimeout(refresh,15000); } }
+        refresh(); if (o.loadMarks) o.loadMarks().then((ok) => { if (!gone && ok && doc) paint(); });
+        return { refresh, destroy: () => { gone = true; clearTimeout(timer); } };
     }
     root.OpenVibeDockRuns = { mount };
 })(typeof window !== 'undefined' ? window : globalThis);
