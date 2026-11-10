@@ -1,5 +1,39 @@
 # Changelog
 
+## 4.185.0 — 2026-11-10
+
+**The You tab: your home first, a shorter bar, Most used as shortcuts.** The owner, 2026-11-10: "Your home should be
+above Jump back in… the thing at the top with your username and online and the settings… a little more compact… most
+used is cool, but maybe we should actually have links to whatever the user uses the most… so it's just easier to jump
+to the app."
+
+- **The order** is you, your own AI, **Your home**, Most used, Jump back in (it was you, AI, Jump back in, Most used,
+  Your home). Nothing above the grid comes or goes while Home is being arranged, as before.
+- **The bar with your name** is 52px tall (was 68): a 36px picture, name and handle on two tight lines. Display and
+  Settings keep their 44px.
+- **Most used** keeps its one bar; its key is now the apps themselves, five across: each app's icon in its own hue, its
+  name, and how often with the bar's colour beside the number. Each is a link (`.ovh-key`, "Live, opened 183 times") and
+  a full touch target; it was a row of small legend entries.
+- **Jump back in** comes last and says what it is: "where you were last".
+
+**A phone's Dock opens out of the navbar's menu button, and that button is its close button.** The owner, 2026-11-10:
+"that close button should, instead of coming from that menu, fade and have an animation effect from the top right, the
+menu button that already exists… it's supposed to be nicer connected to this." Until now the sheet rose from the bottom
+and carried its own close button up with it.
+
+- On a phone (640px and under) with the orb at the bar's right, the sheet fades and grows from the orb's centre
+  (`.ovdk.from-orb`); its close orb starts exactly on the navbar's orb, as its nine dots, and settles into its x in the
+  header (a glide of a few pixels and the same turn the main menu's orb makes). The navbar's own orb makes the same
+  move underneath (`.ovnav-orb.is-dock`), so it is one button the whole way. The x wears the menu's colours.
+- **Closing runs it back:** the x turns into the dots and returns to the bar while the sheet fades (240 ms), then the
+  sheet is gone and the button is where it always was. `OpenVibeDock.close()` therefore hides a phone's sheet a moment
+  later than it is called; with motion off, in a window of its own, or on a bar without the orb, it hides at once as
+  before (and such a bar keeps the rise from the bottom).
+- Calm keeps the move (the grow is smaller, by `--ov-move`); only motion off skips it.
+
+`test/menu-home-screen-chrome.test.js` holds both: the order, the bar's height, the shortcuts' links and targets; the
+close orb starting on the navbar's orb, settling, folding back, and standing still with motion off.
+
 ## 4.184.0 — 2026-11-10
 
 - **Server-rendered navbar links.** The shared shell emits the configured navbar links in the reserved `#navbar-mount`
