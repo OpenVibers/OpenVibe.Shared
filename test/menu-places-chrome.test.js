@@ -135,7 +135,10 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             const page = await h.openPage(browser, await browser.newContext(), { width, height: 800 });
             await page.goto('http://127.0.0.1:' + server.address().port + '/', { maxMs: 6000 });
             await page.evaluate(`window.OpenVibeNotifications = { init() {}, unread: () => 7 };
-                new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/navbar.js'; document.head.appendChild(s); s.onload = () => { OpenVibeNavbar.init({ service: 'chat', auth: 'external', user: { id: 7, username: 'maya', display_name: 'Maya' }, token: 't', search: true, dock: true, links: [] }); ok(); }; s.onerror = no; })`);
+                new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/navbar.js'; document.head.appendChild(s); s.onload = () => { OpenVibeNavbar.init({ service: 'chat', auth: 'external', user: { id: 7, username: 'maya', display_name: 'Maya' }, token: 't', search: true, dock: true, links: [{ id: 'rooms', label: 'Rooms', href: '/rooms' }] }); ok(); }; s.onerror = no; })`);
+            await page.evaluate(`window.fetch = async (url) => String(url).includes('/api/v1/changelog')
+                ? new Response(JSON.stringify({ entries: [{ service: 'live', subject: 'A shipped change', deployed_at: new Date(Date.now() - 10000).toISOString() }] }), { status: 200 })
+                : new Response('{}', { status: 404 }); localStorage.setItem('ovs-feed-seen', '1');`);
             const endBadge = Date.now() + 7000;
             while (!await page.evaluate("!!document.querySelector('.ovnav-avatar-count:not([hidden])')") && Date.now() < endBadge) await wait(80);
             assert.equal(await page.evaluate("!!document.querySelector('.openvibe-bell, #openvibe-bell-mount')"), false, `${width}px: no bar bell or bell mount`);
@@ -143,6 +146,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             await page.evaluate("document.querySelector('#openvibe-avatar-btn').click()"); await wait(500);
             assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open .ovs-starttabs [data-tab=you][aria-selected=true]')"), true, `${width}px avatar opens You`);
             assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open [data-sec=notifications]')"), true, `${width}px avatar opens at Notifications`);
+            assert.equal(await page.evaluate("!!document.querySelector('.openvibe-navbar .ovs-feed-dot:not([hidden])')"), true, `${width}px menu button carries the calm Feed dot`);
             assert.equal(await page.evaluate("!!document.querySelector('.ovdk.is-open')"), false, `${width}px avatar does not open the floating Dock`);
             await page.close();
         }

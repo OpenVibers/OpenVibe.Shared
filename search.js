@@ -69,13 +69,29 @@
     // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
     // since last time you've looked… a badge").
     const FEED_SEEN = 'ovs-feed-seen';
+    const FEED_COUNT = 'ovs-feed-count';
     const feedSeen = () => { try { return Number(localStorage.getItem(FEED_SEEN)) || 0; } catch { return 0; } };
+    function paintFeedDot(count) {
+        const orb = document.getElementById('openvibe-burger'); if (!orb) return;
+        let dot = orb.querySelector('.ovs-feed-dot');
+        if (!dot) { dot = document.createElement('i'); dot.className = 'ovs-feed-dot'; dot.setAttribute('aria-hidden', 'true'); orb.appendChild(dot); }
+        dot.hidden = !(Number(count) > 0);
+    }
+    function paintFeedTabCount(count) {
+        if (!el || !el.classList.contains('is-open') || !tabsEl) return;
+        const b = tabsEl.querySelector('[data-tab="feed"]'); if (!b) return;
+        const old = b.querySelector('.ovs-tabnew'); if (old) old.remove();
+        const n = Number(count) || 0;
+        if (n) { const badge = document.createElement('b'); badge.className = 'ovs-tabnew'; badge.textContent = n > 9 ? '9+' : String(n); badge.setAttribute('aria-label', `${n} new since you last looked`); b.appendChild(badge); }
+    }
     let feedChannel;
-    try { if (typeof BroadcastChannel === 'function') { feedChannel = new BroadcastChannel('openvibe-feed-seen'); feedChannel.onmessage = () => { if (el && el.classList.contains('is-open')) paintTabs(); }; } } catch { feedChannel = null; }
-    if (typeof window !== 'undefined') window.addEventListener('storage', (e) => { if (e.key === FEED_SEEN && el && el.classList.contains('is-open')) paintTabs(); });
+    try { if (typeof BroadcastChannel === 'function') { feedChannel = new BroadcastChannel('openvibe-feed-seen'); feedChannel.onmessage = (e) => { const n = Number(e.data && e.data.count) || 0; paintFeedDot(n); paintFeedTabCount(n); }; } } catch { feedChannel = null; }
+    if (typeof window !== 'undefined') window.addEventListener('storage', (e) => { if (e.key === FEED_COUNT) { paintFeedDot(e.newValue); paintFeedTabCount(e.newValue); } if (e.key === FEED_SEEN) { paintFeedDot(0); paintFeedTabCount(0); } });
     const markFeedSeen = () => {
         try { localStorage.setItem(FEED_SEEN, String(Date.now())); } catch { /* signed out private window */ }
-        try { feedChannel?.postMessage({ type: 'seen', at: feedSeen() }); } catch { /* */ }
+        try { localStorage.setItem(FEED_COUNT, '0'); } catch { /* */ }
+        paintFeedDot(0); paintFeedTabCount(0);
+        try { feedChannel?.postMessage({ type: 'seen', count: 0, at: feedSeen() }); } catch { /* */ }
     };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
@@ -254,6 +270,8 @@
 .ovs-tab-on { position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
 .ovs-tabnew { flex: none; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: 700 11px/18px Inter, system-ui, sans-serif; text-align: center; }
 .ovs-tabnew-red { background: var(--danger, #ef4444); }
+.openvibe-navbar .ovnav-orb .ovs-feed-dot { position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-light, var(--accent, #60a5fa)); }
+.openvibe-navbar .ovnav-orb .ovs-feed-dot[hidden] { display: none; }
 .ovs-tabdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live-red, #ef4444); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live-red, #ef4444) 22%, transparent); }
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
@@ -1101,6 +1119,9 @@
         tabsEl.textContent = '';
         const live = pulseData && Number(pulseData.live_now) > 0;
         const fresh = tab === 'feed' ? 0 : feedNew();
+        try { localStorage.setItem(FEED_COUNT, String(fresh)); } catch { /* */ }
+        paintFeedDot(fresh);
+        try { feedChannel?.postMessage({ type: 'count', count: fresh }); } catch { /* */ }
         const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
         let siteId = ctx.service || '';
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
