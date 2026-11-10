@@ -5,6 +5,11 @@ const http = require('http');
 const path = require('path');
 const browserHarness = require('../browser-harness');
 
+if (process.env.OV_SKIP_BROWSER === '1' || !browserHarness.findChrome()) {
+  console.log('ov-upload-browser: skipped (no Chrome; set CHROME_BIN)');
+  process.exit(0);
+}
+
 (async () => {
   const script = fs.readFileSync(path.join(__dirname, '../ov-upload.js'));
   const server = http.createServer((req, res) => {
