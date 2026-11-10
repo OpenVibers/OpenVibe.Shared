@@ -35,6 +35,11 @@
   A star, an arrow up, a tick; an improvement shows the mark alone. "Better" is gone.
 - **One picker for a person's computers** (`machines.js`, with Network's /add-computer): each computer a tile with
   its state and what it can run, "Auto", and "Add a computer" through OpenVibe Link.
+- **One bar mount per page: an empty band under the bar is gone from seventeen sites** ("why is there so much wasted
+  space or unnecessary margin … for no reason", with the space under the bar circled on openvibe.community). Since
+  4.186.0 the server writes the bar's links itself, in its own `#navbar-mount`; a page whose body already had
+  `<div id="navbar-mount"></div>` then had two, the bar mounted in the first, and the second stayed an empty 52 px box.
+  `shell.page` puts the server's bar into the page's own mount where it has one.
 - **Sign In has its own icon** (an arrow into the ring; it steps in now and then, and the ring's gap runs once
   pressed), and the menu button's three squares hop in turn every few seconds ("use a nice custom animated icon for the
   sign in … make the menu button animated as well").
