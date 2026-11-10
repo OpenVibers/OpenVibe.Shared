@@ -81,13 +81,15 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 assert.equal((await inside()).sw, 'Chat Code* Agents', `${name}: the switch goes to Code (ask 350)`);
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
                 assert.equal((await inside()).sw, 'Chat Code Agents*', `${name}: the switch goes to Agents`);
+                await page.evaluate(`document.querySelector('.ovs-door-host .stub').dispatchEvent(new CustomEvent('ov-dock:part', { bubbles: true, detail: { part: 'code', text: 'A goal bar' } }))`);
+                assert.equal((await inside()).sw, 'Chat Code* Agents', `${name}: a hand-over to Code (Vibe's Build it) moves the switch`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
                 assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`); await wait(80);
                 assert.deepEqual(await inside(), { door: false, list: true, stub: false, sw: '', chosen: 'Feed' }, `${name}: Feed hands the panel back`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
-                assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`);
+                assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:code', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close; Vibe opens again on the part it was left on (Code, after the hand-over)`);
             } else {
                 assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI still opens the floating Dock`);
                 assert.deepEqual(await page.evaluate('window.log'), [], `${name}: nothing mounted in the menu`);

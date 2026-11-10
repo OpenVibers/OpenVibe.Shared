@@ -480,6 +480,7 @@
         doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['code', 'Code', 'code'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
         doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
+        doorHost.addEventListener('ov-dock:part', (e) => { aiPart = e.detail.part; doorSw.querySelectorAll('[data-part]').forEach((b) => b.setAttribute('aria-selected', String(b.getAttribute('data-part') === aiPart))); });
         doorEl.append(doorSw, doorHost);
         listEl.after(doorEl);
         tabsEl = el.querySelector('.ovs-tabs');

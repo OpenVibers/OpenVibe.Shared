@@ -206,7 +206,15 @@
             } catch { err.textContent = 'That picture could not be attached. Try again.'; err.hidden = false; }
             finally { attach.disabled = false; file.value = ''; }
         });
-        form.append(attach, file);
+        // 350: Build it in Code. What you wrote, else Vibe's last answer, goes to the Code part as a new task's words.
+        const build = iconButton('button', 'ovdk-attach ovdk-build', 'M8 7l-5 5 5 5M16 7l5 5-5 5', 'Build it in Code');
+        build.addEventListener('click', () => {
+            const last = [...vibe.msgs].reverse().find((m) => m.from !== 'you');
+            const text = box.value.trim() || (last && last.text) || '';
+            if (!text) { box.focus(); return; }
+            build.dispatchEvent(new CustomEvent('ov-dock:part', { bubbles: true, detail: { part: 'code', text: text.slice(0, 16000) } }));
+        });
+        form.append(attach, file, build);
         let mic = null;
         if (TALK) {
             mic = h('button', 'ovdk-mic'); mic.type = 'button'; mic.append(icon(G.mic));

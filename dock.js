@@ -35,7 +35,7 @@
     const SAVED_TABS = ['vibe', 'code', 'agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
-    let el = null, bodyEl = null, inline = null, panelEpoch = 0, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null, dockSurface = null;
+    let el = null, bodyEl = null, inline = null, panelEpoch = 0, handoff = '', o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null, dockSurface = null;
     // Pop out (K-D4): the window the panel lives in while it is popped out, and whether it is in one.
     let pipWin = null, popped = false, pipClosing = false, popOk = true;
     const mounts = {};
@@ -89,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '4eb6d94db445', 'dock-code.js': '815f7c7ce84e', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '1bfa19b01e8e', 'dock-code.js': 'f3a7b06f1b01', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -358,6 +358,7 @@
             <span class="ovdk-size" aria-hidden="true"></span>`;
         document.body.appendChild(el);
         bodyEl = el.querySelector('.ovdk-body');
+        bodyEl.addEventListener('ov-dock:part', (e) => { handoff = e.detail.text || ''; setTab(e.detail.part, true); });
 
         const tabs = [...el.querySelectorAll('[role="tab"]')];
         tabs.forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab, true)));
@@ -568,7 +569,7 @@
             const ok = await load('dock-code.js', () => !!(root.OpenVibeDockCode && root.OpenVibeDockCode.mount));
             if (epoch !== panelEpoch || !panelActive(id)) { delete mounts[id]; return; }
             if (!ok) return failed(panel, id);
-            mounts[id] = root.OpenVibeDockCode.mount(panel, { token: o.token, frameBase: frameBase(), active: () => panelActive('code') });
+            mounts[id] = root.OpenVibeDockCode.mount(panel, { token: o.token, frameBase: frameBase(), active: () => panelActive('code'), take: () => { const t = handoff; handoff = ''; return t; } });
             return;
         }
         if (id === 'agent') {
