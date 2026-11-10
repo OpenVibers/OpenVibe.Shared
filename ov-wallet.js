@@ -147,7 +147,10 @@
             const balances = el('div', 'ov-wallet-balances'); body.append(balances);
             for (const id of ['coins', 'vibes', 'balance']) {
                 const b = data.balances[id], card = el('article', `ov-wallet-balance is-${id}`);
-                const title = el('div', 'ov-wallet-balance-title'); title.append(el('span', 'ov-wallet-symbol', { coins: 'O', vibes: 'V', balance: '$' }[id]), el('h3', '', b.label));
+                // The currency's own icon (purse.js, the one the bar's pill has); the letter where that file is not on the page.
+                const symbol = el('span', 'ov-wallet-symbol', root.OpenVibePurse ? null : { coins: 'O', vibes: 'V', balance: '$' }[id]);
+                if (root.OpenVibePurse) { symbol.innerHTML = root.OpenVibePurse.icon(id, 30); symbol.classList.add('is-drawn', 'ovp-icw'); symbol.setAttribute('data-purse', id); symbol.setAttribute('aria-hidden', 'true'); }
+                const title = el('div', 'ov-wallet-balance-title'); title.append(symbol, el('h3', '', b.label));
                 card.append(title, el('p', 'ov-wallet-value', amount(b)), el('p', 'ov-wallet-purpose', b.purpose));
                 if (id === 'coins') { const link = el('a', 'ov-wallet-button', b.action); link.href = 'https://openvibe.network/my#coins'; card.append(link); }
                 else { const action = button(b.action, () => checkout(id === 'vibes' ? 'vibes' : 'topup')); action.disabled = data.money_writes_frozen; card.append(action); }

@@ -104,7 +104,14 @@
         '.ov-shipped-dev-text b{font-size:.95rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}',
         `.ov-shipped-dev-text>span{font-size:.82rem;color:${MUTED};display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}`,
         '.ov-shipped .ov-shipped-row{display:flex;align-items:center;gap:8px;min-width:0}',
-        '.ov-shipped-kind{flex:none;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px}',
+        // The kind of a change: a drawn mark (a star, an arrow up, a tick) and, for New and Fixed, the word. An improvement
+        // is the mark alone: most rows are improvements, and the word beside every one of them read as noise.
+        '.ov-shipped-kind{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;line-height:1.2;padding:2px 9px 2px 6px;border-radius:999px}',
+        '.ov-shipped-kind::before{content:"";flex:none;width:11px;height:11px;background:var(--k,currentColor)}',
+        '.ov-shipped-kind.is-new::before{--k:#22c55e;clip-path:polygon(50% 0,63% 37%,100% 50%,63% 63%,50% 100%,37% 63%,0 50%,37% 37%)}',
+        '.ov-shipped-kind.is-better::before{--k:var(--accent-light,var(--accent,#60a5fa));clip-path:polygon(50% 0,100% 52%,68% 52%,68% 100%,32% 100%,32% 52%,0 52%)}',
+        '.ov-shipped-kind.is-fixed::before{--k:#f59e0b;clip-path:polygon(6% 54%,22% 38%,40% 56%,78% 12%,94% 28%,40% 88%)}',
+        '.ov-shipped-kind.is-better{gap:0;padding:5px;font-size:0}',
         `.ov-shipped-kind.is-new{background:color-mix(in srgb,#22c55e 20%,transparent);color:${TEXT}}.ov-shipped-kind.is-better{background:color-mix(in srgb,var(--accent,#3b82f6) 20%,transparent);color:${TEXT}}.ov-shipped-kind.is-fixed{background:color-mix(in srgb,#f59e0b 22%,transparent);color:${TEXT}}`,
         `.ov-shipped-areas{display:inline-flex;gap:4px;flex:none}.ov-shipped-areas span{font-size:.68rem;padding:1px 7px;border-radius:999px;border:1px solid ${BORDER};color:${MUTED};white-space:nowrap}`,
         '@media (max-width:520px){.ov-shipped .ov-shipped-row{flex-wrap:wrap;row-gap:2px}.ov-shipped .ov-shipped-row .ov-shipped-subject{flex:1 1 60%;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ov-shipped-areas{order:5}}',
@@ -250,8 +257,8 @@
     // tags or topics"): the site's newest devblog post leads with its picture, then the last changes as rows, each with
     // what kind of change it is (New, Better, Fixed: Blog's blog.changelog.tag task), its plain words and up to two
     // areas. Entries without those fields (before the task ran) read as before: their subject, no kind, no areas.
-    const KINDS = { new: 'New', better: 'Better', fixed: 'Fixed' };
-    function kindTag(e) { const k = e && KINDS[e.kind]; return k ? el('span', { class: `ov-shipped-kind is-${e.kind}` }, k) : null; }
+    const KINDS = { new: 'New', better: 'Improved', fixed: 'Fixed' };
+    function kindTag(e) { const k = e && KINDS[e.kind]; return k ? el('span', { class: `ov-shipped-kind is-${e.kind}`, title: k }, k) : null; }
     function areaChips(e, n) {
         const areas = Array.isArray(e && e.areas) ? e.areas.filter((a) => typeof a === 'string' && a).slice(0, n) : [];
         if (!areas.length) return null;
@@ -471,7 +478,7 @@
         const loading = el('p', { class: 'ov-shipped-empty' }, 'Loading…');
         function drawKinds() {
             kinds.textContent = '';
-            for (const [k, label] of [['', 'All changes'], ['new', 'New'], ['better', 'Better'], ['fixed', 'Fixed']]) {
+            for (const [k, label] of [['', 'All changes'], ['new', 'New'], ['better', 'Improved'], ['fixed', 'Fixed']]) {
                 const b = el('button', { type: 'button', class: 'ov-shipped-chip', 'aria-pressed': String(kindNow === k) }, label);
                 b.addEventListener('click', () => {
                     kindNow = k;
