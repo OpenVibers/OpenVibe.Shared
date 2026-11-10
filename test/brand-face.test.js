@@ -38,7 +38,7 @@ assert.strictEqual(files.path('ov-brand.woff2'), path.join(__dirname, '..', 'ov-
     assert.ok(/function brandFace\(\)[\s\S]*ov-brand\.woff2/.test(cards) && /\.name\{[^}]*font-family:'OV Brand'/.test(cards), 'the share cards, with the face embedded');
 
     // The mark sits beside the name in the wide box: level with the words, not a square with space above and below.
-    assert.match(nav, /<span class="ov-mark" data-size="34" data-wide data-variant=/, 'navbar: the wide mark');
+    assert.match(nav, /<span class="ov-mark" data-size="42" data-wide data-variant=/, 'navbar: the wide mark');
     assert.match(read('footer.js'), /<span class="ov-mark" data-size="38" data-wide><\/span>/, 'footer: the wide mark');
     console.log('brand face: served as a font with CORS, declared by the navbar, used for the names with a fallback; the wide mark beside them');
 })().catch((e) => { console.error(e); process.exit(1); });
