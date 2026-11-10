@@ -75,17 +75,19 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 chosen: Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab[aria-selected="true"]')).map((t) => t.textContent.trim()).join(' ') })`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(120);
             if (width <= 640) {
-                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`);
+                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Code Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`);
                 assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`);
+                await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="code"]').click()`); await wait(80);
+                assert.equal((await inside()).sw, 'Chat Code* Agents', `${name}: the switch goes to Code (ask 350)`);
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
-                assert.equal((await inside()).sw, 'Chat Agents*', `${name}: the switch goes to Agents`);
+                assert.equal((await inside()).sw, 'Chat Code Agents*', `${name}: the switch goes to Agents`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
                 assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`); await wait(80);
                 assert.deepEqual(await inside(), { door: false, list: true, stub: false, sw: '', chosen: 'Feed' }, `${name}: Feed hands the panel back`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
-                assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`);
+                assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`);
             } else {
                 assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI still opens the floating Dock`);
                 assert.deepEqual(await page.evaluate('window.log'), [], `${name}: nothing mounted in the menu`);

@@ -475,8 +475,9 @@
         listEl = el.querySelector('.ovs-list');
         doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
         doorSw = document.createElement('div'); doorSw.className = 'ovs-door-sw'; doorSw.setAttribute('role', 'tablist'); doorSw.setAttribute('aria-label', 'Vibe');
-        // Vibe holds two things (ask 335, the owner: "under Vibe is Chat and Agents"): your chats with it, and your agents.
-        doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
+        // Vibe holds three things (asks 335 and 350, the owner: "chat, codes, and agents all in the same place"): your
+        // chats with it, your coding tasks, and your agents.
+        doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['code', 'Code', 'code'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
         doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
         doorEl.append(doorSw, doorHost);
@@ -1154,6 +1155,7 @@
     const bsvg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const BRIDGE_SVG = {
         vibe: bsvg('<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+        code: bsvg('<path d="M8 7l-5 5 5 5M16 7l5 5-5 5M13.5 4.5l-3 15"/>'),
         agent: bsvg('<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13v.01M14.5 13v.01M3 12.5v2M21 12.5v2"/>'),
         talk: bsvg('<path d="M4.6 11.6a7.4 6.4 0 1 1 3.3 5.4l-3.4 1.3 1-3.1a6 6 0 0 1-.9-3.6z"/><path d="M9 11.6h.01M12 11.6h.01M15 11.6h.01"/>'),
         chats: bsvg('<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-7L8 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V8A1.5 1.5 0 0 1 5 6.5z"/>'),

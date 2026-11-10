@@ -12,6 +12,7 @@
     // The close button is the menu button, already crossed (navbar.js, root.OpenVibeOrb): it forms as the sheet opens.
     const ORBX = () => (root.OpenVibeOrb ? root.OpenVibeOrb.svg(22, true) : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>');
     const G = {
+        code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>',
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
         bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
         // An upright pushpin whose lines never cross (owner, 11-09: the old one had "a line going through it").
@@ -28,10 +29,10 @@
     };
     // Vibe first (L48 V2): the person's AI, on every site.
     const ROBOT = '<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13h.01M14.5 13h.01M3 12.5v2M21 12.5v2"/>';   // as in the menu's row
-    const TABS = [['vibe', 'Vibe', G.spark], ['agent', 'Agents', ROBOT], ['chats', 'Chat', G.chat], ['activity', 'Activity', G.bell]];
+    const TABS = [['vibe', 'Vibe', G.spark], ['code', 'Code', G.code], ['agent', 'Agents', ROBOT], ['chats', 'Chat', G.chat], ['activity', 'Activity', G.bell]];
     // The tabs the Network keeps in the person's Dock state (network.dock-state@1; vibe since contracts 0.270.0); a
     // newer one stays on this site's copy until the Network learns it.
-    const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
+    const SAVED_TABS = ['vibe', 'code', 'agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
     let el = null, bodyEl = null, inline = null, panelEpoch = 0, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null, dockSurface = null;
@@ -88,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '4eb6d94db445', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '4eb6d94db445', 'dock-code.js': '815f7c7ce84e', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -563,6 +564,13 @@
         if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (mounts[id + 'Timeline']) mounts[id + 'Timeline'].refresh(); return; }
         mounts[id] = { refresh: null };
         panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
+        if (id === 'code') {
+            const ok = await load('dock-code.js', () => !!(root.OpenVibeDockCode && root.OpenVibeDockCode.mount));
+            if (epoch !== panelEpoch || !panelActive(id)) { delete mounts[id]; return; }
+            if (!ok) return failed(panel, id);
+            mounts[id] = root.OpenVibeDockCode.mount(panel, { token: o.token, frameBase: frameBase(), active: () => panelActive('code') });
+            return;
+        }
         if (id === 'agent') {
             const ok = await load('dock-runs.js', () => !!(root.OpenVibeDockRuns && root.OpenVibeDockRuns.mount));
             if (epoch !== panelEpoch || !panelActive(id)) { delete mounts[id]; return; }
