@@ -14,7 +14,9 @@
 const { minify: terserMinify } = require('terser');
 const CleanCSS = require('clean-css');
 
-const cleanCss = new CleanCSS({ level: { 1: { specialComments: 0 }, 2: {} } });
+// Level 1 only: it removes what is not needed inside each rule and never moves or merges rules, so the cascade's order
+// (and a later rule winning) cannot change (the orchestrator's review, 2026-11-10: level 2 restructures).
+const cleanCss = new CleanCSS({ level: { 1: { specialComments: 0 } } });
 
 /** Minify browser JS (terser, async). Input/output are strings. Throws on a parse error. */
 async function minifyJs(src) {

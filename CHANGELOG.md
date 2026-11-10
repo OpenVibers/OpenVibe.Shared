@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.199.0 — 2026-11-10
+
+**Every page downloads about 56 KB less: the shared files are served minified.** From the owner's notes of 2026-11-10:
+"Make sure everything loads … non-blocking asynchronously … minified".
+
+- **Served minified, cached by content hash (`serve.js`, new `minify.js`; OpenVibe.Shared #429).** Sites have no build
+  step by choice, so the shared browser files are minified where they are served: terser for JavaScript, clean-css for
+  stylesheets. It runs once per release per file, and the immutable `?v=` address does the rest. On 4.197.0's eager set
+  (the bar, the theme, the footer, the kit and the rest) that is 806 KB → 523 KB raw and 189 KB → 133 KB after brotli,
+  about 56 KB less per page view; `navbar.js` alone is 49.8 KB → 34.4 KB as delivered. A file the minifier cannot
+  handle, or one that would not come out smaller, is served as it is; a minifier error never fails a request. ETag and
+  `?v=` immutability are unchanged. Stylesheets are minified at clean-css level 1 only (inside each rule), never level
+  2, which moves and merges rules and could change which rule wins. New dependencies: `terser`, `clean-css`.
+- **Avatars reserve their box (OpenVibe.Shared #430).** The bar's, the footer's, the account switcher's and the user
+  card's pictures carry their width and height and decode asynchronously (the footer's also load lazily, below the
+  fold), so a signed-in page no longer shifts when the picture arrives.
+- Checked on production openvibe.chat with every shared file served minified, on a phone and a computer: the bar, the
+  menu, Messages and AI inside it, the Dock; no page errors.
+
 ## 4.198.0 — 2026-11-10
 
 **On a phone the menu is one sheet: Messages and AI open inside it.** From the owner's notes of 2026-11-10, with the menu
