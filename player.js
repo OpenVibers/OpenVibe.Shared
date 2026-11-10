@@ -207,8 +207,131 @@
         } catch { /* an action this browser does not know */ }
     }
 
+    // Startup policy is shared with pages that own their HLS attachment. Unknown connections use the fast policy.
+    const nav = typeof navigator === 'undefined' ? {} : navigator;
+    let battery = null;
+    if (nav.getBattery) Promise.resolve().then(() => nav.getBattery()).then((b) => { battery = b; }).catch(() => {});
+    function playbackPolicy(connection = nav.connection || {}, power = battery) {
+        const slow = connection.saveData || /^(slow-)?2g$/.test(connection.effectiveType || '');
+        const limited = slow || connection.effectiveType === '3g';
+        const lowBattery = !!power && !power.charging && power.level <= 0.2;
+        return {
+            preload: slow ? 'none' : limited ? 'metadata' : 'auto',
+            warm: !limited && !lowBattery,
+            hls: { startLevel: 0, maxBufferLength: lowBattery ? 15 : limited ? 30 : 60,
+                maxMaxBufferLength: lowBattery ? 30 : limited ? 60 : 120,
+                backBufferLength: lowBattery || slow ? 0 : limited ? 15 : 30 },
+        };
+    }
+    /** Attach using the page's Hls constructor; native HLS keeps the same connection-aware preload. */
+    function attachHls(video, Hls, url, options = {}) {
+        const policy = playbackPolicy();
+        video.preload = policy.preload;
+        if (!Hls || !Hls.isSupported()) {
+            if (video.canPlayType('application/vnd.apple.mpegurl')) video.src = url;
+            return null;
+        }
+        const hls = new Hls({ ...options, ...policy.hls, autoStartLoad: policy.preload === 'auto' });
+        let loading = policy.preload === 'auto';
+        const start = () => { if (!loading) { loading = true; hls.startLoad(); } };
+        const update = () => {
+            video.preload = playbackPolicy().preload;
+            Object.assign(hls.config, playbackPolicy().hls);
+            if (video.paused && video.preload !== 'auto' && loading) { hls.stopLoad(); loading = false; }
+        };
+        video.addEventListener('play', start);
+        if (nav.connection && nav.connection.addEventListener) nav.connection.addEventListener('change', update);
+        // getBattery is optional and async; register only while this attachment is alive.
+        let disposed = false, power = null;
+        if (nav.getBattery) Promise.resolve().then(() => nav.getBattery()).then((b) => {
+            if (disposed) return;
+            power = battery = b; update();
+            b.addEventListener('levelchange', update); b.addEventListener('chargingchange', update);
+        }).catch(() => {});
+        hls.on(Hls.Events.DESTROYING, () => {
+            disposed = true; video.removeEventListener('play', start);
+            if (nav.connection && nav.connection.removeEventListener) nav.connection.removeEventListener('change', update);
+            if (power) { power.removeEventListener('levelchange', update); power.removeEventListener('chargingchange', update); }
+        });
+        hls.loadSource(url); hls.attachMedia(video);
+        if (!video.paused) start();
+        return hls;
+    }
+    // Warm only explicit public HLS card sources, at most 20 per minute and 2 MiB per card. No whole-file prefetch.
+    const warmed = new Map();
+    async function warmHls(url, signal) {
+        if (!playbackPolicy().warm || typeof fetch !== 'function') return false;
+        const now = Date.now();
+        for (const [key, at] of warmed) if (now - at >= 60000) warmed.delete(key);
+        const safe = (value, base) => {
+            const u = new URL(value, base || undefined);
+            if (!/^https?:$/.test(u.protocol) || u.username || u.password || /(?:sig|token|key|exp|signature)/i.test(u.search)) throw new Error('Only public playlists are warmed');
+            return u.href;
+        };
+        let source;
+        try { source = safe(url, document.baseURI); } catch { return false; }
+        if (warmed.has(source) || warmed.size >= 20) return false;
+        warmed.set(source, now);
+        let remaining = 2 * 1024 * 1024;
+        const read = async (u, manifest = false) => {
+            const response = await fetch(u, { signal, credentials: 'same-origin', cache: 'force-cache' });
+            if (!response.ok || !response.body) throw new Error('Not cacheable');
+            const reader = response.body.getReader(), chunks = [];
+            let size = 0;
+            try {
+                for (;;) {
+                    const { done, value } = await reader.read(); if (done) break;
+                    size += value.byteLength; remaining -= value.byteLength;
+                    if (remaining < 0 || (manifest && size > 65536)) throw new Error('Warm budget');
+                    if (manifest) chunks.push(value);
+                }
+            } finally { await reader.cancel().catch(() => {}); }
+            if (!manifest) return '';
+            const bytes = new Uint8Array(size); let offset = 0;
+            for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
+            return new TextDecoder().decode(bytes);
+        };
+        try {
+            let body = await read(source, true);
+            if (!body.startsWith('#EXTM3U')) return false;
+            if (body.includes('#EXT-X-STREAM-INF:')) {
+                const lines = body.split(/\r?\n/), variants = [];
+                lines.forEach((line, i) => {
+                    if (line.startsWith('#EXT-X-STREAM-INF:') && lines[i + 1] && !lines[i + 1].startsWith('#'))
+                        variants.push({ bandwidth: Number((line.match(/(?:^|,)BANDWIDTH=(\d+)/) || line.match(/:BANDWIDTH=(\d+)/) || [])[1]) || Infinity, uri: lines[i + 1] });
+                });
+                variants.sort((a, b) => a.bandwidth - b.bandwidth);
+                if (!variants.length) return false;
+                source = safe(variants[0].uri, source); body = await read(source, true);
+            }
+            // Live playlists, encrypted media and byte-range playlists need their player's own loader.
+            if (!body.includes('#EXT-X-ENDLIST') || /#EXT-X-(KEY|BYTERANGE):/.test(body)) return false;
+            const init = body.match(/#EXT-X-MAP:URI="([^"]+)"/);
+            const segment = body.split(/\r?\n/).find((line) => line && !line.startsWith('#'));
+            if (init) await read(safe(init[1], source));
+            if (segment) await read(safe(segment, source));
+            return !!segment;
+        } catch { return false; }
+    }
+    function warmCards(scope = document) {
+        scope.querySelectorAll('[data-ov-player-hls]').forEach((card) => {
+            if (card.__ovWarm) return; card.__ovWarm = true;
+            let controller = null, timer = null;
+            const cancel = () => { clearTimeout(timer); if (controller) controller.abort(); };
+            const begin = () => {
+                cancel();
+                if (!playbackPolicy().warm || typeof AbortController !== 'function') return;
+                controller = new AbortController();
+                timer = setTimeout(() => warmHls(card.getAttribute('data-ov-player-hls'), controller.signal), 120);
+            };
+            card.addEventListener('pointerenter', begin); card.addEventListener('focusin', begin);
+            card.addEventListener('pointerleave', cancel); card.addEventListener('focusout', cancel);
+        });
+    }
+
     function enhance(video, options = {}) {
         if (!video || video.__ovPlayer) return video && video.__ovPlayer;
+        video.preload = playbackPolicy().preload;
         const idleMs = options.idleMs || 2500;
         const root = el('div', 'ov-player is-paused is-start', { tabindex: '0', role: 'region', 'aria-label': options.label || video.getAttribute('aria-label') || 'Video player' });
         video.parentNode.insertBefore(root, video);
@@ -236,7 +359,14 @@
         root.insertBefore(posterLayer, video);
         root.insertBefore(audioLayer, video);
         const shown = () => root.classList.add('has-frame');
-        if (video.readyState >= 2) shown(); else video.addEventListener('loadeddata', shown, { once: true });
+        if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(shown);
+        else if (video.readyState >= 2) shown();
+        else video.addEventListener('loadeddata', shown, { once: true });
+        video.addEventListener('emptied', () => {
+            root.classList.remove('has-frame');
+            if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(shown);
+            else video.addEventListener('loadeddata', shown, { once: true });
+        });
 
         // ── Build ────────────────────────────────────────────
         const big = button('ov-player-big', 'Play', ICON.play);
@@ -599,9 +729,10 @@
 
     function enhanceAll(scope) {
         (scope || document).querySelectorAll('video[data-ov-player]').forEach((v) => enhance(v));
+        warmCards(scope || document);
     }
 
-    window.OpenVibePlayer = { enhance, enhanceAll, format: fmt };
+    window.OpenVibePlayer = { enhance, enhanceAll, format: fmt, playbackPolicy, attachHls, warmHls, warmCards };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => enhanceAll());
     else enhanceAll();
 })();

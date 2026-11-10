@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.201.0 — 2026-11-10
+
+- Player startup: keep the poster to the presented frame; select preload by connection, expose battery-aware HLS attachment with a low first rung, and warm a public card's first segment on hover/focus within byte and request limits. Consumer integration is documented in `docs/player-startup.md`.
+
 ## 4.199.0 — 2026-11-10
 
 **Every page downloads about 56 KB less: the shared files are served minified.** From the owner's notes of 2026-11-10:
