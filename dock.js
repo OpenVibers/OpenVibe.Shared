@@ -193,17 +193,24 @@
             .ovdk-orbx:active .ovdk-ox { transform: rotate(270deg) scale(.7); }
             @keyframes ovdk-ox-in { from { transform: rotate(45deg) scale(.8); } }
             @keyframes ovdk-o1-out { from { opacity: 1; transform: scale(1); } }
-            /* A phone's sheet opens out of the navbar's orb, which becomes its close button (4.185.0; see CHANGELOG). */
-            .ovdk.from-orb { transform-origin: var(--ovdk-ox, 100%) var(--ovdk-oy, 0%) !important; }
-            .ovdk.from-orb.is-in { animation: ovdk-from-orb .3s cubic-bezier(.2,.9,.25,1) both; }
-            .ovdk.from-orb.is-out { animation: ovdk-to-orb .24s ease both; pointer-events: none; }
-            @keyframes ovdk-from-orb { from { opacity: 0; transform: scale(calc(1 - .06 * var(--ov-move, 1))); } }
-            @keyframes ovdk-to-orb { to { opacity: 0; transform: scale(calc(1 - .04 * var(--ov-move, 1))); } }
+            /* A phone's sheet opens out of the navbar's orb as the menu's does (4.186.0; see CHANGELOG): one move, one close button. */
+            .ovdk.from-orb.is-in { animation: ovdk-reveal .38s cubic-bezier(.2,.9,.25,1) both; }
+            .ovdk.from-orb.is-out { animation: ovdk-fold .28s cubic-bezier(.5,0,.75,.2) both; pointer-events: none; }
+            @keyframes ovdk-reveal { from { clip-path: circle(28px at var(--ovdk-ox) var(--ovdk-oy)); } to { clip-path: circle(150% at var(--ovdk-ox) var(--ovdk-oy)); } }
+            @keyframes ovdk-fold { from { clip-path: circle(150% at var(--ovdk-ox) var(--ovdk-oy)); } to { clip-path: circle(20px at var(--ovdk-ox) var(--ovdk-oy)); opacity: 0; } }
+            .ovdk.from-orb .ovdk-head { padding: 4px 14px 6px 8px; }
+            .from-orb .ovdk-acts .ovdk-orbx { position: relative; width: 40px; height: 40px; margin: 2px; border-radius: 50%; background: color-mix(in srgb, var(--accent, #3b82f6) 16%, var(--bg-primary, #0b0f19));
+                box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 35%, transparent), 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); transition: background-color .3s, box-shadow .3s; }
+            .from-orb .ovdk-acts .ovdk-orbx.is-from { background: transparent; box-shadow: none; }
+            .from-orb.is-in .ovdk-orbx::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accent-light, #60a5fa); pointer-events: none; animation: ovdk-ring .6s cubic-bezier(.2,.8,.2,1) .1s both; }
+            @keyframes ovdk-ring { from { opacity: .8; transform: scale(.9); } to { opacity: 0; transform: scale(calc(1 + 2.2 * var(--ov-move, 1))); } }
             .from-orb.is-in .ovdk-ox, .from-orb.is-in .ovdk-o1 { animation: none !important; }
             .from-orb .ovdk-orbx { color: var(--text-primary, #ececf1); }
             .from-orb .ovdk-orbx svg { transition: transform .42s cubic-bezier(.2, 1.1, .3, 1); }
             .from-orb .ovdk-ox circle { transition: fill .3s, opacity .3s, transform .35s cubic-bezier(.2, 1.4, .3, 1); }
-            .from-orb .ovdk-ox :is(.ovdk-o0, .ovdk-o2), .from-orb .is-from .ovdk-ox .ovdk-o0 { fill: var(--accent-light, #60a5fa); }
+            .from-orb .ovdk-ox { transform: rotate(180deg) scale(.95); }
+            .from-orb .ovdk-ox :is(.ovdk-o0, .ovdk-o2) { fill: var(--accent-light, #60a5fa); transform: scale(1.12); }
+            .from-orb .is-from .ovdk-ox .ovdk-o0 { fill: var(--accent-light, #60a5fa); }
             .ovdk-orbx.is-set, .ovdk-orbx.is-set * { transition: none !important; }
             .from-orb .is-from svg { transform: translate(var(--orb-dx, 0), var(--orb-dy, 0)) scale(var(--orb-s, 1)); }
             .from-orb .is-from .ovdk-ox { transform: rotate(45deg) scale(.8); }
@@ -977,13 +984,14 @@
         unlinkOrb();
         const nav = navOrb(), mine = el.querySelector('.ovdk-orbx'), mineSvg = mine && mine.querySelector('svg');
         if (!nav || !mineSvg || reduced() || popped) return;
+        el.classList.add('from-orb');   // first: it sets the header's layout, and the close orb is measured where it will rest
         const a = (nav.querySelector('svg') || nav).getBoundingClientRect(), b = mineSvg.getBoundingClientRect(), box = el.getBoundingClientRect();
-        if (!a.width || !b.width) return;
+        if (!a.width || !b.width) { el.classList.remove('from-orb'); return; }
         const ax = a.left + a.width / 2, ay = a.top + a.height / 2, bx = b.left + b.width / 2, by = b.top + b.height / 2, s = a.width / b.width;
         el.style.setProperty('--ovdk-ox', `${Math.round(ax - box.left)}px`); el.style.setProperty('--ovdk-oy', `${Math.round(ay - box.top)}px`);
         mine.style.setProperty('--orb-dx', `${(ax - bx).toFixed(1)}px`); mine.style.setProperty('--orb-dy', `${(ay - by).toFixed(1)}px`); mine.style.setProperty('--orb-s', s.toFixed(3));
         nav.style.setProperty('--dock-dx', `${(bx - ax).toFixed(1)}px`); nav.style.setProperty('--dock-dy', `${(by - ay).toFixed(1)}px`); nav.style.setProperty('--dock-s', (1 / s).toFixed(3));
-        el.classList.add('from-orb'); mine.classList.add('is-set', 'is-from');
+        mine.classList.add('is-set', 'is-from');
         orbLink = { nav, mine };
         void mine.offsetWidth;   // the starting pose is put on, not animated into
         mine.classList.remove('is-set');
@@ -1039,7 +1047,7 @@
         if (orbLink && !closing && !popped && !reduced() && el.classList.contains('from-orb')) {
             el.classList.remove('is-in'); el.classList.add('is-out');
             orbLink.mine.classList.add('is-from'); orbLink.nav.classList.remove('is-dock');
-            closing = setTimeout(() => { closing = 0; shut(); }, 240);
+            closing = setTimeout(() => { closing = 0; shut(); }, 280);
             return;
         }
         shut();

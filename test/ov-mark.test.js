@@ -352,6 +352,13 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.match(css, /\.ov-mark\[data-ovm-intro\] \.gr\{animation:ovmGlint/, 'a glint ends the intro');
         assert.match(css, /\.ov-mark:hover \.gr\{animation:ovmGlint|\.ov-mark:hover \.gr,/, 'and crosses on hover');
         assert.match(css, /\.ov-mark\[data-glow\]::before\{opacity:\.42/, 'data-glow keeps the glow on');
+        // Working and thinking (4.186.0): the O as eight dots with three bright ones going round, dot to dot; three dots
+        // rising in turn inside the O while the V's strokes glimmer. One sign each, wherever something works or writes.
+        assert.match(css, /\.ov-mark\[data-state=busy\] \.ot\{opacity:\.3;stroke-dasharray:0 12\.5\}/, 'working: the O is eight dots');
+        assert.match(css, /\.ov-mark\[data-state=busy\] \.o\{stroke-dasharray:0 12\.5 0 12\.5 0 75;animation:ovmDots \.96s steps\(8,end\) infinite\}/, 'three bright ones hop round it');
+        assert.ok(!/\[data-state=busy\] \.og\{animation:ovmBreathe/.test(css), 'the O no longer just breathes while it works');
+        assert.match(css, /\.ov-mark\[data-state=think\] \.td\{display:inline;animation:ovmThink 1\.2s ease-in-out infinite\}/, 'thinking: three dots inside the O');
+        assert.match(css, /\.ov-mark\[data-state=think\] \.vb\{animation:ovmSpeak 1\.2s ease-in-out \.6s infinite\}/, 'and the V glimmers, one stroke after the other');
         assert.match(css, /\.ov-mark\[data-tone\]::before,\.ov-mark\[data-state=sleep\]::before\{display:none\}/);
         assert.ok(!css.includes('::before{transition:none!important}') && css.includes('html[data-ov-motion=off] .ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}'), 'the glow fades in under Calm too; only motion off holds the mark still (outside a demo scope)');
         assert.match(css, /\.ov-mark:active \.m\{transform:scale\(\.9\)/, 'a press gives a little');
