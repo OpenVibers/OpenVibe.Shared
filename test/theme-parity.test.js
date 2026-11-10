@@ -51,7 +51,8 @@ assert.ok(LT.arctic['--success'], 'loader entries carry the full token set');
 // 62,000 since 4.64.0: the look travels between sites (?ov_look=) and every copy is dated; brotli 15.45 KB (was 15.41) (2026-10-31).
 // 63,500 since 4.111.1 (2026-11-05): the FAVICON block draws the Pair (about 1.2 KB raw) instead of the retired ring.
 // 66,500 since 4.183.0 (2026-11-10): motion has four choices, --ov-move, and Calm paces endless loops (about 2.9 KB raw).
-assert.ok(loader.length < 66500, `theme-loader.js stays small for first paint (${loader.length} characters)`);
+// 67,600 since 4.186.0 (2026-11-10): a control nobody styled wears the theme (three rules, about 0.9 KB raw with their note).
+assert.ok(loader.length < 67600, `theme-loader.js stays small for first paint (${loader.length} characters)`);
 assert.ok(loader.includes('KNOWN_PROPS'), 'loader clears tokens the new theme does not set');
 
 // 5. Derived tokens: text on the accent always reads, on every theme.
