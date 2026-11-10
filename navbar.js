@@ -1042,30 +1042,19 @@
     let _renderAbort = null;
     const onDocument = () => (_renderAbort ? { signal: _renderAbort.signal } : undefined);
 
-    /** One anonymous page-view count per page load (host only), which is what orders the network's
-     *  navigation. Skipped when the browser asks not to be tracked. It carries one boolean and no identity:
-     *  `?in=1` says this browser is signed in, so the network counts that person from their presence
-     *  heartbeat and keeps them out of its guest count (owner, 2026-11-10). */
+    /** One anonymous page-view count per page load (host only), which orders the network's navigation; skipped when
+     *  the browser asks not to be tracked. `?in=1` says this browser is signed in, never who; it waits 2.5 s for that. */
     let _counted = false;
     function countView() {
         if (_counted || _config.countViews === false) return; _counted = true;
         try {
-            if (navigator.globalPrivacyControl || navigator.doNotTrack === '1') return;
-            if (!/^https:$/.test(location.protocol)) return;
+            if (navigator.globalPrivacyControl || navigator.doNotTrack === '1' || !/^https:$/.test(location.protocol)) return;
             const hit = 'https://openvibe.network/api/frame/hit';
-            const send = () => {
-                try {
-                    const signedIn = !!(_config.user && !_config.user.is_anon);
-                    if (navigator.sendBeacon) navigator.sendBeacon(signedIn ? `${hit}?in=1` : hit);
-                } catch { /* */ }
-            };
-            // A page that brought its own user knows now; otherwise the shared sign-in state answers a moment
-            // later (refreshAuthState fires openvibe-navbar-auth), and the beacon waits for it, never longer than this.
-            if (_config.user || _config.auth === 'external') { send(); return; }
             let sent = false;
-            const once = () => { if (sent) return; sent = true; document.removeEventListener('openvibe-navbar-auth', once); send(); };
-            document.addEventListener('openvibe-navbar-auth', once);
-            setTimeout(once, 2500);
+            const send = () => { if (sent) return; sent = true; try { if (navigator.sendBeacon) navigator.sendBeacon(_config.user && !_config.user.is_anon ? `${hit}?in=1` : hit); } catch { /* */ } };
+            if (_config.user || _config.auth === 'external') return send();
+            document.addEventListener('openvibe-navbar-auth', send, { once: true });
+            setTimeout(send, 2500);
         } catch { /* */ }
     }
 
