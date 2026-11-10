@@ -342,7 +342,7 @@
         const media = /^https:\/\/openvibe\.media\/o\/med_[0-9A-Za-z]{10,40}$/.test(user.avatar_url || '');
         const sized = media ? `${user.avatar_url}?w=64&fmt=webp` : (user.username && !user.is_anon ? `${NETWORK_URL}/avatar/${encodeURIComponent(user.username)}?s=32` : '');
         const avatar = sized
-            ? `<img src="${esc(sized)}" alt="">`
+            ? `<img src="${esc(sized)}" alt="" width="${media ? 64 : 32}" height="${media ? 64 : 32}" loading="lazy" decoding="async">`
             : `<span>${esc(String(name).charAt(0).toUpperCase())}</span>`;
         const quick = [
             service !== 'live' ? { name: 'My channel', url: `https://openvibe.live/@${esc(user.username || '')}`, icon: 'channel' } : { name: 'My dashboard', url: '/dashboard', icon: 'dashboard' },

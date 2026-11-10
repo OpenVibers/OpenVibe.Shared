@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.198.0",
+  "version": "4.199.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -96,6 +96,7 @@
     "./release-update": "./release-update.js",
     "./release-watch": "./release-watch.js",
     "./seo": "./seo.js",
+    "./minify": "./minify.js",
     "./serve": "./serve.js",
     "./shell": "./shell.js",
     "./showcase": "./showcase.js",
@@ -185,8 +186,10 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "clean-css": "^5.3.3",
     "jsonwebtoken": "^9.0.0",
-    "linkedom": "^0.18.13"
+    "linkedom": "^0.18.13",
+    "terser": "^5.51.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
