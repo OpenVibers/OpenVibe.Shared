@@ -8,7 +8,7 @@
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.373.0 (devDependency: the release manifest contract)",
+  "contracts": "openvibe-contracts v0.384.0 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.133.0",
   "features": [
     "an agent's live panel: ov-canvas.js draws actor.canvas@1 (headings, text, lists, checklists, tables, metrics, bar and line charts, pictures from openvibe.media, https links, buttons) the same on every site; built node by node, a button only asks, a tick tells, versions only grow (4.145.0)",
