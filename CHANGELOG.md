@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.186.0 — 2026-11-10
+
+**One shared picker for Link computers.** Pages can mount `OpenVibeMachines` on `[data-ov-machines]`; it reads the signed-in person's machines from Network, filters by `data-needs`, fills a hidden form field, emits `change`, and links to Link's add-computer flow. It reports loading, no machines, signed out and unreachable states.
+
 ## 4.185.0 — 2026-11-10
 
 **The You tab: your home first, a shorter bar, Most used as shortcuts.** The owner, 2026-11-10: "Your home should be
