@@ -230,6 +230,22 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, second batch: marks in a disc, the media keys, and a few things (flame, mug, clapper, a person with
+        // a badge). A mark inside a filled shape is cut out of it; a thin part that must stay a line is class "ln".
+        'plus-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm-1.2 4.2h2.4v3.8H17v2.4h-3.8V17h-2.4v-3.8H7v-2.4h3.8Z"/>',
+        'minus-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM7 10.8v2.4h10v-2.4Z"/>',
+        contrast: '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 2.2a7.4 7.4 0 0 1 0 14.8Z"/>',
+        rewind: '<path d="M21 5.7v12.6L12.3 12ZM11.7 5.7v12.6L3 12Z"/>',
+        'fast-forward': '<path d="M3 5.7v12.6L11.7 12ZM12.3 5.7v12.6L21 12Z"/>',
+        skip: '<path d="M5.4 4.3v15.4L15.6 12Z"/><rect x="17.2" y="4.4" width="2.6" height="15.2" rx="1.2"/>',
+        flame: '<path fill-rule="evenodd" d="M12 21.6c3.9 0 6.6-2.7 6.6-6.3 0-4.4-4.5-7.9-6.1-12.9h-1C9.9 7.4 5.4 10.9 5.4 15.3c0 3.6 2.7 6.3 6.6 6.3Zm0-3.4c1.2 0 2-.8 2-1.9 0-1.2-1-2.2-2-3.6-1 1.4-2 2.4-2 3.6 0 1.1.8 1.9 2 1.9Z"/>',
+        'heart-broken': '<path fill-rule="evenodd" d="M12 20.1s-7.6-4.6-7.6-10.6a4.3 4.3 0 0 1 7.6-2.9 4.3 4.3 0 0 1 7.6 2.9c0 6-7.6 10.6-7.6 10.6ZM11.1 7.4l2.2.5-1.1 2.2 2.9 2-2.1 4.8-2-.9 1.2-3-3-2Z"/>',
+        clapper: '<path fill-rule="evenodd" d="M2.4 6.1 19.7 2.9l.9 4.3L3 8.9ZM6.8 5.3 9 8.3l2.6-.2L9.4 4.8ZM12.4 4.2l2.2 3.6 2.6-.3L15 3.8Z"/><path d="M2.9 10.1h18.2v9a1.6 1.6 0 0 1-1.6 1.6h-15a1.6 1.6 0 0 1-1.6-1.6Z"/>',
+        mug: '<path d="M3.9 8.4h12.2v7.6a4.6 4.6 0 0 1-4.6 4.6h-3a4.6 4.6 0 0 1-4.6-4.6Z"/><path class="ln" d="M16.1 10.5H17a2.5 2.5 0 0 1 0 5h-.9M8 3.2c-.8 1 .8 2 0 3M11.5 3.2c-.8 1 .8 2 0 3"/>',
+        'user-minus': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><path class="ln" d="M15.8 17.5h5.4"/>',
+        'user-lock': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><rect x="14.6" y="15.2" width="6.8" height="5.6" rx="1.3"/><path class="ln" d="M16.5 15.2v-1a1.5 1.5 0 0 1 3 0v1"/>',
+        'clipboard-check': '<path fill-rule="evenodd" d="M7.4 4.4h9.2a2.1 2.1 0 0 1 2.1 2.1v13.4a2.1 2.1 0 0 1-2.1 2.1H7.4a2.1 2.1 0 0 1-2.1-2.1V6.5a2.1 2.1 0 0 1 2.1-2.1ZM7.9 13.5 11 16.6l5.1-5.1-1.6-1.6-3.5 3.5-1.5-1.5Z"/><rect x="8.6" y="2.6" width="6.8" height="3.8" rx="1.2"/>',
+        'file-code': '<path fill-rule="evenodd" d="M6 2.6h7.6v5.2h5V21.4H6ZM10 11.2l1.5 1.4-1.6 1.7 1.6 1.7-1.5 1.4-2.9-3.1ZM14.6 11.2l-1.5 1.4 1.6 1.7-1.6 1.7 1.5 1.4 2.9-3.1Z"/><path d="M15.2 2.9l3.1 3.3h-3.1Z"/>',
         // 4.182.0: thirteen more shapes that are shown small (frames, cards and the person in a circle). A frame's
         // inner line becomes a gap between two filled panels, so the shape still reads at 14 px.
         grid: '<rect x="3.4" y="3.4" width="7.4" height="7.4" rx="2"/><rect x="13.2" y="3.4" width="7.4" height="7.4" rx="2"/><rect x="3.4" y="13.2" width="7.4" height="7.4" rx="2"/><rect x="13.2" y="13.2" width="7.4" height="7.4" rx="2"/>',
