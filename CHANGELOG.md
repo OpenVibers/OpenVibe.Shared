@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.187.0 — 2026-11-10
+
+- **Upload duplicate preflight:** `OVUpload.queue` can hash modest files with `crypto.subtle`, ask the caller's
+  `checkDuplicate` lookup, and offer Open it, Use that one, or Upload again in the existing file row. Files above
+  the configurable 32 MiB default skip hashing. The queue emits `ov-upload:duplicate` and `ov-upload:done` events.
+
 ## 4.186.0 — 2026-11-10
 
 **The mark at work is a ring of dots, and thinking is a state of its own.** The owner, 2026-11-10: "the progress

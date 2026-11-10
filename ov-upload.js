@@ -18,6 +18,30 @@
         if (seconds < 3600) return 'About ' + Math.ceil(seconds / 60) + ' min left';
         return 'About ' + Math.ceil(seconds / 3600) + ' hr left';
     }
+    // SubtleCrypto has no streaming digest API. Read in slices to keep file access responsive,
+    // then hash only modest files so hashing cannot become an unbounded pre-upload cost.
+    async function sha256(file, maxBytes) {
+        if (!globalThis.crypto || !globalThis.crypto.subtle || file.size > (maxBytes || 32 * 1024 * 1024)) return null;
+        var sampleSize = Math.min(file.size, 1024 * 1024);
+        var t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
+        var sample = await file.slice(0, sampleSize).arrayBuffer();
+        await globalThis.crypto.subtle.digest('SHA-256', sample);
+        var measuredMs = Math.max(1, (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0);
+        var uploadMbps = typeof navigator !== 'undefined' && navigator.connection && Number(navigator.connection.downlink) > 0
+            ? Number(navigator.connection.downlink) : 10;
+        var estimatedHashMs = (file.size / Math.max(1, sampleSize)) * measuredMs + 4;
+        var estimatedUploadMs = 600 + (file.size / (uploadMbps * 125000)) * 1000;
+        if (estimatedHashMs > estimatedUploadMs) return null;
+        var chunks = [], size = 0, step = 1024 * 1024;
+        for (var at = 0; at < file.size; at += step) {
+            var part = await file.slice(at, Math.min(file.size, at + step)).arrayBuffer();
+            chunks.push(part); size += part.byteLength;
+        }
+        var all = new Uint8Array(size), offset = 0;
+        chunks.forEach(function (part) { all.set(new Uint8Array(part), offset); offset += part.byteLength; });
+        var digest = new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', all));
+        return Array.from(digest, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
     // Seconds are smoothed by measured bytes per second, not the last network burst.
     function rate(previous, deltaBytes, deltaSeconds, alpha) {
         if (deltaBytes <= 0 || deltaSeconds <= 0) return previous || 0;
@@ -93,6 +117,25 @@
         render();
         return { update: update, destroy: function () { if (timer) clearInterval(timer); } };
     }
+    async function preflight(file, lookup, row, callbacks, maxBytes) {
+        if (typeof lookup !== 'function') return null;
+        var hash = await sha256(file, maxBytes);
+        if (!hash) return null;
+        var existing = await lookup(file, hash);
+        if (!existing) return null;
+        var target = existing.object || existing;
+        var actions = node('div', 'ov-upload__duplicate-actions');
+        var note = node('p', 'ov-upload__duplicate-note', 'You already uploaded this on ' + (target.date || target.created_at || 'an earlier date') + '.');
+        var open = node('a', 'ovk-btn ovk-btn--quiet', 'Open it'); open.href = target.address || target.url || '#';
+        var use = node('button', 'ovk-btn ovk-btn--quiet', 'Use that one'); use.type = 'button';
+        use.addEventListener('click', function () { if (callbacks && callbacks.onUse) callbacks.onUse(target); });
+        var again = node('button', 'ovk-btn ovk-btn--quiet', 'Upload again'); again.type = 'button';
+        again.addEventListener('click', function () { actions.remove(); if (callbacks && callbacks.onAgain) callbacks.onAgain(); });
+        actions.append(note, open, use, again); row.append(actions);
+        row.dispatchEvent(new CustomEvent('ov-upload:duplicate', { detail: { file: file, existing: target } }));
+        if (callbacks && callbacks.onDuplicate) callbacks.onDuplicate(target);
+        return target;
+    }
     function picker(root, options) {
         options = options || {};
         var input = node('input', 'ov-upload__input');
@@ -146,7 +189,7 @@
             var done = items.reduce(function (n, item) { return n + item.done; }, 0);
             var state = items.some(function (item) { return item.state === 'sending'; }) ? 'sending'
                 : items.some(function (item) { return item.state === 'failed'; }) ? 'failed'
-                    : items.length && items.every(function (item) { return item.state === 'done'; }) ? 'done' : 'waiting';
+                    : items.length && items.every(function (item) { return item.state === 'done' || item.state === 'duplicate'; }) ? 'done' : 'waiting';
             total.update({ done: done, total: bytes, state: state, message: state === 'failed' ? 'A file needs a retry.' : '' });
             totalRoot.hidden = items.length < 2;
         }
@@ -154,18 +197,38 @@
             while (active < (options.concurrency || 3)) {
                 var item = items.find(function (x) { return x.state === 'waiting'; });
                 if (!item) break;
-                item.state = 'sending'; active++;
+                item.state = 'checking'; active++;
                 item.meter.update({ state: 'sending', done: item.done, total: item.file.size }); refresh();
                 (function (entry) {
                     entry.controller = new AbortController();
-                    Promise.resolve().then(function () { return options.upload(entry.file, {
+                    Promise.resolve().then(async function () {
+                        if (options.checkDuplicate && !entry.keepBoth) {
+                            var hash = await sha256(entry.file, options.hashLimitBytes);
+                            if (hash) {
+                                var existing = await options.checkDuplicate(entry.file, hash);
+                                entry.sha256 = hash;
+                                if (existing) {
+                                    existing = existing.object || existing;
+                                    entry.state = 'duplicate'; entry.duplicate = existing;
+                                    entry.meter.update({ state: 'done', done: entry.file.size, total: entry.file.size, message: 'You already uploaded this on ' + (existing.date || existing.created_at || 'an earlier date') + '.' });
+                                    entry.duplicateActions = duplicateActions(entry, existing);
+                                    if (options.onDuplicate) options.onDuplicate(entry.file, existing);
+                                    root.dispatchEvent(new CustomEvent('ov-upload:duplicate', { detail: { file: entry.file, existing: existing } }));
+                                    refresh(); return { __duplicate: true };
+                                }
+                            }
+                        }
+                        return options.upload(entry.file, {
                         signal: entry.controller.signal,
+                        keepBoth: !!entry.keepBoth,
+                        sha256: entry.sha256 || null,
                         onProgress: function (value) {
                             entry.done = Math.max(0, Math.min(entry.file.size, Number(value.uploadedBytes == null ? value.done : value.uploadedBytes) || 0));
                             entry.meter.update({ state: 'sending', done: entry.done, total: entry.file.size }); refresh();
                         }
                     }); }).then(function (result) {
                         if (entry.removed) return;
+                        if (result && result.__duplicate) return;
                         entry.done = entry.file.size; entry.state = 'done';
                         entry.meter.update({ state: 'done', done: entry.done, total: entry.file.size });
                         if (options.onDone) options.onDone(entry.file, result);
@@ -176,6 +239,16 @@
                     }).finally(function () { active--; refresh(); pump(); });
                 })(item);
             }
+        }
+        function duplicateActions(entry, existing) {
+            var actions = node('div', 'ov-upload__duplicate-actions');
+            var open = node('a', 'ovk-btn ovk-btn--quiet', 'Open it'); open.href = existing.url || existing.address || '#';
+            open.addEventListener('click', function () { if (options.onOpenDuplicate) options.onOpenDuplicate(entry.file, existing); });
+            var use = node('button', 'ovk-btn ovk-btn--quiet', 'Use that one'); use.type = 'button';
+            use.addEventListener('click', function () { entry.done = entry.file.size; entry.state = 'done'; entry.meter.update({ state: 'done', done: entry.done, total: entry.file.size, message: 'Using the picture you already uploaded.' }); refresh(); if (options.onDone) options.onDone(entry.file, existing); root.dispatchEvent(new CustomEvent('ov-upload:done', { detail: { file: entry.file, result: existing, duplicate: true } })); });
+            var again = node('button', 'ovk-btn ovk-btn--quiet', 'Upload again'); again.type = 'button';
+            again.addEventListener('click', function () { entry.keepBoth = true; entry.state = 'waiting'; entry.meter.update({ state: 'waiting', done: 0, total: entry.file.size, message: '' }); actions.remove(); entry.duplicate = null; pump(); });
+            actions.append(open, use, again); entry.row.append(actions); return actions;
         }
         var pick = picker(pickRoot, {
             label: options.label, accept: options.accept, multiple: options.multiple !== false,
@@ -197,5 +270,5 @@
         pick.rows.before(totalRoot);   // the total sits between the picker and the files
         return { picker: pick, total: total, items: items };
     }
-    return { progress: progress, picker: picker, queue: queue, rate: rate, timeLeft: timeLeft, size: size };
+        return { progress: progress, picker: picker, queue: queue, preflight: preflight, rate: rate, timeLeft: timeLeft, size: size, sha256: sha256 };
 });
