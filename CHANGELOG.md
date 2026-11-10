@@ -25,9 +25,12 @@
   tone is never a hard coloured border ("instead of just like this red … border … shadow, glow"): the card leans toward
   the tone at its top and glows in it, the kicker is a pill with a round mark, the facts stand in a box with a tinted
   hairline. `palette(theme)` and `mix(a, b, t)` are exported for a site's own blocks.
-- **`mini.js`:** a file that cannot be played where the small player is says so ("Open its page to keep watching"),
-  keeps the way back, and does not follow to the next page; it used to close without a word. A page whose script gives
-  its video another address once it runs names the plain file with `data-ov-mini-src` (openvibe.video does).
+- **`mini.js` plays what the page plays.** Found on openvibe.video the hour it shipped: the page's script gives the
+  video its streaming playlist, and one recording's plain file stopped with a decode error three seconds in. The small
+  player now takes the playlist (`data-ov-mini-hls`) where the browser plays one by itself, in the page's cross-origin
+  mode, and the plain file (`data-ov-mini-src`) otherwise; a playlist that fails gives way to the file at the same
+  second. A video that cannot be played either says so ("Open its page to keep watching"), keeps the way back, and
+  does not follow to the next page; it used to close without a word.
 - **The wallet says what a line was for** (OpenVibe.Shared #416, from the money-reasons work): the reason is a made
   sentence, linked to the thing it paid for.
 - The 4.192.0 entry's date is corrected (it said the 11th).

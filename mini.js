@@ -6,7 +6,7 @@
  * A watch page says its video may come along:
  *
  *   <video data-ov-player data-ov-mini data-ov-mini-title="…" data-ov-mini-by="…" [data-ov-mini-page="/watch?v=…"]
- *          [data-ov-mini-to="/"] [data-ov-mini-src="https://…/file.mp4"] src="…">
+ *          [data-ov-mini-to="/"] [data-ov-mini-src="https://…/file.mp4"] [data-ov-mini-hls="https://…/index.m3u8"] src="…">
  *
  * The shared player's picture-in-picture button then calls OpenVibeMini.carry(video): what is playing is written down
  * (the page, the file, the title, who made it, the poster, the second, the speed, the volume, whether it was playing)
@@ -15,6 +15,9 @@
  * on by loading this file on its pages, deferred: it starts itself and does nothing without a record.) It has play and pause,
  * a way back to the video's own page at that second, and a close. The page the video came from takes the second back
  * and the small player is not drawn there. Starting another video on a page closes it: one sound at a time.
+ * It plays what the page plays: the streaming playlist (data-ov-mini-hls) where the browser plays one by itself, in the
+ * same cross-origin mode as the page, and the plain file otherwise; a playlist that fails gives way to the file at the
+ * same second. A file that cannot be played either is said, with the way back.
  *
  * The record is this tab's own (sessionStorage): it never leaves the site, so a private file's signed address is safe
  * in it. Across sites it will travel another way (plan, ask 265).
@@ -152,8 +155,13 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
         video.addEventListener('timeupdate', () => { paint(); if (Date.now() - saved > 1000) { saved = Date.now(); note(r); } });
         ['play', 'pause', 'ended', 'volumechange', 'ratechange', 'durationchange'].forEach((t) => video.addEventListener(t, () => { paint(); note(r); }));
         // A file that cannot be played here: say so, keep the way back, and do not follow the person to the next page.
-        video.addEventListener('error', () => { if (!video) return; live = false; forget(); playBtn.hidden = true; soundBtn.hidden = true; by.textContent = 'Open its page to keep watching'; el.classList.add('is-broken'); });
-        video.addEventListener('loadedmetadata', () => {
+        video.addEventListener('error', () => {
+            if (!video) return;
+            // The playlist failed: the file, from the same second, once.
+            if (onPlaylist && r.src) { onPlaylist = false; if (live && video.currentTime > 0) r.t = video.currentTime; live = false; arm(); source(); return; }
+            live = false; forget(); playBtn.hidden = true; soundBtn.hidden = true; by.textContent = 'Open its page to keep watching'; el.classList.add('is-broken');
+        });
+        const arm = () => video.addEventListener('loadedmetadata', () => {
             try { if (r.t > 0 && (!isFinite(video.duration) || r.t < video.duration - 0.25)) video.currentTime = r.t; } catch { /* not seekable yet: it starts where it can */ }
             video.playbackRate = r.rate || 1;
             const was = r.playing;
@@ -162,9 +170,16 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
             // With its sound where the browser lets a new page make sound; else silent, with the way to turn it on.
             video.play().catch(() => { r.wantSound = !r.muted; video.muted = true; return video.play(); }).catch(() => {}).then(paint);
         }, { once: true });
+        // What the page plays: its playlist where the browser plays one by itself (a signed playlist is served without
+        // CORS, as on the page), else the file.
+        let onPlaylist = !!(r.hls && video.canPlayType && video.canPlayType('application/vnd.apple.mpegurl'));
+        const source = () => {
+            if (onPlaylist) { if (!/[?&]sig=/.test(r.hls)) video.crossOrigin = 'anonymous'; video.src = r.hls; }
+            else { video.removeAttribute('crossorigin'); video.src = r.src; }
+        };
         video.volume = typeof r.vol === 'number' ? r.vol : 1;
         video.muted = !!r.muted;
-        video.src = r.src;
+        arm(); source();
         document.body.appendChild(el);
         root.addEventListener('pagehide', leave);
         document.addEventListener('play', other, true);
@@ -194,7 +209,7 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
         if (!src || /^blob:/.test(src)) src = /^blob:/.test(v.currentSrc || '') ? '' : (v.currentSrc || '');
         if (!src) return false;
         save({
-            page: d.ovMiniPage || (root.location.pathname + root.location.search), src: new URL(src, root.location.href).href,
+            page: d.ovMiniPage || (root.location.pathname + root.location.search), src: new URL(src, root.location.href).href, hls: d.ovMiniHls ? new URL(d.ovMiniHls, root.location.href).href : '',
             title: d.ovMiniTitle || document.title, by: d.ovMiniBy || '', poster: v.poster || '',
             t: v.currentTime || 0, dur: isFinite(v.duration) ? v.duration : 0, rate: v.playbackRate || 1, vol: v.volume, muted: v.muted,
             playing: !v.paused && !v.ended, at: Date.now(),
