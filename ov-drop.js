@@ -12,7 +12,8 @@
                                       opts: { label (what the list is, said to a screen reader and shown small on top),
                                               align: 'start' | 'end', minWidth, onClose }
    OVDrop.attach(button, items, opts) the button opens and closes it, with aria-expanded kept true to what is shown
-   OVDrop.pages(anchor, links, icon)  a site's pages from its bar links, Home first, the present page marked
+   OVDrop.pages(anchor, links, icon, more)  a site's pages from its bar links, Home first, the present page marked;
+                                      more: { label, onClick } ends it with a way out (the navbar's: every OpenVibe site)
    OVDrop.close()                     close the one that is open */
 (function (root) {
     'use strict';
@@ -132,7 +133,8 @@
      * A site's pages, from the bar's links (the navbar calls this when the site's name is pressed): Home first, the
      * page you are on marked. links: [{ label, href, icon, hidden }]; icon(name) gives an icon's SVG text.
      */
-    function pages(anchor, links, icon) {
+    const GRID = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/></svg>';
+    function pages(anchor, links, icon, more) {
         const path = (h) => String(h).split(/[?#]/)[0].replace(/\/+$/, '') || '/';
         const list = (links || []).filter((l) => l && l.label && l.href && !l.hidden && !/^https?:/i.test(l.href));
         const at = path(root.location.pathname);
@@ -141,6 +143,9 @@
         const draw = (name) => { try { return typeof icon === 'function' ? icon(name) : ''; } catch { return ''; } };
         const items = list.map((l, i) => ({ label: l.label, href: l.href, icon: draw(l.icon || 'fa-arrow-right'), current: i === best }));
         if (!list.some((l) => path(l.href) === '/')) items.unshift({ label: 'Home', href: anchor.getAttribute('href') || '/', icon: draw('fa-house'), current: at === '/' });
+        // The way to every site (ask 338, the owner: "a button … to view all sites … past the list of pages … to the list
+        // of actual domains"): one row under a hairline.
+        if (more && typeof more.onClick === 'function') items.push(null, { label: more.label || 'All OpenVibe sites', icon: GRID, onClick: more.onClick });
         return open(anchor, items, { label: `Pages on ${anchor.textContent.trim()}` });
     }
     root.OVDrop = { open, close: () => close(), attach, pages, get isOpen() { return !!cur; } };

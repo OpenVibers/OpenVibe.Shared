@@ -75,7 +75,10 @@
             .openvibe-navbar .openvibe-navbar-brand .name a.b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 800; }
             .openvibe-navbar .openvibe-navbar-brand .name a.has-drop::after { content: ""; flex: none; display: inline-block; width: 5px; height: 5px; margin: 0 2px 3px 6px; border: solid currentColor; border-width: 0 1.8px 1.8px 0; transform: rotate(45deg); opacity: .65; transition: transform .2s; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+            .openvibe-navbar .openvibe-navbar-brand .name { overflow-clip-margin: 8px; }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop { border-radius: 8px; transition: color .15s, background .15s, box-shadow .26s cubic-bezier(.2,1.4,.3,1); }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop:hover { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t); }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t), 0 0 0 7px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
             .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
@@ -562,14 +565,14 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '496bc3134c08', 'dock.js': 'c606aca212ab', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '0bd4b26af88a', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'b14cdbd6a82f', 'dock.js': '2eafa431ce28', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '0bd4b26af88a', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
     const _selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     let _lazyWidth = null;
     let _iconState = 0;     // 0 idle, 1 loading, 2 loaded, 3 unavailable
-    // "Ask Vibe": the page's selected text (≤1000) and https address (no hash, ≤400) into a new chat with Vibe (openvibe.chat).
+    // "Ask Vibe": the selected text (≤1000) and the page's address (≤400) into a new chat with Vibe.
     function selectedText() { try { const s = root.getSelection(); return s && !s.isCollapsed ? String(s).replace(/\s+/g, ' ').trim().slice(0, 1000) : ''; } catch { return ''; } }
     function askVibeHref(t) {
         const c = 'https://openvibe.chat/vibe', u = new URL(location.href); u.hash = '';
@@ -1183,7 +1186,7 @@
             closeDrawer();
         });
         nav.querySelectorAll('.ovnav-dd').forEach((dd) => regPanel(dd, 'nav-dropdown', () => dd.classList.remove('open'), dd.querySelector(':scope > a')));
-        // Dropdowns hang below the links row, which scrolls sideways and would clip them: fixed, under the link (less a filtered bar's offset).
+        // Dropdowns are fixed under their link: the links row scrolls sideways and would clip them.
         const placeDd = (dd) => {
             const m = dd && dd.querySelector(':scope>.ovnav-dd-menu'); if (!m) return;
             let cb = dd.parentElement, o = { top: 0, left: 0 };
@@ -2229,7 +2232,7 @@
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
                 const orbs = nav.querySelectorAll ? [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
-                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
+                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null, avatarBtn);
             });
 
 
@@ -2312,7 +2315,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl) {
+    function openSearch(q, tab, fromEl, flyEl) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2326,7 +2329,7 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab,
+            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: flyEl || fromEl || null,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
@@ -2372,7 +2375,8 @@
         a.addEventListener('click', (e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
-            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon);
+            const orb = () => [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')].find((o) => o.getBoundingClientRect().width > 0) || null;
+            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon, _config.search === false ? null : { label: 'All OpenVibe sites', onClick: () => openSearch('', 'sites', orb()) });
             if (root.OVDrop) return go();
             if (document.getElementById('ov-drop-loader')) return;
             const sc = document.createElement('script'); sc.id = 'ov-drop-loader'; sc.src = siblingV('ov-drop.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);

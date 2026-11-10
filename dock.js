@@ -28,7 +28,7 @@
     };
     // Vibe first (L48 V2): the person's AI, on every site.
     const ROBOT = '<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13h.01M14.5 13h.01M3 12.5v2M21 12.5v2"/>';   // as in the menu's row
-    const TABS = [['vibe', 'Vibe', G.spark], ['agent', 'Agents', ROBOT], ['chats', 'Messages', G.chat], ['activity', 'Activity', G.bell]];
+    const TABS = [['vibe', 'Vibe', G.spark], ['agent', 'Agents', ROBOT], ['chats', 'Chat', G.chat], ['activity', 'Activity', G.bell]];
     // The tabs the Network keeps in the person's Dock state (network.dock-state@1; vibe since contracts 0.270.0); a
     // newer one stays on this site's copy until the Network learns it.
     const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
@@ -88,7 +88,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'eb2b2a51ed49', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '4eb6d94db445', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -233,6 +233,11 @@
             .ovdk-muted { color: var(--text-muted, #8b8b96); }
             .ovdk-i { display: inline-grid; place-items: center; }
             .ovdk-i svg { width: 18px; height: 18px; }
+            .ovdk-bar { flex: none; display: flex; justify-content: flex-end; gap: 4px; padding: 4px 8px 0; }
+            .ovdk-ib { flex: none; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; text-decoration: none; }
+            .ovdk-ib svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+            .ovdk-ib:hover, .ovdk-ib:focus-visible { background: var(--hover-bg, rgba(127,127,127,.12)); color: var(--text-primary, #ececf1); }
+            .ovdk-thread-h .ovdk-ib { margin-left: auto; }
             .ovdk-chats { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; }
             .ovdk-chat { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 10px; border: 0; border-radius: 14px;
                 background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
@@ -508,7 +513,7 @@
         n('agent', agent, c.waiting ? 'waiting' : '');
         n('activity', c.unread || 0);
         n('chats', chats.unread || 0);
-        el.querySelector('#ovdk-tab-chats').setAttribute('aria-label', chats.unread ? `Messages, ${chats.unread} unread` : 'Messages');
+        el.querySelector('#ovdk-tab-chats').setAttribute('aria-label', chats.unread ? `Chat, ${chats.unread} unread` : 'Chat');
         el.querySelector('#ovdk-tab-agent').setAttribute('aria-label', [`Agents`, c.waiting ? `${c.waiting} need${c.waiting === 1 ? 's' : ''} you` : '', c.running ? `${c.running} working` : ''].filter(Boolean).join(', '));
         el.querySelector('#ovdk-tab-activity').setAttribute('aria-label', c.unread ? `Activity, ${c.unread} unread` : 'Activity');
     }
@@ -610,6 +615,7 @@
     const canWriteChat = () => !scopes() || scopes().includes('chat.write');
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
+    const toChat = (href) => { const a = h('a', 'ovdk-ib ovdk-away'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Open in Chat'; a.setAttribute('aria-label', 'Open in Chat'); a.setAttribute('data-ov-tip', 'Open in Chat'); a.innerHTML = svg('<path d="M13.5 5.5h5v5M18.5 5.5l-7.5 7.5M17 13.5v4a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 5 17.5v-9A1.5 1.5 0 0 1 6.5 7h4"/>'); return a; };
     async function chatCall(path, init = {}) {
         const t = await tokenOf();
         const headers = { accept: 'application/json', ...(init.body ? { 'content-type': init.type || 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
@@ -648,12 +654,6 @@
     }
     const others = (c) => (c.participants || []).filter((p) => p.username !== me());
     const titleOf = (c) => c.name || others(c).map((p) => p.display_name || p.username).join(', ') || 'Just you';
-    function chatFoot(panel) {
-        const foot = h('div', 'ovdk-foot');
-        const a = h('a', '', 'Open Chat →'); a.href = `${chatBase()}/messages`; a.target = '_blank'; a.rel = 'noopener';
-        foot.append(h('span', 'ovdk-muted', 'Your conversations and DMs'), a);
-        panel.append(foot);
-    }
     async function chatList() {
         clearTimeout(chats.timer);
         chats.open = null;
@@ -669,6 +669,8 @@
         if (panel !== chats.panel || !panelActive('chats') || chats.open) return;
         panel.textContent = '';
         if (chats.draft && canWriteChat() && root.OpenVibeDockShare) panel.append(root.OpenVibeDockShare.bar({ draft: chats.draft, h, chatCall, host: el, cancel: () => { chats.draft = null; chatList(); }, open: (id) => { chats.list = null; return openChat(String(id), true); } }));
+        // Open in Chat, as an icon over your conversations (ask 336).
+        const bar = h('div', 'ovdk-bar'); bar.append(toChat('https://openvibe.chat/messages')); panel.append(bar);
         const scroll = h('div', 'ovdk-scroll');
         if (!chats.list.length && !chats.vibeSummary) {
             const none = h('div', 'ovdk-none');
@@ -679,11 +681,11 @@
             [...chats.list, ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
                 if (c.kind === 'vibe') {
                     const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
-                    const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'AI chats'), h('span', 'ovdk-chat-p', `${c.count} conversation${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
+                    const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'Vibe'), h('span', 'ovdk-chat-p', `${c.count} chat${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
                     const meta = h('span', 'ovdk-chat-m'); const at = c.latest && c.latest.last_answer_at;
                     const t = h('time', '', when(at || c.last_message_at)); if (at) t.title = answered(at); meta.append(t);
                     const av = h('span', 'ovdk-av ovdk-av-vibe'); av.append(icon(G.vibe));
-                    b.append(av, body, meta); b.setAttribute('aria-label', `AI chats, ${c.count} conversations${at ? `, ${answered(at)}` : ''}`);
+                    b.append(av, body, meta); b.setAttribute('aria-label', `Vibe, ${c.count} chats${at ? `, ${answered(at)}` : ''}`);
                     b.addEventListener('click', () => { vibeOnList = true; save({ vibe: null }); setTab('vibe', true); });
                     li.append(b); ul.append(li); return;
                 }
@@ -705,7 +707,6 @@
             scroll.append(ul);
         }
         panel.append(scroll);
-        chatFoot(panel);
     }
     function bubble(m, prev) {
         const mine = m.username === me();
@@ -730,7 +731,7 @@
         const back = h('button', 'ovdk-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.append(icon(G.back));
         back.addEventListener('click', () => { save({ chat: null }); chatList(); });
         const title = h('b', '', conv ? titleOf(conv) : 'Conversation');
-        head.append(back, title);
+        head.append(back, title, toChat('https://openvibe.chat/messages'));
         // Opened from the Dock's state on another page: the list is not here yet, so the title comes with it.
         if (!conv) chatCall('/api/dm/conversations').then((b) => { chats.list = b.conversations || []; const c = chats.list.find((x) => String(x.id) === String(id)); if (c && chats.open === String(id)) title.textContent = titleOf(c); }).catch(() => { /* the title stays */ });
         const list = h('ol', 'ovdk-msgs'); list.setAttribute('aria-live', 'polite');

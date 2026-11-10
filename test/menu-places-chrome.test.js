@@ -39,15 +39,24 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             assert.ok(await until(`document.querySelectorAll('.ovs.is-open .ovs-starttabs .ovs-tab').length === 5`), `${name}: five places`);
             await wait(350);
             const row = await page.evaluate(ROW);
-            assert.deepEqual(row.map((t) => t.label + (t.chosen ? '*' : '') + (t.door ? `>${t.door}` : '')), ['Chat*', 'Feed', 'Messages>chats', 'AI>vibe', 'You'], `${name}: this site, Feed, Messages, AI, You, in that order`);
+            assert.deepEqual(row.map((t) => t.label + (t.chosen ? '*' : '') + (t.door ? `>${t.door}` : '')), ['Chat*', 'Feed', 'Messages>chats', 'Vibe>vibe', 'You'], `${name}: this site, Feed, Messages (Chat's own site keeps the word: its tab is Chat), Vibe, You, in that order`);
+            if (width <= 640) {
+                // On another site the door is called Chat (ask 336).
+                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+                await page.evaluate(OPEN(true).replace("service: 'chat'", "service: 'design'"));
+                assert.ok(await until(`document.querySelectorAll('.ovs.is-open .ovs-starttabs .ovs-tab').length === 5`), `${name}: five places on another site`);
+                assert.deepEqual((await page.evaluate(ROW)).slice(2, 4).map((t) => t.label), ['Chat', 'Vibe'], `${name}: on another site, Chat and Vibe`);
+                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+                await page.evaluate(OPEN(true)); await wait(350);
+            }
             assert.ok(row.every((t) => t.top === row[0].top), `${name}: one row (${row.map((t) => t.top).join(',')})`);
             assert.ok(row.every((t) => Math.abs(t.w - row[0].w) <= 1 && t.h >= 42), `${name}: the same width each, and tall enough to press (${row.map((t) => `${t.w}x${t.h}`).join(' ')})`);
             assert.ok(row.every((t) => t.role === 'tab') && row[row.length - 1].right <= width, `${name}: all on the screen`);
             assert.equal(await page.evaluate(`document.querySelectorAll('.ovs-bridge, .ovs-bridge-b').length`), 0, `${name}: no second row of buttons under the tabs`);
             assert.equal(await page.evaluate(`document.querySelectorAll('.ovs-starttabs .ovs-tab svg, .ovs-starttabs .ovs-tab .ovs-tab-ic').length >= 4`), true, `${name}: each place has its icon`);
-            // AI opens the Dock on Vibe; Messages on the conversations; neither becomes the chosen tab.
+            // Vibe opens the Dock on its chats; Messages on the conversations; neither becomes the chosen tab.
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-            assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI opens the Dock's Vibe`);
+            assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: Vibe opens the Dock's Vibe`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`);
             assert.equal(await page.evaluate('window.went'), 'chats', `${name}: Messages opens the Dock's conversations`);
             assert.deepEqual((await page.evaluate(ROW)).filter((t) => t.chosen).map((t) => t.label), ['Chat'], `${name}: the chosen tab is still this site's`);
@@ -66,10 +75,10 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 chosen: Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab[aria-selected="true"]')).map((t) => t.textContent.trim()).join(' ') })`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(120);
             if (width <= 640) {
-                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Vibe* Agents', chosen: 'AI' }, `${name}: AI opens inside the menu, on Vibe`);
+                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`);
                 assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`);
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
-                assert.equal((await inside()).sw, 'Vibe Agents*', `${name}: the switch goes to Agents`);
+                assert.equal((await inside()).sw, 'Chat Agents*', `${name}: the switch goes to Agents`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
                 assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`); await wait(80);
