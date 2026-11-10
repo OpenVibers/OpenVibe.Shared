@@ -90,24 +90,23 @@
     const REPORT_URL = 'https://openvibe.help/tickets/new';
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-    // One place that knows what the network contains. Adding a property here gives every site
-    // the link, with no edit anywhere else.
-    const NETWORK = [
-        { id: 'live', name: 'Live streaming', url: 'https://openvibe.live', desc: 'Go live, restream and clip' },
-        { id: 'tools', name: 'Online tools', url: 'https://openvibe.tools', desc: 'The whole toolbox' },
-        { id: 'dev', name: 'Developer tools', url: 'https://dev.openvibe.tools', desc: 'Formatters, encoders, validators' },
-        { id: 'net', name: 'Network diagnostics', url: 'https://net.openvibe.tools', desc: 'Ping, DNS, Whois, SSL' },
-        { id: 'img', name: 'Image converter', url: 'https://img.openvibe.tools', desc: 'Convert, resize, compress' },
-        { id: 'audio', name: 'Audio converter', url: 'https://audio.openvibe.tools', desc: 'Convert, trim, pitch-shift' },
-        { id: 'docs', name: 'PDF & document tools', url: 'https://docs.openvibe.tools', desc: 'Merge, split, compress' },
-        { id: 'text', name: 'Text tools', url: 'https://text.openvibe.tools', desc: 'Fancy text, case, ASCII' },
-        { id: 'yt', name: 'YouTube downloader', url: 'https://yt.openvibe.tools', desc: 'Video and audio' },
-        { id: 'community', name: 'Community & pastes', url: 'https://openvibe.community', desc: 'Pastes, posts and the people of OpenVibe' },
-        { id: 'games', name: 'Games', url: 'https://openvibe.games', desc: 'Scraplandia and browser games' },
-        { id: 'media', name: 'Media', url: 'https://openvibe.media', desc: 'VODs, clips and files for every site' },
-        { id: 'network', name: 'Account & themes', url: NETWORK_URL, desc: 'One account, every site' },
-        { id: 'more', name: 'The whole network →', url: NETWORK_URL + '/#network', desc: 'Every OpenVibe site, live and upcoming' },
+    // The eight groups, in the menu's order (OpenVibe.Network frame/sites.js GROUPS, the owner's regrouping of
+    // 2026-11-10). The Network column links each group's section on /sites; the Frame's `groups` replaces these names
+    // and order when it answers, so the footer, the launcher and the home pages read the same list.
+    const GROUP_LINKS = [
+        { id: 'watch', name: 'Watch & stream' },
+        { id: 'talk', name: 'Talk & belong' },
+        { id: 'play', name: 'Play' },
+        { id: 'read', name: 'Read & ask' },
+        { id: 'shop', name: 'Shop & money' },
+        { id: 'tools', name: 'Free tools' },
+        { id: 'make', name: 'Make with AI' },
+        { id: 'build', name: 'For developers' },
     ];
+    const groupHref = (id) => `${NETWORK_URL}/sites#group-${encodeURIComponent(id)}`;
+    const NETWORK = GROUP_LINKS.map(({ id, name }) => ({ id, name, url: groupHref(id), desc: '' }));
+    // Tool subdomains have no site of their own; brandFor names them "<Sub>.OpenVibe.Tools".
+    const TOOL_FAMILIES = new Set(['dev', 'net', 'img', 'audio', 'docs', 'text', 'yt']);
 
     const LEGAL = [
         { key: 'terms', name: 'Terms of Service', path: '/tos', fallback: 'https://openvibe.live/tos' },
@@ -194,9 +193,8 @@
         if (m) { const sub = m[1] && m[1] !== 'www' ? m[1] : null; return [sub ? (sub.length <= 4 ? sub.toUpperCase() : cap(sub)) : null, 'OpenVibe', TLD_LABELS[m[2]] || cap(m[2])].filter(Boolean).join('.'); }
         if ((m = h.match(/^(?:(.+)\.)?openre\.stream$/))) return 'OpenRestream';
         if ((m = h.match(/^(?:(.+)\.)?open\.([a-z]+)$/))) return `Open.${TLD_LABELS[m[2]] || cap(m[2])}`;
-        const found = NETWORK.find(n => n.id === service);
         if (service && TLD_LABELS[service]) return `OpenVibe.${TLD_LABELS[service]}`;
-        if (found && found.name !== 'Account & themes' && found.name !== 'The whole network →') return `${cap(service)}.OpenVibe.Tools`;
+        if (TOOL_FAMILIES.has(service)) return `${cap(service)}.OpenVibe.Tools`;
         return 'OpenVibe';
     }
 
@@ -270,13 +268,18 @@
         const service = c.service || detectService();
         const brand = c.brandName || brandFor(service);
         const frame = c._frame = OVFrame.get(() => { try { render(); } catch { /* */ } });
-        // Most used sites first when the Frame service has spoken; the built-in list otherwise.
-        const network = frame && frame.nav.length
-            ? frame.nav.filter(n => n.id !== service && !(typeof location !== 'undefined' && new URL(n.url).hostname === location.hostname)).map(n => ({ name: 'OpenVibe.' + n.name, url: n.url, desc: n.tagline }))
-            : NETWORK.filter(n => n.id !== service);
+        // The Frame's own groups, in its order, when it answers; the built-in eight otherwise. One column of groups,
+        // not a head-list of sites, so the footer shows the same neighbourhoods as the launcher and the home pages.
+        const network = frame && Array.isArray(frame.groups) && frame.groups.length
+            ? frame.groups.map(g => ({ name: g.name, url: groupHref(g.id), desc: '' }))
+            : NETWORK;
+        // The ranked sites are still what the discover picks must not repeat.
+        const nav = frame && frame.nav.length
+            ? frame.nav.filter(n => n.id !== service && !(typeof location !== 'undefined' && new URL(n.url).hostname === location.hostname))
+            : [];
         const tagline = (cfg && cfg.tagline) || (frame && frame.footer.blurb) || c.tagline;
         const popular = frame ? frame.footer.popular : [];
-        const discover = frame ? frame.footer.discover.filter(d => !network.slice(0, 8).some(n => n.url === d.url)) : [];
+        const discover = frame ? frame.footer.discover.filter(d => !nav.slice(0, 8).some(n => n.url === d.url)) : [];
         const year = new Date().getFullYear();
 
         if (c.variant === 'compact') {
@@ -321,7 +324,7 @@
                 </div>
                 ${cols}
                 ${c.showNetwork ? fold('The OpenVibe network', 'Network', `${networkLinks.map(linkTag).join('')}
-                    <a class="ovf-more" href="${NETWORK_URL}" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>`, networkLinks.length + 1) : ''}
+                    <a class="ovf-more" href="${NETWORK_URL}/sites" target="_blank" rel="noopener">Everything else ${icon('arrow')}</a>`, networkLinks.length + 1) : ''}
                 ${popular.length ? fold('Popular tools', 'Popular tools', `${popular.slice(0, 6).concat(discover.slice(0, 2)).map(linkTag).join('')}
                     <a class="ovf-more" href="https://openvibe.tools/all-tools">All tools ${icon('arrow')}</a>`, Math.min(popular.length, 6) + Math.min(discover.length, 2) + 1) : ''}
                 ${fold('Legal', 'Legal', `${LEGAL.map(l => `<a href="${esc(legalHref(l, c))}">${esc(l.name)}</a>`).join('')}
