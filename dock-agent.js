@@ -49,6 +49,7 @@
             .ovda-stage { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 14px; background: #0a0c11; border: 1px solid var(--border, rgba(255,255,255,.1)); }
             .ovda-frame, .ovda-still { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: contain; background: #0a0c11; }
             .ovda-still { object-fit: cover; opacity: .92; }
+            .ovda-stage[hidden] { display: none; }
             .ovda-wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-muted, #8b8b96); font-size: 12.5px; text-align: center; padding: 12px; }
             .ovda-line { display: flex; align-items: center; gap: 6px; min-height: 34px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); }
             .ovda-line b { color: var(--text-primary, #ececf1); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -154,8 +155,11 @@
             } else if (!embed) {
                 if (shown) stage.innerHTML = '';
                 if (agent.last_frame_url) still(agent.last_frame_url);
-                else if (!stage.querySelector('img')) stage.append(h('div', 'ovda-wait', ended ? 'Nothing to show' : 'Waiting for the desk'));
+                else if (!ended && !stage.querySelector('img')) stage.append(h('div', 'ovda-wait', 'Waiting for the desk'));
             }
+            // A session that ended and left no picture has no stage: a black box saying "Nothing to show" told nobody
+            // anything (the owner, 2026-11-10). The line under it still says what it was and how long it worked.
+            stage.hidden = ended && !embed && !agent.last_frame_url && !stage.querySelector('img');
 
             // The line: what it is doing, one row.
             line.innerHTML = '';
