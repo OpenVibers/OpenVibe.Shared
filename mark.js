@@ -30,6 +30,9 @@ const COLORS = Object.freeze({ o: '#4f7cff', v: '#8b5cf6' });
 const f = (v) => +v.toFixed(2);
 
 /** The Pair: ring radius r and stroke sw, the V's stroke vsw; the V's left cap a, tip t and right cap b, as multiples of the ring's outer radius from its centre. */
+// The ground around the V where it crosses the O: the wide gap (the owner's pick, 2026-11-10; it was 7). ov-mark.js
+// has the same number (test/mark.test.js).
+const HALO = 14;
 function pair(r, sw, vsw, a = 0.86, t = 1.5, b = 2.16) {
     const R = r + sw / 2, right = b * R + vsw / 2, cx = 50 - (right - R) / 2, cy = 50;
     const A = [f(cx + a * R), f(cy - R + vsw / 2)], T = [f(cx + t * R), f(cy + R - vsw / 2)], B = [f(cx + b * R), f(cy - R + vsw / 2)];
@@ -38,7 +41,7 @@ function pair(r, sw, vsw, a = 0.86, t = 1.5, b = 2.16) {
     const x0 = f(cx - R), x1 = f(B[0] + vsw / 2), pad = 2;
     const w = f(x1 - x0 + 2 * pad);
     return {
-        cx: f(cx), cy, r, sw, R: f(R), vsw, halo: vsw + 7, A, T, B, ring,
+        cx: f(cx), cy, r, sw, R: f(R), vsw, halo: vsw + HALO, A, T, B, ring,
         // A square box centred on the mark, and a wide one that hugs it.
         box: `${f(50 - w / 2)} ${f(50 - w / 2)} ${w} ${w}`,
         wideBox: `${f(50 - w / 2)} ${f(50 - R - pad)} ${w} ${f(2 * R + 2 * pad)}`,

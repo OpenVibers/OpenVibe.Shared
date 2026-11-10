@@ -1,10 +1,37 @@
 # Changelog
 
-## 4.187.0 — 2026-11-10
+## 4.188.0 — 2026-11-10
 
 - **Upload duplicate preflight:** `OVUpload.queue` can hash modest files with `crypto.subtle`, ask the caller's
   `checkDuplicate` lookup, and offer Open it, Use that one, or Upload again in the existing file row. Files above
   the configurable 32 MiB default skip hashing. The queue emits `ov-upload:duplicate` and `ov-upload:done` events.
+
+## 4.187.0 — 2026-11-10
+
+**The bar the owner chose.** 2026-11-10, in the Arena: "here's the new menu button and the logo … these two, but
+improve upon and expand on it. And let's move the user … so that it's to the right of this. And instead of having
+messaging and notifications, just have the notifications."
+
+- **The menu button is "Search and apps"** (the Arena's M57): the menu itself, small: a search bar over three apps.
+  Under the pointer its parts lift in turn; while the menu loads the apps breathe; open, the bar turns into one stroke
+  of the close mark and the three apps line up as the other. One drawing (`OpenVibeOrb.svg()`, navbar.js) for the
+  bar, the menu's sheet and the Dock's sheet, where three copies of nine dots were.
+- **The mark has the wide gap** (the Arena's P07): the ground around the V where it crosses the O is 14, was 7, in
+  `ov-mark.js`, `mark.js`, the app icons and the loader's tab icon alike (`test/mark.test.js`).
+- **The person is last in the bar**: balances, the bell, the menu button, then the picture (or Sign In).
+- **Messages is the bell.** The Messages button leaves the bar; the count of new messages (Chat's, or a site's own
+  through `setMessages(count)`) is added to the bell's number and named in its label ("Notifications, 1 unread, 2 new
+  messages"). With new messages and nothing else new, the bell opens the Dock on Chats; otherwise on Activity.
+- **One menu.** The owner: "make sure these two share the same universal system … it just opens the actual first
+  tab … same UI." The mark opens the OpenVibe menu on its first tab; `site-switcher.js`, its panel, its own icons
+  and its "here" label are deleted. `OpenVibeNavbar.openSwitcher()` opens the menu.
+- **All apps is a small button beside Edit** in the menu's You tab ("All 65"), where a bar the width of the sheet
+  was under the grid.
+- **An agent's turn shows it is thinking**: in the conversation kit (`thread.css`), the agent's avatar shows three
+  rising dots while its turn is open.
+
+Removed: `site-switcher.js` (and its export), the Messages button and its `messages: { href, onOpen, label }`
+behaviours (the Dock's Chats tab is where messages open; `messages: false` still turns the count off).
 
 ## 4.186.0 — 2026-11-10
 

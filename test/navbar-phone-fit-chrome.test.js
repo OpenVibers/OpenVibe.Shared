@@ -46,11 +46,11 @@ const MEASURE = `(() => {
     const box = (el) => { const r = el.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; };
     const name = bar.querySelector('.openvibe-navbar-brand .name');
     const parts = [['name', name], ['launcher', bar.querySelector('.ovnav-launch')], ['search', bar.querySelector('#openvibe-search-btn')],
-        ['balances', bar.querySelector('.ovnav-chip--all')], ['sign in', bar.querySelector('#openvibe-login-btn')],
-        ['picture', bar.querySelector('#openvibe-avatar-btn')], ['menu', bar.querySelector('#openvibe-burger')]].filter(([, el]) => vis(el)).map(([k, el]) => [k, box(el)]);
+        ['balances', bar.querySelector('.ovnav-chip--all')], ['menu', bar.querySelector('#openvibe-burger')],
+        ['sign in', bar.querySelector('#openvibe-login-btn')], ['picture', bar.querySelector('#openvibe-avatar-btn')]].filter(([, el]) => vis(el)).map(([k, el]) => [k, box(el)]);
     const minis = [...bar.querySelectorAll('.ovnav-chip--all .ovnav-chip-mini')].filter(vis).length;
     const menu = bar.querySelector('#openvibe-burger');
-    const orbMenu = !!(menu && menu.classList.contains('ovnav-orb') && menu.querySelectorAll('.ovo-g .ovo-d').length === 9 && !menu.querySelector('span'));
+    const orbMenu = !!(menu && menu.classList.contains('ovnav-orb') && menu.querySelectorAll('.ovmb .ovmb-app').length === 3 && !!menu.querySelector('.ovmb-bar') && !menu.querySelector('span'));
     return { parts, clipped: name.scrollWidth > name.clientWidth + 1, visibleText: name.innerText, minis, width: innerWidth, orbMenu, docW: document.documentElement.scrollWidth };
 })()`;
 

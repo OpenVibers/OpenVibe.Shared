@@ -56,6 +56,9 @@
     if (window.__ovMark) return; window.__ovMark = true;
     let n = 0;
     const f = (v) => +v.toFixed(2);
+    // The ground around the V where it crosses the O: the wide gap (the owner's pick, 2026-11-10, the Arena's P07:
+    // "more ground around the V where it crosses"); it was 7.
+    const HALO = 14;
     // The Pair in a 100-unit box, centred on (50, 50) (openvibe-shared/mark: the same numbers; test/mark.test.js).
     function pair(r, sw, vsw, a = 0.86, t = 1.5, b = 2.16) {
         const R = r + sw / 2, right = b * R + vsw / 2, cx = 50 - (right - R) / 2, cy = 50;
@@ -73,7 +76,7 @@
             err: [mx, A[1], mx, T[1] - vsw * 1.28, mx, T[1], mx, T[1] + 0.01],
         };
         for (const k in shapes) shapes[k] = shapes[k].map(f);
-        return { cx: f(cx), cy, r, sw, R: f(R), vsw, halo: vsw + 7, A, T, B, ring, box, wideBox, shapes };
+        return { cx: f(cx), cy, r, sw, R: f(R), vsw, halo: vsw + HALO, A, T, B, ring, box, wideBox, shapes };
     }
     const FORMS = { pair: pair(20, 13, 13), heavy: pair(18, 18, 17) };
     const formOf = (v) => (v === 'heavy' || v === 'solid' ? 'heavy' : 'pair');
