@@ -371,8 +371,11 @@
 }
 /* Dropped from the navbar's orb (4.25.0): under the bar, from the orb's side, the bar still showing. */
 .ovs.ovs-anchored { top: var(--ovs-top, 0px); background: rgba(3, 6, 12, .45); }
-.ovs.ovs-anchored .ovs-panel { top: 8px; left: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); transform: none; transform-origin: 24px 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .22s cubic-bezier(.2,1.15,.3,1); }
-@keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
+/* It grows out of the button that was pressed (4.195.0; the owner: "go … to the proper element … what you clicked on"): its
+   origin is that button's centre, wherever the panel was clamped to (it unfolded from its left corner, though the button is at
+   the right since 4.193.0), on the dropdown's own curve. */
+.ovs.ovs-anchored .ovs-panel { --ovs-pl: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); top: 8px; left: var(--ovs-pl); transform: none; transform-origin: calc(var(--ovs-cx, 40px) - var(--ovs-pl)) 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .26s cubic-bezier(.2, 1.25, .3, 1); }
+@keyframes ovs-drop { from { opacity: 0; transform: translateY(-6px) scale(.9); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) {
   /* The whole screen on a phone (the owner, 11-07: "make full use of the height, not compensate for the navbar"),
      opening as a circle that grows from the button that opened it. */
