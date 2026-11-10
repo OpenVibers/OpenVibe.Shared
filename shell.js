@@ -38,6 +38,12 @@ function json(value) {
     return JSON.stringify(value).replace(/</g, '\\u003c');
 }
 
+function navbarOptions(o, name) {
+    const navbar = { service: name, ...(o.navbar || {}) };
+    if (navbar.links === undefined && Array.isArray(o.navLinks)) navbar.links = o.navLinks;
+    return navbar;
+}
+
 /** HTML attributes from an object; `true` is a bare attribute, null/false/undefined are dropped. */
 function attrs(map) {
     return Object.entries(map || {})
@@ -57,7 +63,7 @@ function attrs(map) {
  */
 function scripts(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
-    const navbar = { service: name, ...(o.navbar || {}) };
+    const navbar = navbarOptions(o, name);
     const footer = o.footer || { service: name, variant: 'compact' };
     const boot = { features: o.features || {}, routes: o.routes || [] };
     if (o.versions) boot.versions = o.versions;
@@ -145,10 +151,11 @@ function faviconLink(o) {
 // (openvibe.events and openvibe.bot showed an 8px frame around the footer). The same page also had no font: its text fell
 // back to the browser's Times New Roman (five sites' /updates, 2026-11-01), so the body gets the network's type at zero
 // specificity, which any site's own rule beats.
-const NAVBAR_RESERVE = '<style>body{margin:0}:where(body){font-family:var(--ov-font,\'Inter\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'Helvetica Neue\',Arial,sans-serif)}#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>';
+const NAVBAR_RESERVE = '<style>body{margin:0}:where(body){font-family:var(--ov-font,\'Inter\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'Helvetica Neue\',Arial,sans-serif)}#navbar-mount{min-height:52px}</style>';
 
 function page(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
+    const navbar = navbarOptions(o, name);
     const title = o.title || name;
     const summary = o.summary == null ? null
         : seo.pageSummary({ title, summary: o.summary, facts: o.facts, url: o.url || o.canonical, updated: o.updated });
@@ -178,7 +185,7 @@ function page(o = {}) {
         '</head>',
         `<body${attrs(bodyAttributes)}>`,
         summary ? summary.body : '',
-        frame.noscriptNav({ name, home: o.home, links: o.navLinks }),
+        frame.serverNav({ name, service: navbar.service, home: o.home, links: navbar.links }),
         o.body || '',
         frame.footer(o.footer || { service: name, variant: 'compact' }),
         '</body>',

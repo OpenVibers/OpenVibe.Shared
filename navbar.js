@@ -1503,7 +1503,7 @@
     }
 
     function currentLinks() {
-        const list = _runtimeLinks || _config.links || SERVICE_LINKS[_config.service] || [];
+        const list = _runtimeLinks || _config.links || linksFor(_config.service);
         const path = (typeof location !== 'undefined' && location.pathname) || '/';
         const activePage = _activePage;
         return list.map((l) => Object.assign({}, l, { active: l.active !== undefined ? l.active : (activePage ? l.page === activePage : (l.href === path && path !== '/')) }));
@@ -1592,6 +1592,11 @@
             { label: 'Diff', href: 'https://diff.openvibe.tools' },
         ],
     };
+
+    // The server shell calls this same table so its HTML matches the browser defaults.
+    function linksFor(service) {
+        return (SERVICE_LINKS[service] || []).map(link => ({ ...link }));
+    }
 
     // Accounts seen here (no tokens).
     const SEEN_KEY = 'openvibe_seen_accounts';
@@ -2272,7 +2277,9 @@
         // Insert into page — use navbar-mount placeholder if available, otherwise prepend to body
         const mount = document.getElementById('navbar-mount');
         if (mount) {
-            mount.appendChild(nav);
+            // Replace the crawlable server nav atomically; never leave duplicate landmarks.
+            if (mount.replaceChildren) mount.replaceChildren(nav);
+            else { while (mount.firstChild) mount.removeChild(mount.firstChild); mount.appendChild(nav); }
         } else {
             document.body.prepend(nav);
         }
@@ -2289,7 +2296,7 @@
 
     // ── The phone app bar (appbar.js, loaded only when the site sets appBar): its main places as a bottom tab bar ──
     let _appBarLoading = false;
-    const rawLinks = () => _runtimeLinks || _config.links || SERVICE_LINKS[_config.service] || [];
+    const rawLinks = () => _runtimeLinks || _config.links || linksFor(_config.service);
 
     // Search (search.js, loaded on first use). _config.search: false, or { owner, label, page }.
     let _searchLoading = false;
@@ -2725,6 +2732,7 @@
         },
         _ask: { selectedText, askVibeHref },
         _wallet: { loadWallet, walletOrder, syncWalletChips, loadWalletChips, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
+        _defaults: { linksFor },
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;

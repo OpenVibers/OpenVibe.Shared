@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.184.0 — 2026-11-10
+
+- **Server-rendered navbar links.** The shared shell emits the configured navbar links in the reserved `#navbar-mount`
+  so crawlers can read site navigation from the response HTML. The client replaces that node's contents atomically
+  on hydration; server and browser use the same configured or default link list, with the existing 52px reserve.
+
 ## 4.183.0 — 2026-11-10
 
 **Motion: Calm reduces, only Off removes.** The owner, 2026-11-10: "Reduce motion is too much reduction, it ruins a lot
