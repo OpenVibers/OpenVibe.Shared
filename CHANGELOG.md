@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.188.0 — 2026-11-09
+
+- Add `openvibe-shared/quest` with a plain-kit `[data-ov-quest]` mount for the personalized Quest today response.
+
 ## 4.187.0 — 2026-11-10
 
 **The bar the owner chose.** 2026-11-10, in the Arena: "here's the new menu button and the logo … these two, but
