@@ -83,8 +83,8 @@ assert.ok(attrs.includes('<body class="a&quot; onload=&quot;b" data-x="&quot; y=
 {
     const links = [{ label: 'Places', href: '/places' }, { label: 'Elsewhere', href: 'https://openvibe.live/' }];
     const rendered = shell.page({ name: 'example', navbar: { service: 'example', links }, body: '' });
-    assert.ok(rendered.includes('<a href="/places">Places</a>'), 'server emits configured local links');
-    assert.ok(rendered.includes('<a href="https://openvibe.live/">Elsewhere</a>'), 'server emits configured cross-site links');
+    assert.ok(rendered.includes('<a data-ov-nav-link="true" href="/places">Places</a>'), 'server emits configured local links');
+    assert.ok(rendered.includes('<a data-ov-nav-link="true" href="https://openvibe.live/">Elsewhere</a>'), 'server emits configured cross-site links');
     assert.match(rendered, /OpenVibeNavbar\.init\(\{"service":"example","links":\[\{"label":"Places","href":"\/places"\}/, 'client receives same configured list');
     assert.equal((rendered.match(/aria-label="Site"/g) || []).length, 1, 'one navigation landmark before hydration');
 }

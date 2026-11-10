@@ -57,7 +57,7 @@ function attrs(map) {
  */
 function scripts(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
-    const navbar = { service: name, ...(o.navbar || {}) };
+    const navbar = { service: name, ...(o.navLinks ? { links: o.navLinks } : {}), ...(o.navbar || {}) };
     const footer = o.footer || { service: name, variant: 'compact' };
     const boot = { features: o.features || {}, routes: o.routes || [] };
     if (o.versions) boot.versions = o.versions;
