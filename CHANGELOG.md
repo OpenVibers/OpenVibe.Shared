@@ -1,5 +1,52 @@
 # Changelog
 
+## 4.190.0 — 2026-11-10
+
+**The one dropdown, the wallet in colour, who is online, and five smaller things.** From the owner's notes of
+2026-11-10, each with a screenshot.
+
+- **The site's name opens its pages** ("clicking the actual name of the domain should have a sleek little minimalist
+  drop down … that just shows the pages … have the home button as an option … a custom, animated system for these drop
+  downs and positioning of them, used across all sites"). New `ov-drop.js`: a small list that opens out of what was
+  pressed (under it, or above when there is no room), kept on screen, its rows arriving in turn; arrow keys, Enter,
+  Escape with the focus given back, a press outside; one open at a time, with the page's other panels. `OVDrop.open`,
+  `.attach` and `.pages`. In the bar the name shows a small mark and lists Home first, each page with its icon and the
+  present page marked; with a modifier key it is still a link to the site's home.
+- **The wallet sheet in the currencies' colours, with motion** ("make this way nicer with animations and effects and
+  color … nicer for the different currencies … effects like animations for the coin loss … shared and unified, also
+  SDK API"). Each balance is a tinted card with its drawn icon in a tile and its action in the same colour; a light
+  crosses each card as the sheet opens and the numbers count in; after a purchase the number counts to the new amount
+  and the currency's pieces leave its card with the amount beside it. On a phone: the tile, the name over the number,
+  the action at the right. A read that fails is said in a person's words, never a program's.
+- **The effects as calls** (`purse.js`): `OpenVibePurse.burst(element, id, delta)` plays the gain or spend at any
+  element, inside an open dialog too, upward near the bottom of the screen; `.count(element, from, to, format)`;
+  `data-purse` gives a holder the currency's colour (`--pc`); `.ovp-play` plays an icon's own move.
+- **The footer strip says who is online** ("show how many users are across all sites … the last half hour … guests
+  and users, like the old forum style where it lists everyone … live smaller, only if someone's live … other
+  metrics"). One read, `/api/frame/online`: the count with a few faces, members and guests, and where members may be
+  named the list of them with their site; then small tiles that open what they count: live (only while someone is),
+  joined this week, the site's own items, the sites, the week's page views. The page-view beacon marks a signed-in
+  browser with `?in=1` (no identity), so that person is counted from their presence and not as a guest.
+- **Uploads say when you already have the file** ("tell the user they already have one"). `OVUpload.queue` takes
+  `checkDuplicate(file, sha256)`; the row says "You already uploaded this on 10 Nov 2026." with Open it, Use that one
+  and Upload again, as one block. `OVUpload.preflight` does it for a single picker. Files over `hashLimitBytes` (32 MiB)
+  or slower to hash than to send are not hashed.
+- **A change is New, Improved or Fixed, with a mark** ("what is this confusing tag … better next to everything?").
+  A star, an arrow up, a tick; an improvement shows the mark alone. "Better" is gone.
+- **One picker for a person's computers** (`machines.js`, with Network's /add-computer): each computer a tile with
+  its state and what it can run, "Auto", and "Add a computer" through OpenVibe Link.
+- **Sign In has its own icon** (an arrow into the ring; it steps in now and then, and the ring's gap runs once
+  pressed), and the menu button's three squares hop in turn every few seconds ("use a nice custom animated icon for the
+  sign in … make the menu button animated as well").
+- **The bottom bar's highlight is centred on its icon** ("this is all offset"). It was placed once from `offsetTop`,
+  before the icons and the brand font arrived, and stayed above its icon; it is measured from where things are and
+  placed again when the bar or an icon changes size.
+- Jump back in links to the full history on openvibe.my; the Dock's agent can read recent history on a press (the
+  history-timeline job's plumbing).
+
+Built by runner jobs and given their look here: the upload check (upload-dedupe), the computers picker
+(machines-one-place), the footer's read (whos-online-strip), the history link (history-timeline).
+
 ## 4.189.0 — 2026-11-10
 
 **The balances are one pill, the menu and the Dock lead to each other, and the menu opens where you are.** Seven notes

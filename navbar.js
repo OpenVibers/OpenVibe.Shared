@@ -258,6 +258,9 @@
             .openvibe-navbar-dropdown-menu .sep { height: 1px; background: var(--border, #333340); margin: 4px -8px; }
 
             .openvibe-navbar-links { display: flex; align-items: center; gap: 2px; margin-left: 2px; }
+            .openvibe-navbar-links > *, .openvibe-navbar-right { flex: none; white-space: nowrap; }
+            @media (min-width: 861px) { .openvibe-navbar .openvibe-navbar-brand { flex: none; } }
+            .openvibe-navbar-links > .ovnav-out { display: none; }
             .openvibe-navbar-links a {
                 padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
                 color: var(--text-secondary, #b0b0b8); text-decoration: none;
@@ -358,7 +361,6 @@
                 transition: filter .15s; text-decoration: none; display: inline-flex; align-items: center;
             }
             .openvibe-navbar-login:hover { filter: brightness(1.12); }
-            /* Sign In's icon: an arrow into the ring; pressed, the ring's gap runs. */
             .openvibe-navbar-login { gap: 7px; }
             .openvibe-navbar-login:active { transform: scale(.95); }
             .ovsi { margin-left: -3px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
@@ -2123,7 +2125,7 @@
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
         hookSearch(nav);
-        hookSwitcher(nav); hookPages(nav); hookSignIn(nav);
+        hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
@@ -2354,7 +2356,7 @@
         try { if (Date.now() - Number(localStorage.getItem(key) || 0) < 30 * 60000) return; localStorage.setItem(key, String(Date.now())); } catch { /* storage off: still record */ }
         fetch('https://openvibe.network/api/themes/me/sites/visit', { method: 'POST', headers: { Authorization: `Bearer ${_config.token}`, 'Content-Type': 'application/json' }, credentials: 'include', keepalive: true, body: JSON.stringify({ site: _config.service }) }).catch(() => {});
     }
-    // The site's name opens its pages (4.191.0; ov-drop.js builds and draws the list). With a modifier key it is a link.
+    // The site's name opens its pages (ov-drop.js); with a modifier key it is a link.
     function hookPages(nav) {
         const a = nav.querySelector('.openvibe-navbar-brand .name a.b-tld');
         if (!a || typeof a.removeAttribute !== 'function' || !flatLinks(rawLinks()).some((l) => l && l.href && !l.hidden)) return;
@@ -2372,6 +2374,28 @@
         const b = nav.querySelector('#openvibe-login-btn');
         if (!b || !b.classList || typeof b.addEventListener !== 'function') return;
         b.addEventListener('click', (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; b.classList.add('is-going'); setTimeout(() => b.classList.remove('is-going'), 6000); });
+    }
+    // Links leave from the end until the bar holds one row (they stay in the menu); the site's "More" leaves last.
+    function fitLinks() {
+        const nav = (this && this.nodeType === 1 ? this : null) || _navEl, box = nav && nav.querySelector && nav.querySelector('.openvibe-navbar-links');
+        if (!box || !box.children || !nav.clientWidth) return;
+        const kids = Array.from(box.children);
+        kids.forEach((k) => k.classList.remove('ovnav-out'));
+        const more = (k) => !!(k.querySelector && k.querySelector('[data-link-id="ovnav-more"]'));
+        const order = kids.filter((k) => !more(k)).reverse().concat(kids.filter(more));
+        for (let i = 0; i < order.length && nav.scrollWidth > nav.clientWidth + 1; i += 1) order[i].classList.add('ovnav-out');
+    }
+    let _fitWatch = null, _fitSeen = null;
+    function hookFit(nav) {
+        fitLinks.call(nav);
+        if (typeof ResizeObserver !== 'function' || typeof MutationObserver !== 'function') return;
+        if (_fitWatch) { _fitWatch.disconnect(); _fitSeen.disconnect(); }
+        let t = 0;
+        const soon = () => { clearTimeout(t); t = setTimeout(() => fitLinks.call(nav), 60); };
+        _fitWatch = new ResizeObserver(soon); _fitWatch.observe(nav);
+        _fitSeen = new MutationObserver((list) => { if (list.some((m) => !(m.target.closest && m.target.closest('.openvibe-navbar-links')))) soon(); });
+        _fitSeen.observe(nav, { childList: true, subtree: true, characterData: true });
+        if (document.fonts && document.fonts.ready && document.fonts.ready.then) document.fonts.ready.then(soon, () => {});
     }
     function hookSwitcher(nav) {
         const b = nav.querySelector('#openvibe-switch-btn');
