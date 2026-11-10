@@ -551,6 +551,9 @@
         if (msg.type === 'unread') setBadge(msg.count, { quiet: true });
         else if (msg.type === 'read') { for (const v of _views.values()) applyReadLocally(v, msg.ids || [], msg.all); }
     }
+    function announceCount() {
+        try { document.dispatchEvent(new CustomEvent('openvibe-notifications-count', { detail: { count: _unreadCount } })); } catch { /* */ }
+    }
 
     // ── Sound ───────────────────────────────────────────────
     function playSound(priority) {
@@ -862,6 +865,7 @@
             if (c) { c.textContent = _unreadCount > 99 ? '99+' : String(_unreadCount); c.classList.toggle('zero', _unreadCount === 0); }
         }
         if (!quiet) broadcast({ type: 'unread', count: _unreadCount });
+        announceCount();
         if (_unreadCount !== prev && listShowing()) loadTabCounts();
     }
 

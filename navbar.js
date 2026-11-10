@@ -353,6 +353,9 @@
                 object-fit: cover;
             }
             .openvibe-navbar-avatar:hover { border-color: var(--accent, #3b82f6); }
+            .openvibe-navbar .ovnav-avatar-wrap { position: relative; display: inline-flex; flex: none; }
+            .openvibe-navbar .ovnav-avatar-count { position: absolute; top: -5px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #e5484d); color: #fff; font-family: inherit; font-size: 10px; font-weight: 700; line-height: 1; }
+            .openvibe-navbar .ovnav-avatar-count[hidden] { display: none; }
 
             /* Sign in: a filled circle where the person's picture will be; a figure and an arrow coming in take turns. */
             .openvibe-navbar-login { display: inline-grid; place-items: center; background: var(--accent-strong, #1d4ed8); color: var(--on-accent-strong, #fff); border: none; cursor: pointer; text-decoration: none; transition: filter .15s, box-shadow .25s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
@@ -1316,14 +1319,19 @@
         box.hidden = false;
     }
 
-    // ── Notification bell (mounted by the navbar itself) ─────
-    function mountBell(nav, u) {
+    // ── Notifications (count and list are mounted in You) ─────
+    function mountNotifications(nav, u) {
         if (_config.notifications === false || !u || u.is_anon || !_config.token) return;
-        const mount = nav.querySelector('#openvibe-bell-mount'); if (!mount || mount.childElementCount) return;
-        _bellMount = mount;
+        const avatar = nav.querySelector('#openvibe-avatar-btn');
+        const badge = avatar?.parentElement?.querySelector('.ovnav-avatar-count');
+        if (badge) badge.hidden = true;
         const go = () => {
-            const N = root.OpenVibeNotifications; if (!N || mount.childElementCount) return;
-            try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; } N.createBell(mount); wireBell(); } catch { /* */ }
+            const N = root.OpenVibeNotifications; if (!N) return;
+            try {
+                if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; }
+                const paint = () => { if (!badge) return; const n = Number(N.unread()) || 0; badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = !n; };
+                paint(); document.addEventListener('openvibe-notifications-count', paint);
+            } catch { /* */ }
         };
         if (root.OpenVibeNotifications) return go();
         if (document.getElementById('ov-notify-loader')) return;
@@ -1331,7 +1339,7 @@
     }
 
     // ── The Dock (Dock plan K-D1): your agents and activity at the screen's edge. dock.js draws its pill and the Dock;
-    // for a signed-in person it loads after the bell, from beside this file. A Network without the route yet (dock.js
+    // for a signed-in person it loads alongside notifications. A Network without the route yet (dock.js
     // keeps { off } for a day) is not asked again. dockApiBase and dockChatBase override the Network and Chat (tests, staging).
     const dockBase = () => String(_config.dockApiBase || 'https://openvibe.network').replace(/\/+$/, '');
     const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), chatBase: _config.dockChatBase, agentBase: _config.dockAgentBase, me: _config.user && _config.user.username, sibling });
@@ -1342,20 +1350,10 @@
         if (!sc) { sc = document.createElement('script'); sc.id = 'ov-dock-loader'; sc.src = siblingV('dock.js'); sc.async = true; document.head.appendChild(sc); }
         sc.addEventListener('load', () => setTimeout(() => { try { then(); } catch { /* */ } }, 0));
     }
-    // The bell opens the Dock on Activity (the same list), and closes it from there; without the Dock, its own panel.
-    let _dockOn = false, _bellMount = null;
-    function wireBell() {
-        const N = root.OpenVibeNotifications; if (!N || typeof N.setBellAction !== 'function') return;
-        N.setBellAction(() => {
-            const active = document.querySelector('.ovs.is-open');
-            if (active && active.querySelector('.ovs-starttabs [data-tab="you"][aria-selected="true"]')) root.OpenVibeSearch.close();
-            else openSearch('', 'you', _bellMount && _bellMount.querySelector('.openvibe-bell'), 'notifications');
-            return true;
-        });
-    }
+    let _dockOn = false;
     function mountDock(u) {
         const on = _config.dock !== false && !!u && !u.is_anon && !!_config.token;
-        _dockOn = on; wireBell();
+        _dockOn = on;
         if (root.OpenVibeDock) return root.OpenVibeDock.mount(on ? dockOpts() : null);
         try { const k = JSON.parse(localStorage.getItem('ov-dock') || 'null'); if (!on || (k && k.off > Date.now())) return; } catch { if (!on) return; }
         loadDock(() => root.OpenVibeDock.mount(dockOpts()));
@@ -2123,9 +2121,8 @@
             <div class="openvibe-navbar-right">
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 ${featuredPhoneHTML(links)}
-                <div id="openvibe-bell-mount"></div>
                 ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" data-ov-tip="Menu" data-ov-tip-sub="This site, search, every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
-                ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
+                ${u ? `<span class="ovnav-avatar-wrap">${avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn')}<b class="ovnav-avatar-count" hidden></b></span>` :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}" aria-label="Sign in" data-ov-tip="Sign in"><svg class="ovsi" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="ovsi-o" cx="12" cy="12" r="11"/><g class="ovsi-p"><circle cx="12" cy="8.8" r="3.2"/><path d="M5.900 18.400c1.100-2.700 3.300-4.100 6.100-4.100s5 1.400 6.100 4.100"/></g><path class="ovsi-a" d="M5.500 12h8.500M11 8.500l3.500 3.500-3.500 3.500M15.500 6.500h2.500v11h-2.500"/></svg></a>`}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
@@ -2142,7 +2139,7 @@
         queueFx();
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
-        setTimeout(() => { mountBell(nav, u); mountDock(u); mountPresence(u); }, 0);
+        setTimeout(() => { mountNotifications(nav, u); mountDock(u); mountPresence(u); }, 0);
 
         // Dropdown
         if (u) {
@@ -2227,7 +2224,9 @@
             avatarBtn.addEventListener('click', () => {
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
-                openSearch('', 'you', avatarBtn);
+                const active = document.querySelector('.ovs.is-open');
+                if (active && active.querySelector('.ovs-starttabs [data-tab="you"][aria-selected="true"]')) root.OpenVibeSearch.close();
+                else openSearch('', 'you', avatarBtn, 'notifications');
             });
 
 

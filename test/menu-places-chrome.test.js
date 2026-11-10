@@ -131,15 +131,37 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             assert.deepEqual((await page.evaluate(ROW)).map((t) => t.label), ['Chat', 'Feed', 'You'].map((x, i) => x), `${name}: in that order`);
             await page.close();
         }
-        const page = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 800 });
-        await page.goto('http://127.0.0.1:' + server.address().port + '/', { maxMs: 6000 });
-        await page.evaluate("new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/navbar.js'; document.head.appendChild(s); s.onload = () => { OpenVibeNavbar.init({ service: 'chat', auth: 'external', user: { id: 7, username: 'maya', display_name: 'Maya' }, token: 't', search: true, dock: true, links: [] }); ok(); }; s.onerror = no; })");
-        const endBell = Date.now() + 7000;
-        while (!await page.evaluate("!!document.querySelector('.openvibe-bell')") && Date.now() < endBell) await wait(80);
-        await page.evaluate("document.querySelector('.openvibe-bell').click()"); await wait(500);
-        assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open .ovs-starttabs [data-tab=you][aria-selected=true]')"), true, '1280 px bell opens You in the menu');
-        assert.equal(await page.evaluate("!!document.querySelector('.ovdk.is-open')"), false, '1280 px bell does not open the floating Dock');
-        await page.close();
-        console.log('menu-places-chrome: Notifications in You, red unread badge and in-place expansion; stable tab ids; bell opens You at 1280px; phone Messages and AI search stay in place');
+        for (const width of [390, 1280]) {
+            const page = await h.openPage(browser, await browser.newContext(), { width, height: 800 });
+            await page.goto('http://127.0.0.1:' + server.address().port + '/', { maxMs: 6000 });
+            await page.evaluate(`window.OpenVibeNotifications = { init() {}, unread: () => 7 };
+                new Promise((ok, no) => { const s = document.createElement('script'); s.src = '/navbar.js'; document.head.appendChild(s); s.onload = () => { OpenVibeNavbar.init({ service: 'chat', auth: 'external', user: { id: 7, username: 'maya', display_name: 'Maya' }, token: 't', search: true, dock: true, links: [] }); ok(); }; s.onerror = no; })`);
+            const endBadge = Date.now() + 7000;
+            while (!await page.evaluate("!!document.querySelector('.ovnav-avatar-count:not([hidden])')") && Date.now() < endBadge) await wait(80);
+            assert.equal(await page.evaluate("!!document.querySelector('.openvibe-bell, #openvibe-bell-mount')"), false, `${width}px: no bar bell or bell mount`);
+            assert.equal(await page.evaluate("document.querySelector('.ovnav-avatar-count')?.textContent"), '7', `${width}px: avatar carries the unread count`);
+            await page.evaluate("document.querySelector('#openvibe-avatar-btn').click()"); await wait(500);
+            assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open .ovs-starttabs [data-tab=you][aria-selected=true]')"), true, `${width}px avatar opens You`);
+            assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open [data-sec=notifications]')"), true, `${width}px avatar opens at Notifications`);
+            assert.equal(await page.evaluate("!!document.querySelector('.ovdk.is-open')"), false, `${width}px avatar does not open the floating Dock`);
+            await page.close();
+        }
+        // Two pages in one browser context share the Feed seen time; the receiving open menu redraws its badge at once.
+        const sharedContext = await browser.newContext();
+        const pages = await Promise.all([390, 390].map((width) => h.openPage(browser, sharedContext, { width, height: 780 })));
+        for (const p of pages) {
+            await p.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 6000 });
+            await p.evaluate(`window.fetch = async () => new Response(JSON.stringify({ entries: [{ service: 'live', subject: 'A shipped change', deployed_at: new Date(Date.now() - 10000).toISOString() }] }), { status: 200 });
+                localStorage.setItem('ovs-feed-seen', '1');`);
+            await p.evaluate(OPEN(false)); await wait(250);
+        }
+        const waitBadge = async (p) => { const until = Date.now() + 5000; while (Date.now() < until) { if (await p.evaluate("!!document.querySelector('.ovs-starttabs [data-tab=feed] .ovs-tabnew')")) return true; await wait(60); } return false; };
+        assert.ok(await waitBadge(pages[1]), 'tab 2 starts with a Feed count');
+        await pages[0].evaluate("document.querySelector('.ovs-starttabs [data-tab=feed]').click()"); await wait(250);
+        const cleared = await pages[1].evaluate("!document.querySelector('.ovs-starttabs [data-tab=feed] .ovs-tabnew')");
+        assert.equal(cleared, true, 'seeing Feed in tab 1 clears its count in tab 2');
+        for (const p of pages) await p.close();
+        await sharedContext.dispose();
+        console.log('menu-places-chrome: avatar notifications at 390/1280 with no bar bell; Feed seen syncs across tabs; one menu; phone Messages and AI search stay in place');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((err) => { console.error(err); process.exit(1); });

@@ -70,7 +70,13 @@
     // since last time you've looked… a badge").
     const FEED_SEEN = 'ovs-feed-seen';
     const feedSeen = () => { try { return Number(localStorage.getItem(FEED_SEEN)) || 0; } catch { return 0; } };
-    const markFeedSeen = () => { try { localStorage.setItem(FEED_SEEN, String(Date.now())); } catch { /* */ } };
+    let feedChannel;
+    try { if (typeof BroadcastChannel === 'function') { feedChannel = new BroadcastChannel('openvibe-feed-seen'); feedChannel.onmessage = () => { if (el && el.classList.contains('is-open')) paintTabs(); }; } } catch { feedChannel = null; }
+    if (typeof window !== 'undefined') window.addEventListener('storage', (e) => { if (e.key === FEED_SEEN && el && el.classList.contains('is-open')) paintTabs(); });
+    const markFeedSeen = () => {
+        try { localStorage.setItem(FEED_SEEN, String(Date.now())); } catch { /* signed out private window */ }
+        try { feedChannel?.postMessage({ type: 'seen', at: feedSeen() }); } catch { /* */ }
+    };
     let el = null, input = null, ghost = null, listEl = null, tabsEl = null, ctx = {}, items = [], active = -1, inflight = null, timer = null, lastFocus = null;
     let tab = 'here', mine = null, catalog = null, completion = '';
     // The results view (4.29.0): Enter shows the Search Fabric's answer here, by scope, instead of leaving the page.
@@ -485,6 +491,7 @@
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
+        document.addEventListener('openvibe-notifications-count', () => { if (el && el.classList.contains('is-open')) paintTabs(); });
         input.addEventListener('input', () => { moved = false; if (view === 'results') leaveResults(); paintGhost(); schedule(input.value); });
         input.addEventListener('keydown', onKey);
         listEl.addEventListener('click', (e) => {
