@@ -348,6 +348,7 @@
             <header class="ovdk-head">
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
+                    <button type="button" data-act="menu" class="ovdk-tomenu" title="The OpenVibe menu" aria-label="The OpenVibe menu: every site, the feed, you">${root.OpenVibeOrb ? root.OpenVibeOrb.svg(20) : ''}</button>
                     <button type="button" data-act="more" aria-haspopup="true" aria-expanded="false" title="More" aria-label="More: a timer, the Dock's button">${svg(G.more)}</button>
                     <button type="button" data-act="close" class="ovdk-orbx" title="Close" aria-label="Close the Dock">${ORBX()}</button>
                 </div>
@@ -369,6 +370,8 @@
             if (j >= 0) { e.preventDefault(); setTab(tabs[j].dataset.tab, true); tabs[j].focus(); }
         });
         el.querySelector('[data-act="close"]').addEventListener('click', () => close());
+        // The way back to the menu: this sheet folds, the menu opens out of the same button.
+        { const m = el.querySelector('[data-act="menu"]'); if (m) { if (!root.OpenVibeNavbar || !root.OpenVibeOrb) m.hidden = true; m.addEventListener('click', () => { close(); setTimeout(() => { try { root.OpenVibeNavbar.openSwitcher(); } catch { /* no bar */ } }, 300); }); } }
         el.querySelector('[data-act="pop"]').addEventListener('click', () => { if (popped) backToPage(); else popOut(); });
         el.querySelector('[data-act="pin"]').addEventListener('click', () => { save({ pinned: !state().pinned }); paintPin(); });
         el.querySelector('[data-act="timer"]').addEventListener('click', () => { const a = el.querySelector('[data-act="more"]'); closeMore(); withTimer((t) => t.menu(a)); });

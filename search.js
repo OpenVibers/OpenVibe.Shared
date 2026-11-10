@@ -218,7 +218,17 @@
   .ovs-x span { display: none; }
   .ovs-x:active { background: var(--bg-active, rgba(255,255,255,.14)); color: var(--text-primary, #fff); }
 }
-.ovs-tabs { display: flex; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+.ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+/* The way over to the Dock: a quieter row under the tabs, four small buttons with the Dock's own names. */
+.ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
+.ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
+  color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); transition: background-color .15s, color .15s, transform .12s; }
+.ovs-bridge-b span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-bridge-i { display: grid; place-items: center; flex: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-bridge-b:hover, .ovs-bridge-b:focus-visible { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovs-bridge-b:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-bridge-b:active { transform: scale(.96); }
+@media (max-width: 380px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; font-size: 11.5px; } }
 /* The menu's three tabs (4.149.0): one segmented row under the field; the chosen one in the accent. */
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
@@ -1018,8 +1028,29 @@
             else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); b.appendChild(n); }
             tabsEl.appendChild(b);
         }
+        // The way over to the Dock (4.189.0): Vibe, your agents, messages and what is new are one press from here, and
+        // the Dock's head has the way back. Only where the bar can open the Dock for this person.
+        if (typeof ctx.dock === 'function') {
+            const row = document.createElement('div'); row.className = 'ovs-bridge'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Your Dock');
+            for (const [id, label] of [['vibe', 'Vibe'], ['agent', 'Agents'], ['chats', 'Messages'], ['activity', 'Activity']]) {
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-bridge-b'; b.setAttribute('data-dock', id);
+                const ic = document.createElement('span'); ic.className = 'ovs-bridge-i'; ic.innerHTML = BRIDGE_SVG[id];
+                const t = document.createElement('span'); t.textContent = label;
+                b.append(ic, t);
+                b.addEventListener('click', () => { try { ctx.dock(id); } catch { /* the Dock is optional */ } });
+                row.appendChild(b);
+            }
+            tabsEl.appendChild(row);
+        }
         if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
     }
+    const bsvg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const BRIDGE_SVG = {
+        vibe: bsvg('<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+        agent: bsvg('<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13v.01M14.5 13v.01M3 12.5v2M21 12.5v2"/>'),
+        chats: bsvg('<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-7L8 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V8A1.5 1.5 0 0 1 5 6.5z"/>'),
+        activity: bsvg('<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>'),
+    };
 
     /** What every tab needs: the sites, this one, and the person's ranking of them. */
     function basis() {
