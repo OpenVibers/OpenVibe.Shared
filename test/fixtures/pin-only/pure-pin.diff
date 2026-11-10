@@ -1,0 +1,72 @@
+diff --git a/README.md b/README.md
+index dae90aa..3d34bb7 100644
+--- a/README.md
++++ b/README.md
+@@ -69,7 +69,7 @@ promo write changes both in one transaction.
+ - OpenVibe.Network (JWKS for service tokens; SSO with PKCE for the staff console; `identity.subject.resolve` for the Live import)
+ - OpenVibe.Events (the SDK outbox relay, when `EVENTS_URL` and the OAuth client secret are set)
+ - the payment providers whose secrets are configured (none in production today)
+-- `openvibe-contracts` v0.384.0, `openvibe-sdk` v0.133.0 (service tokens, per-person limits, `openvibe-sdk/db`, `openvibe-sdk/service`, `openvibe-sdk/vibes`), `openvibe-shared` v4.186.0, pinned by release tarball
++- `openvibe-contracts` v0.384.0, `openvibe-sdk` v0.133.0 (service tokens, per-person limits, `openvibe-sdk/db`, `openvibe-sdk/service`, `openvibe-sdk/vibes`), `openvibe-shared` v4.190.0, pinned by release tarball
+ - **PostgreSQL 18 and Valkey 9** (OpenVibe.Host `roles/data/`, ADR-035): every read and write is async through
+   `openvibe-sdk/db`; Valkey holds the per-person limit counters (optional: without `VALKEY_URL` they count in the process)
+ 
+@@ -518,5 +518,5 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
+ <!-- versions:start -->
+ - openvibe-contracts: v0.384.0
+ - openvibe-sdk: v0.133.0
+-- openvibe-shared: v4.186.0
++- openvibe-shared: v4.190.0
+ <!-- versions:end -->
+diff --git a/STATUS.json b/STATUS.json
+index 39fc2cc..d821e84 100644
+--- a/STATUS.json
++++ b/STATUS.json
+@@ -10,7 +10,7 @@
+   "deployment": "The money ledger since the cutover of 2026-10-17 04:50-04:56 UTC (BILLING_AUTHORITY=billing in billing.env and live.env): deployed with `sudo ovhost deploy billing`, /opt/openvibe.billing, unit openvibe-billing, API on 127.0.0.1:4600 (loopback only; /api/v1 is denied on the public host). Public at https://billing.openvibe.network: the staff console (Network SSO + PKCE, BILLING_STAFF_SUBJECTS = the owner only), the billing policy (/policy), a person's own Vibes (/api/me/vibes, CORS for OpenVibe's sites), /api/health, /api/ready, /release.json and /webhooks/*. PowerChat deliveries reach /webhooks/powerchat through openvibe.live's /api/powerchat/webhook (proxied by Live's vhost, OpenVibe.Live#172).",
+   "contracts": "openvibe-contracts v0.384.0",
+   "sdk": "openvibe-sdk v0.133.0",
+-  "shared": "openvibe-shared v4.186.0",
++  "shared": "openvibe-shared v4.190.0",
+   "notes": "Runtime, journal, adapters, import, reconciliation and the staff console (cashout approve/deny, review queue, reconciliation, freeze, audit log) are built, tested and deployed, with /metrics (loopback only), hourly scheduled reconciliation, EXTERNAL PowerChat receipts (billing.receipt.external, announced for OpenVibe.Tips), overflow guards and serializable settlement (PostgreSQL, ADR-035). The cutover (README runbook, docs/live-cutover.md) ran on 2026-10-17: final import 0 new rows, 0 holds, 0 anomalies; reconciliation OK before and after; Live's money tables are read-only behind a database tripwire. OpenVibe.Tips and OpenVibe.VIP launched right after (VIP checkout open). Still due: a small real PowerChat purchase settling end to end after the cutover. Live's payouts, refunds and plans have no tables of their own; where they map is docs/live-mapping.md.",
+   "features": [
+     "append-only double-entry journal in bits and cents, balanced per currency",
+diff --git a/package-lock.json b/package-lock.json
+index abbec7f..8205305 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -14,7 +14,7 @@
+         "iovalkey": "^0.4.0",
+         "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.384.0",
+         "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.133.0",
+-        "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.186.0",
++        "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.190.0",
+         "pg": "^8.23.0"
+       },
+       "devDependencies": {
+@@ -1147,9 +1147,9 @@
+       }
+     },
+     "node_modules/openvibe-shared": {
+-      "version": "4.186.0",
+-      "resolved": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.186.0",
+-      "integrity": "sha512-wD4net+UjO0a6OG73W+RR1z5MIWtPgj407xLEWphiVWgLTQ4V1r76+DtLOfSf6RfEda/ALizRu1zmxbvuGGZOw==",
++      "version": "4.190.0",
++      "resolved": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.190.0",
++      "integrity": "sha512-NnmQ+mJLTyM4mbYDyq/Nmxpjxo1ehmMcltz6NqcJJ/AhOTuZw7/QBl1CbJeWcGyXyL5VI/Ugu9/fIPe0UKvNNQ==",
+       "license": "MIT",
+       "dependencies": {
+         "jsonwebtoken": "^9.0.0",
+diff --git a/package.json b/package.json
+index 4347318..06ac961 100644
+--- a/package.json
++++ b/package.json
+@@ -28,7 +28,7 @@
+     "iovalkey": "^0.4.0",
+     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.384.0",
+     "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.133.0",
+-    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.186.0",
++    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.190.0",
+     "pg": "^8.23.0"
+   },
+   "engines": {
