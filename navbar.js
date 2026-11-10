@@ -517,11 +517,7 @@
                 .openvibe-navbar .openvibe-network-badge { display: none; }
             }
 
-            /* Touch and keyboard feedback. Phones flash a square, theme-blind blue box over anything
-               tapped (-webkit-tap-highlight-color); the Frame turns it off and shows a slight press
-               instead, and keyboard focus gets one ring in the theme accent. :where() keeps it at zero
-               specificity, so the Frame's own :focus-visible rules and a host page's rules still win.
-               \`scale\` is its own property, so it composes with any transform already in use. */
+            /* No square tap flash: a slight press (scale composes with transforms) and one accent focus ring, at zero specificity. */
             .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer { -webkit-tap-highlight-color: transparent; }
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: .96; }
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
