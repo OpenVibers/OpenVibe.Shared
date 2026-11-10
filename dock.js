@@ -70,9 +70,13 @@
     const kind = () => (phone() ? 'phone' : 'desktop');
     const place = () => ({ ...DEFAULT_STATE.place[kind()], ...((state().place || {})[kind()] || {}) });
     const sibling = (name) => (typeof o.sibling === 'function' ? o.sibling(name) : `https://openvibe.network/shared/${name}`);
-    // K-D3: the agent stream comes from OpenVibe.Codes' API (it mints the view ticket with the person's own token).
-    const agentBase = () => String(o.agentBase || 'https://openvibe.codes').replace(/\/+$/, '');
-    // The one timeline behind the Dock (design 2026-11-07): OpenVibe.Actor keeps it.
+    // K-D3: the agent stream is OpenVibe.Codes' (it mints the view ticket with the person's own token) and the one
+    // timeline behind the Dock is OpenVibe.Actor's (design 2026-11-07). On a site both go through Network's frame
+    // relay: every site's connect-src allows openvibe.network and refuses openvibe.codes and openvibe.actor. A test
+    // or the extension passes agentBase/actorBase and reaches the product itself; actorBase also names the Actor's
+    // pages in the run list.
+    const frameBase = () => String(o.frameBase || (String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '') + '/api/frame')).replace(/\/+$/, '');
+    const directBase = (v) => (v ? String(v).replace(/\/+$/, '') : '');
     const actorBase = () => String(o.actorBase || 'https://openvibe.actor').replace(/\/+$/, '');
 
     async function call(path, init = {}) {
@@ -546,14 +550,14 @@
             // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
             // phone Now and Needs you are on screen before anything else.
             load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
-                if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent', focus: () => o.task || null });
+                if (on && !mounts[id + 'Timeline'] && panel.isConnected) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), active: () => isOpen() && tab === 'agent', focus: () => o.task || null });
             });
             // Actor v3 (A3): your Actor first, on every site; it shows nothing for a person without one.
             load('dock-actor.js', () => !!(root.OpenVibeDockActor && root.OpenVibeDockActor.mount)).then((on) => {
-                if (on && !mounts[id + 'Actor'] && panel.isConnected) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: actorBase(), active: () => isOpen() && tab === 'agent' });
+                if (on && !mounts[id + 'Actor'] && panel.isConnected) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), active: () => isOpen() && tab === 'agent' });
             });
             load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
-                if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: agentBase(), active: () => isOpen() && tab === 'agent' });
+                if (on && !mounts[id + 'View'] && panel.isConnected) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: directBase(o.agentBase), frameBase: frameBase(), active: () => isOpen() && tab === 'agent' });
             });
             const m = root.OpenVibeDockRuns.mount(panel.querySelector('.ovdk-scroll'), {
                 call, state, save, scopes: o.scopes, active: () => isOpen() && tab === 'agent', actorBase: actorBase(), loadMarks: () => load('ai-marks-client.js', () => !!root.OpenVibeAIMarks),
