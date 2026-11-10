@@ -1,10 +1,21 @@
 # Changelog
 
-## 4.181.0 — 2026-11-09
+## 4.182.0 — 2026-11-10
 
 - **Server-rendered navbar links.** The shared shell emits configured navbar links in the reserved `#navbar-mount`
   so crawlers can read site navigation from the response HTML. The client replaces that node's contents atomically
   on hydration; the configured list is shared with `OpenVibeNavbar.init` and the existing 52px reserve remains.
+
+## 4.181.0 — 2026-11-10
+
+**The Dock's agent view, timeline and Actor go through Network's frame relay.** `dock-agent.js`, `dock-timeline.js`
+and `dock-actor.js` asked `openvibe.codes` and `openvibe.actor` directly from every site. Every site's `connect-src`
+allows `openvibe.network` and refuses those, so 49 of 49 signed-in sites logged 1-4 console errors at 1280 on
+2026-11-09 (CSP on most, CORS on the sites without one). The three modules now ask Network's same-origin
+`/api/frame/...` relay by default: `GET /agent-view`, its still and the four controls; `GET /agent/timeline` and its
+writes; `GET /actor` and its subpaths. An explicit `base`/`agentBase`/`actorBase` (a test, or the extension's own
+panel) still reaches the product itself, and nothing is asked without the person's token. The markup and styles are
+unchanged. `test/dock-relay.test.js` fails if a Dock script fetches another product's origin directly again.
 
 ## 4.180.0 — 2026-11-10
 
