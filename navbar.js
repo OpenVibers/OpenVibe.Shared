@@ -11,6 +11,7 @@
         history: null, silentLogin: null, fedcm: 'optional', fedcmLogin: null,   // README.md, "The navbar"
     };
     const _runtimeMenu = { before: [], after: [] };
+    let _own = [];   // the You tab's small items
     let _runtimeLinks = null;
     let _navEl = null;
     // A site's own buttons (lead before the brand, actions before the bell): nav-slots.js.
@@ -565,7 +566,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '3174ce995380', 'dock.js': '1e2c189c1b1e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '64c1e90ec311', 'dock.js': '1e2c189c1b1e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2153,9 +2154,6 @@
             const barWallet = !!_config.wallet || (Array.isArray(_config.chips) && _config.chips.some(c => c && (c.id === 'coins' || c.id === 'vibes')));
             const admin = u.role === 'admin' || !!(u.capabilities && (u.capabilities.is_owner || u.capabilities.admin_panel));
 
-            // The menu (4.23.0, the owner 2026-10-28: "more compactness… data-driven"): you, with + and the gear; your
-            // places as icons in the order you use them (eight, then More); the site's sections; one row for light/dark,
-            // text size, motion, themes and sign out. Notifications are the bell's; history and Ask Vibe, search's.
             const bell = _config.notifications !== false && !!_config.token && !isAnon;
             const places = before.concat(after).filter((it) => it && !it.sep).concat(menuCfg.defaults === false ? [] : [
                 !isAnon && u.username ? { id: 'ov-channel', label: 'My channel', short: 'Channel', drawn: navIcon('fa-tower-broadcast'), href: `https://openvibe.live/@${encodeURIComponent(u.username)}` } : null,
@@ -2168,6 +2166,7 @@
                 !isAnon ? { id: 'ov-wallet', label: 'Wallet', drawn: navIcon('fa-wallet'), href: 'https://openvibe.network/my#wallet' } : null,
                 !isAnon && u.username ? { id: 'ov-profile', label: 'Profile', drawn: navIcon('fa-id-card'), href: `https://openvibe.network/@${encodeURIComponent(u.username)}` } : null,
             ].filter(Boolean));
+            _own = places.filter((p) => !/^ov-(hi|no|as|wo|do|wa|pr)/.test(p.id || ''));
             const ranked = byUse(places), grid = ranked.slice(0, 8), more = ranked.slice(8);
             const others = otherAccounts.filter(a => switcher || !a.is_anon);
             const iconBtn = (cls, drawn, label, extra) => `<button type="button" class="ud-ib${cls}" title="${label}" aria-label="${label}"${extra || ''}><span class="icon">${drawn}</span></button>`;
@@ -2326,8 +2325,7 @@
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
                 dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); openDock(t); } : null,
-                // The account's own block (who you are, your accounts, sign out, this site's items): the You tab hosts it.
-                account: (host) => { if (!_accountEl || !host) return false; host.appendChild(_accountEl); loadWallet(_accountEl); loadOvIcons(_accountEl); return true; },
+                me: _accountEl ? { add: _config.accounts === false ? '' : addAccountHref(), out: () => { const b = _accountEl.querySelector('#openvibe-logout-btn'); if (b) b.click(); }, own: _own } : null,
                 onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
             const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
         };
