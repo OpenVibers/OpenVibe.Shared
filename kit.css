@@ -305,14 +305,18 @@ div.ovk-set-row { cursor: default; }
 .ovk-empty > .ovk-i { width: 28px; height: 28px; }
 .ovk-empty.ovk-empty p { margin: 0; max-width: 46ch; }
 .ovk-empty .ovk-empty-title { color: var(--ovk-text); font-weight: 750; }
-.ovk-notice { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 10px 14px; border-radius: calc(var(--ov-radius-1) + 2px); border: 1px solid var(--ovk-line); background: var(--ovk-panel); color: var(--ovk-text); font-size: .92rem; }
-.ovk-notice > .ovk-i { margin-top: 2px; }
-.ovk-notice--ok { border-color: color-mix(in srgb, var(--ovk-ok) 45%, transparent); }
-.ovk-notice--ok > .ovk-i { color: var(--ovk-ok-text); }
-.ovk-notice--error { border-color: color-mix(in srgb, var(--ovk-bad) 50%, transparent); }
-.ovk-notice--error > .ovk-i { color: var(--ovk-bad-text); }
-.ovk-notice--warn > .ovk-i { color: var(--ovk-warn-text); }
-.ovk-notice--info > .ovk-i { color: var(--ovk-accent); }
+/* A tone is a lean and a glow, never a coloured bar (4.196.0; the owner, 2026-11-10: "instead of just like this red and
+   crappy border … shadow, glow … something nice. Also add some icons"). A notice leans toward its tone from the side its
+   icon is on, carries a hairline tinted with it and a soft glow in it; its icon sits in a round chip of the tone. The same
+   three properties are a class of their own (.ovk-tone, with data-tone) for a card, a toast or a row that must say
+   "good", "careful" or "wrong" without a stripe. */
+.ovk-notice, .ovk-tone { --ovk-tone: var(--ovk-accent); --ovk-tone-text: var(--ovk-accent); border: 1px solid color-mix(in srgb, var(--ovk-tone) 32%, var(--ovk-line)); background: linear-gradient(100deg, color-mix(in srgb, var(--ovk-tone) 13%, var(--ovk-panel)) 0, var(--ovk-panel) 58%); box-shadow: 0 12px 28px -20px var(--ovk-tone); }
+.ovk-notice--ok, .ovk-tone[data-tone="good"] { --ovk-tone: var(--ovk-ok); --ovk-tone-text: var(--ovk-ok-text); }
+.ovk-notice--error, .ovk-tone[data-tone="alert"] { --ovk-tone: var(--ovk-bad); --ovk-tone-text: var(--ovk-bad-text); }
+.ovk-notice--warn, .ovk-tone[data-tone="warning"] { --ovk-tone: var(--ovk-warn); --ovk-tone-text: var(--ovk-warn-text); }
+.ovk-notice { display: flex; align-items: flex-start; gap: 11px; margin: 0 0 12px; padding: 10px 14px 10px 10px; border-radius: calc(var(--ov-radius-1) + 4px); color: var(--ovk-text); font-size: .92rem; }
+.ovk-notice > .ovk-i { flex: none; box-sizing: border-box; width: 26px; height: 26px; margin: -2px 0; padding: 5px; border-radius: 50%; background: color-mix(in srgb, var(--ovk-tone) 20%, transparent); color: var(--ovk-tone-text); }
+.ovk-notice > span { align-self: center; min-width: 0; }
 .ovk-snip { position: relative; }
 .ovk-snip > .ovk-icon-btn { position: absolute; top: 6px; right: 6px; z-index: 1; width: 34px; height: 34px; background: var(--ovk-panel); border-color: var(--ovk-line); }
 .ovk-snip > pre { max-height: 50vh; margin: 0 0 10px; padding: 12px 48px 12px 12px; overflow: auto; border-radius: var(--ov-radius-1); border: 1px solid var(--ovk-line); background: var(--ovk-input); color: var(--ovk-text); font-size: .84rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }

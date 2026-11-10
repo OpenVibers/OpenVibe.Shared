@@ -1,5 +1,39 @@
 # Changelog
 
+## 4.196.0 — 2026-11-10
+
+**Your Actor in the Dock, redrawn: one row and one line to type in. And a tone is a lean and a glow, never a bar.** From
+the owner's notes of 2026-11-10.
+
+- **The Dock's Actor block (`dock-actor.js`).** The owner, on the Agents tab on a phone: "improve the design and layout
+  so it's more intuitive, minimalist, elegant". It was a row with two outlined pills ("Resume", "Open"), a grey box
+  that said "Paused" a second time beside a green dot, the model and the cap in a sentence, a field with a "Send" pill
+  and a "Read recent history" pill. Now:
+  - **Who, in one row.** The face wears a ring in the colour of its state (green and breathing while it works, amber
+    while it waits for you, dimmed when paused), then the name and one quiet line: the state, and today's spend against
+    the cap ("Paused · $0.00 of $1.00 today"; the model is that figure's tooltip). The row is the link to the Actor's
+    page, so "Open" is gone.
+  - **One action, the one that fits.** "Resume" in the accent when the Actor is paused; a quiet pause button when it
+    runs. What happened is said in one line under the field ("Resumed.", "Sent. Your Actor reads it at its next step.",
+    or why it did not go through), in place of notes piling up at the bottom.
+  - **What it does, only when there is something to say.** The step it is on (a soft pulse), what it is looking at, the
+    steps before it and what comes next ("Next: … , in 40 min"), as a short line of dots. A paused Actor shows none of
+    it, and the state words Actor sends as a step ("Paused", "Resting until the next goal is due.") are no longer
+    drawn as one.
+  - **What it asks you** sits in the warning tone (a lean and a glow), with its own buttons: the first in the accent,
+    "Not now" as plain words, and "1 more on your Actor's page" as a link.
+  - **One field to tell it something**, with send inside the field; it lights up when there are words in it.
+  - **Built once.** A refresh (every 15 seconds) used to rebuild the whole block and wiped the line being typed; now it
+    repaints the row, the steps and the ask only when the answer changed, and never touches the field.
+  - "Recent history" is a quiet text button; the button that opens the list closes it, one line per entry.
+- **The agent view (`dock-agent.js`): no black box for a session that left no picture.** A session that ended with no
+  still drew a 16:9 black stage saying "Nothing to show", which pushed the runs off a phone's screen. The stage is
+  left out; the line under it still says what it was and how long it worked.
+- **The kit's tone (`kit.css`).** The owner, on a notice with a red bar down its side: "instead of just like this red
+  and crappy border … blur maybe effect or shadow, glow". Notices and `.ovk-tone[data-tone=good|alert|warning]` take a
+  tinted hairline, a gradient that leans from the corner, a soft glow under them and a round icon chip; no side stripe
+  anywhere.
+
 ## 4.195.0 — 2026-11-10
 
 **The You tab gets a row of its own, and the menu grows out of the button that was pressed.** From the owner's notes of
