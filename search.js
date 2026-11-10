@@ -1691,8 +1691,10 @@
         const jump = opts.tab === 'tools' || opts.tab === 'sites' ? opts.tab : '';
         if (jump) setTimeout(() => { const t = listEl.querySelector(`[data-sec="${jump === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
-    let pushed = false, popping = false, surface = null;
-    if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
+    // ownBack: the history.back() a close made itself. Its popstate arrives later, and must not close a menu opened
+    // again in between (a quick close-and-reopen on the picture lost the second open, 2026-11-10).
+    let pushed = false, popping = false, surface = null, ownBack = false;
+    if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (ownBack) { ownBack = false; return; } if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
         const backTo = flyFrom; flyFrom = null;
@@ -1702,7 +1704,7 @@
         if (!el || closing) return;
         if (navigating) pushed = false;
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
-        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) history.back(); } catch { /* */ } }
+        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; history.back(); } } catch { /* */ } }
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
         if (phoneSheet() && !calm() && el.classList.contains('is-open')) {
             el.classList.add('is-closing');

@@ -28,6 +28,8 @@
 - **The site's name, highlighted (`navbar.js`, ask 342).** The name that opens its pages gets its highlight as a spread
   shadow with room around it (no added width, so the name still reads whole at 360 px): a faint tint on hover; open, a
   deeper tint with a hairline ring that comes up on a small spring. Motion Off keeps it still (the theme loader's rule).
+- **A quick close and reopen keeps the menu open (`search.js`).** Closing the menu steps back in history; that step's
+  event arrives later and used to close a menu opened again in between. The menu now ignores the one step it took itself.
 - Budget: `dock.js` 20.43 KB brotli (budget 20.45 KB, was 20.30 KB) for the "Open in Chat" icon in the always-loaded
   Dock; the Vibe-only button rules stay in `dock-vibe.js`.
 
