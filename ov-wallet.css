@@ -6,7 +6,31 @@
 @media(max-width:600px){.ov-wallet{width:100%;max-width:100%;max-height:94dvh;margin:auto 0 0;border-radius:22px 22px 0 0;border-bottom:0}.ov-wallet-head{padding:18px 18px 14px}.ov-wallet-body{padding:16px 18px 28px;max-height:calc(94dvh - 94px);scrollbar-gutter:auto}.ov-wallet-eyebrow{font-size:12px;letter-spacing:1px}.ov-wallet-balances{grid-template-columns:1fr;gap:9px}.ov-wallet-balance{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:12px 14px}.ov-wallet-value{grid-column:1;grid-row:2;font-size:26px}.ov-wallet-purpose{grid-column:1/-1;grid-row:3;font-size:12px}.ov-wallet-balance>.ov-wallet-button{grid-column:2;grid-row:1/3;align-self:center;max-width:132px}.ov-wallet-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ov-wallet-preview{height:92px}.ov-wallet-item .ov-wallet-button{padding:9px 6px;font-size:12px}.ov-wallet-section{margin-top:24px}.ov-wallet-event{gap:8px}.ov-wallet-event>span{max-width:44%;text-align:right;overflow-wrap:anywhere}}
 /* The close ring only for the keyboard (a tap that opens the sheet shows no ring), in the accent like every focus. */
 .ov-wallet-close:focus{outline:none}.ov-wallet-close:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}
-/* The drawn icons (4.190.0): no disc behind them; each lands with a small hop when the sheet opens. */
-.ov-wallet-symbol.is-drawn{width:30px;height:30px;border-radius:0;background:none;filter:drop-shadow(0 2px 4px color-mix(in srgb,var(--pd,#000) 45%,transparent));animation:ov-wallet-coin .5s cubic-bezier(.2,1.5,.4,1) both}
-.ov-wallet-balance:nth-child(2) .ov-wallet-symbol.is-drawn{animation-delay:.06s}.ov-wallet-balance:nth-child(3) .ov-wallet-symbol.is-drawn{animation-delay:.12s}
-@keyframes ov-wallet-coin{from{opacity:0;transform:translateY(calc(8px*var(--ov-move,1))) scale(.6) rotate(calc(-18deg*var(--ov-move,1)))}}
+/* Each balance in its currency's colour (4.190.0; --pc comes from purse.js through data-purse): a tinted card, the icon
+   in a tile, a light that crosses the card once as the sheet opens, and the action in the same colour. */
+.ov-wallet-balance[data-purse]{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--pc) 30%,var(--wallet-line));background:radial-gradient(130% 150% at 0% 0%,color-mix(in srgb,var(--pc) 17%,transparent),transparent 60%),var(--wallet-card);transition:border-color .3s,box-shadow .3s;animation:ov-wallet-in .45s cubic-bezier(.2,.9,.3,1.1) backwards}
+.ov-wallet-balance[data-purse]:nth-child(2){animation-delay:.06s}.ov-wallet-balance[data-purse]:nth-child(3){animation-delay:.12s}
+@keyframes ov-wallet-in{from{opacity:0;transform:translateY(calc(10px*var(--ov-move,1))) scale(.97)}}
+.ov-wallet-balance[data-purse]::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 38%,color-mix(in srgb,var(--pc) 20%,transparent) 50%,transparent 62%);transform:translateX(-110%);animation:ov-wallet-sheen 1.1s ease-out .3s both}
+.ov-wallet-balance[data-purse]:nth-child(2)::after{animation-delay:.42s}.ov-wallet-balance[data-purse]:nth-child(3)::after{animation-delay:.54s}
+@keyframes ov-wallet-sheen{to{transform:translateX(110%)}}
+.ov-wallet-balance[data-purse]:is(.is-gain,.is-loss){border-color:color-mix(in srgb,var(--pc) 70%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 16%,transparent)}
+.ov-wallet-symbol.is-drawn{width:44px;height:44px;border-radius:14px;color:inherit;background:color-mix(in srgb,var(--pc) 16%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 32%,transparent)}
+.ov-wallet-symbol.is-drawn svg{width:28px;height:28px;filter:drop-shadow(0 2px 3px color-mix(in srgb,var(--pd,#000) 50%,transparent))}
+.ov-wallet-balance[data-purse]:hover .ov-wallet-symbol svg{animation:ov-wallet-nod .5s cubic-bezier(.3,1.5,.4,1)}
+@keyframes ov-wallet-nod{40%{transform:translateY(calc(-3px*var(--ov-move,1))) rotate(calc(-8deg*var(--ov-move,1))) scale(1.08)}}
+.ov-wallet-balance[data-purse] .ov-wallet-balance-title{gap:12px}
+.ov-wallet-balance[data-purse] .ov-wallet-balance-title h3{font-size:14px;color:var(--wallet-muted);font-weight:650}
+.ov-wallet-balance[data-purse] .ov-wallet-value{font-variant-numeric:tabular-nums}
+.ov-wallet-balance[data-purse] .ov-wallet-button{position:relative;z-index:1;border-radius:999px;border-color:color-mix(in srgb,var(--pc) 48%,transparent);background:color-mix(in srgb,var(--pc) 14%,transparent);transition:background-color .15s,transform .12s}
+.ov-wallet-balance[data-purse] .ov-wallet-button:hover:not(:disabled){background:color-mix(in srgb,var(--pc) 26%,transparent)}
+.ov-wallet-balance[data-purse] .ov-wallet-button:active:not(:disabled){transform:scale(.96)}
+/* On a phone: the tile, then the name over the number, and the action at the right; what it is for under them. */
+@media(max-width:600px){.ov-wallet-balance[data-purse]{grid-template-columns:auto minmax(0,1fr) auto;gap:2px 12px;padding:12px 14px}
+.ov-wallet-balance[data-purse] .ov-wallet-balance-title{display:contents}
+.ov-wallet-balance[data-purse] .ov-wallet-symbol{grid-column:1;grid-row:1/3;align-self:center}
+.ov-wallet-balance[data-purse] .ov-wallet-balance-title h3{grid-column:2;grid-row:1;align-self:end;font-size:13px}
+.ov-wallet-balance[data-purse] .ov-wallet-value{grid-column:2;grid-row:2;font-size:25px}
+.ov-wallet-balance[data-purse]>.ov-wallet-button{grid-column:3;grid-row:1/3}
+.ov-wallet-balance[data-purse] .ov-wallet-purpose{grid-column:1/-1;grid-row:3;margin-top:6px}}
+html[data-ov-motion=off] .ov-wallet-balance[data-purse],html[data-ov-motion=off] .ov-wallet-balance[data-purse]::after{animation:none}
