@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.188.0 — 2026-11-10
+
+- **The footer strip reads one endpoint.** `footer.js` now fills the strip from `openvibe.network/api/frame/online?site=<this site>` (owner, 2026-11-10): how many people were on the network in the last thirty minutes, the members by name and picture only when their presence lets them be seen (a disclosure the page styles as a sheet), guests as a count and nothing more, the live channels, a few counts that open what they count, and the site's own items (a label, a glyph name, a number or a line). Live shows only while somebody is live. The old facts — watching, sites and page views this week — are kept and now come from the same read; `/api/frame/pulse` is the fallback when the new read does not answer, and keeps its "Nobody live right now" line. Every string is capped and every link must be https before it reaches the page; a count's or an item's glyph is drawn from the shared set. No new CSS: the strip is plain kit markup (`ovk-btn`, `ovk-muted`) for the page to design.
+- **The page-view beacon says whether the browser is signed in, and nothing else.** `navbar.js` sends `?in=1` on `POST /api/frame/hit` for a signed-in person, so Network counts them from their presence heartbeat and leaves them out of the guest count; the beacon waits for the shared sign-in state (or 2.5 s) so a page that draws before it answers is not counted as a guest. Still one request per page view, and still no identity in it.
+
 ## 4.187.0 — 2026-11-10
 
 **The bar the owner chose.** 2026-11-10, in the Arena: "here's the new menu button and the logo … these two, but
