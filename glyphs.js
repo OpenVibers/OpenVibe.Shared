@@ -230,6 +230,18 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, fifth batch: a laughing face, a cookie, a radio, a toolbox, a task, two windows, captions, an
+        // eraser, a seedling and a hammer.
+        laugh: '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM7 8.1l3.4 1.7-3.4 1.7-.67-1.34.72-.36-.72-.36ZM17 8.1l-3.4 1.7 3.4 1.7.67-1.34-.72-.36.72-.36ZM7.6 13.4h8.8a4.4 4.4 0 0 1-8.8 0Z"/>',
+        cookie: '<path fill-rule="evenodd" d="M20.5 12.5a8.5 8.5 0 1 1-9-9 3 3 0 0 0 4 3.6 3 3 0 0 0 5 5.4ZM7.3 9.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM10.8 14a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM6.8 15.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM14.3 15.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0Z"/>',
+        radio: '<path fill-rule="evenodd" d="M5 7.4h14a2.6 2.6 0 0 1 2.6 2.6v8a2.6 2.6 0 0 1-2.6 2.6H5A2.6 2.6 0 0 1 2.4 18v-8A2.6 2.6 0 0 1 5 7.4ZM12.9 14a2.6 2.6 0 1 0 5.2 0a2.6 2.6 0 1 0-5.2 0ZM6 11.3v2.1h4.8v-2.1ZM6 14.8v2.1h4.8v-2.1Z"/><path class="ln" d="M7 7.4 17 3.5"/>',
+        toolbox: '<path d="M2.4 10a2.6 2.6 0 0 1 2.6-2.6h14a2.6 2.6 0 0 1 2.6 2.6v2.3H2.4ZM2.4 13.7h4.8v1.5h1.6v-1.5h6.4v1.5h1.6v-1.5h4.8V18a2.6 2.6 0 0 1-2.6 2.6H5A2.6 2.6 0 0 1 2.4 18Z"/><path class="ln" d="M9 7.4V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5v1.9"/>',
+        task: '<path fill-rule="evenodd" d="M7 3.4h10a3.6 3.6 0 0 1 3.6 3.6v10a3.6 3.6 0 0 1-3.6 3.6H7A3.6 3.6 0 0 1 3.4 17V7A3.6 3.6 0 0 1 7 3.4ZM6.9 12.1l4.2 4.2 6.1-7.3-1.7-1.4-4.6 5.5-2.4-2.4Z"/>',
+        'window-restore': '<path d="M2.9 10.5a2.6 2.6 0 0 1 2.6-2.6h8a2.6 2.6 0 0 1 2.6 2.6v7a2.6 2.6 0 0 1-2.6 2.6h-8a2.6 2.6 0 0 1-2.6-2.6ZM7.9 6.6V6.5a2.6 2.6 0 0 1 2.6-2.6h8a2.6 2.6 0 0 1 2.6 2.6v7a2.6 2.6 0 0 1-2.6 2.6h-1.1v-5.6a3.9 3.9 0 0 0-3.9-3.9Z"/>',
+        cc: '<path fill-rule="evenodd" d="M5.5 4.4h13a3.1 3.1 0 0 1 3.1 3.1v9a3.1 3.1 0 0 1-3.1 3.1h-13a3.1 3.1 0 0 1-3.1-3.1v-9a3.1 3.1 0 0 1 3.1-3.1ZM10.82 9.47A3.3 3.3 0 1 0 10.82 14.53L9.54 13A1.3 1.3 0 1 1 9.54 11ZM17.62 9.47A3.3 3.3 0 1 0 17.62 14.53L16.34 13A1.3 1.3 0 1 1 16.34 11Z"/>',
+        eraser: '<path d="M14 3.9l6.1 6.1-5.2 5.2-6.1-6.1ZM7.4 10l6.2 6.2-3.2 3.2H6.1l-2.9-2.9a1.6 1.6 0 0 1 0-2.3Z"/><path class="ln" d="M13 19.4h7"/>',
+        seedling: '<path d="M12.4 11.4C12.4 7 9.6 4 4.5 4c0 4.6 2.8 7.4 7.9 7.4ZM11.6 13.9c0-4.4 2.8-7.4 7.9-7.4 0 4.6-2.8 7.4-7.9 7.4Z"/><path class="ln" d="M12 20.5V13"/>',
+        hammer: '<path d="M13 2.7l7.3 7.3-3.6 3.6-7.3-7.3ZM12.9 8.9 3.9 17.9a2 2 0 0 0 2.8 2.8l9-9Z"/>',
         // 4.182.0, the "-off" family: the shape is cut along the slash (a band a little wider than the line), so the
         // slash stays a line across it, as eye-off and mic-off already do.
         'chat-off': '<path d="M7.1 4.4H19a1.6 1.6 0 0 1 1.6 1.6v9a1.6 1.6 0 0 1-1.3 1.6ZM3.4 6.1 13.9 16.6H8.3l-4.9 4.6Z"/><path class="ln" d="m4 4 16 16"/>',
