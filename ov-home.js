@@ -85,7 +85,7 @@
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1); }
 .ovh-recent .ovh-ic { width: 48px; height: 48px; border-radius: 15px; }
 /* App icons: the ring goes, the glyph fills the tile, each app keeps its own hue (11-09). */
-.ovh-grid .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
+.ovh-grid .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic, .ovh-key .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
 .ovh-ic .ovi-ring, .ovh-ic .ovi-bg, .ovh-ic .ovi-comet, .ovh-ic .ovi-prog { display: none; }
 .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 90% 82%); color: hsl(var(--ovh-h, 215) 90% 82%); }
 :root[data-theme="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
@@ -184,18 +184,20 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-lives a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--live, #ef4444) 12%, transparent); color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; }
 .ovh-lives a::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #ef4444); }
 
-/* You (11-09, the owner: "the U tab still sucks"): you on top, with Display and Settings beside your name; what you were
-   doing as a rail of cards; what you use most as one bar; then your home. */
-.ovh-me { display: flex; align-items: center; gap: 10px; margin: 4px 4px 8px; padding: 10px 10px 10px 12px; border-radius: 20px;
+/* You (11-09, the owner: "the U tab still sucks"; 11-10: "Your home should be above Jump back in… the thing at the top
+   a little more compact… links to whatever the user uses the most"): you on top in one short bar, with Display and
+   Settings beside your name; then your home; then what you use most, as shortcuts under one bar; then where you were
+   last, as a rail of cards. */
+.ovh-me { display: flex; align-items: center; gap: 6px; margin: 2px 4px 6px; padding: 4px 4px 4px 8px; border-radius: 16px;
     background: radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent, #3b82f6) 20%, transparent), transparent 60%), color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 18%, var(--border, rgba(255,255,255,.08))); }
-.ovh-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 48px; border-radius: 14px; color: inherit; text-decoration: none; }
-.ovh-av { position: relative; flex: none; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 50%, #a855f7)); color: #fff; font-size: 19px; font-weight: 800; }
+.ovh-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 44px; border-radius: 12px; color: inherit; text-decoration: none; }
+.ovh-av { position: relative; flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 50%, #a855f7)); color: #fff; font-size: 15px; font-weight: 800; }
 .ovh-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-.ovh-av::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 12px; height: 12px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 3px var(--bg-secondary, #141a24); }
-.ovh-who-txt { min-width: 0; display: grid; gap: 2px; }
-.ovh-who-txt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16.5px; font-weight: 800; letter-spacing: -.01em; }
-.ovh-who-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovh-av::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #141a24); }
+.ovh-who-txt { min-width: 0; display: grid; gap: 0; line-height: 1.25; }
+.ovh-who-txt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+.ovh-who-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-secondary, #a8b3c4); }
 .ovh-ib { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; text-decoration: none;
     background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); transition: background .16s, color .16s, transform .16s cubic-bezier(.2,1.4,.4,1); }
 .ovh-ib svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
@@ -221,14 +223,19 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: var(--live, #ef4444); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
 @media (hover: hover) { .ovh-card:hover { background: var(--bg-hover, rgba(255,255,255,.08)); } }
 @media (min-width: 861px) { .ovh-card { width: 232px; } }
-.ovh-use { margin: 0 4px 8px; padding: 12px 12px 6px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
+.ovh-use { margin: 0 4px 8px; padding: 12px 12px 4px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
 .ovh-use-bar { display: flex; gap: 3px; height: 12px; border-radius: 999px; overflow: hidden; }
 .ovh-use-bar > span { flex: var(--n, 1) 1 0; min-width: 8px; background: var(--c, #3b82f6); transform-origin: left center; animation: ovh-grow .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 60ms); }
-.ovh-use-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0 4px; margin: 6px -6px 0; }
-.ovh-key { display: flex; align-items: center; gap: 7px; min-width: 0; min-height: 38px; padding: 0 8px; border-radius: 10px; color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; white-space: nowrap; }
-.ovh-key::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--c, #3b82f6); }
-.ovh-key small { color: var(--text-muted, #93a0b4); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
-@media (hover: hover) { .ovh-key:hover { background: var(--bg-hover, rgba(255,255,255,.07)); } }
+/* The bar's key is the apps themselves: each one its icon (a way in, not a legend), its name, and how often, with the
+   bar's own colour beside the number. Five across, as the home grid is. */
+.ovh-use-apps { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; margin: 8px -8px 0; }
+.ovh-key { display: grid; justify-items: center; align-content: start; gap: 3px; min-width: 0; padding: 6px 0; border-radius: 14px; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+.ovh-key .ovh-ic { width: 44px; height: 44px; border-radius: 14px; transition: transform .16s cubic-bezier(.2,1.4,.4,1); }
+.ovh-key b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 650; letter-spacing: -.01em; color: var(--text-secondary, #a8b3c4); }
+.ovh-key small { display: inline-flex; align-items: center; gap: 4px; color: var(--text-muted, #93a0b4); font-size: 11.5px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.ovh-key small::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--c, #3b82f6); }
+.ovh-key:active .ovh-ic { transform: scale(calc(1 - .08 * var(--ov-move, 1))); }
+@media (hover: hover) { .ovh-key:hover { background: var(--bg-hover, rgba(255,255,255,.07)); } .ovh-key:hover b { color: var(--text-primary, #e8ecf3); } }
 .ovh-sec small { flex: none; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-muted, #93a0b4); }
 @keyframes ovh-rise { from { opacity: 0; transform: translateY(6px) scale(.98); } }
 @keyframes ovh-grow { from { transform: scaleX(0); } }
@@ -419,6 +426,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             if (!items.length) return null;
             const wrap = h('div');
             const head = sec('Jump back in');
+            head.append(h('small', '', 'where you were last'));
             wrap.append(head);
             const rail = h('div', 'ovh-rail'); rail.setAttribute('role', 'list'); rail.setAttribute('aria-label', 'Jump back in');
             items.forEach((x, i) => {
@@ -441,7 +449,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             return wrap;
         }
 
-        /** Most used: the pages you opened, by site, as one bar and its key. */
+        /** Most used: the pages you opened, by site, as one bar; its key is the apps themselves, each a way in. */
         function usage() {
             const rows = (o.usage || []).map((u) => ({ a: L.byId.get(u.id), n: u.count })).filter((r) => r.a && r.n > 0).sort((x, y) => y.n - x.n).slice(0, 5);
             if (rows.length < 2) return null;
@@ -454,13 +462,16 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const box = h('div', 'ovh-use');
             const bar = h('div', 'ovh-use-bar'); bar.setAttribute('role', 'img');
             bar.setAttribute('aria-label', rows.map((r) => `${r.a.title} ${r.n}`).join(', '));
-            const keys = h('div', 'ovh-use-keys');
+            const keys = h('div', 'ovh-use-apps'); keys.setAttribute('role', 'list');
             const CHART = ['#3b82f6', '#a855f7', '#f59e0b', '#14b8a6', '#ec4899'];   // five that tell apart in dark and light
             rows.forEach((r, i) => {
                 const c = CHART[i % CHART.length];
                 const seg = h('span'); seg.style.setProperty('--n', String(r.n)); seg.style.setProperty('--c', c); seg.style.setProperty('--i', String(i)); bar.append(seg);
-                const k = h('a', 'ovh-key', r.a.title); k.href = safe(r.a.url) || '#'; k.style.setProperty('--c', c);
-                k.append(h('small', '', num(r.n)));
+                const k = h('a', 'ovh-key'); k.href = safe(r.a.url) || '#'; k.style.setProperty('--c', c); k.setAttribute('role', 'listitem');
+                k.setAttribute('aria-label', `${r.a.title}, opened ${num(r.n)} ${r.n === 1 ? 'time' : 'times'}`);
+                const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(r.a.site || r.a.id))); ic.append(siteIcon(r.a.site, 44));
+                k.append(ic, h('b', '', r.a.title), h('small', '', num(r.n)));
+                k.addEventListener('click', () => { if (o.onOpen) o.onOpen(r.a); });
                 keys.append(k);
             });
             box.append(bar, keys);
@@ -477,7 +488,6 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const calm = (x) => { x.classList.add('ovh-calm'); x.inert = state.edit; return x; };
             if (signedIn(o)) el.append(calm(me()));
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
-            { const b = backRail(); if (b) el.append(calm(b)); const u = usage(); if (u) el.append(calm(u)); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
             const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
             edit.type = 'button';
@@ -497,6 +507,8 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const all = h('button', 'ovh-all', `All apps (${total})`); all.type = 'button';
             all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
             el.append(all);
+            // Under your home: what you use most (shortcuts), then where you were last (history).
+            { const u = usage(); if (u) el.append(calm(u)); const b = backRail(); if (b) el.append(calm(b)); }
             icons();
             if (signedIn(o) && actorBox && !actorBox.childNodes.length) actor(actorBox, o);
         }

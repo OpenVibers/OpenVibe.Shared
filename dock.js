@@ -193,6 +193,33 @@
             .ovdk-orbx:active .ovdk-ox { transform: rotate(270deg) scale(.7); }
             @keyframes ovdk-ox-in { from { transform: rotate(45deg) scale(.8); } }
             @keyframes ovdk-o1-out { from { opacity: 1; transform: scale(1); } }
+            /* A phone's sheet opens out of the navbar's menu button, and that button is its close button (the owner,
+               2026-11-10: "that close button should, instead of coming from that menu, fade and have an animation effect
+               from the top right, the menu button that already exists"). The sheet fades and grows from the orb's centre;
+               its close orb starts on the navbar's orb, as its nine dots, and settles into its x in the header; the
+               navbar's own orb makes the same move underneath, so it is one button the whole way. Closing runs it back. */
+            .ovdk.from-orb { transform-origin: var(--ovdk-ox, 100%) var(--ovdk-oy, 0%) !important; }
+            .ovdk.from-orb.is-in { animation: ovdk-from-orb .3s cubic-bezier(.2,.9,.25,1) both; }
+            .ovdk.from-orb.is-out { animation: ovdk-to-orb .24s ease both; pointer-events: none; }
+            @keyframes ovdk-from-orb { from { opacity: 0; transform: scale(calc(1 - .06 * var(--ov-move, 1))); } }
+            @keyframes ovdk-to-orb { to { opacity: 0; transform: scale(calc(1 - .04 * var(--ov-move, 1))); } }
+            .ovdk.from-orb.is-in .ovdk-ox, .ovdk.from-orb.is-in .ovdk-ox .ovdk-o1 { animation: none; }
+            .ovdk.from-orb .ovdk-orbx { color: var(--text-primary, #ececf1); }
+            .ovdk.from-orb .ovdk-orbx svg { transition: transform .42s cubic-bezier(.2, 1.1, .3, 1); }
+            .ovdk.from-orb .ovdk-ox circle { transition: fill .3s, opacity .3s, transform .35s cubic-bezier(.2, 1.4, .3, 1); }
+            .ovdk.from-orb .ovdk-ox :is(.ovdk-o0, .ovdk-o2) { fill: var(--accent-light, var(--accent, #60a5fa)); }
+            /* The starting pose is put on at once (is-set), never animated into: it is then let go, and that is the move. */
+            .ovdk .ovdk-orbx.is-set, .ovdk .ovdk-orbx.is-set * { transition: none !important; }
+            .ovdk.from-orb .ovdk-orbx.is-from svg { transform: translate(var(--orb-dx, 0px), var(--orb-dy, 0px)) scale(var(--orb-s, 1)); }
+            .ovdk.from-orb .ovdk-orbx.is-from .ovdk-ox { transform: rotate(45deg) scale(.8); }
+            .ovdk.from-orb .ovdk-orbx.is-from .ovdk-ox circle { fill: var(--text-secondary, #a8b3c4); opacity: 1; transform: none; }
+            .ovdk.from-orb .ovdk-orbx.is-from .ovdk-ox .ovdk-o2 { opacity: .6; }
+            .ovdk.from-orb .ovdk-orbx.is-from .ovdk-ox .ovdk-o0 { fill: var(--accent-light, var(--accent, #60a5fa)); }
+            .openvibe-navbar .ovnav-orb.is-dock { transform: translate(var(--dock-dx, 0px), var(--dock-dy, 0px)) scale(var(--dock-s, 1)); color: var(--text-primary, #e6edf7); }
+            .ovnav-orb.is-dock .ovo-g { transform: rotate(180deg) scale(.86); transition-duration: .45s; }
+            .ovnav-orb.is-dock .ovo-d { animation: none; }
+            .ovnav-orb.is-dock .ovo-r1 { opacity: 0; transform: scale(0); }
+            .ovnav-orb.is-dock :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; }
             .ovdk-more { position: absolute; z-index: 6; right: 8px; top: calc(100% - 4px); width: min(320px, calc(100% - 16px)); display: grid; gap: 2px; padding: 6px; border-radius: 16px;
                 border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55); cursor: default; }
             .ovdk-more[hidden] { display: none; }
@@ -944,6 +971,41 @@
     // Ask your agent (4.135.0): Vibe opens with the question in its box, unsent.
     function ask({ text = '' } = {}, n = 0) { if (!n) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!(el && !el.hidden); }
+    // ── A phone's sheet and the navbar's menu button are one thing (see the styles: .ovdk.from-orb) ──
+    let orbLink = null, closing = 0;
+    /** The navbar's menu button, when it is the orb at the top right of a phone's bar. */
+    function navOrb() {
+        if (!phone()) return null;
+        const list = document.querySelectorAll('.openvibe-navbar .ovnav-orb');
+        for (let i = 0; i < list.length; i++) { const r = list[i].getBoundingClientRect(); if (r.width && r.left > root.innerWidth / 2 && r.top < 120 && r.bottom > 0) return list[i]; }
+        return null;
+    }
+    /** Called as the sheet is shown, before its entrance: start the close orb on the navbar's orb, then let both go. */
+    function fromOrb() {
+        unlinkOrb();
+        const nav = navOrb(), mine = el.querySelector('.ovdk-orbx'), mineSvg = mine && mine.querySelector('svg');
+        if (!nav || !mineSvg || reduced() || popped) return;
+        const a = (nav.querySelector('svg') || nav).getBoundingClientRect(), b = mineSvg.getBoundingClientRect(), box = el.getBoundingClientRect();
+        if (!a.width || !b.width) return;
+        const ax = a.left + a.width / 2, ay = a.top + a.height / 2, bx = b.left + b.width / 2, by = b.top + b.height / 2, s = a.width / b.width;
+        el.style.setProperty('--ovdk-ox', `${Math.round(ax - box.left)}px`); el.style.setProperty('--ovdk-oy', `${Math.round(ay - box.top)}px`);
+        mine.style.setProperty('--orb-dx', `${(ax - bx).toFixed(1)}px`); mine.style.setProperty('--orb-dy', `${(ay - by).toFixed(1)}px`); mine.style.setProperty('--orb-s', s.toFixed(3));
+        nav.style.setProperty('--dock-dx', `${(bx - ax).toFixed(1)}px`); nav.style.setProperty('--dock-dy', `${(by - ay).toFixed(1)}px`); nav.style.setProperty('--dock-s', (1 / s).toFixed(3));
+        el.classList.add('from-orb'); mine.classList.add('is-set', 'is-from');
+        orbLink = { nav, mine };
+        void mine.offsetWidth;            // the starting pose, with no transition into it
+        mine.classList.remove('is-set');
+        void mine.offsetWidth;
+        nav.style.transition = 'transform .42s cubic-bezier(.2, 1.1, .3, 1), color .3s';
+        root.requestAnimationFrame(() => { if (!orbLink || orbLink.mine !== mine) return; mine.classList.remove('is-from'); nav.classList.add('is-dock'); });
+    }
+    function unlinkOrb() {
+        if (closing) { clearTimeout(closing); closing = 0; }
+        if (el) el.classList.remove('from-orb', 'is-out');
+        if (!orbLink) return;
+        orbLink.nav.classList.remove('is-dock'); orbLink.nav.style.transition = ''; orbLink.mine.classList.remove('is-from', 'is-set');
+        orbLink = null;
+    }
     function share({ text = '', title = '' } = {}) {
         const t = String(text || '').trim().slice(0, 4000);
         if (!t) return;
@@ -965,8 +1027,11 @@
         paintPin();
         paintPop();
         el.hidden = false;
-        el.classList.remove('is-in'); void el.offsetWidth; el.classList.add('is-in');
-        // On a computer it grows out of its pill (the navbar's shared motion); a phone's sheet rises as before.
+        el.classList.remove('is-in');
+        fromOrb();
+        void el.offsetWidth; el.classList.add('is-in');
+        // On a computer it grows out of its pill (the navbar's shared motion); a phone's sheet opens out of the navbar's
+        // menu button when the bar has one (fromOrb), and rises from the bottom when it does not.
         if (!phone() && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) root.OpenVibeNavbar.pop(el, document.getElementById('ovdk-pill'));
         if (phone()) {
             el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open');
@@ -979,6 +1044,19 @@
     }
     function close() {
         if (!isOpen()) return;
+        // The sheet folds back into the navbar's menu button: its x turns back into the dots and returns to the bar,
+        // then the sheet is gone and the button is where it always was.
+        if (orbLink && !closing && !popped && !reduced() && el.classList.contains('from-orb')) {
+            el.classList.remove('is-in'); el.classList.add('is-out');
+            orbLink.mine.classList.add('is-from'); orbLink.nav.classList.remove('is-dock');
+            closing = setTimeout(() => { closing = 0; shut(); }, 240);
+            return;
+        }
+        shut();
+    }
+    function shut() {
+        if (!isOpen()) return;
+        unlinkOrb();
         const wasPopped = popped;
         if (wasPopped) { popped = false; const w = pipWin; pipWin = null; pipClosing = true; try { if (w) w.close(); } catch { /* already gone */ } pipClosing = false; if (el.parentNode !== document.body) document.body.appendChild(el); }
         const inside = el.contains(document.activeElement);
