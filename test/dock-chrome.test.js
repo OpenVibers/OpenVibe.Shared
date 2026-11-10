@@ -428,8 +428,9 @@ async function drag(p, from, to) {
             await wait(300);
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'the opening tap does not close the sheet');
             await p.evaluate("document.body.click()");
-            await wait(150);
-            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), false, 'a later tap outside closes it');
+            // A phone's sheet folds back into the navbar's orb before it goes (4.185.0: 240 ms), so it is gone a moment
+            // after the tap, not in the same instant.
+            await until(p, "!document.querySelector('.ovdk:not([hidden])')", 'a later tap outside closes it');
             await share();
             await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar again');
             // Cancel: back to the list, nothing waiting.

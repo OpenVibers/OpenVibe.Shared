@@ -179,7 +179,7 @@ const server = http.createServer((req, res) => {
         await openTab(s, 'you');
         assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
         assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /Juniper.*Working.*Reading job posts/, 'it names the Actor, its state and its step');
-        // You on top: the name, Display (the Look panel) and Settings beside it; Jump back in as cards; Most used as one bar.
+        // You on top: the name, Display (the Look panel) and Settings beside it; then your home, Most used and Jump back in.
         assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-me .ovh-who-txt b').textContent`), 'Ada', 'your name on top');
         assert.ok(await s.evaluate(`!!document.querySelector('.ovh-me [data-ov-look-open]') && !!document.querySelector('.ovh-me a[href="https://openvibe.network/my"]')`), 'Display and Settings beside it');
         assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow')`), 'Display is not at the foot any more');
@@ -187,6 +187,16 @@ const server = http.createServer((req, res) => {
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-rail .ovh-card')].map((a) => a.getAttribute('href'))`), ['https://openvibe.live/ada', 'https://openvibe.pics/1']);
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].map((k) => k.textContent)`), ['Live5', 'Pics2'], 'Most used: pages opened per site');
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec a.ovh-link[href="https://openvibe.report/me"]') || {}).textContent`), 'Your stats', 'Most used links to your stats on Report');
+        // The owner, 2026-11-10: "Your home should be above Jump back in… the thing at the top a little more compact… links
+        // to whatever the user uses the most". Your home comes first, then what you use most, then where you were last;
+        // the bar with your name is short; each most-used app is a way in (its icon, a full touch target), not a legend.
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-sec > span')].map((x) => x.textContent)`), ['Your home', 'Most used', 'Jump back in'], 'your home, then most used, then where you were');
+        assert.ok(await s.evaluate(`document.querySelector('.ovh-me').getBoundingClientRect().height <= 56`), 'the bar with your name is short');
+        assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-me .ovh-ib')].every((b) => b.getBoundingClientRect().height >= 44)`), 'and its two buttons are still full touch targets');
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].map((k) => [k.getAttribute('href'), k.getAttribute('aria-label'), !!k.querySelector('.ovh-ic > *')].join('|'))`),
+            ['https://openvibe.live/|Live, opened 5 times|true', 'https://openvibe.pics/|Pics, opened 2 times|true'], 'each most-used app is a link with its icon and says how often');
+        assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].every((k) => { const r = k.getBoundingClientRect(); return r.height >= 44 && r.width >= 44; })`), 'each a full touch target');
+        assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-rail').parentElement.querySelector('.ovh-sec small') || {}).textContent`), 'where you were last', 'Jump back in says what it is');
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec:not(:first-child) span, .ovh-grid:not(.ovh-recent)') && [...document.querySelectorAll('.ovh-sec span')].map((x) => x.textContent).find((x) => /home|Popular/i.test(x)))`), 'Your home', 'signed in, Home is theirs from the start');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons');
         await s.evaluate(`document.querySelector('.ovh-sec button').click(), true`);
@@ -214,6 +224,32 @@ const server = http.createServer((req, res) => {
         assert.deepStrictEqual(sent.map((c) => c.u), ['attachments', 'attachments', 'posts'], 'each picture, then the post');
         assert.ok(sent.every((c) => c.auth === 'Bearer tok-1'), 'with the person\'s token');
         assert.deepStrictEqual(JSON.parse(sent[2].body).pictures.map((x) => x.alt), ['A dark sky', 'The same sky']);
+        // ── A phone's Dock opens out of the navbar's menu button, and that button is its close button (the owner,
+        // 2026-11-10: "that close button should… fade and have an animation effect from the top right, the menu button
+        // that already exists"). The close orb starts on the navbar's orb and settles into its x; the navbar's orb makes
+        // the same move underneath; closing runs it back, then the sheet is gone. With motion off there is no move.
+        await s.evaluate(`(document.querySelector('.ovs.is-open [data-close], .ovs-orb') || { click() {} }).click(), true`);
+        await new Promise((ok) => setTimeout(ok, 700));
+        assert.ok(await until(s, `!!(window.OpenVibeDock && window.OpenVibeDock.open)`), 'the Dock is loaded beside the navbar');
+        const start = await s.evaluate(`(() => { const c = (e) => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+            const nav = [...document.querySelectorAll('.openvibe-navbar .ovnav-orb')].find((b) => b.getBoundingClientRect().width > 0);
+            const before = c(nav.querySelector('svg'));
+            window.OpenVibeDock.open({ tab: 'activity' });
+            const dock = document.querySelector('.ovdk'), mine = dock.querySelector('.ovdk-orbx');
+            return { before, at: c(mine.querySelector('svg')), fromOrb: dock.classList.contains('from-orb'), isFrom: mine.classList.contains('is-from') }; })()`);
+        assert.ok(start.fromOrb && start.isFrom, 'the sheet opens from the orb');
+        assert.ok(Math.abs(start.at[0] - start.before[0]) <= 1.5 && Math.abs(start.at[1] - start.before[1]) <= 1.5, `the close orb starts on the navbar's orb (${JSON.stringify(start)})`);
+        await new Promise((ok) => setTimeout(ok, 900));
+        const open = await s.evaluate(`(() => { const dock = document.querySelector('.ovdk'), mine = dock.querySelector('.ovdk-orbx'), sv = mine.querySelector('svg'), r = sv.getBoundingClientRect(), b = mine.getBoundingClientRect();
+            return { settled: getComputedStyle(sv).transform === 'none' && !mine.classList.contains('is-from'), centred: Math.abs((r.left + r.width / 2) - (b.left + b.width / 2)) <= 1, navIsDock: !!document.querySelector('.openvibe-navbar .ovnav-orb.is-dock'), opacity: getComputedStyle(dock).opacity }; })()`);
+        assert.ok(open.settled && open.centred, `it settles into its place in the header (${JSON.stringify(open)})`);
+        assert.ok(open.navIsDock && open.opacity === '1', 'the navbar\'s orb made the same move underneath');
+        const closing = await s.evaluate(`(() => { window.OpenVibeDock.close(); const dock = document.querySelector('.ovdk'); return { hidden: dock.hidden, out: dock.classList.contains('is-out'), back: dock.querySelector('.ovdk-orbx').classList.contains('is-from'), navIsDock: !!document.querySelector('.ovnav-orb.is-dock') }; })()`);
+        assert.ok(!closing.hidden && closing.out && closing.back && !closing.navIsDock, `closing folds it back into the orb first (${JSON.stringify(closing)})`);
+        assert.ok(await until(s, `document.querySelector('.ovdk').hidden`), 'then the sheet is gone');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovdk').classList.contains('from-orb') && !document.querySelector('.ovnav-orb.is-dock') && [...document.querySelectorAll('.openvibe-navbar .ovnav-orb')].every((b) => !b.style.transition)`), 'and the navbar\'s orb is as it was');
+        const still = await s.evaluate(`(() => { document.documentElement.setAttribute('data-ov-motion', 'off'); window.OpenVibeDock.open({ tab: 'activity' }); const dock = document.querySelector('.ovdk'); const a = dock.classList.contains('from-orb'); window.OpenVibeDock.close(); const out = { fromOrb: a, hidden: dock.hidden }; document.documentElement.removeAttribute('data-ov-motion'); return out; })()`);
+        assert.ok(!still.fromOrb && still.hidden, 'motion off: no move, and it closes at once');
         await s.close();
         console.log('menu-home-screen-chrome: home grid, long-press and drag, keys, remove and put back, folders with tool icons, the wall, today, the composer with pictures, Network sync ok');
     } finally {
