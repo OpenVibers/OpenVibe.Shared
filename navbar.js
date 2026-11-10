@@ -315,6 +315,9 @@
             /* A close mark that arrives already made (the Dock's sheet) forms from the button it came from. */
             .ovmb.is-forming :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
             @keyframes ovmb-form { from { transform: none; } }
+            .ovnav-orb:not([aria-expanded="true"]):not(.is-dock) .ovmb:not(.is-x) .ovmb-app { animation: ovmb-idle 9s ease-in-out 3s infinite; }
+            .ovnav-orb .ovmb .ovmb-a1 { animation-delay: 3.09s !important; } .ovnav-orb .ovmb .ovmb-a2 { animation-delay: 3.18s !important; }
+            @keyframes ovmb-idle { 0%, 4%, 100% { transform: none; } 2% { transform: translateY(calc(-2.2px * var(--ov-move, 1))); } }
             @keyframes ovmb-wave { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(calc(-2.6px * var(--ov-move, 1))); } }
             @keyframes ovmb-busy { 0%, 100% { transform: scale(.72); opacity: .5; } 50% { transform: scale(1.18); opacity: 1; } }
             .openvibe-navbar .ovnav-orb[aria-expanded="true"] { color: var(--text-primary, #e6edf7); }
@@ -355,6 +358,17 @@
                 transition: filter .15s; text-decoration: none; display: inline-flex; align-items: center;
             }
             .openvibe-navbar-login:hover { filter: brightness(1.12); }
+            /* Sign In's icon: an arrow into the ring; pressed, the ring's gap runs. */
+            .openvibe-navbar-login { gap: 7px; }
+            .openvibe-navbar-login:active { transform: scale(.95); }
+            .ovsi { margin-left: -3px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+            .ovsi-o { stroke-dasharray: 30 10.2; stroke-dashoffset: -15.1; }
+            .ovsi-a { animation: ovsi-in 7s ease-in-out 2s infinite; }
+            :hover > .ovsi .ovsi-a { animation-duration: .9s; animation-delay: 0s; }
+            .is-going .ovsi-a { opacity: 0; animation: none; }
+            .is-going .ovsi-o { animation: ovsi-go 1s linear infinite; }
+            @keyframes ovsi-in { 0%, 80% { transform: none; } 90% { transform: translateX(calc(3px * var(--ov-move, 1))); } }
+            @keyframes ovsi-go { to { stroke-dashoffset: -55.3; } }
             /* 4.148.0 (the owner, 11-08: "the things need to be more consistent in the nav bar in size"): one height for
                every control at the bar's right, 36 px (34 px on a phone under 400 px): Sign In, the orb, messages, the
                picture, the balances and a featured link. The orb draws its dots at 26 px (24) so it reads as large as
@@ -551,7 +565,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '5754cf36a7de', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '373723a04e15', 'ov-wallet.css': '3f443fa216c5', 'purse.js': 'd1d5b341c610', 'ov-drop.js': '0132897495f0' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '5754cf36a7de', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '373723a04e15', 'ov-wallet.css': '3f443fa216c5', 'purse.js': 'd1d5b341c610', 'ov-drop.js': '0132897495f0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2102,14 +2116,14 @@
                 <div id="openvibe-bell-mount"></div>
                 ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
-                    `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}
+                    `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}"><svg class="ovsi" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle class="ovsi-o" cx="14.5" cy="12" r="6.4"/><path class="ovsi-a" d="M2.5 12h9.6M9 8.4l3.6 3.6L9 15.6"/></svg>Sign In</a>`}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
         hookSearch(nav);
-        hookSwitcher(nav); hookPages(nav);
+        hookSwitcher(nav); hookPages(nav); hookSignIn(nav);
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
@@ -2353,6 +2367,11 @@
             if (document.getElementById('ov-drop-loader')) return;
             const sc = document.createElement('script'); sc.id = 'ov-drop-loader'; sc.src = siblingV('ov-drop.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
         });
+    }
+    function hookSignIn(nav) {
+        const b = nav.querySelector('#openvibe-login-btn');
+        if (!b || !b.classList || typeof b.addEventListener !== 'function') return;
+        b.addEventListener('click', (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; b.classList.add('is-going'); setTimeout(() => b.classList.remove('is-going'), 6000); });
     }
     function hookSwitcher(nav) {
         const b = nav.querySelector('#openvibe-switch-btn');
