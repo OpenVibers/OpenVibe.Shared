@@ -10,6 +10,8 @@
 //   npm test                     # every *.test.js in dir, each in its own process, a few at a time
 //   npm test -- quota cache      # only files whose name contains one of the words
 //   npm test -- --strict         # a skip fails the run too (or OV_TEST_STRICT=1)
+//   npm test -- page --allow-empty   # exit 0 when no file matches (or OV_TEST_ALLOW_EMPTY=1):
+//                                # the pin-only CI subset on a repository without those files
 //
 // Each test file runs in its own process and owns its database: openvibe-sdk/testing `createTestDb` gives it its
 // own PGlite, or under `test:pg` its own PostgreSQL schema, roles and port. Files therefore parallelize safely and
@@ -81,11 +83,16 @@ async function run(opts = {}) {
     const argv = opts.argv || process.argv.slice(2);
     const log = opts.log || console.log;
     const strict = argv.includes('--strict') || process.env.OV_TEST_STRICT === '1';
+    const allowEmpty = argv.includes('--allow-empty') || process.env.OV_TEST_ALLOW_EMPTY === '1';
     const filters = argv.filter((a) => !a.startsWith('-'));
     const match = opts.match || /\.test\.js$/;
     const files = fs.readdirSync(dir).filter((f) => match.test(f))
         .filter((f) => !filters.length || filters.some((w) => f.includes(w))).sort();
     if (!files.length) {
+        if (allowEmpty) {
+            log('no test files matched (allowed)');
+            return { results: [], passed: 0, skipped: 0, failed: 0, strict, exitCode: 0, summary: 'no test files matched (allowed)' };
+        }
         log('no test files matched');
         return { results: [], passed: 0, skipped: 0, failed: 0, strict, exitCode: 1, summary: 'no test files matched' };
     }

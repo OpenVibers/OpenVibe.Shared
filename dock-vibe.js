@@ -66,7 +66,7 @@
     // browser without it (Firefox) records instead, up to 30 s, and Chat's /api/vibe/listen turns that into text
     // (OpenVibe.AI's speech-to-text on this network's own machines; the recording is never kept).
     // Everything is set as text; a link is a link only when it is https.
-    const vibe = { panel: null, chat: null, view: 'list', fresh: false, msgs: [], last: 0, timer: 0, busy: false, waitUntil: 0, rec: null, talk: null };
+    const vibe = { panel: null, chat: null, view: 'list', fresh: false, msgs: [], last: 0, timer: 0, busy: false, waitUntil: 0, rec: null, talk: null, generation: 0 };
     const SR = root.SpeechRecognition || root.webkitSpeechRecognition || null;
     const MR = !SR && root.MediaRecorder && root.navigator && root.navigator.mediaDevices && root.navigator.mediaDevices.getUserMedia ? root.MediaRecorder : null;
     const TALK = Boolean(SR || MR);
@@ -129,6 +129,7 @@
     }
     const age = (iso) => { const n = Date.parse(iso || ''); if (!Number.isFinite(n)) return ''; const m = Math.max(0, Math.floor((Date.now() - n) / 60000)); return m < 1 ? 'now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.floor(m / 60)} h ago` : `${Math.floor(m / 1440)} d ago`; };
     async function openList() {
+        const generation = ++vibe.generation;
         clearTimeout(vibe.timer); vibe.view = 'list'; vibe.chat = null;
         const panel = vibe.panel; if (!panel) return;
         panel.textContent = '';
@@ -139,7 +140,7 @@
         const first = h('li'); first.append(newer); list.append(first); scroll.append(list); panel.append(head, scroll);
         try {
             const out = await ctx.chatCall('/api/vibe/conversations');
-            if (vibe.view !== 'list' || vibe.panel !== panel) return;
+            if (generation !== vibe.generation || vibe.view !== 'list' || vibe.panel !== panel) return;
             const conversations = Array.isArray(out.conversations) ? out.conversations : [];
             if (!conversations.length) list.append(h('li', 'ovdk-none', 'Your Vibe conversations will appear here.'));
             conversations.forEach((c) => {
@@ -156,9 +157,10 @@
                 b.addEventListener('click', () => { vibe.fresh = false; vibe.chat = { slug: c.slug }; ctx.save({ vibe: { slug: c.slug, at: new Date().toISOString() } }); openVibe(); });
                 li.append(b); list.append(li);
             });
-        } catch (e) { list.append(h('li', 'ovdk-none', e && e.status === 401 ? 'Sign in to see your conversations.' : 'Conversations did not load. Open Vibe again to retry.')); }
+        } catch (e) { if (generation === vibe.generation) list.append(h('li', 'ovdk-none', e && e.status === 401 ? 'Sign in to see your conversations.' : 'Conversations did not load. Open Vibe again to retry.')); }
     }
     async function openVibe() {
+        const generation = ++vibe.generation;
         clearTimeout(vibe.timer);
         vibe.view = 'conversation';
         const panel = vibe.panel; if (!panel) return;
@@ -219,6 +221,7 @@
             try {
                 let timezone = null; try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch { /* */ }
                 const out = await ctx.chatCall('/api/vibe/ask', { method: 'POST', body: JSON.stringify({ message: text, slug: vibe.chat ? vibe.chat.slug : undefined, fresh: vibe.fresh, timezone }) });
+                if (generation !== vibe.generation) return;
                 if (out.chat) { vibe.chat = out.chat; vibe.fresh = false; away.href = out.chat.url; ctx.save({ vibe: { slug: out.chat.slug, at: new Date().toISOString() } }); }
                 box.value = ''; fit();
                 const empty = list.querySelector('.ovdk-vibe-start'); if (empty) empty.remove();
@@ -238,10 +241,10 @@
             try {
                 got = vibe.fresh && !vibe.chat ? { chat: null, messages: [] } : await ctx.chatCall(`/api/vibe/chat${vibe.chat ? `?slug=${encodeURIComponent(vibe.chat.slug)}${vibe.last ? `&after=${vibe.last}` : ''}` : ''}`);
             } catch (e) {
-                if (first) { list.textContent = ''; showFailure(e, () => pull(true)); }
+                if (first && generation === vibe.generation) { list.textContent = ''; showFailure(e, () => pull(true)); }
                 return;
             }
-            if (!ctx.active() || vibe.panel !== panel) return;
+            if (generation !== vibe.generation || !ctx.active() || vibe.panel !== panel) return;
             if (got.chat) { vibe.chat = got.chat; away.href = got.chat.url; title.textContent = got.chat.name || 'Vibe'; }
             if (first) list.textContent = '';
             const atEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 40;
@@ -362,7 +365,7 @@
         return {
             refresh: () => { vibe.panel = panel; const list = ctx.wantList ? ctx.wantList() : false; if (list) return openList(); return vibe.view === 'list' ? openList() : openVibe(); },
             list: () => { vibe.panel = panel; return openList(); },
-            pause: () => { clearTimeout(vibe.timer); if (vibe.rec) { try { vibe.rec.abort(); } catch { /* */ } } },
+            pause: () => { vibe.generation++; clearTimeout(vibe.timer); if (vibe.rec) { try { vibe.rec.abort(); } catch { /* */ } } },
             talk: () => { if (vibe.talk) vibe.talk(); },
             // A page's "Ask your agent" (4.135.0): the question waits in the box, with its context, for the person to send.
             ask: (text) => { if (vibe.view === 'list') { vibe.pendingAsk = text; vibe.fresh = true; openVibe(); } else if (vibe.fill) vibe.fill(text); else vibe.pendingAsk = text; },

@@ -77,6 +77,8 @@
     const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
     let view = 'suggest', rtabsEl = null, rq = '', rtab = 'all', rflight = null, moved = false;
+    // A place of the Dock shown inside the menu (a phone, 312 step 2): which one, its mount, and AI's part.
+    let door = null, doorEl = null, doorHost = null, doorSw = null, doorMount = null, aiPart = 'vibe';
 
     const safeUrl = (u) => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     function siteOf(url) {
@@ -269,6 +271,18 @@
 .ovs-list > li:nth-child(5) { animation-delay: 100ms; } .ovs-list > li:nth-child(6) { animation-delay: 125ms; } .ovs-list > li:nth-child(n+7) { animation-delay: 150ms; }
 @keyframes ovs-rise { from { opacity: 0; transform: translateY(6px); } }
 .ovs-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
+/* A place of the Dock inside the menu (312 step 2, a phone): it fills the sheet under the head and scrolls itself. */
+.ovs-door { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.ovs-door[hidden] { display: none; }
+.ovs-door-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ovs-door-host > .ovdk { flex: 1 1 auto; min-height: 0; }
+.ovs-door-sw { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 8px 12px 4px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovs-door-sw[hidden] { display: none; }
+.ovs-door-sw button { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border-radius: 11px; cursor: pointer; font-size: 14px; font-weight: 650; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s; }
+.ovs-door-sw button[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
+.ovs-door-sw button[aria-selected="true"] .ovs-tab-ic { color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-door-sw button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-in-door .ovs-foot { display: none; }
 .ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
 .ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .ovs-item a { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 5px 10px; border-radius: 12px; color: inherit; text-decoration: none; }
@@ -444,6 +458,13 @@
         input = el.querySelector('.ovs-input');
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
+        doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
+        doorSw = document.createElement('div'); doorSw.className = 'ovs-door-sw'; doorSw.setAttribute('role', 'tablist'); doorSw.setAttribute('aria-label', 'AI');
+        doorSw.innerHTML = [['vibe', 'Vibe'], ['agent', 'Agents']].map(([id, label]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[id]}</span><span>${label}</span></button>`).join('');
+        doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
+        doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
+        doorEl.append(doorSw, doorHost);
+        listEl.after(doorEl);
         tabsEl = el.querySelector('.ovs-tabs');
         rtabsEl = el.querySelector('.ovs-rtabs');
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
@@ -456,6 +477,7 @@
         el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
+            leaveDoor();
             tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
@@ -1007,6 +1029,36 @@
      * the feed content aware… each site its own icon"): this site's own mark and name, Feed with a red dot while anyone is
      * live or a count of what is new since you last looked, and You with your picture and an online dot.
      */
+    /** A phone's menu with the Dock to hand: its places open inside the menu, under the menu's own head. */
+    function inSheet() {
+        let phone = false;
+        try { phone = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ }
+        return phone && !!(root.OpenVibeDock && typeof root.OpenVibeDock.mountInto === 'function');
+    }
+    /** Show a place of the Dock in the menu: Messages, or AI (Vibe or your agents, by the two-part switch). */
+    function openDoor(id) {
+        if (!doorEl || !inSheet()) return;
+        door = id;
+        const want = id === 'chats' ? 'chats' : aiPart;
+        doorSw.hidden = id !== 'vibe';
+        doorSw.querySelectorAll('[data-part]').forEach((b) => b.setAttribute('aria-selected', b.getAttribute('data-part') === aiPart ? 'true' : 'false'));
+        listEl.hidden = true; doorEl.hidden = false; el.classList.add('ovs-in-door');
+        try { if (!doorMount) doorMount = root.OpenVibeDock.mountInto(doorHost, { tab: want }); else doorMount.show(want); }
+        catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
+        input.placeholder = id === 'chats' ? 'Search your messages' : `Search ${here()}, or ask Vibe`;
+        paintTabs();
+    }
+    /** Back to the menu's own list (a tab, typing, or closing). The Dock's panels go home with their state. */
+    function leaveDoor() {
+        if (!door) return;
+        door = null;
+        if (doorMount) { try { doorMount.destroy(); } catch { /* */ } doorMount = null; }
+        if (doorEl) doorEl.hidden = true;
+        if (listEl) listEl.hidden = false;
+        if (el) el.classList.remove('ovs-in-door');
+        if (input) input.placeholder = `Search ${here()}, or ask Vibe`;
+    }
+
     function paintTabs() {
         tabsEl.hidden = false;
         tabsEl.setAttribute('role', 'tablist');
@@ -1022,20 +1074,22 @@
         const doors = typeof ctx.dock === 'function' ? [['chats', 'Messages'], ['vibe', 'AI']] : [];
         const row = [TABS[0], TABS[1], ...doors.map(([id, label]) => [id, label, true]), TABS[2]];
         tabsEl.classList.toggle('has-doors', doors.length > 0);
-        for (const [id, label, door] of row) {
+        for (const [id, label, isDoor] of row) {
             const b = document.createElement('button');
             b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab');
-            if (door) {
-                // A place that opens in the Dock: never the chosen tab here; it says it opens something.
-                b.setAttribute('data-dock', id); b.setAttribute('aria-selected', 'false'); b.setAttribute('aria-haspopup', 'dialog');
+            if (isDoor) {
+                // A place of the Dock. On a phone it opens here, inside the menu, and is then the chosen tab; on a computer
+                // it opens the floating Dock beside the page (it is kept beside the work there).
+                b.setAttribute('data-dock', id); b.setAttribute('aria-selected', door === id ? 'true' : 'false');
+                if (!inSheet()) b.setAttribute('aria-haspopup', 'dialog');
                 const ic = document.createElement('span'); ic.className = 'ovs-tab-ic'; ic.innerHTML = BRIDGE_SVG[id]; b.appendChild(ic);
                 const t = document.createElement('span'); t.textContent = label; b.appendChild(t);
-                b.addEventListener('click', (e) => { e.stopPropagation(); try { ctx.dock(id); } catch { /* the Dock is optional */ } });
+                b.addEventListener('click', (e) => { e.stopPropagation(); if (inSheet()) { openDoor(id); return; } try { ctx.dock(id); } catch { /* the Dock is optional */ } });
                 tabsEl.appendChild(b);
                 continue;
             }
             b.setAttribute('data-tab', id);
-            b.setAttribute('aria-selected', tab === id ? 'true' : 'false');
+            b.setAttribute('aria-selected', !door && tab === id ? 'true' : 'false');
             const ic = document.createElement('span'); ic.className = 'ovs-tab-ic';
             if (id === 'here' && siteId) { const g = document.createElement('span'); g.className = 'ov-icon'; g.setAttribute('data-icon', siteId); g.setAttribute('data-size', '20'); g.setAttribute('data-fx', 'none'); ic.appendChild(g); }
             else if (id === 'you' && me && me.avatar_url && /^https:\/\//.test(me.avatar_url)) {
@@ -1297,6 +1351,7 @@
     function render(q) {
         q = String(q || '').trim();
         el.classList.toggle('ovs-typing', !!q);
+        if (q) leaveDoor();
         tabsEl.hidden = !!q;
         if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); paintTabs(); renderTab(); return; }
         const n = q.toLowerCase();
@@ -1517,6 +1572,7 @@
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         if (view === 'results' && rtabsEl) leaveResults();
+        leaveDoor();
         if (!el || closing) return;
         if (navigating) pushed = false;
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.

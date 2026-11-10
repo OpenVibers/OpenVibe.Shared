@@ -58,6 +58,14 @@ const { run, skipsIn, resolveParallel } = require('../test-runner');
 
     r = await run({ dir, argv: ['nothing-matches'], log });
     assert.strictEqual(r.exitCode, 1);
+    // --allow-empty (the pin-only CI subset): no match is a pass, not a failure.
+    r = await run({ dir, argv: ['nothing-matches', '--allow-empty'], log });
+    assert.deepStrictEqual([r.summary, r.exitCode], ['no test files matched (allowed)', 0]);
+    process.env.OV_TEST_ALLOW_EMPTY = '1';
+    try {
+        r = await run({ dir, argv: ['nothing-matches'], log });
+        assert.strictEqual(r.exitCode, 0);
+    } finally { delete process.env.OV_TEST_ALLOW_EMPTY; }
     assert.deepStrictEqual(skipsIn('x\n  ACK test: skipped (ffmpeg not installed)  \nrollback with newer writes: skipped (no git history)\nOK B: skipped — old style'),
         ['ACK test: skipped (ffmpeg not installed)', 'rollback with newer writes: skipped (no git history)']);
     // retry: a file that matches and fails is run once more. One that passes the second time counts as passed and is

@@ -983,6 +983,7 @@
         }, true);
         attachRowSwipe(v, list);
         refreshPushButton(v);
+        v.destroy = () => { clearTimeout(qTimer); v.seq++; };
         _views.set(root, v);
         paintTabCounts();
         return v;
@@ -1482,6 +1483,13 @@
             const v = buildView(container, { mode: 'dock' });
             reload(v);
             return v;
+        },
+        unmountDock(container) {
+            const v = _views.get(container);
+            if (!v || v.mode !== 'dock') return;
+            if (v.destroy) v.destroy();
+            _views.delete(container);
+            container.classList.remove('openvibe-notif-dock');
         },
         /** Programmatically show a toast (real-time events). Marks nothing on the server. */
         push(notification) {

@@ -517,11 +517,7 @@
                 .openvibe-navbar .openvibe-network-badge { display: none; }
             }
 
-            /* Touch and keyboard feedback. Phones flash a square, theme-blind blue box over anything
-               tapped (-webkit-tap-highlight-color); the Frame turns it off and shows a slight press
-               instead, and keyboard focus gets one ring in the theme accent. :where() keeps it at zero
-               specificity, so the Frame's own :focus-visible rules and a host page's rules still win.
-               \`scale\` is its own property, so it composes with any transform already in use. */
+            /* No square tap flash: a slight press (scale composes with transforms) and one accent focus ring, at zero specificity. */
             .openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer { -webkit-tap-highlight-color: transparent; }
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: .96; }
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
@@ -566,7 +562,7 @@
     const NAV_ICONS_REV = 'c95bb7e2a981';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '810a6665e79c', 'dock.js': 'de8b3805e36c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '496bc3134c08', 'dock.js': 'c606aca212ab', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '0bd4b26af88a', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1999,7 +1995,7 @@
         const retry = current && current !== src ? ` data-retry-src="${escapeAttr(current)}"` : '';
         const idAttr = id ? ` id="${escapeAttr(id)}"` : '';
         const alt = escapeAttr(user?.display_name || user?.username || 'Avatar');
-        return `<img class="${escapeAttr(className)}" src="${escapeAttr(src)}"${retry} data-fallback-src="${escapeAttr(fallback)}" alt="${alt}"${idAttr}>`;
+        return `<img class="${escapeAttr(className)}" src="${escapeAttr(src)}"${retry} data-fallback-src="${escapeAttr(fallback)}" alt="${alt}"${idAttr} width="${escapeAttr(size)}" height="${escapeAttr(size)}" decoding="async">`;
     }
 
     // A picture that does not load: the current one once (data-retry-src), then the initial.
