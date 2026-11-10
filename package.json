@@ -23,6 +23,7 @@
     "./assets": "./assets.js",
     "./auth-client": "./auth-client.js",
     "./brand": "./brand.js",
+    "./bottom": "./bottom.js",
     "./browser-harness": "./browser-harness.js",
     "./builtin-themes": "./builtin-themes.js",
     "./cache-policy": "./cache-policy.js",

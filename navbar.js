@@ -2308,8 +2308,7 @@
         return nav;
     }
 
-    // ── The bottom of the screen (bottom.js): one measurement of the visible viewport for the app bar, the small
-    // player, the Dock's pill and the composer. Loaded before any of them draw; they all work without it.
+    // bottom.js: the visible viewport for the bar, the small player, the Dock's pill and the composer.
     let _bottomLoading = false;
     function loadBottom() {
         if (_bottomLoading || root.OpenVibeBottom) return;
