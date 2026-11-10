@@ -75,15 +75,10 @@
             .openvibe-navbar .openvibe-navbar-brand .name a.b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 800; }
             .openvibe-navbar .openvibe-navbar-brand .name a.has-drop::after { content: ""; flex: none; display: inline-block; width: 5px; height: 5px; margin: 0 2px 3px 6px; border: solid currentColor; border-width: 0 1.8px 1.8px 0; transform: rotate(45deg); opacity: .65; transition: transform .2s; }
-            /* The name that opens its pages (342): the highlight is drawn behind it with room around it (no layout shift), a
-               faint tint on hover, and on open a deeper one with a hairline ring that comes up on a small spring. */
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop { position: relative; isolation: isolate; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop:hover, .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { background: transparent; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop::before { content: ""; position: absolute; z-index: -1; inset: -5px -9px; border-radius: 12px; background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); opacity: 0; transform: scale(.86); transition: opacity .16s, transform .24s cubic-bezier(.2, 1.4, .3, 1), background-color .16s, box-shadow .16s; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop:hover::before { opacity: 1; transform: none; }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"]::before { opacity: 1; transform: none; background: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
-            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop:active::before { transform: scale(.95); }
-            html[data-ov-motion=off] .openvibe-navbar .openvibe-navbar-brand .name a.has-drop::before { transition: none; }
+            .openvibe-navbar .openvibe-navbar-brand .name { overflow-clip-margin: 8px; }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop { border-radius: 8px; transition: color .15s, background .15s, box-shadow .26s cubic-bezier(.2,1.4,.3,1); }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop:hover { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t); }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t), 0 0 0 7px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
             .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
