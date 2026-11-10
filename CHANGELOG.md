@@ -1,5 +1,33 @@
 # Changelog
 
+## 4.192.0 — 2026-11-11
+
+**The video that comes with you.** The owner, 2026-11-10, with the browser's floating picture-in-picture window over a
+watch page: "should … actually [be] like YouTube where it moves that video. Now you go to the search again or the index
+… the homepage … it's just kind of confusing".
+
+- **New `mini.js` (`OpenVibeMini`): a small player of our own.** A watch page says its video may come along
+  (`<video data-ov-player data-ov-mini data-ov-mini-title data-ov-mini-by>`). The shared player's picture-in-picture
+  button then writes down what is playing (the page, the file, the title, who made it, the poster, the second, the
+  speed, the volume, whether it was playing) and takes the person to the site's front page. Every page of the site
+  that finds the record draws the small player and goes on from the same second: a card at the bottom left on a
+  computer (the picture, "Back to the video" on hover, a line of progress, the title, who and the time, play and
+  close), one bar above the app bar on a phone. The video's own page takes the second back and draws nothing. A page's
+  own video starting closes it: one sound at a time. Where a new page may not start with sound, it plays silent with
+  "Turn the sound on". The record is the tab's own (`sessionStorage`), so a private file's signed address never
+  leaves the site. `OpenVibeMini.carry(video, { to })`, `.open(record)`, `.resume()`, `.close()`, `.record()`.
+- **`player.js`:** on a video with `data-ov-mini` the picture-in-picture button is "Keep watching while you browse"
+  and is shown also where the browser has no floating window of its own (it was hidden there).
+- **A site turns it on** by loading `mini.js` on its pages (`ovServe.url('mini.js')`, deferred): the file starts
+  itself and does nothing without a record. The bar does not load it: `navbar.js` is at its size budget, and the loader
+  moves into the bar with the bar's diet.
+- Motion: the card rises in 280 ms; Calm fades; Off does not move.
+- `test/mini-chrome.test.js`: from the player's button to the front page at the same second, pause kept across pages,
+  closing for the page's own video, the second handed back, Close forgets, the bar on a phone.
+
+Across sites the record will travel another way (storage is each site's own); gapless moves need pages changed in
+place. Both are researched first (plan, ask 265).
+
 ## 4.191.0 — 2026-11-10
 
 - **A guest's page view counts at once again.** The beacon waits for the shared sign-in state only for a browser that has a token and no user yet (at most 2.5 s, so a signed-in person is not also counted as a guest); a page that knows its person, and a browser with no token at all, send it as they always did. The navbar's brotli budget follows (49.9 KB).

@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.191.0",
+  "version": "4.192.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -51,6 +51,7 @@
     "./presence": "./presence.js",
     "./purse": "./purse.js",
     "./drop": "./ov-drop.js",
+    "./mini": "./mini.js",
     "./machines": "./machines.js",
     "./nav-slots": "./nav-slots.js",
     "./overlay": "./overlay.js",
