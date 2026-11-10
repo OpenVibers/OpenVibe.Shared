@@ -230,6 +230,14 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, third batch: a die, a lifebuoy, cubes, a paw, a weight, and a person with a pen or a tag.
+        dice: '<path fill-rule="evenodd" d="M6.4 2.9h11.2a3.5 3.5 0 0 1 3.5 3.5v11.2a3.5 3.5 0 0 1-3.5 3.5H6.4a3.5 3.5 0 0 1-3.5-3.5V6.4a3.5 3.5 0 0 1 3.5-3.5ZM6.4 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 8.3a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM10.1 12a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM6.4 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0ZM13.8 15.7a1.9 1.9 0 1 0 3.8 0a1.9 1.9 0 1 0-3.8 0Z"/>',
+        lifebuoy: '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 5.4a4.2 4.2 0 1 1 0 8.4 4.2 4.2 0 0 1 0-8.4ZM14.33 16.17 17.44 19.28 19.28 17.44 16.17 14.33ZM9.67 16.17 6.56 19.28 4.72 17.44 7.83 14.33ZM14.33 7.83 17.44 4.72 19.28 6.56 16.17 9.67ZM9.67 7.83 6.56 4.72 4.72 6.56 7.83 9.67Z"/>',
+        cubes: '<path d="M12 3.3 8.4 5.1v4.2l3.6 1.8 3.6-1.8V5.1ZM7.5 11.8 3.9 13.6v4.2l3.6 1.8 3.6-1.8v-4.2ZM16.5 11.8l-3.6 1.8v4.2l3.6 1.8 3.6-1.8v-4.2Z"/>',
+        paw: '<path d="M7.4 18.4c0-3.1 2-5.6 4.6-5.6s4.6 2.5 4.6 5.6c0 1.6-1.2 2.6-2.6 2.6-.8 0-1.3-.5-2-.5s-1.2.5-2 .5c-1.4 0-2.6-1-2.6-2.6Z"/><circle cx="5.8" cy="11" r="2.3"/><circle cx="9.4" cy="6.4" r="2.3"/><circle cx="14.6" cy="6.4" r="2.3"/><circle cx="18.2" cy="11" r="2.3"/>',
+        weight: '<circle cx="12" cy="5.2" r="2.6"/><path d="M6.6 9h10.8l3.3 12.1H3.3Z"/>',
+        'user-pen': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><path d="M19.9 11.9l2.2 2.2-5.3 5.3-2.9.7.7-2.9Z"/>',
+        'user-tag': '<circle cx="10" cy="8" r="4.1"/><path d="M2.9 20.6c0-4.1 3.2-6.9 7.1-6.9 1.2 0 2.3.3 3.2.8v6.1Z"/><path fill-rule="evenodd" d="M14.1 14.4h4.6l3.1 3.1-3.1 3.1h-4.6ZM15.3 17.5a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0Z"/>',
         // 4.182.0, second batch: marks in a disc, the media keys, and a few things (flame, mug, clapper, a person with
         // a badge). A mark inside a filled shape is cut out of it; a thin part that must stay a line is class "ln".
         'plus-circle': '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4Zm-1.2 4.2h2.4v3.8H17v2.4h-3.8V17h-2.4v-3.8H7v-2.4h3.8Z"/>',
