@@ -74,6 +74,7 @@ const BROWSER = Object.freeze([
     'appbar.js',            // the phone app bar; navbar.js loads it only for a site that sets appBar
     'kit.js',               // the OpenVibe Kit's builders in the page (for pages that draw themselves; with kit-web.js)
     'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
+    'machines.js',          // shared picker for a person's Link machines; loaded by pages with a picker
     'kit-data-web.js',      // Kit 2's behaviour: chart readouts, scatter labels, drop zones (4.37.0; with kit-data.css)
     'tokens.js',            // OpenVibe Tokens: a theme as DTCG tokens, compiled to CSS, Tailwind, Compose, SwiftUI, Flutter, Figma (4.40.0)
     'components.js',        // the kit's components as a contract (anatomy, tokens, states, a11y), kit documents, native reference views (4.42.0)
