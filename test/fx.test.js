@@ -42,8 +42,8 @@ function setup({ reduce = false, calm = false, html = '' } = {}) {
         assert.match(css, /--ov-dur-1:\.12s;--ov-dur-2:\.2s;--ov-dur-3:\.32s;--ov-dur-4:\.52s/, 'the motion tokens');
         assert.match(css, /html\[data-ov-motion=reduced\]\{--ov-dur-1:0s/, 'Calm zeroes them');
         assert.ok(css.includes('@media (prefers-reduced-motion:reduce){.ovfx-glint:not([data-fx-demo] *)::after{display:none}'), 'the device asking for less motion stops the glint, outside a demo scope');
-        assert.ok(css.includes('html[data-ov-motion=reduced] [data-fx-demo]{--ov-dur-1:.12s'), 'a demo scope gets its lengths back under Calm');
-        assert.ok(css.indexOf('html[data-ov-motion=reduced] [data-fx-demo]{') > css.indexOf('html[data-ov-motion=reduced]{--ov-dur-1:0s'), 'and it comes after Calm, so it wins');
+        assert.ok(css.includes('[data-fx-demo]{--ov-dur-1:.12s;--ov-dur-2:.2s'), 'a demo scope sets its own lengths, so neither Calm nor the device setting (kit.css) reaches inside it');
+        assert.ok(/html:is\([^)]*neon-tokyo[^)]*\) \[data-fx-demo\]\{--ov-dur-1:\.09s/.test(css), 'in the look\'s own feel');
         assert.ok(!/infinite/.test(css.replace(/\.ovfx-shimmer\{[^}]*\}/, '')), 'nothing loops but a placeholder\'s shimmer');
         assert.strictEqual(typeof t.window.OVFx.confetti, 'function');
         // A feel per look (4.67.0): quiet themes move calmly (no overshoot), neon ones snap; Calm still wins.

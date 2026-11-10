@@ -31,7 +31,11 @@
         + `html:is(${CALM}){--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s;--ov-ease-spring:var(--ov-ease-out)}`
         + `html:is(${SNAPPY}){--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s;--ov-ease-spring:cubic-bezier(.3,1.8,.6,1)}`
         + 'html[data-ov-motion=reduced]{--ov-dur-1:0s;--ov-dur-2:0s;--ov-dur-3:0s;--ov-dur-4:0s}'
-        + 'html[data-ov-motion=reduced] [data-fx-demo]{--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s}'
+        // A demo scope keeps its lengths whatever reduced them (Calm above, or kit.css under the device's own setting),
+        // in the look's own feel.
+        + '[data-fx-demo]{--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s}'
+        + `html:is(${CALM}) [data-fx-demo]{--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s}`
+        + `html:is(${SNAPPY}) [data-fx-demo]{--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s}`
         + '.ovfx-glint{position:relative;overflow:hidden;isolation:isolate}'
         + '.ovfx-glint::after{content:"";position:absolute;inset:-2px;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);transform:translateX(-120%);z-index:1}'
         + '.ovfx-glint:hover::after,.ovfx-glint:focus-visible::after{transform:translateX(120%);transition:transform .75s var(--ov-ease-in-out)}'
