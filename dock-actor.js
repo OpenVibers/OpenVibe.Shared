@@ -5,8 +5,10 @@
 // tab opens:
 //   OpenVibeDockActor.mount(container, { token, base, active })  → { refresh(), destroy() }
 //
-// `base` is OpenVibe.Actor (GET /api/v1/me/actor with the person's Network Dock token, scope actor.me.read; the
-// answers, pause, resume and tell are POSTs with actor.me.write). It shows:
+// It reads OpenVibe.Actor's GET /api/v1/me/actor with the person's Network token (scope actor.me.read); the answers,
+// pause, resume and tell are POSTs with actor.me.write. On a site every call goes through Network's same-origin relay
+// (/api/frame/actor…) because every site's connect-src allows openvibe.network and refuses openvibe.actor; `base`
+// reaches Actor itself in a test, and `frameBase` names the relay. Nothing is asked without a token. It shows:
 //   - the Actor's face, name and state (Working, Waiting for you, Resting, Paused), Pause/Resume, and its model;
 //   - Now: the step it is on in plain words, what it is looking at, the last three steps and what comes next, and the
 //     cost so far today;
@@ -76,12 +78,18 @@
         let gone = false, timer = 0, busy = false;
         container.replaceChildren();
         container.classList.add('ovdac');
-        const base = String(o.base || 'https://openvibe.actor').replace(/\/+$/, '');
+        // Network's frame relay on a site; an explicit base reaches Actor itself (a test).
+        const direct = o.base ? String(o.base).replace(/\/+$/, '') : '';
+        const frameBase = String(o.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
+        const endpoint = (path) => (direct ? direct + '/api/v1/me/actor' + path : frameBase + '/actor' + path);
+        // "Open" is a navigation, never a fetch: Actor's own page, wherever the API is.
+        const openBase = direct || 'https://openvibe.actor';
 
         async function api(path, init = {}) {
             const t = typeof o.token === 'function' ? await o.token() : o.token;
-            const headers = { accept: 'application/json', ...(init.json ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
-            const r = await fetch(base + '/api/v1/me/actor' + path, { method: init.method || 'GET', headers, credentials: 'omit', body: init.json ? JSON.stringify(init.body || {}) : undefined });
+            if (!t) throw Object.assign(new Error('Sign in to use your Actor'), { status: 401 });
+            const headers = { accept: 'application/json', ...(init.json ? { 'content-type': 'application/json' } : {}), authorization: `Bearer ${t}` };
+            const r = await fetch(endpoint(path), { method: init.method || 'GET', headers, credentials: 'omit', body: init.json ? JSON.stringify(init.body || {}) : undefined });
             const b = await r.json().catch(() => ({}));
             if (!r.ok) throw Object.assign(new Error(b.detail || `HTTP ${r.status}`), { status: r.status });
             return b;
@@ -109,7 +117,7 @@
             who.append(st);
             const pause = h('button', 'ovdac-btn', a.status === 'paused' ? 'Resume' : 'Pause'); pause.type = 'button';
             pause.addEventListener('click', () => act(a.status === 'paused' ? '/resume' : '/pause', {}, pause));
-            const open = h('a', 'ovdac-btn', 'Open'); open.href = base + '/you'; open.target = '_blank'; open.rel = 'noopener';
+            const open = h('a', 'ovdac-btn', 'Open'); open.href = openBase + '/you'; open.target = '_blank'; open.rel = 'noopener';
             head.append(face, who, pause, open);
             container.append(head);
             // Now: the step, what it looks at, the last three, next, today's cost.
