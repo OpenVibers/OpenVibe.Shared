@@ -39,7 +39,9 @@ const server = http.createServer((req, res) => {
         const context = await browser.newContext();
         const p = await h.openPage(browser, context, { width: 390, height: 844 });
         await p.goto(`${base}/`, { maxMs: 5000 });
-        await wait(300);
+        // A browser with no fine pointer gets the one nudge (along and back, done about 1.2 s after the strip is seen), under
+        // Calm too since 4.183.0 (a macOS runner asks for less motion and used to skip it): read the edges after it.
+        await wait(1600);
         const first = await p.evaluate(`({ endFade: document.getElementById('plain').classList.contains('is-more-end'), startFade: document.getElementById('plain').classList.contains('is-more-start'),
             bar: !document.querySelector('#plain + .ovk-scroll-bar').hidden, shortBar: document.querySelector('#short + .ovk-scroll-bar').hidden, shortFade: document.getElementById('short').classList.contains('is-more-end') })`);
         assert.ok(first.endFade && !first.startFade, `the far edge fades where more is hidden (${JSON.stringify(first)})`);
@@ -51,12 +53,12 @@ const server = http.createServer((req, res) => {
         assert.ok(!end.endFade && end.startFade, 'at the end only the near edge fades');
         assert.ok(/translateX\((?!0%)/.test(end.thumb), `the bar's thumb moved (${end.thumb})`);
         // Drift: it moves on its own, and a touch stops it for good.
-        // A slow runner (CI) gets more time; a browser that asks for less motion is not asked to drift.
-        const calm = await p.evaluate("matchMedia('(prefers-reduced-motion: reduce)').matches");
+        // A slow runner (CI) gets more time. A browser that asks for less motion drifts too, at half the speed (Calm
+        // reduces, it does not remove); it may already be on its way back, so any change counts.
         const a = await p.evaluate("document.getElementById('drift').scrollLeft");
         let b = a;
-        for (let i = 0; i < 30 && !calm && b <= a; i++) { await wait(100); b = await p.evaluate("document.getElementById('drift').scrollLeft"); }
-        assert.ok(calm || b > a, `a drifting strip moves by itself (${a} → ${b})`);
+        for (let i = 0; i < 40 && b === a; i++) { await wait(100); b = await p.evaluate("document.getElementById('drift').scrollLeft"); }
+        assert.ok(b !== a, `a drifting strip moves by itself (${a} → ${b})`);
         await p.evaluate("document.getElementById('drift').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))");
         const c = await p.evaluate("document.getElementById('drift').scrollLeft");
         await wait(700);

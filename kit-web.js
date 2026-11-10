@@ -165,7 +165,11 @@
         });
         // Rails: ‹ › move a page of cards where there is a pointer to click them; each hides at its end.
         const fine = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
-        const still = () => document.documentElement.getAttribute('data-ov-motion') === 'off';   // a rail glides under Calm too
+        // Motion (4.183.0): only Off keeps a strip still. Calm glides, nudges half as far and drifts at half the speed
+        // (<html data-ov-motion>, theme-loader.js; a page without the loader asks the device).
+        const motionAttr = () => document.documentElement.getAttribute('data-ov-motion');
+        const still = () => motionAttr() === 'off';
+        const gentle = () => { const m = motionAttr(); return m === 'reduced' || (!m && typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 0.5 : 1; };
         all('.ovk-rail').forEach((r) => {
             if (!once(r, 'ovkRail')) return;
             const track = r.querySelector('.ovk-rail-track');
@@ -223,7 +227,7 @@
                 if (max <= 4) return;
                 // A float of its own: a browser rounds scrollLeft, and under a pixel a frame would never move.
                 if (pos < 0 || Math.abs(pos - track.scrollLeft) > 2) pos = track.scrollLeft;
-                pos = Math.max(0, Math.min(max, pos + dir * dt * 0.028));
+                pos = Math.max(0, Math.min(max, pos + dir * dt * 0.028 * gentle()));
                 track.scrollLeft = pos;
                 if (pos >= max - 1) dir = -1; else if (pos <= 0) dir = 1;
                 raf = requestAnimationFrame(step);
@@ -236,10 +240,10 @@
                     const max = track.scrollWidth - track.clientWidth;
                     if (max <= 4) continue;
                     if (drift) { last = 0; if (!raf) raf = requestAnimationFrame(step); continue; }
-                    // One nudge, phones only (a computer has the ‹ › buttons): 48 px along and back.
+                    // One nudge, phones only (a computer has the ‹ › buttons): 48 px along and back (24 under Calm).
                     if (!nudged && !fine && track.scrollLeft < 4) {
                         nudged = true;
-                        setTimeout(() => { if (touched) return; track.scrollBy({ left: 48, behavior: 'smooth' }); setTimeout(() => { if (!touched) track.scrollBy({ left: -48, behavior: 'smooth' }); }, 420); }, 350);
+                        setTimeout(() => { if (touched) return; const far = 48 * gentle(); track.scrollBy({ left: far, behavior: 'smooth' }); setTimeout(() => { if (!touched) track.scrollBy({ left: -far, behavior: 'smooth' }); }, 420); }, 350);
                     }
                 }
             }, { threshold: [0, 0.6] }).observe(track);

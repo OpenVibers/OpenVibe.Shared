@@ -19,7 +19,7 @@ of stuff, so it should still have full motion but actually just reduce it instea
 - **The effects.** A lift rises a pixel and a reveal five; a tilt leans a third as far; a burst of confetti is a third
   of the pieces thrown half as hard; a count-up is quicker; the glint is fainter and slower; the mark keeps its intro
   and its hover and drops only the linger, and three leaves fall instead of seven; the ghost cursor glides slower and
-  waits longer; a name's particle burst is three pieces, not six; a drawer slides a third of its width and fades.
+  waits longer; a name's particle burst is three pieces, not six; a drawer slides a third of its width and fades; a strip nudges half as far and drifts at half the speed.
 - **The files.** 75 rules across 45 files stopped an effect under `prefers-reduced-motion` or under
   `html[data-ov-motion=reduced]`: all are gone. What such a rule did to leave a thing finished (a drawn stroke, a
   static glow, a bar at rest) belongs to `html[data-ov-motion=off]`. The calmer keyframes that already existed (the
