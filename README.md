@@ -22,7 +22,7 @@ were reconciled first.
 
 | Kind | Files |
 |---|---|
-| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `player.js`, `vibes-pay.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `openvibe-sw.js` |
+| Browser scripts, served at `/shared/<file>` (listed in `files.js`) | `navbar.js`, `nav-icons.js`, `theme-loader.js`, `footer.js`, `notification-ui.js`, `notification-live.js`, `account-switcher.js`, `user-card.js`, `ov-mark.js`, `ov-icons.js`, `history.js`, `sso-client.js`, `panels.js`, `ui.js`, `island.js`, `tooltip.js`, `player.js`, `vibes-pay.js`, `release-watch.js`, `release-update.js`, `web-runtime.js`, `boost.js`, `soft.js`, `openvibe-sw.js` |
 | Fonts, served at `/shared/<file>` (`files.FONTS`) | `ov-brand.woff2`: the brand face the names are set in (Nunito, SIL OFL 1.1, `OFL-Nunito.txt`; Latin, 700–900), declared by `navbar.js` |
 | Node modules (`require('openvibe-shared/<name>')`) | `index` (`.`), `analytics` (+ `analytics/{privacy,pg,retention,event}`), `app-icon`, `glyphs` (the network's icons, one registry: `NAMES`, `path(name)`, `svg(name, { size, title })`, `fromFa(name)`, `FA`; the browser drop-in `ov-glyphs.js` shows them in place of Font Awesome's and keeps Font Awesome's classes, animations and `data-fa-transform`; also as fonts, `/shared/ov-glyphs.woff2` with `ov-glyphs-font.css` (`ovi ovi-<name>`) or `ov-glyphs-fa.css` (Font Awesome's names), `glyph-fonts/ov-glyphs.{ttf,otf}` and `glyph-codepoints.json`, and as the sprite `/shared/ov-glyphs.svg#ovg-<name>`), `mark` (the OpenVibe mark, the Pair, as static SVG: `svg({ form, tone, wide, size, title })`, `art()`, `geo()`, `shapes()`, `COLORS`; the browser drop-in `ov-mark.js` draws the same numbers), `app-icons` (every site's installable app icon set: `has(service)`, `url(service, size, { maskable })`, `isIcon(name)`, `path(name)`; the pre-rendered PNGs are served at `/shared/icons/<service>[-maskable]-<size>.png` and named by the web app manifest `serve.js` serves at `/shared/manifest/<service>.webmanifest`), `assets` (content-addressed image/asset URLs and responsive `<picture>` markup: `hash(bytes)`, `url(src, hash)`, `srcset(entries)`, `picture({ src, hash?, alt, width, height, sizes, sources })` — AVIF before WebP before the fallback `<img>`, an unhashed path kept exactly as given), `auth-client`, `brand`, `builtin-themes`, `cache-policy` (the one cache rule: a content-addressed asset — `?v=<hash>` or a hashed filename — is `public, max-age=31536000, immutable`, anything else is `public, max-age=300, stale-while-revalidate=86400`, HTML is `public, max-age=120, stale-while-revalidate=3600` and a personalised page is `private, no-store`; `assetHeaders`/`htmlHeaders`/`isHashed` plus an `applyHtml()` middleware, used by `serve.js`), `indexnow` (tell engines a page changed: `createIndexNow({ host, key, keyLocation?, endpoint?, fetch, log })` → `keyFile` for `/<key>.txt`, `ping(urls)` for one POST of a deduped, https-only, own-host batch of ≤10,000 URLs that never throws, and `pingSoon(urls)` debounced into one batch in 30s; an unset key sends nothing), `frame` (the OpenVibe Frame on the server), `legal`, `middleware`, `notifications`, `seo`, `social` (every site's 1200×630 share card: `url(service)`, served by `serve.js` at `/shared/social/<service>.jpg` and used by `shell.page()` for `og:image` when a page names none), `shell` (the server-rendered page shell: `page(o)` composes the doctype and `<head>` from `seo.headTags`/`seo.pageSummary`, the theme-loader before the first paint, `web-runtime`/`navbar`/`footer` through `serve.url`, the `frame.noscriptNav` no-JS nav, the body and `frame.footer`; `scripts(o)` is just the head scripts and the escaped runtime boot JSON), `theme-sync`, `url-resolver`, `files`, `egress` (SSRF-safe addresses and connect-time DNS for outbound fetches of user-chosen hosts), `trace` (the request's W3C trace on outbound calls inside the network), `release`, `release-compat` (tests), `metrics`, `ready`, `config` (the configuration model: revisioned, validated, classified settings with last-known-good and `/api/admin/config`), `test-runner` (the `npm test` runner of every service's `test/run.js`: each `*.test.js` in its own process; a line `<label>: skipped (<why>)` makes a file skipped, listed with ○ and never counted as passed, and `--strict` fails on skips), `perf-budget` (size budgets for a page's first load, measured from the running server: HTML, same-origin scripts and stylesheets, raw and brotli; for `npm test`), `browser-harness` (real-Chrome checks of a running site: status, console errors, overflow, duplicate scripts, no-JS text, canonical, JSON-LD against visible text, axe-core, repeated-navigation growth and idle work; Node 22, Chrome); `footer`, `shipped` (the shared "shipped X ago" pill, recent list and `/updates` log, from the network changelog) and `icons` (= `ov-icons.js`) work on both sides, and `release-update` gives Link its pure `plan()` |
 | Schemas | `docs/schemas/analytics-event.v1.json` (`analytics/event.v1`, exported as `openvibe-shared/analytics/event.v1.json`) |
@@ -670,6 +670,28 @@ the new content. Another release marker, other external scripts, a non-HTML answ
 or a timeout is a normal load. Listen for `ov:boost:before` and `ov:boost:load` to tear down and wire widgets.
 `OVBoost.start(opts)` returns `{ go(url), stop(), stats() }`; options: `main`, `prefix` (`ov`), `exclude` (path
 prefixes), `timeout` (8000 ms), `prefetch` (true), `fx` (true).
+
+### Soft pages (`soft.js`): prefetch and cross-document view transitions
+
+The small, safe part of the "instant pages" work, for a server-rendered site that does not want a full soft-navigation
+contract yet. Load it in `<head>`, after `theme-loader.js`, as a plain script (not deferred — the arriving page must
+have its `@view-transition` opt-in before it first renders):
+
+```html
+<script src="/shared/soft.js"></script>
+```
+
+It adds a same-origin speculation-rule **prefetch** at moderate eagerness (plus the navbar's cross-site
+`[data-ov-net-link]` warm-up; no prerender: our navbar's page-view beacon and visit record do not defer under
+`document.prerendering` yet) and a cross-document **view transition** where the shared bar is held still and the rest of
+the page cross-fades. Calm is shorter; motion Off has none. Sign-in, sign-out, auth/API, downloads, query URLs, in-page
+anchors and `data-ov-no-prefetch` links are never prefetched. A page with its own `script[type="speculationrules"]`
+keeps it: soft.js leaves the rules alone; when soft.js runs first, the navbar sees its rules and skips its own (so no
+prerender either). Without `CSSViewTransitionRule` or speculation-rule support it does nothing and loads pages as before.
+
+`window.OpenVibeSoft.on()`, `.off()` and `.exclude(selector)` turn it on, off, or add links to the exclusion. The
+research behind it (and the limits — notably: a video cannot follow a person across origins) is in the network's agent
+research notes, `agents/research/soft-pages.md`.
 
 ### The web runtime (`web-runtime.js`, `route-transition.js`)
 
