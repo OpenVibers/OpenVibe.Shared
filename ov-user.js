@@ -75,7 +75,7 @@
         if (!username) throw new TypeError('OVUser.card: use a username of 3–24 letters, digits or underscores');
         mounts.get(host)?.destroy();
         const doc = host.ownerDocument;
-        const section = element(doc, 'section', undefined, 'ovk-card');
+        const section = element(doc, 'section', undefined, 'ovk-section');
         section.setAttribute('data-ov-user-card', '');
         host.replaceChildren(section);
         let generation = 0, controller, disposed = false;
@@ -90,7 +90,7 @@
                 const timer = setTimeout(() => request.abort(), 8000);
                 const status = element(doc, 'p', 'Loading profile…'); status.setAttribute('role', 'status');
                 section.replaceChildren(status); section.setAttribute('aria-busy', 'true');
-                const fetcher = options.fetchImpl || root.fetch.bind(root);
+                const fetcher = options.fetchImpl || ((...args) => root.fetch(...args));
                 const url = `${String(options.networkUrl || NETWORK).replace(/\/+$/, '')}/api/v1/people/${encodeURIComponent(username)}/card`;
                 api.ready = Promise.resolve().then(() => fetcher(url, { credentials: 'omit', cache: 'no-store',
                     headers: { Accept: 'application/json' }, signal: request.signal }))
@@ -131,7 +131,7 @@
         let close = null, disposed = false;
         function open(username, trigger) {
             close?.();
-            const dialog = element(doc, 'dialog', undefined, 'ovk-card');
+            const dialog = element(doc, 'dialog');
             if (typeof dialog.showModal !== 'function') return false;
             dialog.setAttribute('aria-label', `User @${username}`);
             const dismiss = element(doc, 'button', 'Close', 'ovk-btn ovk-btn--quiet'); dismiss.type = 'button';
