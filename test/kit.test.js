@@ -337,3 +337,17 @@ console.log('kit: builders, escaping, tabs, rows, settings, find/dock, icons, ti
     assert.ok(h.includes('aria-label="Create"') && h.includes('One line &amp; all the detail.'));
     assert.ok(!kit.pageHead({ title: 'Home' }).includes('<details'));
 }
+
+// A tone is a lean and a glow, never a coloured bar (4.196.0): a notice and anything with .ovk-tone take a tinted
+// hairline, a soft lean toward the tone and a glow in it; the notice's icon sits in a round chip. No side stripe anywhere
+// in the kit.
+{
+    const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'kit.css'), 'utf8');
+    assert.match(css, /\.ovk-notice, \.ovk-tone \{ --ovk-tone: var\(--ovk-accent\);[^}]*border: 1px solid color-mix\(in srgb, var\(--ovk-tone\) 32%, var\(--ovk-line\)\);[^}]*background: linear-gradient\([^;]*var\(--ovk-tone\) 13%[^;]*\);[^}]*box-shadow: 0 12px 28px -20px var\(--ovk-tone\); \}/, 'the tone: a hairline, a lean, a glow');
+    for (const [cls, tone, v] of [['ok', 'good', 'ok'], ['error', 'alert', 'bad'], ['warn', 'warning', 'warn']]) {
+        assert.ok(css.includes(`.ovk-notice--${cls}, .ovk-tone[data-tone="${tone}"] { --ovk-tone: var(--ovk-${v}); --ovk-tone-text: var(--ovk-${v}-text); }`), `${cls} and data-tone="${tone}" are the same tone`);
+    }
+    assert.match(css, /\.ovk-notice > \.ovk-i \{[^}]*border-radius: 50%;[^}]*background: color-mix\(in srgb, var\(--ovk-tone\) 20%, transparent\); color: var\(--ovk-tone-text\); \}/, 'the icon in a round chip of the tone');
+    assert.ok(!/border-(left|right|inline-start):\s*[2-9]px solid/.test(css), 'no side stripe marks a tone anywhere in the kit');
+    assert.match(kit.notice({ kind: 'error', text: 'x' }), /^<p class="ovk-notice ovk-notice--error" role="alert"><svg/, 'an error is still an alert with its icon first');
+}
