@@ -128,6 +128,7 @@
     "./web-runtime": "./web-runtime.js",
     "./route-transition": "./route-transition.js",
     "./boost": "./boost.js",
+    "./soft": "./soft.js",
     "./rooms": "./rooms.js",
     "./motion": "./motion.js",
     "./agent-layer": "./agent-layer.js",

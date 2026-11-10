@@ -61,6 +61,7 @@ const BROWSER = Object.freeze([
     'ui.js',                // toasts and page notices
     'route-transition.js',  // page-move bar, loading line and fade-in; web-runtime.js fetches it on the first move
     'boost.js',             // smooth same-site page moves for a server-rendered site (OVBoost; plan T11)
+    'soft.js',              // speculation-rule prefetch and cross-document view transitions (soft pages, 2026-11-10)
     'island.js',            // activity island
     'items.js',             // what people wear (OpenVibe.Inventory name effects, plan T21); draw with items.css
     'profile-panel.js',     // a person's stuff on any site (worn items, badges, achievements), from the Network profile
