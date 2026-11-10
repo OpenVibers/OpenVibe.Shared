@@ -47,6 +47,7 @@
         // make its saved state "hidden". Only a page without it needs the wallet's own lock.
         const ownLock = !root.OVSurfaces;
         let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [];
+        const shown = {};   // what each balance last showed, so a change counts from it
         const pending = new Map();
         const session = { close() {
             if (disposed) return; disposed = true; controller.abort(); dialog.close(); dialog.remove();
@@ -68,7 +69,14 @@
             if (!r.ok) throw new Error(value.detail || 'This is temporarily unavailable. Please try again.');
             return value;
         }
-        function message(error) { if (!disposed) { status.textContent = error.message || String(error); status.classList.add('is-error'); status.scrollIntoView({ block: 'nearest' }); } }
+        // What went wrong, in a person's words: a program's own error (a TypeError from a read that came back in another
+        // shape, a failed fetch) is never shown as it is.
+        function said(error) {
+            if (error && error.name === 'TypeError' && /fetch|network|load/i.test(error.message || '')) return 'Your wallet could not be reached. Check your connection and try again.';
+            if (!error || (error.name && error.name !== 'Error') || !error.message) return 'Part of your wallet could not be loaded. Close Wallet and open it again.';
+            return error.message;
+        }
+        function message(error) { if (!disposed) { status.textContent = said(error); status.classList.add('is-error'); status.scrollIntoView({ block: 'nearest' }); } }
         function button(label, action, cls) {
             const b = el('button', cls || 'ov-wallet-button', label); b.type = 'button';
             b.addEventListener('click', async () => {
@@ -147,11 +155,26 @@
             const balances = el('div', 'ov-wallet-balances'); body.append(balances);
             for (const id of ['coins', 'vibes', 'balance']) {
                 const b = data.balances[id], card = el('article', `ov-wallet-balance is-${id}`);
-                const title = el('div', 'ov-wallet-balance-title'); title.append(el('span', 'ov-wallet-symbol', { coins: 'O', vibes: 'V', balance: '$' }[id]), el('h3', '', b.label));
-                card.append(title, el('p', 'ov-wallet-value', amount(b)), el('p', 'ov-wallet-purpose', b.purpose));
+                const numeric = Number(b.amount) / Math.pow(10, b.scale || 0);
+                const words = (n) => amount({ ...b, amount: String(Math.round(n * Math.pow(10, b.scale || 0))) });
+                // The currency's own icon and colour (purse.js, the one the bar's pill has); the letter where that file is not on the page.
+                const purse = root.OpenVibePurse || null;
+                const symbol = el('span', 'ov-wallet-symbol', purse ? null : { coins: 'O', vibes: 'V', balance: '$' }[id]);
+                if (purse) { symbol.innerHTML = purse.icon(id, 30); symbol.classList.add('is-drawn', 'ovp-play'); symbol.setAttribute('aria-hidden', 'true'); card.setAttribute('data-purse', id); }
+                const title = el('div', 'ov-wallet-balance-title'); title.append(symbol, el('h3', '', b.label));
+                const value = el('p', 'ov-wallet-value', amount(b));
+                card.append(title, value, el('p', 'ov-wallet-purpose', b.purpose));
                 if (id === 'coins') { const link = el('a', 'ov-wallet-button', b.action); link.href = 'https://openvibe.network/my#coins'; card.append(link); }
                 else { const action = button(b.action, () => checkout(id === 'vibes' ? 'vibes' : 'topup')); action.disabled = data.money_writes_frozen; card.append(action); }
                 balances.append(card);
+                // The number counts in as the sheet opens; after a purchase it counts to the new amount and the currency's
+                // pieces leave (or reach) its card. The full amount is what a screen reader hears, at once.
+                if (purse && isFinite(numeric)) {
+                    const was = shown[id]; shown[id] = numeric;
+                    value.setAttribute('aria-label', amount(b));
+                    if (was == null) purse.count(value, numeric * .82, numeric, words);
+                    else if (was !== numeric) { purse.count(value, was, numeric, words); card.classList.add(numeric > was ? 'is-gain' : 'is-loss'); setTimeout(() => { if (card.isConnected) purse.burst(card, id, numeric - was); }, 60); }
+                }
             }
             const store = section('Store', 'A little more you. Items travel with your OpenVibe account.');
             const grid = el('div', 'ov-wallet-grid'); store.append(grid);

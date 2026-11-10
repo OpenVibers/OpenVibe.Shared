@@ -16,6 +16,13 @@ assert.ok(burst > steady && burst < 20 * 1024 * 1024, 'one burst is smoothed');
 assert.strictEqual(upload.rate(burst, 0, 1), burst, 'a stalled sample does not become a false zero rate');
 assert.strictEqual(upload.timeLeft(Infinity), 'Estimating time left');
 
+(async () => {
+  const bytes = Buffer.from('fixture upload');
+  const file = { size: bytes.length, slice: (a, b) => new Blob([bytes.subarray(a, b)]) };
+  assert.strictEqual(await upload.sha256(file), require('crypto').createHash('sha256').update(bytes).digest('hex'), 'fixture bytes use their exact SHA-256');
+  assert.strictEqual(await upload.sha256({ size: 99, slice: file.slice }, 10), null, 'large files skip the expensive preflight hash');
+})().catch((error) => { console.error(error); process.exitCode = 1; });
+
 assert.ok(files.isBrowserFile('ov-upload.js') && files.isBrowserFile('ov-upload.css'));
 const css = fs.readFileSync(path.join(__dirname, '../ov-upload.css'), 'utf8');
 assert.match(css, /html\[data-ov-motion=off\] \.ov-progress__check path\{stroke-dashoffset: 0\}/, 'with motion off the tick is simply drawn');

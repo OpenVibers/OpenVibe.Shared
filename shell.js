@@ -153,6 +153,13 @@ function faviconLink(o) {
 // specificity, which any site's own rule beats.
 const NAVBAR_RESERVE = '<style>body{margin:0}:where(body){font-family:var(--ov-font,\'Inter\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'Helvetica Neue\',Arial,sans-serif)}#navbar-mount{min-height:52px}</style>';
 
+// One bar mount per page (4.190.0). A page whose own body has <div id="navbar-mount"></div> gets the server's bar in
+// that place; before, it got a second mount, and the empty one held 52 px under the bar on seventeen sites.
+const OWN_MOUNT = /<div id="navbar-mount"(?:\s[^>]*)?>\s*<\/div>/;
+function oneMount(nav, body) {
+    return OWN_MOUNT.test(body) ? [body.replace(OWN_MOUNT, () => nav)] : [nav, body];
+}
+
 function page(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
     const navbar = navbarOptions(o, name);
@@ -185,8 +192,7 @@ function page(o = {}) {
         '</head>',
         `<body${attrs(bodyAttributes)}>`,
         summary ? summary.body : '',
-        frame.serverNav({ name, service: navbar.service, home: o.home, links: navbar.links }),
-        o.body || '',
+        ...oneMount(frame.serverNav({ name, service: navbar.service, home: o.home, links: navbar.links }), o.body || ''),
         frame.footer(o.footer || { service: name, variant: 'compact' }),
         '</body>',
         '</html>',
