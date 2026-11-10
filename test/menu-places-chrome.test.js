@@ -55,6 +55,16 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`);
             assert.ok(await until(`(document.querySelector('.ovs-starttabs [aria-selected="true"]') || {}).textContent.trim().startsWith('Feed')`), `${name}: Feed is chosen in place`);
             await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+            // Opened from a button: the sheet grows out of that button's centre, wherever the sheet itself was placed.
+            if (width > 900) {
+                await page.evaluate(OPEN(true).replace("frame: {},", `frame: {}, anchor: { top: 52, left: ${width - 150}, cx: ${width - 130}, cy: 26 },`));
+                assert.ok(await until(`!!document.querySelector('.ovs.is-open.ovs-anchored .ovs-panel')`), 'opened from a button');
+                await wait(420);
+                const o = await page.evaluate(`(() => { const p = document.querySelector('.ovs-panel'), r = p.getBoundingClientRect(); return { origin: parseFloat(getComputedStyle(p).transformOrigin), left: r.left, right: r.right }; })()`);
+                assert.ok(Math.abs(o.origin - (width - 130 - o.left)) <= 2, `the sheet's origin is the pressed button's centre (${JSON.stringify(o)})`);
+                assert.ok(o.right <= width && o.left >= 0, `and the sheet is wholly on the screen (${JSON.stringify(o)})`);
+                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
+            }
             // A visitor: three places, as before.
             await page.evaluate(OPEN(false));
             assert.ok(await until(`document.querySelectorAll('.ovs.is-open .ovs-starttabs .ovs-tab').length === 3`), `${name}: a visitor has this site, Feed and You`);

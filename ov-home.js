@@ -215,6 +215,13 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-ib:focus-visible, .ovh-who:focus-visible, .ovh-card:focus-visible, .ovh-key:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 @media (hover: hover) { .ovh-ib:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 14%, transparent); } .ovh-ib[aria-expanded="true"]:hover { background: var(--accent-strong, var(--accent, #2563eb)); } }
 .ovh-me-look { margin: -2px 4px 8px; }
+.ovh-me .ovh-ib { width: 40px; }
+.ovh-out:hover { color: var(--danger, #f87171); }
+.ovh-own { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 4px 8px; }
+.ovh .ovh-own > .ovh-own-i { font-size: 13px; font-weight: 600; line-height: 1; }
+.ovh-own-i { display: inline-flex; align-items: center; min-height: 36px; padding: 0 13px; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); color: var(--text-secondary, #a8b3c4); font: 600 13px/1 inherit; text-decoration: none; cursor: pointer; transition: background-color .15s, color .15s; }
+.ovh-own-i:hover, .ovh-own-i:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--text-primary, #e8ecf3); }
+@media (pointer: coarse) { .ovh-own-i { min-height: 44px; } }
 .ovh-rail { display: flex; gap: 8px; margin: 0 -2px; padding: 2px 6px 8px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding: 0 6px; scrollbar-width: none;
     -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
 .ovh-rail::-webkit-scrollbar { display: none; }
@@ -335,6 +342,8 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        plus: [['circle', { cx: 9.5, cy: 8.5, r: 3.2 }], ['path', { d: 'M3.5 18.5c1-2.900 3.300-4.400 6-4.400 1.300 0 2.500.300 3.500 1' }], ['path', { d: 'M18 13.500v6M15 16.500h6' }]],
+        out: [['path', { d: 'M13.500 4.500h4a1.500 1.500 0 0 1 1.500 1.500v12a1.500 1.500 0 0 1-1.500 1.500h-4' }], ['path', { d: 'M9.500 8l-4 4 4 4M5.500 12h9.500' }]],
         grid: [['rect', { x: 4, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 4, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }]],
         look: [['path', { d: 'M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.7-.4-1.1 0-1 .8-1.7 1.7-1.7h2.1A4.4 4.4 0 0 0 21 11c0-4.4-4-8-9-8Z' }],
             ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
@@ -409,16 +418,9 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 
         /** You: your picture (online), your name, and Display and Settings beside it. Made once per opening, so an open
          *  Look panel survives the repaints that come as history and the catalogue arrive. */
-        // The account's block (navbar.js builds it: who you are, add account, settings, sign out, your other accounts,
-        // this site's own items): the You tab is where it lives since 4.188.0. Without a bar to give it, the short bar below.
-        let accountBox = null;
-        function account() {
-            if (typeof o.account !== 'function') return null;
-            accountBox = accountBox || h('div', 'ovh-account');
-            let ok = false;
-            try { ok = o.account(accountBox) !== false; } catch { ok = false; }
-            return ok ? accountBox : null;
-        }
+        // Your row (4.195.0): the old account block is not set here any more (the owner: "get rid of this thing … we
+        // didn't really need [it] here, other than like adding your account"). The row has the five things a person needs of
+        // an account; under it, only what has no other home in the menu.
         function me() {
             if (meBox) return meBox;
             const u = o.user || {};
@@ -434,9 +436,25 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const look = h('a', 'ovh-ib'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
             look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.title = 'Display';
             const gear = h('a', 'ovh-ib'); gear.append(svgIcon('gear')); gear.href = 'https://openvibe.network/my'; gear.setAttribute('aria-label', 'Account and settings'); gear.title = 'Account and settings';
-            bar.append(who, look, gear);
+            bar.append(who);
+            const m = o.me || {};
+            if (m.add && safe(m.add)) { const add = h('a', 'ovh-ib'); add.append(svgIcon('plus')); add.href = m.add; add.setAttribute('aria-label', 'Add or switch account'); add.setAttribute('data-ov-tip', 'Add or switch account'); bar.append(add); }
+            bar.append(look, gear);
+            if (typeof m.out === 'function') { const out = h('button', 'ovh-ib ovh-out'); out.type = 'button'; out.append(svgIcon('out')); out.setAttribute('aria-label', 'Sign out'); out.setAttribute('data-ov-tip', 'Sign out'); out.addEventListener('click', () => { try { m.out(); } catch { /* the bar signs out */ } }); bar.append(out); }
             const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
             meBox.append(bar, panel);
+            // This site's own items, your status, Admin: small, in one line that wraps; nothing that the menu has elsewhere.
+            const own = (Array.isArray(m.own) ? m.own : []).filter((it) => it && it.label && (typeof it.onClick === 'function' || (it.href && safe(it.href)))).slice(0, 8);
+            if (own.length) {
+                const row = h('div', 'ovh-own'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Yours on this site');
+                own.forEach((it) => {
+                    const el2 = it.href ? h('a', 'ovh-own-i') : h('button', 'ovh-own-i');
+                    if (it.href) el2.href = it.href; else { el2.type = 'button'; el2.addEventListener('click', () => { try { it.onClick(); } catch { /* the item is the site's */ } }); }
+                    el2.textContent = it.short || it.label;
+                    row.append(el2);
+                });
+                meBox.append(row);
+            }
             return meBox;
         }
 
@@ -510,7 +528,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const calm = (x) => { x.classList.add('ovh-calm'); x.inert = state.edit; return x; };
             // The account's block wherever the bar has a person (a site with its own session may have no token for
             // the network's reads yet: sign out and the rest must still be there); else the short bar.
-            { const a = account(); if (a) el.append(calm(a)); else if (signedIn(o)) el.append(calm(me())); }
+            if ((o.user && !o.user.is_anon) || signedIn(o)) el.append(calm(me()));
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
             const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
