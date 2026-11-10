@@ -25,9 +25,9 @@
 - **Every site from the site's name (`ov-drop.js`, `navbar.js`, `search.js`).** The dropdown under a site's name ends
   with "All OpenVibe sites", which opens the menu scrolled past the site's own pages to every site. The scroll had never
   run: the menu read the tab after "sites" had become "here".
-- **The site's name, highlighted (`navbar.js`, ask 342).** The name that opens its pages draws its highlight behind it with
-  room around it (no layout shift): a faint tint on hover; open, a deeper tint with a hairline ring that comes up on a
-  small spring; a slight give on press. Motion Off keeps it still.
+- **The site's name, highlighted (`navbar.js`, ask 342).** The name that opens its pages gets its highlight as a spread
+  shadow with room around it (no added width, so the name still reads whole at 360 px): a faint tint on hover; open, a
+  deeper tint with a hairline ring that comes up on a small spring. Motion Off keeps it still (the theme loader's rule).
 - Budget: `dock.js` 20.43 KB brotli (budget 20.45 KB, was 20.30 KB) for the "Open in Chat" icon in the always-loaded
   Dock; the Vibe-only button rules stay in `dock-vibe.js`.
 
