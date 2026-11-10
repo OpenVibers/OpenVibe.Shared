@@ -452,7 +452,7 @@
   background:color-mix(in srgb, var(--accent,#60a5fa) 6%, var(--bg-tertiary,#1a1b28));border:1px solid var(--border,rgba(255,255,255,.08));animation:ovfIn .4s ease-out both}
 .ovf-pulse a{color:inherit;text-decoration:none;font-weight:600}
 .ovf-now{flex:1 1 100%;min-width:0;display:grid;gap:8px}
-.ovf-who>summary,.ovf-who--flat{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 9px;min-height:36px;color:var(--text-primary,#f1f4fb)}
+.ovf-who>summary{list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:4px 9px;min-height:36px;color:var(--text-primary,#f1f4fb)}
 .ovf-who>summary{cursor:pointer;border-radius:10px}
 .ovf-who>summary::-webkit-details-marker{display:none}
 .ovf-who>summary::after{content:"";width:.45em;height:.45em;margin:0 4px 3px auto;border:solid var(--text-muted,#8b93ad);border-width:0 1.8px 1.8px 0;transform:rotate(45deg);transition:transform .2s}
@@ -461,7 +461,7 @@
 .ovf-who-dot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--success-text,#34d399);box-shadow:0 0 0 3px color-mix(in srgb,var(--success-text,#34d399) 22%,transparent);animation:ovf-on 2.4s ease-in-out infinite}
 @keyframes ovf-on{50%{box-shadow:0 0 0 calc(3px + 3px*var(--ov-move,1)) color-mix(in srgb,var(--success-text,#34d399) 6%,transparent)}}
 .ovf-who-n{font-weight:500}.ovf-who-n b{font-size:1.05em;font-weight:800;font-variant-numeric:tabular-nums}
-.ovf-who-sub{color:var(--text-muted,#8b93ad)}
+.ovf-who-when{margin:6px 2px 0;color:var(--text-muted,#8b93ad)}
 .ovf-who-faces{display:inline-flex;padding-left:7px}
 .ovf-who-faces img,.ovf-who-faces i{width:24px;height:24px;margin-left:-7px;border-radius:50%;box-shadow:0 0 0 2px var(--bg-secondary,#0f1420);object-fit:cover}
 .ovf-who i{display:grid;place-items:center;font-style:normal;font-size:.72rem;font-weight:800;color:var(--text-primary,#f1f4fb);background:color-mix(in srgb,var(--accent,#3b82f6) 38%,var(--bg-secondary,#0f1420))}
@@ -483,7 +483,7 @@ a.ovf-tile:active{transform:scale(.96)}
 .ovf-tile .ovf-ic{font-size:1.15em;color:var(--accent-light,var(--accent,#60a5fa))}
 .ovf-tile.is-live{background:color-mix(in srgb,var(--live-red-text,#ef4444) 15%,transparent)}
 .ovf-tile.is-channel{padding:0 12px;color:var(--text-primary,#f1f4fb)}
-@media (pointer:coarse){.ovf-who>summary,.ovf-who--flat,.ovf-tile,.ovf-who-list a{min-height:44px}}
+@media (pointer:coarse){.ovf-who>summary,.ovf-tile,.ovf-who-list a{min-height:44px}}
 .ovf-pulse a:hover{color:var(--accent,#60a5fa)}
 .ovf-pulse .ovf-sep{color:var(--text-muted,#8b93ad)}
 .ovf-pulse-live{display:inline-flex;align-items:center;gap:7px;color:var(--text-primary,#f1f4fb)!important}
@@ -647,11 +647,13 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         if (o.total > 0) {
             const face = (p, size) => (p.avatar ? `<img src="${esc(p.avatar)}" alt="" width="${size}" height="${size}" loading="lazy" decoding="async">` : `<i aria-hidden="true">${esc(p.name.charAt(0).toUpperCase())}</i>`);
             const parts = [o.members > 0 ? `${fmtN(o.members)} member${o.members === 1 ? '' : 's'}` : '', o.guests > 0 ? `${fmtN(o.guests)} guest${o.guests === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
-            const head = `<span class="ovf-who-dot" aria-hidden="true"></span><span class="ovf-who-n"><b>${fmtN(o.total)}</b> online in the last 30 min</span>${o.people.length ? `<span class="ovf-who-faces" aria-hidden="true">${o.people.slice(0, 5).map((p) => face(p, 24)).join('')}</span>` : ''}${parts ? `<span class="ovf-who-sub">${parts}</span>` : ''}`;
+            // Shorthand (the owner, 2026-11-10: "Make it like shorthand '3 online'. If you put your mouse over it, it says
+            // 'last 30 minutes'"): the count and the faces. When, and how many are members and guests, are the tooltip's
+            // and the first line of what a press opens (a finger never sees a tooltip).
+            const head = `<span class="ovf-who-dot" aria-hidden="true"></span><span class="ovf-who-n" data-ov-tip="In the last 30 minutes"${parts ? ` data-ov-tip-sub="${esc(parts)}"` : ''}><b>${fmtN(o.total)}</b> online</span>${o.people.length ? `<span class="ovf-who-faces" aria-hidden="true">${o.people.slice(0, 5).map((p) => face(p, 24)).join('')}</span>` : ''}`;
+            const when = `<p class="ovf-who-when">In the last 30 minutes${parts ? ` · ${parts}` : ''}</p>`;
             const list = o.people.map((p) => `<li><a href="${NETWORK_URL}/@${encodeURIComponent(p.username)}">${face(p, 26)}<span>${esc(p.name)}</span>${p.site ? `<small>${esc(p.site)}</small>` : ''}</a></li>`).join('');
-            who = list
-                ? `<details class="ovf-who"><summary>${head}</summary><ul class="ovf-who-list">${list}</ul>${o.more > 0 ? `<p class="ovf-who-more">and ${fmtN(o.more)} more</p>` : ''}</details>`
-                : `<div class="ovf-who ovf-who--flat">${head}</div>`;
+            who = `<details class="ovf-who"><summary>${head}</summary>${when}${list ? `<ul class="ovf-who-list">${list}</ul>` : ''}${o.more > 0 ? `<p class="ovf-who-more">and ${fmtN(o.more)} more</p>` : ''}</details>`;
         }
         // Then a row of small tiles, each opening what it counts: live (only while someone is), the counts, this
         // site's own items, and the two facts the strip always had.

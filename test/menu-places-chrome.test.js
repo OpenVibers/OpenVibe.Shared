@@ -59,7 +59,9 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             if (width > 900) {
                 await page.evaluate(OPEN(true).replace("frame: {},", `frame: {}, anchor: { top: 52, left: ${width - 150}, cx: ${width - 130}, cy: 26 },`));
                 assert.ok(await until(`!!document.querySelector('.ovs.is-open.ovs-anchored .ovs-panel')`), 'opened from a button');
-                await wait(420);
+                // Measured once the sheet has stopped growing: a fixed wait read it mid-motion on a busy machine (2026-11-10).
+                await wait(120);
+                await until(`document.querySelector('.ovs-panel').getAnimations().every((a) => a.playState !== 'running')`);
                 const o = await page.evaluate(`(() => { const p = document.querySelector('.ovs-panel'), r = p.getBoundingClientRect(); return { origin: parseFloat(getComputedStyle(p).transformOrigin), left: r.left, right: r.right }; })()`);
                 assert.ok(Math.abs(o.origin - (width - 130 - o.left)) <= 2, `the sheet's origin is the pressed button's centre (${JSON.stringify(o)})`);
                 assert.ok(o.right <= width && o.left >= 0, `and the sheet is wholly on the screen (${JSON.stringify(o)})`);
