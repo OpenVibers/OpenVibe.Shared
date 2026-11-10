@@ -37,16 +37,17 @@ const q = (str) => String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
  * are made against. An arc's flags and its rotation are not coordinates and are left alone.
  */
 const coarse = (d) => d.replace(/( d=")([^"]*)(")/g, (m, a, body, b) => {
-    let out = '', cmd = '', n = 0;
+    let out = '', cmd = '', n = 0, lastNumber = false;
     for (const tok of body.match(/[AaCcSsQqTtLlHhVvMmZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/g) || []) {
-        if (/[A-Za-z]/.test(tok)) { out += tok; cmd = tok; n = 0; continue; }
+        if (/[A-Za-z]/.test(tok)) { out += tok; cmd = tok; n = 0; lastNumber = false; continue; }
         // An arc's numbers come in groups of seven — rx ry rotation large-arc sweep x y — and the
         // rotation and the two flags are not coordinates.
         const keep = /[Aa]/.test(cmd) && (n % 7) >= 2 && (n % 7) <= 4;
         n++;
-        if (keep) { out += tok; continue; }
-        const v = Math.round(Number(tok) * 2) / 2;
-        out += (Object.is(v, -0) ? 0 : v).toString();
+        const value = keep ? tok : (Object.is(Math.round(Number(tok) * 2) / 2, -0) ? '0' : (Math.round(Number(tok) * 2) / 2).toString());
+        if (lastNumber && value[0] !== '-') out += ' ';
+        out += value;
+        lastNumber = true;
     }
     return a + out + b;
 });
@@ -56,7 +57,7 @@ function upgraded(text) {
     return text.replace(/^( {8}'(fa-[a-z0-9-]+)': )\[.*\],$/gm, (line, head, name) => {
         const g = glyphs.fromFa(name);
         if (!g) return line;
-        return `${head}[0, '${q(coarse(glyphs.path(g)))}', '${q(coarse(glyphs.solid(g) || ''))}'],`;
+        return `${head}[0, '${q(glyphs.path(g))}', '${q(glyphs.solid(g) || '')}'],`;
     });
 }
 const BEGIN_PREFIX = '    // BEGIN generated';

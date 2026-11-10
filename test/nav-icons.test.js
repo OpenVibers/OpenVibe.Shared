@@ -60,7 +60,20 @@ function load(opts = {}) {
 }
 // [0, line, solid] is an OpenVibe glyph (4.71.0: one hand in the bar); [w, path] a Font Awesome one the set lacks.
 const ovg = (g) => `<svg class="ovnav-ic ovnav-ovg${g[2] ? ' has-s' : ''}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${g[1]}${g[2] ? `<g class="ovg-s">${g[2]}</g>` : ''}</svg>`;
-const glyph = (name) => (ICONS[name][0] === 0 ? ovg(ICONS[name]) : `<svg class="ovnav-ic" viewBox="0 0 ${ICONS[name][0]} 512" style="width:${(ICONS[name][0] / 512).toFixed(3)}em" aria-hidden="true" focusable="false"><path fill="currentColor" d="${ICONS[name][1]}"/></svg>`);
+const coarseMarkup = (markup) => markup.replace(/ d="([^"]*)"/g, (m, body) => {
+    let out = '', cmd = '', n = 0, lastNumber = false;
+    for (const tok of body.match(/[AaCcSsQqTtLlHhVvMmZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/g) || []) {
+        if (/[A-Za-z]/.test(tok)) { out += tok; cmd = tok; n = 0; lastNumber = false; continue; }
+        const keep = /[Aa]/.test(cmd) && (n % 7) >= 2 && (n % 7) <= 4;
+        n++;
+        const value = keep ? tok : (Object.is(Math.round(Number(tok) * 2) / 2, -0) ? '0' : (Math.round(Number(tok) * 2) / 2).toString());
+        if (lastNumber && value[0] !== '-') out += ' ';
+        out += value; lastNumber = true;
+    }
+    return ` d="${out}"`;
+});
+const rawGlyph = (name) => (ICONS[name][0] === 0 ? ovg(ICONS[name]) : `<svg class="ovnav-ic" viewBox="0 0 ${ICONS[name][0]} 512" style="width:${(ICONS[name][0] / 512).toFixed(3)}em" aria-hidden="true" focusable="false"><path fill="currentColor" d="${ICONS[name][1]}"/></svg>`);
+const glyph = (name) => (ICONS[name][0] === 0 ? ovg([0, coarseMarkup(ICONS[name][1]), coarseMarkup(ICONS[name][2] || '')]) : rawGlyph(name));
 const html = (created) => created.map(e => e.innerHTML).join('\n');
 const wait = (ms) => new Promise(r => setTimeout(r, ms));
 const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
@@ -94,7 +107,7 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         const block = src.slice(src.indexOf('const NAV_ICONS_LAZY = {'), src.indexOf('const NAV_ICONS_REV'));
         for (const m of block.matchAll(/(\d+): '([^']+)'/g)) m[2].split(' ').forEach(n => { lazy[n] = Number(m[1]); });
         for (const [name, [w]] of Object.entries(ICONS)) {
-            if (own.includes(name)) assert.ok(src.includes(w === 0 ? `'${name}': [0, '${ICONS[name][1]}', '${ICONS[name][2]}']` : `'${name}': [${w}, '${ICONS[name][1]}']`), `${name} built in, same drawing as nav-icons.js`);
+            if (own.includes(name)) assert.ok(src.includes(w === 0 ? `'${name}': [0, '${coarseMarkup(ICONS[name][1])}', '${coarseMarkup(ICONS[name][2] || '')}']` : `'${name}': [${w}, '${ICONS[name][1]}']`), `${name} built in, same drawing as nav-icons.js`);
             else assert.strictEqual(lazy[name], w, `${name} listed as lazy with its width`);
         }
         const rev = crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, 'nav-icons.js'))).digest('hex').slice(0, 12);
@@ -124,7 +137,7 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
         assert.strictEqual(slot.attrs['data-ovnav-ic'], undefined);
         created.length = 0;
         navbar.setLinks([{ id: 'home', label: 'Home', href: '/', icon: 'fa-house' }]);
-        assert.ok(html(created).includes(glyph('fa-house')), 'after loading, the glyph renders inline');
+        assert.ok(html(created).includes(rawGlyph('fa-house')), 'after loading, the glyph renders inline');
     }
 
     // ── nav-icons.js cannot load: lazy icons fall back to the page's Font Awesome ──
@@ -146,7 +159,7 @@ const admin = { id: 1, username: 'alex', display_name: 'Alex', role: 'admin' };
     {
         const { navbar, created, loaders } = load({ preloaded: true });
         navbar.init({ service: 'live', links: [{ label: 'Chat', href: '/chat', icon: 'fa-comments' }] });
-        assert.ok(html(created).includes(glyph('fa-comments')), 'preloaded set used synchronously');
+        assert.ok(html(created).includes(rawGlyph('fa-comments')), 'preloaded set used synchronously');
         await wait(350);
         assert.strictEqual(loaders().length, 0, 'no fetch when the set is already on the page');
     }

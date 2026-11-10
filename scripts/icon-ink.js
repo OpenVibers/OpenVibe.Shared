@@ -821,11 +821,10 @@ if (require.main === module) {
     const onlySet = flag('--set');
     (async () => {
         if (args.includes('--normalise')) { await cmdNormalise(flag('--target')); return; }
-        if (flag('--sheets')) throw new Error('--sheets: not implemented yet');
-        if (flag('--tile-demo')) throw new Error('--tile-demo: not implemented yet');
+        if (flag('--sheets')) { await require('./icon-ink-sheets').saveSheets(path.resolve(flag('--sheets'))); return; }
+        if (flag('--tile-demo')) { await require('./icon-ink-sheets').saveTileDemo(path.resolve(flag('--tile-demo'))); return; }
         await cmdMeasure(out, onlySet);
     })().catch((e) => { console.error(e.message || e); process.exit(1); });
 }
-
 
 
