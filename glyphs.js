@@ -230,6 +230,13 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        // 4.182.0, the last five shapes: a car, a door, a podium, a rocket and a camera that flips. After these, every
+        // glyph without a solid drawing is one made of lines, which thickens when small instead.
+        car: '<path fill-rule="evenodd" d="M5.8 5.4h12.4l2.6 5.4H3.2ZM2.9 12.2h18.2v4.4H2.9ZM6.1 14.4a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0ZM15.7 14.4a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0ZM5.2 17.4h2.6v1.8H5.2ZM16.2 17.4h2.6v1.8h-2.6Z"/>',
+        door: '<path fill-rule="evenodd" d="M14.6 4.1 5.4 2.4v19.2l9.2-1.7ZM9.9 12a1.1 1.1 0 1 0 2.2 0a1.1 1.1 0 1 0-2.2 0Z"/><path class="ln" d="M15.9 5h1.6a1 1 0 0 1 1 1v15M15.9 21H21M3 21h2.4"/>',
+        ranking: '<path d="M3.4 13.6h5V9.8h7.2v5.8h5v5.5H3.4ZM12 2l1 2 2.2.3-1.6 1.6.4 2.2L12 7.1l-2 1 .4-2.2-1.6-1.6 2.2-.3Z"/>',
+        rocket: '<path fill-rule="evenodd" d="M12.1 16.2 7.8 11.9C9.4 6 13.8 2.9 21.1 2.9c0 7.3-3.1 11.7-9 13.3ZM13.8 8.5a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0-3.4 0Z"/><path d="M4.2 11.9 7.2 7.4h3.4L7 12.3ZM11.7 17 12.1 19.8l4.5-3.2v-3.4ZM6.7 17.3c-1.9 0-3.8 1.9-3.8 3.8 1.9 0 3.8-1.9 3.8-3.8Z"/>',
+        'camera-flip': '<path fill-rule="evenodd" d="M3 8.3a1.8 1.8 0 0 1 1.8-1.8h2.5L9 4h6l1.7 2.5h2.5A1.8 1.8 0 0 1 21 8.3v10.1a1.8 1.8 0 0 1-1.8 1.8H4.8A1.8 1.8 0 0 1 3 18.4ZM7.96 12.03A4.3 4.3 0 0 1 16.04 12.03L13.79 12.85A1.9 1.9 0 0 0 10.21 12.85ZM16.04 14.97A4.3 4.3 0 0 1 7.96 14.97L10.21 14.15A1.9 1.9 0 0 0 13.79 14.15Z"/>',
         // 4.182.0, sixth batch: things with one outline (an aeroplane, a burst, a fish, a shoe, a sword, a mask, a
         // piggy bank), a couch, a coin over a box, two folders on a tree, a chequered flag, and two people.
         airplane: '<path d="M12 2.5c1.3 0 2 1.2 2 3V9.7l7.5 4.5v2.5L14 14.2v3.5l2 1.5v2.5L12 20.5l-4 1.2v-2.5l2-1.5v-3.5l-7.5 2.5v-2.5L10 9.7V5.5c0-1.8.7-3 2-3Z"/>',
