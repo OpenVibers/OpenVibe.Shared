@@ -89,7 +89,6 @@
                 .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; box-sizing: border-box; }
                 .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
-                /* 4.46.0 (the fleet tap audit): Sign In, the menu and the orb reach 44px to a finger, still drawn as before. */
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
                 /* Sign in is a 36px circle: its taps grow to the right and a little to the left, off the menu button's. */
                 .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -5px -8px -5px -3px; }
@@ -354,18 +353,21 @@
             }
             .openvibe-navbar-avatar:hover { border-color: var(--accent, #3b82f6); }
 
-            /* Sign in is the person's place before there is a person: a filled circle with a figure in it, named by its
-               tooltip (ov-tip.js). --accent-strong / --on-accent-strong read at 4.5:1 or better in every theme. */
+            /* Sign in: a filled circle where the person's picture will be; a figure and an arrow coming in take turns. */
             .openvibe-navbar-login { display: inline-grid; place-items: center; background: var(--accent-strong, #1d4ed8); color: var(--on-accent-strong, #fff); border: none; cursor: pointer; text-decoration: none; transition: filter .15s, box-shadow .25s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
             .openvibe-navbar-login:hover, .openvibe-navbar-login:focus-visible { filter: brightness(1.12); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); }
             .openvibe-navbar-login:active { transform: scale(.9); }
             .ovsi { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
-            .ovsi-p { transform-origin: 12px 13px; animation: ovsi-in .5s cubic-bezier(.2, 1.4, .3, 1) .3s both; transition: transform .2s; }
-            :hover > .ovsi .ovsi-p { transform: translateY(calc(-1px * var(--ov-move, 1))); }
+            .ovsi-p { animation: ovsi-p 6s ease-in-out 2s infinite; }
+            .ovsi-a { opacity: 0; animation: ovsi-a 6s ease-in-out 2s infinite; }
+            :hover > .ovsi .ovsi-p { animation: none; opacity: 0; }
+            :hover > .ovsi .ovsi-a { animation: none; opacity: 1; }
+            html[data-ov-motion=off] .ovsi :is(.ovsi-p, .ovsi-a) { animation: none; }
             .ovsi-o { opacity: 0; stroke-dasharray: 30 39; }
             .is-going .ovsi-o { opacity: 1; animation: ovsi-go 1s linear infinite; }
             .is-going .ovsi-p { opacity: .55; }
-            @keyframes ovsi-in { from { opacity: 0; transform: translateY(4px) scale(.8); } }
+            @keyframes ovsi-p { 0%, 62%, 100% { opacity: 1; transform: none; } 70%, 92% { opacity: 0; transform: translateX(4px); } }
+            @keyframes ovsi-a { 0%, 62%, 100% { opacity: 0; transform: translateX(-5px); } 70%, 92% { opacity: 1; transform: none; } }
             @keyframes ovsi-go { to { stroke-dashoffset: -69; } }
             /* 4.148.0 (the owner, 11-08: "the things need to be more consistent in the nav bar in size"): one height for
                every control at the bar's right, 36 px (34 px on a phone under 400 px): Sign In, the orb, messages, the
@@ -563,7 +565,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '3174ce995380', 'dock.js': '1e2c189c1b1e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '6ac08ce47825' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '3174ce995380', 'dock.js': '1e2c189c1b1e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2116,7 +2118,7 @@
                 <div id="openvibe-bell-mount"></div>
                 ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" data-ov-tip="Menu" data-ov-tip-sub="This site, search, every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
-                    `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}" aria-label="Sign in" data-ov-tip="Sign in"><svg class="ovsi" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="ovsi-o" cx="12" cy="12" r="11"/><g class="ovsi-p"><circle cx="12" cy="8.8" r="3.2"/><path d="M5.900 18.400c1.100-2.700 3.300-4.100 6.100-4.100s5 1.400 6.100 4.100"/></g></svg></a>`}
+                    `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}" aria-label="Sign in" data-ov-tip="Sign in"><svg class="ovsi" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="ovsi-o" cx="12" cy="12" r="11"/><g class="ovsi-p"><circle cx="12" cy="8.8" r="3.2"/><path d="M5.900 18.400c1.100-2.700 3.300-4.100 6.100-4.100s5 1.400 6.100 4.100"/></g><path class="ovsi-a" d="M5.500 12h8.500M11 8.500l3.500 3.500-3.500 3.500M15.500 6.500h2.500v11h-2.500"/></svg></a>`}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
@@ -2124,7 +2126,9 @@
         bindLinks(nav, links);
         hookSearch(nav);
         hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
-        if (!root.OVTip && !document.getElementById('ov-tip-loader') && root.matchMedia && matchMedia('(hover: hover)').matches) { try { const sc = document.createElement('script'); sc.id = 'ov-tip-loader'; sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ } }
+        // The tooltip's file is fetched when a pointer first comes over the bar, not with the page.
+        const tip = () => { nav.removeEventListener('pointerover', tip); if (!root.OVTip && !document.getElementById('ov-tip-loader')) { try { const sc = document.createElement('script'); sc.id = 'ov-tip-loader'; sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ } } };
+        if (typeof nav.addEventListener === 'function') nav.addEventListener('pointerover', tip, { passive: true });
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();

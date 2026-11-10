@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.194.0 — 2026-11-10
+
+**One row of places in the menu, a wallet that is there at once, and a Sign in that says so.** From the owner's notes
+of 2026-11-10.
+
+- **The menu's head is one row of five places** ("combine and consolidate these two menus into one unified menu … It
+  just seems a little much with all the buttons on the first one … the agents and AI tools versus the feed and kind of
+  community stuff"). This site · Feed · Messages · AI · You, in place of three tabs with a second row of four under
+  them: on a phone each is its icon over its word, on a computer side by side. Messages and AI (Vibe and your agents)
+  open the Dock on those places for now; their panels move into this sheet next. A visitor has this site, Feed and
+  You, as before. The Dock draws Vibe as the spark and Agents as a robot, as the row does (the spark meant two things).
+- **The wallet sheet is there at once and nothing jumps** ("load faster and dynamically sync smarter … isn't so jumpy
+  as it loads in, the different elements and balances"). It opens holding what it last showed in this tab, or room
+  held for its three cards; the store and your items stand as placeholders of their size; the store, the kinds and the
+  items are asked side by side with the balances (they waited for them before); each part arrives where it stands,
+  once. What it keeps is the wallet's own answer in the person's tab, forgotten when the account changes.
+- **Sign in says "sign in"** ("should represent … that they need to sign in"). In the filled circle the figure and an
+  arrow coming in through a door take turns (the arrow for a moment every six seconds); under the pointer it is the
+  arrow, what a press does. Off shows the figure and does not move.
+- **The tooltip's file is fetched by the first pointer over the bar**, not with the page (it was fetched at once on
+  any device that can hover); what that pointer rests on gets its tooltip when the file arrives.
+- Tests: `menu-places-chrome` (five places in one row signed in, the doors open the Dock, three for a visitor),
+  the wallet's and the bar's. `dock.js` is 20.30 KB brotli (budget raised by 0.05 KB for the robot glyph, dated).
+
 ## 4.193.0 — 2026-11-10
 
 **The bar's right end, one tooltip, and one frame for mail.** From the owner's notes of 2026-11-10.

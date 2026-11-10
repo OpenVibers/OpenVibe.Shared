@@ -92,4 +92,6 @@ html[data-ov-motion=off] .ovtip { transform: none; transition: none; }
     root.addEventListener('resize', hide, { passive: true });
 
     root.OVTip = { show, hide };
+    // Fetched by the first pointer over the bar: what that pointer is resting on gets its tooltip.
+    try { const now = document.querySelector('[data-ov-tip]:hover'); if (now) timer = setTimeout(() => show(now), 240); } catch { /* an old engine without :hover here */ }
 }(typeof window !== 'undefined' ? window : globalThis));
