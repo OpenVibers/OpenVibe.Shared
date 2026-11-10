@@ -66,11 +66,6 @@
     // user last had open … the main tab should just show links that exist on that site, and under that the full list
     // of sites"). The first is labelled with this site's own name.
     const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
-    const TAB_KEY = 'ovs-tab';
-    // The tab is remembered per site (11-09, the owner: on a new site the menu opened on You, "confusing"): another site
-    // opens on its own tab first; the same site opens where the person left it.
-    const savedTab = () => { try { const [v, host] = String(localStorage.getItem(TAB_KEY) || '').split('|'); if (host && host !== location.hostname) return null; return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
-    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, `${v}|${location.hostname}`); } catch { /* private window */ } };
     // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
     // since last time you've looked… a badge").
     const FEED_SEEN = 'ovs-feed-seen';
@@ -228,7 +223,7 @@
 .ovs-bridge-b:hover, .ovs-bridge-b:focus-visible { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
 .ovs-bridge-b:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 .ovs-bridge-b:active { transform: scale(.96); }
-@media (max-width: 380px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; font-size: 11.5px; } }
+@media (max-width: 640px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; padding: 4px 2px; font-size: 11.5px; } .ovs-bridge-i svg { width: 19px; height: 19px; } }
 /* The menu's three tabs (4.149.0): one segmented row under the field; the chosen one in the accent. */
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
@@ -304,8 +299,14 @@
 .ovs-app { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; padding: 10px 2px 8px; border-radius: 16px; color: inherit; text-decoration: none; }
 .ovs .ovs-appic { width: 54px; height: 54px; border-radius: 17px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1), box-shadow .18s; }
 .ovs-appname { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
-.ovs-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; padding: 0 2px 2px; }
-.ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; padding: 0 10px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; }
+/* This site's pages: named as such, in the case they are written in, behind a dot that says "you are here"; each a tile. */
+.ovs-group[data-sec="here"] { gap: 9px; padding-top: 12px; font-size: 13.5px; font-weight: 750; letter-spacing: 0; text-transform: none; color: var(--text-secondary, #a8b3c4); }
+.ovs-group[data-sec="here"]::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-light, var(--accent, #60a5fa)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); animation: ovs-here 2.4s ease-in-out infinite; }
+@keyframes ovs-here { 50% { box-shadow: 0 0 0 calc(4px + 3px * var(--ov-move, 1)) color-mix(in srgb, var(--accent, #3b82f6) 8%, transparent); } }
+.ovs-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 2px 4px 6px; }
+.ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 46px; padding: 0 12px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4.5%, transparent); transition: background-color .15s, transform .12s; }
+.ovs-link:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); }
+.ovs-link:active { transform: scale(.97); }
 .ovs-link svg { width: 16px; height: 16px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-link.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 42%, transparent); color: var(--text-primary, #e6edf3); }
@@ -449,7 +450,7 @@
         el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
-            tab = b.getAttribute('data-tab'); saveTab(tab); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
+            tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -1099,7 +1100,7 @@
             if (len > bestLen) { best = i; bestLen = len; }
         });
         if (best >= 0) pages[best].here = true;
-        if (pages.length) groups.push({ title: `On ${here()}`, as: 'links', items: pages, section: 'here' });
+        if (pages.length) groups.push({ title: `Pages on ${here()}`, as: 'links', items: pages, section: 'here' });
         const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
         if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
         const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);
@@ -1450,7 +1451,8 @@
         // tab, whose second half is every site; "tools" is You); else this site.
         // "sites" is a request for the list of every site (the legacy drawer's All sites): it opens this site's tab.
         const asked = { here: 'here', sites: 'here', feed: 'feed', you: 'you', tools: 'you' }[opts.tab];
-        tab = opts.tab === 'sites' ? 'here' : (savedTab() || asked || 'here');
+        // The menu opens on this site's tab unless a tab was asked (the picture asks You): no tab is remembered (4.189.0).
+        tab = asked || 'here';
         allOpen = false; hereOpen = true; leadHere = false; discoverPick = null;
         drainCards();
         syncFeeds();
