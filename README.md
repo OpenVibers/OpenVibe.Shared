@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.186.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.187.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -827,11 +827,13 @@ Sign-in and history: history: { type: 'tool'|'stream'|'video'|'clip'|'paste'|'th
   bots and unavailable sessionStorage suppress the attempt. The site's login
   handler must return silent failures without showing a login form (openvibe-sdk/sso).
   OpenVibeSSO.fedcm remains available for browser-native sign-in flows.
-Site switcher (4.48): the OpenVibe mark is a button that opens
-  site-switcher.js, a compact grid of every OpenVibe site with Recent, Pinned,
-  then the frame's groups. Recent and pinned follow the account (Network
-  /api/themes/me/sites) when signed in. The site's name stays the link home;
-  switcher: false keeps the mark as a home link.
+One menu (4.187): the OpenVibe mark is a button that opens the OpenVibe menu
+  on its first tab, as the menu button does (there is no separate site
+  switcher). The site's name stays the link home; switcher: false keeps the
+  mark as a home link.
+The bar's order (4.187): balances, the bell, the menu button, then the
+  person's picture (or Sign In), last. New messages are counted on the bell
+  (setMessages(count)); there is no Messages button.
 Balances: chips: [{ id, icon, value, label, tone, title, onClick, hidden }]
   are status chips beside the bell (Live's OpenCoins and Vibes); setChip(id,
   value) updates one. Two or more fold into one chip at 560 px and narrower.

@@ -24,13 +24,14 @@ function load(answers) {
     global.window = { location: global.location };
     try { Object.defineProperty(global, 'navigator', { value: { userAgent: 'test' }, configurable: true }); } catch { /* */ }
     const navs = [];
-    const badge = Object.assign(stubElement(), { parentElement: stubElement() });
-    const messageButton = stubElement();
+    // The bell takes the count of new messages (4.187.0: there is no Messages button).
+    const bell = [];
+    global.OpenVibeNotifications = { setMessages: (n) => bell.push(n), unread: () => 0, setBellAction() {} };
     global.document = {
         cookie: '', head: stubElement(), body: stubElement(), title: 'T', visibilityState: 'visible',
         getElementById: () => null, querySelectorAll: () => [],
-        querySelector: (sel) => (sel === '#openvibe-messages-btn b' ? badge : null),
-        createElement: (tag) => { const e = stubElement(); e.tag = tag; if (tag === 'nav') { e.querySelector = (sel) => sel === '#openvibe-messages-btn' ? messageButton : stubElement(); navs.push(e); } return e; },
+        querySelector: () => null,
+        createElement: (tag) => { const e = stubElement(); e.tag = tag; if (tag === 'nav') { e.querySelector = () => stubElement(); navs.push(e); } return e; },
         addEventListener() {}, removeEventListener() {}, dispatchEvent() {},
     };
     global.CustomEvent = class { constructor(t, i) { this.type = t; this.detail = i && i.detail; } };
@@ -48,7 +49,7 @@ function load(answers) {
         return { ok: a.status >= 200 && a.status < 300, status: a.status, json: async () => a.body };
     };
     delete require.cache[require.resolve(NAVBAR_PATH)];
-    return { navbar: require(NAVBAR_PATH), navs, calls, badge, messageButton };
+    return { navbar: require(NAVBAR_PATH), navs, calls, bell };
 }
 const settle = () => new Promise((r) => setTimeout(r, 20));
 const user = { id: 7, subject: 'usr_7', username: 'maya' };
@@ -57,52 +58,33 @@ const answers = { coins: { status: 200, body: { balances: { coins: { amount: '12
 const asked = (calls, re) => calls.filter((u) => re.test(u));
 
 (async () => {
-    // Nothing said: the balances and Messages, and one question to Chat for the unread count.
-    let { navbar, navs, calls, badge, messageButton } = load(answers);
+    // Nothing said: the balances, and one question to Chat for the unread count, which goes to the bell.
+    let { navbar, navs, calls, bell } = load(answers);
     navbar.init(base);
-    const dockOpens = [];
-    global.OpenVibeDock = { mount() {}, open(options) { dockOpens.push(options); } };
-    let prevented = false;
-    messageButton.listeners.click({ preventDefault() { prevented = true; }, metaKey: false, ctrlKey: false, shiftKey: false });
-    assert.strictEqual(prevented, true, 'signed-in Messages stays on this page');
-    assert.deepStrictEqual(dockOpens, [{ tab: 'chats' }], 'the default action opens the Dock Chats tab');
     let bar = navs[navs.length - 1].innerHTML;
-    assert.match(bar, /id="openvibe-messages-btn"/, 'Messages is in the bar');
-    assert.match(bar, /href="https:\/\/openvibe\.chat\/messages"/, 'and is a real link (a site without the Dock follows it)');
+    assert.doesNotMatch(bar, /openvibe-messages-btn|ovnav-msgs/, 'no Messages button in the bar: the bell counts them');
+    assert.ok(bar.indexOf('id="openvibe-bell-mount"') < bar.indexOf('id="openvibe-avatar-btn"'), 'the bell, then the person: the picture is the last thing in the bar');
     assert.match(bar, /data-chip-id="coins"/, 'the OpenCoins chip');
     assert.match(bar, /data-chip-id="vibes"/, 'the Vibes chip');
     await settle();
     assert.deepStrictEqual(asked(calls, /\/api\/dm\/unread$/), ['https://openvibe.chat/api/dm/unread'], 'Chat is asked for the count');
     assert.strictEqual(asked(calls, /\/api\/frame\/wallet\/api\/v1\/me\/wallet$/).length, 1, 'and the Network (its wallet relay) for the balances');
-    assert.strictEqual(badge.textContent, '3', 'the count shows on the button');
+    assert.deepStrictEqual(bell, [3], 'the count goes to the bell');
     navbar.init(base);
     await settle();
     assert.strictEqual(asked(calls, /\/api\/dm\/unread$/).length, 1, 'at most once a minute');
 
     // A site with an HTTP-only session can hand its verified token back from /auth/me.
-    ({ navbar, navs, calls, messageButton } = load({ ...answers, session: { status: 200, body: { user, token: 'session-token' } } }));
+    ({ navbar, navs, calls } = load({ ...answers, session: { status: 200, body: { user, token: 'session-token' } } }));
     navbar.init({ service: 'actor', sessionUrl: '/auth/me', notifications: false, wallet: false });
     await settle();
     assert.strictEqual(navbar.session.token, 'session-token', 'the navbar receives the site session token');
-    const fromSession = [];
-    global.OpenVibeDock = { mount() {}, open(options) { fromSession.push(options); } };
-    messageButton.listeners.click({ preventDefault() {}, metaKey: false, ctrlKey: false, shiftKey: false });
-    assert.deepStrictEqual(fromSession, [{ tab: 'chats' }], 'the site session opens Chats in place');
 
     ({ navbar, calls } = load({ ...answers, session: { status: 200, body: { user } }, sessionToken: { status: 200, body: { token: 'short-access-token' } } }));
     navbar.init({ service: 'actor', sessionUrl: '/auth/me', tokenUrl: '/auth/navbar-token', notifications: false, wallet: false });
     await settle();
     assert.strictEqual(navbar.session.token, 'short-access-token', 'HTTP-only sessions use the same-origin token route');
     assert.ok(calls.includes('/auth/navbar-token'), 'the token route is requested after the session identifies the person');
-
-    // The button can be pressed while the signed-in page is still resolving its HTTP-only session.
-    ({ navbar, messageButton } = load({ ...answers, session: { status: 200, body: { user } }, sessionToken: { status: 200, body: { token: 'late-token' } } }));
-    navbar.init({ service: 'actor', user, token: null, sessionUrl: '/auth/me', tokenUrl: '/auth/navbar-token', notifications: false, wallet: false });
-    const afterWait = [];
-    global.OpenVibeDock = { mount() {}, open(options) { afterWait.push(options); } };
-    messageButton.listeners.click({ preventDefault() {}, metaKey: false, ctrlKey: false, shiftKey: false });
-    await settle();
-    assert.deepStrictEqual(afterWait, [{ tab: 'chats' }], 'a click during session loading opens Chats when the token arrives');
 
     // A site that says no.
     ({ navbar, navs, calls } = load(answers));
@@ -119,18 +101,19 @@ const asked = (calls, re) => calls.filter((u) => re.test(u));
     assert.doesNotMatch(navs.map((n) => n.innerHTML).join(''), /openvibe-messages-btn|data-chip-id="coins"/);
     assert.strictEqual(asked(calls, /\/api\/(dm\/unread|coins\/me|frame\/wallet)/).length, 0);
 
-    // A site with its own Messages (Live, Chat) keeps its own count: Chat is not asked by the navbar.
+    // A site with its own Messages (Live, Chat) hands its own count to setMessages: Chat is not asked by the navbar.
     ({ navbar, navs, calls } = load(answers));
     navbar.init({ ...base, messages: { href: '/messages' } });
     await settle();
-    assert.match(navs[navs.length - 1].innerHTML, /href="\/messages"/);
     assert.strictEqual(asked(calls, /\/api\/dm\/unread$/).length, 0);
 
-    // Chat away: the button stays, without a number.
-    ({ navbar, navs, calls, badge } = load({ ...answers, unread: { status: 503, body: {} } }));
+    // Chat away: nothing is counted, and nothing breaks.
+    ({ navbar, navs, calls, bell } = load({ ...answers, unread: { status: 503, body: {} } }));
     navbar.init(base);
     await settle();
-    assert.match(navs[navs.length - 1].innerHTML, /id="openvibe-messages-btn"/);
-    assert.strictEqual(badge.textContent, '');
+    assert.deepStrictEqual(bell, []);
+    // A site's own count reaches the bell the same way.
+    navbar.setMessages(5);
+    assert.deepStrictEqual(bell, [5]);
     console.log('navbar-yours-everywhere: all checks passed');
 })().catch((e) => { console.error(e); process.exit(1); });

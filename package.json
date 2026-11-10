@@ -101,7 +101,6 @@
     "./tokens": "./tokens.js",
     "./components": "./components.js",
     "./appbar": "./appbar.js",
-    "./site-switcher": "./site-switcher.js",
     "./search": "./search.js",
     "./agent-session": "./agent-session.js",
     "./loading": "./loading.js",
