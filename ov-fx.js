@@ -31,6 +31,11 @@
         + `html:is(${CALM}){--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s;--ov-ease-spring:var(--ov-ease-out)}`
         + `html:is(${SNAPPY}){--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s;--ov-ease-spring:cubic-bezier(.3,1.8,.6,1)}`
         + 'html[data-ov-motion=reduced]{--ov-dur-1:0s;--ov-dur-2:0s;--ov-dur-3:0s;--ov-dur-4:0s}'
+        // A demo scope keeps its lengths whatever reduced them (Calm above, or kit.css under the device's own setting),
+        // in the look's own feel.
+        + '[data-fx-demo]{--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s}'
+        + `html:is(${CALM}) [data-fx-demo]{--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s}`
+        + `html:is(${SNAPPY}) [data-fx-demo]{--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s}`
         + '.ovfx-glint{position:relative;overflow:hidden;isolation:isolate}'
         + '.ovfx-glint::after{content:"";position:absolute;inset:-2px;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%);transform:translateX(-120%);z-index:1}'
         + '.ovfx-glint:hover::after,.ovfx-glint:focus-visible::after{transform:translateX(120%);transition:transform .75s var(--ov-ease-in-out)}'
@@ -50,10 +55,13 @@
         + '.ovfx-shimmer{background:linear-gradient(100deg,color-mix(in srgb,var(--text-muted,#8b93ad) 12%,transparent) 30%,color-mix(in srgb,var(--text-muted,#8b93ad) 22%,transparent) 50%,color-mix(in srgb,var(--text-muted,#8b93ad) 12%,transparent) 70%) 0 0/300% 100%;animation:ovfxShim 1.4s linear infinite;color:transparent!important;border-radius:8px}'
         + '@keyframes ovfxShim{from{background-position:100% 0}to{background-position:0 0}}'
         + '.ovfx-confetti{position:fixed;inset:0;pointer-events:none;z-index:2147483000}'
-        + '@media (prefers-reduced-motion:reduce){.ovfx-glint::after{display:none}.ovfx-lift,.ovfx-press,.ovfx-tilt,.ovfx-in{transition:none!important}.ovfx-shimmer{animation:none}}'
-        + 'html[data-ov-motion=reduced] .ovfx-glint::after{display:none}html[data-ov-motion=reduced] .ovfx-shimmer{animation:none}html[data-ov-motion=reduced] .ovfx-in{transition:none}';
+        + '@media (prefers-reduced-motion:reduce){.ovfx-glint:not([data-fx-demo] *)::after{display:none}.ovfx-lift:not([data-fx-demo] *),.ovfx-press:not([data-fx-demo] *),.ovfx-tilt:not([data-fx-demo] *),.ovfx-in:not([data-fx-demo] *){transition:none!important}.ovfx-shimmer:not([data-fx-demo] *){animation:none}}'
+        + 'html[data-ov-motion=reduced] .ovfx-glint:not([data-fx-demo] *)::after{display:none}html[data-ov-motion=reduced] .ovfx-shimmer:not([data-fx-demo] *){animation:none}html[data-ov-motion=reduced] .ovfx-in:not([data-fx-demo] *){transition:none}';
 
-    const reduced = () => (root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) || doc.documentElement.getAttribute('data-ov-motion') === 'reduced';
+    // The demo scope (4.180.0): inside [data-fx-demo] the effects play even when motion is reduced. A page that exists
+    // to show motion sets it on one container, only after the person presses a button that says so; nothing else may.
+    const demo = (el) => !!(el && el.closest && el.closest('[data-fx-demo]'));
+    const reduced = (el) => !demo(el) && ((root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) || doc.documentElement.getAttribute('data-ov-motion') === 'reduced');
     const fine = () => !!(root.matchMedia && root.matchMedia('(hover: hover) and (pointer: fine)').matches);
     const done = new WeakSet();
     let io = null;
@@ -103,7 +111,7 @@
 
     // ── Pointer effects ──
     function ripple(el, ev) {
-        if (reduced()) return;
+        if (reduced(el)) return;
         const r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
         const s = doc.createElement('span'); s.className = 'ovfx-rip';
         s.style.cssText = `width:${d}px;height:${d}px;left:${(ev.clientX || r.left + r.width / 2) - r.left - d / 2}px;top:${(ev.clientY || r.top + r.height / 2) - r.top - d / 2}px`;
@@ -112,7 +120,7 @@
     function tilt(el) {
         let raf = 0;
         el.addEventListener('pointermove', (ev) => {
-            if (ev.pointerType !== 'mouse' || reduced() || raf) return;
+            if (ev.pointerType !== 'mouse' || reduced(el) || raf) return;
             raf = root.requestAnimationFrame(() => {
                 raf = 0;
                 const r = el.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width - 0.5, y = (ev.clientY - r.top) / r.height - 0.5;
@@ -124,7 +132,7 @@
 
     // ── Confetti: one canvas, about 1.6 s, then gone ──
     function confetti(opts) {
-        if (reduced() || !doc.body) return false;
+        if (reduced(opts && opts.from) || !doc.body) return false;
         const o = opts || {}, cs = root.getComputedStyle(doc.documentElement);
         const accent = (cs.getPropertyValue('--accent') || '').trim() || '#4f7cff';
         const colors = o.colors || [accent, '#4f7cff', '#8b5cf6', '#22c55e', '#facc15', '#f472b6'];
@@ -163,15 +171,15 @@
             if (n === 'glint' || n === 'glow' || n === 'lift' || n === 'press' || n === 'ripple' || n === 'shimmer') el.classList.add(`ovfx-${n}`);
             if (n === 'ripple') el.addEventListener('pointerdown', (ev) => ripple(el, ev));
             if (n === 'tilt' && fine()) { el.classList.add('ovfx-tilt'); tilt(el); }
-            if (n === 'confetti') el.addEventListener('click', () => { const r = el.getBoundingClientRect(); confetti({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 70 }); });
-            if (n === 'reveal' && !reduced()) {
+            if (n === 'confetti') el.addEventListener('click', () => { const r = el.getBoundingClientRect(); confetti({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 70, from: el }); });
+            if (n === 'reveal' && !reduced(el)) {
                 const kids = el.children.length && el.getAttribute('data-fx-self') == null ? Array.from(el.children) : [el];
                 if (!below(el)) continue;   // already on screen when wired: never hide what someone can see
                 const gap = Math.max(0, Math.min(200, Number(el.getAttribute('data-fx-stagger')) || 50));
                 kids.forEach((k, i) => { k.classList.add('ovfx-hide'); k.style.setProperty('--ovfx-d', `${Math.min(i, 12) * gap}ms`); });
                 el.__ovfxReveal = kids; observe(el);
             }
-            if (n === 'count' && !reduced()) {
+            if (n === 'count' && !reduced(el)) {
                 const c = countOf(el);
                 if (c && below(el)) { el.__ovfxCount = c; observe(el); } else if (c) { el.__ovfxCount = c; seen(el); }
             }

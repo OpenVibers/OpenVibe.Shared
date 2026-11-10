@@ -380,7 +380,7 @@
         for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *,html[data-ov-motion=reduced] *::before,html[data-ov-motion=reduced] *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + ALIAS_CSS + COMFORT_CSS;
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}html[data-ov-motion=reduced] *:not([data-fx-demo] *),html[data-ov-motion=reduced] *:not([data-fx-demo] *)::before,html[data-ov-motion=reduced] *:not([data-fx-demo] *)::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}html[data-ov-motion=reduced] .ov-icon .ovi-comet{display:none}' + ALIAS_CSS + COMFORT_CSS;
             document.head.appendChild(st);
         }
         try { window.dispatchEvent(new CustomEvent('ov:display', { detail: d })); } catch (e) { /* */ }
