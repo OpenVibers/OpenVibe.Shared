@@ -35,7 +35,6 @@ const BROWSER = Object.freeze([
     'dock-agent.js',        // the Dock's agent view (K-D3); dock.js loads it the first time the Agents tab opens
     'dock-timeline.js',     // the Dock's one timeline (A6); dock.js loads it with the Agent panel
     'account-switcher.js',
-    'site-switcher.js',     // the OpenVibe mark's site switcher (4.48.0); navbar.js loads it on the first tap. Missing from this list until 4.106.1, so every site answered 404 for it and the mark did nothing
     'user-card.js',
     'ov-mark.js',           // the OV brand mark drop-in
     'ov-glyphs.js',         // the network's own icons in place of Font Awesome's (built from glyphs.js; navbar.js loads it)

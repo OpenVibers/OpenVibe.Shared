@@ -382,13 +382,6 @@
   .ovs.is-closing .ovs-panel { animation: ovs-fold .28s cubic-bezier(.5, 0, .75, .2) both; }
   .ovs.is-closing { animation: ovs-fade .28s ease-in both; }
 }
-.ovs-orb .ovo-g { transform-origin: 12px 12px; transform: rotate(45deg) scale(.8); transition: transform .5s cubic-bezier(.2, 1.35, .3, 1); }
-.ovs-orb .ovo-d { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: fill .3s, opacity .25s, transform .32s cubic-bezier(.2, 1.4, .3, 1); }
-.ovs-orb .ovo-r0 { fill: var(--ovo-a); }
-.ovs-orb .ovo-r2 { opacity: .6; }
-.ovs-orb.is-x .ovo-g { transform: rotate(180deg) scale(.95); }
-.ovs-orb.is-x .ovo-r1 { opacity: 0; transform: scale(0); }
-.ovs-orb.is-x :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; transform: scale(1.12); }
 `;
         document.head.appendChild(st);
     }
@@ -403,11 +396,10 @@
         grid: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>',
     };
 
-    // The orb (navbar.js draws the same nine dots): on a phone the menu covers the bar, so the menu draws the orb in the
+    // The orb (navbar.js's drawing, root.OpenVibeOrb): on a phone the menu covers the bar, so the menu draws the orb in the
     // button's own place, on top, and it turns into the menu's close (4.150.0, the owner: "it renders on top … turns into
     // the close button when it's open … a cool effect as it goes in and out").
-    const ORB_DOTS = [[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]];
-    const orbSvg = () => `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><g class="ovo-g">${ORB_DOTS.map(([x, y, r]) => `<circle class="ovo-d ovo-r${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('')}</g></svg>`;
+    const orbSvg = () => (root.OpenVibeOrb ? root.OpenVibeOrb.svg(24) : '');
     let orbEl = null, closing = 0;
     const phoneSheet = () => { try { return !!(el && el.classList.contains('ovs-anchored') && root.matchMedia('(max-width: 640px)').matches); } catch { return false; } };
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.

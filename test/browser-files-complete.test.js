@@ -21,5 +21,4 @@ files.BROWSER.forEach((name) => {
     }
 });
 assert.deepStrictEqual([...new Set(missing)], [], 'files a browser file loads but no site serves');
-assert.ok(files.BROWSER.includes('site-switcher.js'), 'the mark\'s switcher is served');
 console.log('browser files complete: all checks passed');

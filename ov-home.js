@@ -113,6 +113,15 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-hint { margin: 10px 6px 4px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
 .ovh-calm { transition: opacity .2s; }
 .ovh.is-edit .ovh-calm { opacity: .38; pointer-events: none; }
+.ovh-headtools { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.ovh-sec .ovh-allbtn { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 11px 0 10px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 700;
+  color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 7%, transparent); transition: color .15s, background-color .15s, transform .12s; }
+.ovh-sec .ovh-allbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-sec .ovh-allbtn b { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text-primary, #e8ecf3); }
+.ovh-sec .ovh-allbtn:hover { color: var(--text-primary, #e8ecf3); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 13%, transparent); }
+.ovh-sec .ovh-allbtn:active { transform: scale(.96); }
+.ovh-sec .ovh-allbtn:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (pointer: coarse) { .ovh-sec .ovh-allbtn { min-height: 44px; padding: 0 13px 0 12px; } }
 .ovh-all[hidden], .ovh[hidden] { display: none !important; }
 .ovh-all { display: flex; align-items: center; justify-content: center; gap: 8px; width: calc(100% - 8px); min-height: 44px; margin: 6px 4px 2px; border: 1px solid var(--border, rgba(255,255,255,.12));
     border-radius: 14px; background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -326,6 +335,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        grid: [['rect', { x: 4, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 4, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }]],
         look: [['path', { d: 'M12 3a9 9 0 1 0 0 18c1 0 1.7-.8 1.7-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.7-.4-1.1 0-1 .8-1.7 1.7-1.7h2.1A4.4 4.4 0 0 0 21 11c0-4.4-4-8-9-8Z' }],
             ['circle', { cx: 7.6, cy: 11.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 10.4, cy: 7.4, r: 1.1, fill: 'currentColor', stroke: 'none' }], ['circle', { cx: 15, cy: 7.6, r: 1.1, fill: 'currentColor', stroke: 'none' }]],
         gear: [['circle', { cx: 12, cy: 12, r: 3 }], ['path', { d: 'M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z' }]],
@@ -497,16 +507,20 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             edit.title = state.edit ? 'Done' : 'Edit Home: move apps, remove them, add folders';
             edit.setAttribute('aria-pressed', state.edit ? 'true' : 'false');
             edit.addEventListener('click', () => setEdit(!state.edit));
-            head.append(edit);
+            // All apps sits beside Edit, small, with its count (the owner, 2026-11-10: "all apps should just be in a
+            // button in the corner so it's more compact"): it was a bar the width of the sheet under the grid.
+            const total = L.byId.size;
+            const all = h('button', 'ovh-allbtn'); all.type = 'button';
+            all.append(svgIcon('grid'), h('span', '', 'All'), h('b', '', String(total)));
+            all.setAttribute('aria-label', `All apps (${total})`); all.title = `All apps (${total})`;
+            all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
+            const tools = h('div', 'ovh-headtools'); tools.append(all, edit);
+            head.append(tools);
             el.append(head);
             const grid = h('div', 'ovh-grid'); grid.setAttribute('aria-label', 'Your home');
             L.home.forEach((id, i) => grid.append(homeTile(id, i)));
             el.append(grid);
-            if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All apps puts it back.'));
-            const total = L.byId.size;
-            const all = h('button', 'ovh-all', `All apps (${total})`); all.type = 'button';
-            all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
-            el.append(all);
+            if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All puts it back.'));
             // Under your home: what you use most (shortcuts), then where you were last (history).
             { const u = usage(); if (u) el.append(calm(u)); const b = backRail(); if (b) el.append(calm(b)); }
             icons();
@@ -701,7 +715,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         function backHead(title) {
             const head = h('div', 'ovh-head');
             const back = h('button', 'ovh-back', '← Home'); back.type = 'button';
-            back.addEventListener('click', () => { state.view = 'home'; state.folder = null; paint(); const b = el.querySelector('.ovh-all'); if (b) b.focus(); });
+            back.addEventListener('click', () => { state.view = 'home'; state.folder = null; paint(); const b = el.querySelector('.ovh-allbtn'); if (b) b.focus(); });
             head.append(back, h('b', '', title));
             return head;
         }

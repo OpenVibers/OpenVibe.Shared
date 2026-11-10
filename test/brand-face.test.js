@@ -34,7 +34,6 @@ assert.strictEqual(files.path('ov-brand.woff2'), path.join(__dirname, '..', 'ov-
     const fallback = /font-family: ?'OV Brand', ?Nunito, ?'?Inter'?, ?-apple-system/;
     assert.match(nav, new RegExp(`\\.openvibe-navbar-brand \\.name \\{[^}]*${fallback.source}`), 'the site name');
     assert.match(read('footer.js'), new RegExp(`\\.ovf-brand\\{[^}]*${fallback.source}`), "the footer's brand");
-    assert.match(read('site-switcher.js'), new RegExp(`\\.ovsw-t \\{[^}]*${fallback.source}`), "the switcher's names");
     const cards = read('scripts/build-social-cards.js');
     assert.ok(/function brandFace\(\)[\s\S]*ov-brand\.woff2/.test(cards) && /\.name\{[^}]*font-family:'OV Brand'/.test(cards), 'the share cards, with the face embedded');
 

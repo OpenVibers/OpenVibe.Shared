@@ -289,33 +289,44 @@
             .openvibe-navbar-spacer { flex: 1; }
 
             .openvibe-navbar-right { display: flex; align-items: center; gap: 6px; }
-            /* The OpenVibe menu's button (4.25.0; the owner, 2026-10-28: "the little diamond thing… an icon that has cool
-               animations and effects… next to the logo"): nine dots set as a diamond beside the brand. Hovered, a ripple
-               runs out from the centre and the dots take the accent's colours; while the menu loads they wave; while it is
-               open the diamond turns into an ×. Transform, opacity and fill only, and nothing moves while it rests. */
+            /* The person (or Sign In) is last, after the menu button, with a little air between them. */
+            .openvibe-navbar .ovnav-burger + :is(.openvibe-navbar-avatar, .openvibe-navbar-login) { margin-left: 3px; }
+            /* The OpenVibe menu's button (4.187.0; the owner's pick of 2026-11-10: a search bar over three apps). Under
+               the pointer its parts lift in turn; while the menu loads the apps breathe; open, the bar and the apps cross
+               into the close mark. Transform, opacity and fill only, and nothing moves while it rests. */
             .openvibe-navbar .ovnav-orb { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; cursor: pointer; color: var(--text-secondary, #a8b3c4); --ovo-a: var(--accent-light, var(--accent, #60a5fa)); --ovo-b: color-mix(in oklab, var(--accent, #3b82f6) 45%, #e879f9); }
             .openvibe-navbar .ovnav-orb::before { content: ""; position: absolute; inset: -3px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--accent, #3b82f6) 38%, transparent), transparent); opacity: 0; transform: scale(.5); transition: opacity .25s, transform .4s cubic-bezier(.2,1.4,.3,1); pointer-events: none; }
             .openvibe-navbar .ovnav-orb:hover::before, .openvibe-navbar .ovnav-orb:focus-visible::before, .openvibe-navbar .ovnav-orb[aria-expanded="true"]::before { opacity: 1; transform: none; }
             .openvibe-navbar .ovnav-orb svg { position: relative; display: block; overflow: visible; }
-            .ovnav-orb .ovo-g { transform-origin: 12px 12px; transform: rotate(45deg) scale(.8); transition: transform .55s cubic-bezier(.2,1.35,.3,1); }
-            .ovnav-orb .ovo-d { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: fill .3s, opacity .3s, transform .35s cubic-bezier(.2,1.4,.3,1); }
-            .ovnav-orb .ovo-r2 { opacity: .6; }
-            .ovnav-orb .ovo-r0 { fill: var(--ovo-a); }
-            .ovnav-orb:is(:hover, :focus-visible) .ovo-r1 { fill: var(--ovo-a); }
-            .ovnav-orb:is(:hover, :focus-visible) .ovo-r2 { fill: var(--ovo-b); opacity: 1; }
-            .ovnav-orb:is(:hover, :focus-visible) .ovo-r0 { fill: var(--text-primary, #e6edf7); }
-            .ovnav-orb:is(:hover, .ovo-intro) .ovo-d { animation: ovo-ripple .7s cubic-bezier(.3,.7,.3,1) both; }
-            .ovnav-orb.is-busy .ovo-d { animation: ovo-wave .9s ease-in-out infinite; }
-            .ovnav-orb .ovo-d.ovo-r1 { animation-delay: .07s; } .ovnav-orb .ovo-d.ovo-r2 { animation-delay: .14s; }
+            .ovmb { display: block; overflow: visible; }
+            .ovmb-bar { fill: transparent; stroke: currentColor; stroke-width: 1.9; }
+            .ovmb-app { fill: currentColor; }
+            .ovmb-dot, .ovmb-a1 { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
+            .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-app) { transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.2,1.3,.3,1), fill .3s, stroke-width .3s, opacity .25s; }
+            .ovmb-a0 { transition-delay: .03s; } .ovmb-a1 { transition-delay: .06s; } .ovmb-a2 { transition-delay: .09s; }
+            /* Under the pointer (and once, the first time it is seen): the bar and the three apps lift in turn. */
+            :is(.ovnav-orb, .ovs-orb):is(:hover, .ovo-intro) .ovmb:not(.is-x) :is(.ovmb-bar, .ovmb-dot, .ovmb-app) { animation: ovmb-wave .7s ease-in-out both; }
+            .ovmb .ovmb-a0 { animation-delay: .08s; } .ovmb .ovmb-a1 { animation-delay: .15s; } .ovmb .ovmb-a2 { animation-delay: .22s; }
+            :is(.ovnav-orb, .ovs-orb):is(:hover, :focus-visible) .ovmb-app { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
+            :is(.ovnav-orb, .ovs-orb):is(:hover, :focus-visible) .ovmb-a1 { fill: var(--ovo-b, #e879f9); }
+            /* While the menu loads: the apps breathe in turn. */
+            .ovnav-orb.is-busy .ovmb-app { animation: ovmb-busy .9s ease-in-out infinite; }
+            /* Open: the bar is one stroke of the close mark, the three apps the other. */
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-app), .ovmb.is-x :is(.ovmb-bar, .ovmb-dot, .ovmb-app) { animation: none; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-bar, .ovmb.is-x .ovmb-bar { transform: translateY(4px) rotate(45deg) scale(.9, .43); fill: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-dot, .ovmb.is-x .ovmb-dot { transform: translate(4.6px, 4px) scale(0); opacity: 0; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-app, .ovmb.is-x .ovmb-app { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.3, .6); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(0, -4.6px) rotate(-45deg) scale(1.3, .6); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: translate(-2.4px, -8px) rotate(-45deg) scale(1.3, .6); }
+            /* A close mark that arrives already made (the Dock's sheet) forms from the button it came from. */
+            .ovmb.is-forming :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
+            @keyframes ovmb-form { from { transform: none; } }
+            @keyframes ovmb-wave { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(calc(-2.6px * var(--ov-move, 1))); } }
+            @keyframes ovmb-busy { 0%, 100% { transform: scale(.72); opacity: .5; } 50% { transform: scale(1.18); opacity: 1; } }
             .openvibe-navbar .ovnav-orb[aria-expanded="true"] { color: var(--text-primary, #e6edf7); }
-            .ovnav-orb[aria-expanded="true"] .ovo-g { transform: rotate(180deg) scale(.86); }
-            .ovnav-orb[aria-expanded="true"] .ovo-d { animation: none; }
-            .openvibe-navbar :is(.ovnav-orb, .ovnav-msgs, .openvibe-bell, .openvibe-navbar-avatar) { transition: transform .18s cubic-bezier(.2, 1.4, .3, 1), background-color .15s, color .15s; }
-            .openvibe-navbar :is(.ovnav-orb, .ovnav-msgs, .openvibe-bell, .openvibe-navbar-avatar):active { transform: scale(.9); }
-            .ovnav-orb[aria-expanded="true"] .ovo-r1 { opacity: 0; transform: scale(0); }
-            .ovnav-orb[aria-expanded="true"] :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; }
-            @keyframes ovo-ripple { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.55); } }
-            @keyframes ovo-wave { 0%, 100% { transform: scale(.7); opacity: .5; } 50% { transform: scale(1.25); opacity: 1; } }
+            .openvibe-navbar :is(.ovnav-orb, .openvibe-bell, .openvibe-navbar-avatar) { transition: transform .18s cubic-bezier(.2, 1.4, .3, 1), background-color .15s, color .15s; }
+            .openvibe-navbar :is(.ovnav-orb, .openvibe-bell, .openvibe-navbar-avatar):active { transform: scale(.9); }
             .openvibe-navbar .openvibe-navbar-brand .ovnav-orb { margin-left: 1px; }
             /* 4.148.0 (the owner: "replace the hamburger with that button"): the phone's menu button is the orb, in the
                burger's place at the bar's right. Hidden on a wide bar (its links are there), shown at 860 px and below;
@@ -329,18 +340,12 @@
             /* Messages (4.25.0; the owner, 2026-10-28: the floating DM button was "buggy as hell on mobile… app style"): a
                site that has messages puts them in the bar beside the bell, with the unread count, instead of a bubble
                over the page. */
-            .openvibe-navbar .ovnav-msgs { all: unset; box-sizing: border-box; position: relative; display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 11px; cursor: pointer; color: var(--text-secondary, #a8b3c4); }
-            .openvibe-navbar .ovnav-msgs:hover, .openvibe-navbar .ovnav-msgs:focus-visible { background: var(--accent-glow, rgba(59,130,246,.14)); color: var(--text-primary, #e6edf7); }
-            .openvibe-navbar .ovnav-msgs .ovnav-ic { width: 22px; height: 22px; }
             .ovnav-ovg { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; overflow: visible; vertical-align: -.2em; }
             .ovnav-chip .ovnav-ovg, .ovnav-chip-mini .ovnav-ovg, .ovnav-chips-pop .ovnav-ovg { stroke-width: 2.3; }
             .ovnav-ovg > .ovg-s { display: none; fill: currentColor; stroke: none; }
             .ovnav-ovg > .ovg-s .ln { fill: none; stroke: currentColor; stroke-width: 2.6px; }
             html[data-ov-icons=solid] .ovnav-ovg.has-s, .ovnav-ab.is-here .ovnav-ovg.has-s { stroke-width: 0; }
             html[data-ov-icons=solid] .ovnav-ovg.has-s > .ovg-s, .ovnav-ab.is-here .ovnav-ovg.has-s > .ovg-s { display: inline; }
-            .openvibe-navbar .ovnav-msgs b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
-            .openvibe-navbar .ovnav-msgs b:empty { display: none; }
-            @media (max-width: 400px) { .openvibe-navbar .ovnav-msgs { width: 32px; height: 32px; } }
 
             .openvibe-navbar-avatar {
                 width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
@@ -363,12 +368,12 @@
                Sign In beside it; Sign In's corners follow the orb's. */
             .openvibe-navbar .ovnav-orb { width: 36px; height: 36px; }
             .openvibe-navbar .ovnav-orb svg { width: 26px; height: 26px; }
-            .openvibe-navbar .ovnav-msgs, .openvibe-navbar .ovnav-featured-phone { width: 36px; height: 36px; }
+            .openvibe-navbar .ovnav-featured-phone { width: 36px; height: 36px; }
             .openvibe-navbar .openvibe-navbar-avatar { width: 36px; height: 36px; box-sizing: border-box; }
             .openvibe-navbar .ovnav-chip { height: 36px; }
             .openvibe-navbar .openvibe-navbar-login { box-sizing: border-box; height: 36px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
             @media (max-width: 400px) {
-                .openvibe-navbar .ovnav-orb, .openvibe-navbar .ovnav-msgs, .openvibe-navbar .ovnav-featured-phone, .openvibe-navbar .openvibe-navbar-avatar { width: 34px; height: 34px; }
+                .openvibe-navbar .ovnav-orb, .openvibe-navbar .ovnav-featured-phone, .openvibe-navbar .openvibe-navbar-avatar { width: 34px; height: 34px; }
                 .openvibe-navbar .ovnav-orb svg { width: 24px; height: 24px; }
                 .openvibe-navbar .ovnav-chip, .openvibe-navbar .openvibe-navbar-login { height: 34px; }
                 .openvibe-navbar .openvibe-navbar-login { padding: 0 13px; }
@@ -557,17 +562,16 @@
         'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 2.2a7.4 7.4 0 0 1 0 14.8Z"/>'],
         'fa-moon': [0, '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>'],
         'fa-sun': [0, '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2M12 19.6v2M5.25 5.25l1.4 1.4M17.4 17.4l1.4 1.4M2.5 12h2M19.6 12h2M5.25 18.75l1.4 -1.4M17.4 6.6l1.4 -1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
-        'fa-comment-dots': [0, '<path d="M4 5h16v11H8l-4 4Z"/>', '<path d="M3.5 5.6A1.6 1.6 0 0 1 5.1 4h13.8a1.6 1.6 0 0 1 1.6 1.6v9.8a1.6 1.6 0 0 1-1.6 1.6H8.6L3.5 21Z"/>'],
         'fa-brain': [0, '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1.2V5.5A2 2 0 0 0 9 4ZM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1.2"/>', '<path d="M9 3.8a3.1 3.1 0 0 0-3.1 3 3 3 0 0 0-2.1 5.2 3 3 0 0 0 2.1 5.1 3.1 3.1 0 0 0 5.5 1.3V5.5A2.2 2.2 0 0 0 9 3.8Z"/><path d="M15 3.8a3.1 3.1 0 0 1 3.1 3 3 3 0 0 1 2.1 5.2 3 3 0 0 1-2.1 5.1 3.1 3.1 0 0 1-5.5 1.3V5.5A2.2 2.2 0 0 1 15 3.8Z"/>'],
     };
     // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives); 0 is an OpenVibe glyph.
     const NAV_ICONS_LAZY = {
-        0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-text-height fa-user fa-video fa-wand-magic-sparkles fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
+        0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-text-height fa-user fa-video fa-wand-magic-sparkles fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-comment-dots fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
     };
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '4fb7af77a431', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'c6dbd7d46ae7', 'dock.js': '2c59b0f0e035', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'dc24929109b5', 'history.js': '1e6598f78ba4', 'site-switcher.js': 'd8980cf95157', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '6252acb43bd4', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'bb502f67c4d5', 'dock.js': '00e20b4b2895', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': '1e6598f78ba4', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'db1d79b7b932', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -927,7 +931,7 @@
         return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
                 ${_config.switcher === false
         ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>`
-        : `<button type="button" class="flame" id="openvibe-switch-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="Switch to another OpenVibe site" title="Every OpenVibe site">${mark}</button>`}
+        : `<button type="button" class="flame" id="openvibe-switch-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="OpenVibe menu: every site and tool" title="Every OpenVibe site">${mark}</button>`}
                 <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
                 ${_config.search === false ? '' : orbHTML()}
             </div>`;
@@ -981,13 +985,16 @@
         try { const sc = document.createElement('script'); sc.id = 'ov-slots-loader'; sc.src = siblingV('nav-slots.js'); sc.async = true; sc.onload = () => paintSlots(); document.head.appendChild(sc); } catch { /* */ }
     }
 
-    // The OpenVibe menu's button: nine dots as a diamond (the old launcher's, which the owner liked), the centre in the
-    // accent. Rings: 0 the centre, 1 the edges, 2 the corners (the ripple's order; corners and centre make the ×).
-    const ORB_DOTS = [[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]];
-    function orbSVG() {
-        const dots = ORB_DOTS.map(([x, y, r]) => `<circle class="ovo-d ovo-r${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('');
-        return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g class="ovo-g">${dots}</g></svg>`;
+    // The OpenVibe menu's button (the owner's pick, 2026-11-10: the Arena's M57, "Search and apps"): the menu itself,
+    // small: a search bar over three apps. Open, the bar turns into one stroke of the close mark and the three apps
+    // line up as the other, so the button that opens the menu is, in the same place, the one that closes it. One
+    // drawing for the bar, the menu's sheet and the Dock's (root.OpenVibeOrb); its styles are below (.ovmb).
+    const ORB_PARTS = '<rect class="ovmb-bar" x="4" y="5.2" width="16" height="5.6" rx="2.8"/><circle class="ovmb-dot" cx="7.4" cy="8" r="1.15"/>'
+        + '<rect class="ovmb-app ovmb-a0" x="4.2" y="14.6" width="4" height="4" rx="1.3"/><rect class="ovmb-app ovmb-a1" x="10" y="14.6" width="4" height="4" rx="1.3"/><rect class="ovmb-app ovmb-a2" x="15.8" y="14.6" width="4" height="4" rx="1.3"/>';
+    function orbSVG(size = 22, open = false) {
+        return `<svg class="ovmb${open ? ' is-x' : ''}" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${ORB_PARTS}</svg>`;
     }
+    root.OpenVibeOrb = { svg: orbSVG };
     function orbHTML() {
         return `<button type="button" class="ovnav-search ovnav-orb" id="openvibe-search-btn" aria-label="OpenVibe menu: search, every site and tool (/)" title="Search and every OpenVibe site (/)" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>`;
     }
@@ -1064,34 +1071,10 @@
     }
     const chipLabel = (c) => c.label || String(c.title || c.id).split(':')[0];
     /** The chips folded into one (shown instead of them on a phone): each chip's icon and short value. */
+    // New messages are counted on the bell (4.187.0; the owner, 2026-11-10: "instead of having messaging and
+    // notifications, just have the notifications … it'll show you new messages as well"): there is no Messages button.
     let _msgCount = 0;
-    const msgLabel = () => `Messages${_msgCount ? ` (${_msgCount} unread)` : ''}`;
-    function messagesHTML() {
-        const m = _config.messages || {};
-        const href = typeof m.href === 'string' ? m.href : 'https://openvibe.chat/messages';
-        const n = _msgCount ? (_msgCount > 99 ? '99+' : String(_msgCount)) : '';
-        return `<a class="ovnav-msgs" id="openvibe-messages-btn" href="${escapeAttr(href)}" title="${escapeAttr(m.label || 'Messages')}" aria-label="${escapeAttr(msgLabel())}">${navIcon('fa-comment-dots')}<b>${n}</b></a>`;
-    }
-    function bindMessages(nav) {
-        const a = nav.querySelector('#openvibe-messages-btn'); if (!a || typeof a.addEventListener !== 'function') return;
-        a.addEventListener('click', (e) => {
-            const m = _config.messages || {};
-            if (e.metaKey || e.ctrlKey || e.shiftKey) return;
-            // The default (4.130.0): the Dock's Chats tab; without the Dock, the link.
-            if (m.__default && _config.dock !== false) {
-                e.preventDefault();
-                if (_config.token) openDock('chats');
-                else refreshAuthState().then(() => {
-                    if (_config.token) openDock('chats');
-                    else root.location.href = a.href;
-                });
-                return;
-            }
-            if (typeof m.onOpen !== 'function') return;
-            e.preventDefault(); try { m.onOpen(e); } catch { /* the link still works */ }
-        });
-    }
-    // The default Messages button's count: Chat's GET /api/dm/unread, at most once a minute (README, "The navbar").
+    // New messages, for the bell's count: Chat's GET /api/dm/unread, at most once a minute (README, "The navbar").
     let _unreadAt = 0;
     function loadUnread() {
         const m = _config.messages, u = _config.user;
@@ -1355,7 +1338,9 @@
         N.setBellAction(_dockOn ? () => {
             const D = root.OpenVibeDock; if (!D || typeof D.open !== 'function') return false;
             const st = typeof D._state === 'function' ? D._state() : {};
-            if (D.isOpen() && st.tab === 'activity') D.close(); else D.open({ tab: 'activity' });
+            // New messages and nothing else new: the bell opens on them. Otherwise on Activity, as before.
+            const tab = _msgCount && N.unread && !N.unread() ? 'chats' : 'activity';
+            if (D.isOpen() && st.tab === tab) D.close(); else D.open({ tab });
             return true;
         } : null);
     }
@@ -2128,18 +2113,16 @@
             <div class="openvibe-navbar-spacer"></div>
             <div class="openvibe-navbar-right">
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
-                ${u && !isAnon && _config.messages ? messagesHTML() : ''}
                 ${featuredPhoneHTML(links)}
                 <div id="openvibe-bell-mount"></div>
+                ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}">Sign In</a>`}
-                ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
-        bindMessages(nav);
         hookSearch(nav);
         hookSwitcher(nav);
         bindChips(nav);
@@ -2345,30 +2328,14 @@
     }
     const menuOpen = () => !!(typeof document !== 'undefined' && document.querySelector && document.querySelector('.ovs.is-open'));
 
-    // ── The site switcher (site-switcher.js, 4.48.0): the OpenVibe mark opens a compact grid of every site ──
-    // Recent and pinned follow the account (Network /api/themes/me/sites) when signed in; the name stays the home link.
-    let _switcherLoading = false;
+    // ── The mark opens the OpenVibe menu on its first tab (4.187.0; the owner, 2026-11-10: the mark's own panel and
+    // the menu were two lists of the same sites, drawn differently and updated apart). One menu, two ways in. ──
     function openSwitcher() {
-        const btn = _navEl && _navEl.querySelector('#openvibe-switch-btn');
-        const anchor = () => {
-            if (!_navEl || !btn || !btn.getBoundingClientRect) return null;
-            const bar = _navEl.getBoundingClientRect(), at = btn.getBoundingClientRect();
-            return bar.bottom > 0 && bar.bottom < 200 ? { top: bar.bottom, left: at.left - 6, cx: at.left + at.width / 2, cy: at.top + at.height / 2 } : null;
-        };
-        const go = () => {
-            const S = root.OpenVibeSiteSwitcher;
-            if (!S) return;
-            if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close();
-            if (_navEl) _navEl.classList.remove('ovnav-hide');
-            S.open({ service: _config.service, frame: OVFrame.get((d) => S.update(d)), token: _config.token, apiBase: 'https://openvibe.network', user: _config.user,
-                icons: (scope) => loadOvIcons(scope), anchor: anchor(),
-                onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-switch-btn'); if (b) b.setAttribute('aria-expanded', 'false'); } });
-            const b = _navEl && _navEl.querySelector('#openvibe-switch-btn'); if (b) b.setAttribute('aria-expanded', 'true');
-        };
-        if (root.OpenVibeSiteSwitcher) return go();
-        if (_switcherLoading) return;
-        _switcherLoading = true;
-        try { const sc = document.createElement('script'); sc.src = siblingV('site-switcher.js'); sc.async = true; sc.onload = go; sc.onerror = () => { _switcherLoading = false; }; document.head.appendChild(sc); } catch { _switcherLoading = false; }
+        if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
+        // As if the menu button itself were pressed (the one on screen: beside the name on a wide bar, at the bar's end
+        // on a phone), so the sheet opens out of it and it becomes the close button, whichever way in was used.
+        const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
+        openSearch('', 'sites', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
     }
     // A signed-in person's visit moves this site to the front of their Recent, at most once in 30 minutes, and never
     // under Global Privacy Control or Do Not Track (as the page-view beacon).
@@ -2384,9 +2351,8 @@
     function hookSwitcher(nav) {
         const b = nav.querySelector('#openvibe-switch-btn');
         if (!b) return;
-        b.addEventListener('click', () => { if (root.OpenVibeSiteSwitcher && root.OpenVibeSiteSwitcher.isOpen()) root.OpenVibeSiteSwitcher.close(); else openSwitcher(); });
+        b.addEventListener('click', () => openSwitcher());
         for (const ev of ['pointerenter', 'touchstart', 'focus']) b.addEventListener(ev, () => { loadOvIcons(); OVFrame.get(); }, { once: true, passive: true });
-        if (root.OpenVibeSiteSwitcher && root.OpenVibeSiteSwitcher.isOpen()) b.setAttribute('aria-expanded', 'true');
         // Once the page is idle: the visit never competes with the first paint or the sign-in check.
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(() => recordVisit(), { timeout: 8000 });
         else setTimeout(recordVisit, 3000);
@@ -2612,12 +2578,12 @@
         /** The phone app bar: true (from the links that have icons), a list of { label, href, icon, id, page, dot }, or false. */
         setAppBar(spec) { _config.appBar = spec; renderAppBar(); },
 
-        /** Messages beside the bell: messages: { href?, onOpen?(), label? } in init (or here), and the unread count. */
+        /** New messages: the count joins the bell's (there is no Messages button); a spec keeps `messages` on or off. */
         setMessages(count, spec) {
-            if (spec !== undefined) { _config.messages = spec; if (_navEl) render(); }
+            if (spec !== undefined) _config.messages = spec;
             _msgCount = Math.max(0, Number(count) || 0);
-            const b = typeof document !== 'undefined' && document.querySelector('#openvibe-messages-btn b');
-            if (b) { b.textContent = _msgCount ? (_msgCount > 99 ? '99+' : String(_msgCount)) : ''; b.parentElement.setAttribute('aria-label', msgLabel()); }
+            const N = root.OpenVibeNotifications;
+            if (N && typeof N.setMessages === 'function') N.setMessages(_msgCount);
         },
 
         /** Add a row to the account dropdown: {label, href|onClick, icon, danger, external, position:'before'|'after'}. */

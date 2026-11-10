@@ -13,7 +13,7 @@ const ROOT = path.join(__dirname, '..');
 // went out without ?v=, so a release reached phones up to a day late (max-age=300, stale-while-revalidate=86400): the
 // owner still saw the old menu hours after the new one shipped (11-07).
 const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov-fx.js', 'ov-labels.js', 'ov-forms.js', 'ov-forms.css', 'ov-share.js', 'ov-share.css',
-    'search.js', 'dock.js', 'presence.js', 'panels.js', 'surfaces.js', 'notification-ui.js', 'history.js', 'site-switcher.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js', 'overlay.js', 'ov-home.js', 'nav-slots.js',
+    'search.js', 'dock.js', 'presence.js', 'panels.js', 'surfaces.js', 'notification-ui.js', 'history.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js', 'overlay.js', 'ov-home.js', 'nav-slots.js',
     // 4.173.0: the wallet sheet (4.170.0) went out without ?v=, so a fix to it reached phones up to a day late.
     'ov-wallet.js', 'ov-wallet.css'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
