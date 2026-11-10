@@ -24,7 +24,7 @@ assert.match(html, /<title>Example &lt;site&gt;<\/title>/, 'title escaped');
 assert.match(html, /<meta name="description" content="A &lt;b&gt;description&lt;\/b&gt;">/, 'description escaped');
 assert.match(html, /<link rel="canonical" href="https:\/\/example\.com\/">/, 'canonical present');
 assert.match(html, /<meta property="og:title" content="Example &lt;site&gt;">/, 'og:title present and escaped');
-assert.match(html, /<noscript><nav aria-label="Site"/, 'no-JS nav present');
+assert.match(html, /<div id="navbar-mount"><nav class="openvibe-navbar" aria-label="Site"/, 'server nav present in the client mount');
 assert.match(html, /<footer id="ov-footer"/, 'shared footer present');
 assert.ok(html.includes('<main id="hero">Hello</main>'), 'body kept verbatim');
 assert.ok(html.includes('<script src="/shared/theme-loader.js?v='), 'theme-loader via serve.url');
@@ -77,6 +77,17 @@ assert.ok(evil.includes('\\u003c/script>'), 'the boot escapes <');
 // ── Body attributes are escaped ───────────────────────────────────────────────────────────────────
 const attrs = shell.page({ name: 'x', bodyClass: 'a" onload="b', bodyAttributes: { 'data-x': '" y="', hidden: true, skip: null } });
 assert.ok(attrs.includes('<body class="a&quot; onload=&quot;b" data-x="&quot; y=&quot;" hidden>'), 'body attributes escaped, bare flag kept, null dropped');
+
+// Server navigation uses the exact configured links sent to OpenVibeNavbar.init, in the mount
+// that the client replaces atomically after hydration.
+{
+    const links = [{ label: 'Places', href: '/places' }, { label: 'Elsewhere', href: 'https://openvibe.live/' }];
+    const rendered = shell.page({ name: 'example', navbar: { service: 'example', links }, body: '' });
+    assert.ok(rendered.includes('<a href="/places">Places</a>'), 'server emits configured local links');
+    assert.ok(rendered.includes('<a href="https://openvibe.live/">Elsewhere</a>'), 'server emits configured cross-site links');
+    assert.match(rendered, /OpenVibeNavbar\.init\(\{"service":"example","links":\[\{"label":"Places","href":"\/places"\}/, 'client receives same configured list');
+    assert.equal((rendered.match(/aria-label="Site"/g) || []).length, 1, 'one navigation landmark before hydration');
+}
 
 // ── The AI page summary is present only when given, and its JSON-LD comes with it ────────────────
 assert.ok(!shell.page({ name: 'x' }).includes('"@type":"WebPage"'), 'no WebPage JSON-LD without a summary');

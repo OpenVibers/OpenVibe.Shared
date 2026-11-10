@@ -21,6 +21,15 @@ function noscriptNav({ name, home = '/', links = [] } = {}) {
     return `<noscript><nav aria-label="Site" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;padding:12px 20px;border-bottom:1px solid rgba(255,255,255,.1);font:500 14px/1.4 system-ui,sans-serif"><a href="${esc(home)}" style="font-weight:700;color:inherit;text-decoration:none">${esc(name || 'OpenVibe')}</a>${own}<span style="flex:1"></span>${net}</nav></noscript>`;
 }
 
+// The client navbar replaces this node on its first render. Keeping configured links in the same
+// mount makes the page useful to crawlers before any JavaScript runs.
+function serverNav({ name, home = '/', links = [] } = {}) {
+    const items = (Array.isArray(links) ? links : []).filter(l => l && (l.href || l.url) && (l.label || l.name));
+    const own = items.map(l => `<a href="${esc(l.href || l.url)}">${esc(l.label || l.name)}</a>`).join('');
+    const brand = `<a href="${esc(home)}" style="font-weight:700;color:inherit;text-decoration:none">${esc(name || 'OpenVibe')}</a>`;
+    return `<div id="navbar-mount"><nav class="openvibe-navbar" aria-label="Site" data-ov-server-nav="true" style="box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 16px;min-height:52px;font:500 14px/1.4 system-ui,sans-serif">${brand}${own}</nav></div>`;
+}
+
 const NETWORK = 'https://openvibe.network';
 const SERVICE_RE = /^[a-z][a-z0-9-]{1,39}$/;
 const svc = (s) => (SERVICE_RE.test(String(s || '')) ? String(s) : '');
@@ -59,4 +68,4 @@ function shippedScript({ base = NETWORK } = {}) {
     return `<script src="${esc(String(base).replace(/\/+$/, ''))}/shared/shipped.js${v ? `?v=${v}` : ''}" defer></script>`;
 }
 
-module.exports = { footer: (cfg) => footerModule.ssr(cfg), noscriptNav, shipped, updatesBody, shippedScript };
+module.exports = { footer: (cfg) => footerModule.ssr(cfg), noscriptNav, serverNav, shipped, updatesBody, shippedScript };

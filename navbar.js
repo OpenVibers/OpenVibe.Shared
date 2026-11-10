@@ -2277,7 +2277,9 @@
         // Insert into page — use navbar-mount placeholder if available, otherwise prepend to body
         const mount = document.getElementById('navbar-mount');
         if (mount) {
-            mount.appendChild(nav);
+            // Replace the crawlable server nav atomically; never leave duplicate landmarks.
+            if (mount.replaceChildren) mount.replaceChildren(nav);
+            else { while (mount.firstChild) mount.removeChild(mount.firstChild); mount.appendChild(nav); }
         } else {
             document.body.prepend(nav);
         }

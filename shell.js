@@ -178,7 +178,7 @@ function page(o = {}) {
         '</head>',
         `<body${attrs(bodyAttributes)}>`,
         summary ? summary.body : '',
-        frame.noscriptNav({ name, home: o.home, links: o.navLinks }),
+        frame.serverNav({ name, home: o.home, links: (o.navbar && o.navbar.links) || o.navLinks }),
         o.body || '',
         frame.footer(o.footer || { service: name, variant: 'compact' }),
         '</body>',

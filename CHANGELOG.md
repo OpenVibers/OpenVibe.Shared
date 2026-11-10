@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.181.0 — 2026-11-09
+
+- **Server-rendered navbar links.** The shared shell emits configured navbar links in the reserved `#navbar-mount`
+  so crawlers can read site navigation from the response HTML. The client replaces that node's contents atomically
+  on hydration; the configured list is shared with `OpenVibeNavbar.init` and the existing 52px reserve remains.
+
 ## 4.180.0 — 2026-11-10
 
 - **A demo scope for motion: `data-fx-demo`** (`ov-fx.js`, `ov-mark.js`, `theme-loader.js`). Inside a container
