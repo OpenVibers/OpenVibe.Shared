@@ -1098,7 +1098,7 @@
     }
 
     async function fetchPage(v, offset) {
-        const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(offset) });
+        const params = new URLSearchParams({ limit: String(v.pageSize || PAGE_SIZE), offset: String(offset) });
         if (v.unread) params.set('unread_only', '1');
         if (v.tab && v.tab !== 'all') params.set('tab', v.tab);
         if (v.q) params.set('q', v.q);
@@ -1116,6 +1116,7 @@
             if (seq !== v.seq) return;
             v.items = data.notifications || []; v.items.forEach(n => v.ids.add(String(n.id)));
             v.hasMore = !!data.has_more; v.total = data.total ?? null; v.offset = v.items.length;
+            if (typeof v.onCount === 'function') { try { v.onCount(v.total); } catch { /* */ } }
             renderItems(v);
         } catch (e) {
             if (seq !== v.seq) return;
@@ -1483,6 +1484,16 @@
             const v = buildView(container, { mode: 'dock' });
             reload(v);
             return v;
+        },
+        /** Compact five-row preview for the one menu, expandable without leaving You. */
+        renderMenuNotifications(container, onCount) {
+            injectStyles();
+            if (!container) return null;
+            container.classList.add('openvibe-notif-dock');
+            const v = buildView(container, { mode: 'dock' });
+            v.pageSize = 5; v.onCount = onCount;
+            reload(v);
+            return { showAll() { v.pageSize = PAGE_SIZE; reload(v); } };
         },
         unmountDock(container) {
             const v = _views.get(container);

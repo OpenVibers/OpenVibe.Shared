@@ -603,7 +603,7 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null };
+    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null, filter: '' };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
@@ -676,7 +676,7 @@
             scroll.append(none);
         } else {
             const ul = h('ul', 'ovdk-chats');
-            [...chats.list, ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
+            [...chats.list.filter((c) => !chats.filter || titleOf(c).toLowerCase().includes(chats.filter)), ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
                 if (c.kind === 'vibe') {
                     const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
                     const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'AI chats'), h('span', 'ovdk-chat-p', `${c.count} conversation${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
@@ -807,7 +807,7 @@
     function withTimer(fn) {
         if (timerMod) return fn(timerMod);
         timerLoading = timerLoading || load('dock-timer.js', () => !!(root.OpenVibeDockTimer && root.OpenVibeDockTimer.attach)).then((ok) => {
-            if (ok && !timerMod) timerMod = root.OpenVibeDockTimer.attach({ state, save, host: () => el, repaint: () => paintPill() });
+            if (ok && !timerMod) timerMod = root.OpenVibeDockTimer.attach({ state, save, host: () => inline || el, repaint: () => paintPill() });
             return timerMod;
         });
         return timerLoading.then((m) => (m ? fn(m) : null));
@@ -1102,5 +1102,7 @@
         return handle;
     }
 
-    root.OpenVibeDock = { mount, mountInto, open, close, isOpen, update, ask, share, canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
+    root.OpenVibeDock = { mount, mountInto, open, close, isOpen, update, ask, share,
+        filterChats: (v) => { chats.filter = v.toLowerCase(); chatList(); },
+        openTimer: () => withTimer((m) => m.menu(inline || el)), canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);

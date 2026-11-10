@@ -1320,6 +1320,7 @@
     function mountBell(nav, u) {
         if (_config.notifications === false || !u || u.is_anon || !_config.token) return;
         const mount = nav.querySelector('#openvibe-bell-mount'); if (!mount || mount.childElementCount) return;
+        _bellMount = mount;
         const go = () => {
             const N = root.OpenVibeNotifications; if (!N || mount.childElementCount) return;
             try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; } N.createBell(mount); wireBell(); } catch { /* */ }
@@ -1342,17 +1343,15 @@
         sc.addEventListener('load', () => setTimeout(() => { try { then(); } catch { /* */ } }, 0));
     }
     // The bell opens the Dock on Activity (the same list), and closes it from there; without the Dock, its own panel.
-    let _dockOn = false;
+    let _dockOn = false, _bellMount = null;
     function wireBell() {
         const N = root.OpenVibeNotifications; if (!N || typeof N.setBellAction !== 'function') return;
-        N.setBellAction(_dockOn ? () => {
-            const D = root.OpenVibeDock; if (!D || typeof D.open !== 'function') return false;
-            const st = typeof D._state === 'function' ? D._state() : {};
-            // New messages and nothing else new: the bell opens on them. Otherwise on Activity, as before.
-            const tab = _msgCount && N.unread && !N.unread() ? 'chats' : 'activity';
-            if (D.isOpen() && st.tab === tab) D.close(); else D.open({ tab });
+        N.setBellAction(() => {
+            const active = document.querySelector('.ovs.is-open');
+            if (active && active.querySelector('.ovs-starttabs [data-tab="you"][aria-selected="true"]')) root.OpenVibeSearch.close();
+            else openSearch('', 'you', _bellMount && _bellMount.querySelector('.openvibe-bell'), 'notifications');
             return true;
-        } : null);
+        });
     }
     function mountDock(u) {
         const on = _config.dock !== false && !!u && !u.is_anon && !!_config.token;
@@ -2042,7 +2041,7 @@
         const data = u && !u.is_anon && _walletFor === walletKey(u) ? _walletData : null;
         if (u && !u.is_anon && data !== false) {
             chips = walletOrder(data).map((id) => Object.assign({}, WALLET_CHIPS.find((w) => w.id === id), {
-                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: openWallet,
+                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: (e) => openSearch('', 'you', e.currentTarget, 'you'),
             })).concat(chips);
         }
         _config.chips = chips;
@@ -2228,8 +2227,7 @@
             avatarBtn.addEventListener('click', () => {
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
-                const orbs = nav.querySelectorAll ? [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
-                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
+                openSearch('', 'you', avatarBtn);
             });
 
 
@@ -2312,7 +2310,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl) {
+    function openSearch(q, tab, fromEl, section) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2326,12 +2324,14 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab,
+            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
                 dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); openDock(t); } : null,
+                dockTimer: () => { if (root.OpenVibeDock && root.OpenVibeDock.openTimer) root.OpenVibeDock.openTimer(); else openDock('activity'); },
+                ask: (text) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); }); },
                 me: _accountEl ? { add: _config.accounts === false ? '' : addAccountHref(), out: () => { const b = _accountEl.querySelector('#openvibe-logout-btn'); if (b) b.click(); }, own: _own } : null,
                 onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
             const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
