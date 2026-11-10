@@ -53,7 +53,9 @@ const html = f.onlineHTML(clean);
 assert.ok(html.includes('<a class="ovf-tile is-live" href="https://openvibe.live/"><span class="ovf-dot" aria-hidden="true"></span><b>2</b><span>live now</span><small>41 watching</small></a>'), 'live is one small tile, with its dot and its way in');
 assert.ok(html.indexOf('ovf-who') < html.indexOf('is-live'), 'who is online comes first; live is among the tiles');
 assert.ok(html.includes('<b>56</b><span>sites, one account</span>') && html.includes('<b>81k</b><span>page views this week</span>'), 'the old facts are kept, as tiles');
-assert.ok(html.includes('<details class="ovf-who">') && html.includes('<b>10</b> online in the last 30 min') && html.includes('3 members · 7 guests'), 'who is online opens the list; guests are a count');
+assert.ok(html.includes('<details class="ovf-who">') && html.includes('<b>10</b> online</span>') && html.includes('data-ov-tip="In the last 30 minutes" data-ov-tip-sub="3 members · 7 guests"'), 'shorthand: the count, with when and who in its tooltip');
+assert.ok(html.includes('<p class="ovf-who-when">In the last 30 minutes · 3 members · 7 guests</p>'), 'a press opens the same words (a finger never sees a tooltip)');
+assert.ok(!/online in the last 30 min/.test(html), 'the strip itself stays short');
 assert.ok(/class="ovf-who-faces" aria-hidden="true"><img src="https:\/\/openvibe\.network\/avatar\/ann\?s=64"[^>]*><i aria-hidden="true">B<\/i>/.test(html), 'a few faces beside the count: a picture, or a first letter where there is none');
 assert.ok(html.includes('href="https://openvibe.network/@ann"') && html.includes('https://openvibe.network/avatar/ann?s=64') && html.includes('<small>Live</small>'), 'a named member links to their profile with their picture and site');
 assert.ok(html.includes('and 2 more'), 'the rest of the list is a count');
@@ -70,7 +72,10 @@ assert.ok(!f.onlineHTML(f.cleanOnline({ ...read, live: { channels: 0, watching: 
 assert.ok(f.pulseHTML({ live_now: 0, watching: 0, sites: 40, views_7d: 1500 }).includes('Nobody live right now · go live'), 'the old line is the fallback');
 assert.ok(!f.onlineHTML(f.cleanOnline({ ...read, members: 0, guests: 0, total: 0, people: [] })).includes('online in the last'), 'nobody online: no list');
 assert.ok(!f.onlineHTML(f.cleanOnline({ ...read, counts: [], items: [] })).includes('ovf-online-actions'), 'no counts and no items: only the old facts');
-assert.ok(f.onlineHTML(f.cleanOnline({ ...read, people: [], members: 0, total: 7 })).includes('<div class="ovf-who ovf-who--flat">'), 'guests only: a line, with nothing to open');
+{
+    const guests = f.onlineHTML(f.cleanOnline({ ...read, people: [], members: 0, total: 7 }));
+    assert.ok(guests.includes('<details class="ovf-who">') && guests.includes('<p class="ovf-who-when">In the last 30 minutes') && !guests.includes('ovf-who-list'), 'guests only: the count opens when, with no list of names');
+}
 
 // The slot stays in the footer; the strip is read from /api/frame/online, with the old line as the fallback.
 assert.ok(f.buildHTML({ service: 'live', variant: 'full' }).includes('class="ovf-pulse" data-ovf-pulse'), 'the strip slot');

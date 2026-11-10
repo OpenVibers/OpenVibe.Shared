@@ -594,6 +594,19 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
+
+    // The tooltip part (ov-tip.js) loads at the first hover over anything that carries one: the bar, the footer's count.
+    // At module level, so the listener holds no bar that a soft navigation has since replaced.
+    function tipWait() {
+        if (root.__ovTipWait || !document.addEventListener) return;
+        root.__ovTipWait = 1;
+        const tip = (e) => {
+            if (!e.target.closest || !e.target.closest('[data-ov-tip]')) return;
+            document.removeEventListener('pointerover', tip);
+            if (!root.OVTip && !document.getElementById('ov-tip-loader')) { try { const sc = document.createElement('script'); sc.id = 'ov-tip-loader'; sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ } }
+        };
+        document.addEventListener('pointerover', tip, { passive: true });
+    }
     // ov-glyphs.js, when a page shows a Font Awesome-style icon: now, or the first time one appears. One watch per page,
     // made here and not in the bar's render, so it holds nothing of a bar that a page move (Boost) re-renders. A
     // mutation only schedules one look 250 ms later, and the watch ends once the glyphs are loading.
@@ -2128,8 +2141,7 @@
         hookSearch(nav);
         hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
         // The tooltip's file is fetched when a pointer first comes over the bar, not with the page.
-        const tip = () => { nav.removeEventListener('pointerover', tip); if (!root.OVTip && !document.getElementById('ov-tip-loader')) { try { const sc = document.createElement('script'); sc.id = 'ov-tip-loader'; sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ } } };
-        if (typeof nav.addEventListener === 'function') nav.addEventListener('pointerover', tip, { passive: true });
+        tipWait();
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
