@@ -49,6 +49,10 @@
 - Jump back in links to the full history on openvibe.my; the Dock's agent can read recent history on a press (the
   history-timeline job's plumbing).
 
+- **The test runner gives a failed browser file one more try** (`retry` in `test-runner.js`, used by this package's
+  own run). Three releases in a row waited on the macOS runner, each time for different headless-Chrome files that
+  pass on Linux, on Windows and locally. A pass on the second try is named in the summary.
+
 Built by runner jobs and given their look here: the upload check (upload-dedupe), the computers picker
 (machines-one-place), the footer's read (whos-online-strip), the history link (history-timeline).
 

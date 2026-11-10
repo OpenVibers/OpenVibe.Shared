@@ -13,4 +13,6 @@
  * a skipped file is listed with ○ and never counted as passed.
  */
 'use strict';
-require('../test-runner').main({ dir: __dirname, timeoutMs: 60000, pad: 36, serial: /-chrome\.test\.js$/ });
+// A headless-Chrome file that fails is run once more (a slow runner, not a wrong page); the summary names any that
+// needed it.
+require('../test-runner').main({ dir: __dirname, timeoutMs: 60000, pad: 36, serial: /-chrome\.test\.js$/, retry: /-chrome\.test\.js$/ });
