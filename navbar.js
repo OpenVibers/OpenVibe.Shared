@@ -1019,16 +1019,19 @@
     let _renderAbort = null;
     const onDocument = () => (_renderAbort ? { signal: _renderAbort.signal } : undefined);
 
-    /** One anonymous page-view count per page load (host only), which is what orders the network's
-     *  navigation. Skipped when the browser asks not to be tracked. */
+    /** One anonymous page-view count per page load (host only), which orders the network's navigation; skipped when
+     *  the browser asks not to be tracked. `?in=1` says this browser is signed in, never who; it waits 2.5 s for that. */
     let _counted = false;
     function countView() {
         if (_counted || _config.countViews === false) return; _counted = true;
         try {
-            if (navigator.globalPrivacyControl || navigator.doNotTrack === '1') return;
-            if (!/^https:$/.test(location.protocol)) return;
-            const url = 'https://openvibe.network/api/frame/hit';
-            if (navigator.sendBeacon) navigator.sendBeacon(url);
+            if (navigator.globalPrivacyControl || navigator.doNotTrack === '1' || !/^https:$/.test(location.protocol)) return;
+            const hit = 'https://openvibe.network/api/frame/hit';
+            let sent = false;
+            const send = () => { if (sent) return; sent = true; try { if (navigator.sendBeacon) navigator.sendBeacon(_config.user && !_config.user.is_anon ? `${hit}?in=1` : hit); } catch { /* */ } };
+            if (_config.user || _config.auth === 'external') return send();
+            document.addEventListener('openvibe-navbar-auth', send, { once: true });
+            setTimeout(send, 2500);
         } catch { /* */ }
     }
 
