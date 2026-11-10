@@ -186,8 +186,8 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
-@media (prefers-reduced-motion:reduce){.ov-mark *{animation-iteration-count:1!important}.ov-mark::before{transition:none!important}.ovm-fall{display:none}}
-html[data-ov-motion=reduced] .ov-mark *{animation-iteration-count:1!important}
+@media (prefers-reduced-motion:reduce){.ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}.ov-mark:not([data-fx-demo] *)::before{transition:none!important}.ovm-fall{display:none}}
+html[data-ov-motion=reduced] .ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}
 .ov-busy{cursor:progress;pointer-events:none}
 .ov-busy-mark{display:inline-block;vertical-align:-.2em;margin-right:.45em;flex:none}
 `;
@@ -251,7 +251,9 @@ html[data-ov-motion=reduced] .ov-mark *{animation-iteration-count:1!important}
         if (!end || end > now + INTRO_MS) { end = now + INTRO_MS; try { sessionStorage.setItem(INTRO_KEY, String(end)); } catch { /* */ } }
         return end;
     }
-    function reduced() {
+    // Inside [data-fx-demo] (ov-fx.js: a motion page's own container, set when the person asks) a mark plays in full.
+    function reduced(el) {
+        if (el && el.closest && el.closest('[data-fx-demo]')) return false;
         return !!(rm && rm.matches) || document.documentElement.getAttribute('data-ov-motion') === 'reduced';
     }
     function update(el) {
@@ -261,12 +263,12 @@ html[data-ov-motion=reduced] .ov-mark *{animation-iteration-count:1!important}
         const now = Date.now();
         // Calm (the Motion setting, or the device asking for less) is gentle, not still: a state still animates, once.
         const may = !el.hasAttribute('data-static') && !document.hidden && st.onScreen === true;
-        if (may && !reduced() && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
+        if (may && !reduced(el) && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
         const s = el.getAttribute('data-state');
         // Anything the mark is showing keeps it moving: a state, a page on its way, a known progress.
         const showing = (s && s !== 'idle') || el.hasAttribute('data-nav') || el.hasAttribute('data-progress');
         const intro = now < st.introEnd;
-        const run = may && (showing || (!reduced() && (intro || st.hover || st.focus || now < st.lingerEnd)));
+        const run = may && (showing || (!reduced(el) && (intro || st.hover || st.focus || now < st.lingerEnd)));
         if (run !== el.hasAttribute('data-ovm-run')) { if (run) el.setAttribute('data-ovm-run', ''); else el.removeAttribute('data-ovm-run'); }
         // The intro's pop and growth are on only inside the intro (paused with the rest while the mark cannot move).
         if ((may && intro) !== el.hasAttribute('data-ovm-intro') && (may || !intro)) { if (may && intro) el.setAttribute('data-ovm-intro', ''); else el.removeAttribute('data-ovm-intro'); }
@@ -381,7 +383,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation-iteration-count:1!important}
             new MutationObserver((records) => {
                 let added = false;
                 for (const r of records) {
-                    if (r.type === 'attributes') { if (r.target === document.documentElement) { updateAll(); if (r.attributeName === 'data-ov-season-mark') scheduleFlourish(); } else if (state.has(r.target)) update(r.target); continue; }
+                    if (r.type === 'attributes') { if (r.attributeName === 'data-fx-demo') { updateAll(); continue; } if (r.target === document.documentElement) { updateAll(); if (r.attributeName === 'data-ov-season-mark') scheduleFlourish(); } else if (state.has(r.target)) update(r.target); continue; }
                     if (r.addedNodes.length) added = true;
                     r.removedNodes.forEach((node) => {
                         if (node.nodeType !== 1) return;
@@ -390,7 +392,7 @@ html[data-ov-motion=reduced] .ov-mark *{animation-iteration-count:1!important}
                     });
                 }
                 if (added) mount();
-            }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'data-static', 'data-nav', 'data-progress', 'data-ov-motion', 'data-ov-season-mark'] });
+            }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'data-static', 'data-nav', 'data-progress', 'data-ov-motion', 'data-ov-season-mark', 'data-fx-demo'] });
         } catch { /* */ }
     }
     // ── A page on its way: the navbar's mark draws its ring round as the next page loads ──
