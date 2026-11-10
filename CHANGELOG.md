@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.181.0 — 2026-11-10
+
+**The Dock's agent view, timeline and Actor go through Network's frame relay.** `dock-agent.js`, `dock-timeline.js`
+and `dock-actor.js` asked `openvibe.codes` and `openvibe.actor` directly from every site. Every site's `connect-src`
+allows `openvibe.network` and refuses those, so 49 of 49 signed-in sites logged 1-4 console errors at 1280 on
+2026-11-09 (CSP on most, CORS on the sites without one). The three modules now ask Network's same-origin
+`/api/frame/...` relay by default: `GET /agent-view`, its still and the four controls; `GET /agent/timeline` and its
+writes; `GET /actor` and its subpaths. An explicit `base`/`agentBase`/`actorBase` (a test, or the extension's own
+panel) still reaches the product itself, and nothing is asked without the person's token. The markup and styles are
+unchanged. `test/dock-relay.test.js` fails if a Dock script fetches another product's origin directly again.
+
 ## 4.180.0 — 2026-11-10
 
 - **A demo scope for motion: `data-fx-demo`** (`ov-fx.js`, `ov-mark.js`, `theme-loader.js`). Inside a container
