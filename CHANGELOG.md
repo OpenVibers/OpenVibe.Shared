@@ -1,9 +1,27 @@
 # Changelog
 
-## 4.188.0 — 2026-11-10
+## 4.189.0 — 2026-11-10
 
 - **The footer strip reads one endpoint.** `footer.js` now fills the strip from `openvibe.network/api/frame/online?site=<this site>` (owner, 2026-11-10): how many people were on the network in the last thirty minutes, the members by name and picture only when their presence lets them be seen (a disclosure the page styles as a sheet), guests as a count and nothing more, the live channels, a few counts that open what they count, and the site's own items (a label, a glyph name, a number or a line). Live shows only while somebody is live. The old facts — watching, sites and page views this week — are kept and now come from the same read; `/api/frame/pulse` is the fallback when the new read does not answer, and keeps its "Nobody live right now" line. Every string is capped and every link must be https before it reaches the page; a count's or an item's glyph is drawn from the shared set. No new CSS: the strip is plain kit markup (`ovk-btn`, `ovk-muted`) for the page to design.
 - **The page-view beacon says whether the browser is signed in, and nothing else.** `navbar.js` sends `?in=1` on `POST /api/frame/hit` for a signed-in person, so Network counts them from their presence heartbeat and leaves them out of the guest count; the beacon waits for the shared sign-in state (or 2.5 s) so a page that draws before it answers is not counted as a guest. Still one request per page view, and still no identity in it.
+
+## 4.188.0 — 2026-11-10
+
+**The account's things are in the menu.** The owner, 2026-11-10, with the dropdown under the picture marked "Replace →
+to You tab": "this user drop down is just redundant … move it into the You tab of the menu … add account switching
+and adding accounts to that … consolidate the two into one menu."
+
+- **The picture opens the OpenVibe menu on You.** The block the dropdown drew (who you are, add another account,
+  settings, sign out, your other accounts, the site's own items from `addMenuItem`, light or dark and Display) is a
+  block of that tab, at its top, where a shorter bar with the name was. It is there wherever the bar has a person, with
+  or without a token for the network's reads.
+- **No dropdown.** The popup, its position, its height rules and its place among the panels (`user-menu`) are gone.
+  The block rests in the bar, out of sight, while the menu is closed: a site that looks for `#openvibe-logout-btn`,
+  `[data-ov-ask]` or its own item still finds it.
+- **The mark is larger in the bar** (42, was 34; 34 on a small phone, was 28). The owner: "make the OV branding take
+  up most of its area … stand out a little more … compared to the My." Nothing overlaps from 320 px
+  (`navbar-phone-fit-chrome`).
+- In the You tab, "All 65" keeps its own case (it was drawn in the heading's capitals).
 
 ## 4.187.0 — 2026-11-10
 

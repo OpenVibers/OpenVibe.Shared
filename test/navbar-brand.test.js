@@ -192,7 +192,7 @@ function load(hostname, opts = {}) {
     global.addEventListener = (type, fn, opts) => winListeners.push({ type, opts });
     navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
     const first = regs.slice(), firstDisplay = winListeners.filter((l) => l.type === 'ov:display');
-    assert.deepStrictEqual(first.map((r) => r.id).sort(), ['nav-drawer', 'user-menu'], 'the drawer and the account menu are registered');
+    assert.deepStrictEqual(first.map((r) => r.id).sort(), ['nav-drawer'], 'the drawer is registered (the account\'s things are in the menu since 4.188.0: no popup of their own)');
     assert.ok(first.every((r) => r.signal && !r.signal.aborted), 'each registration carries the render\'s signal');
     assert.ok(firstDisplay.length === 1 && firstDisplay[0].opts && firstDisplay[0].opts.signal, 'the display rows\' window listener carries it too');
     navbar.init({ service: 'space', user: { id: 1, username: 'x' } });
@@ -211,7 +211,7 @@ function load(hostname, opts = {}) {
     global.OpenVibePanels = { register: (o) => { regs.push(o); } };
     loaders[loaders.length - 1].onload();
     delete global.OpenVibePanels;
-    assert.deepStrictEqual(regs.map((r) => r.id).sort(), ['nav-drawer', 'user-menu'], 'only the live render\'s panels are registered');
+    assert.deepStrictEqual(regs.map((r) => r.id).sort(), ['nav-drawer'], 'only the live render\'s panels are registered');
     assert.ok(regs.every((r) => !r.signal.aborted));
 }
 // ── balance chips fold into one on a phone (owner, 2026-10-27): the folded chip, its short values, and setChip ──
