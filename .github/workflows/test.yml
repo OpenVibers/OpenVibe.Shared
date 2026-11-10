@@ -157,11 +157,12 @@ jobs:
         name: pin-only plan
         run: |
           # mode=override: the repository's own pin-only-test. mode=subset: the page, frame,
-          # size-budget and browser files through test/run.js (npm + openvibe-shared/test-runner only;
-          # a custom runner or pnpm falls through to full). mode=full: the suite exactly as before.
+          # size-budget and browser files through test/run.js (npm + a test/run.js that requires
+          # openvibe-shared/test-runner only; a custom runner or pnpm falls through to full).
+          # mode=full: the suite exactly as before.
           if [ "${{ needs.changes.outputs.pin_only }}" = "true" ]; then
             if [ -n "${{ inputs.pin-only-test }}" ]; then echo "mode=override" >> "$GITHUB_OUTPUT"
-            elif [ "${{ inputs.package-manager }}" = "npm" ] && [ -f test/run.js ] && grep -q test-runner test/run.js && grep -q '"test": *"node test/run.js' package.json; then echo "mode=subset" >> "$GITHUB_OUTPUT"
+            elif [ "${{ inputs.package-manager }}" = "npm" ] && [ -f test/run.js ] && grep -q "require(.*test-runner" test/run.js && grep -q '"test": *"node test/run.js' package.json; then echo "mode=subset" >> "$GITHUB_OUTPUT"
             else echo "mode=full" >> "$GITHUB_OUTPUT"; fi
           else echo "mode=full" >> "$GITHUB_OUTPUT"; fi
       - uses: pnpm/action-setup@v4
