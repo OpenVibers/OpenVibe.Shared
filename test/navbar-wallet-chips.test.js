@@ -59,11 +59,18 @@ const base = { service: 'games', auth: 'external', apiBase: 'https://openvibe.ne
     assert(!calls.some((u) => u.includes('/api/coins/me') || u.includes('/api/me/vibes')));
     const html = navs[navs.length - 1].innerHTML;
     assert.match(html, /160,799/); assert.match(html, /400/);
+    // Only the balances the person has, the largest first (4.189.0): no money balance, so it is not in the pill.
     assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['coins', 'vibes']);
     data.used_ai_this_month = true;
-    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['balance', 'coins']);
-    data.balances.coins.amount = '0'; data.balances.vibes.amount = '0';
+    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['balance', 'coins', 'vibes'], 'AI was used and the money ran out: that leads');
+    data.balances.balance.amount = '12500000000';
+    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['coins', 'balance', 'vibes'], 'all three, by worth (400 Vibes are 4 dollars)');
+    data.balances.vibes.amount = '0';
+    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['coins', 'balance'], 'no Vibes: not shown');
+    data.balances.coins.amount = '0'; data.balances.balance.amount = '0';
     assert.strictEqual(navbar._wallet.walletOrder(data)[0], 'balance');
+    data.used_ai_this_month = false;
+    assert.deepStrictEqual(navbar._wallet.walletOrder(data), ['coins'], 'nothing at all: OpenCoins at zero, alone');
     navbar.setUser(null, null); await settle();
     assert(!navs[navs.length - 1].innerHTML.includes('data-chip-id="coins"'));
 

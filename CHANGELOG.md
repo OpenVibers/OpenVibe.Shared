@@ -1,9 +1,40 @@
 # Changelog
 
-## 4.189.0 — 2026-11-10
+## 4.190.0 — 2026-11-10
 
 - **The footer strip reads one endpoint.** `footer.js` now fills the strip from `openvibe.network/api/frame/online?site=<this site>` (owner, 2026-11-10): how many people were on the network in the last thirty minutes, the members by name and picture only when their presence lets them be seen (a disclosure the page styles as a sheet), guests as a count and nothing more, the live channels, a few counts that open what they count, and the site's own items (a label, a glyph name, a number or a line). Live shows only while somebody is live. The old facts — watching, sites and page views this week — are kept and now come from the same read; `/api/frame/pulse` is the fallback when the new read does not answer, and keeps its "Nobody live right now" line. Every string is capped and every link must be https before it reaches the page; a count's or an item's glyph is drawn from the shared set. No new CSS: the strip is plain kit markup (`ovk-btn`, `ovk-muted`) for the page to design.
 - **The page-view beacon says whether the browser is signed in, and nothing else.** `navbar.js` sends `?in=1` on `POST /api/frame/hit` for a signed-in person, so Network counts them from their presence heartbeat and leaves them out of the guest count; the beacon waits for the shared sign-in state (or 2.5 s) so a page that draws before it answers is not counted as a guest. Still one request per page view, and still no identity in it.
+
+## 4.189.0 — 2026-11-10
+
+**The balances are one pill, the menu and the Dock lead to each other, and the menu opens where you are.** Seven notes
+from the owner on 2026-11-10, each with a screenshot of the bar or the menu.
+
+- **One pill for the balances** ("we just show one, but it can animate between all three … it only needs to show the
+  things you have … nice icons that are animated, designed for the three currencies … a custom animation for gaining
+  and losing, with coins coming out of it"). `#openvibe-chips-all` is drawn at every width, with the balances the
+  person has (above zero, the largest first; the money balance leads when AI was used and it is empty) stacked in one
+  place and one showing. New `purse.js`: an icon drawn for OpenCoins (a coin struck with the ring), Vibes (a cut gem)
+  and the money balance (a note with a seal), each in its own colour leaned toward the theme's text so it holds on
+  light and dark; a turn through the balances on the first page of a visit and one every forty seconds or so; and on a
+  change the pill turns to that balance, counts the number, takes its colour for a moment and sends a few of its
+  pieces in (a gain) or out (a spend) with the amount under it. Calm motion shortens the moves; Off removes them.
+  The two-line pill on phones and the separate chips on computers are gone.
+- **The menu opens on this site's tab** ("this button should open the first tab so people can switch between pages on
+  the site they're on … make it more clear that those are pages on the site you're on"). No tab is remembered; the
+  picture still opens You. The pages are tiles under "Pages on <site>", in the case it is written in, behind a dot that
+  marks where you are.
+- **The current site is first in its group**, the site tiles are full touch targets, and a group's name sits on a
+  hairline ("design should be the first result … improve these section titles … make the icons look nicer").
+- **From the menu to the Dock and back** ("how are you supposed to get to the other menu from this area … a way to hop
+  over to the other interface that has the chat"). Under the menu's tabs a row opens the Dock on Vibe, Agents, Messages
+  or Activity (`ctx.dock`, given by the navbar where the Dock is on); the Dock's head has "Menu", which folds the Dock
+  and opens the menu out of the same button.
+- **The Dock's head** ("buggy and kind of ugly … more consistent, cohesive"). Its close button was drawn as a white bar
+  over blue dots: the Dock's line style for icons reached the menu button's parts. It is the same cross as the menu's
+  now. The chosen tab takes the theme's accent, as the menu's does (it was a dark box inside a box). On a phone the
+  head is two rows, as the menu's is: Menu, More and Close where the bar's bell and button are, and under them the
+  four tabs, full width, in the look of the menu's row that leads here.
 
 ## 4.188.0 — 2026-11-10
 
