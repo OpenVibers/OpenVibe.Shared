@@ -241,7 +241,15 @@
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
 .ovs-grid.is-mini .ovs-ic { width: 26px; height: 26px; border-radius: 8px; }
-.ovs-grid.is-mini .ovs-tile b { font-size: 13px; font-weight: 600; }
+.ovs-grid.is-mini .ovs-tile b { font-size: 13.5px; font-weight: 650; }
+/* 4.189.0: the sites in their groups are full touch targets with a larger mark, and each group's name runs into a
+   hairline, so the list reads as sections and not as one long column of small rings. */
+.ovs-grid.is-mini { gap: 4px; }
+.ovs-grid.is-mini .ovs-tile { min-height: 48px; padding: 6px 8px; border-radius: 12px; transition: background-color .15s, transform .12s; }
+.ovs-grid.is-mini .ovs-tile:active { transform: scale(.97); }
+.ovs-grid.is-mini .ovs-ic { width: 32px; height: 32px; border-radius: 10px; }
+.ovs-group[data-sec="all"] { display: flex; align-items: center; gap: 10px; }
+.ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
 .ovs-tab[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #8ab4ff)); }
@@ -715,7 +723,7 @@
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
                 if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
                 const ic = icon(it);
-                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '22'); }
+                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '26'); }
                 a.append(ic, txt);
                 box.appendChild(a);
             });
@@ -1066,7 +1074,8 @@
         const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);
         const mini = (x) => siteItem(x, all);
         fgroups.forEach((g, i) => {
-            const list = all.filter((x) => inGroup(x, g)).map(mini);
+            // The site you are on is first in its group (its group is already first): the menu opens where you are.
+            const list = all.filter((x) => inGroup(x, g)).sort((a, b) => (mineSite ? (b.id === mineSite.id) - (a.id === mineSite.id) : 0)).map(mini);
             if (list.length) groups.push({ title: i === 0 && fgroups.length > 1 ? g.name : g.name, as: 'mini', items: list, section: 'all' });
         });
         const soon = f && Array.isArray(f.soon) ? f.soon : [];
