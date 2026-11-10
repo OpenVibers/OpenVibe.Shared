@@ -28,12 +28,35 @@ const ICONS = path.join(ROOT, 'nav-icons.js');
 const glyphs = require('../glyphs');
 const q = (str) => String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
+/**
+ * A path with its coordinates on a half-unit grid, for the navbar's own copy.
+ *
+ * The bar draws these at 15-20 px, where half a unit of a 24-box is a third of a pixel — and the
+ * navbar's block is on every page's first load, so the shorter numbers are worth the tenth of a
+ * pixel. The drawings in glyphs.js keep their tenths: they are the ones the sets' own measurements
+ * are made against. An arc's flags and its rotation are not coordinates and are left alone.
+ */
+const coarse = (d) => d.replace(/( d=")([^"]*)(")/g, (m, a, body, b) => {
+    let out = '', cmd = '', n = 0;
+    for (const tok of body.match(/[AaCcSsQqTtLlHhVvMmZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/g) || []) {
+        if (/[A-Za-z]/.test(tok)) { out += tok; cmd = tok; n = 0; continue; }
+        // An arc's numbers come in groups of seven — rx ry rotation large-arc sweep x y — and the
+        // rotation and the two flags are not coordinates.
+        const keep = /[Aa]/.test(cmd) && (n % 7) >= 2 && (n % 7) <= 4;
+        n++;
+        if (keep) { out += tok; continue; }
+        const v = Math.round(Number(tok) * 2) / 2;
+        out += (Object.is(v, -0) ? 0 : v).toString();
+    }
+    return a + out + b;
+});
+
 /** nav-icons.js with every name the glyphs cover drawn from them: [0, line, solid]. */
 function upgraded(text) {
     return text.replace(/^( {8}'(fa-[a-z0-9-]+)': )\[.*\],$/gm, (line, head, name) => {
         const g = glyphs.fromFa(name);
         if (!g) return line;
-        return `${head}[0, '${q(glyphs.path(g))}', '${q(glyphs.solid(g) || '')}'],`;
+        return `${head}[0, '${q(coarse(glyphs.path(g)))}', '${q(coarse(glyphs.solid(g) || ''))}'],`;
     });
 }
 const BEGIN_PREFIX = '    // BEGIN generated';
@@ -71,9 +94,9 @@ function render(src, iconsText) {
     return [
         BEGIN,
         '    // The glyphs the navbar draws itself: [0, line, solid] is an OpenVibe glyph (24-unit grid); [w, path] a Font',
-        '    // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 <w> 512 viewBox. The rest of the set is nav-icons.js.',
+        '    // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 512 512 viewBox, one ink size. The rest of the set is nav-icons.js.',
         '    const NAV_ICONS = {',
-        ...Object.keys(all).filter((n) => own.includes(n)).map((n) => (all[n][0] === 0 ? `        '${n}': [0, '${q(all[n][1])}', '${q(all[n][2] || '')}'],` : `        '${n}': [${all[n][0]}, '${all[n][1]}'],`)),
+        ...Object.keys(all).filter((n) => own.includes(n)).map((n) => (all[n][0] === 0 ? `        '${n}': [0, '${q(coarse(all[n][1]))}', '${q(coarse(all[n][2] || ''))}'],` : `        '${n}': [${all[n][0]}, '${all[n][1]}'],`)),
         '    };',
         '    // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives); 0 is an OpenVibe glyph.',
         '    const NAV_ICONS_LAZY = {',
