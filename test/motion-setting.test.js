@@ -74,6 +74,12 @@ assert.ok(/html\[data-ov-motion=off\] \*:not\(\[data-fx-demo\] \*\)[^{]*\{animat
 assert.ok(/CALM_RATE = 0\.6/.test(SRC) && SRC.includes('t.iterations !== Infinity') && SRC.includes("addEventListener('animationstart'"), 'under Calm an endless loop is slowed as it starts; anything that ends plays as written');
 assert.ok(SRC.includes("motionOf() === 'off') return;"), 'the theme crossfade is a colour fade: only Off skips it');
 
+// ── a control nobody styled wears the theme (4.186.0) ──
+assert.ok(/:where\(button,input:is\(\[type=submit\],\[type=button\],\[type=reset\]\)\):where\(:not\(\[class\]\)\)\{font-family:inherit;border:1px solid var\(--border-light,[^;]*;border-radius:10px;color:var\(--text-primary,inherit\);background:var\(--bg-hover,/.test(css), 'a bare button: the theme\'s face, at no specificity, readable even where no theme is set');
+assert.ok(/:where\(input:not\(\[type=checkbox\][^)]*\),select,textarea\):where\(:not\(\[class\]\)\)\{font-family:inherit;border:1px solid/.test(css), 'a bare field, select or text box too');
+const bare = css.match(/:where\((?:button|input)[^{]*\{[^}]*\}/g) || [];
+assert.ok(bare.length >= 3 && bare.every((r) => /^:where\([^{]*:where\(:not\(\[class\]\)\)\{/.test(r) && !/padding|height|width|margin|display/.test(r)), 'only controls with no class, and nothing that moves a layout');
+
 // ── the package: nothing stops an effect because the device asked for less ──
 const STOPS = /(animation|transition)\s*:\s*none/;
 const offenders = [];

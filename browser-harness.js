@@ -146,7 +146,7 @@ function connect(wsUrl, onClose) {
  * { version, userAgent, send, newContext(), close() }. close() kills only the process it started and resolves once
  * its temporary profile is removed.
  */
-async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, headless = true } = {}) {
+async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, headless = true, _again = false } = {}) {
     let proc = null, profile = null, wsUrl;
     if (browserURL) {
         const v = await (await fetch(`${browserURL.replace(/\/$/, '')}/json/version`)).json();
@@ -175,7 +175,13 @@ async function launch({ bin, browserURL, tmpDir, args = [], sandbox = false, hea
             } catch { /* not yet */ }
             if (!wsUrl) await sleep(100);
         }
-        if (!wsUrl) { proc.kill('SIGKILL'); fs.rmSync(profile, { recursive: true, force: true }); throw new Error('Chrome did not start'); }
+        if (!wsUrl) {
+            proc.kill('SIGKILL'); fs.rmSync(profile, { recursive: true, force: true });
+            // Once more before giving up: on a loaded runner the first Chrome of a batch can take longer than the
+            // wait, and the second, with the binary warm, comes up in a second or two (macOS CI, 2026-11-10).
+            if (!_again) return launch({ bin, browserURL, tmpDir, args, sandbox, headless, _again: true });
+            throw new Error('Chrome did not start');
+        }
     }
     const conn = connect(wsUrl);
     await conn.opened;

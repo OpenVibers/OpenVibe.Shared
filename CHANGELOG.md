@@ -1,8 +1,41 @@
 # Changelog
 
+## 4.187.0 — 2026-11-10
+
+**One shared picker for Link computers.** Pages mount `OpenVibeMachines` on `[data-ov-machines]`; it reads the signed-in person's machines from Network, filters by `data-needs`, fills the form's hidden machine ID, emits `change`, and links to Link's add-computer flow. It reports loading, none, signed out and unreachable states and can map a selected machine to its Link principal for host assignment.
+
 ## 4.186.0 — 2026-11-10
 
-**One shared picker for Link computers.** Pages can mount `OpenVibeMachines` on `[data-ov-machines]`; it reads the signed-in person's machines from Network, filters by `data-needs`, fills a hidden form field, emits `change`, and links to Link's add-computer flow. It reports loading, no machines, signed out and unreachable states.
+**The mark at work is a ring of dots, and thinking is a state of its own.** The owner, 2026-11-10: "the progress
+animation… should make the O turn into a bunch of little circles, like how a normal loading spinner looks… a cooler
+animation that actually looks like it's loading or doing something. Also, there should be one dedicated for thinking
+when your agent is thinking or replying… easier to know that it's replying or outputting tokens."
+
+- **`data-state="busy"` (working):** the O breaks into eight dots (a dash of no length with a round cap) and three
+  bright ones go round the ring, dot to dot, while the V bobs. It was the O breathing. This replaces the old line
+  "nothing spins": a wait is the mark's own O going round, never a borrowed spinner.
+- **`data-state="think"` (new):** three dots rise in turn inside the O, the ring quiets, and the V's two strokes glimmer
+  one after the other. One sign, wherever an agent is thinking or tokens are on their way.
+- Both are shown at every size and stay readable with motion off (the dots are simply there).
+
+**The menu and the Dock are one kind of sheet on a phone.** The owner: "make the two UIs look match a little better,
+especially the close button, so it feels more seamless… make the animation effect for the menu opening and closing more
+similar to how the other ones are… and make it cooler."
+
+- **One close button:** the Dock's is the menu's now: the same round, ringed button, the same × of dots in the same
+  colours, at the same place on the screen (measured: both centred 36px from the right edge, 34px from the top).
+- **One move:** the Dock's sheet opens as a circle growing from the orb and folds back into it, with the menu's own
+  timing (380 ms in, 280 ms out); it faded and scaled in 4.185.0.
+- **A ring leaves the orb** as either sheet opens (smaller under Calm, by `--ov-move`).
+- The close orb is measured after the sheet's layout is set, so it starts exactly on the navbar's button.
+
+**A control nobody styled wears the theme.** The owner: "customize all the inputs and buttons and things that aren't
+styled." A `<button>`, a text field, a `<select>` or a `<textarea>` with **no class of its own** gets the theme's face
+from the loader: its colour, border, corner and font, and the accent on a tick box or a slider. Only the face, and at
+no specificity (`:where`), so any rule a site wrote still wins and no layout moves; a control's real shape is the
+kit's (`ovk-btn`, `ovk-input`). The loader grew about 1 KB raw (budget 67,600 characters).
+
+The Dock is 20.00 KB brotli (budget 20.25 KB, with the reason beside it).
 
 ## 4.185.0 — 2026-11-10
 

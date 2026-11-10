@@ -26,7 +26,11 @@
  *   - a page on its way (navbar): the ring empties and draws itself round again as the next page loads, paced by how
  *     long this site's pages usually take in this browser (learned per site, boost moves and full loads apart); the
  *     V nods while it waits and hops when the page is here (window.OVMark.navStart/navEnd for single-page apps);
- *   - busy: the V bobs and the O breathes, in turn; ok: the V becomes a tick, green, and hops (the tick only ever
+ *   - busy (working): the O breaks into eight dots and three bright ones go round it, dot to dot, while the V bobs
+ *     (the owner, 2026-11-10: "make the O turn into a bunch of little circles… a spinner that has little dots around
+ *     it… that actually looks like it's loading"); think (your agent is thinking or writing): three dots rise in turn
+ *     inside the O and the V's two strokes glimmer one after the other, the one sign used wherever tokens are on
+ *     their way; ok: the V becomes a tick, green, and hops (the tick only ever
  *     means "done"); error: the V becomes "!", red, and the mark shakes; no: the V becomes "×", grey, and the O
  *     shakes its head; notify: a dot pops up by the V and the O bounces; live: the O is the record light, red, and
  *     ripples go out from it; sleep: the O closes like an eye and the V sinks.
@@ -134,7 +138,19 @@ html[data-ov-season-mark] .ov-mark[data-ovm-intro] .sl{animation:ovmLeaf .9s cub
 .ov-mark[data-ovm-arrive] .og{animation:ovmPulse .5s ease-out 1}
 /* The states. */
 .ov-mark[data-state=busy] .vg{animation:ovmBob .9s ease-in-out infinite}
-.ov-mark[data-state=busy] .og{animation:ovmBreathe .9s ease-in-out .45s infinite}
+/* Working: the O as eight dots (a dash of no length with a round cap is a dot), three bright ones hopping round. */
+.ov-mark[data-state=busy] :is(.o,.ot){stroke-linecap:round;stroke-width:var(--ovm-dot-w)}
+.ov-mark[data-state=busy] .ot{opacity:.3;stroke-dasharray:0 12.5}
+.ov-mark[data-state=busy] .o{stroke-dasharray:0 12.5 0 12.5 0 75;animation:ovmDots .96s steps(8,end) infinite}
+.ov-mark[data-state=busy] .og{animation:ovmSettle .4s cubic-bezier(.2,1.3,.3,1) 1}
+/* Thinking: three dots inside the O rise in turn, the ring quiets, the V's strokes glimmer one after the other. */
+.ov-mark .td{display:none;fill:var(--ovm-o);transform-box:fill-box;transform-origin:center}
+.ov-mark[data-state=think] .td{display:inline;animation:ovmThink 1.2s ease-in-out infinite}
+.ov-mark[data-state=think] .td2{animation-delay:.16s}
+.ov-mark[data-state=think] .td3{animation-delay:.32s}
+.ov-mark[data-state=think] .o{stroke-opacity:.5;transition:stroke-opacity .3s}
+.ov-mark[data-state=think] .va{animation:ovmSpeak 1.2s ease-in-out infinite}
+.ov-mark[data-state=think] .vb{animation:ovmSpeak 1.2s ease-in-out .6s infinite}
 .ov-mark[data-state=ok]{--ovm-o:var(--success,#22c55e);--ovm-v:var(--success,#22c55e)}
 .ov-mark[data-state=ok] .vg{animation:ovmHop .56s ease-out .14s 1 both}
 .ov-mark[data-state=error]{--ovm-o:var(--danger,#ef4444);--ovm-v:var(--danger,#ef4444)}
@@ -171,6 +187,10 @@ html[data-ov-season-mark] .ov-mark[data-ovm-intro] .sl{animation:ovmLeaf .9s cub
 @keyframes ovmHop{0%,100%{transform:translateY(0) scaleY(1)}35%{transform:translateY(-9px) scaleY(1.04)}70%{transform:translateY(0) scaleY(.96)}}
 @keyframes ovmBob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 @keyframes ovmBreathe{0%,100%{transform:scale(1)}50%{transform:scale(.88)}}
+@keyframes ovmDots{to{stroke-dashoffset:-100}}
+@keyframes ovmSettle{from{transform:scale(.86)}}
+@keyframes ovmThink{0%,55%,100%{transform:translateY(0);opacity:.4}28%{transform:translateY(-2.6px);opacity:1}}
+@keyframes ovmSpeak{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes ovmPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 @keyframes ovmShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-7px)}30%{transform:translateX(7px)}45%{transform:translateX(-6px)}60%{transform:translateX(6px)}80%{transform:translateX(-3px)}}
 @keyframes ovmNo{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
@@ -208,7 +228,7 @@ html[data-ov-motion=off] .ov-mark:not([data-fx-demo] *) *{animation-iteration-co
 <linearGradient id="${id}gg"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <mask id="${id}s" maskUnits="userSpaceOnUse" x="-20" y="-20" width="140" height="140"><g mask="url(#${id}h)"><g class="og" style="${oc}"><path d="${G.ring}" fill="none" stroke="#fff" stroke-width="${G.sw}"/></g></g><g class="vg" style="${vc}"><path class="ma" d="${seg(p, 0)}" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="${G.vsw}"/><path class="mb" d="${seg(p, 4)}" fill="none" stroke="#fff" stroke-linecap="round" stroke-width="${G.vsw}"/></g></mask></defs>
 <g class="m"><circle class="rp" cx="${G.cx}" cy="${G.cy}" r="${G.R}"/><circle class="rp rp2" cx="${G.cx}" cy="${G.cy}" r="${G.R}"/>
-<g mask="url(#${id}h)"><g class="og" style="${oc}"><path class="ot" d="${G.ring}" stroke-width="${G.sw}"/><path class="o" d="${G.ring}" pathLength="100" stroke-width="${G.sw}" style="stroke:url(#${id}go)"/><circle class="cd" cx="${G.cx}" cy="${G.cy}" r="${f(ri * 0.62)}"/>
+<g mask="url(#${id}h)"><g class="og" style="${oc};--ovm-dot-w:${f(G.sw * 0.62)}"><path class="ot" d="${G.ring}" pathLength="100" stroke-width="${G.sw}"/><path class="o" d="${G.ring}" pathLength="100" stroke-width="${G.sw}" style="stroke:url(#${id}go)"/><circle class="cd" cx="${G.cx}" cy="${G.cy}" r="${f(ri * 0.62)}"/>${[-1, 0, 1].map((k, n) => `<circle class="td${n ? ` td${n + 1}` : ''}" cx="${f(G.cx + k * ri * 0.52)}" cy="${G.cy}" r="${f(ri * 0.21)}"/>`).join('')}
 <g class="sw2"><path class="sc" d="M${c0[0]} ${c0[1]}A${capR} ${capR} 0 0 1 ${c1[0]} ${c1[1]}"/></g></g></g>
 <g class="vg" style="${vc}"><path class="va" d="${seg(p, 0)}" stroke-width="${G.vsw}" style="stroke:url(#${id}gv)"/><path class="vb" d="${seg(p, 4)}" stroke-width="${G.vsw}" style="stroke:url(#${id}gv)"/>
 <g class="sw2"><circle class="sd" cx="${G.A[0]}" cy="${f(G.A[1] - G.vsw * 0.18)}" r="${f(G.vsw * 0.36)}"/><circle class="sd" cx="${G.B[0]}" cy="${f(G.B[1] - G.vsw * 0.18)}" r="${f(G.vsw * 0.36)}"/></g></g>

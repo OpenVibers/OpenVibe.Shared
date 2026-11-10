@@ -357,6 +357,12 @@
     // Status names some sites use (--error, --error-text, --ok, --warn, --accent-text) that no theme sets: they resolve to the theme's
     // readable status colours instead of each site's fallback literal (pale on light themes). :where() keeps them
     // below any site's own value (4.86.0).
+    // A control nobody styled wears the theme, not the browser's grey (4.186.0): only one with no class, only its face,
+    // at no specificity, so any rule a site wrote still wins and no layout moves. Its shape is the kit's job.
+    const BARE = ':where(:not([class]))', FACE = '{font-family:inherit;border:1px solid var(--border-light,var(--border,color-mix(in srgb,currentColor 30%,transparent)));border-radius:10px;color:var(--text-primary,inherit);background:';
+    const BARE_CSS = ':where(button,input:is([type=submit],[type=button],[type=reset]))' + BARE + FACE + 'var(--bg-hover,var(--bg-card,color-mix(in srgb,currentColor 8%,transparent)))}'
+        + ':where(input:not([type=checkbox],[type=radio],[type=range],[type=color],[type=file],[type=image],[type=submit],[type=button],[type=reset],[type=hidden]),select,textarea)' + BARE + FACE + 'var(--bg-input,var(--bg-primary,transparent))}'
+        + ':where(input:is([type=checkbox],[type=radio],[type=range]),progress)' + BARE + '{accent-color:var(--accent,auto)}';
     const ALIAS_CSS = ':where(html){--error:var(--danger);--error-text:var(--danger-text);--ok:var(--success-text);--warn:var(--warning-text);--accent-text:var(--accent-strong)}';
     // Comfort (4.45.0): one <html> attribute each, !important over the inline theme (Okabe-Ito colours, OLED black).
     const COMFORT_CSS = 'html[data-ov-contrast=more]{--text-secondary:color-mix(in srgb,var(--text-primary) 88%,var(--bg-primary))!important;--text-muted:color-mix(in srgb,var(--text-primary) 76%,var(--bg-primary))!important;--border:color-mix(in srgb,var(--text-primary) 40%,var(--bg-primary))!important;--border-light:color-mix(in srgb,var(--text-primary) 55%,var(--bg-primary))!important}'
@@ -411,7 +417,7 @@
         for (const k in COMFORT_ATTRS) { const [attr, off] = COMFORT_ATTRS[k]; if (d[k] && d[k] !== off) el.setAttribute(attr, d[k]); else el.removeAttribute(attr); }
         if (!document.getElementById('ov-display-css') && document.head) {
             const st = document.createElement('style'); st.id = 'ov-display-css';
-            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}' + MOTION_CSS + ALIAS_CSS + COMFORT_CSS;
+            st.textContent = 'html[data-ov-text]{font-size:calc(100% * var(--ov-text-scale,1))}' + MOTION_CSS + BARE_CSS + ALIAS_CSS + COMFORT_CSS;
             document.head.appendChild(st);
         }
         paceLoops();
