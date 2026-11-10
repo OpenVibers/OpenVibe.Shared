@@ -465,7 +465,7 @@
         doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
         const timerButton = document.createElement('button'); timerButton.type = 'button'; timerButton.className = 'ovs-fold ovs-ai-timer'; timerButton.textContent = 'Timer'; timerButton.hidden = true;
-        timerButton.addEventListener('click', () => { try { if (ctx.dockTimer) ctx.dockTimer(); } catch { /* Dock optional */ } });
+        timerButton.addEventListener('click', () => { try { if (ctx.dockMore) ctx.dockMore('timer'); } catch { /* Dock optional */ } });
         doorEl.append(doorSw, doorHost, timerButton);
         listEl.after(doorEl);
         tabsEl = el.querySelector('.ovs-tabs');
@@ -632,12 +632,11 @@
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
                 const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-fold'; b.textContent = 'The Dock';
                 const host = document.createElement('div'); host.className = 'ovs-dock-you'; host.hidden = true;
-                b.addEventListener('click', () => {
-                    if (host.hidden) {
-                        host.hidden = false;
-                        try { if (root.OpenVibeDock && root.OpenVibeDock.mountInto) doorMount = root.OpenVibeDock.mountInto(host, { tab: 'activity' }); } catch { host.hidden = true; }
-                    } else { host.hidden = true; if (doorMount) { doorMount.destroy(); doorMount = null; } }
+                [['timer', 'Start a timer'], ['pin', 'Keep the Dock button on every page'], ['pop', 'Open the Dock in its own window']].forEach(([action, label]) => {
+                    const item = document.createElement('button'); item.type = 'button'; item.className = 'ovs-fold'; item.textContent = label;
+                    item.addEventListener('click', () => { try { if (ctx.dockMore) ctx.dockMore(action); } catch { /* Dock optional */ } }); host.appendChild(item);
                 });
+                b.addEventListener('click', () => { host.hidden = !host.hidden; });
                 li.append(b, host); listEl.appendChild(li); return;
             }
             if (g.as === 'notifications') {

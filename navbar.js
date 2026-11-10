@@ -2330,7 +2330,7 @@
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
                 dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); openDock(t); } : null,
-                dockTimer: () => { if (root.OpenVibeDock && root.OpenVibeDock.openTimer) root.OpenVibeDock.openTimer(); else openDock('activity'); },
+                dockMore: (action) => { if (root.OpenVibeDock && root.OpenVibeDock.more) root.OpenVibeDock.more(action); },
                 ask: (text) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); }); },
                 me: _accountEl ? { add: _config.accounts === false ? '' : addAccountHref(), out: () => { const b = _accountEl.querySelector('#openvibe-logout-btn'); if (b) b.click(); }, own: _own } : null,
                 onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });

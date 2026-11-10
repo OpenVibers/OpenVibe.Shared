@@ -23,7 +23,7 @@ const server = http.createServer((req, res) => {
 });
 const OPEN = (dock) => `OpenVibeSearch.open({ service: 'chat', scope: { label: 'Chat', page: '/search' }, links: [{ label: 'Rooms', href: '/rooms' }], frame: {}, token: ${dock ? "'t'" : 'null'}, from: document.body,
     user: ${dock ? "{ id: 7, username: 'maya', display_name: 'Maya' }" : 'null'}, dock: ${dock ? '(id) => { window.went = id; }' : 'null'},
-    dockTimer: () => { window.timerCalled = true; }, ask: (text) => { window.asked = text; }, section: 'notifications' })`;
+    dockMore: (action) => { window.timerCalled = action; }, ask: (text) => { window.asked = text; }, section: 'notifications' })`;
 const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).map((t) => { const r = t.getBoundingClientRect(); return { label: t.textContent.trim(), chosen: t.getAttribute('aria-selected') === 'true', door: t.getAttribute('data-dock') || '', role: t.getAttribute('role'), top: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right) }; })`;
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
@@ -35,7 +35,8 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             const page = await h.openPage(browser, await browser.newContext(), { width, height });
             await page.goto(`http://127.0.0.1:${server.address().port}/`, { maxMs: 6000 });
             const until = async (expr) => { const end = Date.now() + 5000; while (Date.now() < end) { if (await page.evaluate(expr)) return true; await wait(60); } return false; };
-            await page.evaluate(`window.OpenVibeNotifications = { unread: () => 7, renderMenuNotifications(host, count) { host.innerHTML = '<div data-role="list">five newest</div>'; count(12); return { showAll() { window.notificationsExpanded = true; } }; } };`);
+            await page.evaluate(`window.OpenVibeNotifications = { unread: () => 7, renderMenuNotifications(host, count) { host.innerHTML = '<div data-role="list">five newest</div>'; count(12); return { showAll() { window.notificationsExpanded = true; } }; } };
+                window.OpenVibeDock = { mountInto(host) { host.innerHTML = '<div class="stub"></div>'; return { show() {}, destroy() { host.innerHTML = ''; } }; } };`);
             // Signed in, with the Dock: five places in one row.
             await page.evaluate(OPEN(true));
             assert.ok(await until(`document.querySelectorAll('.ovs.is-open .ovs-starttabs .ovs-tab').length === 5`), `${name}: five places`);
@@ -55,14 +56,22 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-fold')?.textContent`), 'Show all 12', `${name}: notification expansion count`);
             await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-fold').click()`);
             assert.equal(await page.evaluate('window.notificationsExpanded'), true, `${name}: notifications expand in place`);
+            await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click()`);
+            if (width <= 640) {
+                await page.evaluate(`document.querySelector('.ovs-list > li > .ovs-fold').click()`);
+                assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-dock-you button')).map((b) => b.textContent)`), ['Start a timer', 'Keep the Dock button on every page', 'Open the Dock in its own window'], `${name}: The Dock row opens its three actions in place`);
+                await page.evaluate(`document.querySelector('.ovs-dock-you button').click()`);
+                assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: You Dock timer action`);
+            }
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="here"]').click()`);
-            // AI opens the Dock on Vibe; Messages on the conversations; neither becomes the chosen tab.
-            await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-            assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI opens the Dock's Vibe`);
-            await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`);
-            assert.equal(await page.evaluate('window.went'), 'chats', `${name}: Messages opens the Dock's conversations`);
-            assert.deepEqual((await page.evaluate(ROW)).filter((t) => t.chosen).map((t) => t.label), ['Chat'], `${name}: the chosen tab is still this site's`);
-            // Feed is a tab of this sheet.
+            if (width > 640) {
+                // A computer opens the floating Dock beside the menu.
+                await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
+                assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI opens the Dock's Vibe`);
+                await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`);
+                assert.equal(await page.evaluate('window.went'), 'chats', `${name}: Messages opens the Dock's conversations`);
+                assert.deepEqual((await page.evaluate(ROW)).filter((t) => t.chosen).map((t) => t.label), ['Chat'], `${name}: the chosen tab is still this site's`);
+            }
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`);
             assert.ok(await until(`(document.querySelector('.ovs-starttabs [aria-selected="true"]') || {}).textContent.trim().startsWith('Feed')`), `${name}: Feed is chosen in place`);
             await page.evaluate('OpenVibeSearch.close()'); await wait(300);
@@ -82,7 +91,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
                 assert.equal((await inside()).sw, 'Vibe Agents*', `${name}: the switch goes to Agents`);
                 await page.evaluate(`document.querySelector('.ovs-ai-timer').click()`);
-                assert.equal(await page.evaluate('window.timerCalled'), true, `${name}: AI timer entry`);
+                assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: AI timer entry`);
                 await page.evaluate(`document.querySelector('.ovs-input').value = 'find this'; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`); await wait(170);
                 await page.evaluate(`document.querySelector('.ovs-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));`);
                 assert.equal(await page.evaluate('window.asked'), 'find this', `${name}: AI Enter hands its text to Vibe`);

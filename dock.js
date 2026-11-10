@@ -1104,5 +1104,5 @@
 
     root.OpenVibeDock = { mount, mountInto, open, close, isOpen, update, ask, share,
         filterChats: (v) => { chats.filter = v.toLowerCase(); chatList(); },
-        openTimer: () => withTimer((m) => m.menu(inline || el)), canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
+        more: a => el.querySelector(`[data-act="${a}"]`).click(), canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);
