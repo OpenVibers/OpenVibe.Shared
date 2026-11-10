@@ -145,7 +145,7 @@ function faviconLink(o) {
 // (openvibe.events and openvibe.bot showed an 8px frame around the footer). The same page also had no font: its text fell
 // back to the browser's Times New Roman (five sites' /updates, 2026-11-01), so the body gets the network's type at zero
 // specificity, which any site's own rule beats.
-const NAVBAR_RESERVE = '<style>body{margin:0}:where(body){font-family:var(--ov-font,\'Inter\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'Helvetica Neue\',Arial,sans-serif)}#navbar-mount{min-height:52px}</style><noscript><style>#navbar-mount{display:none}</style></noscript>';
+const NAVBAR_RESERVE = '<style>body{margin:0}:where(body){font-family:var(--ov-font,\'Inter\',-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,\'Helvetica Neue\',Arial,sans-serif)}#navbar-mount{min-height:52px}</style>';
 
 function page(o = {}) {
     const name = o.name || o.service || 'OpenVibe';
