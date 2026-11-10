@@ -22,6 +22,18 @@
 
     const QUEST_URL = 'https://openvibe.quest/';
     let cards = 0;
+    // The card's small marks are its own SVG (a site may not load Font Awesome): aria-hidden, the text's colour.
+    const PATHS = {
+        'chevron-down': 'M6 9l6 6 6-6', 'chevron-right': 'M9 6l6 6-6 6', 'arrow-right': 'M5 12h14M13 6l6 6-6 6',
+        fire: 'M12 2.8c.6 3 3.2 4.7 3.2 8.2a3.2 3.2 0 0 1-6.4 0c0-1.3.4-2.2 1.1-3C7.8 9.6 5.8 11.8 5.8 14.8a6.2 6.2 0 0 0 12.4 0C18.2 9 13.1 6.4 12 2.8z',
+    };
+    const glyph = (name, cls) => {
+        const span = document.createElement('span');
+        span.className = `ovq-g ${cls || ''}`.trim();
+        span.setAttribute('aria-hidden', 'true');
+        span.innerHTML = `<svg viewBox="0 0 24 24"><path d="${PATHS[name]}"/></svg>`;
+        return span;
+    };
     const el = (tag, cls, text) => {
         const node = document.createElement(tag);
         if (cls) node.className = cls;
@@ -81,7 +93,7 @@
         titles.append(kicker, title, bar);
         const chip = el('span', 'ovq-chip');
         chip.hidden = true;
-        const chev = el('i', 'fa-solid fa-chevron-down ovq-chev');
+        const chev = glyph('chevron-down', 'ovq-chev');
         chev.setAttribute('aria-hidden', 'true');
         head.append(icon, titles, chip, chev);
 
@@ -98,7 +110,7 @@
         moreTitle.textContent = 'More on OpenVibe.Quest';
         const moreLineEl = el('span');
         moreText.append(moreTitle, moreLineEl);
-        const arrow = el('i', 'fa-solid fa-arrow-right');
+        const arrow = glyph('arrow-right', 'ovq-arrow');
         arrow.setAttribute('aria-hidden', 'true');
         more.append(moreText, arrow);
         body.append(story, steps, more);
@@ -125,7 +137,7 @@
             chip.replaceChildren();
             chip.hidden = !(mine && streak > 0);
             if (!chip.hidden) {
-                const fire = el('i', 'fa-solid fa-fire');
+                const fire = glyph('fire', 'ovq-fire is-fill');
                 fire.setAttribute('aria-hidden', 'true');
                 chip.append(fire, ` ${streak}`);
                 chip.title = `${streak}-day streak`;
@@ -152,7 +164,7 @@
                     done.setAttribute('aria-label', 'Done');
                     a.append(done);
                 } else {
-                    const go = el('i', 'fa-solid fa-chevron-right ovq-go');
+                    const go = glyph('chevron-right', 'ovq-go');
                     go.setAttribute('aria-hidden', 'true');
                     a.append(go);
                 }
