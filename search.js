@@ -374,6 +374,9 @@
     transform: none; transition: transform .42s cubic-bezier(.2, 1.1, .3, 1), background-color .3s, box-shadow .3s; }
   .ovs.ovs-anchored .ovs-orb.is-from { transform: translate(var(--orb-dx, 0px), var(--orb-dy, 0px)) scale(.9); background: transparent; box-shadow: none; }
   .ovs.ovs-anchored .ovs-orb::after { content: ""; position: absolute; inset: -4px; }
+  /* A ring leaves the orb as its sheet opens (4.186.0; the Dock's sheet does the same). */
+  .ovs.ovs-anchored .ovs-orb.is-x::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ovo-a); pointer-events: none; animation: ovs-ring .6s cubic-bezier(.2,.8,.2,1) .1s both; }
+  @keyframes ovs-ring { from { opacity: .8; transform: scale(.9); } to { opacity: 0; transform: scale(calc(1 + 2.2 * var(--ov-move, 1))); } }
   .ovs.ovs-anchored .ovs-orb:active { transform: scale(.9); }
   .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; }
   .ovs.is-closing .ovs-panel { animation: ovs-fold .28s cubic-bezier(.5, 0, .75, .2) both; }
