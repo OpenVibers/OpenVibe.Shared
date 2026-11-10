@@ -75,8 +75,10 @@ async function openMenu(p) {
         assert.ok(await p.evaluate('document.activeElement.classList.contains("ovs-orb")'), 'the phone menu keeps focus on its orb');
         await p.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
         await p.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
-        await wait(450);
-        assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Escape closes the menu from its orb');
+        // Up to three seconds: the fold takes 280 ms, and a slow runner (macOS in CI) has needed more than 450.
+        let stillOpen = true;
+        for (let i = 0; i < 30 && stillOpen; i += 1) { await wait(100); stillOpen = await p.evaluate('!!document.querySelector(".ovs.is-open")'); }
+        assert.strictEqual(stillOpen, false, 'Escape closes the menu from its orb');
         assert.strictEqual(await p.evaluate('document.body.style.position'), '', 'closing unlocks the page');
         await openMenu(p);
         await p.evaluate('document.querySelector(".ovs.is-open .ovs-orb").click(); 1');

@@ -66,11 +66,6 @@
     // user last had open … the main tab should just show links that exist on that site, and under that the full list
     // of sites"). The first is labelled with this site's own name.
     const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
-    const TAB_KEY = 'ovs-tab';
-    // The tab is remembered per site (11-09, the owner: on a new site the menu opened on You, "confusing"): another site
-    // opens on its own tab first; the same site opens where the person left it.
-    const savedTab = () => { try { const [v, host] = String(localStorage.getItem(TAB_KEY) || '').split('|'); if (host && host !== location.hostname) return null; return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
-    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, `${v}|${location.hostname}`); } catch { /* private window */ } };
     // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
     // since last time you've looked… a badge").
     const FEED_SEEN = 'ovs-feed-seen';
@@ -218,7 +213,17 @@
   .ovs-x span { display: none; }
   .ovs-x:active { background: var(--bg-active, rgba(255,255,255,.14)); color: var(--text-primary, #fff); }
 }
-.ovs-tabs { display: flex; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+.ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+/* The way over to the Dock: a quieter row under the tabs, four small buttons with the Dock's own names. */
+.ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
+.ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
+  color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); transition: background-color .15s, color .15s, transform .12s; }
+.ovs-bridge-b span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-bridge-i { display: grid; place-items: center; flex: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-bridge-b:hover, .ovs-bridge-b:focus-visible { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovs-bridge-b:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-bridge-b:active { transform: scale(.96); }
+@media (max-width: 640px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; padding: 4px 2px; font-size: 11.5px; } .ovs-bridge-i svg { width: 19px; height: 19px; } }
 /* The menu's three tabs (4.149.0): one segmented row under the field; the chosen one in the accent. */
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
@@ -241,7 +246,15 @@
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
 .ovs-grid.is-mini .ovs-ic { width: 26px; height: 26px; border-radius: 8px; }
-.ovs-grid.is-mini .ovs-tile b { font-size: 13px; font-weight: 600; }
+.ovs-grid.is-mini .ovs-tile b { font-size: 13.5px; font-weight: 650; }
+/* 4.189.0: the sites in their groups are full touch targets with a larger mark, and each group's name runs into a
+   hairline, so the list reads as sections and not as one long column of small rings. */
+.ovs-grid.is-mini { gap: 4px; }
+.ovs-grid.is-mini .ovs-tile { min-height: 48px; padding: 6px 8px; border-radius: 12px; transition: background-color .15s, transform .12s; }
+.ovs-grid.is-mini .ovs-tile:active { transform: scale(.97); }
+.ovs-grid.is-mini .ovs-ic { width: 32px; height: 32px; border-radius: 10px; }
+.ovs-group[data-sec="all"] { display: flex; align-items: center; gap: 10px; }
+.ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
 .ovs-tab[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #8ab4ff)); }
@@ -286,8 +299,14 @@
 .ovs-app { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; padding: 10px 2px 8px; border-radius: 16px; color: inherit; text-decoration: none; }
 .ovs .ovs-appic { width: 54px; height: 54px; border-radius: 17px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1), box-shadow .18s; }
 .ovs-appname { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
-.ovs-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; padding: 0 2px 2px; }
-.ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; padding: 0 10px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; }
+/* This site's pages: named as such, in the case they are written in, behind a dot that says "you are here"; each a tile. */
+.ovs-group[data-sec="here"] { gap: 9px; padding-top: 12px; font-size: 13.5px; font-weight: 750; letter-spacing: 0; text-transform: none; color: var(--text-secondary, #a8b3c4); }
+.ovs-group[data-sec="here"]::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-light, var(--accent, #60a5fa)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); animation: ovs-here 2.4s ease-in-out infinite; }
+@keyframes ovs-here { 50% { box-shadow: 0 0 0 calc(4px + 3px * var(--ov-move, 1)) color-mix(in srgb, var(--accent, #3b82f6) 8%, transparent); } }
+.ovs-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 2px 4px 6px; }
+.ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 46px; padding: 0 12px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4.5%, transparent); transition: background-color .15s, transform .12s; }
+.ovs-link:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); }
+.ovs-link:active { transform: scale(.97); }
 .ovs-link svg { width: 16px; height: 16px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-link.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 42%, transparent); color: var(--text-primary, #e6edf3); }
@@ -431,7 +450,7 @@
         el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
-            tab = b.getAttribute('data-tab'); saveTab(tab); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
+            tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -715,7 +734,7 @@
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
                 if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
                 const ic = icon(it);
-                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '22'); }
+                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '26'); }
                 a.append(ic, txt);
                 box.appendChild(a);
             });
@@ -1010,8 +1029,29 @@
             else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); b.appendChild(n); }
             tabsEl.appendChild(b);
         }
+        // The way over to the Dock (4.189.0): Vibe, your agents, messages and what is new are one press from here, and
+        // the Dock's head has the way back. Only where the bar can open the Dock for this person.
+        if (typeof ctx.dock === 'function') {
+            const row = document.createElement('div'); row.className = 'ovs-bridge'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Your Dock');
+            for (const [id, label] of [['vibe', 'Vibe'], ['agent', 'Agents'], ['chats', 'Messages'], ['activity', 'Activity']]) {
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-bridge-b'; b.setAttribute('data-dock', id);
+                const ic = document.createElement('span'); ic.className = 'ovs-bridge-i'; ic.innerHTML = BRIDGE_SVG[id];
+                const t = document.createElement('span'); t.textContent = label;
+                b.append(ic, t);
+                b.addEventListener('click', () => { try { ctx.dock(id); } catch { /* the Dock is optional */ } });
+                row.appendChild(b);
+            }
+            tabsEl.appendChild(row);
+        }
         if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
     }
+    const bsvg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const BRIDGE_SVG = {
+        vibe: bsvg('<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+        agent: bsvg('<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13v.01M14.5 13v.01M3 12.5v2M21 12.5v2"/>'),
+        chats: bsvg('<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-7L8 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V8A1.5 1.5 0 0 1 5 6.5z"/>'),
+        activity: bsvg('<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>'),
+    };
 
     /** What every tab needs: the sites, this one, and the person's ranking of them. */
     function basis() {
@@ -1060,13 +1100,14 @@
             if (len > bestLen) { best = i; bestLen = len; }
         });
         if (best >= 0) pages[best].here = true;
-        if (pages.length) groups.push({ title: `On ${here()}`, as: 'links', items: pages, section: 'here' });
+        if (pages.length) groups.push({ title: `Pages on ${here()}`, as: 'links', items: pages, section: 'here' });
         const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
         if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
         const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);
         const mini = (x) => siteItem(x, all);
         fgroups.forEach((g, i) => {
-            const list = all.filter((x) => inGroup(x, g)).map(mini);
+            // The site you are on is first in its group (its group is already first): the menu opens where you are.
+            const list = all.filter((x) => inGroup(x, g)).sort((a, b) => (mineSite ? (b.id === mineSite.id) - (a.id === mineSite.id) : 0)).map(mini);
             if (list.length) groups.push({ title: i === 0 && fgroups.length > 1 ? g.name : g.name, as: 'mini', items: list, section: 'all' });
         });
         const soon = f && Array.isArray(f.soon) ? f.soon : [];
@@ -1410,7 +1451,8 @@
         // tab, whose second half is every site; "tools" is You); else this site.
         // "sites" is a request for the list of every site (the legacy drawer's All sites): it opens this site's tab.
         const asked = { here: 'here', sites: 'here', feed: 'feed', you: 'you', tools: 'you' }[opts.tab];
-        tab = opts.tab === 'sites' ? 'here' : (savedTab() || asked || 'here');
+        // The menu opens on this site's tab unless a tab was asked (the picture asks You): no tab is remembered (4.189.0).
+        tab = asked || 'here';
         allOpen = false; hereOpen = true; leadHere = false; discoverPick = null;
         drainCards();
         syncFeeds();

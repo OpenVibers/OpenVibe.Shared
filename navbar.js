@@ -175,13 +175,14 @@
                switcher next to the logo); a tap lists each in full. */
             /* The balances (owner, 2026-10-28: "the coins and vibes badges look a little weird… polish… use the space"): one
                calm pill on the bar's own surface, each balance a coloured icon and a plain number, a hairline between. */
-            .openvibe-navbar .ovnav-chip.ovnav-chip--all { display: none; gap: 0; padding: 0 1px; font-size: 12.5px; --chip-c: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); border-color: color-mix(in srgb, var(--text-primary, #e6edf7) 13%, transparent); }
+            /* The balances: one pill, one showing (purse.js turns between them). */
+            .openvibe-navbar .ovnav-chip.ovnav-chip--all { display: inline-grid; gap: 0; padding: 0 1px; font-size: 13px; --chip-c: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); border-color: color-mix(in srgb, var(--text-primary, #e6edf7) 13%, transparent); }
             .openvibe-navbar .ovnav-chip--all:hover, .openvibe-navbar .ovnav-chip--all[aria-expanded="true"] { background: color-mix(in srgb, var(--text-primary, #e6edf7) 11%, transparent); }
-            .ovnav-chip-mini { display: inline-flex; align-items: center; gap: 4px; padding: 0 6px; color: var(--text-primary, #e6edf7); }
-            .ovnav-chip-mini + .ovnav-chip-mini { border-left: 1px solid color-mix(in srgb, var(--text-primary, #e6edf7) 16%, transparent); }
-            .ovnav-chip-mini .ovnav-ic { color: var(--chip-c, inherit); }
+            .ovnav-chip-mini { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 0 7px; color: var(--text-primary, #e6edf7); opacity: 0; }
+            .ovnav-chip-mini.is-on { opacity: 1; }
+            .ovnav-chip-mini .ovnav-ic { color: var(--chip-c, inherit); width: 15px; height: 15px; }
             .ovnav-chip-mini[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chip-mini[data-tone="green"] { --chip-c: #4ade80; }
-            .ovnav-chip-mini .ovnav-ic { width: 14px; height: 14px; }
+            .openvibe-navbar-right.has-chips-all .ovnav-chip[data-chip-id] { display: none; }
             .ovnav-chips-pop { position: absolute; top: calc(100% + 6px); right: 8px; z-index: 1002; min-width: 220px; padding: 6px; border-radius: 14px; display: none; flex-direction: column; gap: 2px;
                 background: var(--bg-elevated, var(--bg-secondary, #111826)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 18px 40px rgba(0,0,0,.45); }
             .ovnav-chips-pop.open { display: flex; animation: openvibe-slide-down .18s ease; }
@@ -190,10 +191,6 @@
             .ovnav-chips-pop button .ovnav-ic { color: var(--chip-c, inherit); width: 16px; height: 16px; }
             .ovnav-chips-pop button[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chips-pop button[data-tone="green"] { --chip-c: #4ade80; }
             .ovnav-chips-pop b { margin-left: auto; font-variant-numeric: tabular-nums; }
-            @media (max-width: 560px) {
-                .openvibe-navbar-right.has-chips-all .ovnav-chip[data-chip-id] { display: none; }
-                .openvibe-navbar-right.has-chips-all .ovnav-chip--all { display: inline-flex; }
-            }
             @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar:has(.ovnav-burger) .ovnav-orb:not(.ovnav-burger) { display: none; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
@@ -204,8 +201,7 @@
             .openvibe-navbar .openvibe-navbar-brand .name { display: block; min-width: 0; white-space: nowrap; overflow-x: clip; text-overflow: ellipsis; }
             /* Both balances on every phone (the owner, 2026-10-28: "you can only see one… use the full space"): the pill
                tightens instead of folding to one. */
-            @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
-            @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
+            @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
                 .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .ovnav-featured-phone { width: 34px; height: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
                 .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16.5px; letter-spacing: -.25px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 34px !important; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
@@ -214,12 +210,6 @@
                website you're on seems to get cut off", openvibe.live showing "Li…" beside 161k | 400, the messages, the bell
                and the picture). Up to 480px the two balances stack in one pill, each with its icon (both still show, as asked
                on 10-28): the pill is about 53px instead of 90-103px, and the name has that room. */
-            @media (max-width: 480px) {
-                .openvibe-navbar .ovnav-chip.ovnav-chip--all { flex-direction: column; align-items: stretch; justify-content: center; gap: 1px; height: 34px; padding: 2px; border-radius: 10px; font-size: 11.5px; line-height: 1; letter-spacing: -.1px; }
-                .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini { height: 14px; padding: 0 4px; gap: 3px; justify-content: flex-start; font-variant-numeric: tabular-nums; }
-                .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini + .ovnav-chip-mini { border-left: 0; }
-                .openvibe-navbar .ovnav-chip--all .ovnav-chip-mini .ovnav-ic { width: 11px; height: 11px; flex: none; }
-            }
             .openvibe-navbar-brand .flame { font-size: 18px; text-decoration: none; color: var(--accent, #3b82f6); display: inline-grid; place-items: center; width: 28px; height: 28px; flex: none; }
             .openvibe-navbar-brand .name { display: inline-flex; align-items: baseline; font-size: 15px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; line-height: 1; }
             /* Segments: subdomain · OpenVibe · TLD. The part that names *this* site is the loud one. */
@@ -558,7 +548,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '9c0b9621ca9f', 'dock.js': '00e20b4b2895', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': '1e6598f78ba4', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '135d730d03fd', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '4235b5850241', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': '1e6598f78ba4', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '135d730d03fd', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e', 'purse.js': 'd1d5b341c610' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -1057,7 +1047,6 @@
         return String(Math.round(n));
     }
     const chipLabel = (c) => c.label || String(c.title || c.id).split(':')[0];
-    /** The chips folded into one (shown instead of them on a phone): each chip's icon and short value. */
     // New messages are counted on the bell (4.187.0; the owner, 2026-11-10: "instead of having messaging and
     // notifications, just have the notifications … it'll show you new messages as well"): there is no Messages button.
     let _accountEl = null;   // the account's block, built at render, hosted by the menu's You tab
@@ -1074,13 +1063,15 @@
 
     function chipsAllHTML(chips) {
         const list = (Array.isArray(chips) ? chips : []).filter((c) => c && !c.hidden);
-        if (list.length < 2) return '';
-        return `<button type="button" class="ovnav-chip ovnav-chip--all" id="openvibe-chips-all" aria-haspopup="true" aria-expanded="false" aria-label="Your balances: ${escapeAttr(list.map((c) => `${chipLabel(c)} ${c.value == null ? '' : c.value}`).join(', '))}">${list.map((c) => `<span class="ovnav-chip-mini" data-chip-mini="${escapeAttr(c.id)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span class="ovnav-chip-mv">${escapeAttr(shortValue(c.value))}</span></span>`).join('')}</button>`;
+        if (list.length < 2 && !(list[0] && ['coins', 'vibes', 'balance'].includes(list[0].id))) return '';
+        return `<button type="button" class="ovnav-chip ovnav-chip--all" id="openvibe-chips-all" aria-haspopup="true" aria-expanded="false" aria-label="Your balances: ${escapeAttr(list.map((c) => `${chipLabel(c)} ${c.value == null ? '' : c.value}`).join(', '))}">${list.map((c, i) => `<span class="ovnav-chip-mini${i ? '' : ' is-on'}" data-chip-mini="${escapeAttr(c.id)}" data-v="${escapeAttr(c.value == null ? '' : c.value)}"${c.tone ? ` data-tone="${escapeAttr(c.tone)}"` : ''}>${c.icon ? navIcon(c.icon) : ''}<span class="ovnav-chip-mv">${escapeAttr(shortValue(c.value))}</span></span>`).join('')}</button>`;
     }
     function bindChipsAll(nav) {
         const btn = nav.querySelector('#openvibe-chips-all'); if (!btn || typeof btn.addEventListener !== 'function') return;
         const right = typeof btn.closest === 'function' ? btn.closest('.openvibe-navbar-right') : null;
         if (right && right.classList) right.classList.add('has-chips-all');
+        if (root.OpenVibePurse) root.OpenVibePurse.mount(btn);
+        else if (!document.getElementById('ov-purse-loader')) { const sc = document.createElement('script'); sc.id = 'ov-purse-loader'; sc.src = siblingV('purse.js'); sc.async = true; document.head.appendChild(sc); }
         let pop = null;
         const close = () => { if (pop) pop.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); };
         btn.addEventListener('click', (e) => {
@@ -2006,11 +1997,11 @@
     }
     function walletOrder(data) {
         const order = ['coins', 'vibes', 'balance'];
-        if (!data) return order.slice(0, 2);
+        if (!data) return order.slice(0, 1);
         const value = (id) => Number(data.balances[id].amount) / Math.pow(10, data.balances[id].scale) / (id === 'vibes' ? data.bits_per_usd || 100 : 1);
-        order.sort((a, b) => value(b) - value(a));
-        if (data.used_ai_this_month && BigInt(data.balances.balance.amount) === 0n) return ['balance', ...order.filter((id) => id !== 'balance')].slice(0, 2);
-        return order.slice(0, 2);
+        const have = order.filter((id) => value(id) > 0).sort((a, b) => value(b) - value(a));
+        if (data.used_ai_this_month && BigInt(data.balances.balance.amount) === 0n) have.unshift('balance');
+        return have.length ? have : order.slice(0, 1);
     }
     function syncWalletChips() {
         if (!_config.wallet) return;
@@ -2309,6 +2300,7 @@
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
+                dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); openDock(t); } : null,
                 // The account's own block (who you are, your accounts, sign out, this site's items): the You tab hosts it.
                 account: (host) => { if (!_accountEl || !host) return false; host.appendChild(_accountEl); loadWallet(_accountEl); loadOvIcons(_accountEl); return true; },
                 onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
@@ -2612,6 +2604,7 @@
             lists.forEach(l => l.forEach(c => { if (c && c.id === id) { c.value = value; if (patch) Object.assign(c, patch); } }));
             document.querySelectorAll(`[data-chip-id="${id}"]`).forEach(el => { const v = el.querySelector('.ovnav-chip-v'); if (v) v.textContent = value == null ? '' : String(value); if (patch && 'hidden' in patch) el.hidden = !!patch.hidden; });
             document.querySelectorAll(`[data-chip-mini="${id}"] .ovnav-chip-mv`).forEach(el => { el.textContent = shortValue(value); });
+            if (root.OpenVibePurse) root.OpenVibePurse.set(id, value);
             document.querySelectorAll(`[data-chip-row="${id}"] b`).forEach(el => { el.textContent = value == null ? '' : String(value); });
             const all = document.getElementById('openvibe-chips-all');
             if (all) all.setAttribute('aria-label', `Your balances: ${(_config.chips || []).filter((c) => c && !c.hidden).map((c) => `${chipLabel(c)} ${c.value == null ? '' : c.value}`).join(', ')}`);

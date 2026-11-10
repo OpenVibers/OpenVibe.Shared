@@ -163,6 +163,8 @@
             @keyframes ovdk-grow { from { opacity: 0; transform: scale(.82); } }
             @keyframes ovdk-rise { from { transform: translateY(100%); } }
             .ovdk svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            /* The menu button's drawing (navbar.js) has its own fills: the line style above is not its. */
+            .ovdk svg.ovmb { fill: currentColor; stroke: none; stroke-width: 0; }
             .ovdk-head { position: relative; flex: none; display: flex; align-items: center; gap: 8px; padding: 10px 8px 8px 10px; cursor: grab; touch-action: none; user-select: none; }
             .ovdk-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #ececf1) 6%, transparent); min-width: 0; flex: 0 1 auto; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; }
             .ovdk-tabs::-webkit-scrollbar { display: none; }
@@ -171,7 +173,7 @@
                 color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
             .ovdk-tabs button svg { width: 17px; height: 17px; flex: none; }
             .ovdk-tabs button:hover { color: var(--text-primary, #ececf1); }
-            .ovdk-tabs button[aria-selected="true"] { background: var(--bg-primary, #12141b); color: var(--text-primary, #ececf1); box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+            .ovdk-tabs button[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #8ab4ff)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
             .ovdk-tabs button[aria-selected="true"] svg { color: var(--accent-light, var(--accent, #60a5fa)); }
             .ovdk-tabs button:focus-visible, .ovdk-acts button:focus-visible, .ovdk-foot :focus-visible { outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 1px; }
             .ovdk-tabs .n { min-width: 18px; padding: 1px 6px; box-sizing: border-box; border-radius: 999px; font-size: 11px; font-weight: 800; line-height: 1.35; text-align: center; font-variant-numeric: tabular-nums;
@@ -182,6 +184,7 @@
             .ovdk-acts button { width: 40px; height: 40px; border: 0; border-radius: 12px; background: transparent; color: var(--text-muted, #8b8b96); cursor: pointer; display: grid; place-items: center; }
             .ovdk-acts button:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
             .ovdk-acts button svg { width: 19px; height: 19px; display: block; }
+            .ovdk-acts .ovdk-tomenu span { display: none; }
             .ovdk-orbx svg { width: 22px !important; height: 22px !important; overflow: visible; }
             .ovdk-orbx { --ovo-a: var(--accent-light, var(--accent, #60a5fa)); }
             .ovdk.is-in .ovdk-orbx .ovmb :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
@@ -317,6 +320,17 @@
                 .ovdk-tabs button svg { width: 19px; height: 19px; }
                 .ovdk-tabs .n { position: absolute; top: 4px; left: calc(50% + 6px); min-width: 17px; padding: 1px 5px; font-size: 10.5px; }
                 .ovdk-foot a, .ovdk-foot button { min-height: 44px; }
+                /* Two rows, as the menu's head (4.189.0): the way back to the menu, More and Close; under them the four tabs,
+                   full width, in the look of the menu's row that leads here. */
+                .ovdk-head, .ovdk.from-orb .ovdk-head { flex-wrap: wrap; gap: 6px 4px; padding: 6px 12px 8px; }
+                .ovdk-acts { order: 0; flex: 1 0 100%; align-items: center; gap: 2px; }
+                .ovdk-acts .ovdk-tomenu { width: auto; margin-right: auto; padding: 0 14px 0 10px; gap: 8px; display: inline-flex; align-items: center; border-radius: 999px; font: inherit; font-size: 13.5px; font-weight: 700;
+                    color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+                .ovdk-acts .ovdk-tomenu span { display: inline; }
+                .ovdk-tabs { order: 1; flex: 1 0 100%; gap: 4px; padding: 0; border-radius: 0; background: transparent; overflow: visible; }
+                .ovdk-tabs button, .ovdk-tabs button:not([aria-selected="true"]) { height: 50px; gap: 2px; background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); }
+                .ovdk-tabs button[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); }
+                .ovdk-tabs button:not([aria-selected="true"]) svg { color: var(--accent-light, var(--accent, #60a5fa)); }
             }
             @media (min-width: 641px) and (max-width: 1023px) {
                 .ovdk, .ovdk[data-corner] { z-index: 10010; top: 0; bottom: 0; right: 0; left: auto; width: min(460px, calc(100vw - 48px)) !important; height: auto !important;
@@ -348,6 +362,7 @@
             <header class="ovdk-head">
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
+                    <button type="button" data-act="menu" class="ovdk-tomenu" title="The OpenVibe menu" aria-label="The OpenVibe menu: every site, the feed, you">${root.OpenVibeOrb ? root.OpenVibeOrb.svg(20) : ''}<span>Menu</span></button>
                     <button type="button" data-act="more" aria-haspopup="true" aria-expanded="false" title="More" aria-label="More: a timer, the Dock's button">${svg(G.more)}</button>
                     <button type="button" data-act="close" class="ovdk-orbx" title="Close" aria-label="Close the Dock">${ORBX()}</button>
                 </div>
@@ -369,6 +384,8 @@
             if (j >= 0) { e.preventDefault(); setTab(tabs[j].dataset.tab, true); tabs[j].focus(); }
         });
         el.querySelector('[data-act="close"]').addEventListener('click', () => close());
+        // The way back to the menu: this sheet folds, the menu opens out of the same button.
+        { const m = el.querySelector('[data-act="menu"]'); if (m) { if (!root.OpenVibeNavbar || !root.OpenVibeOrb) m.hidden = true; m.addEventListener('click', () => { close(); setTimeout(() => { try { root.OpenVibeNavbar.openSwitcher(); } catch { /* no bar */ } }, 300); }); } }
         el.querySelector('[data-act="pop"]').addEventListener('click', () => { if (popped) backToPage(); else popOut(); });
         el.querySelector('[data-act="pin"]').addEventListener('click', () => { save({ pinned: !state().pinned }); paintPin(); });
         el.querySelector('[data-act="timer"]').addEventListener('click', () => { const a = el.querySelector('[data-act="more"]'); closeMore(); withTimer((t) => t.menu(a)); });

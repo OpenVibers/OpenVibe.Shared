@@ -48,7 +48,8 @@ const MEASURE = `(() => {
     const parts = [['name', name], ['launcher', bar.querySelector('.ovnav-launch')], ['search', bar.querySelector('#openvibe-search-btn')],
         ['balances', bar.querySelector('.ovnav-chip--all')], ['menu', bar.querySelector('#openvibe-burger')],
         ['sign in', bar.querySelector('#openvibe-login-btn')], ['picture', bar.querySelector('#openvibe-avatar-btn')]].filter(([, el]) => vis(el)).map(([k, el]) => [k, box(el)]);
-    const minis = [...bar.querySelectorAll('.ovnav-chip--all .ovnav-chip-mini')].filter(vis).length;
+    const all = [...bar.querySelectorAll('.ovnav-chip--all .ovnav-chip-mini')];
+    const minis = all.filter((m) => getComputedStyle(m).opacity === '1').length + ' of ' + all.length;
     const menu = bar.querySelector('#openvibe-burger');
     const orbMenu = !!(menu && menu.classList.contains('ovnav-orb') && menu.querySelectorAll('.ovmb .ovmb-app').length === 3 && !!menu.querySelector('.ovmb-bar') && !menu.querySelector('span'));
     return { parts, clipped: name.scrollWidth > name.clientWidth + 1, visibleText: name.innerText, minis, width: innerWidth, orbMenu, docW: document.documentElement.scrollWidth };
@@ -76,7 +77,7 @@ const MEASURE = `(() => {
                 const last = v.parts[v.parts.length - 1];
                 assert.ok(last[1][1] <= width, `${at}: ${last[0]} runs off the screen`);
                 if (width >= 360) assert.ok(!v.clipped && /Games/.test(v.visibleText), `${at}: the site's word reads whole (${v.visibleText})`);
-                if (who === 'in') assert.strictEqual(v.minis, 2, `${at}: the folded balances show both, OpenCoins and Vibes (4.25.0)`);
+                if (who === 'in') assert.strictEqual(v.minis, '1 of 2', `${at}: one pill, one balance showing, the other a turn away (4.189.0)`);
                 // One menu button on a phone (4.137.0, the owner: "these buttons do the same shit"): the burger opens the
                 // OpenVibe menu, and the orb that opened the same menu steps aside.
                 assert.ok(v.parts.some(([k]) => k === 'menu'), `${at}: the menu button is there`);
