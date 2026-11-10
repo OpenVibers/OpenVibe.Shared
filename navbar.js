@@ -66,7 +66,7 @@
             .openvibe-navbar .openvibe-navbar-brand button.flame:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             [data-ov-scroll-focus]:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
             .openvibe-navbar .openvibe-navbar-brand { gap: 6px; padding: 2px; border-radius: 12px; margin-right: 0; }
-            .openvibe-navbar .openvibe-navbar-brand .flame { display: inline-grid; place-items: center; width: auto; min-width: 30px; height: 30px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; transition: background .15s; }
+            .openvibe-navbar .openvibe-navbar-brand .flame { display: inline-grid; place-items: center; width: auto; min-width: 30px; height: 34px; padding: 0 4px; box-sizing: border-box; border-radius: 9px; transition: background .15s; }
             .openvibe-navbar .openvibe-navbar-brand .flame:hover { background: var(--accent-glow, rgba(59,130,246,.14)); }
             .openvibe-navbar .openvibe-navbar-brand .name { align-items: center; gap: 0; font-family: 'OV Brand', Nunito, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 19px; letter-spacing: -.25px; }
             .openvibe-navbar .openvibe-navbar-brand .name a { padding: 3px 1px; border-radius: 6px; transition: color .15s, background .15s; }
@@ -207,7 +207,7 @@
             @media (max-width: 440px) { .ovnav-chip-mini { padding: 0 5px; gap: 3px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 12px; } .ovnav-chip-mini .ovnav-ic { width: 13px; height: 13px; } }
             @media (max-width: 400px) { .openvibe-navbar .openvibe-navbar-right { gap: 1px; } .ovnav-chip-mini { padding: 0 3px; gap: 2px; } .openvibe-navbar .ovnav-chip.ovnav-chip--all { font-size: 11.5px; letter-spacing: -.2px; } .openvibe-navbar .openvibe-navbar-brand { gap: 4px; }
                 .openvibe-navbar { padding-left: 8px; padding-right: 6px; gap: 2px; } .openvibe-navbar .ovnav-burger { width: 34px; } .openvibe-navbar .ovnav-featured-phone { width: 34px; height: 34px; } .openvibe-navbar .openvibe-navbar-avatar { width: 32px; height: 32px; box-sizing: border-box; }
-                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16.5px; letter-spacing: -.25px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 28px !important; } }
+                .openvibe-navbar .openvibe-navbar-brand .name { font-size: 16.5px; letter-spacing: -.25px; } .openvibe-navbar .openvibe-navbar-brand .flame { min-width: 28px; height: 28px; padding: 0 2px; } .openvibe-navbar .openvibe-navbar-brand .flame .ov-mark { width: 34px !important; } }
             /* Under 350px the mark alone names the site, so both balances keep their icons (a number alone says nothing). */
             @media (max-width: 350px) { .openvibe-navbar .openvibe-navbar-brand .name { display: none; } }
             /* The site's name reads whole on a signed-in phone (the owner, 2026-11-02: "the label or the branding of the
@@ -379,26 +379,13 @@
                 .openvibe-navbar .openvibe-navbar-login { padding: 0 13px; }
             }
 
-            .openvibe-navbar-dropdown {
-                position: absolute; top: 48px; right: 8px;
-                width: min(320px, calc(100vw - 16px)); background: var(--bg-card, #22222c);
-                border: 1px solid var(--border, #333340); border-radius: 10px;
-                box-shadow: var(--shadow-lg, 0 8px 32px rgba(0,0,0,0.5));
-                display: none; flex-direction: column; overflow: hidden;
-                animation: openvibe-slide-down .2s ease;
-            }
-            .openvibe-navbar-dropdown.open { display: flex; }
-            /* The panel scrolls as a whole; its sections keep their height. A flex column lets children shrink by
-               default, which squeezed the accounts block into a sliver with its own scrollbar when the panel was
-               height-limited (phones). */
+            /* The account's block (4.188.0): not a popup. It rests in the bar out of sight and is a block of the menu's
+               You tab while the menu is open: no position, no shadow, no height of its own. */
+            .openvibe-navbar-dropdown { display: none; flex-direction: column; border: 1px solid var(--border, #333340); }
             .openvibe-navbar-dropdown > * { flex-shrink: 0; }
-            /* Panels never leave the screen: dvh is the VISIBLE height on phones (100vh reaches behind the address
-               bar), the panel scrolls inside itself, and it is never wider than the viewport. */
-            .openvibe-navbar-dropdown {
-                max-width: calc(100vw - 16px);
-                max-height: calc(100vh - 64px); max-height: calc(100dvh - 64px - env(safe-area-inset-bottom, 0px));
-                overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin;
-            }
+            .ovh-account > .openvibe-navbar-dropdown.ovnav-account .openvibe-navbar-dropdown-header .ud-hbtn { min-width: 44px; min-height: 44px; }
+            .ovh-account > .openvibe-navbar-dropdown.ovnav-account { display: flex; overflow: hidden; margin: 2px 4px 10px; border-radius: 16px;
+                background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); border-color: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); }
             @keyframes openvibe-slide-down { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
             .ov-pop { transform-origin: var(--ov-pop-x, 50%) var(--ov-pop-y, 0); animation: ov-pop .34s cubic-bezier(.2, 1.1, .3, 1) both !important; }
             .ov-pop-out { transform-origin: var(--ov-pop-x, 50%) var(--ov-pop-y, 0); animation: ov-pop-out .16s ease-in both !important; pointer-events: none; }
@@ -571,7 +558,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'bb502f67c4d5', 'dock.js': '562434a9d0e3', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '1cf3dadb86df', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '9c0b9621ca9f', 'dock.js': '562434a9d0e3', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -927,7 +914,7 @@
             : seg('b-core', brand.core, to.core, brand.name) + join + seg('b-tld', brand.tldText, to.tld, brand.name);
         const mark = brand.icon
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
-            : `<span class="ov-mark" data-size="34" data-wide data-variant="${escapeAttr(brand.variant)}"></span>`;
+            : `<span class="ov-mark" data-size="42" data-wide data-variant="${escapeAttr(brand.variant)}"></span>`;   // 42 since 4.188.0 (was 34: beside a short name it read as smaller than the word)
         return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
                 ${_config.switcher === false
         ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>`
@@ -1073,6 +1060,7 @@
     /** The chips folded into one (shown instead of them on a phone): each chip's icon and short value. */
     // New messages are counted on the bell (4.187.0; the owner, 2026-11-10: "instead of having messaging and
     // notifications, just have the notifications … it'll show you new messages as well"): there is no Messages button.
+    let _accountEl = null;   // the account's block, built at render, hosted by the menu's You tab
     let _msgCount = 0;
     // New messages, for the bell's count: Chat's GET /api/dm/unread, at most once a minute (README, "The navbar").
     let _unreadAt = 0;
@@ -2198,26 +2186,30 @@
                 </div>
             `;
             dropdown.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-use]'); if (t) countUse(t.getAttribute('data-use')); });
+            // 4.188.0: not a popup under the picture. It rests in the bar, out of sight (so a site that looks for its
+            // sign-out button or its own item still finds it), and the menu's You tab hosts it while the menu is open
+            // (openSearch's account(); onClose brings it back).
+            dropdown.classList.add('ovnav-account');
             nav.appendChild(dropdown);
+            _accountEl = dropdown;
             bindMenuItems(dropdown, before.concat(after, sectionItems(menuCfg.sections)));
             dropdown.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('[data-ov-dock]')) return; dropdown.classList.remove('open'); openDock(); });
             bindChips(dropdown);
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
             bindLook(dropdown);
-            regPanel(dropdown, 'user-menu', () => dropdown.classList.remove('open'), nav.querySelector('#openvibe-avatar-btn'));
 
-            // Avatar click toggles dropdown (the selection for Ask Vibe is read on pointerdown: the press can clear it)
+            // The picture opens the menu on You, where the account's things are (the selection for Ask Vibe is read on
+            // pointerdown: the press can clear it).
             const avatarBtn = nav.querySelector('#openvibe-avatar-btn'); let sel = null;
             avatarBtn.addEventListener('pointerdown', () => { sel = selectedText(); });
             avatarBtn.addEventListener('click', () => {
-                if (dropdown.classList.contains('open') && !dropdown.classList.contains('ov-pop-out')) { unpop(dropdown, () => { if (!dropdown.classList.contains('ov-pop')) dropdown.classList.remove('open'); }); return; }
-                dropdown.classList.add('open'); popFrom(dropdown, avatarBtn);
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
-                if (dropdown.classList.contains('open')) { loadWallet(dropdown); dropdown.scrollTop = 0; loadOvIcons(dropdown); }
+                if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
+                const orbs = nav.querySelectorAll ? [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
+                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
             });
 
-            // panels.js closes this on an outside pointerdown, including another control in the navbar.
 
             dropdown.querySelectorAll('[data-account-id]').forEach(el => {
                 el.addEventListener('click', () => {
@@ -2317,7 +2309,9 @@
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
-                onClose: () => { const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
+                // The account's own block (who you are, your accounts, sign out, this site's items): the You tab hosts it.
+                account: (host) => { if (!_accountEl || !host) return false; host.appendChild(_accountEl); loadWallet(_accountEl); loadOvIcons(_accountEl); return true; },
+                onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
             const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
         };
         if (root.OpenVibeSearch) return go();

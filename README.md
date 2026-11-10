@@ -831,6 +831,12 @@ One menu (4.187): the OpenVibe mark is a button that opens the OpenVibe menu
   on its first tab, as the menu button does (there is no separate site
   switcher). The site's name stays the link home; switcher: false keeps the
   mark as a home link.
+The account's things (4.188): the person's picture opens the OpenVibe menu
+  on You, where the account's block is (who you are, add account, settings,
+  sign out, your other accounts, this site's own items from addMenuItem,
+  Display). There is no dropdown under the picture; the block rests in the bar,
+  out of sight, while the menu is closed, so #openvibe-logout-btn and a
+  site's own items are always in the page.
 The bar's order (4.187): balances, the bell, the menu button, then the
   person's picture (or Sign In), last. New messages are counted on the bell
   (setMessages(count)); there is no Messages button.
