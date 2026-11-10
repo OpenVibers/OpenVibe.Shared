@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.188.0 — 2026-11-10
+
+**The account's things are in the menu.** The owner, 2026-11-10, with the dropdown under the picture marked "Replace →
+to You tab": "this user drop down is just redundant … move it into the You tab of the menu … add account switching
+and adding accounts to that … consolidate the two into one menu."
+
+- **The picture opens the OpenVibe menu on You.** The block the dropdown drew (who you are, add another account,
+  settings, sign out, your other accounts, the site's own items from `addMenuItem`, light or dark and Display) is a
+  block of that tab, at its top, where a shorter bar with the name was. It is there wherever the bar has a person, with
+  or without a token for the network's reads.
+- **No dropdown.** The popup, its position, its height rules and its place among the panels (`user-menu`) are gone.
+  The block rests in the bar, out of sight, while the menu is closed: a site that looks for `#openvibe-logout-btn`,
+  `[data-ov-ask]` or its own item still finds it.
+- **The mark is larger in the bar** (42, was 34; 34 on a small phone, was 28). The owner: "make the OV branding take
+  up most of its area … stand out a little more … compared to the My." Nothing overlaps from 320 px
+  (`navbar-phone-fit-chrome`).
+- In the You tab, "All 65" keeps its own case (it was drawn in the heading's capitals).
+
 ## 4.187.0 — 2026-11-10
 
 **The bar the owner chose.** 2026-11-10, in the Arena: "here's the new menu button and the logo … these two, but

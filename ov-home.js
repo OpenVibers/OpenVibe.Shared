@@ -114,7 +114,7 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-calm { transition: opacity .2s; }
 .ovh.is-edit .ovh-calm { opacity: .38; pointer-events: none; }
 .ovh-headtools { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
-.ovh-sec .ovh-allbtn { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 11px 0 10px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 700;
+.ovh-sec .ovh-allbtn { all: unset; box-sizing: border-box; text-transform: none; letter-spacing: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 11px 0 10px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 700;
   color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 7%, transparent); transition: color .15s, background-color .15s, transform .12s; }
 .ovh-sec .ovh-allbtn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ovh-sec .ovh-allbtn b { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text-primary, #e8ecf3); }
@@ -409,6 +409,16 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 
         /** You: your picture (online), your name, and Display and Settings beside it. Made once per opening, so an open
          *  Look panel survives the repaints that come as history and the catalogue arrive. */
+        // The account's block (navbar.js builds it: who you are, add account, settings, sign out, your other accounts,
+        // this site's own items): the You tab is where it lives since 4.188.0. Without a bar to give it, the short bar below.
+        let accountBox = null;
+        function account() {
+            if (typeof o.account !== 'function') return null;
+            accountBox = accountBox || h('div', 'ovh-account');
+            let ok = false;
+            try { ok = o.account(accountBox) !== false; } catch { ok = false; }
+            return ok ? accountBox : null;
+        }
         function me() {
             if (meBox) return meBox;
             const u = o.user || {};
@@ -496,7 +506,9 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             // nothing above the grid may come or go (the macOS run of #394 dropped onto the wrong place when the hint
             // pushed the grid down mid-drag). The cards above stay, quiet and inert; the hint goes under the grid.
             const calm = (x) => { x.classList.add('ovh-calm'); x.inert = state.edit; return x; };
-            if (signedIn(o)) el.append(calm(me()));
+            // The account's block wherever the bar has a person (a site with its own session may have no token for
+            // the network's reads yet: sign out and the rest must still be there); else the short bar.
+            { const a = account(); if (a) el.append(calm(a)); else if (signedIn(o)) el.append(calm(me())); }
             if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
             const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
             const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
