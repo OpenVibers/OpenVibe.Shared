@@ -466,6 +466,8 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             rail.addEventListener('scroll', ends, { passive: true });
             requestAnimationFrame(ends);
             wrap.append(rail);
+            const all = h('a', 'ovh-link', 'View full history'); all.href = 'https://openvibe.my/my#history';
+            wrap.append(all);
             return wrap;
         }
 

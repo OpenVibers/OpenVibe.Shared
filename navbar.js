@@ -73,6 +73,9 @@
             .openvibe-navbar .openvibe-navbar-brand .name a.b-sub { color: var(--text-primary, #e6edf7); font-weight: 900; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
             .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 800; }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop::after { content: ""; flex: none; display: inline-block; width: 5px; height: 5px; margin: 0 2px 3px 6px; border: solid currentColor; border-width: 0 1.8px 1.8px 0; transform: rotate(45deg); opacity: .65; transition: transform .2s; }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+            .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
             .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0; opacity: .5; }
@@ -548,7 +551,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '4235b5850241', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': '1e6598f78ba4', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '135d730d03fd', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '373723a04e15', 'ov-wallet.css': '3f443fa216c5', 'purse.js': 'd1d5b341c610' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '5754cf36a7de', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '373723a04e15', 'ov-wallet.css': '3f443fa216c5', 'purse.js': 'd1d5b341c610', 'ov-drop.js': '0132897495f0' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2106,7 +2109,7 @@
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
         bindLinks(nav, links);
         hookSearch(nav);
-        hookSwitcher(nav);
+        hookSwitcher(nav); hookPages(nav);
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();
@@ -2336,6 +2339,20 @@
         const key = 'ov_sw_visit_' + _config.service;
         try { if (Date.now() - Number(localStorage.getItem(key) || 0) < 30 * 60000) return; localStorage.setItem(key, String(Date.now())); } catch { /* storage off: still record */ }
         fetch('https://openvibe.network/api/themes/me/sites/visit', { method: 'POST', headers: { Authorization: `Bearer ${_config.token}`, 'Content-Type': 'application/json' }, credentials: 'include', keepalive: true, body: JSON.stringify({ site: _config.service }) }).catch(() => {});
+    }
+    // The site's name opens its pages (4.191.0; ov-drop.js builds and draws the list). With a modifier key it is a link.
+    function hookPages(nav) {
+        const a = nav.querySelector('.openvibe-navbar-brand .name a.b-tld');
+        if (!a || typeof a.removeAttribute !== 'function' || !flatLinks(rawLinks()).some((l) => l && l.href && !l.hidden)) return;
+        a.classList.add('has-drop'); a.setAttribute('aria-haspopup', 'menu'); a.setAttribute('aria-expanded', 'false'); a.removeAttribute('title');
+        a.addEventListener('click', (e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            e.preventDefault();
+            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon);
+            if (root.OVDrop) return go();
+            if (document.getElementById('ov-drop-loader')) return;
+            const sc = document.createElement('script'); sc.id = 'ov-drop-loader'; sc.src = siblingV('ov-drop.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
+        });
     }
     function hookSwitcher(nav) {
         const b = nav.querySelector('#openvibe-switch-btn');
