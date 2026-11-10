@@ -23,6 +23,14 @@
         }
         return hosts.has(url.hostname.toLowerCase());
     }
+    // What the sheet last showed in this tab (the wallet's own answer: the person's balances and recent lines, kept only
+    // in their tab): the next opening starts from it,
+    // so the cards are right from the first frame. Forgotten when the account changes.
+    const KEEP = 'ov-wallet-last';
+    const kept = () => { try { const j = JSON.parse(root.sessionStorage.getItem(KEEP) || 'null'); return j && j.balances && j.subject && j.subject.id ? j : null; } catch { return null; } };
+    const keep = (d) => { try { root.sessionStorage.setItem(KEEP, JSON.stringify(d)); } catch { /* a closed store: it opens with placeholders */ } };
+    if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('openvibe-auth-changed', () => { try { root.sessionStorage.removeItem(KEEP); } catch { /* */ } });
+
     async function open(options) {
         close();
         const token = (options.getToken ? options.getToken() : options.token) || null;
@@ -40,13 +48,15 @@
         heading.lastChild.id = 'ov-wallet-title';
         const exit = el('button', 'ov-wallet-close', '×'); exit.type = 'button'; exit.setAttribute('aria-label', 'Close wallet');
         header.append(heading, exit);
-        const body = el('div', 'ov-wallet-body'), status = el('p', 'ov-wallet-status', 'Opening your wallet…');
+        const body = el('div', 'ov-wallet-body is-first'), status = el('p', 'ov-wallet-status', '');
         status.setAttribute('role', 'status'); body.append(status); dialog.append(header, body);
         const previousFocus = document.activeElement, previousOverflow = document.documentElement.style.overflow;
         // A site's surfaces.js locks the page for any modal dialog and restores it on close; locking here as well would
         // make its saved state "hidden". Only a page without it needs the wallet's own lock.
         const ownLock = !root.OVSurfaces;
         let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [];
+        const here = { store: false, items: false };   // which parts have answered: until then a placeholder of their size stands in
+        const wait = (n, cls) => { const w = el('div', 'ov-wallet-wait-set'); w.setAttribute('aria-hidden', 'true'); for (let i = 0; i < n; i += 1) w.append(el('div', `ov-wallet-wait ${cls || ''}`)); return w; };
         const shown = {};   // what each balance last showed, so a change counts from it
         const pending = new Map();
         const session = { close() {
@@ -149,6 +159,8 @@
             });
             body.prepend(form); form.scrollIntoView({ block: 'start' }); input.focus();
         }
+        // Before anything is known (the first opening in a tab): three cards' worth of room, so nothing moves when they come.
+        function hold() { body.replaceChildren(status, wait(3, 'is-card'), wait(2, 'is-row')); status.textContent = 'Opening your wallet…'; }
         function render() {
             body.replaceChildren(status); status.textContent = data.money_writes_frozen ? 'Purchases and top-ups are paused. Your balances and items are still here.' : '';
             status.classList.remove('is-error');
@@ -178,7 +190,8 @@
             }
             const store = section('Store', 'A little more you. Items travel with your OpenVibe account.');
             const grid = el('div', 'ov-wallet-grid'); store.append(grid);
-            if (!storeItems.length) grid.append(el('p', 'ov-wallet-muted', 'New items will appear here after review.'));
+            if (!here.store) grid.append(wait(2, 'is-tile'));
+            else if (!storeItems.length) grid.append(el('p', 'ov-wallet-muted', 'New items will appear here after review.'));
             for (const item of storeItems) {
                 const card = el('article', 'ov-wallet-item'); card.append(preview(item.preview, item.name), el('h4', '', item.name), el('p', 'ov-wallet-muted', `By ${maker(item.issuer)}`));
                 const owned = item.owned || (allItems && allItems.instances.some((i) => i.definition_id === item.id && i.state === 'owned'));
@@ -196,7 +209,8 @@
             }
             const mine = section('Your items', 'Wear them wherever their kind is supported.');
             const owned = allItems ? allItems.instances.filter((i) => i.state === 'owned') : [];
-            if (!owned.length) mine.append(el('p', 'ov-wallet-muted', 'Your collection starts here.'));
+            if (!here.items) mine.append(wait(2, 'is-row'));
+            else if (!owned.length) mine.append(el('p', 'ov-wallet-muted', 'Your collection starts here.'));
             for (const item of owned) {
                 const def = allItems.definitions[item.definition_id]; if (!def) continue;
                 const kind = kinds.find((k) => k.id === def.kind), row = el('article', 'ov-wallet-owned-row'), copy = el('div');
@@ -237,13 +251,24 @@
         dialog.addEventListener('click', (e) => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) session.close(); });
         document.addEventListener('openvibe-auth-changed', session.close);
         document.body.append(dialog); dialog.showModal(); if (ownLock) document.documentElement.style.overflow = 'hidden'; exit.focus();
+        // There at once: what this tab last showed, or room held for it. Then everything is asked side by side (the
+        // store and the kinds need nothing; the items need to know whose they are, which a kept wallet already says).
+        const seed = kept();
+        if (seed) { data = seed; render(); } else hold();
+        setTimeout(() => body.classList.remove('is-first'), 600);
+        const settled = (pr) => pr.then((value) => ({ status: 'fulfilled', value }), (reason) => ({ status: 'rejected', reason }));
+        const storeAsked = settled(request('/api/v1/store')), kindsAsked = settled(request('/api/v1/kinds', 'GET', null, true));
+        let itemsAsked = seed ? settled(refreshItems()) : null;
         try {
             await refreshWallet();
-            const results = await Promise.allSettled([request('/api/v1/store'), refreshItems(), request('/api/v1/kinds', 'GET', null, true)]);
+            identity(); keep(data); render();
+            if (!itemsAsked || (seed && seed.subject.id !== data.subject.id)) itemsAsked = settled(refreshItems());
+            const results = await Promise.all([storeAsked, itemsAsked, kindsAsked]);
             identity(); storeItems = results[0].status === 'fulfilled' ? results[0].value.items : [];
             kinds = results[2].status === 'fulfilled' ? results[2].value.kinds : [];
+            here.store = here.items = true;
             render(); if (results.some((r) => r.status === 'rejected')) message(new Error('Your balances are ready. The store or your items could not load. Close and reopen Wallet to retry.'));
-        } catch (error) { message(error); }
+        } catch (error) { if (seed && !disposed) { here.store = here.items = true; } message(error); }
         return session;
     }
     const api = { open, close, amount, checkoutAllowed };

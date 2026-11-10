@@ -214,7 +214,10 @@
   .ovs-x:active { background: var(--bg-active, rgba(255,255,255,.14)); color: var(--text-primary, #fff); }
 }
 .ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
-/* The way over to the Dock: a quieter row under the tabs, four small buttons with the Dock's own names. */
+/* Five places in one row (4.194.0): on a phone each is its icon over its word; the doors to the Dock look like the tabs. */
+.ovs-starttabs.has-doors .ovs-tab { padding: 0 6px; }
+.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 20px; height: 20px; }
+@media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 54px; padding: 4px 2px; font-size: 11.5px; border-radius: 14px; } }
 .ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
 .ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
   color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); transition: background-color .15s, color .15s, transform .12s; }
@@ -1011,9 +1014,24 @@
         const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
         let siteId = ctx.service || '';
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
-        for (const [id, label] of TABS) {
+        // One row of places (4.194.0): this site, the feed, your messages, AI (Vibe and your agents), you. Messages and
+        // AI are the Dock's; they are in this row, between Feed and You, where the bar can open the Dock for this person.
+        const doors = typeof ctx.dock === 'function' ? [['chats', 'Messages'], ['vibe', 'AI']] : [];
+        const row = [TABS[0], TABS[1], ...doors.map(([id, label]) => [id, label, true]), TABS[2]];
+        tabsEl.classList.toggle('has-doors', doors.length > 0);
+        for (const [id, label, door] of row) {
             const b = document.createElement('button');
-            b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab'); b.setAttribute('data-tab', id);
+            b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab');
+            if (door) {
+                // A place that opens in the Dock: never the chosen tab here; it says it opens something.
+                b.setAttribute('data-dock', id); b.setAttribute('aria-selected', 'false'); b.setAttribute('aria-haspopup', 'dialog');
+                const ic = document.createElement('span'); ic.className = 'ovs-tab-ic'; ic.innerHTML = BRIDGE_SVG[id]; b.appendChild(ic);
+                const t = document.createElement('span'); t.textContent = label; b.appendChild(t);
+                b.addEventListener('click', (e) => { e.stopPropagation(); try { ctx.dock(id); } catch { /* the Dock is optional */ } });
+                tabsEl.appendChild(b);
+                continue;
+            }
+            b.setAttribute('data-tab', id);
             b.setAttribute('aria-selected', tab === id ? 'true' : 'false');
             const ic = document.createElement('span'); ic.className = 'ovs-tab-ic';
             if (id === 'here' && siteId) { const g = document.createElement('span'); g.className = 'ov-icon'; g.setAttribute('data-icon', siteId); g.setAttribute('data-size', '20'); g.setAttribute('data-fx', 'none'); ic.appendChild(g); }
@@ -1028,20 +1046,6 @@
             if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); b.appendChild(d); }
             else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); b.appendChild(n); }
             tabsEl.appendChild(b);
-        }
-        // The way over to the Dock (4.189.0): Vibe, your agents, messages and what is new are one press from here, and
-        // the Dock's head has the way back. Only where the bar can open the Dock for this person.
-        if (typeof ctx.dock === 'function') {
-            const row = document.createElement('div'); row.className = 'ovs-bridge'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Your Dock');
-            for (const [id, label] of [['vibe', 'Vibe'], ['agent', 'Agents'], ['chats', 'Messages'], ['activity', 'Activity']]) {
-                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-bridge-b'; b.setAttribute('data-dock', id);
-                const ic = document.createElement('span'); ic.className = 'ovs-bridge-i'; ic.innerHTML = BRIDGE_SVG[id];
-                const t = document.createElement('span'); t.textContent = label;
-                b.append(ic, t);
-                b.addEventListener('click', () => { try { ctx.dock(id); } catch { /* the Dock is optional */ } });
-                row.appendChild(b);
-            }
-            tabsEl.appendChild(row);
         }
         if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
     }

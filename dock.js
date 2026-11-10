@@ -52,7 +52,8 @@
         clock: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/>',
     };
     // Vibe first (L48 V2): the person's AI, on every site.
-    const TABS = [['vibe', 'Vibe', G.vibe], ['agent', 'Agents', G.spark], ['chats', 'Messages', G.chat], ['activity', 'Activity', G.bell]];
+    const ROBOT = '<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13h.01M14.5 13h.01M3 12.5v2M21 12.5v2"/>';   // as in the menu's row
+    const TABS = [['vibe', 'Vibe', G.spark], ['agent', 'Agents', ROBOT], ['chats', 'Messages', G.chat], ['activity', 'Activity', G.bell]];
     // The tabs the Network keeps in the person's Dock state (network.dock-state@1; vibe since contracts 0.270.0); a
     // newer one stays on this site's copy until the Network learns it.
     const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
