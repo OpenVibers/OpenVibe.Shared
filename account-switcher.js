@@ -469,7 +469,7 @@
             <div class="openvibe-switcher-list">
                 ${loggedAccounts.map(a => `
                     <div class="openvibe-switcher-item ${String(a.id) === String(activeId) ? 'active' : ''}" data-id="${a.id}">
-                        <img src="${a.avatar_url || '/data/avatars/default.png'}" alt="">
+                        <img src="${a.avatar_url || '/data/avatars/default.png'}" alt="" width="40" height="40" decoding="async">
                         <div class="info">
                             <div class="name">${a.display_name || a.username}</div>
                             <div class="sub">${a.email || `@${a.username}`}</div>

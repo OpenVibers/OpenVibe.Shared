@@ -66,11 +66,6 @@
     // user last had open … the main tab should just show links that exist on that site, and under that the full list
     // of sites"). The first is labelled with this site's own name.
     const TABS = [['here', ''], ['feed', 'Feed'], ['you', 'You']];
-    const TAB_KEY = 'ovs-tab';
-    // The tab is remembered per site (11-09, the owner: on a new site the menu opened on You, "confusing"): another site
-    // opens on its own tab first; the same site opens where the person left it.
-    const savedTab = () => { try { const [v, host] = String(localStorage.getItem(TAB_KEY) || '').split('|'); if (host && host !== location.hostname) return null; return TABS.some(([id]) => id === v) ? v : null; } catch { return null; } };
-    const saveTab = (v) => { try { localStorage.setItem(TAB_KEY, `${v}|${location.hostname}`); } catch { /* private window */ } };
     // When the Feed was last looked at, for its "new since" count (11-09, the owner: "if there's anything new in the feed
     // since last time you've looked… a badge").
     const FEED_SEEN = 'ovs-feed-seen';
@@ -82,6 +77,8 @@
     const RTABS = [['all', 'All'], ['openvibe', 'OpenVibe'], ['web', 'Web'], ['video', 'Video'], ['news', 'News'], ['products', 'Products'], ['mine', 'Yours']];
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
     let view = 'suggest', rtabsEl = null, rq = '', rtab = 'all', rflight = null, moved = false;
+    // A place of the Dock shown inside the menu (a phone, 312 step 2): which one, its mount, and AI's part.
+    let door = null, doorEl = null, doorHost = null, doorSw = null, doorMount = null, aiPart = 'vibe';
 
     const safeUrl = (u) => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     function siteOf(url) {
@@ -218,7 +215,20 @@
   .ovs-x span { display: none; }
   .ovs-x:active { background: var(--bg-active, rgba(255,255,255,.14)); color: var(--text-primary, #fff); }
 }
-.ovs-tabs { display: flex; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+.ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
+/* Five places in one row (4.194.0): on a phone each is its icon over its word; the doors to the Dock look like the tabs. */
+.ovs-starttabs.has-doors .ovs-tab { padding: 0 6px; }
+.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 20px; height: 20px; }
+@media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 54px; padding: 4px 2px; font-size: 11.5px; border-radius: 14px; } }
+.ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
+.ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
+  color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); transition: background-color .15s, color .15s, transform .12s; }
+.ovs-bridge-b span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovs-bridge-i { display: grid; place-items: center; flex: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-bridge-b:hover, .ovs-bridge-b:focus-visible { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovs-bridge-b:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-bridge-b:active { transform: scale(.96); }
+@media (max-width: 640px) { .ovs-bridge-b { flex-direction: column; gap: 2px; min-height: 50px; padding: 4px 2px; font-size: 11.5px; } .ovs-bridge-i svg { width: 19px; height: 19px; } }
 /* The menu's three tabs (4.149.0): one segmented row under the field; the chosen one in the accent. */
 .ovs-starttabs { gap: 6px; padding: 2px 12px 10px; }
 .ovs-starttabs .ovs-tab { flex: 1 1 0; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 10px; border-radius: 12px; font-size: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
@@ -241,7 +251,15 @@
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
 .ovs-grid.is-mini .ovs-ic { width: 26px; height: 26px; border-radius: 8px; }
-.ovs-grid.is-mini .ovs-tile b { font-size: 13px; font-weight: 600; }
+.ovs-grid.is-mini .ovs-tile b { font-size: 13.5px; font-weight: 650; }
+/* 4.189.0: the sites in their groups are full touch targets with a larger mark, and each group's name runs into a
+   hairline, so the list reads as sections and not as one long column of small rings. */
+.ovs-grid.is-mini { gap: 4px; }
+.ovs-grid.is-mini .ovs-tile { min-height: 48px; padding: 6px 8px; border-radius: 12px; transition: background-color .15s, transform .12s; }
+.ovs-grid.is-mini .ovs-tile:active { transform: scale(.97); }
+.ovs-grid.is-mini .ovs-ic { width: 32px; height: 32px; border-radius: 10px; }
+.ovs-group[data-sec="all"] { display: flex; align-items: center; gap: 10px; }
+.ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
 .ovs-tab[aria-selected="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #8ab4ff)); }
@@ -253,6 +271,18 @@
 .ovs-list > li:nth-child(5) { animation-delay: 100ms; } .ovs-list > li:nth-child(6) { animation-delay: 125ms; } .ovs-list > li:nth-child(n+7) { animation-delay: 150ms; }
 @keyframes ovs-rise { from { opacity: 0; transform: translateY(6px); } }
 .ovs-list { list-style: none; margin: 0; padding: 6px; overflow-y: auto; overscroll-behavior: contain; }
+/* A place of the Dock inside the menu (312 step 2, a phone): it fills the sheet under the head and scrolls itself. */
+.ovs-door { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.ovs-door[hidden] { display: none; }
+.ovs-door-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ovs-door-host > .ovdk { flex: 1 1 auto; min-height: 0; }
+.ovs-door-sw { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 8px 12px 4px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovs-door-sw[hidden] { display: none; }
+.ovs-door-sw button { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border-radius: 11px; cursor: pointer; font-size: 14px; font-weight: 650; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s; }
+.ovs-door-sw button[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
+.ovs-door-sw button[aria-selected="true"] .ovs-tab-ic { color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-door-sw button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-in-door .ovs-foot { display: none; }
 .ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
 .ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
 .ovs-item a { display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 5px 10px; border-radius: 12px; color: inherit; text-decoration: none; }
@@ -286,8 +316,14 @@
 .ovs-app { display: flex; flex-direction: column; align-items: center; gap: 7px; min-width: 0; padding: 10px 2px 8px; border-radius: 16px; color: inherit; text-decoration: none; }
 .ovs .ovs-appic { width: 54px; height: 54px; border-radius: 17px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1), box-shadow .18s; }
 .ovs-appname { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
-.ovs-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; padding: 0 2px 2px; }
-.ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 44px; padding: 0 10px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; }
+/* This site's pages: named as such, in the case they are written in, behind a dot that says "you are here"; each a tile. */
+.ovs-group[data-sec="here"] { gap: 9px; padding-top: 12px; font-size: 13.5px; font-weight: 750; letter-spacing: 0; text-transform: none; color: var(--text-secondary, #a8b3c4); }
+.ovs-group[data-sec="here"]::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-light, var(--accent, #60a5fa)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); animation: ovs-here 2.4s ease-in-out infinite; }
+@keyframes ovs-here { 50% { box-shadow: 0 0 0 calc(4px + 3px * var(--ov-move, 1)) color-mix(in srgb, var(--accent, #3b82f6) 8%, transparent); } }
+.ovs-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 2px 4px 6px; }
+.ovs-link { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 46px; padding: 0 12px; border-radius: 12px; color: inherit; text-decoration: none; font-size: 14px; font-weight: 600; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4.5%, transparent); transition: background-color .15s, transform .12s; }
+.ovs-link:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); }
+.ovs-link:active { transform: scale(.97); }
 .ovs-link svg { width: 16px; height: 16px; flex: none; color: var(--text-muted, #93a0b4); }
 .ovs-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovs-link.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 42%, transparent); color: var(--text-primary, #e6edf3); }
@@ -349,8 +385,11 @@
 }
 /* Dropped from the navbar's orb (4.25.0): under the bar, from the orb's side, the bar still showing. */
 .ovs.ovs-anchored { top: var(--ovs-top, 0px); background: rgba(3, 6, 12, .45); }
-.ovs.ovs-anchored .ovs-panel { top: 8px; left: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); transform: none; transform-origin: 24px 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .22s cubic-bezier(.2,1.15,.3,1); }
-@keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.97); } to { opacity: 1; transform: none; } }
+/* It grows out of the button that was pressed (4.195.0; the owner: "go … to the proper element … what you clicked on"): its
+   origin is that button's centre, wherever the panel was clamped to (it unfolded from its left corner, though the button is at
+   the right since 4.193.0), on the dropdown's own curve. */
+.ovs.ovs-anchored .ovs-panel { --ovs-pl: clamp(8px, var(--ovs-left, 12px), calc(100vw - min(720px, calc(100vw - 16px)) - 8px)); top: 8px; left: var(--ovs-pl); transform: none; transform-origin: calc(var(--ovs-cx, 40px) - var(--ovs-pl)) 0; max-height: calc(100dvh - var(--ovs-top, 0px) - 24px); animation: ovs-drop .26s cubic-bezier(.2, 1.25, .3, 1); }
+@keyframes ovs-drop { from { opacity: 0; transform: translateY(-6px) scale(.9); } to { opacity: 1; transform: none; } }
 @media (max-width: 640px) {
   /* The whole screen on a phone (the owner, 11-07: "make full use of the height, not compensate for the navbar"),
      opening as a circle that grows from the button that opened it. */
@@ -419,6 +458,13 @@
         input = el.querySelector('.ovs-input');
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
+        doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
+        doorSw = document.createElement('div'); doorSw.className = 'ovs-door-sw'; doorSw.setAttribute('role', 'tablist'); doorSw.setAttribute('aria-label', 'AI');
+        doorSw.innerHTML = [['vibe', 'Vibe'], ['agent', 'Agents']].map(([id, label]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[id]}</span><span>${label}</span></button>`).join('');
+        doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
+        doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
+        doorEl.append(doorSw, doorHost);
+        listEl.after(doorEl);
         tabsEl = el.querySelector('.ovs-tabs');
         rtabsEl = el.querySelector('.ovs-rtabs');
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
@@ -431,7 +477,8 @@
         el.appendChild(orbEl);
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
-            tab = b.getAttribute('data-tab'); saveTab(tab); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
+            leaveDoor();
+            tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -715,7 +762,7 @@
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
                 if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
                 const ic = icon(it);
-                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '22'); }
+                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '26'); }
                 a.append(ic, txt);
                 box.appendChild(a);
             });
@@ -982,6 +1029,36 @@
      * the feed content aware… each site its own icon"): this site's own mark and name, Feed with a red dot while anyone is
      * live or a count of what is new since you last looked, and You with your picture and an online dot.
      */
+    /** A phone's menu with the Dock to hand: its places open inside the menu, under the menu's own head. */
+    function inSheet() {
+        let phone = false;
+        try { phone = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ }
+        return phone && !!(root.OpenVibeDock && typeof root.OpenVibeDock.mountInto === 'function');
+    }
+    /** Show a place of the Dock in the menu: Messages, or AI (Vibe or your agents, by the two-part switch). */
+    function openDoor(id) {
+        if (!doorEl || !inSheet()) return;
+        door = id;
+        const want = id === 'chats' ? 'chats' : aiPart;
+        doorSw.hidden = id !== 'vibe';
+        doorSw.querySelectorAll('[data-part]').forEach((b) => b.setAttribute('aria-selected', b.getAttribute('data-part') === aiPart ? 'true' : 'false'));
+        listEl.hidden = true; doorEl.hidden = false; el.classList.add('ovs-in-door');
+        try { if (!doorMount) doorMount = root.OpenVibeDock.mountInto(doorHost, { tab: want }); else doorMount.show(want); }
+        catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
+        input.placeholder = id === 'chats' ? 'Search your messages' : `Search ${here()}, or ask Vibe`;
+        paintTabs();
+    }
+    /** Back to the menu's own list (a tab, typing, or closing). The Dock's panels go home with their state. */
+    function leaveDoor() {
+        if (!door) return;
+        door = null;
+        if (doorMount) { try { doorMount.destroy(); } catch { /* */ } doorMount = null; }
+        if (doorEl) doorEl.hidden = true;
+        if (listEl) listEl.hidden = false;
+        if (el) el.classList.remove('ovs-in-door');
+        if (input) input.placeholder = `Search ${here()}, or ask Vibe`;
+    }
+
     function paintTabs() {
         tabsEl.hidden = false;
         tabsEl.setAttribute('role', 'tablist');
@@ -992,10 +1069,27 @@
         const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
         let siteId = ctx.service || '';
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
-        for (const [id, label] of TABS) {
+        // One row of places (4.194.0): this site, the feed, your messages, AI (Vibe and your agents), you. Messages and
+        // AI are the Dock's; they are in this row, between Feed and You, where the bar can open the Dock for this person.
+        const doors = typeof ctx.dock === 'function' ? [['chats', 'Messages'], ['vibe', 'AI']] : [];
+        const row = [TABS[0], TABS[1], ...doors.map(([id, label]) => [id, label, true]), TABS[2]];
+        tabsEl.classList.toggle('has-doors', doors.length > 0);
+        for (const [id, label, isDoor] of row) {
             const b = document.createElement('button');
-            b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab'); b.setAttribute('data-tab', id);
-            b.setAttribute('aria-selected', tab === id ? 'true' : 'false');
+            b.type = 'button'; b.className = 'ovs-tab'; b.setAttribute('role', 'tab');
+            if (isDoor) {
+                // A place of the Dock. On a phone it opens here, inside the menu, and is then the chosen tab; on a computer
+                // it opens the floating Dock beside the page (it is kept beside the work there).
+                b.setAttribute('data-dock', id); b.setAttribute('aria-selected', door === id ? 'true' : 'false');
+                if (!inSheet()) b.setAttribute('aria-haspopup', 'dialog');
+                const ic = document.createElement('span'); ic.className = 'ovs-tab-ic'; ic.innerHTML = BRIDGE_SVG[id]; b.appendChild(ic);
+                const t = document.createElement('span'); t.textContent = label; b.appendChild(t);
+                b.addEventListener('click', (e) => { e.stopPropagation(); if (inSheet()) { openDoor(id); return; } try { ctx.dock(id); } catch { /* the Dock is optional */ } });
+                tabsEl.appendChild(b);
+                continue;
+            }
+            b.setAttribute('data-tab', id);
+            b.setAttribute('aria-selected', !door && tab === id ? 'true' : 'false');
             const ic = document.createElement('span'); ic.className = 'ovs-tab-ic';
             if (id === 'here' && siteId) { const g = document.createElement('span'); g.className = 'ov-icon'; g.setAttribute('data-icon', siteId); g.setAttribute('data-size', '20'); g.setAttribute('data-fx', 'none'); ic.appendChild(g); }
             else if (id === 'you' && me && me.avatar_url && /^https:\/\//.test(me.avatar_url)) {
@@ -1012,6 +1106,13 @@
         }
         if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
     }
+    const bsvg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const BRIDGE_SVG = {
+        vibe: bsvg('<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
+        agent: bsvg('<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13v.01M14.5 13v.01M3 12.5v2M21 12.5v2"/>'),
+        chats: bsvg('<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-7L8 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V8A1.5 1.5 0 0 1 5 6.5z"/>'),
+        activity: bsvg('<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>'),
+    };
 
     /** What every tab needs: the sites, this one, and the person's ranking of them. */
     function basis() {
@@ -1060,13 +1161,14 @@
             if (len > bestLen) { best = i; bestLen = len; }
         });
         if (best >= 0) pages[best].here = true;
-        if (pages.length) groups.push({ title: `On ${here()}`, as: 'links', items: pages, section: 'here' });
+        if (pages.length) groups.push({ title: `Pages on ${here()}`, as: 'links', items: pages, section: 'here' });
         const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
         if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
         const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);
         const mini = (x) => siteItem(x, all);
         fgroups.forEach((g, i) => {
-            const list = all.filter((x) => inGroup(x, g)).map(mini);
+            // The site you are on is first in its group (its group is already first): the menu opens where you are.
+            const list = all.filter((x) => inGroup(x, g)).sort((a, b) => (mineSite ? (b.id === mineSite.id) - (a.id === mineSite.id) : 0)).map(mini);
             if (list.length) groups.push({ title: i === 0 && fgroups.length > 1 ? g.name : g.name, as: 'mini', items: list, section: 'all' });
         });
         const soon = f && Array.isArray(f.soon) ? f.soon : [];
@@ -1236,7 +1338,7 @@
         const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
         const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
             feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
@@ -1249,6 +1351,7 @@
     function render(q) {
         q = String(q || '').trim();
         el.classList.toggle('ovs-typing', !!q);
+        if (q) leaveDoor();
         tabsEl.hidden = !!q;
         if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); paintTabs(); renderTab(); return; }
         const n = q.toLowerCase();
@@ -1410,7 +1513,8 @@
         // tab, whose second half is every site; "tools" is You); else this site.
         // "sites" is a request for the list of every site (the legacy drawer's All sites): it opens this site's tab.
         const asked = { here: 'here', sites: 'here', feed: 'feed', you: 'you', tools: 'you' }[opts.tab];
-        tab = opts.tab === 'sites' ? 'here' : (savedTab() || asked || 'here');
+        // The menu opens on this site's tab unless a tab was asked (the picture asks You): no tab is remembered (4.189.0).
+        tab = asked || 'here';
         allOpen = false; hereOpen = true; leadHere = false; discoverPick = null;
         drainCards();
         syncFeeds();
@@ -1468,6 +1572,7 @@
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         if (view === 'results' && rtabsEl) leaveResults();
+        leaveDoor();
         if (!el || closing) return;
         if (navigating) pushed = false;
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.

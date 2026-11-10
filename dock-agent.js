@@ -49,6 +49,7 @@
             .ovda-stage { position: relative; overflow: hidden; aspect-ratio: 16 / 9; border-radius: 14px; background: #0a0c11; border: 1px solid var(--border, rgba(255,255,255,.1)); }
             .ovda-frame, .ovda-still { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; object-fit: contain; background: #0a0c11; }
             .ovda-still { object-fit: cover; opacity: .92; }
+            .ovda-stage[hidden] { display: none; }
             .ovda-wait { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-muted, #8b8b96); font-size: 12.5px; text-align: center; padding: 12px; }
             .ovda-line { display: flex; align-items: center; gap: 6px; min-height: 34px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); }
             .ovda-line b { color: var(--text-primary, #ececf1); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -65,6 +66,12 @@
             .ovda-acts button:disabled { opacity: .5; cursor: default; }
             .ovda-acts svg { width: 14px; height: 14px; }
             .ovda-acts button[data-act="end"] { color: color-mix(in srgb, var(--live-red, #e5484d) 65%, var(--text-primary, #ececf1)); }
+            /* A session that ended is two lines of words with its one way out beside them, not a button on a row of its own. */
+            .ovda.is-ended .ovda-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; align-items: center; padding: 2px 4px 6px; }
+            .ovda.is-ended .ovda-line, .ovda.is-ended .ovda-meta { grid-column: 1; }
+            .ovda.is-ended .ovda-acts { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
+            .ovda.is-ended .ovda-acts:empty { display: none; }
+            @media (pointer: coarse) { .ovda-acts button, .ovda-acts a { min-height: 44px; min-width: 44px; justify-content: center; } }
             .ovda svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
             @keyframes ovda-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
         `;
@@ -92,7 +99,7 @@
         const line = h('div', 'ovda-line');
         const meta = h('div', 'ovda-meta');
         const acts = h('div', 'ovda-acts');
-        const head = h('div');
+        const head = h('div', 'ovda-head');
         head.append(line, meta, acts);
         const body = h('div');
         body.append(stage, head);
@@ -140,6 +147,7 @@
 
             const live = agent.state === 'live';
             const ended = agent.state === 'ended';
+            container.classList.toggle('is-ended', ended);
             // The picture: the live embed when there is one, else the still.
             const embed = typeof agent.embed_url === 'string' && EMBED.test(agent.embed_url) ? agent.embed_url : null;
             const shown = stage.querySelector('iframe');
@@ -154,8 +162,11 @@
             } else if (!embed) {
                 if (shown) stage.innerHTML = '';
                 if (agent.last_frame_url) still(agent.last_frame_url);
-                else if (!stage.querySelector('img')) stage.append(h('div', 'ovda-wait', ended ? 'Nothing to show' : 'Waiting for the desk'));
+                else if (!ended && !stage.querySelector('img')) stage.append(h('div', 'ovda-wait', 'Waiting for the desk'));
             }
+            // A session that ended and left no picture has no stage: a black box saying "Nothing to show" told nobody
+            // anything (the owner, 2026-11-10). The line under it still says what it was and how long it worked.
+            stage.hidden = ended && !embed && !agent.last_frame_url && !stage.querySelector('img');
 
             // The line: what it is doing, one row.
             line.innerHTML = '';

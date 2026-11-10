@@ -23,6 +23,14 @@
         }
         return hosts.has(url.hostname.toLowerCase());
     }
+    // What the sheet last showed in this tab (the wallet's own answer: the person's balances and recent lines, kept only
+    // in their tab): the next opening starts from it,
+    // so the cards are right from the first frame. Forgotten when the account changes.
+    const KEEP = 'ov-wallet-last';
+    const kept = () => { try { const j = JSON.parse(root.sessionStorage.getItem(KEEP) || 'null'); return j && j.balances && j.subject && j.subject.id ? j : null; } catch { return null; } };
+    const keep = (d) => { try { root.sessionStorage.setItem(KEEP, JSON.stringify(d)); } catch { /* a closed store: it opens with placeholders */ } };
+    if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('openvibe-auth-changed', () => { try { root.sessionStorage.removeItem(KEEP); } catch { /* */ } });
+
     async function open(options) {
         close();
         const token = (options.getToken ? options.getToken() : options.token) || null;
@@ -40,13 +48,16 @@
         heading.lastChild.id = 'ov-wallet-title';
         const exit = el('button', 'ov-wallet-close', '×'); exit.type = 'button'; exit.setAttribute('aria-label', 'Close wallet');
         header.append(heading, exit);
-        const body = el('div', 'ov-wallet-body'), status = el('p', 'ov-wallet-status', 'Opening your wallet…');
+        const body = el('div', 'ov-wallet-body is-first'), status = el('p', 'ov-wallet-status', '');
         status.setAttribute('role', 'status'); body.append(status); dialog.append(header, body);
         const previousFocus = document.activeElement, previousOverflow = document.documentElement.style.overflow;
         // A site's surfaces.js locks the page for any modal dialog and restores it on close; locking here as well would
         // make its saved state "hidden". Only a page without it needs the wallet's own lock.
         const ownLock = !root.OVSurfaces;
         let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [];
+        const here = { store: false, items: false };   // which parts have answered: until then a placeholder of their size stands in
+        const wait = (n, cls) => { const w = el('div', 'ov-wallet-wait-set'); w.setAttribute('aria-hidden', 'true'); for (let i = 0; i < n; i += 1) w.append(el('div', `ov-wallet-wait ${cls || ''}`)); return w; };
+        const shown = {};   // what each balance last showed, so a change counts from it
         const pending = new Map();
         const session = { close() {
             if (disposed) return; disposed = true; controller.abort(); dialog.close(); dialog.remove();
@@ -68,7 +79,14 @@
             if (!r.ok) throw new Error(value.detail || 'This is temporarily unavailable. Please try again.');
             return value;
         }
-        function message(error) { if (!disposed) { status.textContent = error.message || String(error); status.classList.add('is-error'); status.scrollIntoView({ block: 'nearest' }); } }
+        // What went wrong, in a person's words: a program's own error (a TypeError from a read that came back in another
+        // shape, a failed fetch) is never shown as it is.
+        function said(error) {
+            if (error && error.name === 'TypeError' && /fetch|network|load/i.test(error.message || '')) return 'Your wallet could not be reached. Check your connection and try again.';
+            if (!error || (error.name && error.name !== 'Error') || !error.message) return 'Part of your wallet could not be loaded. Close Wallet and open it again.';
+            return error.message;
+        }
+        function message(error) { if (!disposed) { status.textContent = said(error); status.classList.add('is-error'); status.scrollIntoView({ block: 'nearest' }); } }
         function button(label, action, cls) {
             const b = el('button', cls || 'ov-wallet-button', label); b.type = 'button';
             b.addEventListener('click', async () => {
@@ -141,21 +159,39 @@
             });
             body.prepend(form); form.scrollIntoView({ block: 'start' }); input.focus();
         }
+        // Before anything is known (the first opening in a tab): three cards' worth of room, so nothing moves when they come.
+        function hold() { body.replaceChildren(status, wait(3, 'is-card'), wait(2, 'is-row')); status.textContent = 'Opening your wallet…'; }
         function render() {
             body.replaceChildren(status); status.textContent = data.money_writes_frozen ? 'Purchases and top-ups are paused. Your balances and items are still here.' : '';
             status.classList.remove('is-error');
             const balances = el('div', 'ov-wallet-balances'); body.append(balances);
             for (const id of ['coins', 'vibes', 'balance']) {
                 const b = data.balances[id], card = el('article', `ov-wallet-balance is-${id}`);
-                const title = el('div', 'ov-wallet-balance-title'); title.append(el('span', 'ov-wallet-symbol', { coins: 'O', vibes: 'V', balance: '$' }[id]), el('h3', '', b.label));
-                card.append(title, el('p', 'ov-wallet-value', amount(b)), el('p', 'ov-wallet-purpose', b.purpose));
+                const numeric = Number(b.amount) / Math.pow(10, b.scale || 0);
+                const words = (n) => amount({ ...b, amount: String(Math.round(n * Math.pow(10, b.scale || 0))) });
+                // The currency's own icon and colour (purse.js, the one the bar's pill has); the letter where that file is not on the page.
+                const purse = root.OpenVibePurse || null;
+                const symbol = el('span', 'ov-wallet-symbol', purse ? null : { coins: 'O', vibes: 'V', balance: '$' }[id]);
+                if (purse) { symbol.innerHTML = purse.icon(id, 30); symbol.classList.add('is-drawn', 'ovp-play'); symbol.setAttribute('aria-hidden', 'true'); card.setAttribute('data-purse', id); }
+                const title = el('div', 'ov-wallet-balance-title'); title.append(symbol, el('h3', '', b.label));
+                const value = el('p', 'ov-wallet-value', amount(b));
+                card.append(title, value, el('p', 'ov-wallet-purpose', b.purpose));
                 if (id === 'coins') { const link = el('a', 'ov-wallet-button', b.action); link.href = 'https://openvibe.network/my#coins'; card.append(link); }
                 else { const action = button(b.action, () => checkout(id === 'vibes' ? 'vibes' : 'topup')); action.disabled = data.money_writes_frozen; card.append(action); }
                 balances.append(card);
+                // The number counts in as the sheet opens; after a purchase it counts to the new amount and the currency's
+                // pieces leave (or reach) its card. The full amount is what a screen reader hears, at once.
+                if (purse && isFinite(numeric)) {
+                    const was = shown[id]; shown[id] = numeric;
+                    value.setAttribute('aria-label', amount(b));
+                    if (was == null) purse.count(value, numeric * .82, numeric, words);
+                    else if (was !== numeric) { purse.count(value, was, numeric, words); card.classList.add(numeric > was ? 'is-gain' : 'is-loss'); setTimeout(() => { if (card.isConnected) purse.burst(card, id, numeric - was); }, 60); }
+                }
             }
             const store = section('Store', 'A little more you. Items travel with your OpenVibe account.');
             const grid = el('div', 'ov-wallet-grid'); store.append(grid);
-            if (!storeItems.length) grid.append(el('p', 'ov-wallet-muted', 'New items will appear here after review.'));
+            if (!here.store) grid.append(wait(2, 'is-tile'));
+            else if (!storeItems.length) grid.append(el('p', 'ov-wallet-muted', 'New items will appear here after review.'));
             for (const item of storeItems) {
                 const card = el('article', 'ov-wallet-item'); card.append(preview(item.preview, item.name), el('h4', '', item.name), el('p', 'ov-wallet-muted', `By ${maker(item.issuer)}`));
                 const owned = item.owned || (allItems && allItems.instances.some((i) => i.definition_id === item.id && i.state === 'owned'));
@@ -173,7 +209,8 @@
             }
             const mine = section('Your items', 'Wear them wherever their kind is supported.');
             const owned = allItems ? allItems.instances.filter((i) => i.state === 'owned') : [];
-            if (!owned.length) mine.append(el('p', 'ov-wallet-muted', 'Your collection starts here.'));
+            if (!here.items) mine.append(wait(2, 'is-row'));
+            else if (!owned.length) mine.append(el('p', 'ov-wallet-muted', 'Your collection starts here.'));
             for (const item of owned) {
                 const def = allItems.definitions[item.definition_id]; if (!def) continue;
                 const kind = kinds.find((k) => k.id === def.kind), row = el('article', 'ov-wallet-owned-row'), copy = el('div');
@@ -196,7 +233,15 @@
             const recent = section('Recent activity', 'Your last five money events.');
             if (!data.recent_activity.length) recent.append(el('p', 'ov-wallet-muted', 'No activity yet.'));
             for (const event of data.recent_activity) {
-                const row = el('div', 'ov-wallet-event'), info = el('div'); info.append(el('strong', '', event.label), el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
+                // The reason is a sentence made by billing.money-reason@1 (Billing or Network); when it names
+                // something with a page, the sentence is the link to it. The raw ledger key is never drawn.
+                const row = el('div', 'ov-wallet-event'), info = el('div');
+                const url = event.subject && event.subject.url;
+                if (url && /^https:\/\//.test(url)) {
+                    const a = el('a', '', event.label);
+                    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+                    info.append(a, el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
+                } else info.append(el('strong', '', event.label), el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
                 const units = event.kind === 'balance' ? { currency: 'USD', scale: 9 } : { currency: event.kind, scale: 0 };
                 row.append(info, el('span', '', `${Number(event.amount) > 0 ? '+' : ''}${amount({ ...units, amount: event.amount })}${event.kind === 'balance' ? '' : event.kind === 'vibes' ? ' Vibes' : ' OpenCoins'}`)); recent.append(row);
             }
@@ -206,13 +251,24 @@
         dialog.addEventListener('click', (e) => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) session.close(); });
         document.addEventListener('openvibe-auth-changed', session.close);
         document.body.append(dialog); dialog.showModal(); if (ownLock) document.documentElement.style.overflow = 'hidden'; exit.focus();
+        // There at once: what this tab last showed, or room held for it. Then everything is asked side by side (the
+        // store and the kinds need nothing; the items need to know whose they are, which a kept wallet already says).
+        const seed = kept();
+        if (seed) { data = seed; render(); } else hold();
+        setTimeout(() => body.classList.remove('is-first'), 600);
+        const settled = (pr) => pr.then((value) => ({ status: 'fulfilled', value }), (reason) => ({ status: 'rejected', reason }));
+        const storeAsked = settled(request('/api/v1/store')), kindsAsked = settled(request('/api/v1/kinds', 'GET', null, true));
+        let itemsAsked = seed ? settled(refreshItems()) : null;
         try {
             await refreshWallet();
-            const results = await Promise.allSettled([request('/api/v1/store'), refreshItems(), request('/api/v1/kinds', 'GET', null, true)]);
+            identity(); keep(data); render();
+            if (!itemsAsked || (seed && seed.subject.id !== data.subject.id)) itemsAsked = settled(refreshItems());
+            const results = await Promise.all([storeAsked, itemsAsked, kindsAsked]);
             identity(); storeItems = results[0].status === 'fulfilled' ? results[0].value.items : [];
             kinds = results[2].status === 'fulfilled' ? results[2].value.kinds : [];
+            here.store = here.items = true;
             render(); if (results.some((r) => r.status === 'rejected')) message(new Error('Your balances are ready. The store or your items could not load. Close and reopen Wallet to retry.'));
-        } catch (error) { message(error); }
+        } catch (error) { if (seed && !disposed) { here.store = here.items = true; } message(error); }
         return session;
     }
     const api = { open, close, amount, checkoutAllowed };

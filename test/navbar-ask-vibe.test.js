@@ -88,7 +88,10 @@ const server = http.createServer((req, res) => {
         const u = new URL(await askHref());
         assert.strictEqual(u.searchParams.get('ask'), 'The rover drives to the door.');
         assert.strictEqual(u.searchParams.get('from'), null, 'an http test page is not named');
-        assert.strictEqual(await p.evaluate(`document.querySelector('.openvibe-navbar-dropdown').classList.contains('open')`), true, 'the menu opened');
+        // The picture opens the menu on You, with your own row in it (4.195.0: the old account block is not set there).
+        const until = async (expr, ms = 6000) => { const end = Date.now() + ms; while (Date.now() < end) { if (await p.evaluate(expr)) return true; await new Promise((r) => setTimeout(r, 80)); } return false; };
+        assert.ok(await until(`!!document.querySelector('.ovs.is-open .ovh-me .ovh-out')`), "the picture opened the menu's You tab, with your row and Sign out in it");
+        assert.strictEqual(await p.evaluate(`!!document.querySelector('.ovs .openvibe-navbar-dropdown')`), false, 'and the old account block is not in the menu');
         console.log('navbar-ask-vibe: browser ok');
     } finally {
         await browser.close();

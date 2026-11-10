@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.188.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.199.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -831,6 +831,36 @@ One menu (4.187): the OpenVibe mark is a button that opens the OpenVibe menu
   on its first tab, as the menu button does (there is no separate site
   switcher). The site's name stays the link home; switcher: false keeps the
   mark as a home link.
+New in 4.190: `ov-drop.js` is the one dropdown (`OVDrop.open(anchor, items,
+  opts)`, `.attach(button, items)`, `.pages(anchor, links, icon)`): it opens out
+  of what was pressed, under it or above, stays on screen, and one is open at a
+  time; the bar's site name opens the site's pages with it. `purse.js` gives any
+  site the currencies' effects: `OpenVibePurse.burst(el, id, delta)` plays the
+  gain or spend at an element (inside a dialog too), `.count(el, from, to,
+  format)` counts a number, `data-purse="coins|vibes|balance"` gives a holder
+  the currency's colour as `--pc`. `machines.js` is the one picker of a person's
+  Link computers (`[data-ov-machines]` or `OpenVibeMachines.mount`). `OVUpload`
+  takes `checkDuplicate(file, sha256)` and tells a person they already have a
+  file. The footer strip reads `/api/frame/online`.
+  The balances (4.189): one pill, `#openvibe-chips-all`, at every width, with
+  one `.ovnav-chip-mini` per balance the person has (OpenCoins, Vibes, the money
+  balance; only those above zero, the largest first) and one of them showing.
+  `purse.js`, loaded beside the navbar, draws each currency's icon
+  (`OpenVibePurse.icon(id, size)` gives the same drawing to any surface), turns
+  the pill through the balances on the first page of a visit and now and then,
+  and on `setChip(id, value)` turns to that balance, counts the number and
+  plays the gain or spend effect (`OpenVibePurse.play(id, delta)`). A site's
+  single counter that is not a balance stays an ordinary chip.
+  The menu and the Dock (4.189): the menu button always opens this site's tab
+  (no tab is remembered; the picture still asks for You); under the tabs a row
+  opens the Dock on Vibe, Agents, Messages or Activity (`dock: false` leaves
+  it out), and the Dock's head has a button back to the menu.
+  The account's things (4.188): the person's picture opens the OpenVibe menu
+  on You, where the account's block is (who you are, add account, settings,
+  sign out, your other accounts, this site's own items from addMenuItem,
+  Display). There is no dropdown under the picture; the block rests in the bar,
+  out of sight, while the menu is closed, so #openvibe-logout-btn and a
+  site's own items are always in the page.
 The bar's order (4.187): balances, the bell, the menu button, then the
   person's picture (or Sign In), last. New messages are counted on the bell
   (setMessages(count)); there is no Messages button.

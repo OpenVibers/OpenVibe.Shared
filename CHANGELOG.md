@@ -1,8 +1,312 @@
 # Changelog
 
-## 4.188.0 — 2026-11-09
+## 4.199.0 — 2026-11-10
 
-- Add `openvibe-shared/quest` with a plain-kit `[data-ov-quest]` mount for the personalized Quest today response.
+**Every page downloads about 56 KB less: the shared files are served minified.** From the owner's notes of 2026-11-10:
+"Make sure everything loads … non-blocking asynchronously … minified".
+
+- **Served minified, cached by content hash (`serve.js`, new `minify.js`; OpenVibe.Shared #429).** Sites have no build
+  step by choice, so the shared browser files are minified where they are served: terser for JavaScript, clean-css for
+  stylesheets. It runs once per release per file, and the immutable `?v=` address does the rest. On 4.197.0's eager set
+  (the bar, the theme, the footer, the kit and the rest) that is 806 KB → 523 KB raw and 189 KB → 133 KB after brotli,
+  about 56 KB less per page view; `navbar.js` alone is 49.8 KB → 34.4 KB as delivered. A file the minifier cannot
+  handle, or one that would not come out smaller, is served as it is; a minifier error never fails a request. ETag and
+  `?v=` immutability are unchanged. Stylesheets are minified at clean-css level 1 only (inside each rule), never level
+  2, which moves and merges rules and could change which rule wins. New dependencies: `terser`, `clean-css`.
+- **Avatars reserve their box (OpenVibe.Shared #430).** The bar's, the footer's, the account switcher's and the user
+  card's pictures carry their width and height and decode asynchronously (the footer's also load lazily, below the
+  fold), so a signed-in page no longer shifts when the picture arrives.
+- Checked on production openvibe.chat with every shared file served minified, on a phone and a computer: the bar, the
+  menu, Messages and AI inside it, the Dock; no page errors.
+
+## 4.198.0 — 2026-11-10
+
+**On a phone the menu is one sheet: Messages and AI open inside it.** From the owner's notes of 2026-11-10, with the menu
+and the Dock side by side: "combine and consolidate these two menus into one unified menu … easier to search between",
+and a phone picture of the Dock's own head over the menu ("Menu", "…", close, then four tabs: two rows of chrome).
+
+- **The menu (`search.js`).** On a phone, Messages and AI in the row of places no longer close the menu to open the
+  Dock's second sheet. They open inside the menu, under its own head, and become the chosen place like Feed or You. AI
+  carries a small two-part switch at its top: Vibe · Agents (your Actor is the top of Agents). Feed, Here or You, typing
+  in the field, or closing the menu hand the Dock's panel back with its state. On a computer the two places still open
+  the floating Dock, which stays beside the work.
+- **The Dock (`dock.js`, new `dock-mount.js`).** `OpenVibeDock.mountInto(host, { tab })` → `{ show(tab), destroy() }`
+  shows one of the Dock's panels (chats, vibe, agents, activity) inside another sheet, with no head of its own: the same
+  panel body, state, counts, token and loaders as the floating Dock, which closes while a panel is lent. The layout
+  loads on first use (`dock-mount.js`), so `dock.js` stays inside its budget. Six mount and destroy laps leave no nodes or
+  listeners behind (`test/dock-mount-chrome.test.js`).
+- **The agent view (`dock-agent.js`).** An ended session is two lines of words with its one button beside them (it sat
+  alone on a third row), and the agent view's buttons are 44 px under a finger.
+- The bar's touch-feedback comment, which ships inside its styles, is one line now: the bar is back under its size
+  budget with room for the next hashes.
+
+## 4.197.0 — 2026-11-10
+
+**The footer says "3 online", and the tooltip part works anywhere.** From the owner's notes of 2026-11-10: "Make it like
+shorthand '3 online'. If you put your mouse over it, it says 'last 30 minutes'".
+
+- **The footer's online strip (`footer.js`)** read "13 online in the last 30 min", then the faces, then "1 member · 12
+  guests". It now says **"13 online"** and the faces. Hovering the count (or reaching it with the keyboard) shows the one
+  tooltip: "In the last 30 minutes", and under it how many are members and guests. A press opens the same words above
+  the list of names, because a finger never sees a tooltip; with guests only, the count still opens that one line
+  (before, a guests-only strip opened nothing).
+- **The tooltip part (`ov-tip.js`) loads at the first hover over anything that carries `data-ov-tip`**, not only over the
+  bar: the footer's count, and whatever a site labels the same way. The waiting listener lives at module level, so it
+  holds no bar that a soft navigation has replaced.
+- A test (`menu-places-chrome`) measured the menu's origin after a fixed wait and could read it mid-motion on a busy
+  machine; it now waits for the motion to end.
+
+## 4.196.0 — 2026-11-10
+
+**Your Actor in the Dock, redrawn: one row and one line to type in. And a tone is a lean and a glow, never a bar.** From
+the owner's notes of 2026-11-10.
+
+- **The Dock's Actor block (`dock-actor.js`).** The owner, on the Agents tab on a phone: "improve the design and layout
+  so it's more intuitive, minimalist, elegant". It was a row with two outlined pills ("Resume", "Open"), a grey box
+  that said "Paused" a second time beside a green dot, the model and the cap in a sentence, a field with a "Send" pill
+  and a "Read recent history" pill. Now:
+  - **Who, in one row.** The face wears a ring in the colour of its state (green and breathing while it works, amber
+    while it waits for you, dimmed when paused), then the name and one quiet line: the state, and today's spend against
+    the cap ("Paused · $0.00 of $1.00 today"; the model is that figure's tooltip). The row is the link to the Actor's
+    page, so "Open" is gone.
+  - **One action, the one that fits.** "Resume" in the accent when the Actor is paused; a quiet pause button when it
+    runs. What happened is said in one line under the field ("Resumed.", "Sent. Your Actor reads it at its next step.",
+    or why it did not go through), in place of notes piling up at the bottom.
+  - **What it does, only when there is something to say.** The step it is on (a soft pulse), what it is looking at, the
+    steps before it and what comes next ("Next: … , in 40 min"), as a short line of dots. A paused Actor shows none of
+    it, and the state words Actor sends as a step ("Paused", "Resting until the next goal is due.") are no longer
+    drawn as one.
+  - **What it asks you** sits in the warning tone (a lean and a glow), with its own buttons: the first in the accent,
+    "Not now" as plain words, and "1 more on your Actor's page" as a link.
+  - **One field to tell it something**, with send inside the field; it lights up when there are words in it.
+  - **Built once.** A refresh (every 15 seconds) used to rebuild the whole block and wiped the line being typed; now it
+    repaints the row, the steps and the ask only when the answer changed, and never touches the field.
+  - "Recent history" is a quiet text button; the button that opens the list closes it, one line per entry.
+- **The agent view (`dock-agent.js`): no black box for a session that left no picture.** A session that ended with no
+  still drew a 16:9 black stage saying "Nothing to show", which pushed the runs off a phone's screen. The stage is
+  left out; the line under it still says what it was and how long it worked.
+- **The kit's tone (`kit.css`).** The owner, on a notice with a red bar down its side: "instead of just like this red
+  and crappy border … blur maybe effect or shadow, glow". Notices and `.ovk-tone[data-tone=good|alert|warning]` take a
+  tinted hairline, a gradient that leans from the corner, a soft glow under them and a round icon chip; no side stripe
+  anywhere.
+
+## 4.195.0 — 2026-11-10
+
+**The You tab gets a row of its own, and the menu grows out of the button that was pressed.** From the owner's notes of
+2026-11-10.
+
+- **The You tab: one slim row, and the old account block is gone from the menu.** The owner, with the block crossed
+  out: "When I said integrate the user drop down into this menu, I didn't mean like this … get rid of this thing … We
+  didn't really need the actual [block] here, other than like adding your account … making a new design for that."
+  The row: your face and name, add or switch account, Display, Settings, Sign out (each a full touch target, with a
+  tooltip). Under it, small, only what has no other home in the menu: this site's own items, your status, and Admin
+  for an admin. History, Ask Vibe, Work, the Dock and the wallet are not repeated: they are tiles, the search box, the
+  row of places and the balances pill. `navbar.js` hands the menu three small things (`me: { add, out, own }`) in
+  place of its dropdown; `ov-home.js` draws the row.
+- **The menu grows out of the pressed button** ("go … to the proper element … what you clicked on, and be more aware …
+  of positioning"). On a computer it unfolded from its left corner, though its button has been at the right since
+  4.193.0: its origin is now the pressed button's centre, wherever the sheet was clamped to, on the dropdown's own
+  curve.
+- Tests: `menu-home-screen-chrome` and `navbar-ask-vibe` read the row (the old block and its grid are not in the
+  menu); `menu-places-chrome` checks the sheet's origin against the pressed button. `navbar.js` is under its budget.
+
+## 4.194.0 — 2026-11-10
+
+**One row of places in the menu, a wallet that is there at once, and a Sign in that says so.** From the owner's notes
+of 2026-11-10.
+
+- **The menu's head is one row of five places** ("combine and consolidate these two menus into one unified menu … It
+  just seems a little much with all the buttons on the first one … the agents and AI tools versus the feed and kind of
+  community stuff"). This site · Feed · Messages · AI · You, in place of three tabs with a second row of four under
+  them: on a phone each is its icon over its word, on a computer side by side. Messages and AI (Vibe and your agents)
+  open the Dock on those places for now; their panels move into this sheet next. A visitor has this site, Feed and
+  You, as before. The Dock draws Vibe as the spark and Agents as a robot, as the row does (the spark meant two things).
+- **The wallet sheet is there at once and nothing jumps** ("load faster and dynamically sync smarter … isn't so jumpy
+  as it loads in, the different elements and balances"). It opens holding what it last showed in this tab, or room
+  held for its three cards; the store and your items stand as placeholders of their size; the store, the kinds and the
+  items are asked side by side with the balances (they waited for them before); each part arrives where it stands,
+  once. What it keeps is the wallet's own answer in the person's tab, forgotten when the account changes.
+- **Sign in says "sign in"** ("should represent … that they need to sign in"). In the filled circle the figure and an
+  arrow coming in through a door take turns (the arrow for a moment every six seconds); under the pointer it is the
+  arrow, what a press does. Off shows the figure and does not move.
+- **The tooltip's file is fetched by the first pointer over the bar**, not with the page (it was fetched at once on
+  any device that can hover); what that pointer rests on gets its tooltip when the file arrives.
+- Tests: `menu-places-chrome` (five places in one row signed in, the doors open the Dock, three for a visitor),
+  the wallet's and the bar's. `dock.js` is 20.30 KB brotli (budget raised by 0.05 KB for the robot glyph, dated).
+
+## 4.193.0 — 2026-11-10
+
+**The bar's right end, one tooltip, and one frame for mail.** From the owner's notes of 2026-11-10.
+
+- **The menu button is at the right on a computer too** ("The menu button should be on the right, even on desktop …
+  there's like a duplicated icon"). The orb at the bar's right is drawn on every width, and the one beside the name is
+  not drawn where it is: the left end is the logo (the network's sites) and the name (this site's pages), the right
+  end the menu and then the person. A second press closes the menu.
+- **Sign in is an icon** ("This can be majorly improved with a custom icon. Doesn't need the label really, and could
+  have a tooltip"). A filled circle with a figure in it, the size of the picture it stands in for, in the readable
+  accent pair; the figure arrives on load, lifts under the pointer, and the ring runs while the sign-in page opens. Its
+  name is its own (`aria-label="Sign in"`) and its tooltip. A finger's area is 44 px and stays off the menu button's.
+- **New `ov-tip.js` (`OVTip`): the network's one small tooltip.** Anything with `data-ov-tip` (and an optional quiet
+  second line, `data-ov-tip-sub`) gets a small card that grows out of what it names, under it or above, kept on the
+  screen. A mouse sees it after a short rest (the next one at once), the keyboard's focus at once; a press, a scroll,
+  Escape or leaving hides it; a finger never sees it, so nothing is said only there. The bar loads it where a pointer
+  can hover; the menu button carries one too (its native `title` made a second, plain one).
+- **New `email.js`: one frame for every mail** ("Improve the entire email system so it uses openvibe.design … uses the
+  theme applied by the user … explain more details … what they can do, what they can click"). `frame({ theme, site,
+  tone, kicker, title, lead, body, facts, code, actions, next, why, manage, preheader })` returns `{ html, text }`: the
+  person's theme written on the elements (all fifty read at 4.5:1 or better), a title that says what happened, the
+  facts as a list, one button and quieter links, what happens next, and why it came. Text only and safe links only. A
+  tone is never a hard coloured border ("instead of just like this red … border … shadow, glow"): the card leans toward
+  the tone at its top and glows in it, the kicker is a pill with a round mark, the facts stand in a box with a tinted
+  hairline. `palette(theme)` and `mix(a, b, t)` are exported for a site's own blocks.
+- **`mini.js` plays what the page plays.** Found on openvibe.video the hour it shipped: the page's script gives the
+  video its streaming playlist, and one recording's plain file stopped with a decode error three seconds in. The small
+  player now takes the playlist (`data-ov-mini-hls`) where the browser plays one by itself, in the page's cross-origin
+  mode, and the plain file (`data-ov-mini-src`) otherwise; a playlist that fails gives way to the file at the same
+  second. A video that cannot be played either says so ("Open its page to keep watching"), keeps the way back, and
+  does not follow to the next page; it used to close without a word.
+- **The wallet says what a line was for** (OpenVibe.Shared #416, from the money-reasons work): the reason is a made
+  sentence, linked to the thing it paid for.
+- The 4.192.0 entry's date is corrected (it said the 11th).
+- Tests: `ov-tip-chrome`, `email` (every theme, every tone), `mini-chrome` (the cannot-play state), `navbar-fit-chrome`
+  (the menu button at the right at every width, no second one by the name), the tap-area tests with the round Sign in.
+
+## 4.192.0 — 2026-11-10
+
+**The video that comes with you.** The owner, 2026-11-10, with the browser's floating picture-in-picture window over a
+watch page: "should … actually [be] like YouTube where it moves that video. Now you go to the search again or the index
+… the homepage … it's just kind of confusing".
+
+- **New `mini.js` (`OpenVibeMini`): a small player of our own.** A watch page says its video may come along
+  (`<video data-ov-player data-ov-mini data-ov-mini-title data-ov-mini-by>`). The shared player's picture-in-picture
+  button then writes down what is playing (the page, the file, the title, who made it, the poster, the second, the
+  speed, the volume, whether it was playing) and takes the person to the site's front page. Every page of the site
+  that finds the record draws the small player and goes on from the same second: a card at the bottom left on a
+  computer (the picture, "Back to the video" on hover, a line of progress, the title, who and the time, play and
+  close), one bar above the app bar on a phone. The video's own page takes the second back and draws nothing. A page's
+  own video starting closes it: one sound at a time. Where a new page may not start with sound, it plays silent with
+  "Turn the sound on". The record is the tab's own (`sessionStorage`), so a private file's signed address never
+  leaves the site. `OpenVibeMini.carry(video, { to })`, `.open(record)`, `.resume()`, `.close()`, `.record()`.
+- **`player.js`:** on a video with `data-ov-mini` the picture-in-picture button is "Keep watching while you browse"
+  and is shown also where the browser has no floating window of its own (it was hidden there).
+- **A site turns it on** by loading `mini.js` on its pages (`ovServe.url('mini.js')`, deferred): the file starts
+  itself and does nothing without a record. The bar does not load it: `navbar.js` is at its size budget, and the loader
+  moves into the bar with the bar's diet.
+- Motion: the card rises in 280 ms; Calm fades; Off does not move.
+- `test/mini-chrome.test.js`: from the player's button to the front page at the same second, pause kept across pages,
+  closing for the page's own video, the second handed back, Close forgets, the bar on a phone.
+
+Across sites the record will travel another way (storage is each site's own); gapless moves need pages changed in
+place. Both are researched first (plan, ask 265).
+
+## 4.191.0 — 2026-11-10
+
+- **A guest's page view counts at once again.** The beacon waits for the shared sign-in state only for a browser that has a token and no user yet (at most 2.5 s, so a signed-in person is not also counted as a guest); a page that knows its person, and a browser with no token at all, send it as they always did. The navbar's brotli budget follows (49.9 KB).
+
+## 4.190.0 — 2026-11-10
+
+**The one dropdown, the wallet in colour, who is online, and five smaller things.** From the owner's notes of
+2026-11-10, each with a screenshot.
+
+- **The site's name opens its pages** ("clicking the actual name of the domain should have a sleek little minimalist
+  drop down … that just shows the pages … have the home button as an option … a custom, animated system for these drop
+  downs and positioning of them, used across all sites"). New `ov-drop.js`: a small list that opens out of what was
+  pressed (under it, or above when there is no room), kept on screen, its rows arriving in turn; arrow keys, Enter,
+  Escape with the focus given back, a press outside; one open at a time, with the page's other panels. `OVDrop.open`,
+  `.attach` and `.pages`. In the bar the name shows a small mark and lists Home first, each page with its icon and the
+  present page marked; with a modifier key it is still a link to the site's home.
+- **The wallet sheet in the currencies' colours, with motion** ("make this way nicer with animations and effects and
+  color … nicer for the different currencies … effects like animations for the coin loss … shared and unified, also
+  SDK API"). Each balance is a tinted card with its drawn icon in a tile and its action in the same colour; a light
+  crosses each card as the sheet opens and the numbers count in; after a purchase the number counts to the new amount
+  and the currency's pieces leave its card with the amount beside it. On a phone: the tile, the name over the number,
+  the action at the right. A read that fails is said in a person's words, never a program's.
+- **The effects as calls** (`purse.js`): `OpenVibePurse.burst(element, id, delta)` plays the gain or spend at any
+  element, inside an open dialog too, upward near the bottom of the screen; `.count(element, from, to, format)`;
+  `data-purse` gives a holder the currency's colour (`--pc`); `.ovp-play` plays an icon's own move.
+- **The footer strip says who is online** ("show how many users are across all sites … the last half hour … guests
+  and users, like the old forum style where it lists everyone … live smaller, only if someone's live … other
+  metrics"). One read, `/api/frame/online`: the count with a few faces, members and guests, and where members may be
+  named the list of them with their site; then small tiles that open what they count: live (only while someone is),
+  joined this week, the site's own items, the sites, the week's page views. The page-view beacon marks a signed-in
+  browser with `?in=1` (no identity), so that person is counted from their presence and not as a guest.
+- **Uploads say when you already have the file** ("tell the user they already have one"). `OVUpload.queue` takes
+  `checkDuplicate(file, sha256)`; the row says "You already uploaded this on 10 Nov 2026." with Open it, Use that one
+  and Upload again, as one block. `OVUpload.preflight` does it for a single picker. Files over `hashLimitBytes` (32 MiB)
+  or slower to hash than to send are not hashed.
+- **A change is New, Improved or Fixed, with a mark** ("what is this confusing tag … better next to everything?").
+  A star, an arrow up, a tick; an improvement shows the mark alone. "Better" is gone.
+- **One picker for a person's computers** (`machines.js`, with Network's /add-computer): each computer a tile with
+  its state and what it can run, "Auto", and "Add a computer" through OpenVibe Link.
+- **One bar mount per page: an empty band under the bar is gone from seventeen sites** ("why is there so much wasted
+  space or unnecessary margin … for no reason", with the space under the bar circled on openvibe.community). Since
+  4.186.0 the server writes the bar's links itself, in its own `#navbar-mount`; a page whose body already had
+  `<div id="navbar-mount"></div>` then had two, the bar mounted in the first, and the second stayed an empty 52 px box.
+  `shell.page` puts the server's bar into the page's own mount where it has one.
+- **Sign In has its own icon** (an arrow into the ring; it steps in now and then, and the ring's gap runs once
+  pressed), and the menu button's three squares hop in turn every few seconds ("use a nice custom animated icon for the
+  sign in … make the menu button animated as well").
+- **The bottom bar's highlight is centred on its icon** ("this is all offset"). It was placed once from `offsetTop`,
+  before the icons and the brand font arrived, and stayed above its icon; it is measured from where things are and
+  placed again when the bar or an icon changes size.
+- Jump back in links to the full history on openvibe.my; the Dock's agent can read recent history on a press (the
+  history-timeline job's plumbing).
+
+- **The test runner gives a failed browser file one more try** (`retry` in `test-runner.js`, used by this package's
+  own run). Three releases in a row waited on the macOS runner, each time for different headless-Chrome files that
+  pass on Linux, on Windows and locally. A pass on the second try is named in the summary.
+
+Built by runner jobs and given their look here: the upload check (upload-dedupe), the computers picker
+(machines-one-place), the footer's read (whos-online-strip), the history link (history-timeline).
+
+## 4.189.0 — 2026-11-10
+
+**The balances are one pill, the menu and the Dock lead to each other, and the menu opens where you are.** Seven notes
+from the owner on 2026-11-10, each with a screenshot of the bar or the menu.
+
+- **One pill for the balances** ("we just show one, but it can animate between all three … it only needs to show the
+  things you have … nice icons that are animated, designed for the three currencies … a custom animation for gaining
+  and losing, with coins coming out of it"). `#openvibe-chips-all` is drawn at every width, with the balances the
+  person has (above zero, the largest first; the money balance leads when AI was used and it is empty) stacked in one
+  place and one showing. New `purse.js`: an icon drawn for OpenCoins (a coin struck with the ring), Vibes (a cut gem)
+  and the money balance (a note with a seal), each in its own colour leaned toward the theme's text so it holds on
+  light and dark; a turn through the balances on the first page of a visit and one every forty seconds or so; and on a
+  change the pill turns to that balance, counts the number, takes its colour for a moment and sends a few of its
+  pieces in (a gain) or out (a spend) with the amount under it. Calm motion shortens the moves; Off removes them.
+  The two-line pill on phones and the separate chips on computers are gone.
+- **The menu opens on this site's tab** ("this button should open the first tab so people can switch between pages on
+  the site they're on … make it more clear that those are pages on the site you're on"). No tab is remembered; the
+  picture still opens You. The pages are tiles under "Pages on <site>", in the case it is written in, behind a dot that
+  marks where you are.
+- **The current site is first in its group**, the site tiles are full touch targets, and a group's name sits on a
+  hairline ("design should be the first result … improve these section titles … make the icons look nicer").
+- **From the menu to the Dock and back** ("how are you supposed to get to the other menu from this area … a way to hop
+  over to the other interface that has the chat"). Under the menu's tabs a row opens the Dock on Vibe, Agents, Messages
+  or Activity (`ctx.dock`, given by the navbar where the Dock is on); the Dock's head has "Menu", which folds the Dock
+  and opens the menu out of the same button.
+- **The Dock's head** ("buggy and kind of ugly … more consistent, cohesive"). Its close button was drawn as a white bar
+  over blue dots: the Dock's line style for icons reached the menu button's parts. It is the same cross as the menu's
+  now. The chosen tab takes the theme's accent, as the menu's does (it was a dark box inside a box). On a phone the
+  head is two rows, as the menu's is: Menu, More and Close where the bar's bell and button are, and under them the
+  four tabs, full width, in the look of the menu's row that leads here.
+
+## 4.188.0 — 2026-11-10
+
+**The account's things are in the menu.** The owner, 2026-11-10, with the dropdown under the picture marked "Replace →
+to You tab": "this user drop down is just redundant … move it into the You tab of the menu … add account switching
+and adding accounts to that … consolidate the two into one menu."
+
+- **The picture opens the OpenVibe menu on You.** The block the dropdown drew (who you are, add another account,
+  settings, sign out, your other accounts, the site's own items from `addMenuItem`, light or dark and Display) is a
+  block of that tab, at its top, where a shorter bar with the name was. It is there wherever the bar has a person, with
+  or without a token for the network's reads.
+- **No dropdown.** The popup, its position, its height rules and its place among the panels (`user-menu`) are gone.
+  The block rests in the bar, out of sight, while the menu is closed: a site that looks for `#openvibe-logout-btn`,
+  `[data-ov-ask]` or its own item still finds it.
+- **The mark is larger in the bar** (42, was 34; 34 on a small phone, was 28). The owner: "make the OV branding take
+  up most of its area … stand out a little more … compared to the My." Nothing overlaps from 320 px
+  (`navbar-phone-fit-chrome`).
+- In the You tab, "All 65" keeps its own case (it was drawn in the heading's capitals).
 
 ## 4.187.0 — 2026-11-10
 

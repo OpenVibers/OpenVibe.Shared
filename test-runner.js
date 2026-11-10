@@ -10,6 +10,8 @@
 //   npm test                     # every *.test.js in dir, each in its own process, a few at a time
 //   npm test -- quota cache      # only files whose name contains one of the words
 //   npm test -- --strict         # a skip fails the run too (or OV_TEST_STRICT=1)
+//   npm test -- page --allow-empty   # exit 0 when no file matches (or OV_TEST_ALLOW_EMPTY=1):
+//                                # the pin-only CI subset on a repository without those files
 //
 // Each test file runs in its own process and owns its database: openvibe-sdk/testing `createTestDb` gives it its
 // own PGlite, or under `test:pg` its own PostgreSQL schema, roles and port. Files therefore parallelize safely and
@@ -72,6 +74,7 @@ function runOne(file, { dir, cwd, env, timeoutMs, nodeArgs }) {
  * timeoutMs (60000), parallel (a number, 'auto' = min(8, cpus-1), default min(4, cpus-1); resolved value returned), env (added to process.env; NODE_ENV=test by default),
  * hide (a RegExp: output lines of a failed file left out, e.g. /^\[DB\] /), pad (file-name column, 44),
  * match (which files, default /\.test\.js$/), serial (files to run alone after parallel files),
+ * retry (a RegExp: a failed file that matches is run once more; a pass on the second try counts, and is named in the summary),
  * nodeArgs ([]), log (console.log).
  */
 async function run(opts = {}) {
@@ -80,11 +83,16 @@ async function run(opts = {}) {
     const argv = opts.argv || process.argv.slice(2);
     const log = opts.log || console.log;
     const strict = argv.includes('--strict') || process.env.OV_TEST_STRICT === '1';
+    const allowEmpty = argv.includes('--allow-empty') || process.env.OV_TEST_ALLOW_EMPTY === '1';
     const filters = argv.filter((a) => !a.startsWith('-'));
     const match = opts.match || /\.test\.js$/;
     const files = fs.readdirSync(dir).filter((f) => match.test(f))
         .filter((f) => !filters.length || filters.some((w) => f.includes(w))).sort();
     if (!files.length) {
+        if (allowEmpty) {
+            log('no test files matched (allowed)');
+            return { results: [], passed: 0, skipped: 0, failed: 0, strict, exitCode: 0, summary: 'no test files matched (allowed)' };
+        }
         log('no test files matched');
         return { results: [], passed: 0, skipped: 0, failed: 0, strict, exitCode: 1, summary: 'no test files matched' };
     }
@@ -97,16 +105,26 @@ async function run(opts = {}) {
     const queue = [], serial = [];
     for (const file of files) (opts.serial && opts.serial.test(file) ? serial : queue).push(file);
     const results = [];
+    // A file the caller marks as worth a second try (browser tests on a slow machine) gets one.
+    const runFile = async (file) => {
+        let r = await runOne(file, cfg);
+        if (r.state === 'fail' && opts.retry && opts.retry.test(file)) {
+            log(`↻ ${file.padEnd(pad)} failed once (exit ${r.code}); a second try`);
+            const again = await runOne(file, cfg);
+            r = { ...again, ms: r.ms + again.ms, retried: true };
+        }
+        return r;
+    };
     await Promise.all(Array.from({ length: parallel }, async () => {
         while (queue.length) {
-            const r = await runOne(queue.shift(), cfg);
+            const r = await runFile(queue.shift());
             results.push(r);
             const mark = r.state === 'pass' ? '✓' : r.state === 'skip' ? '○' : '✗';
             log(`${mark} ${r.file.padEnd(pad)} ${String(r.ms).padStart(6)}ms${r.state === 'skip' ? `  ${r.skips.join('; ')}` : ''}`);
         }
     }));
     for (const file of serial) {
-        const r = await runOne(file, cfg);
+        const r = await runFile(file);
         results.push(r);
         const mark = r.state === 'pass' ? '✓' : r.state === 'skip' ? '○' : '✗';
         log(`${mark} ${r.file.padEnd(pad)} ${String(r.ms).padStart(6)}ms${r.state === 'skip' ? `  ${r.skips.join('; ')}` : ''}`);
@@ -119,12 +137,14 @@ async function run(opts = {}) {
         log(r.output.split('\n').filter((l) => !(opts.hide && opts.hide.test(l))).slice(-40).join('\n'));
     }
     const passed = results.length - failed.length - skipped.length;
-    const summary = skipped.length
+    const second = results.filter((r) => r.retried && r.state === 'pass').map((r) => r.file);
+    const summary = (skipped.length
         ? `${passed}/${results.length} test files passed, ${skipped.length} skipped (${skipped.map((r) => `${r.file}: ${r.skips.join('; ')}`).join(' | ')})${strict ? ' — strict: skips fail the run' : ''}`
-        : `${passed}/${results.length} test files passed`;
+        : `${passed}/${results.length} test files passed`)
+        + (second.length ? `; passed on a second try: ${second.join(', ')}` : '');
     log(`\n${summary}`);
     const exitCode = failed.length || (strict && skipped.length) ? 1 : 0;
-    return { results, passed, skipped: skipped.length, failed: failed.length, strict, exitCode, summary, parallel };
+    return { results, passed, skipped: skipped.length, failed: failed.length, strict, exitCode, summary, parallel, secondTry: second };
 }
 
 /** run(), then exit with its status: what a test/run.js calls. */

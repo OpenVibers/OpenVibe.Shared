@@ -180,8 +180,12 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
         assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /Juniper.*Working.*Reading job posts/, 'it names the Actor, its state and its step');
         // You on top: the name, Display (the Look panel) and Settings beside it; then your home, Most used and Jump back in.
+        // 4.195.0 (the owner, the old block crossed out: "get rid of this thing … we didn't really need [it] here, other than
+        // like adding your account"): one slim row of its own, and the old account block is not set in the menu at all.
         assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-me .ovh-who-txt b').textContent`), 'Ada', 'your name on top');
-        assert.ok(await s.evaluate(`!!document.querySelector('.ovh-me [data-ov-look-open]') && !!document.querySelector('.ovh-me a[href="https://openvibe.network/my"]')`), 'Display and Settings beside it');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs .ovh-account, .ovs .openvibe-navbar-dropdown, .ovs .ud-grid')`), 'the old account block and its grid of tiles are not in the menu');
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-me > .ovh-ib')].map((b) => b.getAttribute('aria-label'))`), ['Add or switch account', 'Display: theme, text size, motion', 'Account and settings', 'Sign out'], 'add or switch account, Display, Settings, Sign out, in that order');
+        assert.ok(await s.evaluate(`/[?&]add_account=1/.test(document.querySelector('.ovh-me > a.ovh-ib').getAttribute('href')) && !!document.querySelector('.ovh-me [data-ov-look-open]') && !!document.querySelector('.ovh-me a[href="https://openvibe.network/my"]')`), 'the add-account address is the bar\'s; Display and Settings are in the row');
         assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow')`), 'Display is not at the foot any more');
         assert.ok(await until(s, `document.querySelectorAll('.ovh-rail .ovh-card').length === 2`), 'Jump back in shows the places opened lately');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-rail .ovh-card')].map((a) => a.getAttribute('href'))`), ['https://openvibe.live/ada', 'https://openvibe.pics/1']);
@@ -191,8 +195,9 @@ const server = http.createServer((req, res) => {
         // to whatever the user uses the most". Your home comes first, then what you use most, then where you were last;
         // the bar with your name is short; each most-used app is a way in (its icon, a full touch target), not a legend.
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-sec > span')].map((x) => x.textContent)`), ['Your home', 'Most used', 'Jump back in'], 'your home, then most used, then where you were');
-        assert.ok(await s.evaluate(`document.querySelector('.ovh-me').getBoundingClientRect().height <= 56`), 'the bar with your name is short');
-        assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-me .ovh-ib')].every((b) => b.getBoundingClientRect().height >= 44)`), 'and its two buttons are still full touch targets');
+        assert.ok(await s.evaluate(`document.querySelector('.ovh-me').getBoundingClientRect().height <= 64`), 'the row with your name is one short row');
+        assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-me > .ovh-ib')].every((b) => { const r = b.getBoundingClientRect(); return r.height >= 44 && r.width >= 40; })`), 'and its buttons are full touch targets');
+        assert.ok(await s.evaluate(`(() => { const m = document.querySelector('.ovh-me').getBoundingClientRect(); return m.right <= innerWidth && [...document.querySelectorAll('.ovh-me > *')].every((x) => x.getBoundingClientRect().right <= m.right + 1); })()`), 'all of it on the screen');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].map((k) => [k.getAttribute('href'), k.getAttribute('aria-label'), !!k.querySelector('.ovh-ic > *')].join('|'))`),
             ['https://openvibe.live/|Live, opened 5 times|true', 'https://openvibe.pics/|Pics, opened 2 times|true'], 'each most-used app is a link with its icon and says how often');
         assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-use .ovh-key')].every((k) => { const r = k.getBoundingClientRect(); return r.height >= 44 && r.width >= 44; })`), 'each a full touch target');

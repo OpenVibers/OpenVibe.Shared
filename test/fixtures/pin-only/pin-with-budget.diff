@@ -1,0 +1,94 @@
+diff --git a/README.md b/README.md
+index 1395115..b9873b4 100644
+--- a/README.md
++++ b/README.md
+@@ -301,7 +301,7 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
+ 
+ <!-- versions:start -->
+ - openvibe-contracts: v0.384.0
+-- openvibe-sdk: v0.125.0
+-- openvibe-shared: v4.186.0
++- openvibe-sdk: v0.136.0
++- openvibe-shared: v4.190.0
+ - openvibe-publishing: v1.7.0
+ <!-- versions:end -->
+diff --git a/STATUS.json b/STATUS.json
+index 5204641..80a4146 100644
+--- a/STATUS.json
++++ b/STATUS.json
+@@ -8,12 +8,12 @@
+   "port": "4980",
+   "domain": "openvibe.quest",
+   "contracts": "openvibe-contracts v0.384.0",
+-  "sdk": "openvibe-sdk v0.125.0",
+-  "shared": "openvibe-shared v4.186.0",
++  "sdk": "openvibe-sdk v0.136.0",
++  "shared": "openvibe-shared v4.190.0",
+   "packages": [
+     "openvibe-contracts v0.384.0",
+-    "openvibe-sdk v0.125.0",
+-    "openvibe-shared v4.186.0",
++    "openvibe-sdk v0.136.0",
++    "openvibe-shared v4.190.0",
+     "openvibe-publishing v1.7.0"
+   ],
+   "summary": "OpenVibe.Quest: one quest log across every OpenVibe site. OpenVibe.Events delivers the domain events the sites already emit to POST /internal/events (signed v2, once-only through the openvibe-sdk inbox), the person taken from the field each event's own schema defines, and a progress count, a completion and a badge move because of it. 12 first-party quests in code, grouped by the site whose events each counts. Rewards are badges and OpenCoins — credited through OpenVibe.Network's wallet, off by default (QUEST_COINS), with per-person and network-wide daily caps, failures recorded and retried. Public API and server-rendered pages, complete without JavaScript. OpenCoins are off until Network grants the two capabilities.",
+diff --git a/package-lock.json b/package-lock.json
+index d3fc5fa..7e15af0 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -18,7 +18,7 @@
+         "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.384.0",
+         "openvibe-publishing": "https://codeload.github.com/OpenVibers/OpenVibe.Publishing/tar.gz/refs/tags/v1.7.0",
+         "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.136.0",
+-        "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.186.0",
++        "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.190.0",
+         "pg": "^8.23.0"
+       },
+       "devDependencies": {
+@@ -1209,9 +1209,9 @@
+       }
+     },
+     "node_modules/openvibe-shared": {
+-      "version": "4.186.0",
+-      "resolved": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.186.0",
+-      "integrity": "sha512-wD4net+UjO0a6OG73W+RR1z5MIWtPgj407xLEWphiVWgLTQ4V1r76+DtLOfSf6RfEda/ALizRu1zmxbvuGGZOw==",
++      "version": "4.190.0",
++      "resolved": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.190.0",
++      "integrity": "sha512-NnmQ+mJLTyM4mbYDyq/Nmxpjxo1ehmMcltz6NqcJJ/AhOTuZw7/QBl1CbJeWcGyXyL5VI/Ugu9/fIPe0UKvNNQ==",
+       "license": "MIT",
+       "dependencies": {
+         "jsonwebtoken": "^9.0.0",
+diff --git a/package.json b/package.json
+index 1c4042d..5f52d62 100644
+--- a/package.json
++++ b/package.json
+@@ -25,7 +25,7 @@
+     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.384.0",
+     "openvibe-publishing": "https://codeload.github.com/OpenVibers/OpenVibe.Publishing/tar.gz/refs/tags/v1.7.0",
+     "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.136.0",
+-    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.186.0",
++    "openvibe-shared": "https://codeload.github.com/OpenVibers/OpenVibe.Shared/tar.gz/refs/tags/v4.190.0",
+     "pg": "^8.23.0"
+   },
+   "engines": {
+diff --git a/test/perf-budget.test.js b/test/perf-budget.test.js
+index f4cb34c..6cb52de 100644
+--- a/test/perf-budget.test.js
++++ b/test/perf-budget.test.js
+@@ -21,11 +21,11 @@ const BUDGETS = {
+     // Raised 2026-10-22 with the rich home: figures under the hero, the most-earned badges, each card's "earned by",
+     // the badges nobody holds yet, the sites Quest follows, a FAQ and the quests as ItemList + FAQPage JSON-LD.
+     // Measured 54.3 KB raw / 10.6 KB brotli on a fresh database.
+-    htmlRawKB: 83.5, // 83.2 with the daily quest as a card of three rows and its glyphs drawn inline (2026-11-10); before: 82.6 with the daily quest hero (2026-11-09); 81.3 with openvibe-shared 4.93.2: content labels, glyph fallback, footer counts (2026-11-01); 80.6 with 2026-11-01: the hero orbit (15 sites, inline icons) (2026-11-01); 58.6 the home a taste and a door (2026-10-29): rails of kit cards and folds instead of every quest card and the sites list; 67.5 the hero's and the numbers' icons (inline ring icons, 2026-10-28); 61.2 openvibe-shared 4.15 footer: the compact footer opens into the whole one, and the pulse line; measured 54.3 (the home page: hero, figures, badges, features, the quests, sites, FAQ, cta, JSON-LD)
+-    htmlBrotliKB: 16.8, // 16.8: measured 16.3 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 2026-11-09
++    htmlRawKB: 87, // 87: measured 86.5 with openvibe-shared 4.190.0 (2026-11-10: the site name's dropdown, the footer's online strip, the balances pill); 83.2 with the daily quest as a card of three rows and its glyphs drawn inline (2026-11-10); before: 82.6 with the daily quest hero (2026-11-09); 81.3 with openvibe-shared 4.93.2: content labels, glyph fallback, footer counts (2026-11-01); 80.6 with 2026-11-01: the hero orbit (15 sites, inline icons) (2026-11-01); 58.6 the home a taste and a door (2026-10-29): rails of kit cards and folds instead of every quest card and the sites list; 67.5 the hero's and the numbers' icons (inline ring icons, 2026-10-28); 61.2 openvibe-shared 4.15 footer: the compact footer opens into the whole one, and the pulse line; measured 54.3 (the home page: hero, figures, badges, features, the quests, sites, FAQ, cta, JSON-LD)
++    htmlBrotliKB: 17, // 17: measured 16.9 with openvibe-shared 4.190.0 (2026-11-10: the site name's dropdown, the footer's online strip, the balances pill); 16.8: measured 16.3 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 2026-11-09
+     jsFiles: 5,   // 5 (theme-loader, web-runtime, navbar, footer, boost: openvibe-shared/shell)
+-    jsRawKB: 376.7, // 376.7: measured 368.7 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 2026-11-09
+-    jsBrotliKB: 89.8, // 89.8: measured 89.7 KB brotli with openvibe-shared 4.186.0 (2026-11-10: the mark's Working and Thinking states, the Dock and the menu as one sheet, bare controls styled by the loader); 89.5: measured 87.5 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 2026-11-09
++    jsRawKB: 393, // 393: measured 392.5 with openvibe-shared 4.190.0 (2026-11-10: the site name's dropdown, the footer's online strip, the balances pill); 376.7: measured 368.7 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 2026-11-09
++    jsBrotliKB: 94, // 94: measured 93.7 KB brotli with openvibe-shared 4.190.0 (2026-11-10: the site name's dropdown, the footer's online strip, the balances pill); 89.8: measured 89.7 KB brotli with openvibe-shared 4.186.0 (2026-11-10: the mark's Working and Thinking states, the Dock and the menu as one sheet, bare controls styled by the loader); 89.5: measured 87.5 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 2026-11-09
+     cssFiles: 4,   // 4 (2026-10-29: + /shared/kit.css and /shared/room.css, the kit's numbers, filters, folds, cards and rails); 2 (app.css + the cached /shared/showcase.css)
+     cssRawKB: 127.3, // 127.0 with the catalog's phone cards (2026-11-10); before: 125.9 with the daily card and the phone folds (2026-11-10); before: 122.2: measured 117.2 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0,
+     cssBrotliKB: 27.6, // 27.4 with the catalog's phone cards (2026-11-10); before: 27.1 with the daily card and the phone folds (2026-11-10); before: 26.6: measured 25.4 with openvibe-shared 4.163.0, plus room for 4.162.0–4.163.0, 20

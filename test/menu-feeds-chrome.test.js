@@ -108,13 +108,15 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         const box = await p.evaluate(`document.documentElement.scrollWidth`);
         assert.ok(box <= 390, `nothing runs off a phone (${box})`);
 
-        // Reopened later: the choice holds.
+        // Reopened later: the menu opens on this site's tab (4.189.0: no tab is remembered), and the Feed keeps its order.
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })), true`);
         await wait(200);
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`));
         await wait(150);
-        assert.strictEqual(await p.evaluate(`document.querySelector('.ovs-starttabs [aria-selected="true"]').getAttribute('data-tab')`), 'feed', 'it reopens on the tab last chosen');
+        assert.strictEqual(await p.evaluate(`document.querySelector('.ovs-starttabs [aria-selected="true"]').getAttribute('data-tab')`), 'here', 'it reopens on this site\'s tab, whatever was open last');
+        await p.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click(), true`);
+        await wait(250);
         assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories'], 'your feeds, in your order');
         // Signed in on a new device: the person's saved feeds come from Network, and a change is saved back.
         const ctx2 = await browser.newContext();

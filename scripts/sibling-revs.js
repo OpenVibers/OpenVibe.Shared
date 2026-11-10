@@ -15,9 +15,15 @@ const ROOT = path.join(__dirname, '..');
 const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov-fx.js', 'ov-labels.js', 'ov-forms.js', 'ov-forms.css', 'ov-share.js', 'ov-share.css',
     'search.js', 'dock.js', 'presence.js', 'panels.js', 'surfaces.js', 'notification-ui.js', 'history.js', 'appbar.js', 'release-watch.js', 'ov-icons.js', 'sso-client.js', 'overlay.js', 'ov-home.js', 'nav-slots.js',
     // 4.173.0: the wallet sheet (4.170.0) went out without ?v=, so a fix to it reached phones up to a day late.
-    'ov-wallet.js', 'ov-wallet.css'];
+    'ov-wallet.js', 'ov-wallet.css',
+    // 4.189.0: the balances pill's icons and effects.
+    'purse.js',
+    // 4.191.0: the one dropdown (the site's name opens its pages).
+    'ov-drop.js',
+    // 4.193.0: the one tooltip (Sign in, the menu button, short labels).
+    'ov-tip.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
-const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js'] },
+const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'dock-mount.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },
     'footer.js': { name: 'FOOTER_REV', files: ['shipped.js'] }, 'boost.js': { name: 'BOOST_REV', files: ['route-transition.js'] } };
 const table = (name, files) => `    const ${name} = { ${files.map((f) => `'${f}': '${hashAsset(fs.readFileSync(path.join(ROOT, f)))}'`).join(', ')} };`;
