@@ -217,7 +217,7 @@ const server = http.createServer((req, res) => {
 });
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-async function until(p, expr, what, ms = 5000) {
+async function until(p, expr, what, ms = 15000) {   // a limit on a poll: a loaded runner drew the pill after 5 s
     const end = Date.now() + ms;
     for (;;) {
         const v = await p.evaluate(expr);
