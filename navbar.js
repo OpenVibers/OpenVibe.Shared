@@ -2299,12 +2299,22 @@
         _navEl = nav;
         paintSlots();
         watchKeyboard();
+        loadBottom();
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
         loadUnread();
         renderAppBar();
         return nav;
+    }
+
+    // ── The bottom of the screen (bottom.js): one measurement of the visible viewport for the app bar, the small
+    // player, the Dock's pill and the composer. Loaded before any of them draw; they all work without it.
+    let _bottomLoading = false;
+    function loadBottom() {
+        if (_bottomLoading || root.OpenVibeBottom) return;
+        _bottomLoading = true;
+        try { const sc = document.createElement('script'); sc.id = 'ovb-loader'; sc.src = siblingV('bottom.js'); sc.async = true; document.head.appendChild(sc); } catch { _bottomLoading = false; }
     }
 
     // ── The phone app bar (appbar.js, loaded only when the site sets appBar): its main places as a bottom tab bar ──

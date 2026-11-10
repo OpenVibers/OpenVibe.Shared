@@ -33,6 +33,11 @@
  * Signed-in visitors get a cross-site row: their account, their channel, themes and the tools
  * hub, so the network behaves like one product instead of a ring of separate sites. It reads
  * the shared ov_token the same way navbar.js does and never blocks rendering on it.
+ *
+ * The page's end (plan 280, the owner: "That huge wasted space … in between that and the footer … It's just waste"):
+ * content ends, then 32 px on a computer (24 on a phone), then the footer — the footer's own margin-top is that
+ * number and nothing else may add to it. A site's bottom padding above the footer is its own dead space and is
+ * removed in that site (scripts/audit-page-end.js measures it on every home).
  */
 (function (root, factory) {
     const api = factory();
@@ -382,9 +387,9 @@
 
     // ── Styles (injected once) ─────────────────────────────────
     const CSS = `
-.ovf{background:var(--bg-secondary,#12131c);border-top:1px solid var(--border,rgba(255,255,255,.08));margin-top:40px;font-family:var(--ov-font,'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif);
+.ovf{background:var(--bg-secondary,#12131c);border-top:1px solid var(--border,rgba(255,255,255,.08));margin-top:32px;font-family:var(--ov-font,'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif);
   padding:clamp(24px,4vw,40px) clamp(14px,4vw,32px) calc(clamp(20px,3vw,28px) + env(safe-area-inset-bottom,0px));}
-.ovf[data-variant="compact"]{margin-top:24px;padding:14px clamp(12px,3vw,24px) calc(14px + env(safe-area-inset-bottom,0px));}
+.ovf[data-variant="compact"]{margin-top:32px;padding:14px clamp(12px,3vw,24px) calc(14px + env(safe-area-inset-bottom,0px));}
 .ovf-inner{max-width:1240px;margin:0 auto}
 .ovf-inner--compact{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 18px;text-align:center}
 .ovf-cols{display:grid;gap:clamp(20px,3vw,36px);grid-template-columns:minmax(230px,1.6fr) repeat(auto-fit,minmax(120px,1fr));align-items:start}
@@ -491,6 +496,7 @@ a.ovf-tile:active{transform:scale(.96)}
 @keyframes ovfLive{0%{box-shadow:0 0 0 0 rgba(239,68,68,.55)}70%{box-shadow:0 0 0 7px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
 .ovf-pulse-quiet{font-weight:500!important;color:var(--text-secondary,#b6bdd2)!important}
 @media (max-width:900px){.ovf-cols{grid-template-columns:repeat(2,minmax(0,1fr))}.ovf-col--brand{grid-column:1/-1}}
+@media (max-width:760px){.ovf,.ovf[data-variant="compact"]{margin-top:24px}}
 @media (max-width:560px){
   .ovf{padding-bottom:calc(20px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}
   .ovf[data-variant="compact"]{padding-bottom:calc(14px + var(--ov-footer-clearance,0px) + env(safe-area-inset-bottom,0px))}

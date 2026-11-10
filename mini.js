@@ -58,7 +58,7 @@
         const st = document.createElement('style');
         st.id = 'ov-mini-style';
         st.textContent = `
-.ovmini { --mc: var(--accent, #3b82f6); box-sizing: border-box; position: fixed; z-index: 9990; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px)); width: 340px; max-width: calc(100vw - 32px); display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 2px; border: 1px solid var(--border, #1f2d47); border-radius: 16px; background: var(--bg-elevated, var(--bg-card, #101828)); color: var(--text-primary, #e6edf7); box-shadow: 0 18px 44px -18px rgba(0, 0, 0, .7), 0 2px 8px rgba(0, 0, 0, .25); overflow: hidden; font: 500 .88rem/1.3 var(--font-sans, system-ui, sans-serif); animation: ovmini-in .28s cubic-bezier(.2, .7, .2, 1) both; }
+.ovmini { --mc: var(--accent, #3b82f6); box-sizing: border-box; position: fixed; z-index: var(--ovb-z-mini, 9991); left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ovb-bar, var(--ovnav-appbar-h, 0px))); translate: 0 calc(-1 * var(--ovb-lift, 0px)); width: 340px; max-width: calc(100vw - 32px); display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 2px; border: 1px solid var(--border, #1f2d47); border-radius: 16px; background: var(--bg-elevated, var(--bg-card, #101828)); color: var(--text-primary, #e6edf7); box-shadow: 0 18px 44px -18px rgba(0, 0, 0, .7), 0 2px 8px rgba(0, 0, 0, .25); overflow: hidden; font: 500 .88rem/1.3 var(--font-sans, system-ui, sans-serif); animation: ovmini-in .28s cubic-bezier(.2, .7, .2, 1) both; }
 .ovmini-pic { position: relative; grid-column: 1 / -1; display: block; aspect-ratio: 16 / 9; background: #000; cursor: pointer; }
 .ovmini-pic video { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; }
 .ovmini-back { position: absolute; left: 8px; top: 8px; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px 0 8px; border: 0; border-radius: 999px; background: rgba(5, 8, 15, .72); color: #fff; font: 600 .76rem/1 var(--font-sans, system-ui, sans-serif); text-decoration: none; opacity: 0; transition: opacity .16s ease; }
@@ -82,7 +82,7 @@
 @keyframes ovmini-out { to { opacity: 0; transform: translateY(10px); } }
 @media (max-width: 640px) {
   /* A phone: one bar above the app bar. The picture at its left, then what is playing, then play and close. */
-  .ovmini { left: 8px; right: 8px; width: auto; max-width: none; bottom: calc(8px + var(--ovnav-appbar-h, env(safe-area-inset-bottom, 0px))); grid-template-columns: auto minmax(0, 1fr) auto auto; border-radius: 14px; }
+  .ovmini { left: 8px; right: 8px; width: auto; max-width: none; bottom: calc(8px + var(--ovb-base, var(--ovnav-appbar-h, env(safe-area-inset-bottom, 0px)))); grid-template-columns: auto minmax(0, 1fr) auto auto; border-radius: 14px; }
   .ovmini-pic { grid-column: 1; width: 112px; aspect-ratio: 16 / 9; }
   .ovmini-back { display: none; }
   .ovmini-sound { left: 4px; right: auto; top: auto; bottom: 7px; min-height: 26px; padding: 0 8px 0 5px; font-size: .68rem; }
@@ -181,6 +181,7 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
         video.muted = !!r.muted;
         arm(); source();
         document.body.appendChild(el);
+        if (root.OpenVibeBottom) root.OpenVibeBottom.refresh();
         root.addEventListener('pagehide', leave);
         document.addEventListener('play', other, true);
         paint();
@@ -196,7 +197,7 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
         el = null; video = null; live = false;
         if (v) { try { v.pause(); v.removeAttribute('src'); v.load(); } catch { /* already gone */ } }
         if (!quiet) forget();
-        const off = () => node.remove();
+        const off = () => { node.remove(); if (root.OpenVibeBottom) root.OpenVibeBottom.refresh(); };
         if (quiet || document.documentElement.getAttribute('data-ov-motion') === 'off') off();
         else { node.classList.add('is-leaving'); node.addEventListener('animationend', off, { once: true }); root.setTimeout(off, 260); }
     }
