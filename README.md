@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.190.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.191.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -831,7 +831,18 @@ One menu (4.187): the OpenVibe mark is a button that opens the OpenVibe menu
   on its first tab, as the menu button does (there is no separate site
   switcher). The site's name stays the link home; switcher: false keeps the
   mark as a home link.
-The balances (4.189): one pill, `#openvibe-chips-all`, at every width, with
+New in 4.190: `ov-drop.js` is the one dropdown (`OVDrop.open(anchor, items,
+  opts)`, `.attach(button, items)`, `.pages(anchor, links, icon)`): it opens out
+  of what was pressed, under it or above, stays on screen, and one is open at a
+  time; the bar's site name opens the site's pages with it. `purse.js` gives any
+  site the currencies' effects: `OpenVibePurse.burst(el, id, delta)` plays the
+  gain or spend at an element (inside a dialog too), `.count(el, from, to,
+  format)` counts a number, `data-purse="coins|vibes|balance"` gives a holder
+  the currency's colour as `--pc`. `machines.js` is the one picker of a person's
+  Link computers (`[data-ov-machines]` or `OpenVibeMachines.mount`). `OVUpload`
+  takes `checkDuplicate(file, sha256)` and tells a person they already have a
+  file. The footer strip reads `/api/frame/online`.
+  The balances (4.189): one pill, `#openvibe-chips-all`, at every width, with
   one `.ovnav-chip-mini` per balance the person has (OpenCoins, Vibes, the money
   balance; only those above zero, the largest first) and one of them showing.
   `purse.js`, loaded beside the navbar, draws each currency's icon

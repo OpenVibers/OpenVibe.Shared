@@ -167,7 +167,7 @@ const data = {
     const more = logEl.querySelector('.ov-shipped-more');
     assert.strictEqual(more.hidden, false);
     assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-bar:not(.ov-shipped-kinds) .ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe']);
-    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-kinds .ov-shipped-chip')].map((b) => b.textContent), ['All changes', 'New', 'Better', 'Fixed'], 'the kind filter');
+    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-kinds .ov-shipped-chip')].map((b) => b.textContent), ['All changes', 'New', 'Improved', 'Fixed'], 'the kind filter (an improvement is named "Improved", not "Better")');
     more.dispatchEvent(new window.Event('click'));
     await new Promise((r) => setTimeout(r, 20));
     assert.ok(calls.some((u) => u.includes('before=CUR') && u.includes('service=wiki')));

@@ -18,6 +18,7 @@
     'use strict';
     let barEl = null;
     let resizeBound = false;
+    let pillWatch = null;
 
     function spec(ctx) {
         const cfg = ctx.config.appBar;
@@ -80,8 +81,12 @@
         const ic = bar && bar.querySelector('.ovnav-ab.is-here .ovnav-ab-ic');
         if (!pill || !ic) return;
         if (instant) bar.classList.add('ab-still');
-        bar.style.setProperty('--ab-x', `${ic.offsetLeft + (ic.offsetWidth - 52) / 2}px`);
-        bar.style.setProperty('--ab-y', `${ic.offsetTop}px`);
+        // From where the icon and the bar are now (not offsetTop: a positioned tab or a late icon made that stale, and
+        // the pill sat above its icon), centred on the icon both ways.
+        const b = bar.getBoundingClientRect(), r = ic.getBoundingClientRect();
+        if (!r.width) return;
+        bar.style.setProperty('--ab-x', `${Math.round(r.left - b.left - bar.clientLeft + (r.width - 52) / 2)}px`);
+        bar.style.setProperty('--ab-y', `${Math.round(r.top - b.top - bar.clientTop + (r.height - 28) / 2)}px`);
         const raf = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (f) => setTimeout(f, 16);
         if (instant) raf(() => raf(() => bar.classList.remove('ab-still')));
     }
@@ -137,6 +142,14 @@
         if (de && de.classList) de.classList.add('ov-has-appbar');
         placePill(bar, true);
         if (!resizeBound && typeof window !== 'undefined' && typeof window.addEventListener === 'function') { resizeBound = true; window.addEventListener('resize', () => placePill(barEl, true)); }
+        // The icons and the brand font arrive after the bar is drawn, and a tab's label can wrap: place it again whenever
+        // the bar or the lit icon changes size, and once the fonts are in.
+        if (typeof ResizeObserver === 'function') {
+            if (pillWatch) pillWatch.disconnect();
+            pillWatch = new ResizeObserver(() => placePill(barEl, true));
+            pillWatch.observe(bar); bar.querySelectorAll('.ovnav-ab-ic').forEach((el) => pillWatch.observe(el));
+        }
+        if (document.fonts && document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(() => placePill(barEl, true)).catch(() => {});
     }
 
     const api = { render, spec };

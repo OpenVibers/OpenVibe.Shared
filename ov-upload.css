@@ -56,6 +56,11 @@
 @keyframes ov-upload-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 @keyframes ov-upload-pulse { 50% { opacity: .5; } }
 @keyframes ov-upload-check { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+/* "You already uploaded this": the note, then the three ways on, as one block under the file's row. */
+.ov-upload__duplicate-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 24%, transparent); animation: ov-upload-in .3s cubic-bezier(.2, .9, .3, 1.1) both; }
+.ov-upload__duplicate-note { flex: 1 0 100%; margin: 0 0 2px; font-size: 13.5px; font-weight: 650; color: var(--text-primary, #e6edf7); }
+.ov-upload__duplicate-actions .ovk-btn { min-height: 40px; }
+@media (pointer: coarse) { .ov-upload__duplicate-actions .ovk-btn { min-height: 44px; flex: 1 1 auto; } }
 @keyframes ov-upload-draw { to { stroke-dashoffset: 0; } }
 @keyframes ov-upload-in { from { opacity: 0; transform: translateY(6px); } }
 @keyframes ov-upload-bob { 50% { transform: translateY(-3px); } }

@@ -25,7 +25,7 @@ const BROWSER = Object.freeze([
     'dock.js',              // the Dock and its pill; navbar.js loads it for a signed-in person
     'dock-runs.js',         // the Dock's content-aware Agents rows and overview, loaded with that tab
     'ai-marks-client.js',   // maker marks on a run receipt, loaded only in Agents
-    'presence.js', 'purse.js', 'overlay.js', 'nav-slots.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
+    'presence.js', 'purse.js', 'machines.js', 'ov-drop.js', 'overlay.js', 'nav-slots.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
     'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
     'dock-share.js',        // the Dock's Send to… (4.144.0); dock.js loads it the first time something is sent

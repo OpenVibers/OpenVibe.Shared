@@ -124,4 +124,17 @@ assert.ok(withSummary.indexOf('</head>') < withSummary.indexOf('<noscript><secti
     assert.doesNotMatch(shell.page({ name: 'X', service: 'mail', favicon: false, body: '' }), /rel="icon"/, 'favicon: false opts out');
     assert.match(shell.page({ name: 'Plain', body: '' }), /data-ov-icon="network"/, 'no service: the network mark');
 }
+{
+    // One bar mount per page: the server's bar goes into the page's own mount where it has one (4.190.0).
+    const count = (html) => (html.match(/id="navbar-mount"/g) || []).length;
+    const plain = shell.page({ name: 'X', service: 'mail', body: '<main>Hi</main>' });
+    assert.equal(count(plain), 1, 'a page with no mount of its own gets one');
+    const own = shell.page({ name: 'X', service: 'mail', body: '<div id="navbar-mount"></div>\n<main>Hi</main>' });
+    assert.equal(count(own), 1, 'a page with its own mount keeps one, not two (the second was an empty 52 px box)');
+    assert.match(own, /<div id="navbar-mount"><nav class="openvibe-navbar"[^>]*data-ov-server-nav="true"[\s\S]*<\/nav><\/div>\n<main>Hi<\/main>/, 'and the server\'s bar is in it, where the page put it');
+    const classed = shell.page({ name: 'X', service: 'mail', body: '<div id="navbar-mount" class="top"></div><main>Hi</main>' });
+    assert.equal(count(classed), 1, 'a mount with attributes is the same mount');
+    const price = shell.page({ name: 'X', navbar: { service: 'mail', links: [{ label: 'Costs $1 $& more', href: '/a' }] }, body: '<div id="navbar-mount"></div>' });
+    assert.ok(price.includes('Costs $1 $&amp; more') && (price.match(/id="navbar-mount"/g) || []).length === 1, 'a dollar sign in a link is written as it is');
+}
 console.log('shell: all checks passed');

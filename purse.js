@@ -11,7 +11,10 @@
    OpenVibePurse.mount(button)   the pill, after each draw of the bar
    OpenVibePurse.set(id, value)  a balance changed ('coins', '1,234')
    OpenVibePurse.icon(id, size)  the currency's icon as SVG text ('coins' | 'vibes' | 'balance'), for other surfaces
-   OpenVibePurse.play(id, delta) the gain or spend effect alone (openvibe.design shows it) */
+   OpenVibePurse.play(id, delta) the gain or spend effect at the bar's pill
+   OpenVibePurse.burst(el, id, delta)        the same effect at any element: a buy button, a card, a tip
+   OpenVibePurse.count(el, from, to, format) count a number from one value to another
+   A holder with data-purse="coins|vibes|balance" has the currency's colour as --pc; .ovp-play plays its icon's move. */
 (function (root) {
     'use strict';
     if (!root || !root.document || root.OpenVibePurse) return;
@@ -27,7 +30,7 @@
         balance: '<g class="ovp-note"><rect x="2.2" y="5.6" width="19.6" height="12.8" rx="3.2" fill="var(--pc)"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="var(--pd)" stroke-width="2.1"/><path d="M5.6 9.2v.01M18.4 14.8v.01" stroke="var(--pd)" stroke-width="2.2" stroke-linecap="round"/><path d="M5 8.4h3.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></g>',
     };
     const CSS = `
-.ovnav-chip-mini, .ovp-bit, .ovp-delta, .ovp-icw { --pc: var(--text-secondary, #a8b3c4); --pd: color-mix(in oklab, var(--pc) 42%, #000); }
+[data-purse], .ovnav-chip-mini, .ovp-bit, .ovp-delta, .ovp-icw { --pc: var(--text-secondary, #a8b3c4); --pd: color-mix(in oklab, var(--pc) 42%, #000); }
 /* Each colour leans toward the page's text, so it is brighter on a dark theme and deeper on a light one. */
 [data-purse="coins"] { --pc: color-mix(in oklab, #f6b21d 88%, var(--text-primary, #e6edf7)); }
 [data-purse="vibes"] { --pc: color-mix(in oklab, #1fc78c 86%, var(--text-primary, #e6edf7)); }
@@ -44,6 +47,11 @@
 .is-purse .is-on .ovp-gem { transform-origin: 12px 12px; animation: ovpGem .7s cubic-bezier(.3, 1.4, .4, 1) both; }
 .is-purse .is-on .ovp-note { transform-origin: 12px 12px; animation: ovpNote .6s cubic-bezier(.3, 1.3, .4, 1) both; }
 .is-purse .is-on .ovp-glint { animation: ovpGlint 2.8s ease-in-out .6s infinite; }
+/* Anywhere else: .ovp-play on an icon's holder plays its move once (take the class off and put it back to replay). */
+.ovp-play .ovp-spin { transform-origin: 12px 12px; animation: ovpSpin .7s cubic-bezier(.3, .9, .3, 1) both; }
+.ovp-play .ovp-gem { transform-origin: 12px 12px; animation: ovpGem .7s cubic-bezier(.3, 1.4, .4, 1) both; }
+.ovp-play .ovp-note { transform-origin: 12px 12px; animation: ovpNote .6s cubic-bezier(.3, 1.3, .4, 1) both; }
+.ovp-play .ovp-glint { animation: ovpGlint 2.8s ease-in-out .6s infinite; }
 @keyframes ovpSpin { from { transform: scaleX(calc(1 - 2 * var(--ov-move, 1))); } 50% { transform: scaleX(calc(1 - .9 * var(--ov-move, 1))); } }
 @keyframes ovpGem { from { transform: rotate(calc(-28deg * var(--ov-move, 1))) scale(.6); } }
 @keyframes ovpNote { from { transform: translateX(calc(-5px * var(--ov-move, 1))) rotate(calc(-12deg * var(--ov-move, 1))); } }
@@ -128,13 +136,14 @@
         tour();
     }
     /** A few of the currency's pieces: into the pill from below on a gain, out of it and down on a spend. */
-    function pieces(id, rect, gain, k) {
+    function pieces(id, rect, gain, k, at) {
         if (!ICONS[id] || typeof doc.body.animate !== 'function' || k === 0) return;
-        const cx = rect.left + 14, cy = rect.top + rect.height / 2, n = k < 1 ? 3 : 7;
+        // at: { x, y } where the pieces meet (the pill's icon by default), host: the layer they are drawn in, up: they fly above it.
+        const cx = at && at.x != null ? at.x : rect.left + 14, cy = at && at.y != null ? at.y : rect.top + rect.height / 2, n = k < 1 ? 3 : 7, host = (at && at.host) || doc.body, sign = at && at.up ? -1 : 1;
         for (let i = 0; i < n; i += 1) {
             const b = doc.createElement('span'); b.className = 'ovp-bit'; b.setAttribute('data-purse', id); b.innerHTML = svg(13, ICONS[id]);
-            doc.body.appendChild(b);
-            const spread = ((i / (n - 1)) - .5) * 2, dx = spread * 34 * k + (Math.random() - .5) * 10, dy = (38 + Math.random() * 26) * k, turn = (Math.random() - .5) * 260 * k;
+            host.appendChild(b);
+            const spread = ((i / (n - 1)) - .5) * 2, dx = spread * 34 * k + (Math.random() - .5) * 10, dy = sign * (38 + Math.random() * 26) * k, turn = (Math.random() - .5) * 260 * k;
             const far = `translate(${cx - 6 + dx}px, ${cy - 6 + dy}px) rotate(${turn}deg) scale(.9)`, near = `translate(${cx - 6}px, ${cy - 6}px) rotate(0deg) scale(.55)`;
             const mid = `translate(${cx - 6 + dx * .7}px, ${cy - 6 + dy * (gain ? .75 : .25) - (gain ? 0 : 9 * k)}px) rotate(${turn / 2}deg) scale(1)`;
             const frames = gain ? [{ transform: far, opacity: 0 }, { transform: mid, opacity: 1, offset: .3 }, { transform: near, opacity: .9, offset: .92 }, { transform: near, opacity: 0 }]
@@ -144,12 +153,13 @@
         }
     }
     /** "+15" or "−200" under the pill: it rises into the pill on a gain and falls away on a spend. */
-    function delta(id, rect, d, k) {
+    function delta(id, rect, d, k, at) {
         if (typeof doc.body.animate !== 'function') return;
+        const host = (at && at.host) || doc.body, up = !!(at && at.up);
         const t = doc.createElement('span'); t.className = 'ovp-delta'; t.setAttribute('data-purse', id);
         t.textContent = `${d > 0 ? '+' : '−'}${Math.abs(d) >= 1e4 ? short(Math.abs(d)) : Math.abs(d).toLocaleString()}`;
-        doc.body.appendChild(t);
-        const x = Math.max(6, Math.min(root.innerWidth - t.offsetWidth - 6, rect.left + rect.width / 2 - t.offsetWidth / 2)), y = rect.bottom + 6, m = 16 * (k || .01);
+        host.appendChild(t);
+        const x = Math.max(6, Math.min(root.innerWidth - t.offsetWidth - 6, rect.left + rect.width / 2 - t.offsetWidth / 2)), y = up ? rect.top - t.offsetHeight - 6 : rect.bottom + 6, m = (up ? -16 : 16) * (k || .01);
         const frames = d > 0 ? [{ transform: `translate(${x}px, ${y + m}px)`, opacity: 0 }, { transform: `translate(${x}px, ${y}px)`, opacity: 1, offset: .22 }, { transform: `translate(${x}px, ${y}px)`, opacity: 1, offset: .78 }, { transform: `translate(${x}px, ${y - m * .6}px) scale(.9)`, opacity: 0 }]
             : [{ transform: `translate(${x}px, ${y - m * .5}px)`, opacity: 0 }, { transform: `translate(${x}px, ${y}px)`, opacity: 1, offset: .22 }, { transform: `translate(${x}px, ${y}px)`, opacity: 1, offset: .75 }, { transform: `translate(${x}px, ${y + m}px)`, opacity: 0 }];
         const a = t.animate(frames, { duration: 1900, easing: 'ease-out', fill: 'both' });
@@ -166,11 +176,26 @@
         later(() => { btn.classList.remove('is-gain', 'is-loss'); }, 1500);
         later(() => { busy = false; show(home); idle(); }, 3400);
     }
-    /** Count the number from what it was to what it is, in the bar's short form. */
-    function count(el, from, to) {
-        if (!el || motion() === 0 || typeof root.requestAnimationFrame !== 'function') return;
+    /**
+     * The gain or spend effect at any element (4.190.0): the currency's pieces fly into it (a gain) or out of it (a
+     * spend) and the amount shows beside it. It works inside an open dialog, and goes upward near the bottom of the
+     * screen. burst(button, 'coins', -200) when someone spends; burst(card, 'vibes', 50) when they receive.
+     */
+    function burst(el, id, d) {
+        if (!el || !el.getBoundingClientRect || !d || !ICONS[id]) return;
+        style();
+        const rect = el.getBoundingClientRect(); if (!rect.width) return;
+        const icon = el.querySelector && el.querySelector('.ovp-ic'), ir = icon ? icon.getBoundingClientRect() : rect;
+        const at = { x: ir.left + ir.width / 2, y: ir.top + ir.height / 2, host: (el.closest && el.closest('dialog[open]')) || doc.body, up: rect.bottom > root.innerHeight - 110 };
+        const k = motion();
+        pieces(id, rect, d > 0, k, at); delta(id, rect, d, k, at);
+    }
+    /** Count a number from what it was to what it is: in the bar's short form, or with the format given. */
+    function count(el, from, to, fmt) {
+        if (!el || typeof root.requestAnimationFrame !== 'function') return;
+        if (motion() === 0) { el.textContent = (fmt || short)(to); return; }
         const t0 = root.performance.now(), ms = 800;
-        const step = (t) => { const p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3); if (!el.isConnected) return; el.textContent = short(from + (to - from) * e); if (p < 1) root.requestAnimationFrame(step); };
+        const step = (t) => { const p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3); if (!el.isConnected) return; el.textContent = (fmt || short)(p < 1 ? from + (to - from) * e : to); if (p < 1) root.requestAnimationFrame(step); };
         root.requestAnimationFrame(step);
     }
     function set(id, value) {
@@ -181,6 +206,6 @@
         m.setAttribute('data-v', String(value));
         play(id, n - was); count(m.querySelector('.ovnav-chip-mv'), was, n);
     }
-    root.OpenVibePurse = { mount, set, play, icon: (id, size) => (ICONS[id] ? svg(size || 20, ICONS[id]) : ''), ids: Object.keys(ICONS) };
+    root.OpenVibePurse = { mount, set, play, burst, count, icon: (id, size) => { style(); return ICONS[id] ? svg(size || 20, ICONS[id]) : ''; }, ids: Object.keys(ICONS) };
     const now = doc.getElementById('openvibe-chips-all'); if (now) mount(now);
 })(typeof window !== 'undefined' ? window : null);

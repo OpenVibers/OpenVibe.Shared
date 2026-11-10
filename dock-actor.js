@@ -161,6 +161,26 @@
             form.append(input, send);
             form.addEventListener('submit', (e) => { e.preventDefault(); const text = input.value.trim(); if (!text) return; act('/tell', { text }, send).then((ok) => { if (ok) input.value = ''; }); });
             container.append(form);
+            const history = h('div', 'ovdac-history');
+            const read = h('button', 'ovdac-btn', 'Read recent history'); read.type = 'button';
+            const rows = h('div', 'ovdac-note'); rows.hidden = true;
+            read.addEventListener('click', async () => {
+                read.disabled = true;
+                try {
+                    const t = typeof o.token === 'function' ? await o.token() : o.token;
+                    if (!t) throw new Error('Sign in to read history.');
+                    const url = String(o.networkBase || 'https://openvibe.network').replace(/\/+$/, '') + '/api/v1/history/agents/recent?limit=10';
+                    const response = await fetch(url, { headers: { accept: 'application/json', authorization: `Bearer ${t}` }, credentials: 'omit' });
+                    const result = await response.json().catch(() => ({}));
+                    if (response.status === 403) { rows.textContent = 'Your agent history setting is off. Turn it on in My settings to allow this read.'; }
+                    else if (!response.ok) { rows.textContent = 'Recent history is unavailable.'; }
+                    else { rows.textContent = (result.items || []).map((x) => `${x.type}: ${x.title}`).join(' · ') || 'No recent history.'; }
+                    rows.hidden = false;
+                } catch { rows.textContent = 'Recent history is unavailable.'; rows.hidden = false; }
+                finally { read.disabled = false; }
+            });
+            history.append(read, rows);
+            container.append(history);
         }
 
         async function act(path, body, btn) {

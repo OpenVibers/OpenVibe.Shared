@@ -60,6 +60,21 @@ const { run, skipsIn, resolveParallel } = require('../test-runner');
     assert.strictEqual(r.exitCode, 1);
     assert.deepStrictEqual(skipsIn('x\n  ACK test: skipped (ffmpeg not installed)  \nrollback with newer writes: skipped (no git history)\nOK B: skipped — old style'),
         ['ACK test: skipped (ffmpeg not installed)', 'rollback with newer writes: skipped (no git history)']);
+    // retry: a file that matches and fails is run once more. One that passes the second time counts as passed and is
+    // named; one that fails twice is a failure; a file that does not match is not tried again.
+    const flag = path.join(dir, 'ran-once');
+    write('f-slow-chrome.test.js', `const fs = require('fs'); if (!fs.existsSync(${JSON.stringify(flag)})) { fs.writeFileSync(${JSON.stringify(flag)}, '1'); throw new Error('too slow the first time'); } console.log('f: all checks passed');\n`);
+    write('g-broken-chrome.test.js', "throw new Error('wrong both times');\n");
+    lines.length = 0;
+    r = await run({ dir, argv: ['f-slow', 'g-broken', 'd-fail', 'a-pass'], log, retry: /-chrome\.test\.js$/ });
+    assert.deepStrictEqual(r.results.map((x) => [x.file, x.state, Boolean(x.retried)]), [['a-pass.test.js', 'pass', false], ['d-fail.test.js', 'fail', false], ['f-slow-chrome.test.js', 'pass', true], ['g-broken-chrome.test.js', 'fail', true]]);
+    assert.deepStrictEqual([r.passed, r.failed, r.exitCode, r.secondTry], [2, 2, 1, ['f-slow-chrome.test.js']]);
+    assert.match(r.summary, /^2\/4 test files passed; passed on a second try: f-slow-chrome\.test\.js$/, 'the summary names what needed a second try');
+    assert.ok(lines.some((l) => l.startsWith('↻ f-slow-chrome.test.js')) && lines.some((l) => l.startsWith('✓ f-slow-chrome.test.js')), 'the first failure is said, then the pass');
+    assert.strictEqual(lines.filter((l) => l.startsWith('↻ d-fail')).length, 0, 'a file that does not match is not run again');
+    fs.rmSync(flag, { force: true });
+    r = await run({ dir, argv: ['f-slow'], log });
+    assert.deepStrictEqual([r.failed, r.exitCode], [1, 1], 'without retry, the first failure stands');
     fs.rmSync(dir, { recursive: true, force: true });
     console.log('test-runner: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });
