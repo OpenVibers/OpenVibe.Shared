@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.201.0 — 2026-11-10
+
+- **One site list, the owner's eight groups (plan ask 274).** The footer's Network column and its no-Frame fallback now link the eight groups of OpenVibe.Network `frame/sites.js` GROUPS, in its order (`watch`, `talk`, `play`, `read`, `shop`, `tools`, `make`, `build`), reading the Frame's own `groups` when it answers; `rooms.js` repeats the same ids and labels; the You tab's folders are the same eight, Build keeping its saved `build` folder id; and each home page's "More on OpenVibe" leads to the next places in its own group, in group order, instead of a hand-picked cross-group list. Sites keep their names: Email, Restream, Studio, Locker.
+
 ## 4.199.0 — 2026-11-10
 
 **Every page downloads about 56 KB less: the shared files are served minified.** From the owner's notes of 2026-11-10:
