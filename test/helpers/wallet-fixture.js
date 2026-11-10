@@ -19,8 +19,8 @@ const wallet = {
     },
     checkout: { providers: [{ name: 'stripe', hosts: ['checkout.stripe.com'] }], vibes: { minimum: 100, maximum: 100000, price_tiers: [{ min: 100, usd_per_bit: 0.012 }] }, topup: { enabled: true, amounts_cents: [1000, 2500], fee_bps: 0 } },
     recent_activity: [
-        { id: 'a', at: '2026-11-08T12:00:00Z', kind: 'coins', amount: '50', label: 'Daily quest completed', site: 'quest', detail: '' },
-        { id: 'b', at: '2026-11-08T10:00:00Z', kind: 'vibes', amount: '-25', label: 'Tipped a creator', site: 'live', detail: '' },
+        { id: 'a', at: '2026-11-08T12:00:00Z', kind: 'coins', amount: '50', label: 'for the quest Publish a video', subject: { name: 'Publish a video', url: 'https://openvibe.quest/quests/publish-a-video' }, site: 'OpenVibe.Quest', detail: '' },
+        { id: 'b', at: '2026-11-08T10:00:00Z', kind: 'vibes', amount: '-25', label: 'for a tip to @alice', subject: { name: '@alice', url: 'https://openvibe.live/@alice' }, site: 'OpenVibe', detail: '' },
     ],
 };
 function fixture() {

@@ -196,7 +196,15 @@
             const recent = section('Recent activity', 'Your last five money events.');
             if (!data.recent_activity.length) recent.append(el('p', 'ov-wallet-muted', 'No activity yet.'));
             for (const event of data.recent_activity) {
-                const row = el('div', 'ov-wallet-event'), info = el('div'); info.append(el('strong', '', event.label), el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
+                // The reason is a sentence made by billing.money-reason@1 (Billing or Network); when it names
+                // something with a page, the sentence is the link to it. The raw ledger key is never drawn.
+                const row = el('div', 'ov-wallet-event'), info = el('div');
+                const url = event.subject && event.subject.url;
+                if (url && /^https:\/\//.test(url)) {
+                    const a = el('a', '', event.label);
+                    a.href = url; a.target = '_blank'; a.rel = 'noopener';
+                    info.append(a, el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
+                } else info.append(el('strong', '', event.label), el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
                 const units = event.kind === 'balance' ? { currency: 'USD', scale: 9 } : { currency: event.kind, scale: 0 };
                 row.append(info, el('span', '', `${Number(event.amount) > 0 ? '+' : ''}${amount({ ...units, amount: event.amount })}${event.kind === 'balance' ? '' : event.kind === 'vibes' ? ' Vibes' : ' OpenCoins'}`)); recent.append(row);
             }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.189.0 — 2026-11-10
+
+- The wallet sheet's Recent activity draws the reason Billing and Network already made (`billing.money-reason@1`): "for the quest Publish a video", not the ledger key, with the phrase linked to the thing it was for when there is a page. A reason with no page stays a plain sentence.
+
 ## 4.188.0 — 2026-11-10
 
 **The account's things are in the menu.** The owner, 2026-11-10, with the dropdown under the picture marked "Replace →
