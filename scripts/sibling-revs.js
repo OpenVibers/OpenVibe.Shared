@@ -19,7 +19,9 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     // 4.189.0: the balances pill's icons and effects.
     'purse.js',
     // 4.191.0: the one dropdown (the site's name opens its pages).
-    'ov-drop.js'];
+    'ov-drop.js',
+    // 4.193.0: the one tooltip (Sign in, the menu button, short labels).
+    'ov-tip.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
 const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },

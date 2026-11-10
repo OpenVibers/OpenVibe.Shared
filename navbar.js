@@ -91,8 +91,8 @@
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
                 /* 4.46.0 (the fleet tap audit): Sign In, the menu and the orb reach 44px to a finger, still drawn as before. */
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
-                /* 4.107.2 (the 11-03 re-audit): Sign In measured 40px tall; 9px above and below makes 45. */
-                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -9px 0; }
+                /* Sign in is a 36px circle: its taps grow to the right and a little to the left, off the menu button's. */
+                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -5px -8px -5px -3px; }
                 .openvibe-navbar .ovnav-burger::after { content: ''; position: absolute; inset: -3px -5px; }
                 /* The orb grows up and down, and sideways mostly to the right: the site's name sits 8px to its left and keeps
                    its own taps (4px there); the extra width goes to the open bar on its right (12px), so it measures 44px
@@ -194,7 +194,7 @@
             .ovnav-chips-pop button .ovnav-ic { color: var(--chip-c, inherit); width: 16px; height: 16px; }
             .ovnav-chips-pop button[data-tone="gold"] { --chip-c: #fbbf24; } .ovnav-chips-pop button[data-tone="green"] { --chip-c: #4ade80; }
             .ovnav-chips-pop b { margin-left: auto; font-variant-numeric: tabular-nums; }
-            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar:has(.ovnav-burger) .ovnav-orb:not(.ovnav-burger) { display: none; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
+            @media (max-width: 860px) { .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-featured-phone { display: inline-flex; } .openvibe-navbar .openvibe-navbar-links, .openvibe-navbar .openvibe-navbar-spacer { display: none; } .openvibe-navbar .openvibe-navbar-right { margin-left: auto; } .openvibe-navbar .ovnav-chip .ovnav-ic + .ovnav-chip-v:empty { display: none; } }
             @media (max-width: 420px) { .openvibe-navbar .ovnav-chip { padding: 0 8px; height: 30px; font-size: 12px; } }
             /* A narrow phone never draws the site's name over the bar's buttons (owner, 2026-10-28: on openvibe.games, signed
                in, the name ran under the launcher and the magnifier). The name gives way with an ellipsis, and up to 440px
@@ -287,6 +287,7 @@
             .openvibe-navbar-right { display: flex; align-items: center; gap: 6px; }
             /* The person (or Sign In) is last, after the menu button, with a little air between them. */
             .openvibe-navbar .ovnav-burger + :is(.openvibe-navbar-avatar, .openvibe-navbar-login) { margin-left: 3px; }
+            .openvibe-navbar .ovnav-burger + .openvibe-navbar-login { margin-left: 6px; }
             /* The OpenVibe menu's button (4.187.0; the owner's pick of 2026-11-10: a search bar over three apps). Under
                the pointer its parts lift in turn; while the menu loads the apps breathe; open, the bar and the apps cross
                into the close mark. Transform, opacity and fill only, and nothing moves while it rests. */
@@ -327,10 +328,10 @@
             .openvibe-navbar :is(.ovnav-orb, .openvibe-bell, .openvibe-navbar-avatar) { transition: transform .18s cubic-bezier(.2, 1.4, .3, 1), background-color .15s, color .15s; }
             .openvibe-navbar :is(.ovnav-orb, .openvibe-bell, .openvibe-navbar-avatar):active { transform: scale(.9); }
             .openvibe-navbar .openvibe-navbar-brand .ovnav-orb { margin-left: 1px; }
-            /* 4.148.0 (the owner: "replace the hamburger with that button"): the phone's menu button is the orb, in the
-               burger's place at the bar's right. Hidden on a wide bar (its links are there), shown at 860 px and below;
-               the orb's glow is its hover, not the burger's square. */
-            .openvibe-navbar .ovnav-orb.ovnav-burger { display: none; }
+            /* The menu button is the orb, at the bar's right on every width (4.148.0 a phone; 4.193.0 a computer too: the
+               owner, "on the right, even on desktop"). The orb beside the name is not drawn where this one is. */
+            .openvibe-navbar .ovnav-orb.ovnav-burger { display: inline-grid; }
+            .openvibe-navbar:has(.ovnav-burger) .ovnav-orb:not(.ovnav-burger) { display: none; }
             /* At the bar's right edge its tap area grows to the left (the brand orb's reached 12 px right, past the screen). */
             .openvibe-navbar .ovnav-orb.ovnav-burger::after { inset: -6px -4px -6px -10px; }
             .openvibe-navbar .ovnav-orb.ovnav-burger:hover, .openvibe-navbar .ovnav-orb.ovnav-burger[aria-expanded="true"] { background: none; }
@@ -353,24 +354,19 @@
             }
             .openvibe-navbar-avatar:hover { border-color: var(--accent, #3b82f6); }
 
-            .openvibe-navbar-login {
-                padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
-                /* --accent-strong / --on-accent-strong (builtin-themes.js deriveTokens) read at 4.5:1 or better in
-                   every theme (WCAG AA); the accent itself did not (white on #3b82f6 is 3.67:1). */
-                background: var(--accent-strong, #1d4ed8); color: var(--on-accent-strong, #fff); border: none; cursor: pointer;
-                transition: filter .15s; text-decoration: none; display: inline-flex; align-items: center;
-            }
-            .openvibe-navbar-login:hover { filter: brightness(1.12); }
-            .openvibe-navbar-login { gap: 7px; }
-            .openvibe-navbar-login:active { transform: scale(.95); }
-            .ovsi { margin-left: -3px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
-            .ovsi-o { stroke-dasharray: 30 10.2; stroke-dashoffset: -15.1; }
-            .ovsi-a { animation: ovsi-in 7s ease-in-out 2s infinite; }
-            :hover > .ovsi .ovsi-a { animation-duration: .9s; animation-delay: 0s; }
-            .is-going .ovsi-a { opacity: 0; animation: none; }
-            .is-going .ovsi-o { animation: ovsi-go 1s linear infinite; }
-            @keyframes ovsi-in { 0%, 80% { transform: none; } 90% { transform: translateX(calc(3px * var(--ov-move, 1))); } }
-            @keyframes ovsi-go { to { stroke-dashoffset: -55.3; } }
+            /* Sign in is the person's place before there is a person: a filled circle with a figure in it, named by its
+               tooltip (ov-tip.js). --accent-strong / --on-accent-strong read at 4.5:1 or better in every theme. */
+            .openvibe-navbar-login { display: inline-grid; place-items: center; background: var(--accent-strong, #1d4ed8); color: var(--on-accent-strong, #fff); border: none; cursor: pointer; text-decoration: none; transition: filter .15s, box-shadow .25s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
+            .openvibe-navbar-login:hover, .openvibe-navbar-login:focus-visible { filter: brightness(1.12); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); }
+            .openvibe-navbar-login:active { transform: scale(.9); }
+            .ovsi { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+            .ovsi-p { transform-origin: 12px 13px; animation: ovsi-in .5s cubic-bezier(.2, 1.4, .3, 1) .3s both; transition: transform .2s; }
+            :hover > .ovsi .ovsi-p { transform: translateY(calc(-1px * var(--ov-move, 1))); }
+            .ovsi-o { opacity: 0; stroke-dasharray: 30 39; }
+            .is-going .ovsi-o { opacity: 1; animation: ovsi-go 1s linear infinite; }
+            .is-going .ovsi-p { opacity: .55; }
+            @keyframes ovsi-in { from { opacity: 0; transform: translateY(4px) scale(.8); } }
+            @keyframes ovsi-go { to { stroke-dashoffset: -69; } }
             /* 4.148.0 (the owner, 11-08: "the things need to be more consistent in the nav bar in size"): one height for
                every control at the bar's right, 36 px (34 px on a phone under 400 px): Sign In, the orb, messages, the
                picture, the balances and a featured link. The orb draws its dots at 26 px (24) so it reads as large as
@@ -380,12 +376,12 @@
             .openvibe-navbar .ovnav-featured-phone { width: 36px; height: 36px; }
             .openvibe-navbar .openvibe-navbar-avatar { width: 36px; height: 36px; box-sizing: border-box; }
             .openvibe-navbar .ovnav-chip { height: 36px; }
-            .openvibe-navbar .openvibe-navbar-login { box-sizing: border-box; height: 36px; padding: 0 16px; font-size: 14px; border-radius: 10px; }
+            .openvibe-navbar .openvibe-navbar-login { box-sizing: border-box; width: 36px; height: 36px; padding: 0; border-radius: 50%; }
             @media (max-width: 400px) {
                 .openvibe-navbar .ovnav-orb, .openvibe-navbar .ovnav-featured-phone, .openvibe-navbar .openvibe-navbar-avatar { width: 34px; height: 34px; }
                 .openvibe-navbar .ovnav-orb svg { width: 24px; height: 24px; }
                 .openvibe-navbar .ovnav-chip, .openvibe-navbar .openvibe-navbar-login { height: 34px; }
-                .openvibe-navbar .openvibe-navbar-login { padding: 0 13px; }
+                .openvibe-navbar .openvibe-navbar-login { width: 34px; }
             }
 
             /* The account's block (4.188.0): not a popup. It rests in the bar out of sight and is a block of the menu's
@@ -567,7 +563,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '5754cf36a7de', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'daf7e9cbec5d', 'ov-wallet.css': 'e44856825761', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '04aa1cedb6b4', 'dock.js': '5754cf36a7de', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'b64ea0c39d34', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'c38f5859fff6', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5af39638e579', 'ov-wallet.css': 'bd92a321ae64', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '6ac08ce47825' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -992,7 +988,7 @@
     }
     root.OpenVibeOrb = { svg: orbSVG };
     function orbHTML() {
-        return `<button type="button" class="ovnav-search ovnav-orb" id="openvibe-search-btn" aria-label="OpenVibe menu: search, every site and tool (/)" title="Search and every OpenVibe site (/)" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>`;
+        return `<button type="button" class="ovnav-search ovnav-orb" id="openvibe-search-btn" aria-label="OpenVibe menu: search, every site and tool (/)" data-ov-tip="Menu" data-ov-tip-sub="Search, this site, every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>`;
     }
 
 
@@ -1193,7 +1189,7 @@
             // site that turns the menu off (search: false) or asks for it (drawer: 'legacy').
             burger.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (_config.search !== false && _config.drawer !== 'legacy') { openSearch('', 'here', burger); return; }
+                if (_config.search !== false && _config.drawer !== 'legacy') { if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close(); else openSearch('', 'here', burger); return; }
                 const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); if (open) loadOvIcons(drawer);
             });
             drawer.addEventListener('click', (e) => {
@@ -2118,9 +2114,9 @@
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 ${featuredPhoneHTML(links)}
                 <div id="openvibe-bell-mount"></div>
-                ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
+                ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" data-ov-tip="Menu" data-ov-tip-sub="This site, search, every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
                 ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
-                    `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}"><svg class="ovsi" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle class="ovsi-o" cx="14.5" cy="12" r="6.4"/><path class="ovsi-a" d="M2.5 12h9.6M9 8.4l3.6 3.6L9 15.6"/></svg>Sign In</a>`}
+                    `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}" aria-label="Sign in" data-ov-tip="Sign in"><svg class="ovsi" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="ovsi-o" cx="12" cy="12" r="11"/><g class="ovsi-p"><circle cx="12" cy="8.8" r="3.2"/><path d="M5.900 18.400c1.100-2.700 3.300-4.100 6.100-4.100s5 1.400 6.100 4.100"/></g></svg></a>`}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
@@ -2128,6 +2124,7 @@
         bindLinks(nav, links);
         hookSearch(nav);
         hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
+        if (!root.OVTip && !document.getElementById('ov-tip-loader') && root.matchMedia && matchMedia('(hover: hover)').matches) { try { const sc = document.createElement('script'); sc.id = 'ov-tip-loader'; sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ } }
         bindChips(nav);
         bindChipsAll(nav);
         queueIcons();

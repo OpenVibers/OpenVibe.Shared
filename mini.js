@@ -72,6 +72,8 @@
 .ovmini-btn:active { transform: scale(.92); }
 .ovmini-btn:focus-visible, .ovmini-back:focus-visible, .ovmini-sound:focus-visible, .ovmini-text:focus-visible { outline: 2px solid var(--mc); outline-offset: 2px; }
 .ovmini-btn:last-child { margin-right: 4px; }
+.ovmini-btn[hidden] { display: none; }
+.ovmini.is-broken .ovmini-bar { visibility: hidden; }
 .ovmini.is-leaving { animation: ovmini-out .18s ease both; }
 @keyframes ovmini-in { from { opacity: 0; transform: translateY(14px) scale(.98); } }
 @keyframes ovmini-out { to { opacity: 0; transform: translateY(10px); } }
@@ -135,7 +137,7 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
             const d = isFinite(video.duration) && video.duration > 0 ? video.duration : (r.dur || 0);
             const pct = d ? Math.min(100, (video.currentTime / d) * 100) : 0;
             bars.forEach((b) => { b.style.width = pct.toFixed(2) + '%'; });
-            by.textContent = [r.by, d ? `${clock(video.currentTime)} / ${clock(d)}` : clock(video.currentTime)].filter(Boolean).join(' · ');
+            if (!el.classList.contains('is-broken')) by.textContent = [r.by, d ? `${clock(video.currentTime)} / ${clock(d)}` : clock(video.currentTime)].filter(Boolean).join(' · ');
             soundBtn.hidden = !(video.muted && on && r.wantSound);
         };
         el.querySelectorAll('[data-m="back"]').forEach((a) => { a.href = back(); });
@@ -149,7 +151,8 @@ html[data-ov-motion=off] .ovmini-bar i { transition: none; }
         });
         video.addEventListener('timeupdate', () => { paint(); if (Date.now() - saved > 1000) { saved = Date.now(); note(r); } });
         ['play', 'pause', 'ended', 'volumechange', 'ratechange', 'durationchange'].forEach((t) => video.addEventListener(t, () => { paint(); note(r); }));
-        video.addEventListener('error', () => { close(); });
+        // A file that cannot be played here: say so, keep the way back, and do not follow the person to the next page.
+        video.addEventListener('error', () => { if (!video) return; live = false; forget(); playBtn.hidden = true; soundBtn.hidden = true; by.textContent = 'Open its page to keep watching'; el.classList.add('is-broken'); });
         video.addEventListener('loadedmetadata', () => {
             try { if (r.t > 0 && (!isFinite(video.duration) || r.t < video.duration - 0.25)) video.currentTime = r.t; } catch { /* not seekable yet: it starts where it can */ }
             video.playbackRate = r.rate || 1;

@@ -91,6 +91,13 @@ const server = http.createServer((req, res) => {
         await page.goto(`${base}/second`, { maxMs: 6000 }); await wait(300);
         assert.equal(await page.evaluate(`!!document.querySelector('.ovmini')`), false, 'and it does not come back on the next page');
 
+        // A file that cannot be played here: the card says so and keeps the way back; nothing follows to the next page.
+        await page.goto(`${base}/second`, { maxMs: 6000 });
+        await page.evaluate(`OpenVibeMini.open({ page: '/watch', src: '/no-such-file.webm', title: 'The harbour at night', by: 'Kim', t: 3, playing: true })`);
+        assert.ok(await until(`!!document.querySelector('.ovmini.is-broken')`), 'a file that cannot play is said, not hidden');
+        assert.deepEqual(await page.evaluate(`(() => { const e = document.querySelector('.ovmini'); return [e.querySelector('.ovmini-by').textContent, e.querySelector('[data-m="play"]').hidden, e.querySelector('.ovmini-text').getAttribute('href'), OpenVibeMini.record()]; })()`), ['Open its page to keep watching', true, '/watch', null]);
+        await page.evaluate(`OpenVibeMini.close()`);
+
         // A phone: one bar across the bottom, the picture at its left, 44 px buttons.
         const phone = await h.openPage(browser, await browser.newContext(), { width: 390, height: 780 });
         const untilP = async (expr) => { const end = Date.now() + 6000; while (Date.now() < end) { let v = false; try { v = await phone.evaluate(expr); } catch { v = false; } if (v) return v; await wait(60); } return false; };
