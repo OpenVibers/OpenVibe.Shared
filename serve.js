@@ -15,6 +15,10 @@
  * cards (social/<service>.jpg, openvibe-shared/social), the installable app icons
  * (icons/<service>[-maskable]-<size>.png, openvibe-shared/app-icons) and the web app manifest built
  * per service at manifest/<service>.webmanifest.
+ *
+ * JS/CSS are minified at serve time (openvibe-shared/minify) and cached by content hash: the minify
+ * runs once per release per file, then the immutable ?v= URL does the rest. A file the minifier
+ * cannot handle is served raw; a minified body is used only when it is smaller than the raw file.
  */
 const fs = require('fs');
 const files = require('./files');
@@ -23,6 +27,7 @@ const appIcons = require('./app-icons');
 const appIcon = require('./app-icon');
 const cache = require('./cache-policy');
 const { hashAsset } = require('./assets');
+const { minifyFile } = require('./minify');
 
 const hashes = new Map();
 const fileOf = (name) => (social.isCard(name) ? social.path(name) : appIcons.isIcon(name) ? appIcons.path(name) : files.path(name));
@@ -96,6 +101,35 @@ function cacheHeaders(res, name, hash, v) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
 }
 
+// Minified bodies by `${name}:${hash}`: minification runs once per release, then the cache and the
+// immutable ?v= URL do the rest. Bounded, because a site never serves more than this package lists.
+const bodies = new Map();
+
+/** The bytes to serve for `name`: minified when JS/CSS, raw otherwise. Fail-open to raw. */
+async function bodyFor(name) {
+    const hash = hashOf(name);
+    const key = `${name}:${hash}`;
+    const hit = bodies.get(key);
+    if (hit) return hit;
+    if (bodies.size > 300) bodies.clear();
+    const raw = fs.readFileSync(fileOf(name));
+    if (!name.endsWith('.js') && !name.endsWith('.css')) {
+        const entry = { body: raw, minified: false };
+        bodies.set(key, entry);
+        return entry;
+    }
+    try {
+        const body = await minifyFile(name, raw);
+        const entry = body.length < raw.length ? { body, minified: true } : { body: raw, minified: false };
+        bodies.set(key, entry);
+        return entry;
+    } catch {
+        const entry = { body: raw, minified: false };
+        bodies.set(key, entry);
+        return entry;
+    }
+}
+
 /** Express/connect handler for app.use('/shared', handler()). */
 function handler() {
     return function openvibeShared(req, res, next) {
@@ -123,8 +157,8 @@ function handler() {
         cacheHeaders(res, name, hash, v);
         if (req.headers['if-none-match'] === `"${hash}"`) { res.statusCode = 304; return res.end(); }
         if (req.method === 'HEAD') return res.end();
-        fs.createReadStream(fileOf(name)).on('error', next).pipe(res);
+        bodyFor(name).then(({ body }) => res.end(body)).catch(next);
     };
 }
 
-module.exports = { handler, url, hashOf, manifestUrl };
+module.exports = { handler, url, hashOf, manifestUrl, _bodyFor: bodyFor };
