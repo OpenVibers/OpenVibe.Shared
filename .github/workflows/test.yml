@@ -195,11 +195,14 @@ jobs:
           echo "node --check: $n files, $failed failed"
           [ "$failed" -eq 0 ]
       - name: test
+        # A case, not if/elif: the override branch holds only the pin-only-test input, and an empty
+        # branch is a syntax error under if (`then` + `elif` with no command) but legal under case.
         run: |
-          mode="${{ steps.plan.outputs.mode }}"
-          if [ "$mode" = "override" ]; then
+          case "${{ steps.plan.outputs.mode }}" in
+          override)
             ${{ inputs.pin-only-test }}
-          elif [ "$mode" = "subset" ]; then
+            ;;
+          subset)
             echo "pin-only: the page, frame, size-budget and browser files only (pin drift still runs below)"
             set +e
             out=$(npm test -- perf budget page frame layout home smoke chrome --allow-empty 2>&1); rc=$?
@@ -210,9 +213,11 @@ jobs:
             else
               exit "$rc"
             fi
-          else
+            ;;
+          *)
             ${{ inputs.test }}
-          fi
+            ;;
+          esac
       - name: contracts
         if: ${{ inputs.contracts-service != '' && steps.plan.outputs.mode == 'full' }}
         env:
