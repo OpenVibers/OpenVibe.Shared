@@ -5,8 +5,11 @@
 // tab opens:
 //   OpenVibeDockAgent.mount(container, { token, base, active })  → { refresh(), destroy() }
 //
-// `base` is OpenVibe.Codes' API (GET /api/v1/me/agent-view, the same POST for pause, Curtain now, mute and End, and
-// the frame). Agent Streams S5 adds the four controls: a moderator cannot resume the owner's pause on Live, and the
+// The read is OpenVibe.Codes' GET /api/v1/me/agent-view (the same POST for pause, Curtain now, mute and End, and the
+// frame). It asks Network's same-origin relay (/api/frame/agent-view…) because every site's connect-src allows
+// openvibe.network and refuses openvibe.codes; `frameBase` overrides the relay, and `base` reaches Codes itself in a
+// test or the extension (an explicit base wins). Nothing is asked when there is no token: a signed-out page can never
+// read the view. Agent Streams S5 adds the four controls: a moderator cannot resume the owner's pause on Live, and the
 // Dock is the owner's own view, so it may always resume.
 // Codes mints the view ticket server-side with the person's own token — an iframe on another site has no Live cookie —
 // so the frame it answers is already Live's /embed/agent/<ags_id>?vt=wvt_…: the picture, the "AI agent" label, the
@@ -79,6 +82,10 @@
         styles(d);
         const o = { ...opts };
         const h = (tag, cls, text) => { const n = d.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+        // Network's frame relay on a site; an explicit base reaches Codes itself (a test, or the extension's panel).
+        const direct = o.base ? String(o.base).replace(/\/+$/, '') : '';
+        const frameBase = String(o.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
+        const endpoint = (path) => (direct ? direct + path : frameBase + path.replace(/^\/api\/v1\/me\/agent-view/, '/agent-view'));
         let gone = false, timer = 0, busy = false, agent = null, frameUrl = null, lastFrame = '';
         container.innerHTML = '';
         container.classList.add('ovda');
@@ -93,10 +100,10 @@
         container.append(body);
 
         async function api(path, init = {}) {
-            const base = String(o.base || 'https://openvibe.codes').replace(/\/+$/, '');
             const t = typeof o.token === 'function' ? await o.token() : o.token;
-            const headers = { accept: 'application/json', ...(init.json ? { 'content-type': 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
-            const r = await fetch(base + path, { ...init, headers, credentials: 'omit', body: init.json ? JSON.stringify(init.body || {}) : undefined });
+            if (!t) throw Object.assign(new Error('Sign in to see your agent'), { status: 401 });
+            const headers = { accept: 'application/json', ...(init.json ? { 'content-type': 'application/json' } : {}), authorization: `Bearer ${t}` };
+            const r = await fetch(endpoint(path), { ...init, headers, credentials: 'omit', body: init.json ? JSON.stringify(init.body || {}) : undefined });
             const b = await r.json().catch(() => ({}));
             if (!r.ok) throw Object.assign(new Error(b.detail || `HTTP ${r.status}`), { status: r.status });
             return b;
@@ -106,8 +113,10 @@
         function still(url) {
             if (!url || frameUrl === url) return;
             frameUrl = url;
-            Promise.resolve(typeof o.token === 'function' ? o.token() : o.token).then((t) => fetch(url, { headers: t ? { authorization: `Bearer ${t}` } : {}, credentials: 'omit' }))
-                .then((r) => (r.ok ? r.blob() : null))
+            Promise.resolve(typeof o.token === 'function' ? o.token() : o.token).then((t) => (t
+                ? fetch(endpoint('/api/v1/me/agent-view/frame'), { headers: { authorization: `Bearer ${t}`, accept: 'image/jpeg, image/webp' }, credentials: 'omit' })
+                : null))
+                .then((r) => (r && r.ok ? r.blob() : null))
                 .then((blob) => {
                     if (!blob || gone || frameUrl !== url) return;
                     const next = URL.createObjectURL(blob);

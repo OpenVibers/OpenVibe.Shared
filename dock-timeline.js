@@ -4,10 +4,12 @@
 //   OpenVibeDockTimeline.mount(container, { token, base, active, focus })  → { refresh(), destroy() }
 //
 // `token` is the person's own Network token: a string, or the function the navbar hands over (which
-// resolves it when it is needed).
-// `base` is OpenVibe.Actor's API: GET /api/v1/agent/timeline (the person's own steps, newest first, with the cursor
-// and the mode and needs-you filters), POST /api/v1/agent/approvals/:product/:id/decide (an approval is answered in
-// the mode that owns it) and POST /api/v1/agent/kill-switch (stop what is open and pause the agent).
+// resolves it when it is needed). Nothing is asked without it: a signed-out page can never read the timeline.
+// OpenVibe.Actor's API is GET /api/v1/agent/timeline (the person's own steps, newest first, with the cursor and the
+// mode and needs-you filters), POST /api/v1/agent/approvals/:product/:id/decide (an approval is answered in the mode
+// that owns it) and POST /api/v1/agent/kill-switch (stop what is open and pause the agent). On a site every call goes
+// through Network's same-origin relay (/api/frame/agent…, /api/frame/tasks…) because every site's connect-src allows
+// openvibe.network and refuses openvibe.actor; `base` reaches Actor itself in a test, and `frameBase` names the relay.
 // `focus` is the id of the step to point at (the task id a site opened the Dock with): the entry that
 // carries it is marked and brought into view.
 //
@@ -107,7 +109,10 @@
     function mount(container, opts = {}) {
         const doc = container.ownerDocument || document;
         styles(doc);
-        const base = String(opts.base || 'https://openvibe.actor').replace(/\/+$/, '');
+        // Network's frame relay on a site; an explicit base reaches Actor itself (a test).
+        const direct = opts.base ? String(opts.base).replace(/\/+$/, '') : '';
+        const frameBase = String(opts.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '');
+        const endpoint = (path) => (direct ? direct + path : frameBase + path.replace(/^\/api\/v1/, ''));
         const rawToken = opts.token;
         const active = typeof opts.active === 'function' ? opts.active : () => true;
         const focus = typeof opts.focus === 'function' ? opts.focus : () => opts.focus || null;
@@ -134,7 +139,8 @@
 
         async function api(path, options = {}) {
             const auth = await bearer();
-            const res = await fetch(base + path, Object.assign({ headers: { Accept: 'application/json', ...(auth ? { Authorization: auth } : {}) } }, options));
+            if (!auth) throw new Error('Sign in to see your agent');
+            const res = await fetch(endpoint(path), Object.assign({ headers: { Accept: 'application/json', Authorization: auth } }, options));
             const body = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error((body && (body.detail || body.title)) || ('HTTP ' + res.status));
             return body;
