@@ -159,6 +159,7 @@
   ],
   "scripts": {
     "test": "node test/run.js",
+    "audit:page-end": "node scripts/audit-page-end.js",
     "create-site": "node scripts/create-site.js",
     "size": "node scripts/size-report.js",
     "build:icons": "python3 scripts/build-nav-icons.py",

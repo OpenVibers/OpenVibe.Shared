@@ -562,7 +562,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '496bc3134c08', 'dock.js': 'c606aca212ab', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '0bd4b26af88a', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
+    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '496bc3134c08', 'dock.js': 'dfeb436ddd66', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '0bd4b26af88a', 'history.js': 'f9fb9e096c65', 'bottom.js': 'b9f708d04350', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '0132897495f0', 'ov-tip.js': '1d918e7de69d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -2283,12 +2283,22 @@
         _navEl = nav;
         paintSlots();
         watchKeyboard();
+        loadBottom();
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
         loadUnread();
         renderAppBar();
         return nav;
+    }
+
+    // ── The bottom of the screen (bottom.js): one measurement of the visible viewport for the app bar, the small
+    // player, the Dock's pill and the composer. Loaded before any of them draw; they all work without it.
+    let _bottomLoading = false;
+    function loadBottom() {
+        if (_bottomLoading || root.OpenVibeBottom) return;
+        _bottomLoading = true;
+        try { const sc = document.createElement('script'); sc.id = 'ovb-loader'; sc.src = siblingV('bottom.js'); sc.async = true; document.head.appendChild(sc); } catch { _bottomLoading = false; }
     }
 
     // ── The phone app bar (appbar.js, loaded only when the site sets appBar): its main places as a bottom tab bar ──
