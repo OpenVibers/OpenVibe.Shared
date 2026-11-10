@@ -1048,7 +1048,9 @@
             const hit = 'https://openvibe.network/api/frame/hit';
             let sent = false;
             const send = () => { if (sent) return; sent = true; try { if (navigator.sendBeacon) navigator.sendBeacon(_config.user && !_config.user.is_anon ? `${hit}?in=1` : hit); } catch { /* */ } };
-            if (_config.user || _config.auth === 'external') return send();
+            // A page that knows its person, and a browser with no token at all (a guest), count now; only a browser
+            // that may be signed in waits for the shared sign-in state, never longer than 2.5 s.
+            if (_config.user || _config.auth === 'external' || !resolveToken()) return send();
             document.addEventListener('openvibe-navbar-auth', send, { once: true });
             setTimeout(send, 2500);
         } catch { /* */ }

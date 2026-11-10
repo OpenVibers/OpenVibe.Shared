@@ -84,6 +84,7 @@ assert.ok(SRC.includes('?site=${encodeURIComponent(site)}'), 'the read asks as t
 const NB = fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8');
 assert.ok(NB.includes('sendBeacon(_config.user && !_config.user.is_anon ? `${hit}?in=1` : hit)'), 'the beacon marks a signed-in browser, and never an anonymous account');
 assert.ok(NB.includes("document.addEventListener('openvibe-navbar-auth', send, { once: true })"), 'it waits for the shared sign-in state, once');
+assert.ok(NB.includes('|| !resolveToken()) return send()'), 'a guest\'s page view counts at once: only a browser that may be signed in waits');
 assert.ok(!/sendBeacon\([^)]*username|sendBeacon\([^)]*token/.test(NB), 'no identity travels with it');
 
 console.log('footer-online: one read fills the strip, a guest is a number, a live member is named with their picture and site, counts and the site\'s own items open what they count');
