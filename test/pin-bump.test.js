@@ -159,8 +159,8 @@ assert.ok(Object.values(SERVICE).every((s) => s === null || /^[a-z][a-z0-9-]*$/.
 assert.deepStrictEqual(
     shipOrder([{ repo: 'OpenVibe.Live', number: 1 }, { repo: 'OpenVibe.AI', number: 2 }, { repo: 'OpenVibe.Media', number: 3 }]).map((s) => s.repo),
     ['OpenVibe.AI', 'OpenVibe.Live', 'OpenVibe.Media']);
-assert.deepStrictEqual(shipCommand('/tools', { repo: 'OpenVibe.Quest', number: 263 }), { run: ['/tools/merge-deploy.sh', 'OpenVibe.Quest#263:quest'], describe: "merge-deploy.sh 'OpenVibe.Quest#263:quest'" });
-assert.deepStrictEqual(shipCommand('/tools', { repo: 'OpenVibe.Contracts', number: 7 }), { run: ['/tools/merge-after-ci.sh', 'OpenVibe.Contracts#7'], describe: "merge-after-ci.sh 'OpenVibe.Contracts#7'" });
+assert.deepStrictEqual(shipCommand('/tools', { repo: 'OpenVibe.Quest', number: 263 }), { run: [path.join('/tools', 'merge-deploy.sh'), 'OpenVibe.Quest#263:quest'], describe: "merge-deploy.sh 'OpenVibe.Quest#263:quest'" });
+assert.deepStrictEqual(shipCommand('/tools', { repo: 'OpenVibe.Contracts', number: 7 }), { run: [path.join('/tools', 'merge-after-ci.sh'), 'OpenVibe.Contracts#7'], describe: "merge-after-ci.sh 'OpenVibe.Contracts#7'" });
 assert.strictEqual(shipCommand('/tools', { repo: 'OpenVibe.New', number: 1 }).run, null, 'an unmapped repository is shipped by hand, never guessed');
 
 fs.rmSync(bdir, { recursive: true, force: true });
