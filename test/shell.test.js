@@ -88,6 +88,13 @@ assert.ok(attrs.includes('<body class="a&quot; onload=&quot;b" data-x="&quot; y=
     assert.match(rendered, /OpenVibeNavbar\.init\(\{"service":"example","links":\[\{"label":"Places","href":"\/places"\}/, 'client receives same configured list');
     assert.equal((rendered.match(/aria-label="Site"/g) || []).length, 1, 'one navigation landmark before hydration');
 }
+{
+    const defaults = require('../navbar')._defaults.linksFor('tools');
+    const rendered = shell.page({ name: 'OpenVibe.Tools', navbar: { service: 'tools' }, body: '' });
+    for (const link of defaults) assert.ok(rendered.includes(`<a data-ov-nav-link="true" href="${link.href}">${link.label}</a>`), `server uses the navbar default ${link.label}`);
+    assert.equal((rendered.match(/aria-label="Site"/g) || []).length, 1, 'one default navigation landmark');
+    assert.match(fs.readFileSync(path.join(__dirname, '..', 'navbar.js'), 'utf8'), /mount\.replaceChildren\(nav\)/, 'hydration atomically replaces the server nav');
+}
 
 // ── The AI page summary is present only when given, and its JSON-LD comes with it ────────────────
 assert.ok(!shell.page({ name: 'x' }).includes('"@type":"WebPage"'), 'no WebPage JSON-LD without a summary');

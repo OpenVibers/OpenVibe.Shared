@@ -11,6 +11,7 @@
 //   shippedScript()    the <script> tag for shipped.js (the footer loads it lazily too; a page that shows the
 //                      log should load it itself)
 const footerModule = require('./footer');
+const navbarModule = require('./navbar');
 
 const SITES = [['Live', 'https://openvibe.live/'], ['Tools', 'https://openvibe.tools/'], ['Community', 'https://openvibe.community/'], ['Games', 'https://openvibe.games/'], ['Media', 'https://openvibe.media/'], ['Network', 'https://openvibe.network/']];
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -23,8 +24,9 @@ function noscriptNav({ name, home = '/', links = [] } = {}) {
 
 // The client navbar replaces this node on its first render. Keeping configured links in the same
 // mount makes the page useful to crawlers before any JavaScript runs.
-function serverNav({ name, home = '/', links = [] } = {}) {
-    const items = (Array.isArray(links) ? links : []).filter(l => l && (l.href || l.url) && (l.label || l.name));
+function serverNav({ name, service, home = '/', links } = {}) {
+    const source = Array.isArray(links) ? links : navbarModule._defaults.linksFor(service);
+    const items = source.filter(l => l && (l.href || l.url) && (l.label || l.name));
     const own = items.map(l => `<a data-ov-nav-link="true" href="${esc(l.href || l.url)}">${esc(l.label || l.name)}</a>`).join('');
     const brand = `<a href="${esc(home)}" style="font-weight:700;color:inherit;text-decoration:none">${esc(name || 'OpenVibe')}</a>`;
     return `<div id="navbar-mount"><nav class="openvibe-navbar" aria-label="Site" data-ov-server-nav="true" style="box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:0 16px;min-height:52px;font:500 14px/1.4 system-ui,sans-serif">${brand}${own}</nav></div>`;
