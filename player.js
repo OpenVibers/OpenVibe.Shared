@@ -3,7 +3,7 @@
  * video players across all our sites and vods … for a more unified look").
  *
  *   <link rel="stylesheet" href="/shared/player.css">
- *   <video data-ov-player controls src="…" poster="…" preload="metadata" playsinline></video>
+ *   <video data-ov-player controls src="…" poster="…" preload="none" playsinline></video>
  *   <script src="/shared/player.js" defer></script>
  *
  * Progressive: without this script the browser's own controls stay. With it, each video[data-ov-player] is wrapped
@@ -293,7 +293,7 @@
         };
         try {
             let body = await read(source, true);
-            if (!body.startsWith('#EXTM3U')) return false;
+            if (!body.startsWith('#EXTM3U') || /#EXT-X-(?:KEY|SESSION-KEY):|BYTERANGE[=:]/.test(body)) return false;
             if (body.includes('#EXT-X-STREAM-INF:')) {
                 const lines = body.split(/\r?\n/), variants = [];
                 lines.forEach((line, i) => {
@@ -305,7 +305,7 @@
                 source = safe(variants[0].uri, source); body = await read(source, true);
             }
             // Live playlists, encrypted media and byte-range playlists need their player's own loader.
-            if (!body.includes('#EXT-X-ENDLIST') || /#EXT-X-(KEY|BYTERANGE):/.test(body)) return false;
+            if (!body.includes('#EXT-X-ENDLIST') || /#EXT-X-(?:KEY|SESSION-KEY):|BYTERANGE[=:]/.test(body)) return false;
             const init = body.match(/#EXT-X-MAP:URI="([^"]+)"/);
             const segment = body.split(/\r?\n/).find((line) => line && !line.startsWith('#'));
             if (init) await read(safe(init[1], source));
