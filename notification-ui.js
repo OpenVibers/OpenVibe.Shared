@@ -100,6 +100,7 @@
     let _pollTimer = null;
     let _lastSeenAt = null;       // newest created_at we have toasted / seen
     let _unreadCount = 0;
+    let _msgs = 0;   // new messages (navbar.js setMessages): on the bell's badge with the notifications, never in the list's own count
     let _toastContainer = null;
     let _panelEl = null;
     let _bellEl = null;
@@ -840,18 +841,22 @@
         _bellEl = bell;
         return bell;
     }
+    // The bell's own number: notifications and new messages together, each named in its label.
+    function paintBell(ring) {
+        if (!_bellEl) return;
+        const badge = _bellEl.querySelector('.badge'), n = _unreadCount + _msgs;
+        if (n > 0) {
+            badge.textContent = n > 99 ? '99+' : String(n);
+            badge.classList.remove('hidden');
+            if (ring) { _bellEl.classList.add('ringing'); setTimeout(() => _bellEl.classList.remove('ringing'), 700); }
+        } else badge.classList.add('hidden');
+        const parts = [_unreadCount ? `${_unreadCount} unread` : '', _msgs ? `${_msgs} new ${_msgs === 1 ? 'message' : 'messages'}` : ''].filter(Boolean);
+        _bellEl.setAttribute('aria-label', parts.length ? `Notifications, ${parts.join(', ')}` : 'Notifications');
+    }
     function setBadge(count, { quiet = false } = {}) {
         const prev = _unreadCount;
         _unreadCount = Math.max(0, Number(count) || 0);
-        if (_bellEl) {
-            const badge = _bellEl.querySelector('.badge');
-            if (_unreadCount > 0) {
-                badge.textContent = _unreadCount > 99 ? '99+' : String(_unreadCount);
-                badge.classList.remove('hidden');
-                if (!quiet && _unreadCount > prev) { _bellEl.classList.add('ringing'); setTimeout(() => _bellEl.classList.remove('ringing'), 700); }
-            } else badge.classList.add('hidden');
-            _bellEl.setAttribute('aria-label', _unreadCount ? `Notifications, ${_unreadCount} unread` : 'Notifications');
-        }
+        paintBell(!quiet && _unreadCount > prev);
         for (const v of _views.values()) {
             const c = v.root.querySelector('.openvibe-nv-head .count');
             if (c) { c.textContent = _unreadCount > 99 ? '99+' : String(_unreadCount); c.classList.toggle('zero', _unreadCount === 0); }
@@ -1444,6 +1449,10 @@
         },
         /** What a tap on the bell does instead of its own panel: fn() returns true when it handled it (navbar.js: the Dock). */
         setBellAction(fn) { _bellAction = typeof fn === 'function' ? fn : null; },
+        /** New messages, counted on the bell with the notifications (navbar.js): 0 takes them off. */
+        setMessages(count) { const prev = _msgs; _msgs = Math.max(0, Number(count) || 0); paintBell(_msgs > prev); },
+        /** How many notifications are unread (not counting messages). */
+        unread() { return _unreadCount; },
         /** Create and inject the bell icon. Returns the DOM element. */
         createBell(container) {
             injectStyles();

@@ -103,7 +103,7 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate(`(document.querySelector('.ovh-sec span') || {}).textContent`), 'Popular on OpenVibe', 'until arranged, it says what it is');
         assert.notStrictEqual(await p.evaluate(`document.querySelector('.ovs [data-tab="here"]').textContent`), 'Home', 'a page titled Home never names the first tab');
         assert.ok(await p.evaluate(`!document.querySelector('[data-sec="recent"]') && ![...document.querySelectorAll('.ovs-group')].some((g) => /Recent searches/.test(g.textContent))`), 'no Recent searches');
-        assert.ok(await p.evaluate(`/All apps \\(\\d+\\)/.test(document.querySelector('.ovh-all').textContent)`), 'All apps says how many');
+        assert.ok(await p.evaluate(`(() => { const b = document.querySelector('.ovh-headtools .ovh-allbtn'); return !!b && /All apps \\(\\d+\\)/.test(b.getAttribute('aria-label')) && /^All\\d+$/.test(b.textContent.replace(/\\s/g, '')) && b.getBoundingClientRect().width < 120; })()`), 'All apps is a small button beside Edit, and says how many');
         assert.ok(await p.evaluate(`!document.querySelector('.ovh-actor')`), 'signed out: no Actor strip');
 
         // A long-press starts Edit, and the same press drags the first app onto the third's place.
@@ -135,7 +135,7 @@ const server = http.createServer((req, res) => {
         assert.ok(!removed.includes(keyed[0]) && removed.length === 11, '− takes it off Home');
         // Done, then All apps puts it back.
         await p.evaluate(`[...document.querySelectorAll('.ovh-sec button')].find((b) => b.textContent === 'Done').click(), true`);
-        await p.evaluate(`document.querySelector('.ovh-all').click(), true`);
+        await p.evaluate(`document.querySelector('.ovh-allbtn').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovh-filter')`), 'the drawer opened');
         await p.evaluate(`document.querySelector('.ovh-grid .ovh-app[data-id="${keyed[0]}"] .ovh-badge.is-add').click(), true`);
         await p.evaluate(`document.querySelector('.ovh-back').click(), true`);
@@ -199,7 +199,7 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-rail').parentElement.querySelector('.ovh-sec small') || {}).textContent`), 'where you were last', 'Jump back in says what it is');
         assert.strictEqual(await s.evaluate(`(document.querySelector('.ovh-sec:not(:first-child) span, .ovh-grid:not(.ovh-recent)') && [...document.querySelectorAll('.ovh-sec span')].map((x) => x.textContent).find((x) => /home|Popular/i.test(x)))`), 'Your home', 'signed in, Home is theirs from the start');
         assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons');
-        await s.evaluate(`document.querySelector('.ovh-sec button').click(), true`);
+        await s.evaluate(`document.querySelector('.ovh-sec .ovh-edit').click(), true`);
         await s.evaluate(`(() => { const t = document.querySelector('.ovh-grid:not(.ovh-recent) .ovh-app'); t.focus(); t.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); })()`);
         assert.ok(await until(s, `window.__calls.some((c) => c.m === 'PUT' && c.u.endsWith('/api/v1/me/home-screen') && c.auth === 'Bearer tok-1')`, 3000), 'the arrangement goes to Network with the bearer');
         await s.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);

@@ -34,7 +34,8 @@
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     // Close is the OpenVibe menu's orb in its × form (11-09, the owner: "replace this close button with our own… the
     // corner button… its close form… nice animations"): nine dots that fold into an × as the Dock opens.
-    const ORBX = `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="ovdk-ox">${[[12, 12, 0], [12, 5, 1], [19, 12, 1], [12, 19, 1], [5, 12, 1], [5, 5, 2], [19, 5, 2], [19, 19, 2], [5, 19, 2]].map(([x, y, r]) => `<circle class="ovdk-o${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('')}</g></svg>`;
+    // The close button is the menu button, already crossed (navbar.js, root.OpenVibeOrb): it forms as the sheet opens.
+    const ORBX = () => (root.OpenVibeOrb ? root.OpenVibeOrb.svg(22, true) : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>');
     const G = {
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
         bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
@@ -182,17 +183,11 @@
             .ovdk-acts button:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
             .ovdk-acts button svg { width: 19px; height: 19px; display: block; }
             .ovdk-orbx svg { width: 22px !important; height: 22px !important; overflow: visible; }
-            .ovdk-ox { transform-origin: 12px 12px; transform: rotate(180deg) scale(.86); transition: transform .45s cubic-bezier(.2, 1.35, .3, 1); }
-            .ovdk-ox circle { fill: currentColor; transform-box: fill-box; transform-origin: center; transition: opacity .25s, transform .3s cubic-bezier(.2, 1.4, .3, 1), fill .2s; }
-            .ovdk-ox .ovdk-o1 { opacity: 0; transform: scale(0); }
-            .ovdk-ox .ovdk-o0 { fill: var(--accent, #3b82f6); }
-            .ovdk.is-in .ovdk-ox { animation: ovdk-ox-in .55s cubic-bezier(.2, 1.35, .3, 1) both; }
-            .ovdk.is-in .ovdk-ox .ovdk-o1 { animation: ovdk-o1-out .4s ease both; }
-            .ovdk-orbx:hover .ovdk-ox, .ovdk-orbx:focus-visible .ovdk-ox { transform: rotate(270deg) scale(.9); }
-            .ovdk-orbx:hover .ovdk-ox circle { fill: var(--accent-light, #60a5fa); }
-            .ovdk-orbx:active .ovdk-ox { transform: rotate(270deg) scale(.7); }
-            @keyframes ovdk-ox-in { from { transform: rotate(45deg) scale(.8); } }
-            @keyframes ovdk-o1-out { from { opacity: 1; transform: scale(1); } }
+            .ovdk-orbx { --ovo-a: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk.is-in .ovdk-orbx .ovmb :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
+            .ovdk-orbx:hover .ovmb, .ovdk-orbx:focus-visible .ovmb { transform: rotate(90deg); }
+            .ovdk-orbx .ovmb { transition: transform .35s cubic-bezier(.2,1.3,.3,1); }
+            .ovdk-orbx:active .ovmb { transform: rotate(90deg) scale(.8); }
             /* A phone's sheet opens out of the navbar's orb as the menu's does (4.186.0; see CHANGELOG): one move, one close button. */
             .ovdk.from-orb.is-in { animation: ovdk-reveal .38s cubic-bezier(.2,.9,.25,1) both; }
             .ovdk.from-orb.is-out { animation: ovdk-fold .28s cubic-bezier(.5,0,.75,.2) both; pointer-events: none; }
@@ -204,23 +199,11 @@
             .from-orb .ovdk-acts .ovdk-orbx.is-from { background: transparent; box-shadow: none; }
             .from-orb.is-in .ovdk-orbx::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--accent-light, #60a5fa); pointer-events: none; animation: ovdk-ring .6s cubic-bezier(.2,.8,.2,1) .1s both; }
             @keyframes ovdk-ring { from { opacity: .8; transform: scale(.9); } to { opacity: 0; transform: scale(calc(1 + 2.2 * var(--ov-move, 1))); } }
-            .from-orb.is-in .ovdk-ox, .from-orb.is-in .ovdk-o1 { animation: none !important; }
             .from-orb .ovdk-orbx { color: var(--text-primary, #ececf1); }
             .from-orb .ovdk-orbx svg { transition: transform .42s cubic-bezier(.2, 1.1, .3, 1); }
-            .from-orb .ovdk-ox circle { transition: fill .3s, opacity .3s, transform .35s cubic-bezier(.2, 1.4, .3, 1); }
-            .from-orb .ovdk-ox { transform: rotate(180deg) scale(.95); }
-            .from-orb .ovdk-ox :is(.ovdk-o0, .ovdk-o2) { fill: var(--accent-light, #60a5fa); transform: scale(1.12); }
-            .from-orb .is-from .ovdk-ox .ovdk-o0 { fill: var(--accent-light, #60a5fa); }
             .ovdk-orbx.is-set, .ovdk-orbx.is-set * { transition: none !important; }
             .from-orb .is-from svg { transform: translate(var(--orb-dx, 0), var(--orb-dy, 0)) scale(var(--orb-s, 1)); }
-            .from-orb .is-from .ovdk-ox { transform: rotate(45deg) scale(.8); }
-            .from-orb .is-from .ovdk-ox circle { fill: var(--text-secondary, #a8b3c4); opacity: 1; transform: none; }
-            .from-orb .is-from .ovdk-ox .ovdk-o2 { opacity: .6; }
             .ovnav-orb.is-dock { transform: translate(var(--dock-dx, 0), var(--dock-dy, 0)) scale(var(--dock-s, 1)) !important; color: var(--text-primary, #e6edf7) !important; }
-            .ovnav-orb.is-dock .ovo-g { transform: rotate(180deg) scale(.86); transition-duration: .45s; }
-            .ovnav-orb.is-dock .ovo-d { animation: none; }
-            .ovnav-orb.is-dock .ovo-r1 { opacity: 0; transform: scale(0); }
-            .ovnav-orb.is-dock :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; }
             .ovdk-more { position: absolute; z-index: 6; right: 8px; top: calc(100% - 4px); width: min(320px, calc(100% - 16px)); display: grid; gap: 2px; padding: 6px; border-radius: 16px;
                 border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); box-shadow: 0 18px 40px -12px rgba(0,0,0,.55); cursor: default; }
             .ovdk-more[hidden] { display: none; }
@@ -366,7 +349,7 @@
                 <div class="ovdk-tabs" role="tablist" aria-label="Dock">${TABS.map(([id, label, g]) => `<button type="button" role="tab" id="ovdk-tab-${id}" aria-controls="ovdk-panel-${id}" data-tab="${id}" aria-selected="false" tabindex="-1">${svg(g)}<span>${label}</span><b class="n" data-n="${id}"></b></button>`).join('')}</div>
                 <div class="ovdk-acts">
                     <button type="button" data-act="more" aria-haspopup="true" aria-expanded="false" title="More" aria-label="More: a timer, the Dock's button">${svg(G.more)}</button>
-                    <button type="button" data-act="close" class="ovdk-orbx" title="Close" aria-label="Close the Dock">${ORBX}</button>
+                    <button type="button" data-act="close" class="ovdk-orbx" title="Close" aria-label="Close the Dock">${ORBX()}</button>
                 </div>
                 <div class="ovdk-more" role="menu" aria-label="More" hidden>
                     <button type="button" role="menuitem" data-act="timer">${svg(G.clock)}<span><b>Start a timer</b><small>A countdown or a focus round, on the Dock's button</small></span></button>

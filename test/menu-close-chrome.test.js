@@ -68,7 +68,7 @@ async function openMenu(p) {
         assert.strictEqual(x.vw, 390, 'a phone layout');
         assert.ok(x.w >= 40 && x.h >= 40 && x.right <= x.vw && x.top >= 0, `a 40 px target on screen: ${JSON.stringify(x)}`);
         assert.deepStrictEqual([x.label, x.icon, x.word], ['Close the menu', true, false], 'the orb, named for a screen reader');
-        assert.strictEqual(await p.evaluate(`(() => { const o = document.querySelector('.ovs.is-open .ovs-orb'); return o.classList.contains('is-x') && o.querySelectorAll('.ovo-d').length === 9; })()`), true, 'its nine dots have turned into an x');
+        assert.strictEqual(await p.evaluate(`(() => { const o = document.querySelector('.ovs.is-open .ovs-orb'); return o.classList.contains('is-x') && o.querySelectorAll('.ovmb .ovmb-app').length === 3 && getComputedStyle(o.querySelector('.ovmb-bar')).transform !== 'none'; })()`), true, 'its bar and three apps have crossed into an x');
         assert.strictEqual(await p.evaluate(`getComputedStyle(document.querySelector('.ovs.is-open .ovs-x')).display`), 'none', 'one close: the round x steps aside for the orb');
         const hit = await p.evaluate(`(() => { const b = document.querySelector('.ovs.is-open .ovs-orb').getBoundingClientRect(); const e = document.elementFromPoint(b.left - 2, b.top + b.height / 2); return !!e && !!e.closest('.ovs-orb'); })()`);
         assert.ok(hit, 'the hit area reaches past the circle');

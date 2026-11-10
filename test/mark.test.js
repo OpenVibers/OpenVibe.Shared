@@ -38,7 +38,7 @@ for (const form of ['pair', 'heavy']) {
 // The standalone SVG: the gap is a mask, so it holds on any ground; the tones; the wide box.
 const svg = mark.svg({ size: 64, title: 'OpenVibe', depth: false });   // the flat colours (depth is checked below)
 assert.match(svg, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="[\d. ]+" width="64" height="64" role="img" aria-label="OpenVibe"><title>OpenVibe<\/title>/);
-assert.match(svg, /<mask id="ovmh"[\s\S]*stroke="#000" stroke-width="20"[\s\S]*<\/mask>[\s\S]*<circle [^>]*stroke="#4f7cff"[^>]*mask="url\(#ovmh\)"\/><path [^>]*stroke="#8b5cf6"/, 'blue O cut by a mask, violet V on top');
+assert.match(svg, /<mask id="ovmh"[\s\S]*stroke="#000" stroke-width="27"[\s\S]*<\/mask>[\s\S]*<circle [^>]*stroke="#4f7cff"[^>]*mask="url\(#ovmh\)"\/><path [^>]*stroke="#8b5cf6"/, 'blue O cut by a mask, violet V on top');
 assert.match(mark.svg({ tone: 'ink' }), /stroke="currentColor"[\s\S]*stroke="currentColor"/, 'ink: the text colour');
 assert.match(mark.svg({ tone: 'white' }), /stroke="#fff"[\s\S]*stroke="#fff"/, 'white: for a colour tile');
 const wide = mark.svg({ wide: true, size: 40 });
