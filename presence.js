@@ -86,7 +86,7 @@
                 .ovp-pop::before { content: ""; justify-self: center; width: 40px; height: 4px; border-radius: 99px; background: color-mix(in srgb, var(--text-primary, #fff) 25%, transparent); }
                 .ovp-opt { min-height: 56px; }
             }
-            @media (prefers-reduced-motion: reduce) { .ovp-scrim, .ovp-pop { animation: none; } }`;
+            `;
         document.head.appendChild(s);
     }
 

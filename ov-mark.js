@@ -36,13 +36,16 @@
  * visit, from the first time a mark is on screen in this tab; later pages of a multi-page site open with the mark at
  * rest), while it or its link is hovered or focused (and LINGER_MS after), and while it shows a state, a page load or
  * progress. Otherwise its CSS animations are paused where they are. It never moves while the page is hidden, while it
- * is off-screen (IntersectionObserver), with data-static, under prefers-reduced-motion or under the network's own
- * reduced-motion setting (html[data-ov-motion=reduced], theme-loader.js); its colours and shapes still change.
+ * is off-screen (IntersectionObserver), with data-static, or with motion off (html[data-ov-motion=off],
+ * theme-loader.js); its colours and shapes still change. Calm (html[data-ov-motion=reduced]: the person's choice, or
+ * the device asking for less motion) keeps the intro, the hover and every state, drops the linger after a hover and
+ * lets fewer leaves fall a shorter way.
  *
  * The season (theme-loader.js sets <html data-ov-season-mark="halloween|winter"> for anyone who has not turned seasonal
  * themes off, on any theme): the mark wears it, the O a pumpkin with its stem and leaf in October, caps of snow in
  * December. Now and then (every 4 to 8 minutes) a mark on screen flickers for a moment, and on the first visit of the
- * day a few leaves (snowflakes in December) drift down from the first mark seen. Never under either reduced-motion setting.
+ * day a few leaves (snowflakes in December) drift down from the first mark seen: seven in full, three under Calm, none
+ * with motion off.
  */
 (function () {
     'use strict';
@@ -186,8 +189,7 @@ html[data-ov-season-mark=winter] .ovm-fall i{width:6px;height:6px;border-radius:
 @keyframes ovmWiggle{0%,100%{transform:none}25%{transform:rotate(-18deg)}60%{transform:rotate(12deg)}}
 @keyframes ovmTwinkle{0%,100%{opacity:1}50%{opacity:.3}}
 @keyframes ovmFall{0%{opacity:0;transform:none}12%{opacity:1}72%{opacity:1;transform:translate(var(--x),var(--y)) rotate(var(--r))}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(var(--r))}}
-@media (prefers-reduced-motion:reduce){.ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}.ov-mark:not([data-fx-demo] *)::before{transition:none!important}.ovm-fall{display:none}}
-html[data-ov-motion=reduced] .ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}
+html[data-ov-motion=off] .ov-mark:not([data-fx-demo] *) *{animation-iteration-count:1!important}html[data-ov-motion=off] .ovm-fall{display:none}
 .ov-busy{cursor:progress;pointer-events:none}
 .ov-busy-mark{display:inline-block;vertical-align:-.2em;margin-right:.45em;flex:none}
 `;
@@ -252,23 +254,28 @@ html[data-ov-motion=reduced] .ov-mark:not([data-fx-demo] *) *{animation-iteratio
         return end;
     }
     // Inside [data-fx-demo] (ov-fx.js: a motion page's own container, set when the person asks) a mark plays in full.
-    function reduced(el) {
-        if (el && el.closest && el.closest('[data-fx-demo]')) return false;
-        return !!(rm && rm.matches) || document.documentElement.getAttribute('data-ov-motion') === 'reduced';
+    // 'full' | 'calm' | 'off': <html data-ov-motion> is the signal (theme-loader.js, the device's setting counted in);
+    // a page without the loader asks the device.
+    function motion(el) {
+        if (el && el.closest && el.closest('[data-fx-demo]')) return 'full';
+        const m = document.documentElement.getAttribute('data-ov-motion');
+        if (m === 'off') return 'off';
+        return m === 'reduced' || (!m && rm && rm.matches) ? 'calm' : 'full';
     }
+    const off = (el) => motion(el) === 'off';
     function update(el) {
         const st = state.get(el); if (!st) return;
         const svgEl = el.querySelector('svg');
         if (!el.isConnected || !svgEl) { forget(el); return; }
         const now = Date.now();
-        // Calm (the Motion setting, or the device asking for less) is gentle, not still: a state still animates, once.
         const may = !el.hasAttribute('data-static') && !document.hidden && st.onScreen === true;
-        if (may && !reduced(el) && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
+        if (may && !off(el) && !st.introEnd) { st.introEnd = introDeadline(now); if (season()) setTimeout(() => fallOnce(el), 900); }
         const s = el.getAttribute('data-state');
         // Anything the mark is showing keeps it moving: a state, a page on its way, a known progress.
         const showing = (s && s !== 'idle') || el.hasAttribute('data-nav') || el.hasAttribute('data-progress');
         const intro = now < st.introEnd;
-        const run = may && (showing || (!reduced(el) && (intro || st.hover || st.focus || now < st.lingerEnd)));
+        // Calm plays the intro and answers a hover or focus, and rests as soon as that ends (no linger).
+        const run = may && (showing || (!off(el) && (intro || st.hover || st.focus || (motion(el) === 'full' && now < st.lingerEnd))));
         if (run !== el.hasAttribute('data-ovm-run')) { if (run) el.setAttribute('data-ovm-run', ''); else el.removeAttribute('data-ovm-run'); }
         // The intro's pop and growth are on only inside the intro (paused with the rest while the mark cannot move).
         if ((may && intro) !== el.hasAttribute('data-ovm-intro') && (may || !intro)) { if (may && intro) el.setAttribute('data-ovm-intro', ''); else el.removeAttribute('data-ovm-intro'); }
@@ -295,7 +302,7 @@ html[data-ov-motion=reduced] .ov-mark:not([data-fx-demo] *) *{animation-iteratio
         clearTimeout(flourishTimer); flourishTimer = 0;
         if (!season()) return;
         flourishTimer = setTimeout(() => {
-            if (season() && !reduced() && !document.hidden) {
+            if (season() && !off() && !document.hidden) {
                 document.querySelectorAll('.ov-mark[data-ov]:not([data-static])').forEach((el) => {
                     const st = state.get(el); if (!st || st.onScreen === false) return;
                     el.setAttribute('data-ovm-flourish', ''); setTimeout(() => el.removeAttribute('data-ovm-flourish'), 1700);
@@ -306,7 +313,8 @@ html[data-ov-motion=reduced] .ov-mark:not([data-fx-demo] *) *{animation-iteratio
     }
     const FALL_KEY = 'ov-season-fall';
     function fallOnce(el) {
-        const id = season(); if (!id || reduced() || document.hidden || !el.isConnected) return;
+        const id = season(); if (!id || off() || document.hidden || !el.isConnected) return;
+        const calm = motion() === 'calm';
         const day = id + ':' + new Date().toDateString();
         try { const ls = window.localStorage; if (ls.getItem(FALL_KEY) === day) return; ls.setItem(FALL_KEY, day); } catch { return; }
         const r = el.getBoundingClientRect(); if (!r.width || !document.body) return;
@@ -319,11 +327,11 @@ html[data-ov-motion=reduced] .ov-mark:not([data-fx-demo] *) *{animation-iteratio
         const rb = bar && bar.getBoundingClientRect();
         const floor = rb && rb.bottom > y0 + 8 ? rb.bottom - y0 - 4 : 0;
         const colors = id === 'winter' ? ['#f4fbff', '#d8f3ff', '#ffffff'] : ['#ff7a1a', '#f5a524', '#d9481f', '#7fd04e'];
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < (calm ? 3 : 7); i++) {
             const s = document.createElement('i');
-            const dx = Math.max(8 - x0, Math.min((window.innerWidth || 0) - 8 - x0, Math.round((Math.random() - 0.3) * 200)));
+            const dx = Math.max(8 - x0, Math.min((window.innerWidth || 0) - 8 - x0, Math.round((Math.random() - 0.3) * (calm ? 70 : 200))));
             const dy = floor ? Math.round(floor - Math.random() * 3) : Math.round(36 + Math.random() * 28);
-            s.style.cssText = `--x:${dx}px;--y:${dy}px;--r:${Math.round(Math.random() * 540 - 270)}deg;animation-delay:${(i * 0.18 + Math.random() * 0.2).toFixed(2)}s;animation-duration:${(2.4 + Math.random() * 1.2).toFixed(2)}s;background:${colors[i % colors.length]}`;
+            s.style.cssText = `--x:${dx}px;--y:${dy}px;--r:${Math.round((Math.random() * 540 - 270) * (calm ? 0.35 : 1))}deg;animation-delay:${(i * 0.18 + Math.random() * 0.2).toFixed(2)}s;animation-duration:${(2.4 + Math.random() * 1.2).toFixed(2)}s;background:${colors[i % colors.length]}`;
             box.appendChild(s);
         }
         document.body.appendChild(box);

@@ -1,5 +1,48 @@
 # Changelog
 
+## 4.183.0 — 2026-11-10
+
+**Motion: Calm reduces, only Off removes.** The owner, 2026-11-10: "Reduce motion is too much reduction, it ruins a lot
+of stuff, so it should still have full motion but actually just reduce it instead of getting rid of it." Until now Calm
+(the person's choice, or the device asking for less motion) gave every animation and transition no length at all.
+
+- **Four choices, one signal.** `display.motion` is `auto`, `full`, `reduced` or `off`, and `theme-loader.js` writes
+  the answer on `<html>`, the device's own setting counted in: Automatic follows the device (Calm when it asks, nothing
+  otherwise), Full plays everything even when the device asks (`data-ov-motion=full`), Calm is `data-ov-motion=reduced`,
+  and Off (`data-ov-motion=off`) is the only choice that stops motion. `display.motion()` answers `'full'`, `'calm'` or
+  `'off'`. The look panel's Motion row offers the four (Auto, Full, Calm, Off).
+- **What Calm is.** `--ov-move`, the factor a moving thing multiplies its distance by: 1 in full, .35 under Calm, 0 with
+  motion off (`calc(12px * var(--ov-move, 1))` in CSS, `display.move()` and `OVFx.move()` in script). The calm feel's
+  lengths with no overshoot. And the loader slows every endless loop (a pulse, a drift, a shimmer) to 0.6 of its speed
+  as it starts; anything that ends plays as it was written. The page itself does not glide when it scrolls; a rail or
+  a sheet does.
+- **The effects.** A lift rises a pixel and a reveal five; a tilt leans a third as far; a burst of confetti is a third
+  of the pieces thrown half as hard; a count-up is quicker; the glint is fainter and slower; the mark keeps its intro
+  and its hover and drops only the linger, and three leaves fall instead of seven; the ghost cursor glides slower and
+  waits longer; a name's particle burst is three pieces, not six; a drawer slides a third of its width and fades.
+- **The files.** 75 rules across 45 files stopped an effect under `prefers-reduced-motion` or under
+  `html[data-ov-motion=reduced]`: all are gone. What such a rule did to leave a thing finished (a drawn stroke, a
+  static glow, a bar at rest) belongs to `html[data-ov-motion=off]`. The calmer keyframes that already existed (the
+  menu's pop, the home screen's wiggle and card fade, a new message) stay as Calm's. Script that skipped an effect when
+  the device asked skips it only with motion off; a live preview (a video that starts by itself) still waits for a tap
+  under Calm.
+- **For a site's own styles:** delete the rules that stop motion under `prefers-reduced-motion` or under
+  `html[data-ov-motion=reduced]`; multiply a distance of 24px or more by `var(--ov-move, 1)`; keep a rule only where it
+  swaps in a calmer keyframe, keyed on `html[data-ov-motion=reduced]`; a finished state belongs to
+  `html[data-ov-motion=off]`. `test/motion-setting.test.js` holds this package to it.
+- The loader grew about 2.9 KB raw (budget 66,500 characters). Network must accept `full` and `off` in the display
+  record before a site offers them (OpenVibe.Network `server/themes/routes.js`).
+
+**Icons: every shape glyph has a solid drawing, and every product has its mark.** Icons shown at 18 px or smaller draw
+their solid form; 142 of the 278 glyphs had none. 75 of those are made of lines only and thicken when small by design;
+the other 67 are shapes, and all of them are drawn now (frames and cards, marks in a disc, the media keys, things,
+people, slashed shapes), so 203 of 278 glyphs have a solid drawing and every glyph without one is a line glyph.
+`glyphs.svg(name, { style: 'solid' })` gave a class-ln part no stroke of its own, so a line inside a solid drawing was
+filled as a shape or not drawn; it carries the stroke inline now, as the sprite already did. Site marks: eleven
+product ids had no mark and drew the bare "V" (computer, mail, lock/locker, git, barcode, party, studio, my, home,
+restream, node), and four things sites name as marks did the same (shoe, heart, calendar, camera). Each has its glyph
+in the ring, centred by measurement; `test/site-icons.test.js` covers every product id.
+
 ## 4.181.0 — 2026-11-10
 
 **The Dock's agent view, timeline and Actor go through Network's frame relay.** `dock-agent.js`, `dock-timeline.js`

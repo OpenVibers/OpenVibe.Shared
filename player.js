@@ -167,7 +167,7 @@
      * on screen, blurred and crossfaded by player.css. A cross-origin video taints a canvas, which can still be shown.
      */
     function glow(root, video) {
-        const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';   // a slow colour fade moves nothing: Calm keeps it
         const saver = typeof navigator !== 'undefined' && navigator.connection && navigator.connection.saveData;
         const probe = document.createElement('canvas');
         if (reduce || saver || typeof probe.getContext !== 'function' || !probe.getContext('2d')) return null;

@@ -183,7 +183,6 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-lives { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
 .ovh-lives a { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: color-mix(in srgb, var(--live, #ef4444) 12%, transparent); color: inherit; text-decoration: none; font-size: 13px; font-weight: 650; }
 .ovh-lives a::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--live, #ef4444); }
-@media (prefers-reduced-motion: reduce) { .ovh.is-edit .ovh-grid .ovh-ic { animation-name: ovh-wiggle-calm !important; } .ovh-chip.is-working .ovh-dot { animation: none !important; } }
 
 /* You (11-09, the owner: "the U tab still sucks"): you on top, with Display and Settings beside your name; what you were
    doing as a rail of cards; what you use most as one bar; then your home. */
@@ -236,9 +235,7 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 @keyframes ovh-onair { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--live, #ef4444) 55%, transparent), 0 0 18px color-mix(in srgb, var(--live, #ef4444) 35%, transparent); } }
 /* Calm is gentle, not still (the owner, 11-09): shorter travel, slower breath. */
 html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-duration: .5s; }
-html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s; }
 @keyframes ovh-fade { from { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .ovh-card { animation-name: ovh-fade; } .ovh-use-bar > span { animation-duration: .4s; } }
 /* The invitation, one compact row (11-09): mark, words, Set it up, and an × to put it away. */
 .ovh-actor.is-invite { grid-template-columns: 44px minmax(0, 1fr) auto auto; grid-template-rows: auto auto; gap: 2px 10px; align-items: center; min-height: 0; padding: 10px 6px 12px 12px; }
 .ovh-actor.is-invite .ovh-face { grid-row: 1 / 3; align-self: start; width: 44px; height: 44px; border-radius: 14px; }
@@ -988,7 +985,8 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
         return fetch(feedUrl(o, kind, cursor), { credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {}) })
             .then((r) => (r.ok ? r.json() : null)).then((j) => (j && Array.isArray(j.items) ? j : null)).catch(() => null);
     }
-    const still = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced' || !!(navigator.connection && navigator.connection.saveData); } catch { return false; } };
+    // A preview is a video that starts by itself: Calm and Off both leave it to a tap (as does a data saver).
+    const still = () => { try { const m = document.documentElement.getAttribute('data-ov-motion'); return m === 'off' || m === 'reduced' || (!m && matchMedia('(prefers-reduced-motion: reduce)').matches) || !!(navigator.connection && navigator.connection.saveData); } catch { return false; } };
     const count = (n) => { const v = Number(n) || 0; return v >= 1000 ? `${(v / 1000).toFixed(v >= 10000 ? 0 : 1)}k` : String(v); };
     let player = null;   // one IntersectionObserver plays the preview in view and pauses the rest
     function watchPreview(box, c) {
@@ -1305,7 +1303,6 @@ html[data-ov-motion=reduced] .ovh-card.is-live .ovh-ic { animation-duration: 4s;
 .ovfd-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovfd-shimmer 1.4s ease-in-out infinite}
 .ovfd-more{min-height:1px}.ovfd-caught{text-align:center;padding:10px 0}
 @keyframes ovfd-shimmer{to{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.ovfd-skel{animation:none}.ovfd-livechip{animation-duration:4s}}
 `;
         document.head.appendChild(st);
     }

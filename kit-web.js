@@ -165,7 +165,7 @@
         });
         // Rails: ‹ › move a page of cards where there is a pointer to click them; each hides at its end.
         const fine = typeof matchMedia === 'function' && matchMedia('(hover: hover) and (pointer: fine)').matches;
-        const still = () => (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) || document.documentElement.getAttribute('data-ov-motion') === 'reduced';
+        const still = () => document.documentElement.getAttribute('data-ov-motion') === 'off';   // a rail glides under Calm too
         all('.ovk-rail').forEach((r) => {
             if (!once(r, 'ovkRail')) return;
             const track = r.querySelector('.ovk-rail-track');

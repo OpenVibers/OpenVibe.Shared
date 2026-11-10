@@ -325,7 +325,6 @@
 @media (hover: hover) { .ovs-app:hover, .ovs-link:hover, .ovs-live:hover, .ovs-fold:hover { background: var(--bg-hover, rgba(255,255,255,.07)); color: inherit; } .ovs-app:hover .ovs-appic { transform: translateY(-2px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); } }
 @media (max-width: 640px) { .ovs-apps { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (pointer: coarse) { .ovs-chip { height: 44px; } .ovs-group button, .ovs-group .ovs-more { min-height: 44px; display: inline-flex; align-items: center; } }
-@media (prefers-reduced-motion: reduce) { .ovs-livedot { animation: none; } .ovs .ovs-appic { transition: none; } }
 .ovs-foot { display: flex; gap: 14px; padding: 8px 16px; border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-size: 11.5px; color: var(--text-muted, #93a0b4); }
 .ovs-foot kbd { font: inherit; font-weight: 700; padding: 1px 5px; border-radius: 5px; border: 1px solid var(--border, rgba(255,255,255,.14)); }
 .ovs-busy .ovs-bar { background-image: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent), transparent); background-size: 40% 2px; background-repeat: no-repeat; background-position: -40% 100%; animation: ovs-scan 1s linear infinite; }
@@ -387,7 +386,7 @@
 .ovs-orb.is-x .ovo-g { transform: rotate(180deg) scale(.95); }
 .ovs-orb.is-x .ovo-r1 { opacity: 0; transform: scale(0); }
 .ovs-orb.is-x :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; transform: scale(1.12); }
-@media (prefers-reduced-motion: reduce) { .ovs.is-open, .ovs-busy .ovs-bar, .ovs.ovs-anchored .ovs-panel, .ovs-skel, .ovs-list > li { animation: none; } .ovs-orb, .ovs-orb .ovo-g, .ovs-orb .ovo-d { transition: none !important; } }`;
+`;
         document.head.appendChild(st);
     }
 
@@ -408,7 +407,8 @@
     const orbSvg = () => `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><g class="ovo-g">${ORB_DOTS.map(([x, y, r]) => `<circle class="ovo-d ovo-r${r}" cx="${x}" cy="${y}" r="${r ? 2.15 : 2.5}"/>`).join('')}</g></svg>`;
     let orbEl = null, closing = 0;
     const phoneSheet = () => { try { return !!(el && el.classList.contains('ovs-anchored') && root.matchMedia('(max-width: 640px)').matches); } catch { return false; } };
-    const calm = () => { try { return root.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.getAttribute('data-ov-motion') === 'reduced'; } catch { return false; } };
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const calm = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
 
     function build() {
         styles();

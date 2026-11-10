@@ -37,7 +37,7 @@
 .ov-labels-gate span{display:inline-flex;align-items:center;min-height:36px;padding:0 16px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28)}
 .ov-labels-gate:hover span,.ov-labels-gate:focus-visible span{background:rgba(255,255,255,.26)}
 .ov-labels-gate:focus-visible{outline:2px solid var(--accent,#60a5fa);outline-offset:-4px}
-@media (prefers-reduced-motion:reduce){.ov-labels-cover>:not(.ov-labels-gate){transform:none}}`;
+html[data-ov-motion=off] .ov-labels-cover>:not(.ov-labels-gate){transform:none}`;
 
     function injectCSS() {
         if (document.getElementById('ov-labels-css')) return;

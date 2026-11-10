@@ -21,7 +21,8 @@
     'use strict';
     if (root.OVThread) return;
     var fine = root.matchMedia && root.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    var reduce = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
 
     function q(el, sel) { return el ? el.querySelector(sel) : null; }

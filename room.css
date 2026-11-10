@@ -175,8 +175,6 @@
     .ovk-rail--wrap.ovk-rail--l { --ovk-rail-min: 320px; }
     .ovk-rail--wrap .ovk-rail-btn { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .ovk-card-media > img, .ovk-card-peek, .ovk-card-video { transition: none; } .ovk-card-badge.is-live::before { animation: none; } }
-html[data-ov-motion=reduced] .ovk-card-badge.is-live::before { animation: none; }
 
 /* ── sc.room(): a room's front door (moved from showcase.css in 4.29.2, so product homes that never draw a room do not
  *    load it) ── */
@@ -226,7 +224,7 @@ html[data-ov-motion=reduced] .ovk-card-badge.is-live::before { animation: none; 
 .sc-scene-stage{position:relative;min-width:0;border-radius:20px;padding:clamp(14px,2.4vw,24px);background:radial-gradient(120% 80% at 85% 0%,color-mix(in srgb,var(--room-accent,#3b82f6) 16%,transparent),transparent 62%),var(--bg-card,#0f1729);border:1px solid var(--border,#1f2d47);box-shadow:0 30px 60px -32px rgba(0,0,0,.55);overflow:hidden}
 .sc-room-devlinks{margin:12px 0 0;font-size:.9rem;color:var(--text-muted,#7386a3)}
 .sc-room-devlinks a{color:var(--room-strong,#60a5fa);font-weight:700}
-html.ov-motion [data-ov-reveal]{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
+html.ov-motion [data-ov-reveal]{opacity:0;transform:translateY(calc(18px * var(--ov-move,1)));transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
 html.ov-motion [data-ov-reveal].is-in{opacity:1;transform:none}
 @media (max-width:759px){
 .sc-room-hero{grid-template-columns:minmax(0,1fr);margin-inline:-16px;padding-inline:16px;overflow-x:clip}
@@ -238,9 +236,7 @@ html.ov-motion [data-ov-reveal].is-in{opacity:1;transform:none}
 .sc-scene,.sc-scene.is-flip{grid-template-columns:minmax(0,1fr)}.sc-scene.is-flip .sc-scene-text{order:0}
 }
 @media (max-width:599px){.sc-room-chips{flex-wrap:nowrap;overflow-x:auto;margin-inline:-16px;padding:2px 16px;scrollbar-width:none}.sc-room-chips::-webkit-scrollbar{display:none}.sc-room-box input{height:52px;padding-left:18px}}
-@media (prefers-reduced-motion:reduce){.sc-rm-glow,.sc-rm-orbit,.sc-room-live::before{animation:none}html.ov-motion [data-ov-reveal]{opacity:1;transform:none;transition:none}}
-html[data-ov-motion=reduced] .sc-rm-glow,html[data-ov-motion=reduced] .sc-rm-orbit,html[data-ov-motion=reduced] .sc-room-live::before{animation:none}
-html[data-ov-motion=reduced].ov-motion [data-ov-reveal]{opacity:1;transform:none;transition:none}
+html[data-ov-motion=off].ov-motion [data-ov-reveal]{opacity:1;transform:none}
 
 /* Sideways strips say they scroll (kit-web.js sets the classes): the edge fades where more is hidden. */
 :where(.ovk-rail-track, [data-ovk-scroll]) { --ovk-fade: 28px; }
@@ -252,4 +248,3 @@ html[data-ov-motion=reduced].ov-motion [data-ov-reveal]{opacity:1;transform:none
 .ovk-scroll-bar { display: block; width: 56px; height: 4px; margin: 10px auto 0; border-radius: 4px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 12%, transparent); overflow: hidden; }
 .ovk-scroll-bar[hidden] { display: none; }
 .ovk-scroll-bar > i { display: block; height: 100%; border-radius: 4px; background: var(--accent, #3b82f6); transition: transform .12s linear; }
-@media (prefers-reduced-motion: reduce) { .ovk-scroll-bar > i { transition: none; } }

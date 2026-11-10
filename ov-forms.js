@@ -37,7 +37,8 @@
     const done = new WeakMap();      // select → its state
     let open = null;                 // the state whose list is open
     let uid = 0;
-    const reduce = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
+    const reduce = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
     const phone = () => !!(root.matchMedia && root.matchMedia(PHONE).matches);
     const el = (tag, cls, attrs) => {
         const n = doc.createElement(tag);

@@ -46,7 +46,7 @@
             .ovrt-bar::after { content: ''; position: absolute; right: 0; top: -2px; width: 90px; height: 7px; border-radius: 50%; background: var(--accent-light, #93c5fd); filter: blur(4px); opacity: .9; }
             .ovrt-bar.is-run { opacity: 1; transform: scaleX(.88); transition: transform 3s cubic-bezier(.08, .7, .2, 1), opacity .1s; }
             .ovrt-bar.is-done { opacity: 0; transform: scaleX(1); transition: transform .2s ease, opacity .35s .15s; }
-            @media (prefers-reduced-motion: reduce) { .ovrt-bar.is-run, .ovrt-bar.is-done { transition: none; } .ovrt-bar::after { display: none; } }
+            html[data-ov-motion=off] .ovrt-bar::after{display: none}
             .openvibe-navbar::before { content: ""; position: absolute; inset: 0 0 -28px; pointer-events: none; z-index: -1; opacity: 0; transition: opacity .45s cubic-bezier(.2,.7,.2,1); background: linear-gradient(180deg, rgba(4,7,14,.62), rgba(4,7,14,.28) 55%, rgba(4,7,14,0)); }
             .openvibe-navbar:not(.ovnav-top) { background-color: color-mix(in srgb, var(--bg-secondary, #252530) 84%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px); box-shadow: 0 12px 32px -14px rgba(0,0,0,.6); }
             .openvibe-navbar.ovnav-top { background-color: transparent; border-bottom-color: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -55,7 +55,6 @@
             body.ov-nav-overlay .openvibe-navbar.ovnav-top::before { opacity: 1; }
             body.ov-nav-overlay > #navbar-mount, body.ov-nav-overlay > .openvibe-navbar { margin-bottom: calc(-1 * var(--ovnav-real-h, 52px)); }
             body.ov-panel-open .openvibe-navbar.ovnav-top { background-color: var(--bg-secondary, #252530); border-bottom-color: var(--border, #333340); }
-            @media (prefers-reduced-motion: reduce) { .openvibe-navbar, .openvibe-navbar::before { transition: none; } }
             /* Names: the brand face (ov-brand.woff2: Nunito, Latin, 700-900). */
             @font-face { font-family: 'OV Brand'; src: url(${siblingV('ov-brand.woff2')}) format('woff2'); font-weight: 700 900; font-style: normal; font-display: swap; unicode-range: U+0020-007E, U+00A0, U+00B7, U+00E9, U+2013-2014, U+2018-2019, U+201C-201D, U+2026; }
             .openvibe-navbar-brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; margin-right: 8px; min-width: 0; }
@@ -317,8 +316,6 @@
             .ovnav-orb[aria-expanded="true"] :is(.ovo-r0, .ovo-r2) { fill: var(--ovo-a); opacity: 1; }
             @keyframes ovo-ripple { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.55); } }
             @keyframes ovo-wave { 0%, 100% { transform: scale(.7); opacity: .5; } 50% { transform: scale(1.25); opacity: 1; } }
-            @media (prefers-reduced-motion: reduce) { .ovnav-orb .ovo-g, .ovnav-orb .ovo-d, .ovnav-orb::before { transition: none; animation: none !important; } }
-            html[data-ov-motion="reduced"] .ovnav-orb .ovo-d { animation: none !important; }
             .openvibe-navbar .openvibe-navbar-brand .ovnav-orb { margin-left: 1px; }
             /* 4.148.0 (the owner: "replace the hamburger with that button"): the phone's menu button is the orb, in the
                burger's place at the bar's right. Hidden on a wide bar (its links are there), shown at 860 px and below;
@@ -404,8 +401,8 @@
             @keyframes ov-pop-out { to { opacity: 0; transform: scale(.94); filter: blur(3px); } }
             @keyframes ov-fade { from { opacity: 0; } }
             @keyframes ov-pop-calm { from { opacity: 0; transform: scale(.97); } }
-            @media (prefers-reduced-motion: reduce) { .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; } .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; animation-direction: reverse !important; } }
             html[data-ov-motion=reduced] .ov-pop { animation-name: ov-pop-calm !important; animation-duration: .18s !important; }
+            html[data-ov-motion=reduced] .ov-pop-out { animation-name: ov-fade !important; animation-duration: .12s !important; animation-direction: reverse !important; }
 
             .openvibe-navbar-dropdown-header {
                 padding: 12px 10px 12px 14px; border-bottom: 1px solid var(--border, #333340);
@@ -530,9 +527,7 @@
             :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
                 outline: 2px solid var(--accent-light, var(--accent, #3b82f6)); outline-offset: 2px;
             }
-            @media (prefers-reduced-motion: reduce) {
-                :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active { scale: none; opacity: .82; }
-            }
+            html[data-ov-motion=off] :where(.openvibe-navbar, .openvibe-navbar-dropdown, .ovnav-drawer) :where(a, button, [role="button"]):not(:disabled):active{scale: none;opacity: .82}
         `;
         document.head.appendChild(s);
     }
@@ -572,7 +567,7 @@
     const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'ced6e6ecf191', 'ov-glyphs.js': 'f358a22b3ae5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2d3a47d3535c', 'ov-fx.js': 'f0dc83b9c816', 'ov-labels.js': 'a30b178391f5', 'ov-forms.js': '20f4ef41d127', 'ov-forms.css': '98cf0f28bb68', 'ov-share.js': '44a863d7a267', 'ov-share.css': '45b92b654148', 'search.js': 'bbae7542436f', 'dock.js': '67101584eb54', 'presence.js': '1b675c37d888', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'e06f1388b696', 'history.js': '1e6598f78ba4', 'site-switcher.js': '292bea111aa8', 'appbar.js': '1edf7532f228', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '94adfcb62f3d', 'sso-client.js': '52439265b980', 'overlay.js': 'd18308ab8a63', 'ov-home.js': '631efe800b13', 'nav-slots.js': 'a5af310d62e0', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
+    const SIBLING_REV = { 'ov-mark.js': '8cc78bde2190', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'b170f6e994fa', 'dock.js': 'd45d3e6e7c39', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': 'dc24929109b5', 'history.js': '1e6598f78ba4', 'site-switcher.js': 'd8980cf95157', 'appbar.js': '4e34b7d60372', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '093d5979ae12', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': '5c4d7fdb448d', 'ov-wallet.css': 'e46f653fa59e' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.

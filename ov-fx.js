@@ -17,8 +17,10 @@
  * Motion tokens (a look can set them; theme-loader.js passes a theme's own): --ov-dur-1…4, --ov-ease-out,
  * --ov-ease-spring, --ov-ease-in-out. Each look has a feel (4.67.0): the quiet paper and light themes move calmly (a
  * little slower, no overshoot), the neon and terminal ones snap (quicker, a livelier spring); the rest are lively. Nothing here runs by itself: every effect waits for a hover, a press, or the
- * element coming on screen, plays once, and stops. Under prefers-reduced-motion or Calm (html[data-ov-motion=reduced])
- * nothing moves: reveals and numbers are simply there, and no confetti falls.
+ * element coming on screen, plays once, and stops. Calm (the person's choice, or the device asking for less motion:
+ * html[data-ov-motion=reduced]) keeps every effect and makes it smaller and slower: a lift rises a pixel, a reveal
+ * rises five, a tilt leans a third as far, a burst of confetti is a third the size, nothing overshoots. Only Off
+ * (html[data-ov-motion=off]) stops them: reveals and numbers are simply there, and no confetti falls.
  */
 (function (root) {
     'use strict';
@@ -30,10 +32,11 @@
     const CSS = ':root{--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s;--ov-ease-out:cubic-bezier(.2,.8,.2,1);--ov-ease-spring:cubic-bezier(.34,1.56,.64,1);--ov-ease-in-out:cubic-bezier(.65,0,.35,1)}'
         + `html:is(${CALM}){--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s;--ov-ease-spring:var(--ov-ease-out)}`
         + `html:is(${SNAPPY}){--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s;--ov-ease-spring:cubic-bezier(.3,1.8,.6,1)}`
-        + 'html[data-ov-motion=reduced]{--ov-dur-1:0s;--ov-dur-2:0s;--ov-dur-3:0s;--ov-dur-4:0s}'
-        // A demo scope keeps its lengths whatever reduced them (Calm above, or kit.css under the device's own setting),
-        // in the look's own feel.
-        + '[data-fx-demo]{--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s}'
+        + 'html[data-ov-motion=reduced]{--ov-move:.35;--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s;--ov-ease-spring:var(--ov-ease-out)}'
+        + '@media (prefers-reduced-motion:reduce){html:not([data-ov-motion]){--ov-move:.35;--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s;--ov-ease-spring:var(--ov-ease-out)}}'
+        + 'html[data-ov-motion=off]{--ov-move:0;--ov-dur-1:0s;--ov-dur-2:0s;--ov-dur-3:0s;--ov-dur-4:0s}'
+        // A demo scope plays in full whatever the page's motion is, in the look's own feel.
+        + '[data-fx-demo]{--ov-move:1;--ov-ease-spring:cubic-bezier(.34,1.56,.64,1);--ov-dur-1:.12s;--ov-dur-2:.2s;--ov-dur-3:.32s;--ov-dur-4:.52s}'
         + `html:is(${CALM}) [data-fx-demo]{--ov-dur-1:.15s;--ov-dur-2:.25s;--ov-dur-3:.4s;--ov-dur-4:.62s}`
         + `html:is(${SNAPPY}) [data-fx-demo]{--ov-dur-1:.09s;--ov-dur-2:.15s;--ov-dur-3:.24s;--ov-dur-4:.42s}`
         + '.ovfx-glint{position:relative;overflow:hidden;isolation:isolate}'
@@ -42,26 +45,37 @@
         + '.ovfx-glow{transition:box-shadow var(--ov-dur-3) var(--ov-ease-out)}'
         + '.ovfx-glow:hover,.ovfx-glow:focus-visible{box-shadow:0 0 0 1px color-mix(in srgb,var(--accent,#4f7cff) 45%,transparent),0 10px 34px -10px color-mix(in srgb,var(--accent,#4f7cff) 70%,transparent)}'
         + '.ovfx-lift{transition:transform var(--ov-dur-3) var(--ov-ease-spring),box-shadow var(--ov-dur-3) var(--ov-ease-out)}'
-        + '.ovfx-lift:hover{transform:translateY(-3px);box-shadow:0 12px 28px -14px rgba(0,0,0,.45)}'
+        + '.ovfx-lift:hover{transform:translateY(calc(-3px * var(--ov-move,1)));box-shadow:0 12px 28px -14px rgba(0,0,0,.45)}'
         + '.ovfx-press{transition:transform var(--ov-dur-4) var(--ov-ease-spring)}'
-        + '.ovfx-press:active{transform:scale(.96);transition-duration:var(--ov-dur-1)}'
-        + '.ovfx-lift.ovfx-press:active{transform:translateY(-1px) scale(.97)}'
+        + '.ovfx-press:active{transform:scale(calc(1 - .04 * var(--ov-move,1)));transition-duration:var(--ov-dur-1)}'
+        + '.ovfx-lift.ovfx-press:active{transform:translateY(calc(-1px * var(--ov-move,1))) scale(calc(1 - .03 * var(--ov-move,1)))}'
         + '.ovfx-ripple{position:relative;overflow:hidden;isolation:isolate}'
         + '.ovfx-rip{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:ovfxRip .6s var(--ov-ease-out) forwards}'
         + '@keyframes ovfxRip{to{transform:scale(1);opacity:0}}'
         + '.ovfx-tilt{transition:transform var(--ov-dur-3) var(--ov-ease-out);transform-style:preserve-3d;will-change:transform}'
-        + '.ovfx-hide{opacity:0;transform:translateY(14px)}'
+        + '.ovfx-hide{opacity:0;transform:translateY(calc(14px * var(--ov-move,1)))}'
         + '.ovfx-in{opacity:1;transform:none;transition:opacity .5s var(--ov-ease-out),transform .6s var(--ov-ease-spring);transition-delay:var(--ovfx-d,0ms)}'
         + '.ovfx-shimmer{background:linear-gradient(100deg,color-mix(in srgb,var(--text-muted,#8b93ad) 12%,transparent) 30%,color-mix(in srgb,var(--text-muted,#8b93ad) 22%,transparent) 50%,color-mix(in srgb,var(--text-muted,#8b93ad) 12%,transparent) 70%) 0 0/300% 100%;animation:ovfxShim 1.4s linear infinite;color:transparent!important;border-radius:8px}'
         + '@keyframes ovfxShim{from{background-position:100% 0}to{background-position:0 0}}'
         + '.ovfx-confetti{position:fixed;inset:0;pointer-events:none;z-index:2147483000}'
-        + '@media (prefers-reduced-motion:reduce){.ovfx-glint:not([data-fx-demo] *)::after{display:none}.ovfx-lift:not([data-fx-demo] *),.ovfx-press:not([data-fx-demo] *),.ovfx-tilt:not([data-fx-demo] *),.ovfx-in:not([data-fx-demo] *){transition:none!important}.ovfx-shimmer:not([data-fx-demo] *){animation:none}}'
-        + 'html[data-ov-motion=reduced] .ovfx-glint:not([data-fx-demo] *)::after{display:none}html[data-ov-motion=reduced] .ovfx-shimmer:not([data-fx-demo] *){animation:none}html[data-ov-motion=reduced] .ovfx-in:not([data-fx-demo] *){transition:none}';
+        // Calm: the sheen crosses fainter and slower, the ripple is fainter. Off: no sheen, no shimmer, nothing fades in.
+        + 'html[data-ov-motion=reduced] .ovfx-glint:not([data-fx-demo] *)::after{opacity:.55}html[data-ov-motion=reduced] .ovfx-glint:not([data-fx-demo] *):is(:hover,:focus-visible)::after{transition-duration:1.1s}html[data-ov-motion=reduced] .ovfx-rip:not([data-fx-demo] *){opacity:.14}'
+        + 'html[data-ov-motion=off] .ovfx-glint:not([data-fx-demo] *)::after{display:none}html[data-ov-motion=off] .ovfx-shimmer:not([data-fx-demo] *){animation:none}html[data-ov-motion=off] :is(.ovfx-in,.ovfx-lift,.ovfx-press,.ovfx-tilt):not([data-fx-demo] *){transition:none!important}';
 
-    // The demo scope (4.180.0): inside [data-fx-demo] the effects play even when motion is reduced. A page that exists
-    // to show motion sets it on one container, only after the person presses a button that says so; nothing else may.
+    // The demo scope (4.180.0): inside [data-fx-demo] the effects play in full whatever the page's motion is. A page
+    // that exists to show motion sets it on one container, only after the person presses a button that says so.
     const demo = (el) => !!(el && el.closest && el.closest('[data-fx-demo]'));
-    const reduced = (el) => !demo(el) && ((root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches) || doc.documentElement.getAttribute('data-ov-motion') === 'reduced');
+    // How far things move here: 1 in full, CALM_MOVE under Calm, 0 when motion is off. <html data-ov-motion> is the signal
+    // (theme-loader.js writes it, the device's own setting counted in); a page without the loader asks the device.
+    const CALM_MOVE = 0.35;
+    const move = (el) => {
+        if (demo(el)) return 1;
+        const m = doc.documentElement.getAttribute('data-ov-motion');
+        if (m === 'off') return 0;
+        if (m === 'reduced') return CALM_MOVE;
+        return !m && root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches ? CALM_MOVE : 1;
+    };
+    const off = (el) => move(el) === 0;
     const fine = () => !!(root.matchMedia && root.matchMedia('(hover: hover) and (pointer: fine)').matches);
     const done = new WeakSet();
     let io = null;
@@ -89,7 +103,7 @@
     const below = (el) => { try { return el.getBoundingClientRect().top > (root.innerHeight || 0); } catch (e) { return false; } };
 
     function countUp(el, c) {
-        const t0 = root.performance ? root.performance.now() : Date.now(), ms = Math.min(1600, 500 + Math.log10(Math.max(10, c.to)) * 220);
+        const t0 = root.performance ? root.performance.now() : Date.now(), ms = Math.min(1600, 500 + Math.log10(Math.max(10, c.to)) * 220) * (move(el) < 1 ? 0.6 : 1);
         const step = (now) => {
             const p = Math.min(1, ((now || Date.now()) - t0) / ms), e = 1 - Math.pow(1 - p, 3);
             el.textContent = p < 1 ? c.fmt(c.to * e) : c.text;
@@ -111,7 +125,7 @@
 
     // ── Pointer effects ──
     function ripple(el, ev) {
-        if (reduced(el)) return;
+        if (off(el)) return;
         const r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
         const s = doc.createElement('span'); s.className = 'ovfx-rip';
         s.style.cssText = `width:${d}px;height:${d}px;left:${(ev.clientX || r.left + r.width / 2) - r.left - d / 2}px;top:${(ev.clientY || r.top + r.height / 2) - r.top - d / 2}px`;
@@ -120,19 +134,21 @@
     function tilt(el) {
         let raf = 0;
         el.addEventListener('pointermove', (ev) => {
-            if (ev.pointerType !== 'mouse' || reduced(el) || raf) return;
+            if (ev.pointerType !== 'mouse' || off(el) || raf) return;
             raf = root.requestAnimationFrame(() => {
                 raf = 0;
                 const r = el.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width - 0.5, y = (ev.clientY - r.top) / r.height - 0.5;
-                el.style.transform = `perspective(900px) rotateX(${(-y * 6).toFixed(2)}deg) rotateY(${(x * 7).toFixed(2)}deg)`;
+                const k = move(el);
+                el.style.transform = `perspective(900px) rotateX(${(-y * 6 * k).toFixed(2)}deg) rotateY(${(x * 7 * k).toFixed(2)}deg)`;
             });
         });
         el.addEventListener('pointerleave', () => { if (raf) { root.cancelAnimationFrame(raf); raf = 0; } el.style.transform = ''; });
     }
 
-    // ── Confetti: one canvas, about 1.6 s, then gone ──
+    // ── Confetti: one canvas, about 1.6 s, then gone. Calm: a third of the pieces, thrown half as hard ──
     function confetti(opts) {
-        if (reduced(opts && opts.from) || !doc.body) return false;
+        const k = move(opts && opts.from);
+        if (!k || !doc.body) return false;
         const o = opts || {}, cs = root.getComputedStyle(doc.documentElement);
         const accent = (cs.getPropertyValue('--accent') || '').trim() || '#4f7cff';
         const colors = o.colors || [accent, '#4f7cff', '#8b5cf6', '#22c55e', '#facc15', '#f472b6'];
@@ -141,9 +157,9 @@
         cv.width = W * dpr; cv.height = H * dpr; doc.body.appendChild(cv);
         const ctx = cv.getContext('2d'); if (!ctx) { cv.remove(); return false; }
         ctx.scale(dpr, dpr);
-        const x0 = o.x == null ? W / 2 : o.x, y0 = o.y == null ? H / 3 : o.y, n = Math.min(160, o.count || 80);
+        const x0 = o.x == null ? W / 2 : o.x, y0 = o.y == null ? H / 3 : o.y, n = Math.max(8, Math.round(Math.min(160, o.count || 80) * (k < 1 ? k : 1))), throwBy = k < 1 ? 0.55 : 1;
         const ps = Array.from({ length: n }, (_, i) => {
-            const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9, v = 6 + Math.random() * 7;
+            const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.9, v = (6 + Math.random() * 7) * throwBy;
             return { x: x0, y: y0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3, w: 5 + Math.random() * 5, h: 3 + Math.random() * 4, c: colors[i % colors.length], round: Math.random() < 0.3 };
         });
         const t0 = Date.now();
@@ -172,14 +188,14 @@
             if (n === 'ripple') el.addEventListener('pointerdown', (ev) => ripple(el, ev));
             if (n === 'tilt' && fine()) { el.classList.add('ovfx-tilt'); tilt(el); }
             if (n === 'confetti') el.addEventListener('click', () => { const r = el.getBoundingClientRect(); confetti({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 70, from: el }); });
-            if (n === 'reveal' && !reduced(el)) {
+            if (n === 'reveal' && !off(el)) {
                 const kids = el.children.length && el.getAttribute('data-fx-self') == null ? Array.from(el.children) : [el];
                 if (!below(el)) continue;   // already on screen when wired: never hide what someone can see
                 const gap = Math.max(0, Math.min(200, Number(el.getAttribute('data-fx-stagger')) || 50));
                 kids.forEach((k, i) => { k.classList.add('ovfx-hide'); k.style.setProperty('--ovfx-d', `${Math.min(i, 12) * gap}ms`); });
                 el.__ovfxReveal = kids; observe(el);
             }
-            if (n === 'count' && !reduced(el)) {
+            if (n === 'count' && !off(el)) {
                 const c = countOf(el);
                 if (c && below(el)) { el.__ovfxCount = c; observe(el); } else if (c) { el.__ovfxCount = c; seen(el); }
             }
@@ -196,6 +212,6 @@
         if ('MutationObserver' in root) new root.MutationObserver((rs) => rs.forEach((r) => r.addedNodes.forEach((n) => { if (n.nodeType === 1) scan(n); }))).observe(doc.documentElement, { childList: true, subtree: true });
     }
 
-    root.OVFx = { scan, confetti, wire, FEEL: { CALM, SNAPPY } };
+    root.OVFx = { scan, confetti, wire, move, FEEL: { CALM, SNAPPY } };
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', init); else init();
 })(typeof window !== 'undefined' ? window : this);

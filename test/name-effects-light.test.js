@@ -13,6 +13,6 @@ effects.forEach((fx) => {
 });
 // The colour-animated ones animate their light colours, so the dark keyframes cannot bring the bright colour back.
 ['Fire', 'Ice', 'Neon'].forEach((k) => assert.match(css, new RegExp(`@keyframes nameFx${k}Light \\{`), `${k} has light keyframes`));
-// Reduced motion still stops them all.
-assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{\s*\.ov-fx\[class\*="name-fx-"\], \.ov-hat \{ animation: none !important; \}/);
+// Calm plays them (the loader slows the loops); motion off is the loader's one rule, so nothing here stops them.
+assert.doesNotMatch(css, /prefers-reduced-motion/);
 console.log('name effects light: all checks passed');

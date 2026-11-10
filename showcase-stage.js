@@ -15,8 +15,8 @@
  * Everything is server-rendered HTML with the real words and numbers in it (crawlers and no-JavaScript readers get the
  * whole page); the motion only adds. `demo` is the site's own HTML (trusted: the site renders it from its data). Motion is
  * opacity, stroke-dash and transforms on HTML elements or on an <svg> itself, never a CSS transform on an element inside
- * an SVG (phones left those unpainted while scrolling); all of it stops for prefers-reduced-motion and the Calm setting
- * (html[data-ov-motion=reduced]).
+ * an SVG (phones left those unpainted while scrolling); Calm (html[data-ov-motion=reduced]) plays it with its loops slowed, and all of
+ * it stops with motion off (html[data-ov-motion=off]).
  */
 const sc = require('./showcase');
 const glyphs = require('./glyphs');
@@ -182,14 +182,14 @@ const CSS = `
 @keyframes sc-tilt{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
 @keyframes sc-pop{from{transform:scale(.6);opacity:0}}
 @keyframes sc-glow{50%{background:color-mix(in srgb,var(--accent,#3b82f6) 26%,transparent)}}
-@media (prefers-reduced-motion:reduce){.sc-stage *,.sc-reel *,.sc-numbers *,.sc-flow *,.sc-stage-demo,.sc-reel-card,.sc-flow-list::before{animation:none!important;transition:none!important}.sc-stage-demo,.sc-reel-card,.sc-num-line{opacity:1;transform:none}.sc-flow-list::before{transform:none}.sc-motif .m-draw{stroke-dashoffset:0}}
-html[data-ov-motion=reduced] :is(.sc-stage,.sc-reel,.sc-numbers,.sc-flow) *,html[data-ov-motion=reduced] :is(.sc-stage-demo,.sc-reel-card){animation:none!important;transition:none!important;opacity:1;transform:none}
-html[data-ov-motion=reduced] .sc-flow-list::before{transform:none;transition:none}
+html[data-ov-motion=off] .sc-stage-demo,html[data-ov-motion=off] .sc-reel-card,html[data-ov-motion=off] .sc-num-line{opacity:1;transform:none}html[data-ov-motion=off] .sc-flow-list::before{transform:none}html[data-ov-motion=off] .sc-motif .m-draw{stroke-dashoffset:0}
+html[data-ov-motion=off] :is(.sc-stage,.sc-reel,.sc-numbers,.sc-flow) *,html[data-ov-motion=off] :is(.sc-stage-demo,.sc-reel-card){opacity:1;transform:none}
+html[data-ov-motion=off] .sc-flow-list::before{transform:none}
 `;
 
 // Starts each piece when it comes into view; rolls the numbers up from zero once. Without IntersectionObserver, or with
-// reduced motion, everything is shown as it is (the server already wrote the final numbers).
-const MOTION_JS = "(function(){try{var d=document,h=d.documentElement,still=(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)||h.getAttribute('data-ov-motion')==='reduced',els=[].slice.call(d.querySelectorAll('[data-sc-in]'));"
+// motion off, everything is shown as it is (the server already wrote the final numbers).
+const MOTION_JS = "(function(){try{var d=document,h=d.documentElement,still=h.getAttribute('data-ov-motion')==='off',els=[].slice.call(d.querySelectorAll('[data-sc-in]'));"
     + "function roll(e){if(still)return;[].slice.call(e.querySelectorAll('[data-to]')).forEach(function(n){var to=+n.getAttribute('data-to');if(!(to>0))return;var f=new Intl.NumberFormat('en-US'),t0=performance.now();(function s(t){var k=Math.min(1,(t-t0)/900);n.textContent=f.format(Math.round(to*(1-Math.pow(1-k,3))));if(k<1)requestAnimationFrame(s)})(t0)})}"
     + "if(!('IntersectionObserver' in window)){els.forEach(function(e){e.classList.add('is-in')});return}"
     + "var io=new IntersectionObserver(function(es){es.forEach(function(x){if(!x.isIntersecting)return;x.target.classList.add('is-in');roll(x.target);io.unobserve(x.target)})},{threshold:.15});els.forEach(function(e){io.observe(e)})}catch(e){}})();";
