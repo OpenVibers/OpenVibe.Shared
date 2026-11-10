@@ -8,7 +8,7 @@
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.384.0 (devDependency: the release manifest contract)",
+  "contracts": "openvibe-contracts v0.399.0 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.146.0",
   "features": [
     "the page-view beacon sends ?in=1 only for a signed-in browser and counts a guest at once, so a signed-in person is counted from presence and never also as a guest (4.191.0)",
