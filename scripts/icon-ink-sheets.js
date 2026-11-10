@@ -75,7 +75,7 @@ async function saveSheets(dir) {
 async function saveTileDemo(dir) {
     fs.mkdirSync(dir, { recursive: true });
     const items = ink.buildItems(ROOT, 'ovi-line');
-    const selected = ['live', 'people', 'tools', 'chat'].map((name) => items.find((it) => it.key === `ovi-line/${name}`)).filter(Boolean);
+    const selected = ['live', 'community', 'tools', 'chat'].map((name) => items.find((it) => it.key === `ovi-line/${name}`)).filter(Boolean);
     const fractions = [0.5, 0.58, 0.64];
     const rows = fractions.map((f) => `<section><h2>${(f * 100).toFixed(0)}% painted ink</h2>${selected.map((it) => `<div class="sample"><div class="tile"><img src="${it.src}" style="width:${(56 * f / TARGET).toFixed(2)}px;height:${(56 * f / TARGET).toFixed(2)}px"></div><b>${it.key.split('/')[1]}</b></div>`).join('')}</section>`).join('');
     const h = require(path.join(ROOT, 'browser-harness.js'));
