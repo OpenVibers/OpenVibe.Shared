@@ -95,7 +95,7 @@ const server = http.createServer((req, res) => {
         // 4.149.0 (the owner, 11-08: "tabs at the top … the main tab should just show links that exist on that site, and
         // under that the full list of sites"): this site's tab, Feed and You; nothing typed opens on this site's tab.
         assert.strictEqual(v.tabs, 3, 'three tabs at the top');
-        assert.deepStrictEqual([v.groups[0], v.links], ['On Chat', ['Home', 'Rooms', 'Servers']], 'nothing typed: this site\'s own pages first, Home leading them (no link names the home)');
+        assert.deepStrictEqual([v.groups[0], v.links], ['Pages on Chat', ['Home', 'Rooms', 'Servers']], 'nothing typed: this site\'s own pages first, Home leading them (no link names the home)');
         assert.ok(v.sites.includes('Live') && v.sites.includes('Tools'), 'then every site, even before the Frame answers');
         assert.strictEqual(v.placeholder, 'Search Chat, or ask Vibe', 'the site by its short name (4.48.0)');
         // The box completes from this site's pages (and the person's searches, history and sites); Tab takes it.

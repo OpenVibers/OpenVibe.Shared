@@ -223,14 +223,23 @@ function load(hostname, opts = {}) {
     ] });
     const nav = created.find(e => e.tag === 'nav');
     assert.ok(/class="ovnav-chip ovnav-chip--all" id="openvibe-chips-all"/.test(nav.innerHTML), 'the folded chip');
-    assert.ok(/data-chip-mini="coins" data-tone="gold">.*?<span class="ovnav-chip-mv">161k<\/span>/.test(nav.innerHTML), '160,774 reads 161k');
-    assert.ok(/data-chip-mini="vibes" data-tone="green">.*?<span class="ovnav-chip-mv">400<\/span>/.test(nav.innerHTML));
+    assert.ok(/class="ovnav-chip-mini is-on" data-chip-mini="coins" data-v="160,774" data-tone="gold">.*?<span class="ovnav-chip-mv">161k<\/span>/.test(nav.innerHTML), '160,774 reads 161k, and the first balance is the one showing');
+    assert.ok(/class="ovnav-chip-mini" data-chip-mini="vibes" data-v="400" data-tone="green">.*?<span class="ovnav-chip-mv">400<\/span>/.test(nav.innerHTML), 'the second waits in the same place');
     assert.ok(nav.innerHTML.includes('aria-label="Your balances: OpenCoins 160,774, Vibes balance 400"'), 'said in full to a screen reader');
-    assert.ok(/@media \(max-width: 560px\) \{\s*\.openvibe-navbar-right\.has-chips-all \.ovnav-chip\[data-chip-id\] \{ display: none; \}/.test(require('fs').readFileSync(NAVBAR_PATH, 'utf8')), 'the chips fold on a phone');
-    // One chip: nothing to fold.
+    {
+        // One pill at every width (4.189.0): the chips it stands for are not drawn beside it, and purse.js is loaded for it.
+        const src = require('fs').readFileSync(NAVBAR_PATH, 'utf8');
+        assert.ok(/\n {12}\.openvibe-navbar-right\.has-chips-all \.ovnav-chip\[data-chip-id\] \{ display: none; \}/.test(src) && !/@media \(max-width: 560px\) \{\s*\.openvibe-navbar-right\.has-chips-all/.test(src), 'one pill on a phone and on a computer');
+        assert.ok(src.includes(".ovnav-chip-mini { grid-area: 1 / 1;") && src.includes(".ovnav-chip-mini.is-on { opacity: 1; }"), 'the balances share one place, one showing');
+        assert.ok(src.includes("sc.src = siblingV('purse.js')") && src.includes("root.OpenVibePurse.set(id, value)"), 'purse.js draws the icons and hears each change');
+    }
+    // A site's single counter stays a chip; a single balance is the pill (it has its own icon there).
     const one = load('openvibe.live');
-    one.navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
+    one.navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [{ id: 'viewers', icon: 'fa-eye', value: '5' }] });
     assert.ok(!/ovnav-chip--all/.test(one.created.find(e => e.tag === 'nav').innerHTML));
+    const coin = load('openvibe.live');
+    coin.navbar.init({ service: 'live', wallet: false, user: { id: 1, username: 'x' }, chips: [{ id: 'coins', icon: 'fa-coins', value: '5' }] });
+    assert.ok(/id="openvibe-chips-all"/.test(coin.created.find(e => e.tag === 'nav').innerHTML));
 }
 // ── "Across OpenVibe" in the drawer, and the icon slots that have their size before ov-icons.js arrives ──
 {

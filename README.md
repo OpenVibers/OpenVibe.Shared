@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.188.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.189.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -831,7 +831,20 @@ One menu (4.187): the OpenVibe mark is a button that opens the OpenVibe menu
   on its first tab, as the menu button does (there is no separate site
   switcher). The site's name stays the link home; switcher: false keeps the
   mark as a home link.
-The account's things (4.188): the person's picture opens the OpenVibe menu
+The balances (4.189): one pill, `#openvibe-chips-all`, at every width, with
+  one `.ovnav-chip-mini` per balance the person has (OpenCoins, Vibes, the money
+  balance; only those above zero, the largest first) and one of them showing.
+  `purse.js`, loaded beside the navbar, draws each currency's icon
+  (`OpenVibePurse.icon(id, size)` gives the same drawing to any surface), turns
+  the pill through the balances on the first page of a visit and now and then,
+  and on `setChip(id, value)` turns to that balance, counts the number and
+  plays the gain or spend effect (`OpenVibePurse.play(id, delta)`). A site's
+  single counter that is not a balance stays an ordinary chip.
+  The menu and the Dock (4.189): the menu button always opens this site's tab
+  (no tab is remembered; the picture still asks for You); under the tabs a row
+  opens the Dock on Vibe, Agents, Messages or Activity (`dock: false` leaves
+  it out), and the Dock's head has a button back to the menu.
+  The account's things (4.188): the person's picture opens the OpenVibe menu
   on You, where the account's block is (who you are, add account, settings,
   sign out, your other accounts, this site's own items from addMenuItem,
   Display). There is no dropdown under the picture; the block rests in the bar,
