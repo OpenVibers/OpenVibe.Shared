@@ -11,6 +11,7 @@
   "contracts": "openvibe-contracts v0.384.0 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.133.0",
   "features": [
+    "the wallet sheet's Recent activity reads the reason Billing and Network already made (billing.money-reason@1): \"for the quest Publish a video\", never a ledger key, linked to the quest or creator when there is a page (4.190.0)",
     "the mark at work is the O as eight dots with three bright ones going round, and it has a state of its own for an agent that is thinking or writing (data-state=think); a phone's Dock opens and closes exactly as the menu does and wears its close button in its place; a button, field, select or text box that nobody styled wears the theme instead of the browser's grey (4.186.0)",
     "the menu's You tab: your home right under your name (a 52px bar, was 68) and the AI card; Most used is the apps themselves under their bar, each a link and a full touch target; Jump back in last, saying what it is. A phone's Dock opens out of the navbar's menu button: its close orb starts on that orb and settles into its x while the navbar's orb makes the same move underneath, and closing runs it back (4.185.0)",
     "motion has four choices (Automatic, Full, Calm, Off) and one signal, html[data-ov-motion]: Calm keeps every effect and makes it smaller and slower (--ov-move, display.move(), endless loops at 0.6 of their speed), and only Off stops motion; no rule in the package stops an effect because the device asked for less (4.183.0)",
