@@ -50,7 +50,14 @@
 .ovt-avatar { width: 28px; height: 28px; margin-top: 2px; border-radius: 9px;
     background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--ovt-accent) 70%, #fff), var(--ovt-accent) 55%, color-mix(in srgb, var(--ovt-accent) 60%, #000));
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--ovt-accent) 35%, transparent); }
-.ovt-turn[data-open] .ovt-avatar { animation: ovt-breathe 1.6s ease-in-out infinite; }
+/* While it thinks or writes, the agent's picture shows the thinking sign (the mark's own: three dots rising in turn,
+   openvibe-shared 4.187.0); a face or initials (is-who) keeps breathing instead, so it is never covered. */
+.ovt-avatar { position: relative; }
+.ovt-turn[data-open] .ovt-avatar.is-who { animation: ovt-breathe 1.6s ease-in-out infinite; }
+.ovt-turn[data-open] .ovt-avatar:not(.is-who)::before { content: ""; position: absolute; inset: 0; border-radius: inherit;
+    --d: radial-gradient(circle closest-side, #fff 88%, transparent) no-repeat;
+    background: var(--d) 5px 11.5px / 5px 5px, var(--d) 11.5px 11.5px / 5px 5px, var(--d) 18px 11.5px / 5px 5px;
+    animation: ovt-think 1.2s ease-in-out infinite; }
 .ovt-reply { min-width: 0; display: grid; gap: 10px; }
 /* Grid items size to their content by default: a tool row's long input would widen the page. */
 .ovt-reply > *, .ovt-work, .ovt-w-tool > details { min-width: 0; max-width: 100%; }
@@ -208,6 +215,12 @@ html[data-ov-motion=off] .ovt-answer.is-revealing .ovt-sw{opacity: 1 !important}
 .ovt-c-note:empty { display: none; }
 
 @keyframes ovt-breathe { 50% { opacity: .45; } }
+@keyframes ovt-think {
+    0%, 60%, 100% { background-position: 5px 11.5px, 11.5px 11.5px, 18px 11.5px; }
+    15% { background-position: 5px 7.5px, 11.5px 11.5px, 18px 11.5px; }
+    30% { background-position: 5px 11.5px, 11.5px 7.5px, 18px 11.5px; }
+    45% { background-position: 5px 11.5px, 11.5px 11.5px, 18px 7.5px; }
+}
 @keyframes ovt-rise { from { opacity: 0; transform: translateY(8px); } }
 @keyframes ovt-fade { from { opacity: 0; } }
 @keyframes ovt-shimmer { to { background-position: -300% 0; } }
