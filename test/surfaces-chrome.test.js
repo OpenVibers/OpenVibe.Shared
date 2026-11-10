@@ -58,7 +58,12 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate('Math.round(scrollY)'), await p.evaluate('Math.round(window.__before)'), 'close restores page position');
         assert.strictEqual(await p.evaluate('document.activeElement.id'), 'open', 'focus returns to opener');
         await p.evaluate(`(() => { const btn=document.querySelector('#open');btn.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));btn.click(); })()`);
-        await new Promise((ok) => setTimeout(ok, 40));
+        // The sheet takes the swipe only once the surfaces layer has adopted it (the page is locked): wait for that, not
+        // for a fixed 40 ms (a slow macOS runner had not got there yet, twice on 2026-11-10).
+        let adopted = false;
+        for (let i = 0; i < 60 && !adopted; i++) { adopted = await p.evaluate('document.querySelector("#sheet").open && document.body.style.position === "fixed"'); if (!adopted) await new Promise((ok) => setTimeout(ok, 50)); }
+        assert.strictEqual(adopted, true, 'the sheet opens again and locks the page');
+        await new Promise((ok) => setTimeout(ok, 60));
         await p.evaluate(`(() => { const head=document.querySelector('[data-ov-sheet-head]');
             const fire=(type,y)=>head.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:5,pointerType:'touch',clientY:y}));
             fire('pointerdown',200);fire('pointermove',330);fire('pointerup',330); })()`);
