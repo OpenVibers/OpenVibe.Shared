@@ -97,7 +97,7 @@ assert.ok(!vibe.includes('box.focus()') || /touch|coarse|pointer/.test(vibe), 't
 assert.ok(dock.includes("load('dock-runs.js'"), 'the Dock loads the Agents tab');
 assert.ok(dock.includes("load('ai-marks-client.js'"), 'and the maker marks with it');
 assert.ok(dock.includes('ovdk-runs-foot'), 'the Agents tab has its own foot');
-assert.ok(dock.includes('AI chats'), "the Chats tab has the AI chats row");
+assert.ok(dock.includes("h('b', '', 'Vibe')"), 'the Chat tab has the Vibe row (your chats with Vibe)');
 assert.ok(dock.includes('vibeOnList'), 'and it opens the Vibe tab on its list');
 assert.ok(dock.includes('groupAvatar'), "a group's row shows faces, not a number sign");
 assert.ok(dock.includes('answered'), 'and when Vibe last answered');

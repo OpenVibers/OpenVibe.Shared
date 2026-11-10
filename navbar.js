@@ -2229,7 +2229,7 @@
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
                 const orbs = nav.querySelectorAll ? [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
-                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
+                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null, avatarBtn);
             });
 
 
@@ -2312,7 +2312,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl) {
+    function openSearch(q, tab, fromEl, flyEl) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2326,7 +2326,7 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab,
+            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: flyEl || fromEl || null,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
@@ -2372,7 +2372,8 @@
         a.addEventListener('click', (e) => {
             if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
-            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon);
+            const orb = () => [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')].find((o) => o.getBoundingClientRect().width > 0) || null;
+            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon, _config.search === false ? null : { label: 'All OpenVibe sites', onClick: () => openSearch('', 'sites', orb()) });
             if (root.OVDrop) return go();
             if (document.getElementById('ov-drop-loader')) return;
             const sc = document.createElement('script'); sc.id = 'ov-drop-loader'; sc.src = siblingV('ov-drop.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
