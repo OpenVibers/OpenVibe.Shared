@@ -2,7 +2,8 @@
 // OpenVibe — the Code part (openvibe-shared 4.201.0). Ask 350, the owner: openvibe.codes "should be better interconnected
 // and shared … so that you can do chat, codes, and agents all in the same place and in one area". The menu's Vibe place
 // is Chat · Code · Agents, and the Dock has the same Code tab. dock.js loads this file the first time it opens:
-//   OpenVibeDockCode.mount(container, { token, frameBase, base, codes, active }) → { refresh(), focus(), destroy() }
+//   OpenVibeDockCode.mount(container, { token, frameBase, base, codes, active, take }) → { refresh(), focus(), destroy() }
+// take() → the words another part handed over (Vibe's "Build it in Code"), which go in the box.
 //
 // One box to start a coding task, the way openvibe.codes starts one (Create: a new website, game or app; OpenVibe:
 // a change to OpenVibe itself; My code: a repository of yours), and your latest tasks under it, running ones first,
@@ -215,10 +216,13 @@
             paint();
             if (reachable && tasks && tasks.some((t) => /running|queued/.test(t.status)) && (!o.active || o.active())) timer = setTimeout(read, POLL_MS);
         }
+        // What another part handed over (Vibe's Build it in Code) goes in the box, ready to start.
+        const take = () => { const t = typeof o.take === 'function' ? o.take() : ''; if (!t) return; text.value = t; text.dispatchEvent(new Event('input')); text.focus(); note.textContent = 'From your chat with Vibe. Start it, or change it first.'; };
         paint();
         read();
+        take();
         return {
-            refresh: read,
+            refresh: () => { take(); read(); },
             focus: () => text.focus(),
             destroy() { gone = true; clearTimeout(timer); container.replaceChildren(); container.classList.remove('ovdc'); },
         };
