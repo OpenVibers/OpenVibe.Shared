@@ -114,6 +114,14 @@ function setup({ reduce = false, calm = false, off = false, timeline = false, ht
         assert.deepStrictEqual(t.observed, [c], 'only that card is observed');
     }
 
+    // ── data-fx-self reveals the element itself, not its children ──
+    {
+        const t = setup({ html: '<h2 id="h" data-fx="reveal" data-fx-self data-top="1400">Title</h2>' });
+        const h = t.document.getElementById('h');
+        assert.ok(h.classList.contains('ovfx-head') && h.classList.contains('ovfx-wait'), 'the element itself has the start state');
+        assert.strictEqual(t.observed.length, 1, 'one element waits for the screen');
+    }
+
     // ── a rule only when the section has one; cards can be named when the markup is not a list or grid ──
     {
         const t = setup({ html: '<div data-fx="reveal" data-fx-cards=".pick" data-top="1400"><h2 data-top="1400">x</h2><p data-top="1400">lede</p><div><a class="pick" data-top="1400">1</a><a class="pick" data-top="1400">2</a></div></div>' });
@@ -141,6 +149,15 @@ function setup({ reduce = false, calm = false, off = false, timeline = false, ht
         assert.strictEqual(h.style.getPropertyValue('--ovfx-d'), '', 'no rise or stagger delay');
         assert.strictEqual(t.observed.length, 3, 'the fade still waits for the screen');
         assert.strictEqual(t.window.OVFx.move(), 0.35, 'a third of the distance for everything else');
+    }
+
+    // ── the same fade on the scroll timeline when the browser has it ──
+    {
+        const t = setup({ reduce: true, timeline: true, html: '<section data-fx="reveal" data-top="1400"><h2 id="h" data-top="1400">x</h2><a id="c" data-top="1400">card</a></section>' });
+        const h = t.document.getElementById('h'), c = t.document.getElementById('c');
+        assert.ok(h.classList.contains('ovfx-fade') && h.classList.contains('ovfx-scroll'), 'the heading fades on the scroll timeline');
+        assert.ok(c.classList.contains('ovfx-fade') && c.classList.contains('ovfx-scroll'), 'the card too');
+        assert.strictEqual(t.observed.length, 0, 'still no observer');
     }
 
     // ── motion off: nothing hidden, nothing counted, no confetti ──
