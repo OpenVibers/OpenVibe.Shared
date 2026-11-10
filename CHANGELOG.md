@@ -1,6 +1,43 @@
 # Changelog
 
-## 4.192.0 — 2026-11-11
+## 4.193.0 — 2026-11-10
+
+**The bar's right end, one tooltip, and one frame for mail.** From the owner's notes of 2026-11-10.
+
+- **The menu button is at the right on a computer too** ("The menu button should be on the right, even on desktop …
+  there's like a duplicated icon"). The orb at the bar's right is drawn on every width, and the one beside the name is
+  not drawn where it is: the left end is the logo (the network's sites) and the name (this site's pages), the right
+  end the menu and then the person. A second press closes the menu.
+- **Sign in is an icon** ("This can be majorly improved with a custom icon. Doesn't need the label really, and could
+  have a tooltip"). A filled circle with a figure in it, the size of the picture it stands in for, in the readable
+  accent pair; the figure arrives on load, lifts under the pointer, and the ring runs while the sign-in page opens. Its
+  name is its own (`aria-label="Sign in"`) and its tooltip. A finger's area is 44 px and stays off the menu button's.
+- **New `ov-tip.js` (`OVTip`): the network's one small tooltip.** Anything with `data-ov-tip` (and an optional quiet
+  second line, `data-ov-tip-sub`) gets a small card that grows out of what it names, under it or above, kept on the
+  screen. A mouse sees it after a short rest (the next one at once), the keyboard's focus at once; a press, a scroll,
+  Escape or leaving hides it; a finger never sees it, so nothing is said only there. The bar loads it where a pointer
+  can hover; the menu button carries one too (its native `title` made a second, plain one).
+- **New `email.js`: one frame for every mail** ("Improve the entire email system so it uses openvibe.design … uses the
+  theme applied by the user … explain more details … what they can do, what they can click"). `frame({ theme, site,
+  tone, kicker, title, lead, body, facts, code, actions, next, why, manage, preheader })` returns `{ html, text }`: the
+  person's theme written on the elements (all fifty read at 4.5:1 or better), a title that says what happened, the
+  facts as a list, one button and quieter links, what happens next, and why it came. Text only and safe links only. A
+  tone is never a hard coloured border ("instead of just like this red … border … shadow, glow"): the card leans toward
+  the tone at its top and glows in it, the kicker is a pill with a round mark, the facts stand in a box with a tinted
+  hairline. `palette(theme)` and `mix(a, b, t)` are exported for a site's own blocks.
+- **`mini.js` plays what the page plays.** Found on openvibe.video the hour it shipped: the page's script gives the
+  video its streaming playlist, and one recording's plain file stopped with a decode error three seconds in. The small
+  player now takes the playlist (`data-ov-mini-hls`) where the browser plays one by itself, in the page's cross-origin
+  mode, and the plain file (`data-ov-mini-src`) otherwise; a playlist that fails gives way to the file at the same
+  second. A video that cannot be played either says so ("Open its page to keep watching"), keeps the way back, and
+  does not follow to the next page; it used to close without a word.
+- **The wallet says what a line was for** (OpenVibe.Shared #416, from the money-reasons work): the reason is a made
+  sentence, linked to the thing it paid for.
+- The 4.192.0 entry's date is corrected (it said the 11th).
+- Tests: `ov-tip-chrome`, `email` (every theme, every tone), `mini-chrome` (the cannot-play state), `navbar-fit-chrome`
+  (the menu button at the right at every width, no second one by the name), the tap-area tests with the round Sign in.
+
+## 4.192.0 — 2026-11-10
 
 **The video that comes with you.** The owner, 2026-11-10, with the browser's floating picture-in-picture window over a
 watch page: "should … actually [be] like YouTube where it moves that video. Now you go to the search again or the index
