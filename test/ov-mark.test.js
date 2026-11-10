@@ -220,6 +220,13 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.strictEqual(t.running(), false, 'prefers-reduced-motion');
         assert.strictEqual(t.smilPaused(), true, 'SMIL stopped too (the V sweep used to run under reduced motion)');
 
+        // The demo scope: inside [data-fx-demo] (a motion page's own container, set when the person asks) it plays.
+        const d = setup({ reduce: true });
+        d.document.body.setAttribute('data-fx-demo', '');
+        d.io.fire(d.mark, true);
+        d.mark.closest('a').dispatchEvent(new d.Event('pointerenter'));
+        assert.strictEqual(d.running(), true, 'a mark inside a demo scope plays under prefers-reduced-motion');
+
         const u = setup();
         u.io.fire(u.mark, true);
         u.document.documentElement.setAttribute('data-ov-motion', 'reduced'); await u.flush();
@@ -340,7 +347,7 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.match(css, /\.ov-mark:hover \.gr\{animation:ovmGlint|\.ov-mark:hover \.gr,/, 'and crosses on hover');
         assert.match(css, /\.ov-mark\[data-glow\]::before\{opacity:\.42/, 'data-glow keeps the glow on');
         assert.match(css, /\.ov-mark\[data-tone\]::before,\.ov-mark\[data-state=sleep\]::before\{display:none\}/);
-        assert.ok(css.includes('.ov-mark::before{transition:none!important}'), 'reduced motion: the glow appears without moving');
+        assert.ok(css.includes('.ov-mark:not([data-fx-demo] *)::before{transition:none!important}'), 'reduced motion: the glow appears without moving (outside a demo scope)');
         assert.match(css, /\.ov-mark:active \.m\{transform:scale\(\.9\)/, 'a press gives a little');
         assert.ok(!/ovmPop/.test(css), 'the old pop is gone');
         // The glint's copy of the V follows the V into its shapes.
