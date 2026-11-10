@@ -595,15 +595,14 @@
      */
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
-    // The tooltip part (ov-tip.js) loads at the first hover over anything that carries one: the bar, the footer's count.
-    // At module level, so the listener holds no bar that a soft navigation has since replaced.
+    // ov-tip.js loads at the first hover over a tooltip's owner.
     function tipWait() {
-        if (root.__ovTipWait || !document.addEventListener) return;
-        root.__ovTipWait = 1;
+        if (root.__ovTip || !document.addEventListener) return;
+        root.__ovTip = 1;
         const tip = (e) => {
-            if (!e.target.closest || !e.target.closest('[data-ov-tip]')) return;
+            if (!e.target.closest('[data-ov-tip]')) return;
             document.removeEventListener('pointerover', tip);
-            if (!root.OVTip && !document.getElementById('ov-tip-loader')) { try { const sc = document.createElement('script'); sc.id = 'ov-tip-loader'; sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); } catch { /* */ } }
+            if (!root.OVTip) { const sc = document.createElement('script'); sc.src = siblingV('ov-tip.js'); sc.async = true; document.head.appendChild(sc); }
         };
         document.addEventListener('pointerover', tip, { passive: true });
     }
