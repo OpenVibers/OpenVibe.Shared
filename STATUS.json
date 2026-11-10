@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.399.0 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.133.0",
+  "sdk": "openvibe-sdk v0.146.0",
   "features": [
     "the page-view beacon sends ?in=1 only for a signed-in browser and counts a guest at once, so a signed-in person is counted from presence and never also as a guest (4.191.0)",
     "the mark at work is the O as eight dots with three bright ones going round, and it has a state of its own for an agent that is thinking or writing (data-state=think); a phone's Dock opens and closes exactly as the menu does and wears its close button in its place; a button, field, select or text box that nobody styled wears the theme instead of the browser's grey (4.186.0)",

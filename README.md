@@ -1218,5 +1218,5 @@ The Locker browser core currently uses the immutable SDK review commit `80f21232
 
 <!-- versions:start -->
 - openvibe-contracts: v0.399.0
-- openvibe-sdk: v0.133.0
+- openvibe-sdk: v0.146.0
 <!-- versions:end -->
