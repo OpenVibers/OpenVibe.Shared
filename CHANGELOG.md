@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.197.0 — 2026-11-10
+
+**The footer says "3 online", and the tooltip part works anywhere.** From the owner's notes of 2026-11-10: "Make it like
+shorthand '3 online'. If you put your mouse over it, it says 'last 30 minutes'".
+
+- **The footer's online strip (`footer.js`)** read "13 online in the last 30 min", then the faces, then "1 member · 12
+  guests". It now says **"13 online"** and the faces. Hovering the count (or reaching it with the keyboard) shows the one
+  tooltip: "In the last 30 minutes", and under it how many are members and guests. A press opens the same words above
+  the list of names, because a finger never sees a tooltip; with guests only, the count still opens that one line
+  (before, a guests-only strip opened nothing).
+- **The tooltip part (`ov-tip.js`) loads at the first hover over anything that carries `data-ov-tip`**, not only over the
+  bar: the footer's count, and whatever a site labels the same way. The waiting listener lives at module level, so it
+  holds no bar that a soft navigation has replaced.
+- A test (`menu-places-chrome`) measured the menu's origin after a fixed wait and could read it mid-motion on a busy
+  machine; it now waits for the motion to end.
+
 ## 4.196.0 — 2026-11-10
 
 **Your Actor in the Dock, redrawn: one row and one line to type in. And a tone is a lean and a glow, never a bar.** From
