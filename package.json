@@ -124,6 +124,7 @@
     "./trace": "./trace.js",
     "./ui": "./ui.js",
     "./url-resolver": "./url-resolver.js",
+    "./ov-user": "./ov-user.js",
     "./user-card": "./user-card.js",
     "./web-runtime": "./web-runtime.js",
     "./route-transition": "./route-transition.js",

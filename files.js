@@ -37,6 +37,7 @@ const BROWSER = Object.freeze([
     'dock-timeline.js',     // the Dock's one timeline (A6); dock.js loads it with the Agent panel
     'account-switcher.js',
     'user-card.js',
+    'ov-user.js',           // public user-card read and opt-in mention/avatar hook; plain kit markup
     'ov-mark.js',           // the OV brand mark drop-in
     'ov-glyphs.js',         // the network's own icons in place of Font Awesome's (built from glyphs.js; navbar.js loads it)
     'brands.js',            // brand logos (Simple Icons, CC0), fetched by ov-glyphs.js the first time a page shows one (4.72.0)

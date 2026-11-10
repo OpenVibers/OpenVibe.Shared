@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `OVUser.card(host, { username })` and the opt-in `OVUser.bind(root)` mention/avatar hook, using Network’s single public aggregate with plain kit markup. Hidden fields stay absent. No automatic mount or version bump.
+
 ## 4.200.0 — 2026-11-10
 
 **The button becomes its tab; Vibe holds Chat and Agents; every site from the site's name.** From the owner's notes of
