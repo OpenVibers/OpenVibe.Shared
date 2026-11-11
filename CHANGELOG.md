@@ -1,5 +1,38 @@
 # Changelog
 
+## 4.200.0 — 2026-11-10
+
+**The button becomes its tab; Vibe holds Chat and Agents; every site from the site's name.** From the owner's notes of
+2026-11-10 (asks 334 to 338).
+
+- **The button becomes its tab (`search.js`, `navbar.js`).** "When you click this button, I want it to animate into the
+  tab it becomes. Same with the other buttons." The bar's button that was pressed (the menu button, the picture; the
+  bell once it opens You) flies to its tab's icon in the menu and turns into it on the way: its own picture fades out as
+  the tab's fades in, along one short arc, and the tab settles with a small give. The bell's count rides along to the
+  tab's count. Closing flies it back into the bar. When a button flies, the sheet's close X is simply there (the menu
+  button no longer travels to it). Motion Off skips it; Reduced plays it short and straight. A flying button is hidden
+  by opacity, so a quick second press still lands on it. `OpenVibeSearch.open({ from })` takes the pressed element.
+- **Vibe, with Chat and Agents (`search.js`, `dock-vibe.js`).** The menu's "AI" place is called Vibe; its two-part
+  switch is Chat · Agents (your chats with Vibe, and your agents). The list loses its "Vibe conversations" heading and
+  the large "New conversation" button: a + icon (new chat) and an ↗ icon (open in OpenVibe.Chat) stand in for them.
+- **Chat, where it was Messages (`search.js`, `dock.js`).** The menu's Messages place is called Chat (on
+  openvibe.chat itself, whose own tab is already "Chat", it keeps "Messages" so the row never shows one word twice). An
+  ↗ icon opens OpenVibe.Chat over your conversations and in a thread; the footer that said the same in words is gone.
+  The "AI chats" row among your conversations is "Vibe". The Dock's own tab is "Chat" too.
+- **A place's icons in the search pill (`search.js`).** Inside the menu, a place's icons (+ and ↗) sit in the search
+  pill, left of the close button, so they cost no row; the floating Dock keeps them in a slim row of their own. The
+  menu mirrors the panel's buttons and each mirror presses the panel's own.
+- **Every site from the site's name (`ov-drop.js`, `navbar.js`, `search.js`).** The dropdown under a site's name ends
+  with "All OpenVibe sites", which opens the menu scrolled past the site's own pages to every site. The scroll had never
+  run: the menu read the tab after "sites" had become "here".
+- **The site's name, highlighted (`navbar.js`, ask 342).** The name that opens its pages gets its highlight as a spread
+  shadow with room around it (no added width, so the name still reads whole at 360 px): a faint tint on hover; open, a
+  deeper tint with a hairline ring that comes up on a small spring. Motion Off keeps it still (the theme loader's rule).
+- **A quick close and reopen keeps the menu open (`search.js`).** Closing the menu steps back in history; that step's
+  event arrives later and used to close a menu opened again in between. The menu now ignores the one step it took itself.
+- Budget: `dock.js` 20.43 KB brotli (budget 20.45 KB, was 20.30 KB) for the "Open in Chat" icon in the always-loaded
+  Dock; the Vibe-only button rules stay in `dock-vibe.js`.
+
 ## 4.199.0 — 2026-11-10
 
 **Every page downloads about 56 KB less: the shared files are served minified.** From the owner's notes of 2026-11-10:

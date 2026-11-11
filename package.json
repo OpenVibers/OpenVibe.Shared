@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.199.0",
+  "version": "4.200.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -197,6 +197,6 @@
     "@electric-sql/pglite": "^0.5.8",
     "express": "^4.22.3",
     "openvibe-contracts": "https://codeload.github.com/OpenVibers/OpenVibe.Contracts/tar.gz/refs/tags/v0.399.0",
-    "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.133.0"
+    "openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.146.0"
   }
 }
