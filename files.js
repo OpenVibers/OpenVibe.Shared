@@ -58,6 +58,7 @@ const BROWSER = Object.freeze([
     'ov-composer.js',       // shared composer
     'ov-combo.js',          // shared field dropdown
     'ov-window.js',         // shared dialog, sheet, and panel
+    'ov-float.js',          // the move engine behind a PiP or a panel: dock/float, tuck, size, place (4.208.0)
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'ov-home.js',           // the menu's home screen and wall (search.js loads it for You and Feed)
     'history.js',           // cross-site history

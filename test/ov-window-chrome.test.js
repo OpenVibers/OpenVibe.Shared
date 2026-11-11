@@ -15,6 +15,7 @@ if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) { console.log('ov-wi
 const root = path.join(__dirname, '..');
 const server = http.createServer((req, res) => {
     if (req.url.startsWith('/ov-window.js')) { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'ov-window.js'))); }
+    if (req.url.startsWith('/ov-float.js')) { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'ov-float.js'))); }
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;height:1600px;background:#111;color:#eee">
 <button id="open" style="position:absolute;left:40px;top:40px">Open</button><button id="pan" style="position:absolute;left:300px;top:40px">Panel</button><input id="page" style="position:absolute;left:40px;top:600px">
@@ -73,8 +74,12 @@ window.mk = (o) => { const f = document.createElement('div'); const a = document
         const hb = await page.evaluate(`(() => { const r = document.querySelector('.ovw-h').getBoundingClientRect(); return { x: r.left + 40, y: r.top + 20 }; })()`);
         await page.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: hb.x, y: hb.y, button: 'left', clickCount: 1 });
         await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: hb.x + 60, y: hb.y + 30, button: 'left' });
+        await wait(80);
         await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: hb.x + 200, y: hb.y + 150, button: 'left' });
-        await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: hb.x + 200, y: hb.y + 150, button: 'left', clickCount: 1 });
+        await wait(100);
+        await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: hb.x + 201, y: hb.y + 151, button: 'left' });
+        await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: hb.x + 201, y: hb.y + 151, button: 'left', clickCount: 1 });
+        await wait(400);
         const moved = await page.evaluate(`(() => { const r = document.querySelector('.ovw').getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top) }; })()`);
         await eventually(async () => assert.deepEqual(await page.evaluate(`JSON.parse(localStorage.getItem('ov:window:dock-test'))`), moved, 'where it was left is kept'));
         await page.evaluate('p1.close()'); await wait(300);

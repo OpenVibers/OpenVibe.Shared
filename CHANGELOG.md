@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.208.0 — 2026-11-11
+
+**One move engine for every floating thing: the picture-in-picture's drag, flick, tuck, pinch, corner and place, now
+shared and adopted by the window.**
+
+- **`ov-float.js`.** `OVFloat.attach(el, { frame, key, defaults, aspect, minPx, onChange })` gives any box Live's
+  picture-in-picture behaviour: docked in its frame or fixed over the page, the lift on the first move, a transform
+  each animation frame, the FLIP landing with the spring, a flick, edge snapping, the tuck into a side with its tab,
+  pinch and corner sizing, a double tap, the keyboard (arrows, + −, T, F, Home), fullscreen, reduced motion, and its
+  place as fractions of its frame. The place is kept in localStorage by `key` and in the account through
+  `OVFloat.store` (`GET`/`PATCH /api/me/layout`, the `pip` map); `OVFloat.layout()` and the `ov:float` event say where
+  every box is. Its behaviour CSS is injected once; a component keeps its own look.
+- **A panel window moves, tucks and keeps its place (`ov-window.js`).** A panel's head is an OVFloat handle: drag it
+  anywhere, flick it, throw it past a side to tuck it with a tab, and it opens where it was left. The absolute place
+  older releases wrote stays readable, and the size the corner grip keeps is unchanged.
+- **Live's picture-in-picture uses it (`stream-pip.js`, in the Live release).** The viewer sessions, waits and
+  actions stay Live's; the move, tuck, size, keyboard and persistence are the shared engine's.
+
 ## 4.206.0 — 2026-11-11
 
 **The menu keeps a stream playing, the Feed in the menu is searchable with the one composer at its top, and a Code task
