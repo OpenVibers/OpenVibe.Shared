@@ -168,6 +168,8 @@ const server = http.createServer((req, res) => {
         }
         const dm = /^\/api\/dm\/conversations\/(\d+)\/(messages|read)$/.exec(u.pathname);
         if (dm && dm[2] === 'read') { reads.push(dm[1]); return json(200, { ok: true }); }
+        const dmEdit = /^\/api\/dm\/conversations\/(\d+)\/messages\/(\d+)$/.exec(u.pathname);
+        if (dmEdit && req.method === 'PATCH') { const text = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').message; return json(200, { message: { id: Number(dmEdit[2]), message: text, card: null, edited_at: new Date().toISOString() } }); }
         if (dm && req.method === 'POST') { said.push(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').message); return json(201, { message: { id: 900 + said.length } }); }
         if (dm) {
             const after = Number(u.searchParams.get('after')) || 0;
@@ -383,6 +385,10 @@ async function drag(p, from, to) {
             assert.deepStrictEqual(cards[0], ['A', 'The studio tour', 'https://openvibe.video/v/42', 'https://openvibe.media/t/abc?w=320', 'Watch together https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42'], 'a card: its picture, its title as a link, its one move');
             assert.deepStrictEqual(cards[1], ['B', '<img src=x>', null, null, null], 'a card is data: no script link, no picture from elsewhere, no script button, the title as text');
             assert.strictEqual(await p.evaluate("document.querySelectorAll('script[src*=\"dock-card.js\"]').length"), 1, 'dock-card.js is loaded once, when a card first shows');
+            await until(p, "!!document.querySelector('.ovdk .ovdk-edit')", 'the edit action');
+            await p.evaluate("(() => { window.prompt = () => 'updated by me'; document.querySelector('.ovdk .ovdk-edit').click(); })()");
+            await until(p, "document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-text').textContent === 'updated by me'", 'the edited message');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-edited').textContent.includes('edited')"), true);
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'opening a chat on a phone is not a tap outside the sheet');
             await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'Looks good'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
