@@ -15,7 +15,7 @@ const event = (type, extras = {}) => { const e = new window.Event(type, { bubble
     assert.strictEqual(calls[0].url, 'https://openvibe.network/api/v1/people/Example/card');
     assert.strictEqual(calls[0].options.credentials, 'omit');
     assert.strictEqual(calls[0].options.cache, 'no-store');
-    assert.ok(host.textContent.includes('Level4Streak3 daysBadges0Followers12'));
+    assert.ok(['Level 4', '3 day streak', '0 badges', '12 followers'].every((t) => host.textContent.includes(t)), 'the numbers as chips (4.202.0 card)');
     assert.ok(host.textContent.includes('Live now') && host.textContent.includes('<Live>'));
     assert.strictEqual(host.querySelectorAll('img').length, 1, 'display name is text, never markup');
     assert.strictEqual(host.querySelector('img').getAttribute('onerror'), null);
@@ -41,7 +41,7 @@ const event = (type, extras = {}) => { const e = new window.Event(type, { bubble
     newer.destroy();
     const unavailable = OVUser.card(host, { username: 'Example', fetchImpl: async () => ({ ok: false, status: 503 }) });
     assert.strictEqual(await unavailable.ready, null);
-    assert.ok(host.textContent.includes('Profile unavailable.') && host.querySelector('a').href === person.profile_url);
+    assert.ok(host.textContent.includes('The profile did not load.') && host.querySelector('a').href === person.profile_url);
     unavailable.destroy();
 
     const mention = document.createElement('a'); mention.href = person.profile_url; mention.textContent = '@Example'; document.body.appendChild(mention);

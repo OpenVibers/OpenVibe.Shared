@@ -1,4 +1,9 @@
-/* The public user card's data and hooks. Plain kit markup; sites opt in with OVUser.bind(root).
+/* The public user card (ask 287, the owner: "one user card … across all sites … level … live streams … like Discord, but
+ * way better"). Its look, 4.202.0: a banner from the person's own picture (blurred, tinted by their name's hue), the face
+ * with its ring (red while live), the name and @handle, Live now as the first action when they are, level / streak /
+ * badges / followers as chips, the sites they used this week, and the way to their profile and channel. Opened from a
+ * mention or a face (OVUser.bind), it sits in the one window (ov-window.js, a panel beside what was pressed; a sheet on
+ * a phone), loaded from beside this file.
  * OVUser.card(host, { username }) -> { ready, refresh(), destroy() }
  * Nothing mounts or intercepts clicks merely by loading this file. */
 (function (root, factory) {
@@ -9,6 +14,59 @@
 })(typeof window !== 'undefined' ? window : globalThis, function (root) {
     'use strict';
     const NETWORK = 'https://openvibe.network';
+    const USER_REV = { 'ov-window.js': 'd5a6f3337252' };
+    const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+    const CSS = `.ovu { position: relative; display: grid; gap: 14px; padding: 0 0 18px; color: var(--text-primary, #e6edf7); font: 500 14.5px/1.4 var(--font, Inter, system-ui, sans-serif); }
+.ovu-banner { position: relative; height: 92px; overflow: hidden; background: linear-gradient(135deg, hsl(var(--ovu-h, 220) 70% 42%), hsl(calc(var(--ovu-h, 220) + 40) 70% 28%)); }
+.ovu-banner::before { content: ""; position: absolute; inset: -30%; background: var(--ovu-bg, none) center / cover; filter: blur(26px) saturate(1.5); opacity: .75; }
+.ovu-banner::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--ovw-bg, #111826) 55%, transparent)); }
+.ovu-head { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 12px; margin: -44px 16px 0; }
+.ovu-face { position: relative; display: grid; place-items: center; width: 76px; height: 76px; border-radius: 50%; overflow: hidden; background: hsl(var(--ovu-h, 220) 55% 40%); color: #fff; font-size: 30px; font-weight: 800; box-shadow: 0 0 0 4px var(--ovw-bg, var(--bg-secondary, #111826)); }
+.ovu-face img { width: 100%; height: 100%; object-fit: cover; }
+.ovu-face.is-live { box-shadow: 0 0 0 3px var(--live-red, #ef4444), 0 0 0 6px var(--ovw-bg, var(--bg-secondary, #111826)); }
+.ovu-names { min-width: 0; padding-bottom: 4px; }
+.ovu-name { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+.ovu-handle { margin: 0; color: var(--text-secondary, #a8b3c4); font-size: 14px; }
+.ovu-state { margin: 0 16px; font-size: 13px; color: var(--text-muted, #8b98ad); }
+.ovu-live { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin: 0 16px; border-radius: 12px; background: var(--live-red, #ef4444); color: #fff; font-weight: 750; text-decoration: none; }
+.ovu-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: ovu-beat 1.4s ease-in-out infinite; }
+.ovu-live small { font-weight: 600; opacity: .85; }
+.ovu-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 16px; padding: 0; list-style: none; }
+.ovu-chips li { display: inline-flex; align-items: baseline; gap: 5px; padding: 6px 10px; border-radius: 10px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovu-chips b { font-size: 14px; color: var(--text-primary, #e6edf7); }
+.ovu-sec { margin: 0 16px; }
+.ovu-sec h3 { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted, #8b98ad); }
+.ovu-sites { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.ovu-sites a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13px; font-weight: 600; }
+.ovu-sites a:hover { border-color: var(--accent, #3b82f6); }
+.ovu-acts { display: flex; gap: 8px; margin: 2px 16px 0; }
+.ovu-acts a { flex: 1; display: grid; place-items: center; min-height: 42px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); color: inherit; font-weight: 650; text-decoration: none; }
+.ovu-acts a:first-child { background: var(--accent, #3b82f6); color: var(--on-accent, #fff); }
+.ovu-acts a:hover { filter: brightness(1.1); }
+.ovu-wait { display: grid; gap: 10px; padding: 0 16px 18px; }
+.ovu-wait i { display: block; height: 12px; border-radius: 6px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); animation: ovu-shine 1.2s ease-in-out infinite; }
+.ovu-wait i:first-child { width: 55%; height: 18px; }
+.ovu-wait i:nth-child(2) { width: 35%; }
+.ovu-wait i:nth-child(3) { width: 80%; }
+.ovu-none { margin: 0 16px; color: var(--text-secondary, #a8b3c4); }
+@keyframes ovu-beat { 50% { opacity: .35; transform: scale(.75); } }
+@keyframes ovu-shine { 50% { opacity: .45; } }
+html[data-ov-motion=off] .ovu-live::before, html[data-ov-motion=off] .ovu-wait i { animation: none; }`;
+    function styles(doc) { if (doc.getElementById('ovu-styles')) return; const st = doc.createElement('style'); st.id = 'ovu-styles'; st.textContent = CSS; doc.head.appendChild(st); }
+    // The banner's hue: from the name, so a person's card always wears the same colour.
+    const hueOf = (name) => { let h = 0; for (const ch of String(name || '')) h = (h * 31 + ch.codePointAt(0)) % 360; return h; };
+    const compact = (n) => n >= 1e6 ? `${(n / 1e6).toFixed(n < 1e7 ? 1 : 0)}M` : n >= 1e4 ? `${Math.round(n / 1e3)}k` : n >= 1e3 ? `${(n / 1e3).toFixed(1)}k` : String(n);
+    function needWindow() {
+        return new Promise((ok) => {
+            if (root.OVWindow) return ok(root.OVWindow);
+            const m = /^(https?:\/\/[^?#]*\/)ov-user(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+            if (!m || typeof document === 'undefined') return ok(null);
+            const sc = document.createElement('script');
+            sc.src = m[1] + 'ov-window.js' + (USER_REV['ov-window.js'] ? '?v=' + USER_REV['ov-window.js'] : '');
+            sc.onload = () => ok(root.OVWindow || null); sc.onerror = () => ok(null);
+            document.head.appendChild(sc);
+        });
+    }
     const mounts = new WeakMap();
     const bindings = new WeakMap();
     const usernameOf = value => typeof value === 'string' && /^[A-Za-z0-9_]{3,24}$/.test(value.replace(/^@/, '')) ? value.replace(/^@/, '') : null;
@@ -35,39 +93,50 @@
         const doc = section.ownerDocument;
         section.replaceChildren();
         section.setAttribute('aria-label', `User @${person.username}`);
+        section.style.setProperty('--ovu-h', String(hueOf(person.username)));
         const avatar = safeUrl(person.avatar_url);
-        if (avatar) {
-            const img = doc.createElement('img');
-            img.src = avatar; img.alt = ''; img.width = 64; img.height = 64; img.decoding = 'async';
-            section.appendChild(img);
-        }
-        if (typeof person.display_name === 'string') section.appendChild(element(doc, 'h2', person.display_name));
-        section.appendChild(element(doc, 'p', `@${person.username}`));
-        if (person.live?.now === true) {
-            const live = link(doc, 'Live now', person.live.url);
-            if (live) section.appendChild(live);
-        } else if (person.live?.now === false) section.appendChild(element(doc, 'p', 'Offline'));
-        const stats = element(doc, 'dl');
-        for (const [key, label] of [['level', 'Level'], ['streak', 'Streak'], ['badges_count', 'Badges'], ['followers', 'Followers']]) {
+        const banner = element(doc, 'div', undefined, 'ovu-banner');
+        if (avatar && !/["'()\\\s]/.test(avatar)) banner.style.setProperty('--ovu-bg', `url("${avatar}")`);
+        section.appendChild(banner);
+        const head = element(doc, 'div', undefined, 'ovu-head');
+        const live = person.live && person.live.now === true;
+        const face = element(doc, 'span', undefined, `ovu-face${live ? ' is-live' : ''}`);
+        if (avatar) { const img = doc.createElement('img'); img.src = avatar; img.alt = ''; img.decoding = 'async'; img.addEventListener('error', () => { img.remove(); face.textContent = person.username[0].toUpperCase(); }); face.appendChild(img); }
+        else face.textContent = person.username[0].toUpperCase();
+        const names = element(doc, 'div', undefined, 'ovu-names');
+        names.appendChild(element(doc, 'h2', typeof person.display_name === 'string' && person.display_name.trim() ? person.display_name : person.username, 'ovu-name'));
+        names.appendChild(element(doc, 'p', `@${person.username}`, 'ovu-handle'));
+        head.append(face, names);
+        section.appendChild(head);
+        if (live) {
+            const a = link(doc, 'Live now', person.live.url);
+            if (a) { a.className = 'ovu-live'; if (typeof person.live.where === 'string' && person.live.where) a.appendChild(element(doc, 'small', `on ${person.live.where}`)); section.appendChild(a); }
+        } else if (person.live && person.live.now === false) section.appendChild(element(doc, 'p', 'Not live right now', 'ovu-state'));
+        const chips = element(doc, 'ul', undefined, 'ovu-chips');
+        for (const [key, label] of [['level', 'Level'], ['streak', 'day streak'], ['badges_count', 'badges'], ['followers', 'followers']]) {
             const value = person[key];
             if (!Number.isSafeInteger(value) || value < 0) continue;
-            stats.appendChild(element(doc, 'dt', label));
-            stats.appendChild(element(doc, 'dd', key === 'streak' ? `${value} ${value === 1 ? 'day' : 'days'}` : value));
+            const li = element(doc, 'li');
+            if (key === 'level') { li.append(label + ' '); li.appendChild(element(doc, 'b', value)); }
+            else { li.appendChild(element(doc, 'b', compact(value))); li.append(` ${key === 'streak' && value === 1 ? 'day streak' : key === 'badges_count' && value === 1 ? 'badge' : key === 'followers' && value === 1 ? 'follower' : label}`); }
+            chips.appendChild(li);
         }
-        if (stats.childNodes.length) section.appendChild(stats);
+        if (chips.childNodes.length) section.appendChild(chips);
         if (Array.isArray(person.active_sites)) {
-            const list = element(doc, 'ul');
+            const list = element(doc, 'ul', undefined, 'ovu-sites');
             for (const site of person.active_sites) {
                 if (!site || typeof site.name !== 'string') continue;
                 const a = link(doc, site.name, site.url);
-                if (a) { const li = element(doc, 'li'); li.appendChild(a); list.appendChild(li); }
+                if (a) { a.className = ''; const li = element(doc, 'li'); li.appendChild(a); list.appendChild(li); }
             }
-            if (list.childNodes.length) { section.appendChild(element(doc, 'h3', 'This week')); section.appendChild(list); }
+            if (list.childNodes.length) { const sec = element(doc, 'div', undefined, 'ovu-sec'); sec.append(element(doc, 'h3', 'This week'), list); section.appendChild(sec); }
         }
-        for (const [label, url] of [['View profile', person.profile_url], ['Channel', person.channel_url]]) {
+        const acts = element(doc, 'div', undefined, 'ovu-acts');
+        for (const [label, url] of [['Profile', person.profile_url], ['Channel', person.channel_url]]) {
             const a = link(doc, label, url);
-            if (a) section.appendChild(a);
+            if (a) { a.className = ''; acts.appendChild(a); }
         }
+        if (acts.childNodes.length) section.appendChild(acts);
     }
     function card(host, options = {}) {
         const username = usernameOf(options.username);
@@ -75,7 +144,8 @@
         if (!username) throw new TypeError('OVUser.card: use a username of 3–24 letters, digits or underscores');
         mounts.get(host)?.destroy();
         const doc = host.ownerDocument;
-        const section = element(doc, 'section', undefined, 'ovk-section');
+        styles(doc);
+        const section = element(doc, 'section', undefined, 'ovu');
         section.setAttribute('data-ov-user-card', '');
         host.replaceChildren(section);
         let generation = 0, controller, disposed = false;
@@ -88,8 +158,10 @@
                 controller?.abort();
                 const request = controller = new AbortController();
                 const timer = setTimeout(() => request.abort(), 8000);
-                const status = element(doc, 'p', 'Loading profile…'); status.setAttribute('role', 'status');
-                section.replaceChildren(status); section.setAttribute('aria-busy', 'true');
+                const status = element(doc, 'div', undefined, 'ovu-wait'); status.setAttribute('role', 'status'); status.setAttribute('aria-label', 'Loading the profile');
+                status.append(element(doc, 'i'), element(doc, 'i'), element(doc, 'i'));
+                section.style.setProperty('--ovu-h', String(hueOf(username)));
+                section.replaceChildren(element(doc, 'div', undefined, 'ovu-banner'), status); section.setAttribute('aria-busy', 'true');
                 const fetcher = options.fetchImpl || ((...args) => root.fetch(...args));
                 const url = `${String(options.networkUrl || NETWORK).replace(/\/+$/, '')}/api/v1/people/${encodeURIComponent(username)}/card`;
                 api.ready = Promise.resolve().then(() => fetcher(url, { credentials: 'omit', cache: 'no-store',
@@ -102,8 +174,9 @@
                         return person;
                     }).catch(() => {
                         if (!disposed && ticket === generation) {
-                            const message = element(doc, 'p', 'Profile unavailable.'); message.setAttribute('role', 'status');
-                            section.replaceChildren(message, link(doc, 'View profile', profile));
+                            const message = element(doc, 'p', 'The profile did not load.', 'ovu-none'); message.setAttribute('role', 'status');
+                            const acts = element(doc, 'div', undefined, 'ovu-acts'); const a = link(doc, 'Open the profile', profile); if (a) { a.className = ''; acts.appendChild(a); }
+                            section.replaceChildren(element(doc, 'div', undefined, 'ovu-banner'), message, acts);
                         }
                         return null;
                     }).finally(() => {
@@ -131,6 +204,21 @@
         let close = null, disposed = false;
         function open(username, trigger) {
             close?.();
+            if (root.OVWindow || selfSrc) {
+                needWindow().then((W) => {
+                    if (!W) { openDialog(username, trigger); return; }
+                    const host = element(doc, 'div');
+                    const mounted = card(host, { ...options, username });
+                    let win = null;
+                    const cleanup = () => { mounted.destroy(); if (win) { const w = win; win = null; w.close(); } if (close === cleanup) close = null; };
+                    close = cleanup;
+                    win = W.open({ id: 'ov-user-card', kind: 'panel', size: 'sm', bare: true, title: `@${username}`, body: host, from: trigger, onClose: () => { win = null; mounted.destroy(); if (close === cleanup) close = null; } });
+                });
+                return true;
+            }
+            return openDialog(username, trigger);
+        }
+        function openDialog(username, trigger) {
             const dialog = element(doc, 'dialog');
             if (typeof dialog.showModal !== 'function') return false;
             dialog.setAttribute('aria-label', `User @${username}`);
