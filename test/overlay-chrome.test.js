@@ -108,6 +108,11 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
         for (const host of ['openvibe.link', 'connect.openvibe.link']) assert.ok(await e.evaluate(`OVOverlay.safeSrc('https://${host}/')`), host);
         await eventually(async () => assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'http://openvibe.live/embed/x' })`), null, 'plain http to another site is refused'));
         await eventually(async () => assert.ok(await e.evaluate(`!!OVOverlay.safeSrc('https://openvibe.live/embed/maticus')`), "Live's embed is first-party"));
+        await e.evaluate(`OVOverlay.open({ id: 'portable-live', src: 'https://openvibe.live/embed/maticus', title: 'Maticus', live: true, sound: true, href: 'https://openvibe.live/@maticus' }), true`);
+        assert.deepStrictEqual(await e.evaluate(`({ frame: document.querySelector('#ovo-portable-live iframe').src, source: OVOverlay.current().src, sound: OVOverlay.current().sound })`), {
+            frame: `https://openvibe.network/frame/live/maticus?from=${encodeURIComponent(base)}`,
+            source: 'https://openvibe.live/embed/maticus', sound: true,
+        }, 'the portable player keeps its Live address and sound intent while using Network as the frame host');
         console.log('overlay-chrome: ok');
     } finally {
         await browser.close();
