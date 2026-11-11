@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `openvibe-shared/csp`: one place for the network's Content-Security-Policy pieces. `connectSources()` names this site, OpenVibe.Network, OpenVibe.Events and **OpenVibe.Media** — the origin the shared composer uploads a person's attachment to — and `policy({ nonce, sites, frames, … })` builds the whole header with the network's defaults. A site that has its own inline policy can add `https://openvibe.media` to its connect-src (or adopt the helper) so the composer's upload is not refused. `test/csp.test.js` pins the Media origin.
+
 ## 4.200.0 — 2026-11-10
 
 **The button becomes its tab; Vibe holds Chat and Agents; every site from the site's name.** From the owner's notes of

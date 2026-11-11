@@ -24,6 +24,7 @@
     "./browser-harness": "./browser-harness.js",
     "./builtin-themes": "./builtin-themes.js",
     "./cache-policy": "./cache-policy.js",
+    "./csp": "./csp.js",
     "./config": "./config.js",
     "./config-pg": "./config-pg.js",
     "./egress": "./egress.js",
