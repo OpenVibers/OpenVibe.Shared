@@ -191,6 +191,12 @@
         return api;
     }
 
-    root.OpenVibeQuest = { mount };
-    if (typeof module === 'object' && module.exports) module.exports = { mount };
+    /** Mount every explicit quest host in a page. The site supplies its authenticated reader. */
+    function mountAll({ load, root: page = document } = {}) {
+        if (typeof load !== 'function') throw new TypeError('OpenVibeQuest.mountAll: load() must return the quest data');
+        return [...page.querySelectorAll('[data-ov-quest]')].map((host) => mount(host, { load: () => load(host) }));
+    }
+
+    root.OpenVibeQuest = { mount, mountAll };
+    if (typeof module === 'object' && module.exports) module.exports = { mount, mountAll };
 })(typeof window !== 'undefined' ? window : globalThis);

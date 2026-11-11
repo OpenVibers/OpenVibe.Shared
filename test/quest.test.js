@@ -12,7 +12,7 @@ const files = require('../files');
 const { window, document } = parseHTML('<!doctype html><html><head></head><body></body></html>');
 global.window = window;
 global.document = document;
-const { mount } = require('../quest');
+const { mount, mountAll } = require('../quest');
 
 const step = (site, sentence, extra = {}) => ({ site: `openvibe.${site}`, sentence, href: `https://openvibe.${site}/`, ...extra });
 const quest = (extra = {}) => ({
@@ -33,6 +33,12 @@ function host() {
     assert.ok(files.isBrowserFile('quest.js'), 'sites serve quest.js');
     assert.ok(files.isBrowserFile('guide.js'), 'sites serve guide.js');
     assert.ok(files.isBrowserFile('quest.css'), 'sites serve quest.css');
+    const declarativeHost = host();
+    declarativeHost.setAttribute('data-ov-quest', '');
+    const [declarative] = mountAll({ load: async () => ({ signed_in: false, quest: quest() }) });
+    assert.strictEqual(declarative, declarativeHost._ovq);
+    await declarative.refresh();
+    assert.equal(declarative.el.hidden, false);
 
     // Signed out: today's quest, the three doors, no streak and no progress.
     const out = mount(host(), { load: async () => ({ signed_in: false, quest: quest(), more: { quests: 24, sites: 8 } }) });
