@@ -1490,11 +1490,7 @@
             reload(v);
             return v;
         },
-        /**
-         * The You tab's preview (4.211.0, the owner's "the You tab still sucks"): the newest three, nothing else (no
-         * search, no filters) so the person's own parts are a glance below; Show all opens the whole list in place, with
-         * its search and filters.
-         */
+        /** The You tab's preview (4.211.0): the newest three, no tools; Show all opens the whole list in place. */
         renderMenuNotifications(container, onCount) {
             injectStyles();
             if (!container) return null;
