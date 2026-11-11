@@ -55,6 +55,21 @@
             .ovdk-res-c.is-stopped .ovdk-i, .ovdk-res-c.is-stopped .ovdk-res-t { color: var(--text-muted, #8b8b96); }
 `;
     let ctx = null, G = {};
+    // 4.203.0 (ask 349, "a better composer system unified across all sites"): Vibe's box is the one composer too, for
+    // drafts, "/" commands and your own, the marks, what sends and your settings; its picture keeps its own upload.
+    const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+    const VIBE_REV = { 'ov-composer.js': 'f52e2323e6e9' };
+    function joinComposer(form) {
+        if (!form || form.ownerDocument !== document) return;   // a popped-out Dock keeps its plain box
+        form.setAttribute('data-ovc-no-files', '');
+        const go = () => { try { if (root.OpenVibeComposer && form.isConnected) root.OpenVibeComposer.enhance(form); } catch (e) { console.error(e); } };
+        if (root.OpenVibeComposer) { go(); return; }
+        const m = /^(https?:\/\/[^?#]*\/)dock-vibe(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+        if (!m) return;
+        let sc = document.getElementById('ov-composer-script');
+        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-composer-script'; sc.async = true; sc.src = m[1] + 'ov-composer.js' + (VIBE_REV['ov-composer.js'] ? '?v=' + VIBE_REV['ov-composer.js'] : ''); document.head.appendChild(sc); }
+        sc.addEventListener('load', go, { once: true });
+    }
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
     /** A round icon button with its name as label and tooltip. */
     const iconButton = (tag, cls, path, label) => { const b = h(tag, cls); if (tag === 'button') b.type = 'button'; b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label); b.title = label; b.innerHTML = svg(path); return b; };
@@ -249,6 +264,7 @@
             } finally { vibe.busy = false; go.disabled = false; box.focus(); }
         }
         form.addEventListener('submit', (e) => { e.preventDefault(); send(box.value.trim()); });
+        joinComposer(form);
 
         async function pull(first) {
             let got;
