@@ -144,6 +144,7 @@
     "./messages": "./messages.js",
     "./ov-thread": "./ov-thread.js",
     "./ov-window": "./ov-window.js",
+    "./agent-sheet": "./agent-sheet.js",
     "./ov-float": "./ov-float.js",
     "./ov-combo": "./ov-combo.js",
     "./ov-composer": "./ov-composer.js",
