@@ -15,6 +15,9 @@
  *                             label, onClose, bare, width });   bare: the content draws its own head (the title is still
  *                             read); width: px, for content that wants its own
  *   w.el, w.body, w.foot, w.setTitle(text), w.close()
+ * A panel can be resizable (4.204.0, the owner: a robot's controls "can be popped out … and resized"): { resizable: true,
+ * minWidth, minHeight, onResize({ width, height }) } adds a grip at its corner that a mouse, a finger or a pen drags and
+ * the arrow keys move (Shift for bigger steps, Enter for the first size); the size is kept with its place per id.
  * A site's content goes in as nodes (or text, set as text): the window never parses markup it is given.
  */
 (function (root) {
@@ -52,6 +55,12 @@ html[data-ov-window="outline"] { --ovw-bg: var(--bg-primary, #0b1220); --ovw-blu
 .ovw.is-sheet .ovw-h { position: relative; padding-top: 16px; touch-action: none; }
 .ovw.is-sheet .ovw-h::before { content: ""; position: absolute; left: 50%; top: 6px; width: 38px; height: 4px; margin-left: -19px; border-radius: 4px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 28%, transparent); }
 .ovw.is-sheet.is-dragging { animation: none; }
+.ovw.is-resizable { max-height: none; }
+.ovw-grip { position: absolute; right: 2px; bottom: 2px; z-index: 2; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: none; cursor: nwse-resize; touch-action: none; color: var(--text-secondary, #a8b3c4); }
+.ovw-grip::before { content: ""; position: absolute; right: 6px; bottom: 6px; width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; border-radius: 0 0 3px 0; opacity: .55; }
+.ovw-grip:hover::before, .ovw-grip:focus-visible::before, .ovw.is-resizing .ovw-grip::before { opacity: 1; color: var(--accent, #3b82f6); }
+.ovw-grip:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -2px; }
+.ovw.is-resizing { animation: none; transition: none; user-select: none; }
 .ovw { --ovw-w: 520px; }
 .ovw.is-sm { --ovw-w: 380px; }
 .ovw.is-lg { --ovw-w: 760px; }
@@ -177,7 +186,7 @@ html.ovw-locked { overflow: hidden; }
                 const up = (ev) => {
                     head.removeEventListener('pointermove', move); head.removeEventListener('pointerup', up); head.removeEventListener('pointercancel', up);
                     el.classList.remove('is-dragging');
-                    if (kind === 'panel') { if (moved && o.id) { const b = el.getBoundingClientRect(); place.set(o.id, { x: Math.round(b.left), y: Math.round(b.top) }); } return; }
+                    if (kind === 'panel') { if (moved && o.id) { const b = el.getBoundingClientRect(); place.set(o.id, Object.assign(place.get(o.id) || {}, { x: Math.round(b.left), y: Math.round(b.top) })); } return; }
                     const dy = ev.clientY - sy;
                     if (moved && dy > Math.min(140, r.height * 0.28)) w.close('swipe');
                     else { el.style.transition = 'transform .2s cubic-bezier(.2, 1, .3, 1)'; el.style.transform = ''; setTimeout(() => { el.style.transition = ''; }, 220); }
@@ -186,9 +195,54 @@ html.ovw-locked { overflow: hidden; }
             });
         }
 
+        if (kind === 'panel' && o.resizable) resizable(el, o);
+
         const first = o.focus ? body.querySelector(o.focus) : focusables(body)[0];
         (first || x).focus({ preventScroll: true });
         return w;
+    }
+
+    /** A panel's corner grip: pointer drag (mouse, finger, pen) and the arrow keys; the size is kept with its place. */
+    function resizable(el, o) {
+        el.classList.add('is-resizable');
+        const minW = Math.max(200, Number(o.minWidth) || 260), minH = Math.max(120, Number(o.minHeight) || 160);
+        const grip = document.createElement('button');
+        grip.type = 'button'; grip.className = 'ovw-grip';
+        grip.setAttribute('aria-label', 'Resize: drag, or use the arrow keys');
+        el.append(grip);
+        const first = { w: el.offsetWidth, h: el.offsetHeight };
+        const set = (w, h, save) => {
+            const r = el.getBoundingClientRect();
+            const W = Math.round(Math.max(minW, Math.min(w, root.innerWidth - r.left - 8)));
+            const H = Math.round(Math.max(minH, Math.min(h, root.innerHeight - r.top - 8)));
+            el.style.width = `${W}px`; el.style.height = `${H}px`;
+            if (save && o.id) place.set(o.id, Object.assign(place.get(o.id) || {}, { x: Math.round(r.left), y: Math.round(r.top), w: W, h: H }));
+            if (typeof o.onResize === 'function') { try { o.onResize({ width: W, height: H }); } catch { /* the page's own */ } }
+        };
+        const saved = o.id ? place.get(o.id) : null;
+        if (saved && saved.w && saved.h) set(saved.w, saved.h, false);
+        grip.addEventListener('pointerdown', (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            e.preventDefault();
+            const sx = e.clientX, sy = e.clientY, w0 = el.offsetWidth, h0 = el.offsetHeight;
+            el.classList.add('is-resizing');
+            try { grip.setPointerCapture(e.pointerId); } catch { /* */ }
+            const move = (ev) => set(w0 + ev.clientX - sx, h0 + ev.clientY - sy, false);
+            const up = () => {
+                grip.removeEventListener('pointermove', move); grip.removeEventListener('pointerup', up); grip.removeEventListener('pointercancel', up);
+                el.classList.remove('is-resizing');
+                set(el.offsetWidth, el.offsetHeight, true);
+            };
+            grip.addEventListener('pointermove', move); grip.addEventListener('pointerup', up); grip.addEventListener('pointercancel', up);
+        });
+        grip.addEventListener('keydown', (e) => {
+            const step = e.shiftKey ? 80 : 24;
+            const d = { ArrowRight: [step, 0], ArrowLeft: [-step, 0], ArrowDown: [0, step], ArrowUp: [0, -step] }[e.key];
+            if (e.key === 'Enter' || e.key === 'Home') { e.preventDefault(); set(first.w, first.h, true); return; }
+            if (!d) return;
+            e.preventDefault();
+            set(el.offsetWidth + d[0], el.offsetHeight + d[1], true);
+        });
     }
 
     document.addEventListener('keydown', (e) => {
