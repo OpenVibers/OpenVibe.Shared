@@ -31,6 +31,21 @@
     const keep = (d) => { try { root.sessionStorage.setItem(KEEP, JSON.stringify(d)); } catch { /* a closed store: it opens with placeholders */ } };
     if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('openvibe-auth-changed', () => { try { root.sessionStorage.removeItem(KEEP); } catch { /* */ } });
 
+    // 4.202.0 (asks 304 and 318): the wallet sits in the one window (ov-window.js, loaded from beside this file): the
+    // same motion, keys, phone sheet and window style as every other window; its own <dialog> where that is missing.
+    const WALLET_REV = { 'ov-window.js': 'c882d11d85ff' };
+    const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
+    function needWindow() {
+        return new Promise((ok) => {
+            if (root.OVWindow) return ok(root.OVWindow);
+            const m = /^(https?:\/\/[^?#]*\/)ov-wallet(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+            if (!m) return ok(null);
+            const sc = document.createElement('script');
+            sc.src = m[1] + 'ov-window.js' + (WALLET_REV['ov-window.js'] ? '?v=' + WALLET_REV['ov-window.js'] : '');
+            sc.onload = () => ok(root.OVWindow || null); sc.onerror = () => ok(null);
+            document.head.appendChild(sc);
+        });
+    }
     async function open(options) {
         close();
         const token = (options.getToken ? options.getToken() : options.token) || null;
@@ -41,7 +56,9 @@
         // sheet asks Network's relays (/api/frame/wallet/…); Network forwards the bearer and never a cookie.
         const walletApi = `${(options.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet`;
         const controller = new AbortController();
-        const dialog = el('dialog', 'ov-wallet');
+        const W = await needWindow();
+        let win = null;
+        const dialog = W ? el('div', 'ov-wallet ov-wallet-in') : el('dialog', 'ov-wallet');
         dialog.setAttribute('aria-labelledby', 'ov-wallet-title');
         const header = el('header', 'ov-wallet-head'), heading = el('div');
         heading.append(el('h2', '', 'Wallet'));
@@ -49,18 +66,20 @@
         const exit = el('button', 'ov-wallet-close', '×'); exit.type = 'button'; exit.setAttribute('aria-label', 'Close wallet');
         header.append(heading, exit);
         const body = el('div', 'ov-wallet-body is-first'), status = el('p', 'ov-wallet-status', '');
-        status.setAttribute('role', 'status'); body.append(status); dialog.append(header, body);
+        status.setAttribute('role', 'status'); body.append(status); dialog.append(header, body); if (W) exit.remove();   // the window's own × closes it
         const previousFocus = document.activeElement, previousOverflow = document.documentElement.style.overflow;
         // A site's surfaces.js locks the page for any modal dialog and restores it on close; locking here as well would
         // make its saved state "hidden". Only a page without it needs the wallet's own lock.
-        const ownLock = !root.OVSurfaces;
+        const ownLock = !!W || !root.OVSurfaces;   // in the window there is no <dialog> for surfaces.js to see
         let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [];
         const here = { store: false, items: false };   // which parts have answered: until then a placeholder of their size stands in
         const wait = (n, cls) => { const w = el('div', 'ov-wallet-wait-set'); w.setAttribute('aria-hidden', 'true'); for (let i = 0; i < n; i += 1) w.append(el('div', `ov-wallet-wait ${cls || ''}`)); return w; };
         const shown = {};   // what each balance last showed, so a change counts from it
         const pending = new Map();
         const session = { close() {
-            if (disposed) return; disposed = true; controller.abort(); dialog.close(); dialog.remove();
+            if (disposed) return; disposed = true; controller.abort();
+            if (win) { const w = win; win = null; w.close(); } else if (dialog.close) dialog.close();
+            dialog.remove();
             if (ownLock) document.documentElement.style.overflow = previousOverflow;
             document.removeEventListener('openvibe-auth-changed', session.close);
             if (active === session) active = null;
@@ -247,10 +266,12 @@
             }
         }
         exit.addEventListener('click', session.close);
-        dialog.addEventListener('cancel', (e) => { e.preventDefault(); session.close(); });
-        dialog.addEventListener('click', (e) => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) session.close(); });
+        if (!W) dialog.addEventListener('cancel', (e) => { e.preventDefault(); session.close(); });
+        if (!W) dialog.addEventListener('click', (e) => { if (e.target !== dialog) return; const r = dialog.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) session.close(); });
         document.addEventListener('openvibe-auth-changed', session.close);
-        document.body.append(dialog); dialog.showModal(); if (ownLock) document.documentElement.style.overflow = 'hidden'; exit.focus();
+        if (W) win = W.open({ id: 'ov-wallet', title: 'Wallet', bare: true, body: dialog, kind: 'dialog', size: 'lg', width: 860, from: previousFocus, onClose: () => { win = null; session.close(); } });
+        else { document.body.append(dialog); dialog.showModal(); exit.focus(); }
+        if (ownLock) document.documentElement.style.overflow = 'hidden';
         // There at once: what this tab last showed, or room held for it. Then everything is asked side by side (the
         // store and the kinds need nothing; the items need to know whose they are, which a kept wallet already says).
         const seed = kept();

@@ -54,3 +54,4 @@ html[data-ov-motion=reduced] .ov-wallet-body.is-first > * { animation: ov-wallet
 html[data-ov-motion=off] .ov-wallet-body.is-first > *, html[data-ov-motion=off] .ov-wallet-wait { animation: none; }
 @media (prefers-reduced-motion: reduce) { html:not([data-ov-motion]) .ov-wallet-body.is-first > * { animation: ov-wallet-fade .2s ease both; animation-delay: 0s; } }
 @keyframes ov-wallet-fade { from { opacity: 0; } }
+.ov-wallet.ov-wallet-in{width:auto;max-height:none;border:0;border-radius:0;box-shadow:none;overflow:visible}.ovw:has(.ov-wallet-in){background:none;border:0}.ov-wallet-in{border-radius:inherit}.ov-wallet-in .ov-wallet-head{padding-right:64px}.ovw.is-sheet .ov-wallet-in .ov-wallet-head{padding-top:26px}.ov-wallet-in .ov-wallet-body{max-height:none;overflow:visible}.ovw-b:has(>.ov-wallet-in){padding:0}
