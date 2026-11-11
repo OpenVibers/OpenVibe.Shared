@@ -212,8 +212,10 @@ html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25
 .ovk-head-row { display: flex; align-items: center; gap: 6px; min-height: 48px; padding-bottom: 6px; }
 .ovk-head-row > .ovk-back { margin-left: -8px; }
 .ovk-head-id { flex: 1; min-width: 0; }
-.ovk-head-id.ovk-head-id h1, .ovk-head-id.ovk-head-id h2 { margin: 0; color: var(--ovk-text); font-family: var(--ovk-font); font-size: clamp(1.15rem, 4.2vw, 1.5rem); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovk-sub { margin: 2px 0 0; color: var(--ovk-muted); font-size: .86rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The title and its line wrap to two lines before anything is cut (openvibe.design names-are-never-cut, 2026-11-11: the
+   Arena's "One prompt, two models, side b…" lost its point on a phone). */
+.ovk-head-id.ovk-head-id h1, .ovk-head-id.ovk-head-id h2 { margin: 0; color: var(--ovk-text); font-family: var(--ovk-font); font-size: clamp(1.15rem, 4.2vw, 1.5rem); font-weight: 800; letter-spacing: -.01em; line-height: 1.2; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ovk-sub { margin: 2px 0 0; color: var(--ovk-muted); font-size: .86rem; line-height: 1.35; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .ovk-head-tools { display: flex; align-items: center; gap: 2px; margin-right: -8px; }
 .ovk-head-tools form { margin: 0; }
 .ovk-heading-icon { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: var(--ovk-radius-sm); color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); }

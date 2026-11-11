@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.210.0 — 2026-11-11
+
+- **A page's title and its line wrap before they are cut (kit.css `.ovk-head`).** The title takes up to two lines and
+  its line up to three, instead of one line each with an ellipsis (the Arena's "One prompt, two models, side b…" on a
+  phone). openvibe.design rule names-are-never-cut.
+
 ## 4.209.0 — 2026-11-11
 
 **The Quest guide on any page, and the current Live step in the Dock's agent view.**
