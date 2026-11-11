@@ -475,11 +475,13 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
             const f = c.el.querySelector('.ovo-frame');
             if (!f || e.source !== f.contentWindow || e.origin !== new URL(c.d.src).origin) continue;
             c.muted = !!m.muted;
+            c.d.sound = !c.muted;
             c.d.playing = !!m.playing;
             const b = c.el.querySelector('[data-ovo="sound"]');
             if (b) { b.innerHTML = c.muted ? ICON.muted : ICON.sound; b.setAttribute('aria-label', c.muted ? 'Turn the sound on' : 'Mute'); b.title = b.getAttribute('aria-label'); }
             if (typeof m.title === 'string' && m.title && !c.d.title) handle(c).update({ title: m.title });
             const live = c.el.querySelector('.ovo-live'); if (live) live.hidden = m.live === false;
+            remember();
             changed('state', { ...c.d });
         }
     });
