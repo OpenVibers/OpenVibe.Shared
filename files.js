@@ -72,6 +72,7 @@ const BROWSER = Object.freeze([
     'items.js',             // what people wear (OpenVibe.Inventory name effects, plan T21); draw with items.css
     'profile-panel.js',     // a person's stuff on any site (worn items, badges, achievements), from the Network profile
     'quest.js',             // the daily quest card any site can show (OpenVibeQuest.mount); draw with quest.css
+    'guide.js',             // the opaque quest step guide (OpenVibeQuestGuide.startFromLocation)
     'tooltip.js',
     'player.js',            // the network's one video player look: enhances video[data-ov-player]; draw with player.css
     'ov-sync.js',           // one timeline for many players (seven domains B4): OVSync.attach(media, { room, socket }); no dependencies

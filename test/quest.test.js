@@ -31,6 +31,7 @@ function host() {
 
 (async () => {
     assert.ok(files.isBrowserFile('quest.js'), 'sites serve quest.js');
+    assert.ok(files.isBrowserFile('guide.js'), 'sites serve guide.js');
     assert.ok(files.isBrowserFile('quest.css'), 'sites serve quest.css');
 
     // Signed out: today's quest, the three doors, no streak and no progress.
