@@ -18,6 +18,7 @@
     if (typeof document === 'undefined' || root.OpenVibeDockCode) return;
 
     const CODES = 'https://openvibe.codes';
+    const SCRIPT_BASE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : '/shared/';
     const POLL_MS = 8000;
     const MODES = [['create', 'Create', 'A new website, game or app'], ['openvibe', 'OpenVibe', 'A change to OpenVibe itself'], ['repo', 'My code', 'A repository of yours']];
     const STATE = { queued: 'Waiting', running: 'Running', 'needs-you': 'Needs you', done: 'Done', failed: 'Failed', stopped: 'Stopped' };
@@ -99,6 +100,72 @@
             : relay + ({ list: '/codes-tasks?limit=8', start: '/codes-tasks', stop: `/codes-tasks/${encodeURIComponent(id)}/stop` })[what]);
         const h = (tag, cls, text) => { const n = d.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
         let gone = false, timer = 0, mode = 'create', tasks = null, reachable = true;
+
+        function loadScript(file, ready) {
+            if (ready()) return Promise.resolve(true);
+            return new Promise((resolve) => {
+                const id = `ovdc-${file}`;
+                let script = d.getElementById(id);
+                if (!script) { script = d.createElement('script'); script.id = id; script.src = SCRIPT_BASE + file; script.async = true; d.head.appendChild(script); }
+                script.addEventListener('load', () => resolve(!!ready()), { once: true });
+                script.addEventListener('error', () => resolve(false), { once: true });
+            });
+        }
+        function runUrl(id) {
+            return (direct ? direct + '/api/v1/runs/' : relay + '/codes-runs/') + encodeURIComponent(id);
+        }
+        async function openRun(task, from) {
+            const href = onCodes(task.url);
+            if (!href || !tok()) return;
+            const loaded = await Promise.all([
+                loadScript('ov-window.js', () => !!root.OVWindow),
+                loadScript('agent-session.js', () => !!root.OpenVibeAgentSession)
+            ]);
+            if (loaded.some((ok) => !ok)) { d.defaultView.location.assign(href); return; }
+            const body = h('div');
+            let stopped = false, controller = null, view = null;
+            const win = root.OVWindow.open({ id: `codes-run-${task.id}`, title: task.title || 'Coding task', body, kind: 'dialog', size: 'md', from,
+                onClose: () => { stopped = true; if (controller) controller.abort(); if (view) view.destroy(); } });
+            body.appendChild(h('p', 'ovdc-none', 'Loading the run…'));
+            const headers = () => ({ Authorization: `Bearer ${tok()}`, Accept: 'application/json' });
+            try {
+                const res = await fetch(runUrl(task.id), { headers: headers(), credentials: 'omit' });
+                if (!res.ok) throw new Error('The run could not be read.');
+                const run = await res.json();
+                if (stopped) return;
+                body.replaceChildren();
+                view = root.OpenVibeAgentSession.mount(body, { title: run.title || task.title || 'Coding task',
+                    status: run.status || task.status || 'running', mode: 'card', href });
+                let last = 0;
+                while (!stopped) {
+                    controller = new AbortController();
+                    const events = await fetch(runUrl(task.id) + '/events', { credentials: 'omit',
+                        headers: { ...headers(), Accept: 'text/event-stream', 'Last-Event-ID': String(last) }, signal: controller.signal });
+                    if (!events.ok || !events.body) break;
+                    const reader = events.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '', terminal = false;
+                    while (!stopped) {
+                        const part = await reader.read();
+                        if (part.done) break;
+                        buffer = (buffer + decoder.decode(part.value, { stream: true })).replace(/\r\n/g, '\n');
+                        let cut;
+                        while ((cut = buffer.indexOf('\n\n')) !== -1) {
+                            const frame = buffer.slice(0, cut); buffer = buffer.slice(cut + 2);
+                            const id = /^id: *(\d+)$/m.exec(frame), data = frame.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trimStart()).join('\n');
+                            if (id) last = Number(id[1]);
+                            if (!data) continue;
+                            try { const event = JSON.parse(data); view.push(event); if (event.type === 'RUN_FINISHED' || event.type === 'RUN_ERROR') terminal = true; } catch { /* skip one malformed event */ }
+                        }
+                    }
+                    if (terminal || !/running|queued|placed/.test(run.status || '')) break;
+                    await new Promise((resolve) => setTimeout(resolve, 1500));
+                }
+            } catch (err) {
+                if (!stopped) { body.replaceChildren(); const a = h('a', 'ovk-btn ovk-btn--quiet', 'Open on Codes'); a.href = href; body.appendChild(a); }
+            }
+            return win;
+        }
 
         container.innerHTML = '';
         container.classList.add('ovdc');
@@ -183,7 +250,10 @@
                 const li = h('li', 'ovdc-task');
                 const there = onCodes(t.url);
                 const a = h(there ? 'a' : 'div', 'ovdc-a');
-                if (there) a.href = there;
+                if (there) { a.href = there; a.addEventListener('click', (event) => {
+                    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                    event.preventDefault(); openRun(t, a);
+                }); }
                 a.appendChild(h('span', 'ovdc-t', t.title || 'A coding task'));
                 const m = h('span', 'ovdc-m');
                 const s = h('span', 'ovdc-s', STATE[t.status] || t.status || ''); s.dataset.s = t.status || '';

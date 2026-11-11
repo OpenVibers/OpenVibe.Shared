@@ -152,28 +152,6 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-actor.is-invite .ovh-x { min-height: 36px; height: 36px; padding: 0 14px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); color: var(--text-secondary, #a8b3c4); font-weight: 600; }
 @media (min-width: 560px) { .ovh-actor.is-invite { grid-template-columns: 48px minmax(0, 1fr) auto; } .ovh-actor.is-invite .ovh-acts { grid-column: auto; } }
 .ovh-skel { display: block; height: 14px; margin: 10px 8px; border-radius: 7px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
-.ovh-compose { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; align-items: start; margin: 6px 4px; padding: 10px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent);
-    box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); }
-.ovh-compose textarea { flex: 1; min-width: 0; min-height: 44px; max-height: 160px; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.14));
-    background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 15px; line-height: 1.4; resize: none; overflow-y: auto; }
-.ovh-post { flex: none; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); font: inherit; font-weight: 700; cursor: pointer; }
-.ovh-post:disabled { opacity: .5; cursor: default; }
-.ovh-compose-main { display: grid; gap: 8px; min-width: 0; }
-.ovh-compose-bar { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ovh-compose-bar .ovh-post { margin-left: auto; }
-.ovh-compose-hint { flex: 1; min-width: 0; font-size: 12px; color: var(--text-muted, #93a0b4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ovh-pic-btn { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--accent-light, var(--accent, #60a5fa)); cursor: pointer; }
-.ovh-pic-btn:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
-.ovh-pic-btn:disabled { opacity: .4; cursor: default; background: transparent; }
-.ovh-pic-btn svg, .ovh-pic-x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.ovh-pics { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.ovh-pics[hidden] { display: none; }
-.ovh-pic { display: grid; grid-template-columns: 56px minmax(0, 1fr) 40px; gap: 8px; align-items: center; }
-.ovh-pic img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); }
-.ovh-pic input { min-width: 0; min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.14)); background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 14px; }
-.ovh-pic-x { display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted, #93a0b4); cursor: pointer; }
-.ovh-pic-x svg { width: 18px; height: 18px; }
-.ovh-pic-x:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); }
 .ovh-note { margin: 2px 8px 6px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
 .ovh-today { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 4px 4px 6px; }
 .ovh-stat { display: grid; gap: 2px; align-content: start; min-width: 0; padding: 10px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
@@ -359,6 +337,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        attach: [['path', { d: 'M12 5v14M5 12h14' }]],
         plus: [['circle', { cx: 9.5, cy: 8.5, r: 3.2 }], ['path', { d: 'M3.5 18.5c1-2.900 3.300-4.400 6-4.400 1.300 0 2.500.300 3.500 1' }], ['path', { d: 'M18 13.500v6M15 16.500h6' }]],
         out: [['path', { d: 'M13.500 4.500h4a1.500 1.500 0 0 1 1.500 1.500v12a1.500 1.500 0 0 1-1.500 1.500h-4' }], ['path', { d: 'M9.500 8l-4 4 4 4M5.500 12h9.500' }]],
         grid: [['rect', { x: 4, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 4, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }]],
@@ -872,85 +851,83 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         return out;
     }
     function composer(box, o) {
-        const form = h('form', 'ovh-compose');
-        const face = h('span', 'ovh-face');
-        const pic = o.user && /^https:\/\//.test(String(o.user.avatar_url || o.user.avatar || '')) ? (o.user.avatar_url || o.user.avatar) : '';
-        if (pic) { const img = h('img'); img.alt = ''; img.src = pic; face.append(img); } else face.textContent = String((o.user && (o.user.display_name || o.user.username)) || 'Y').charAt(0).toUpperCase();
+        const form = h('form', 'ovt-composer'); form.id = 'ovh-feed-composer'; form.setAttribute('data-ovc', ''); form.setAttribute('data-ovc-max-files', '10'); form.setAttribute('data-ovc-max-mb', '300');
+        const ta = h('textarea'); ta.name = 'text'; ta.maxLength = 2000; ta.rows = 2; ta.required = true; ta.setAttribute('data-ovt-text', '');
         const first = String((o.user && (o.user.display_name || o.user.username)) || '').split(/\s+/)[0];
-        const main = h('div', 'ovh-compose-main');
-        const ta = h('textarea'); ta.name = 'text'; ta.maxLength = 500; ta.rows = 1; ta.placeholder = first ? `What's new, ${first}?` : "What's new?"; ta.setAttribute('aria-label', "What's new");
-        // Pictures (owner, 11-09: "you can make posts and put images"): up to four, each with a line saying what it shows,
-        // which Community requires (alt text, for people who cannot see it).
-        const pics = []; const list = h('ul', 'ovh-pics'); list.hidden = true;
-        const bar = h('div', 'ovh-compose-bar');
-        const add = h('button', 'ovh-pic-btn'); add.type = 'button'; add.setAttribute('aria-label', 'Add pictures'); add.title = 'Add pictures (up to 4)'; add.append(svgIcon('image'));
-        const file = h('input'); file.type = 'file'; file.accept = 'image/jpeg,image/png,image/webp,image/gif'; file.multiple = true; file.hidden = true;
-        const hint = h('small', 'ovh-compose-hint');
-        const post = h('button', 'ovh-post', 'Post'); post.type = 'submit'; post.disabled = true;
-        const ready = () => {
-            const missing = pics.some((p) => !p.alt.value.trim());
-            post.disabled = !ta.value.trim() || missing;
-            hint.textContent = missing ? 'Describe each picture' : '';
-            add.disabled = pics.length >= 4;
-            list.hidden = !pics.length;
-        };
-        ta.addEventListener('input', () => { ready(); ta.style.height = 'auto'; ta.style.height = `${Math.min(160, ta.scrollHeight + 2)}px`; });
-        add.addEventListener('click', () => file.click());
-        file.addEventListener('change', async () => {
-            const chosen = [...(file.files || [])].slice(0, 4 - pics.length); file.value = '';
-            for (const f of chosen) {
-                if (!/^image\//.test(f.type)) continue;
-                const pr = await preparePicture(f);
-                if (pr.file.size > 8 * 1024 * 1024) { note.hidden = false; note.textContent = `${f.name} is over 8 MB.`; continue; }
-                const li = h('li', 'ovh-pic');
-                const im = h('img'); im.alt = ''; if (pr.thumb) im.src = pr.thumb;
-                const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What does it show?'; alt.setAttribute('aria-label', `What ${f.name} shows`);
-                const x = h('button', 'ovh-pic-x'); x.type = 'button'; x.setAttribute('aria-label', 'Remove this picture'); x.title = 'Remove'; x.append(svgIcon('x'));
-                const entry = { file: pr.file, alt, li };
-                x.addEventListener('click', () => { pics.splice(pics.indexOf(entry), 1); li.remove(); ready(); });
-                alt.addEventListener('input', ready);
-                li.append(im, alt, x); list.append(li); pics.push(entry);
-            }
-            ready();
-            const empty = pics.find((p) => !p.alt.value.trim()); if (empty) empty.alt.focus();
+        ta.placeholder = first ? `What's new, ${first}?` : "What's new?"; ta.setAttribute('aria-label', "What's new");
+        const row = h('div', 'ovt-c-row'), tools = h('div', 'ovt-c-tools');
+        // The composer's own + (its contract: label.ovt-btn.ovt-attach holding the file input), drawn by ov-composer.js's
+        // styles wherever the menu opens; a kit button had no styles here and drew bare ("Attach files").
+        const attach = h('label', 'ovt-btn ovt-attach'); attach.title = 'Attach files'; attach.setAttribute('aria-label', 'Attach files');
+        attach.append(svgIcon('attach'));
+        const file = h('input'); file.type = 'file'; file.multiple = true; file.hidden = true; file.setAttribute('data-ovt-files', ''); file.setAttribute('aria-label', 'Attach files');
+        attach.append(file); tools.append(attach);
+        const post = h('button', 'ovt-send', 'Post'); post.type = 'submit'; post.disabled = true; post.setAttribute('data-ovt-send', '');
+        const note = h('p', 'ovh-note'); note.hidden = true; note.setAttribute('data-ovt-note', '');
+        row.append(tools, post); form.append(ta, row); box.append(form, note);
+        const pics = new Map();
+        const ready = () => { post.disabled = !ta.value.trim() || [...pics.values()].some((alt) => !alt.value.trim()); };
+        form.addEventListener('input', ready);
+        form.addEventListener('ovc:file-added', (e) => {
+            const { file: f, chip } = e.detail;
+            if (!/^image\//.test(f.type)) return;
+            chip.classList.add('ovc-image');
+            const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What does it show?';
+            alt.setAttribute('aria-label', `What ${f.name || 'the picture'} shows`); alt.required = true;
+            chip.append(alt); pics.set(f, alt); queueMicrotask(ready);
         });
-        bar.append(add, file, hint, post);
-        main.append(ta, list, bar);
-        form.append(face, main);
-        const note = h('p', 'ovh-note'); note.hidden = true;
+        form.addEventListener('ovc:file-removed', (e) => { pics.delete(e.detail.file); queueMicrotask(ready); });
         const auth = { Authorization: `Bearer ${o.token}` };
+        const upload = async (url, f) => {
+            const fd = new FormData(); fd.append('file', f, f.name || 'file');
+            const r = await fetch(url, { method: 'POST', credentials: 'omit', headers: auth, body: fd });
+            const j = await r.json().catch(() => ({}));
+            const id = (j.attachment && (j.attachment.media_id || j.attachment.id)) || j.id;
+            if (!r.ok || !id) throw new Error(j.detail || `${f.name || 'File'} did not upload.`);
+            return id;
+        };
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const text = ta.value.trim(); if (!text || post.disabled) return;
-            post.disabled = true; add.disabled = true; note.hidden = true;
+            const text = ta.value.trim(), files = form.__ovc ? form.__ovc.files() : [...file.files];
+            if (!text) { ta.focus(); return; }
+            const images = files.filter((f) => /^image\//.test(f.type));
+            if (images.length > 4) { note.hidden = false; note.textContent = 'Choose up to four pictures.'; return; }
+            const missing = images.find((f) => !pics.get(f) || !pics.get(f).value.trim());
+            if (missing) { note.hidden = false; note.textContent = 'Describe each picture.'; pics.get(missing)?.focus(); return; }
+            post.disabled = true; note.hidden = true;
             const label = post.textContent;
             try {
-                let r;
-                if (pics.length) {
-                    const named = [];
-                    for (let k = 0; k < pics.length; k++) {
-                        post.textContent = pics.length > 1 ? `Picture ${k + 1} of ${pics.length}` : 'Sending the picture';
-                        const fd = new FormData(); fd.append('file', pics[k].file, pics[k].file.name || 'picture.jpg');
-                        const up = await fetch(`${o.frameBase || FRAME}/attachments`, { method: 'POST', credentials: 'omit', headers: auth, body: fd });
-                        const uj = await up.json().catch(() => ({}));
-                        const id = uj && uj.attachment && uj.attachment.media_id;
-                        if (!up.ok || !id) throw new Error(uj.detail || 'A picture did not upload. Try again in a moment.');
-                        named.push({ media_id: id, alt: pics[k].alt.value.trim() });
+                const pictures = [], attachments = [];
+                for (const f of files) {
+                    post.textContent = `Uploading ${f.name || 'file'}`;
+                    if (/^image\//.test(f.type)) {
+                        const prepared = await preparePicture(f);
+                        const media_id = await upload(`${o.frameBase || FRAME}/attachments`, prepared.file);
+                        pictures.push({ media_id, alt: pics.get(f).value.trim() });
+                    } else {
+                        const media_id = await upload('https://openvibe.media/api/v1/attachments', f);
+                        attachments.push(media_id);
                     }
-                    post.textContent = 'Posting';
-                    r = await fetch(`${o.frameBase || FRAME}/posts`, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify({ text, pictures: named }) });
-                } else {
-                    r = await fetch(`${o.frameBase || FRAME}/status`, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify({ text }) });
                 }
+                post.textContent = 'Posting';
+                const url = files.length ? `${o.frameBase || FRAME}/posts` : `${o.frameBase || FRAME}/status`;
+                const body = files.length ? { text, pictures, attachments } : { text };
+                const r = await fetch(url, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify(body) });
                 const j = await r.json().catch(() => ({}));
                 if (!r.ok) throw new Error(j.detail || 'It did not post. Try again in a moment.');
-                ta.value = ''; ta.style.height = ''; pics.splice(0).forEach((p) => p.li.remove());
+                ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); form.__ovc?.clearFiles(); pics.clear();
                 note.hidden = false; note.textContent = 'Posted. It is on your profile and in the Feed.';
                 if (o.onPosted) o.onPosted(j);
-            } catch (err) { note.hidden = false; note.textContent = String(err.message || err); }
+            } catch (err) { note.hidden = false; note.textContent = String(err.message || err); ta.dispatchEvent(new Event('input', { bubbles: true })); }
             post.textContent = label; ready();
         });
-        box.append(form, note);
+        const join = () => { if (root.OpenVibeComposer && form.isConnected) root.OpenVibeComposer.enhance(form); };
+        if (root.OpenVibeComposer) join();
+        else if (typeof o.sibling === 'function') {
+            let script = document.getElementById('ov-composer-script');
+            if (!script) { script = document.createElement('script'); script.id = 'ov-composer-script'; script.src = o.sibling('ov-composer.js'); script.onload = join; document.head.append(script); }
+            else script.addEventListener('load', join, { once: true });
+        }
     }
     function spark(series) {
         const v = (Array.isArray(series) ? series : []).map(Number).filter((x) => Number.isFinite(x)).slice(-14);
@@ -1259,11 +1236,64 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         el.classList.add('ovh', 'ovfd');
         el.setAttribute('data-sec', 'wall');
         el.textContent = '';
+        const examples = h('div', 'ovfd-examples'); examples.setAttribute('aria-label', 'Example feed searches');
+        const resultHead = h('div', 'ovfd-results'); resultHead.hidden = true;
         const chips = h('div', 'ovfd-chips'); chips.setAttribute('role', 'tablist'); chips.setAttribute('aria-label', 'Feed');
         const list = h('div', 'ovfd-list');
         const sentinel = h('div', 'ovfd-more');
-        el.append(chips, list, sentinel);
+        el.append(examples, resultHead, chips, list, sentinel);
         let kind = '', cursor = null, busy = false, done = false, seq = 0, lastDay = '';
+        let query = '', searchSeq = 0;
+        const loaded = [];
+        const feedBase = `${o.frameBase || FRAME}/feed`;
+        const headers = () => Object.assign({ Accept: 'application/json' }, signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {});
+        const fallbackExamples = ["Who's live", 'New photos', 'Clips from today', 'Videos this week'];
+        const showExamples = (values) => {
+            examples.textContent = '';
+            [...new Set([...values, ...fallbackExamples])].slice(0, 6).forEach((value) => {
+                const b = h('button', 'ovfd-ex', value); b.type = 'button';
+                b.addEventListener('click', () => { if (o.onSearch) o.onSearch(value); });
+                examples.append(b);
+            });
+        };
+        showExamples(fallbackExamples);
+        fetch(`${feedBase}/examples`, { credentials: 'omit', headers: headers() }).then((r) => r.ok ? r.json() : null).then((j) => {
+            const values = j && Array.isArray(j.examples) ? j.examples.map((x) => x && x.text).filter((x) => typeof x === 'string' && x.trim()) : [];
+            if (values.length) showExamples(values);
+        }).catch(() => {});
+        const matches = (x, q) => {
+            const words = q.toLowerCase().replace(/^(new |who's |from |this )/g, '').split(/\s+/).filter((w) => !['the', 'today', 'week'].includes(w));
+            const hay = [x.title, x.text, x.kind, x.site, x.site_name, x.actor && x.actor.name].join(' ').toLowerCase();
+            if (q.toLowerCase().includes('today') && String(x.at || '').slice(0, 10) !== new Date().toISOString().slice(0, 10)) return false;
+            if (q.toLowerCase().includes('this week') && Date.parse(x.at || '') < Date.now() - 7 * 864e5) return false;
+            return words.filter((w) => !['from', 'this', 'week'].includes(w)).every((w) => {
+                const word = w.replace(/s$/, '');
+                return hay.includes(word) || word === 'photo' && x.kind === 'pic';
+            });
+        };
+        async function search(q) {
+            query = String(q || '').trim(); const current = ++searchSeq;
+            resultHead.textContent = '';
+            resultHead.hidden = !query; chips.hidden = !!query; sentinel.hidden = !!query;
+            examples.hidden = !!query;
+            if (!query) { cursor = null; done = false; busy = false; more(true); return; }
+            list.textContent = '';
+            resultHead.append(h('span', '', 'Searching…'));
+            let found = null;
+            try {
+                const r = await fetch(`${feedBase}/search?q=${encodeURIComponent(query)}`, { credentials: 'omit', headers: headers() });
+                if (r.ok) { const j = await r.json(); if (Array.isArray(j.items)) found = j.items; }
+            } catch { /* the loaded cards remain searchable */ }
+            if (current !== searchSeq) return;
+            if (!found) found = loaded.filter((x) => matches(x, query));
+            resultHead.textContent = '';
+            resultHead.append(h('span', '', `${found.length} result${found.length === 1 ? '' : 's'}`));
+            const clear = h('button', 'ovk-btn ovk-btn--quiet', '×'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear feed search');
+            clear.addEventListener('click', () => { if (o.onSearch) o.onSearch(''); }); resultHead.append(clear);
+            list.textContent = '';
+            found.forEach((x) => { const card = feedCard(x); if (card) list.append(card); });
+            if (typeof o.mountIcons === 'function') o.mountIcons(list);
+        }
         const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovfd-skel')); };
         const clearSkels = () => list.querySelectorAll('.ovfd-skel').forEach((x) => x.remove());
         async function more(first) {
@@ -1272,12 +1302,15 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             if (first) { list.textContent = ''; skeletons(); } else skeletons();
             const j = await loadFeed(o, kind, cursor);
             if (my !== seq) return;
-            clearSkels(); busy = false;
+            clearSkels();
             if (!j) {
+                busy = false;
                 if (first && !kind) { el.textContent = ''; if (o.feedMissing) o.feedMissing(); timeline(el, o); return; }   // the API is not there: the wall stands
                 done = true; sentinel.textContent = ''; sentinel.append(h('p', 'ovh-note', 'That did not load. Pull the menu again to retry.')); return;
             }
             if (first && o.feedLive) o.feedLive();
+            if (!kind) { if (first) loaded.length = 0; loaded.push(...j.items); }
+            if (query) { busy = false; search(query); return; }
             // Back-to-back go-lives that are over fold into one card of faces (a wall of "X went live" was the whole feed).
             const past = (x) => x && (x.kind === 'stream' || (x.kind === 'live' && !x.live_now)) && safe(x.url);
             let run = [];
@@ -1291,6 +1324,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
             done = !cursor;
+            busy = false;
             sentinel.textContent = '';
             if (done) sentinel.append(h('p', 'ovh-note ovfd-caught', list.querySelector('.ovfd-card,.ovfd-act,.ovfd-update') ? "You're all caught up."
                 : (kind === 'following' ? 'Nothing yet from the people you follow. Follow someone on their profile and what they share shows here.' : 'Nothing here yet.')));
@@ -1311,7 +1345,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             io.observe(sentinel);
         }
         more(true);
-        return { update() {} };
+        return { update() {}, search, get query() { return query; } };
     }
     function feedStyles() {
         if (document.getElementById('ovfd-styles')) return;
@@ -1319,6 +1353,10 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         st.textContent = `
 .ovfd-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
 .ovfd-chips::-webkit-scrollbar{display:none}
+.ovfd-examples{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 4px 6px;margin:0 -4px}.ovfd-examples::-webkit-scrollbar{display:none}.ovfd-examples[hidden]{display:none}
+.ovfd-ex{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;border:0;background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);color:var(--accent-light,var(--accent,#60a5fa));font:inherit;font-size:13px;font-weight:650;cursor:pointer;white-space:nowrap;transition:background .15s}
+.ovfd-ex::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.8}
+.ovfd-ex:hover,.ovfd-ex:focus-visible{background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent)}
 .ovfd-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
 .ovfd-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
 .ovfd-list{display:grid;gap:10px;padding:4px 0}

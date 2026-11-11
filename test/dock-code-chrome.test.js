@@ -24,6 +24,10 @@ let up = true;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/dock-code.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'dock-code.js'))); }
+    if (u.pathname === '/ov-window.js' || u.pathname === '/agent-session.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, u.pathname.slice(1)))); }
+    if (u.pathname === '/agent-session.css') { res.writeHead(200, { 'content-type': 'text/css' }); return res.end(fs.readFileSync(path.join(root, 'agent-session.css'))); }
+    if (u.pathname === '/api/frame/codes-runs/t1') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ id: 't1', title: 'A goal bar for my sub goal', status: 'running', plan: [] })); }
+    if (u.pathname === '/api/frame/codes-runs/t1/events') { res.writeHead(200, { 'content-type': 'text/event-stream' }); return res.end('id: 1\nevent: RUN_STARTED\ndata: {"type":"RUN_STARTED","runId":"t1","threadId":"t1"}\n\nid: 2\nevent: STEP_STARTED\ndata: {"type":"STEP_STARTED","stepName":"Read files"}\n\n'); }
     if (u.pathname.startsWith('/api/frame/codes-tasks')) {
         let body = '';
         req.on('data', (c) => { body += c; });
@@ -64,6 +68,12 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         assert.equal(r[1].link, null, 'an address off openvibe.codes is not a link');
         assert.equal(seen[0].auth, 'Bearer tok_abc', 'the read carries the person\'s token');
         assert.equal(seen[0].path, '/api/frame/codes-tasks?limit=8', 'through Network\'s relay');
+
+        // A task opens the shared card in the one window; the full Codes link stays available.
+        await page.evaluate(`document.querySelector('.ovdc-task a.ovdc-a').click()`);
+        assert.ok(await until(`!!document.querySelector('.ovw .ovas')`), 'the agent session mounted in OVWindow');
+        assert.equal(await page.evaluate(`document.querySelector('.ovw a[href="https://openvibe.codes/tasks/t1"]') !== null`), true);
+        await page.evaluate(`OVWindow.closeAll()`);
 
         // My code wants a repository; Ctrl+Enter starts the task.
         await page.evaluate(`document.querySelector('[data-mode="repo"]').click()`);
