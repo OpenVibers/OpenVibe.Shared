@@ -2040,11 +2040,7 @@
         });
     }
 
-    /**
-     * wallet: true — OpenCoins and Vibes as chips in the bar on any site (owner, 2026-10-27). A site's own chips with
-     * those ids (Live) win. The last balances are kept per person so the chips paint at once; they refresh from the
-     * Network and Billing in the background and when the tab returns after a minute; on a phone they fold into one.
-     */
+    // Wallet balances fold into one pill and refresh when the tab returns.
     const WALLET_CHIPS = [
         { id: 'coins', icon: 'fa-coins', tone: 'gold', label: 'OpenCoins', title: 'Open Wallet' },
         { id: 'vibes', icon: 'fa-wallet', tone: 'green', label: 'Vibes', title: 'Open Wallet' },
@@ -2101,13 +2097,14 @@
             _walletWatch = true;
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
-        // No token (httpOnlyAccess sites): the Network cookie reads it. Unreadable with nothing kept hides the chips.
         const same = () => _config.user === u && (_config.token || null) === token;
         const failed = () => { if (!same() || _walletData) return; _walletData = false; if (_navEl) render(); };
         fetch(`${(_config.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet/api/v1/me/wallet`,
             token ? { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' } : { credentials: 'include' })
             .then(async (r) => { if (!r.ok) return failed(); const data = await r.json(); if (!same()) return;
-                _walletData = data; if (_navEl) render(); }).catch(failed);
+                _walletData = data; if (_navEl) render();
+                (root.OpenVibePurse?.catchUp || (v => root.__ovPursePending = v))({ frameBase: _config.frameBase, token, user: u.subject || u.id, streamer: _config.purse?.streamer, valid: same });
+            }).catch(failed);
     }
 
     function render() {
@@ -2164,7 +2161,6 @@
         bindLinks(nav, links);
         hookSearch(nav);
         hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
-        // The tooltip's file is fetched when a pointer first comes over the bar, not with the page.
         tipWait();
         bindChips(nav);
         bindChipsAll(nav);
