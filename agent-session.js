@@ -492,7 +492,7 @@
         const S = { phases: [], thinks: new Map(), msgs: new Map(), sources: new Map(), activity: '', ownPlan: false, status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, agentCost: new Map(), durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
         host.textContent = '';
         const box = el('div', 'ovas');
-        box.innerHTML = `<div class="ovas-head"><div class="ovas-top"><span class="ovas-pill" data-s="${esc(S.status)}"></span><span class="ovas-title"></span></div><div class="ovas-meta"><span class="ovas-agents"></span><span data-m="time"></span><span data-m="steps"></span><span data-m="files"></span><span data-m="cost"></span></div><details class="ovas-plan" hidden><summary><span class="ovas-plan-now"></span><span class="ovas-plan-n"></span></summary><div class="ovas-plan-bar"><i style="width:0"></i></div><ol></ol></details></div>`
+        box.innerHTML = `<div class="ovas-head"><div class="ovas-top"><span class="ovas-pill" data-s="${esc(S.status)}"></span><span class="ovas-title"></span></div><div class="ovas-meta"><span class="ovas-agents"></span><span data-m="now" hidden></span><span data-m="time"></span><span data-m="steps"></span><span data-m="files"></span><span data-m="cost"></span></div><details class="ovas-plan" hidden><summary><span class="ovas-plan-now"></span><span class="ovas-plan-n"></span></summary><div class="ovas-plan-bar"><i style="width:0"></i></div><ol></ol></details></div>`
             + '<div class="ovas-bar" role="toolbar" aria-label="Show"></div><ol class="ovas-files" hidden></ol><ol class="ovas-feed" aria-live="polite"></ol><div class="ovas-actions" hidden></div>';
         host.appendChild(box);
         const head = box.querySelector('.ovas-head'), feed = box.querySelector('.ovas-feed'), bar = box.querySelector('.ovas-bar');
@@ -523,6 +523,9 @@
             try { navigator.clipboard.writeText(text); c.lastChild.textContent = 'Copied'; setTimeout(() => { c.lastChild.textContent = 'Copy'; }, 1400); } catch { /* no clipboard */ }
         });
         const empty = el('li', 'ovas-empty', opts.empty || 'Waiting for the agent to start…'); feed.appendChild(empty);
+        // The run is still working: three dots after the newest line (gone when it ends).
+        const working = el('div', 'ovas-working'); working.setAttribute('aria-hidden', 'true'); working.innerHTML = '<i></i><i></i><i></i>';
+        working.hidden = !LIVE.includes(S.status); box.insertBefore(working, box.querySelector('.ovas-actions'));
 
         // ── The preview sheet: one attachment, opened by a tap ──────────────────────────
         const sheet = el('div', 'ovas-sheet');
@@ -976,6 +979,9 @@
             });
             const fc = bar.querySelector('[data-f="files"]'); if (fc) fc.textContent = sm.files ? `Files ${sm.files}` : 'Files';
             const m = (k, html) => { const n = head.querySelector(`[data-m="${k}"]`); n.innerHTML = html; n.hidden = !html; };
+            // What it is doing now (the portal's sticky line, 2026-11-11): the newest step that has not ended.
+            const nowStep = LIVE.includes(S.status) ? [...S.steps.values()].reverse().find((st) => !st.done && !st.hidden) : null;
+            m('now', nowStep && nowStep.info ? `<span class="ovas-now">${esc(String(nowStep.info.command || nowStep.info.title || '').split('\n')[0].slice(0, 90))}</span>` : '');
             m('time', sm.durationMs ? `<b>${esc(dur(sm.durationMs))}</b>` : '');
             m('steps', sm.steps ? `<b>${sm.steps}</b> step${sm.steps === 1 ? '' : 's'}${sm.commands ? ` · <b>${sm.commands}</b> command${sm.commands === 1 ? '' : 's'}` : ''}` : '');
             m('files', sm.files ? `<b>${sm.files}</b> file${sm.files === 1 ? '' : 's'} <span style="color:var(--ovas-ok)">+${sm.added}</span> <span style="color:var(--ovas-bad)">−${sm.removed}</span>` : '');
@@ -983,8 +989,29 @@
         }
         function status(s, label) {
             S.status = s; S.label = label || '';
+            working.hidden = !LIVE.includes(s);
             if (!LIVE.includes(s)) { S.endedAt = S.endedAt || Date.now(); empty.textContent = 'Nothing was recorded for this run.'; }
             paintHead();
+        }
+        // Talking to the run while it works (opts.onSend(text) → a promise; the product sends it to its agent: Codes' job
+        // message, Actor's task input, the portal's session). The one composer when the page has it, else a plain box.
+        if (typeof opts.onSend === 'function') {
+            const form = el('form', 'ovas-say');
+            const ta = el('textarea'); ta.name = 'text'; ta.rows = 1; ta.maxLength = 4000; ta.placeholder = opts.sayPlaceholder || 'Message the agent'; ta.setAttribute('aria-label', 'Message the agent');
+            const send = el('button', 'ovas-say-send'); send.type = 'submit'; send.setAttribute('aria-label', 'Send'); send.innerHTML = svg('handoff');
+            form.appendChild(ta); form.appendChild(send);
+            box.appendChild(form);
+            ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = ta.value.trim(); if (!text || form.classList.contains('is-busy')) return;
+                form.classList.add('is-busy');
+                const li = el('li', 'ovas-you'); li.dataset.k = 'msg'; li.appendChild(el('span', '', text)); appendLi(feed, li); keep();
+                try { await opts.onSend(text); ta.value = ''; li.classList.add('is-sent'); }
+                catch (err) { li.classList.add('is-failed'); li.title = (err && err.message) || 'Not sent'; }
+                finally { form.classList.remove('is-busy'); }
+            });
+            try { if (root.OpenVibeComposer && root.OpenVibeComposer.enhance) { form.setAttribute('data-ovc-no-files', ''); root.OpenVibeComposer.enhance(form); } } catch { /* a plain box is fine */ }
         }
         const tick = setInterval(() => { if (S.status === 'running' || S.status === 'placed') { S.steps.forEach((st) => { if (!st.done) setStepState(st); }); paintHead(); } }, 1000);
         paintHead();

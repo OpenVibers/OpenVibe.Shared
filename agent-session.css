@@ -241,3 +241,38 @@ html[data-ov-motion="off"] :is(.ovas-phase-dot, .ovas-think-dots) { animation: n
 /* 3. A card keeps its groups folded: the head says what they did. */
 .ovas--card .ovas-group:not(.is-one) > :not(summary) { display: none; }
 .ovas--card .ovas-group:not(.is-one) > summary .ovas-chev { display: none; }
+
+/* ── Compact runs (2026-11-11, the owner with the portal's run view open: "consider stuff like this … parse and expandable
+   and compact mode … smart"): a group is one line, its state first, its words, the step it is on in mono, the chevron
+   last; the steps inside are light rows; the head says what it is doing now; three dots while it works; a box to talk
+   to it. Every motion follows --ov-move. */
+.ovas-feed { gap: 6px; }
+.ovas-group > summary { min-height: 42px; padding: 4px 10px; gap: 9px; }
+.ovas-group:not(.is-one) > summary .ovas-state { order: -1; }
+.ovas-group:not(.is-one) > summary .ovas-icons { display: none; }
+.ovas-group:not(.is-one) > summary .ovas-chev { order: 99; transition: transform var(--ov-dur-2, .2s) var(--ov-ease-out, ease); }
+.ovas-group[open]:not(.is-one) > summary .ovas-chev { transform: rotate(90deg); }
+.ovas-group:not(.is-one) > summary .ovas-sum { display: flex; align-items: baseline; gap: 9px; }
+.ovas-group:not(.is-one) > summary .ovas-sum b { flex: none; max-width: 60%; }
+.ovas-group:not(.is-one) > summary .ovas-sum small { flex: 1 1 auto; min-width: 0; }
+.ovas-group > ol .ovas-step { border: 0; background: transparent; border-radius: 10px; }
+.ovas-group > ol .ovas-step > summary { min-height: 38px; padding: 3px 8px; }
+.ovas-group > ol .ovas-step > summary:hover { background: color-mix(in srgb, var(--text-primary, #fff) 5%, transparent); }
+.ovas-group > ol .ovas-kind { width: 24px; height: 24px; border-radius: 7px; }
+.ovas-meta [data-m="now"] { flex: 1 1 100%; min-width: 0; order: -1; }
+.ovas-now { display: flex; align-items: center; gap: 7px; min-width: 0; font: 12.5px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text-primary, #e6edf7); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ovas-now::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); animation: ovasBreathe 1.6s ease-in-out infinite; }
+.ovas-working { display: flex; gap: 5px; padding: 4px 6px; }
+.ovas-working[hidden] { display: none; }
+.ovas-working i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); opacity: .35; animation: ovasWork 1.2s ease-in-out infinite; }
+.ovas-working i:nth-child(2) { animation-delay: .16s; } .ovas-working i:nth-child(3) { animation-delay: .32s; }
+@keyframes ovasWork { 40% { opacity: 1; transform: translateY(calc(-3px * var(--ov-move, 1))); } }
+.ovas-you { justify-self: end; max-width: 85%; padding: 8px 12px; border-radius: 14px 14px 4px 14px; background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ovas-you:not(.is-sent):not(.is-failed) { opacity: .6; }
+.ovas-you.is-failed { outline: 1px solid var(--ovas-bad, #ef4444); }
+.ovas-say { position: sticky; bottom: 0; display: flex; gap: 8px; align-items: flex-end; padding: 8px; border-radius: 16px; border: 1px solid var(--ovas-b, rgba(255,255,255,.1)); background: var(--ovas-s, #121826); }
+.ovas-say textarea { flex: 1; min-height: 40px; max-height: 160px; resize: none; padding: 9px 12px; border: 0; border-radius: 12px; background: var(--ovas-t, rgba(255,255,255,.05)); color: inherit; font: inherit; font-size: 15px; }
+.ovas-say textarea:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 0; }
+.ovas-say-send { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 12px; background: var(--accent-strong, var(--accent, #2563eb)); color: #fff; cursor: pointer; }
+.ovas-say.is-busy .ovas-say-send { opacity: .5; }
+html[data-ov-motion="off"] :is(.ovas-now, .ovas-working i)::before, html[data-ov-motion="off"] .ovas-working i { animation: none !important; }
