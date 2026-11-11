@@ -86,6 +86,12 @@ const server = http.createServer((req, res) => {
         await page.evaluate(`document.querySelector('#c1 [data-ovc-back]').click()`);
         assert.ok((await val()).startsWith('line 0\nline 1'), '↩ puts it back in the box');
         assert.equal(await page.evaluate(`document.querySelectorAll('#c1 .ovc-file').length`), 0);
+        // A box that takes only pictures keeps a long paste as text (it is not turned into a file it would refuse).
+        await page.evaluate(`(() => { const i = document.querySelector('#c1 input[type=file]'); i.dataset.acc = i.getAttribute('accept'); i.setAttribute('accept', 'image/*'); })()`);
+        f = await page.evaluate(`(() => { const t = document.querySelector('#c1 textarea'); const dt = new DataTransfer(); dt.setData('text/plain', 'x\\n'.repeat(200));
+            const ev = new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }); t.dispatchEvent(ev); return { prevented: ev.defaultPrevented, chips: document.querySelectorAll('#c1 .ovc-file').length }; })()`);
+        assert.deepEqual(f, { prevented: false, chips: 0 }, 'a pictures-only box lets the long paste in as text');
+        await page.evaluate(`(() => { const i = document.querySelector('#c1 input[type=file]'); i.setAttribute('accept', i.dataset.acc); })()`);
         await clear();
 
         // "/": the site's commands, then settings; the arrows and Enter pick one, and Enter does not send.
