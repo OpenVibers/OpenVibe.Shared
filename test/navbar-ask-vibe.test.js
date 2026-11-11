@@ -77,10 +77,16 @@ const server = http.createServer((req, res) => {
         // Work together: a new workspace room on OpenVibe.Chat (a team and Vibe, a work queue, a shared screen).
         assert.strictEqual(await p.evaluate(`document.querySelector('[data-ov-work]').href`), 'https://openvibe.chat/work');
 
+        // The menu loads on the first press (search.js): each press waits for the state it asked for, so a second
+        // press never lands before the first has opened the menu (2026-11-10: a press 20 ms after the first was
+        // swallowed while the script loaded, and the third press then closed the menu).
+        const settle = async (open) => { const end = Date.now() + 6000; while (Date.now() < end) { if (await p.evaluate(`!!document.querySelector('.ovs.is-open') === ${open}`)) return; await new Promise((r) => setTimeout(r, 40)); } };
         // Nothing selected: the plain console.
         await press();
         assert.strictEqual(await askHref(), 'https://openvibe.chat/vibe');
+        await settle(true);
         await press();
+        await settle(false);
 
         // Text selected on the page, then a real press on the avatar: the selection is the ask (spaces folded).
         await p.evaluate(`(() => { const r = document.createRange(); r.selectNodeContents(document.getElementById('text')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); })()`);

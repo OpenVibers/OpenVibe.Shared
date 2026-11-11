@@ -79,6 +79,7 @@
     let view = 'suggest', rtabsEl = null, rq = '', rtab = 'all', rflight = null, moved = false;
     // A place of the Dock shown inside the menu (a phone, 312 step 2): which one, its mount, and AI's part.
     let door = null, doorEl = null, doorHost = null, doorSw = null, doorMount = null, aiPart = 'vibe';
+    let actsEl = null, actsObs = null, actsTick = 0;
 
     const safeUrl = (u) => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     function siteOf(url) {
@@ -191,6 +192,13 @@
         st.textContent = `
 .ovs { position: fixed; inset: 0; z-index: 10020; display: none; background: rgba(3, 6, 12, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; color: var(--text-primary, #e8ecf3); }
 .ovs.is-open { display: block; animation: ovs-in .14s ease-out; }
+/* The button becomes its tab (4.200.0): the flight layer above everything, its parts drawn from the two buttons. */
+.ovs-fly { position: fixed; inset: 0; z-index: 2147483600; pointer-events: none; }
+.ovs-fly-part { position: absolute; display: grid; place-items: center; color: var(--ovk-text, var(--text-primary, #e8ecf4)); will-change: transform, opacity; }
+.ovs-fly-part > svg, .ovs-fly-part > .ov-icon { width: 100%; height: 100%; }
+.ovs-fly-part > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovs-fly-part--count { width: auto !important; height: auto !important; }
+.ovs-fly-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font: 800 11px/1 system-ui, sans-serif; }
 .ovs-panel { position: absolute; left: 50%; top: 8vh; width: min(720px, calc(100vw - 32px)); max-height: 80vh; transform: translateX(-50%); display: flex; flex-direction: column; border-radius: 18px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-secondary, #121826); box-shadow: 0 30px 80px rgba(0,0,0,.55); overflow: hidden; }
 .ovs-bar { display: flex; align-items: center; gap: 10px; margin: 10px 10px 6px; padding: 0 6px 0 14px; border-radius: 999px; background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); transition: box-shadow .2s, background .2s; }
 .ovs-bar:focus-within { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent), 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
@@ -275,6 +283,13 @@
 .ovs-door { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .ovs-door[hidden] { display: none; }
 .ovs-door-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+/* A place's actions in the search pill (4.200.0); the panel's own row of them is hidden inside the menu. */
+.ovs-acts { display: flex; flex: none; gap: 2px; }
+.ovs-acts:empty, .ovs-door-host .ovdk-bar { display: none; }
+.ovs-act { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+.ovs-act svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+.ovs-act:hover, .ovs-act:focus-visible { background: var(--hover-bg, rgba(127,127,127,.14)); color: var(--text-primary, #ececf1); }
+.ovs-act.is-new { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovs-door-host > .ovdk { flex: 1 1 auto; min-height: 0; }
 .ovs-door-sw { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 8px 12px 4px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
 .ovs-door-sw[hidden] { display: none; }
@@ -451,7 +466,7 @@
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-modal', 'true');
         el.setAttribute('aria-label', 'Search and every OpenVibe site');
-        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar">${ICON.search}<div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
+        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar">${ICON.search}<div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
             + '<div class="ovs-tabs ovs-starttabs" hidden></div>'
             + `<div class="ovs-tabs ovs-rtabs" role="tablist" aria-label="Results from" hidden>${RTABS.map(([id, label]) => `<button type="button" class="ovs-tab" role="tab" data-rtab="${id}" aria-selected="false">${label}</button>`).join('')}</div>`
             + '<ul class="ovs-list" id="ovs-list" role="listbox"></ul><div class="ovs-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Tab</kbd> complete</span><span><kbd>Esc</kbd> close</span></div></div>';
@@ -459,13 +474,15 @@
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
         doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
-        doorSw = document.createElement('div'); doorSw.className = 'ovs-door-sw'; doorSw.setAttribute('role', 'tablist'); doorSw.setAttribute('aria-label', 'AI');
-        doorSw.innerHTML = [['vibe', 'Vibe'], ['agent', 'Agents']].map(([id, label]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[id]}</span><span>${label}</span></button>`).join('');
+        doorSw = document.createElement('div'); doorSw.className = 'ovs-door-sw'; doorSw.setAttribute('role', 'tablist'); doorSw.setAttribute('aria-label', 'Vibe');
+        // Vibe holds two things (ask 335, the owner: "under Vibe is Chat and Agents"): your chats with it, and your agents.
+        doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
         doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
         doorEl.append(doorSw, doorHost);
         listEl.after(doorEl);
         tabsEl = el.querySelector('.ovs-tabs');
+        actsEl = el.querySelector('.ovs-acts');
         rtabsEl = el.querySelector('.ovs-rtabs');
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
         el.addEventListener('mousedown', (e) => { if (e.target === el) close(); });
@@ -1035,6 +1052,32 @@
         try { phone = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ }
         return phone && !!(root.OpenVibeDock && typeof root.OpenVibeDock.mountInto === 'function');
     }
+    // A place's own actions (+ for a new chat, ↗ to open it in Chat) sit in the search pill, left of the close orb, so
+    // they cost no row (asks 335, 336: "an icon plus button that looks nice and integrated", "open in Chat … a button
+    // icon"). The Dock's panel draws them in its slim row; inside the menu that row is hidden and mirrored here, and
+    // each mirror presses the panel's own button (an address opens from the person's own tap).
+    function mirrorActs() {
+        actsTick = 0;
+        if (!actsEl) return;
+        actsEl.textContent = '';
+        if (!door || !doorHost) return;
+        doorHost.querySelectorAll('.ovdk-bar > .ovdk-ib').forEach((orig) => {
+            const b = document.createElement('button'); b.type = 'button';
+            b.className = 'ovs-act' + (orig.classList.contains('is-new') ? ' is-new' : '');
+            const label = orig.getAttribute('aria-label') || ''; b.setAttribute('aria-label', label); b.title = label;
+            b.innerHTML = orig.innerHTML;
+            b.addEventListener('click', (e) => { e.stopPropagation(); orig.click(); });
+            actsEl.appendChild(b);
+        });
+    }
+    function watchActs(on) {
+        if (actsObs) { actsObs.disconnect(); actsObs = null; }
+        if (on && doorHost && typeof MutationObserver === 'function') {
+            actsObs = new MutationObserver(() => { if (!actsTick) actsTick = requestAnimationFrame(mirrorActs); });
+            actsObs.observe(doorHost, { childList: true, subtree: true });
+        }
+        mirrorActs();
+    }
     /** Show a place of the Dock in the menu: Messages, or AI (Vibe or your agents, by the two-part switch). */
     function openDoor(id) {
         if (!doorEl || !inSheet()) return;
@@ -1045,7 +1088,8 @@
         listEl.hidden = true; doorEl.hidden = false; el.classList.add('ovs-in-door');
         try { if (!doorMount) doorMount = root.OpenVibeDock.mountInto(doorHost, { tab: want }); else doorMount.show(want); }
         catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
-        input.placeholder = id === 'chats' ? 'Search your messages' : `Search ${here()}, or ask Vibe`;
+        watchActs(true);
+        input.placeholder = id === 'chats' ? 'Search your chats' : `Search ${here()}, or ask Vibe`;
         paintTabs();
     }
     /** Back to the menu's own list (a tab, typing, or closing). The Dock's panels go home with their state. */
@@ -1053,6 +1097,7 @@
         if (!door) return;
         door = null;
         if (doorMount) { try { doorMount.destroy(); } catch { /* */ } doorMount = null; }
+        watchActs(false);
         if (doorEl) doorEl.hidden = true;
         if (listEl) listEl.hidden = false;
         if (el) el.classList.remove('ovs-in-door');
@@ -1071,7 +1116,7 @@
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
         // One row of places (4.194.0): this site, the feed, your messages, AI (Vibe and your agents), you. Messages and
         // AI are the Dock's; they are in this row, between Feed and You, where the bar can open the Dock for this person.
-        const doors = typeof ctx.dock === 'function' ? [['chats', 'Messages'], ['vibe', 'AI']] : [];
+        const doors = typeof ctx.dock === 'function' ? [['chats', ctx.service === 'chat' ? 'Messages' : 'Chat'], ['vibe', 'Vibe']] : [];
         const row = [TABS[0], TABS[1], ...doors.map(([id, label]) => [id, label, true]), TABS[2]];
         tabsEl.classList.toggle('has-doors', doors.length > 0);
         for (const [id, label, isDoor] of row) {
@@ -1110,6 +1155,7 @@
     const BRIDGE_SVG = {
         vibe: bsvg('<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'),
         agent: bsvg('<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13v.01M14.5 13v.01M3 12.5v2M21 12.5v2"/>'),
+        talk: bsvg('<path d="M4.6 11.6a7.4 6.4 0 1 1 3.3 5.4l-3.4 1.3 1-3.1a6 6 0 0 1-.9-3.6z"/><path d="M9 11.6h.01M12 11.6h.01M15 11.6h.01"/>'),
         chats: bsvg('<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5h-7L8 20v-3.5H5A1.5 1.5 0 0 1 3.5 15V8A1.5 1.5 0 0 1 5 6.5z"/>'),
         activity: bsvg('<path d="M6.2 16.2V11a5.8 5.8 0 0 1 11.6 0v5.2l1.6 2H4.6z"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0"/>'),
     };
@@ -1503,11 +1549,82 @@
         try { navigator.sendBeacon(b, new Blob([JSON.stringify({ host: location.hostname, section: sec, pos: peers, to: hostOf(it.url), kind: it.kind })], { type: 'text/plain' })); } catch { /* */ }
     }
 
+    // ── The button becomes its tab (ask 334; the owner, 11-10: "when you click this button, I want it to animate into the
+    // tab it becomes. Same with the other buttons … if you click notifications, it should merge into the notifications
+    // tab"). The bar button that was pressed (the orb, the bell, the picture, a balance: opts.from) flies to its tab's
+    // icon and turns into it on the way (its own picture fades out as the tab's fades in, along one short arc); the
+    // bell's count flies with it to the tab's count. Closing flies it back. Motion Off skips it; Reduced plays it short
+    // and straight (Calm reduces, only Off removes).
+    let flyFrom = null;
+    const motionLevel = () => (typeof document !== 'undefined' && document.documentElement.getAttribute('data-ov-motion')) || '';
+    function tabFace(id) {
+        const b = tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${id}"], .ovs-tab[data-dock="${id}"]`);
+        return b ? (b.querySelector('.ovs-tab-ic') || b) : null;
+    }
+    /** What the eye sees of a button: its picture or its glyph, without ids or handlers. */
+    function faceOf(node) {
+        const pic = (node.matches && node.matches('img, svg') && node) || node.querySelector('img, svg, .ov-icon') || node;
+        const g = pic.cloneNode(true);
+        if (g.removeAttribute) g.removeAttribute('id');
+        if (g.querySelectorAll) g.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
+        return g;
+    }
+    const countIn = (node) => node && node.querySelector && [...node.querySelectorAll('b, span, i')].find((n) => /^\d+\+?$/.test((n.textContent || '').trim()) && n.getBoundingClientRect().width);
+    function fly(fromEl, toEl, { back = false } = {}) {
+        const level = motionLevel();
+        if (!fromEl || !toEl || level === 'off' || !toEl.animate || !fromEl.isConnected || !toEl.isConnected) return;
+        const A = fromEl.getBoundingClientRect(), B = toEl.getBoundingClientRect();
+        if (!A.width || !B.width || A.bottom < 0 || A.top > innerHeight) return;
+        const short = level === 'reduced';
+        const D = short ? 180 : back ? 300 : 420, E = short ? 'ease-out' : 'cubic-bezier(.45,0,.2,1)';
+        const layer = document.createElement('div'); layer.className = 'ovs-fly'; layer.setAttribute('aria-hidden', 'true');
+        const part = (face, r, cls = '') => { const box = document.createElement('div'); box.className = 'ovs-fly-part' + cls; box.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`; box.appendChild(face); layer.appendChild(box); return box; };
+        const src = part(faceOf(fromEl), A), dst = part(faceOf(toEl), B), riders = [];
+        document.body.appendChild(layer);
+        const dx = (B.left + B.width / 2) - (A.left + A.width / 2), dy = (B.top + B.height / 2) - (A.top + A.height / 2), s = B.width / A.width;
+        const lift = short ? 0 : Math.min(36, Math.hypot(dx, dy) * .12);
+        const at = (k, sc) => `translate(${dx * k}px, ${dy * k - lift * Math.sin(Math.PI * k)}px) scale(${sc})`;
+        const back1 = (k, sc) => `translate(${-dx * (1 - k)}px, ${-dy * (1 - k) - lift * Math.sin(Math.PI * k)}px) scale(${sc})`;
+        src.animate([{ transform: 'none', opacity: 1 }, { transform: at(.5, (1 + s) / 2), opacity: .85, offset: .5 }, { transform: at(1, s), opacity: 0 }], { duration: D, easing: E, fill: 'forwards' });
+        const end = dst.animate([{ transform: back1(0, 1 / s), opacity: 0 }, { transform: back1(.5, (1 + 1 / s) / 2), opacity: .5, offset: .5 }, { transform: 'none', opacity: 1 }], { duration: D, easing: E, fill: 'forwards' });
+        // The count rides along (the bell's red count to the tab's, and back), when both are showing.
+        const c1 = back ? countIn(fromEl.closest && fromEl.closest('.ovs-tab')) : countIn(fromEl);
+        const c2 = back ? countIn(toEl) : countIn(toEl.closest && toEl.closest('.ovs-tab'));
+        if (c1 && c2) {
+            const R1 = c1.getBoundingClientRect(), R2 = c2.getBoundingClientRect();
+            const pill = document.createElement('b'); pill.className = 'ovs-fly-count'; pill.textContent = (c2.textContent || '').trim();
+            const box = part(pill, R1, ' ovs-fly-part--count');
+            const mx = R2.left - R1.left, my = R2.top - R1.top;
+            box.animate([{ transform: 'none' }, { transform: `translate(${mx / 2}px, ${my / 2 - lift}px)`, offset: .5 }, { transform: `translate(${mx}px, ${my}px)` }], { duration: D, easing: E, fill: 'forwards' });
+            c1.style.opacity = c2.style.opacity = '0';
+            riders.push(c1, c2);
+        }
+        const hidden = [fromEl, toEl, ...riders];
+        hidden.forEach((n) => { n.style.opacity = '0'; });   // opacity, not visibility: a button still takes a press while it flies
+        const done = () => {
+            hidden.forEach((n) => { n.style.opacity = ''; });
+            layer.remove();
+            const tabBtn = !back && toEl.closest && toEl.closest('.ovs-tab');
+            if (tabBtn && !short) tabBtn.animate([{ transform: 'scale(.92)' }, { transform: 'scale(1.03)', offset: .6 }, { transform: 'none' }], { duration: 200, easing: 'ease-out' });
+        };
+        end.finished.then(done, done);
+    }
+    /** After the menu has painted its tabs: the sheet's own entrance is finished at once (the flight is the motion). */
+    function flyIn() {
+        const from = flyFrom;
+        if (!from || !el) return;
+        const to = tabFace(door || tab);
+        if (!to) return;
+        try { (el.getAnimations ? el.getAnimations({ subtree: true }) : []).forEach((a) => { try { a.finish(); } catch { /* an endless one */ } }); } catch { /* */ }
+        fly(from, to);
+    }
+
     function open(opts = {}) {
         homeViews = {}; pulseReady = null;   // a fresh home screen and wall each time the menu opens
         if (typeof document === 'undefined') return;
         ctx = opts || {};
         if (!el) build();
+        flyFrom = opts.from && opts.from.getBoundingClientRect ? opts.from : null;
         lastFocus = document.activeElement;
         // The tab the person last chose wins; else the one the opener asked for (old names kept: "sites" is this site's
         // tab, whose second half is every site; "tools" is You); else this site.
@@ -1537,15 +1654,19 @@
         if (orbEl) {
             orbEl.classList.remove('is-x');
             if (phoneSheet()) {
-                // From the button's centre to the pill's right end: the same orb, moving into the menu.
+                // From the button's centre to the pill's right end: the same orb, moving into the menu. When the pressed
+                // button flies into its tab instead, the orb is simply there as the close X.
                 const cx = Number.isFinite(at && at.cx) ? at.cx : innerWidth - 24, cy = Number.isFinite(at && at.cy) ? at.cy : 28;
                 const bar = el.querySelector('.ovs-bar'), br = bar ? bar.getBoundingClientRect() : null;
                 const tx = br ? br.right - 26 : cx, ty = br ? br.top + br.height / 2 : cy;
                 orbEl.style.setProperty('--orb-x', `${Math.round(tx - 20)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 20)}px`);
                 orbEl.style.setProperty('--orb-dx', `${Math.round(cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(cy - ty)}px`);
-                orbEl.classList.add('is-from');
-                void orbEl.offsetWidth;
-                requestAnimationFrame(() => { orbEl.classList.remove('is-from'); orbEl.classList.add('is-x'); });
+                if (flyFrom) orbEl.classList.add('is-x');
+                else {
+                    orbEl.classList.add('is-from');
+                    void orbEl.offsetWidth;
+                    requestAnimationFrame(() => { orbEl.classList.remove('is-from'); orbEl.classList.add('is-x'); });
+                }
             }
         }
         if (root.OVSurfaces) {
@@ -1557,6 +1678,7 @@
         input.value = opts.q || '';
         paintGhost();
         render(input.value);
+        if (flyFrom && !input.value) requestAnimationFrame(flyIn);
         // On a phone the orb opens a menu, not a search: focusing the field would raise the keyboard over the menu (owner
         // 11-08), so focus stays on the close orb until the person taps the field. A query, or a computer, still types.
         setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
@@ -1566,17 +1688,23 @@
         if (!catalog) loadCatalog().then((c) => { if (c) { catalog = c; if (el.classList.contains('is-open')) render(input.value); } });
         loadPulse().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
         loadChanges().then((d) => { if (d && el.classList.contains('is-open') && !input.value.trim() && view !== 'results') render(''); });
-        if (tab === 'tools' || tab === 'sites') setTimeout(() => { const t = listEl.querySelector(`[data-sec="${tab === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
+        const jump = opts.tab === 'tools' || opts.tab === 'sites' ? opts.tab : '';
+        if (jump) setTimeout(() => { const t = listEl.querySelector(`[data-sec="${jump === 'tools' ? 'tools' : 'all'}"]`); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'start' }); }, 60);
     }
-    let pushed = false, popping = false, surface = null;
-    if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
+    // ownBack: the history.back() a close made itself. Its popstate arrives later, and must not close a menu opened
+    // again in between (a quick close-and-reopen on the picture lost the second open, 2026-11-10).
+    let pushed = false, popping = false, surface = null, ownBack = false;
+    if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (ownBack) { ownBack = false; return; } if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
+        // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
+        const backTo = flyFrom; flyFrom = null;
+        if (backTo && !navigating && el && el.classList.contains('is-open') && !closing) fly(tabFace(door || tab), backTo, { back: true });
         if (view === 'results' && rtabsEl) leaveResults();
         leaveDoor();
         if (!el || closing) return;
         if (navigating) pushed = false;
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
-        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) history.back(); } catch { /* */ } }
+        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; history.back(); } } catch { /* */ } }
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
         if (phoneSheet() && !calm() && el.classList.contains('is-open')) {
             el.classList.add('is-closing');
