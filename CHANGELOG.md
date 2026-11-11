@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.212.0 — 2026-11-11
+
+A train of four pull requests (one line each):
+
+- **A carried Live player can play on any OpenVibe page that permits Network frames.** The portable card keeps the
+  original Live embed and channel addresses in its state, while its iframe loads Network's narrow Live player bridge;
+  sound controls and state events pass through that frame, so no destination's frame policy changes (#473, ask 360).
+- **The bar catches up on balance changes across sites (ask 273).** Once a signed-in wallet loads, its pill plays each
+  currency's net gain or loss once and marks that currency's cursor read through Network's frame relay; Calm keeps one
+  quiet effect, Motion Off updates the figures only. The Wallet sheet starts with the recent net amounts and the API's
+  plain reason names (#474).
+- **The Dock's pill stands above a page's bottom composer.** bottom.js measures a composer docked at the bottom of the
+  screen (`form[data-ovt-composer]` or `data-ov-bottom-dock`) and writes `--ovb-composer`; the pill keeps above it as
+  it grows and comes back when it goes (on openvibe.chat it covered the send button) (#475).
+- **Glyphs: focus and bridge redrawn** after the all-glyph review: focus is a viewfinder round its centre, bridge two
+  towers, the cable and the deck; both have solid twins, drawn to the set's size (the long side 0.79 of the box);
+  the drop-in, sprite and fonts are rebuilt (#476).
+
 ## 4.213.0 — 2026-11-11
 
 - **One inline comment thread for every site: `thread.renderThread` and `thread-inline.css` (new), beside the

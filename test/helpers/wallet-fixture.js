@@ -23,18 +23,23 @@ const wallet = {
         { id: 'b', at: '2026-11-08T10:00:00Z', kind: 'vibes', amount: '-25', label: 'for a tip to @alice', subject: { name: '@alice', url: 'https://openvibe.live/@alice' }, site: 'OpenVibe', detail: '' },
     ],
 };
-function fixture() {
+function fixture({ changes = false, changeNet = 5 } = {}) {
     const calls = [], owned = new Set([definitions[1].id]);
-    let slots = {}, base;
+    let slots = {}, base, readCursor = null;
     const server = http.createServer(async (req, res) => {
         const url = new URL(req.url, 'http://localhost');
         // The sheet asks Network's relay (/api/frame/wallet/…); the fixture answers as Billing and Inventory would.
         const pathname = url.pathname.startsWith('/api/frame/wallet/') ? url.pathname.slice('/api/frame/wallet'.length) : url.pathname;
         const json = (x, status = 200) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(x)); };
-        if (pathname.startsWith('/api/')) {
+        if (pathname.startsWith('/api/') || pathname.startsWith('/changes')) {
             const chunks = []; for await (const chunk of req) chunks.push(chunk);
             const body = chunks.length ? JSON.parse(Buffer.concat(chunks).toString()) : null;
             calls.push({ path: pathname, method: req.method, body, authorization: req.headers.authorization, cookie: req.headers.cookie });
+            if (pathname.startsWith('/changes') && changes) {
+                if (req.method === 'PUT' && pathname === '/changes/read') { readCursor = body.cursor; return json({ currency: body.currency, read_cursor: readCursor }); }
+                if (changes === 'unauthorized') return json({ error: 'Authentication required' }, 401);
+                return json({ opencoins: { currency: 'opencoins', net: readCursor ? 0 : changeNet, cursor: 42, moves: readCursor ? [] : [{ id: 42, at: '2026-11-11T12:00:00Z', delta: changeNet, label: 'For a quest' }] }, vibes: null, channel_points: null });
+            }
             if (pathname === '/api/v1/me/wallet') return json(wallet);
             if (pathname === '/api/v1/store') return json({ items: definitions.map((d, i) => ({ ...d, preview: d.art, prices: { vibes: (i + 1) * 50, coins: (i + 1) * 250 }, available: true, owned: owned.has(d.id), slots: [d.kind.split('.')[1]], surfaces: [{ surface: 'chat' }, { surface: 'profile' }] })) });
             if (pathname === '/api/v1/me/items') return json({ subject, instances: definitions.filter((d) => owned.has(d.id)).map((d) => ({ id: d.id.replace('itd_', 'inv_'), definition_id: d.id, state: 'owned' })), definitions: Object.fromEntries(definitions.map((d) => [d.id, d])), next_cursor: null });
@@ -45,7 +50,7 @@ function fixture() {
         }
         if (pathname === '/') {
             res.writeHead(200, { 'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'" });
-            return res.end(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wallet preview</title><link rel="icon" href="data:,"><style>body{margin:0;background:#111820;color:#e9edf2;font:16px system-ui;min-height:150vh}main{padding:90px 7%}h1{font-size:50px;letter-spacing:-2px}p{max-width:470px;line-height:1.6}@media(prefers-color-scheme:light){body{background:#f1f4f6;color:#25303d}}</style><script>const originalFetch=window.fetch.bind(window);window.fetch=(u,o)=>new URL(u,location.href).origin===location.origin?originalFetch(u,o):Promise.resolve(new Response(JSON.stringify({items:[],notifications:[],unread:0}),{headers:{'Content-Type':'application/json'}}));</script><script src="/navbar.js"></script><main><p>OPENVIBE LIVE</p><h1>Good company.<br>Anywhere.</h1><p>A local fixture for the shared Wallet. Balances, store items and activity below are sample data.</p></main><script>OpenVibeNavbar.init({service:'live',auth:'external',apiBase:${JSON.stringify(base)},frameBase:${JSON.stringify(base + '/api/frame')},user:{id:1,subject:${JSON.stringify(subject)},display_name:'Maya'},token:'wallet-fixture',wallet:true,search:false,presence:false,dock:false,networkBase:${JSON.stringify(base)}});</script></html>`);
+            return res.end(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wallet preview</title><link rel="icon" href="data:,"><style>body{margin:0;background:#111820;color:#e9edf2;font:16px system-ui;min-height:150vh}main{padding:90px 7%}h1{font-size:50px;letter-spacing:-2px}p{max-width:470px;line-height:1.6}@media(prefers-color-scheme:light){body{background:#f1f4f6;color:#25303d}}</style><script>if(location.search.includes('off=1'))document.documentElement.setAttribute('data-ov-motion','off');if(location.search.includes('calm=1'))document.documentElement.setAttribute('data-ov-motion','reduced');window._purseEffects=[];window._pursePieces=[];new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1&&n.classList.contains('ovp-delta'))window._purseEffects.push(n.textContent);if(n.nodeType===1&&n.classList.contains('ovp-bit'))window._pursePieces.push(n.textContent)}))).observe(document.documentElement,{childList:true,subtree:true});const originalFetch=window.fetch.bind(window);window.fetch=(u,o)=>new URL(u,location.href).origin===location.origin?originalFetch(u,o):Promise.resolve(new Response(JSON.stringify({items:[],notifications:[],unread:0}),{headers:{'Content-Type':'application/json'}}));</script><script src="/navbar.js"></script><main><p>OPENVIBE LIVE</p><h1>Good company.<br>Anywhere.</h1><p>A local fixture for the shared Wallet. Balances, store items and activity below are sample data.</p></main><script>OpenVibeNavbar.init({service:'live',auth:'external',apiBase:${JSON.stringify(base)},frameBase:${JSON.stringify(base + '/api/frame')},user:{id:1,subject:${JSON.stringify(subject)},display_name:'Maya'},token:'wallet-fixture',wallet:true,search:false,presence:false,dock:false,networkBase:${JSON.stringify(base)}});</script></html>`);
         }
         const name = pathname.slice(1);
         if (/^[a-z0-9-]+\.(js|css|woff2)$/.test(name) && fs.existsSync(path.join(root, name))) {

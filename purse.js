@@ -6,7 +6,7 @@
    navbar.js draws the pill (#openvibe-chips-all: one .ovnav-chip-mini per balance the person has, the first one showing)
    and loads this file beside itself. This file gives each currency its own drawn icon, rolls the pill through the
    balances on the first page of a visit and now and then after, and, when a balance changes, turns to it, counts the
-   number up or down and sends a few of its pieces in or out. It reads nothing from the network.
+   number up or down and sends a few of its pieces in or out. catchUp reads the person's change window.
 
    OpenVibePurse.mount(button)   the pill, after each draw of the bar
    OpenVibePurse.set(id, value)  a balance changed ('coins', '1,234')
@@ -28,6 +28,7 @@
         vibes: '<g class="ovp-gem"><path d="M7.2 3.6h9.6l4.4 5.6L12 21 2.8 9.2z" fill="var(--pc)" stroke="var(--pc)" stroke-width="1.6" stroke-linejoin="round"/><path d="M2.8 9.2h18.4M8.9 9.2 12 20.4l3.1-11.2M7.2 3.6l1.7 5.6L12 3.6l3.1 5.6 1.7-5.6" fill="none" stroke="var(--pd)" stroke-width="1.25" stroke-linejoin="round" opacity=".8"/><path class="ovp-glint" d="M6.3 7.3 8 5.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity=".75"/></g>',
         // The money balance: a note with a round seal.
         balance: '<g class="ovp-note"><rect x="2.2" y="5.6" width="19.6" height="12.8" rx="3.2" fill="var(--pc)"/><circle cx="12" cy="12" r="3.1" fill="none" stroke="var(--pd)" stroke-width="2.1"/><path d="M5.6 9.2v.01M18.4 14.8v.01" stroke="var(--pd)" stroke-width="2.2" stroke-linecap="round"/><path d="M5 8.4h3.4" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></g>',
+        'channel-points': '<path d="m12 2.5 2.8 6.6 7.1.6-5.4 4.7 1.7 7-6.2-3.7-6.2 3.7 1.7-7-5.4-4.7 7.1-.6z" fill="var(--pc)" stroke="var(--pd)" stroke-width="1.2"/>',
     };
     const CSS = `
 [data-purse], .ovnav-chip-mini, .ovp-bit, .ovp-delta, .ovp-icw { --pc: var(--text-secondary, #a8b3c4); --pd: color-mix(in oklab, var(--pc) 42%, #000); }
@@ -35,6 +36,7 @@
 [data-purse="coins"] { --pc: color-mix(in oklab, #f6b21d 88%, var(--text-primary, #e6edf7)); }
 [data-purse="vibes"] { --pc: color-mix(in oklab, #1fc78c 86%, var(--text-primary, #e6edf7)); }
 [data-purse="balance"] { --pc: color-mix(in oklab, var(--accent, #3b82f6) 78%, var(--text-primary, #e6edf7)); }
+[data-purse="channel-points"] { --pc: color-mix(in oklab, #e899fb 85%, var(--text-primary, #e6edf7)); }
 .ovp-ic { display: block; flex: none; overflow: visible; }
 .openvibe-navbar .ovnav-chip.ovnav-chip--all.is-purse { height: 32px; padding: 0 3px 0 2px; border-radius: 999px; overflow: hidden; font-size: 13.5px; font-weight: 750; letter-spacing: -.1px; transition: background-color .2s, border-color .3s, box-shadow .3s, transform .15s; }
 .openvibe-navbar .ovnav-chip--all.is-purse:active { transform: scale(.95); }
@@ -166,15 +168,16 @@
         const done = () => t.remove(); a.onfinish = done; a.oncancel = done; setTimeout(done, 2600);
     }
     function play(id, d) {
-        if (!btn || !visible() || !d) return;
-        const i = minis.findIndex((m) => m.getAttribute('data-chip-mini') === id); if (i < 0) return;
+        if (!btn || !visible() || !d || motion() === 0) return false;
+        const i = minis.findIndex((m) => m.getAttribute('data-chip-mini') === id);
         const k = motion(), rect = btn.getBoundingClientRect();
-        busy = true; clear(); show(i);
-        btn.style.setProperty('--pf', root.getComputedStyle(minis[i]).getPropertyValue('--pc') || 'currentColor');
+        busy = true; clear(); if (i >= 0) show(i);
+        btn.style.setProperty('--pf', i >= 0 ? root.getComputedStyle(minis[i]).getPropertyValue('--pc') || 'currentColor' : 'currentColor');
         btn.classList.remove('is-gain', 'is-loss'); void btn.offsetWidth; btn.classList.add(d > 0 ? 'is-gain' : 'is-loss');
-        pieces(id, rect, d > 0, k); delta(id, rect, d, k);
+        if (k === 1) pieces(id, rect, d > 0, k); delta(id, rect, d, k);
         later(() => { btn.classList.remove('is-gain', 'is-loss'); }, 1500);
         later(() => { busy = false; show(home); idle(); }, 3400);
+        return true;
     }
     /**
      * The gain or spend effect at any element (4.190.0): the currency's pieces fly into it (a gain) or out of it (a
@@ -206,6 +209,56 @@
         m.setAttribute('data-v', String(value));
         play(id, n - was); count(m.querySelector('.ovnav-chip-mv'), was, n);
     }
-    root.OpenVibePurse = { mount, set, play, burst, count, icon: (id, size) => { style(); return ICONS[id] ? svg(size || 20, ICONS[id]) : ''; }, ids: Object.keys(ICONS) };
+    let recent = null, recentUser = null, running = null, runningUser = null;
+    const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    function recentChanges(user) {
+        const id = user || recentUser;
+        if (!id) return null;
+        if (recent && id === recentUser) return recent;
+        try { return JSON.parse(root.sessionStorage.getItem(`ovp-changes:${id}`) || 'null'); } catch { return null; }
+    }
+    async function catchUp(options = {}) {
+        const { frameBase = 'https://openvibe.network/api/frame', token, user, streamer, valid } = options;
+        if (!user || typeof root.fetch !== 'function') return;
+        if (recentUser !== user) recent = null;
+        recentUser = user;
+        if (running) return runningUser === user ? running : running.then(() => catchUp(options));
+        runningUser = user;
+        const base = String(frameBase).replace(/\/+$/, '');
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const credentials = token ? 'omit' : 'include';
+        const channel = /^[1-9]\d{0,15}$/.test(String(streamer || '')) ? String(streamer) : '';
+        const url = `${base}/wallet/changes${channel ? `?streamer=${channel}` : ''}`;
+        running = (async () => {
+            let answer;
+            try {
+                const response = await root.fetch(url, { headers, credentials });
+                if (!response.ok) return;
+                answer = await response.json();
+            } catch { return; }
+            if (!answer || typeof answer !== 'object' || (valid && !valid())) return;
+            const order = [['opencoins', 'coins'], ['vibes', 'vibes'], ['channel_points', 'channel-points']];
+            const changed = order.filter(([name]) => answer[name] && Number.isSafeInteger(Number(answer[name].net)) && Number(answer[name].net) !== 0 && answer[name].cursor != null);
+            if (!changed.length) return;
+            recent = answer; recentUser = user;
+            try { root.sessionStorage.setItem(`ovp-changes:${user}`, JSON.stringify(answer)); } catch { /* closed storage */ }
+            for (const [name, id] of changed) {
+                const part = answer[name], cursor = String(part.cursor);
+                const guard = `ovp-read:${user}:${name}:${name === 'channel_points' ? channel : ''}`;
+                let previous = null; try { previous = root.sessionStorage.getItem(guard); } catch { /* closed storage */ }
+                if ((valid && !valid()) || previous === cursor || (motion() !== 0 && !visible())) continue;
+                if (motion() !== 0) play(id, Number(part.net));
+                try { root.sessionStorage.setItem(guard, cursor); } catch { /* closed storage */ }
+                try {
+                    await root.fetch(`${base}/wallet/changes/read`, { method: 'PUT', credentials, headers: { ...headers, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ currency: id === 'coins' ? 'opencoins' : id, cursor: part.cursor, ...(id === 'channel-points' ? { streamer: Number(channel) } : {}) }) });
+                } catch { /* the server's read state will be retried on the next visit */ }
+                if (changed.at(-1)[0] !== name) await pause(700);
+            }
+        })().finally(() => { running = null; runningUser = null; });
+        return running;
+    }
+    root.OpenVibePurse = { mount, set, play, burst, count, catchUp, recentChanges, icon: (id, size) => { style(); return ICONS[id] ? svg(size || 20, ICONS[id]) : ''; }, ids: Object.keys(ICONS) };
+    if (root.__ovPursePending) { const pending = root.__ovPursePending; delete root.__ovPursePending; catchUp(pending); }
     const now = doc.getElementById('openvibe-chips-all'); if (now) mount(now);
 })(typeof window !== 'undefined' ? window : null);
