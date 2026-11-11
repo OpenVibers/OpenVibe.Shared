@@ -216,7 +216,8 @@
 .ovs.is-open { display: block; animation: ovs-in .14s ease-out; }
 /* The button becomes its tab (4.200.0): the flight layer above everything, its parts drawn from the two buttons. */
 .ovs-fly { position: fixed; inset: 0; z-index: 2147483600; pointer-events: none; }
-.ovs-fly-part { position: absolute; display: grid; place-items: center; color: var(--ovk-text, var(--text-primary, #e8ecf4)); will-change: transform, opacity; }
+.ovs-fly-part { position: absolute; display: grid; place-items: center; color: inherit; will-change: transform, opacity, filter; }
+.ovs-fly-ring { position: fixed; z-index: 2147483600; border: 2px solid; border-radius: 50%; pointer-events: none; }
 .ovs-fly-part > svg, .ovs-fly-part > .ov-icon { width: 100%; height: 100%; }
 .ovs-fly-part > img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .ovs-fly-part--count { width: auto !important; height: auto !important; }
@@ -477,6 +478,12 @@
   .ovs.ovs-anchored .ovs-orb.is-x::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ovo-a); pointer-events: none; animation: ovs-ring .6s cubic-bezier(.2,.8,.2,1) .1s both; }
   @keyframes ovs-ring { from { opacity: .8; transform: scale(.9); } to { opacity: 0; transform: scale(calc(1 + 2.2 * var(--ov-move, 1))); } }
   .ovs.ovs-anchored .ovs-orb:active { transform: scale(.9); }
+  /* 4.213.0: when the pressed button flew to its tab, the close turns in at the pill once it has left (a quarter turn,
+     a little past its size); closing with the button flying back, it turns away where it is. */
+  .ovs.ovs-anchored .ovs-orb.is-pop { animation: ovs-orb-in .38s cubic-bezier(.2, 1.3, .3, 1) .1s both; }
+  .ovs.ovs-anchored .ovs-orb.is-gone { animation: ovs-orb-out .22s cubic-bezier(.5, 0, .75, .2) both; }
+  @keyframes ovs-orb-in { from { opacity: 0; transform: scale(.45) rotate(-90deg); } }
+  @keyframes ovs-orb-out { to { opacity: 0; transform: scale(.5) rotate(90deg); } }
   .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; }
   .ovs.is-closing .ovs-panel { animation: ovs-fold .28s cubic-bezier(.5, 0, .75, .2) both; }
   .ovs.is-closing { animation: ovs-fade .28s ease-in both; }
@@ -1662,41 +1669,86 @@
     // ── The button becomes its tab (ask 334; the owner, 11-10: "when you click this button, I want it to animate into the
     // tab it becomes. Same with the other buttons … if you click notifications, it should merge into the notifications
     // tab"). The bar button that was pressed (the orb, the bell, the picture, a balance: opts.from) flies to its tab's
-    // icon and turns into it on the way (its own picture fades out as the tab's fades in, along one short arc); the
-    // bell's count flies with it to the tab's count. Closing flies it back. Motion Off skips it; Reduced plays it short
-    // and straight (Calm reduces, only Off removes).
-    let flyFrom = null;
+    // icon and turns into it on the way; the bell's count flies with it to the tab's count. Closing flies it back.
+    // 4.213.0 (the owner, 11-11: "the icon becomes whiter than it was when idle … needs general polish … effects when it
+    // lands … improve both the open and close transitions"):
+    //   - the copy is the button exactly as it looked when pressed: its look is frozen before the press turns it bright
+    //     and into an x, with every computed paint copied (the bar's colour rules stop at its edge, so a bare copy fell
+    //     back to the brightest text colour);
+    //   - it drops first and glides in last (a landing, not a line across the search field), swelling a little and
+    //     tilting into the turn, with a short trail and a glow while it moves;
+    //   - it lands: the tab's icon gives with a squash and a ring leaves it; flying back, the bar button does the same;
+    //   - the menu's own circle grows from the button while it flies (it was cut short before), and the close orb turns
+    //     in once the button has left its place.
+    // Motion Off skips it all; Calm plays the same path short, with no trail, tilt or glow (Calm reduces, only Off removes).
+    let flyFrom = null, flyIdle = null;
     const motionLevel = () => (typeof document !== 'undefined' && document.documentElement.getAttribute('data-ov-motion')) || '';
     function tabFace(id) {
         const b = tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${id}"], .ovs-tab[data-dock="${id}"]`);
         return b ? (b.querySelector('.ovs-tab-ic') || b) : null;
     }
-    /** What the eye sees of a button: its picture or its glyph, without ids or handlers. */
+    const PAINT = ['color', 'fill', 'stroke', 'stroke-width', 'opacity', 'fill-opacity', 'stroke-opacity', 'transform', 'transform-origin', 'transform-box', 'visibility'];
+    /** What the eye sees of a button, as it looks now: its picture or its glyph, every computed paint copied onto the copy
+     *  (so it keeps its colour outside the bar's CSS), without ids, handlers, transitions or animations. */
     function faceOf(node) {
         const pic = (node.matches && node.matches('img, svg') && node) || node.querySelector('img, svg, .ov-icon') || node;
         const g = pic.cloneNode(true);
+        try {
+            const from = [pic, ...pic.querySelectorAll('*')], to = [g, ...g.querySelectorAll('*')];
+            from.forEach((n, i) => {
+                const t = to[i], cs = getComputedStyle(n);
+                if (!t || !t.style) return;
+                PAINT.forEach((k) => t.style.setProperty(k, cs.getPropertyValue(k)));
+                t.style.transition = 'none'; t.style.animation = 'none';
+            });
+        } catch { /* a plain copy */ }
         if (g.removeAttribute) g.removeAttribute('id');
         if (g.querySelectorAll) g.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'));
         return g;
     }
     const countIn = (node) => node && node.querySelector && [...node.querySelectorAll('b, span, i')].find((n) => /^\d+\+?$/.test((n.textContent || '').trim()) && n.getBoundingClientRect().width);
-    function fly(fromEl, toEl, { back = false } = {}) {
+    const inOut = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const fadeAt = (g, a, b) => Math.min(1, Math.max(0, (g - a) / (b - a)));
+    /** A ring that leaves a point and fades (where the flight lands). */
+    function ring(r, color, big) {
+        const d = Math.max(r.width, r.height) + 10, o = document.createElement('div');
+        o.className = 'ovs-fly-ring'; o.setAttribute('aria-hidden', 'true');
+        o.style.cssText = `left:${r.left + r.width / 2 - d / 2}px;top:${r.top + r.height / 2 - d / 2}px;width:${d}px;height:${d}px;border-color:${color}`;
+        document.body.appendChild(o);
+        const a = o.animate([{ transform: 'scale(.55)', opacity: .75 }, { transform: `scale(${big ? 1.9 : 1.35})`, opacity: 0 }], { duration: big ? 520 : 320, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'forwards' });
+        a.finished.then(() => o.remove(), () => o.remove());
+    }
+    function fly(fromEl, toEl, { back = false, fromFace = null, toFace = null } = {}) {
         const level = motionLevel();
         if (!fromEl || !toEl || level === 'off' || !toEl.animate || !fromEl.isConnected || !toEl.isConnected) return;
         const A = fromEl.getBoundingClientRect(), B = toEl.getBoundingClientRect();
         if (!A.width || !B.width || A.bottom < 0 || A.top > innerHeight) return;
-        const short = level === 'reduced';
-        const D = short ? 180 : back ? 300 : 420, E = short ? 'ease-out' : 'cubic-bezier(.45,0,.2,1)';
+        // Only a button flies, and only a button lands: a larger opener (a page passing document.body) would be copied
+        // whole and squashed on landing, the whole page with it.
+        if (Math.max(A.width, A.height, B.width, B.height) > 160) return;
+        const calm = level === 'reduced';
+        const D = calm ? 240 : back ? 340 : 460, N = calm ? 8 : 22;
+        const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent-light') || '').trim() || '#60a5fa';
         const layer = document.createElement('div'); layer.className = 'ovs-fly'; layer.setAttribute('aria-hidden', 'true');
         const part = (face, r, cls = '') => { const box = document.createElement('div'); box.className = 'ovs-fly-part' + cls; box.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`; box.appendChild(face); layer.appendChild(box); return box; };
-        const src = part(faceOf(fromEl), A), dst = part(faceOf(toEl), B), riders = [];
+        const srcFace = () => (fromFace ? fromFace.cloneNode(true) : faceOf(fromEl));
+        const ghosts = calm ? [] : [part(srcFace(), A), part(srcFace(), A)];
+        const src = part(srcFace(), A), dst = part(toFace ? toFace.cloneNode(true) : faceOf(toEl), B), riders = [];
         document.body.appendChild(layer);
         const dx = (B.left + B.width / 2) - (A.left + A.width / 2), dy = (B.top + B.height / 2) - (A.top + A.height / 2), s = B.width / A.width;
-        const lift = short ? 0 : Math.min(36, Math.hypot(dx, dy) * .12);
-        const at = (k, sc) => `translate(${dx * k}px, ${dy * k - lift * Math.sin(Math.PI * k)}px) scale(${sc})`;
-        const back1 = (k, sc) => `translate(${-dx * (1 - k)}px, ${-dy * (1 - k) - lift * Math.sin(Math.PI * k)}px) scale(${sc})`;
-        src.animate([{ transform: 'none', opacity: 1 }, { transform: at(.5, (1 + s) / 2), opacity: .85, offset: .5 }, { transform: at(1, s), opacity: 0 }], { duration: D, easing: E, fill: 'forwards' });
-        const end = dst.animate([{ transform: back1(0, 1 / s), opacity: 0 }, { transform: back1(.5, (1 + 1 / s) / 2), opacity: .5, offset: .5 }, { transform: 'none', opacity: 1 }], { duration: D, easing: E, fill: 'forwards' });
+        // The path, from the bar to the tab: down fast, across slowly (both settle at the end). Flying back is the same
+        // path walked the other way.
+        const xs = (g) => g * g * (3 - 2 * g), ys = (g) => 1 - Math.pow(1 - g, 2.4);
+        const X = (g) => (back ? 1 - xs(1 - g) : xs(g)), Y = (g) => (back ? 1 - ys(1 - g) : ys(g));
+        const swell = calm ? 0 : .14, tilt = calm ? 0 : (dx < 0 ? -9 : 9);
+        const frames = (fn) => Array.from({ length: N + 1 }, (_, i) => { const g = inOut(i / N); return Object.assign({ offset: i / N }, fn(g)); });
+        const look = (g) => { const sc = 1 + (s - 1) * g + swell * Math.sin(Math.PI * g); return { sc, rot: tilt * Math.sin(Math.PI * g), glow: calm ? 0 : 7 * Math.sin(Math.PI * g) }; };
+        const glow = (n) => (n > .2 ? `drop-shadow(0 0 ${n.toFixed(1)}px ${accent})` : 'none');
+        const srcOp = (g) => 1 - fadeAt(g, .32, .74), dstOp = (g) => fadeAt(g, .26, .7);
+        src.animate(frames((g) => { const l = look(g); return { transform: `translate(${dx * X(g)}px, ${dy * Y(g)}px) rotate(${l.rot}deg) scale(${l.sc})`, opacity: srcOp(g), filter: glow(l.glow) }; }), { duration: D, easing: 'linear', fill: 'forwards' });
+        const end = dst.animate(frames((g) => { const l = look(g); return { transform: `translate(${-dx * (1 - X(g))}px, ${-dy * (1 - Y(g))}px) rotate(${l.rot}deg) scale(${l.sc / s})`, opacity: dstOp(g), filter: glow(l.glow) }; }), { duration: D, easing: 'linear', fill: 'forwards' });
+        // The trail: two fainter copies a beat behind, gone before it lands.
+        ghosts.forEach((gh, i) => gh.animate(frames((g) => { const l = look(g); return { transform: `translate(${dx * X(g)}px, ${dy * Y(g)}px) rotate(${l.rot}deg) scale(${l.sc})`, opacity: srcOp(g) * (i ? .14 : .28) }; }), { duration: D, delay: 34 * (i + 1), easing: 'linear', fill: 'forwards' }));
         // The count rides along (the bell's red count to the tab's, and back), when both are showing.
         const c1 = back ? countIn(fromEl.closest && fromEl.closest('.ovs-tab')) : countIn(fromEl);
         const c2 = back ? countIn(toEl) : countIn(toEl.closest && toEl.closest('.ovs-tab'));
@@ -1705,7 +1757,7 @@
             const pill = document.createElement('b'); pill.className = 'ovs-fly-count'; pill.textContent = (c2.textContent || '').trim();
             const box = part(pill, R1, ' ovs-fly-part--count');
             const mx = R2.left - R1.left, my = R2.top - R1.top;
-            box.animate([{ transform: 'none' }, { transform: `translate(${mx / 2}px, ${my / 2 - lift}px)`, offset: .5 }, { transform: `translate(${mx}px, ${my}px)` }], { duration: D, easing: E, fill: 'forwards' });
+            box.animate(frames((g) => ({ transform: `translate(${mx * X(g)}px, ${my * Y(g)}px) scale(${1 + (calm ? 0 : .12) * Math.sin(Math.PI * g)})` })), { duration: D, easing: 'linear', fill: 'forwards' });
             c1.style.opacity = c2.style.opacity = '0';
             riders.push(c1, c2);
         }
@@ -1714,19 +1766,25 @@
         const done = () => {
             hidden.forEach((n) => { n.style.opacity = ''; });
             layer.remove();
-            const tabBtn = !back && toEl.closest && toEl.closest('.ovs-tab');
-            if (tabBtn && !short) tabBtn.animate([{ transform: 'scale(.92)' }, { transform: 'scale(1.03)', offset: .6 }, { transform: 'none' }], { duration: 200, easing: 'ease-out' });
+            // The landing: the icon gives under it (a squash, then up past its size and back) and a ring leaves it.
+            const give = calm ? [{ transform: 'scale(.94)' }, { transform: 'none' }]
+                : [{ transform: 'scale(1.16, .84)' }, { transform: 'scale(.94, 1.07)', offset: .42 }, { transform: 'scale(1.02, .99)', offset: .72 }, { transform: 'none' }];
+            try { toEl.animate(give, { duration: calm ? 160 : 380, easing: 'cubic-bezier(.2,.9,.3,1)' }); } catch { /* */ }
+            ring(B, accent, !calm && !back);
         };
         end.finished.then(done, done);
     }
-    /** After the menu has painted its tabs: the sheet's own entrance is finished at once (the flight is the motion). */
+    /** After the menu has painted its tabs: they are finished where they rest (so the flight lands on them), while the
+     *  menu's own circle keeps growing from the button around the flight. */
     function flyIn() {
         const from = flyFrom;
         if (!from || !el) return;
         const to = tabFace(door || tab);
         if (!to) return;
-        try { (el.getAnimations ? el.getAnimations({ subtree: true }) : []).forEach((a) => { try { a.finish(); } catch { /* an endless one */ } }); } catch { /* */ }
-        fly(from, to);
+        // Anything that moves the tabs is finished (a computer's dropdown scales in); the circle and the fade only show
+        // more of the menu, so they keep playing.
+        try { (el.getAnimations ? el.getAnimations({ subtree: true }) : []).forEach((a) => { if (a.animationName === 'ovs-reveal' || a.animationName === 'ovs-in') return; try { a.finish(); } catch { /* an endless one */ } }); } catch { /* */ }
+        fly(from, to, { fromFace: flyIdle });
     }
 
     function open(opts = {}) {
@@ -1736,6 +1794,10 @@
         ctx.from = opts.from || null;
         if (!el) build();
         flyFrom = opts.from && opts.from.getBoundingClientRect ? opts.from : null;
+        // Its look now, before the press turns it bright and into an x: what flies (and what it flies back to). Only a
+        // button-sized opener is copied.
+        const fr = flyFrom ? flyFrom.getBoundingClientRect() : null;
+        flyIdle = fr && fr.width && Math.max(fr.width, fr.height) <= 160 ? faceOf(flyFrom) : null;
         lastFocus = document.activeElement;
         // The tab the person last chose wins; else the one the opener asked for (old names kept: "sites" is this site's
         // tab, whose second half is every site; "tools" is You); else this site.
@@ -1763,7 +1825,7 @@
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: true } })); } catch { /* */ }
         if (closing) { clearTimeout(closing); closing = 0; el.classList.remove('is-closing'); }
         if (orbEl) {
-            orbEl.classList.remove('is-x');
+            orbEl.classList.remove('is-x', 'is-pop', 'is-gone');
             if (phoneSheet()) {
                 // From the button's centre to the pill's right end: the same orb, moving into the menu. When the pressed
                 // button flies into its tab instead, the orb is simply there as the close X.
@@ -1772,7 +1834,7 @@
                 const tx = br ? br.right - 26 : cx, ty = br ? br.top + br.height / 2 : cy;
                 orbEl.style.setProperty('--orb-x', `${Math.round(tx - 20)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 20)}px`);
                 orbEl.style.setProperty('--orb-dx', `${Math.round(cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(cy - ty)}px`);
-                if (flyFrom) orbEl.classList.add('is-x');
+                if (flyFrom) orbEl.classList.add('is-x', 'is-pop');   // the button has flown to its tab: the close turns in at the pill
                 else {
                     orbEl.classList.add('is-from');
                     void orbEl.offsetWidth;
@@ -1810,7 +1872,8 @@
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
         const backTo = flyFrom; flyFrom = null;
-        if (backTo && !navigating && el && el.classList.contains('is-open') && !closing) fly(tabFace(door || tab), backTo, { back: true });
+        if (backTo && !navigating && el && el.classList.contains('is-open') && !closing) fly(tabFace(door || tab), backTo, { back: true, toFace: flyIdle });
+        flyIdle = null;
         if (view === 'results' && rtabsEl) leaveResults();
         leaveDoor();
         if (!el || closing) return;
@@ -1820,11 +1883,13 @@
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
         if (phoneSheet() && !calm() && el.classList.contains('is-open')) {
             el.classList.add('is-closing');
-            if (orbEl) { orbEl.classList.remove('is-x'); orbEl.classList.add('is-from'); }
-            closing = setTimeout(() => { closing = 0; el.classList.remove('is-open', 'is-closing'); if (orbEl) orbEl.classList.remove('is-from'); }, 280);
+            // With a button flying back, the close turns away where it is (two things never land on the bar at once);
+            // otherwise it glides back into the button's place.
+            if (orbEl) { orbEl.classList.remove('is-x', 'is-pop'); orbEl.classList.add(backTo ? 'is-gone' : 'is-from'); }
+            closing = setTimeout(() => { closing = 0; el.classList.remove('is-open', 'is-closing'); if (orbEl) orbEl.classList.remove('is-from', 'is-gone'); }, 280);
         } else {
             el.classList.remove('is-open');
-            if (orbEl) orbEl.classList.remove('is-x', 'is-from');
+            if (orbEl) orbEl.classList.remove('is-x', 'is-from', 'is-pop', 'is-gone');
         }
         if (surface) { surface.destroy(); surface = null; }
         else document.documentElement.style.overflow = '';

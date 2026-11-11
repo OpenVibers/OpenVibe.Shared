@@ -76,11 +76,19 @@
                     if (!d.__ovSurface) d.__ovSurface = root.OVSurfaces.popover({ el: d, trigger: d.querySelector('summary'), close: () => { d.open = false; } });
                     if (d.open) d.__ovSurface.open(); else d.__ovSurface.close();
                 }
-                // Inside a rail (a sideways scroller clips anything that hangs out of it) the menu is placed on the screen.
+                // Inside a rail (a sideways scroller clips anything that hangs out of it, and its edge fade is a mask that hides
+                // even a fixed menu outside its box: Community's paste cards, 11-11) the menu opens in the top layer, placed on
+                // the screen. Without the Popover API it stays fixed, as before.
                 const pop = d.querySelector('.ovk-pop');
-                if (!pop || !d.closest('.ovk-rail-track')) return;
+                if (!pop || !d.closest('.ovk-rail-track, [data-ovk-scroll]')) return;
+                const topLayer = typeof pop.showPopover === 'function';
                 pop.classList.toggle('is-fixed', d.open);
-                if (!d.open) { pop.style.left = pop.style.top = ''; return; }
+                if (!d.open) {
+                    if (topLayer && pop.hasAttribute('popover')) { try { pop.hidePopover(); } catch { /* already closed */ } pop.removeAttribute('popover'); }
+                    pop.style.left = pop.style.top = '';
+                    return;
+                }
+                if (topLayer) { pop.setAttribute('popover', 'manual'); try { pop.showPopover(); } catch { /* stays fixed */ } }
                 const r = d.getBoundingClientRect();
                 const w = pop.offsetWidth, h = pop.offsetHeight;
                 pop.style.left = `${Math.max(8, Math.min(r.right - w, innerWidth - w - 8))}px`;

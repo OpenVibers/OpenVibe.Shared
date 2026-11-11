@@ -73,7 +73,7 @@
 
     const ICON = {
         chat: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4V6a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
-        open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-8.5 8.5M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
         sound: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
         muted: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9.5l5 5M22 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
         close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
@@ -100,6 +100,22 @@
 .ovo-top,.ovo-row{display:flex;align-items:center;gap:6px;padding:7px 8px}
 .ovo-live{flex:none;display:inline-flex;align-items:center;gap:5px;padding:2px 7px;border-radius:999px;background:#e5484d;color:#fff;font:800 10px/1.6 system-ui,sans-serif;letter-spacing:.06em}
 .ovo-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+/* At rest (controls hidden) a live card keeps a small red dot in its corner, so it reads as live without a tap (4.213.0). */
+.ovo-dot{position:absolute;left:9px;top:9px;width:9px;height:9px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 1px 4px rgba(0,0,0,.5);pointer-events:none;transition:opacity .2s}
+.ovo-card.is-ui .ovo-dot{opacity:0}
+@media (hover:hover) and (pointer:fine){.ovo-card:hover .ovo-dot{opacity:0}}
+/* Playing without sound (a browser blocked carried sound): one clear chip says so and takes the tap, at rest too. */
+.ovo-unmute{position:absolute;left:8px;bottom:8px;z-index:1;display:none;align-items:center;gap:6px;height:30px;padding:0 11px 0 8px;border:0;border-radius:999px;background:rgba(10,12,18,.72);color:#fff;font:700 12px/1 system-ui,sans-serif;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 0 0 1px rgba(255,255,255,.18)}
+.ovo-unmute svg{width:16px;height:16px;flex:none}
+.ovo-card.is-muted .ovo-unmute{display:inline-flex}
+.ovo-card.is-muted .ovo-unmute.is-new{animation:ovo-call 1.6s cubic-bezier(.2,.8,.2,1) .4s 2}
+@keyframes ovo-call{0%{box-shadow:0 0 0 1px rgba(255,255,255,.18),0 0 0 0 rgba(255,255,255,.45)}70%{box-shadow:0 0 0 1px rgba(255,255,255,.18),0 0 0 calc(10px * var(--ov-move, 1)) rgba(255,255,255,0)}100%{box-shadow:0 0 0 1px rgba(255,255,255,.18),0 0 0 0 rgba(255,255,255,0)}}
+html[data-ov-motion="off"] .ovo-unmute.is-new{animation:none}
+.ovo-unmute:hover{background:rgba(10,12,18,.86)}
+.ovo-unmute:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.ovo-card.is-muted .ovo-row [data-ovo="sound"]{display:none}
+.ovo-card.is-narrow .ovo-unmute span{display:none}
+.ovo-card.is-narrow .ovo-unmute{padding:0 7px}
 .ovo-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff;font:700 12.5px/1.3 system-ui,sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .ovo-row{justify-content:flex-end}
 .ovo-b{flex:none;display:inline-grid;place-items:center;width:34px;height:34px;border:0;border-radius:999px;background:rgba(20,22,30,.55);color:#fff;cursor:pointer;
@@ -166,6 +182,7 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         const p = cornerXY(c, corner, w);
         place(c, p.x, p.y, w, true);
         try { localStorage.setItem(`${KEY}:${c.kindKey}`, JSON.stringify({ corner, w })); } catch { /* private mode */ }
+        c.el.classList.toggle('is-narrow', w < 200);   // the muted chip keeps only its icon on a small card
     }
     function nearest(c, x, y, w) {
         const b = bounds(), h = heightOf(c, w);
@@ -352,6 +369,8 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         const ui = document.createElement('div'); ui.className = 'ovo-ui';
         const top = document.createElement('div'); top.className = 'ovo-top';
         if (d.live) { const l = document.createElement('span'); l.className = 'ovo-live'; l.textContent = 'LIVE'; top.appendChild(l); }
+        const dot = d.live ? Object.assign(document.createElement('span'), { className: 'ovo-dot' }) : null;
+        if (dot) dot.setAttribute('aria-hidden', 'true');
         const name = document.createElement('span'); name.className = 'ovo-name'; name.textContent = d.title || '';
         top.append(name, button('Close', ICON.close, () => close(c.id), 'ovo-x'));
         const row = document.createElement('div'); row.className = 'ovo-row';
@@ -365,6 +384,14 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
             });
             snd.setAttribute('data-ovo', 'sound');
             row.appendChild(snd);
+            // Muted (the browser would not carry the sound over): the chip that turns it on, at rest as well.
+            const chip = document.createElement('button');
+            chip.type = 'button'; chip.className = 'ovo-unmute is-new';
+            chip.innerHTML = `${ICON.muted}<span>Tap for sound</span>`;
+            chip.setAttribute('aria-label', 'Turn the sound on');
+            chip.addEventListener('click', (e) => { e.stopPropagation(); chip.classList.remove('is-new'); snd.click(); });
+            chip.addEventListener('pointerdown', (e) => e.stopPropagation());
+            c.unmute = chip;
         }
         if (d.side) { const s = button('Chat', ICON.chat, () => { toggleSide(c); showUi(c); }); s.setAttribute('data-ovo', 'side'); s.setAttribute('aria-pressed', 'false'); row.appendChild(s); }
         if (d.href) row.appendChild(button('Open the full page', ICON.open, () => { root.location.href = d.href; }));
@@ -374,7 +401,7 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         if (d.sound && embed) mediaFrame.addEventListener('load', () => {
             try { mediaFrame.contentWindow.postMessage({ type: 'ov-embed', cmd: 'unmute' }, new URL(mediaFrame.src).origin); } catch { /* browser may require a new tap */ }
         });
-        el.append(mediaFrame, ui, grip);
+        el.append(mediaFrame, ...(dot ? [dot] : []), ui, ...(c.unmute ? [c.unmute] : []), grip);
         document.body.appendChild(el);
         cards.set(c.id, c);
         let pref = null; try { pref = JSON.parse(localStorage.getItem(`${KEY}:${c.kindKey}`) || 'null'); } catch { /* */ }
@@ -491,6 +518,8 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
             c.d.playing = !!m.playing;
             const b = c.el.querySelector('[data-ovo="sound"]');
             if (b) { b.innerHTML = c.muted ? ICON.muted : ICON.sound; b.setAttribute('aria-label', c.muted ? 'Turn the sound on' : 'Mute'); b.title = b.getAttribute('aria-label'); }
+            c.el.classList.toggle('is-muted', c.muted && !!m.playing);
+            c.el.classList.toggle('is-narrow', c.el.getBoundingClientRect().width < 200);
             if (typeof m.title === 'string' && m.title && !c.d.title) handle(c).update({ title: m.title });
             const live = c.el.querySelector('.ovo-live'); if (live) live.hidden = m.live === false;
             remember();
