@@ -12,7 +12,7 @@
  * (OVWindow.setStyle), on every window at once.
  *
  *   const w = OVWindow.open({ id, title, body: node | text, foot: node, kind: 'dialog', size: 'md', from: button,
- *                             label, onClose });
+ *                             label, onClose, bare });   bare: the content draws its own head (the title is still read)
  *   w.el, w.body, w.foot, w.setTitle(text), w.close()
  * A site's content goes in as nodes (or text, set as text): the window never parses markup it is given.
  */
@@ -63,7 +63,15 @@ html[data-ov-window="outline"] { --ovw-bg: var(--bg-primary, #0b1220); --ovw-blu
 @keyframes ovw-down { to { transform: translateY(100%); } }
 @keyframes ovw-fade { from { opacity: 0; } }
 html[data-ov-motion=off] .ovw, html[data-ov-motion=off] .ovw-scrim { animation: none !important; }
-html.ovw-locked { overflow: hidden; }`;
+html.ovw-locked { overflow: hidden; }
+/* bare: the content carries its own head (a card's banner); the title is for screen readers, × floats on top, and
+   the top strip is still the handle (drag a panel, swipe a sheet). */
+.ovw.is-bare .ovw-h { position: absolute; left: 0; right: 0; top: 0; z-index: 3; min-height: 52px; padding: 6px; justify-content: flex-end; border: 0; background: none; }
+.ovw.is-bare .ovw-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ovw.is-bare .ovw-x { width: 36px; height: 36px; border-radius: 50%; color: #fff; background: rgba(4, 8, 16, .42); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.ovw.is-bare .ovw-x:hover, .ovw.is-bare .ovw-x:focus-visible { background: rgba(4, 8, 16, .62); color: #fff; }
+.ovw.is-bare .ovw-b { padding: 0; }
+.ovw.is-bare.is-sheet .ovw-h { padding-top: 14px; }`;
 
     const stack = [];
     let uid = 0;
@@ -85,7 +93,7 @@ html.ovw-locked { overflow: hidden; }`;
         scrim.className = `ovw-scrim${modal ? '' : ' is-clear'}`;
         scrim.style.setProperty('--ovw-z', String(z));
         const el = document.createElement('section');
-        el.className = `ovw is-${kind} is-${['sm', 'md', 'lg', 'full'].includes(o.size) ? o.size : 'md'}`;
+        el.className = `ovw is-${kind} is-${['sm', 'md', 'lg', 'full'].includes(o.size) ? o.size : 'md'}${o.bare ? ' is-bare' : ''}`;
         el.style.setProperty('--ovw-z', String(z + 1));
         el.setAttribute('role', 'dialog');
         if (modal) el.setAttribute('aria-modal', 'true');
