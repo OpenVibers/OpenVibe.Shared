@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.203.0 — 2026-11-10
+
+- Add `openvibe-shared/crawlable` to render static site navigation, grouped OpenVibe links, Organization and WebSite JSON-LD, and `/llms.txt` from Shared at build or request time. Its site catalog is bundled at release and does not call the network.
+
+
 ## 4.201.0 — 2026-11-10
 
 **Notifications move into the one menu; the mark and the name are one button; one composer and Code on every site.**
