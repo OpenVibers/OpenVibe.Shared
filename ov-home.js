@@ -183,8 +183,8 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
 .ovh-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .ovh-av::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #141a24); }
 .ovh-who-txt { min-width: 0; display: grid; gap: 0; line-height: 1.25; }
-.ovh-who-txt b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
-.ovh-who-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--text-secondary, #a8b3c4); }
+.ovh-who-txt b { overflow-wrap: anywhere; font-size: 15px; font-weight: 800; letter-spacing: -.01em; }
+.ovh-who-txt small { overflow-wrap: anywhere; font-size: 12px; color: var(--text-secondary, #a8b3c4); }
 .ovh-ib { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; text-decoration: none;
     background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); transition: background .16s, color .16s, transform .16s cubic-bezier(.2,1.4,.4,1); }
 .ovh-ib svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }

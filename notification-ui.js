@@ -205,6 +205,7 @@
             .openvibe-notif-dock { display: flex; flex-direction: column; min-height: 0; flex: 1; color: var(--text-primary, #ececf1); }
             .openvibe-notif-dock .openvibe-nv-head { display: none; }
             .openvibe-notif-dock .openvibe-nv-tools { padding-top: 10px; }
+.openvibe-notif-dock.is-preview .openvibe-nv-tools, .openvibe-notif-dock.is-preview .openvibe-nv-foot, .openvibe-notif-dock.is-preview .openvibe-nv-head, .openvibe-notif-dock.is-preview .openvibe-nv-more { display: none; }
             .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }
             .openvibe-notif-dock .openvibe-nv-foot [data-role="status"] { margin-right: auto; }
             .ovn-foot-read { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
@@ -1489,15 +1490,19 @@
             reload(v);
             return v;
         },
-        /** Compact five-row preview for the one menu, expandable without leaving You. */
+        /**
+         * The You tab's preview (4.211.0, the owner's "the You tab still sucks"): the newest three, nothing else (no
+         * search, no filters) so the person's own parts are a glance below; Show all opens the whole list in place, with
+         * its search and filters.
+         */
         renderMenuNotifications(container, onCount) {
             injectStyles();
             if (!container) return null;
-            container.classList.add('openvibe-notif-dock');
+            container.classList.add('openvibe-notif-dock', 'is-preview');
             const v = buildView(container, { mode: 'dock' });
-            v.pageSize = 5; v.onCount = onCount;
+            v.pageSize = 3; v.onCount = onCount;
             reload(v);
-            return { showAll() { v.pageSize = PAGE_SIZE; reload(v); } };
+            return { showAll() { container.classList.remove('is-preview'); v.pageSize = PAGE_SIZE; reload(v); } };
         },
         unmountDock(container) {
             const v = _views.get(container);

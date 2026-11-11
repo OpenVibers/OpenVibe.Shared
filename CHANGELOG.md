@@ -2,6 +2,10 @@
 
 ## 4.211.0 — 2026-11-11
 
+- **The menu's You tab leads with you (ask 158b, "the You tab still sucks").** Its notifications are a preview of the
+  newest three, with no search, filters, foot or Load more until "Show all N" opens the whole list in place; the
+  person's bar, their AI and the rest are a glance below instead of a thousand pixels down. The person's name and handle
+  wrap instead of being cut (rule names-are-never-cut).
 - **An agent's sheet (agent-sheet.js, new; the Dock's Actor row opens it).** One window (ov-window.js: a panel beside
   the row on a computer, a sheet on a phone) with everything about one agent: its face, state and instructions, then
   Now, Asks (first when it waits for you, with the count), Work, Schedule, Memory and Computer as tabs (arrow keys move
