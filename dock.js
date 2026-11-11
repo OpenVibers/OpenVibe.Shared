@@ -89,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '1bfa19b01e8e', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '1bfa19b01e8e', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '21e125e3f1e9' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -616,7 +616,7 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null, filter: '' };
+    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, edits: null, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null, filter: '' };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
@@ -664,6 +664,7 @@
     const titleOf = (c) => c.name || others(c).map((p) => p.display_name || p.username).join(', ') || 'Just you';
     async function chatList() {
         clearTimeout(chats.timer);
+        if (chats.edits) { chats.edits.stop(); chats.edits = null; }
         chats.open = null;
         const panel = chats.panel; if (!panel) return;
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
@@ -720,7 +721,10 @@
         const mine = m.username === me();
         const li = h('li', `ovdk-msg${mine ? ' is-mine' : ''}${prev && prev.username === m.username ? ' is-cont' : ''}`);
         if (!mine && !(prev && prev.username === m.username)) li.append(h('span', 'ovdk-who', m.display_name || m.username || ''));
+        li.dataset.id = String(m.id);
         li.append(h('span', 'ovdk-text', String(m.message || '')));
+        if (m.edited_at) li.append(h('small', 'ovdk-edited', `edited · ${String(m.edited_at).slice(11, 16)}`));
+        if (mine && canWriteChat()) { const edit = h('button', 'ovk-btn ovk-btn--quiet ovdk-edit', 'Edit'); edit.type = 'button'; li.append(edit); }
         // A known OpenVibe link's card (Chat's link cards): dock-card.js draws it, loaded the first time one shows.
         if (m.card) load('dock-card.js', () => !!root.OpenVibeDockCard).then((ok) => { const c = ok && root.OpenVibeDockCard(m.card, h); if (c) li.append(c); });
         li.title = new Date(m.created_at).toLocaleString();
@@ -728,6 +732,7 @@
     }
     async function openChat(id, remember) {
         clearTimeout(chats.timer);
+        if (chats.edits) { chats.edits.stop(); chats.edits = null; }
         const panel = chats.panel; if (!panel) return;
         chats.open = String(id); chats.msgs = []; chats.last = 0;
         const draft = chats.draft && canWriteChat() ? chats.draft.text : '';
@@ -776,6 +781,7 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
+        load('dock-chat-edits.js', () => !!root.OpenVibeDockChatEdits).then((ok) => { if (ok && chats.open === String(id)) chats.edits = root.OpenVibeDockChatEdits({ id: String(id), list, messages: chats.msgs, error: err, tokenOf, chatCall, chatBase, active: () => chats.open === String(id) && panelActive('chats'), load, h }); });
         if (canWriteChat() && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */

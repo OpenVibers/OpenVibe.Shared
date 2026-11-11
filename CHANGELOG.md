@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.203.0 — 2026-11-11
+
+- Dock conversations update edited messages and link cards live; authors can edit their own messages.
+
 ## 4.202.0 — 2026-11-11
 
 **One field dropdown, one window for small interfaces, one user card, a measured page end, eight site groups, and the reveal remade.**
