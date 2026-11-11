@@ -37,6 +37,11 @@
     const cards = new Map();      // id → card
     const declared = new Map();   // id → descriptor (drawn by the page itself)
     let styleEl = null, clicksWired = false;
+    const changed = (reason, card) => { try { root.dispatchEvent(new CustomEvent('openvibe:player', { detail: { reason, card: card || current() } })); } catch { /* */ } };
+    function current() {
+        const live = [...declared.values(), ...cards.values()].map((c) => c.d || c).find((c) => c.live);
+        return live ? { ...live } : null;
+    }
 
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     const reduced = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
@@ -59,7 +64,7 @@
     function portableOf(d) {
         const src = safeSrc(d && d.src);
         if (!src) return null;
-        const out = { id: clean(d.id || 'card', 40).replace(/[^a-z0-9_-]/gi, '') || 'card', src, title: clean(d.title, 80), live: !!d.live };
+        const out = { id: clean(d.id || 'card', 40).replace(/[^a-z0-9_-]/gi, '') || 'card', src, title: clean(d.title, 80), live: !!d.live, sound: !!d.sound };
         const href = safeSrc(d.href); if (href) out.href = href;
         const side = d.side && safeSrc(d.side.src); if (side) out.side = { src: side, title: clean(d.side.title, 80) };
         if (Number(d.aspect) > 0.3 && Number(d.aspect) < 4) out.aspect = Number(d.aspect);
@@ -353,7 +358,11 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         if (d.href) row.appendChild(button('Open the full page', ICON.open, () => { root.location.href = d.href; }));
         ui.append(top, row);
         const grip = document.createElement('span'); grip.className = 'ovo-grip'; grip.innerHTML = ICON.grip; grip.setAttribute('aria-hidden', 'true');
-        el.append(frame(d.src, d.title), ui, grip);
+        const mediaFrame = frame(d.src, d.title);
+        if (d.sound && embed) mediaFrame.addEventListener('load', () => {
+            try { mediaFrame.contentWindow.postMessage({ type: 'ov-embed', cmd: 'unmute' }, new URL(d.src).origin); } catch { /* browser may require a new tap */ }
+        });
+        el.append(mediaFrame, ui, grip);
         document.body.appendChild(el);
         cards.set(c.id, c);
         let pref = null; try { pref = JSON.parse(localStorage.getItem(`${KEY}:${c.kindKey}`) || 'null'); } catch { /* */ }
@@ -368,6 +377,7 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         wire(c);
         if (!fine()) showUi(c);
         remember();
+        changed('open', d);
         return handle(c);
     }
     function handle(c) {
@@ -380,12 +390,14 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         clearTimeout(c.idle);
         try { c.el.remove(); } catch { /* */ }
         remember();
+        changed('close');
     }
     function list() { return [...cards.values()].map((c) => ({ ...c.d })); }
     function declare(id, desc) {
         const key = clean(id, 40);
         if (!desc) declared.delete(key); else { const d = portableOf({ ...desc, id: key }); if (d) declared.set(key, d); }
         if (declared.size) wireClicks();
+        changed('declare');
     }
 
     // ── Within a site: the cards come back after a reload ──
@@ -412,7 +424,9 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
             if (u.origin === root.location.origin || u.protocol !== 'https:' || !FIRST_PARTY.test(u.hostname)) return href;
             const data = b64(JSON.stringify(list));
             if (data.length > 3000) return href;
-            u.hash = `ovo=${data}`;
+            const existing = u.hash.slice(1);
+            u.hash = existing ? `${existing}&ovo=${data}` : `ovo=${data}`;
+            changed('handoff');
             return u.href;
         } catch { return href; }
     }
@@ -433,7 +447,12 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         let list = null;
         if (m) {
             try { list = JSON.parse(unb64(m[1])); } catch { list = null; }
-            try { const u = new URL(root.location.href); u.hash = ''; root.history.replaceState(root.history.state, '', u.href.replace(/#$/, '')); } catch { /* */ }
+            try {
+                const u = new URL(root.location.href);
+                const keep = u.hash.slice(1).split('&').filter((part) => !/^ovo=/.test(part)).join('&');
+                u.hash = keep;
+                root.history.replaceState(root.history.state, '', u.href.replace(/#$/, ''));
+            } catch { /* */ }
         } else {
             try { list = JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch { list = null; }
         }
@@ -456,14 +475,16 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
             const f = c.el.querySelector('.ovo-frame');
             if (!f || e.source !== f.contentWindow || e.origin !== new URL(c.d.src).origin) continue;
             c.muted = !!m.muted;
+            c.d.playing = !!m.playing;
             const b = c.el.querySelector('[data-ovo="sound"]');
             if (b) { b.innerHTML = c.muted ? ICON.muted : ICON.sound; b.setAttribute('aria-label', c.muted ? 'Turn the sound on' : 'Mute'); b.title = b.getAttribute('aria-label'); }
             if (typeof m.title === 'string' && m.title && !c.d.title) handle(c).update({ title: m.title });
             const live = c.el.querySelector('.ovo-live'); if (live) live.hidden = m.live === false;
+            changed('state', { ...c.d });
         }
     });
     root.addEventListener('resize', () => { for (const c of cards.values()) settle(c, c.corner, clampW(c.w)); });
-    root.OVOverlay = { open, close, list, declare, handoffUrl, restore, safeSrc, _travelling: travelling };
+    root.OVOverlay = { open, close, list, current, declare, handoffUrl, restore, safeSrc, _travelling: travelling };
     // After the page's own start-up (its scripts may set OVOverlayHere on DOMContentLoaded).
     const later = () => setTimeout(restore, 0);
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', later, { once: true }); else later();

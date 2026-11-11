@@ -8,6 +8,11 @@
     let saved = null;
     let pop = null;
     let opener = null;
+    let mediaLock = false;
+    const blockBackdropScroll = (e) => {
+        const top = [...sheets].at(-1);
+        if (top && top.el && !top.el.contains(e.target)) e.preventDefault();
+    };
 
     function lock() {
         if (saved) return;
@@ -19,13 +24,21 @@
         const gap = Math.max(0, root.innerWidth - html.clientWidth);
         if (gap) html.style.paddingRight = `${(parseFloat(getComputedStyle(html).paddingRight) || 0) + gap}px`;
         html.style.overflow = 'hidden';
-        body.style.position = 'fixed'; body.style.top = `-${y}px`;
-        body.style.left = '0'; body.style.right = '0'; body.style.width = '100%';
+        // Moving a playing video into a fixed-position body interrupts playback on some
+        // mobile WebKit builds. Keep the media layer in its existing layout instead.
+        mediaLock = [...document.querySelectorAll('video, audio')].some((media) => !media.paused && !media.ended);
+        if (mediaLock) document.addEventListener('touchmove', blockBackdropScroll, { passive: false, capture: true });
+        else {
+            body.style.position = 'fixed'; body.style.top = `-${y}px`;
+            body.style.left = '0'; body.style.right = '0'; body.style.width = '100%';
+        }
     }
     function unlock() {
         if (!saved || sheets.size) return;
         const s = saved, html = document.documentElement, body = document.body;
         saved = null;
+        if (mediaLock) document.removeEventListener('touchmove', blockBackdropScroll, true);
+        mediaLock = false;
         html.style.overflow = s.htmlOverflow; html.style.paddingRight = s.htmlPadding;
         body.style.position = s.bodyPosition; body.style.top = s.bodyTop;
         body.style.left = s.bodyLeft; body.style.right = s.bodyRight; body.style.width = s.bodyWidth;
@@ -62,7 +75,7 @@
         };
         if (head) { head.addEventListener('pointerdown', onDown); head.addEventListener('pointermove', onMove); head.addEventListener('pointerup', onUp); head.addEventListener('pointercancel', onUp); }
         if (el instanceof HTMLDialogElement) el.addEventListener('close', release);
-        const api = { open() { if (active) return; active = true; sheets.add(api); lock(); }, close: release, dismiss,
+        const api = { el, open() { if (active) return; active = true; sheets.add(api); lock(); }, close: release, dismiss,
             destroy() { release(); scroll.style.overscrollBehavior = oldOverscroll; if (head) { head.style.touchAction = oldTouch; head.removeEventListener('pointerdown', onDown); head.removeEventListener('pointermove', onMove); head.removeEventListener('pointerup', onUp); head.removeEventListener('pointercancel', onUp); } if (el instanceof HTMLDialogElement) el.removeEventListener('close', release); } };
         return api;
     }

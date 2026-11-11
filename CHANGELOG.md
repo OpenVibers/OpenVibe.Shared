@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.205.0 — 2026-11-11
+
+- Keep active media in its existing page layout when opening a sheet on a phone, avoiding a WebKit playback interruption from a fixed-position body.
+- Expose the current portable Live card and player lifecycle events; carry sound intent into the next site's floating player.
+
 ## 4.203.0 — 2026-11-11
 
 - Dock conversations update edited messages and link cards live; authors can edit their own messages.
