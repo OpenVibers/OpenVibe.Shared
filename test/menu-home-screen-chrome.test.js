@@ -33,6 +33,10 @@ const PULSE = { items: [
     { title: 'A new clip: the jump', url: 'https://openvibe.video/c/1', occurred_at: new Date(Date.now() - 3600e3).toISOString(), ref: { service: 'video' } },
     { title: '<img src=x onerror="window.pwned=1"> a post', url: 'https://openvibe.community/p/1', occurred_at: new Date(Date.now() - 7200e3).toISOString(), ref: { service: 'community' } },
 ], next_cursor: 'c2' };
+const FEED_V2 = { items: [
+    { id: 'p:1', kind: 'pic', title: 'Ada shared a new photo', text: 'A sunny sky', actor: { name: 'Ada' }, site: 'community', site_name: 'Community', url: 'https://openvibe.community/p/1', at: new Date().toISOString(), counts: {} },
+    { id: 'p:2', kind: 'clip', title: 'Bo shared a clip', text: 'A new trick', actor: { name: 'Bo' }, site: 'video', site_name: 'Video', url: 'https://openvibe.video/c/1', at: new Date().toISOString(), counts: {} },
+], next_cursor: null };
 const TODAY = { people: { today: 1204, series: [800, 900, 1000, 1204] }, streams: { today: 37, series: [20, 30, 37] }, posts: { today: 210 }, videos: { today: 12 } };
 
 const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home</title><link rel="icon" href="data:,">
@@ -52,7 +56,13 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (s.startsWith('https://openvibe.network/api/history')) return J({ items: [{ title: 'A stream', url: 'https://openvibe.live/ada', service: 'live', updated_at: new Date().toISOString() }, { title: 'A pic', url: 'https://openvibe.pics/1', service: 'pics', updated_at: new Date(Date.now() - 1000).toISOString() }], services: [{ service: 'live', count: 5 }, { service: 'pics', count: 2 }] });
     if (s.startsWith('https://openvibe.network/api/v1/me/home-screen')) return (o && o.method === 'PUT') ? J({ ok: true }) : J({}, false, 404);
     if (s === 'https://openvibe.network/api/frame/attachments') return J({ attachment: { media_id: 'med_01ABCDEFGHJKMNPQRSTVWXYZ0' + (window.__calls.filter((c) => c.u === s).length) } }, true, 201);
+    if (s === 'https://openvibe.media/api/v1/attachments') return J({ id: 'att_01ABCDEFGHJKMNPQRSTVWXYZ01' }, true, 201);
     if (s === 'https://openvibe.network/api/frame/posts') return J({ id: 7 }, true, 201);
+    if (s === 'https://openvibe.chat/api/dm/conversations') return J({ conversations: [] });
+    if (s === 'https://openvibe.chat/api/vibe/conversations') return J({ count: 4, conversations: [{ name: 'Read https://…', last_message_at: new Date().toISOString() }] });
+    if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed/examples')) return J({ examples: [{ text: 'New photos' }, { text: 'Clips from today' }, { text: 'Ada' }] });
+    if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed/search')) return J({ items: ${JSON.stringify(FEED_V2.items.slice(0, 1))}, next_cursor: null });
+    if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed?')) return J(${JSON.stringify(FEED_V2)});
     if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
     if (s.startsWith('https://openvibe.actor/api/v1/me/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
     if (s.startsWith('https://')) return J({}, false, 404);
@@ -209,27 +219,33 @@ const server = http.createServer((req, res) => {
         await s.evaluate(`(() => { const t = document.querySelector('.ovh-grid:not(.ovh-recent) .ovh-app'); t.focus(); t.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })); })()`);
         assert.ok(await until(s, `window.__calls.some((c) => c.m === 'PUT' && c.u.endsWith('/api/v1/me/home-screen') && c.auth === 'Bearer tok-1')`, 3000), 'the arrangement goes to Network with the bearer');
         await s.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);
-        assert.ok(await until(s, `!!document.querySelector('.ovh-compose textarea')`), 'the composer shows when Community says you can post');
-        await eventually(async () => assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-compose textarea').placeholder`), "What's new, Ada?"));
-        // Pictures (11-09: "you can make posts and put images"): two picked, each must say what it shows, then each
-        // uploads through Network and the post names them with that text.
+        assert.ok(await until(s, `!!document.querySelector('#ovh-feed-composer.__none, #ovh-feed-composer.ovc')`), 'the one composer joins the Feed form');
+        await eventually(async () => assert.strictEqual(await s.evaluate(`document.querySelector('#ovh-feed-composer textarea').placeholder`), "What's new, Ada?"));
         await s.evaluate(`(async () => {
-            const ta = document.querySelector('.ovh-compose textarea'); ta.value = 'Golden hour'; ta.dispatchEvent(new Event('input'));
+            const ta = document.querySelector('#ovh-feed-composer textarea'); ta.value = 'Golden hour'; ta.dispatchEvent(new Event('input', { bubbles: true }));
             const c = document.createElement('canvas'); c.width = 40; c.height = 30; c.getContext('2d').fillRect(0, 0, 40, 30);
             const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
-            const dt = new DataTransfer(); dt.items.add(new File([blob], 'a.png', { type: 'image/png' })); dt.items.add(new File([blob], 'b.png', { type: 'image/png' }));
-            const input = document.querySelector('.ovh-compose input[type=file]'); input.files = dt.files; input.dispatchEvent(new Event('change'));
+            const dt = new DataTransfer(); dt.items.add(new File([blob], 'a.png', { type: 'image/png' })); dt.items.add(new File(['PDF'], 'notes.pdf', { type: 'application/pdf' }));
+            const input = document.querySelector('#ovh-feed-composer input[type=file]'); input.files = dt.files; input.dispatchEvent(new Event('change', { bubbles: true }));
         })(), true`);
-        assert.ok(await until(s, `document.querySelectorAll('.ovh-pic img[src^="data:"]').length === 2`), 'two pictures, each with a preview');
-        await eventually(async () => assert.ok(await s.evaluate(`document.querySelector('.ovh-post').disabled && document.querySelector('.ovh-compose-hint').textContent === 'Describe each picture'`), 'no post until each picture says what it shows'));
-        await s.evaluate(`[...document.querySelectorAll('.ovh-pic input')].forEach((x, i) => { x.value = ['A dark sky', 'The same sky'][i]; x.dispatchEvent(new Event('input')); }), true`);
-        await eventually(async () => assert.ok(!(await s.evaluate(`document.querySelector('.ovh-post').disabled`)), 'described: Post is on'));
-        await s.evaluate(`document.querySelector('.ovh-post').click(), true`);
-        assert.ok(await until(s, `/Posted/.test(document.querySelector('.ovh-compose ~ .ovh-note, .ovh-note').textContent)`), 'it posts');
-        const sent = await s.evaluate(`window.__calls.filter((c) => c.u.endsWith('/api/frame/attachments') || c.u.endsWith('/api/frame/posts')).map((c) => ({ u: c.u.replace('https://openvibe.network/api/frame/', ''), auth: c.auth, body: typeof c.body === 'string' ? c.body : '' }))`);
-        assert.deepStrictEqual(sent.map((c) => c.u), ['attachments', 'attachments', 'posts'], 'each picture, then the post');
-        assert.ok(sent.every((c) => c.auth === 'Bearer tok-1'), 'with the person\'s token');
-        assert.deepStrictEqual(JSON.parse(sent[2].body).pictures.map((x) => x.alt), ['A dark sky', 'The same sky']);
+        assert.ok(await until(s, `document.querySelectorAll('#ovh-feed-composer .ovc-file').length === 2`), 'the picture and PDF become chips');
+        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('#ovh-feed-composer').checkValidity()`), 'the picture needs a description'));
+        await s.evaluate(`(() => { const a = document.querySelector('#ovh-feed-composer .ovc-image input'); a.value = 'A dark sky'; a.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await s.evaluate(`document.querySelector('#ovh-feed-composer .ovt-send').click(), true`);
+        const posted = await until(s, `/Posted/.test(document.querySelector('#ovh-feed-composer + .ovh-note').textContent)`);
+        const postState = await s.evaluate(`({ note: document.querySelector('#ovh-feed-composer + .ovh-note').textContent, valid: document.querySelector('#ovh-feed-composer').checkValidity(), disabled: document.querySelector('#ovh-feed-composer .ovt-send').disabled, calls: window.__calls.filter((c) => /attachments|posts/.test(c.u)).map((c) => c.u) })`);
+        assert.ok(posted, `it posts: ${JSON.stringify(postState)}`);
+        const sent = await s.evaluate(`window.__calls.filter((c) => c.u.endsWith('/api/frame/attachments') || c.u.endsWith('/api/v1/attachments') || c.u.endsWith('/api/frame/posts')).map((c) => ({ u: c.u, auth: c.auth, body: typeof c.body === 'string' ? c.body : '' }))`);
+        assert.deepStrictEqual(sent.map((c) => c.u.replace(/^https:\/\/(?:openvibe.network\/api\/frame|openvibe.media\/api\/v1)\//, '')), ['attachments', 'attachments', 'posts'], 'picture and PDF upload before the post');
+        assert.ok(sent.every((c) => c.auth === 'Bearer tok-1'), 'uploads and post use the person\'s token');
+        const body = JSON.parse(sent[2].body);
+        assert.strictEqual(body.pictures[0].alt, 'A dark sky');
+        assert.deepStrictEqual(body.attachments, ['att_01ABCDEFGHJKMNPQRSTVWXYZ01']);
+        assert.deepStrictEqual(await s.evaluate(`window.__calls.filter((c) => c.u.endsWith('/attachments') && c.body instanceof FormData).map((c) => c.body.get('file').name)`), ['a.png', 'notes.pdf'], 'the picture and PDF bytes use the two upload routes');
+        await s.evaluate(`document.querySelector('.ovs [data-dock="chats"]').click()`);
+        assert.ok(await until(s, `!!document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]')`), 'the Chat summary is an Open Vibe button');
+        await s.evaluate(`document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]').click()`);
+        assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true'`), 'the Vibe row selects the menu Vibe tab');
         // ── A phone's Dock opens out of the navbar's menu button, and that button is its close button (the owner,
         // 2026-11-10: "that close button should… fade and have an animation effect from the top right, the menu button
         // that already exists"). The close orb starts on the navbar's orb and settles into its x; the navbar's orb makes
@@ -257,6 +273,22 @@ const server = http.createServer((req, res) => {
         const still = await s.evaluate(`(() => { document.documentElement.setAttribute('data-ov-motion', 'off'); window.OpenVibeDock.open({ tab: 'activity' }); const dock = document.querySelector('.ovdk'); const a = dock.classList.contains('from-orb'); window.OpenVibeDock.close(); const out = { fromOrb: a, hidden: dock.hidden }; document.documentElement.removeAttribute('data-ov-motion'); return out; })()`);
         assert.ok(!still.fromOrb && still.hidden, 'motion off: no move, and it closes at once');
         await s.close();
+        if (process.env.OV_CAPTURE_MENU) {
+            for (const width of [390, 1280]) {
+                const shotPage = await h.openPage(browser, context, { width, height: width === 390 ? 844 : 900, block: blocked });
+                await shotPage.goto(`${base}/?signed=1&feedv2=1`, { maxMs: 6000 });
+                await openTab(shotPage, 'feed');
+                assert.ok(await until(shotPage, `document.querySelectorAll('.ovfd-examples button').length >= 4 && document.querySelectorAll('.ovfd-list .ovfd-card').length === 2`));
+                const feedShot = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+                fs.writeFileSync(path.join(ROOT, `docs/screenshots/360-feed-${width}.png`), Buffer.from(feedShot.data, 'base64'));
+                await shotPage.evaluate(`document.querySelector('.ovs [data-dock="chats"]').click()`);
+                if (width === 1280) assert.ok(await until(shotPage, `!document.querySelector('.ovs').classList.contains('is-open')`), 'desktop Chat closes the menu so the Dock is visible');
+                assert.ok(await until(shotPage, `(() => { const b = document.querySelector('.ovdk-chat[aria-label="Open Vibe"]'), d = b && b.closest('.ovdk'), r = b && b.getBoundingClientRect(); return !!d && !d.hidden && d.getAnimations({ subtree: false }).every((a) => a.playState === 'finished') && r.width > 0 && r.left < innerWidth && r.top < innerHeight && b.contains(document.elementFromPoint((r.left+r.right)/2, (r.top+r.bottom)/2)); })()`), 'Chat is painted in the capture');
+                const chatShot = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+                fs.writeFileSync(path.join(ROOT, `docs/screenshots/360-chat-${width}.png`), Buffer.from(chatShot.data, 'base64'));
+                await shotPage.close();
+            }
+        }
         console.log('menu-home-screen-chrome: home grid, long-press and drag, keys, remove and put back, folders with tool icons, the wall, today, the composer with pictures, Network sync ok');
     } finally {
         await browser.close();

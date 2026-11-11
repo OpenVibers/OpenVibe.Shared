@@ -529,6 +529,11 @@
         timerButton.addEventListener('click', () => { try { if (ctx.dockMore) ctx.dockMore('timer'); } catch { /* Dock optional */ } });
         doorEl.append(doorSw, doorHost, timerButton);
         listEl.after(doorEl);
+        doorHost.addEventListener('openvibe:open-vibe', (e) => {
+            if (door !== 'chats' || !inSheet()) return;
+            e.preventDefault();
+            openDoor('vibe');
+        });
         tabsEl = el.querySelector('.ovs-tabs');
         actsEl = el.querySelector('.ovs-acts');
         rtabsEl = el.querySelector('.ovs-rtabs');
@@ -543,7 +548,7 @@
         tabsEl.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-tab]'); if (!b) return;
             leaveDoor();
-            tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); render(''); listEl.scrollTop = 0;
+            tab = b.getAttribute('data-tab'); if (tab === 'feed') markFeedSeen(); input.value = ''; render(''); listEl.scrollTop = 0;
             let touch = false; try { touch = root.matchMedia('(pointer: coarse)').matches; } catch { /* */ }
             if (touch) b.focus(); else input.focus();
         });
@@ -614,6 +619,7 @@
         if (e.key === 'Enter') {
             e.preventDefault();
             const q = input.value.trim();
+            if (tab === 'feed' && homeLib() && !door) { render(q); return; }
             if (inSheet() && door === 'vibe' && q) { try { if (ctx.ask) ctx.ask(q); } catch { /* Dock is optional */ } return; }
             if (inSheet() && door === 'chats') { try { if (root.OpenVibeDock && root.OpenVibeDock.filterChats) root.OpenVibeDock.filterChats(q); } catch { /* Dock is optional */ } return; }
             const it = items[active >= 0 ? active : 0];
@@ -1213,7 +1219,7 @@
                 if (!inSheet()) b.setAttribute('aria-haspopup', 'dialog');
                 const ic = document.createElement('span'); ic.className = 'ovs-tab-ic'; ic.innerHTML = BRIDGE_SVG[id]; b.appendChild(ic);
                 const t = document.createElement('span'); t.textContent = label; b.appendChild(t);
-                b.addEventListener('click', (e) => { e.stopPropagation(); if (inSheet()) { openDoor(id); return; } try { ctx.dock(id); } catch { /* the Dock is optional */ } });
+                b.addEventListener('click', (e) => { e.stopPropagation(); if (inSheet()) { openDoor(id); return; } close(); try { ctx.dock(id); } catch { /* the Dock is optional */ } });
                 tabsEl.appendChild(b);
                 continue;
             }
@@ -1320,6 +1326,7 @@
         const { all, mineSite, byId, shown, take, ranked, f } = basis();
         const groups = [];
         const wall = homeLib();
+        if (wall && input && input.value.trim()) return [{ as: 'wall', items: [], section: 'wall' }];
         if (wall) groups.push({ as: 'walltop', items: [], section: 'wall-top' });
         const live = liveGroup(); if (live) groups.push(live);
         if (wall) groups.push({ as: 'wall', items: [], section: 'wall' });
@@ -1475,7 +1482,8 @@
         const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
         const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            onSearch: (q) => { input.value = q; render(q); input.focus(); },
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
             feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
@@ -1490,6 +1498,15 @@
         el.classList.toggle('ovs-typing', !!q);
         if (door === 'chats' && inSheet()) { try { root.OpenVibeDock.filterChats(q); } catch { /* */ } return; }
         if (door === 'vibe' && inSheet()) return;
+        if (tab === 'feed' && homeLib()) {
+            tabsEl.hidden = false;
+            input.placeholder = 'Search the feed';
+            paintTabs(); renderTab();
+            const feed = homeViews.wall && homeViews.wall.api;
+            if (feed && feed.search && (q || feed.query)) feed.search(q);
+            return;
+        }
+        input.placeholder = 'Search OpenVibe';
         if (q) leaveDoor();
         tabsEl.hidden = !!q;
         if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); paintTabs(); renderTab(); return; }
