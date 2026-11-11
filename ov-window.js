@@ -195,13 +195,15 @@ html.ovw-locked { overflow: hidden; }
         stack[stack.length - 1].close('escape');
     });
 
+    // The style is the person's display setting (theme-loader: saved, synced to their account, painted at boot as
+    // <html data-ov-window>); setStyle saves through it, or straight onto the page where the theme loader is absent.
     function setStyle(name) {
         const v = STYLES.includes(name) ? name : 'glass';
+        const T = root.OpenVibeThemeLoader;
+        if (T && T.display && typeof T.display.set === 'function') { try { T.display.set({ window: v }); } catch { /* */ } }
         if (v === 'glass') document.documentElement.removeAttribute('data-ov-window'); else document.documentElement.setAttribute('data-ov-window', v);
-        try { root.localStorage.setItem('ov:window-style', v); } catch { /* */ }
         return v;
     }
-    try { const s = root.localStorage.getItem('ov:window-style'); if (s && s !== 'glass' && STYLES.includes(s)) document.documentElement.setAttribute('data-ov-window', s); } catch { /* */ }
 
     root.OVWindow = { open, setStyle, styles: STYLES.slice(), top: () => stack[stack.length - 1] || null, closeAll: () => [...stack].reverse().forEach((w) => w.close('all')) };
 })(typeof window !== 'undefined' ? window : globalThis);

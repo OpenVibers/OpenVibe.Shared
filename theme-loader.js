@@ -353,7 +353,7 @@
 
     // ── Display settings, one record for every OpenVibe site: display.get() → DISPLAY_OPTS' values; display.set(patch)
     // applies here and in other tabs and saves to the account. <html data-ov-*> and --ov-text-scale before first paint.
-    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'full', 'reduced', 'off'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'] };
+    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'full', 'reduced', 'off'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'], window: ['glass', 'solid', 'outline'] };
     // Status names some sites use (--error, --error-text, --ok, --warn, --accent-text) that no theme sets: they resolve to the theme's
     // readable status colours instead of each site's fallback literal (pale on light themes). :where() keeps them
     // below any site's own value (4.86.0).
@@ -371,7 +371,7 @@
         + 'html[data-ov-colors=cb-safe]{--success:#56b4e9!important;--success-text:#7cc6ef!important;--warning:#f0e442!important;--warning-text:#f0e442!important;--danger:#e8743b!important;--danger-text:#f0985f!important}'
         + 'html[data-ov-colors=cb-safe][data-theme-mode=light]{--success:#0072b2!important;--success-text:#005a8c!important;--warning:#e69f00!important;--warning-text:#8a6100!important;--danger:#d55e00!important;--danger-text:#a84400!important}'
         + 'html[data-ov-oled=on][data-theme-mode=dark]{--bg-primary:#000!important;--bg-secondary:#050608!important;--bg-tertiary:#0b0d12!important;--bg-card:#0a0c10!important;--bg-input:#0b0d12!important;--bg-hover:#12151c!important}';
-    const COMFORT_ATTRS = { contrast: ['data-ov-contrast', 'normal'], font: ['data-ov-font', 'default'], colors: ['data-ov-colors', 'default'], oled: ['data-ov-oled', 'off'], icons: ['data-ov-icons', 'auto'] };
+    const COMFORT_ATTRS = { contrast: ['data-ov-contrast', 'normal'], font: ['data-ov-font', 'default'], colors: ['data-ov-colors', 'default'], oled: ['data-ov-oled', 'off'], icons: ['data-ov-icons', 'auto'], window: ['data-ov-window', 'glass'] };
     // ── Motion (4.183.0; the owner, 2026-11-10: "still have full motion but actually just reduce it instead of getting
     // rid of it"). auto follows the device, full plays everything, reduced is Calm (every effect, smaller and slower),
     // off alone stops motion. <html data-ov-motion=full|reduced|off> is the one signal; --ov-move is what a moving
@@ -404,7 +404,7 @@
         document.addEventListener('animationstart', function (e) { if (document.documentElement.getAttribute('data-ov-motion') === 'reduced') paceLoops(e.target); }, true);
     }
     function readDisplay() {
-        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off', icons: 'auto' };
+        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off', icons: 'auto', window: 'glass' };
         try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(d[k])) >= 0) out[k] = String(d[k]); } catch (e) { /* */ }
         return out;
     }
@@ -546,7 +546,7 @@
     // page, only colours pass; the next site keeps it when newer and drops it from the address before first paint.
     const OV_HOST = /(^|\.)(openvibe\.[a-z]{2,12}|openre\.stream)$/i;
     const PAINT_KEY = 'ov_paint';
-    const PAINT_ATTRS = ['data-theme', 'data-theme-mode', 'data-ov-season', 'data-ov-season-mark', 'data-ov-motion', 'data-ov-text', 'data-ov-contrast', 'data-ov-font', 'data-ov-colors', 'data-ov-oled', 'data-ov-icons'];
+    const PAINT_ATTRS = ['data-theme', 'data-theme-mode', 'data-ov-season', 'data-ov-season-mark', 'data-ov-motion', 'data-ov-text', 'data-ov-contrast', 'data-ov-font', 'data-ov-colors', 'data-ov-oled', 'data-ov-icons', 'data-ov-window'];
     const SAFE_VALUE = /^(#[0-9a-f]{3,8}|rgba?\([0-9.,\s%]+\)|[0-9.,\s]+|light|dark|(-?[0-9.]+(px)?\s+){2,4}rgba?\([0-9.,\s%]+\))$/i;
     const SAFE_ATTR = /^[a-z0-9-]{1,40}$/;
     function seasonUntil(s) {

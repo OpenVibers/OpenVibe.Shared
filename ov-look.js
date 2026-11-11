@@ -104,6 +104,8 @@
             panel.append(row('text', 'Text size', [[100, 'Default'], [112, 'Large'], [125, 'Largest']]));
             // Motion (4.183.0): Auto follows the device; Calm keeps every effect, smaller and slower; only Off stops them.
             panel.append(row('motion', 'Motion', [['auto', 'Auto'], ['full', 'Full'], ['reduced', 'Calm'], ['off', 'Off']]));
+            // Windows (4.202.0, asks 304 and 318): every window at once (ov-window.js), glass, solid or outlined.
+            panel.append(row('window', 'Windows', [['glass', 'Glass'], ['solid', 'Solid'], ['outline', 'Outline']]));
         }
         const signedIn = opts.signedIn != null ? !!opts.signedIn : /(?:^|; )ov_sso_hint=account/.test(document.cookie || '') || !!(root.localStorage && (() => { try { return root.localStorage.getItem('ov_token'); } catch (e) { return null; } })());
         const named = showing ? showing.name : ((PICKS.find(([id]) => id === cur) || [0, cur])[1]);
