@@ -26,10 +26,72 @@
     'use strict';
     if (root.OpenVibeComposer || typeof document === 'undefined') return;
 
+    // 4.203.0: the composer carries its own look (it was in thread.css), so any box on any page gets it: the Dock's
+    // Vibe and Code boxes included. Injected once, before the first box is joined.
+    const CSS = `.ovc-files { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
+.ovc-files[hidden] { display: none; }
+.ovc-file { position: relative; flex: none; display: flex; align-items: center; gap: 9px; max-width: 230px; height: 52px; padding: 5px 30px 5px 5px; box-sizing: border-box; border-radius: 14px;
+    border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: color-mix(in srgb, var(--text-primary, #fff) 4%, transparent); overflow: hidden; animation: ovc-in .2s cubic-bezier(.2, .9, .3, 1) both; }
+.ovc-file.is-bad { border-color: color-mix(in srgb, var(--live-red, #ef4444) 70%, transparent); }
+.ovc-file.is-up::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: calc(var(--p, 0) * 100%); background: var(--ovt-accent, var(--accent, #3b82f6)); transition: width .2s; }
+.ovc-file-th { flex: none; width: 40px; height: 40px; border-radius: 10px; object-fit: cover; background: #0b1220; }
+.ovc-file-ic { display: grid; place-items: center; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 16%, transparent); color: var(--ovt-accent, var(--accent, #3b82f6)); font-size: 11px; font-weight: 750; letter-spacing: .02em; }
+.ovc-file-t { min-width: 0; display: grid; line-height: 1.25; }
+.ovc-file-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; font-weight: 600; color: var(--text-primary, #e6edf7); }
+.ovc-file-s { font-size: 12px; color: var(--text-muted, #7386a3); white-space: nowrap; }
+.ovc-file.is-bad .ovc-file-s { color: var(--live-red, #ef4444); }
+.ovc-file-x, .ovc-file-b { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--text-secondary, #b4c0d4); cursor: pointer; }
+.ovc-file-b { top: auto; bottom: 4px; }
+.ovc-file-x:hover, .ovc-file-b:hover, .ovc-file-x:focus-visible, .ovc-file-b:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 10%, transparent)); color: var(--text-primary, #e6edf7); }
+.ovc-file-x svg, .ovc-file-b svg { width: 15px; height: 15px; }
+.ovc-dropping { border-color: var(--ovt-accent, var(--accent, #3b82f6)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent), 0 8px 30px rgba(0, 0, 0, .25); }
+.ovc-dropping::before { content: "Drop to attach"; position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; border-radius: inherit; background: color-mix(in srgb, var(--bg-card, #131c2e) 86%, var(--ovt-accent, var(--accent, #3b82f6))); color: var(--text-primary, #e6edf7); font-weight: 650; pointer-events: none; }
+.ovc-pop { position: absolute; z-index: 40; left: 6px; right: 6px; bottom: calc(100% + 8px); max-height: min(320px, 50vh); overflow: auto; padding: 6px; border-radius: 16px; border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18)));
+    background: var(--bg-card, #131c2e); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); animation: ovc-in .16s cubic-bezier(.2, .9, .3, 1) both; }
+.ovt.is-start .ovc-pop { bottom: auto; top: calc(100% + 8px); }
+.ovc-pop[hidden] { display: none; }
+.ovc-pop-i { display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px; width: 100%; min-height: 44px; padding: 6px 10px; box-sizing: border-box; border: 0; border-radius: 11px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovc-pop-i[aria-selected="true"], .ovc-pop-i:hover { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
+.ovc-pop-ic, .ovc-pop-av { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); object-fit: cover; }
+.ovc-pop-av { border-radius: 50%; }
+.ovc-pop-ic svg { width: 17px; height: 17px; }
+.ovc-pop-t { min-width: 0; display: grid; line-height: 1.3; }
+.ovc-pop-t b { font-weight: 650; font-size: 14px; color: var(--text-primary, #e6edf7); }
+.ovc-pop-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-muted, #7386a3); }
+.ovc-pop-tag { font-size: 11px; font-weight: 650; padding: 2px 7px; border-radius: 999px; color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); }
+.ovc-mic[aria-pressed="true"] { color: var(--live-red, #ef4444); background: color-mix(in srgb, var(--live-red, #ef4444) 14%, transparent); animation: ovc-listen 1.4s ease-in-out infinite; }
+.ovc-count { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted, #7386a3); }
+.ovc-count.is-low { color: var(--live-red, #ef4444); }
+.ovc-count[hidden] { display: none; }
+.ovt-composer.ovc-compact { padding: 6px 8px 6px 12px; border-radius: 18px; }
+.ovt-composer.ovc-compact .ovt-c-row { margin-top: 0; }
+.ovt-composer.ovc-compact .ovt-btn, .ovt-composer.ovc-compact .ovt-send { width: 36px; min-width: 36px; height: 36px; }
+@keyframes ovc-in { from { opacity: 0; transform: translateY(4px) scale(.98); } }
+@keyframes ovc-listen { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--live-red, #ef4444) 18%, transparent); } }
+html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data-ov-motion=off] .ovc-mic { animation: none; }
+.ovc-set { width: min(460px, calc(100vw - 24px)); max-height: min(640px, calc(100vh - 32px)); padding: 0; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .2)); border-radius: 20px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); }
+.ovc-set::backdrop { background: rgba(2, 6, 14, .55); }
+.ovc-set.ovc-set-in { width: auto; max-height: none; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.ovc-set-in .ovc-set-f { padding: 0; }
+.ovc-set-f { display: grid; gap: 14px; padding: 6px 18px 18px; }
+.ovc-set-h { display: flex; align-items: center; justify-content: space-between; margin: 0 -8px 0 0; font-size: 17px; }
+.ovc-set-g { margin: 0; padding: 0; border: 0; display: grid; gap: 6px; }
+.ovc-set-g legend { padding: 0 0 6px; font-weight: 650; font-size: 14px; }
+.ovc-set label { display: flex; align-items: center; gap: 10px; min-height: 40px; font-size: 14.5px; cursor: pointer; }
+.ovc-set small, .ovc-set-p { color: var(--text-muted, #7386a3); font-size: 12.5px; margin: 0; }
+.ovc-set input[type=radio], .ovc-set input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent, #3b82f6); }
+.ovc-set-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.ovc-set-l li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 4px 4px 4px 10px; border-radius: 10px; background: color-mix(in srgb, var(--text-primary, #fff) 4%, transparent); }
+.ovc-set-l span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary, #b4c0d4); font-size: 13px; }
+.ovc-set-add { display: grid; grid-template-columns: 110px 1fr auto; gap: 8px; align-items: start; }
+.ovc-set-add input, .ovc-set-add textarea { box-sizing: border-box; width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .25)); background: var(--bg-input, rgba(2, 6, 14, .35)); color: inherit; font: inherit; font-size: 14px; resize: vertical; }
+.ovc-set-btn { height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: inherit; font-weight: 650; cursor: pointer; }
+@media (max-width: 480px) { .ovc-set-add { grid-template-columns: 1fr; } .ovc-file { max-width: 200px; } }`;
+    function styles() { if (document.getElementById('ovc-styles')) return; const st = document.createElement('style'); st.id = 'ovc-styles'; st.textContent = CSS; document.head.appendChild(st); }
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': 'c882d11d85ff' };
+    const COMPOSER_REV = { 'ov-window.js': '625783527b4e' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
@@ -102,6 +164,7 @@
     // ── One box.
     function enhance(form) {
         if (!form || form.__ovc) return form && form.__ovc;
+        styles();
         const text = form.querySelector('[data-ovt-text]') || form.querySelector('textarea');
         if (!text) return null;
         const row = form.querySelector('.ovt-c-row');
@@ -111,11 +174,14 @@
         const inputs = () => [...form.querySelectorAll('input[type="file"]')];
         const mine = () => mods.filter((m) => !m.match || m.match(form));
         const uploader = () => { const m = mine().find((x) => typeof x.upload === 'function'); return m ? m.upload : null; };
-        const canFile = () => !!(inputs().length || uploader());
+        // data-ovc-no-files: the box handles its own files (the Dock's Vibe box uploads a picture as it is picked).
+        const noFiles = form.hasAttribute('data-ovc-no-files');
+        const canFile = () => !noFiles && !!(inputs().length || uploader());
         const maxFiles = Number(form.getAttribute('data-ovc-max-files')) || 10;
         const maxBytes = (Number(form.getAttribute('data-ovc-max-mb')) || 25) * 1048576;
         const files = [];
         let quiet = '';
+        const wasRequired = !!text.required;   // a box that was not required stays so (the Dock's Vibe box)
 
         const say = (s) => { if (!note) return; if (!quiet) quiet = note.textContent; note.textContent = s; clearTimeout(say.t); say.t = setTimeout(() => { note.textContent = quiet; quiet = ''; }, 5000); };
         const fire = () => text.dispatchEvent(new Event('input', { bubbles: true }));
@@ -143,6 +209,7 @@
             return acc.split(',').map((x) => x.trim().toLowerCase()).some((a) => !a || (a.startsWith('.') ? name.endsWith(a) : a.endsWith('/*') ? type.startsWith(a.slice(0, -1)) : type === a));
         };
         function syncInputs() {
+            if (noFiles) return;
             if (uploader()) { inputs().forEach((i) => { i.value = ''; }); return; }
             const [first, ...rest] = inputs();
             if (!first || typeof DataTransfer === 'undefined') return;
@@ -210,7 +277,7 @@
             else if (e.target.closest('[data-ovc-back]')) { const t = f.text; remove(f); ctx.insert(t); }
         });
         form.addEventListener('change', (e) => {
-            const i = e.target; if (!i || i.type !== 'file' || i.__ovcSync) return;
+            const i = e.target; if (noFiles || !i || i.type !== 'file' || i.__ovcSync) return;
             const picked = [...(i.files || [])];
             i.__ovcSync = true; i.value = ''; i.__ovcSync = false;
             add(picked);
@@ -243,8 +310,8 @@
         function syncSend() {
             if (!send || form.classList.contains('is-busy')) return;
             send.disabled = busy() || (!text.value.trim() && !files.length);
-            if (text.required && files.length) text.required = false;
-            else if (!files.length && !text.required && !form.classList.contains('is-busy')) text.required = true;
+            if (wasRequired && text.required && files.length) text.required = false;
+            else if (wasRequired && !files.length && !text.required && !form.classList.contains('is-busy')) text.required = true;
         }
         text.addEventListener('input', syncSend);
 

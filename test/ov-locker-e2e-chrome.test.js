@@ -6,6 +6,7 @@
 //   an item locked in Node for that person's public key opens in the browser; a stranger's locker cannot open it;
 //   a password-locked item opens with its password only; the recovery words open the locker too.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -93,16 +94,16 @@ const server = http.createServer((req, res) => {
         await b.evaluate(type('pass', PASS)); await b.evaluate(press('unlock'));
         await wait(5000);
         if (process.env.LOCKER_E2E_DEBUG) console.log('DEBUG', await b.evaluate("JSON.stringify({ card: (document.querySelector('.ovl-card') || {}).textContent, msg: (document.querySelector('dialog .ovl-msg') || {}).textContent, state: OVLocker.state() })"));
-        assert.deepStrictEqual(await b.evaluate('window.__opened'), ['for you only'], 'a new device unlocks with the passphrase and opens what was locked for this person');
+        await eventually(async () => assert.deepStrictEqual(await b.evaluate('window.__opened'), ['for you only'], 'a new device unlocks with the passphrase and opens what was locked for this person'));
         await b.evaluate(`(() => { OVLocker.open(document.getElementById('item'), { url: '/item/theirs' }); })()`);
         await wait(800);
-        assert.match(await b.evaluate("document.querySelector('.ovl-cardtitle').textContent"), /not locked for you/, 'someone else’s item says so');
+        await eventually(async () => assert.match(await b.evaluate("document.querySelector('.ovl-cardtitle').textContent"), /not locked for you/, 'someone else’s item says so'));
         await b.evaluate(`(() => { OVLocker.open(document.getElementById('item'), { url: '/item/pw', onOpen: (x) => window.__opened.push(new TextDecoder().decode(x)) }); })()`);
         await wait(300);
         await b.evaluate(type('item-pass', 'wrong one')); await b.evaluate(press('item-open')); await wait(3500);
-        assert.match(await b.evaluate("document.querySelector('.ovl-card .ovl-msg').textContent"), /does not open it/);
+        await eventually(async () => assert.match(await b.evaluate("document.querySelector('.ovl-card .ovl-msg').textContent"), /does not open it/));
         await b.evaluate(type('item-pass', 'hunter22 hunter22')); await b.evaluate(press('item-open')); await wait(3500);
-        assert.deepStrictEqual(await b.evaluate('window.__opened'), ['for you only', 'with a password'], 'the password item opens with its password');
+        await eventually(async () => assert.deepStrictEqual(await b.evaluate('window.__opened'), ['for you only', 'with a password'], 'the password item opens with its password'));
 
         // Device three: the recovery words open the locker too.
         const c = await h.openPage(browser, await browser.newContext(), { width: 1280 });
@@ -111,7 +112,7 @@ const server = http.createServer((req, res) => {
         await c.evaluate(press('other')); await wait(80);
         await c.evaluate(type('words', words.join('  ').toUpperCase())); await c.evaluate(press('unlock'));
         await wait(5000);
-        assert.strictEqual(await c.evaluate('OVLocker.state().fingerprint'), fp, 'the recovery words open the same locker');
+        await eventually(async () => assert.strictEqual(await c.evaluate('OVLocker.state().fingerprint'), fp, 'the recovery words open the same locker'));
         // A PRF-capable authenticator is stubbed at the browser boundary; sealing and opening remain real WebCrypto.
         // Hardware availability varies, so the unsupported case must leave setup usable too.
         const d = await h.openPage(browser, await browser.newContext(), { width: 390 });
@@ -130,7 +131,7 @@ const server = http.createServer((req, res) => {
         await wait(300); await d.evaluate(press('setup-passkey')); await wait(1500);
         const recovery = await d.evaluate("[...document.querySelectorAll('.ovl-words li')].map(x => x.textContent)");
         assert.strictEqual(recovery.length, 24);
-        assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=print]')"), true);
+        await eventually(async () => assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=print]')"), true));
         const ask = await d.evaluate("[...document.querySelectorAll('dialog .ovl-pair .ovl-label')].map(x => Number(x.textContent.replace(/\\D/g, '')))");
         await d.evaluate(type('w1', recovery[ask[0] - 1])); await d.evaluate(type('w2', recovery[ask[1] - 1])); await d.evaluate(press('make')); await wait(9000);
         assert.ok(stored.backups.passkey && stored.backups.recovery && !stored.backups.passphrase);
@@ -140,18 +141,18 @@ const server = http.createServer((req, res) => {
         await d.evaluate(press('done'));
         await d.evaluate('(() => { OVLocker.forget(); OVLocker.unlock(); })()'); await wait(300);
         await d.evaluate(press('unlock-passkey')); await wait(5000);
-        assert.strictEqual(await d.evaluate('OVLocker.state().fingerprint'), pkFp, 'PRF opens the same SDK-protected keys');
+        await eventually(async () => assert.strictEqual(await d.evaluate('OVLocker.state().fingerprint'), pkFp, 'PRF opens the same SDK-protected keys'));
         items.stream = (await locker.seal('streamed on device', { lock: 'people', keys: [{ subject: { type: 'user', id: 'usr_x' }, publicKey: stored.ecdh_public }] })).bytes;
-        assert.strictEqual(await d.evaluate("(async () => new Response(await OVLocker.openStream((await fetch('/item/stream')).body)).text())()"), 'streamed on device');
+        await eventually(async () => assert.strictEqual(await d.evaluate("(async () => new Response(await OVLocker.openStream((await fetch('/item/stream')).body)).text())()"), 'streamed on device'));
         await d.evaluate('(() => { OVLocker.forget(); OVLocker.unlock(); })()'); await wait(300);
         await d.evaluate(type('pass', PASS)); await d.evaluate(press('unlock')); await wait(300);
-        assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /recovery kit/);
-        assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=make-instead]')"), false, 'an existing passkey locker is never described as missing');
+        await eventually(async () => assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /recovery kit/));
+        await eventually(async () => assert.strictEqual(await d.evaluate("!!document.querySelector('[data-k=make-instead]')"), false, 'an existing passkey locker is never described as missing'));
         await d.evaluate("document.querySelector('dialog button[aria-label=Close]').click()");
         await d.evaluate(`(() => { OVLocker.forget(); navigator.credentials.create = async () => ({ getClientExtensionResults: () => ({}) }); OVLocker.setup(); })()`);
         await wait(300); await d.evaluate(press('setup-passkey')); await wait(300);
-        assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /does not support Locker/);
-        assert.strictEqual(await d.evaluate("document.querySelector('[data-k=setup-passkey]').disabled"), false);
+        await eventually(async () => assert.match(await d.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /does not support Locker/));
+        await eventually(async () => assert.strictEqual(await d.evaluate("document.querySelector('[data-k=setup-passkey]').disabled"), false));
         console.log('ov-locker-e2e-chrome: real crypto: make a locker, unlock it on a new device by passphrase and by recovery words, open what was locked for you, refuse what was not');
     } finally {
         await browser.close();

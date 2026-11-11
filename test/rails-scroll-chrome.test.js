@@ -4,6 +4,7 @@
 // where more is hidden and a position bar under them; data-ovk-scroll="drift" moves on its own while in view and stops for
 // good at the first touch; a strip with nothing hidden shows neither. Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -62,7 +63,7 @@ const server = http.createServer((req, res) => {
         await p.evaluate("document.getElementById('drift').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))");
         const c = await p.evaluate("document.getElementById('drift').scrollLeft");
         await wait(700);
-        assert.strictEqual(await p.evaluate("document.getElementById('drift').scrollLeft"), c, 'and stops at the first touch');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('drift').scrollLeft"), c, 'and stops at the first touch'));
         console.log('rails-scroll-chrome: edge fades, the position bar, drift that stops at a touch, nothing on a short strip');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((e) => { console.error(e); process.exit(1); });

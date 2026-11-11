@@ -5,6 +5,7 @@
 // another OpenVibe site carries it in #ovo=; the next page opens it again and takes the hash out of the address; a
 // source that is not first-party is never opened; a reload brings it back. Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -65,30 +66,30 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
         assert.ok(await until(p, `getComputedStyle(document.querySelector('.ovo-side')).transform === 'none'`), 'the sheet has finished opening');
         const side = await p.evaluate(`(() => { const s = document.querySelector('.ovo-side'); const r = s.getBoundingClientRect(); return { open: s.classList.contains('is-open'), bottom: Math.round(r.bottom), src: s.querySelector('iframe').getAttribute('src') }; })()`);
         assert.deepStrictEqual(side, { open: true, bottom: 844 - 58 - 10, src: `${base}/frame-chat` }, 'the chat sheet, above the app bar');
-        assert.strictEqual(await p.evaluate('document.body.style.position'), 'fixed', 'the chat sheet locks the page');
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.body.style.position'), 'fixed', 'the chat sheet locks the page'));
         await p.evaluate(`document.querySelector('[data-ovo="side"]').click(), true`);
-        assert.strictEqual(await p.evaluate('document.body.style.position'), '', 'closing the chat sheet unlocks the page');
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.body.style.position'), '', 'closing the chat sheet unlocks the page'));
 
         // A link to another OpenVibe site carries it; one on this site does not.
         const away = await p.evaluate(`OVOverlay.handoffUrl('https://openvibe.games/achievements')`);
         assert.match(away, /^https:\/\/openvibe\.games\/achievements#ovo=[A-Za-z0-9_-]+$/);
         const carried = JSON.parse(Buffer.from(away.split('#ovo=')[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
         assert.deepStrictEqual(carried.map((d) => [d.id, d.title, d.live, d.src, d.side && d.side.src]), [['live', 'maticus', true, `${base}/frame-a`, `${base}/frame-chat`]]);
-        assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('${base}/b')`), `${base}/b`, 'the same site: no hash');
-        assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('https://example.com/x')`), 'https://example.com/x', 'not an OpenVibe site: no hash');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('${base}/b')`), `${base}/b`, 'the same site: no hash'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('https://example.com/x')`), 'https://example.com/x', 'not an OpenVibe site: no hash'));
 
         // Arriving with the hash: the card opens and the hash leaves the address.
         const data = away.split('#ovo=')[1];
         const q = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 900 });
         await q.goto(`${base}/b#ovo=${data}`, { maxMs: 5000 });
         assert.ok(await until(q, `!!document.querySelector('.ovo-card')`), 'the carried card opens');
-        assert.strictEqual(await q.evaluate(`location.hash`), '', 'the hash is gone from the address');
-        assert.strictEqual(await q.evaluate(`document.querySelector('.ovo-card .ovo-name').textContent`), 'maticus');
+        await eventually(async () => assert.strictEqual(await q.evaluate(`location.hash`), '', 'the hash is gone from the address'));
+        await eventually(async () => assert.strictEqual(await q.evaluate(`document.querySelector('.ovo-card .ovo-name').textContent`), 'maticus'));
         // Reload: it comes back (this site's session).
         await q.goto(`${base}/b`, { maxMs: 5000 });
         assert.ok(await until(q, `!!document.querySelector('.ovo-card')`), 'a reload brings it back');
         await q.evaluate(`OVOverlay.close('live'), true`);
-        assert.strictEqual(await q.evaluate(`sessionStorage.getItem('ov-overlay')`), null, 'closed: nothing kept');
+        await eventually(async () => assert.strictEqual(await q.evaluate(`sessionStorage.getItem('ov-overlay')`), null, 'closed: nothing kept'));
 
         // A source that is not first-party is never opened, from the hash or from a call.
         const evil = Buffer.from(JSON.stringify([{ id: 'x', src: 'https://evil.example/steal', title: 'x' }])).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -96,15 +97,15 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
         await e.goto(`${base}/c#ovo=${evil}`, { maxMs: 5000 });
         await until(e, `!!window.OVOverlay`);
         await wait(200);
-        assert.strictEqual(await e.evaluate(`document.querySelectorAll('.ovo-card').length`), 0, 'a foreign source is refused');
-        assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'javascript:alert(1)' })`), null);
+        await eventually(async () => assert.strictEqual(await e.evaluate(`document.querySelectorAll('.ovo-card').length`), 0, 'a foreign source is refused'));
+        await eventually(async () => assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'javascript:alert(1)' })`), null));
         for (const host of ['portal--alex.openvibe.link', 'portal--alex.openvibe.website', 'nested.portal--alex.openvibe.link', 'unknown.openvibe.link']) {
-            assert.strictEqual(await e.evaluate(`OVOverlay.safeSrc('https://${host}/')`), null, host);
-            assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('https://${host}/')`), `https://${host}/`, 'no card carried to a share');
+            await eventually(async () => assert.strictEqual(await e.evaluate(`OVOverlay.safeSrc('https://${host}/')`), null, host));
+            await eventually(async () => assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('https://${host}/')`), `https://${host}/`, 'no card carried to a share'));
         }
         for (const host of ['openvibe.link', 'connect.openvibe.link']) assert.ok(await e.evaluate(`OVOverlay.safeSrc('https://${host}/')`), host);
-        assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'http://openvibe.live/embed/x' })`), null, 'plain http to another site is refused');
-        assert.ok(await e.evaluate(`!!OVOverlay.safeSrc('https://openvibe.live/embed/maticus')`), "Live's embed is first-party");
+        await eventually(async () => assert.strictEqual(await e.evaluate(`OVOverlay.open({ src: 'http://openvibe.live/embed/x' })`), null, 'plain http to another site is refused'));
+        await eventually(async () => assert.ok(await e.evaluate(`!!OVOverlay.safeSrc('https://openvibe.live/embed/maticus')`), "Live's embed is first-party"));
         console.log('overlay-chrome: ok');
     } finally {
         await browser.close();

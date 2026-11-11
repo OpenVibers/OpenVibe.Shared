@@ -5,6 +5,7 @@
 // locker; making a locker refuses a weak or mismatched passphrase, shows 24 words once and checks two of them; and,
 // the point of all of it, the passphrase and the recovery words never leave the page, and nothing is stored.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -84,51 +85,51 @@ const server = http.createServer((req, res) => {
         // A password lock: only its password opens it; the card says so plainly.
         await p.evaluate(openItem('password:hunter22:the notes'));
         await wait(150);
-        assert.match(await p.evaluate("document.querySelector('.ovl-cardtitle').textContent"), /is locked/);
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('.ovl-cardtitle').textContent"), /is locked/));
         await p.evaluate(type('item-pass', 'wrong')); await p.evaluate(submit('item-open')); await wait(120);
-        assert.match(await p.evaluate("document.querySelector('.ovl-card .ovl-msg').textContent"), /does not open it/);
-        assert.deepStrictEqual(await p.evaluate('window.__opened'), []);
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('.ovl-card .ovl-msg').textContent"), /does not open it/));
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__opened'), []));
         await p.evaluate(type('item-pass', 'hunter22')); await p.evaluate(submit('item-open')); await wait(120);
-        assert.deepStrictEqual(await p.evaluate('window.__opened'), ['the notes'], 'the right password opens it');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__opened'), ['the notes'], 'the right password opens it'));
 
         // A link lock without its key, then with it.
         await p.evaluate(openItem('link::linked'));
         await wait(120);
-        assert.match(await p.evaluate("document.querySelector('.ovl-cardtitle').textContent"), /missing its key/);
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('.ovl-cardtitle').textContent"), /missing its key/));
         const key = 'A'.repeat(43);
         await p.evaluate(openItem('link::linked', `, link: 'https://x.test/p/1#k=${key}'`));
         await wait(120);
-        assert.deepStrictEqual(await p.evaluate('window.__opened'), ['the notes', 'linked'], 'the key after #k= opens it by itself');
-        assert.strictEqual(await p.evaluate("OVLocker.keyFromLink('https://x.test/#k=short')"), null, 'a key that is not 32 bytes is no key');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__opened'), ['the notes', 'linked'], 'the key after #k= opens it by itself'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("OVLocker.keyFromLink('https://x.test/#k=short')"), null, 'a key that is not 32 bytes is no key'));
 
         // A people lock: unlock the locker (wrong passphrase first), then it opens.
         await p.evaluate(openItem('people::for you'));
         await wait(120);
         await p.evaluate(submit('item-unlock')); await wait(300);
         await p.evaluate(type('pass', 'nope')); await p.evaluate(submit('unlock')); await wait(150);
-        assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /does not open your locker/);
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /does not open your locker/));
         await p.evaluate(type('pass', PASS)); await p.evaluate(submit('unlock')); await wait(400);
-        assert.strictEqual(await p.evaluate('OVLocker.state().unlocked'), true);
-        assert.deepStrictEqual(await p.evaluate('window.__opened'), ['the notes', 'linked', 'for you'], 'unlocked, it opens');
+        await eventually(async () => assert.strictEqual(await p.evaluate('OVLocker.state().unlocked'), true));
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__opened'), ['the notes', 'linked', 'for you'], 'unlocked, it opens'));
         await p.evaluate('OVLocker.forget()');
-        assert.strictEqual(await p.evaluate('OVLocker.state().unlocked'), false, 'forget() drops the keys');
+        await eventually(async () => assert.strictEqual(await p.evaluate('OVLocker.state().unlocked'), false, 'forget() drops the keys'));
 
         // Making a locker: weak, then mismatched, then good; 24 words; two checked; saved locked.
         await p.evaluate('(() => { OVLocker.setup(); })()');
         await wait(300);
         await p.evaluate(type('pass', 'short')); await p.evaluate(type('pass2', 'short')); await p.evaluate(submit('next')); await wait(80);
-        assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /longer/, 'a weak passphrase is refused');
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /longer/, 'a weak passphrase is refused'));
         await p.evaluate(type('pass', 'violet lantern river cobalt')); await p.evaluate(type('pass2', 'violet lantern river cobalT')); await p.evaluate(submit('next')); await wait(80);
-        assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /do not match/);
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /do not match/));
         await p.evaluate(type('pass2', 'violet lantern river cobalt')); await p.evaluate(submit('next')); await wait(300);
         const words = await p.evaluate("[...document.querySelectorAll('.ovl-words li')].map((li) => li.textContent)");
         assert.strictEqual(words.length, 24, 'the kit is 24 words');
         const labels = await p.evaluate("[...document.querySelectorAll('dialog .ovl-pair .ovl-label')].map((l) => Number(l.textContent.replace(/\\D/g, '')))");
         await p.evaluate(type('w1', 'wrong')); await p.evaluate(type('w2', 'words')); await p.evaluate(submit('make')); await wait(100);
-        assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /not the words/);
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('dialog .ovl-msg').textContent"), /not the words/));
         assert.ok(!sent.some((s) => s.startsWith('PUT')), 'nothing is saved before the kit is checked');
         await p.evaluate(type('w1', words[labels[0] - 1])); await p.evaluate(type('w2', words[labels[1] - 1])); await p.evaluate(submit('make')); await wait(400);
-        assert.strictEqual(await p.evaluate(`${q('fingerprint')}.textContent`), 'cedar ember lumen onyx fable maple gecko iris', 'the fingerprint, eight words');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${q('fingerprint')}.textContent`), 'cedar ember lumen onyx fable maple gecko iris', 'the fingerprint, eight words'));
         const put = sent.find((s) => s.startsWith('PUT /api/v1/me/keys'));
         assert.ok(put, 'the locked copies are saved');
         assert.ok(!put.includes('violet') && !put.includes('lantern'), 'the passphrase never leaves the page');
@@ -138,7 +139,7 @@ const server = http.createServer((req, res) => {
         assert.ok(!put.includes('"d":"private"') && !put.includes('private'), 'nor the private keys in the clear');
         assert.match(put, /"backups":\{"passphrase":\{"format":"locker.envelope.v1"/, 'what is saved is two Locker envelopes');
         assert.match(put, /"self_signature":"sig"/, 'with the keys\u2019 self-signature (the SDK\u2019s fingerprint_signature)');
-        assert.strictEqual(await p.evaluate('localStorage.length + sessionStorage.length'), 0, 'nothing is stored in the browser');
+        await eventually(async () => assert.strictEqual(await p.evaluate('localStorage.length + sessionStorage.length'), 0, 'nothing is stored in the browser'));
 
         // Lost both: a plain warning, a checkbox that gates the button, then a new locker saved with reset: true.
         await p.evaluate('OVLocker.forget()');
@@ -146,8 +147,8 @@ const server = http.createServer((req, res) => {
         await p.evaluate('(() => { OVLocker.unlock(); })()'); await wait(300);
         await p.evaluate(submit('other')); await wait(80);
         await p.evaluate(submit('lost')); await wait(80);
-        assert.match(await p.evaluate("document.querySelector('dialog .ovl-body').textContent"), /cannot be opened again/, 'it says what is lost');
-        assert.strictEqual(await p.evaluate(`${q('lost-go')}.disabled`), true, 'nothing starts until the person says they understand');
+        await eventually(async () => assert.match(await p.evaluate("document.querySelector('dialog .ovl-body').textContent"), /cannot be opened again/, 'it says what is lost'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${q('lost-go')}.disabled`), true, 'nothing starts until the person says they understand'));
         await p.evaluate(`${q('lost-ok')}.click()`); await p.evaluate(submit('lost-go')); await wait(400);
         await p.evaluate(type('pass', 'amber window tide falcon')); await p.evaluate(type('pass2', 'amber window tide falcon')); await p.evaluate(submit('next')); await wait(300);
         const w2 = await p.evaluate("[...document.querySelectorAll('.ovl-words li')].map((li) => li.textContent)");
@@ -173,7 +174,7 @@ const server = http.createServer((req, res) => {
         await wait(300);
         authError = { error: 'locker.proof_required' };
         await p.evaluate(type('pass', PASS)); await p.evaluate(submit('unlock')); await wait(150);
-        assert.strictEqual(new URL(await p.evaluate("document.querySelector('dialog .ovl-msg a').href")).searchParams.get('reauth'), '1');
+        await eventually(async () => assert.strictEqual(new URL(await p.evaluate("document.querySelector('dialog .ovl-msg a').href")).searchParams.get('reauth'), '1'));
         authError = null;
 
         // A phone: the kit fits, no sideways scroll.
@@ -182,8 +183,8 @@ const server = http.createServer((req, res) => {
         await phone.evaluate('(() => { OVLocker.setup(); })()');
         await wait(300);
         await phone.evaluate(type('pass', 'violet lantern river cobalt')); await phone.evaluate(type('pass2', 'violet lantern river cobalt')); await phone.evaluate(submit('next')); await wait(300);
-        assert.strictEqual(await phone.evaluate('document.documentElement.scrollWidth'), 390);
-        assert.ok(await phone.evaluate("(() => { const d = document.querySelector('dialog').getBoundingClientRect(); return [...document.querySelectorAll('dialog input')].every((i) => i.getBoundingClientRect().right <= d.right + 0.5); })()"), 'every field fits inside the sheet');
+        await eventually(async () => assert.strictEqual(await phone.evaluate('document.documentElement.scrollWidth'), 390));
+        await eventually(async () => assert.ok(await phone.evaluate("(() => { const d = document.querySelector('dialog').getBoundingClientRect(); return [...document.querySelectorAll('dialog input')].every((i) => i.getBoundingClientRect().right <= d.right + 0.5); })()"), 'every field fits inside the sheet'));
         await phone.close();
         console.log('ov-locker-chrome: password, link and people locks; making and unlocking a locker; nothing secret leaves the page or is stored; the phone ok');
     } finally {

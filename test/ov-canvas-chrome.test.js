@@ -4,6 +4,7 @@
 // panel back, and a wide table never makes a phone's page scroll sideways.
 //   node test/ov-canvas-chrome.test.js
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -61,42 +62,42 @@ const server = http.createServer((req, res) => {
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(200);
         const C = "document.getElementById('c')";
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-title').textContent`), 'Lisbon, 14–17 November');
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('h3').textContent`), 'Lisbon, 14–17 November', 'a heading');
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-metric-v').textContent`), '€612', 'a metric');
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-when').textContent`), '5 min ago', 'when it changed, in words');
-        assert.deepStrictEqual(await p.evaluate(`[...${C}.querySelectorAll('.ovc-check input')].map((i) => i.checked)`), [true, false], 'a checklist');
-        assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('.ovc-table tbody tr').length`), 2, 'a table');
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-table td.is-num').textContent`), '118', 'numbers align as numbers');
-        assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('svg').length`), 2, 'two charts');
-        assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('svg polyline').length`), 1, 'a line');
-        assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('svg rect').length`), 2, 'grouped bars');
-        assert.ok(await p.evaluate(`${C}.querySelector('table.ovc-sr').textContent.includes('240€')`), "the chart's numbers are a table for a screen reader");
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-title').textContent`), 'Lisbon, 14–17 November'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('h3').textContent`), 'Lisbon, 14–17 November', 'a heading'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-metric-v').textContent`), '€612', 'a metric'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-when').textContent`), '5 min ago', 'when it changed, in words'));
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(`[...${C}.querySelectorAll('.ovc-check input')].map((i) => i.checked)`), [true, false], 'a checklist'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('.ovc-table tbody tr').length`), 2, 'a table'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-table td.is-num').textContent`), '118', 'numbers align as numbers'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('svg').length`), 2, 'two charts'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('svg polyline').length`), 1, 'a line'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('svg rect').length`), 2, 'grouped bars'));
+        await eventually(async () => assert.ok(await p.evaluate(`${C}.querySelector('table.ovc-sr').textContent.includes('240€')`), "the chart's numbers are a table for a screen reader"));
         // Only openvibe.media pictures, only https links, never markup, never a block it does not know.
-        assert.strictEqual(await p.evaluate("[...document.querySelectorAll('img')].every((i) => i.getAttribute('src').startsWith('https://openvibe.media/'))"), true, 'only openvibe.media pictures (one that fails to load is removed)');
+        await eventually(async () => assert.strictEqual(await p.evaluate("[...document.querySelectorAll('img')].every((i) => i.getAttribute('src').startsWith('https://openvibe.media/'))"), true, 'only openvibe.media pictures (one that fails to load is removed)'));
         assert.deepStrictEqual(await p.evaluate(`[...${C}.querySelectorAll('a')].map((a) => [a.getAttribute('href'), a.target, a.rel, a.querySelector('span').textContent])`),
             [['https://openvibe.video/watch?v=AbCdEfGhIjK', '_blank', 'noopener noreferrer nofollow', 'openvibe.video']], 'a link shows its host; a javascript: link is not drawn');
-        assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('script, iframe, style:not(#ov-canvas-css)').length`), 0, 'no script, frame or style inside');
-        assert.strictEqual(await p.evaluate('window.__xss === undefined'), true, 'text is text');
-        assert.match(await p.evaluate(`${C}.querySelector('.ovc-text').textContent`), /^<script>window.__xss = 1<\/script>/, 'shown as written');
-        assert.strictEqual(await p.evaluate(`${C}.textContent.includes('never')`), false, 'an html block and a running button are left out');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelectorAll('script, iframe, style:not(#ov-canvas-css)').length`), 0, 'no script, frame or style inside'));
+        await eventually(async () => assert.strictEqual(await p.evaluate('window.__xss === undefined'), true, 'text is text'));
+        await eventually(async () => assert.match(await p.evaluate(`${C}.querySelector('.ovc-text').textContent`), /^<script>window.__xss = 1<\/script>/, 'shown as written'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.textContent.includes('never')`), false, 'an html block and a running button are left out'));
         // A button only asks; a tick tells; a canvas without the callbacks only shows.
-        assert.deepStrictEqual(await p.evaluate(`[...${C}.querySelectorAll('.ovc-btn')].map((b) => b.textContent)`), ['Book Casa A']);
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(`[...${C}.querySelectorAll('.ovc-btn')].map((b) => b.textContent)`), ['Book Casa A']));
         await p.evaluate(`${C}.querySelector('.ovc-btn').click()`);
-        assert.deepStrictEqual(await p.evaluate('window.__asked'), ['Book Casa A'], "the label goes to the agent as the person's message");
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-btn').textContent`), 'Sent');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__asked'), ['Book Casa A'], "the label goes to the agent as the person's message"));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-btn').textContent`), 'Sent'));
         await p.evaluate(`${C}.querySelectorAll('.ovc-check input')[1].click()`);
-        assert.deepStrictEqual(await p.evaluate('window.__checked'), [['todo', 'hotel', true]], 'the tick names the block and the item');
-        assert.strictEqual(await p.evaluate("document.querySelector('#ro .ovc-btn').disabled && document.querySelector('#ro .ovc-check input').disabled"), true, 'no callbacks, nothing to press');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__checked'), [['todo', 'hotel', true]], 'the tick names the block and the item'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('#ro .ovc-btn').disabled && document.querySelector('#ro .ovc-check input').disabled"), true, 'no callbacks, nothing to press'));
         // An older version never rolls the panel back; a newer one replaces it.
-        assert.strictEqual(await p.evaluate(`OVCanvas.render(${C}, { ...window.__DOC, version: 2, title: 'Old' })`), 3);
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-title').textContent`), 'Lisbon, 14–17 November');
-        assert.strictEqual(await p.evaluate(`OVCanvas.render(${C}, { ...window.__DOC, version: 4, title: 'Newer' })`), 4);
-        assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-title').textContent`), 'Newer');
-        assert.strictEqual(await p.evaluate("OVCanvas.valid({ canvas: 'something-else', version: 1, blocks: [] })"), false);
+        await eventually(async () => assert.strictEqual(await p.evaluate(`OVCanvas.render(${C}, { ...window.__DOC, version: 2, title: 'Old' })`), 3));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-title').textContent`), 'Lisbon, 14–17 November'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`OVCanvas.render(${C}, { ...window.__DOC, version: 4, title: 'Newer' })`), 4));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${C}.querySelector('.ovc-title').textContent`), 'Newer'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("OVCanvas.valid({ canvas: 'something-else', version: 1, blocks: [] })"), false));
         // A phone: the wide table scrolls in its own box; the page never scrolls sideways.
-        assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'no sideways scroll at 390 px');
-        assert.ok(await p.evaluate(`${C}.querySelector('.ovc-table').scrollWidth > ${C}.querySelector('.ovc-table').clientWidth`), 'the table scrolls inside');
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'no sideways scroll at 390 px'));
+        await eventually(async () => assert.ok(await p.evaluate(`${C}.querySelector('.ovc-table').scrollWidth > ${C}.querySelector('.ovc-table').clientWidth`), 'the table scrolls inside'));
         if (process.env.OV_SHOT) {
             const { data } = await p.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true });
             fs.writeFileSync(process.env.OV_SHOT, Buffer.from(data, 'base64'));

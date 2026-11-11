@@ -18,6 +18,10 @@
  *                  and a page move close it (document-level, so boost-swapped pages need no wiring)
  *   card previews  .ovk-card video[data-src]: a muted loop while the card is hovered or focused (pointers only, never
  *                  under reduced motion; the file loads only then)
+ *   hold           .ovk-btn[data-hold="1200"]: press and hold to confirm (the fill runs; letting go early cancels; Enter or
+ *                  Space held works the same); the click goes through only after the hold
+ *   busy(button, work)   shows the work on the button: busy (the words stay, the wait beside them, aria-busy), then a
+ *                  check for a moment, or a shake and red when it failed; work is a promise or a function returning one
  *
  * Idempotent and safe on a page that uses none of it. docs/kit.md describes the pieces.
  */
@@ -291,7 +295,68 @@
     }
 
 
-    const api = { enhance };
+    /** The work a button started, shown on the button. Resolves with the work's value; rethrows its error. */
+    async function busy(btn, work) {
+        if (!btn) return typeof work === 'function' ? work() : work;
+        const wait = document.createElement('span');
+        wait.className = 'ovk-btn-wait'; wait.setAttribute('aria-hidden', 'true'); wait.innerHTML = '<i></i><i></i><i></i>';
+        const wasDisabled = btn.disabled;
+        btn.dataset.state = 'busy'; btn.setAttribute('aria-busy', 'true'); btn.appendChild(wait);
+        if ('disabled' in btn) btn.disabled = true;
+        const settle = (state) => {
+            wait.remove(); btn.removeAttribute('aria-busy');
+            if ('disabled' in btn) btn.disabled = wasDisabled;
+            btn.dataset.state = state;
+            setTimeout(() => { if (btn.dataset.state === state) delete btn.dataset.state; }, state === 'done' ? 1200 : 1600);
+        };
+        try {
+            const out = await (typeof work === 'function' ? work() : work);
+            settle('done');
+            return out;
+        } catch (e) { settle('error'); throw e; }
+    }
+
+    // Hold to confirm: document-level, so buttons added later need no wiring.
+    function bindHold() {
+        if (typeof document === 'undefined' || root.__ovkHoldBound) return;
+        root.__ovkHoldBound = true;
+        let held = null;
+        const stop = (fire) => {
+            if (!held) return;
+            const { btn, raf, ok } = held; held = null;
+            cancelAnimationFrame(raf); btn.classList.remove('is-holding'); btn.style.removeProperty('--ovk-hold');
+            if (fire && ok) { btn.dataset.ovkHeld = '1'; btn.click(); }
+        };
+        const start = (btn) => {
+            const ms = Math.max(400, Math.min(4000, Number(btn.getAttribute('data-hold')) || 1200));
+            const t0 = performance.now();
+            held = { btn, raf: 0, ok: false };
+            btn.classList.add('is-holding');
+            const tick = (t) => {
+                if (!held || held.btn !== btn) return;
+                const f = Math.min(1, (t - t0) / ms);
+                btn.style.setProperty('--ovk-hold', `${Math.round(f * 100)}%`);
+                if (f >= 1) { held.ok = true; stop(true); return; }
+                held.raf = requestAnimationFrame(tick);
+            };
+            held.raf = requestAnimationFrame(tick);
+        };
+        document.addEventListener('pointerdown', (e) => { const b = e.target.closest && e.target.closest('.ovk-btn[data-hold]'); if (b && !b.disabled && e.button === 0) start(b); });
+        document.addEventListener('pointerup', () => stop(false));
+        document.addEventListener('pointercancel', () => stop(false));
+        document.addEventListener('keydown', (e) => { const b = e.target.closest && e.target.closest('.ovk-btn[data-hold]'); if (b && !e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); start(b); } });
+        document.addEventListener('keyup', (e) => { if (e.key === 'Enter' || e.key === ' ') stop(false); });
+        // A plain click on a hold button does nothing until the hold has run.
+        document.addEventListener('click', (e) => {
+            const b = e.target.closest && e.target.closest('.ovk-btn[data-hold]');
+            if (!b) return;
+            if (b.dataset.ovkHeld === '1') { delete b.dataset.ovkHeld; return; }
+            e.preventDefault(); e.stopImmediatePropagation();
+        }, true);
+    }
+    bindHold();
+
+    const api = { enhance, busy };
     root.OpenVibeKitWeb = api;
     if (typeof module === 'object' && module.exports) { module.exports = api; return; }
     if (typeof document !== 'undefined') {

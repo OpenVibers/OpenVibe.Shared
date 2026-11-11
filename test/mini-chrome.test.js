@@ -5,6 +5,7 @@
 // draws nothing there; Close stops and forgets; on a phone it is a bar across the bottom; a page's own video starting
 // closes it.
 const assert = require('node:assert/strict');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -80,7 +81,7 @@ const server = http.createServer((req, res) => {
         await page.evaluate(`document.querySelector('.ovmini-text').click()`);
         assert.ok(await until(`location.pathname === '/watch' && !!document.getElementById('v') && document.getElementById('v').readyState >= 1`), 'back on its page');
         assert.ok(await until(`document.getElementById('v').currentTime >= ${at - 0.05}`), 'the page takes the second back');
-        assert.deepEqual(await page.evaluate(`[!!document.querySelector('.ovmini'), OpenVibeMini.record()]`), [false, null], 'no small player on the video\'s own page, and nothing left written down');
+        await eventually(async () => assert.deepEqual(await page.evaluate(`[!!document.querySelector('.ovmini'), OpenVibeMini.record()]`), [false, null], 'no small player on the video\'s own page, and nothing left written down'));
 
         // Close stops and forgets.
         await take();
@@ -89,13 +90,13 @@ const server = http.createServer((req, res) => {
         await page.evaluate(`document.querySelector('.ovmini [data-m="close"]').click()`);
         assert.ok(await until(`!document.querySelector('.ovmini') && OpenVibeMini.record() === null`), 'closed and forgotten');
         await page.goto(`${base}/second`, { maxMs: 6000 }); await wait(300);
-        assert.equal(await page.evaluate(`!!document.querySelector('.ovmini')`), false, 'and it does not come back on the next page');
+        await eventually(async () => assert.equal(await page.evaluate(`!!document.querySelector('.ovmini')`), false, 'and it does not come back on the next page'));
 
         // A file that cannot be played here: the card says so and keeps the way back; nothing follows to the next page.
         await page.goto(`${base}/second`, { maxMs: 6000 });
         await page.evaluate(`OpenVibeMini.open({ page: '/watch', src: '/no-such-file.webm', title: 'The harbour at night', by: 'Kim', t: 3, playing: true })`);
         assert.ok(await until(`!!document.querySelector('.ovmini.is-broken')`), 'a file that cannot play is said, not hidden');
-        assert.deepEqual(await page.evaluate(`(() => { const e = document.querySelector('.ovmini'); return [e.querySelector('.ovmini-by').textContent, e.querySelector('[data-m="play"]').hidden, e.querySelector('.ovmini-text').getAttribute('href'), OpenVibeMini.record()]; })()`), ['Open its page to keep watching', true, '/watch', null]);
+        await eventually(async () => assert.deepEqual(await page.evaluate(`(() => { const e = document.querySelector('.ovmini'); return [e.querySelector('.ovmini-by').textContent, e.querySelector('[data-m="play"]').hidden, e.querySelector('.ovmini-text').getAttribute('href'), OpenVibeMini.record()]; })()`), ['Open its page to keep watching', true, '/watch', null]));
         await page.evaluate(`OpenVibeMini.close()`);
 
         // A phone: one bar across the bottom, the picture at its left, 44 px buttons.
