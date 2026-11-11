@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.209.0 — 2026-11-11
+
+**The Quest guide on any page, and the current Live step in the Dock's agent view.**
+
+- **The Quest guide for browser pages (#464).** Pages can start the Quest guide from an opaque `qstep` link once the host
+  resolves the step; it waits for late controls and checks the Events-backed completion read, and the shared navbar
+  starts it from its own sign-in.
+- **The Dock's agent view shows the current Live step (#466)** when the stream supplies one; older streams keep showing
+  the task without a step line.
+
 ## 4.208.0 — 2026-11-11
 
 **One move engine for every floating thing: the picture-in-picture's drag, flick, tuck, pinch, corner and place, now

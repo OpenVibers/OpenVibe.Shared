@@ -3,14 +3,16 @@
 // OpenVibe.Live home card, marks the next step, tolerates a missing `more`, and redraws on refresh. The guide's
 // own test stays here too: it points at a hooked control and finishes on its event.
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
 const { parseHTML } = require('linkedom');
-const { startQuestGuide } = require('../guide');
+const { startQuestGuide, startFromLocation } = require('../guide');
 const files = require('../files');
 
 const { window, document } = parseHTML('<!doctype html><html><head></head><body></body></html>');
 global.window = window;
 global.document = document;
-const { mount } = require('../quest');
+const { mount, mountAll } = require('../quest');
 
 const step = (site, sentence, extra = {}) => ({ site: `openvibe.${site}`, sentence, href: `https://openvibe.${site}/`, ...extra });
 const quest = (extra = {}) => ({
@@ -29,7 +31,14 @@ function host() {
 
 (async () => {
     assert.ok(files.isBrowserFile('quest.js'), 'sites serve quest.js');
+    assert.ok(files.isBrowserFile('guide.js'), 'sites serve guide.js');
     assert.ok(files.isBrowserFile('quest.css'), 'sites serve quest.css');
+    const declarativeHost = host();
+    declarativeHost.setAttribute('data-ov-quest', '');
+    const [declarative] = mountAll({ load: async () => ({ signed_in: false, quest: quest() }) });
+    assert.strictEqual(declarative, declarativeHost._ovq);
+    await declarative.refresh();
+    assert.equal(declarative.el.hidden, false);
 
     // Signed out: today's quest, the three doors, no streak and no progress.
     const out = mount(host(), { load: async () => ({ signed_in: false, quest: quest(), more: { quests: 24, sites: 8 } }) });
@@ -143,6 +152,39 @@ function host() {
     assert.equal(note.children[0].href, '/next');
     stop();
     assert.equal(note.removed, true);
+
+    let requested = null;
+    const stopFromLink = await startFromLocation({
+        location: { href: 'https://openvibe.pics/?qstep=AbC_0123456789' }, document: guideRoot,
+        load: async (id) => { requested = id; return { step: { hook: 'pics.upload', help: 'Choose a picture', event_type: 'mediahub.picture.uploaded' } }; },
+    });
+    assert.equal(requested, 'AbC_0123456789');
+    assert.equal(control.arrived, true);
+    stopFromLink();
+    let mountedLater = false;
+    const delayedRoot = { ...guideRoot, querySelector: () => mountedLater ? control : null,
+        documentElement: {}, defaultView: { MutationObserver: class {
+            constructor(notify) { this.notify = notify; }
+            observe() { mountedLater = true; this.notify(); }
+            disconnect() {}
+        } } };
+    const stopDelayed = await startFromLocation({ location: { href: 'https://openvibe.pics/?qstep=AbC_0123456789' },
+        document: delayedRoot, load: async () => ({ step: { hook: 'pics.upload', help: 'Choose a picture', event_type: 'mediahub.picture.uploaded' } }) });
+    assert.equal(mountedLater, true);
+    stopDelayed();
+    let observed = false;
+    const stopPolled = startQuestGuide({ root: guideRoot,
+        step: { hook: 'pics.upload', help: 'Choose a picture', event_type: 'mediahub.picture.uploaded' },
+        checkDone: async () => ({ step: { done: true } }), pollMs: 1, onDone: () => { observed = true; } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(observed, true, 'the guide follows the Events-backed step read');
+    stopPolled();
+    requested = null;
+    await startFromLocation({ location: { href: 'https://openvibe.pics/?qstep=plain text' }, document: guideRoot, load: async (id) => { requested = id; } });
+    assert.equal(requested, null);
+    const browser = { document: guideRoot };
+    vm.runInNewContext(fs.readFileSync(require.resolve('../guide'), 'utf8'), { window: browser });
+    assert.equal(typeof browser.OpenVibeQuestGuide.startFromLocation, 'function');
 
     process.stdout.write('quest card and guide passed\n');
 })().catch((err) => { process.stderr.write(String(err.stack || err) + '\n'); process.exit(1); });

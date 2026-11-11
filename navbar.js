@@ -607,7 +607,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '0dbfc679c2a2', 'dock.js': '2dc02f5569ac', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'bottom.js': 'b9f708d04350', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': 'c72c0e31505d', 'ov-home.js': 'cdacf9b1154b', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'b5a78ad67810', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '0dbfc679c2a2', 'dock.js': '0ec4ae476c63', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'bottom.js': 'b9f708d04350', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': 'c72c0e31505d', 'ov-home.js': 'cdacf9b1154b', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'b5a78ad67810', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1939,6 +1939,26 @@
         }
     }
 
+    let _questGuideStarted = false;
+    function startQuestGuide() {
+        if (_questGuideStarted || !_config.token || !root.location || !/[?&]qstep=/.test(root.location.search || '')) return;
+        _questGuideStarted = true;
+        const script = document.createElement('script');
+        script.src = siblingV('guide.js');
+        script.onload = () => {
+            if (!root.OpenVibeQuestGuide) return;
+            void root.OpenVibeQuestGuide.startFromLocation({ load: async (id) => {
+                try {
+                    const response = await fetch(`https://openvibe.quest/api/v1/quests/today/steps/${encodeURIComponent(id)}`, {
+                        headers: { Authorization: `Bearer ${_config.token}` }, credentials: 'omit',
+                    });
+                    return response.ok ? response.json() : null;
+                } catch { return null; }
+            } });
+        };
+        document.head.appendChild(script);
+    }
+
     function refreshAuthState() {
         if (_authInFlight) return _authInFlight;
         _authInFlight = resolveSessionUser()
@@ -1950,6 +1970,7 @@
                     render();
                     recordHistory();
                     enableHandoff();
+                    startQuestGuide();
                 } else {
                     maybeSilentLogin();
                 }
@@ -2631,6 +2652,7 @@
             if (_config.auth === 'external') { if (_config.user) { recordHistory(); enableHandoff(); } }
             else if (!_config.user) refreshAuthState();
             else { recordHistory(); enableHandoff(); }
+            startQuestGuide();
             return el;
         },
 
@@ -2688,7 +2710,7 @@
         /** The signed-in user changed (sites with auth: 'external'). Pass null for signed out. */
         openWallet,
         refreshWallet() { _walletAt = 0; loadWalletChips(); },
-        setUser(user, token) { if (root.OpenVibeWallet && (_config.user !== user || (token !== undefined && token !== _config.token))) root.OpenVibeWallet.close(); _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; return render(); },
+        setUser(user, token) { if (root.OpenVibeWallet && (_config.user !== user || (token !== undefined && token !== _config.token))) root.OpenVibeWallet.close(); _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; const result = render(); startQuestGuide(); return result; },
         /** Single-page apps: mark the link whose `page` matches as active. */
         setActive(page) { _activePage = page || null; renderAppBar(); if (!_navEl) return; _navEl.querySelectorAll('.ovnav-link[data-page]').forEach(a => a.classList.toggle('active', a.getAttribute('data-page') === _activePage)); },
         /** Change a status chip's text (navbar and menu header): setChip('coins', '1,234'). */

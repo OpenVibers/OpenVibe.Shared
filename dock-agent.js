@@ -16,7 +16,7 @@
 // curtain state and the viewer count. The embed renews its own ticket while it plays.
 //
 // Nothing live: the last frame through the same API (an <img> cannot carry a token), with the task and the worked time.
-// There is no step line yet: steps are Agent Streams S2, and this view shows none until Live serves them.
+// Live's S2 current step comes through Codes when available; an older stream simply has no step line.
 // Everything is set as text, never markup; the frame's address is the one Codes answered, as an https Live address.
 // ═══════════════════════════════════════════════════════════════
 (function (root) {
@@ -97,10 +97,11 @@
         container.classList.add('ovda');
         const stage = h('div', 'ovda-stage');
         const line = h('div', 'ovda-line');
+        const step = h('div', 'ovda-meta ovda-step');
         const meta = h('div', 'ovda-meta');
         const acts = h('div', 'ovda-acts');
         const head = h('div', 'ovda-head');
-        head.append(line, meta, acts);
+        head.append(line, meta, step, acts);
         const body = h('div');
         body.append(stage, head);
         container.append(body);
@@ -177,6 +178,11 @@
             if (url) { const a = h('a', null, text); a.href = url; a.rel = 'noopener'; a.target = '_blank'; title.append(a); }
             else title.textContent = text;
             line.append(title);
+
+            const current = agent.current_step;
+            step.textContent = current && typeof current.title === 'string' && current.title.trim()
+                ? `Step: ${current.title} · ${current.status || 'started'}` : '';
+            step.hidden = !step.textContent;
 
             // The meta: the state, the viewers, the curtain, the worked time.
             meta.textContent = '';
