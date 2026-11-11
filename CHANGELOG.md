@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.215.0 — 2026-11-11
+
+- **One inline comment thread for every site: `thread.renderThread` and `thread-inline.css` (new), beside the
+  composer.** MediaHub's Video and Pics item pages and Community's paste and `/c` pages rendered two copies of the
+  same thread; the renderer now lives in `openvibe-shared/thread`, with both sites' options:
+  `attachmentsAllowed` (Pics and a paste page offer files; elsewhere the composer does not) and `draft` (the message
+  kept after a failed post). It draws the quiet head, Top and Newest only when there is something to order, the
+  composer or one sign-in line (the whole empty state when nobody has commented), the comments with their replies,
+  targets, deletions and attachments, More, and the discussion link. The markup is byte-for-byte what the two sites
+  render; each keeps its own post, delete and sign-in routes. The stylesheet is served like the package's other CSS
+  (`/shared/thread-inline.css?v=<content hash>`, `files.js` STYLES), so a site pins one look. Both sites' renderer
+  tests are here; MediaHub and Community delete their copies and pin this release.
+
 ## 4.212.0 — 2026-11-11
 
 A train of four pull requests (one line each):
@@ -17,19 +30,6 @@ A train of four pull requests (one line each):
 - **Glyphs: focus and bridge redrawn** after the all-glyph review: focus is a viewfinder round its centre, bridge two
   towers, the cable and the deck; both have solid twins, drawn to the set's size (the long side 0.79 of the box);
   the drop-in, sprite and fonts are rebuilt (#476).
-
-## 4.215.0 — 2026-11-11
-
-- **One inline comment thread for every site: `thread.renderThread` and `thread-inline.css` (new), beside the
-  composer.** MediaHub's Video and Pics item pages and Community's paste and `/c` pages rendered two copies of the
-  same thread; the renderer now lives in `openvibe-shared/thread`, with both sites' options:
-  `attachmentsAllowed` (Pics and a paste page offer files; elsewhere the composer does not) and `draft` (the message
-  kept after a failed post). It draws the quiet head, Top and Newest only when there is something to order, the
-  composer or one sign-in line (the whole empty state when nobody has commented), the comments with their replies,
-  targets, deletions and attachments, More, and the discussion link. The markup is byte-for-byte what the two sites
-  render; each keeps its own post, delete and sign-in routes. The stylesheet is served like the package's other CSS
-  (`/shared/thread-inline.css?v=<content hash>`, `files.js` STYLES), so a site pins one look. Both sites' renderer
-  tests are here; MediaHub and Community delete their copies and pin this release.
 
 ## 4.211.0 — 2026-11-11
 
