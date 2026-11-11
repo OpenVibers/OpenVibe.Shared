@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.211.0 — 2026-11-11
+
+- **A carried Live player can play on any OpenVibe page that permits Network frames.** The portable card keeps the
+  original Live embed and channel addresses in its state, while its iframe loads Network's narrow Live player bridge.
+  Sound controls and state events pass through that frame. This avoids changing every destination's frame policy.
+
 ## 4.210.0 — 2026-11-11
 
 - **A page's title and its line wrap before they are cut (kit.css `.ovk-head`).** The title takes up to two lines and
