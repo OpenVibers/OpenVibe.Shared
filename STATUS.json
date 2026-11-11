@@ -8,8 +8,8 @@
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.410.0 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.151.0",
+  "contracts": "openvibe-contracts v0.406.0 (devDependency: the release manifest contract)",
+  "sdk": "openvibe-sdk commit 6236bf23edc3f73c8eaed78f3616bb25d253ff29 (0.151.0, reviewed; released as v0.151.0)",
   "features": [
     "the Arrange editor: ov-arrange.js places a surface's real parts from a ui.layout@1 (drag, resize, arrows, a part sheet, Undo/Reset/Save/Share, Ask OpenVibe previewed), with openvibe-sdk/ui-layout for the browser generated as ov-arrange-core.js and loaded only when someone presses Arrange (4.214.0)",
     "the Quest guide on any page and the current Live step in the Dock's agent view (4.209.0)",
