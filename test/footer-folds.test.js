@@ -38,4 +38,12 @@ assert.ok(phone.length < css.length, 'the phone block exists');
 assert.match(phone, /\.ovf-fold>summary\{pointer-events:auto;cursor:pointer;[^}]*min-height:48px\}/);
 assert.match(phone, /\.ovf-fold\[open\]>summary::after\{transform:/);
 
+// An untitled or empty group is never a fold (4.202.0's screenshots showed two "0 links" folds with no heading).
+{
+    const empty = footer.buildHTML({ service: 'live', variant: 'full', links: [{ heading: '', items: [] }, { heading: 'Nothing', items: [] }, { heading: '', items: [{ name: 'X', url: '/x' }] }, ...links] });
+    assert.ok(!/<h3><\/h3>/.test(empty), 'no fold without a heading');
+    assert.ok(!/>0 links</.test(empty), 'no fold with no links');
+    assert.strictEqual((empty.match(/<details class="ovf-fold"/g) || []).length, folds.length, 'only the real columns are folds');
+}
+
 console.log('footer-folds: all checks passed');

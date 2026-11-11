@@ -308,7 +308,10 @@
         const fold = (label, heading, body, count) => `
             <nav class="ovf-col" aria-label="${esc(label)}"><details class="ovf-fold" open><summary><h3>${esc(heading)}</h3><span class="ovf-fold-n">${esc(String(count))} ${count === 1 ? 'link' : 'links'}</span></summary>
                 <div class="ovf-fold-body">${body}</div></details></nav>`;
-        const cols = (c.links || []).map(group => fold(group.heading, group.heading, group.items.map(linkTag).join(''), group.items.length)).join('');
+        // A column needs a name and at least one link: an untitled "0 links" fold is never drawn (4.202.0's screenshots
+        // showed two when a site passed empty groups).
+        const cols = (c.links || []).filter(group => group && String(group.heading || '').trim() && Array.isArray(group.items) && group.items.length)
+            .map(group => fold(group.heading, group.heading, group.items.map(linkTag).join(''), group.items.length)).join('');
         const networkLinks = network.slice(0, 8);
 
         return `<div class="ovf-inner${compact ? ' ovf-inner--expanded' : ''}">

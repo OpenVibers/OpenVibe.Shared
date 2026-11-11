@@ -4,6 +4,8 @@
 
 **One field dropdown, one window for small interfaces, one user card, a measured page end, eight site groups, and the reveal remade.**
 
+- **An empty footer column is never drawn (`footer.js`).** A group with no heading or no links is left out instead of
+  showing as an untitled "0 links" fold.
 - **One field dropdown (#447).** `ov-combo.js` adds async, grouped suggestions and optional creation; the composer handoff to Code and whole site names in the phone menu are included.
 - **One window (#451).** `ov-window.js` supplies dialog, sheet and panel modes, and the composer's settings use it.
 - **One user card (#452).** Shared mention hooks, the profile card, wallet window and display style settings.
