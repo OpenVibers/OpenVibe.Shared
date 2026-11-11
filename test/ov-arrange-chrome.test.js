@@ -9,6 +9,7 @@ const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
 const h = require('../browser-harness');
+assert.doesNotThrow(() => require('../ov-arrange'), 'ov-arrange.js loads (browser-only: Node takes the early return)');
 if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) {
     console.log('ov-arrange-chrome: skipped (no Chrome; set CHROME_BIN)');
     process.exit(0);

@@ -9,6 +9,8 @@
   "exports": {
     ".": "./index.js",
     "./offer-card": "./offer-card.js",
+    "./ov-arrange": "./ov-arrange.js",
+    "./ov-arrange-core": "./ov-arrange-core.js",
     "./quest": "./quest.js",
     "./quest-guide": "./guide.js",
     "./account-switcher": "./account-switcher.js",
