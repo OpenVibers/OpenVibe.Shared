@@ -33,7 +33,7 @@
 
     // 4.202.0 (asks 304 and 318): the wallet sits in the one window (ov-window.js, loaded from beside this file): the
     // same motion, keys, phone sheet and window style as every other window; its own <dialog> where that is missing.
-    const WALLET_REV = { 'ov-window.js': '625783527b4e' };
+    const WALLET_REV = { 'ov-window.js': 'f0cf81f57e43' };
     const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {

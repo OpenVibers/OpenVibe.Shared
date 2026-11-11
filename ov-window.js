@@ -23,6 +23,8 @@
 (function (root) {
     'use strict';
     if (typeof document === 'undefined' || root.OVWindow) return;
+    const HERE = document.currentScript && document.currentScript.src;
+    const WINDOW_REV = { 'ov-float.js': '493316099681' };
 
     const STYLES = ['glass', 'solid', 'outline'];
     const CSS = `.ovw-scrim { position: fixed; inset: 0; z-index: var(--ovw-z, 10040); background: rgba(3, 7, 15, .5); animation: ovw-fade .2s ease-out both; }
@@ -86,6 +88,27 @@ html.ovw-locked { overflow: hidden; }
     const stack = [];
     let uid = 0;
     function styles() { if (document.getElementById('ovw-styles')) return; const st = document.createElement('style'); st.id = 'ovw-styles'; st.textContent = CSS; document.head.appendChild(st); }
+
+    // The panel's move, tuck and place are OVFloat's (ov-float.js, loaded from beside this file the first time a panel
+    // opens). A page that already loaded it uses that.
+    let floatLoading = null;
+    const floatWait = [];
+    function withFloat(cb) {
+        if (root.OVFloat) { cb(root.OVFloat); return; }
+        if (!HERE || floatLoading === false) return;
+        if (floatLoading) { floatWait.push(cb); return; }
+        floatWait.push(cb);
+        const s = document.createElement('script');
+        const rev = WINDOW_REV['ov-float.js'];
+        s.src = HERE.replace(/ov-window\.js(?:\?.*)?$/, 'ov-float.js') + (rev ? `?v=${rev}` : '');
+        s.onload = () => {
+            floatLoading = null;
+            for (const fn of floatWait.splice(0)) { try { fn(root.OVFloat); } catch (e) { console.error(e); } }
+        };
+        s.onerror = () => { floatLoading = false; floatWait.length = 0; };
+        floatLoading = s;
+        (document.head || document.documentElement).appendChild(s);
+    }
     const phone = () => !!(root.matchMedia && root.matchMedia('(max-width: 640px)').matches);
     const focusables = (el) => [...el.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter((x) => x.offsetParent !== null || x === document.activeElement);
     const place = { get(id) { try { return JSON.parse(root.localStorage.getItem(`ov:window:${id}`) || 'null'); } catch { return null; } }, set(id, v) { try { root.localStorage.setItem(`ov:window:${id}`, JSON.stringify(v)); } catch { /* private mode */ } } };
@@ -122,15 +145,20 @@ html.ovw-locked { overflow: hidden; }
         if (modal) document.documentElement.classList.add('ovw-locked');
 
         // Where it opens: a panel beside its opener (or where it was left), a dialog centred, a sheet at the bottom.
+        let panelLeft = 0, panelTop = 0;
         if (kind === 'panel') {
             const saved = o.id ? place.get(o.id) : null;
-            const r = el.getBoundingClientRect(), vw = root.innerWidth, vh = root.innerHeight;
+            const cs = document.documentElement;
+            const r = el.getBoundingClientRect(), vw = cs.clientWidth || root.innerWidth, vh = cs.clientHeight || root.innerHeight;
             let left, top;
             if (saved) { left = saved.x; top = saved.y; }
             else if (opener && opener.getBoundingClientRect) { const f = opener.getBoundingClientRect(); left = f.left; top = f.bottom + 8; if (top + r.height > vh - 12) top = Math.max(12, f.top - r.height - 8); }
             else { left = vw - r.width - 24; top = 72; }
-            el.style.left = `${Math.max(8, Math.min(left, vw - r.width - 8))}px`;
-            el.style.top = `${Math.max(8, Math.min(top, vh - 60))}px`;
+            left = Math.max(8, Math.min(left, vw - r.width - 8));
+            top = Math.max(8, Math.min(top, vh - 60));
+            panelLeft = left; panelTop = top;
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
         }
         if (opener && opener.getBoundingClientRect && kind !== 'sheet') {
             const r = el.getBoundingClientRect(), f = opener.getBoundingClientRect();
@@ -144,6 +172,7 @@ html.ovw-locked { overflow: hidden; }
             setTitle(t) { title.textContent = t || ''; },
             close(why) {
                 if (closed) return; closed = true;
+                if (w.float) { try { w.float.destroy(); } catch { /* */ } w.float = null; }
                 const i = stack.indexOf(w); if (i >= 0) stack.splice(i, 1);
                 if (!stack.some((s) => s.modal)) document.documentElement.classList.remove('ovw-locked');
                 const gone = () => { el.remove(); scrim.remove(); };
@@ -153,8 +182,33 @@ html.ovw-locked { overflow: hidden; }
                 if (typeof o.onClose === 'function') { try { o.onClose(why || 'close'); } catch (e) { console.error(e); } }
             },
             modal,
+            float: null,
         };
         stack.push(w);
+        if (kind === 'panel') {
+            const panelId = o.id ? String(o.id) : '';
+            withFloat((OVFloat) => {
+                if (closed) return;
+                w.float = OVFloat.attach(el, {
+                    frame: null, key: panelId ? `ov:window:float:${panelId}` : undefined,
+                    defaults: {
+                        x: Math.max(0, Math.min(1, panelLeft / Math.max(1, (document.documentElement.clientWidth || root.innerWidth)))),
+                        y: Math.max(0, Math.min(1, panelTop / Math.max(1, (document.documentElement.clientHeight || root.innerHeight)))),
+                        mode: 'float',
+                    },
+                    aspect: null, size: false, resize: false, doubleTap: false, activeBar: false,
+                    viewport: 'client', handle: head, store: null, hintClass: 'ovw-dock-hint',
+                    onChange(geom) {
+                        if (!panelId) return;
+                        // The fractions convert back to the same pixels without reading a rect mid-landing. (The old
+                        // key stays as the absolute place older releases wrote, and for the size the grip keeps there.)
+                        const vw = document.documentElement.clientWidth || root.innerWidth;
+                        const vh = document.documentElement.clientHeight || root.innerHeight;
+                        place.set(panelId, Object.assign(place.get(panelId) || {}, { x: Math.round(geom.x * vw), y: Math.round(geom.y * vh) }));
+                    },
+                });
+            });
+        }
         x.addEventListener('click', () => w.close('x'));
         if (modal) scrim.addEventListener('pointerdown', () => w.close('outside'));
         el.addEventListener('keydown', (e) => {
@@ -166,8 +220,8 @@ html.ovw-locked { overflow: hidden; }
             }
         });
 
-        // A panel moves by its head on a computer; a sheet goes down when swiped down on a phone.
-        if (kind === 'panel' || kind === 'sheet') {
+        // A sheet goes down when swiped down on a phone; a panel's head is OVFloat's handle (with its tuck and place).
+        if (kind === 'sheet') {
             head.addEventListener('pointerdown', (e) => {
                 if (e.target.closest('.ovw-x') || (e.button !== undefined && e.button !== 0)) return;
                 const r = el.getBoundingClientRect(), sx = e.clientX, sy = e.clientY;
