@@ -97,8 +97,8 @@ const server = http.createServer((req, res) => {
         await openTab(p, 'you');
         assert.ok(await until(p, `document.querySelectorAll('.ovh-grid .ovh-app').length >= 12`), 'the home grid painted');
         const first = await order(p);
-        assert.strictEqual(first.length, 12, `twelve on Home by default (${first})`);
-        assert.deepStrictEqual(first.slice(-2), ['folder:tools', 'folder:build'], 'Tools and Build are folders at the end');
+        assert.strictEqual(first.length, 13, `thirteen on Home by default (${first})`);
+        assert.deepStrictEqual(first.slice(-3), ['folder:g-play', 'folder:build', 'folder:tools'], 'the final group, Build and Quick tools folders stay at the end');
         assert.ok(!first.includes('ai') && !first.includes('run'), 'developer services wait in the Build folder');
         assert.strictEqual(await p.evaluate(`(document.querySelector('.ovh-sec span') || {}).textContent`), 'Popular on OpenVibe', 'until arranged, it says what it is');
         assert.notStrictEqual(await p.evaluate(`document.querySelector('.ovs [data-tab="here"]').textContent`), 'Home', 'a page titled Home never names the first tab');
@@ -132,7 +132,7 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(await p.evaluate(`document.activeElement && document.activeElement.getAttribute('data-id')`), dragged[0], 'and it keeps the focus');
         await p.evaluate(`document.querySelector('.ovh-grid .ovh-app[data-id="${keyed[0]}"] .ovh-badge').click(), true`);
         const removed = await order(p);
-        assert.ok(!removed.includes(keyed[0]) && removed.length === 11, '− takes it off Home');
+        assert.ok(!removed.includes(keyed[0]) && removed.length === 12, '− takes it off Home');
         // Done, then All apps puts it back.
         await p.evaluate(`[...document.querySelectorAll('.ovh-sec button')].find((b) => b.textContent === 'Done').click(), true`);
         await p.evaluate(`document.querySelector('.ovh-allbtn').click(), true`);

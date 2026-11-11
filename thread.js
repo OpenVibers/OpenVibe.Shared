@@ -283,9 +283,12 @@ function optionsHtml({ html, label = 'Options' }) {
  *   <select> or radio group carries data-ovt-default="<value>" shows as a chip beside the button while it differs
  *   (its × puts the default back), and the button wears a dot.
  *   examples: ['Make the home page faster on phones', …] the box's placeholder walks through them while it is empty
+ *   commands: [{ name: 'fix', hint: 'Fix a bug', insert: 'Fix this: ' }] the box's "/" list (ov-composer.js, 4.201.0),
+ *   with the person's own commands and the site's mods (files, @, voice and drafts come with it on every box)
  */
-function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '', options = null, examples = [] } = {}) {
-    const extra = Object.entries(attrs || {}).map(([k, v]) => attr(k, v)).join('');
+function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '', options = null, examples = [], commands = [] } = {}) {
+    const cmds = (commands || []).filter((c) => c && /^[\w-]{1,30}$/.test(c.name || '')).slice(0, 30).map((c) => ({ name: c.name, hint: String(c.hint || '').slice(0, 120), insert: String(c.insert || '').slice(0, 4000) }));
+    const extra = Object.entries(attrs || {}).map(([k, v]) => attr(k, v)).join('') + (cmds.length ? attr('data-ovt-commands', JSON.stringify(cmds)) : '');
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
     return `${starters.length ? `<div class="ovt-starters">${starters.map((s) => `<button type="button" class="ovt-starter" data-ovt-starter="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
 <form class="ovt-composer${busy ? ' is-busy' : ''}"${attr('id', id)} method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}${extra}>${hid}

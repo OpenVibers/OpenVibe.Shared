@@ -437,7 +437,13 @@
         const duration = () => (Number.isFinite(video.duration) ? video.duration : 0);
         function paintTime() {
             const d = duration(), t = video.currentTime || 0;
-            time.textContent = d ? `${fmt(t)} / ${fmt(d)}` : fmt(t);
+            // The position, and the length in its own part (a phone shows the position alone: the scrubber has the length).
+            const now = fmt(t), len = d ? fmt(d) : '';
+            if (time.dataset.now !== now || time.dataset.len !== len) {
+                time.dataset.now = now; time.dataset.len = len;
+                const at = document.createElement('span'); at.textContent = now;
+                if (len) { const of = document.createElement('span'); of.className = 'ov-player-dur'; of.textContent = ` / ${len}`; time.replaceChildren(at, of); } else time.replaceChildren(at);
+            }
             played.style.width = d ? `${Math.min(100, (t / d) * 100)}%` : '0%';
             scrub.setAttribute('aria-valuemax', String(Math.floor(d)));
             scrub.setAttribute('aria-valuenow', String(Math.floor(t)));

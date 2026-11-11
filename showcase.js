@@ -306,45 +306,107 @@ const jsonLd = (obj) => `<script type="application/ld+json">${JSON.stringify(obj
 const faqJsonLd = (items) => jsonLd({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: (items || []).filter((q) => Array.isArray(q) && q[0] && q[1]).map(([q, a]) => ({ '@type': 'Question', name: String(q), acceptedAnswer: { '@type': 'Answer', text: String(a) } })) });
 
 /**
- * Where each product leads next on the network: real, crawlable links with descriptive text, chosen per product so a
- * reader (and a search engine) sees how the sites fit together, not one long list of every domain. [to, what, href].
+ * Where each home page leads next on the network: the other places in the same menu group, in the group's own order
+ * (OpenVibe.Network frame/sites.js GROUPS, the owner's regrouping of 2026-11-10), so "More on OpenVibe" shows the
+ * same neighbourhood the launcher and the footer show. Up to four. [to, what, href]; `to` is the name and icon the
+ * card shows (Email is `email`, OpenRestream `openre`, Studio `studio`, Locker `locker`).
  */
-const RELATED = {
-    live: [['openre', 'Stream to every platform at once', 'https://openre.stream/'], ['video', 'Watch past streams and clips', 'https://openvibe.video/'], ['chat', 'Chat rooms and DMs', 'https://openvibe.chat/'], ['tips', 'Tips and alerts for your stream', 'https://openvibe.tips/']],
-    openre: [['live', 'Go live from your browser', 'https://openvibe.live/'], ['video', 'Keep your broadcasts', 'https://openvibe.video/'], ['chat', 'One chat for every platform', 'https://openvibe.chat/']],
-    video: [['live', 'Live streams now', 'https://openvibe.live/'], ['pics', 'Pictures, fast and open', 'https://openvibe.pics/'], ['tools', 'Convert and trim media', 'https://openvibe.tools/video-tools']],
-    media: [['video', 'Videos, clips and VODs', 'https://openvibe.video/'], ['pics', 'Share pictures', 'https://openvibe.pics/'], ['download', 'Your files, anywhere', 'https://openvibe.download/']],
-    chat: [['live', 'Live streams with chat', 'https://openvibe.live/'], ['actor', 'Agents that work while you are away', 'https://openvibe.actor/'], ['community', 'Posts and pastes', 'https://openvibe.community/']],
-    tools: [['codes', 'Build apps with AI', 'https://openvibe.codes/'], ['services', 'APIs and SDK for developers', 'https://openvibe.services/'], ['actor', 'Hand a task to an agent', 'https://openvibe.actor/'], ['space', 'Host a site or an app', 'https://openvibe.space/']],
-    codes: [['run', 'Run jobs on your own machine', 'https://openvibe.run/'], ['services', 'The SDK and APIs', 'https://openvibe.services/'], ['space', 'Publish what you build', 'https://openvibe.space/']],
-    actor: [['tools', 'Hundreds of free tools', 'https://openvibe.tools/'], ['watch', 'Alerts when something changes', 'https://openvibe.watch/'], ['bot', 'Drive a robot from your browser', 'https://openvibe.bot/'], ['codes', 'Coding agents', 'https://openvibe.codes/']],
-    services: [['tools', 'Tools with open APIs', 'https://openvibe.tools/developers'], ['space', 'Host apps on the network', 'https://openvibe.space/'], ['network', 'Sign-in for your app', 'https://openvibe.network/']],
-    space: [['codes', 'Build it with AI', 'https://openvibe.codes/'], ['services', 'The SDK your app calls', 'https://openvibe.services/'], ['host', 'Hosting, compared', 'https://openvibe.host/']],
-    run: [['codes', 'Coding agents', 'https://openvibe.codes/'], ['bot', 'Robots and machines', 'https://openvibe.bot/'], ['actor', 'Agents', 'https://openvibe.actor/']],
-    watch: [['deals', 'Deals worth sharing', 'https://openvibe.deals/'], ['work', 'Job alerts', 'https://openvibe.work/'], ['actor', 'An agent to act on alerts', 'https://openvibe.actor/']],
-    bot: [['live', 'Stream your robot', 'https://openvibe.live/'], ['actor', 'Let an agent drive', 'https://openvibe.actor/'], ['run', 'Your machines', 'https://openvibe.run/']],
-    work: [['watch', 'Alerts for new jobs', 'https://openvibe.watch/'], ['actor', 'An agent on your side', 'https://openvibe.actor/'], ['rent', 'Find a place to live', 'https://openvibe.rent/']],
-    rent: [['homes', 'Homes for sale', 'https://openvibe.homes/'], ['work', 'Jobs nearby', 'https://openvibe.work/'], ['food', 'Food near you', 'https://openvibe.food/']],
-    homes: [['rent', 'Rentals', 'https://openvibe.rent/'], ['deals', 'Deals', 'https://openvibe.deals/'], ['help', 'Help nearby', 'https://openvibe.help/']],
-    food: [['help', 'Help nearby', 'https://openvibe.help/'], ['deals', 'Grocery deals', 'https://openvibe.deals/'], ['coupons', 'Coupons that work', 'https://openvibe.coupons/']],
-    deals: [['coupons', 'Coupons that work', 'https://openvibe.coupons/'], ['reviews', 'Reviews with receipts', 'https://openvibe.reviews/'], ['watch', 'Price alerts', 'https://openvibe.watch/']],
-    coupons: [['deals', 'Deals worth sharing', 'https://openvibe.deals/'], ['reviews', 'Reviews', 'https://openvibe.reviews/'], ['trade', 'Markets and watchlists', 'https://openvibe.trade/']],
-    reviews: [['deals', 'Deals', 'https://openvibe.deals/'], ['coupons', 'Coupons', 'https://openvibe.coupons/'], ['host', 'Hosting reviews', 'https://openvibe.host/']],
-    trade: [['news', 'News, sourced', 'https://openvibe.news/'], ['watch', 'Market alerts', 'https://openvibe.watch/'], ['deals', 'Deals', 'https://openvibe.deals/']],
-    news: [['wiki', 'Knowledge, with sources', 'https://openvibe.wiki/'], ['blog', 'Long-form writing', 'https://openvibe.blog/'], ['community', 'Discuss it', 'https://openvibe.community/']],
-    blog: [['news', 'News', 'https://openvibe.news/'], ['wiki', 'Wiki', 'https://openvibe.wiki/'], ['community', 'Community', 'https://openvibe.community/']],
-    wiki: [['news', 'News', 'https://openvibe.news/'], ['help', 'Help', 'https://openvibe.help/'], ['blog', 'Blog', 'https://openvibe.blog/']],
-    community: [['chat', 'Chat', 'https://openvibe.chat/'], ['blog', 'Blog', 'https://openvibe.blog/'], ['live', 'Live', 'https://openvibe.live/']],
-    help: [['food', 'Food near you', 'https://openvibe.food/'], ['wiki', 'Guides', 'https://openvibe.wiki/'], ['community', 'Ask the community', 'https://openvibe.community/']],
-    games: [['quest', 'Quests and rewards', 'https://openvibe.quest/'], ['live', 'Stream your game', 'https://openvibe.live/'], ['vip', 'Memberships', 'https://openvibe.vip/']],
-    quest: [['games', 'Browser games', 'https://openvibe.games/'], ['vip', 'Memberships', 'https://openvibe.vip/'], ['tips', 'Tips', 'https://openvibe.tips/']],
-    tips: [['live', 'Go live', 'https://openvibe.live/'], ['vip', 'Memberships for creators', 'https://openvibe.vip/'], ['openre', 'Restream', 'https://openre.stream/']],
-    vip: [['tips', 'Tips and paid messages', 'https://openvibe.tips/'], ['live', 'Live', 'https://openvibe.live/'], ['games', 'Games', 'https://openvibe.games/']],
-    host: [['space', 'Host on OpenVibe', 'https://openvibe.space/'], ['reviews', 'Reviews', 'https://openvibe.reviews/'], ['tools', 'Network tools', 'https://openvibe.tools/network-tools']],
-    pics: [['video', 'Videos', 'https://openvibe.video/'], ['tools', 'Image tools', 'https://openvibe.tools/image-tools'], ['community', 'Community', 'https://openvibe.community/']],
-    network: [['live', 'Live', 'https://openvibe.live/'], ['tools', 'Tools', 'https://openvibe.tools/'], ['chat', 'Chat', 'https://openvibe.chat/'], ['actor', 'Agents', 'https://openvibe.actor/']],
+const GROUPS = {
+    watch: [
+        ['live', 'Go live, watch streams', 'https://openvibe.live/'],
+        ['video', 'Clips and past streams', 'https://openvibe.video/'],
+        ['pics', 'Share pictures', 'https://openvibe.pics/'],
+        ['download', 'Your files', 'https://openvibe.download/'],
+        ['openre', 'Stream everywhere', 'https://openre.stream/'],
+        ['cam', 'Your camera, in private', 'https://openvibe.cam/'],
+        ['tours', 'Cities, routes, stays', 'https://openvibe.tours/'],
+    ],
+    talk: [
+        ['community', 'Posts and pastes', 'https://openvibe.community/'],
+        ['chat', 'Chat with anyone', 'https://openvibe.chat/'],
+        ['tips', 'Support streamers', 'https://openvibe.tips/'],
+        ['vip', 'Back your creators', 'https://openvibe.vip/'],
+        ['email', 'Masks and inboxes', 'https://openvibe.email/'],
+        ['help', 'Help nearby', 'https://openvibe.help/'],
+        ['network', 'Your account', 'https://openvibe.network/'],
+    ],
+    play: [
+        ['games', 'Play in your browser', 'https://openvibe.games/'],
+        ['quest', 'Earn badges', 'https://openvibe.quest/'],
+        ['surf', 'Surf maps and the web', 'https://openvibe.surf/'],
+        ['fun', 'Something to do', 'https://openvibe.fun/'],
+        ['meme', 'Memes with receipts', 'https://openvibe.meme/'],
+        ['casino', 'Odds shown, chips free', 'https://openvibe.casino/'],
+        ['inventory', 'Your items', 'https://openvibe.my/inventory'],
+    ],
+    read: [
+        ['news', 'Sourced, not spun', 'https://openvibe.news/'],
+        ['today', 'Your schedule', 'https://openvibe.today/'],
+        ['report', 'Your numbers, honest', 'https://openvibe.report/'],
+        ['search', 'Search everything', 'https://search.openvibe.network/'],
+        ['wiki', 'Facts with sources', 'https://openvibe.wiki/'],
+        ['blog', 'Write long-form', 'https://openvibe.blog/'],
+        ['vision', 'Ask a picture', 'https://openvibe.vision/'],
+    ],
+    shop: [
+        ['deals', 'Deals people share', 'https://openvibe.deals/'],
+        ['coupons', 'Codes that work', 'https://openvibe.coupons/'],
+        ['shoes', 'Every shoe, every price', 'https://open.shoes/'],
+        ['reviews', 'Honest reviews', 'https://openvibe.reviews/'],
+        ['trade', 'Watch the markets', 'https://openvibe.trade/'],
+        ['rent', 'Places to rent', 'https://openvibe.rent/'],
+        ['work', 'Find a job', 'https://openvibe.work/'],
+    ],
+    tools: [
+        ['tools', 'Every online tool', 'https://openvibe.tools/'],
+        ['design', 'Try themes live', 'https://openvibe.design/'],
+        ['domains', 'Names and prices', 'https://openvibe.domains/'],
+        ['host', 'Compare hosting', 'https://openvibe.host/'],
+        ['studio', 'Edit photos in your browser', 'https://openvibe.studio/'],
+        ['locker', 'Files only you can open', 'https://openvibe.locker/'],
+        ['food', 'Food near you', 'https://openvibe.food/'],
+    ],
+    make: [
+        ['space', 'Host a site or app', 'https://openvibe.space/'],
+        ['codes', 'Code with any agent', 'https://openvibe.codes/'],
+        ['bot', 'Drive a robot', 'https://openvibe.bot/'],
+        ['actor', 'The agent engine', 'https://openvibe.actor/'],
+        ['computer', 'Your computer, your way', 'https://openvibe.computer/'],
+        ['connect', 'Share a port with Link', 'https://connect.openvibe.link/'],
+    ],
+    build: [
+        ['services', 'APIs, SDK and keys', 'https://openvibe.services/'],
+        ['exchange', 'AI models, one account', 'https://openvibe.exchange/'],
+        ['run', 'Run jobs anywhere', 'https://openvibe.run/'],
+        ['zone', 'S3 storage', 'https://openvibe.zone/'],
+        ['events', 'Event streams', 'https://openvibe.events/'],
+        ['watch', 'Know when it changes', 'https://openvibe.watch/'],
+        ['git', 'Host and browse code', 'https://git.openvibe.codes/'],
+    ],
 };
-const DEFAULT_RELATED = RELATED.network;
+// The service names home pages pass that are not the card's own name (Video is media-hub, Media is its API,
+// Restream's service is openre, Email's mail, Studio's image, Locker's lock, Homes is Rent's section, Bench Report's).
+const RELATED_ALIAS = {
+    media: 'video', 'media-hub': 'video', video: 'video', stream: 'openre', openre: 'openre', restream: 'openre',
+    mail: 'email', email: 'email', image: 'studio', studio: 'studio', lock: 'locker', locker: 'locker',
+    homes: 'rent', bench: 'report',
+};
+const RELATED_ALL = Object.entries(GROUPS).flatMap(([group, members]) => members.map(([to, what, href]) => ({ group, to, what, href })));
+const RELATED_BY_ID = new Map(RELATED_ALL.map((x) => [x.to, x]));
+function relatedFor(key) {
+    const id = RELATED_ALIAS[key] || key;
+    const here = RELATED_BY_ID.get(id);
+    if (!here) return null;
+    return RELATED_ALL.filter((x) => x.group === here.group && x.to !== id).slice(0, 4).map((x) => [x.to, x.what, x.href]);
+}
+const RELATED = {};
+for (const x of RELATED_ALL) RELATED[x.to] = relatedFor(x.to);
+for (const [alias, id] of Object.entries(RELATED_ALIAS)) if (RELATED_BY_ID.has(id)) RELATED[alias] = relatedFor(id);
+// A product without its own list shows one place from each of the first four groups, in the groups' order.
+const DEFAULT_RELATED = ['live', 'community', 'games', 'news'].map((id) => {
+    const x = RELATED_BY_ID.get(id);
+    return [x.to, x.what, x.href];
+});
 
 /**
  * "Part of OpenVibe": up to four related products for this one (RELATED, or the caller's own items in the same
@@ -676,4 +738,4 @@ html{overflow-x:clip}
 }
 `;
 
-module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, DEFAULT_RELATED, CSS, STYLESHEET: 'showcase.css', esc };

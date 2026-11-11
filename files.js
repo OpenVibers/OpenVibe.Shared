@@ -28,6 +28,7 @@ const BROWSER = Object.freeze([
     'ai-marks-client.js',   // maker marks on a run receipt, loaded only in Agents
     'presence.js', 'purse.js', 'machines.js', 'ov-drop.js', 'mini.js', 'ov-tip.js', 'overlay.js', 'nav-slots.js',          // your online status: the dot, the heartbeat, the picker; navbar.js loads it for a signed-in person
     'dock-vibe.js',         // the Dock's Vibe tab (L48 V2); dock.js loads it the first time the tab opens
+    'dock-code.js',         // the Dock's Code tab (4.201.0); dock.js loads it the first time the tab opens
     'dock-timer.js',        // the Dock's timer (L48 R2); dock.js loads it while a timer runs or its menu opens
     'dock-share.js',        // the Dock's Send to… (4.144.0); dock.js loads it the first time something is sent
     'dock-card.js',         // a known OpenVibe link's card under a Dock message (4.147.0); loaded the first time one shows
@@ -37,6 +38,7 @@ const BROWSER = Object.freeze([
     'dock-timeline.js',     // the Dock's one timeline (A6); dock.js loads it with the Agent panel
     'account-switcher.js',
     'user-card.js',
+    'ov-user.js',           // public user-card read and opt-in mention/avatar hook; plain kit markup
     'ov-mark.js',           // the OV brand mark drop-in
     'ov-glyphs.js',         // the network's own icons in place of Font Awesome's (built from glyphs.js; navbar.js loads it)
     'brands.js',            // brand logos (Simple Icons, CC0), fetched by ov-glyphs.js the first time a page shows one (4.72.0)
@@ -52,6 +54,9 @@ const BROWSER = Object.freeze([
     'ov-upload.js',         // shared file picker, upload queue and ov-progress
     'messages.js',          // Chat's two views: room lines and texting bubbles (openvibe-shared/messages)
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
+    'ov-composer.js',       // shared composer
+    'ov-combo.js',          // shared field dropdown
+    'ov-window.js',         // shared dialog, sheet, and panel
     'ov-icons.js',          // ring icons (also required on the server as openvibe-shared/icons)
     'ov-home.js',           // the menu's home screen and wall (search.js loads it for You and Feed)
     'history.js',           // cross-site history
@@ -61,9 +66,11 @@ const BROWSER = Object.freeze([
     'ui.js',                // toasts and page notices
     'route-transition.js',  // page-move bar, loading line and fade-in; web-runtime.js fetches it on the first move
     'boost.js',             // smooth same-site page moves for a server-rendered site (OVBoost; plan T11)
+    'soft.js',              // speculation-rule prefetch and cross-document view transitions (soft pages, 2026-11-10)
     'island.js',            // activity island
     'items.js',             // what people wear (OpenVibe.Inventory name effects, plan T21); draw with items.css
     'profile-panel.js',     // a person's stuff on any site (worn items, badges, achievements), from the Network profile
+    'quest.js',             // the daily quest card any site can show (OpenVibeQuest.mount); draw with quest.css
     'tooltip.js',
     'player.js',            // the network's one video player look: enhances video[data-ov-player]; draw with player.css
     'ov-sync.js',           // one timeline for many players (seven domains B4): OVSync.attach(media, { room, socket }); no dependencies
@@ -71,6 +78,7 @@ const BROWSER = Object.freeze([
     'release-watch.js',     // keeps open tabs on a supported release (ADR-016), loaded after first paint
     'release-update.js',    // plans a new release and applies style/content in place; release-watch loads it on demand
     'web-runtime.js',       // feature loader and route lifecycle (OVWebRuntime), from Live's ov-loader
+    'bottom.js',            // the bottom of the screen measured once (plan 279): --ovb-lift for the app bar, the small player and the Dock
     'appbar.js',            // the phone app bar; navbar.js loads it only for a site that sets appBar
     'kit.js',               // the OpenVibe Kit's builders in the page (for pages that draw themselves; with kit-web.js)
     'kit-web.js',           // the OpenVibe Kit's behaviour (copy, menus, Enter to send, confirms, sheets): all a server-rendered site loads
@@ -91,6 +99,7 @@ const STYLES = Object.freeze([
     'items.css',            // Live's name effects for items.js (live.name_effect.css@1)
     'profile-panel.css',    // the panel profile-panel.js draws
     'player.css',           // player.js's controls
+    'quest.css',            // quest.js's card: the daily quest any site can show
     'kit.css',              // the OpenVibe Kit's look (kit.js / openvibe-shared/kit build the markup; docs/kit.md)
     'ov-forms.css',         // the look of ov-forms.js's select, the site-coloured checkboxes, switches and sliders, .ov-field (docs/forms.md)
     'ov-locker.css',        // ov-locker.js's look: the locked card, the locker sheets, the recovery kit (docs/locker.md)

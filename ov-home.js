@@ -62,8 +62,8 @@
 .ovh-grid:not(.ovh-recent) { gap: 4px 2px; padding: 2px 0 0; justify-items: stretch; }
 .ovh-grid:not(.ovh-recent) .ovh-app { min-height: 0; padding: 6px 0 8px; gap: 7px; }
 .ovh-grid:not(.ovh-recent) .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: 29%; }
-.ovh-grid:not(.ovh-recent) .ovh-app:not(.ovh-folder) .ovh-ic > .ov-icon { display: grid; place-items: center; width: 104%; height: 104%; }
-.ovh-grid:not(.ovh-recent) .ovh-app:not(.ovh-folder) .ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
+.ovh-ic > .ov-icon { --ovi-size: 74.4%; display: grid; place-items: center; }
+.ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { grid-template-columns: repeat(2, 36%); grid-auto-rows: 36%; gap: 7%; place-content: center; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { width: 100%; height: 100%; border-radius: 30%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span .ov-icon { display: grid; place-items: center; width: 100%; height: 100%; }
@@ -306,35 +306,52 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         (o.yours || []).forEach((a) => { if (a && a.id && safe(a.url)) byId.set(a.id, a); });
         return byId;
     }
-    // The network's groups, as folders for the sites past the first page (until the person arranges their home).
-    const GROUP_FOLDERS = [['streams', 'Watch'], ['people', 'People'], ['make', 'Make'], ['answers', 'Read'], ['games', 'Play'], ['shop', 'Shop']];
+    // The network's eight groups, in the menu's own order (OpenVibe.Network frame/sites.js GROUPS, the owner's
+    // regrouping of 2026-11-10), as folders for the sites past the first page (until the person arranges their home).
+    const GROUP_FOLDERS = [['watch', 'Watch & stream'], ['talk', 'Talk & belong'], ['play', 'Play'], ['read', 'Read & ask'], ['shop', 'Shop & money'], ['tools', 'Free tools'], ['make', 'Make with AI'], ['build', 'For developers']];
+    // A group folder's id: `g-watch` …; Build keeps `build`, the id saved home screens already use.
+    const folderId = (g) => (g === 'build' ? 'build' : `g-${g}`);
+    // Saved before the regrouping: the old group ids map onto the new folders.
+    const FOLDER_ALIAS = { 'g-streams': 'g-watch', 'g-people': 'g-talk', 'g-games': 'g-play', 'g-answers': 'g-read' };
+    const normalizeFolder = (id) => (id.startsWith('folder:') ? `folder:${FOLDER_ALIAS[id.slice(7)] || id.slice(7)}` : id);
     function topSites(o) {
         const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id));
-        const sites = (o.apps || []).filter((a) => a.group !== 'build').map((a) => a.id);
-        return sites.slice(0, Math.max(6, 12 - 2 - mineFirst.length));
+        const limit = Math.max(6, 12 - 2 - mineFirst.length);
+        // Leave at least one app in every group for its folder: a group that is all singles has no folder to open.
+        const left = new Map();
+        for (const a of o.apps || []) left.set(a.group, (left.get(a.group) || 0) + 1);
+        const sites = [];
+        for (const a of o.apps || []) {
+            if (a.group === 'build') continue;
+            if ((left.get(a.group) || 0) <= 1) continue;
+            left.set(a.group, left.get(a.group) - 1);
+            sites.push(a.id);
+            if (sites.length >= limit) break;
+        }
+        return sites;
     }
     function folderDefs(o) {
         const apps = o.apps || [];
         const top = new Set(topSites(o));
-        const groups = GROUP_FOLDERS.map(([g, name]) => ({ id: `g-${g}`, name, apps: apps.filter((a) => a.group === g && !top.has(a.id)).map((a) => a.id), glyph: 'grid' }))
-            .filter((f) => f.apps.length >= 2);
+        const groups = GROUP_FOLDERS.map(([g, name]) => ({ id: folderId(g), name, group: g, apps: apps.filter((a) => a.group === g && !top.has(a.id)).map((a) => a.id), glyph: 'grid' }))
+            .filter((f) => f.apps.length);
         return groups.concat([
             { id: 'tools', name: 'Quick tools', apps: (o.tools || []).map((t) => t.id), glyph: 'tools', more: { label: `All ${o.toolCount || (o.tools || []).length} tools`, href: 'https://openvibe.tools/' } },
-            { id: 'build', name: 'Build', apps: apps.filter((a) => a.group === 'build').map((a) => a.id), glyph: 'code' },
         ]).filter((f) => f.apps.length);
     }
-    /** Until the person arranges it: their own places first (signed in), then the most used and popular sites. */
+    /** Until the person arranges it: their own places first (signed in), then the most used and popular sites, then
+     *  one folder per group (the menu's eight, in its order) and the quick tools. */
     function defaultHome(o) {
         const mineFirst = (o.yours || []).filter((y) => ['you:vibe', 'you:codes', 'you:files', 'you:wallet'].includes(y.id)).map((y) => y.id);
-        const groupFolders = folderDefs(o).filter((f) => f.id.startsWith('g-')).map((f) => `folder:${f.id}`);
-        return mineFirst.concat(topSites(o), groupFolders, ['folder:tools', 'folder:build']);
+        const groupFolders = folderDefs(o).filter((f) => f.group).map((f) => `folder:${f.id}`);
+        return mineFirst.concat(topSites(o), groupFolders, ['folder:tools']);
     }
     function layoutOf(o) {
         const byId = universe(o);
         const folders = folderDefs(o);
         const known = (id) => byId.has(id) || (id.startsWith('folder:') && folders.some((f) => `folder:${f.id}` === id));
         const l = readLocal();
-        const home = (l ? l.home : defaultHome(o)).filter((id, i, a) => known(id) && a.indexOf(id) === i).slice(0, HOME_MAX);
+        const home = (l ? l.home : defaultHome(o)).map(normalizeFolder).filter((id, i, a) => known(id) && a.indexOf(id) === i).slice(0, HOME_MAX);
         return { home, folders, arranged: !!l, byId };
     }
 

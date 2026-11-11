@@ -21,26 +21,26 @@
     'use strict';
 
     const HOODS = Object.freeze({
-        streams: 'Streams & places', games: 'Games & laughs', answers: 'News & answers',
-        make: 'Make & build', shop: 'Shop & swap', people: 'People & you', build: 'For developers',
+        watch: 'Watch & stream', talk: 'Talk & belong', play: 'Play', read: 'Read & ask',
+        shop: 'Shop & money', tools: 'Free tools', make: 'Make with AI', build: 'For developers',
     });
 
     // id, name in menus, host, neighbourhood, OKLCH hue, dark accent, light accent, hero line (≤ 8 words), kit icon, motif
     const ROWS = [
-        ['fun', 'Fun', 'openvibe.fun', 'games', 350, '#F47DB9', '#A42C71', 'Something to do, alone, together, or live', 'spark', 'a city map where idea pins pop up and a quest card flips'],
+        ['fun', 'Fun', 'openvibe.fun', 'play', 350, '#F47DB9', '#A42C71', 'Something to do, alone, together, or live', 'spark', 'a city map where idea pins pop up and a quest card flips'],
         ['shoes', 'Shoes', 'open.shoes', 'shop', 25, '#FF7E76', '#B02A2D', 'Every shoe, every market, the right price', 'shoe', 'a shoe drawn as one line, price tags from several stores sliding into one all-in price'],
-        ['tours', 'Tours', 'openvibe.tours', 'streams', 50, '#F98942', '#AA3900', 'Go anywhere: fly, stay, walk, watch', 'map', 'a plane\'s dotted arc landing on a map, then the walking route drawing itself'],
-        ['today', 'Today', 'openvibe.today', 'answers', 75, '#E49900', '#994E00', 'Everything happening for you, today', 'calendar', 'the day\'s ring with events as dots and "now" sweeping; the brief\'s lines typing in'],
-        ['meme', 'Meme', 'openvibe.meme', 'games', 100, '#C3AC00', '#7B6100', 'The internet\'s meme database, rebuilt with AI', 'image', 'a family tree of memes growing branch by branch, stickers fanning out'],
-        ['domains', 'Domains', 'openvibe.domains', 'make', 125, '#94BB3B', '#4D7100', 'Name it, price it, run it', 'globe', 'a name typing itself while extensions cycle, prices settling into a sorted list'],
-        ['casino', 'Casino', 'openvibe.casino', 'games', 150, '#51C672', '#007C25', 'Learn it, play it, never pay it', 'game', 'a card fan and chips, with a probability curve drawing beneath'],
-        ['exchange', 'Exchange', 'openvibe.exchange', 'shop', 175, '#00CAA5', '#007F5E', 'Trade what people make', 'swap', 'two arrows looping an item between makers, and a passport card stamping "safe"'],
-        ['cam', 'Cam', 'openvibe.cam', 'streams', 200, '#00C7D2', '#007C89', 'Your camera, the world\'s cams, face to face', 'video', 'a shutter iris opening onto a grid of live cams, a flash, the photo flying to a gallery'],
-        ['surf', 'Surf', 'openvibe.surf', 'games', 225, '#00BEF6', '#0072AB', 'Ride maps, surf the web, surf what\'s on', 'wave', 'a first-person surf run: ramps, speed lines, the timer ticking'],
-        ['report', 'Report', 'openvibe.report', 'answers', 250, '#50B0FF', '#0064BE', 'Every number on OpenVibe, honest', 'chart', 'live counters ticking, a line chart drawing itself, the after-show card sliding in'],
+        ['tours', 'Tours', 'openvibe.tours', 'watch', 50, '#F98942', '#AA3900', 'Go anywhere: fly, stay, walk, watch', 'map', 'a plane\'s dotted arc landing on a map, then the walking route drawing itself'],
+        ['today', 'Today', 'openvibe.today', 'read', 75, '#E49900', '#994E00', 'Everything happening for you, today', 'calendar', 'the day\'s ring with events as dots and "now" sweeping; the brief\'s lines typing in'],
+        ['meme', 'Meme', 'openvibe.meme', 'play', 100, '#C3AC00', '#7B6100', 'The internet\'s meme database, rebuilt with AI', 'image', 'a family tree of memes growing branch by branch, stickers fanning out'],
+        ['domains', 'Domains', 'openvibe.domains', 'tools', 125, '#94BB3B', '#4D7100', 'Name it, price it, run it', 'globe', 'a name typing itself while extensions cycle, prices settling into a sorted list'],
+        ['casino', 'Casino', 'openvibe.casino', 'play', 150, '#51C672', '#007C25', 'Learn it, play it, never pay it', 'game', 'a card fan and chips, with a probability curve drawing beneath'],
+        ['exchange', 'Exchange', 'openvibe.exchange', 'build', 175, '#00CAA5', '#007F5E', 'Trade what people make', 'swap', 'two arrows looping an item between makers, and a passport card stamping "safe"'],
+        ['cam', 'Cam', 'openvibe.cam', 'watch', 200, '#00C7D2', '#007C89', 'Your camera, the world\'s cams, face to face', 'video', 'a shutter iris opening onto a grid of live cams, a flash, the photo flying to a gallery'],
+        ['surf', 'Surf', 'openvibe.surf', 'play', 225, '#00BEF6', '#0072AB', 'Ride maps, surf the web, surf what\'s on', 'wave', 'a first-person surf run: ramps, speed lines, the timer ticking'],
+        ['report', 'Report', 'openvibe.report', 'read', 250, '#50B0FF', '#0064BE', 'Every number on OpenVibe, honest', 'chart', 'live counters ticking, a line chart drawing itself, the after-show card sliding in'],
         ['website', 'Website', 'openvibe.website', 'make', 275, '#8EA0FF', '#4B53C2', 'Serious sites, no login needed', 'computer', 'a browser frame assembling a real site from blocks while a cursor types the prompt'],
-        ['vision', 'Vision', 'openvibe.vision', 'answers', 300, '#BB91FF', '#7444B4', 'See with the best model for the job', 'eye', 'an aperture with two models\' boxes racing on the same image, cost and time ticking'],
-        ['design', 'Design', 'openvibe.design', 'make', 325, '#DD84E2', '#913797', 'Make it yours, find the best AI designer', 'palette', 'the theme orb: drag it and the whole page recolours live; an A/B vote flips'],
+        ['vision', 'Vision', 'openvibe.vision', 'read', 300, '#BB91FF', '#7444B4', 'See with the best model for the job', 'eye', 'an aperture with two models\' boxes racing on the same image, cost and time ticking'],
+        ['design', 'Design', 'openvibe.design', 'tools', 325, '#DD84E2', '#913797', 'Make it yours, find the best AI designer', 'palette', 'the theme orb: drag it and the whole page recolours live; an A/B vote flips'],
     ];
     const ROOMS = Object.freeze(Object.fromEntries(ROWS.map(([id, name, host, hood, hue, dark, light, line, icon, motif]) =>
         [id, Object.freeze({ id, name, host, hood, hue, dark, light, line, icon, motif })])));

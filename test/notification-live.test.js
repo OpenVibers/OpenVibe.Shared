@@ -490,7 +490,9 @@ const created = (subject, over = {}) => ({
     // 24 → 24.5 KB on 2026-11-07 (4.137.0): notification-live.js by its content hash (24.04 KB measured).
     // 24.5 → 25.5 KB on 2026-11-09 (4.172.0): service faces and readable agent and watch notices (25.24 KB measured).
     // 25.5 → 25.7 KB on 2026-11-10 (4.187.0): new messages are counted on the bell (25.51 KB measured).
-    assert.ok(size('notification-ui.js') <= 25.7 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 25.7 KB`);
+    // 25.7 → 25.75 KB on 2026-11-10 (4.201.0): the one menu's notifications (the count event, the five-row preview
+    // with its count, per-view page sizes; 25.72 KB measured). It cannot be trimmed: every line feeds the menu.
+    assert.ok(size('notification-ui.js') <= 25.75 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 25.75 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

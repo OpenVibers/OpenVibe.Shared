@@ -12,6 +12,7 @@
     // The close button is the menu button, already crossed (navbar.js, root.OpenVibeOrb): it forms as the sheet opens.
     const ORBX = () => (root.OpenVibeOrb ? root.OpenVibeOrb.svg(22, true) : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>');
     const G = {
+        code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>',
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
         bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
         // An upright pushpin whose lines never cross (owner, 11-09: the old one had "a line going through it").
@@ -28,10 +29,10 @@
     };
     // Vibe first (L48 V2): the person's AI, on every site.
     const ROBOT = '<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13h.01M14.5 13h.01M3 12.5v2M21 12.5v2"/>';   // as in the menu's row
-    const TABS = [['vibe', 'Vibe', G.spark], ['agent', 'Agents', ROBOT], ['chats', 'Chat', G.chat], ['activity', 'Activity', G.bell]];
+    const TABS = [['vibe', 'Vibe', G.spark], ['code', 'Code', G.code], ['agent', 'Agents', ROBOT], ['chats', 'Chat', G.chat], ['activity', 'Activity', G.bell]];
     // The tabs the Network keeps in the person's Dock state (network.dock-state@1; vibe since contracts 0.270.0); a
     // newer one stays on this site's copy until the Network learns it.
-    const SAVED_TABS = ['vibe', 'agent', 'chats', 'activity'];
+    const SAVED_TABS = ['vibe', 'code', 'agent', 'chats', 'activity'];
     const DEFAULT_STATE = { open: false, tab: 'activity', pinned: false, agent: null, chat: null, place: { phone: { corner: 'bottom-right' }, desktop: { corner: 'bottom-right', width: null, height: null } } };
 
     let el = null, bodyEl = null, inline = null, panelEpoch = 0, o = {}, doc = null, tab = 'activity', saveT = 0, pending = {}, lastFocus = null, dockSurface = null;
@@ -88,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '4eb6d94db445', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '1bfa19b01e8e', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -105,7 +106,7 @@
         const st = document.createElement('style');
         st.id = 'ovdk-styles';
         st.textContent = `
-            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: 9995; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
+            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: var(--ovb-z-pill, 9995); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + var(--ovb-dock, calc(max(var(--ovnav-appbar-h, 0px), env(safe-area-inset-bottom, 0px)) + var(--ovb-mini, 0px)))); translate: 0 calc(-1 * var(--ovb-lift, 0px));
                 display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 18px 0 9px; border-radius: 99px; border: 1px solid var(--border, #333340); background: var(--bg); color: var(--text-primary, #e0e0e0);
                 font: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: -.005em; box-shadow: 0 14px 34px -14px rgba(0,0,0,.6); cursor: pointer; -webkit-tap-highlight-color: transparent; animation: ovdk-in .3s cubic-bezier(.2,.9,.25,1.2); }
             .ovdk-pill[hidden] { display: none; }
@@ -123,7 +124,7 @@
             .ovdk-pill:has(.ovdk-t:empty) { padding-right: 8px; }
             @keyframes ovdk-in { from { opacity: 0; transform: translateY(10px) scale(.9); } }
             @keyframes ovdk-ping { to { transform: scale(2.6); opacity: 0; } }
-            .ovdk { --ovdk-gap: 16px; position: fixed; z-index: 9996; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
+            .ovdk { --ovdk-gap: 16px; position: fixed; z-index: var(--ovb-z-dock, 9996); display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
                 right: max(var(--ovdk-gap), env(safe-area-inset-right, 0px)); bottom: calc(max(var(--ovdk-gap), env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
                 width: ${DEF.width}px; height: ${DEF.height}px; max-width: calc(100vw - 32px); max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px);
                 background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1));
@@ -563,6 +564,13 @@
         if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (mounts[id + 'Timeline']) mounts[id + 'Timeline'].refresh(); return; }
         mounts[id] = { refresh: null };
         panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
+        if (id === 'code') {
+            const ok = await load('dock-code.js', () => !!(root.OpenVibeDockCode && root.OpenVibeDockCode.mount));
+            if (epoch !== panelEpoch || !panelActive(id)) { delete mounts[id]; return; }
+            if (!ok) return failed(panel, id);
+            mounts[id] = root.OpenVibeDockCode.mount(panel, { token: o.token, frameBase: frameBase(), active: () => panelActive('code') });
+            return;
+        }
         if (id === 'agent') {
             const ok = await load('dock-runs.js', () => !!(root.OpenVibeDockRuns && root.OpenVibeDockRuns.mount));
             if (epoch !== panelEpoch || !panelActive(id)) { delete mounts[id]; return; }
@@ -608,7 +616,7 @@
     // The person's conversations and DMs, from OpenVibe.Chat's own API with their Network token (Chat checks they are
     // in each one). Everything people wrote is set as text, never markup; only https pictures are shown. A thread polls
     // for new messages every 5 s while it is open in the Dock, and is marked read as it is shown.
-    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null };
+    const chats = { panel: null, list: null, open: null, msgs: [], last: 0, timer: 0, unread: 0, unreadT: 0, busy: false, draft: null, vibeSummary: null, filter: '' };
     const chatBase = () => String(o.chatBase || 'https://openvibe.chat').replace(/\/+$/, '');
     const me = () => String(o.me || '');
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
@@ -678,7 +686,7 @@
             scroll.append(none);
         } else {
             const ul = h('ul', 'ovdk-chats');
-            [...chats.list, ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
+            [...chats.list.filter((c) => !chats.filter || titleOf(c).toLowerCase().includes(chats.filter)), ...(chats.vibeSummary ? [chats.vibeSummary] : [])].sort((a, b) => String(b.last_message_at || b.updated_at || '').localeCompare(String(a.last_message_at || a.updated_at || ''))).forEach((c) => {
                 if (c.kind === 'vibe') {
                     const li = h('li'), b = h('button', 'ovdk-chat'); b.type = 'button';
                     const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'Vibe'), h('span', 'ovdk-chat-p', `${c.count} chat${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
@@ -808,7 +816,7 @@
     function withTimer(fn) {
         if (timerMod) return fn(timerMod);
         timerLoading = timerLoading || load('dock-timer.js', () => !!(root.OpenVibeDockTimer && root.OpenVibeDockTimer.attach)).then((ok) => {
-            if (ok && !timerMod) timerMod = root.OpenVibeDockTimer.attach({ state, save, host: () => el, repaint: () => paintPill() });
+            if (ok && !timerMod) timerMod = root.OpenVibeDockTimer.attach({ state, save, host: () => inline || el, repaint: () => paintPill() });
             return timerMod;
         });
         return timerLoading.then((m) => (m ? fn(m) : null));
@@ -1103,5 +1111,7 @@
         return handle;
     }
 
-    root.OpenVibeDock = { mount, mountInto, open, close, isOpen, update, ask, share, canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
+    root.OpenVibeDock = { mount, mountInto, open, close, isOpen, update, ask, share,
+        filterChats: (v) => { chats.filter = v.toLowerCase(); chatList(); },
+        more: a => el.querySelector(`[data-act="${a}"]`).click(), canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
 })(typeof window !== 'undefined' ? window : globalThis);
