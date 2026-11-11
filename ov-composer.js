@@ -19,6 +19,8 @@
  *   upload(file, onProgress) → Promise<{ id }>,      files go to the site's store before the send
  *   beforeSend(ctx) → false to hold the send })
  * ctx: { form, text, value, set(v), insert(s), files(), add(files), note(s), send() }.
+ * A box its page sends by script (a chat, an agent's run): form.__ovc.files() → the files (File objects), uploads(): the
+ * ids a mod's upload gave, clear() after the send (the text, the chips, the draft); a form 'reset' clears the same.
  * A site without script says the same in data: data-ovt-commands='[{"name","hint","insert"}]', data-ovc-max-files,
  * data-ovc-max-mb, data-ovc-no-draft.
  */
@@ -495,9 +497,12 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
             form, ctx,
             refresh() { form.classList.toggle('ovc-compact', prefs.density === 'compact'); micButton(); paintTools(); syncSend(); },
             add, files: () => files.map((f) => f.file),
+            uploads: () => files.map((f) => f.id).filter(Boolean),
+            clear() { files.slice().forEach(remove); text.value = ''; if (draftKey) store.set(draftKey, null); fire(); },
             destroy() { live.delete(api); pop.remove(); strip.remove(); if (mic) mic.remove(); modTools.forEach((b) => b.remove()); form.__ovc = null; },
         };
         form.__ovc = api;
+        form.addEventListener('reset', () => setTimeout(() => api.clear(), 0));
         live.add(api);
         form.classList.add('ovc');
         api.refresh();

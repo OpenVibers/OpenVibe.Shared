@@ -993,25 +993,49 @@
             if (!LIVE.includes(s)) { S.endedAt = S.endedAt || Date.now(); empty.textContent = 'Nothing was recorded for this run.'; }
             paintHead();
         }
-        // Talking to the run while it works (opts.onSend(text) → a promise; the product sends it to its agent: Codes' job
-        // message, Actor's task input, the portal's session). The one composer when the page has it, else a plain box.
+        // Talking to the run while it works (opts.onSend(text, { files, uploads }) → a promise; the product sends it to its
+        // agent: Codes' job message, Actor's task input, the portal's session). The box is the one composer on every site
+        // (owner, 2026-11-11: "uses our custom modular composer across all sites"): files by picker, paste and drop, "/"
+        // commands and the person's own, drafts, voice and their settings; loaded from beside this file when the page has
+        // not loaded it. opts.composer: false keeps a plain box.
         if (typeof opts.onSend === 'function') {
-            const form = el('form', 'ovas-say');
-            const ta = el('textarea'); ta.name = 'text'; ta.rows = 1; ta.maxLength = 4000; ta.placeholder = opts.sayPlaceholder || 'Message the agent'; ta.setAttribute('aria-label', 'Message the agent');
-            const send = el('button', 'ovas-say-send'); send.type = 'submit'; send.setAttribute('aria-label', 'Send'); send.innerHTML = svg('handoff');
-            form.appendChild(ta); form.appendChild(send);
+            // The one composer's markup (thread.js composer()): the box, then a row with its tools and Send, then its note,
+            // so ov-composer.js puts its + menu (files), "/" commands, voice and settings where every site has them.
+            const form = el('form', 'ovas-say ovt-composer'); form.setAttribute('data-ovt-composer', '');
+            const ta = el('textarea'); ta.name = 'text'; ta.rows = 1; ta.maxLength = 4000; ta.placeholder = opts.sayPlaceholder || 'Message the agent'; ta.setAttribute('aria-label', 'Message the agent'); ta.setAttribute('data-ovt-text', '');
+            const row = el('div', 'ovt-c-row'); const toolsEl = el('div', 'ovt-c-tools');
+            const send = el('button', 'ovas-say-send ovt-send'); send.type = 'submit'; send.setAttribute('aria-label', 'Send'); send.setAttribute('data-ovt-send', ''); send.innerHTML = svg('handoff');
+            const noteEl = el('p', 'ovt-c-note'); noteEl.setAttribute('data-ovt-note', ''); noteEl.setAttribute('role', 'status');
+            row.appendChild(toolsEl); row.appendChild(send);
+            form.appendChild(ta); form.appendChild(row); form.appendChild(noteEl);
             box.appendChild(form);
             ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const text = ta.value.trim(); if (!text || form.classList.contains('is-busy')) return;
+                const ovc = form.__ovc;
+                const files = ovc ? ovc.files() : [], uploads = ovc && ovc.uploads ? ovc.uploads() : [];
+                const text = ta.value.trim(); if ((!text && !files.length) || form.classList.contains('is-busy')) return;
                 form.classList.add('is-busy');
-                const li = el('li', 'ovas-you'); li.dataset.k = 'msg'; li.appendChild(el('span', '', text)); appendLi(feed, li); keep();
-                try { await opts.onSend(text); ta.value = ''; li.classList.add('is-sent'); }
+                const li = el('li', 'ovas-you'); li.dataset.k = 'msg'; li.appendChild(el('span', '', text));
+                if (files.length) li.appendChild(el('small', 'ovas-you-files', files.map((f) => f.name || 'a file').join(' · ')));
+                appendLi(feed, li); keep();
+                try { await opts.onSend(text, { files, uploads }); if (ovc && ovc.clear) ovc.clear(); else ta.value = ''; li.classList.add('is-sent'); }
                 catch (err) { li.classList.add('is-failed'); li.title = (err && err.message) || 'Not sent'; }
                 finally { form.classList.remove('is-busy'); }
             });
-            try { if (root.OpenVibeComposer && root.OpenVibeComposer.enhance) { form.setAttribute('data-ovc-no-files', ''); root.OpenVibeComposer.enhance(form); } } catch { /* a plain box is fine */ }
+            if (opts.composer !== false) {
+                form.id = form.id || `ovas-say-${Math.random().toString(36).slice(2, 8)}`;
+                const join = () => { try { if (root.OpenVibeComposer && form.isConnected) root.OpenVibeComposer.enhance(form); } catch { /* a plain box still sends */ } };
+                if (root.OpenVibeComposer) join();
+                else {
+                    const m = /^(https?:\/\/[^?#]*\/)agent-session(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(SELF_SRC);
+                    if (m) {
+                        let sc = document.getElementById('ov-composer-script');
+                        if (!sc) { sc = document.createElement('script'); sc.id = 'ov-composer-script'; sc.async = true; sc.src = m[1] + 'ov-composer.js'; document.head.appendChild(sc); }
+                        sc.addEventListener('load', join, { once: true });
+                    }
+                }
+            }
         }
         const tick = setInterval(() => { if (S.status === 'running' || S.status === 'placed') { S.steps.forEach((st) => { if (!st.done) setStepState(st); }); paintHead(); } }, 1000);
         paintHead();
