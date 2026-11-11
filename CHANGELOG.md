@@ -5,6 +5,9 @@
 **Notifications move into the one menu; the mark and the name are one button; one composer and Code on every site.**
 From the owner's notes of 2026-11-10 (asks 334 to 350).
 
+- **The one menu's look (`search.js`).** Vibe's three parts (Chat, Code, Agents) sit in one row on a phone. Notifications
+  in You have a head: their name, the red "n new", and Show all in the head instead of a dashed box under the list. The
+  Timer under Vibe and the Dock's actions in You are rows with a glyph, not dashed folds.
 - **Notifications in You, no bell in the bar (`navbar.js`, `search.js`, `notification-ui.js`).** The bar's bell is
   gone: the signed-in picture wears the red unread count, and pressing it opens the menu's You at Notifications, on
   phones and computers alike (the menu's You tab wears the red count too). The notification read/unread

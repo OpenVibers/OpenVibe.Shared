@@ -316,7 +316,7 @@
 .ovs-act:hover, .ovs-act:focus-visible { background: var(--hover-bg, rgba(127,127,127,.14)); color: var(--text-primary, #ececf1); }
 .ovs-act.is-new { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovs-door-host > .ovdk { flex: 1 1 auto; min-height: 0; }
-.ovs-door-sw { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin: 8px 12px 4px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovs-door-sw { flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; margin: 8px 12px 4px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
 .ovs-door-sw[hidden] { display: none; }
 .ovs-door-sw button { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border-radius: 11px; cursor: pointer; font-size: 14px; font-weight: 650; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s; }
 .ovs-door-sw button[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
@@ -377,6 +377,24 @@
 @keyframes ovs-livedot { 50% { opacity: .4; transform: scale(.75); } }
 .ovs-foldrow { padding: 6px 4px 2px; }
 .ovs-fold { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1px dashed var(--border, rgba(255,255,255,.16)); background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; text-align: left; cursor: pointer; }
+/* 4.201.0's look: Notifications' head in You; the Timer under Vibe; the Dock's actions in You. */
+.ovs-nhead { display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; }
+.ovs-nhead b { font-size: 13px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #a8b3c4); }
+.ovs-nhead-n { padding: 2px 8px; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font-size: 11.5px; font-weight: 750; }
+.ovs-nhead-n[hidden], .ovs-nhead-more[hidden] { display: none; }
+.ovs-nhead-more { margin-left: auto; min-height: 32px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--accent-light, var(--accent, #60a5fa)); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.ovs-nhead-more:hover, .ovs-nhead-more:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+.ovs-ai-timer { flex: none; display: flex; align-items: center; gap: 10px; margin: 6px 12px 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ovs-ai-timer[hidden] { display: none; }
+.ovs-ai-timer:hover, .ovs-ai-timer:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); color: var(--text-primary, #e6edf7); }
+.ovs-ai-timer svg { flex: none; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-dockyou-b { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: none; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+.ovs-dockyou-b::after { content: ""; width: 7px; height: 7px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .2s; }
+.ovs-dockyou-b[aria-expanded="true"]::after { transform: rotate(225deg); }
+.ovs-dock-you { display: grid; gap: 2px; padding: 0 6px 8px; }
+.ovs-dock-you[hidden] { display: none; }
+.ovs-dockyou-i { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border: 0; border-radius: 11px; background: none; color: var(--text-primary, #e6edf7); font: inherit; font-size: 14.5px; text-align: left; cursor: pointer; }
+.ovs-dockyou-i:hover, .ovs-dockyou-i:focus-visible { background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
 .ovs-fold svg { width: 16px; height: 16px; flex: none; transition: transform .2s; }
 .ovs-feeds { display: grid; gap: 4px; padding: 4px 6px 8px; }
 .ovs-feed { display: grid; grid-template-columns: minmax(0, 1fr) 40px 40px; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
@@ -505,7 +523,7 @@
         doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['code', 'Code', 'code'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
         doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
-        const timerButton = document.createElement('button'); timerButton.type = 'button'; timerButton.className = 'ovs-fold ovs-ai-timer'; timerButton.textContent = 'Timer'; timerButton.hidden = true;
+        const timerButton = document.createElement('button'); timerButton.type = 'button'; timerButton.className = 'ovs-ai-timer'; timerButton.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/></svg><span>Start a timer</span>'; timerButton.hidden = true;
         timerButton.addEventListener('click', () => { try { if (ctx.dockMore) ctx.dockMore('timer'); } catch { /* Dock optional */ } });
         doorEl.append(doorSw, doorHost, timerButton);
         listEl.after(doorEl);
@@ -673,23 +691,30 @@
         groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card', 'display', 'feeds', 'home', 'walltop', 'wall', 'dock-activity', 'dock-row', 'notifications'].includes(g.as)).forEach((g) => {
             if (g.as === 'dock-row') {
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
-                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-fold'; b.textContent = 'The Dock';
+                const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-dockyou-b'; b.setAttribute('aria-expanded', 'false'); b.textContent = 'The Dock';
                 const host = document.createElement('div'); host.className = 'ovs-dock-you'; host.hidden = true;
                 [['timer', 'Start a timer'], ['pin', 'Keep the Dock button on every page'], ['pop', 'Open the Dock in its own window']].forEach(([action, label]) => {
-                    const item = document.createElement('button'); item.type = 'button'; item.className = 'ovs-fold'; item.textContent = label;
+                    const item = document.createElement('button'); item.type = 'button'; item.className = 'ovs-dockyou-i'; item.textContent = label;
                     item.addEventListener('click', () => { try { if (ctx.dockMore) ctx.dockMore(action); } catch { /* Dock optional */ } }); host.appendChild(item);
                 });
-                b.addEventListener('click', () => { host.hidden = !host.hidden; });
+                b.addEventListener('click', () => { host.hidden = !host.hidden; b.setAttribute('aria-expanded', String(!host.hidden)); });
                 li.append(b, host); listEl.appendChild(li); return;
             }
             if (g.as === 'notifications') {
                 const li = document.createElement('li'); li.className = 'ovs-notifications'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'notifications');
                 const host = document.createElement('div'); host.className = 'ovs-notifications-host'; li.appendChild(host);
                 const N = root.OpenVibeNotifications;
-                const more = document.createElement('button'); more.type = 'button'; more.className = 'ovs-fold'; more.hidden = true;
+                // 4.201.0's look: the section's head says what it is and how many wait, and Show all sits in it.
+                const head = document.createElement('div'); head.className = 'ovs-nhead';
+                const title = document.createElement('b'); title.textContent = 'Notifications';
+                const unread = document.createElement('span'); unread.className = 'ovs-nhead-n'; unread.hidden = true;
+                try { const n = N.unread ? Number(N.unread()) : 0; if (n > 0) { unread.textContent = `${n > 99 ? '99+' : n} new`; unread.hidden = false; } } catch { /* the count is optional */ }
+                const more = document.createElement('button'); more.type = 'button'; more.className = 'ovs-nhead-more'; more.hidden = true;
+                head.append(title, unread, more);
+                li.insertBefore(head, host);
                 let compact = null;
                 try { compact = N.renderMenuNotifications(host, (total) => { if (total > 5) { more.textContent = `Show all ${total}`; more.hidden = false; } }); } catch { host.textContent = 'Notifications are unavailable right now.'; }
-                more.addEventListener('click', () => { if (compact) compact.showAll(); more.remove(); }); li.appendChild(more);
+                more.addEventListener('click', () => { if (compact) compact.showAll(); more.hidden = true; });
                 listEl.appendChild(li); return;
             }
             if (g.as === 'home' || g.as === 'walltop' || g.as === 'wall') {

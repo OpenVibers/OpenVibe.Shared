@@ -63,12 +63,13 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click()`);
             assert.equal(await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"] .ovs-tabnew-red').textContent`), '7', `${name}: You has the red unread badge`);
             assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-notifications-host [data-role="list"]')?.textContent`), 'five newest', `${name}: You starts with the notifications preview`);
-            assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-fold')?.textContent`), 'Show all 12', `${name}: notification expansion count`);
-            await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-fold').click()`);
+            assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead-more')?.textContent`), 'Show all 12', `${name}: notification expansion count, in the section's head`);
+            assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead b')?.textContent`), 'Notifications', `${name}: the section is named`);
+            await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead-more').click()`);
             assert.equal(await page.evaluate('window.notificationsExpanded'), true, `${name}: notifications expand in place`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click()`);
             if (width <= 640) {
-                await page.evaluate(`document.querySelector('.ovs-list > li > .ovs-fold').click()`);
+                await page.evaluate(`document.querySelector('.ovs-list > li > .ovs-dockyou-b').click()`);
                 assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-dock-you button')).map((b) => b.textContent)`), ['Start a timer', 'Keep the Dock button on every page', 'Open the Dock in its own window'], `${name}: The Dock row opens its three actions in place`);
                 await page.evaluate(`document.querySelector('.ovs-dock-you button').click()`);
                 assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: You Dock timer action`);
