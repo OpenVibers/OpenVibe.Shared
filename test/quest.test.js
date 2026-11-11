@@ -155,6 +155,24 @@ function host() {
     assert.equal(requested, 'AbC_0123456789');
     assert.equal(control.arrived, true);
     stopFromLink();
+    let mountedLater = false;
+    const delayedRoot = { ...guideRoot, querySelector: () => mountedLater ? control : null,
+        documentElement: {}, defaultView: { MutationObserver: class {
+            constructor(notify) { this.notify = notify; }
+            observe() { mountedLater = true; this.notify(); }
+            disconnect() {}
+        } } };
+    const stopDelayed = await startFromLocation({ location: { href: 'https://openvibe.pics/?qstep=AbC_0123456789' },
+        document: delayedRoot, load: async () => ({ step: { hook: 'pics.upload', help: 'Choose a picture', event_type: 'mediahub.picture.uploaded' } }) });
+    assert.equal(mountedLater, true);
+    stopDelayed();
+    let observed = false;
+    const stopPolled = startQuestGuide({ root: guideRoot,
+        step: { hook: 'pics.upload', help: 'Choose a picture', event_type: 'mediahub.picture.uploaded' },
+        checkDone: async () => ({ step: { done: true } }), pollMs: 1, onDone: () => { observed = true; } });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(observed, true, 'the guide follows the Events-backed step read');
+    stopPolled();
     requested = null;
     await startFromLocation({ location: { href: 'https://openvibe.pics/?qstep=plain text' }, document: guideRoot, load: async (id) => { requested = id; } });
     assert.equal(requested, null);
