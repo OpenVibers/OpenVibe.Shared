@@ -387,6 +387,15 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-avatar'));
     }
 
+    // A signed-in destination starts the shared guide only when an opaque step link is present.
+    {
+        const { navbar } = loadNavbar({ hostname: 'openvibe.chat', href: 'https://openvibe.chat/?qstep=abc123def456' });
+        const scripts = [];
+        document.head.appendChild = (el) => scripts.push(el.src);
+        navbar.init({ service: 'chat', token: 'person-token', user: USER });
+        assert.strictEqual(scripts.filter((src) => /guide\.js/.test(src)).length, 1);
+    }
+
     // The top-level SDK route reads Network's first-party session even where third-party cookies are blocked; a guest
     // comes back with sso=none. It runs when there is a reason to think the person has a session: this site signed them
     // in before ('account'), or they came from another OpenVibe site. A first visit from elsewhere keeps the quiet

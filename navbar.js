@@ -1939,6 +1939,26 @@
         }
     }
 
+    let _questGuideStarted = false;
+    function startQuestGuide() {
+        if (_questGuideStarted || !_config.token || !root.location || !/[?&]qstep=/.test(root.location.search || '')) return;
+        _questGuideStarted = true;
+        const script = document.createElement('script');
+        script.src = siblingV('guide.js');
+        script.onload = () => {
+            if (!root.OpenVibeQuestGuide) return;
+            void root.OpenVibeQuestGuide.startFromLocation({ load: async (id) => {
+                try {
+                    const response = await fetch(`https://openvibe.quest/api/v1/quests/today/steps/${encodeURIComponent(id)}`, {
+                        headers: { Authorization: `Bearer ${_config.token}` }, credentials: 'omit',
+                    });
+                    return response.ok ? response.json() : null;
+                } catch { return null; }
+            } });
+        };
+        document.head.appendChild(script);
+    }
+
     function refreshAuthState() {
         if (_authInFlight) return _authInFlight;
         _authInFlight = resolveSessionUser()
@@ -1950,6 +1970,7 @@
                     render();
                     recordHistory();
                     enableHandoff();
+                    startQuestGuide();
                 } else {
                     maybeSilentLogin();
                 }
@@ -2631,6 +2652,7 @@
             if (_config.auth === 'external') { if (_config.user) { recordHistory(); enableHandoff(); } }
             else if (!_config.user) refreshAuthState();
             else { recordHistory(); enableHandoff(); }
+            startQuestGuide();
             return el;
         },
 
@@ -2688,7 +2710,7 @@
         /** The signed-in user changed (sites with auth: 'external'). Pass null for signed out. */
         openWallet,
         refreshWallet() { _walletAt = 0; loadWalletChips(); },
-        setUser(user, token) { if (root.OpenVibeWallet && (_config.user !== user || (token !== undefined && token !== _config.token))) root.OpenVibeWallet.close(); _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; return render(); },
+        setUser(user, token) { if (root.OpenVibeWallet && (_config.user !== user || (token !== undefined && token !== _config.token))) root.OpenVibeWallet.close(); _config.user = user || null; if (token !== undefined) _config.token = token; _walletLoaded = false; const result = render(); startQuestGuide(); return result; },
         /** Single-page apps: mark the link whose `page` matches as active. */
         setActive(page) { _activePage = page || null; renderAppBar(); if (!_navEl) return; _navEl.querySelectorAll('.ovnav-link[data-page]').forEach(a => a.classList.toggle('active', a.getAttribute('data-page') === _activePage)); },
         /** Change a status chip's text (navbar and menu header): setChip('coins', '1,234'). */
