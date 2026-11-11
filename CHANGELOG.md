@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.203.0 — 2026-11-11
+
+**The one composer everywhere: it carries its own look, and Vibe's box in the Dock is the same composer.**
+
+- **The composer carries its own look (`ov-composer.js`).** Its styles moved out of `thread.css` into the script (injected
+  once, before the first box is joined), so any box on any page gets the chips, the "/" menu, the counter and the
+  settings, with the page's tokens or the network's defaults.
+- **Vibe's box in the Dock joins it (`dock-vibe.js`).** Drafts, "/" commands (the site's, mods' and yours), the marks,
+  what sends and your settings; its picture keeps its own upload (`data-ovc-no-files` opts a box out of attaching files),
+  and a box that was not required stays so. A popped-out Dock keeps its plain box. `VIBE_REV` keeps the sibling fresh.
+- **openvibe-sdk 0.147.0 (#453).**
+
 ## 4.202.0 — 2026-11-11
 
 **One field dropdown, one window for small interfaces, one user card, a measured page end, eight site groups, and the reveal remade.**
