@@ -572,6 +572,7 @@
 .fa-duotone.fa-fire::after{content:"\e033";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-fish::after{content:"\e0dd";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-flag::after{content:"\e034";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-arrows-to-dot::after{content:"\e0df";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-folder::after{content:"\e035";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-folder-open::after{content:"\e035";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-folder-tree::after{content:"\e0e0";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
