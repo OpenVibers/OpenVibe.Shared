@@ -1,0 +1,423 @@
+{
+  "groups": [
+    {
+      "id": "watch",
+      "name": "Watch & stream"
+    },
+    {
+      "id": "talk",
+      "name": "Talk & belong"
+    },
+    {
+      "id": "play",
+      "name": "Play"
+    },
+    {
+      "id": "read",
+      "name": "Read & ask"
+    },
+    {
+      "id": "shop",
+      "name": "Shop & money"
+    },
+    {
+      "id": "tools",
+      "name": "Free tools"
+    },
+    {
+      "id": "make",
+      "name": "Make with AI"
+    },
+    {
+      "id": "build",
+      "name": "For developers"
+    }
+  ],
+  "sites": [
+    {
+      "id": "live",
+      "name": "Live",
+      "url": "https://openvibe.live/",
+      "description": "Go live, watch streams",
+      "group": "watch"
+    },
+    {
+      "id": "community",
+      "name": "Community",
+      "url": "https://openvibe.community/",
+      "description": "Posts and pastes",
+      "group": "talk"
+    },
+    {
+      "id": "chat",
+      "name": "Chat",
+      "url": "https://openvibe.chat/",
+      "description": "Chat with anyone",
+      "group": "talk"
+    },
+    {
+      "id": "media-hub",
+      "name": "Video",
+      "url": "https://openvibe.video/",
+      "description": "Clips and past streams",
+      "group": "watch"
+    },
+    {
+      "id": "pics",
+      "name": "Pics",
+      "url": "https://openvibe.pics/",
+      "description": "Share pictures",
+      "group": "watch"
+    },
+    {
+      "id": "download",
+      "name": "Download",
+      "url": "https://openvibe.download/",
+      "description": "Your files",
+      "group": "watch"
+    },
+    {
+      "id": "tools",
+      "name": "Tools",
+      "url": "https://openvibe.tools/",
+      "description": "Every online tool",
+      "group": "tools"
+    },
+    {
+      "id": "bot",
+      "name": "Bot",
+      "url": "https://openvibe.bot/",
+      "description": "Drive a robot",
+      "group": "make"
+    },
+    {
+      "id": "space",
+      "name": "Space",
+      "url": "https://openvibe.space/",
+      "description": "Host a site or app",
+      "group": "make"
+    },
+    {
+      "id": "tips",
+      "name": "Tips",
+      "url": "https://openvibe.tips/",
+      "description": "Support streamers",
+      "group": "talk"
+    },
+    {
+      "id": "news",
+      "name": "News",
+      "url": "https://openvibe.news/",
+      "description": "Sourced, not spun",
+      "group": "read"
+    },
+    {
+      "id": "games",
+      "name": "Games",
+      "url": "https://openvibe.games/",
+      "description": "Play in your browser",
+      "group": "play"
+    },
+    {
+      "id": "vip",
+      "name": "VIP",
+      "url": "https://openvibe.vip/",
+      "description": "Back your creators",
+      "group": "talk"
+    },
+    {
+      "id": "report",
+      "name": "Report",
+      "url": "https://openvibe.report/",
+      "description": "Your numbers, honest",
+      "group": "read"
+    },
+    {
+      "id": "blog",
+      "name": "Blog",
+      "url": "https://openvibe.blog/",
+      "description": "Write long-form",
+      "group": "read"
+    },
+    {
+      "id": "coupons",
+      "name": "Coupons",
+      "url": "https://openvibe.coupons/",
+      "description": "Codes that work",
+      "group": "shop"
+    },
+    {
+      "id": "deals",
+      "name": "Deals",
+      "url": "https://openvibe.deals/",
+      "description": "Deals people share",
+      "group": "shop"
+    },
+    {
+      "id": "actor",
+      "name": "Actor",
+      "url": "https://openvibe.actor/",
+      "description": "The agent engine",
+      "group": "make"
+    },
+    {
+      "id": "design",
+      "name": "Design",
+      "url": "https://openvibe.design/",
+      "description": "Try themes live",
+      "group": "tools"
+    },
+    {
+      "id": "codes",
+      "name": "Codes",
+      "url": "https://openvibe.codes/",
+      "description": "Code with any agent",
+      "group": "make"
+    },
+    {
+      "id": "wiki",
+      "name": "Wiki",
+      "url": "https://openvibe.wiki/",
+      "description": "Facts with sources",
+      "group": "read"
+    },
+    {
+      "id": "exchange",
+      "name": "Exchange",
+      "url": "https://openvibe.exchange/",
+      "description": "AI models, one account",
+      "group": "build"
+    },
+    {
+      "id": "reviews",
+      "name": "Reviews",
+      "url": "https://openvibe.reviews/",
+      "description": "Honest reviews",
+      "group": "shop"
+    },
+    {
+      "id": "trade",
+      "name": "Trade",
+      "url": "https://openvibe.trade/",
+      "description": "Watch the markets",
+      "group": "shop"
+    },
+    {
+      "id": "host",
+      "name": "Host",
+      "url": "https://openvibe.host/",
+      "description": "Compare hosting",
+      "group": "tools"
+    },
+    {
+      "id": "fun",
+      "name": "Fun",
+      "url": "https://openvibe.fun/",
+      "description": "Something to do",
+      "group": "play"
+    },
+    {
+      "id": "network",
+      "name": "Network",
+      "url": "https://openvibe.network/",
+      "description": "Your account",
+      "group": "talk"
+    },
+    {
+      "id": "rent",
+      "name": "Rent",
+      "url": "https://openvibe.rent/",
+      "description": "Places to rent",
+      "group": "shop"
+    },
+    {
+      "id": "computer",
+      "name": "Computer",
+      "url": "https://openvibe.computer/",
+      "description": "Your computer, your way",
+      "group": "make"
+    },
+    {
+      "id": "work",
+      "name": "Work",
+      "url": "https://openvibe.work/",
+      "description": "Find a job",
+      "group": "shop"
+    },
+    {
+      "id": "inventory",
+      "name": "Inventory",
+      "url": "https://openvibe.my/inventory",
+      "description": "Your items",
+      "group": "play"
+    },
+    {
+      "id": "services",
+      "name": "Services",
+      "url": "https://openvibe.services/",
+      "description": "APIs, SDK and keys",
+      "group": "build"
+    },
+    {
+      "id": "tours",
+      "name": "Tours",
+      "url": "https://openvibe.tours/",
+      "description": "Cities, routes, stays",
+      "group": "watch"
+    },
+    {
+      "id": "vision",
+      "name": "Vision",
+      "url": "https://openvibe.vision/",
+      "description": "Ask a picture",
+      "group": "read"
+    },
+    {
+      "id": "casino",
+      "name": "Casino",
+      "url": "https://openvibe.casino/",
+      "description": "Odds shown, chips free",
+      "group": "play"
+    },
+    {
+      "id": "food",
+      "name": "Food",
+      "url": "https://openvibe.food/",
+      "description": "Food near you",
+      "group": "tools"
+    },
+    {
+      "id": "surf",
+      "name": "Surf",
+      "url": "https://openvibe.surf/",
+      "description": "Surf maps and the web",
+      "group": "play"
+    },
+    {
+      "id": "today",
+      "name": "Today",
+      "url": "https://openvibe.today/",
+      "description": "Your schedule",
+      "group": "read"
+    },
+    {
+      "id": "domains",
+      "name": "Domains",
+      "url": "https://openvibe.domains/",
+      "description": "Names and prices",
+      "group": "tools"
+    },
+    {
+      "id": "quest",
+      "name": "Quest",
+      "url": "https://openvibe.quest/",
+      "description": "Earn badges",
+      "group": "play"
+    },
+    {
+      "id": "events",
+      "name": "Events",
+      "url": "https://openvibe.events/",
+      "description": "Event streams",
+      "group": "build"
+    },
+    {
+      "id": "cam",
+      "name": "Cam",
+      "url": "https://openvibe.cam/",
+      "description": "Your camera, in private",
+      "group": "watch"
+    },
+    {
+      "id": "run",
+      "name": "Run",
+      "url": "https://openvibe.run/",
+      "description": "Run jobs anywhere",
+      "group": "build"
+    },
+    {
+      "id": "zone",
+      "name": "Zone",
+      "url": "https://openvibe.zone/",
+      "description": "S3 storage",
+      "group": "build"
+    },
+    {
+      "id": "help",
+      "name": "Help",
+      "url": "https://openvibe.help/",
+      "description": "Help nearby",
+      "group": "talk"
+    },
+    {
+      "id": "meme",
+      "name": "Meme",
+      "url": "https://openvibe.meme/",
+      "description": "Memes with receipts",
+      "group": "play"
+    },
+    {
+      "id": "mail",
+      "name": "Email",
+      "url": "https://openvibe.email/",
+      "description": "Masks and inboxes",
+      "group": "talk"
+    },
+    {
+      "id": "stream",
+      "name": "Restream",
+      "url": "https://openre.stream/",
+      "description": "Stream everywhere",
+      "group": "watch"
+    },
+    {
+      "id": "shoes",
+      "name": "Shoes",
+      "url": "https://open.shoes/",
+      "description": "Every shoe, every price",
+      "group": "shop"
+    },
+    {
+      "id": "connect",
+      "name": "Connect",
+      "url": "https://connect.openvibe.link/",
+      "description": "Share a port with Link",
+      "group": "make"
+    },
+    {
+      "id": "watch",
+      "name": "Watch",
+      "url": "https://openvibe.watch/",
+      "description": "Know when it changes",
+      "group": "build"
+    },
+    {
+      "id": "image",
+      "name": "Studio",
+      "url": "https://openvibe.studio/",
+      "description": "Edit photos in your browser",
+      "group": "tools"
+    },
+    {
+      "id": "search",
+      "name": "Search",
+      "url": "https://search.openvibe.network/",
+      "description": "Search everything",
+      "group": "read"
+    },
+    {
+      "id": "lock",
+      "name": "Locker",
+      "url": "https://openvibe.locker/",
+      "description": "Files only you can open",
+      "group": "tools"
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "url": "https://git.openvibe.codes/",
+      "description": "Host and browse code",
+      "group": "build"
+    }
+  ]
+}
