@@ -696,8 +696,7 @@
                     const av = h('span', 'ovdk-av ovdk-av-vibe'); av.append(icon(G.vibe));
                     b.append(av, body, meta); b.setAttribute('aria-label', 'Open Vibe');
                     b.addEventListener('click', () => {
-                        const opening = new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true });
-                        if (!b.dispatchEvent(opening)) return;
+                        if (!b.dispatchEvent(new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true }))) return;
                         vibeOnList = true; save({ vibe: null }); setTab('vibe', true);
                     });
                     li.append(b); ul.append(li); return;
@@ -1048,7 +1047,7 @@
         // On a computer it grows out of its pill; a phone's sheet opens out of the navbar's orb (fromOrb), or rises.
         if (!phone() && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) {
             const pill = document.getElementById('ovdk-pill');
-            root.OpenVibeNavbar.pop(el, pill && pill.getBoundingClientRect().width ? pill : null);
+            root.OpenVibeNavbar.pop(el, pill?.offsetWidth ? pill : null);
         }
         if (phone()) {
             el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open');
