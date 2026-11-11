@@ -30,7 +30,15 @@
 
     // 4.203.0: the composer carries its own look (it was in thread.css), so any box on any page gets it: the Dock's
     // Vibe and Code boxes included. Injected once, before the first box is joined.
-    const CSS = `.ovc-files { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
+    const CSS = `.ovt-composer { position: relative; display: grid; gap: 6px; max-width: 780px; margin: 0 auto; padding: 10px 12px; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 18px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); }
+.ovt-composer textarea { width: 100%; min-height: 48px; box-sizing: border-box; padding: 6px 2px; border: 0; outline: 0; resize: vertical; background: transparent; color: inherit; font: inherit; }
+.ovt-c-row { display: flex; align-items: center; gap: 8px; }
+.ovt-c-tools { flex: 1; display: flex; align-items: center; gap: 6px; }
+.ovt-send { min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: inherit; font-weight: 650; cursor: pointer; }
+.ovt-send:disabled { opacity: .5; }
+.ovt-composer .ovc-file.ovc-image { height: auto; min-height: 100px; flex-wrap: wrap; overflow: visible; }
+.ovt-composer .ovc-image input { flex: 1 0 100%; min-width: 0; min-height: 36px; box-sizing: border-box; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 8px; background: var(--bg-primary, #0b1220); color: inherit; font: inherit; }
+.ovc-files { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0 8px; margin: 0 0 2px -4px; scrollbar-width: thin; }
 .ovc-files[hidden] { display: none; }
 .ovc-file { position: relative; flex: none; display: flex; align-items: center; gap: 9px; max-width: 230px; height: 52px; padding: 5px 30px 5px 5px; box-sizing: border-box; border-radius: 14px;
     border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: color-mix(in srgb, var(--text-primary, #fff) 4%, transparent); overflow: hidden; animation: ovc-in .2s cubic-bezier(.2, .9, .3, 1) both; }
@@ -251,6 +259,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
             files.splice(i, 1);
             if (f.url) URL.revokeObjectURL(f.url);
             if (f.hidden) f.hidden.remove();
+            form.dispatchEvent(new CustomEvent('ovc:file-removed', { detail: { file: f.file, chip: f.chip } }));
             f.chip.remove();
             strip.hidden = !files.length;
             syncInputs();
@@ -266,6 +275,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
                 const f = { file, url: kind === 'image' || kind === 'video' ? URL.createObjectURL(file) : null, pasted: !!pasted, lines: pasted ? pasted.lines : 0, text: pasted ? pasted.text : null };
                 files.push(f);
                 paintFile(f);
+                form.dispatchEvent(new CustomEvent('ovc:file-added', { detail: { file, chip: f.chip } }));
                 if (up) {
                     f.progress = 0; paintFile(f);
                     Promise.resolve(up(file, (p) => { f.progress = Math.max(0, Math.min(0.99, Number(p) || 0)); paintFile(f); syncSend(); }))
@@ -505,7 +515,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
         const api = {
             form, ctx,
             refresh() { form.classList.toggle('ovc-compact', prefs.density === 'compact'); micButton(); paintTools(); syncSend(); },
-            add, files: () => files.map((f) => f.file),
+            add, files: () => files.map((f) => f.file), clearFiles: () => { [...files].forEach(remove); },
             uploads: () => files.map((f) => f.id).filter(Boolean),
             clear() { files.slice().forEach(remove); text.value = ''; if (draftKey) store.set(draftKey, null); fire(); },
             destroy() { live.delete(api); pop.remove(); strip.remove(); if (mic) mic.remove(); modTools.forEach((b) => b.remove()); form.__ovc = null; },

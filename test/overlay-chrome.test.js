@@ -73,6 +73,8 @@ const RECT = `(() => { const c = document.querySelector('.ovo-card'); if (!c) re
         // A link to another OpenVibe site carries it; one on this site does not.
         const away = await p.evaluate(`OVOverlay.handoffUrl('https://openvibe.games/achievements')`);
         assert.match(away, /^https:\/\/openvibe\.games\/achievements#ovo=[A-Za-z0-9_-]+$/);
+        assert.strictEqual(await p.evaluate(`OVOverlay.current().href`), `${base}/a`, 'the active live card exposes its way back');
+        assert.match(await p.evaluate(`OVOverlay.handoffUrl('https://openvibe.games/achievements#scores')`), /#scores&ovo=/, 'handoff keeps the destination section');
         const carried = JSON.parse(Buffer.from(away.split('#ovo=')[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
         assert.deepStrictEqual(carried.map((d) => [d.id, d.title, d.live, d.src, d.side && d.side.src]), [['live', 'maticus', true, `${base}/frame-a`, `${base}/frame-chat`]]);
         await eventually(async () => assert.strictEqual(await p.evaluate(`OVOverlay.handoffUrl('${base}/b')`), `${base}/b`, 'the same site: no hash'));
