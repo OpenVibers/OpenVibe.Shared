@@ -460,6 +460,7 @@ async function drag(p, from, to) {
             const view = () => ({
                 id: AGENT_ID, state: 'live', title: 'Fix the flaky upload test',
                 task: { source: 'codes', ref: 'tsk_1', title: 'Fix the flaky upload test', url: 'https://openvibe.codes/run/tasks/tsk_1' },
+                current_step: { title: 'Run the checkout tests', status: 'started' },
                 curtain: { up: false }, viewers: 2, worked_seconds: 720, visibility: 'private',
                 page_url: `https://openvibe.live/@ada/agents/${AGENT_ID}`,
                 embed_url: `https://openvibe.live/embed/agent/${AGENT_ID}?vt=wvt_test`, last_frame_url: null,
@@ -475,6 +476,7 @@ async function drag(p, from, to) {
             const src = await until(p, "document.querySelector('.ovda iframe') && document.querySelector('.ovda iframe').getAttribute('src')", 'the embed');
             assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda-line').textContent"), 'Fix the flaky upload test', 'the task, one line'));
+            await eventually(async () => assert.ok((await p.evaluate("document.querySelector('.ovda-step').textContent")).includes('Run the checkout tests'), 'the current step'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Live · 2 watching · worked 12 min'));
             await eventually(async () => assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ovda-acts button')].map((b) => b.dataset.act)"), ['pause', 'curtain', 'mute', 'end', 'float'], 'the owner\'s four controls (S5), and Float while the screen plays (4.154.0)'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), true, 'the view is shown above the list'));
