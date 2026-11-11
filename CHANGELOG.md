@@ -6,6 +6,24 @@
 - On desktop, Chat and Vibe open the Dock after the menu closes; the Dock opens from its pill only when that pill is visible.
 - Feed search uses Community's search and examples through Network, with loaded-card filtering when search is unavailable.
 - The Feed post form uses OpenVibeComposer for files, paste, drop, commands, drafts and settings; each picture requires a description, and other files upload to Media.
+## 4.205.0 — 2026-11-11
+
+**Agents show their work everywhere: the one step view reads AG-UI, compact like the portal, with the one composer to
+talk to the run; and every site's first HTML is crawlable.**
+
+- **The step view reads AG-UI 1.0 (`agent-session.js`, protocol 1.2, ask 354).** Run, step, text, tool call,
+  reasoning, state, activity and custom events, with OpenVibe's words in `metadata.ov` (title, kind, sources): phases
+  with a plan row ("1 of 3"), steps under the agent's own titles (rows under one title show their own target), thinking
+  folded to one line, sources gathered in one strip (site tiles, https links), text streamed in place.
+- **Compact runs.** A group is one line (its state, its words, the step it is on in mono, the chevron), the head says
+  what it is doing now, three dots while it works; `mount(el, { mode: 'card', href })` for a chat message, the Dock or
+  a feed card.
+- **Talk to the run with the one composer.** `mount(el, { onSend(text, { files, uploads }) })`: the shared composer's
+  markup ("+" for files, paste and drop, "/" commands, voice, drafts, settings), loaded from beside the view.
+- **The composer on any page (`ov-composer.js`).** `clear()` and `uploads()` for boxes sent by script, a form reset
+  clears it, and it styles its own tool buttons and row, so it looks the same without thread.css.
+- **`openvibe-shared/crawlable` (was #457).** Static navigation, the network's sites by group, JSON-LD and llms.txt for
+  the HTML a site sends before its scripts run.
 
 ## 4.204.0 — 2026-11-11
 
