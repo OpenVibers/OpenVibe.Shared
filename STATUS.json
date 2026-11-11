@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.406.0 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.147.0",
+  "sdk": "openvibe-sdk v0.150.0",
   "features": [
     "one inline Community thread for every site: thread.renderThread and thread-inline.css, carried from MediaHub's Video and Pics pages and Community's paste and /c pages (4.215.0)",
     "the Quest guide on any page and the current Live step in the Dock's agent view (4.209.0)",
