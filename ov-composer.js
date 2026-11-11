@@ -222,8 +222,11 @@
             const t = cd.getData('text/plain') || '';
             const lines = t.split('\n').length;
             if (t.length > 6000 || lines > 120) {
+                // Only where the box takes a text file (or a mod uploads): a box for pictures keeps the paste as text.
+                const asFile = new File([t], 'pasted-text.txt', { type: 'text/plain' });
+                if (!uploader() && !accepts(asFile)) return;
                 e.preventDefault();
-                add([new File([t], 'pasted-text.txt', { type: 'text/plain' })], { lines, text: t });
+                add([asFile], { lines, text: t });
                 say('The long paste went in as a file: ↩ on it puts it back in the box.');
             }
         });
