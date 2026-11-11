@@ -721,7 +721,7 @@
                 head.append(title, unread, more);
                 li.insertBefore(head, host);
                 let compact = null;
-                try { compact = N.renderMenuNotifications(host, (total) => { if (total > 5) { more.textContent = `Show all ${total}`; more.hidden = false; } }); } catch { host.textContent = 'Notifications are unavailable right now.'; }
+                try { compact = N.renderMenuNotifications(host, (total) => { if (total > 3) { more.textContent = `Show all ${total}`; more.hidden = false; } }); } catch { host.textContent = 'Notifications are unavailable right now.'; }
                 more.addEventListener('click', () => { if (compact) compact.showAll(); more.hidden = true; });
                 listEl.appendChild(li); return;
             }

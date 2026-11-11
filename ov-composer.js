@@ -470,7 +470,9 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
         if (text.maxLength > 0 && row) {
             count = el('span', 'ovc-count'); count.setAttribute('aria-live', 'polite');
             row.insertBefore(count, send && send.parentNode === row ? send : null);
-            const paintCount = () => { const left = text.maxLength - text.value.length; count.hidden = left > Math.max(200, text.maxLength * 0.1); count.textContent = `${left} left`; count.classList.toggle('is-low', left < 20); };
+            // The count shows only near the limit: the last 15% of a box, at most 200 and at least 20 characters (a 120-character
+            // search box said "120 left" while empty, 2026-11-11).
+            const paintCount = () => { const left = text.maxLength - text.value.length; count.hidden = left > Math.min(200, Math.max(20, Math.round(text.maxLength * 0.15))); count.textContent = `${left} left`; count.classList.toggle('is-low', left < 20); };
             text.addEventListener('input', paintCount); paintCount();
         }
 
