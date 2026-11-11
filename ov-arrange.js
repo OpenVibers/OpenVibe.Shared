@@ -285,7 +285,7 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
             }
             out.parts = (out.parts || []).map((p) => {
                 const cp = catalogPart(catalog, p.id) || { min: { w: 1, h: 1 }, styles: {} };
-                return { ...p, visible: cp.required ? true : p.visible !== false, place: fitPlace(p.place, catalog, device, cp) || { x: 0, y: 0, w: cp.min.w, h: cp.min.h }, style: { tint: (p.style && p.style.tint) || (cp.styles.tints || catalog.theme_tokens || ['surface'])[0], shape: (p.style && p.style.shape) || (cp.styles.shapes || ['square'])[0], opacity: p.style && typeof p.style.opacity === 'number' ? p.style.opacity : 1, label: !p.style || p.style.label !== false }, bindings: { keys: (p.bindings && p.bindings.keys) || [], gamepad: (p.bindings && p.bindings.gamepad) || [] } };
+                return { ...p, visible: cp.required ? true : p.visible !== false, place: fitPlace(p.place, catalog, device, cp) || { x: 0, y: 0, w: cp.min.w, h: cp.min.h }, style: { tint: (p.style && p.style.tint) || (cp.styles.tints || catalog.theme_tokens || ['surface'])[0], shape: (p.style && p.style.shape) || (cp.styles.shapes || ['square'])[0], opacity: p.style && typeof p.style.opacity === 'number' ? p.style.opacity : 1, label: p.style && typeof p.style.label === 'boolean' ? p.style.label : (cp.styles && cp.styles.label) !== false }, bindings: { keys: (p.bindings && p.bindings.keys) || [], gamepad: (p.bindings && p.bindings.gamepad) || [] } };
             });
             return out;
         };
@@ -347,7 +347,7 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
                 el.style.gridColumn = `${p.x + 1} / span ${p.w}`;
                 el.style.gridRow = `${p.y + 1} / span ${p.h}`;
             }
-            el.hidden = e.visible === false;
+            if (el.dataset.ovRoleHidden !== 'true') el.hidden = e.visible === false;
             el.style.setProperty('--ov-part-opacity', String(e.style && typeof e.style.opacity === 'number' ? e.style.opacity : 1));
             el.dataset.ovTint = (e.style && e.style.tint) || '';
             el.dataset.ovShape = (e.style && e.style.shape) || '';
@@ -359,6 +359,7 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
 
         function apply(lay, { focus = true } = {}) {
             surface.classList.add('ov-arrange-surface');
+            surface.setAttribute('data-ov-custom', 'true');
             surface.style.setProperty('--ov-cols', String(cols));
             surface.style.setProperty('--ov-cell', `${cell}px`);
             surface.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
@@ -782,6 +783,7 @@ ${(p.sizes || []).filter((s) => s.w >= p.min.w && s.h >= p.min.h).map((s) => `<l
             surface.removeEventListener('keydown', onKey);
             if (surfaceStyle == null) surface.removeAttribute('style'); else surface.setAttribute('style', surfaceStyle);
             surface.className = surfaceClass;
+            if (surfaceClass == null || !/\bov-arrange-surface\b/.test(surfaceClass)) surface.removeAttribute('data-ov-custom');
             for (const [el, o] of originals) {
                 for (const a of ['data-ov-selected', 'data-ov-dragging', 'data-ov-refused', 'data-ov-flatten', 'data-ov-tint', 'data-ov-shape', 'data-ov-label', 'data-ov-keys', 'data-ov-gamepad', 'data-ov-dock', 'data-ov-order']) el.removeAttribute(a);
                 if (o.style == null) el.removeAttribute('style'); else el.setAttribute('style', o.style);
