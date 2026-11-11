@@ -607,7 +607,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '01b6fff110cd', 'dock.js': '0ebe750a2e4d', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '7477f93fd775', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '8eec18660ff4', 'dock.js': '4031e67d411d', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'bottom.js': 'b9f708d04350', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': 'ea69b8a08868', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'cca1c50e1cce', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -2299,12 +2299,21 @@
         _navEl = nav;
         paintSlots();
         watchKeyboard();
+        loadBottom();
         attachAvatarFallbacks(nav);
         hookTop();
         loadWalletChips();
         loadUnread();
         renderAppBar();
         return nav;
+    }
+
+    // bottom.js: the visible viewport for the bar, the small player, the Dock's pill and the composer.
+    let _bottomLoading = false;
+    function loadBottom() {
+        if (_bottomLoading || root.OpenVibeBottom) return;
+        _bottomLoading = true;
+        try { const sc = document.createElement('script'); sc.id = 'ovb-loader'; sc.src = siblingV('bottom.js'); sc.async = true; document.head.appendChild(sc); } catch { _bottomLoading = false; }
     }
 
     // ── The phone app bar (appbar.js, loaded only when the site sets appBar): its main places as a bottom tab bar ──

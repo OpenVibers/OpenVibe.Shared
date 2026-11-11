@@ -27,6 +27,21 @@
     if (root.OpenVibeComposer || typeof document === 'undefined') return;
 
     const mods = [];
+    // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
+    // from beside this file; without it, a plain <dialog>.
+    const COMPOSER_REV = { 'ov-window.js': 'c882d11d85ff' };
+    const selfSrc = (document.currentScript && document.currentScript.src) || '';
+    function needWindow() {
+        return new Promise((ok) => {
+            if (root.OVWindow) return ok(root.OVWindow);
+            const m = /^(https?:\/\/[^?#]*\/)ov-composer(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+            if (!m) return ok(null);
+            const sc = document.createElement('script');
+            sc.src = m[1] + 'ov-window.js' + (COMPOSER_REV['ov-window.js'] ? '?v=' + COMPOSER_REV['ov-window.js'] : '');
+            sc.onload = () => ok(root.OVWindow || null); sc.onerror = () => ok(null);
+            document.head.appendChild(sc);
+        });
+    }
     const live = new Set();
     const PREFS_KEY = 'ov:composer';
     const DEFAULTS = { send_key: 'enter', voice: true, density: 'comfy', snippets: [] };
@@ -207,8 +222,11 @@
             const t = cd.getData('text/plain') || '';
             const lines = t.split('\n').length;
             if (t.length > 6000 || lines > 120) {
+                // Only where the box takes a text file (or a mod uploads): a box for pictures keeps the paste as text.
+                const asFile = new File([t], 'pasted-text.txt', { type: 'text/plain' });
+                if (!uploader() && !accepts(asFile)) return;
                 e.preventDefault();
-                add([new File([t], 'pasted-text.txt', { type: 'text/plain' })], { lines, text: t });
+                add([asFile], { lines, text: t });
                 say('The long paste went in as a file: ↩ on it puts it back in the box.');
             }
         });
@@ -308,13 +326,15 @@
             text.setRangeText(String(it.insert || ''), from, from, 'end'); fire(); text.focus();
         }
         let lookT = 0;
-        text.addEventListener('input', () => { clearTimeout(lookT); lookT = setTimeout(look, trig && trig.kind === 'at' ? 140 : 0); });
+        text.addEventListener('input', () => { clearTimeout(lookT); lookT = setTimeout(() => { lookT = 0; look(); }, trig && trig.kind === 'at' ? 140 : 0); });
         text.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== text) close(); }, 120));
         text.setAttribute('aria-autocomplete', 'list');
 
         // Keys, before the thread's own: the list's arrows and Enter, what sends, and the marks.
         form.addEventListener('keydown', (e) => {
             if (e.target !== text) return;
+            // Enter right after the last letter: the slash list is read now, so "/settings" + Enter picks it.
+            if (e.key === 'Enter' && lookT) { clearTimeout(lookT); lookT = 0; const w = caretWord(); if (w && w.kind === 'slash') look(); }
             if (!pop.hidden && items.length) {
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); at = (at + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length; paintPop(); return; }
                 if ((e.key === 'Enter' && !e.shiftKey) || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); choose(at); return; }
@@ -419,26 +439,32 @@
 
     // ── Your settings, in a sheet: what sends, voice, compact, your own commands.
     let sheet = null;
-    function openSettings() {
-        if (!sheet) {
+    function openSettings(from) {
+        const opener = from || document.activeElement;
+        needWindow().then((W) => settingsIn(W, opener));
+    }
+    function settingsIn(W, opener) {
+        let win = null;
+        if (!W && !sheet) {
             sheet = el('dialog', 'ovc-set');
             sheet.setAttribute('aria-label', 'Your composer');
             sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });
             document.body.appendChild(sheet);
         }
         const k = mac ? '⌘' : 'Ctrl';
-        sheet.innerHTML = `<form method="dialog" class="ovc-set-f"><header class="ovc-set-h"><b>Your composer</b><button class="ovt-btn" value="done" aria-label="Done">${svg(IC.x)}</button></header>
+        const host = W ? el('div', 'ovc-set ovc-set-in') : sheet;
+        host.innerHTML = `<form method="dialog" class="ovc-set-f">${W ? '' : `<header class="ovc-set-h"><b>Your composer</b><button class="ovt-btn" value="done" aria-label="Done">${svg(IC.x)}</button></header>`}
 <fieldset class="ovc-set-g"><legend>Send with</legend><label><input type="radio" name="send_key" value="enter"> Enter <small>(Shift+Enter for a new line)</small></label><label><input type="radio" name="send_key" value="mod-enter"> ${k}+Enter <small>(Enter for a new line)</small></label></fieldset>
 <label class="ovc-set-c"><input type="checkbox" name="voice"> A microphone button${Speech ? '' : ' <small>(this browser cannot listen)</small>'}</label>
 <label class="ovc-set-c"><input type="checkbox" name="compact"> A compact box</label>
 <fieldset class="ovc-set-g"><legend>Your commands</legend><p class="ovc-set-p">Type / and the word, and its text goes in. Up to 50.</p><ul class="ovc-set-l"></ul>
 <div class="ovc-set-add"><input name="trigger" placeholder="word" maxlength="30" pattern="[A-Za-z0-9_-]+" aria-label="The word after /"><textarea name="snippet" rows="2" maxlength="4000" placeholder="The text it puts in" aria-label="The text it puts in"></textarea><button type="button" class="ovc-set-btn" data-ovc-add>Add</button></div></fieldset>
 <p class="ovc-set-p">${synced ? 'Saved to your account: the same on every OpenVibe site.' : 'Saved in this browser.'}</p></form>`;
-        const f = sheet.querySelector('form');
+        const f = host.querySelector('form');
         f.send_key.value = prefs.send_key;
         f.voice.checked = !!prefs.voice; f.voice.disabled = !Speech;
         f.compact.checked = prefs.density === 'compact';
-        const list = sheet.querySelector('.ovc-set-l');
+        const list = host.querySelector('.ovc-set-l');
         const paintList = () => {
             list.innerHTML = '';
             (prefs.snippets || []).forEach((s, i) => {
@@ -456,7 +482,7 @@
             else if (e.target.name === 'voice') setPrefs({ voice: f.voice.checked });
             else if (e.target.name === 'compact') setPrefs({ density: f.compact.checked ? 'compact' : 'comfy' });
         });
-        sheet.querySelector('[data-ovc-add]').addEventListener('click', () => {
+        host.querySelector('[data-ovc-add]').addEventListener('click', () => {
             const w = f.trigger.value.trim().replace(/^\//, ''), t = f.snippet.value;
             if (!/^[\w-]{1,30}$/.test(w)) { f.trigger.focus(); return; }
             if (!t.trim()) { f.snippet.focus(); return; }
@@ -464,8 +490,10 @@
             f.trigger.value = ''; f.snippet.value = '';
             paintList(); f.trigger.focus();
         });
-        if (typeof sheet.showModal === 'function') sheet.showModal(); else sheet.setAttribute('open', '');
-        const first = f.querySelector('input[name=send_key]:checked'); if (first) first.focus();
+        f.addEventListener('submit', (e) => e.preventDefault());
+        if (W) win = W.open({ id: 'ov-composer-settings', title: 'Your composer', body: host, kind: 'dialog', size: 'sm', from: opener, focus: 'input[name=send_key]:checked' });
+        else { if (typeof sheet.showModal === 'function') sheet.showModal(); else sheet.setAttribute('open', ''); const first = f.querySelector('input[name=send_key]:checked'); if (first) first.focus(); }
+        return win;
     }
 
     function mod(m) {

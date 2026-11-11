@@ -24,7 +24,17 @@ global.window = undefined;
 const sandbox = {};
 new Function('globalThis', 'document', src.replace("if (typeof document === 'undefined' || root.OpenVibeHome) return;", 'if (root.OpenVibeHome) return;'))(sandbox, {});
 const H = sandbox.OpenVibeHome;
-const apps = ['live', 'chat', 'pics', 'video', 'games', 'space', 'design', 'news', 'fun', 'bot'].map((id) => ({ id, group: 'play' })).concat([{ id: 'ai', group: 'build' }]);
-assert.deepStrictEqual(H._defaultHome({ apps, yours: [] }), ['live', 'chat', 'pics', 'video', 'games', 'space', 'design', 'news', 'fun', 'bot', 'folder:tools', 'folder:build'], 'signed out: ten popular places and the two folders');
+const apps = [
+    ...['live', 'video', 'pics', 'stream', 'cam'].map((id) => ({ id, group: 'watch' })),
+    ...['community', 'chat', 'tips', 'mail'].map((id) => ({ id, group: 'talk' })),
+    ...['games', 'quest', 'surf', 'fun'].map((id) => ({ id, group: 'play' })),
+    ...['news', 'today', 'report', 'wiki'].map((id) => ({ id, group: 'read' })),
+    ...['deals', 'coupons', 'rent', 'work'].map((id) => ({ id, group: 'shop' })),
+    ...['tools', 'design', 'domains', 'host'].map((id) => ({ id, group: 'tools' })),
+    ...['space', 'codes', 'bot', 'actor'].map((id) => ({ id, group: 'make' })),
+    ...['services', 'exchange', 'run'].map((id) => ({ id, group: 'build' })),
+];
+// Ten popular singles (one left in every group for its folder), then the menu's eight groups in its order.
+assert.deepStrictEqual(H._defaultHome({ apps, yours: [] }), ['live', 'video', 'pics', 'stream', 'community', 'chat', 'tips', 'games', 'quest', 'surf', 'folder:g-watch', 'folder:g-talk', 'folder:g-play', 'folder:g-read', 'folder:g-shop', 'folder:g-tools', 'folder:g-make', 'folder:build', 'folder:tools'], 'signed out: ten popular places and one folder per group, in the menu\'s order');
 assert.deepStrictEqual(H._defaultHome({ apps, yours: [{ id: 'you:vibe' }, { id: 'you:files' }, { id: 'you:account' }] }).slice(0, 3), ['you:vibe', 'you:files', 'live'], 'signed in: their own places first');
 console.log('ov-home: text only, safe links, kept here and on Network, no cookies, the composer and wall, long-press and keys, the default Home');

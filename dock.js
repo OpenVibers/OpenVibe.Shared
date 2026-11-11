@@ -89,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '4eb6d94db445', 'dock-code.js': '7cc3b2f4b7ea', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
+    const DOCK_REV = { 'dock-vibe.js': '1bfa19b01e8e', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -106,7 +106,7 @@
         const st = document.createElement('style');
         st.id = 'ovdk-styles';
         st.textContent = `
-            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: 9995; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
+            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: var(--ovb-z-pill, 9995); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + var(--ovb-dock, calc(max(var(--ovnav-appbar-h, 0px), env(safe-area-inset-bottom, 0px)) + var(--ovb-mini, 0px)))); translate: 0 calc(-1 * var(--ovb-lift, 0px));
                 display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 18px 0 9px; border-radius: 99px; border: 1px solid var(--border, #333340); background: var(--bg); color: var(--text-primary, #e0e0e0);
                 font: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: -.005em; box-shadow: 0 14px 34px -14px rgba(0,0,0,.6); cursor: pointer; -webkit-tap-highlight-color: transparent; animation: ovdk-in .3s cubic-bezier(.2,.9,.25,1.2); }
             .ovdk-pill[hidden] { display: none; }
@@ -124,7 +124,7 @@
             .ovdk-pill:has(.ovdk-t:empty) { padding-right: 8px; }
             @keyframes ovdk-in { from { opacity: 0; transform: translateY(10px) scale(.9); } }
             @keyframes ovdk-ping { to { transform: scale(2.6); opacity: 0; } }
-            .ovdk { --ovdk-gap: 16px; position: fixed; z-index: 9996; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
+            .ovdk { --ovdk-gap: 16px; position: fixed; z-index: var(--ovb-z-dock, 9996); display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
                 right: max(var(--ovdk-gap), env(safe-area-inset-right, 0px)); bottom: calc(max(var(--ovdk-gap), env(safe-area-inset-bottom, 0px)) + var(--ovnav-appbar-h, 0px));
                 width: ${DEF.width}px; height: ${DEF.height}px; max-width: calc(100vw - 32px); max-height: calc(100vh - 96px); max-height: calc(100dvh - 96px);
                 background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); color: var(--text-primary, #ececf1); border: 1px solid var(--border, rgba(255,255,255,.1));

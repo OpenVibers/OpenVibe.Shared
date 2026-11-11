@@ -51,7 +51,7 @@
     --ovk-radius-sm: var(--ov-radius-1);
     --ovk-tap: 44px;
     --ovk-top: var(--ovnav-real-h, 52px);          /* the navbar's height: sticky things stop under it */
-    --ovk-bottom: var(--ovnav-appbar-h, 0px);      /* the app bar's height on phones (navbar.js sets it) */
+    --ovk-bottom: var(--ovb-dock, var(--ovnav-appbar-h, 0px));   /* the app bar (and a small player above it) on phones, measured by bottom.js */
     --ovk-font: var(--ov-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 }
 
@@ -248,7 +248,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .ovk-chip span { display: inline-flex; align-items: center; min-height: 32px; box-sizing: border-box; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--ovk-line); color: var(--ovk-muted); font-size: .86rem; font-weight: 650; cursor: pointer; }
 .ovk-chip input:checked + span { border-color: color-mix(in srgb, var(--ovk-accent) 55%, transparent); background: color-mix(in srgb, var(--ovk-accent) 14%, transparent); color: var(--ovk-text); }
-.ovk-save { position: sticky; bottom: var(--ovk-bottom); z-index: 30; margin: 0; padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, var(--ovk-bg) 35%); }
+.ovk-save { position: sticky; bottom: var(--ovk-bottom); translate: 0 calc(-1 * var(--ovb-lift, 0px)); z-index: 30; margin: 0; padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, var(--ovk-bg) 35%); }
 .ovk-save .ovk-btn { width: 100%; }
 .ovk-form { display: grid; gap: 12px; margin: 0; }
 .ovk-form label { display: grid; gap: 5px; color: var(--ovk-muted); font-size: .9rem; }
@@ -272,7 +272,7 @@ div.ovk-set-row { cursor: default; }
 .ovk-go { display: inline-grid; place-items: center; flex: none; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%; background: var(--ovk-fill); color: var(--ovk-on-fill); cursor: pointer; }
 .ovk-go .ovk-i { width: 18px; height: 18px; stroke-width: 2.4; }
 .ovk-go--send { width: var(--ovk-tap); height: var(--ovk-tap); }
-.ovk-dock { position: sticky; bottom: var(--ovk-bottom); z-index: 30; display: flex; align-items: flex-end; gap: 6px; margin: 8px -16px 0; padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--ovk-bg) 92%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.ovk-dock { position: sticky; bottom: var(--ovk-bottom); translate: 0 calc(-1 * var(--ovb-lift, 0px)); z-index: 30; display: flex; align-items: flex-end; gap: 6px; margin: 8px -16px 0; padding: 8px 16px calc(8px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--ovk-bg) 92%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .ovk-compose { flex: 1; min-width: 0; display: flex; align-items: flex-end; gap: 8px; margin: 0; }
 .ovk-compose textarea { flex: 1; min-width: 0; min-height: var(--ovk-tap); max-height: 40vh; box-sizing: border-box; margin: 0; padding: 10px 16px; border-radius: 22px; border: 1px solid var(--ovk-line); background: var(--ovk-input); color: var(--ovk-text); font: inherit; font-size: 1rem; line-height: 1.4; resize: none; field-sizing: content; }
 .ovk-compose textarea:focus-visible { outline: none; border-color: var(--ovk-accent); }

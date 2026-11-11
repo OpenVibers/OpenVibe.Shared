@@ -41,7 +41,7 @@ const server = http.createServer((req, res) => {
     res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#111;color:#eee;font-family:sans-serif">
 <div id="part" style="width:380px"></div><script src="/dock-code.js"></script>
 <script>window.signedIn = ${u.searchParams.get('out') ? 'false' : 'true'};
-window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: () => (window.signedIn ? 'tok_abc' : null), frameBase: location.origin + '/api/frame', codes: location.origin + '/codes', active: () => true });</script>`);
+window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: () => (window.signedIn ? 'tok_abc' : null), frameBase: location.origin + '/api/frame', codes: location.origin + '/codes', active: () => true, take: () => { const t = window.handed || ''; window.handed = ''; return t; } });</script>`);
 });
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
@@ -81,6 +81,14 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         b = await page.evaluate(`({ text: document.querySelector('.ovdc-text').value, note: document.querySelector('.ovdc-note').textContent, link: document.querySelector('.ovdc-note a') && document.querySelector('.ovdc-note a').getAttribute('href') })`);
         assert.deepEqual(b, { text: '', note: 'Started. Follow it on openvibe.codes', link: 'https://openvibe.codes/tasks/t3' });
         assert.equal((await rows())[0].s, 'Waiting', 'a queued task says it is waiting');
+
+        // Vibe's Build it in Code: the words another part hands over go in the box, ready to start.
+        await page.evaluate(`window.handed = 'Build a goal bar for my sub goal'; window.part.refresh()`);
+        b = await page.evaluate(`({ text: document.querySelector('.ovdc-text').value, note: document.querySelector('.ovdc-note').textContent, focused: document.activeElement === document.querySelector('.ovdc-text'), go: document.querySelector('.ovdc-go').disabled })`);
+        assert.deepEqual(b, { text: 'Build a goal bar for my sub goal', note: 'From your chat with Vibe. Start it, or change it first.', focused: true, go: false }, 'handed-over words are in the box, ready to start (My code keeps its repository)');
+        await page.evaluate(`document.querySelector('[data-mode="create"]').click()`);
+        assert.equal(await page.evaluate(`document.querySelector('.ovdc-go').disabled`), false);
+        await page.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = ''; t.dispatchEvent(new Event('input')); })()`);
 
         // Stop.
         await page.evaluate(`[...document.querySelectorAll('.ovdc-task')].find((li) => li.textContent.includes('goal bar')).querySelector('.ovdc-stop').click()`);

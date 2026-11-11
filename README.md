@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.201.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.202.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -838,7 +838,7 @@ Menus are modular: every site keeps the shared account menu and adds its own
   ({label, href, icon, onClick, danger, external}); OpenVibeNavbar.addMenuItem()
   / setLinks() do the same at runtime. Signed-in users also get a
   "Recently used" row fed by the shared history module when it is loaded.
-Sign-in and history: history: { type: 'tool'|'stream'|'paste'|'page'|…,
+Sign-in and history: history: { type: 'tool'|'stream'|'video'|'clip'|'paste'|'thread'|'conversation'|'document'|'page'|…,
   title, url, icon } is recorded for the signed-in user once auth resolves
   (cross-site "Recently used" / History on the Network). silentLogin:
   'https://site/auth/login?silent=1&next={url}' — when nobody is signed in

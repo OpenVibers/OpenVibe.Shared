@@ -13,6 +13,10 @@
  * dock and save bar sit on it), and it steps aside while the keyboard is up or a panel is open. A link's icon is a
  * navbar icon name (fa-…), its dot a small red mark, the open page (its path, a path under it, or setActive's page)
  * a filled pill. Clicks go through the link's onClick and the site's onNavigate, as the navbar's own links do.
+ *
+ * Plan 279: the bar does not sit on the layout viewport's bottom edge. bottom.js measures the visible viewport
+ * (--ovb-lift) and the bar moves up by it with `translate`, so the browser's toolbar sliding away or a keyboard
+ * never leaves the bar behind; its height is measured back for whatever docks above it (--ovb-bar, --ovb-dock).
  */
 (function (root) {
     'use strict';
@@ -43,7 +47,7 @@
             @media (max-width: 760px) {
                 html.ov-has-appbar { --ovnav-appbar-h: calc(58px + env(safe-area-inset-bottom, 0px)); }
                 html.ov-has-appbar body { padding-bottom: var(--ovnav-appbar-h); }
-                .ovnav-appbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 9990; display: flex; align-items: stretch; height: var(--ovnav-appbar-h); box-sizing: border-box; padding: 0 4px env(safe-area-inset-bottom, 0px);
+                .ovnav-appbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--ovb-z-bar, 9990); translate: 0 calc(-1 * var(--ovb-lift, 0px)); display: flex; align-items: stretch; height: var(--ovnav-appbar-h); box-sizing: border-box; padding: 0 4px env(safe-area-inset-bottom, 0px);
                     background: color-mix(in srgb, var(--bg-secondary, #121826) 90%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px);
                     border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: transform .2s ease; }
                 .ovnav-appbar .ovnav-ab { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; cursor: pointer;
@@ -140,6 +144,7 @@
         document.body.appendChild(bar);
         barEl = bar;
         if (de && de.classList) de.classList.add('ov-has-appbar');
+        if (root.OpenVibeBottom) root.OpenVibeBottom.refresh();
         placePill(bar, true);
         if (!resizeBound && typeof window !== 'undefined' && typeof window.addEventListener === 'function') { resizeBound = true; window.addEventListener('resize', () => placePill(barEl, true)); }
         // The icons and the brand font arrive after the bar is drawn, and a tab's label can wrap: place it again whenever

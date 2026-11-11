@@ -82,7 +82,15 @@ p.L.display.set({ icons: 'auto' }, { local: true });
 assert.strictEqual(p.html.getAttribute('data-ov-icons'), null);
 p = load({ store: new Map([['ov_display', JSON.stringify({ icons: 'line' })]]) });
 assert.strictEqual(p.html.getAttribute('data-ov-icons'), 'line', 'a saved preference paints on the next page');
-assert.ok(/'data-ov-icons'\]/.test(SRC) || SRC.includes("'data-ov-oled', 'data-ov-icons']"), 'the preference travels with the look (PAINT_ATTRS)');
+assert.ok(/'data-ov-icons'[,\]]/.test(SRC) && /const PAINT_ATTRS = \[[^\]]*'data-ov-icons'/.test(SRC), 'the preference travels with the look (PAINT_ATTRS)');
+// Windows (4.202.0, asks 304 and 318): the person's window style is a display setting too, painted at boot.
+p.L.display.set({ window: 'outline' }, { local: true });
+assert.strictEqual(p.html.getAttribute('data-ov-window'), 'outline');
+p.L.display.set({ window: 'neon' }, { local: true });
+assert.strictEqual(p.html.getAttribute('data-ov-window'), 'outline', 'an unknown window style changes nothing');
+p.L.display.set({ window: 'glass' }, { local: true });
+assert.strictEqual(p.html.getAttribute('data-ov-window'), null, 'glass (the default) paints nothing');
+assert.ok(/const PAINT_ATTRS = \[[^\]]*'data-ov-window'/.test(SRC), 'the window style travels with the look');
 const glyphCss = require('fs').readFileSync(require('path').join(__dirname, '..', 'ov-glyphs.js'), 'utf8');
 assert.ok(glyphCss.includes('html[data-ov-icons=solid]{--ovg-pref:99999px}html[data-ov-icons=line]{--ovg-pref:0px}'), 'the glyphs read the preference');
 assert.ok(glyphCss.includes('var(--ovg-pref, var(--ovg-solid-below, 18.4px))'), 'the person\'s preference wins over an area\'s switch point');

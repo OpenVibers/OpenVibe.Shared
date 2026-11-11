@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.202.0 — 2026-11-11
+
+**One field dropdown, one window for small interfaces, one user card, a measured page end, eight site groups, and the reveal remade.**
+
+- **An empty footer column is never drawn (`footer.js`).** A group with no heading or no links is left out instead of
+  showing as an untitled "0 links" fold.
+- **One field dropdown (#447).** `ov-combo.js` adds async, grouped suggestions and optional creation; the composer handoff to Code and whole site names in the phone menu are included.
+- **One window (#451).** `ov-window.js` supplies dialog, sheet and panel modes, and the composer's settings use it.
+- **One user card (#452).** Shared mention hooks, the profile card, wallet window and display style settings.
+- **Page end (#442).** A shared bottom measurement keeps the end of a page at 32 px on computer and 24 px on phone.
+- **Eight site groups (#445).** The footer, rooms, You folders and home pages use the same groups.
+- **Reveal (#448).** Headings emerge from blur, rules draw, and up to six cards stagger as they enter view.
+- **Jump back in (#412).** The full history link and private history support are present from the 4.201.0 base.
+
 ## 4.201.0 — 2026-11-10
 
 **Notifications move into the one menu; the mark and the name are one button; one composer and Code on every site.**
@@ -93,7 +107,6 @@ From the owner's notes of 2026-11-10 (asks 334 to 350).
   event arrives later and used to close a menu opened again in between. The menu now ignores the one step it took itself.
 - Budget: `dock.js` 20.43 KB brotli (budget 20.45 KB, was 20.30 KB) for the "Open in Chat" icon in the always-loaded
   Dock; the Vibe-only button rules stay in `dock-vibe.js`.
-
 ## 4.199.0 — 2026-11-10
 
 **Every page downloads about 56 KB less: the shared files are served minified.** From the owner's notes of 2026-11-10:

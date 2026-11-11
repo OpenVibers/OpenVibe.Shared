@@ -4,7 +4,10 @@
  * navbar.js loads it from beside itself once the page settles, and only when the page has an element with data-fx.
  *
  *   <a class="card" data-fx="glint lift press">…</a>     effects by name, any number of them
- *   <ul data-fx="reveal" data-fx-stagger="60">…</ul>     its children rise in as they come on screen, 60 ms apart
+ *   <section data-fx="reveal" data-fx-stagger="40">…</section>
+ *                                                      its heading rises 12 px (8 on a phone) out of a 4 px blur,
+ *                                                      a [data-fx-rule] draws from the left, and its cards follow in
+ *                                                      40 ms steps (at most six; the rest together), once.
  *   <b data-fx="count">12,480</b>                         the number counts up the first time it is seen
  *   <button data-fx="confetti press">Send tip</button>    a burst of confetti from the button when it is pressed
  *   OVFx.confetti({ x, y, count, colors })                the same burst from anywhere (a first stream, a goal)
@@ -18,9 +21,17 @@
  * --ov-ease-spring, --ov-ease-in-out. Each look has a feel (4.67.0): the quiet paper and light themes move calmly (a
  * little slower, no overshoot), the neon and terminal ones snap (quicker, a livelier spring); the rest are lively. Nothing here runs by itself: every effect waits for a hover, a press, or the
  * element coming on screen, plays once, and stops. Calm (the person's choice, or the device asking for less motion:
- * html[data-ov-motion=reduced]) keeps every effect and makes it smaller and slower: a lift rises a pixel, a reveal
- * rises five, a tilt leans a third as far, a burst of confetti is a third the size, nothing overshoots. Only Off
- * (html[data-ov-motion=off]) stops them: reveals and numbers are simply there, and no confetti falls.
+ * html[data-ov-motion=reduced]) keeps every effect and makes it smaller and slower: a lift rises a pixel, a tilt
+ * leans a third as far, a burst of confetti is a third the size, nothing overshoots; a reveal keeps only a short
+ * fade. Only Off (html[data-ov-motion=off]) stops them: reveals and numbers are simply there, and no confetti falls.
+ *
+ * The reveal (278) is driven by the scroll timeline where the browser has animation-timeline: view(), so no script
+ * runs on the main thread while scrolling; elsewhere one shared IntersectionObserver does the same job. Content is
+ * visible by default: the start state is only applied (a) by CSS inside @supports, or (b) to elements the script
+ * knows are below the fold, with an observer ready to show them. A heading is [data-fx-heading] or the first h1–h6
+ * in the container; a rule is [data-fx-rule] (or an <hr>); cards are [data-fx-card]s, the container's own children,
+ * or the children of a plain list/grid child. Point at them with data-fx-cards="selector" when the markup is not
+ * one of those shapes. data-fx-self reveals the element itself. Distances halve on a phone, Calm fades, Off is still.
  */
 (function (root) {
     'use strict';
@@ -53,8 +64,30 @@
         + '.ovfx-rip{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:ovfxRip .6s var(--ov-ease-out) forwards}'
         + '@keyframes ovfxRip{to{transform:scale(1);opacity:0}}'
         + '.ovfx-tilt{transition:transform var(--ov-dur-3) var(--ov-ease-out);transform-style:preserve-3d;will-change:transform}'
-        + '.ovfx-hide{opacity:0;transform:translateY(calc(14px * var(--ov-move,1)))}'
-        + '.ovfx-in{opacity:1;transform:none;transition:opacity .5s var(--ov-ease-out),transform .6s var(--ov-ease-spring);transition-delay:var(--ovfx-d,0ms)}'
+        // The reveal (278): a heading out of a blur, its rule drawing from the left, then its cards. The scroll timeline
+        // plays it where view() exists; the classes only carry the start state, so the page is never left blank by CSS.
+        + '.ovfx-head{--ovfx-rise:12px}.ovfx-card{--ovfx-card-rise:10px}'
+        + '@media (max-width:600px){.ovfx-head{--ovfx-rise:8px}.ovfx-card{--ovfx-card-rise:6px}}'
+        + '.ovfx-rule{transform-origin:left center}'
+        + '@keyframes ovfxHeadRise{from{opacity:0;transform:translateY(calc(var(--ovfx-rise,12px) * var(--ov-move,1)));filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}'
+        + '@keyframes ovfxCardRise{from{opacity:0;transform:translateY(calc(var(--ovfx-card-rise,10px) * var(--ov-move,1)))}to{opacity:1;transform:none}}'
+        + '@keyframes ovfxRuleDraw{from{transform:scaleX(0);opacity:.35}to{transform:scaleX(1);opacity:1}}'
+        + '@keyframes ovfxFadeIn{from{opacity:0}to{opacity:1}}'
+        + '@supports (animation-timeline:view()){.ovfx-head.ovfx-scroll{animation:ovfxHeadRise linear backwards;animation-timeline:view();animation-range:entry 0% cover 25%}.ovfx-rule.ovfx-scroll{animation:ovfxRuleDraw linear backwards;animation-timeline:view();animation-range:entry 5% cover 35%}.ovfx-card.ovfx-scroll{animation:ovfxCardRise linear backwards;animation-timeline:view();animation-range:entry calc(5% + var(--ovfx-i,0) * 3%) cover calc(30% + var(--ovfx-i,0) * 3%)}.ovfx-fade.ovfx-scroll{animation:ovfxFadeIn linear backwards;animation-timeline:view();animation-range:entry 0% cover 15%}}'
+        + '.ovfx-head.ovfx-wait{opacity:0;transform:translateY(var(--ovfx-rise,12px));filter:blur(4px)}'
+        + '.ovfx-head.ovfx-in{opacity:1;transform:none;filter:blur(0);transition:opacity .5s var(--ov-ease-out),transform .55s var(--ov-ease-spring),filter .45s var(--ov-ease-out)}'
+        + '.ovfx-card.ovfx-wait{opacity:0;transform:translateY(var(--ovfx-card-rise,10px))}'
+        + '.ovfx-card.ovfx-in{opacity:1;transform:none;transition:opacity .45s var(--ov-ease-out),transform .55s var(--ov-ease-spring);transition-delay:var(--ovfx-d,0ms)}'
+        + '.ovfx-rule.ovfx-wait{transform:scaleX(0);opacity:.35}'
+        + '.ovfx-rule.ovfx-in{transform:scaleX(1);opacity:1;transition:transform .6s var(--ov-ease-out) 80ms,opacity .4s var(--ov-ease-out) 80ms}'
+        + '.ovfx-fade.ovfx-wait{opacity:0}'
+        + '.ovfx-fade.ovfx-in{opacity:1;transition:opacity .28s var(--ov-ease-out)}'
+        + 'html[data-ov-motion=reduced] :is(.ovfx-head,.ovfx-card,.ovfx-rule).ovfx-scroll:not([data-fx-demo] *){animation-name:ovfxFadeIn;animation-range:entry 0% cover 15%}'
+        + 'html[data-ov-motion=reduced] :is(.ovfx-head,.ovfx-card).ovfx-wait:not([data-fx-demo] *){opacity:0;transform:none;filter:none}'
+        + 'html[data-ov-motion=reduced] :is(.ovfx-head,.ovfx-card).ovfx-in:not([data-fx-demo] *){opacity:1;transform:none;filter:none;transition:opacity .28s var(--ov-ease-out)}'
+        + '@media (prefers-reduced-motion:reduce){html:not([data-ov-motion]) :is(.ovfx-head,.ovfx-card,.ovfx-rule).ovfx-scroll:not([data-fx-demo] *){animation-name:ovfxFadeIn;animation-range:entry 0% cover 15%}html:not([data-ov-motion]) :is(.ovfx-head,.ovfx-card).ovfx-wait:not([data-fx-demo] *){opacity:0;transform:none;filter:none}html:not([data-ov-motion]) :is(.ovfx-head,.ovfx-card).ovfx-in:not([data-fx-demo] *){opacity:1;transform:none;filter:none;transition:opacity .28s var(--ov-ease-out)}}'
+        + 'html[data-ov-motion=off] :is(.ovfx-head,.ovfx-card,.ovfx-rule,.ovfx-fade):not([data-fx-demo] *){animation:none!important;transition:none!important}'
+        + 'html[data-ov-motion=off] :is(.ovfx-head,.ovfx-card,.ovfx-rule,.ovfx-fade).ovfx-wait:not([data-fx-demo] *){opacity:1!important;transform:none!important;filter:none!important}'
         + '.ovfx-shimmer{background:linear-gradient(100deg,color-mix(in srgb,var(--text-muted,#8b93ad) 12%,transparent) 30%,color-mix(in srgb,var(--text-muted,#8b93ad) 22%,transparent) 50%,color-mix(in srgb,var(--text-muted,#8b93ad) 12%,transparent) 70%) 0 0/300% 100%;animation:ovfxShim 1.4s linear infinite;color:transparent!important;border-radius:8px}'
         + '@keyframes ovfxShim{from{background-position:100% 0}to{background-position:0 0}}'
         + '.ovfx-confetti{position:fixed;inset:0;pointer-events:none;z-index:2147483000}'
@@ -86,21 +119,100 @@
     }
 
     // ── Seen: reveal and count, once each, when they come on screen ──
-    function seen(el) {
-        if (el.__ovfxReveal) {
-            const kids = el.__ovfxReveal;
-            kids.forEach((k) => { k.classList.add('ovfx-in'); k.classList.remove('ovfx-hide'); });
-            root.setTimeout(() => kids.forEach((k) => { k.classList.remove('ovfx-in'); k.style.removeProperty('--ovfx-d'); }), 1400 + kids.length * 80);
-            el.__ovfxReveal = null;
-        }
-        if (el.__ovfxCount) { const c = el.__ovfxCount; el.__ovfxCount = null; countUp(el, c); }
-    }
-    function observe(el) {
-        if (!('IntersectionObserver' in root)) return seen(el);
-        io = io || new root.IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); seen(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+    function observe(el, fn) {
+        if (!('IntersectionObserver' in root)) return fn(el);
+        io = io || new root.IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); (e.target.__ovfxSeen || fn)(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+        el.__ovfxSeen = fn;
         io.observe(el);
     }
     const below = (el) => { try { return el.getBoundingClientRect().top > (root.innerHeight || 0); } catch (e) { return false; } };
+    function seenCount(el) { const c = el.__ovfxCount; if (c) { el.__ovfxCount = null; countUp(el, c); } }
+
+    // ── Reveal (278): a heading, its rule and its cards, once. The scroll timeline (where view() exists) plays it
+    // without any script on the main thread; the shared observer is the fallback. Only elements the script knows are
+    // below the fold ever get a start state, and every path has a way back to the finished state.
+    const HEAD_SEL = 'h1,h2,h3,h4,h5,h6';
+    const CARDISH = 'li,article,a,[data-fx-card],[class*="card"],[class*="tile"],[class*="item"]';
+    function findHead(el) {
+        if (el.hasAttribute('data-fx-self')) return el;
+        const marked = el.querySelector('[data-fx-heading]');
+        if (marked) return marked;
+        if (el.matches(HEAD_SEL)) return el;
+        for (const h of el.querySelectorAll(HEAD_SEL)) {
+            const card = h.closest(CARDISH);
+            if (card && card !== el && el.contains(card)) continue;   // a card's own title is not the section's heading
+            let depth = 0, p = h;
+            while (p && p !== el) { p = p.parentElement; depth++; }
+            if (depth <= 3) return h;
+        }
+        return null;
+    }
+    function findRule(el, head) {
+        const marked = el.querySelector('[data-fx-rule]');
+        if (marked && marked !== head) return marked;
+        const hr = el.querySelector('hr');
+        return hr && hr !== head ? hr : null;
+    }
+    function findCards(el, head, rule) {
+        const sel = el.getAttribute('data-fx-cards');
+        if (sel) { try { const list = Array.from(el.querySelectorAll(sel)); if (list.length) return list; } catch (e) { /* the default below */ } }
+        const marked = Array.from(el.querySelectorAll('[data-fx-card]'));
+        if (marked.length) return marked;
+        const out = [];
+        for (const k of Array.from(el.children)) {
+            if (k === head || k === rule || (head && k.contains(head)) || (rule && k.contains(rule))) continue;
+            const cls = typeof k.className === 'string' ? k.className : '';
+            if (k.matches('ul,ol,[role="list"]') || /(^|[\s_-])(grid|cards|rail|row|list)([\s_-]|$)/i.test(cls)) {
+                const inner = Array.from(k.children);
+                if (inner.length) { out.push(...inner); continue; }
+            }
+            out.push(k);
+        }
+        return out;
+    }
+    let viewTimeline = null;
+    function hasViewTimeline() {
+        if (viewTimeline != null) return viewTimeline;
+        try { viewTimeline = !!(root.CSS && root.CSS.supports && root.CSS.supports('animation-timeline: view()')); } catch (e) { viewTimeline = false; }
+        return viewTimeline;
+    }
+    function showReveal(el) {
+        if (el.__ovfxShown) return;
+        el.__ovfxShown = true;
+        el.classList.add('ovfx-in');
+        const delay = Number(String(el.style.getPropertyValue('--ovfx-d')).replace('ms', '')) || 0;
+        root.setTimeout(() => { el.classList.remove('ovfx-wait', 'ovfx-in'); el.style.removeProperty('--ovfx-d'); }, 900 + delay);
+    }
+    function wireReveal(el) {
+        if (off(el)) return;
+        const mode = demo(el) ? 'full' : move(el) < 1 ? 'fade' : 'full';
+        const self = el.hasAttribute('data-fx-self');
+        const head = findHead(el), rule = self ? null : findRule(el, head), cards = self ? [] : findCards(el, head, rule);
+        const parts = [];
+        if (head) parts.push([head, 'head', 0]);
+        if (rule) parts.push([rule, 'rule', 0]);
+        cards.forEach((k, i) => parts.push([k, 'card', Math.min(i, 5)]));
+        if (!parts.length) return;
+        // Never hide what someone can already see: a section below the fold is safe whole, one already on screen
+        // is checked part by part.
+        const live = below(el) ? parts : parts.filter(([k]) => below(k));
+        if (!live.length) return;
+        const timeline = hasViewTimeline();
+        if (!timeline && !('IntersectionObserver' in root)) return;
+        const gap = Math.max(0, Math.min(200, Number(el.getAttribute('data-fx-stagger')) || 40));
+        const follow = head ? 140 : 0;
+        live.forEach(([k, kind, i]) => {
+            k.classList.add(mode === 'fade' ? 'ovfx-fade' : kind === 'head' ? 'ovfx-head' : kind === 'rule' ? 'ovfx-rule' : 'ovfx-card');
+            if (timeline) {
+                k.classList.add('ovfx-scroll');
+                if (kind === 'card') k.style.setProperty('--ovfx-i', String(i));
+            } else {
+                k.classList.add('ovfx-wait');
+                if (kind === 'card' && mode === 'full') k.style.setProperty('--ovfx-d', `${follow + i * gap}ms`);
+                observe(k, showReveal);
+            }
+        });
+    }
 
     function countUp(el, c) {
         const t0 = root.performance ? root.performance.now() : Date.now(), ms = Math.min(1600, 500 + Math.log10(Math.max(10, c.to)) * 220) * (move(el) < 1 ? 0.6 : 1);
@@ -188,16 +300,10 @@
             if (n === 'ripple') el.addEventListener('pointerdown', (ev) => ripple(el, ev));
             if (n === 'tilt' && fine()) { el.classList.add('ovfx-tilt'); tilt(el); }
             if (n === 'confetti') el.addEventListener('click', () => { const r = el.getBoundingClientRect(); confetti({ x: r.left + r.width / 2, y: r.top + r.height / 2, count: 70, from: el }); });
-            if (n === 'reveal' && !off(el)) {
-                const kids = el.children.length && el.getAttribute('data-fx-self') == null ? Array.from(el.children) : [el];
-                if (!below(el)) continue;   // already on screen when wired: never hide what someone can see
-                const gap = Math.max(0, Math.min(200, Number(el.getAttribute('data-fx-stagger')) || 50));
-                kids.forEach((k, i) => { k.classList.add('ovfx-hide'); k.style.setProperty('--ovfx-d', `${Math.min(i, 12) * gap}ms`); });
-                el.__ovfxReveal = kids; observe(el);
-            }
+            if (n === 'reveal') wireReveal(el);
             if (n === 'count' && !off(el)) {
                 const c = countOf(el);
-                if (c && below(el)) { el.__ovfxCount = c; observe(el); } else if (c) { el.__ovfxCount = c; seen(el); }
+                if (c && below(el)) { el.__ovfxCount = c; observe(el, seenCount); } else if (c) { el.__ovfxCount = c; seenCount(el); }
             }
         }
     }

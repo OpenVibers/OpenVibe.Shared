@@ -24,9 +24,19 @@
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
-    // 4.201.0: the one composer (ov-composer.js: files, / and @, voice, drafts, your settings), from beside this file.
-    const THREAD_REV = { 'ov-composer.js': 'b70e544155ac' };
+    const THREAD_REV = { 'ov-composer.js': 'bab301d99cb6', 'ov-combo.js': '3e426e56fc75' };
     var selfSrc = (document.currentScript && document.currentScript.src) || '';
+    // 4.202.0: the one dropdown for a field (ov-combo.js: a repository, a person), wherever a page asks for it.
+    function loadCombo() {
+        if (root.OVCombo) { root.OVCombo.scan(); return; }
+        if (loadCombo.on || !document.querySelector('input[data-ov-combo]')) return;
+        loadCombo.on = true;
+        var m = /^(https?:\/\/[^?#]*\/)ov-thread(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = (m ? m[1] : 'https://openvibe.network/shared/') + 'ov-combo.js' + (THREAD_REV['ov-combo.js'] ? '?v=' + THREAD_REV['ov-combo.js'] : '');
+        document.head.appendChild(s);
+    }
     function loadComposer() {
         if (root.OpenVibeComposer) { root.OpenVibeComposer.scan(); return; }
         if (loadComposer.on) return;
@@ -243,6 +253,7 @@
     root.OVThread = api;
 
     function start() {
+        loadCombo();
         qa(document, '[data-ovt]').forEach(function (box) {
             if (box.dataset.ovtReady) return;
             box.dataset.ovtReady = '1';
