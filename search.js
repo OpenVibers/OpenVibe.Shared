@@ -1506,7 +1506,7 @@
             if (feed && feed.search && (q || feed.query)) feed.search(q);
             return;
         }
-        input.placeholder = 'Search OpenVibe';
+        input.placeholder = `Search ${here()}, or ask Vibe`;
         if (q) leaveDoor();
         tabsEl.hidden = !!q;
         if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); paintTabs(); renderTab(); return; }
