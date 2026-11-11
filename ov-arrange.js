@@ -98,20 +98,23 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
 
     // ── The SDK's rules, as a browser sibling (scripts/build-arrange-core.js) ─────────────────────────
     const ARRANGE_CORE_REV = { 'ov-arrange-core.js': '6344916a04e9' };
+    let coreLoading = null;
     function loadCore(opts) {
         if (opts && opts.core) return Promise.resolve(opts.core);
         if (root.OVArrangeCore) return Promise.resolve(root.OVArrangeCore);
+        if (coreLoading) return coreLoading;
         if (!root.document || !document.currentScript) return Promise.resolve(null);
         const src = document.currentScript.src || '';
         if (!src) return Promise.resolve(null);
         const url = src.replace(/[^/]*$/, `ov-arrange-core.js${ARRANGE_CORE_REV['ov-arrange-core.js'] ? `?v=${ARRANGE_CORE_REV['ov-arrange-core.js']}` : ''}`);
-        return new Promise((resolve) => {
+        coreLoading = new Promise((resolve) => {
             const sc = document.createElement('script');
             sc.src = url; sc.async = true;
             sc.onload = () => resolve(root.OVArrangeCore || null);
             sc.onerror = () => resolve(null);
             document.head.appendChild(sc);
         });
+        return coreLoading;
     }
 
     // The rules when the SDK core is not there (a product without the sibling): the same checks the contract
@@ -181,8 +184,9 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
             for (const b of dockedEntries) {
                 if (a === b || !catalogPart(catalog, b.id)) continue;
                 if (a.place.dock === b.place.dock && a.place.order === b.place.order) {
-                    const bp = catalogPart(catalog, b.id);
+                    const ap = catalogPart(catalog, a.id), bp = catalogPart(catalog, b.id);
                     if (bp.required) reasons.push(`${partName(catalog, a.id)} covers ${bp.name}.`);
+                    if (((ap.never_covers) || []).includes(b.id)) reasons.push(`${partName(catalog, a.id)} must never cover ${bp.name}.`);
                 }
             }
         }
@@ -321,6 +325,7 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
 
         const partEls = () => [...surface.querySelectorAll('[data-ov-part]')].filter((el) => catalogPart(catalog, el.dataset.ovPart));
         const originals = new Map();
+        const innerTab = [];
         for (const el of partEls()) originals.set(el, { style: el.getAttribute('style'), hidden: el.hidden, tabindex: el.getAttribute('tabindex'), role: el.getAttribute('role'), label: el.getAttribute('aria-label'), cls: el.className });
         const surfaceStyle = surface.getAttribute('style');
         const surfaceClass = surface.className;
@@ -366,7 +371,13 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
             surface.style.gridAutoRows = `minmax(${cell}px, auto)`;
             const dockMode = (catalog.id || '').split('.').pop() === 'overlay';
             if (dockMode) { surface.style.display = surface.style.display || 'block'; surface.style.position = 'relative'; }
-            for (const el of partEls()) flatten(el);
+            for (const el of partEls()) {
+                flatten(el);
+                for (const inner of el.querySelectorAll('button, input, select, textarea, a[href], [tabindex]')) {
+                    if (!innerTab.some((x) => x.el === inner)) innerTab.push({ el: inner, tabindex: inner.getAttribute('tabindex') });
+                    if (inner !== el) inner.setAttribute('tabindex', '-1');
+                }
+            }
             for (const p of (catalog.parts || [])) {
                 const el = elOf(p.id), e = entryOf(lay, p.id);
                 if (!el || !e) continue;
@@ -723,9 +734,9 @@ ${(p.sizes || []).filter((s) => s.w >= p.min.w && s.h >= p.min.h).map((s) => `<l
             apply(working); markDirty(); setStatus('Undone.'); announce('Undone.');
         });
         host.querySelector('[data-reset]').addEventListener('click', () => {
-            working = defaults(); preview = null;
+            preview = null;
             if (previewBar) { previewBar.remove(); previewBar = null; }
-            pushUndo(); apply(working); markDirty(); setStatus('Reset to the default. Save it to keep it.', 'ok');
+            pushUndo(); working = defaults(); apply(working); markDirty(); setStatus('Reset to the default. Save it to keep it.', 'ok');
             announce('Reset to the default.');
         });
         host.querySelector('[data-save]').addEventListener('click', async () => {
@@ -793,6 +804,7 @@ ${(p.sizes || []).filter((s) => s.w >= p.min.w && s.h >= p.min.h).map((s) => `<l
                 if (o.label == null) el.removeAttribute('aria-label'); else el.setAttribute('aria-label', o.label);
                 el.className = o.cls;
             }
+            for (const x of innerTab) { if (x.tabindex == null) x.el.removeAttribute('tabindex'); else x.el.setAttribute('tabindex', x.tabindex); }
             for (const a of surface.querySelectorAll('[data-ov-flatten]')) a.removeAttribute('data-ov-flatten');
             if (typeof opts.onApply === 'function') try { opts.onApply(clone(working)); } catch (_) { /* */ }
             if (typeof opts.onClose === 'function') try { opts.onClose(clone(working), { dirty }); } catch (_) { /* */ }
