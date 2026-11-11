@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.207.0 — 2026-11-11
+
+- The Dock's agent view shows the current Live step when the stream supplies one. Older streams continue to show the task without a step line.
+
 ## 4.205.0 — 2026-11-11
 
 **Agents show their work everywhere: the one step view reads AG-UI, compact like the portal, with the one composer to
