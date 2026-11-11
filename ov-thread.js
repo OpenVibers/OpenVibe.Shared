@@ -25,7 +25,7 @@
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
     // 4.202.0: the one composer (ov-composer.js: files, / and @, voice, drafts, your settings), from beside this file.
-    const THREAD_REV = { 'ov-composer.js': '8ef5c5166176', 'ov-combo.js': '3e426e56fc75' };
+    const THREAD_REV = { 'ov-composer.js': 'f2ea428ffcf4', 'ov-combo.js': '3e426e56fc75' };
     var selfSrc = (document.currentScript && document.currentScript.src) || '';
     // 4.202.0: the one dropdown for a field (ov-combo.js: a repository, a person), wherever a page asks for it.
     function loadCombo() {
