@@ -71,7 +71,7 @@
         // A site's surfaces.js locks the page for any modal dialog and restores it on close; locking here as well would
         // make its saved state "hidden". Only a page without it needs the wallet's own lock.
         const ownLock = !!W || !root.OVSurfaces;   // in the window there is no <dialog> for surfaces.js to see
-        let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [];
+        let disposed = false, data = null, allItems = null, equipped = {}, kinds = [], storeItems = [], changeData = null;
         const here = { store: false, items: false };   // which parts have answered: until then a placeholder of their size stands in
         const wait = (n, cls) => { const w = el('div', 'ov-wallet-wait-set'); w.setAttribute('aria-hidden', 'true'); for (let i = 0; i < n; i += 1) w.append(el('div', `ov-wallet-wait ${cls || ''}`)); return w; };
         const shown = {};   // what each balance last showed, so a change counts from it
@@ -183,6 +183,34 @@
         function render() {
             body.replaceChildren(status); status.textContent = data.money_writes_frozen ? 'Purchases and top-ups are paused. Your balances and items are still here.' : '';
             status.classList.remove('is-error');
+            // The bar keeps the last window in this tab after marking it read. A direct sheet read supplies it when
+            // the bar has not yet fetched changes. Reasons are the API's plain labels, never ledger keys.
+            const changeWindow = (root.OpenVibePurse && root.OpenVibePurse.recentChanges()) || changeData;
+            if (changeWindow) {
+                const entries = [['opencoins', 'OpenCoins'], ['vibes', 'Vibes'], ['channel_points', 'Channel points']]
+                    .map(([key, name]) => ({ key, name, part: changeWindow[key] }))
+                    .filter(({ part }) => part && Number.isSafeInteger(Number(part.net)) && Number(part.net) !== 0)
+                    .sort((a, b) => String((b.part.moves || []).at(-1)?.at || '').localeCompare(String((a.part.moves || []).at(-1)?.at || '')));
+                if (entries.length) {
+                    const section = el('section', 'ov-wallet-section ov-wallet-changes');
+                    section.append(el('h3', '', 'What changed'));
+                    let remaining = 10;
+                    for (const { name, part } of entries) {
+                        const row = el('div', 'ov-wallet-event'), info = el('div');
+                        info.append(el('strong', '', name));
+                        const moves = Array.isArray(part.moves) ? [...part.moves].sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))) : [];
+                        const reasons = moves.slice(0, remaining).map((move) => String(move.label || '')).filter(Boolean);
+                        remaining -= reasons.length;
+                        if (reasons.length) info.append(el('small', '', reasons.join(' · ')));
+                        const n = Number(part.net), full = `${n > 0 ? '+' : '−'}${Math.abs(n).toLocaleString().replace(/,/g, '\u2009')}`;
+                        const compact = Math.abs(n) > 10000 ? `${n > 0 ? '+' : '−'}${Math.round(Math.abs(n) / 1000)}k` : full;
+                        const value = el('span', n > 0 ? 'is-gain' : 'is-loss', compact);
+                        value.style.fontVariantNumeric = 'tabular-nums'; value.style.color = n > 0 ? 'var(--success, #17865a)' : 'var(--danger, #c84141)';
+                        value.title = full; value.setAttribute('aria-label', full); row.append(info, value); section.append(row);
+                    }
+                    body.append(section);
+                }
+            }
             const balances = el('div', 'ov-wallet-balances'); body.append(balances);
             for (const id of ['coins', 'vibes', 'balance']) {
                 const b = data.balances[id], card = el('article', `ov-wallet-balance is-${id}`);
@@ -279,10 +307,12 @@
         setTimeout(() => body.classList.remove('is-first'), 600);
         const settled = (pr) => pr.then((value) => ({ status: 'fulfilled', value }), (reason) => ({ status: 'rejected', reason }));
         const storeAsked = settled(request('/api/v1/store')), kindsAsked = settled(request('/api/v1/kinds', 'GET', null, true));
+        const changesAsked = settled(request('/changes'));
         let itemsAsked = seed ? settled(refreshItems()) : null;
         try {
             await refreshWallet();
             identity(); keep(data); render();
+            changesAsked.then((result) => { if (!disposed && result.status === 'fulfilled') { changeData = result.value; render(); } });
             if (!itemsAsked || (seed && seed.subject.id !== data.subject.id)) itemsAsked = settled(refreshItems());
             const results = await Promise.all([storeAsked, itemsAsked, kindsAsked]);
             identity(); storeItems = results[0].status === 'fulfilled' ? results[0].value.items : [];

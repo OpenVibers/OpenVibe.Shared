@@ -106,7 +106,7 @@
         const st = document.createElement('style');
         st.id = 'ovdk-styles';
         st.textContent = `
-            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: var(--ovb-z-pill, 9995); right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + var(--ovb-dock, calc(max(var(--ovnav-appbar-h, 0px), env(safe-area-inset-bottom, 0px)) + var(--ovb-mini, 0px)))); translate: 0 calc(-1 * var(--ovb-lift, 0px));
+            .ovdk-pill { --t: var(--accent, #3b82f6); --bg: var(--bg-elevated, var(--bg-secondary, #252530)); position: fixed; z-index: var(--ovb-z-pill, 9995); right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(calc(16px + var(--ovb-dock, calc(max(var(--ovnav-appbar-h, 0px), env(safe-area-inset-bottom, 0px)) + var(--ovb-mini, 0px)))), var(--ovb-composer, 0px)); translate: 0 calc(-1 * var(--ovb-lift, 0px));
                 display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 18px 0 9px; border-radius: 99px; border: 1px solid var(--border, #333340); background: var(--bg); color: var(--text-primary, #e0e0e0);
                 font: inherit; font-size: 13.5px; font-weight: 700; letter-spacing: -.005em; box-shadow: 0 14px 34px -14px rgba(0,0,0,.6); cursor: pointer; -webkit-tap-highlight-color: transparent; animation: ovdk-in .3s cubic-bezier(.2,.9,.25,1.2); }
             .ovdk-pill[hidden] { display: none; }

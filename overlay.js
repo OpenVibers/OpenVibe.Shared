@@ -313,12 +313,24 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
     function frame(src, title) {
         const f = document.createElement('iframe');
         f.className = 'ovo-frame';
-        f.src = src;
+        f.src = frameUrl(src);
         f.title = title || 'OpenVibe';
         f.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms');
         f.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture');
         f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
         return f;
+    }
+    function frameUrl(src) {
+        try {
+            const url = new URL(src);
+            if (url.origin === root.location.origin || url.origin !== 'https://openvibe.live') return src;
+            const match = /^\/embed\/([^/]+)$/.exec(url.pathname);
+            if (!match) return src;
+            const username = decodeURIComponent(match[1]);
+            if (!/^[A-Za-z0-9_-]{1,40}$/.test(username)) return src;
+            // All sites already allow Network frames; its player bridge frames Live.
+            return `https://openvibe.network/frame/live/${encodeURIComponent(username)}?from=${encodeURIComponent(root.location.origin)}`;
+        } catch { return src; }
     }
 
     // ── Opening and closing ──
@@ -348,7 +360,7 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         if (embed) {
             const snd = button('Turn the sound on', ICON.muted, () => {
                 const f = el.querySelector('.ovo-frame');
-                try { f.contentWindow.postMessage({ type: 'ov-embed', cmd: c.muted === false ? 'mute' : 'unmute' }, new URL(d.src).origin); } catch { /* */ }
+                try { f.contentWindow.postMessage({ type: 'ov-embed', cmd: c.muted === false ? 'mute' : 'unmute' }, new URL(f.src).origin); } catch { /* */ }
                 showUi(c);
             });
             snd.setAttribute('data-ovo', 'sound');
@@ -360,7 +372,7 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         const grip = document.createElement('span'); grip.className = 'ovo-grip'; grip.innerHTML = ICON.grip; grip.setAttribute('aria-hidden', 'true');
         const mediaFrame = frame(d.src, d.title);
         if (d.sound && embed) mediaFrame.addEventListener('load', () => {
-            try { mediaFrame.contentWindow.postMessage({ type: 'ov-embed', cmd: 'unmute' }, new URL(d.src).origin); } catch { /* browser may require a new tap */ }
+            try { mediaFrame.contentWindow.postMessage({ type: 'ov-embed', cmd: 'unmute' }, new URL(mediaFrame.src).origin); } catch { /* browser may require a new tap */ }
         });
         el.append(mediaFrame, ui, grip);
         document.body.appendChild(el);
@@ -473,7 +485,7 @@ html[data-ov-motion=off] .ovo-card.is-entering{transform:translate3d(var(--ovo-x
         if (!m || m.type !== 'ov-embed' || m.event !== 'state') return;
         for (const c of cards.values()) {
             const f = c.el.querySelector('.ovo-frame');
-            if (!f || e.source !== f.contentWindow || e.origin !== new URL(c.d.src).origin) continue;
+            if (!f || e.source !== f.contentWindow || e.origin !== new URL(f.src).origin) continue;
             c.muted = !!m.muted;
             c.d.sound = !c.muted;
             c.d.playing = !!m.playing;

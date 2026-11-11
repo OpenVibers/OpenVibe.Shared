@@ -15,6 +15,8 @@
  *   --ovb-mini    the small player's height plus its 8 px gap, while it is the full-width bar on a phone.
  *   --ovb-base    max(--ovb-bar, safe-area-inset-bottom): where the first docked part starts.
  *   --ovb-dock    --ovb-base + --ovb-mini: how far anything above all of them sits from the bottom edge.
+ *   --ovb-composer  how far a page's own composer docked at the bottom reaches up (its top, plus 8 px), so the Dock's
+ *                 pill stands above a chat's box instead of on its send button (2026-11-11); 0 when there is none.
  *
  * One stacking order, written here only (the bottom of the screen, low to high):
  *   1. the app bar            --ovb-z-bar    9990
@@ -49,6 +51,7 @@
     --ovb-mini: 0px;
     --ovb-base: max(var(--ovb-bar, 0px), env(safe-area-inset-bottom, 0px));
     --ovb-dock: calc(var(--ovb-base) + var(--ovb-mini, 0px));
+    --ovb-composer: 0px;
     --ovb-z-bar: 9990;
     --ovb-z-mini: 9991;
     --ovb-z-pill: 9995;
@@ -59,6 +62,7 @@
     }
 
     const px = (n) => `${Math.round(n * 100) / 100}px`;
+    const COMPOSERS = 'form[data-ovt-composer], [data-ov-bottom-dock]';
 
     /** The height of an element that is actually on screen (a bar hidden under the page is not). */
     function onScreen(el) {
@@ -89,13 +93,23 @@
             }
         } catch { /* no matchMedia: no full-width small player to stack */ }
         html.style.setProperty('--ovb-mini', px(mini));
+        // A page's composer at the bottom of the screen (a chat's box, the shared composer, or anything marked
+        // data-ov-bottom-dock) that reaches the right-hand corner where the pill sits.
+        let composer = 0;
+        const visBottom = vv ? vv.offsetTop + vv.height : root.innerHeight;
+        for (const f of document.querySelectorAll(COMPOSERS)) {
+            if (!onScreen(f)) continue;
+            const r = f.getBoundingClientRect();
+            if (r.bottom >= visBottom - 48 && r.top < visBottom && r.right > root.innerWidth - 140) composer = Math.max(composer, visBottom - r.top + 8);
+        }
+        html.style.setProperty('--ovb-composer', px(composer));
     }
 
     const later = () => { if (!raf) raf = requestAnimationFrame(measure); };
 
     /** Watch the parts that are added to the page after this file, and their size changes. */
     function watch() {
-        const parts = [...document.querySelectorAll('.ovnav-appbar, .ovmini')];
+        const parts = [...document.querySelectorAll(`.ovnav-appbar, .ovmini, ${COMPOSERS}`)];
         if (resize) { resize.disconnect(); watched = []; }
         else if (typeof ResizeObserver === 'function') resize = new ResizeObserver(later);
         if (!resize) return;
@@ -115,9 +129,10 @@
             observer = new MutationObserver((records) => {
                 let parts = false;
                 for (const r of records) {
-                    if (r.target && r.target.closest && r.target.closest('.ovnav-appbar, .ovmini')) { parts = true; break; }
+                    const sel = `.ovnav-appbar, .ovmini, ${COMPOSERS}`;
+                    if (r.target && r.target.closest && r.target.closest(sel)) { parts = true; break; }
                     for (const n of [...r.addedNodes, ...r.removedNodes]) {
-                        if (n.nodeType === 1 && (n.matches('.ovnav-appbar, .ovmini') || n.querySelector('.ovnav-appbar, .ovmini'))) { parts = true; break; }
+                        if (n.nodeType === 1 && (n.matches(sel) || n.querySelector(sel))) { parts = true; break; }
                     }
                     if (parts) break;
                 }
