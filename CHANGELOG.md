@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.206.0 — 2026-11-11
+
+- The Chat summary's Vibe row is an accessible Open Vibe button that selects the menu's Vibe tab.
+- On desktop, Chat and Vibe open the Dock after the menu closes; the Dock opens from its pill only when that pill is visible.
+- Feed search uses Community's search and examples through Network, with loaded-card filtering when search is unavailable.
+- The Feed post form uses OpenVibeComposer for files, paste, drop, commands, drafts and settings; each picture requires a description, and other files upload to Media.
 ## 4.205.0 — 2026-11-11
 
 **Agents show their work everywhere: the one step view reads AG-UI, compact like the portal, with the one composer to

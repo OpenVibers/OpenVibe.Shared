@@ -89,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '7f3c25bc076d', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '21e125e3f1e9' };
+    const DOCK_REV = { 'dock-vibe.js': '2c597ddf5604', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '21e125e3f1e9' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -694,8 +694,11 @@
                     const meta = h('span', 'ovdk-chat-m'); const at = c.latest && c.latest.last_answer_at;
                     const t = h('time', '', when(at || c.last_message_at)); if (at) t.title = answered(at); meta.append(t);
                     const av = h('span', 'ovdk-av ovdk-av-vibe'); av.append(icon(G.vibe));
-                    b.append(av, body, meta); b.setAttribute('aria-label', `Vibe, ${c.count} chats${at ? `, ${answered(at)}` : ''}`);
-                    b.addEventListener('click', () => { vibeOnList = true; save({ vibe: null }); setTab('vibe', true); });
+                    b.append(av, body, meta); b.setAttribute('aria-label', 'Open Vibe');
+                    b.addEventListener('click', () => {
+                        if (!b.dispatchEvent(new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true }))) return;
+                        vibeOnList = true; save({ vibe: null }); setTab('vibe', true);
+                    });
                     li.append(b); ul.append(li); return;
                 }
                 const li = h('li'), b = h('button', 'ovdk-chat');
@@ -1042,7 +1045,10 @@
         fromOrb();
         void el.offsetWidth; el.classList.add('is-in');
         // On a computer it grows out of its pill; a phone's sheet opens out of the navbar's orb (fromOrb), or rises.
-        if (!phone() && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) root.OpenVibeNavbar.pop(el, document.getElementById('ovdk-pill'));
+        if (!phone() && root.OpenVibeNavbar && root.OpenVibeNavbar.pop) {
+            const pill = document.getElementById('ovdk-pill');
+            root.OpenVibeNavbar.pop(el, pill?.offsetWidth ? pill : null);
+        }
         if (phone()) {
             el.setAttribute('aria-modal', 'true'); document.documentElement.classList.add('ovdk-sheet-open');
             if (root.OVSurfaces && !dockSurface) { dockSurface = root.OVSurfaces.sheet({ el, body: el.querySelector('.ovdk-body'), close }); dockSurface.open(); }
