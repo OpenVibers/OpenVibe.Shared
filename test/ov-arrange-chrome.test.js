@@ -41,7 +41,7 @@ window.editor = OVArrange.open({
     onAsk: async (words, request) => {
         window.calls.asked = { words, request };
         const layout = OVArrangeCore.applyDefaults(window.CATALOG, 'phone');
-        layout.parts = layout.parts.map((p) => p.id === 'stop' ? { ...p, place: { x: 0, y: 0, w: 2, h: 2 } } : p);
+        layout.parts = layout.parts.map((p) => p.id === 'stop' ? { ...p, place: { x: 1, y: 3, w: 2, h: 2 } } : p);
         layout.name = 'Big Stop'; layout.summary = 'Stop is first, at 2 by 2.';
         return { ok: true, layout, summary: 'Stop is first, at 2 by 2.', reasons: [] };
     },
@@ -107,9 +107,17 @@ const server = http.createServer((req, res) => {
         await evalv(`(() => { const f = document.querySelector('form[data-ask]'); f.querySelector('input').value = 'put Stop first and make it big'; f.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); })()`);
         assert.ok(await until(`!!document.querySelector('.ov-arrange-preview')`), 'the suggestion is previewed');
         assert.ok(/Stop is first/.test(await evalv(`document.querySelector('.ov-arrange-preview').textContent`)), 'the preview says what changed');
+        assert.equal(await evalv(`document.getElementById('stop').style.gridColumn`), '2 / span 2', 'the suggestion is shown on the real Stop');
+        assert.equal(await evalv(`document.getElementById('stop').style.gridRow`), '4 / span 2', 'and in its row');
         await evalv(`document.querySelector('.ov-arrange-preview [data-keep]').click()`);
-        assert.equal(await evalv(`window.editor.layout().parts.find((p) => p.id === 'stop').place.x`), 0, 'Keep applied the suggestion');
+        assert.equal(await evalv(`window.editor.layout().parts.find((p) => p.id === 'stop').place.x`), 1, 'Keep applied the suggestion');
         assert.equal(await evalv(`document.querySelector('.ov-arrange-preview') === null`), true, 'the preview bar went away');
+
+        // A long press opens the part's sheet (the phone's way to the style controls).
+        await evalv(`(() => { const el = document.getElementById('stick'); const r = el.getBoundingClientRect(); el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0, pointerId: 9, clientX: r.left + 5, clientY: r.top + 5 })); })()`);
+        assert.ok(await until(`!!document.querySelector('.ov-arrange-sheet')`), 'a long press opens the part sheet');
+        await evalv(`document.querySelector('.ov-arrange-sheet [data-close]').click()`);
+        await evalv(`(() => { const el = document.getElementById('stick'); el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 9 })); })()`);
 
         // Reset to default, Share, Done.
         await evalv(`document.querySelector('[data-reset]').click()`);

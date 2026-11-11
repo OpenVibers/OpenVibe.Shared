@@ -329,6 +329,7 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
         for (const el of partEls()) originals.set(el, { style: el.getAttribute('style'), hidden: el.hidden, tabindex: el.getAttribute('tabindex'), role: el.getAttribute('role'), label: el.getAttribute('aria-label'), cls: el.className });
         const surfaceStyle = surface.getAttribute('style');
         const surfaceClass = surface.className;
+        const surfaceCustom = surface.getAttribute('data-ov-custom');
         const elOf = (id) => partEls().find((el) => el.dataset.ovPart === id) || null;
         const entry = (id) => entryOf(working, id);
 
@@ -567,7 +568,16 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
             const id = el.dataset.ovPart;
             select(id);
             clearTimeout(pressTimer);
-            pressTimer = setTimeout(() => { if (!drag) { openSheet(id); } }, 520);
+            pressTimer = setTimeout(() => {
+                if (drag && drag.moved) return;
+                if (drag) {
+                    // A long press is the part's sheet, not a drag: let go of the gesture before opening it.
+                    const held = elOf(drag.id); drag = null;
+                    onPointerMove = null; onPointerUp = null; onPointerCancel = null;
+                    if (held) held.removeAttribute('data-ov-dragging');
+                }
+                openSheet(id);
+            }, 520);
             startDrag(e, id, 'move');
             if (e.pointerType === 'touch') try { el.setPointerCapture(e.pointerId); } catch (_) { /* */ }
         }
@@ -674,14 +684,14 @@ ${(p.sizes || []).filter((s) => s.w >= p.min.w && s.h >= p.min.h).map((s) => `<l
         const words = host.querySelector('#ov-arrange-words');
         let previewBar = null;
         function showPreview(sug, wordText) {
-            preview = { layout: normal(sug.layout), summary: sug.summary || '', reasons: sug.reasons || [], words: wordText };
+            preview = { layout: normal(sug.layout), summary: sug.summary || '', reasons: sug.reasons || [], words: wordText, model: sug.receipt && sug.receipt.model ? String(sug.receipt.model) : '' };
             apply(preview.layout);
             if (previewBar) previewBar.remove();
             previewBar = doc.createElement('div');
             previewBar.className = 'ov-arrange-preview';
             previewBar.setAttribute('role', 'group');
             previewBar.setAttribute('aria-label', 'OpenVibe\'s suggestion');
-            previewBar.innerHTML = `<p><b>OpenVibe suggests:</b> ${esc(preview.summary)}</p><button type="button" class="ovk-btn ovk-btn--primary" data-keep>Keep</button><button type="button" class="ovk-btn ovk-btn--quiet" data-discard>Discard</button>`;
+            previewBar.innerHTML = `<p><b>OpenVibe suggests:</b> ${esc(preview.summary)}${preview.model ? ` <span class="ov-arrange-by">(${esc(preview.model)})</span>` : ''}</p><button type="button" class="ovk-btn ovk-btn--primary" data-keep>Keep</button><button type="button" class="ovk-btn ovk-btn--quiet" data-discard>Discard</button>`;
             host.querySelector('.ov-arrange-actions').before(previewBar);
             previewBar.querySelector('[data-keep]').addEventListener('click', keepPreview);
             previewBar.querySelector('[data-discard]').addEventListener('click', discardPreview);
@@ -794,7 +804,7 @@ ${(p.sizes || []).filter((s) => s.w >= p.min.w && s.h >= p.min.h).map((s) => `<l
             surface.removeEventListener('keydown', onKey);
             if (surfaceStyle == null) surface.removeAttribute('style'); else surface.setAttribute('style', surfaceStyle);
             surface.className = surfaceClass;
-            if (surfaceClass == null || !/\bov-arrange-surface\b/.test(surfaceClass)) surface.removeAttribute('data-ov-custom');
+            if (surfaceCustom == null) surface.removeAttribute('data-ov-custom'); else surface.setAttribute('data-ov-custom', surfaceCustom);
             for (const [el, o] of originals) {
                 for (const a of ['data-ov-selected', 'data-ov-dragging', 'data-ov-refused', 'data-ov-flatten', 'data-ov-tint', 'data-ov-shape', 'data-ov-label', 'data-ov-keys', 'data-ov-gamepad', 'data-ov-dock', 'data-ov-order']) el.removeAttribute(a);
                 if (o.style == null) el.removeAttribute('style'); else el.setAttribute('style', o.style);
