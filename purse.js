@@ -209,7 +209,7 @@
         m.setAttribute('data-v', String(value));
         play(id, n - was); count(m.querySelector('.ovnav-chip-mv'), was, n);
     }
-    let recent = null, recentUser = null, running = null;
+    let recent = null, recentUser = null, running = null, runningUser = null;
     const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     function recentChanges(user) {
         const id = user || recentUser;
@@ -217,10 +217,13 @@
         if (recent && id === recentUser) return recent;
         try { return JSON.parse(root.sessionStorage.getItem(`ovp-changes:${id}`) || 'null'); } catch { return null; }
     }
-    async function catchUp({ frameBase = 'https://openvibe.network/api/frame', token, user, streamer, valid } = {}) {
-        if (!user || running || typeof root.fetch !== 'function') return running;
+    async function catchUp(options = {}) {
+        const { frameBase = 'https://openvibe.network/api/frame', token, user, streamer, valid } = options;
+        if (!user || typeof root.fetch !== 'function') return;
         if (recentUser !== user) recent = null;
         recentUser = user;
+        if (running) return runningUser === user ? running : running.then(() => catchUp(options));
+        runningUser = user;
         const base = String(frameBase).replace(/\/+$/, '');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const credentials = token ? 'omit' : 'include';
@@ -252,7 +255,7 @@
                 } catch { /* the server's read state will be retried on the next visit */ }
                 if (changed.at(-1)[0] !== name) await pause(700);
             }
-        })().finally(() => { running = null; });
+        })().finally(() => { running = null; runningUser = null; });
         return running;
     }
     root.OpenVibePurse = { mount, set, play, burst, count, catchUp, recentChanges, icon: (id, size) => { style(); return ICONS[id] ? svg(size || 20, ICONS[id]) : ''; }, ids: Object.keys(ICONS) };
