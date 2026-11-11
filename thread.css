@@ -355,6 +355,8 @@ html.ovt-sheet-open, html.ovt-sheet-open body { overflow: hidden; }
 html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data-ov-motion=off] .ovc-mic { animation: none; }
 .ovc-set { width: min(460px, calc(100vw - 24px)); max-height: min(640px, calc(100vh - 32px)); padding: 0; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .2)); border-radius: 20px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); }
 .ovc-set::backdrop { background: rgba(2, 6, 14, .55); }
+.ovc-set.ovc-set-in { width: auto; max-height: none; border: 0; border-radius: 0; background: none; box-shadow: none; }
+.ovc-set-in .ovc-set-f { padding: 0; }
 .ovc-set-f { display: grid; gap: 14px; padding: 6px 18px 18px; }
 .ovc-set-h { display: flex; align-items: center; justify-content: space-between; margin: 0 -8px 0 0; font-size: 17px; }
 .ovc-set-g { margin: 0; padding: 0; border: 0; display: grid; gap: 6px; }

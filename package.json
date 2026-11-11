@@ -140,6 +140,7 @@
     "./thread": "./thread.js",
     "./messages": "./messages.js",
     "./ov-thread": "./ov-thread.js",
+    "./ov-window": "./ov-window.js",
     "./ov-combo": "./ov-combo.js",
     "./ov-composer": "./ov-composer.js",
     "./ov-ai-choice": "./ai-choice.js",

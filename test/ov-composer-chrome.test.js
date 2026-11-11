@@ -22,7 +22,7 @@ const form = thread.composer({
 });
 const server = http.createServer((req, res) => {
     const u = req.url.split('?')[0];
-    const file = { '/ov-composer.js': 'application/javascript', '/thread.css': 'text/css' }[u];
+    const file = { '/ov-composer.js': 'application/javascript', '/ov-window.js': 'application/javascript', '/thread.css': 'text/css' }[u];
     if (file) { res.writeHead(200, { 'content-type': file }); return res.end(fs.readFileSync(path.join(root, u.slice(1)))); }
     if (u === '/send') { res.writeHead(204); return res.end(); }
     res.writeHead(200, { 'content-type': 'text/html' });
@@ -179,12 +179,13 @@ const server = http.createServer((req, res) => {
         await type('/settings');
         await until(`!document.querySelector('#c1 .ovc-pop').hidden`);
         await key('Enter');
-        assert.ok(await until(`!!document.querySelector('dialog.ovc-set[open]')`), '/settings opens your composer settings');
-        f = await page.evaluate(`({ mine: [...document.querySelectorAll('.ovc-set-l b')].map((b) => b.textContent), box: document.querySelector('#c1 textarea').value })`);
+        assert.ok(await until(`!!document.querySelector('.ovw .ovc-set-in')`), '/settings opens your composer settings, in the one window (ov-window.js, loaded from beside the composer)');
+        assert.equal(await page.evaluate(`document.querySelector('.ovw .ovw-t').textContent`), 'Your composer');
+        f = await page.evaluate(`({ mine: [...document.querySelectorAll('.ovw .ovc-set-l b')].map((b) => b.textContent), box: document.querySelector('#c1 textarea').value })`);
         assert.deepEqual(f, { mine: ['/sig'], box: '' }, 'the sheet lists your commands; the /settings word left the box');
 
         // The count near the limit (600: it shows from 200 left).
-        await page.evaluate(`document.querySelector('dialog.ovc-set').close()`);
+        await page.evaluate(`OVWindow.closeAll()`);
         await page.evaluate(`(() => { const t = document.querySelector('#c1 textarea'); t.value = 'x'.repeat(590); t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         f = await page.evaluate(`({ shown: !document.querySelector('#c1 .ovc-count').hidden, text: document.querySelector('#c1 .ovc-count').textContent, low: document.querySelector('#c1 .ovc-count').classList.contains('is-low') })`);
         assert.deepEqual(f, { shown: true, text: '10 left', low: true });
