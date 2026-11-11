@@ -203,7 +203,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             if (!state.loading) {
                 state.loading = fetch('/api/me/layout', { credentials: 'same-origin', headers: { accept: 'application/json' } })
                     .then((r) => {
-                        if (r.status === 401 || r.status === 403 || r.status === 404) { state.off = true; return null; }
+                        if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) { state.off = true; return null; }
                         return r.ok ? r.json() : null;
                     })
                     .then((d) => { state.data = d && typeof d === 'object' ? d : {}; return state.data; })
@@ -226,7 +226,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
                     method: 'PATCH', credentials: 'same-origin',
                     headers: { 'content-type': 'application/json', accept: 'application/json' },
                     body: JSON.stringify({ pip }),
-                }).then((r) => { if (r.status === 401 || r.status === 403 || r.status === 404) state.off = true; })
+                }).then((r) => { if (r.status === 400 || r.status === 401 || r.status === 403 || r.status === 404) state.off = true; })
                     .catch(() => { /* the next move tries again */ });
             }, 1500);
         }
