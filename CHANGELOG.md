@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.216.0 — 2026-11-11
+
+- **The bar's first paint follows the sign-in hint (asks 327, 345).** When `ov_sso_hint` says `account`, navbar.js
+  draws the signed-in shape at once: a neutral placeholder avatar, and the account's own name/initial only when the
+  hint carries it (`account:<username>`); the session check then replaces it or corrects the bar to guest. A failed
+  check no longer leaves the optimistic bar behind, and an explicit `guest` hint keeps the guest bar and starts no
+  silent round trip. The hint is never authorization: it holds no token and is not remembered as an account.
+  sso-client.js stores the name after a FedCM sign-in when the response has one.
+
 ## 4.212.0 — 2026-11-11
 
 A train of four pull requests (one line each):

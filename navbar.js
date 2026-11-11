@@ -1822,11 +1822,25 @@
     }
 
     let _authInFlight = null;
+    let _hintPainted = false, _hintSettled = false;
 
     function ssoHint() {
         const m = (typeof document !== 'undefined' ? document.cookie : '').match(/(?:^|;\s*)ov_sso_hint=([^;]*)/);
         if (m) return m[1];
         try { return localStorage.getItem('ov_sso_hint'); } catch { return null; }
+    }
+
+    /**
+     * The first paint, before the session check: a hint that this browser signed in here. It is not
+     * authorization and carries no token; only the account's own name may ride along (account:<name>).
+     */
+    function hintUser() {
+        let raw = ssoHint() || '';
+        try { raw = decodeURIComponent(raw); } catch { /* as written */ }
+        const m = /^account(?::(.{1,64}))?$/.exec(raw);
+        if (!m) return null;
+        let name = (m[1] || '').replace(/^@/, '');
+        return { is_anon: false, username: /^[A-Za-z0-9_.-]{1,64}$/.test(name) ? name : '', __ssoHint: true };
     }
 
     /** One silent sign-in per tab, only after an earlier sign-in here (never after 'guest', never for bots): silent=1. */
@@ -1965,7 +1979,9 @@
                     enableHandoff();
                     startQuestGuide();
                 } else {
-                    maybeSilentLogin();
+                    const navigating = maybeSilentLogin();
+                    // The hint was only a first paint: no session behind it, so draw the guest bar.
+                    if (_hintPainted && !navigating) { _hintPainted = false; _hintSettled = true; render(); }
                 }
                 try {
                     document.dispatchEvent(new CustomEvent('openvibe-navbar-auth', {
@@ -2124,7 +2140,11 @@
         if (typeof nav.setAttribute === 'function') { nav.setAttribute('data-compact', _config.compact || 'auto'); nav.setAttribute('data-service', svc); }
         const links = currentLinks();
 
-        const u = _config.user;
+        // With the hint saying account, the bar starts in the signed-in shape (a neutral avatar, the
+        // account's name only when the hint carries it). refreshAuthState replaces or clears it.
+        const hinted = !_config.user && !_hintSettled && _config.auth !== 'external' ? hintUser() : null;
+        if (hinted) _hintPainted = true;
+        const u = _config.user || hinted;
         rememberAccount(u);
         const accounts = getAccounts();
         const isAnon = u && u.is_anon;
