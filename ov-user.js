@@ -14,7 +14,7 @@
 })(typeof window !== 'undefined' ? window : globalThis, function (root) {
     'use strict';
     const NETWORK = 'https://openvibe.network';
-    const USER_REV = { 'ov-window.js': 'c31f6180d58f' };
+    const USER_REV = { 'ov-window.js': '68992b81f7ea' };
     const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
     const CSS = `.ovu { position: relative; display: grid; gap: 14px; padding: 0 0 18px; color: var(--text-primary, #e6edf7); font: 500 14.5px/1.4 var(--font, Inter, system-ui, sans-serif); }
 .ovu-banner { position: relative; height: 92px; overflow: hidden; background: linear-gradient(135deg, hsl(var(--ovu-h, 220) 70% 42%), hsl(calc(var(--ovu-h, 220) + 40) 70% 28%)); }

@@ -528,6 +528,12 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
                 if (pts.size < 2) {
                     pinch = null;
                     el.classList.remove('is-resizing');
+                    // A pinch that began after the lift put the box over the page; put it back in its frame for its mode.
+                    if (el.classList.contains('is-lifted')) {
+                        el.classList.remove('is-dragging', 'is-lifted');
+                        el.style.left = ''; el.style.top = ''; el.style.width = ''; el.style.transform = '';
+                        placeIn(inst);
+                    }
                     settleInst(inst);
                     paintNow(inst);
                     save(inst);
