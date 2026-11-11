@@ -219,6 +219,7 @@
     }
     async function catchUp({ frameBase = 'https://openvibe.network/api/frame', token, user, streamer, valid } = {}) {
         if (!user || running || typeof root.fetch !== 'function') return running;
+        if (recentUser !== user) recent = null;
         recentUser = user;
         const base = String(frameBase).replace(/\/+$/, '');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
