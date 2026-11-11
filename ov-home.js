@@ -337,6 +337,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        attach: [['path', { d: 'M12 5v14M5 12h14' }]],
         plus: [['circle', { cx: 9.5, cy: 8.5, r: 3.2 }], ['path', { d: 'M3.5 18.5c1-2.900 3.300-4.400 6-4.400 1.300 0 2.500.300 3.500 1' }], ['path', { d: 'M18 13.500v6M15 16.500h6' }]],
         out: [['path', { d: 'M13.500 4.500h4a1.500 1.500 0 0 1 1.500 1.500v12a1.500 1.500 0 0 1-1.500 1.500h-4' }], ['path', { d: 'M9.500 8l-4 4 4 4M5.500 12h9.500' }]],
         grid: [['rect', { x: 4, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 4, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 4, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }], ['rect', { x: 13.5, y: 13.5, width: 6.5, height: 6.5, rx: 1.6 }]],
@@ -855,11 +856,15 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         const first = String((o.user && (o.user.display_name || o.user.username)) || '').split(/\s+/)[0];
         ta.placeholder = first ? `What's new, ${first}?` : "What's new?"; ta.setAttribute('aria-label', "What's new");
         const row = h('div', 'ovt-c-row'), tools = h('div', 'ovt-c-tools');
-        const file = h('input'); file.type = 'file'; file.multiple = true; file.hidden = true; file.setAttribute('aria-label', 'Attach files');
-        const attach = h('button', 'ovk-btn ovk-btn--quiet', 'Attach files'); attach.type = 'button'; attach.addEventListener('click', () => file.click()); tools.append(attach);
+        // The composer's own + (its contract: label.ovt-btn.ovt-attach holding the file input), drawn by ov-composer.js's
+        // styles wherever the menu opens; a kit button had no styles here and drew bare ("Attach files").
+        const attach = h('label', 'ovt-btn ovt-attach'); attach.title = 'Attach files'; attach.setAttribute('aria-label', 'Attach files');
+        attach.append(svgIcon('attach'));
+        const file = h('input'); file.type = 'file'; file.multiple = true; file.hidden = true; file.setAttribute('data-ovt-files', ''); file.setAttribute('aria-label', 'Attach files');
+        attach.append(file); tools.append(attach);
         const post = h('button', 'ovt-send', 'Post'); post.type = 'submit'; post.disabled = true; post.setAttribute('data-ovt-send', '');
         const note = h('p', 'ovh-note'); note.hidden = true; note.setAttribute('data-ovt-note', '');
-        row.append(tools, file, post); form.append(ta, row); box.append(form, note);
+        row.append(tools, post); form.append(ta, row); box.append(form, note);
         const pics = new Map();
         const ready = () => { post.disabled = !ta.value.trim() || [...pics.values()].some((alt) => !alt.value.trim()); };
         form.addEventListener('input', ready);
@@ -1246,7 +1251,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         const showExamples = (values) => {
             examples.textContent = '';
             [...new Set([...values, ...fallbackExamples])].slice(0, 6).forEach((value) => {
-                const b = h('button', 'ovk-btn ovk-btn--quiet', value); b.type = 'button';
+                const b = h('button', 'ovfd-ex', value); b.type = 'button';
                 b.addEventListener('click', () => { if (o.onSearch) o.onSearch(value); });
                 examples.append(b);
             });
@@ -1348,6 +1353,10 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         st.textContent = `
 .ovfd-chips{position:sticky;top:0;z-index:2;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 4px;margin:0 -4px;background:var(--bg-secondary,#141a24)}
 .ovfd-chips::-webkit-scrollbar{display:none}
+.ovfd-examples{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 4px 6px;margin:0 -4px}.ovfd-examples::-webkit-scrollbar{display:none}.ovfd-examples[hidden]{display:none}
+.ovfd-ex{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border-radius:999px;border:0;background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);color:var(--accent-light,var(--accent,#60a5fa));font:inherit;font-size:13px;font-weight:650;cursor:pointer;white-space:nowrap;transition:background .15s}
+.ovfd-ex::before{content:"";width:12px;height:12px;flex:none;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.8}
+.ovfd-ex:hover,.ovfd-ex:focus-visible{background:color-mix(in srgb,var(--accent,#3b82f6) 22%,transparent)}
 .ovfd-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
 .ovfd-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
 .ovfd-list{display:grid;gap:10px;padding:4px 0}

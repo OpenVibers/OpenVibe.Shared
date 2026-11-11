@@ -89,7 +89,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '2c597ddf5604', 'dock-code.js': '3dcbaca10bfb', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '21e125e3f1e9' };
+    const DOCK_REV = { 'dock-vibe.js': '2c597ddf5604', 'dock-code.js': '7a768982eff3', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '8ed09c416a48', 'dock-agent.js': 'c1281ef69ea8', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '21e125e3f1e9' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
