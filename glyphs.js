@@ -145,7 +145,8 @@
         share: '<path d="M12 15.2V3.3M7.4 8.1L12 3.3L16.6 8.1M4.9 12.9v6.1a1 1 0 0 0 1 1h12.2a1 1 0 0 0 1-1v-6.1"/>',
         'arrows-h': '<path d="M3.8 12h16.5M7.6 8.1l-3.9 3.9l3.9 3.9M16.4 8.1l3.9 3.9l-3.9 3.9"/>',
         move: '<path d="M11.9 3.6v16.7M3.6 11.9h16.7M9 6.5l2.9-2.9l2.9 2.9M9 17.3l2.9 2.9l2.9-2.9M6.5 9l-2.9 2.9l2.9 2.9M17.3 9l2.9 2.9l-2.9 2.9"/>',
-        focus: '<circle cx="12" cy="12" r="1.5"/><path d="M12 3.5v4.7M10.1 6.3l1.9 1.9l1.9-1.9M12 20.5v-4.7M10.1 17.7l1.9-1.9l1.9 1.9M3.5 12h4.7M6.3 10.1l1.9 1.9l-1.9 1.9M20.5 12h-4.7M17.7 10.1l-1.9 1.9l1.9 1.9"/>',
+        // A viewfinder with its centre (2026-11-11 review: four tiny arrows crowded at 16 px).
+        focus: '<circle cx="12" cy="12" r="2.8"/><path d="M4 9V6.2A2.2 2.2 0 0 1 6.2 4H9M15 4h2.8A2.2 2.2 0 0 1 20 6.2V9M20 15v2.8a2.2 2.2 0 0 1-2.2 2.2H15M9 20H6.2A2.2 2.2 0 0 1 4 17.8V15"/>',
         at: '<circle cx="12" cy="12" r="3.4"/><path d="M15.4 12v1.3a2.5 2.5 0 0 0 4.9 0V12a8.3 8.3 0 1 0-3.2 6.5"/>',
         box: '<path d="M3.6 7.9L11.9 3.9l8.4 3.9v8.4L11.9 20.1l-8.4-3.9Z"/><path d="M3.6 7.9L11.9 11.8l8.4-3.9M11.9 11.8v8.4M7.8 5.9l8.4 3.9"/>',
         bug: '<rect x="7.2" y="6.2" width="9.6" height="13.3" rx="4.8"/><path d="M9.3 6.5a2.7 2.7 0 0 1 5.3 0M12 10.9v8.5M7.2 12H3.5M20.5 12h-3.7M7.6 8.3L4.6 5.6M16.4 8.3L19.4 5.6M7.6 16.3L4.6 18.9M16.4 16.3L19.4 18.9"/>',
@@ -230,6 +231,7 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
+        focus: '<circle cx="12" cy="12" r="3.6"/><path class="ln" d="M4 9V6.2A2.2 2.2 0 0 1 6.2 4H9M15 4h2.8A2.2 2.2 0 0 1 20 6.2V9M20 15v2.8a2.2 2.2 0 0 1-2.2 2.2H15M9 20H6.2A2.2 2.2 0 0 1 4 17.8V15"/>',
         // 4.182.0, the last five shapes: a car, a door, a podium, a rocket and a camera that flips. After these, every
         // glyph without a solid drawing is one made of lines, which thickens when small instead.
         car: '<path fill-rule="evenodd" d="M5.6 5.2h12.7l2.7 5.5H3ZM2.6 12.2h18.7v4.5H2.6ZM5.9 14.4a1.1 1.1 0 1 0 2.3 0a1.1 1.1 0 1 0-2.3 0ZM15.8 14.4a1.1 1.1 0 1 0 2.3 0a1.1 1.1 0 1 0-2.3 0ZM5 17.5h2.7v1.8H5ZM16.3 17.5h2.7v1.8h-2.7Z"/>',
