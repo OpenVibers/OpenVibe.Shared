@@ -2,7 +2,7 @@
 
 ## 4.207.0 — 2026-11-11
 
-- Expose the Quest guide to browser pages and start it from an opaque `qstep` link after the host resolves the step; it waits for late controls and checks the Events-backed completion read. `OpenVibeQuest.mountAll` mounts each `[data-ov-quest]` card with the site's reader.
+- Expose the Quest guide to browser pages and start it from an opaque `qstep` link after the host resolves the step; it waits for late controls and checks the Events-backed completion read. The shared navbar starts it from its signed-in Network token on every site. `OpenVibeQuest.mountAll` mounts each `[data-ov-quest]` card with the site's reader.
 
 ## 4.206.0 — 2026-11-11
 
