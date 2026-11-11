@@ -62,8 +62,8 @@
 .ovh-grid:not(.ovh-recent) { gap: 4px 2px; padding: 2px 0 0; justify-items: stretch; }
 .ovh-grid:not(.ovh-recent) .ovh-app { min-height: 0; padding: 6px 0 8px; gap: 7px; }
 .ovh-grid:not(.ovh-recent) .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: 29%; }
-.ovh-grid:not(.ovh-recent) .ovh-app:not(.ovh-folder) .ovh-ic > .ov-icon { display: grid; place-items: center; width: 104%; height: 104%; }
-.ovh-grid:not(.ovh-recent) .ovh-app:not(.ovh-folder) .ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
+.ovh-ic > .ov-icon { --ovi-size: 74.4%; display: grid; place-items: center; }
+.ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { grid-template-columns: repeat(2, 36%); grid-auto-rows: 36%; gap: 7%; place-content: center; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { width: 100%; height: 100%; border-radius: 30%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span .ov-icon { display: grid; place-items: center; width: 100%; height: 100%; }

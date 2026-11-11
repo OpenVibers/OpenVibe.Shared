@@ -491,9 +491,12 @@ html[data-ov-motion=off] .ov-mark:not([data-fx-demo] *) *{animation-iteration-co
         window.addEventListener('pageshow', (e) => { if (e.persisted) { navStop(); clearNav(); } });
         // This page came from a click on the last one: learn how long it took, and finish the ring here.
         let t = 0; try { t = Number(sessionStorage.getItem(NAV_FLAG)) || 0; sessionStorage.removeItem(NAV_FLAG); } catch { /* */ }
+        // soft.js ends the ring itself at the arriving page's first paint (it starts at the press, not the click); the
+        // pace is still learned here, from the click's marker, before soft.js's ending takes over.
         if (t && Date.now() - t < 20000) {
             learn('page', Date.now() - t);
-            const finish = () => { const marks = navMarks(); if (!marks.length) return false; setFill(marks, 0.9); setTimeout(() => navEnd(null), 60); return true; };
+            if (window.__ovSoftNavEnded) return;
+            const finish = () => { if (window.__ovSoftNavEnded) return true; const marks = navMarks(); if (!marks.length) return false; setFill(marks, 0.9); setTimeout(() => navEnd(null), 60); return true; };
             let tries = 0; const again = () => { if (!finish() && ++tries <= 20) setTimeout(again, 100); }; again();
         }
     }

@@ -81,16 +81,28 @@
             .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"] { --ovn-t: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); background: var(--ovn-t); box-shadow: 0 0 0 6px var(--ovn-t), 0 0 0 7px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
             .openvibe-navbar .openvibe-navbar-brand .name a.has-drop[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
             .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name a.b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
+            .openvibe-navbar .ovnav-brand { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; gap: 7px; min-width: 0; height: 40px; padding: 0 12px 0 4px; border-radius: 12px; cursor: pointer; color: inherit; transition: background-color .15s, box-shadow .26s cubic-bezier(.2,1.4,.3,1); }
+            .openvibe-navbar .ovnav-brand::before { content: ""; position: absolute; inset: -3px 0; }
+            .openvibe-navbar .ovnav-brand::after { content: ""; flex: none; width: 6px; height: 6px; margin: 0 0 3px 2px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); opacity: .6; transition: transform .2s; }
+            .openvibe-navbar .ovnav-brand:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            .openvibe-navbar .ovnav-brand[aria-expanded="true"] { background: color-mix(in srgb, var(--accent, #3b82f6) 17%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); }
+            .openvibe-navbar .ovnav-brand[aria-expanded="true"]::after { transform: translateY(2px) rotate(225deg); }
+            .openvibe-navbar .ovnav-brand:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
+            .openvibe-navbar .ovnav-brand .flame, .openvibe-navbar .ovnav-brand .flame:hover { background: none; }
+            .openvibe-navbar .openvibe-navbar-brand .name .b-sub { color: var(--text-primary, #e6edf7); font-weight: 900; }
+            .openvibe-navbar .openvibe-navbar-brand .name .b-core { color: var(--text-primary, #e6edf7); font-weight: 800; }
+            .openvibe-navbar .openvibe-navbar-brand .name .b-tld { color: var(--accent-light, var(--accent, #60a5fa)); font-weight: 800; }
+            .openvibe-navbar .openvibe-navbar-brand.has-sub .name .b-core, .openvibe-navbar .openvibe-navbar-brand.has-sub .name .b-tld { color: var(--text-secondary, #a8b3c4); font-weight: 700; }
             .openvibe-navbar .openvibe-navbar-brand .name a:hover { color: var(--accent-light, var(--accent, #60a5fa)); background: var(--accent-glow, rgba(59,130,246,.12)); }
             .openvibe-navbar .openvibe-navbar-brand .b-dot { margin: 0; padding: 0; opacity: .5; }
-            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-core { padding-right: 0; }
-            .openvibe-navbar .openvibe-navbar-brand.joined .name a.b-tld { padding-left: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name .b-core { padding-right: 0; }
+            .openvibe-navbar .openvibe-navbar-brand.joined .name .b-tld { padding-left: 0; }
             .openvibe-navbar .openvibe-navbar-brand a:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
             /* A finger needs about 44px: on touch screens the wordmark's links reach the navbar's height and the mark
                gets a clear ring, without moving anything (they were 22px and 30px tall). */
             @media (pointer: coarse) {
                 .openvibe-navbar .openvibe-navbar-brand .name a { padding-top: 14px; padding-bottom: 14px; margin-top: -11px; margin-bottom: -11px; }
-                .openvibe-navbar .openvibe-navbar-brand .name a.b-tld { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; box-sizing: border-box; }
+                .openvibe-navbar .openvibe-navbar-brand .name .b-tld { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; box-sizing: border-box; }
                 .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
@@ -356,6 +368,9 @@
                 object-fit: cover;
             }
             .openvibe-navbar-avatar:hover { border-color: var(--accent, #3b82f6); }
+            .openvibe-navbar .ovnav-avatar-wrap { position: relative; display: inline-flex; flex: none; }
+            .openvibe-navbar .ovnav-avatar-count { position: absolute; top: -5px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #e5484d); color: #fff; font-family: inherit; font-size: 10px; font-weight: 700; line-height: 1; }
+            .openvibe-navbar .ovnav-avatar-count[hidden] { display: none; }
 
             /* Sign in: a filled circle where the person's picture will be; a figure and an arrow coming in take turns. */
             .openvibe-navbar-login { display: inline-grid; place-items: center; background: var(--accent-strong, #1d4ed8); color: var(--on-accent-strong, #fff); border: none; cursor: pointer; text-decoration: none; transition: filter .15s, box-shadow .25s, transform .18s cubic-bezier(.2, 1.4, .3, 1); }
@@ -537,35 +552,34 @@
     // back to the page's icon font, so sites that pass their own Font Awesome icons keep working.
     // BEGIN generated by scripts/build-navbar-icons.js from nav-icons.js; do not edit by hand
     // The glyphs the navbar draws itself: [0, line, solid] is an OpenVibe glyph (24-unit grid); [w, path] a Font
-    // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 <w> 512 viewBox. The rest of the set is nav-icons.js.
+    // Awesome Free 6 solid glyph (CC BY 4.0, fontawesome.com/license/free) in a 0 0 512 512 viewBox, one ink size. The rest of the set is nav-icons.js.
     const NAV_ICONS = {
-        'fa-bell': [0, '<path d="M6 14.5V9.5a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 18.5a2 2 0 0 0 4 0"/>', '<path d="M5.8 14.7V9.5a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 18.1h4.2a2.1 2.1 0 0 1 -4.2 0Z"/>'],
-        'fa-clock-rotate-left': [0, '<path d="M4 12a8 8 0 1 0 2.4-5.7L4 8.6M4 4.5v4.1h4.1"/><path d="M12 8v4.2l3 1.8"/>', '<path d="M6.06 6.06A8.4 8.4 0 1 1 3.6 12h2.8a5.6 5.6 0 1 0 1.64-3.96ZM3 3.2v6.6h6.6ZM11 8.2h2v3.4l2.5 1.5-1 1.7-3.5-2.1Z"/>'],
-        'fa-coins': [0, '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1.1 0-2-.4-2.5-1.2M12 6.5v11"/>', '<path fill-rule="evenodd" d="M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4ZM11 6h2v1.2c1.1.2 2 .8 2.5 1.7l-1.7 1c-.3-.6-1-1-1.8-1-.9 0-1.5.4-1.5 1s.5.8 1.8 1.1c1.8.4 3.4 1 3.4 3 0 1.4-1 2.4-2.7 2.7V18h-2v-1.3c-1.2-.2-2.2-.9-2.7-1.9l1.7-1c.4.7 1.1 1.1 2 1.1 1 0 1.6-.4 1.6-1s-.6-.8-1.9-1.1c-1.7-.4-3.3-1-3.3-2.9 0-1.3 1-2.3 2.6-2.6Z"/>'],
-        'fa-id-card': [0, '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.5-1.5 1.7-2.3 3-2.3s2.5.8 3 2.3M15 10h3M15 13.5h3"/>', '<path fill-rule="evenodd" d="M5 4.8h14a2.2 2.2 0 0 1 2.2 2.2v10a2.2 2.2 0 0 1-2.2 2.2H5A2.2 2.2 0 0 1 2.8 17V7A2.2 2.2 0 0 1 5 4.8Zm4 4.1a2.1 2.1 0 1 0 0 4.2 2.1 2.1 0 0 0 0-4.2Zm-3.1 7.5h6.2c-.6-1.7-1.8-2.6-3.1-2.6s-2.5.9-3.1 2.6Zm8.6-7v1.5h3.9V9.4Zm0 3.5v1.5h3.9v-1.5Z"/>'],
-        'fa-palette': [0, '<path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6s.8-1.7 2-1.7H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7.3" r="1.2"/><circle cx="14.5" cy="7.3" r="1.2"/>', '<path fill-rule="evenodd" d="M12 2.7a9.3 9.3 0 1 0 0 18.6c1.3 0 2-.9 2-1.9 0-1.2-1-1.5-1-2.5s.8-1.6 2-1.6H17a4.3 4.3 0 0 0 4.3-4.3C21.3 6.5 17.2 2.7 12 2.7ZM7.5 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm2.5-3.7a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm4.5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>'],
-        'fa-people-group': [0, '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M16 4.8a3.2 3.2 0 0 1 0 6.4M18 14.8c1.9.6 3 2.4 3 5.2"/>', '<circle cx="9" cy="7.9" r="3.6"/><path d="M2.4 20.8c0-3.8 3-6.5 6.6-6.5s6.6 2.7 6.6 6.5Z"/><circle cx="16.6" cy="7.4" r="2.9"/><path d="M16.8 13.4c2.9.4 4.8 2.8 4.8 6.4V20.8h-4.4c0-2.9-1-5.2-2.8-6.7Z"/>'],
-        'fa-plus': [0, '<path d="M12 5v14M5 12h14"/>', ''],
-        'fa-right-from-bracket': [0, '<path d="M13 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-4M9 16l-4 -4 4 -4M5 12h10"/>', ''],
-        'fa-shield-halved': [0, '<path d="M12 3 5 6v6c0 4.4 3 7.6 7 9 4-1.4 7-4.6 7-9V6Z"/>', '<path d="M12 2.6 4.6 5.8V12c0 4.6 3.1 8 7.4 9.5 4.3-1.5 7.4-4.9 7.4-9.5V5.8Z"/>'],
-        'fa-tower-broadcast': [0, '<circle cx="12" cy="12" r="2.15"/><path d="M8.4 8.4a5.15 5.15 0 0 0 0 7.55M15.6 8.4a5.15 5.15 0 0 1 0 7.55M6 6a8.55 8.55 0 0 0 0 12.6M18 6a8.55 8.55 0 0 1 0 12.6"/>', '<circle cx="12" cy="12" r="3.1"/><path class="ln" d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/>'],
-        'fa-user-secret': [0, '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6"/>', '<circle cx="12" cy="7.8" r="4.1"/><path d="M4.2 21c0-4.3 3.5-7.2 7.8-7.2s7.8 2.9 7.8 7.2Z"/>'],
-        'fa-wallet': [0, '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H18v4M4 7.5V18a2 2 0 0 0 2 2h14V9H6.5A2.5 2.5 0 0 1 4 7.5Z"/><path d="M16 14.5h.01"/>', '<path fill-rule="evenodd" d="M6.5 4.6H18v4h1.4a.8.8 0 0 1 .8.8v10.8H6a2.2 2.2 0 0 1-2.2-2.2V7.3a2.7 2.7 0 0 1 2.7-2.7Zm0 1.8a.9.9 0 0 0 0 1.8h9.7V6.4ZM16 13.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>'],
-        'fa-chevron-down': [0, '<path d="m6.6 9.9 6.6 6.6 6.6 -6.6"/>', ''],
-        'fa-gear': [0, '<circle cx="12" cy="12" r="2.4"/><path d="M17.85 14.4a1.35 1.35 0 0 0 0.25 1.6l0.1 0.1a1.6 1.6 0 1 1 -2.5 2.5l-0.1 -0.1a1.35 1.35 0 0 0 -1.6 -0.25 1.35 1.35 0 0 0 -0.9 1.35V19.1a1.6 1.6 0 1 1 -3.6 0v-0.1a1.35 1.35 0 0 0 -1 -1.35 1.35 1.35 0 0 0 -1.6 0.25l-0.1 0.1a1.6 1.6 0 1 1 -2.5 -2.5l0.1 -0.1a1.35 1.35 0 0 0 0.25 -1.6 1.35 1.35 0 0 0 -1.35 -0.9H4.95a1.6 1.6 0 1 1 0 -3.6h0.1a1.35 1.35 0 0 0 1.35 -1 1.35 1.35 0 0 0 -0.25 -1.6l-0.1 -0.1a1.6 1.6 0 1 1 2.5 -2.5l0.1 0.1a1.35 1.35 0 0 0 1.6 0.25H9.65a1.35 1.35 0 0 0 0.9 -1.35V4.95a1.6 1.6 0 1 1 3.6 0v0.1a1.35 1.35 0 0 0 0.9 1.35 1.35 1.35 0 0 0 1.6 -0.25l0.1 -0.1a1.6 1.6 0 1 1 2.5 2.5l-0.1 0.1a1.35 1.35 0 0 0 -0.25 1.6V9.65a1.35 1.35 0 0 0 1.35 0.9H19.1a1.6 1.6 0 1 1 0 3.6h-0.1a1.35 1.35 0 0 0 -1.35 0.9Z"/>', '<path fill-rule="evenodd" d="M18.5 14.65a1.5 1.5 0 0 0 0.3 1.8l0.1 0.1a1.75 1.75 0 1 1 -2.8 2.8l-0.1 -0.1a1.5 1.5 0 0 0 -1.8 -0.3 1.5 1.5 0 0 0 -1 1.5V19.9a1.75 1.75 0 1 1 -4 0v-0.1a1.5 1.5 0 0 0 -1.1 -1.5 1.5 1.5 0 0 0 -1.8 0.3l-0.1 0.1a1.75 1.75 0 1 1 -2.8 -2.8l0.1 -0.1a1.5 1.5 0 0 0 0.3 -1.8 1.5 1.5 0 0 0 -1.5 -1H4.15a1.75 1.75 0 1 1 0 -4h0.1a1.5 1.5 0 0 0 1.5 -1.1 1.5 1.5 0 0 0 -0.3 -1.8l-0.1 -0.1a1.75 1.75 0 1 1 2.8 -2.8l0.1 0.1a1.5 1.5 0 0 0 1.8 0.3H9.4a1.5 1.5 0 0 0 1 -1.5V4.15a1.75 1.75 0 1 1 4 0v0.1a1.5 1.5 0 0 0 1 1.5 1.5 1.5 0 0 0 1.8 -0.3l0.1 -0.1a1.75 1.75 0 1 1 2.8 2.8l-0.1 0.1a1.5 1.5 0 0 0 -0.3 1.8V9.4a1.5 1.5 0 0 0 1.5 1H19.9a1.75 1.75 0 1 1 0 4h-0.1a1.5 1.5 0 0 0 -1.5 1ZM12 9.05a3 3 0 1 0 0 6.8 3 3 0 0 0 0 -6.8Z"/>'],
-        'fa-circle-half-stroke': [0, '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M12 7.5h7M12 12h9M12 16.5h7"/>', '<path fill-rule="evenodd" d="M12 2.4a9.6 9.6 0 1 0 0 19.2 9.6 9.6 0 0 0 0-19.2Zm0 2.2a7.4 7.4 0 0 1 0 14.8Z"/>'],
-        'fa-moon': [0, '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/>', '<path d="M20.4 14.4A8.5 8.5 0 1 1 9.6 3.6a7 7 0 0 0 10.8 10.8Z"/>'],
-        'fa-sun': [0, '<circle cx="12" cy="12" r="3.8"/><path d="M12 2.5v2M12 19.6v2M5.25 5.25l1.4 1.4M17.4 17.4l1.4 1.4M2.5 12h2M19.6 12h2M5.25 18.75l1.4 -1.4M17.4 6.6l1.4 -1.4"/>', '<circle cx="12" cy="12" r="4.6"/><path class="ln" d="M12 2.2v1.6M12 20.2v1.6M5 5l1.1 1.1M17.9 17.9 19 19M2.2 12h1.6M20.2 12h1.6M5 19l1.1-1.1M17.9 6.1 19 5"/>'],
-        'fa-brain': [0, '<path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1.2V5.5A2 2 0 0 0 9 4ZM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1.2"/>', '<path d="M9 3.8a3.1 3.1 0 0 0-3.1 3 3 3 0 0 0-2.1 5.2 3 3 0 0 0 2.1 5.1 3.1 3.1 0 0 0 5.5 1.3V5.5A2.2 2.2 0 0 0 9 3.8Z"/><path d="M15 3.8a3.1 3.1 0 0 1 3.1 3 3 3 0 0 1 2.1 5.2 3 3 0 0 1-2.1 5.1 3.1 3.1 0 0 1-5.5 1.3V5.5A2.2 2.2 0 0 1 15 3.8Z"/>'],
+        'fa-bell': [0, '<path d="M6 14.5V9.5a6 6 0 0 1 12 0v5l1.5 2h-15.5ZM10 18.5a2 2 0 0 0 4 0"/>', '<path d="M5 15.5V9.5a7 7 0 0 1 13.5 0v5.5l2 2.5H3.5ZM9.5 19.5h4.5a2.5 2.5 0 0 1-4.5 0Z"/>'],
+        'fa-clock-rotate-left': [0, '<path d="M4 12a8.5 8.5 0 1 0 2.5-6L4 8.5M4 4v4h4"/><path d="M12 8v4.5l3 2"/>', '<path d="M6 6A9 9 0 1 1 3 12h3a6 6 0 1 0 2-4.5ZM2.5 2.5v7h7ZM11 8h2v3.5l2.5 1.5l-1 2l-4-2.5Z"/>'],
+        'fa-coins': [0, '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9c-0.5-1-1.5-1-2.5-1-1.5 0-2.5 1-2.5 2s1 1.5 2.5 2 2.5 1 2.5 2-1 2-2.5 2c-1 0-2-0.5-2.5-1M12 6.5v11"/>', '<path fill-rule="evenodd" d="M13 2.5a9.5 9.5 0 1 0 0 18.5a9.5 9.5 0 0 0 0-18.5ZM12 6h2v1c1 0 2 1 2.5 1.5l-1.5 1c-0.5-0.5-1-1-2-1c-1 0-1.5 0.5-1.5 1s0.5 1 2 1c2 0.5 3.5 1 3.5 3c0 1.5-1 2.5-3 3V18h-2v-1.5c-1 0-2.5-1-3-2l1.5-1c0.5 0.5 1 1 2 1c1 0 1.5-0.5 1.5-1s-0.5-1-2-1c-1.5-0.5-3.5-1-3.5-3c0-1.5 1-2.5 2.5-2.5Z"/>'],
+        'fa-id-card': [0, '<rect x="3.7" y="5.5" width="16.7" height="13" rx="1.9"/><circle cx="9.2" cy="11" r="1.9"/><path d="M6.5 15.5c0.5-1.5 1.5-2 3-2s2.5 1 3 2M15 10h3M15 13.5h3"/>', '<path fill-rule="evenodd" d="M5 4.5h14.5a2.5 2.5 0 0 1 2.5 2.5v10.5a2.5 2.5 0 0 1-2.5 2.5H5A2.5 2.5 0 0 1 2.5 17V7A2.5 2.5 0 0 1 5 4.5Zm4 4a2 2 0 1 0 0 4.5a2 2 0 0 0 0-4.5Zm-3 7.5h6.5c-0.5-1.5-2-2.5-3-2.5s-2.5 1-3 2.5Zm9-7v1.5h4V9.5Zm0 3.5v1.5h4v-1.5Z"/>'],
+        'fa-palette': [0, '<path d="M12 4a8.5 8.5 0 1 0 0 17c1 0 1.5-1 1.5-1.5c0-1-1-1.5-1-2.5s1-1.5 2-1.5H17a3.5 3.5 0 0 0 3.5-3.5C20.5 7 17 4 12 4Z"/><circle cx="8" cy="11.4" r="1.1"/><circle cx="10.3" cy="7.9" r="1.1"/><circle cx="14.5" cy="7.9" r="1.1"/>', '<path fill-rule="evenodd" d="M12 2.5a9.5 9.5 0 1 0 0 19c1.5 0 2-1 2-2c0-1-1-1.5-1-2.5s1-1.5 2-1.5H17.5a4.5 4.5 0 0 0 4.5-4.5C21.5 6.5 17.5 2.5 12 2.5ZM8 9.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3Zm2.5-3.5a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3Zm4.5 0a1.5 1.5 0 1 1 0 3a1.5 1.5 0 0 1 0-3Z"/>'],
+        'fa-people-group': [0, '<circle cx="9.2" cy="7.9" r="3"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5M15.5 5a3 3 0 0 1 0 6M17.5 14.5c2 0.5 3 2.5 3 5"/>', '<circle cx="9.1" cy="7.1" r="3.5"/><path d="M2.5 19.5c0-3.5 3-6.5 6.5-6.5s6.5 2.5 6.5 6.5Z"/><circle cx="16.5" cy="6.6" r="2.8"/><path d="M16.5 12.5c3 0.5 4.5 2.5 4.5 6V19.5h-4.5c0-3-1-5-2.5-6.5Z"/>'],
+        'fa-plus': [0, '<path d="M12 3.5v17M3.5 12h17"/>', ''],
+        'fa-right-from-bracket': [0, '<path d="M12.5 3.5h4a2 2 0 0 1 2 2v12.5a2 2 0 0 1-2 2h-4M8.5 16l-4-4l4-4M4 12h10.5"/>', ''],
+        'fa-shield-halved': [0, '<path d="M12 3.5L5.5 6.5v5.5c0 4 3 7 6.5 8.5c3.5-1.5 6.5-4 6.5-8.5V6.5Z"/>', '<path d="M12 2.5 4.5 6V12c0 4.5 3 8 7.5 9.5 4.5-1.5 7.5-5 7.5-9.5V6Z"/>'],
+        'fa-tower-broadcast': [0, '<circle cx="12" cy="11.8" r="2"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M6.5 6a8 8 0 0 0 0 12M17.5 6a8 8 0 0 1 0 12"/>', '<circle cx="12" cy="12" r="2.5"/><path class="ln" d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M6 6a8 8 0 0 0 0 11.5M18 6a8 8 0 0 1 0 11.5"/>'],
+        'fa-user-secret': [0, '<circle cx="12" cy="7.4" r="3.8"/><path d="M4.5 20.5c0-4 3.5-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/>', '<circle cx="12" cy="6.7" r="4.5"/><path d="M3.5 21c0-4.5 4-8 8.5-8s8.5 3 8.5 8Z"/>'],
+        'fa-wallet': [0, '<path d="M3.5 7A2.5 2.5 0 0 1 6 4H18.5v4M3.5 7V18a2 2 0 0 0 2 2h15V8.5H6A2.5 2.5 0 0 1 3.5 7Z"/><path d="M16 14h0"/>', '<path fill-rule="evenodd" d="M5.5 3H19v4.5h1.5a1 1 0 0 1 1 1v12.5H5a2.5 2.5 0 0 1-2.5-2.5V6a3 3 0 0 1 3-3Zm0 2a1 1 0 0 0 0 2h11V5ZM16.5 13a1.5 1.5 0 1 0 0 3a1.5 1.5 0 0 0 0-3Z"/>'],
+        'fa-chevron-down': [0, '<path d="M3.5 8l8.5 8.5l8.5-8.5"/>', ''],
+        'fa-gear': [0, '<circle cx="12" cy="12.1" r="2.3"/><path d="M17.5 14.5a1.5 1.5 0 0 0 0 1.5l0 0a1.5 1.5 0 1 1-2.5 2.5l0 0a1.5 1.5 0 0 0-1.5 0a1.5 1.5 0 0 0-1 1.5V19a1.5 1.5 0 1 1-3.5 0v0a1.5 1.5 0 0 0-1-1.5a1.5 1.5 0 0 0-1.5 0l0 0a1.5 1.5 0 1 1-2.5-2.5l0 0a1.5 1.5 0 0 0 0-1.5a1.5 1.5 0 0 0-1.5-1H5.5a1.5 1.5 0 1 1 0-3.5h0a1.5 1.5 0 0 0 1.5-1a1.5 1.5 0 0 0 0-1.5l0 0a1.5 1.5 0 1 1 2.5-2.5l0 0a1.5 1.5 0 0 0 1.5 0H10a1.5 1.5 0 0 0 1-1.5V5.5a1.5 1.5 0 1 1 3.5 0v0a1.5 1.5 0 0 0 1 1.5a1.5 1.5 0 0 0 1.5 0l0 0a1.5 1.5 0 1 1 2.5 2.5l0 0a1.5 1.5 0 0 0 0 1.5V10a1.5 1.5 0 0 0 1.5 1H18.5a1.5 1.5 0 1 1 0 3.5h0a1.5 1.5 0 0 0-1.5 1Z"/>', '<path fill-rule="evenodd" d="M18 14.5a1.5 1.5 0 0 0 0.5 1.5l0 0a1.5 1.5 0 1 1-2.5 2.5l0 0a1.5 1.5 0 0 0-1.5-0.5a1.5 1.5 0 0 0-1 1.5V19.5a1.5 1.5 0 1 1-4 0v0a1.5 1.5 0 0 0-1-1.5a1.5 1.5 0 0 0-1.5 0.5l0 0a1.5 1.5 0 1 1-2.5-2.5l0 0a1.5 1.5 0 0 0 0.5-1.5a1.5 1.5 0 0 0-1.5-1H4.5a1.5 1.5 0 1 1 0-4h0a1.5 1.5 0 0 0 1.5-1a1.5 1.5 0 0 0-0.5-1.5l0 0a1.5 1.5 0 1 1 2.5-2.5l0 0a1.5 1.5 0 0 0 1.5 0.5H9.5a1.5 1.5 0 0 0 1-1.5V4.5a1.5 1.5 0 1 1 4 0v0a1.5 1.5 0 0 0 1 1.5a1.5 1.5 0 0 0 1.5-0.5l0 0a1.5 1.5 0 1 1 2.5 2.5l0 0a1.5 1.5 0 0 0-0.5 1.5V9.5a1.5 1.5 0 0 0 1.5 1H19.5a1.5 1.5 0 1 1 0 4h0a1.5 1.5 0 0 0-1.5 1ZM12 9.5a3 3 0 1 0 0 6.5a3 3 0 0 0 0-6.5Z"/>'],
+        'fa-circle-half-stroke': [0, '<circle cx="11.7" cy="12" r="8.4"/><path d="M11.5 3.5v16.5M11.5 8h6.5M11.5 12h8.5M11.5 16h6.5"/>', '<path fill-rule="evenodd" d="M12.5 2.5a9.5 9.5 0 1 0 0 18.5a9.5 9.5 0 0 0 0-18.5Zm0 2a7 7 0 0 1 0 14.5Z"/>'],
+        'fa-moon': [0, '<path d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a7 7 0 0 0 11 11Z"/>', '<path d="M21.5 14.5A9.5 9.5 0 1 1 9.5 2.5a8 8 0 0 0 12.5 12.5Z"/>'],
+        'fa-sun': [0, '<circle cx="11.9" cy="11.9" r="3.4"/><path d="M12 3.5v2M12 18.5v2M6 6l1 1M16.5 16.5l1 1M3.5 12h2M18.5 12h2M6 18l1-1M16.5 7l1-1"/>', '<circle cx="12" cy="12" r="3.8"/><path class="ln" d="M12 4v1.5M12 18.5v1.5M6.5 6l1 1M17 17L18 18M4 12h1.5M18.5 12h1.5M6.5 18l1-1M17 7L18 6"/>'],
+        'fa-brain': [0, '<path d="M9 4a3 3 0 0 0-3 3a3 3 0 0 0-2 5a3 3 0 0 0 2 5a3 3 0 0 0 6 1V6A2 2 0 0 0 9 4ZM15 4a3 3 0 0 1 3 3a3 3 0 0 1 2 5a3 3 0 0 1-2 5a3 3 0 0 1-6 1"/>', '<path d="M9 4a3 3 0 0 0-3 3a3 3 0 0 0-2 5.5a3 3 0 0 0 2 5a3 3 0 0 0 5.5 1.5V5.5A2.5 2.5 0 0 0 9 4Z"/><path d="M15 4a3 3 0 0 1 3 3a3 3 0 0 1 2 5.5a3 3 0 0 1-2 5a3 3 0 0 1-5.5 1.5V5.5A2.5 2.5 0 0 1 15 4Z"/>'],
     };
     // Every other glyph in nav-icons.js, grouped by advance width (sizes its slot before the path arrives); 0 is an OpenVibe glyph.
     const NAV_ICONS_LAZY = {
         0: 'fa-book fa-camera fa-comments fa-gamepad fa-gauge-high fa-hand-fist fa-house fa-link fa-list-check fa-network-wired fa-paste fa-people-arrows fa-scissors fa-screwdriver-wrench fa-shirt fa-text-height fa-user fa-video fa-wand-magic-sparkles fa-arrow-up-right-from-square fa-chevron-right fa-bars fa-xmark fa-magnifying-glass fa-file-pdf fa-arrow-down fa-arrow-right fa-clock fa-envelope fa-star fa-heart fa-play fa-circle-info fa-triangle-exclamation fa-check fa-globe fa-code fa-robot fa-photo-film fa-tower-cell fa-diagram-project fa-toolbox fa-comment-dots fa-money-bill-wave fa-crown fa-server fa-newspaper fa-tag fa-ticket fa-chart-line fa-pen-nib fa-key fa-plug fa-bolt fa-satellite-dish fa-microchip fa-circle-nodes fa-download fa-upload fa-image fa-music fa-file-lines fa-font fa-location-dot fa-lock fa-wave-square fa-map fa-utensils fa-user-shield fa-gauge fa-pen fa-earth-americas fa-hashtag fa-inbox fa-folder fa-puzzle-piece fa-shield fa-display fa-microphone fa-infinity fa-list fa-flag-checkered fa-tv fa-compass',
     };
-    const NAV_ICONS_REV = '148a0eda9ca8';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
+    const NAV_ICONS_REV = '14197adc3df5';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': '01cf79e36af5', 'ov-glyphs.js': '97224763226b', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'b14cdbd6a82f', 'dock.js': '2eafa431ce28', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '0bd4b26af88a', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8e5047755456', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '5fdb2b84221d', 'nav-slots.js': '1db19edaeac4', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d' };
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -592,6 +606,8 @@
      * A shared browser file next to this navbar.js: the same origin and the same release (a site that
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
+    // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '7ef00feeb07c', 'ov-fx.js': 'bb5afd571c72', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'bac9d79632d4', 'dock.js': '0ebe750a2e4d', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'e72f5a304f2d', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'appbar.js': 'dfc8e4da0869', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': '336b30eae325', 'ov-home.js': '7477f93fd775', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'b750eacee14b', 'ov-wallet.css': 'da51db3269db', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -934,11 +950,14 @@
         const mark = brand.icon
             ? `<i class="fa-solid ${escapeAttr(brand.icon)}"></i>`
             : `<span class="ov-mark" data-size="42" data-wide data-variant="${escapeAttr(brand.variant)}"></span>`;   // 42 since 4.188.0 (was 34: beside a short name it read as smaller than the word)
+        const tag = brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : '';
+        // 347: the mark and the name are one button (the site's pages, then every site).
+        const one = (cls, t) => `<span class="${cls}">${escapeAttr(t)}</span>`;
+        const words = brand.subText ? one('b-sub', brand.subText) + dot + one('b-core', brand.core) + join + one('b-tld', brand.tldText) : one('b-core', brand.core) + join + one('b-tld', brand.tldText);
         return `<div class="openvibe-navbar-brand${brand.subText ? ' has-sub' : ''}${brand.joined ? ' joined' : ''}">
                 ${_config.switcher === false
-        ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a>`
-        : `<button type="button" class="flame" id="openvibe-switch-btn" aria-haspopup="dialog" aria-expanded="false" aria-label="OpenVibe menu: every site and tool" title="Every OpenVibe site">${mark}</button>`}
-                <span class="name">${text}${brand.tag ? `<span class="b-tag">${escapeAttr(brand.tag)}</span>` : ''}</span>
+        ? `<a class="flame" href="${escapeAttr(brand.href)}" aria-label="${escapeAttr(brand.name)} home">${mark}</a><span class="name">${text}${tag}</span>`
+        : `<button type="button" class="ovnav-brand" id="openvibe-brand-btn" aria-haspopup="menu" aria-expanded="false" aria-label="${escapeAttr(brand.name)}: its pages and every OpenVibe site"><span class="flame">${mark}</span><span class="name">${words}${tag}</span></button>`}
                 ${_config.search === false ? '' : orbHTML()}
             </div>`;
     }
@@ -1319,13 +1338,19 @@
         box.hidden = false;
     }
 
-    // ── Notification bell (mounted by the navbar itself) ─────
-    function mountBell(nav, u) {
+    // ── Notifications (count and list are mounted in You) ─────
+    function mountNotifications(nav, u) {
         if (_config.notifications === false || !u || u.is_anon || !_config.token) return;
-        const mount = nav.querySelector('#openvibe-bell-mount'); if (!mount || mount.childElementCount) return;
+        const avatar = nav.querySelector('#openvibe-avatar-btn');
+        const badge = avatar?.parentElement?.querySelector('.ovnav-avatar-count');
+        if (badge) badge.hidden = true;
         const go = () => {
-            const N = root.OpenVibeNotifications; if (!N || mount.childElementCount) return;
-            try { if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; } N.createBell(mount); wireBell(); } catch { /* */ }
+            const N = root.OpenVibeNotifications; if (!N) return;
+            try {
+                if (!N.__ovNavInit) { N.init({ token: _config.token, apiBase: 'https://openvibe.network', realtime: _config.notificationsRealtime === true }); N.__ovNavInit = true; }
+                const paint = () => { if (!badge) return; const n = Number(N.unread()) || 0; badge.textContent = n > 99 ? '99+' : String(n); badge.hidden = !n; };
+                paint(); document.addEventListener('openvibe-notifications-count', paint);
+            } catch { /* */ }
         };
         if (root.OpenVibeNotifications) return go();
         if (document.getElementById('ov-notify-loader')) return;
@@ -1333,7 +1358,7 @@
     }
 
     // ── The Dock (Dock plan K-D1): your agents and activity at the screen's edge. dock.js draws its pill and the Dock;
-    // for a signed-in person it loads after the bell, from beside this file. A Network without the route yet (dock.js
+    // for a signed-in person it loads alongside notifications. A Network without the route yet (dock.js
     // keeps { off } for a day) is not asked again. dockApiBase and dockChatBase override the Network and Chat (tests, staging).
     const dockBase = () => String(_config.dockApiBase || 'https://openvibe.network').replace(/\/+$/, '');
     const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), chatBase: _config.dockChatBase, agentBase: _config.dockAgentBase, me: _config.user && _config.user.username, sibling });
@@ -1344,22 +1369,10 @@
         if (!sc) { sc = document.createElement('script'); sc.id = 'ov-dock-loader'; sc.src = siblingV('dock.js'); sc.async = true; document.head.appendChild(sc); }
         sc.addEventListener('load', () => setTimeout(() => { try { then(); } catch { /* */ } }, 0));
     }
-    // The bell opens the Dock on Activity (the same list), and closes it from there; without the Dock, its own panel.
     let _dockOn = false;
-    function wireBell() {
-        const N = root.OpenVibeNotifications; if (!N || typeof N.setBellAction !== 'function') return;
-        N.setBellAction(_dockOn ? () => {
-            const D = root.OpenVibeDock; if (!D || typeof D.open !== 'function') return false;
-            const st = typeof D._state === 'function' ? D._state() : {};
-            // New messages and nothing else new: the bell opens on them. Otherwise on Activity, as before.
-            const tab = _msgCount && N.unread && !N.unread() ? 'chats' : 'activity';
-            if (D.isOpen() && st.tab === tab) D.close(); else D.open({ tab });
-            return true;
-        } : null);
-    }
     function mountDock(u) {
         const on = _config.dock !== false && !!u && !u.is_anon && !!_config.token;
-        _dockOn = on; wireBell();
+        _dockOn = on;
         if (root.OpenVibeDock) return root.OpenVibeDock.mount(on ? dockOpts() : null);
         try { const k = JSON.parse(localStorage.getItem('ov-dock') || 'null'); if (!on || (k && k.off > Date.now())) return; } catch { if (!on) return; }
         loadDock(() => root.OpenVibeDock.mount(dockOpts()));
@@ -2045,7 +2058,7 @@
         const data = u && !u.is_anon && _walletFor === walletKey(u) ? _walletData : null;
         if (u && !u.is_anon && data !== false) {
             chips = walletOrder(data).map((id) => Object.assign({}, WALLET_CHIPS.find((w) => w.id === id), {
-                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: openWallet,
+                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: (e) => openSearch('', 'you', e.currentTarget),
             })).concat(chips);
         }
         _config.chips = chips;
@@ -2127,9 +2140,8 @@
             <div class="openvibe-navbar-right">
                 ${u ? chipsHTML(_config.chips) + chipsAllHTML(_config.chips) : ''}
                 ${featuredPhoneHTML(links)}
-                <div id="openvibe-bell-mount"></div>
                 ${links.length ? `<button type="button" class="ovnav-burger ovnav-orb" id="openvibe-burger" aria-label="Menu: this site, search and every OpenVibe site" data-ov-tip="Menu" data-ov-tip-sub="This site, search, every OpenVibe site" aria-haspopup="dialog" aria-expanded="false">${orbSVG()}</button>` : ''}
-                ${u ? avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn') :
+                ${u ? `<span class="ovnav-avatar-wrap">${avatarImg(u, 64, 'openvibe-navbar-avatar', 'openvibe-avatar-btn')}<b class="ovnav-avatar-count" hidden></b></span>` :
                     `<a class="openvibe-navbar-login" id="openvibe-login-btn" href="${escapeAttr(loginHref)}" aria-label="Sign in" data-ov-tip="Sign in"><svg class="ovsi" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle class="ovsi-o" cx="12" cy="12" r="11"/><g class="ovsi-p"><circle cx="12" cy="8.8" r="3.2"/><path d="M5.900 18.400c1.100-2.700 3.300-4.100 6.100-4.100s5 1.400 6.100 4.100"/></g><path class="ovsi-a" d="M5.500 12h8.500M11 8.500l3.500 3.500-3.500 3.500M15.500 6.500h2.500v11h-2.500"/></svg></a>`}
             </div>
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
@@ -2146,7 +2158,7 @@
         queueFx();
         countView();
         // Pages that wire the bell themselves run right after init(); give them the first go.
-        setTimeout(() => { mountBell(nav, u); mountDock(u); mountPresence(u); }, 0);
+        setTimeout(() => { mountNotifications(nav, u); mountDock(u); mountPresence(u); }, 0);
 
         // Dropdown
         if (u) {
@@ -2231,8 +2243,9 @@
             avatarBtn.addEventListener('click', () => {
                 const ask = dropdown.querySelector('[data-ov-ask]'); if (ask) ask.href = askVibeHref(sel ?? selectedText()); sel = null;
                 if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
-                const orbs = nav.querySelectorAll ? [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
-                openSearch('', 'you', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null, avatarBtn);
+                const active = document.querySelector('.ovs.is-open');
+                if (active && active.querySelector('.ovs-starttabs [data-tab="you"][aria-selected="true"]')) root.OpenVibeSearch.close();
+                else openSearch('', 'you', avatarBtn, 'notifications');
             });
 
 
@@ -2315,7 +2328,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl, flyEl) {
+    function openSearch(q, tab, fromEl, section) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2329,12 +2342,14 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: flyEl || fromEl || null,
+            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
                 dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); openDock(t); } : null,
+                dockMore: (action) => { if (root.OpenVibeDock && root.OpenVibeDock.more) root.OpenVibeDock.more(action); },
+                ask: (text) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); }); },
                 me: _accountEl ? { add: _config.accounts === false ? '' : addAccountHref(), out: () => { const b = _accountEl.querySelector('#openvibe-logout-btn'); if (b) b.click(); }, own: _own } : null,
                 onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
             const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
@@ -2347,12 +2362,9 @@
     }
     const menuOpen = () => !!(typeof document !== 'undefined' && document.querySelector && document.querySelector('.ovs.is-open'));
 
-    // ── The mark opens the OpenVibe menu on its first tab (4.187.0; the owner, 2026-11-10: the mark's own panel and
-    // the menu were two lists of the same sites, drawn differently and updated apart). One menu, two ways in. ──
+    // Every site: the menu on its first tab, scrolled to the sites, out of the menu button on screen.
     function openSwitcher() {
         if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
-        // As if the menu button itself were pressed (the one on screen: beside the name on a wide bar, at the bar's end
-        // on a phone), so the sheet opens out of it and it becomes the close button, whichever way in was used.
         const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
         openSearch('', 'sites', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
     }
@@ -2369,14 +2381,11 @@
     }
     // The site's name opens its pages (ov-drop.js); with a modifier key it is a link.
     function hookPages(nav) {
-        const a = nav.querySelector('.openvibe-navbar-brand .name a.b-tld');
-        if (!a || typeof a.removeAttribute !== 'function' || !flatLinks(rawLinks()).some((l) => l && l.href && !l.hidden)) return;
-        a.classList.add('has-drop'); a.setAttribute('aria-haspopup', 'menu'); a.setAttribute('aria-expanded', 'false'); a.removeAttribute('title');
+        const a = nav.querySelector('#openvibe-brand-btn');
+        if (!a) return;
         a.addEventListener('click', (e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             e.preventDefault();
-            const orb = () => [...nav.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')].find((o) => o.getBoundingClientRect().width > 0) || null;
-            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon, _config.search === false ? null : { label: 'All OpenVibe sites', onClick: () => openSearch('', 'sites', orb()) });
+            const go = () => root.OVDrop && root.OVDrop.pages(a, flatLinks(rawLinks()), navIcon, _config.search === false ? null : { label: 'All OpenVibe sites', onClick: openSwitcher });
             if (root.OVDrop) return go();
             if (document.getElementById('ov-drop-loader')) return;
             const sc = document.createElement('script'); sc.id = 'ov-drop-loader'; sc.src = siblingV('ov-drop.js'); sc.async = true; sc.onload = go; document.head.appendChild(sc);
@@ -2410,9 +2419,9 @@
         if (document.fonts && document.fonts.ready && document.fonts.ready.then) document.fonts.ready.then(soon, () => {});
     }
     function hookSwitcher(nav) {
-        const b = nav.querySelector('#openvibe-switch-btn');
+        const b = nav.querySelector('#openvibe-switch-btn, #openvibe-brand-btn');
         if (!b) return;
-        b.addEventListener('click', () => openSwitcher());
+        if (b.id === 'openvibe-switch-btn') b.addEventListener('click', () => openSwitcher());
         for (const ev of ['pointerenter', 'touchstart', 'focus']) b.addEventListener(ev, () => { loadOvIcons(); OVFrame.get(); }, { once: true, passive: true });
         // Once the page is idle: the visit never competes with the first paint or the sign-in check.
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(() => recordVisit(), { timeout: 8000 });

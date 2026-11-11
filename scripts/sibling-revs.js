@@ -21,11 +21,13 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     // 4.191.0: the one dropdown (the site's name opens its pages).
     'ov-drop.js',
     // 4.193.0: the one tooltip (Sign in, the menu button, short labels).
-    'ov-tip.js'];
+    'ov-tip.js',
+    // 2026-11-10: soft pages (intent prefetch, cross-document view transitions); not loaded by navbar.js yet.
+    'soft.js'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
-const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'dock-mount.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js'] },
+const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'dock-code.js', 'dock-mount.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },
-    'footer.js': { name: 'FOOTER_REV', files: ['shipped.js'] }, 'boost.js': { name: 'BOOST_REV', files: ['route-transition.js'] } };
+    'footer.js': { name: 'FOOTER_REV', files: ['shipped.js'] }, 'ov-thread.js': { name: 'THREAD_REV', files: ['ov-composer.js'] }, 'boost.js': { name: 'BOOST_REV', files: ['route-transition.js'] } };
 const table = (name, files) => `    const ${name} = { ${files.map((f) => `'${f}': '${hashAsset(fs.readFileSync(path.join(ROOT, f)))}'`).join(', ')} };`;
 function writeOwn() {
     for (const [file, { name, files }] of Object.entries(OWN)) {

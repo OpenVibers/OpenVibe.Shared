@@ -14,5 +14,5 @@
  */
 'use strict';
 // A headless-Chrome file that fails is run once more (a slow runner, not a wrong page); the summary names any that
-// needed it.
-require('../test-runner').main({ dir: __dirname, timeoutMs: 60000, pad: 36, serial: /-chrome\.test\.js$/, retry: /-chrome\.test\.js$/ });
+// needed it. 90 s, not 60: dock-chrome takes ~57 s on a macos runner (2026-11-10), so 60 killed a healthy test.
+require('../test-runner').main({ dir: __dirname, timeoutMs: 90000, pad: 36, serial: /-chrome\.test\.js$/, retry: /-chrome\.test\.js$/ });
