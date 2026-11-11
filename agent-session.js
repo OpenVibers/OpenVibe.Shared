@@ -1007,6 +1007,14 @@
             const send = el('button', 'ovas-say-send ovt-send'); send.type = 'submit'; send.setAttribute('aria-label', 'Send'); send.setAttribute('data-ovt-send', ''); send.innerHTML = svg('handoff');
             const noteEl = el('p', 'ovt-c-note'); noteEl.setAttribute('data-ovt-note', ''); noteEl.setAttribute('role', 'status');
             row.appendChild(toolsEl); row.appendChild(send);
+            // A file input makes the box one that takes files (the composer's + menu, paste and drop); the files go to onSend.
+            if (opts.files !== false) {
+                // The shared "+" (thread.js attachHtml): a label holding the file input, first in the tools row.
+                const plus = el('label', 'ovt-btn ovt-attach'); plus.title = 'Attach files';
+                plus.innerHTML = '<svg class="ovt-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="ovt-sr">Attach files</span>';
+                const fi = el('input'); fi.type = 'file'; fi.name = 'files'; fi.multiple = true; fi.hidden = true; fi.setAttribute('data-ovt-files', ''); if (opts.accept) fi.accept = String(opts.accept);
+                plus.appendChild(fi); toolsEl.insertBefore(plus, toolsEl.firstChild);
+            }
             form.appendChild(ta); form.appendChild(row); form.appendChild(noteEl);
             box.appendChild(form);
             ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
