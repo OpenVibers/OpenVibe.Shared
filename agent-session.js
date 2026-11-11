@@ -128,9 +128,48 @@
         if (e.step === 'tool_result') return [{ t: 'tool_result', name: String(e.tool || 'tool'), ok: !e.is_error, output: cut(e.text, 8000), ...att, ...agent }];
         return text ? [{ t: 'text', text, ...agent }] : [];
     }
+
+    // ── AG-UI 1.0 (protocol 1.2, ask 354, 2026-11-11): every OpenVibe agent run streams AG-UI events (docs.ag-ui.com,
+    // spec 1.0 of 2026-11-07) with OpenVibe's own words in metadata.ov (title, kind, sources, …), so another tool's agent
+    // renders here and ours in theirs. Deltas (text, tool arguments, thinking) carry their ids; the view joins them.
+    const pick = (e, ...k) => { for (const n of k) if (e[n] != null) return e[n]; return null; };
+    function fromAgui(e) {
+        const ov = (e.metadata && typeof e.metadata === 'object' && e.metadata.ov && typeof e.metadata.ov === 'object') ? e.metadata.ov : {};
+        const src = Array.isArray(ov.sources) && ov.sources.length ? [{ t: 'sources', items: ov.sources }] : [];
+        const id = (...k) => String(pick(e, ...k) || '');
+        switch (e.type) {
+            case 'RUN_STARTED': return [{ t: 'state', state: 'running' }];
+            case 'RUN_FINISHED': return [...src, { t: 'done', ok: true, text: cut(typeof e.result === 'string' ? e.result : '', MAX_TEXT) }];
+            case 'RUN_ERROR': return [{ t: 'done', ok: false, text: cut(String(e.message || 'The run failed.'), 2000) }];
+            case 'STEP_STARTED': return [{ t: 'phase', id: id('stepName', 'step_name'), title: String(ov.title || pick(e, 'stepName', 'step_name') || 'Step'), status: 'running' }];
+            case 'STEP_FINISHED': return [{ t: 'phase', id: id('stepName', 'step_name'), status: 'done' }];
+            case 'TEXT_MESSAGE_START': return [{ t: 'text_start', id: id('messageId', 'message_id') }];
+            case 'TEXT_MESSAGE_CONTENT': case 'TEXT_MESSAGE_CHUNK': return [{ t: 'text_delta', id: id('messageId', 'message_id'), delta: String(e.delta || '') }];
+            case 'TOOL_CALL_START': return [{ t: 'tool', id: id('toolCallId', 'tool_call_id'), name: String(pick(e, 'toolCallName', 'tool_call_name') || 'tool'), input: {}, title: ov.title ? cut(ov.title, 160) : '', kind: ov.kind || null }];
+            case 'TOOL_CALL_ARGS': case 'TOOL_CALL_CHUNK': return [{ t: 'tool_args', id: id('toolCallId', 'tool_call_id'), delta: String(e.delta || '') }];
+            case 'TOOL_CALL_RESULT': return [...src, { t: 'tool_result', id: id('toolCallId', 'tool_call_id'), ok: !ov.error, output: cut(typeof e.content === 'string' ? e.content : JSON.stringify(e.content || ''), 8000), duration_ms: Number(ov.duration_ms) || 0, cost_usd: Number(ov.cost_usd) || 0 }];
+            case 'REASONING_START': case 'REASONING_MESSAGE_START': return [{ t: 'thinking', id: id('messageId', 'message_id') || 'r' }];
+            case 'REASONING_MESSAGE_CONTENT': case 'REASONING_MESSAGE_CHUNK': return [{ t: 'thinking_delta', id: id('messageId', 'message_id') || 'r', delta: String(e.delta || '') }];
+            case 'REASONING_END': case 'REASONING_MESSAGE_END': return [{ t: 'thinking', id: id('messageId', 'message_id') || 'r', done: true }];
+            case 'REASONING_ENCRYPTED_VALUE': return [{ t: 'thinking', id: id('messageId', 'message_id') || 'r', hidden: true }];
+            case 'STATE_SNAPSHOT': {
+                const plan = e.snapshot && Array.isArray(e.snapshot.plan) ? e.snapshot.plan : null;
+                return plan ? [{ t: 'phases', items: plan.slice(0, 30).map((p) => ({ title: String(p.title || p.content || ''), status: String(p.status || 'pending') })) }] : [];
+            }
+            case 'ACTIVITY_SNAPSHOT': return e.content && e.content.title ? [{ t: 'activity', text: cut(String(e.content.title), 200) }] : [];
+            case 'CUSTOM': {
+                if (e.name === 'ov.sources' && Array.isArray(e.value)) return [{ t: 'sources', items: e.value }];
+                if (e.name === 'ov.handoff' && e.value) return [{ t: 'handoff', from: e.value.from, to: e.value.to || null, reason: cut(e.value.reason, 600) }];
+                if (e.name === 'ov.approval' && e.value) return [{ t: 'note', level: 'warning', text: cut(e.value.question || 'Waiting for your approval.', 600) }];
+                return [];
+            }
+            default: return src;
+        }
+    }
     function normalize(e) {
         if (!e || typeof e !== 'object') return [];
         if (e.t) return [e];
+        if (typeof e.type === 'string' && /^[A-Z][A-Z_]+$/.test(e.type)) return fromAgui(e);
         if (e.kind) return fromActor(e);
         const parent = e.parent_tool_use_id || null;
         if (e.type === 'system' && e.subtype === 'init') return [{ t: 'agent', agent: e.agent || 'claude', model: e.model || null }];
@@ -422,6 +461,7 @@
         else if (k === 'plan') { out.title = 'Updated the plan'; }
         else { out.title = String(step.name || 'Tool'); out.sub = String(step.what || ''); }
         if (!out.title) out.title = String(step.what || step.name || 'Step');
+        if (step.title) out.title = String(step.title);   // the agent's own words for it (AG-UI metadata.ov.title)
         return out;
     }
 
@@ -449,7 +489,7 @@
         // The clock runs from startedAt, or from now for a run that is live as it mounts; a finished run replayed without
         // a start time shows the time only once its done line says it.
         const clock = Boolean(opts.startedAt) || LIVE.includes(opts.status || 'running');
-        const S = { status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, agentCost: new Map(), durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
+        const S = { phases: [], thinks: new Map(), msgs: new Map(), sources: new Map(), activity: '', ownPlan: false, status: opts.status || 'running', label: opts.label || '', startedAt: opts.startedAt || Date.now(), endedAt: null, agents: [], steps: new Map(), plan: null, tokens: { in: 0, out: 0 }, cost: 0, agentCost: new Map(), durationMs: 0, problems: 0, filter: 'all', follow: opts.follow !== false, lastGroup: null };
         host.textContent = '';
         const box = el('div', 'ovas');
         box.innerHTML = `<div class="ovas-head"><div class="ovas-top"><span class="ovas-pill" data-s="${esc(S.status)}"></span><span class="ovas-title"></span></div><div class="ovas-meta"><span class="ovas-agents"></span><span data-m="time"></span><span data-m="steps"></span><span data-m="files"></span><span data-m="cost"></span></div><details class="ovas-plan" hidden><summary><span class="ovas-plan-now"></span><span class="ovas-plan-n"></span></summary><div class="ovas-plan-bar"><i style="width:0"></i></div><ol></ol></details></div>`
@@ -457,6 +497,15 @@
         host.appendChild(box);
         const head = box.querySelector('.ovas-head'), feed = box.querySelector('.ovas-feed'), bar = box.querySelector('.ovas-bar');
         const filesEl = box.querySelector('.ovas-files'), actBar = box.querySelector('.ovas-actions');
+        // The sources strip (protocol 1.2) under the feed; card mode (opts.mode 'card': a chat message, the Dock, a feed card)
+        // keeps the head, the plan row, the newest three lines and the sources, with a way to the whole run (opts.href).
+        const srcBox = el('details', 'ovas-sources'); srcBox.hidden = true;
+        srcBox.innerHTML = '<summary><span class="ovas-src-tiles"></span><span class="ovas-src-n"></span></summary><ol></ol>';
+        box.insertBefore(srcBox, actBar);
+        if (opts.mode === 'card') {
+            box.classList.add('ovas--card');
+            if (typeof opts.href === 'string' && /^(https:\/\/|\/)/.test(opts.href)) { const more = el('a', 'ovas-open', 'Open the whole run'); more.href = opts.href; box.insertBefore(more, actBar); }
+        }
         head.querySelector('.ovas-title').textContent = opts.title || 'Agent session';
         const FILTERS = [['all', 'Everything'], ['said', 'What it said'], ['steps', 'Steps'], ['files', 'Files'], ['problems', 'Problems']];
         FILTERS.forEach(([id, label]) => { const b = el('button', 'ovas-chip', label); b.type = 'button'; b.dataset.f = id; b.setAttribute('aria-pressed', String(id === 'all')); bar.appendChild(b); });
@@ -654,7 +703,21 @@
             const kinds = order.filter((k) => count[k]);
             g.querySelector('.ovas-icons').innerHTML = kinds.slice(0, 3).map((k) => `<span class="ovas-kind" data-k="${k}">${svg(k)}</span>`).join('');
             // A few steps read as what was done ("Ran 2 commands"); more as counts ("2 commands · 1 edit · 3 reads").
-            g.querySelector('.ovas-sum b').textContent = kinds.length === 1 ? plural(kinds[0], count[kinds[0]]) : kinds.map((k) => `${count[k]} ${NOUN[k][count[k] === 1 ? 0 : 1]}`).join(' · ');
+            // Steps the agent named itself (AG-UI metadata.ov.title) read as its words: the newest title and how many there are.
+            const titled = steps.filter((s2) => s2.title);
+            // Rows under one shared title say what each one did instead of the title again: its address, query or file.
+            const sharedTitle = titled.length > 1 && titled.every((s2) => s2.title === titled[0].title);
+            for (const s2 of steps) {
+                const b2 = s2.el && s2.el.querySelector(':scope>summary .ovas-sum b');
+                if (!b2 || !s2.info) continue;
+                // An address reads as its page and its site ("OpenVibe.Codes · github.com"), anything else as it is.
+                let own = String(s2.info.sub || '');
+                try { if (/^https?:\/\//.test(own)) { const u = new URL(own); const leaf = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || ''); own = leaf ? `${leaf} · ${u.hostname.replace(/^www\./, '')}` : u.hostname.replace(/^www\./, ''); } } catch { /* as it is */ }
+                b2.textContent = sharedTitle && own ? own : s2.info.title;
+            }
+            g.querySelector('.ovas-sum b').textContent = titled.length
+                ? `${titled[titled.length - 1].title}${steps.length > 1 ? ` · ${steps.length}` : ''}`
+                : kinds.length === 1 ? plural(kinds[0], count[kinds[0]]) : kinds.map((k) => `${count[k]} ${NOUN[k][count[k] === 1 ? 0 : 1]}`).join(' · ');
             const running = steps.find((s) => !s.done) || steps[steps.length - 1];
             const small = g.querySelector('.ovas-sum small');
             small.textContent = running ? (running.info.sub || running.info.title) : '';
@@ -688,7 +751,8 @@
         const pending = new Map();   // tool name → ids of its steps still waiting for a result (events without ids)
         // Any line may carry attachments, and a line of a type this component does not know still shows: a minimal
         // row with its label or summary, then its attachments (Codes' proof lines, for one).
-        const KNOWN = new Set(['agent', 'text', 'tool', 'tool_progress', 'tool_result', 'handoff', 'note', 'step', 'usage', 'done', 'state']);
+        const KNOWN = new Set(['agent', 'text', 'tool', 'tool_progress', 'tool_result', 'handoff', 'note', 'step', 'usage', 'done', 'state',
+            'phase', 'phases', 'activity', 'thinking', 'thinking_delta', 'text_start', 'text_delta', 'tool_args', 'sources']);
         function extraLine(x, target) {
             const li = el('li', 'ovas-extra');
             li.dataset.k = 'steps';   // it is part of the work, so the Steps filter keeps it
@@ -721,9 +785,9 @@
                 appendLi(target, li); return;
             }
             if (x.t === 'tool') {
-                const kind = kindOf(x.name);
-                const step = { id: x.id || `s${S.steps.size}`, name: x.name, kind, input: x.input || {}, what: x.what || '', started: Date.now(), done: false, ok: null, out: '', attachments: safeAtts(x.attachments) };
-                if (kind === 'plan') { if (Array.isArray(step.input.todos)) { S.plan = step.input.todos; paintPlan(); } step.hidden = true; S.steps.set(step.id, step); return; }
+                const kind = x.kind && VERB[x.kind] ? x.kind : kindOf(x.name);
+                const step = { id: x.id || `s${S.steps.size}`, name: x.name, kind, input: x.input || {}, what: x.what || '', title: x.title || '', started: Date.now(), done: false, ok: null, out: '', attachments: safeAtts(x.attachments) };
+                if (kind === 'plan') { if (Array.isArray(step.input.todos)) { S.ownPlan = true; S.plan = step.input.todos; paintPlan(); } step.hidden = true; S.steps.set(step.id, step); return; }
                 S.steps.set(step.id, step);
                 const g = groupFor(target === feed ? feed : target);
                 if (target === feed && empty.parentNode) empty.remove();
@@ -731,6 +795,21 @@
                 g.firstChild.querySelector('ol').appendChild(stepEl(step));
                 paintGroup(g); step.group = g; paintHead(); return;
             }
+            if (x.t === 'phase' || x.t === 'phases' || x.t === 'activity') { onPhase(x, target); return; }
+            if (x.t === 'thinking' || x.t === 'thinking_delta') { onThinking(x, target); return; }
+            if (x.t === 'text_start' || x.t === 'text_delta') {
+                let m = S.msgs.get(x.id);
+                if (!m) { const li = el('li', 'ovas-msg'); li.dataset.k = 'msg'; m = { li, text: '' }; S.msgs.set(x.id, m); appendLi(target, li); }
+                if (x.t === 'text_delta') { m.text = (m.text + x.delta).slice(0, MAX_TEXT); m.li.textContent = ''; m.li.appendChild(markdown(m.text, linkOk)); }
+                return;
+            }
+            if (x.t === 'tool_args') {
+                const step = S.steps.get(String(x.id)); if (!step) return;
+                step.argText = (step.argText || '') + x.delta;
+                try { step.input = JSON.parse(step.argText); step.info = describe(step); if (step.group) paintGroup(step.group); } catch { /* not whole yet */ }
+                return;
+            }
+            if (x.t === 'sources') { addSources(x.items); return; }
             if (x.t === 'tool_progress') {
                 const step = S.steps.get(String(x.id)); if (!step || !step.outEl) return;
                 step.out = (step.out + x.chunk).slice(-20000); step.outEl.textContent = step.out; step.outEl.hidden = false; step.waitEl.hidden = true;
@@ -797,10 +876,69 @@
                 appendLi(feed, li); paintHead();
             }
         }
+        // Phases: named parts of the run (AG-UI steps). The plan row in the head shows where the run is ("2 of 5"), and a
+        // phase that starts is a divider in the feed. A plan the agent keeps itself (TodoWrite) wins over phases.
+        function onPhase(x, target) {
+            if (x.t === 'activity') { S.activity = x.text; paintPlan(); return; }
+            if (x.t === 'phases') { S.phases = x.items.map((p, i) => ({ id: `p${i}`, title: p.title, status: p.status })); }
+            else {
+                const same = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+                let p = S.phases.find((q) => q.id === x.id) || S.phases.find((q) => same(q.title, x.title || x.id));
+                if (!p) { p = { id: x.id, title: x.title || x.id, status: 'running' }; S.phases.push(p); }
+                if (x.title) p.title = x.title;
+                p.status = x.status;
+                if (x.status === 'running' && !p.li) {
+                    const li = el('li', 'ovas-phase'); li.dataset.k = 'phase';
+                    li.appendChild(el('span', 'ovas-phase-dot')); li.appendChild(el('b', '', p.title));
+                    p.li = li; appendLi(target === feed ? feed : target, li);
+                }
+                if (p.li) { p.li.dataset.s = p.status; p.li.querySelector('b').textContent = p.title; }
+            }
+            if (!S.ownPlan) {
+                S.plan = S.phases.map((p) => ({ content: p.title, status: /done|complete/.test(p.status) ? 'completed' : /run|progress/.test(p.status) ? 'in_progress' : 'pending' }));
+                paintPlan();
+            }
+        }
+        // Thinking: folded to one line, "Thinking…" while it streams and "Thought for 1m 20s" after; its words open on a tap.
+        function onThinking(x, target) {
+            let th = S.thinks.get(x.id);
+            if (!th) {
+                const li = el('li', 'ovas-think'); li.dataset.k = 'msg';
+                const d = el('details'); const sm = el('summary'); sm.appendChild(el('span', 'ovas-think-dots'));
+                const label = el('span', '', 'Thinking…'); sm.appendChild(label); d.appendChild(sm);
+                const body = el('div', 'ovas-think-body'); d.appendChild(body); li.appendChild(d);
+                th = { li, label, body, text: '', started: Date.now() }; S.thinks.set(x.id, th); appendLi(target, li);
+            }
+            if (x.t === 'thinking_delta') { th.text = (th.text + x.delta).slice(-20000); th.body.textContent = th.text; }
+            if (x.hidden) th.body.textContent = 'This model keeps its thinking to itself.';
+            if (x.done || x.hidden) { th.li.classList.add('is-done'); th.label.textContent = `Thought for ${dur(x.duration_ms || Date.now() - th.started)}`; }
+        }
+        // Sources: every page the run read, once each, in one strip under the feed: the sites as letter tiles and a count;
+        // opened, the titles as links (https only, a new tab).
+        function addSources(items) {
+            for (const it of (items || []).slice(0, 200)) {
+                const url = it && String(it.url || '');
+                if (!/^https:\/\//.test(url) || S.sources.has(url)) continue;
+                let site = String(it.site || ''); try { if (!site) site = new URL(url).hostname.replace(/^www\./, ''); } catch { continue; }
+                S.sources.set(url, { url, site, title: cut(String(it.title || site), 160) });
+            }
+            paintSources();
+        }
+        function paintSources() {
+            const list = [...S.sources.values()];
+            srcBox.hidden = !list.length; if (!list.length) return;
+            const tiles = srcBox.querySelector('.ovas-src-tiles'); tiles.textContent = '';
+            const sites = [...new Set(list.map((s) => s.site))];
+            sites.slice(0, 5).forEach((site) => { const t = el('span', 'ovas-src-tile', site.charAt(0).toUpperCase()); t.title = site; let h = 0; for (const c of site) h = (h * 31 + c.charCodeAt(0)) % 360; t.style.setProperty('--h', String(h)); tiles.appendChild(t); });
+            srcBox.querySelector('.ovas-src-n').textContent = `${list.length} source${list.length === 1 ? '' : 's'}${sites.length > 1 ? ` from ${sites.length} sites` : ''}`;
+            const ol = srcBox.querySelector('ol'); ol.textContent = '';
+            list.forEach((s) => { const li = el('li'); const a = el('a', '', s.title); a.href = s.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; li.appendChild(a); li.appendChild(el('small', '', s.site)); ol.appendChild(li); });
+        }
         function push(event) { normalize(event).forEach((x) => { try { onLine(x); } catch { /* one odd line never stops the view */ } }); applyFilter(); keep(); }
 
         function paintPlan() {
             const box2 = head.querySelector('.ovas-plan'); const todos = (S.plan || []).filter((t) => t && (t.content || t.activeForm));
+            if (!todos.length && S.activity) { box2.hidden = false; box2.querySelector('.ovas-plan-now').textContent = S.activity; box2.querySelector('.ovas-plan-n').textContent = ''; box2.querySelector('i').style.width = '0%'; return; }
             box2.hidden = !todos.length; if (!todos.length) return;
             const doneN = todos.filter((t) => t.status === 'completed').length;
             box2.querySelector('i').style.width = `${Math.round((doneN / todos.length) * 100)}%`;
