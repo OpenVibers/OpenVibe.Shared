@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.406.0 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.147.0",
+  "sdk": "openvibe-sdk v0.150.0",
   "features": [
     "the Quest guide on any page and the current Live step in the Dock's agent view (4.209.0)",
     "one move engine for a floating thing: OVFloat.attach gives the PiP's drag, flick, tuck and kept place to any box, and a panel window adopts it (4.208.0)",
