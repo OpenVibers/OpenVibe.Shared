@@ -1,8 +1,26 @@
 # Changelog
 
-## 4.206.0 — 2026-11-11
+## 4.207.0 — 2026-11-11
 
 - Expose the Quest guide to browser pages and start it from an opaque `qstep` link after the host resolves the step; it waits for late controls and checks the Events-backed completion read. `OpenVibeQuest.mountAll` mounts each `[data-ov-quest]` card with the site's reader.
+
+## 4.206.0 — 2026-11-11
+
+**The menu keeps a stream playing, the Feed in the menu is searchable with the one composer at its top, and a Code task
+opens in the Dock's step card.**
+
+- **The menu no longer pauses what is playing (#461, ask 360).** Opening the menu on a phone left live video and audio
+  paused under it; the sheet now leaves media alone and the page can read the player's state.
+- **The Feed in the menu (#463, ask 360).** Feed search uses Community's search and examples through Network, with
+  loaded-card filtering when search is unavailable; the example searches are chips that fill the field. The Feed's
+  post form is the one composer (OpenVibeComposer: files, paste, drop, commands, drafts, settings); each picture needs a
+  description and other files upload to Media. Its + and the example chips carry their own styles in the menu (they
+  drew as bare browser buttons in the PR's screenshots).
+- **Chat and Vibe (#463).** The Chat summary's Vibe row is an accessible Open Vibe button that selects the menu's Vibe
+  tab; on a desktop Chat and Vibe open the Dock after the menu closes, and the Dock opens from its pill only when that
+  pill is visible.
+- **A Code task in the Dock (#465, ask 354).** The Dock's Code card shows the task's live steps with the AG-UI step view
+  (agent-session.js card mode) and opens the whole run.
 
 ## 4.205.0 — 2026-11-11
 
