@@ -1,5 +1,7 @@
 'use strict';
 
+(function (root) {
+
 /** Point at a real hooked control without activating it or covering it. The host owns pointer styling. */
 function startQuestGuide({ step, nextHref, root = document, onDone = () => {} } = {}) {
     if (!step || !/^[a-z][a-z0-9_.-]{1,63}$/.test(step.hook || '') || !step.event_type) return () => {};
@@ -30,4 +32,17 @@ function startQuestGuide({ step, nextHref, root = document, onDone = () => {} } 
     return stop;
 }
 
-module.exports = { startQuestGuide };
+/** Resolve only a short opaque step id. The host supplies an authenticated reader. */
+async function startFromLocation({ load, location = root.location, document: page = root.document, onDone } = {}) {
+    if (typeof load !== 'function' || !location || !page) return () => {};
+    const id = new URL(location.href).searchParams.get('qstep');
+    if (!id || !/^[A-Za-z0-9_-]{12,48}$/.test(id)) return () => {};
+    const answer = await load(id);
+    if (!answer || !answer.step || !answer.step.hook) return () => {};
+    return startQuestGuide({ step: answer.step, nextHref: answer.next_href, root: page, onDone });
+}
+
+const api = { startQuestGuide, startFromLocation };
+if (typeof module === 'object' && module.exports) module.exports = api;
+if (root && root.document) root.OpenVibeQuestGuide = api;
+})(typeof window !== 'undefined' ? window : globalThis);

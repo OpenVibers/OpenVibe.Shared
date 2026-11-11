@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.206.0 — 2026-11-11
+
+- Expose the Quest guide to browser pages and start it from an opaque `qstep` link after the host resolves the step.
+
 ## 4.205.0 — 2026-11-11
 
 **Agents show their work everywhere: the one step view reads AG-UI, compact like the portal, with the one composer to

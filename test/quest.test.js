@@ -3,8 +3,10 @@
 // OpenVibe.Live home card, marks the next step, tolerates a missing `more`, and redraws on refresh. The guide's
 // own test stays here too: it points at a hooked control and finishes on its event.
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
 const { parseHTML } = require('linkedom');
-const { startQuestGuide } = require('../guide');
+const { startQuestGuide, startFromLocation } = require('../guide');
 const files = require('../files');
 
 const { window, document } = parseHTML('<!doctype html><html><head></head><body></body></html>');
@@ -143,6 +145,21 @@ function host() {
     assert.equal(note.children[0].href, '/next');
     stop();
     assert.equal(note.removed, true);
+
+    let requested = null;
+    const stopFromLink = await startFromLocation({
+        location: { href: 'https://openvibe.pics/?qstep=AbC_0123456789' }, document: guideRoot,
+        load: async (id) => { requested = id; return { step: { hook: 'pics.upload', help: 'Choose a picture', event_type: 'mediahub.picture.uploaded' } }; },
+    });
+    assert.equal(requested, 'AbC_0123456789');
+    assert.equal(control.arrived, true);
+    stopFromLink();
+    requested = null;
+    await startFromLocation({ location: { href: 'https://openvibe.pics/?qstep=plain text' }, document: guideRoot, load: async (id) => { requested = id; } });
+    assert.equal(requested, null);
+    const browser = { document: guideRoot };
+    vm.runInNewContext(fs.readFileSync(require.resolve('../guide'), 'utf8'), { window: browser });
+    assert.equal(typeof browser.OpenVibeQuestGuide.startFromLocation, 'function');
 
     process.stdout.write('quest card and guide passed\n');
 })().catch((err) => { process.stderr.write(String(err.stack || err) + '\n'); process.exit(1); });
