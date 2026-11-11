@@ -118,6 +118,83 @@ html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25
 .ovk-icon-btn[hidden] { display: none; }
 .ovk-icon-btn.is-done { color: var(--ovk-ok-text); }
 .ovk-icon-btn--danger:hover { color: var(--ovk-bad-text); }
+
+/* ── Buttons that show what they do and what is happening (4.204.0) ───────────────────────────────────────────────
+   The owner, 2026-11-11: "improve our buttons across the site and add better animations and effects for them, and
+   different things we can use them for, and little indicators or statuses … idle animation … more important buttons …
+   more intuitive and more modular … shared across everything through openvibe.design". docs/kit.md#buttons.
+   Every motion is scaled by --ov-move (Calm makes it smaller and slower, Off removes it; the durations follow). */
+.ovk-btn, .ovk-icon-btn { position: relative; -webkit-tap-highlight-color: transparent;
+    transition: transform var(--ov-dur-1, .12s) var(--ov-ease-out, ease), box-shadow var(--ov-dur-2, .2s) var(--ov-ease-out, ease),
+        background-color var(--ov-dur-1, .12s), border-color var(--ov-dur-1, .12s), color var(--ov-dur-1, .12s), filter var(--ov-dur-1, .12s); }
+.ovk-btn:hover:not([disabled]):not([aria-disabled="true"]) { transform: translateY(calc(-1px * var(--ov-move, 1))); box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .6); }
+.ovk-btn:active:not([disabled]), .ovk-icon-btn:active:not([disabled]) { transform: scale(calc(1 - .03 * var(--ov-move, 1))); box-shadow: none; transition-duration: .06s; }
+.ovk-btn .ovk-i, .ovk-icon-btn .ovk-i { transition: transform var(--ov-dur-2, .2s) var(--ov-ease-spring, var(--ov-ease-out, ease)); }
+/* The icon moves the way the button does (data-nudge): forward slides on, add turns, open lifts, down drops, refresh turns. */
+.ovk-btn[data-nudge="forward"]:hover .ovk-i:last-child, .ovk-icon-btn[data-nudge="forward"]:hover .ovk-i { transform: translateX(calc(3px * var(--ov-move, 1))); }
+.ovk-btn[data-nudge="back"]:hover .ovk-i:first-child, .ovk-icon-btn[data-nudge="back"]:hover .ovk-i { transform: translateX(calc(-3px * var(--ov-move, 1))); }
+.ovk-btn[data-nudge="add"]:hover .ovk-i:first-child, .ovk-icon-btn[data-nudge="add"]:hover .ovk-i { transform: rotate(calc(90deg * var(--ov-move, 1))); }
+.ovk-btn[data-nudge="open"]:hover .ovk-i:last-child, .ovk-icon-btn[data-nudge="open"]:hover .ovk-i { transform: translate(calc(2px * var(--ov-move, 1)), calc(-2px * var(--ov-move, 1))); }
+.ovk-btn[data-nudge="down"]:hover .ovk-i:last-child, .ovk-icon-btn[data-nudge="down"]:hover .ovk-i { transform: translateY(calc(2px * var(--ov-move, 1))); }
+.ovk-btn[data-nudge="refresh"]:hover .ovk-i:first-child, .ovk-icon-btn[data-nudge="refresh"]:hover .ovk-i { transform: rotate(calc(180deg * var(--ov-move, 1))); }
+
+/* Importance: hero (the one thing a page is for), soft (a tinted second choice), live (on air now). */
+.ovk-btn--hero { min-height: 52px; padding: 12px 24px; font-size: 1.02rem; color: var(--ovk-on-fill); border: 0;
+    background: linear-gradient(135deg, var(--ovk-accent), var(--ovk-fill)); box-shadow: 0 10px 26px -14px var(--ovk-fill); }
+.ovk-btn--hero:hover:not([disabled]) { box-shadow: 0 14px 30px -12px var(--ovk-fill); filter: brightness(1.06); }
+.ovk-btn--soft { color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 14%, transparent); border-color: color-mix(in srgb, var(--ovk-accent) 22%, transparent); }
+.ovk-btn--soft:hover { background: color-mix(in srgb, var(--ovk-accent) 20%, transparent); }
+.ovk-btn--live { color: #fff; background: var(--ovk-live); }
+.ovk-btn--live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; flex: none; animation: ovkBreathe 1.6s var(--ov-ease-in-out, ease-in-out) infinite; }
+@keyframes ovkBreathe { 50% { opacity: calc(1 - .65 * var(--ov-move, 1)); transform: scale(calc(1 - .2 * var(--ov-move, 1))); } }
+
+/* A toggle says it is on (aria-pressed): filled tint and a check-weight border. */
+.ovk-btn[aria-pressed="true"], .ovk-icon-btn[aria-pressed="true"] { color: var(--ovk-accent); background: color-mix(in srgb, var(--ovk-accent) 16%, transparent); border-color: color-mix(in srgb, var(--ovk-accent) 45%, transparent); }
+
+/* The one next step (data-attention): a soft ring goes out from it now and then, until it is pressed. */
+.ovk-btn[data-attention]:not([disabled])::after, .ovk-icon-btn[data-attention]:not([disabled])::after {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovk-accent) 55%, transparent); animation: ovkAttention 3.2s var(--ov-ease-out, ease-out) infinite; }
+@keyframes ovkAttention { 0%, 55% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovk-accent) 55%, transparent); } 85%, 100% { box-shadow: 0 0 0 calc(10px * var(--ov-move, 1)) transparent; } }
+
+/* A count (data-badge="3") and a status dot (data-dot="ok|warn|bad|live") at the top right. */
+.ovk-btn[data-badge]:not([data-badge=""])::before, .ovk-icon-btn[data-badge]:not([data-badge=""])::before {
+    content: attr(data-badge); position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+    border-radius: 999px; background: var(--ovk-bad); color: #fff; font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
+    box-shadow: 0 0 0 2px var(--ovk-bg, var(--bg-primary, #0b0f19)); animation: ovkPop var(--ov-dur-2, .2s) var(--ov-ease-spring, ease-out); }
+.ovk-btn--live[data-badge]::before { animation: ovkBreathe 1.6s var(--ov-ease-in-out, ease-in-out) infinite; }
+.ovk-btn[data-dot], .ovk-icon-btn[data-dot] { --ovk-dot: var(--ovk-muted); }
+.ovk-btn[data-dot="ok"], .ovk-icon-btn[data-dot="ok"] { --ovk-dot: var(--ovk-ok); }
+.ovk-btn[data-dot="warn"], .ovk-icon-btn[data-dot="warn"] { --ovk-dot: var(--warning, #f59e0b); }
+.ovk-btn[data-dot="bad"], .ovk-icon-btn[data-dot="bad"], .ovk-btn[data-dot="live"], .ovk-icon-btn[data-dot="live"] { --ovk-dot: var(--ovk-bad); }
+.ovk-btn[data-dot]:not([data-badge])::before, .ovk-icon-btn[data-dot]:not([data-badge])::before {
+    content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ovk-dot);
+    box-shadow: 0 0 0 2px var(--ovk-bg, var(--bg-primary, #0b0f19)); }
+.ovk-btn[data-dot="live"]:not([data-badge])::before, .ovk-icon-btn[data-dot="live"]:not([data-badge])::before { animation: ovkBreathe 1.6s var(--ov-ease-in-out, ease-in-out) infinite; }
+@keyframes ovkPop { from { transform: scale(calc(1 - .6 * var(--ov-move, 1))); opacity: 0; } }
+
+/* Progress inside the button (style="--ovk-progress: .4"): an upload, a countdown, a hold. */
+.ovk-btn[style*="--ovk-progress"] { background-image: linear-gradient(90deg, color-mix(in srgb, currentColor 18%, transparent) calc(var(--ovk-progress, 0) * 100%), transparent 0); }
+
+/* What is happening (data-state, set by OpenVibeKitWeb.busy): busy keeps the words and adds the mark's wait; done shows
+   a check for a moment; error shakes once and turns red. */
+.ovk-btn[data-state="busy"] { cursor: progress; pointer-events: none; }
+.ovk-btn[data-state="busy"] > :not(.ovk-btn-wait) { opacity: .62; }
+.ovk-btn-wait { display: inline-flex; gap: 3px; align-items: center; }
+.ovk-btn-wait i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: ovkWait 1.1s var(--ov-ease-in-out, ease-in-out) infinite; }
+.ovk-btn-wait i:nth-child(2) { animation-delay: .15s; } .ovk-btn-wait i:nth-child(3) { animation-delay: .3s; }
+@keyframes ovkWait { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(calc(-3px * var(--ov-move, 1))); } }
+.ovk-btn[data-state="done"] { color: #fff; background: var(--ovk-ok); border-color: transparent; }
+.ovk-btn[data-state="done"]::after { content: ""; flex: none; width: 16px; height: 16px; background: currentColor; animation: ovkPop var(--ov-dur-2, .2s) var(--ov-ease-spring, ease-out);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat; }
+.ovk-btn[data-state="error"] { color: var(--ovk-bad-text); border-color: var(--ovk-bad); background: color-mix(in srgb, var(--ovk-bad) 10%, transparent); animation: ovkShake .36s var(--ov-ease-out, ease-out); }
+@keyframes ovkShake { 25% { transform: translateX(calc(-4px * var(--ov-move, 1))); } 50% { transform: translateX(calc(4px * var(--ov-move, 1))); } 75% { transform: translateX(calc(-2px * var(--ov-move, 1))); } }
+
+/* Hold to confirm (data-hold="1200" on a destructive button): the fill runs while it is held; letting go early cancels. */
+.ovk-btn[data-hold] { background-image: linear-gradient(90deg, color-mix(in srgb, var(--ovk-bad) 26%, transparent) var(--ovk-hold, 0%), transparent 0); }
+.ovk-btn[data-hold].is-holding { transition: none; }
+@media (hover: none) { .ovk-btn:hover:not([disabled]):not([aria-disabled="true"]) { transform: none; box-shadow: none; } }
 .ovk-icon-btn .ovk-i { width: 20px; height: 20px; }
 @media (pointer: coarse) { .ovk-icon-btn { width: var(--ovk-tap); height: var(--ovk-tap); } }
 .ovk-badge { display: inline-flex; align-items: center; flex: none; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--ovk-line); font-size: .75rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: var(--ovk-muted); white-space: nowrap; }

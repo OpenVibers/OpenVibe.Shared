@@ -5,6 +5,7 @@
 // task with the person's token and the list reads again; Stop stops it; signed out, it says to sign in; when Codes cannot
 // be reached, the box opens openvibe.codes with what was written in it.
 const assert = require('node:assert/strict');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -87,7 +88,7 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         b = await page.evaluate(`({ text: document.querySelector('.ovdc-text').value, note: document.querySelector('.ovdc-note').textContent, focused: document.activeElement === document.querySelector('.ovdc-text'), go: document.querySelector('.ovdc-go').disabled })`);
         assert.deepEqual(b, { text: 'Build a goal bar for my sub goal', note: 'From your chat with Vibe. Start it, or change it first.', focused: true, go: false }, 'handed-over words are in the box, ready to start (My code keeps its repository)');
         await page.evaluate(`document.querySelector('[data-mode="create"]').click()`);
-        assert.equal(await page.evaluate(`document.querySelector('.ovdc-go').disabled`), false);
+        await eventually(async () => assert.equal(await page.evaluate(`document.querySelector('.ovdc-go').disabled`), false));
         await page.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = ''; t.dispatchEvent(new Event('input')); })()`);
 
         // Stop.
@@ -101,7 +102,7 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         const out = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800 });
         await out.goto(base + '/?out=1', { maxMs: 5000 });
         await wait(300);
-        assert.match(await out.evaluate(`document.querySelector('.ovdc-list').textContent`), /Sign in to start coding tasks/);
+        await eventually(async () => assert.match(await out.evaluate(`document.querySelector('.ovdc-list').textContent`), /Sign in to start coding tasks/));
         assert.equal(seen.length, before, 'nothing is asked without a token');
         await out.close();
 
@@ -110,7 +111,7 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         const down = await h.openPage(browser, await browser.newContext(), { width: 390, height: 800 });
         await down.goto(base + '/', { maxMs: 5000 });
         await wait(300);
-        assert.match(await down.evaluate(`document.querySelector('.ovdc-list').textContent`), /Your tasks are on openvibe\.codes/);
+        await eventually(async () => assert.match(await down.evaluate(`document.querySelector('.ovdc-list').textContent`), /Your tasks are on openvibe\.codes/));
         await down.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = 'A goal bar'; t.dispatchEvent(new Event('input')); document.querySelector('.ovdc-go').click(); })()`);
         const went = await (async () => { const end = Date.now() + 5000; while (Date.now() < end) { const v = await down.evaluate('location.pathname + location.search').catch(() => ''); if (v.startsWith('/codes')) return v; await wait(50); } return ''; })();
         assert.equal(went, '/codes/?prompt=A+goal+bar&mode=create', 'it opens Codes with what you wrote');

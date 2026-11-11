@@ -908,7 +908,23 @@ async function run(opts = {}) {
     return report;
 }
 
-module.exports = { textSmells,
+/**
+ * Retry an assertion until it passes (the browser tests' answer to a fixed wait before a check, 2026-11-11: the macOS
+ * runners are slow enough that a 140 ms debounce sometimes outlasted a 180 ms sleep, and Shared's releases kept failing
+ * on menu-places-chrome). check is an async function that throws while the page is not there yet; the last error is
+ * thrown after timeout ms. Waits are a ceiling, never a guess: a check that is already true returns at once.
+ */
+async function eventually(check, { timeout = 5000, every = 50 } = {}) {
+    const end = Date.now() + timeout;
+    let last;
+    for (;;) {
+        try { return await check(); } catch (e) { last = e; }
+        if (Date.now() >= end) throw last;
+        await new Promise((r) => setTimeout(r, every));
+    }
+}
+
+module.exports = { textSmells, eventually,
     run, launch, openPage, format, summarize, findChrome, axeSource, checkUnreachable,
     // pure helpers, exported for tests and for the Host CLI
     normalizeRoutes, jsonLdEntities, findText, visibleIn, growth, sitemapPaths, checkRoute, splitErrors,

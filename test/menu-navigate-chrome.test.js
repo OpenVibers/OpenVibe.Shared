@@ -9,6 +9,7 @@
 //     (defaultPrevented) draws nothing.
 // Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -73,8 +74,8 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].find((a) => a.textContent === 'Camera').click(), true`);
         assert.ok(await until(p, `!document.querySelector('.ovs.is-open')`, 1500), 'the menu closed when a page was chosen');
         await wait(300);
-        assert.strictEqual(await p.evaluate('location.pathname'), '/camera', 'the page moved, and the menu did not step Back over it');
-        assert.ok(await p.evaluate('history.length') >= before, 'no history entry was taken back');
+        await eventually(async () => assert.strictEqual(await p.evaluate('location.pathname'), '/camera', 'the page moved, and the menu did not step Back over it'));
+        await eventually(async () => assert.ok(await p.evaluate('history.length') >= before, 'no history entry was taken back'));
 
         // Open again on the new page: Camera is marked; swap back to / in place while it is open: Home is marked.
         await p.evaluate(`document.getElementById('openvibe-burger').click(), true`);
@@ -88,7 +89,7 @@ const server = http.createServer((req, res) => {
         // A click the page handled draws no bar; a link that leaves draws it at once, while the next page loads.
         await p.evaluate(`document.getElementById('handled').click(), true`);
         await wait(100);
-        assert.strictEqual(await p.evaluate(`!!document.querySelector('#ovnav-leave.is-run')`), false, 'a handled click draws nothing');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`!!document.querySelector('#ovnav-leave.is-run')`), false, 'a handled click draws nothing'));
         await p.evaluate(`document.getElementById('plain').click(), true`);
         assert.ok(await until(p, `window.__left === true`, 1500), 'the plain link was clicked');
         assert.ok(await until(p, `(() => { const b = document.getElementById('ovnav-leave'); return !!b && b.classList.contains('is-run') && getComputedStyle(b).position === 'fixed' && parseFloat(getComputedStyle(b).height) === 3; })()`, 1500), 'the top bar runs as the page is left');

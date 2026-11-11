@@ -4,6 +4,7 @@
 // the reader touches the scene; and under reduced motion there is no cursor at all. Skipped (exit 0) without Chrome or
 // with OV_SKIP_BROWSER=1.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -46,17 +47,17 @@ const server = http.createServer((req, res) => {
             if (now && now !== seen[seen.length - 1]) seen.push(now);
         }
         assert.deepStrictEqual(seen, ['First', 'Second', 'Third'], 'the steps in their numbered order, one chosen at a time');
-        assert.strictEqual(await p.evaluate('!!document.querySelector(".ov-ghost[aria-hidden=true]")'), true, 'the cursor is there, hidden from assistive tech');
-        assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'the page stays its width');
+        await eventually(async () => assert.strictEqual(await p.evaluate('!!document.querySelector(".ov-ghost[aria-hidden=true]")'), true, 'the cursor is there, hidden from assistive tech'));
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'the page stays its width'));
         await p.evaluate('document.querySelector(".row").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })); 1');
         await wait(200);
-        assert.strictEqual(await p.evaluate(`!document.querySelector(".ov-ghost") && ${chosen} === ""`), true, 'a touch ends it for good');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`!document.querySelector(".ov-ghost") && ${chosen} === ""`), true, 'a touch ends it for good'));
 
         const still = await h.openPage(browser, context, { width: 390 });
         await still.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
         await still.goto(`${base}/still`, { maxMs: 5000 });
         await wait(1500);
-        assert.strictEqual(await still.evaluate('!document.querySelector(".ov-ghost") && document.querySelectorAll("[data-ov-ghost-on]").length === 0'), true, 'motion off: no cursor at all');
+        await eventually(async () => assert.strictEqual(await still.evaluate('!document.querySelector(".ov-ghost") && document.querySelectorAll("[data-ov-ghost-on]").length === 0'), true, 'motion off: no cursor at all'));
         const errors = p.state.errors.concat(still.state.errors).filter((e) => !/Failed to load resource/.test(e.text));
         assert.deepStrictEqual(errors, [], JSON.stringify(errors));
         console.log('motion-ghost-chrome: all checks passed');

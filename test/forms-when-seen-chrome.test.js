@@ -3,6 +3,7 @@
 // and more optimized"). Live's shell carries hidden modal forms, so every Live page fetched ov-forms.js and .css
 // (17 KB) for selects nobody saw. A real headless Chrome; skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -45,12 +46,12 @@ const server = http.createServer((req, res) => {
         const p = await h.openPage(browser, context, { width: 390 });
         await p.goto(`${base}/hidden`, { maxMs: 5000 });
         await wait(3000);
-        assert.strictEqual(await p.evaluate(asked), false, 'a hidden dialog\'s select does not fetch the forms kit');
-        assert.strictEqual(await p.evaluate('!!window.OVForms'), false);
+        await eventually(async () => assert.strictEqual(await p.evaluate(asked), false, 'a hidden dialog\'s select does not fetch the forms kit'));
+        await eventually(async () => assert.strictEqual(await p.evaluate('!!window.OVForms'), false));
 
         await p.evaluate("(document.getElementById('modal').hidden = false, 1)");
         assert.ok(await until(p, '!!window.OVForms'), 'the kit loads when the dialog opens');
-        assert.strictEqual(await p.evaluate(asked), true);
+        await eventually(async () => assert.strictEqual(await p.evaluate(asked), true));
 
         const q = await h.openPage(browser, context, { width: 390 });
         await q.goto(`${base}/shown`, { maxMs: 5000 });

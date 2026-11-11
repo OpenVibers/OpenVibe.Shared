@@ -5,6 +5,30 @@
 - Keep active media in its existing page layout when opening a sheet on a phone, avoiding a WebKit playback interruption from a fixed-position body.
 - Expose the current portable Live card and player lifecycle events; carry sound intent into the next site's floating player.
 
+## 4.204.0 — 2026-11-11
+
+**Buttons that show their state, windows that resize, the one composer everywhere, players that start sooner, and one
+place for the network's CSP.**
+
+- **Buttons that show what they do and what is happening (`kit.css`, `kit.js`, `kit-web.js`).** Kinds by importance
+  (hero, soft, live beside primary, quiet, ghost, danger); a count badge, a status dot, a toggle's fill, a progress
+  fill; attention (the one next step glows now and then); busy → a check, or a shake and red
+  (`OpenVibeKitWeb.busy()`); hold-to-confirm for destructive buttons; icons that move by meaning. Every motion follows
+  the motion setting. docs/kit.md#buttons.
+- **A panel window can be resized (`ov-window.js`).** `resizable: true` adds a corner grip that a mouse, a finger or
+  a pen drags and the arrow keys move; the size is kept with the place per id.
+- **The composer carries its own look, and Vibe's Dock box is the same composer (`ov-composer.js`, `dock-vibe.js`).**
+  Its styles moved out of `thread.css` into the script; Vibe's box gets drafts, "/" commands, the marks and settings,
+  with `data-ovc-no-files` keeping its picture upload its own. (Was #458, never released.)
+- **Players start sooner (`player.js`, #454).** The poster stays until a frame is presented; preload follows the
+  connection; battery-aware HLS attachment with a low first rung. docs/player-startup.md.
+- **No more macOS flakes from fixed sleeps (tests).** A browser test now checks the page with `eventually()` from
+  browser-harness (it retries until the page is there, 5 s at most) instead of after a guessed sleep: 382 checks in 26
+  files, including menu-places-chrome, whose 180 ms sleep against a 140 ms debounce failed on the slow macOS runners
+  and held back 4.202.0 and 4.203.0. `test/fixed-waits.test.js` keeps the count of sleep-then-check places at zero.
+- **`openvibe-shared/csp` (#455).** One place for the network's Content-Security-Policy pieces; `connectSources()`
+  names Media, the composer's upload origin.
+
 ## 4.203.0 — 2026-11-11
 
 - Dock conversations update edited messages and link cards live; authors can edit their own messages.

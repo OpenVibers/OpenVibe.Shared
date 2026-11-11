@@ -5,6 +5,7 @@
 // closes it, a changed picker shows as a chip whose × puts the default back, the placeholder walks through the examples,
 // and a kit sidebar's button moves into the navbar on a phone, where the empty head row goes away. Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -51,8 +52,8 @@ const server = http.createServer((req, res) => {
         await p.goto(`${base}/`, { maxMs: 6000 });
         await until(p, "!!document.querySelector('[data-ovt-opts]')", 'the Options button');
         // Only the button and Send in the bar; the pickers are behind it.
-        assert.strictEqual(await p.evaluate("document.querySelector('.ovt-opts-panel').checkVisibility()"), false, 'the pickers start closed');
-        assert.strictEqual(await p.evaluate("document.querySelector('.ovt-opts-dot').hidden"), true, 'no dot while everything is the default');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovt-opts-panel').checkVisibility()"), false, 'the pickers start closed'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovt-opts-dot').hidden"), true, 'no dot while everything is the default'));
         // Open: a sheet at the bottom of a phone, the page behind does not scroll.
         await p.evaluate("document.querySelector('.ovt-opts > summary').click()");
         await until(p, "document.querySelector('[data-ovt-opts]').open", 'it opens');
@@ -63,16 +64,16 @@ const server = http.createServer((req, res) => {
         assert.ok(sheet.locked, 'the page behind stays put');
         // Change a picker: a chip shows beside the button, and the dot.
         await p.evaluate("(() => { const s = document.querySelector('select[name=who]'); s.value = 'codex'; s.dispatchEvent(new Event('change', { bubbles: true })); })()");
-        assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovt-opt-chip > span')].map((s) => s.textContent).join()"), 'Codex', 'the changed one is a chip');
-        assert.strictEqual(await p.evaluate("document.querySelector('.ovt-opts-dot').hidden"), false, 'and the button wears a dot');
+        await eventually(async () => assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovt-opt-chip > span')].map((s) => s.textContent).join()"), 'Codex', 'the changed one is a chip'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovt-opts-dot').hidden"), false, 'and the button wears a dot'));
         // A tap outside closes it and unlocks the page.
         await p.evaluate("(() => { const e = new PointerEvent('pointerdown', { bubbles: true }); document.querySelector('h1').dispatchEvent(e); })()");
         await until(p, "!document.querySelector('[data-ovt-opts]').open", 'a tap outside closes it');
-        assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovt-sheet-open')"), false, 'the page scrolls again');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.documentElement.classList.contains('ovt-sheet-open')"), false, 'the page scrolls again'));
         // The chip's × puts the default back.
         await p.evaluate("document.querySelector('.ovt-opt-chip-x').click()");
-        assert.strictEqual(await p.evaluate("document.querySelector('select[name=who]').value"), '', 'the default is back');
-        assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovt-opt-chip').length"), 0, 'and the chip is gone');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('select[name=who]').value"), '', 'the default is back'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovt-opt-chip').length"), 0, 'and the chip is gone'));
         // The examples walk through the placeholder while the box is empty.
         await until(p, "document.querySelector('[data-ovt-text]').placeholder !== 'What should change?'", 'the placeholder moves to an example', 6000);
         // The sidebar button: in the navbar before the brand, and the head row with nothing else in it is gone.
@@ -83,23 +84,23 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(lead.head, 'none', 'the empty head row goes');
         await p.evaluate("document.getElementById('ovnav-lead').click()");
         await until(p, "document.getElementById('ch-rail').classList.contains('is-open')", 'the slot opens the drawer');
-        assert.strictEqual(await p.evaluate("document.getElementById('ovnav-lead').getAttribute('aria-expanded')"), 'true', 'and says it is open');
-        assert.ok(await p.evaluate('document.documentElement.scrollWidth <= 390'), 'no sideways scroll');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('ovnav-lead').getAttribute('aria-expanded')"), 'true', 'and says it is open'));
+        await eventually(async () => assert.ok(await p.evaluate('document.documentElement.scrollWidth <= 390'), 'no sideways scroll'));
         // A site's own action on the right, by the API.
         await p.evaluate("OpenVibeNavbar.action({ id: 'help', icon: 'info', label: 'Help', badge: 2, onClick: () => { window.__help = (window.__help || 0) + 1; } })");
         await p.evaluate("document.getElementById('ovnav-act-help').click()");
-        assert.strictEqual(await p.evaluate('window.__help'), 1, 'an action button calls its handler');
-        assert.strictEqual(await p.evaluate("document.querySelector('#ovnav-act-help b').textContent"), '2', 'and shows its count');
+        await eventually(async () => assert.strictEqual(await p.evaluate('window.__help'), 1, 'an action button calls its handler'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('#ovnav-act-help b').textContent"), '2', 'and shows its count'));
         // On a computer: the panel opens beside the button, not as a sheet, and the navbar slot is not shown.
         const d = await h.openPage(browser, context, { width: 1280, height: 900, block: ['*openvibe.network*', '*openvibe.tools*'] });
         await d.goto(`${base}/`, { maxMs: 6000 });
         await until(d, "!!document.querySelector('[data-ovt-opts]')", 'the Options button on a computer');
         await d.evaluate("document.querySelector('.ovt-opts > summary').click()");
         await wait(250);
-        assert.strictEqual(await d.evaluate("getComputedStyle(document.querySelector('.ovt-opts-panel')).position"), 'absolute', 'a panel on a computer');
-        assert.strictEqual(await d.evaluate("document.documentElement.classList.contains('ovt-sheet-open')"), false, 'the page is not locked for a panel');
+        await eventually(async () => assert.strictEqual(await d.evaluate("getComputedStyle(document.querySelector('.ovt-opts-panel')).position"), 'absolute', 'a panel on a computer'));
+        await eventually(async () => assert.strictEqual(await d.evaluate("document.documentElement.classList.contains('ovt-sheet-open')"), false, 'the page is not locked for a panel'));
         await until(d, "!!document.getElementById('ovnav-lead')", 'the slot exists');
-        assert.strictEqual(await d.evaluate("getComputedStyle(document.getElementById('ovnav-lead')).display"), 'none', 'but hides where the sidebar is always shown');
+        await eventually(async () => assert.strictEqual(await d.evaluate("getComputedStyle(document.getElementById('ovnav-lead')).display"), 'none', 'but hides where the sidebar is always shown'));
         console.log('composer-options-chrome: one Options button, a sheet on a phone, chips for changes, examples, the sidebar button in the navbar, actions by API');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((e) => { console.error(e); process.exit(1); });

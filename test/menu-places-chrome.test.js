@@ -10,6 +10,7 @@ const os = require('node:os');
 const path = require('node:path');
 const http = require('node:http');
 const h = require('../browser-harness');
+const { eventually } = h;   // a check retries until the page is there (5 s ceiling), never a fixed sleep
 if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) { console.log('menu-places-chrome: skipped (no Chrome; set CHROME_BIN)'); process.exit(0); }
 const root = path.join(__dirname, '..');
 const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chat</title><link rel="icon" href="data:,"></head>
@@ -49,39 +50,39 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
                 await page.evaluate(OPEN(true).replace("service: 'chat'", "service: 'design'"));
                 assert.ok(await until(`document.querySelectorAll('.ovs.is-open .ovs-starttabs .ovs-tab').length === 5`), `${name}: five places on another site`);
-                assert.deepEqual((await page.evaluate(ROW)).slice(2, 4).map((t) => t.label), ['Chat', 'Vibe'], `${name}: on another site, Chat and Vibe`);
+                await eventually(async () => assert.deepEqual((await page.evaluate(ROW)).slice(2, 4).map((t) => t.label), ['Chat', 'Vibe'], `${name}: on another site, Chat and Vibe`));
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
                 await page.evaluate(OPEN(true)); await wait(350);
             }
             assert.ok(row.every((t) => t.top === row[0].top), `${name}: one row (${row.map((t) => t.top).join(',')})`);
             assert.ok(row.every((t) => Math.abs(t.w - row[0].w) <= 1 && t.h >= 42), `${name}: the same width each, and tall enough to press (${row.map((t) => `${t.w}x${t.h}`).join(' ')})`);
             assert.ok(row.every((t) => t.role === 'tab') && row[row.length - 1].right <= width, `${name}: all on the screen`);
-            assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).map((t) => t.dataset.tab)`), ['here', 'feed', 'chats', 'vibe', 'you'], `${name}: stable place ids`);
-            assert.equal(await page.evaluate('OpenVibeSearch._state().from === document.body'), true, `${name}: opening source retained`);
-            assert.equal(await page.evaluate(`document.querySelectorAll('.ovs-bridge, .ovs-bridge-b').length`), 0, `${name}: no second row of buttons under the tabs`);
-            assert.equal(await page.evaluate(`document.querySelectorAll('.ovs-starttabs .ovs-tab svg, .ovs-starttabs .ovs-tab .ovs-tab-ic').length >= 4`), true, `${name}: each place has its icon`);
+            await eventually(async () => assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).map((t) => t.dataset.tab)`), ['here', 'feed', 'chats', 'vibe', 'you'], `${name}: stable place ids`));
+            await eventually(async () => assert.equal(await page.evaluate('OpenVibeSearch._state().from === document.body'), true, `${name}: opening source retained`));
+            await eventually(async () => assert.equal(await page.evaluate(`document.querySelectorAll('.ovs-bridge, .ovs-bridge-b').length`), 0, `${name}: no second row of buttons under the tabs`));
+            await eventually(async () => assert.equal(await page.evaluate(`document.querySelectorAll('.ovs-starttabs .ovs-tab svg, .ovs-starttabs .ovs-tab .ovs-tab-ic').length >= 4`), true, `${name}: each place has its icon`));
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click()`);
-            assert.equal(await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"] .ovs-tabnew-red').textContent`), '7', `${name}: You has the red unread badge`);
-            assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-notifications-host [data-role="list"]')?.textContent`), 'five newest', `${name}: You starts with the notifications preview`);
-            assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead-more')?.textContent`), 'Show all 12', `${name}: notification expansion count, in the section's head`);
-            assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead b')?.textContent`), 'Notifications', `${name}: the section is named`);
+            await eventually(async () => assert.equal(await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"] .ovs-tabnew-red').textContent`), '7', `${name}: You has the red unread badge`));
+            await eventually(async () => assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-notifications-host [data-role="list"]')?.textContent`), 'five newest', `${name}: You starts with the notifications preview`));
+            await eventually(async () => assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead-more')?.textContent`), 'Show all 12', `${name}: notification expansion count, in the section's head`));
+            await eventually(async () => assert.equal(await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead b')?.textContent`), 'Notifications', `${name}: the section is named`));
             await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead-more').click()`);
-            assert.equal(await page.evaluate('window.notificationsExpanded'), true, `${name}: notifications expand in place`);
+            await eventually(async () => assert.equal(await page.evaluate('window.notificationsExpanded'), true, `${name}: notifications expand in place`));
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click()`);
             if (width <= 640) {
                 await page.evaluate(`document.querySelector('.ovs-list > li > .ovs-dockyou-b').click()`);
-                assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-dock-you button')).map((b) => b.textContent)`), ['Start a timer', 'Keep the Dock button on every page', 'Open the Dock in its own window'], `${name}: The Dock row opens its three actions in place`);
+                await eventually(async () => assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-dock-you button')).map((b) => b.textContent)`), ['Start a timer', 'Keep the Dock button on every page', 'Open the Dock in its own window'], `${name}: The Dock row opens its three actions in place`));
                 await page.evaluate(`document.querySelector('.ovs-dock-you button').click()`);
-                assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: You Dock timer action`);
+                await eventually(async () => assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: You Dock timer action`));
             }
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="here"]').click()`);
             if (width > 640) {
                 // A computer opens the floating Dock beside the menu.
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-                assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: Vibe opens the Dock's Vibe`);
+                await eventually(async () => assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: Vibe opens the Dock's Vibe`));
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`);
-                assert.equal(await page.evaluate('window.went'), 'chats', `${name}: Messages opens the Dock's conversations`);
-                assert.deepEqual((await page.evaluate(ROW)).filter((t) => t.chosen).map((t) => t.label), ['Chat'], `${name}: the chosen tab is still this site's`);
+                await eventually(async () => assert.equal(await page.evaluate('window.went'), 'chats', `${name}: Messages opens the Dock's conversations`));
+                await eventually(async () => assert.deepEqual((await page.evaluate(ROW)).filter((t) => t.chosen).map((t) => t.label), ['Chat'], `${name}: the chosen tab is still this site's`));
             }
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`);
             assert.ok(await until(`(document.querySelector('.ovs-starttabs [aria-selected="true"]') || {}).textContent.trim().startsWith('Feed')`), `${name}: Feed is chosen in place`);
@@ -97,32 +98,32 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 chosen: Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab[aria-selected="true"]')).map((t) => t.textContent.trim()).join(' ') })`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(120);
             if (width <= 640) {
-                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Code Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`);
-                assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`);
+                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Code Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`));
+                await eventually(async () => assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`));
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="code"]').click()`); await wait(80);
-                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat Code* Agents', chosen: 'Vibe' }, `${name}: the switch goes to Code`);
+                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat Code* Agents', chosen: 'Vibe' }, `${name}: the switch goes to Code`));
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
-                assert.equal((await inside()).sw, 'Chat Code Agents*', `${name}: the switch goes to Agents`);
+                await eventually(async () => assert.equal((await inside()).sw, 'Chat Code Agents*', `${name}: the switch goes to Agents`));
                 await page.evaluate(`document.querySelector('.ovs-ai-timer').click()`);
-                assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: AI timer entry`);
+                await eventually(async () => assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: AI timer entry`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = 'find this'; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`); await wait(170);
                 await page.evaluate(`document.querySelector('.ovs-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));`);
-                assert.equal(await page.evaluate('window.asked'), 'find this', `${name}: AI Enter hands its text to Vibe`);
+                await eventually(async () => assert.equal(await page.evaluate('window.asked'), 'find this', `${name}: AI Enter hands its text to Vibe`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = ''; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
-                assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`);
+                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = 'sara'; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`); await wait(180);
-                assert.equal(await page.evaluate('window.filtered'), 'sara', `${name}: Messages search filters conversations in place`);
+                await eventually(async () => assert.equal(await page.evaluate('window.filtered'), 'sara', `${name}: Messages search filters conversations in place`));
                 await page.evaluate(`document.querySelector('.ovs-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));`);
-                assert.equal(await page.evaluate(`!!(document.querySelector('.ovs-input').value === '' && document.querySelector('.ovs.is-open'))`), true, `${name}: Escape clears before closing`);
+                await eventually(async () => assert.equal(await page.evaluate(`!!(document.querySelector('.ovs-input').value === '' && document.querySelector('.ovs.is-open'))`), true, `${name}: Escape clears before closing`));
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`); await wait(80);
-                assert.deepEqual(await inside(), { door: false, list: true, stub: false, sw: '', chosen: 'Feed' }, `${name}: Feed hands the panel back`);
+                await eventually(async () => assert.deepEqual(await inside(), { door: false, list: true, stub: false, sw: '', chosen: 'Feed' }, `${name}: Feed hands the panel back`));
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
-                assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`);
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`));
             } else {
-                assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI still opens the floating Dock`);
-                assert.deepEqual(await page.evaluate('window.log'), [], `${name}: nothing mounted in the menu`);
+                await eventually(async () => assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI still opens the floating Dock`));
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), [], `${name}: nothing mounted in the menu`));
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
             }
             await page.evaluate('delete window.OpenVibeDock');
@@ -141,7 +142,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             // A visitor: three places, as before.
             await page.evaluate(OPEN(false));
             assert.ok(await until(`document.querySelectorAll('.ovs.is-open .ovs-starttabs .ovs-tab').length === 3`), `${name}: a visitor has this site, Feed and You`);
-            assert.deepEqual((await page.evaluate(ROW)).map((t) => t.label), ['Chat', 'Feed', 'You'].map((x, i) => x), `${name}: in that order`);
+            await eventually(async () => assert.deepEqual((await page.evaluate(ROW)).map((t) => t.label), ['Chat', 'Feed', 'You'].map((x, i) => x), `${name}: in that order`));
             await page.close();
         }
         for (const width of [390, 1280]) {
@@ -154,13 +155,13 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 : new Response('{}', { status: 404 }); localStorage.setItem('ovs-feed-seen', '1');`);
             const endBadge = Date.now() + 7000;
             while (!await page.evaluate("!!document.querySelector('.ovnav-avatar-count:not([hidden])')") && Date.now() < endBadge) await wait(80);
-            assert.equal(await page.evaluate("!!document.querySelector('.openvibe-bell, #openvibe-bell-mount')"), false, `${width}px: no bar bell or bell mount`);
-            assert.equal(await page.evaluate("document.querySelector('.ovnav-avatar-count')?.textContent"), '7', `${width}px: avatar carries the unread count`);
+            await eventually(async () => assert.equal(await page.evaluate("!!document.querySelector('.openvibe-bell, #openvibe-bell-mount')"), false, `${width}px: no bar bell or bell mount`));
+            await eventually(async () => assert.equal(await page.evaluate("document.querySelector('.ovnav-avatar-count')?.textContent"), '7', `${width}px: avatar carries the unread count`));
             await page.evaluate("document.querySelector('#openvibe-avatar-btn').click()"); await wait(500);
-            assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open .ovs-starttabs [data-tab=you][aria-selected=true]')"), true, `${width}px avatar opens You`);
-            assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open [data-sec=notifications]')"), true, `${width}px avatar opens at Notifications`);
-            assert.equal(await page.evaluate("!!document.querySelector('.openvibe-navbar .ovs-feed-dot:not([hidden])')"), true, `${width}px menu button carries the calm Feed dot`);
-            assert.equal(await page.evaluate("!!document.querySelector('.ovdk.is-open')"), false, `${width}px avatar does not open the floating Dock`);
+            await eventually(async () => assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open .ovs-starttabs [data-tab=you][aria-selected=true]')"), true, `${width}px avatar opens You`));
+            await eventually(async () => assert.equal(await page.evaluate("!!document.querySelector('.ovs.is-open [data-sec=notifications]')"), true, `${width}px avatar opens at Notifications`));
+            await eventually(async () => assert.equal(await page.evaluate("!!document.querySelector('.openvibe-navbar .ovs-feed-dot:not([hidden])')"), true, `${width}px menu button carries the calm Feed dot`));
+            await eventually(async () => assert.equal(await page.evaluate("!!document.querySelector('.ovdk.is-open')"), false, `${width}px avatar does not open the floating Dock`));
             await page.close();
         }
         // Two pages in one browser context share the Feed seen time; the receiving open menu redraws its badge at once.

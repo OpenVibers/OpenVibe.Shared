@@ -4,6 +4,7 @@
 // { state: 'dnd', show_status: true }) and the dot follows; a status line saves; Escape closes the picker; a second
 // tab within the minute does not beat again; presence: false loads nothing. Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -65,7 +66,7 @@ const server = http.createServer((req, res) => {
             assert.strictEqual(state, 'online', `${width}px: the dot says online`);
             const beats = await p.evaluate(`window.__calls.filter((c) => /heartbeat/.test(c.url)).length`);
             assert.strictEqual(beats, 1, 'one heartbeat on load');
-            assert.strictEqual(await p.evaluate(`document.getElementById('openvibe-avatar-btn').title`), 'Online');
+            await eventually(async () => assert.strictEqual(await p.evaluate(`document.getElementById('openvibe-avatar-btn').title`), 'Online'));
 
             await p.evaluate(`OpenVibePresence.open()`);
             assert.ok(await until(p, `!!document.querySelector('.ovp-pop')`), `${width}px: the picker opens`);
@@ -77,7 +78,7 @@ const server = http.createServer((req, res) => {
             assert.strictEqual(await until(p, `(() => { const d = document.querySelector('.ovp-wrap .ovp-dot'); return d && d.dataset.state === 'dnd' && d.dataset.state; })()`), 'dnd', `${width}px: Do not disturb shows`);
             const put = await p.evaluate(`window.__calls.find((c) => c.method === 'PUT')`);
             assert.deepStrictEqual(put.body, { state: 'dnd', show_status: true });
-            assert.strictEqual(await p.evaluate(`document.querySelector('.ovp-opt[aria-checked="true"]').dataset.value`), 'dnd', 'the picker marks it');
+            await eventually(async () => assert.strictEqual(await p.evaluate(`document.querySelector('.ovp-opt[aria-checked="true"]').dataset.value`), 'dnd', 'the picker marks it'));
             await p.evaluate(`(() => { const i = document.querySelector('.ovp-text input'); i.value = 'Building a world'; i.form.requestSubmit(); })()`);
             assert.ok(await until(p, `/Building a world/.test(document.getElementById('openvibe-avatar-btn').title)`), 'the status line saves and shows on hover');
             await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))`);
@@ -88,12 +89,12 @@ const server = http.createServer((req, res) => {
         const again = await h.openPage(browser, context, { width: 1280 });
         await again.goto(`${base}/on`, { maxMs: 5000 });
         assert.strictEqual(await until(again, `(() => { const d = document.querySelector('.ovp-wrap .ovp-dot'); return d && d.dataset.state; })()`), 'dnd');
-        assert.strictEqual(await again.evaluate(`window.__calls.filter((c) => /heartbeat/.test(c.url)).length`), 0, 'a second tab within the minute does not beat again');
+        await eventually(async () => assert.strictEqual(await again.evaluate(`window.__calls.filter((c) => /heartbeat/.test(c.url)).length`), 0, 'a second tab within the minute does not beat again'));
         await again.close();
         const off = await h.openPage(browser, context, { width: 1280 });
         await off.goto(`${base}/off`, { maxMs: 5000 });
         await wait(400);
-        assert.strictEqual(await off.evaluate(`!!window.OpenVibePresence || !!document.getElementById('ov-presence-loader')`), false, 'presence: false loads nothing');
+        await eventually(async () => assert.strictEqual(await off.evaluate(`!!window.OpenVibePresence || !!document.getElementById('ov-presence-loader')`), false, 'presence: false loads nothing'));
         await off.close();
         console.log('presence-chrome: the dot, one heartbeat a minute across tabs, the picker (sheet on a phone), Do not disturb, a status line, Escape; presence: false ok');
     } finally {

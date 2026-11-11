@@ -4,6 +4,7 @@
 // is followed, the keyboard works, options say their state, and data-ov-native keeps the browser's own. Skipped
 // without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -63,68 +64,68 @@ const key = (k, target = 'document.activeElement') => `(${target}).dispatchEvent
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(250);
         const btn = "document.querySelector('#agent + .ov-sel')";
-        assert.strictEqual(await p.evaluate("document.getElementById('agent').classList.contains('ov-sel-native')"), true, 'the select is enhanced');
-        assert.strictEqual(await p.evaluate(`${btn}.textContent.trim()`), 'Choose…');
-        assert.strictEqual(await p.evaluate("!!document.querySelector('#raw + .ov-sel')"), false, 'data-ov-native keeps the browser\'s own');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('agent').classList.contains('ov-sel-native')"), true, 'the select is enhanced'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${btn}.textContent.trim()`), 'Choose…'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('#raw + .ov-sel')"), false, 'data-ov-native keeps the browser\'s own'));
         assert.deepStrictEqual(await p.evaluate("(() => { const b = document.querySelector('#bare + .ov-sel'); const cs = getComputedStyle(b); return [b.classList.contains('is-bare'), cs.borderTopWidth, cs.backgroundColor, getComputedStyle(b.querySelector('.ov-sel-chev')).display]; })()"),
             [true, '0px', 'rgba(0, 0, 0, 0)', 'none'], 'a bare select keeps its chip\'s look: no box, no chevron');
-        assert.strictEqual(await p.evaluate(`${btn}.getAttribute('aria-labelledby').split(' ').some((id) => document.getElementById(id) && document.getElementById(id).tagName === 'LABEL')`), true, 'the button is named by the select\'s label');
-        assert.strictEqual(await p.evaluate(`${btn}.getBoundingClientRect().width === document.getElementById('f').getBoundingClientRect().width`), true, 'a full-width select gives a full-width button');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${btn}.getAttribute('aria-labelledby').split(' ').some((id) => document.getElementById(id) && document.getElementById(id).tagName === 'LABEL')`), true, 'the button is named by the select\'s label'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${btn}.getBoundingClientRect().width === document.getElementById('f').getBoundingClientRect().width`), true, 'a full-width select gives a full-width button'));
 
         await p.evaluate(`${btn}.click()`);
         await wait(80);
-        assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop.is-open')"), true, 'a click opens the menu');
-        assert.strictEqual(await p.evaluate("document.querySelectorAll('.ov-sel-pop [role=option]').length"), 4);
-        assert.strictEqual(await p.evaluate("document.querySelector('.ov-sel-pop [role=option][aria-disabled=true] a.ov-sel-link').getAttribute('href')"), '/setup/opencode', 'a choice that is not ready links to its setup');
-        assert.strictEqual(await p.evaluate("document.querySelector('.ov-sel-pop .ov-sel-desc').textContent"), 'Your own Claude login, on your machine');
-        assert.strictEqual(await p.evaluate("document.querySelector('.ov-sel-pop .ov-sel-badge.is-warn').textContent"), '91% used');
+        await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop.is-open')"), true, 'a click opens the menu'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ov-sel-pop [role=option]').length"), 4));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ov-sel-pop [role=option][aria-disabled=true] a.ov-sel-link').getAttribute('href')"), '/setup/opencode', 'a choice that is not ready links to its setup'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ov-sel-pop .ov-sel-desc').textContent"), 'Your own Claude login, on your machine'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ov-sel-pop .ov-sel-badge.is-warn').textContent"), '91% used'));
         await p.evaluate(key('ArrowDown'));
         await p.evaluate(key('ArrowDown'));
         await p.evaluate(key('ArrowDown'));     // past the end: OpenCode is disabled, Codex stays the last
         await p.evaluate(key('Enter'));
         await wait(60);
-        assert.strictEqual(await p.evaluate("document.getElementById('agent').value"), 'codex', 'the keyboard chooses, skipping a disabled choice');
-        assert.strictEqual(await p.evaluate('window.__changes'), 1, 'and the select says change, as a person\'s choice would');
-        assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop')"), false, 'and the menu closes');
-        assert.strictEqual(await p.evaluate(`document.activeElement === ${btn}`), true, 'with the focus back on the button');
-        assert.match(await p.evaluate(`${btn}.textContent`), /Codex.*91% used/, 'the button shows the choice and its badge');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('agent').value"), 'codex', 'the keyboard chooses, skipping a disabled choice'));
+        await eventually(async () => assert.strictEqual(await p.evaluate('window.__changes'), 1, 'and the select says change, as a person\'s choice would'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop')"), false, 'and the menu closes'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`document.activeElement === ${btn}`), true, 'with the focus back on the button'));
+        await eventually(async () => assert.match(await p.evaluate(`${btn}.textContent`), /Codex.*91% used/, 'the button shows the choice and its badge'));
 
         await p.evaluate("document.getElementById('agent').value = 'claude-code'");
-        assert.match(await p.evaluate(`${btn}.textContent`), /Claude Code/, 'a script that sets the value is followed');
+        await eventually(async () => assert.match(await p.evaluate(`${btn}.textContent`), /Claude Code/, 'a script that sets the value is followed'));
 
         // A long list has a search box, and groups.
         await p.evaluate("document.querySelector('#long + .ov-sel').click()");
         await wait(80);
-        assert.strictEqual(await p.evaluate("document.querySelectorAll('.ov-sel-pop .ov-sel-group').length"), 2);
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ov-sel-pop .ov-sel-group').length"), 2));
         await p.evaluate("(() => { const i = document.querySelector('.ov-sel-pop .ov-sel-search input'); i.value = 'tw'; i.dispatchEvent(new Event('input', { bubbles: true })); })()");
-        assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ov-sel-pop .ov-sel-label')].map((x) => x.textContent)"), ['two', 'twelve'], 'typing narrows the list');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate("[...document.querySelectorAll('.ov-sel-pop .ov-sel-label')].map((x) => x.textContent)"), ['two', 'twelve'], 'typing narrows the list'));
         await p.evaluate(key('Enter', "document.querySelector('.ov-sel-pop .ov-sel-search input')"));
         await wait(60);
-        assert.strictEqual(await p.evaluate("document.getElementById('long').value"), 'two');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('long').value"), 'two'));
 
         // A multiple select keeps its menu open and counts.
         await p.evaluate("document.querySelector('#many + .ov-sel').click()");
         await wait(80);
         await p.evaluate("document.querySelectorAll('.ov-sel-pop .ov-sel-opt')[0].click()");
         await p.evaluate("document.querySelectorAll('.ov-sel-pop .ov-sel-opt')[2].click()");
-        assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop')"), true, 'the menu stays open while choosing several');
+        await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop')"), true, 'the menu stays open while choosing several'));
         await p.evaluate(key('Escape', "document.querySelector('.ov-sel-pop')"));
         await wait(30);
-        assert.strictEqual(await p.evaluate("document.querySelector('#many + .ov-sel').textContent.trim()"), 'a, c');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('#many + .ov-sel').textContent.trim()"), 'a, c'));
 
         // A click elsewhere closes the menu; the form posts what was chosen.
         await p.evaluate("document.querySelector('#agent + .ov-sel').click()");
         await wait(60);
         await p.evaluate("document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))");
-        assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop')"), false, 'a click elsewhere closes it');
+        await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ov-sel-pop')"), false, 'a click elsewhere closes it'));
         await p.evaluate("document.getElementById('send').click()");
-        assert.deepStrictEqual(await p.evaluate('window.__sent'), { agent: 'claude-code', many: ['a', 'c'], long: 'two' }, 'the form posts the hidden selects\' values');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__sent'), { agent: 'claude-code', many: ['a', 'c'], long: 'two' }, 'the form posts the hidden selects\' values'));
 
         // A required select left empty: the button says so, not a bubble on a hidden control.
         await p.evaluate("document.getElementById('agent').value = ''");
         await p.evaluate("document.getElementById('f').requestSubmit()");
-        assert.strictEqual(await p.evaluate(`${btn}.classList.contains('is-invalid')`), true, 'an empty required select marks its button');
-        assert.strictEqual(await p.evaluate(`document.activeElement === ${btn}`), true, 'and takes the focus');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`${btn}.classList.contains('is-invalid')`), true, 'an empty required select marks its button'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`document.activeElement === ${btn}`), true, 'and takes the focus'));
 
         // A select inside a modal dialog opens over it (the top layer), and can be chosen from.
         await p.evaluate("document.getElementById('dlg').showModal()");
@@ -135,15 +136,15 @@ const key = (k, target = 'document.activeElement') => `(${target}).dispatchEvent
         assert.strictEqual(seen, true, `the list is seen over a modal dialog: ${seen}`);
         await p.evaluate("document.querySelectorAll('.ov-sel-pop .ov-sel-opt')[1].click()");
         await wait(60);
-        assert.strictEqual(await p.evaluate("document.getElementById('indlg').value"), 'two', 'and a choice in it lands');
-        assert.strictEqual(await p.evaluate("document.getElementById('dlg').open"), true, 'without closing the dialog');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('indlg').value"), 'two', 'and a choice in it lands'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('dlg').open"), true, 'without closing the dialog'));
         await p.evaluate("document.getElementById('dlg').close()");
 
         // Markup added later is enhanced too.
         await p.evaluate("document.body.insertAdjacentHTML('beforeend', '<select id=\"late\"><option>x</option><option>y</option></select>')");
         await wait(200);
-        assert.strictEqual(await p.evaluate("!!document.querySelector('#late + .ov-sel')"), true, 'a select added later is enhanced');
-        assert.strictEqual(await p.evaluate("getComputedStyle(document.getElementById('sw')).appearance"), 'none', 'a checkbox with role=switch is a switch');
+        await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('#late + .ov-sel')"), true, 'a select added later is enhanced'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("getComputedStyle(document.getElementById('sw')).appearance"), 'none', 'a checkbox with role=switch is a switch'));
         await p.close();
 
         // ── A phone: the sheet ──
@@ -152,17 +153,17 @@ const key = (k, target = 'document.activeElement') => `(${target}).dispatchEvent
         await wait(250);
         await phone.evaluate("document.querySelector('#agent + .ov-sel').click()");
         await wait(320);
-        assert.strictEqual(await phone.evaluate("!!document.querySelector('.ov-sel-sheet.is-open') && !!document.querySelector('.ov-sel-scrim.is-open')"), true, 'a phone gets a sheet over a scrim');
-        assert.strictEqual(await phone.evaluate("document.querySelector('.ov-sel-sheet-title').textContent"), 'Agent', 'titled with the select\'s label');
-        assert.strictEqual(await phone.evaluate("document.documentElement.classList.contains('ov-sel-locked')"), true, 'the page under it does not scroll');
-        assert.strictEqual(await phone.evaluate('document.body.style.position'), 'fixed', 'the shared helper locks the page in place');
-        assert.ok(await phone.evaluate("document.querySelector('.ov-sel-sheet .ov-sel-opt').getBoundingClientRect().height") >= 44, 'rows are a finger tall');
+        await eventually(async () => assert.strictEqual(await phone.evaluate("!!document.querySelector('.ov-sel-sheet.is-open') && !!document.querySelector('.ov-sel-scrim.is-open')"), true, 'a phone gets a sheet over a scrim'));
+        await eventually(async () => assert.strictEqual(await phone.evaluate("document.querySelector('.ov-sel-sheet-title').textContent"), 'Agent', 'titled with the select\'s label'));
+        await eventually(async () => assert.strictEqual(await phone.evaluate("document.documentElement.classList.contains('ov-sel-locked')"), true, 'the page under it does not scroll'));
+        await eventually(async () => assert.strictEqual(await phone.evaluate('document.body.style.position'), 'fixed', 'the shared helper locks the page in place'));
+        await eventually(async () => assert.ok(await phone.evaluate("document.querySelector('.ov-sel-sheet .ov-sel-opt').getBoundingClientRect().height") >= 44, 'rows are a finger tall'));
         await phone.evaluate("document.querySelectorAll('.ov-sel-sheet .ov-sel-opt')[1].click()");
         await wait(320);
-        assert.strictEqual(await phone.evaluate("document.getElementById('agent').value"), 'claude-code');
-        assert.strictEqual(await phone.evaluate("!!document.querySelector('.ov-sel-sheet') || document.documentElement.classList.contains('ov-sel-locked')"), false, 'choosing closes the sheet and frees the page');
-        assert.strictEqual(await phone.evaluate('document.body.style.position'), '', 'closing restores the page');
-        assert.strictEqual(await phone.evaluate('document.documentElement.scrollWidth'), 390, 'nothing is wider than the phone');
+        await eventually(async () => assert.strictEqual(await phone.evaluate("document.getElementById('agent').value"), 'claude-code'));
+        await eventually(async () => assert.strictEqual(await phone.evaluate("!!document.querySelector('.ov-sel-sheet') || document.documentElement.classList.contains('ov-sel-locked')"), false, 'choosing closes the sheet and frees the page'));
+        await eventually(async () => assert.strictEqual(await phone.evaluate('document.body.style.position'), '', 'closing restores the page'));
+        await eventually(async () => assert.strictEqual(await phone.evaluate('document.documentElement.scrollWidth'), 390, 'nothing is wider than the phone'));
         await phone.close();
         console.log('ov-forms-chrome: the menu, the sheet, the keyboard, search, several choices, the form\'s values and native opt-outs ok');
     } finally {

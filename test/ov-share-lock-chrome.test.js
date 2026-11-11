@@ -7,6 +7,7 @@
 //   removing @maticus seals the content again under a fresh key: the new bytes open for quinn, not for maticus;
 //   a link-locked paste's link keeps the key after #k=, and says so when the key is missing.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -147,30 +148,30 @@ const server = http.createServer((req, res) => {
         // The sheet itself loads no Locker: a fresh tab proves it, and that the first press of the part does.
         const fresh = await h.openPage(browser, await browser.newContext(), { width: 390 });
         await fresh.goto(`${base}/`, { maxMs: 5000 });
-        assert.strictEqual(await fresh.evaluate('!!window.OVLocker'), false, 'ov-share.js alone loads no Locker');
+        await eventually(async () => assert.strictEqual(await fresh.evaluate('!!window.OVLocker'), false, 'ov-share.js alone loads no Locker'));
         await fresh.evaluate("document.getElementById('sh').click()");
         await wait(400);
-        assert.match(await fresh.evaluate(text('.ov-share-lock')), /Locked/, 'a fresh tab sees the item is locked');
+        await eventually(async () => assert.match(await fresh.evaluate(text('.ov-share-lock')), /Locked/, 'a fresh tab sees the item is locked'));
         await fresh.evaluate(press('lock-open'));
         await wait(600);
-        assert.ok(await fresh.evaluate('!!window.OVLocker'), 'pressing Locked loads ov-locker.js');
+        await eventually(async () => assert.ok(await fresh.evaluate('!!window.OVLocker'), 'pressing Locked loads ov-locker.js'));
         await fresh.evaluate(press('close'));
 
         // 1. The Locked part says what the lock means, in plain words, and whose keys it is wrapped for.
         await page.evaluate("document.getElementById('sh').click()");
         await wait(400);
-        assert.match(await page.evaluate(text('.ov-share-lock')), /Locked/, 'the sheet says the item is locked');
-        assert.match(await page.evaluate(text('.ov-share-lockshort')), /can’t read what’s inside/, 'and says it in plain words');
+        await eventually(async () => assert.match(await page.evaluate(text('.ov-share-lock')), /Locked/, 'the sheet says the item is locked'));
+        await eventually(async () => assert.match(await page.evaluate(text('.ov-share-lockshort')), /can’t read what’s inside/, 'and says it in plain words'));
         await page.evaluate(press('lock-open'));
         await wait(500);
-        assert.match(await page.evaluate(text('.ov-share-lockmeans')), /Only you and the people below can open it/, 'what a people lock means');
-        assert.ok((await page.evaluate(text('.ov-share-fp'))).includes(matPub.fingerprint.split(' · ')[0]), 'the member’s fingerprint is shown');
+        await eventually(async () => assert.match(await page.evaluate(text('.ov-share-lockmeans')), /Only you and the people below can open it/, 'what a people lock means'));
+        await eventually(async () => assert.ok((await page.evaluate(text('.ov-share-fp'))).includes(matPub.fingerprint.split(' · ')[0]), 'the member’s fingerprint is shown'));
 
         // 2. Add @quinn: their public key is wrapped for them here.
         await page.evaluate(type('add', 'quinn'));
         await page.evaluate(press('add-btn'));
         await wait(600);
-        assert.match(await page.evaluate(text('.ov-share-list')), /Quinn/, 'quinn is on the list');
+        await eventually(async () => assert.match(await page.evaluate(text('.ov-share-list')), /Quinn/, 'quinn is on the list'));
         await page.evaluate(press('done'));
         await wait(2500);   // the re-wrap
         assert.strictEqual(puts.length, 1, 'one save');
@@ -189,7 +190,7 @@ const server = http.createServer((req, res) => {
         await wait(400);
         await page.evaluate(press('rm-user:usr_mat'));
         await wait(200);
-        assert.match(await page.evaluate(text('.ov-share-note')), /They had the key before you removed them/, 'removal says they keep what they opened');
+        await eventually(async () => assert.match(await page.evaluate(text('.ov-share-note')), /They had the key before you removed them/, 'removal says they keep what they opened'));
         await page.evaluate(press('done'));
         await wait(3000);
         assert.strictEqual(puts.length, 2, 'the removal saved');
@@ -222,14 +223,14 @@ const server = http.createServer((req, res) => {
         items['/p/locked/raw'] = linkSealed.bytes;
         await linkPage.evaluate(`(() => { OVShare.open({ kind: 'paste', id: 'locked', title: 'Locked note' }); })()`);
         await wait(500);
-        assert.match(await linkPage.evaluate(`${q('link')}.value`), /#k=[A-Za-z0-9_-]{43}/, 'the copied link keeps the key after #');
+        await eventually(async () => assert.match(await linkPage.evaluate(`${q('link')}.value`), /#k=[A-Za-z0-9_-]{43}/, 'the copied link keeps the key after #'));
         await linkPage.evaluate(press('lock-open'));
         await wait(400);
         await linkPage.evaluate('history.replaceState(null, "", location.pathname)');
         await linkPage.evaluate(press('lock-open'));
         await linkPage.evaluate(press('lock-open'));
         await wait(500);
-        assert.match(await linkPage.evaluate(text('.ov-share-lock')), /missing its key/i, 'a link with no key says so');
+        await eventually(async () => assert.match(await linkPage.evaluate(text('.ov-share-lock')), /missing its key/i, 'a link with no key says so'));
 
         console.log('ov-share-lock-chrome: the Locked part with real crypto: lazy load, fingerprints, add wraps for them, removal re-seals, the link lock keeps its key');
     } finally {
