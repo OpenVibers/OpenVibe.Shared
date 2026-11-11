@@ -39,6 +39,7 @@ window.editor = OVArrange.open({
     core: window.OVArrangeCore,
     onSave: (layout) => { window.calls.save = layout; return { ok: true }; },
     onShare: async () => ({ url: 'https://openvibe.bot/l/abc' }),
+    onReset: async () => { window.calls.reset = true; return { ok: true }; },
     onAsk: async (words, request) => {
         window.calls.asked = { words, request };
         const layout = OVArrangeCore.applyDefaults(window.CATALOG, 'phone');
@@ -123,6 +124,7 @@ const server = http.createServer((req, res) => {
         // Reset to default, Share, Done.
         await evalv(`document.querySelector('[data-reset]').click()`);
         assert.equal(await evalv(`window.editor.layout().name`), 'Default', 'Reset to default');
+        assert.ok(await until(`!!window.calls.reset`), 'Reset clears the stored layout through onReset');
         await evalv(`document.querySelector('[data-share]').click()`);
         assert.ok(await until(`!!document.querySelector('.ov-arrange-share input')`), 'Share shows the link');
         await evalv(`document.querySelector('[data-done]').click()`);

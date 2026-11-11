@@ -13,6 +13,7 @@
  *       defaults(catalog) -> layout,                      // optional: defaults to the sdk core
  *       onSave(layout) -> Promise<{ ok?, reasons? }>,     // PUT the person's layout (Network)
  *       onShare(layout) -> Promise<{ url?, reasons? }>,   // save, then a share link
+ *       onReset() -> Promise<{ ok?, reasons? }>,          // clear the stored layout (Network's reset)
  *       onAsk(words, request) -> Promise<ui.layout-suggestion@1>,
  *       onClose(), confirm() -> boolean, core
  *   }) -> { close, apply, layout, destroy }
@@ -743,11 +744,18 @@ ${(p.sizes || []).filter((s) => s.w >= p.min.w && s.h >= p.min.h).map((s) => `<l
             if (previewBar) { previewBar.remove(); previewBar = null; }
             apply(working); markDirty(); setStatus('Undone.'); announce('Undone.');
         });
-        host.querySelector('[data-reset]').addEventListener('click', () => {
+        host.querySelector('[data-reset]').addEventListener('click', async () => {
             preview = null;
             if (previewBar) { previewBar.remove(); previewBar = null; }
-            pushUndo(); working = defaults(); apply(working); markDirty(); setStatus('Reset to the default. Save it to keep it.', 'ok');
-            announce('Reset to the default.');
+            pushUndo(); working = defaults(); apply(working); markDirty();
+            if (typeof opts.onReset !== 'function') { setStatus('Reset to the default. Save it to keep it.', 'ok'); announce('Reset to the default.'); return; }
+            setStatus('Resetting to the default…');
+            try {
+                const r = await opts.onReset({ surface: catalog.id, device });
+                if (r && r.ok === false) { setStatus(`Couldn't reset: ${(r.reasons && r.reasons[0]) || 'try again.'}`, 'bad'); return; }
+                dirty = false; paintActions();
+                setStatus('Reset to the default.', 'ok'); announce('Reset to the default. It comes back next time.');
+            } catch (err) { setStatus(`Couldn't reset: ${String(err && err.message || err)}`, 'bad'); }
         });
         host.querySelector('[data-save]').addEventListener('click', async () => {
             if (saving) return;
