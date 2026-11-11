@@ -1,6 +1,6 @@
 # Changelog
 
-## 4.206.0 — 2026-11-11
+## 4.208.0 — 2026-11-11
 
 **One move engine for every floating thing: the picture-in-picture's drag, flick, tuck, pinch, corner and place, now
 shared and adopted by the window.**

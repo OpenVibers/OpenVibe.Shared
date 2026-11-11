@@ -1,5 +1,5 @@
 'use strict';
-// ov-float.js (4.206.0) in a real headless Chrome: a box docked in its frame, lifted on the first move and floating
+// ov-float.js (4.208.0) in a real headless Chrome: a box docked in its frame, lifted on the first move and floating
 // over the page, dropped back over its frame it docks, thrown past a side it tucks with its tab, the tab brings it
 // back, the arrows, + and T move and size it, the corner grip sizes it, Home puts it back, the place is kept and
 // comes back on a reload, a pluggable account store receives each save, and `ov:float` and OVFloat.layout() say where

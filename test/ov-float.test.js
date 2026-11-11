@@ -1,5 +1,5 @@
 'use strict';
-// The move engine's geometry (ov-float.js, 4.206.0): the box a float takes in its frame, the snap after a drop, the
+// The move engine's geometry (ov-float.js, 4.208.0): the box a float takes in its frame, the snap after a drop, the
 // tuck decision and the flick's projection. These are the numbers the browser check then drives by hand.
 //
 //   node test/ov-float.test.js

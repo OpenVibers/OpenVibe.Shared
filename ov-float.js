@@ -1,5 +1,5 @@
 /**
- * ov-float.js (openvibe-shared 4.206.0): the move engine behind a picture-in-picture, a panel window or any box that
+ * ov-float.js (openvibe-shared 4.208.0): the move engine behind a picture-in-picture, a panel window or any box that
  * floats over a page. It is Live's PiP move (public/js/stream-pip.js, 2026-11-11: "move it anywhere … mobile and
  * desktop … more solid feeling and more responsive") lifted out whole, so every floating thing behaves the same:
  *
