@@ -266,6 +266,8 @@
 .ovs-grid.is-mini .ovs-tile { min-height: 48px; padding: 6px 8px; border-radius: 12px; transition: background-color .15s, transform .12s; }
 .ovs-grid.is-mini .ovs-tile:active { transform: scale(.97); }
 .ovs-grid.is-mini .ovs-ic { width: 32px; height: 32px; border-radius: 10px; }
+/* 4.202.0: on a phone a site's name sits under its mark, so the whole name shows (Download, Community: not "Downlo…"). */
+@media (max-width: 480px) { .ovs-grid.is-mini .ovs-tile { flex-direction: column; justify-content: center; gap: 5px; min-height: 64px; padding: 6px 2px 5px; text-align: center; } .ovs-grid.is-mini .ovs-tile b { max-width: 100%; font-size: 12.5px; } }
 .ovs-group[data-sec="all"] { display: flex; align-items: center; gap: 10px; }
 .ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
