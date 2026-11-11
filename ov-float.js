@@ -87,6 +87,14 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         return el && typeof el.getBoundingClientRect === 'function' ? el.getBoundingClientRect() : viewport();
     }
 
+    /** The box an absolutely positioned child measures its percentages on: the frame's padding box, not its border. */
+    function contentRect(el) {
+        const r = rectOf(el);
+        if (!el || !el.clientWidth || !el.clientHeight) return r;
+        const left = r.left + (el.clientLeft || 0), top = r.top + (el.clientTop || 0);
+        return { left, top, width: el.clientWidth, height: el.clientHeight, right: left + el.clientWidth, bottom: top + el.clientHeight };
+    }
+
     function reduced() {
         const m = document.documentElement && document.documentElement.getAttribute('data-ov-motion');
         if (m === 'off') return true;
@@ -100,7 +108,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
 
     function frameRect(inst) {
         if (inst.geom.mode === 'float' && !inFullscreen(inst)) return viewport(inst);
-        return inst.frame ? rectOf(inst.frame) : viewport(inst);
+        return inst.frame ? contentRect(inst.frame) : viewport(inst);
     }
 
     /* ── geometry (pure; the tests call these) ─────────────────────────────────────────────────────────────── */
@@ -456,7 +464,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             if (!drag || !drag.lifted) return;
             el.style.transform = `translate3d(${drag.dx}px, ${drag.dy}px, 0)`;
             const c = drag.r;
-            const p = inst.frame ? rectOf(inst.frame) : null;
+            const p = inst.frame ? contentRect(inst.frame) : null;
             if (p) hint(overFrame(c.left + drag.dx + c.width / 2, c.top + drag.dy + c.height / 2, p));
         };
         const lift = () => {
@@ -562,7 +570,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             const vp = viewport(inst);
             const vhei = vp.height;
             const top = Math.min(Math.max(0, fl.top), vhei - from.height);
-            const p = inst.frame ? rectOf(inst.frame) : null;
+            const p = inst.frame ? contentRect(inst.frame) : null;
             const fs = inFullscreen(inst);
             const overPlayer = !!p && (fs || overFrame(fl.left + from.width / 2, top + from.height / 2, p));
             const frame = overPlayer ? p : vp;
