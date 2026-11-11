@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.211.0 — 2026-11-11
+
+- **A composer's count shows only near its limit (ov-composer.js).** The last 15% of the box, at most 200 and at least
+  20 characters: a 120-character search box said "120 left" while it was empty (Exchange's /models).
+
 ## 4.210.0 — 2026-11-11
 
 - **A page's title and its line wrap before they are cut (kit.css `.ovk-head`).** The title takes up to two lines and

@@ -190,8 +190,10 @@ const server = http.createServer((req, res) => {
         f = await page.evaluate(`({ mine: [...document.querySelectorAll('.ovw .ovc-set-l b')].map((b) => b.textContent), box: document.querySelector('#c1 textarea').value })`);
         assert.deepEqual(f, { mine: ['/sig'], box: '' }, 'the sheet lists your commands; the /settings word left the box');
 
-        // The count near the limit (600: it shows from 200 left).
+        // The count near the limit (600: it shows from 90 left, the last 15%); far from it, nothing.
         await page.evaluate(`OVWindow.closeAll()`);
+        await page.evaluate(`(() => { const t = document.querySelector('#c1 textarea'); t.value = 'x'.repeat(450); t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        assert.equal(await page.evaluate(`document.querySelector('#c1 .ovc-count').hidden`), true, '150 left of 600 is not near the limit');
         await page.evaluate(`(() => { const t = document.querySelector('#c1 textarea'); t.value = 'x'.repeat(590); t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         f = await page.evaluate(`({ shown: !document.querySelector('#c1 .ovc-count').hidden, text: document.querySelector('#c1 .ovc-count').textContent, low: document.querySelector('#c1 .ovc-count').classList.contains('is-low') })`);
         assert.deepEqual(f, { shown: true, text: '10 left', low: true });
