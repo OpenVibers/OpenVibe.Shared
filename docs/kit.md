@@ -362,6 +362,37 @@ kit.tool({
 The frame is part of Kit 2: its look is in `kit-data.css` and its behaviour (the clear button and the examples) in
 `kit-data-web.js`. A page that draws no tool loads neither, so `kit.css` and `kit-web.js` weigh what they did.
 
+## Buttons (4.204.0)
+
+A button says what it does and shows what is happening. One look on every site; every motion follows the motion
+setting (Calm makes it smaller and slower, Off removes it).
+
+| Kind | When | Look |
+|---|---|---|
+| `hero` | the one thing the page is for (Go live, Start) | 52 px, the accent gradient, a glow |
+| `primary` | the main action of a section | filled accent |
+| `soft` | a second choice that still matters (Invite, Finish setup) | tinted accent |
+| `quiet` | everything else | panel with a line |
+| `ghost` | a link-like action inside text or a row | accent words only |
+| `danger` | destructive; with `hold` it asks for a press and hold | red line |
+| `live` | on air now | red, a breathing dot |
+
+Status, on any kind: `badge` (a count at the corner, 99+ at most), `dot` (`ok`, `warn`, `bad`, `live`; live
+breathes), `pressed` (a toggle: aria-pressed, tinted), `attention` (the one next step: a soft ring goes out now and
+then until it is pressed; one per screen), `nudge` (the icon moves by meaning on hover: `forward`, `back`, `add`,
+`open`, `down`, `refresh`), `iconEnd` (an icon after the words), and `style="--ovk-progress: .4"` (a fill inside it).
+
+```js
+kit.button({ label: 'Go live', icon: 'live', kind: 'hero', nudge: 'forward', iconEnd: 'chevron' })
+kit.button({ label: 'Messages', icon: 'chat', kind: 'quiet', badge: 3, type: 'button' })
+kit.button({ label: 'Delete', kind: 'danger', hold: 1200, type: 'button' })
+await OpenVibeKitWeb.busy(button, fetch('/api/save', { method: 'POST' }))   // busy → a check, or a shake and red
+```
+
+`busy(button, work)` keeps the words, adds the mark's wait beside them and aria-busy, and disables the button; when the
+work resolves the button turns green with a check for a moment, and when it fails it shakes once and turns red. A
+`hold` button fires its click only after the hold has run (pointer, Enter or Space); letting go early cancels.
+
 ## The navbar's links
 
 The 2026-10-28 sweep of all 38 sites' bars found three habits that made them feel crowded and repetitive:

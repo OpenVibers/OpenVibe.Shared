@@ -158,9 +158,22 @@
 
     // ── Controls ──
     /** A button or a link that looks like one. kind: 'primary' (default), 'quiet', 'danger', 'ghost'; small: a pill. */
-    function button({ href = null, type = 'submit', label = '', icon: ic = '', kind = 'primary', small = false, name = null, value = null, attrs: extra = null } = {}) {
+    // 4.204.0, buttons that show what they do and what is happening (docs/kit.md#buttons): kind 'hero' | 'soft' | 'live'
+    // beside primary/quiet/ghost/danger; nudge (forward, back, add, open, down, refresh) moves the icon by meaning;
+    // iconEnd puts it after the words; attention marks the one next step; badge a count; dot ok|warn|bad|live; hold
+    // (ms) makes a destructive button hold-to-confirm; pressed makes it a toggle.
+    function button({ href = null, type = 'submit', label = '', icon: ic = '', iconEnd = '', kind = 'primary', small = false, name = null, value = null, attrs: extra = null,
+        nudge = null, attention = false, badge = null, dot = null, hold = null, pressed = null } = {}) {
         const cls = `ovk-btn ovk-btn--${esc(kind)}${small ? ' ovk-btn--small' : ''}`;
-        const inner = `${ic ? icon(ic) : ''}<span>${esc(label)}</span>`;
+        const more = { ...(extra || {}) };
+        if (nudge) more['data-nudge'] = nudge;
+        if (attention) more['data-attention'] = '';
+        if (badge != null && badge !== '' && badge !== 0) more['data-badge'] = Number(badge) > 99 ? '99+' : String(badge);
+        if (dot) more['data-dot'] = dot;
+        if (hold) more['data-hold'] = String(Math.max(400, Math.min(4000, Number(hold) || 1200)));
+        if (pressed != null) more['aria-pressed'] = pressed ? 'true' : 'false';
+        extra = Object.keys(more).length ? more : null;
+        const inner = `${ic ? icon(ic) : ''}<span>${esc(label)}</span>${iconEnd ? icon(iconEnd) : ''}`;
         if (href != null) return `<a class="${cls}" href="${esc(url(href))}"${attrs(extra)}>${inner}</a>`;
         return `<button class="${cls}" type="${type === 'button' ? 'button' : type === 'reset' ? 'reset' : 'submit'}"${name ? ` name="${esc(name)}"` : ''}${value != null ? ` value="${esc(value)}"` : ''}${attrs(extra)}>${inner}</button>`;
     }
