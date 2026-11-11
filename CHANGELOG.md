@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.206.0 — 2026-11-11
+
+- The Dock's Code task rows open the shared AG-UI run card in a window. The card follows the owner-authorized run stream and resumes from its last event after a disconnect; its link opens the full Codes task page.
+
 ## 4.205.0 — 2026-11-11
 
 **Agents show their work everywhere: the one step view reads AG-UI, compact like the portal, with the one composer to
