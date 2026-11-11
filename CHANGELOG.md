@@ -18,7 +18,7 @@ A train of four pull requests (one line each):
   towers, the cable and the deck; both have solid twins, drawn to the set's size (the long side 0.79 of the box);
   the drop-in, sprite and fonts are rebuilt (#476).
 
-## 4.213.0 — 2026-11-11
+## 4.215.0 — 2026-11-11
 
 - **One inline comment thread for every site: `thread.renderThread` and `thread-inline.css` (new), beside the
   composer.** MediaHub's Video and Pics item pages and Community's paste and `/c` pages rendered two copies of the

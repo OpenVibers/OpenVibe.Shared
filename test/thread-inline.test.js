@@ -1,5 +1,5 @@
 'use strict';
-// openvibe-shared/thread's renderThread (4.213.0): the inline Community thread Video, Pics, Community's paste page and
+// openvibe-shared/thread's renderThread (4.215.0): the inline Community thread Video, Pics, Community's paste page and
 // /c show, carried from OpenVibe.MediaHub test/comments-inline.test.js and OpenVibe.Community's page tests. The
 // markup is one renderer: attachments only where the site allows them, the draft kept, and signed out the composer's
 // spot is one sign-in line (the whole empty state when nobody has commented).
