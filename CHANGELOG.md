@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.212.0 — 2026-11-11
+
+- **The bar catches up on balance changes across sites (ask 273).** Once a signed-in wallet loads, its pill plays each
+  currency's net gain or loss once and marks that currency's cursor read through Network's frame relay. Calm keeps one
+  quiet effect; Motion Off updates the figures without an effect. The Wallet sheet starts with the recent net amounts
+  and the API's plain reason names. This release follows 4.211.0 (PR #472).
+
 ## 4.210.0 — 2026-11-11
 
 - **A page's title and its line wrap before they are cut (kit.css `.ovk-head`).** The title takes up to two lines and

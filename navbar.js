@@ -579,7 +579,6 @@
     };
     const NAV_ICONS_REV = '14197adc3df5';   // sha256(nav-icons.js), first 12 hex: its ?v= (cacheable forever)
     // END generated
-    // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
     // The navbar's icons are filled paths (no Font Awesome CSS needed): the ones above ship here, the rest
     // (nav-icons.js) load after first paint when a link, chip or menu row names one, into an empty <svg> of their
     // size. Anything unknown, or nav-icons.js failing, falls back to <i class="fa-solid">.
@@ -607,7 +606,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '0dbfc679c2a2', 'dock.js': '0ec4ae476c63', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'bottom.js': 'b9f708d04350', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': 'c72c0e31505d', 'ov-home.js': 'cdacf9b1154b', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'b5a78ad67810', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '749120bfd24b', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '771efd0e3963', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '0dbfc679c2a2', 'dock.js': '0ec4ae476c63', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '4b39796c5145', 'history.js': 'f9fb9e096c65', 'bottom.js': 'b9f708d04350', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': 'c72c0e31505d', 'ov-home.js': 'cdacf9b1154b', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '22286b70f8f6', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '2239673adba8', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -2047,11 +2046,7 @@
         });
     }
 
-    /**
-     * wallet: true — OpenCoins and Vibes as chips in the bar on any site (owner, 2026-10-27). A site's own chips with
-     * those ids (Live) win. The last balances are kept per person so the chips paint at once; they refresh from the
-     * Network and Billing in the background and when the tab returns after a minute; on a phone they fold into one.
-     */
+    // Wallet balances fold into one pill and refresh when the tab returns.
     const WALLET_CHIPS = [
         { id: 'coins', icon: 'fa-coins', tone: 'gold', label: 'OpenCoins', title: 'Open Wallet' },
         { id: 'vibes', icon: 'fa-wallet', tone: 'green', label: 'Vibes', title: 'Open Wallet' },
@@ -2108,13 +2103,14 @@
             _walletWatch = true;
             document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { loadWalletChips(); loadUnread(); } });
         }
-        // No token (httpOnlyAccess sites): the Network cookie reads it. Unreadable with nothing kept hides the chips.
         const same = () => _config.user === u && (_config.token || null) === token;
         const failed = () => { if (!same() || _walletData) return; _walletData = false; if (_navEl) render(); };
         fetch(`${(_config.frameBase || 'https://openvibe.network/api/frame').replace(/\/+$/, '')}/wallet/api/v1/me/wallet`,
             token ? { headers: { Authorization: `Bearer ${token}` }, credentials: 'omit' } : { credentials: 'include' })
             .then(async (r) => { if (!r.ok) return failed(); const data = await r.json(); if (!same()) return;
-                _walletData = data; if (_navEl) render(); }).catch(failed);
+                _walletData = data; if (_navEl) render();
+                (root.OpenVibePurse?.catchUp || (v => root.__ovPursePending = v))({ frameBase: _config.frameBase, token, user: u.subject || u.id, streamer: _config.purse?.streamer, valid: same });
+            }).catch(failed);
     }
 
     function render() {
@@ -2171,7 +2167,6 @@
         bindLinks(nav, links);
         hookSearch(nav);
         hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
-        // The tooltip's file is fetched when a pointer first comes over the bar, not with the page.
         tipWait();
         bindChips(nav);
         bindChipsAll(nav);
