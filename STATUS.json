@@ -4,11 +4,11 @@
   "code": true,
   "wave": "W2",
   "package": "openvibe-shared",
-  "version": "4.211.0",
+  "version": "4.212.0",
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.399.0 (devDependency: the release manifest contract)",
+  "contracts": "openvibe-contracts v0.406.0 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.147.0",
   "features": [
     "the Quest guide on any page and the current Live step in the Dock's agent view (4.209.0)",

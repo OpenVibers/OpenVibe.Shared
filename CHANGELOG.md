@@ -1,10 +1,27 @@
 # Changelog
 
-## 4.211.0 — 2026-11-11
+## 4.212.0 — 2026-11-11
 
 - **A carried Live player can play on any OpenVibe page that permits Network frames.** The portable card keeps the
   original Live embed and channel addresses in its state, while its iframe loads Network's narrow Live player bridge.
   Sound controls and state events pass through that frame. This avoids changing every destination's frame policy.
+
+## 4.211.0 — 2026-11-11
+
+- **The menu's You tab leads with you (ask 158b, "the You tab still sucks").** Its notifications are a preview of the
+  newest three, with no search, filters, foot or Load more until "Show all N" opens the whole list in place; the
+  person's bar, their AI and the rest are a glance below instead of a thousand pixels down. The person's name and handle
+  wrap instead of being cut (rule names-are-never-cut).
+- **An agent's sheet (agent-sheet.js, new; the Dock's Actor row opens it).** One window (ov-window.js: a panel beside
+  the row on a computer, a sheet on a phone) with everything about one agent: its face, state and instructions, then
+  Now, Asks (first when it waits for you, with the count), Work, Schedule, Memory and Computer as tabs (arrow keys move
+  between them), each with its own words when empty; the mark's wait while it reads and Retry when a read fails. Data:
+  Contracts actor.agent-sheet@1 / codes.agent-sheet@1 through Network's relay (/api/frame/agents/:id/sheet,
+  /api/frame/codes-agents/:id/sheet) with the bearer, no cookies; all text, never markup.
+  `OVAgentSheet.open({ kind, id, name, token, frameBase, base, from, openHref })`. The row used to leave for the
+  Actor's page; that page is the sheet's Open now (a modified click still goes straight there).
+- **A composer's count shows only near its limit (ov-composer.js).** The last 15% of the box, at most 200 and at least
+  20 characters: a 120-character search box said "120 left" while it was empty (Exchange's /models).
 
 ## 4.210.0 — 2026-11-11
 

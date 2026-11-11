@@ -44,10 +44,23 @@ const page = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 
 const server = http.createServer((req, res) => {
     if (req.url === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(page); }
-    if (req.url === '/dock-actor.js') { res.writeHead(200, { 'content-type': 'text/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, 'dock-actor.js'))); }
+    const file = req.url.split('?')[0];
+    if (['/dock-actor.js', '/ov-window.js', '/agent-sheet.js'].includes(file)) { res.writeHead(200, { 'content-type': 'text/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, file.slice(1)))); }
     let body = '';
     req.on('data', (c) => { body += c; });
     req.on('end', () => {
+        if (req.url.startsWith('/api/v1/me/agents/')) {
+            calls.push({ method: req.method, url: req.url, auth: req.headers.authorization || '', cookie: req.headers.cookie || '', body: null });
+            res.writeHead(200, { 'content-type': 'application/json' });
+            return res.end(JSON.stringify({
+                agent: { id: 'act_1', name: 'Juniper', face: null, state: 'working', instructions: 'Find remote support jobs <b>now</b>', voice: null },
+                now: { id: 'w1', task: 'Reading the third job post', state: 'running', cost_usd: 0.42 },
+                work: [{ id: 'w0', task: 'Saved two posts', state: 'done', cost_usd: 0.1 }],
+                asks: [{ id: 'ask_1', state: 'waiting', what: 'Apply to Northwind?', why: 'It matches remote and support.' }],
+                asks_empty: 'Requests to approve will appear here.', computer: null,
+                schedules: [{ schedule: 'off', next_run_at: null, last_run_at: null, last_result: null }], memory: [], activity: [],
+            }));
+        }
         if (req.url.startsWith('/api/v1/me/actor')) {
             calls.push({ method: req.method, url: req.url, auth: req.headers.authorization || '', cookie: req.headers.cookie || '', body: body ? JSON.parse(body) : null });
             if (mode === 'none') { res.writeHead(404, { 'content-type': 'application/json' }); return res.end('{"detail":"no actor"}'); }
@@ -176,6 +189,33 @@ const wait = async (pg, expr, ms = 4000) => {
         assert.ok(await wait(pz, `/Resumed/.test(document.querySelector('.ovdac-note').textContent)`), 'it says what happened');
         await pz.close();
 
+        // The row opens the agent's sheet in the one window (agent-sheet.js): its state, the ask first, the parts as tabs
+        // with their own empty words, the bearer and no cookie, the instructions as text.
+        mode = 'actor';
+        const sh = await h.openPage(browser, context, { width: 390, height: 800 });
+        await sh.goto(`${base}/`, { maxMs: 5000 });
+        await wait(sh, `!!document.querySelector('#box.on .ovdac-id')`);
+        calls.length = 0;
+        await sh.evaluate(`document.querySelector('.ovdac-id').click()`);
+        assert.ok(await wait(sh, `!!document.querySelector('.ovw .ovas-tabs')`), 'the sheet opens');
+        const sheet = await sh.evaluate(`(() => { const w = document.querySelector('.ovw'); const sel = w.querySelector('.ovas-tab[aria-selected=true]');
+            const shown = [...w.querySelectorAll('.ovas-part')].find((p) => !p.hidden);
+            return { name: w.querySelector('.ovas-name b').textContent, state: w.querySelector('.ovas-state').textContent,
+                tabs: [...w.querySelectorAll('.ovas-tab')].map((t) => t.firstChild.textContent), first: sel.firstChild.textContent, count: (sel.querySelector('em') || {}).textContent,
+                ask: shown.textContent, bold: w.querySelectorAll('.ovas-name b b').length, open: (w.querySelector('.ovas-open') || {}).href || '' }; })()`);
+        assert.deepStrictEqual({ name: sheet.name, state: sheet.state, tabs: sheet.tabs, first: sheet.first, count: sheet.count },
+            { name: 'Juniper', state: 'Working', tabs: ['Now', 'Asks', 'Work', 'Schedule', 'Memory', 'Computer'], first: 'Asks', count: '1' });
+        assert.ok(sheet.ask.includes('Apply to Northwind?') && sheet.ask.includes('It matches remote and support.'), 'the ask with its reason');
+        assert.strictEqual(sheet.bold, 0, 'the instructions are text');
+        assert.ok(sheet.open.endsWith('/you'), 'the Actor\'s page is one tap further');
+        const read = calls.find((c) => c.url.startsWith('/api/v1/me/agents/'));
+        assert.ok(read && read.url === '/api/v1/me/agents/act_1?view=sheet' && read.auth === 'Bearer tok-1' && read.cookie === '', 'the sheet read carries the bearer, no cookie');
+        await sh.evaluate(`document.querySelector('#ovas-t-memory').click()`);
+        assert.strictEqual(await sh.evaluate(`document.querySelector('#ovas-p-memory').textContent`), 'Nothing remembered yet.', 'an empty part says so');
+        await sh.evaluate(`document.querySelector('#ovas-t-now').click()`);
+        assert.ok((await sh.evaluate(`document.querySelector('#ovas-p-now').textContent`)).includes('Reading the third job post'), 'Now shows the work in progress');
+        await sh.close();
+
         // No Actor: nothing shows.
         mode = 'none';
         const none = await h.openPage(browser, context, { width: 390, height: 800 });
@@ -184,7 +224,7 @@ const wait = async (pg, expr, ms = 4000) => {
         const empty = await none.evaluate(`(() => { const b = document.getElementById('box'); return { on: b.classList.contains('on'), kids: b.children.length, shown: getComputedStyle(b).display }; })()`);
         assert.deepStrictEqual(empty, { on: false, kids: 0, shown: 'none' }, 'a person with no Actor sees nothing');
         await none.close();
-        console.log('dock-actor-chrome: the Actor block shows the step, asks with their buttons, tells, pauses and resumes with the bearer, keeps the typed line, text only, 44 px, nothing without an Actor ok');
+        console.log('dock-actor-chrome: the Actor block shows the step, asks with their buttons, tells, pauses and resumes with the bearer, keeps the typed line, opens its sheet, text only, 44 px, nothing without an Actor ok');
     } finally {
         await browser.close();
         server.close();

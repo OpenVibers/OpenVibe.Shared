@@ -26,6 +26,8 @@
     if (typeof document === 'undefined' || root.OpenVibeDockActor) return;
 
     const POLL_MS = 15000;
+    const ACTOR_REV = { 'ov-window.js': 'd3d8f9e3e6d2', 'agent-sheet.js': '8d150490ad64' };
+    const SCRIPT_BASE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : '/shared/';
     const STATE = { working: 'Working', resting: 'Resting', paused: 'Paused', waiting: 'Waiting for you' };
     // The lines Actor sends as "the current step" when there is none: the state already says them.
     const NOT_A_STEP = /^(paused|resting\b.*)\.?$/i;
@@ -191,6 +193,26 @@
         // ── The parts, built once ────────────────────────────────────────────────────────────────────────────────
         const head = h('div', 'ovdac-head');
         const id = h('a', 'ovdac-id'); id.href = openBase + '/you'; id.target = '_blank'; id.rel = 'noopener';
+        function loadScript(file, ready) {
+            if (ready()) return Promise.resolve(true);
+            return new Promise((resolve) => {
+                const sid = `ovdac-${file}`;
+                let script = d.getElementById(sid);
+                if (!script) { script = d.createElement('script'); script.id = sid; script.src = SCRIPT_BASE + file + (ACTOR_REV[file] ? `?v=${ACTOR_REV[file]}` : ''); script.async = true; d.head.appendChild(script); }
+                script.addEventListener('load', () => resolve(!!ready()), { once: true });
+                script.addEventListener('error', () => resolve(false), { once: true });
+            });
+        }
+        // The row opens its sheet (agent-sheet.js in the one window: now, asks, work, schedule, memory, computer); the
+        // Actor's page is the sheet's "Open". A modified click, or a sheet that cannot load, goes to the page as before.
+        id.addEventListener('click', async (e) => {
+            if (!actor || !(actor.agent_id || actor.id) || e.metaKey || e.ctrlKey || e.shiftKey || e.button) return;
+            e.preventDefault();
+            const ok = (await Promise.all([loadScript('ov-window.js', () => !!root.OVWindow), loadScript('agent-sheet.js', () => !!root.OVAgentSheet)])).every(Boolean);
+            if (!ok) { d.defaultView.open(id.href, '_blank', 'noopener'); return; }
+            root.OVAgentSheet.open({ kind: 'actor', id: actor.agent_id || actor.id, name: actor.name || 'Your Actor', token: o.token,
+                frameBase: o.frameBase, base: direct || null, from: id, openHref: openBase + '/you' });
+        });
         const face = h('span', 'ovdac-face');
         const who = h('span', 'ovdac-who');
         const name = h('span', 'ovdac-name'); const nameText = h('span'); name.append(nameText, icon('go'));
