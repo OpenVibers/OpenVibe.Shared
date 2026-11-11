@@ -12,7 +12,8 @@
  * (OVWindow.setStyle), on every window at once.
  *
  *   const w = OVWindow.open({ id, title, body: node | text, foot: node, kind: 'dialog', size: 'md', from: button,
- *                             label, onClose, bare });   bare: the content draws its own head (the title is still read)
+ *                             label, onClose, bare, width });   bare: the content draws its own head (the title is still
+ *                             read); width: px, for content that wants its own
  *   w.el, w.body, w.foot, w.setTitle(text), w.close()
  * A site's content goes in as nodes (or text, set as text): the window never parses markup it is given.
  */
@@ -27,9 +28,9 @@
   font: 500 15px/1.45 var(--font, Inter, system-ui, -apple-system, 'Segoe UI', sans-serif); border-radius: 20px; overflow: hidden;
   background: var(--ovw-bg); border: 1px solid var(--ovw-line); box-shadow: var(--ovw-shadow); -webkit-backdrop-filter: var(--ovw-blur); backdrop-filter: var(--ovw-blur);
   transform-origin: var(--ov-pop-x, 50%) var(--ov-pop-y, 0); animation: ovw-in .28s cubic-bezier(.2, 1.2, .3, 1) both; }
-:root { --ovw-bg: color-mix(in srgb, var(--bg-elevated, var(--bg-secondary, #111826)) 92%, transparent); --ovw-line: var(--border, rgba(255, 255, 255, .12));
+:root { --ovw-bg: color-mix(in srgb, var(--bg-elevated, var(--bg-secondary, var(--bg-primary, #111826))) 92%, transparent); --ovw-line: var(--border, rgba(255, 255, 255, .12));
   --ovw-shadow: 0 28px 70px rgba(0, 0, 0, .45), 0 2px 8px rgba(0, 0, 0, .2); --ovw-blur: blur(16px) saturate(1.3); }
-html[data-ov-window="solid"] { --ovw-bg: var(--bg-elevated, var(--bg-secondary, #111826)); --ovw-blur: none; }
+html[data-ov-window="solid"] { --ovw-bg: var(--bg-elevated, var(--bg-secondary, var(--bg-primary, #111826))); --ovw-blur: none; }
 html[data-ov-window="outline"] { --ovw-bg: var(--bg-primary, #0b1220); --ovw-blur: none; --ovw-line: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); --ovw-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 20%, transparent), 0 18px 40px rgba(0, 0, 0, .35); }
 .ovw.is-out { animation: ovw-out .16s ease-in both; }
 .ovw-h { flex: none; display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 6px 8px 6px 18px; border-bottom: 1px solid color-mix(in srgb, var(--ovw-line) 70%, transparent); }
@@ -95,6 +96,7 @@ html.ovw-locked { overflow: hidden; }
         const el = document.createElement('section');
         el.className = `ovw is-${kind} is-${['sm', 'md', 'lg', 'full'].includes(o.size) ? o.size : 'md'}${o.bare ? ' is-bare' : ''}`;
         el.style.setProperty('--ovw-z', String(z + 1));
+        if (Number(o.width) > 0) el.style.setProperty('--ovw-w', `${Math.round(Number(o.width))}px`);
         el.setAttribute('role', 'dialog');
         if (modal) el.setAttribute('aria-modal', 'true');
         el.dataset.ovWindow = id;
