@@ -57,7 +57,8 @@
         plane: '<path d="M20 4L3.5 10.8l6.6 3.1l3.1 6.6Z"/><path d="M10.1 13.9l9.9-9.9"/>',
         fire: '<path d="M12 20.5a6.8 6.8 0 0 0 6.8-6.8c0-4.3-2.9-6.8-4.2-10.1c-2 2.3-2.6 4.5-2.6 4.5S10.7 5.8 9.5 3.8C7 6.6 5.2 10 5.2 13.7a6.8 6.8 0 0 0 6.8 6.8Z"/>',
         nodes: '<circle cx="12" cy="5.4" r="2.1"/><circle cx="5.8" cy="17.9" r="2.1"/><circle cx="18.2" cy="17.9" r="2.1"/><path d="M11 7.4L6.8 15.9M13 7.4l4.3 8.6M7.9 17.9h8.3"/>',
-        bridge: '<path d="M3.5 15.6h17M5.6 15.6V10.9M18.4 15.6V10.9M3.5 10.5c3.4 0 5.1-2.6 8.5-2.6s5.1 2.6 8.5 2.6M9 15.6V12.6M15 15.6V12.6M12 15.6V9.2"/>',
+        // Two towers, the cable between them and the deck (2026-11-11 review: the old one read as a bank).
+        bridge: '<path d="M2.5 16h19M6.5 19.5V5M17.5 19.5V5"/><path d="M2.5 10c2 0 3.2-2.3 4-5c2.6 5.6 8.4 5.6 11 0c.8 2.7 2 5 4 5"/><path d="M12 11.2V16"/>',
         'check-circle': '<circle cx="12" cy="12" r="8.5"/><path d="m8 12.4 2.8 2.8L16 9.6"/>',
         'x-circle': '<circle cx="12" cy="12" r="8.5"/><path d="m9 9 6 6M15 9l-6 6"/>',
         'alert-circle': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5M12 16.5h.01"/>',
@@ -436,7 +437,7 @@
         food: '<path d="M4.7 3.3h1.5v4.7h0.6V3.3h1.4v4.7h0.6V3.3h1.5v4.9A2.9 2.9 0 0 1 8.6 10.8V21.7H6.5V10.8a2.9 2.9 0 0 1-1.8-2.7ZM18.9 21.7h-2.3v-7.4h-3V10.6c0-3.9 1.7-6.6 5.2-7.7Z"/>',
         history: '<path d="M5.8 5.8A9.1 9.1 0 1 1 3.2 12.2h3a6.1 6.1 0 1 0 1.8-4.3ZM2.5 2.7v7.2h7.2ZM11.2 8.1h2.2v3.7l2.7 1.6l-1.1 1.8l-3.8-2.3Z"/>',
         compress: '<path d="M9.7 9.7H2.7L9.7 2.7ZM14.3 9.7h7l-7-7ZM9.7 14.3H2.7l7 7ZM14.3 14.3h7l-7 7Z"/>',
-        bridge: '<path d="M3.8 14.5h16.4v2.3H3.8ZM5.2 10.5h1.6v4H5.2ZM17.1 10.5h1.6v4h-1.6Z"/><path class="ln" d="M4 10.6c3.2 0 4.8-2.4 8-2.4s4.8 2.4 8 2.4M9.2 14.5V12.2M14.8 14.5V12.2M12 14.5V9.4"/>',
+        bridge: '<path d="M5.2 4.6h2.6v15.4H5.2ZM16.2 4.6h2.6v15.4h-2.6ZM2.4 14.6h19.2v2.8H2.4Z"/><path class="ln" d="M2.5 10c2 0 3.2-2.3 4-5c2.6 5.6 8.4 5.6 11 0c.8 2.7 2 5 4 5M12 11.2V15"/>',
         text: '<path fill-rule="evenodd" d="M10.2 2.4h3.7l6.8 18.7h-3.4l-1.6-4.7H8.3l-1.6 4.7H3.3ZM9.3 13.6h5.4L12 5.7Z"/>',
         steps: '<path fill-rule="evenodd" d="M2.8 4h4.9v4.9H2.8Zm1 2.5l0.8-0.9l0.9 0.9l1.4-1.4l0.9 0.9l-2.3 2.3ZM2.8 9.4h4.9v4.9H2.8Zm1 2.5l0.8-0.9l0.9 0.9l1.4-1.4l0.9 0.9l-2.3 2.3ZM2.8 15h4.9v4.9H2.8Zm1 2.5l0.8-0.9l0.9 0.9l1.4-1.4l0.9 0.9l-2.3 2.3Z"/><path class="ln" d="M10.6 6.4H20.3M10.6 11.9H20.3M10.6 17.4H20.3"/>',
         // 4.104.0: the next eight by use with a shape to fill (Design's usage count): download, upload, expand, shirt,
