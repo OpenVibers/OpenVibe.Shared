@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const h = require('../browser-harness');
+require('../purse'); // The browser fixture loads and exercises this module with a DOM.
 const { eventually } = h;
 const { fixture } = require('./helpers/wallet-fixture');
 
