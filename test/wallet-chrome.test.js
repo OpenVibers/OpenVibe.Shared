@@ -1,5 +1,6 @@
 'use strict';
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -34,15 +35,15 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
             }
             const wasWorn = await p.evaluate(`document.querySelector('.ov-wallet').innerText.includes('Unequip')`);
             await p.evaluate(`[...document.querySelectorAll('.ov-wallet button')].find(b=>/^(Equip|Unequip)$/.test(b.textContent)).click()`); await wait(150);
-            assert.strictEqual(await p.evaluate(`document.querySelector('.ov-wallet').innerText.includes('Unequip')`), !wasWorn);
+            await eventually(async () => assert.strictEqual(await p.evaluate(`document.querySelector('.ov-wallet').innerText.includes('Unequip')`), !wasWorn));
             await p.evaluate(`[...document.querySelectorAll('.ov-wallet button')].find(b=>b.textContent==='Buy Vibes').click()`);
             assert(await p.evaluate(`document.querySelector('.ov-wallet-checkout').innerText.includes('Continue to checkout')`));
             await p.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }); await wait(50);
-            assert.strictEqual(await p.evaluate(`!!document.querySelector('.ov-wallet')`), false);
-            assert.strictEqual(await p.evaluate(`document.documentElement.style.overflow`), '');
+            await eventually(async () => assert.strictEqual(await p.evaluate(`!!document.querySelector('.ov-wallet')`), false));
+            await eventually(async () => assert.strictEqual(await p.evaluate(`document.documentElement.style.overflow`), ''));
             await p.evaluate(`OpenVibeNavbar.openWallet()`); await wait(150);
             await p.evaluate(`OpenVibeNavbar.setUser(null,null)`);
-            assert.strictEqual(await p.evaluate(`!!document.querySelector('.ov-wallet')`), false, 'signout closes private content');
+            await eventually(async () => assert.strictEqual(await p.evaluate(`!!document.querySelector('.ov-wallet')`), false, 'signout closes private content'));
             const exceptions = p.state.errors || [];
             assert.strictEqual(exceptions.length, 0, JSON.stringify(exceptions));
             await p.close(); await context.dispose();

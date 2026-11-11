@@ -5,6 +5,7 @@
 // "all of OpenVibe" and "Ask Vibe"; arrows and Escape work; titles are text, never markup. Loading: a poster-backed
 // overlay that steps, slows with actions, fails with Retry and fades out; skeleton rows. Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -80,8 +81,8 @@ const server = http.createServer((req, res) => {
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(200);
         // ── Search ──
-        assert.strictEqual(await p.evaluate('!!document.getElementById("openvibe-search-btn")'), true, 'the magnifier is in the bar');
-        assert.strictEqual(await p.evaluate('typeof window.OpenVibeSearch'), 'undefined', 'search.js is not loaded until asked');
+        await eventually(async () => assert.strictEqual(await p.evaluate('!!document.getElementById("openvibe-search-btn")'), true, 'the magnifier is in the bar'));
+        await eventually(async () => assert.strictEqual(await p.evaluate('typeof window.OpenVibeSearch'), 'undefined', 'search.js is not loaded until asked'));
         await p.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true })); 1');
         // search.js loads on first use: wait for its box, not a fixed time (macOS runners took longer than 400 ms, 4.28.0's CI).
         for (let i = 0; i < 50 && !(await p.evaluate('!!document.querySelector(".ovs.is-open .ovs-input")')); i++) await wait(100);
@@ -100,12 +101,12 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(v.placeholder, 'Search Chat, or ask Vibe', 'the site by its short name (4.48.0)');
         // The box completes from this site's pages (and the person's searches, history and sites); Tab takes it.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'Roo'; i.dispatchEvent(new Event('input')); return 1; })()`);
-        assert.strictEqual(await p.evaluate('document.querySelector(".ovs-ghost").textContent'), 'Rooms', 'the completion shows behind the text');
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.querySelector(".ovs-ghost").textContent'), 'Rooms', 'the completion shows behind the text'));
         await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true })); 1');
-        assert.strictEqual(await p.evaluate('document.querySelector(".ovs-input").value'), 'Rooms', 'Tab takes it');
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.querySelector(".ovs-input").value'), 'Rooms', 'Tab takes it'));
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = ''; i.dispatchEvent(new Event('input')); return 1; })()`);
         await wait(100);
-        assert.ok(await p.evaluate('!!document.querySelector(".ovs-grid.is-mini .ovs-tile") && !document.querySelector("[data-ovs-fold=all]")'), 'every site is in the tab itself, compact, with no fold');
+        await eventually(async () => assert.ok(await p.evaluate('!!document.querySelector(".ovs-grid.is-mini .ovs-tile") && !document.querySelector("[data-ovs-fold=all]")'), 'every site is in the tab itself, compact, with no fold'));
         // Typing: one request for the latest text (the earlier one cancelled), this site's results first.
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'slow'; i.dispatchEvent(new Event('input')); setTimeout(() => { i.value = 'night'; i.dispatchEvent(new Event('input')); }, 250); })(); 1`);
         await wait(1200);
@@ -138,22 +139,22 @@ const server = http.createServer((req, res) => {
         assert.ok(/^Searched OpenVibe in \d+ ms · the web through Wikipedia in /.test(v.route), `the route in words: ${v.route}`);
         assert.ok(asked.includes('query:network') && asked.includes('query:web'), 'two questions: OpenVibe quickly, the web on its own');
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'nigh'; i.dispatchEvent(new Event('input')); return 1; })()`);
-        assert.strictEqual(await p.evaluate('document.querySelector(".ovs-rtabs").hidden'), true, 'typing goes back to suggestions');
+        await eventually(async () => assert.strictEqual(await p.evaluate('document.querySelector(".ovs-rtabs").hidden'), true, 'typing goes back to suggestions'));
         await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'night'; i.dispatchEvent(new Event('input')); return 1; })()`);
         await wait(400);
         await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true })); 1');
-        assert.notStrictEqual(await p.evaluate('document.querySelector(".ovs-opt.is-active .ovs-title").textContent'), 'night room', 'arrows move');
+        await eventually(async () => assert.notStrictEqual(await p.evaluate('document.querySelector(".ovs-opt.is-active .ovs-title").textContent'), 'night room', 'arrows move'));
         await p.evaluate('document.querySelector(".ovs-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); 1');
-        assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Escape closes');
+        await eventually(async () => assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Escape closes'));
         // Back closes the menu and stays on the page (4.128.0, the owner 11-07: Back on a phone left the page).
         const before = await p.evaluate('location.href');
         await p.evaluate('document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", bubbles: true })); 1');
         for (let i = 0; i < 30 && !(await p.evaluate('!!document.querySelector(".ovs.is-open")')); i++) await wait(100);
-        assert.strictEqual(await p.evaluate('!!(history.state && history.state.ovsMenu)'), true, 'opening adds one history entry');
+        await eventually(async () => assert.strictEqual(await p.evaluate('!!(history.state && history.state.ovsMenu)'), true, 'opening adds one history entry'));
         await p.evaluate('history.back(); 1');
         await wait(400);
-        assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Back closes the menu');
-        assert.strictEqual(await p.evaluate('location.href'), before, 'and stays on the page');
+        await eventually(async () => assert.strictEqual(await p.evaluate('!!document.querySelector(".ovs.is-open")'), false, 'Back closes the menu'));
+        await eventually(async () => assert.strictEqual(await p.evaluate('location.href'), before, 'and stays on the page'));
 
         // ── The network's cards: a picture before the title, exactly as the entry sent it (Contracts 0.320.0) ──
         // The cards are the Feed tab's (4.149.0).

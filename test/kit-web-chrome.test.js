@@ -5,6 +5,7 @@
 // sent without asking. This checks each of those, and the tool frame's clear button and "Try" examples, in the page.
 // Skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -50,27 +51,27 @@ const server = http.createServer((req, res) => {
         const p = await h.openPage(browser, context, { width: 390 });
         await p.goto(`${base}/`, { maxMs: 5000 });
         await wait(200);
-        assert.strictEqual(await p.evaluate('Math.round(scrollY)'), 0, 'tabs below the fold never scroll the page to themselves');
-        assert.ok(await p.evaluate("document.querySelector('.ovk-tabs').scrollLeft") > 0, 'but their strip shows the open tab');
+        await eventually(async () => assert.strictEqual(await p.evaluate('Math.round(scrollY)'), 0, 'tabs below the fold never scroll the page to themselves'));
+        await eventually(async () => assert.ok(await p.evaluate("document.querySelector('.ovk-tabs').scrollLeft") > 0, 'but their strip shows the open tab'));
         const hasClipboard = await p.evaluate('!!navigator.clipboard');
         if (hasClipboard) assert.strictEqual(await p.evaluate("document.querySelector('[data-ovk-copy]').hidden"), false, 'the copy button shows where the clipboard works');
         await p.evaluate("document.querySelector('[data-ovk-sheet]').click()");
         await wait(100);
-        assert.strictEqual(await p.evaluate("document.getElementById('sh').open"), true, 'the sheet button opens its sheet');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('sh').open"), true, 'the sheet button opens its sheet'));
         await p.evaluate("document.querySelector('#sh [data-ovk-close]').click()");
         await p.evaluate("document.querySelector('form[data-ovk-confirm] button').click()");
         await wait(100);
-        assert.deepStrictEqual(await p.evaluate('window.__asked'), ['Delete it?'], 'a form that asks first asks');
-        assert.ok(!(await p.evaluate("window.__sent.some(([a]) => a === '/gone')")), 'and is not sent when the answer is no');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate('window.__asked'), ['Delete it?'], 'a form that asks first asks'));
+        await eventually(async () => assert.ok(!(await p.evaluate("window.__sent.some(([a]) => a === '/gone')")), 'and is not sent when the answer is no'));
         // The tool frame: the clear button follows the box; a Try example fills the box and runs the tool.
-        assert.strictEqual(await p.evaluate("document.querySelector('.ovk-tool-clear').hidden"), true, 'an empty box hides its clear button');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovk-tool-clear').hidden"), true, 'an empty box hides its clear button'));
         await p.evaluate("document.querySelector('a[data-ovk-try]').click()");
         await wait(100);
-        assert.strictEqual(await p.evaluate("document.getElementById('ovk-tool-q').value"), 'openvibe.network', 'the example fills the box');
-        assert.ok(await p.evaluate("window.__sent.some(([, q]) => q === 'openvibe.network')"), 'and runs the tool (its form is sent)');
-        assert.strictEqual(await p.evaluate("document.querySelector('.ovk-tool-clear').hidden"), false, 'a box with text shows its clear button');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('ovk-tool-q').value"), 'openvibe.network', 'the example fills the box'));
+        await eventually(async () => assert.ok(await p.evaluate("window.__sent.some(([, q]) => q === 'openvibe.network')"), 'and runs the tool (its form is sent)'));
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovk-tool-clear').hidden"), false, 'a box with text shows its clear button'));
         await p.evaluate("document.querySelector('.ovk-tool-clear').click()");
-        assert.strictEqual(await p.evaluate("document.getElementById('ovk-tool-q').value"), '', 'which empties it');
+        await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('ovk-tool-q').value"), '', 'which empties it'));
         await p.close();
         console.log(`kit-web-chrome: ${hasClipboard ? 'copy shows, ' : ''}sheets open, confirms ask, the tool frame's clear and Try work ok`);
     } finally {

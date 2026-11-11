@@ -4,6 +4,7 @@
 // shows it at once; a press, Escape or leaving hides it; an opened button shows none; it is hidden from assistive
 // technology (the element keeps its own name).
 const assert = require('node:assert/strict');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -37,7 +38,7 @@ const server = http.createServer((req, res) => {
 
         // A mouse resting on the button at the right edge: the tooltip, after a moment, under it and on the screen.
         await move(782, 26);
-        assert.equal(await page.evaluate(ON), false, 'not at once: a pointer passing over shows nothing');
+        await eventually(async () => assert.equal(await page.evaluate(ON), false, 'not at once: a pointer passing over shows nothing'));
         assert.ok(await until(ON), 'after a short rest it shows');
         await wait(260);
         const a = await page.evaluate(READ('a'));
@@ -67,7 +68,7 @@ const server = http.createServer((req, res) => {
         await move(400, 300); await wait(600);
         // An opened button shows none.
         await move(38, 26); await wait(700);
-        assert.equal(await page.evaluate(ON), false, 'a button whose panel is open shows no tooltip');
+        await eventually(async () => assert.equal(await page.evaluate(ON), false, 'a button whose panel is open shows no tooltip'));
         await move(400, 300);
         // The keyboard: focus shows it at once; Escape hides it.
         await page.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 });

@@ -5,6 +5,7 @@
 // the magnifier or the drawer's "All sites". Runs in a real headless Chrome (skipped without Chrome or with
 // OV_SKIP_BROWSER=1), with the Frame answer served through a stubbed fetch.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -61,7 +62,7 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(first.display, false, 'this site\'s tab is its pages and every site');
         await p.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click(), true`);
         await wait(150);
-        assert.strictEqual(await p.evaluate(`!!document.querySelector('.ovs-displayrow .ovnav-display')`), true, 'Display is on the You tab');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`!!document.querySelector('.ovs-displayrow .ovnav-display')`), true, 'Display is on the You tab'));
         assert.strictEqual(first.expanded, 'true', 'the burger says the menu is open');
         // The drawer's "All sites" (kept for sites that ask for the legacy drawer) opens the list of every site.
         await p.evaluate(`document.querySelector('#openvibe-drawer [data-open-launcher]').click(), true`);

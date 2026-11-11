@@ -17,6 +17,10 @@ place for the network's CSP.**
   with `data-ovc-no-files` keeping its picture upload its own. (Was #458, never released.)
 - **Players start sooner (`player.js`, #454).** The poster stays until a frame is presented; preload follows the
   connection; battery-aware HLS attachment with a low first rung. docs/player-startup.md.
+- **No more macOS flakes from fixed sleeps (tests).** A browser test now checks the page with `eventually()` from
+  browser-harness (it retries until the page is there, 5 s at most) instead of after a guessed sleep: 382 checks in 26
+  files, including menu-places-chrome, whose 180 ms sleep against a 140 ms debounce failed on the slow macOS runners
+  and held back 4.202.0 and 4.203.0. `test/fixed-waits.test.js` keeps the count of sleep-then-check places at zero.
 - **`openvibe-shared/csp` (#455).** One place for the network's Content-Security-Policy pieces; `connectSources()`
   names Media, the composer's upload origin.
 

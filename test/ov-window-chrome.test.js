@@ -5,6 +5,7 @@
 // opens again where it was left; on a phone every kind is a sheet that a swipe down closes; the window style is one
 // attribute for every window; content given as text is set as text.
 const assert = require('node:assert/strict');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -42,22 +43,22 @@ window.mk = (o) => { const f = document.createElement('div'); const a = document
         assert.ok(v.popX !== '', 'it grows out of its button');
         // The focus stays inside: Tab from the last control goes to the first (×), Shift+Tab from the first to the last.
         await page.evaluate(`document.getElementById('last').focus()`); await key(page, 'Tab');
-        assert.equal(await page.evaluate(`document.activeElement.className`), 'ovw-x', 'Tab wraps to the first control (×)');
+        await eventually(async () => assert.equal(await page.evaluate(`document.activeElement.className`), 'ovw-x', 'Tab wraps to the first control (×)'));
         await key(page, 'Tab', true);
-        assert.equal(await page.evaluate(`document.activeElement.id`), 'last', 'Shift+Tab wraps to the last');
+        await eventually(async () => assert.equal(await page.evaluate(`document.activeElement.id`), 'last', 'Shift+Tab wraps to the last'));
         // A second window on top: Escape closes the top one only.
         await page.evaluate(`window.w2 = mk({ title: 'Send', from: document.getElementById('last') })`);
-        assert.equal(await page.evaluate(`document.querySelectorAll('.ovw').length`), 2);
+        await eventually(async () => assert.equal(await page.evaluate(`document.querySelectorAll('.ovw').length`), 2));
         await key(page, 'Escape'); await wait(350);
-        assert.equal(await page.evaluate(`document.querySelectorAll('.ovw:not(.is-out)').length`), 1, 'Escape closed the top window');
-        assert.equal(await page.evaluate(`document.activeElement.id`), 'last', 'the focus went back to what opened it');
+        await eventually(async () => assert.equal(await page.evaluate(`document.querySelectorAll('.ovw:not(.is-out)').length`), 1, 'Escape closed the top window'));
+        await eventually(async () => assert.equal(await page.evaluate(`document.activeElement.id`), 'last', 'the focus went back to what opened it'));
         await key(page, 'Escape'); await wait(350);
         v = await page.evaluate(`({ n: document.querySelectorAll('.ovw').length, scrims: document.querySelectorAll('.ovw-scrim').length, focus: document.activeElement.id, locked: document.documentElement.classList.contains('ovw-locked'), shut: window.shut })`);
         assert.deepEqual(v, { n: 0, scrims: 0, focus: 'open', locked: false, shut: ['escape', 'escape'] }, 'both gone, the page free, the focus back on Open');
         // A press outside a dialog closes it.
         await page.evaluate(`mk({})`); await wait(80);
         await page.evaluate(`document.querySelector('.ovw-scrim').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))`); await wait(350);
-        assert.equal(await page.evaluate(`document.querySelectorAll('.ovw').length`), 0, 'a press outside closes a dialog');
+        await eventually(async () => assert.equal(await page.evaluate(`document.querySelectorAll('.ovw').length`), 0, 'a press outside closes a dialog'));
         // Text is text.
         await page.evaluate(`OVWindow.open({ title: '<b>x</b>', body: '<img src=x onerror=alert(1)>' })`);
         v = await page.evaluate(`({ t: document.querySelector('.ovw-t').textContent, imgs: document.querySelectorAll('.ovw img').length })`);
@@ -75,18 +76,18 @@ window.mk = (o) => { const f = document.createElement('div'); const a = document
         await page.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: hb.x + 200, y: hb.y + 150, button: 'left' });
         await page.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: hb.x + 200, y: hb.y + 150, button: 'left', clickCount: 1 });
         const moved = await page.evaluate(`(() => { const r = document.querySelector('.ovw').getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top) }; })()`);
-        assert.deepEqual(await page.evaluate(`JSON.parse(localStorage.getItem('ov:window:dock-test'))`), moved, 'where it was left is kept');
+        await eventually(async () => assert.deepEqual(await page.evaluate(`JSON.parse(localStorage.getItem('ov:window:dock-test'))`), moved, 'where it was left is kept'));
         await page.evaluate('p1.close()'); await wait(300);
         await page.evaluate(`mk({ kind: 'panel', id: 'dock-test', title: 'Dock', from: document.getElementById('pan') })`);
         await wait(400);
-        assert.deepEqual(await page.evaluate(`(() => { const r = document.querySelector('.ovw').getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top) }; })()`), moved, 'and it opens there again');
+        await eventually(async () => assert.deepEqual(await page.evaluate(`(() => { const r = document.querySelector('.ovw').getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top) }; })()`), moved, 'and it opens there again'));
         await page.evaluate('OVWindow.closeAll()'); await wait(300);
 
         // The window style: one attribute, every window.
-        assert.equal(await page.evaluate(`OVWindow.setStyle('outline')`), 'outline');
-        assert.equal(await page.evaluate(`document.documentElement.getAttribute('data-ov-window')`), 'outline');
-        assert.equal(await page.evaluate(`OVWindow.setStyle('nonsense')`), 'glass', 'an unknown style is the default');
-        assert.equal(await page.evaluate(`document.documentElement.getAttribute('data-ov-window')`), null);
+        await eventually(async () => assert.equal(await page.evaluate(`OVWindow.setStyle('outline')`), 'outline'));
+        await eventually(async () => assert.equal(await page.evaluate(`document.documentElement.getAttribute('data-ov-window')`), 'outline'));
+        await eventually(async () => assert.equal(await page.evaluate(`OVWindow.setStyle('nonsense')`), 'glass', 'an unknown style is the default'));
+        await eventually(async () => assert.equal(await page.evaluate(`document.documentElement.getAttribute('data-ov-window')`), null));
         await page.close();
 
         // A phone: every kind is a sheet; a swipe down on its head closes it.
@@ -101,8 +102,8 @@ window.mk = (o) => { const f = document.createElement('div'); const a = document
         await ph.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: sh.x, y: sh.y + 260, button: 'left' });
         await ph.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: sh.x, y: sh.y + 260, button: 'left', clickCount: 1 });
         await wait(400);
-        assert.equal(await ph.evaluate(`document.querySelectorAll('.ovw').length`), 0, 'a swipe down closes the sheet');
-        assert.deepEqual(await ph.evaluate('window.shut'), ['swipe']);
+        await eventually(async () => assert.equal(await ph.evaluate(`document.querySelectorAll('.ovw').length`), 0, 'a swipe down closes the sheet'));
+        await eventually(async () => assert.deepEqual(await ph.evaluate('window.shut'), ['swipe']));
         await ph.close();
         console.log('ov-window-chrome: a named modal dialog from its button, focus kept and given back, stacked Escape, outside press, text as text, a panel beside its button that keeps its place, one window style, a phone sheet closed by a swipe');
     } finally {

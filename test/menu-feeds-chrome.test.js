@@ -5,6 +5,7 @@
 // and arrows; ticking one shows it, an arrow reorders, at most four, and the choice is kept on this device. A real
 // headless Chrome; skipped without Chrome.
 const assert = require('assert');
+const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -64,11 +65,11 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`), 'the menu opened');
         // 4.149.0 (the owner: tabs at the top, a Feed tab, remember the last one): this site's tab first, then Feed and You.
-        assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-starttabs .ovs-tab')].map((t) => t.getAttribute('data-tab') + ':' + t.getAttribute('aria-selected'))`), ['here:true', 'feed:false', 'you:false'], 'three tabs, this site first');
-        assert.deepStrictEqual(await p.evaluate(SHOWN), [], 'the feeds are the Feed tab\'s, not this site\'s');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-starttabs .ovs-tab')].map((t) => t.getAttribute('data-tab') + ':' + t.getAttribute('aria-selected'))`), ['here:true', 'feed:false', 'you:false'], 'three tabs, this site first'));
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), [], 'the feeds are the Feed tab\'s, not this site\'s'));
         await p.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click(), true`);
         await wait(150);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds', 'Top stories', 'Today'], 'by default, every feed (owner, 11-09)');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds', 'Top stories', 'Today'], 'by default, every feed (owner, 11-09)'));
         // 4.139.0: a row with a picture has no site icon beside it; in its group a row without one carries the icon in a
         // picture-sized tile, so the titles line up. A group with no pictures keeps plain icons.
         const looks = await p.evaluate(`[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="net:"]')].map((g) => [...document.querySelectorAll('.ovs-list li.ovs-item')].filter((li) => li.getAttribute('data-sec') === g.getAttribute('data-sec')).map((li) => { const a = li.firstElementChild; const first = a && a.firstElementChild; return first ? (first.tagName === 'IMG' ? 'img' : first.classList.contains('ovs-thumb--ico') ? 'tile' : first.classList.contains('ovs-ic') ? 'icon' : first.className) : '?'; }))`);
@@ -78,33 +79,33 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
 
         await p.evaluate(`document.querySelector('[data-ovs-fold="feeds"]').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs-feeds')`), 'the chooser opens in the menu');
-        assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-feed b')].map((b) => b.textContent)`), ['Trending', 'New worlds', 'Top stories', 'Today']);
-        assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('[data-ovs-feed]')].map((x) => x.checked)`), [true, true, true, true]);
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-feed b')].map((b) => b.textContent)`), ['Trending', 'New worlds', 'Top stories', 'Today']));
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(`[...document.querySelectorAll('[data-ovs-feed]')].map((x) => x.checked)`), [true, true, true, true]));
         // Turn two off: the rest show.
         await p.evaluate(`document.querySelector('[data-ovs-feed="news:top"]').click(), true`);
         await wait(80);
         await p.evaluate(`document.querySelector('[data-ovs-feed="today:today"]').click(), true`);
         await wait(100);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds'], 'a feed turned off goes');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds'], 'a feed turned off goes'));
 
         // Tick Today: it shows, after the two.
         await p.evaluate(`document.querySelector('[data-ovs-feed="today:today"]').click(), true`);
         await wait(100);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds', 'Today']);
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Trending', 'New worlds', 'Today']));
         // Move Today up twice: first.
         await p.evaluate(`document.querySelector('[data-ovs-feed-move="up|today:today"]').click(), true`);
         await wait(60);
         await p.evaluate(`document.querySelector('[data-ovs-feed-move="up|today:today"]').click(), true`);
         await wait(100);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'Trending', 'New worlds'], 'the arrows order them');
-        assert.strictEqual(await p.evaluate(`document.activeElement && document.activeElement.getAttribute('data-ovs-feed-move')`), 'up|today:today', 'focus stays on the arrow');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'Trending', 'New worlds'], 'the arrows order them'));
+        await eventually(async () => assert.strictEqual(await p.evaluate(`document.activeElement && document.activeElement.getAttribute('data-ovs-feed-move')`), 'up|today:today', 'focus stays on the arrow'));
         // Untick Trending; tick Top stories: four at most.
         await p.evaluate(`document.querySelector('[data-ovs-feed="media-hub:trending"]').click(), true`);
         await wait(60);
         await p.evaluate(`document.querySelector('[data-ovs-feed="news:top"]').click(), true`);
         await wait(100);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories']);
-        assert.deepStrictEqual(await p.evaluate(`JSON.parse(localStorage.getItem('ovs-feeds'))`), { on: ['today:today', 'games:new-worlds', 'news:top'] }, 'kept on this device');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories']));
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(`JSON.parse(localStorage.getItem('ovs-feeds'))`), { on: ['today:today', 'games:new-worlds', 'news:top'] }, 'kept on this device'));
         const box = await p.evaluate(`document.documentElement.scrollWidth`);
         assert.ok(box <= 390, `nothing runs off a phone (${box})`);
 
@@ -114,10 +115,10 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await p.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open .ovs-group')`));
         await wait(150);
-        assert.strictEqual(await p.evaluate(`document.querySelector('.ovs-starttabs [aria-selected="true"]').getAttribute('data-tab')`), 'here', 'it reopens on this site\'s tab, whatever was open last');
+        await eventually(async () => assert.strictEqual(await p.evaluate(`document.querySelector('.ovs-starttabs [aria-selected="true"]').getAttribute('data-tab')`), 'here', 'it reopens on this site\'s tab, whatever was open last'));
         await p.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click(), true`);
         await wait(250);
-        assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories'], 'your feeds, in your order');
+        await eventually(async () => assert.deepStrictEqual(await p.evaluate(SHOWN), ['Today', 'New worlds', 'Top stories'], 'your feeds, in your order'));
         // Signed in on a new device: the person's saved feeds come from Network, and a change is saved back.
         const ctx2 = await browser.newContext();
         const q = await h.openPage(browser, ctx2, { width: 390, block: ['*openvibe.tools*', '*openvibe.media*', '*jsdelivr*'] });
@@ -131,7 +132,7 @@ const SHOWN = `[...document.querySelectorAll('.ovs-list .ovs-group[data-sec^="ne
         await until(q, `!!document.querySelector('.ovs-feeds')`);
         await q.evaluate(`document.querySelector('[data-ovs-feed="games:new-worlds"]').click(), true`);
         assert.ok(await until(q, `window.__puts.length > 0`, 4000), 'the change is saved to Network');
-        assert.deepStrictEqual(await q.evaluate(`window.__puts[window.__puts.length - 1]`), { on: ['news:top', 'today:today', 'games:new-worlds'] });
+        await eventually(async () => assert.deepStrictEqual(await q.evaluate(`window.__puts[window.__puts.length - 1]`), { on: ['news:top', 'today:today', 'games:new-worlds'] }));
         await q.close();
         console.log('menu-feeds-chrome: every feed by default, every card choosable, tick, reorder, four at most, kept on this device and on Network for a signed-in person');
     } finally {
