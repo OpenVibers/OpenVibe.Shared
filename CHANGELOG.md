@@ -4,6 +4,67 @@
 
 - Add `openvibe-shared/csp`: one place for the network's Content-Security-Policy pieces. `connectSources()` names this site, OpenVibe.Network, OpenVibe.Events and **OpenVibe.Media** — the origin the shared composer uploads a person's attachment to — and `policy({ nonce, sites, frames, … })` builds the whole header with the network's defaults. A site that has its own inline policy can add `https://openvibe.media` to its connect-src (or adopt the helper) so the composer's upload is not refused. `test/csp.test.js` pins the Media origin.
 
+## 4.201.0 — 2026-11-10
+
+**Notifications move into the one menu; the mark and the name are one button; one composer and Code on every site.**
+From the owner's notes of 2026-11-10 (asks 334 to 350).
+
+- **The one menu's look (`search.js`).** Vibe's three parts (Chat, Code, Agents) sit in one row on a phone. Notifications
+  in You have a head: their name, the red "n new", and Show all in the head instead of a dashed box under the list. The
+  Timer under Vibe and the Dock's actions in You are rows with a glyph, not dashed folds.
+- **Notifications in You, no bell in the bar (`navbar.js`, `search.js`, `notification-ui.js`).** The bar's bell is
+  gone: the signed-in picture wears the red unread count, and pressing it opens the menu's You at Notifications, on
+  phones and computers alike (the menu's You tab wears the red count too). The notification read/unread
+  BroadcastChannel keeps open tabs in sync. Feed keeps its calm new count and live dot, now synced across same-origin
+  tabs by BroadcastChannel and the storage event; the menu button shows the Feed indicator too. Messages and Vibe stay
+  inside the menu on phones and open the floating Dock on computers. The pressed bar button still flies into its tab
+  (`OpenVibeSearch.open({ from })`, 4.200.0's flight kept whole). The menu's feed counts are the server half's
+  (Network #790).
+- **A picture that cannot show becomes its initial (`footer.js`, ask 345).** Any `img[data-ov-initial]` that fails is
+  replaced by its initial (a capture listener plus a sweep for early failures; CSP-safe). Footer faces and the
+  account picture carry it: openvibe.locker's footer showed a broken avatar where five sites' `img-src` omit
+  openvibe.media.
+- **The player on a phone (`player.js`, `player.css`, ask 288).** The phone rules lost to the bar's sizing block later
+  in the file, so at 390 px the row ran ~50 px off screen. A last-in-file phone block: speed and PiP out, a 64 px
+  slider, mute alone under 380 px, position alone under 360 px (the length is now its own span). 1280 px unchanged.
+- **The quest card module (`quest.js`, `quest.css`, `guide.js`).** The daily quest card from OpenVibe.Live's finished
+  design, as a component any site can mount: `OpenVibeQuest.mount(host, { load })` returns `{ refresh, el }`, with the
+  site fetching the quest shape its own way under the person's Network token. Signed out, `1 OF 3` with the streak
+  chip, `DONE`; the next step marked, done steps checked. Scoped to `ovq-`, on the kit's tokens.
+- **Soft pages (`soft.js`).** Prefetch on intent (pointer down, or 80 ms of hover on a computer; never on Save-Data or
+  2G/3G, at most four in flight, never auth, posts, downloads, queries, anchors or `data-ov-no-prefetch`), a
+  conservative prefetch-only speculation rule in Chrome/Edge, `OVMark.navStart('page')` on the press finished by the
+  arriving page at first paint, and cross-document view transitions where they exist (the shared bar held still, the
+  rest cross-fading 180 ms; Calm 120 ms; Off none). One opt-in line after `theme-loader.js`; not loaded by
+  `navbar.js`, so a site that does not opt in is unchanged. `window.OpenVibeSoft = { on(), off(), exclude() }`.
+- **Updates (`shipped.js`, ask 341).** The filter chips ask the feed with `kind=` and carry their totals; Improved has
+  no tag; empty kinds say so; commit hashes open on git.openvibe.codes.
+- **Icon ink normalised (`glyphs.js`, `nav-icons.js`, `kit.js`, `ov-glyphs.*`).** 666 drawings normalised to a 0.79
+  ink-size target; app tiles use a 0.58 painted-ink fraction and the old oversized tile rule is gone. Measured in
+  headless Chrome at 96 px (painted ink bounds in `test/fixtures/icon-ink.json`), within 3% centre and 4% size.
+- **The Dock's browser test runs in two halves (`test/dock-chrome.test.js`,
+  `test/dock-vibe-timer-chrome.test.js`).** The whole file took about 65 s and the runner stops a file at 60 s, so it
+  timed out on the slower macOS machines. Its sections each open a fresh page: the first file runs the first half
+  (`DOCK_CHROME_PART` 1, the default), the new second file sets it to 2; 0 runs both.
+- **The mark and the name are one button (`navbar.js`, `ov-drop.js`, `nav-slots.js`, ask 347).** The mark and the
+  site's name are one 40 px button (46 px to tap) with a chevron: the accent tint on hover, a stronger tint with a
+  ring while open. It opens the site's pages (Home first, the present page marked); "All OpenVibe sites" at the end
+  opens the full menu on every site. The lead button a site draws (`nav-slots.js`) matches the menu button's size and
+  corner. A site that turns the switcher off keeps the old links.
+- **One composer on every site (`ov-composer.js`, `ov-thread.js`, `thread.js`, `thread.css`, ask 349).** Every
+  `thread.composer()` box — and any site's own form through `OpenVibeComposer.enhance(form)` — gets files (the + menu,
+  paste and drop become chips: a thumbnail, the name and size, ×), `/` (the site's, its mods', the person's own, and
+  settings) and `@` (the mods' mention sources), voice where the browser can listen, drafts per box for 7 days, and
+  the person's settings under `/settings` (kept in this browser, and on their account once Network's composer route
+  lands). `OpenVibeComposer.mod({ id, match, tools, commands, mentions, upload, beforeSend })` for mods.
+- **Vibe is Chat · Code · Agents (`search.js`, `dock.js`, `dock-code.js`, ask 350).** The menu's Vibe place holds three
+  parts (your chats with Vibe, your coding tasks, your agents), and the Dock grows the same Code tab. `dock-code.js`
+  gives one box to start a coding task the way openvibe.codes does (Create, OpenVibe, My code) with your latest tasks
+  under it — state, repository, how long ago, and Stop — read through the Network's same-origin relay.
+- Budget: `dock.js` 20.51 KB brotli (budget 20.55 KB, was 20.45 KB) for the Code tab's mount branch; the tab itself
+  ships in `dock-code.js`, loaded the first time it opens. `notification-ui.js` 25.72 KB (budget 25.75 KB, was
+  25.7 KB) for the one menu's notifications. The bar holds its 49.9 KB budget.
+
 ## 4.200.0 — 2026-11-10
 
 **The button becomes its tab; Vibe holds Chat and Agents; every site from the site's name.** From the owner's notes of

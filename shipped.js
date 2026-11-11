@@ -59,7 +59,7 @@
         `.ov-shipped-latest b{color:${TEXT};font-weight:600;overflow:hidden;text-overflow:ellipsis;min-width:0}`,
         '[data-ov-shipped][hidden],.ov-shipped[hidden],.ov-shipped-latest[hidden]{display:none!important}',
         '.ov-shipped-home{display:grid;gap:12px;justify-items:start;margin:16px 0;min-width:0}.ov-shipped-home>.ov-shipped{justify-self:stretch}',
-        `.ov-shipped-days[data-kind=new] .ov-shipped-entries>.ov-shipped-entry:not([data-kind=new]),.ov-shipped-days[data-kind=better] .ov-shipped-entries>.ov-shipped-entry:not([data-kind=better]),.ov-shipped-days[data-kind=fixed] .ov-shipped-entries>.ov-shipped-entry:not([data-kind=fixed]){display:none}`,
+        `.ov-shipped-n{margin-left:2px;white-space:pre;font-size:.78em;font-weight:600;opacity:.7;font-variant-numeric:tabular-nums}`,
         `.ov-shipped-kinds{margin-top:-4px}.ov-shipped-house{margin-top:6px;border-top:1px dashed var(--border,rgba(255,255,255,.12));padding-top:6px}.ov-shipped-house>summary{cursor:pointer;color:${MUTED};font-size:13px;padding:6px 0}.ov-shipped-house .ov-shipped-entry{opacity:.85}`,
         `.ov-updates{min-width:0}.ov-updates h1{margin:.2em 0 .3em}.ov-updates-lede{color:${MUTED};line-height:1.55;margin:0 0 18px}`,
         '.ov-shipped{font-size:.92rem;min-width:0}.ov-shipped h3{font-size:1rem;margin:0 0 .5rem;display:flex;gap:.4rem;align-items:center}',
@@ -185,9 +185,10 @@
 
     // One request per feed URL for 30 s, shared by the footer line, the pill and the list on a page.
     const _feeds = new Map();
-    function feed({ service = null, limit = 5, before = null, api = null } = {}) {
+    function feed({ service = null, kind = null, limit = 5, before = null, api = null } = {}) {
         const url = new URL(api || API);
         if (service) url.searchParams.set('service', String(service));
+        if (kind) url.searchParams.set('kind', String(kind));
         url.searchParams.set('limit', String(clamp(limit, 1, 100, 5)));
         if (before) url.searchParams.set('before', String(before));
         const key = url.toString();
@@ -258,7 +259,7 @@
     // what kind of change it is (New, Better, Fixed: Blog's blog.changelog.tag task), its plain words and up to two
     // areas. Entries without those fields (before the task ran) read as before: their subject, no kind, no areas.
     const KINDS = { new: 'New', better: 'Improved', fixed: 'Fixed' };
-    function kindTag(e) { const k = e && KINDS[e.kind]; return k ? el('span', { class: `ov-shipped-kind is-${e.kind}`, title: k }, k) : null; }
+    function kindTag(e) { const k = e && KINDS[e.kind]; return k && e.kind !== 'better' ? el('span', { class: `ov-shipped-kind is-${e.kind}` }, k) : null; }
     function areaChips(e, n) {
         const areas = Array.isArray(e && e.areas) ? e.areas.filter((a) => typeof a === 'string' && a).slice(0, n) : [];
         if (!areas.length) return null;
@@ -373,8 +374,11 @@
     function dayOf(iso) { return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }); }
     function entryRow(e, showSite) {
         const row = el('div', { class: 'ov-shipped-entry' });
-        const href = safeUrl(e.url);
-        row.appendChild(el(href ? 'a' : 'span', href ? { class: 'ov-shipped-hash', href, target: '_blank', rel: 'noopener', title: 'The change on GitHub' } : { class: 'ov-shipped-hash' }, e.short || String(e.sha || '').slice(0, 7)));
+        const sha = String(e.sha || '');
+        const repo = String(e.repo || '').split('/').pop();
+        const href = repo && /^[A-Za-z0-9_.-]+$/.test(repo) && /^[0-9a-f]{7,40}$/i.test(sha)
+            ? `https://git.openvibe.codes/OpenVibers/${repo}/commit/${sha}` : safeUrl(e.url);
+        row.appendChild(el(href ? 'a' : 'span', href ? { class: 'ov-shipped-hash', href, target: '_blank', rel: 'noopener', title: 'The change on OpenVibers Git' } : { class: 'ov-shipped-hash' }, e.short || sha.slice(0, 7)));
         if (showSite) row.appendChild(el('span', { class: 'ov-shipped-site' }, siteName(e.service)));
         const text = el('span', { class: `ov-shipped-text${e.major ? ' ov-shipped-major' : ''}`, title: String(e.subject || '') });
         const kind = kindTag(e);
@@ -469,6 +473,7 @@
         const bar = el('div', { class: 'ov-shipped-bar', role: 'group', 'aria-label': 'Which site' });
         const kinds = el('div', { class: 'ov-shipped-bar ov-shipped-kinds', role: 'group', 'aria-label': 'Which kind of change' });
         let kindNow = KINDS[params.get('kind')] ? params.get('kind') : '';
+        let facets = null;
         const posts = el('aside', { class: 'ov-shipped-posts', hidden: '' });
         const days = el('div', { class: 'ov-shipped-days' });
         days.style.cssText = 'display:flex;flex-direction:column;gap:24px;min-width:0';
@@ -479,16 +484,18 @@
         function drawKinds() {
             kinds.textContent = '';
             for (const [k, label] of [['', 'All changes'], ['new', 'New'], ['better', 'Improved'], ['fixed', 'Fixed']]) {
+                const count = k && facets && facets.kinds ? Number(facets.kinds[k]) || 0 : null;
                 const b = el('button', { type: 'button', class: 'ov-shipped-chip', 'aria-pressed': String(kindNow === k) }, label);
+                if (count != null) b.appendChild(el('span', { class: 'ov-shipped-n' }, ` ${count.toLocaleString()}`));
                 b.addEventListener('click', () => {
                     kindNow = k;
-                    if (k) days.setAttribute('data-kind', k); else days.removeAttribute('data-kind');
                     if (o.syncUrl !== false && typeof history !== 'undefined' && history.replaceState) {
                         const u = new URL(location.href);
                         if (k) u.searchParams.set('kind', k); else u.searchParams.delete('kind');
                         history.replaceState(history.state, '', u.pathname + u.search + u.hash);
                     }
                     drawKinds();
+                    load(true);
                 });
                 kinds.appendChild(b);
             }
@@ -541,7 +548,7 @@
                 for (const b of bar.querySelectorAll('.ov-shipped-chip')) b.setAttribute('aria-pressed', 'false');
             }
             more.disabled = true;
-            const data = await feed({ service: current, limit: pageSize, before: reset ? null : next, api: o.api });
+            const data = await feed({ service: current, kind: kindNow || null, limit: pageSize, before: reset ? null : next, api: o.api });
             if (mine !== seq) return;
             if (reset) {
                 days.textContent = '';
@@ -554,6 +561,8 @@
                 drawBar(sitesSeen);
                 for (const b of bar.querySelectorAll('.ov-shipped-chip')) if (b.textContent === (current ? siteName(current) : (own ? 'All of OpenVibe' : 'Everything'))) b.setAttribute('aria-pressed', 'true');
                 drawPosts(data && data.posts);
+                facets = data.facets || null;
+                drawKinds();
             }
             if (!data) {
                 if (reset) days.appendChild(el('p', { class: 'ov-shipped-empty' }, 'The update history could not be loaded just now.'));
@@ -561,7 +570,7 @@
                 return;
             }
             const entries = Array.isArray(data.entries) ? data.entries : [];
-            if (reset && !entries.length) days.appendChild(el('p', { class: 'ov-shipped-empty' }, 'Nothing has shipped here yet.'));
+            if (reset && !entries.length) days.appendChild(el('p', { class: 'ov-shipped-empty' }, kindNow ? `Nothing marked ${KINDS[kindNow]} in this history yet.` : 'Nothing has shipped here yet.'));
             appendDays(days, entries, !current);
             next = data.next || null;
             more.hidden = !next;

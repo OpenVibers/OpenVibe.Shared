@@ -24,6 +24,19 @@
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
+    // 4.201.0: the one composer (ov-composer.js: files, / and @, voice, drafts, your settings), from beside this file.
+    const THREAD_REV = { 'ov-composer.js': 'b70e544155ac' };
+    var selfSrc = (document.currentScript && document.currentScript.src) || '';
+    function loadComposer() {
+        if (root.OpenVibeComposer) { root.OpenVibeComposer.scan(); return; }
+        if (loadComposer.on) return;
+        loadComposer.on = true;
+        var m = /^(https?:\/\/[^?#]*\/)ov-thread(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = (m ? m[1] : 'https://openvibe.network/shared/') + 'ov-composer.js' + (THREAD_REV['ov-composer.js'] ? '?v=' + THREAD_REV['ov-composer.js'] : '');
+        document.head.appendChild(s);
+    }
 
     function q(el, sel) { return el ? el.querySelector(sel) : null; }
     function qa(el, sel) { return el ? Array.prototype.slice.call(el.querySelectorAll(sel)) : []; }
@@ -289,6 +302,7 @@
 
             // The composer.
             var form = q(box, '[data-ovt-composer]');
+            if (form) loadComposer();
             var text = q(box, '[data-ovt-text]');
             var send = q(box, '[data-ovt-send]');
             function grow() { if (!text) return; text.style.height = 'auto'; text.style.height = Math.min(text.scrollHeight, root.innerHeight * 0.4) + 'px'; }

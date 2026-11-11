@@ -263,6 +263,7 @@ async function drag(p, from, to) {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ov-dock-'));
     const browser = await h.launch({ tmpDir });
     const fresh = async (width, height = 860) => { const context = await browser.newContext(); const p = await h.openPage(browser, context, { width, height }); return p; };
+    const PART = Number(process.env.DOCK_CHROME_PART == null ? 1 : process.env.DOCK_CHROME_PART);
     try {
         if (process.env.DOCK_SHOTS_DIR) {
             fs.mkdirSync(process.env.DOCK_SHOTS_DIR, { recursive: true });
@@ -307,6 +308,9 @@ async function drag(p, from, to) {
             }
             if (process.env.DOCK_SHOTS_ONLY) return;
         }
+        // Two halves (each well under the runner's 60 s; the whole file took about 65 s and timed out on macOS): this file
+        // runs the first (DOCK_CHROME_PART 1, the default), test/dock-vibe-timer-chrome.test.js the second, 0 both.
+        if (PART !== 2) {
         // ── Nothing runs, nothing waits, not pinned: no pill. Pinned: the pill, a mark alone. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 3 } };
@@ -568,7 +572,7 @@ async function drag(p, from, to) {
             await p.evaluate(`${POP}.click()`);
             await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the panel in the window');
             assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk')"), false, 'and not in the page any more');
-            assert.strictEqual(await p.evaluate("window.__pip.win.document.querySelectorAll('.ovdk [role=tab]').length"), 4, 'the same four tabs');
+            assert.strictEqual(await p.evaluate("window.__pip.win.document.querySelectorAll('.ovdk [role=tab]').length"), 5, 'the same five tabs (Vibe, Code, Agents, Chat, Activity)');
             assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovdk-styles')"), true, "the Dock's styles come with it");
             assert.deepStrictEqual(await p.evaluate("window.__pip.opts"), { width: 360, height: 520 }, 'a window of about 360 × 520');
             const inWindow = await until(p, PILL, 'the pill stays');
@@ -618,6 +622,8 @@ async function drag(p, from, to) {
             await p.close();
         }
 
+        }
+        if (PART === 1) { console.log('dock-chrome (1 of 2): the pill only when it matters, a phone\'s sheet, Chats, Send to, the agent view, 320 px clean, a desktop\'s card, pop-out'); return; }
         // ── Vibe (L48 V2): starters, a question, Vibe's answer in place; the Network keeps the tab. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true } };

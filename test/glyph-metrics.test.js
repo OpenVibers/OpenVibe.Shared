@@ -38,7 +38,7 @@ const DATA = glyphs.NAMES.map((name) => ({ name, line: glyphs.path(name), solid:
             });
             const lineRaster = await raster(line, ' fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"');
             const solidRaster = solid ? await raster('<style>.ln{fill:none;stroke:#000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}</style>' + solid, ' fill="#000" stroke="none"') : { ink: 0 };
-            return { name, box: lineRaster.box, lineInk: lineRaster.ink, solidInk: solidRaster.ink };
+            return { name, box: lineRaster.box, solidBox: solidRaster.box, lineInk: lineRaster.ink };
         })); })()`, 60000);
         const measured = results;
         const failures = [];
@@ -48,10 +48,10 @@ const DATA = glyphs.NAMES.map((name) => ({ name, line: glyphs.path(name), solid:
             const long = Math.max(w, ht), short = Math.min(w, ht);
             if (!EXCEPTIONS.has(item.name) && (Math.abs(cx - 12) > 0.75 || Math.abs(cy - 12) > 0.75)) failures.push(`${item.name}: centre ${cx.toFixed(2)},${cy.toFixed(2)}`);
             if (long < 15 || long > 21.5 || short <= 0) failures.push(`${item.name}: ink box ${w.toFixed(2)}x${ht.toFixed(2)}`);
-            if (item.solidInk && item.solidInk > 2.6 * Math.max(1, item.lineInk)) failures.push(`${item.name}: solid ink ${item.solidInk} > 2.6x line ink ${item.lineInk}`);
+            if (item.solidBox && Math.abs(Math.max(item.solidBox[2], item.solidBox[3]) - long) > 1) failures.push(`${item.name}: solid long side ${Math.max(item.solidBox[2], item.solidBox[3]).toFixed(2)} differs from line ${long.toFixed(2)}`);
         }
         assert.deepStrictEqual(failures, [], failures.join('\n'));
-        console.log(`glyph-metrics: ${measured.length} line drawings centered and sized; solid ink within limit`);
+        console.log(`glyph-metrics: ${measured.length} line drawings centered and sized; solid bounds match line bounds`);
     } finally {
         await context.dispose(); await browser.close();
         assert.deepStrictEqual(require('fs').readdirSync(tmpDir), [], 'Chrome temp profile cleanup'); require('fs').rmdirSync(tmpDir);

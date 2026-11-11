@@ -342,7 +342,7 @@
         const media = /^https:\/\/openvibe\.media\/o\/med_[0-9A-Za-z]{10,40}$/.test(user.avatar_url || '');
         const sized = media ? `${user.avatar_url}?w=64&fmt=webp` : (user.username && !user.is_anon ? `${NETWORK_URL}/avatar/${encodeURIComponent(user.username)}?s=32` : '');
         const avatar = sized
-            ? `<img src="${esc(sized)}" alt="" width="${media ? 64 : 32}" height="${media ? 64 : 32}" loading="lazy" decoding="async">`
+            ? `<img src="${esc(sized)}" alt="" width="${media ? 64 : 32}" height="${media ? 64 : 32}" loading="lazy" decoding="async" data-ov-initial="${esc(String(name).charAt(0).toUpperCase())}">`
             : `<span>${esc(String(name).charAt(0).toUpperCase())}</span>`;
         const quick = [
             service !== 'live' ? { name: 'My channel', url: `https://openvibe.live/@${esc(user.username || '')}`, icon: 'channel' } : { name: 'My dashboard', url: '/dashboard', icon: 'dashboard' },
@@ -585,6 +585,24 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
     // until the main session's design lands, and its four facts are kept here from the same read.
     const PULSE_URL = `${NETWORK_URL}/api/frame/pulse`;
     const ONLINE_URL = `${NETWORK_URL}/api/frame/online`;
+    // A picture that cannot show (a site's image policy without openvibe.media, a deleted file) becomes its initial
+    // (ask 345: a broken-image icon in Locker's "5 online"). One capture listener for every <img data-ov-initial> on the
+    // page, no inline handler, so it works under a strict Content-Security-Policy too.
+    if (typeof document !== 'undefined' && !document.__ovInitials) {
+        document.__ovInitials = true;
+        const toInitial = (img) => {
+            if (!img || img.tagName !== 'IMG' || !img.hasAttribute('data-ov-initial') || !img.parentNode) return;
+            const i = document.createElement('i');
+            i.setAttribute('aria-hidden', 'true');
+            i.className = 'ov-initial';
+            i.textContent = img.getAttribute('data-ov-initial') || '?';
+            img.replaceWith(i);
+        };
+        document.addEventListener('error', (e) => toInitial(e.target), true);
+        // Pictures that had already failed before this file ran.
+        const sweep = () => document.querySelectorAll('img[data-ov-initial]').forEach((img) => { if (img.complete && !img.naturalWidth) toInitial(img); });
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sweep, { once: true }); else sweep();
+    }
     const PULSE_MS = 60_000;
     let _pulse = null;
     let _pulseAt = 0;
@@ -645,7 +663,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         // had under its pages: every member by name, then how many more and how many guests. A guest is a number only.
         let who = '';
         if (o.total > 0) {
-            const face = (p, size) => (p.avatar ? `<img src="${esc(p.avatar)}" alt="" width="${size}" height="${size}" loading="lazy" decoding="async">` : `<i aria-hidden="true">${esc(p.name.charAt(0).toUpperCase())}</i>`);
+            const face = (p, size) => (p.avatar ? `<img src="${esc(p.avatar)}" alt="" width="${size}" height="${size}" loading="lazy" decoding="async" data-ov-initial="${esc(p.name.charAt(0).toUpperCase())}">` : `<i aria-hidden="true">${esc(p.name.charAt(0).toUpperCase())}</i>`);
             const parts = [o.members > 0 ? `${fmtN(o.members)} member${o.members === 1 ? '' : 's'}` : '', o.guests > 0 ? `${fmtN(o.guests)} guest${o.guests === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
             // Shorthand (the owner, 2026-11-10: "Make it like shorthand '3 online'. If you put your mouse over it, it says
             // 'last 30 minutes'"): the count and the faces. When, and how many are members and guests, are the tooltip's
@@ -723,7 +741,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
     let _shippedLoading = false;
     // shipped.js's content hash (scripts/sibling-revs.js writes it), and the footer's "shipped" line is fetched only when the
     // footer comes near the screen (4.138.0): most visits never scroll there, and it is 12 KB.
-    const FOOTER_REV = { 'shipped.js': 'c999118b94ee' };
+    const FOOTER_REV = { 'shipped.js': 'f00b4bbc56a4' };
     let _shippedSeen = null;
     function shippedWhenNear(el) {
         if (typeof IntersectionObserver !== 'function' || !el || !el.getBoundingClientRect) { loadShipped(); return; }

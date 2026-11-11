@@ -157,7 +157,9 @@ const data = {
 
     // log(): pages with the cursor, and the "Load more" button disappears on the last page.
     const calls = [];
-    const page1 = { entries: [{ service: 'wiki', sha: 'c'.repeat(40), subject: 'three', deployed_at: at(10) }], next: 'CUR', posts: [{ title: 'Patch notes: x', url: 'https://openvibe.blog/@openvibe/x', published_at: at(9), entries: 40 }], sites: [{ service: 'wiki' }] };
+    globalThis.location = { href: 'https://example.test/updates', search: '' };
+    globalThis.history = { state: null, replaceState(_state, _title, path) { globalThis.location.href = `https://example.test${path}`; globalThis.location.search = new URL(globalThis.location.href).search; } };
+    const page1 = { entries: [{ service: 'wiki', repo: 'OpenVibers/OpenVibe.Wiki', sha: 'c'.repeat(40), subject: 'three', deployed_at: at(10), kind: 'better' }], next: 'CUR', posts: [{ title: 'Patch notes: x', url: 'https://openvibe.blog/@openvibe/x', published_at: at(9), entries: 40 }], sites: [{ service: 'wiki' }], facets: { kinds: { new: 212, better: 15628, fixed: 431 } } };
     const page2 = { entries: [{ service: 'wiki', sha: 'd'.repeat(40), subject: 'four', deployed_at: at(8) }], next: null, posts: [] };
     globalThis.fetch = async (url) => { calls.push(url); return { ok: true, json: async () => (url.includes('before=CUR') ? page2 : page1) }; };
     const logEl = document.getElementById('log');
@@ -167,12 +169,19 @@ const data = {
     const more = logEl.querySelector('.ov-shipped-more');
     assert.strictEqual(more.hidden, false);
     assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-bar:not(.ov-shipped-kinds) .ov-shipped-chip')].map((b) => b.textContent), ['Wiki', 'All of OpenVibe']);
-    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-kinds .ov-shipped-chip')].map((b) => b.textContent), ['All changes', 'New', 'Improved', 'Fixed'], 'the kind filter (an improvement is named "Improved", not "Better")');
+    assert.deepStrictEqual([...logEl.querySelectorAll('.ov-shipped-kinds .ov-shipped-chip')].map((b) => b.textContent), ['All changes', 'New 212', `Improved ${(15628).toLocaleString()}`, 'Fixed 431'], 'kind chips carry facet totals');
+    assert.strictEqual(logEl.querySelector('.ov-shipped-kind'), null, 'Improved is not repeated as a badge on usual rows');
     more.dispatchEvent(new window.Event('click'));
     await new Promise((r) => setTimeout(r, 20));
     assert.ok(calls.some((u) => u.includes('before=CUR') && u.includes('service=wiki')));
     assert.ok(logEl.textContent.includes('four'));
     assert.strictEqual(more.hidden, true, 'no next cursor: no button');
+    logEl.querySelector('.ov-shipped-kinds .ov-shipped-chip').nextElementSibling.dispatchEvent(new window.Event('click'));
+    await new Promise((r) => setTimeout(r, 20));
+    assert.ok(calls.some((u) => u.includes('kind=new')), 'choosing New requests a server-filtered feed');
+    assert.ok(globalThis.location.search.includes('kind=new'), 'chosen kind is kept in the URL');
+    delete globalThis.location;
+    delete globalThis.history;
 
     // log()'s first load: one standalone "Loading…" line and the site's own chips up front, nothing inside the days
     // that the chips and patch notes would push down; all of it lands together.
