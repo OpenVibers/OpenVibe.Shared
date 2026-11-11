@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.204.0",
+  "version": "4.205.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -128,6 +128,7 @@
     "./vibes-pay": "./vibes-pay.js",
     "./trace": "./trace.js",
     "./csp": "./csp.js",
+    "./crawlable": "./crawlable.js",
     "./ui": "./ui.js",
     "./url-resolver": "./url-resolver.js",
     "./ov-user": "./ov-user.js",
