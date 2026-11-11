@@ -58,7 +58,7 @@
         fire: '<path d="M12 20.5a6.8 6.8 0 0 0 6.8-6.8c0-4.3-2.9-6.8-4.2-10.1c-2 2.3-2.6 4.5-2.6 4.5S10.7 5.8 9.5 3.8C7 6.6 5.2 10 5.2 13.7a6.8 6.8 0 0 0 6.8 6.8Z"/>',
         nodes: '<circle cx="12" cy="5.4" r="2.1"/><circle cx="5.8" cy="17.9" r="2.1"/><circle cx="18.2" cy="17.9" r="2.1"/><path d="M11 7.4L6.8 15.9M13 7.4l4.3 8.6M7.9 17.9h8.3"/>',
         // Two towers, the cable between them and the deck (2026-11-11 review: the old one read as a bank).
-        bridge: '<path d="M2.5 16h19M6.5 19.5V5M17.5 19.5V5"/><path d="M2.5 10c2 0 3.2-2.3 4-5c2.6 5.6 8.4 5.6 11 0c.8 2.7 2 5 4 5"/><path d="M12 11.2V16"/>',
+        bridge: '<path d="M3.5 16h17M7 19.5V5M17 19.5V5"/><path d="M3.5 10c1.8 0 2.8-2.3 3.5-5c2.4 5.2 7.6 5.2 10 0c.7 2.7 1.7 5 3.5 5"/><path d="M12 10.9V16"/>',
         'check-circle': '<circle cx="12" cy="12" r="8.5"/><path d="m8 12.4 2.8 2.8L16 9.6"/>',
         'x-circle': '<circle cx="12" cy="12" r="8.5"/><path d="m9 9 6 6M15 9l-6 6"/>',
         'alert-circle': '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5.5M12 16.5h.01"/>',
@@ -147,7 +147,7 @@
         'arrows-h': '<path d="M3.8 12h16.5M7.6 8.1l-3.9 3.9l3.9 3.9M16.4 8.1l3.9 3.9l-3.9 3.9"/>',
         move: '<path d="M11.9 3.6v16.7M3.6 11.9h16.7M9 6.5l2.9-2.9l2.9 2.9M9 17.3l2.9 2.9l2.9-2.9M6.5 9l-2.9 2.9l2.9 2.9M17.3 9l2.9 2.9l-2.9 2.9"/>',
         // A viewfinder with its centre (2026-11-11 review: four tiny arrows crowded at 16 px).
-        focus: '<circle cx="12" cy="12" r="2.8"/><path d="M4 9V6.2A2.2 2.2 0 0 1 6.2 4H9M15 4h2.8A2.2 2.2 0 0 1 20 6.2V9M20 15v2.8a2.2 2.2 0 0 1-2.2 2.2H15M9 20H6.2A2.2 2.2 0 0 1 4 17.8V15"/>',
+        focus: '<circle cx="12" cy="12" r="2.8"/><path d="M3.5 9V5.9A2.4 2.4 0 0 1 5.9 3.5H9M15 3.5h3.1A2.4 2.4 0 0 1 20.5 5.9V9M20.5 15v3.1a2.4 2.4 0 0 1-2.4 2.4H15M9 20.5H5.9A2.4 2.4 0 0 1 3.5 18.1V15"/>',
         at: '<circle cx="12" cy="12" r="3.4"/><path d="M15.4 12v1.3a2.5 2.5 0 0 0 4.9 0V12a8.3 8.3 0 1 0-3.2 6.5"/>',
         box: '<path d="M3.6 7.9L11.9 3.9l8.4 3.9v8.4L11.9 20.1l-8.4-3.9Z"/><path d="M3.6 7.9L11.9 11.8l8.4-3.9M11.9 11.8v8.4M7.8 5.9l8.4 3.9"/>',
         bug: '<rect x="7.2" y="6.2" width="9.6" height="13.3" rx="4.8"/><path d="M9.3 6.5a2.7 2.7 0 0 1 5.3 0M12 10.9v8.5M7.2 12H3.5M20.5 12h-3.7M7.6 8.3L4.6 5.6M16.4 8.3L19.4 5.6M7.6 16.3L4.6 18.9M16.4 16.3L19.4 18.9"/>',
@@ -232,7 +232,7 @@
     // shows the solid one when the icon is 18 px or smaller (pure CSS, see scripts/build-glyphs.js); a glyph without
     // one draws its lines heavier there instead.
     const SOLID = Object.freeze({
-        focus: '<circle cx="12" cy="12" r="3.6"/><path class="ln" d="M4 9V6.2A2.2 2.2 0 0 1 6.2 4H9M15 4h2.8A2.2 2.2 0 0 1 20 6.2V9M20 15v2.8a2.2 2.2 0 0 1-2.2 2.2H15M9 20H6.2A2.2 2.2 0 0 1 4 17.8V15"/>',
+        focus: '<circle cx="12" cy="12" r="3.6"/><path class="ln" d="M3.8 9V6.1A2.3 2.3 0 0 1 6.1 3.8H9M15 3.8h2.9A2.3 2.3 0 0 1 20.2 6.1V9M20.2 15v2.9a2.3 2.3 0 0 1-2.3 2.3H15M9 20.2H6.1A2.3 2.3 0 0 1 3.8 17.9V15"/>',
         // 4.182.0, the last five shapes: a car, a door, a podium, a rocket and a camera that flips. After these, every
         // glyph without a solid drawing is one made of lines, which thickens when small instead.
         car: '<path fill-rule="evenodd" d="M5.6 5.2h12.7l2.7 5.5H3ZM2.6 12.2h18.7v4.5H2.6ZM5.9 14.4a1.1 1.1 0 1 0 2.3 0a1.1 1.1 0 1 0-2.3 0ZM15.8 14.4a1.1 1.1 0 1 0 2.3 0a1.1 1.1 0 1 0-2.3 0ZM5 17.5h2.7v1.8H5ZM16.3 17.5h2.7v1.8h-2.7Z"/>',
@@ -437,7 +437,7 @@
         food: '<path d="M4.7 3.3h1.5v4.7h0.6V3.3h1.4v4.7h0.6V3.3h1.5v4.9A2.9 2.9 0 0 1 8.6 10.8V21.7H6.5V10.8a2.9 2.9 0 0 1-1.8-2.7ZM18.9 21.7h-2.3v-7.4h-3V10.6c0-3.9 1.7-6.6 5.2-7.7Z"/>',
         history: '<path d="M5.8 5.8A9.1 9.1 0 1 1 3.2 12.2h3a6.1 6.1 0 1 0 1.8-4.3ZM2.5 2.7v7.2h7.2ZM11.2 8.1h2.2v3.7l2.7 1.6l-1.1 1.8l-3.8-2.3Z"/>',
         compress: '<path d="M9.7 9.7H2.7L9.7 2.7ZM14.3 9.7h7l-7-7ZM9.7 14.3H2.7l7 7ZM14.3 14.3h7l-7 7Z"/>',
-        bridge: '<path d="M5.2 4.6h2.6v15.4H5.2ZM16.2 4.6h2.6v15.4h-2.6ZM2.4 14.6h19.2v2.8H2.4Z"/><path class="ln" d="M2.5 10c2 0 3.2-2.3 4-5c2.6 5.6 8.4 5.6 11 0c.8 2.7 2 5 4 5M12 11.2V15"/>',
+        bridge: '<path d="M5.7 4.6h2.6v15.4H5.7ZM15.7 4.6h2.6v15.4h-2.6ZM3.4 14.6h17.2v2.8H3.4Z"/><path class="ln" d="M4 10c1.6 0 2.5-2.3 3-5c2.4 5.2 7.6 5.2 10 0c.5 2.7 1.4 5 3 5M12 10.9V15"/>',
         text: '<path fill-rule="evenodd" d="M10.2 2.4h3.7l6.8 18.7h-3.4l-1.6-4.7H8.3l-1.6 4.7H3.3ZM9.3 13.6h5.4L12 5.7Z"/>',
         steps: '<path fill-rule="evenodd" d="M2.8 4h4.9v4.9H2.8Zm1 2.5l0.8-0.9l0.9 0.9l1.4-1.4l0.9 0.9l-2.3 2.3ZM2.8 9.4h4.9v4.9H2.8Zm1 2.5l0.8-0.9l0.9 0.9l1.4-1.4l0.9 0.9l-2.3 2.3ZM2.8 15h4.9v4.9H2.8Zm1 2.5l0.8-0.9l0.9 0.9l1.4-1.4l0.9 0.9l-2.3 2.3Z"/><path class="ln" d="M10.6 6.4H20.3M10.6 11.9H20.3M10.6 17.4H20.3"/>',
         // 4.104.0: the next eight by use with a shape to fill (Design's usage count): download, upload, expand, shirt,
