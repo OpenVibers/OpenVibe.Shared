@@ -50,6 +50,8 @@ const server = http.createServer((req, res) => {
         const type = (t) => page.send('Input.insertText', { text: t });
         const val = () => page.evaluate(`document.querySelector('#c1 textarea').value`);
         const clear = () => page.evaluate(`(() => { const t = document.querySelector('#c1 textarea'); t.value = ''; t.dispatchEvent(new Event('input', { bubbles: true })); t.focus(); })()`);
+        // The composer's mod key is the platform's (Cmd on a Mac, Ctrl elsewhere): send the one the box listens for.
+        const MOD = await page.evaluate(`/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '')`) ? 4 : 2;
         assert.ok(await until(`!!(window.OpenVibeComposer && document.getElementById('c1').__ovc)`), 'it joins the box');
         await page.evaluate(`document.querySelector('#c1 textarea').focus()`);
 
@@ -125,12 +127,12 @@ const server = http.createServer((req, res) => {
             t.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); })()`);
         f = await page.evaluate(`({ up: document.querySelector('#c1 .ovc-file').classList.contains('is-up'), pct: document.querySelector('#c1 .ovc-file-s').textContent, send: document.querySelector('#c1 [data-ovt-send]').disabled, inForm: document.querySelector('#c1 input[type=file]').files.length })`);
         assert.deepEqual(f, { up: true, pct: '40%', send: true, inForm: 0 }, 'an upload shows its progress, holds the send, and the file does not also go in the form');
-        await key('Enter', 2);
+        await key('Enter', MOD);
         assert.equal(await page.evaluate('window.sent'), 0, 'no send while a file uploads');
         await page.evaluate('window.finish()');
         assert.ok(await until(`document.querySelector('#c1 input[name=attachments]') && document.querySelector('#c1 input[name=attachments]').value === 'att_123'`), 'the form carries the upload\'s id');
         assert.equal(await page.evaluate(`document.querySelector('#c1 [data-ovt-send]').disabled`), false);
-        await key('Enter', 2);
+        await key('Enter', MOD);
         assert.equal(await page.evaluate('window.sent'), 1, 'Ctrl+Enter sends');
         await page.evaluate(`document.querySelector('#c1 .ovc-file [data-ovc-x]').click()`);
         assert.equal(await page.evaluate(`document.querySelectorAll('#c1 input[name=attachments]').length`), 0, 'removing the chip removes its id');
@@ -143,7 +145,7 @@ const server = http.createServer((req, res) => {
         await type('two');
         assert.equal(await val(), 'one\ntwo', 'Enter is a new line');
         assert.equal(await page.evaluate('window.sent'), 1);
-        await key('Enter', 2);
+        await key('Enter', MOD);
         assert.equal(await page.evaluate('window.sent'), 2, 'Ctrl+Enter sends');
         await page.evaluate(`OpenVibeComposer.setPrefs({ send_key: 'enter' })`);
         await clear();
@@ -151,7 +153,7 @@ const server = http.createServer((req, res) => {
         // Ctrl+B marks the selection bold.
         await type('make this bold');
         await page.evaluate(`document.querySelector('#c1 textarea').setSelectionRange(10, 14)`);
-        await key('b', 2);
+        await key('b', MOD);
         assert.equal(await val(), 'make this **bold**');
 
         // The draft: back after a reload; gone once sent.

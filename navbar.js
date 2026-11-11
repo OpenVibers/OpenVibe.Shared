@@ -2058,7 +2058,7 @@
         const data = u && !u.is_anon && _walletFor === walletKey(u) ? _walletData : null;
         if (u && !u.is_anon && data !== false) {
             chips = walletOrder(data).map((id) => Object.assign({}, WALLET_CHIPS.find((w) => w.id === id), {
-                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: (e) => openSearch('', 'you', e.currentTarget),
+                __wallet: true, value: data ? walletAmount(data.balances[id]) : '…', hidden: false, onClick: openWallet,
             })).concat(chips);
         }
         _config.chips = chips;
