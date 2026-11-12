@@ -587,7 +587,12 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('vibe'));
             await until(p, PLACE, 'the menu on Vibe');
-            await p.evaluate("document.querySelector('.ovs .ovs-ai-timer').click()");
+            // 4.223.0: the timer is in the box's + (every composer's), not a button of Vibe's own.
+            await p.evaluate("(document.querySelector('.ovs .ovdk-vibe-new') || { click() {} }).click()");
+            await until(p, "!!document.querySelector('.ovs .ovc-more')", 'the box and its +');
+            await p.evaluate("document.querySelector('.ovs .ovc-more').click()");
+            await until(p, "[...document.querySelectorAll('.ovs .ovc-tray-i')].some((b) => b.textContent === 'Timer')", 'Timer in the +');
+            await p.evaluate("[...document.querySelectorAll('.ovs .ovc-tray-i')].find((b) => b.textContent === 'Timer').click()");
             await until(p, "!!document.querySelector('.ovdk .ovdk-tmenu')", 'the timer menu');
             await p.evaluate("document.querySelector('.ovdk .ovdk-tmenu [data-min=\"5\"]').click()");
             const strip = await until(p, "(() => { const s = document.querySelector('.ovdk .ovdk-timer'); return s ? s.innerText : null; })()", 'the timer strip in the Dock');

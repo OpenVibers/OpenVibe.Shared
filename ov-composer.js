@@ -283,6 +283,37 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-emoji button:hover, .ovc-emoji button:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
 @media (max-width: 480px) { .ovc-v2.ovt-composer { padding: 12px 12px 8px; } .ovc-emoji { grid-template-columns: repeat(7, 38px); } .ovc-v2 .ovt-send { padding: 0 16px; } }
 html[data-ov-motion=off] .ovc-emoji { animation: none; }
+
+/* 4.223.0: the + sheet, the mic first, the examples' fade, the round send. */
+.ovc-v2, form.ovc[data-ovc-contain] { container: ovc / inline-size; }
+.ovc-more[aria-expanded="true"] { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 18%, transparent); }
+.ovc-more svg { transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
+.ovc-more[aria-expanded="true"] svg { transform: rotate(45deg); }
+@container ovc (max-width: 460px) {
+  .ovt-c-tools > .ovt-btn:not(.ovc-mic):not(.ovc-more) ~ .ovt-btn:not(.ovc-mic):not(.ovc-more):not([aria-pressed="true"]) { display: none; }
+}
+.ovc-tray { grid-column: 1 / -1; flex: 1 0 100%; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 8px 0 2px; border-top: 1px solid var(--border, rgba(148,163,184,.14)); animation: ovc-tray-in .22s cubic-bezier(.2, .9, .3, 1.15) both; }
+.ovc-tray-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; }
+.ovc-tray-i { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 10px 4px 8px; border-radius: 14px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent; }
+.ovc-tray-ic { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 15px; color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa)));
+  background: linear-gradient(150deg, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent), color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent); transition: transform .2s cubic-bezier(.3, 1.4, .4, 1); }
+.ovc-tray-ic svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovc-tray-t { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13px; font-weight: 800; line-height: 1.2; color: var(--text-primary, #e6edf7); text-wrap: balance; }
+.ovc-tray-i:active .ovc-tray-ic { transform: scale(.92); }
+.ovc-tray-i:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .ovc-tray-i:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); } .ovc-tray-i:hover .ovc-tray-ic { transform: translateY(-2px); } }
+@keyframes ovc-tray-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+html[data-ov-motion=reduced] .ovc-tray { animation-name: ovc-fade-calm; }
+@keyframes ovc-fade-calm { from { opacity: 0; } }
+html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { animation: none; transition: none; }
+.ovc textarea::placeholder, .ovt-composer textarea::placeholder { transition: opacity .25s ease; }
+.ovc textarea.ovc-ph-swap::placeholder, .ovt-composer textarea.ovc-ph-swap::placeholder { opacity: 0; }
+.ovc-v2 .ovt-send--round { background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #fff), var(--accent-strong, var(--accent, #2563eb))); color: var(--on-accent-strong, #fff);
+  box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); transition: transform .2s cubic-bezier(.3, 1.4, .4, 1), opacity .2s, box-shadow .2s; }
+.ovc-v2 .ovt-send--round svg { width: 20px; height: 20px; stroke-width: 2.3; }
+.ovc-v2 .ovt-send--round:disabled { opacity: 1; background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); color: var(--text-muted, #7386a3); box-shadow: none; }
+.ovc-v2 .ovt-send--round:not(:disabled):active { transform: scale(.9); }
 `;
     function styles() { if (document.getElementById('ovc-styles')) return; const st = document.createElement('style'); st.id = 'ovc-styles'; st.textContent = CSS; document.head.appendChild(st); }
     const mods = [];
@@ -337,6 +368,9 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     const mac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
     const IC = {
         mic: 'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21',
+        plus: 'M12 5v14M5 12h14',
+        timer: 'M12 4.5a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4zM12 8.6v4.2l2.7 1.7M9.6 2.6h4.8',
+        up: 'M12 19V5.5M6.2 11.2L12 5.4l5.8 5.8',
         x: 'M7 7l10 10M17 7L7 17',
         file: 'M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5',
         slash: 'M15 4L9 20',
@@ -412,7 +446,8 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         const text = form.querySelector('[data-ovt-text]') || form.querySelector('textarea');
         if (!text) return null;
         const row = form.querySelector('.ovt-c-row');
-        const tools = form.querySelector('.ovt-c-tools');
+        // A box drawn by its own page marks its row with data-ovc-tools (Vibe's); else the composer's own row.
+        const tools = form.querySelector('.ovt-c-tools') || form.querySelector('[data-ovc-tools]');
         const note = form.querySelector('[data-ovt-note]');
         const send = form.querySelector('[data-ovt-send]') || form.querySelector('[type="submit"]');
         const inputs = () => [...form.querySelectorAll('input[type="file"]')];
@@ -722,6 +757,63 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
 
         // Voice: the browser listens, the words go in at the caret as they come.
         let mic = null, rec = null;
+        // 4.223.0, the +: every tool of this box in one sheet (its row's own, the mods', and the extras such as Timer), big
+        // and named. On a narrow box the row keeps the mic, the + and the first tool; the sheet has the rest.
+        let more = null, sheet = null;
+        function closeSheet() { if (sheet) { sheet.remove(); sheet = null; } if (more) more.setAttribute('aria-expanded', 'false'); }
+        function openSheet(ev) {
+            if (sheet) { closeSheet(); return; }
+            sheet = el('div', 'ovc-tray'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Tools');
+            const grid = el('div', 'ovc-tray-grid');
+            const add = (label, path, act, drawn) => {
+                const b = el('button', 'ovc-tray-i', `<span class="ovc-tray-ic">${drawn ? '' : svg(PATH_OK.test(path || '') ? path : IC.slash)}</span><span class="ovc-tray-t"></span>`);
+                if (drawn) { const c = drawn.cloneNode(true); c.removeAttribute('width'); c.removeAttribute('height'); c.removeAttribute('class'); b.firstChild.appendChild(c); }   // the button's own whole drawing
+                b.type = 'button'; b.querySelector('.ovc-tray-t').textContent = label;
+                b.addEventListener('click', () => { closeSheet(); try { act(); } catch (e) { console.error(e); } });
+                grid.appendChild(b);
+            };
+            const seen = new Set();
+            [...tools.children].forEach((t) => {
+                if (t === mic || t === more || !t.matches('.ovt-btn, button, label') || t.matches('[type="submit"], [data-ovt-send], .ovc-mic, .ovdk-mic, .ovdk-go, [hidden]')) return;
+                const label = t.getAttribute('aria-label') || t.title || ''; if (!label || seen.has(label)) return; seen.add(label);
+                const input = t.querySelector('input[type=file]');
+                add(label, '', () => { if (input) input.click(); else t.click(); }, t.querySelector('svg'));
+            });
+            Object.keys(TOOL).forEach((id) => {
+                const t = TOOL[id]; if (!t || !t.extra || seen.has(t.label) || form.hasAttribute(`data-ovc-no-${id}`)) return; seen.add(t.label);
+                add(t.label, t.path, () => t.run(ctx, more, form));
+            });
+            sheet.appendChild(grid);
+            form.appendChild(sheet);   // inside the box, under its row: nothing can clip it
+            more.setAttribute('aria-expanded', 'true');
+            // From the keyboard (a click with no pointer) focus moves into the sheet; a tap leaves it on the +.
+            if (ev && ev.detail === 0) { const first = sheet.querySelector('button'); if (first) first.focus(); }
+            sheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheet(); more.focus(); } });
+        }
+        if (tools && !form.hasAttribute('data-ovc-no-more')) {
+            more = el('button', 'ovt-btn ovc-more', svg(IC.plus));
+            more.type = 'button'; more.setAttribute('aria-label', 'More: attach, timer and tools'); more.title = 'More';
+            more.setAttribute('aria-haspopup', 'dialog'); more.setAttribute('aria-expanded', 'false');
+            more.addEventListener('click', openSheet);
+            const lead = tools.querySelector(':scope > .ovdk-mic');   // a page's own mic stays first
+            tools.insertBefore(more, lead ? lead.nextSibling : tools.firstChild);
+            document.addEventListener('pointerdown', (e) => { if (sheet && !sheet.contains(e.target) && !more.contains(e.target)) closeSheet(); });
+        }
+        // What people do with this box, in turn while it is empty and you are elsewhere (Calm: slower; Off: the first stays).
+        {
+            let ex = null; try { ex = JSON.parse(form.dataset.ovcExamples || 'null'); } catch { ex = null; }
+            if (Array.isArray(ex) && ex.length > 1 && typeof setInterval === 'function') {
+                let k = 0;
+                const motion = () => (document.documentElement.getAttribute('data-ov-motion') || '');
+                const tick = setInterval(() => {
+                    if (!form.isConnected) { clearInterval(tick); return; }
+                    if (motion() === 'off' || text.value || document.activeElement === text) return;
+                    k = (k + 1) % ex.length;
+                    text.classList.add('ovc-ph-swap');
+                    setTimeout(() => { text.placeholder = String(ex[k]).slice(0, 80); text.classList.remove('ovc-ph-swap'); }, motion() === 'reduced' ? 120 : 260);
+                }, motion() === 'reduced' ? 8000 : 4200);
+            }
+        }
         function micButton() {
             if (!Speech || !tools) return;
             if (!prefs.voice || form.hasAttribute('data-ovc-no-voice')) { if (mic) { mic.remove(); mic = null; } return; }
@@ -740,7 +832,8 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
                 rec.onerror = (ev) => { if (ev.error === 'not-allowed') say('The microphone is blocked for this site.'); };
                 try { rec.start(); mic.setAttribute('aria-pressed', 'true'); mic.title = 'Stop listening'; } catch { rec = null; }
             });
-            tools.appendChild(mic);
+            tools.insertBefore(mic, tools.firstChild);
+            if (more && more.parentNode === tools) tools.insertBefore(more, mic.nextSibling);
         }
 
         // The mods' tools: buttons in the row, in the order the mods came.
@@ -753,7 +846,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
                 const b = el('button', 'ovt-btn ovc-tool', svg(PATH_OK.test(t.path || '') ? t.path : IC.slash));
                 b.type = 'button'; b.setAttribute('aria-label', t.label); b.title = t.label;
                 b.addEventListener('click', () => { try { t.run(ctx); } catch (e) { console.error(e); } });
-                tools.insertBefore(b, mic && mic.parentNode === tools ? mic : null);
+                tools.appendChild(b);
                 modTools.push(b);
             }
         }
@@ -764,7 +857,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             add, files: () => files.map((f) => f.file), clearFiles: () => { [...files].forEach(remove); },
             uploads: () => files.map((f) => f.id).filter(Boolean),
             clear() { files.slice().forEach(remove); text.value = ''; if (draftKey) store.set(draftKey, null); fire(); },
-            destroy() { live.delete(api); pop.remove(); strip.remove(); if (mic) mic.remove(); modTools.forEach((b) => b.remove()); form.__ovc = null; },
+            destroy() { live.delete(api); pop.remove(); strip.remove(); if (mic) mic.remove(); if (more) more.remove(); closeSheet(); modTools.forEach((b) => b.remove()); form.__ovc = null; },
         };
         form.__ovc = api;
         form.addEventListener('reset', () => setTimeout(() => api.clear(), 0));
@@ -802,6 +895,10 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     //   value = { verb, text, files, uploads, model, sources, depth, context, chips }.
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
+    const EXAMPLES = {
+        agent: ['Ask for anything', 'Find a live stream about cooking', 'Start a 10-minute timer', 'Summarize today’s Rundown', 'Write a title for my stream', 'What did people post today?'],
+        post: ["What's new?", 'Share a photo from today', 'Ask your followers a question', 'Post a clip you made'],
+    };
     const PRESET = {
         post: { tools: ['photo', 'camera', 'file', 'emoji', 'voice'], send: 'Post', avatar: true, rows: 2, max: 2000, ring: true, resize: 2560 },
         chat: { tools: ['attach', 'emoji', 'voice'], send: '', avatar: false, rows: 1, max: 4000, ring: false, resize: 2560 },
@@ -811,6 +908,17 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     const EMOJI = '😀 😂 🥹 😊 😍 🥰 😘 😎 🤩 🥳 😇 🙂 😉 😌 🤔 🤨 😐 🙄 😏 😬 😮 😱 😭 😤 😡 🤯 🥶 🥵 😴 🤤 🤗 🫡 🤝 👍 👎 👏 🙌 🙏 💪 👀 🫶 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 ✨ 🔥 💯 🎉 🎊 🏆 🎮 🎧 🎵 📸 🎬 🍕 🍔 🍿 ☕ 🍻 🌈 🌙 ⭐ ⚡ 💥 💀 🤖 👻 🐐 🦆 🐸 🚀 ✅ ❌ ⚠️ ❓ 👋 🫠'.split(' ');
     const TOOL = {
         photo: { label: 'Photos and video', path: IC.photo, accept: 'image/*,video/*' },
+        // 4.223.0: in every box's + (extra: never in a row of its own). Your timers are Vibe's: one list on every site.
+        timer: {
+            label: 'Timer', path: IC.timer, extra: true,
+            run(ctx, button) {
+                const D = root.OpenVibeDock;
+                if (D && typeof D.timer === 'function') { try { D.timer(button); return; } catch (e) { console.error(e); } }
+                const N = root.OpenVibeNavbar;
+                if (N && typeof N.openMenuOn === 'function') { try { N.openMenuOn('vibe'); ctx.note('Say “a timer for 10 minutes” to Vibe.'); return; } catch { /* below */ } }
+                ctx.note('Sign in to set timers: they ring on every OpenVibe site.');
+            },
+        },
         file: { label: 'Files', path: IC.file, accept: '' },
         attach: { label: 'Attach', path: IC.clip, accept: '' },
         emoji: {
@@ -959,6 +1067,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         ta.name = o.name || 'text'; ta.rows = p.rows; ta.maxLength = o.maxLength || p.max;
         ta.placeholder = o.placeholder || (name === 'post' ? "What's new?" : name === 'agent' ? 'Ask for anything' : name === 'comment' ? 'Write a reply' : 'Write a message');
         ta.setAttribute('aria-label', o.label || ta.placeholder);
+        { const ex = Array.isArray(o.examples) ? o.examples : (o.placeholder ? null : EXAMPLES[name]); if (ex && ex.length > 1) form.dataset.ovcExamples = JSON.stringify(ex.slice(0, 8)); }
         ta.setAttribute('data-ovt-text', '');
         if (o.required !== false) ta.required = true;
         const row = el('div', 'ovt-c-row'), tools = el('div', 'ovt-c-tools'), chips = el('div', 'ovc-chips');
@@ -1007,7 +1116,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             ring.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26" aria-hidden="true"><circle class="ovc-ring-bg" cx="13" cy="13" r="10"/><circle class="ovc-ring-fg" cx="13" cy="13" r="10" stroke-dasharray="62.83" stroke-dashoffset="62.83" transform="rotate(-90 13 13)"/></svg>';
             ring.hidden = true;
         }
-        const send = el('button', p.send ? 'ovt-send' : 'ovt-send ovt-send--round', p.send ? '' : svg(IC.send));
+        const send = el('button', p.send ? 'ovt-send' : 'ovt-send ovt-send--round', p.send ? '' : svg(IC.up));
         if (p.send) send.textContent = o.submitLabel || p.send;
         send.type = 'submit'; send.disabled = true; send.setAttribute('data-ovt-send', '');
         send.setAttribute('aria-label', o.submitLabel || p.send || 'Send');

@@ -51,7 +51,7 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(`!!document.querySelector('form.ovc-v2[data-preset="comment"]')`), 'the reply is the shared comment composer');
         assert.equal(await page.evaluate(`document.querySelectorAll('[data-ovt-composer]').length`), 0, 'the server form is replaced, not doubled');
         const shape = await page.evaluate(`(() => { const f = document.querySelector('form.ovc-v2[data-preset="comment"]'); return { action: f.getAttribute('action'), method: f.method, parent: (f.querySelector('input[name=parent_id]') || {}).value, send: f.querySelector('[data-ovt-send]').textContent.trim(), tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')) }; })()`);
-        assert.deepEqual(shape, { action: '/p/x/comments', method: 'post', parent: '1', send: 'Reply', tools: ['Photos and video', 'Emoji'] });
+        assert.deepEqual(shape, { action: '/p/x/comments', method: 'post', parent: '1', send: 'Reply', tools: ['More: attach, timer and tools', 'Photos and video', 'Emoji'] });
         assert.equal(await page.evaluate(`document.documentElement.scrollWidth`), 390, 'nothing is wider than a phone');
         await page.evaluate(`(() => { const t = document.querySelector('form.ovc-v2 textarea'); t.value = 'Hello from the shared box'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('form.ovc-v2 [data-ovt-send]').click(); })()`);
         const landed = await until(`!!document.getElementById('posted')`);

@@ -91,8 +91,9 @@ async function openMenu(p) {
         await wait(200);
         await openMenu(wide);
         const d = await wide.evaluate(BUTTON);
-        assert.ok(d && d.shown && d.word && !d.icon, `a wide screen keeps the word Close: ${JSON.stringify(d)}`);
-        console.log('menu-close-chrome: a phone has a round close button (40 px, 48 px hit area) that closes the menu; wide screens keep Close');
+        // 4.223.0 (the owner, 11-12: "Close … ICON"): a wide screen has the round × too, named for readers.
+        assert.ok(d && d.shown && d.icon && !d.word && d.label === 'Close the menu', `a wide screen has a round × named Close the menu: ${JSON.stringify(d)}`);
+        console.log('menu-close-chrome: a phone has a round close button (40 px, 48 px hit area) that closes the menu; wide screens a round × too');
     } finally {
         await browser.close();
         server.close();

@@ -49,10 +49,13 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
 
         // Each preset draws its own tools, chips and send.
         const shape = await page.evaluate(`(() => [...document.querySelectorAll('.ovc-v2')].map((f) => ({ preset: f.dataset.preset,
-            tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')),
+            // 4.223.0: the mic and the + lead the row; the box's own tools follow.
+            lead: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')).filter((l) => l === 'Speak' || l === 'More: attach, timer and tools'),
+            tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')).filter((l) => l !== 'Speak' && l !== 'More: attach, timer and tools'),
             avatar: !!f.querySelector('.ovc-head .ovc-av'), full: Math.abs(f.querySelector('textarea').getBoundingClientRect().left - f.querySelector('.ovc-body').getBoundingClientRect().left) < 4, round: f.querySelector('[data-ovt-send]').classList.contains('ovt-send--round'),
             send: f.querySelector('[data-ovt-send]').textContent.trim(), chips: [...f.querySelectorAll('.ovc-chip-v')].map((c) => c.textContent) })))()`);
         assert.deepEqual(shape.map((s) => s.preset), ['post', 'chat', 'agent', 'comment']);
+        assert.ok(shape.every((s) => s.lead[s.lead.length - 1] === 'More: attach, timer and tools' && (s.lead.length === 1 || s.lead[0] === 'Speak')), `the mic, then the +, lead every row (${JSON.stringify(shape.map((s) => s.lead))})`);
         assert.deepEqual(shape[0].tools.slice(0, 4), ['Photos and video', 'Files', 'Emoji', 'Poll'], 'a post: photos, files, emoji and the site\'s own tool');
         assert.ok(shape[0].avatar && shape[0].send === 'Post' && !shape[0].round);
         assert.ok(shape.every((x) => x.full), 'the words use the full width: no column kept for the picture');
