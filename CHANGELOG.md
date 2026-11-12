@@ -37,8 +37,8 @@ switch: "one new unified agent … a shared UI … a full conversation with rich
   - "Ask your agent" from a page;
   - the place the Network remembers.
 - **Arrange:** Stop is an ordinary optional part; it docks right like any other (#501).
-- `ov-run.js` and `ov-composer.js` have content hashes in `SIBLING_REV`, ready for the menu. The package exports
-  `openvibe-shared/ov-run`.
+- `ov-run.js` and `ov-composer.js` have content hashes in `SIBLING_REV`, ready for the menu. Every site serves
+  `ov-run.js` (`files.js`), and the package exports `openvibe-shared/ov-run`.
 - **Tests:**
   - New `run-thread-chrome` (390 and 1280 px): the list and filters; approve in place; every kind of step; the live
     stream and where it resumes; approvals, messages and a new run reaching the API with the person's token; no markup
