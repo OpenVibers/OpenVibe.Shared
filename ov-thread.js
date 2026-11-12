@@ -37,16 +37,19 @@
         s.src = (m ? m[1] : 'https://openvibe.network/shared/') + 'ov-combo.js' + (THREAD_REV['ov-combo.js'] ? '?v=' + THREAD_REV['ov-combo.js'] : '');
         document.head.appendChild(s);
     }
-    function loadComposer() {
-        if (root.OpenVibeComposer) { root.OpenVibeComposer.scan(); return; }
+    function loadComposer(after) {
+        if (root.OpenVibeComposer) { if (after) after(); else root.OpenVibeComposer.scan(); return; }
+        if (after) loadComposer.waiting.push(after);
         if (loadComposer.on) return;
         loadComposer.on = true;
         var m = /^(https?:\/\/[^?#]*\/)ov-thread(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
         var s = document.createElement('script');
         s.async = true;
         s.src = (m ? m[1] : 'https://openvibe.network/shared/') + 'ov-composer.js' + (THREAD_REV['ov-composer.js'] ? '?v=' + THREAD_REV['ov-composer.js'] : '');
+        s.addEventListener('load', function () { var list = loadComposer.waiting; loadComposer.waiting = []; list.forEach(function (fn) { try { fn(); } catch (e) { /* one box's failure never holds the page */ } }); }, { once: true });
         document.head.appendChild(s);
     }
+    loadComposer.waiting = [];
 
     function q(el, sel) { return el ? el.querySelector(sel) : null; }
     function qa(el, sel) { return el ? Array.prototype.slice.call(el.querySelectorAll(sel)) : []; }
@@ -254,7 +257,7 @@
 
     function start() {
         loadCombo();
-        qa(document, '[data-ovt]').forEach(function (box) {
+        qa(document, '[data-ovt], [data-ovc-thread]').forEach(function (box) {
             if (box.dataset.ovtReady) return;
             box.dataset.ovtReady = '1';
             var head = q(box, '[data-ovt-head]');
@@ -311,41 +314,103 @@
                 });
             }
 
-            // The composer.
-            var form = q(box, '[data-ovt-composer]');
-            if (form) loadComposer();
-            var text = q(box, '[data-ovt-text]');
-            var send = q(box, '[data-ovt-send]');
-            function grow() { if (!text) return; text.style.height = 'auto'; text.style.height = Math.min(text.scrollHeight, root.innerHeight * 0.4) + 'px'; }
-            function syncSend() { if (send && text) send.disabled = !text.value.trim(); }
-            if (text) {
-                text.addEventListener('input', function () { grow(); syncSend(); });
-                text.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && fine && text.value.trim()) {
-                        e.preventDefault();
-                        if (form.requestSubmit) form.requestSubmit(send || undefined); else form.submit();
-                    }
+            // The composer. An inline Community thread (thread.renderThread) draws the comment preset: the same
+            // picture, box, tools, count and Reply as every site's comments, replacing the server-drawn form in place
+            // (without script that form still posts).
+            var form = null, text = null, send = null;
+            function bootComposer(box) {
+                var f = q(box, '[data-ovt-composer]');
+                if (!f) return;
+                if (!f.closest('[data-ovc-thread]')) {
+                    if (!root.OpenVibeComposer) loadComposer();
+                    else if (root.OpenVibeComposer.enhance) root.OpenVibeComposer.enhance(f);
+                    wireComposer(f);
+                    return;
+                }
+                if (!root.OpenVibeComposer) { loadComposer(function () { bootComposer(box); }); return; }
+                if (root.OpenVibeComposer.mount) {
+                    var upgraded = upgradeComposer(f);
+                    if (upgraded) { wireComposer(upgraded); return; }
+                }
+                if (root.OpenVibeComposer.enhance) root.OpenVibeComposer.enhance(f);
+                wireComposer(f);
+            }
+            // The form's own submit stays: mount() draws the box and the server's action, method and hidden fields
+            // (a reply's parent_id) go back on it, so the page still posts without a site script.
+            function upgradeComposer(f) {
+                if (!f || f.__ovtUpgraded || !root.OpenVibeComposer || !root.OpenVibeComposer.mount) return null;
+                var oldText = f.querySelector('[data-ovt-text]') || f.querySelector('textarea');
+                if (!oldText) return null;
+                var action = f.getAttribute('action') || '';
+                var method = f.getAttribute('method') || 'post';
+                var hidden = qa(f, 'input[type=hidden]').map(function (i) { return [i.name, i.value]; });
+                var file = f.querySelector('input[type=file]');
+                var note = q(f, '[data-ovt-note]');
+                var sendBtn = q(f, '[data-ovt-send]');
+                var label = (sendBtn && (sendBtn.getAttribute('aria-label') || sendBtn.textContent.trim())) || 'Reply';
+                var preset = f.getAttribute('data-ovt-preset') || 'comment';
+                var host = document.createElement('div');
+                f.replaceWith(host);
+                var c = null;
+                try {
+                    c = root.OpenVibeComposer.mount(host, {
+                        preset: preset, name: oldText.name || 'message', placeholder: oldText.placeholder || '',
+                        maxLength: Number(oldText.getAttribute('maxlength')) || 2000, submitLabel: label,
+                        tools: file ? ['photo', 'emoji'] : ['emoji'], maxFiles: Number(f.getAttribute('data-ovc-max-files')) || 10,
+                    });
+                } catch (e) { c = null; }
+                if (!c) { host.replaceWith(f); return null; }
+                c.form.action = action; c.form.method = method;
+                if (file) {
+                    c.form.enctype = 'multipart/form-data';
+                    var field = file.name || 'files';
+                    qa(c.form, 'input[type=file]').forEach(function (i) { i.name = field; if (file.accept) i.accept = file.accept; });
+                }
+                hidden.forEach(function (h) { var i = document.createElement('input'); i.type = 'hidden'; i.name = h[0]; i.value = h[1]; c.form.appendChild(i); });
+                if (oldText.value) c.text.value = oldText.value;
+                if (note && note.textContent) c.note.textContent = note.textContent;
+                c.form.__ovtUpgraded = true;
+                return c.form;
+            }
+            function wireComposer(f) {
+                if (!f || f.__ovtWired) return;
+                form = f;
+                text = q(f, '[data-ovt-text]') || q(f, 'textarea');
+                send = q(f, '[data-ovt-send]');
+                function grow() { if (!text) return; text.style.height = 'auto'; text.style.height = Math.min(text.scrollHeight, root.innerHeight * 0.4) + 'px'; }
+                function syncSend() { if (send && text) send.disabled = !text.value.trim(); }
+                if (text && !text.__ovtKeys) {
+                    text.__ovtKeys = true;
+                    text.addEventListener('input', function () { grow(); syncSend(); });
+                    text.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && fine && text.value.trim()) {
+                            e.preventDefault();
+                            if (form.requestSubmit) form.requestSubmit(send || undefined); else form.submit();
+                        }
+                    });
+                    grow();
+                    syncSend();
+                }
+                qa(box, '[data-ovt-starter]').forEach(function (b) {
+                    if (b.__ovtStarter) return; b.__ovtStarter = true;
+                    b.addEventListener('click', function () { if (!text) return; text.value = b.getAttribute('data-ovt-starter'); if (form.__ovc && form.__ovc.ctx) form.__ovc.ctx.set(text.value); grow(); syncSend(); text.focus(); });
                 });
-                grow();
-                syncSend();
+                // The examples: while the box is empty and not being typed in, its placeholder walks through them (a fade).
+                if (text && text.getAttribute('data-ovt-examples') && !text.__ovtEx) {
+                    text.__ovtEx = true;
+                    var exI = 0;
+                    var exTimer = setInterval(function () {
+                        if (!text.isConnected) { clearInterval(exTimer); return; }
+                        var list; try { list = JSON.parse(text.getAttribute('data-ovt-examples') || '[]'); } catch (e) { list = []; }
+                        if (!list.length || text.value || document.activeElement === text || document.hidden) return;
+                        exI = (exI + 1) % list.length;
+                        text.classList.add('is-ph-out');
+                        setTimeout(function () { text.placeholder = list[exI]; text.classList.remove('is-ph-out'); }, 220);
+                    }, 3600);
+                }
+                f.__ovtWired = true;
             }
-            qa(box, '[data-ovt-starter]').forEach(function (b) {
-                b.addEventListener('click', function () { if (!text) return; text.value = b.getAttribute('data-ovt-starter'); grow(); syncSend(); text.focus(); });
-            });
-
-            // The examples: while the box is empty and not being typed in, its placeholder walks through them (a fade).
-            if (text && text.getAttribute('data-ovt-examples') && !text.__ovtEx) {
-                text.__ovtEx = true;
-                var exI = 0;
-                var exTimer = setInterval(function () {
-                    if (!text.isConnected) { clearInterval(exTimer); return; }
-                    var list; try { list = JSON.parse(text.getAttribute('data-ovt-examples') || '[]'); } catch (e) { list = []; }
-                    if (!list.length || text.value || document.activeElement === text || document.hidden) return;
-                    exI = (exI + 1) % list.length;
-                    text.classList.add('is-ph-out');
-                    setTimeout(function () { text.placeholder = list[exI]; text.classList.remove('is-ph-out'); }, 220);
-                }, 3600);
-            }
+            bootComposer(box);
 
             // Options: one button, the pickers behind it (a <details>, so it opens without script too). A tap outside,
             // Escape or Done closes it; on a phone it is a sheet and the page behind stays put; a changed picker shows as

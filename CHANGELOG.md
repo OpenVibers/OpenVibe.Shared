@@ -22,11 +22,17 @@ shared composer … interconnected through all sites with all the features we mi
   Built in: photo, file, attach, emoji (a panel of 90 at the caret), voice. `presets()` and `tools()` list them.
 - **The Feed's composer is the post preset.** Its own + drew an icon with no stroke, so it could not be seen; the
   Feed's posting (pictures with their descriptions through the frame, other files to Media) is unchanged.
+- **The inline Community thread is the comment preset.** `thread.composer({ preset: 'comment' })` marks the server
+  form, and `ov-thread.js` replaces it in place with `OpenVibeComposer.mount(..., { preset: 'comment' })` for every
+  `[data-ovc-thread]`: the action, a reply's `parent_id`, files and the no-JS post stay. Video, Pics and a paste's
+  comments are the same box, once.
 - `enhance()`: a box takes a file any of its pickers takes; a mounted box grows with its words; the file strip sits
   beside the box wherever the box is.
 
 Test: `test/composer-v2-chrome.test.js` (the four presets at 390 px, a post's chip above and pictures under, onSubmit
-and false, the ring, emoji, a site's tool); `menu-home-screen-chrome` reads the Feed's note inside the composer.
+and false, the ring, emoji, a site's tool); `test/inline-composer-chrome.test.js` (the inline thread mounts preset
+comment, keeps its action and `parent_id`, and posts at 390 px); `menu-home-screen-chrome` reads the Feed's note
+inside the composer.
 
 ## 4.214.0 — 2026-11-11
 
