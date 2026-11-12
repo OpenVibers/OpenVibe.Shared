@@ -15,7 +15,7 @@ const repo = path.join(dir, 'OpenVibe.Fixture');
 fs.mkdirSync(path.join(repo, 'server'), { recursive: true });
 const git = (...args) => execFileSync('git', ['-C', repo, ...args], { encoding: 'utf8' });
 const audit = () => {
-    try { return { status: 0, out: execFileSync(process.execPath, [SCRIPT, '--root', dir, '--repos', 'OpenVibe.Fixture'], { encoding: 'utf8' }) }; }
+    try { return { status: 0, out: execFileSync(process.execPath, [SCRIPT, '--root', repo], { encoding: 'utf8' }) }; }
     catch (err) { return { status: err.status, out: String(err.stdout || '') + String(err.stderr || '') }; }
 };
 

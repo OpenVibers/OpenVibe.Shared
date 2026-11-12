@@ -57,7 +57,9 @@ function arg(name, fallback = null) {
     return v && !v.startsWith('--') ? v : true;
 }
 
-function repositories() {
+function repositories(root) {
+    // A site's CI: --root . is the repository itself, so audit that one checkout.
+    if (fs.existsSync(path.join(root, '.git'))) return [{ name: path.basename(root), branch: 'main', dir: root }];
     const only = arg('repos');
     if (only && only !== true) return String(only).split(',').map((s) => s.trim()).filter(Boolean);
     try {
@@ -65,7 +67,6 @@ function repositories() {
         const list = JSON.parse(out).map((r) => ({ name: r.name, branch: (r.defaultBranchRef && r.defaultBranchRef.name) || 'main' }));
         if (list.length) return list;
     } catch { /* no gh, or no network: read what --root has */ }
-    const root = String(arg('root') || path.join(os.homedir(), 'openvibe', 'work'));
     return fs.existsSync(root)
         ? fs.readdirSync(root, { withFileTypes: true }).filter((d) => d.isDirectory() && /^OpenVibe/i.test(d.name) && fs.existsSync(path.join(root, d.name, '.git'))).map((d) => ({ name: d.name, branch: 'main' }))
         : [];
@@ -76,7 +77,8 @@ const PATTERN = String.raw`fa-[a-z0-9-]+|kit\.icon\(|glyphs\.(path|solid|svg|inn
 
 /** Does this repository's main load Font Awesome? Then a valid FA name draws there; the drop-in leaves it to FA. */
 function loadsFontAwesome(repo, branch) {
-    const out = spawnSync('git', ['-C', repo, 'grep', '-I', '-l', '-E', 'fontawesome|font-awesome', branch], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
+    let out = spawnSync('git', ['-C', repo, 'grep', '-I', '-l', '-E', 'fontawesome|font-awesome', branch], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
+    if (out.status > 1) out = spawnSync('git', ['-C', repo, 'grep', '-I', '-l', '-E', 'fontawesome|font-awesome', 'HEAD'], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
     return out.status === 0 && String(out.stdout || '').trim().length > 0;
 }
 
@@ -140,7 +142,7 @@ function main() {
     const cache = String(arg('cache') || path.join(os.homedir(), '.cache', 'ov-icon-audit'));
     const json = arg('json');
     const doClone = arg('clone') === true || arg('clone') === '1';
-    const repos = repositories();
+    const repos = repositories(root);
     const unresolved = new Map();
     const read = [];
     const missing = [];
@@ -149,7 +151,7 @@ function main() {
     for (const entry of repos) {
         const name = typeof entry === 'string' ? entry : entry.name;
         const branch = (entry && entry.branch) || 'main';
-        let dir = path.join(root, name);
+        let dir = (entry && entry.dir) || path.join(root, name);
         let ref = branch;
         if (!fs.existsSync(path.join(dir, '.git'))) {
             if (!doClone) { missing.push(name); continue; }
