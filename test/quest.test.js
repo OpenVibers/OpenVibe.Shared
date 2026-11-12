@@ -54,8 +54,8 @@ function host() {
     assert.deepEqual(outSteps.map((li) => li.querySelector('.ovq-step span').textContent), ['Upload a picture', 'Send a public chat message', 'Go live for a stream']);
     assert.deepEqual(outSteps.map((li) => li.querySelector('.ovq-step small').textContent), ['OpenVibe.Pics', 'OpenVibe.Chat', 'OpenVibe.Live']);
     assert.equal(out.el.querySelectorAll('.is-next, .is-done').length, 0);
-    assert.equal(out.el.querySelectorAll('.ovq-steps .ovq-icon').length, 3);
-    assert.deepEqual([...out.el.querySelectorAll('.ovq-steps .ovq-icon')].map((i) => i.dataset.icon), ['pics', 'chat', 'live']);
+    assert.equal(out.el.querySelectorAll('.ovq-steps .ov-appicon').length, 3, 'each step wears its site\'s app icon (design rule 142)');
+    assert.deepEqual([...out.el.querySelectorAll('.ovq-steps .ov-appicon')].map((i) => [i.dataset.icon, i.dataset.size]), [['pics', '32'], ['chat', '32'], ['live', '32']]);
     assert.equal(out.el.querySelector('.ovq-chip').hidden, true);
     assert.equal(out.el.querySelector('.ovq-more-line, .ovq-more-text span').textContent, '24 quests on 8 sites, each with a badge');
     assert.equal(out.el.querySelector('.ovq-more').href, 'https://openvibe.quest/');

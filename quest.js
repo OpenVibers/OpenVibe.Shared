@@ -150,8 +150,9 @@
                 const row = el('li');
                 const a = el('a');
                 a.href = href(step.href);
-                const siteIcon = el('span', 'ovq-icon ovq-site-icon ov-icon');
+                const siteIcon = el('span', 'ovq-site-icon ov-appicon');
                 siteIcon.dataset.icon = String(step.site || '').split('.')[1] || 'quest';
+                siteIcon.dataset.size = '32';
                 siteIcon.setAttribute('aria-hidden', 'true');
                 const text = el('span', 'ovq-step');
                 const sentence = el('span', null, step.sentence || '');

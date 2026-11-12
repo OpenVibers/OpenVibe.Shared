@@ -1436,7 +1436,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     // you near the end. When the API is not there yet, the pulse wall above stands (timeline()).
     // Following needs a signed-in person (the feed reads their Network follows); the rest are the feed's kinds (Community
     // #310: wiki pages, quest badges, busy chat rooms, calendar events and the people who joined, beside the media kinds).
-    const KINDS = [['', 'For you'], ['following', 'Following'], ['live', 'Live'], ['video', 'Videos'], ['clip', 'Clips'], ['pic', 'Pics'], ['post', 'Posts'], ['meme', 'Memes'], ['game', 'Games'], ['chat', 'Chat'], ['event', 'Events'], ['wiki', 'Wiki'], ['quest', 'Quests'], ['update', 'Updates']];
+    const KINDS = [['', 'For you'], ['following', 'Following'], ['live', 'Live'], ['video', 'Videos'], ['clip', 'Clips'], ['pic', 'Pics'], ['post', 'Posts'], ['rundown', 'Rundown'], ['meme', 'Memes'], ['game', 'Games'], ['chat', 'Chat'], ['event', 'Events'], ['work', 'Jobs'], ['deal', 'Deals'], ['report', 'Stats'], ['wiki', 'Wiki'], ['quest', 'Quests'], ['update', 'Updates']];
     function feedUrl(o, kind, cursor) {
         const p = new URLSearchParams({ limit: '12' });
         if (kind === 'following') p.set('following', '1'); else if (kind) p.set('kind', kind);

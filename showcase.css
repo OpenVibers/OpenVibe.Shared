@@ -228,6 +228,12 @@ html{overflow-x:clip}
 .ov-appicon>.ov-icon svg{position:absolute;left:-13%;top:-13%;width:126%;height:126%;margin:0;transform:none!important}
 .ov-appicon .ovi-ring,.ov-appicon .ovi-bg,.ov-appicon .ovi-comet,.ov-appicon .ovi-prog{display:none}
 :root[data-theme="light"] .ov-appicon>.ov-icon{--ovi-glyph:hsl(var(--ova-h) 70% 30%);color:hsl(var(--ova-h) 70% 30%)}
+.ov-appicon[data-size="20"]{--ova-size:20px}
+.ov-appicon[data-size="26"]{--ova-size:26px}
+.ov-appicon[data-size="32"]{--ova-size:32px}
+.ov-appicon[data-size="44"]{--ova-size:44px}
+.ov-appicon[data-size="56"]{--ova-size:56px}
+.ov-appicon[data-size="64"]{--ova-size:64px}
 .ov-icon{--ovi-size:32px;display:inline-grid;place-items:center;width:var(--ovi-size);height:var(--ovi-size);flex:none;vertical-align:middle;line-height:0;color:var(--ovi-accent,var(--accent,#3b82f6));position:relative}
 .ov-icon svg{width:100%;height:100%;overflow:visible;display:block;transition:transform .25s cubic-bezier(.2,1.4,.3,1)}
 .ov-icon .ovi-bg{fill:currentColor;opacity:.1;transition:opacity .25s}

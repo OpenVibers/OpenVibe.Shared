@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.227.0 — 2026-11-12
+
+- **One app icon, drawn on the server too** (design rule 142). `OpenVibeIcons.appHtml(site, { size, label, hue })` returns the app icon as markup (no DOM needed): its hue and size inline and its glyph already drawn, so `ov-icons.js` finds nothing to fill and nothing moves when it arrives. `OpenVibeIcons.APP_CSS` is the app icon's own rules, sizes 20 · 26 · 32 · 44 · 56 · 64 included: a server-drawn page puts it in its stylesheet once and its icons are whole before any script runs.
+- **The square keeps its size before `ov-icons.js`**: the navbar's early rules hold every `.ov-appicon` at its `data-size`, so a page's app icons no longer pop in.
+- **The menu's "Across OpenVibe" sites and a quest's steps wear their app icons** instead of a small glyph in a ring.
+- **The Feed's chips name the one feed's new kinds**: Rundown, Jobs, Deals and Stats, beside the media kinds.
+
 ## 4.226.0 — 2026-11-12
 
 - **The menu's feed draws the one feed's new kinds (feed.item@1)** (the one-feed job's finding: they fell through to a
