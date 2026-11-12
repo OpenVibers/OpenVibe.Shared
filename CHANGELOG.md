@@ -12,6 +12,10 @@ elements … the spacing could be improved").
 - **Text fields**: the placeholder in the muted colour, an accent ring on focus, room under each field.
 - **A plain details** (no class of its own) gets a chevron that turns when it opens, and no browser marker; a site's own
   details keeps its own.
+- **A site's own questions in a showcase section** (a plain `<details>` straight in `.sc-sec`, as 20 homes have them)
+  look like `sc.faq`'s: a card each, no browser marker, a chevron that turns, the answer padded (unstyled-sweep found
+  them on Blog, Chat, Compare, Coupons, Deals, Download, Food, Games, Host, News, OpenRestream, Reviews, Run, Space, Tips,
+  Trade, VIP, Vision, Wiki and Zone).
 - **Words straight in a kit section** (`<p>`, `<a>`, `<details>`, lists, quotes, code) keep the section's padding; they sat
   flush against the box's edge.
 
