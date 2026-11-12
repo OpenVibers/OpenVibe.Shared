@@ -340,7 +340,9 @@ html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
 .ovs-grid.is-mini .ovs-tile b { font-size: 13px; color: color-mix(in srgb, var(--text-primary, #e6edf7) 92%, transparent); }
 .ovs-group[data-sec="all"] { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13.5px; font-weight: 800; letter-spacing: .01em; text-transform: none; color: var(--text-primary, #e6edf7); }
 /* A slow light drifts behind the menu (Calm slows it, only Off stops it; openvibe.design: calm reduces, only off removes). */
-.ovs-panel { isolation: isolate; }
+/* 4.223.1: the panel clips its light (overflow: clip is never a scroll container; hidden was, and a focus inside it
+   scrolled the whole panel up, taking the search field and the tabs off the screen). */
+.ovs-panel { isolation: isolate; overflow: clip; }
 .ovs-panel::before { content: ""; position: absolute; inset: -20%; z-index: -1; pointer-events: none; opacity: .5;
   background: radial-gradient(38% 30% at 20% 10%, color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent), transparent 70%), radial-gradient(34% 28% at 85% 30%, color-mix(in srgb, #a855f7 16%, transparent), transparent 70%), radial-gradient(40% 32% at 50% 95%, color-mix(in srgb, #14b8a6 12%, transparent), transparent 70%);
   animation: ovs-drift 26s ease-in-out infinite alternate; }
@@ -648,6 +650,9 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
         el.addEventListener('mousedown', (e) => { if (e.target === el) close(); });
         el.querySelector('.ovs-x').addEventListener('click', close);
+        // 4.223.1: the panel never scrolls as a whole (only its list does); an engine that still scrolls it on a focus
+        // is put back at once, so the search field and the tabs stay in place.
+        { const panel = el.querySelector('.ovs-panel'); if (panel) panel.addEventListener('scroll', () => { if (panel.scrollTop || panel.scrollLeft) { panel.scrollTop = 0; panel.scrollLeft = 0; } }, { passive: true }); }
         orbEl = document.createElement('button');
         orbEl.type = 'button'; orbEl.className = 'ovs-orb'; orbEl.setAttribute('aria-label', 'Close the menu'); orbEl.title = 'Close (Esc)';
         orbEl.innerHTML = orbSvg();
