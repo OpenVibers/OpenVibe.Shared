@@ -1193,6 +1193,8 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             get view() { return state.view; },
             apps: () => L.byId.size,
             filter(q) { state.filter = String(q || ''); if (state.view === 'drawer' && drawerDraw) drawerDraw(); },
+            /** Show 'drawer' (All apps) or 'home' from outside: a menu address (you/apps) opens All apps. */
+            show(view) { if (view !== 'drawer' && view !== 'home') return; state.view = view; state.folder = null; state.filter = ''; paint(); },
             /** The menu learned more (history, the catalogue): redraw with it, unless the person is arranging. */
             update(next) { o = next; L = layoutOf(o); if (!state.drag && !state.edit && state.view === 'home') paint(); },
         };

@@ -808,12 +808,13 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             if (g.as === 'home' || g.as === 'walltop' || g.as === 'wall') {
                 const H = root.OpenVibeHome; if (!H) return;
                 const kept = homeViews[g.as];
-                if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); return; }
+                if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); if (g.as === 'home') drawerIfAsked(kept.api); return; }
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
                 let api = null;
                 try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : (H.feed || H.timeline))(li, homeOpts()); } catch { return; }
                 homeViews[g.as] = { li, api };
                 listEl.appendChild(li);
+                if (g.as === 'home') drawerIfAsked(api);
                 return;
             }
             if (g.as === 'route') {
@@ -1975,6 +1976,11 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         fly(from, to, { fromFace: flyIdle });
     }
 
+    function drawerIfAsked(api) {
+        if (!wantDrawer || !api || typeof api.show !== 'function') return;
+        wantDrawer = false;
+        try { api.show('drawer'); } catch { /* the home screen stays */ }
+    }
     function open(opts = {}) {
         homeViews = {}; pulseReady = null;   // a fresh home screen and wall each time the menu opens
         if (typeof document === 'undefined') return;
@@ -2049,7 +2055,10 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         paintGhost();
         render(input.value);
         if (flyFrom && !input.value) requestAnimationFrame(flyIn);
-        if (opts.section) setTimeout(() => { const section = listEl.querySelector(`[data-sec="${opts.section}"]`); if (section && section.scrollIntoView) section.scrollIntoView({ block: 'start' }); }, 80);
+        // All apps is a view of You's home screen: it opens as the home screen arrives (4.229.0, you/apps).
+        wantDrawer = opts.section === 'apps';
+        const sec = opts.section === 'apps' ? 'home' : opts.section;
+        if (sec) setTimeout(() => { const section = listEl.querySelector(`[data-sec="${sec}"]`); if (section && section.scrollIntoView) section.scrollIntoView({ block: 'start' }); }, 80);
         // On a phone the orb opens a menu, not a search: focusing the field would raise the keyboard over the menu (owner
         // 11-08), so focus stays on the close orb until the person taps the field. A query, or a computer, still types.
         setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
@@ -2065,7 +2074,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     }
     // ownBack: the history.back() a close made itself. Its popstate arrives later, and must not close a menu opened
     // again in between (a quick close-and-reopen on the picture lost the second open, 2026-11-10).
-    let pushed = false, popping = false, surface = null, ownBack = false;
+    let pushed = false, popping = false, surface = null, ownBack = false, wantDrawer = false;
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => {
         if (ownBack) return;
         if (!(el && el.classList.contains('is-open'))) {
