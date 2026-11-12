@@ -114,7 +114,7 @@
     // 4.203.0 (ask 349, "a better composer system unified across all sites"): Vibe's box is the one composer too, for
     // drafts, "/" commands and your own, the marks, what sends and your settings; its picture keeps its own upload.
     const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-    const VIBE_REV = { 'ov-composer.js': '2d3782ec0b52' };
+    const VIBE_REV = { 'ov-composer.js': '293808b32ad7' };
     function joinComposer(form) {
         if (!form || form.ownerDocument !== document) return;   // a popped-out Dock keeps its plain box
         form.setAttribute('data-ovc-no-files', '');

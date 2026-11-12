@@ -100,7 +100,7 @@
     const PROVIDER = { open_index: 'OpenVibe\'s index', deepseek: 'DeepSeek', wikipedia: 'Wikipedia', brave: 'Brave', exa: 'Exa', tavily: 'Tavily' };
     let view = 'suggest', rtabsEl = null, rq = '', rtab = 'all', rflight = null, moved = false;
     // A place of the Dock shown inside the menu (a phone, 312 step 2): which one, its mount, and AI's part.
-    let door = null, doorEl = null, doorHost = null, doorSw = null, doorMount = null, aiPart = 'vibe';
+    let door = null, doorEl = null, doorHost = null, doorMount = null, runView = null, runFilter = 'all';
     let actsEl = null, actsObs = null, actsTick = 0;
 
     const safeUrl = (u) => { try { const x = new URL(u, location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
@@ -336,7 +336,7 @@ html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
 .ovs-group-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
 /* Names in the brand face (openvibe.design rule: a place's or an app's name in OV Brand 800; words you read in the UI
    face): the site list, the tabs, Vibe's switch. */
-.ovs-grid.is-mini .ovs-tile b, .ovs-door-sw button, .ovs-starttabs .ovs-tab { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 800; letter-spacing: .005em; }
+.ovs-grid.is-mini .ovs-tile b, .ovs-starttabs .ovs-tab { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 800; letter-spacing: .005em; }
 .ovs-grid.is-mini .ovs-tile b { font-size: 13px; color: color-mix(in srgb, var(--text-primary, #e6edf7) 92%, transparent); }
 .ovs-group[data-sec="all"] { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13.5px; font-weight: 800; letter-spacing: .01em; text-transform: none; color: var(--text-primary, #e6edf7); }
 /* A slow light drifts behind the menu (Calm slows it, only Off stops it; openvibe.design: calm reduces, only off removes). */
@@ -383,37 +383,10 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-act:hover, .ovs-act:focus-visible { background: var(--hover-bg, rgba(127,127,127,.14)); color: var(--text-primary, #ececf1); }
 .ovs-act.is-new { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovs-door-host > .ovdk { flex: 1 1 auto; min-height: 0; }
-.ovs-door-sw { flex: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; margin: 8px 12px 4px; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
-.ovs-door-sw[hidden] { display: none; }
-.ovs-door-top { flex: none; display: flex; align-items: center; gap: 6px; margin: 8px 12px 4px; }
-.ovs-door-top:not(:has(> :not([hidden]))) { display: none; }
-.ovs-door-top > .ovs-door-sw { flex: 1 1 auto; min-width: 0; margin: 0; }
-.ovs-door-top > .ovs-ai-timer { flex: none; width: 50px; min-height: 50px; margin: 0; padding: 0; justify-content: center; border-radius: 14px; }
-.ovs-door-top > .ovs-ai-timer span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.ovs-door-top > .ovs-ai-timer svg { width: 20px; height: 20px; }
+/* 4.225.0: Vibe's runs fill the place under the menu's head (ov-run.js keeps its own filters, thread and box). */
+.ovs-door-host > .ovr { flex: 1 1 auto; min-height: 0; padding: 8px 10px 10px; box-sizing: border-box; }
+.ovs-door-wait { margin: 18px 16px; font-size: 14px; color: var(--text-muted, #93a0b4); }
 @media (min-width: 641px) { .ovs.ovs-in-door .ovs-panel { height: min(820px, 86vh); max-height: 86vh; } .ovs.ovs-in-door .ovs-foot { display: none; } }
-.ovs-door-sw button { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; border-radius: 11px; cursor: pointer; font-size: 14px; font-weight: 650; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s; }
-.ovs-door-sw button[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
-.ovs-door-sw button[aria-selected="true"] .ovs-tab-ic { color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovs-door-sw button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
-/* 4.223.0: one segmented control (You's tabs have the same): the ink slides to the chosen part, names at 15 px, glyphs at
-   20 px, the chosen glyph a touch larger in the accent. */
-.ovs-door-sw { position: relative; isolation: isolate; gap: 4px; padding: 4px; border-radius: 16px; }
-.ovs-door-sw button { min-height: 46px; gap: 8px; font-size: 15px; font-weight: 700; border-radius: 12px; transition: color .18s, background-color .18s; -webkit-tap-highlight-color: transparent; }
-.ovs-door-sw button[aria-selected="true"] { background: transparent; box-shadow: none; }
-.ovs-door-sw .ovs-tab-ic, .ovs-door-sw .ovs-tab-ic > svg { width: 20px; height: 20px; }
-.ovs-door-sw .ovs-tab-ic { transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
-.ovs-door-sw button[aria-selected="true"] .ovs-tab-ic { transform: scale(1.08); }
-.ovs-door-sw button:active .ovs-tab-ic { transform: scale(.9); }
-@media (hover: hover) and (pointer: fine) { .ovs-door-sw button:not([aria-selected="true"]):hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); } }
-.ovs-door-ink { position: absolute; left: 0; top: 4px; bottom: 4px; width: 0; z-index: -1; border-radius: 12px; opacity: 0; pointer-events: none;
-  background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent), 0 6px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent);
-  transition: transform .34s cubic-bezier(.3, 1.3, .4, 1), width .34s cubic-bezier(.3, 1.3, .4, 1), opacity .2s; }
-.ovs-door-ink.is-on { opacity: 1; }
-:root[data-theme="light"] .ovs-door-ink { background: #fff; }
-html[data-ov-motion=reduced] .ovs-door-ink { transition: opacity .25s; }
-html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .ovs-tab-ic { transition: none; }
-@media (max-width: 380px) { .ovs-door-sw button { font-size: 14px; gap: 6px; } }
 .ovs-in-door .ovs-foot { display: none; }
 .ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
 .ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
@@ -476,10 +449,6 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
 .ovs-nhead-n[hidden], .ovs-nhead-more[hidden] { display: none; }
 .ovs-nhead-more { margin-left: auto; min-height: 32px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--accent-light, var(--accent, #60a5fa)); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
 .ovs-nhead-more:hover, .ovs-nhead-more:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
-.ovs-ai-timer { flex: none; display: flex; align-items: center; gap: 10px; margin: 6px 12px 10px; min-height: 44px; padding: 0 14px; border: 0; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.ovs-ai-timer[hidden] { display: none; }
-.ovs-ai-timer:hover, .ovs-ai-timer:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); color: var(--text-primary, #e6edf7); }
-.ovs-ai-timer svg { flex: none; color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovs-fold svg { width: 16px; height: 16px; flex: none; transition: transform .2s; }
 .ovs-feeds { display: grid; gap: 4px; padding: 4px 6px 8px; }
 .ovs-feed { display: grid; grid-template-columns: minmax(0, 1fr) 40px 40px; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
@@ -608,36 +577,10 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
         doorEl = document.createElement('div'); doorEl.className = 'ovs-door'; doorEl.hidden = true;
-        doorSw = document.createElement('div'); doorSw.className = 'ovs-door-sw'; doorSw.setAttribute('role', 'tablist'); doorSw.setAttribute('aria-label', 'Vibe');
-        // Vibe holds three things (asks 335 and 350, the owner: "chat, codes, and agents all in the same place"): your
-        // chats with it, your coding tasks, and your agents.
-        doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['code', 'Code', 'code'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
-        doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
-        // 4.223.0: the switch's ink slides to the chosen part (the owner, 11-12: "animations, effects to the tabs"); it
-        // follows aria-selected wherever that is set, and the size of the row.
-        {
-            const ink = document.createElement('i'); ink.className = 'ovs-door-ink'; ink.setAttribute('aria-hidden', 'true'); doorSw.prepend(ink);
-            const place = () => {
-                const on = doorSw.querySelector('[data-part][aria-selected="true"]');
-                if (!on || !on.offsetWidth) { ink.classList.remove('is-on'); return; }
-                ink.style.transform = `translateX(${on.offsetLeft}px)`; ink.style.width = `${on.offsetWidth}px`; ink.classList.add('is-on');
-            };
-            if (typeof MutationObserver === 'function') new MutationObserver(() => requestAnimationFrame(place)).observe(doorSw, { subtree: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'] });
-            if (typeof ResizeObserver === 'function') new ResizeObserver(() => { ink.style.transition = 'none'; place(); void ink.offsetWidth; ink.style.transition = ''; }).observe(doorSw);
-            doorSw.addEventListener('keydown', (e) => {
-                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-                const all = [...doorSw.querySelectorAll('[data-part]')]; const k = all.indexOf(document.activeElement); if (k < 0) return;
-                const next = all[(k + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
-                e.preventDefault(); next.focus(); next.click();
-            });
-        }
+        // 4.225.0: Vibe is one place (the owner, 11-12, crossing out the Chat · Code · Agents switch: "one new unified
+        // agent … a shared UI"): every chat, task and coding run in one list with its own filters, drawn by ov-run.js.
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
-        const timerButton = document.createElement('button'); timerButton.type = 'button'; timerButton.className = 'ovs-ai-timer'; timerButton.setAttribute('aria-label', 'Start a timer'); timerButton.setAttribute('data-ov-tip', 'Start a timer'); timerButton.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/></svg><span>Start a timer</span>'; timerButton.hidden = true;
-        timerButton.addEventListener('click', () => { try { if (root.OpenVibeDock && root.OpenVibeDock.timer) root.OpenVibeDock.timer(timerButton); else if (ctx.dockMore) ctx.dockMore('timer'); } catch { /* not loaded */ } });
-        // Vibe's switch and its timer share one row (4.220.0): the timer is an icon at its end, never a row under the box.
-        // 4.223.0: the timer is in every box's + (the owner: "the timer should be in the plus thing"), not in this row.
-        const doorTop = document.createElement('div'); doorTop.className = 'ovs-door-top'; doorTop.append(doorSw); void timerButton;
-        doorEl.append(doorTop, doorHost);
+        doorEl.append(doorHost);
         listEl.after(doorEl);
         doorHost.addEventListener('openvibe:open-vibe', (e) => {
             if (door !== 'chats' || !canDoor()) return;
@@ -733,7 +676,12 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
             e.preventDefault();
             const q = input.value.trim();
             if (tab === 'feed' && homeLib() && !door) { render(q); return; }
-            if (door === 'vibe' && q) { try { if (ctx.ask) ctx.ask(q); } catch { /* Dock is optional */ } return; }
+            // Vibe: on Chats (the Dock's Vibe) the words go to its box as before; anywhere else they start a run.
+            if (door === 'vibe' && q) {
+                if (runFilter === 'chat') { try { if (ctx.ask) ctx.ask(q); } catch { /* the Dock is optional */ } }
+                else if (runView) runView.start(q).then(() => { input.value = ''; paintGhost(); }, () => {});
+                return;
+            }
             if (door === 'chats') { try { if (root.OpenVibeDock && root.OpenVibeDock.filterChats) root.OpenVibeDock.filterChats(q); } catch { /* Dock is optional */ } return; }
             const it = items[active >= 0 ? active : 0];
             // Enter shows every result, unless the person picked a row or typed a place's exact name (live, tools).
@@ -1287,38 +1235,98 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
         }
         mirrorActs();
     }
-    /** A place by the Dock's name ('chats', or Vibe's parts 'vibe' | 'code' | 'agent'), in the open menu. */
+    /** A place by the Dock's name ('chats', or Vibe's lists 'vibe' | 'code' | 'agent' | 'tasks'), in the open menu. */
     function showDoor(id) {
         if (!el || !el.classList.contains('is-open') || !canDoor() || !id) return false;
-        const want = id === 'agents' ? 'agent' : id;
-        if (['vibe', 'code', 'agent'].includes(want)) aiPart = want;
-        openDoor(want === 'chats' ? 'chats' : 'vibe');
+        // The Dock's places by name: its Vibe is Chats, its Agents are Tasks.
+        const want = { all: 'all', vibe: 'chat', chat: 'chat', code: 'code', agent: 'task', agents: 'task', tasks: 'task' }[id];
+        if (want) runFilter = want;
+        openDoor(id === 'chats' ? 'chats' : 'vibe');
         return door != null;
     }
-    /** Show a place in the menu: Messages, or AI (Vibe, Code or your agents, by the switch). */
+    /** Vibe's runs (ov-run.js, loaded beside the navbar by its hash the first time Vibe opens). */
+    let runLoading = null;
+    function runLib() {
+        if (root.OpenVibeRun) return Promise.resolve(root.OpenVibeRun);
+        if (runLoading || typeof ctx.sibling !== 'function') return runLoading || Promise.reject(new Error('no sibling'));
+        runLoading = new Promise((resolve, reject) => {
+            const sc = document.createElement('script'); sc.src = ctx.sibling('ov-run.js'); sc.async = true;
+            sc.onload = () => (root.OpenVibeRun ? resolve(root.OpenVibeRun) : reject(new Error('ov-run.js')));
+            sc.onerror = () => { runLoading = null; sc.remove(); reject(new Error('ov-run.js')); };
+            document.head.appendChild(sc);
+        });
+        return runLoading;
+    }
+    // What Vibe can do, to tap (they were the Dock's Vibe starters).
+    const VIBE_STARTERS = [
+        ['bell', 'Remind me to stretch every 2 hours'],
+        ['calendar', 'What is on today?'],
+        ['live', 'Who is live right now?'],
+        ['clock', 'Start a 25-minute focus timer'],
+        ['phone', 'Remind me tomorrow at 9 to call Sam'],
+        ['search', 'What is new on OpenVibe this week?'],
+    ];
+    let pendingAsk = null;
+    /** One of the Dock's panels in a slot of the run view (the Dock lends one at a time). */
+    function lend(slot, how) {
+        try { return root.OpenVibeDock && root.OpenVibeDock.mountInto ? root.OpenVibeDock.mountInto(slot, how) : null; } catch { return null; }
+    }
+    function mountRuns() {
+        const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        // Runs and the Action Center are the person's Network places, like the Dock's (navbar.js passes its base).
+        const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
+        const D = () => root.OpenVibeDock;
+        const opts = {
+            base: `${net}/api/frame`, token: () => ctx.token, me, sibling: ctx.sibling, filter: runFilter,
+            // All: every run, with the Action Center's work from every product, the Dock's Now, your Actor and the live
+            // agent view above it, and Vibe's starters. Chats, Tasks and Code are still the Dock's own panels (its Vibe,
+            // Agents and Code: their history, skills, voice, undo, repos), lent whole until the one view does all they do.
+            actions: { base: net }, starters: VIBE_STARTERS,
+            top: (slot) => lend(slot, { tab: 'agent', part: 'top' }),
+            panes: { chat: (slot) => lend(slot, { tab: 'vibe' }), task: (slot) => lend(slot, { tab: 'agent' }), code: (slot) => lend(slot, { tab: 'code' }) },
+            onPlace: (p) => { if (p.filter) runFilter = p.filter; },
+        };
+        const go = (R) => {
+            if (door !== 'vibe' || runView) return;
+            doorHost.textContent = ''; runView = R.mount(doorHost, opts);
+            if (pendingAsk != null) { runView.prefill(pendingAsk); pendingAsk = null; }
+        };
+        if (root.OpenVibeRun) { go(root.OpenVibeRun); return; }
+        doorHost.textContent = '';
+        const wait = document.createElement('p'); wait.className = 'ovs-door-wait'; wait.textContent = 'Opening Vibe…'; doorHost.append(wait);
+        runLib().then(go, () => { if (door === 'vibe') wait.textContent = 'Vibe did not load. Check your connection and open it again.'; });
+    }
+    /** Show a place in the menu: Messages (the Dock's), or Vibe (your runs). */
     function openDoor(id) {
         if (!doorEl || !canDoor()) return;
+        if (door && door !== id) closeDoorBody();
         door = id;
-        const want = id === 'chats' ? 'chats' : aiPart;
-        doorSw.hidden = id !== 'vibe';
-        const timerButton = doorEl.querySelector('.ovs-ai-timer'); if (timerButton) timerButton.hidden = id !== 'vibe';
-        doorSw.querySelectorAll('[data-part]').forEach((b) => b.setAttribute('aria-selected', b.getAttribute('data-part') === aiPart ? 'true' : 'false'));
         listEl.hidden = true; doorEl.hidden = false; el.classList.add('ovs-in-door');
-        try { if (!doorMount) doorMount = root.OpenVibeDock.mountInto(doorHost, { tab: want }); else doorMount.show(want); }
-        catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
+        el.classList.toggle('ovs-in-vibe', id === 'vibe');
+        if (id === 'vibe') {
+            if (runView) runView.list(runFilter); else mountRuns();
+        } else {
+            try { if (!doorMount) doorMount = root.OpenVibeDock.mountInto(doorHost, { tab: 'chats' }); else doorMount.show('chats'); }
+            catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
+        }
         watchActs(true);
         input.placeholder = id === 'chats' ? 'Search your chats' : `Search ${here()}, or ask Vibe`;
         paintTabs();
+    }
+    function closeDoorBody() {
+        if (doorMount) { try { doorMount.destroy(); } catch { /* */ } doorMount = null; }
+        if (runView) { try { runView.destroy(); } catch { /* */ } runView = null; }
+        if (doorHost) doorHost.textContent = '';
     }
     /** Back to the menu's own list (a tab, typing, or closing). The Dock's panels go home with their state. */
     function leaveDoor() {
         if (!door) return;
         door = null;
-        if (doorMount) { try { doorMount.destroy(); } catch { /* */ } doorMount = null; }
+        closeDoorBody();
         watchActs(false);
         if (doorEl) doorEl.hidden = true;
         if (listEl) listEl.hidden = false;
-        if (el) el.classList.remove('ovs-in-door');
+        if (el) el.classList.remove('ovs-in-door', 'ovs-in-vibe');
         if (input) input.placeholder = `Search ${here()}, or ask Vibe`;
     }
 
@@ -2062,7 +2070,14 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
 
     document.addEventListener('ov:boost:load', () => { if (el && el.classList.contains('is-open') && !input.value) render(''); });
 
-    const api = { open, close, door: (id) => showDoor(id), suggest, siteOf, registerCard, _state: () => ({ tab, door, from: ctx.from }) };
+    /** Ask your agent: Vibe, with the words in its box, unsent (the Dock's ask() comes here when the bar wires it). */
+    function prefill(text) {
+        const t = String(text || '').slice(0, 4000);
+        if (door === 'vibe' && runView) { runView.prefill(t); return true; }
+        pendingAsk = t; runFilter = 'all';
+        return showDoor('vibe');
+    }
+    const api = { open, close, door: (id) => showDoor(id), prefill, suggest, siteOf, registerCard, _state: () => ({ tab, door, from: ctx.from }) };
     root.OpenVibeSearch = api;
     if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

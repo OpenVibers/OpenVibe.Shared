@@ -203,6 +203,11 @@
             .openvibe-notif-panel, .openvibe-notif-inbox, .openvibe-notif-dock { --ovn-bg: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
             .openvibe-notif-dock { display: flex; flex-direction: column; min-height: 0; flex: 1; color: var(--text-primary, #ececf1); }
             .openvibe-notif-dock .openvibe-nv-head { display: none; }
+            /* 4.225.0 (the owner, 11-12: "scrolling is very buggy … on mobile … especially in notifications"): inside the menu
+               the list is not a scroll box of its own. It never overflowed there, but as a scroll box that holds its
+               overscroll it took every swipe that began on a notice and passed none of it to the menu, so nothing moved.
+               One scroller per layer: the menu's own list. */
+            .openvibe-notif-dock .openvibe-nv-list { flex: none; overflow: visible; overscroll-behavior: auto; }
             .openvibe-notif-dock .openvibe-nv-tools { padding-top: 10px; }
 .openvibe-notif-dock.is-preview .openvibe-nv-tools, .openvibe-notif-dock.is-preview .openvibe-nv-foot, .openvibe-notif-dock.is-preview .openvibe-nv-head, .openvibe-notif-dock.is-preview .openvibe-nv-more { display: none; }
             .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }

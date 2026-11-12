@@ -6,6 +6,9 @@
  *
  *   OpenVibeDock.mount(opts)          a signed-in person's state and counts (navbar.js; null when signed out)
  *   OpenVibeDock.mountInto(host, { tab })   the panel body in the menu ('vibe' | 'code' | 'agent' | 'chats')
+ *   OpenVibeDock.mountInto(host, { tab: 'agent', part: 'top' })   4.225.0: only the top of Agents (Now and the
+ *                                            timeline, your Actor, the live agent view), for the menu's Vibe, which
+ *                                            draws the runs and the Action Center's work itself (ov-run.js)
  *   OpenVibeDock.open({ tab }) / ask({ text }) / share({ text, title })   open the menu there (opts.openMenu)
  * What the old pill said (an agent needs you, agents working, a timer's minutes) goes to opts.status, which navbar.js
  * paints on the bar's menu button.
@@ -35,6 +38,7 @@
     const DEFAULT_STATE = { tab: 'vibe', agent: null, chat: null, vibe: null };
 
     let bodyEl = null, inline = null, panelEpoch = 0, o = {}, doc = null, tab = 'vibe', saveT = 0, pending = {};
+    let part = null;   // 'top': only the top of the Agents panel is lent (mountInto … part: 'top', 4.225.0)
     const mounts = {};
 
     const state = () => (doc && doc.state) || DEFAULT_STATE;
@@ -80,7 +84,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'e34bcde16fb8', 'dock-code.js': '7a768982eff3', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': 'f9aea671c7ad', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'dock-vibe.js': 'a918b45c0dae', 'dock-code.js': '7a768982eff3', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': 'f9aea671c7ad', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -267,6 +271,13 @@
         if (mounts[id]) { if (mounts[id].refresh) mounts[id].refresh(); if (mounts[id + 'Timeline']) mounts[id + 'Timeline'].refresh(); return; }
         mounts[id] = { refresh: null };
         panel.innerHTML = '<div class="ovdk-wait"><span></span></div>';
+        if (id === 'agent' && part === 'top') {
+            // 4.225.0: only the top is lent (the menu's Vibe draws the runs and the Action Center's work itself).
+            panel.innerHTML = '<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div>';
+            agentTop(id, panel, epoch);
+            mounts[id] = { refresh() { ['Timeline', 'Actor', 'View'].forEach((k) => { const m = mounts[id + k]; if (m && m.refresh) m.refresh(); }); } };
+            return;
+        }
         if (id === 'code') {
             const ok = await load('dock-code.js', () => !!(root.OpenVibeDockCode && root.OpenVibeDockCode.mount));
             if (epoch !== panelEpoch || !panelActive(id)) { delete mounts[id]; return; }
@@ -280,18 +291,7 @@
             if (!ok) return failed(panel, id);
             // K-D3: the person's own agent stream above the list; it hides itself when there is none.
             panel.innerHTML = '<div class="ovdk-actor"></div><div class="ovdk-timeline"></div><div class="ovdk-agent"></div><div class="ovdk-scroll"></div><div class="ovdk-runs-foot ovdk-foot"></div>';
-            // The Agent panel: Now, Needs you and the one timeline (design 2026-11-07). It is first in the tab, so on a
-            // phone Now and Needs you are on screen before anything else.
-            load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
-                if (on && epoch === panelEpoch && !mounts[id + 'Timeline'] && panel.isConnected && panelActive(id)) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), active: () => panelActive('agent'), focus: () => o.task || null });
-            });
-            // Actor v3 (A3): your Actor first, on every site; it shows nothing for a person without one.
-            load('dock-actor.js', () => !!(root.OpenVibeDockActor && root.OpenVibeDockActor.mount)).then((on) => {
-                if (on && epoch === panelEpoch && !mounts[id + 'Actor'] && panel.isConnected && panelActive(id)) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), networkBase: o.apiBase || 'https://openvibe.network', active: () => panelActive('agent') });
-            });
-            load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
-                if (on && epoch === panelEpoch && !mounts[id + 'View'] && panel.isConnected && panelActive(id)) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: directBase(o.agentBase), frameBase: frameBase(), active: () => panelActive('agent') });
-            });
+            agentTop(id, panel, epoch);
             const m = root.OpenVibeDockRuns.mount(panel.querySelector('.ovdk-scroll'), {
                 call, state, save, scopes: o.scopes, active: () => panelActive('agent'), actorBase: actorBase(), loadMarks: () => load('ai-marks-client.js', () => !!root.OpenVibeAIMarks),
                 styles: () => document.getElementById('ovdk-styles'),
@@ -302,6 +302,20 @@
             return;
         }
         delete mounts[id];
+    }
+    /** The top of the Agents panel: Now and the one timeline (design 2026-11-07, first, so on a phone Now and Needs you
+     * are on screen before anything else), your Actor (Actor v3 A3; nothing for a person without one) and your own
+     * agent's live view (K-D3; it hides itself when there is none). Each loads on its own. */
+    function agentTop(id, panel, epoch) {
+        load('dock-timeline.js', () => !!(root.OpenVibeDockTimeline && root.OpenVibeDockTimeline.mount)).then((on) => {
+            if (on && epoch === panelEpoch && !mounts[id + 'Timeline'] && panel.isConnected && panelActive(id)) mounts[id + 'Timeline'] = root.OpenVibeDockTimeline.mount(panel.querySelector('.ovdk-timeline'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), active: () => panelActive('agent'), focus: () => o.task || null });
+        });
+        load('dock-actor.js', () => !!(root.OpenVibeDockActor && root.OpenVibeDockActor.mount)).then((on) => {
+            if (on && epoch === panelEpoch && !mounts[id + 'Actor'] && panel.isConnected && panelActive(id)) mounts[id + 'Actor'] = root.OpenVibeDockActor.mount(panel.querySelector('.ovdk-actor'), { token: o.token, base: directBase(o.actorBase), frameBase: frameBase(), networkBase: o.apiBase || 'https://openvibe.network', active: () => panelActive('agent') });
+        });
+        load('dock-agent.js', () => !!(root.OpenVibeDockAgent && root.OpenVibeDockAgent.mount)).then((on) => {
+            if (on && epoch === panelEpoch && !mounts[id + 'View'] && panel.isConnected && panelActive(id)) mounts[id + 'View'] = root.OpenVibeDockAgent.mount(panel.querySelector('.ovdk-agent'), { token: o.token, base: directBase(o.agentBase), frameBase: frameBase(), active: () => panelActive('agent') });
+        });
     }
     function failed(panel, id) {
         mounts[id] = null;
@@ -674,7 +688,8 @@
 
     // ── Open: the menu, on one of its places ──
     // Ask your agent (4.135.0): Vibe opens with the question in its box, unsent.
-    function ask({ text = '' } = {}, n = 0) { if (!n && !panelActive('vibe')) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask && panelActive('vibe')) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
+    function ask({ text = '' } = {}, n = 0) {
+        if (!n && !panelActive('vibe')) open({ tab: 'vibe' }); if (vibe.api && vibe.api.ask && panelActive('vibe')) vibe.api.ask(text); else if (n < 40) setTimeout(() => ask({ text }, n + 1), 100); }
     function isOpen() { return !!inline; }
     function share({ text = '', title = '' } = {}) {
         const t = String(text || '').trim().slice(0, 4000);
@@ -694,7 +709,7 @@
         let id = want || (c.waiting || c.running ? 'agent' : state().tab || 'vibe');
         if (id === 'agents') id = 'agent';
         if (!TABS.some(([t]) => t === id)) id = 'vibe';
-        if (inline && id === tab) return;
+        if (inline && id === tab && part !== 'top') return;
         if (typeof o.openMenu === 'function') o.openMenu(id);
     }
     function close() { if (typeof o.closeMenu === 'function') o.closeMenu(); }
@@ -709,7 +724,7 @@
 
     let mountHandle = null;
     /** Place the same panel body under another sheet's head. The helper and its layout load on first use. */
-    function mountInto(host, { tab: first = 'vibe' } = {}) {
+    function mountInto(host, { tab: first = 'vibe', part: lend = null } = {}) {
         if (!(host instanceof Element)) throw new TypeError('mountInto needs a host element');
         if (mountHandle) mountHandle.destroy();
         let api = null, gone = false, wanted = first;
@@ -720,9 +735,10 @@
         mountHandle = handle;
         load('dock-mount.js', () => !!root.OpenVibeDockMount).then((ok) => {
             if (ok && !gone) api = root.OpenVibeDockMount.mount(host, wanted, {
-                start(wrap) { if (!bodyEl) build(); inline = wrap; wrap.append(bodyEl); },
-                show(id) { setTab(id, true); },
-                end() { disposePanel(); inline = null; if (bodyEl) bodyEl.remove(); paintStatus(); },
+                start(wrap) { if (!bodyEl) build(); part = lend === 'top' ? 'top' : null; wrap.classList.toggle('ovdk-part-top', part === 'top'); inline = wrap; wrap.append(bodyEl); },
+                // A lent top is not a place the person chose: the menu's Vibe remembers its own (remember()).
+                show(id) { setTab(id, part !== 'top'); },
+                end() { disposePanel(); inline = null; part = null; if (bodyEl) bodyEl.remove(); paintStatus(); },
             });
         });
         return handle;

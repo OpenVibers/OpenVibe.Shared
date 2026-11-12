@@ -12,8 +12,18 @@ const h = require('../browser-harness');
 assert.doesNotThrow(() => require('../ov-composer'), 'ov-composer.js loads (browser-only: Node takes the early return)');
 if (process.env.OV_SKIP_BROWSER === '1' || !h.findChrome()) { console.log('composer-v2-chrome: skipped (no Chrome; set CHROME_BIN)'); process.exit(0); }
 const root = path.join(__dirname, '..');
+const searched = [];
 const server = http.createServer((req, res) => {
     const u = req.url.split('?')[0];
+    // 4.225.0: the Frame's code search, as Network answers it (server/frame/code-search.js).
+    if (u === '/api/frame/code/search') {
+        searched.push(new URL(req.url, 'http://x').searchParams.get('q'));
+        res.writeHead(200, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify({ items: [
+            { full_name: 'ada/goal-bar', url: 'https://github.com/ada/goal-bar', description: 'A goal bar <b>for</b> streams', language: 'JavaScript', stars: 1250, license: 'MIT', owner_avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4' },
+            { full_name: 'bo/tracker', url: 'https://github.com/bo/tracker', owner_avatar_url: 'https://evil.example/p.png', stars: 3 },
+        ] }));
+    }
     if (u === '/ov-composer.js' || u === '/ov-window.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, u.slice(1)))); }
     res.writeHead(200, { 'content-type': 'text/html' });
     res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -134,6 +144,24 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         await until(`window.chatSent.length === 1`);
         assert.deepEqual(await page.evaluate(`window.chatSent[0]`), { text: 'half a draft', reply: { id: 7 } });
         assert.equal(await page.evaluate(`!!document.querySelector('#c1 .ovc-bar')`), false, 'the reply bar goes with the send');
+
+        // 4.225.0: the + has GitHub. A repository found through the Frame's code search goes into the box as its address.
+        await page.evaluate(`document.getElementById('g1').setAttribute('data-ovc-frame', location.origin), true`);
+        await page.evaluate(`document.querySelector('#g1 .ovc-more').click(), true`);
+        assert.ok((await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-tray-t')].map((t) => t.textContent)`)).includes('GitHub'), 'GitHub is in the +');
+        await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-tray-i')].find((b) => b.textContent === 'GitHub').click(), true`);
+        assert.equal(await page.evaluate(`document.activeElement === document.querySelector('#g1 .ovc-repo-q')`), true, 'the search field has the focus');
+        await page.evaluate(`(() => { const f = document.querySelector('#g1 .ovc-repo-q'); f.value = 'goal bar'; f.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        let rows = 0;
+        for (let i = 0; i < 40 && rows < 2; i++) { await wait(50); rows = await page.evaluate(`document.querySelectorAll('#g1 .ovc-repo-row').length`); }
+        assert.equal(rows, 2, 'the repositories as you type');
+        assert.deepEqual(searched, ['goal bar'], 'asked once, a quarter second after the last key');
+        const shown = await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-repo-row')].map((r) => ({ name: r.querySelector('b').textContent, sub: r.querySelector('small').textContent, meta: r.querySelector('i').textContent, img: r.querySelector('img') ? r.querySelector('img').getAttribute('src') : null, bold: !!r.querySelector('small b') }))`);
+        assert.deepEqual(shown[0], { name: 'ada/goal-bar', sub: 'A goal bar <b>for</b> streams', meta: 'JavaScript · ★ 1.3k · MIT', img: 'https://avatars.githubusercontent.com/u/1?v=4', bold: false }, 'everything as text');
+        assert.equal(shown[1].img, null, 'a picture from anywhere but GitHub\'s avatar host is not drawn');
+        await page.evaluate(`document.querySelector('#g1 .ovc-repo-q').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })), true`);
+        assert.match(await page.evaluate(`document.querySelector('#g1 textarea').value`), /https:\/\/github\.com\/ada\/goal-bar $/, 'Enter puts the first one\'s address in the box');
+        assert.equal(await page.evaluate(`document.querySelector('#g1 .ovc-repo').hidden`), true, 'and the panel goes');
 
         // Nothing is wider than the phone.
         assert.equal(await page.evaluate(`document.documentElement.scrollWidth`), 390);
