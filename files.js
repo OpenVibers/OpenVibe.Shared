@@ -58,6 +58,7 @@ const BROWSER = Object.freeze([
     'messages.js',          // Chat's two views: room lines and texting bubbles (openvibe-shared/messages)
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-composer.js',       // shared composer
+    'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
     'ov-capture.js',        // OVCapture: camera, microphone, screen, photo and recording for Live, Cam and the composer (4.216.0)
     'ov-combo.js',          // shared field dropdown
     'ov-window.js',         // shared dialog, sheet, and panel
