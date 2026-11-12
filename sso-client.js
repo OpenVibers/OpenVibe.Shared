@@ -105,7 +105,8 @@
             const res = await fetch(fedcmLogin, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: cred.token, nonce }) });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) return { ok: false, reason: data.error || `http-${res.status}`, auto: !!cred.isAutoSelected };
-            try { sessionStorage.setItem('ov_sso_hint', 'account'); localStorage.setItem('ov_sso_hint', 'account'); } catch { /* */ }
+            const who = data.user && /^[A-Za-z0-9_.-]{1,64}$/.test(data.user.username || '') ? ':' + data.user.username : '';
+            try { sessionStorage.setItem('ov_sso_hint', 'account' + who); localStorage.setItem('ov_sso_hint', 'account' + who); } catch { /* */ }
             return { ok: true, user: data.user || null, auto: !!cred.isAutoSelected };
         } catch (err) { return { ok: false, reason: 'network' }; }
     }
