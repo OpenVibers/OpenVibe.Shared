@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — a plain Stop
+
+- `ov-arrange.js`: a Stop part docks right like any other optional part; no special E-STOP size or position.
+
 ## 4.223.0 — 2026-11-12
 
 You redone as tabs, icons that fill their squares everywhere in the menu, names in the brand face, and one composer with
