@@ -12,6 +12,8 @@
  *   glyphs.path(name)                its drawing (the inside of a 24-unit SVG), or ''
  *   glyphs.svg(name, { size, title, style })  a standalone SVG, or ''
  *   glyphs.fromFa('fa-tower-broadcast') → 'live'   the glyph for a Font Awesome name (with or without fa-), or null
+ *   glyphs.markup('live', { title, cls })          <i data-ov-icon="live">, OpenVibe's own markup (4.231.0)
+ *   glyphs.fromFaClasses('fa-solid fa-eye me-2')   { icon: 'eye', cls: ['ovg-fill', 'me-2'], … } (scripts/fa-to-ov.js)
  *   glyphs.FA                        { 'tower-broadcast': 'live', … }
  *   glyphs.META[name]                { by, tags } who drew it and what it is for (openvibe.design/icons)
  *
@@ -485,6 +487,10 @@
 
     // ── Font Awesome's names, as the network uses them, mapped to the glyph that stands for each ──
     const FA = Object.freeze({
+        // 4.231.0: the names sites used that drew nothing once Font Awesome's stylesheet was gone (the maps app, yt).
+        'arrow-rotate-left': 'undo', 'chart-pie': 'chart', 'book-skull': 'book', crosshairs: 'target', 'location-crosshairs': 'target',
+        satellite: 'image', 'globe-americas': 'globe', 'street-view': 'walk', 'magnifying-glass-location': 'search', 'apple-whole': 'food',
+        backpack: 'briefcase', 'shield-heart': 'shield', openstreetmap: 'map',
         'wand-magic-sparkles': 'wand', 'wand-magic': 'wand', 'wand-sparkles': 'wand', sparkles: 'spark', 'star-of-life': 'spark', eye: 'eye', 'eye-slash': 'eye-off',
         binoculars: 'binoculars', telescope: 'telescope', microscope: 'microscope', joystick: 'joystick', gpu: 'gpu', cpu: 'cpu', memory: 'memory', ram: 'memory',
         'tower-broadcast': 'live', 'broadcast-tower': 'live', 'satellite-dish': 'dish', 'tower-cell': 'live', 'signal': 'wifi', wifi: 'wifi',
@@ -607,5 +613,50 @@
     /** The inside of the <svg> ov-glyphs.js draws for a glyph: the line drawing, and its solid one when it has one. */
     const inner = (name) => { const d = path(name); const so = solid(name); return d ? d + (so ? `<g class="ovg-s">${so}</g>` : '') : ''; };
 
-    return { NAMES, META, FA, SOLID, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa };
+    // ── OpenVibe's own markup (4.231.0): <i data-ov-icon="name">, drawn in the page by ov-glyphs.js ──
+    function markup(name, { title = '', cls = '' } = {}) {
+        if (name !== 'busy' && !path(name)) return '';
+        return `<i data-ov-icon="${esc(name)}"${cls ? ` class="${esc(cls)}"` : ''}${title ? ` title="${esc(title)}"` : ' aria-hidden="true"'}></i>`;
+    }
+    // Font Awesome's classes that say how, in OpenVibe's: '' drops one (the glyphs' default does it), null means a person
+    // has to decide (an animation, a stack, a list: scripts/fa-to-ov.js reports it and leaves the element alone).
+    const FA_HOW = Object.freeze({
+        'fa-solid': 'ovg-fill', fas: 'ovg-fill', 'fa-regular': '', far: '', 'fa-classic': '', 'fa-thin': 'ovg-thin', 'fa-light': 'ovg-light',
+        'fa-fw': 'ovg-fw', 'fa-2xs': 'ovg-xs', 'fa-xs': 'ovg-xs', 'fa-sm': 'ovg-sm', 'fa-1x': '', 'fa-lg': 'ovg-lg', 'fa-xl': 'ovg-xl', 'fa-2xl': 'ovg-2x',
+        'fa-2x': 'ovg-2x', 'fa-3x': 'ovg-3x', 'fa-rotate-90': 'ovg-rotate-90', 'fa-rotate-180': 'ovg-rotate-180', 'fa-rotate-270': 'ovg-rotate-270',
+        'fa-flip-horizontal': 'ovg-flip-h', 'fa-flip-vertical': 'ovg-flip-v', fa: '',
+    });
+    const SPINNERS = new Set(['spinner', 'circle-notch', 'rotate', 'arrows-rotate', 'sync', 'sync-alt', 'rotate-right', 'arrow-rotate-right', 'gear', 'cog', 'circle-dot']);
+    /**
+     * A class list in OpenVibe's terms: { icon, brand, cls, manual, unknown }. ICON is the glyph its Font Awesome name
+     * maps to (a spinning spinner is busy), BRAND a logo's Font Awesome name (the caller maps it with brands.fromFa),
+     * CLS the classes to keep (the page's own, and ovg-* for Font Awesome's sizes, widths and turns), MANUAL the
+     * classes a person has to decide, UNKNOWN a name the glyphs do not have. Classes without fa- give icon null.
+     */
+    function fromFaClasses(list) {
+        const out = { icon: null, brand: null, cls: [], manual: [], unknown: null };
+        const words = String(list || '').split(/\s+/).filter(Boolean);
+        const brand = words.includes('fa-brands') || words.includes('fab');
+        const spin = words.some((w) => /^fa-(spin|spin-pulse|pulse)$/.test(w));
+        for (const w of words) {
+            if (w === 'fa-brands' || w === 'fab') continue;
+            if (Object.prototype.hasOwnProperty.call(FA_HOW, w)) { if (FA_HOW[w]) out.cls.push(FA_HOW[w]); continue; }
+            if (/^fa-(spin|spin-pulse|pulse)$/.test(w)) continue;
+            if (/^fa-(beat|beat-fade|bounce|fade|flip|shake|stack|stack-1x|stack-2x|layers|layers-text|layers-counter|ul|li|border|pull-left|pull-right|inverse|rotate-by|flip-both|sharp|duotone|sharp-duotone|[4-9]x|10x|swap-opacity|width-auto)$/.test(w)) { out.manual.push(w); continue; }
+            if (/^fa-[a-z0-9-]+$/.test(w)) {
+                const n = w.slice(3);
+                if (brand) { out.brand = out.brand || n; continue; }
+                if (spin && SPINNERS.has(n)) { out.icon = 'busy'; continue; }
+                const g = fromFa(n);
+                if (g && !out.icon) out.icon = g; else if (!g) out.unknown = out.unknown || w;
+                continue;
+            }
+            out.cls.push(w);
+        }
+        if (spin && out.icon && out.icon !== 'busy') out.manual.push('fa-spin');
+        out.cls = [...new Set(out.cls)];
+        return out;
+    }
+
+    return { NAMES, META, FA, SOLID, DRAWN: Object.freeze(Object.keys(DRAWN)), path, solid, inner, svg, fromFa, markup, fromFaClasses, FA_HOW };
 });

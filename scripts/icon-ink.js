@@ -19,9 +19,8 @@
  *   node scripts/icon-ink.js --sheets DIR       before/after contact sheets at 32/44/56/96 px
  *   node scripts/icon-ink.js --tile-demo DIR    one tile at painted fractions 0.50/0.58/0.64 + before
  *
- * The sets: ovi-line and ovi-solid (ov-icons.js, the ring icons; the solids are Font Awesome outlines
- * written by scripts/build-nav-icons.py, normalised here by the same rule that change adds to that
- * generator), glyphs-line and glyphs-solid (glyphs.js, the network's own set), kit-line (kit.js, whose
+ * The sets: ovi-line (ov-icons.js, the ring icons' line drawings; their solids are glyph solids since
+ * 4.231.0, measured with glyphs-solid), glyphs-line and glyphs-solid (glyphs.js, the network's own set), kit-line (kit.js, whose
  * drawings join the glyph registry). Measured but never rewritten: brands (third-party marks, not ours
  * to redraw), home-local and search-local (one-off chrome, not sets), appicon (the one installable mark,
  * centred by construction). nav-icons.js is not measured separately: every entry is a glyphs.js drawing
@@ -46,7 +45,7 @@ const COM_PULL = 0.015;
 
 const r4 = (n) => Math.round(n * 10000) / 10000;
 /**
- * A coordinate: one decimal, no trailing zeros, never -0. Shared with build-nav-icons.py.
+ * A coordinate: one decimal, no trailing zeros, never -0.
  *
  * One decimal is 0.42% of a 24-box — under half a pixel at the 96 px the measurement rasterises at,
  * and a tenth of the test's 4% size bound. The PAINTED SIZE is what lands on the half-unit grid (see
@@ -263,7 +262,6 @@ const unquote = (e) => new Function(`return (${e});`)();
 
 const SETS = {
     'ovi-line': { box: [24, 24], sw: 1.7, norm: true, label: 'ov-icons line (24-unit strokes)' },
-    'ovi-solid': { box: [512, 512], sw: 0, norm: true, label: 'ov-icons solid (Font Awesome outlines)' },
     'glyphs-line': { box: [24, 24], sw: 2, norm: true, label: 'glyphs line (24-unit strokes)' },
     'glyphs-solid': { box: [24, 24], sw: 0, norm: true, label: 'glyphs solid (filled twins)' },
     'kit-line': { box: [24, 24], sw: 2, norm: true, label: 'kit line (24-unit strokes)' },
@@ -273,14 +271,13 @@ const SETS = {
     'appicon': { box: 'png', sw: 0, norm: false, label: 'installable mark (measured only)' },
 };
 
-/** ov-icons.js from a source string: line markup and [w, d] solids per name, with entry offsets. */
+/** ov-icons.js from a source string: line markup per name, with entry offsets. */
 function loadOvi(src) {
     const P = (d) => `<path d="${d}"/>`;
     const line = {}, solid = {};
     const lineEntries = scanEntries(src, 'GLYPHS');
     for (const e of lineEntries) line[e.key] = new Function('P', `return (${e.expr});`)(P);
-    const solidEntries = scanEntries(src, 'SOLID');
-    for (const e of solidEntries) { const [w, d] = unquote(e.expr); solid[e.key] = { w, d }; }
+    const solidEntries = [];   // the ring solids are glyph solids (4.231.0), measured with glyphs-solid
     return { line, solid, lineEntries, solidEntries };
 }
 
@@ -342,15 +339,6 @@ function buildItems(rootDir, onlySet) {
         // Production fills the sub-unit dots (ov-icons.js CSS): measure what the page paints.
         const dots = '<style>circle[r=".6"],circle[r=".7"]{fill:#000;stroke:none}</style>';
         push(`ovi-line/${n}`, stroked(d, 1.7, dots), PX, PX);
-    }
-    if (want('ovi-solid')) for (const [n, { w, d }] of Object.entries(ovi.solid)) {
-        // A Font Awesome glyph's path data lives in the 0..512 square; only the DECLARED advance width varies
-        // (384..640), and ov-icons.js crops the drawing to `0 0 <w> 512`. So the fraction of the icon's own
-        // box the ink fills says nothing about the painted size: two glyphs that paint the same area read
-        // 0.633 (a 640 advance) and 0.790 (a 512 advance). Production maps the solid with `scale(24/512)`, so
-        // equal ink in the 512 reference is equal painted size in the 24-box. Measure the ink against the
-        // square 512 canvas the path data is drawn in.
-        push(`ovi-solid/${n}`, `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="${PX}" height="${PX}"><path d="${d}" fill="#000"/></svg>`, PX, PX);
     }
     if (want('glyphs-line')) for (const [n, d] of Object.entries(gl)) push(`glyphs-line/${n}`, stroked(d, 2), PX, PX);
     if (want('glyphs-solid')) for (const [n, d] of Object.entries(gs)) {
@@ -761,14 +749,12 @@ async function cmdNormalise(targetFlag) {
     const h = require(path.join(ROOT, 'browser-harness.js'));
     fs.writeFileSync(BEFORE, JSON.stringify({ generated: new Date().toISOString(), chrome: h.findChrome(), px: PX, note: 'pre-normalisation', sets: before }, null, 1) + '\n');
     const pool = [];
-    for (const s of ['ovi-line', 'ovi-solid', 'glyphs-line', 'glyphs-solid', 'kit-line']) for (const r of Object.values(before[s].icons)) pool.push(Math.max(...r.ink));
+    for (const s of ['ovi-line', 'glyphs-line', 'glyphs-solid', 'kit-line']) for (const r of Object.values(before[s].icons)) pool.push(Math.max(...r.ink));
     const target = targetFlag ? Number(targetFlag) : Math.round(median(pool) * 100) / 100;
     console.log(`target: ${target} of box (pooled median ${median(pool).toFixed(4)} over ${pool.length} drawings)`);
 
     // ── normalise, then rebuild, then measure again, until it settles ──
-    // The Font Awesome solids are NOT rewritten here: they are generated, and scripts/build-nav-icons.py
-    // normalises them into the 512 square with the same rule (ink at the target, centred on 256,256).
-    // Rewriting a generated file by hand would be undone by the next generator run.
+    // The ring icons' solids are not rewritten here: scripts/build-navbar-icons.js copies them from the glyphs.
     const run = (cmd, args) => execFileSync(cmd, args, { cwd: ROOT, stdio: 'inherit' });
     const rebuild = () => {
         run(process.execPath, ['scripts/build-glyphs.js']);

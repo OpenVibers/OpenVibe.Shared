@@ -1,5 +1,31 @@
 # Changelog
 
+## 4.231.0 — 2026-11-12
+
+**OpenVibe's own icons, and no Font Awesome drawing left** (the owner, 11-12: "make sure no remnants of font awesome or
+other libraries are still being used rather than our openvibe.design systems").
+
+- **The ring icons' solids are the glyphs' own.** Nine product icons (Network, Live, Tools, Media, Games, Community,
+  Chat, Domains, Bench) drew Font Awesome outlines as their solid twin. Each is now the solid drawing of the glyph
+  that stands for it, on the same 24-unit grid as the line drawings. Exchange keeps its line drawing until `swap` has
+  a solid. `scripts/build-navbar-icons.js` writes them from `glyphs.js` and refuses any drawing that is not a glyph.
+- **The generator that read Font Awesome's font is gone** (`scripts/build-nav-icons.py`; `npm run build:icons` is
+  `build-navbar-icons.js`). The bar's dead 512-grid path in `navbar.js` went with it.
+- **OpenVibe's own markup:**
+  - `<i data-ov-icon="eye">` names any glyph and `<i data-ov-brand="github">` any logo, drawn by `ov-glyphs.js`;
+  - classes `ovg-xs` … `ovg-3x`, `ovg-fw`, `ovg-rotate-*`, `ovg-flip-h`/`-v` and `ovg-fill` (what `fa-solid` did);
+  - `OVGlyphs.icon()`, `.html()` and `.has()` in a page, and `glyphs.markup()` on a server;
+  - the drop-in now carries every glyph (287), and the navbar loads it for this markup too.
+- **The bar draws glyph names:** a name the bar's set lacks is drawn as `<i data-ov-icon>`, never as Font Awesome.
+- **`scripts/fa-to-ov.js`** rewrites a repository's static Font Awesome markup into `data-ov-icon` / `data-ov-brand`.
+  It keeps each attribute's own quote, and running it twice changes nothing. It lists what a person has to decide
+  (names built at run time, JS class strings, CSS rules, animations, unknown names). `glyphs.fromFaClasses()` is its
+  mapping.
+- **Names that drew nothing now draw their glyph:** `arrow-rotate-left`, `chart-pie`, `book-skull`, `crosshairs`,
+  `location-crosshairs`, `satellite`, `globe-americas`, `street-view`, `magnifying-glass-location`, `apple-whole`,
+  `backpack`, `shield-heart`, `openstreetmap`; and the logos `reddit-alien` and `kickstarter-k`.
+- Test `fa-to-ov`.
+
 ## 4.230.0 — 2026-11-12
 
 - **OpenVibe's own controls on every site** (the owner, 11-12: "improve the selection boxes to use a more customized look integrated into openvibe.design and themed better with animations and effects for all inputs and buttons"). `ov-forms.css` now draws every checkbox and radio: a rounded box whose check pops in, and a ring whose dot grows. The mark is the box's own `::before` (a clip-path check, scaled), so no picture is fetched. Both lift their border on hover, squeeze on a press and glow with focus; the mixed state is a bar; disabled is faded. A switch (`role="switch"`) glows when on, its knob squeezes when pressed, and it has a focus ring. Buttons answer a press, and text fields, text areas and selects glow in the accent with focus. Everything is `:where()`, so a site's own rule wins; `data-ov-native` keeps the browser's control; motion follows the person (Calm slower, Off moves nothing).

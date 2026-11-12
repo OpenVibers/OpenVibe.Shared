@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.230.0",
+  "version": "4.231.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -182,7 +182,7 @@
     "audit:page-end": "node scripts/audit-page-end.js",
     "create-site": "node scripts/create-site.js",
     "size": "node scripts/size-report.js",
-    "build:icons": "python3 scripts/build-nav-icons.py",
+    "build:icons": "node scripts/build-navbar-icons.js",
     "build:themes": "node scripts/build-theme-loader.js",
     "build:styles": "node scripts/build-styles.js"
   },
