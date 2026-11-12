@@ -850,33 +850,13 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         } catch { /* the original goes as it is */ }
         return out;
     }
+    // The Feed's composer is the shared one (ov-composer.js 4.215.0, composer v2, preset post): the person's picture, a
+    // box that grows, photos as tiles each with its description, files, emoji, voice, the ring and Post. The 11-12
+    // owner: "this composer is completely ugly and broken … doesn't have the file attachment" (its own + drew an icon
+    // with no stroke, so it could not be seen). What it posts is still the Feed's: pictures through the frame with their
+    // descriptions, other files to Media, then the post or the status.
     function composer(box, o) {
-        const form = h('form', 'ovt-composer'); form.id = 'ovh-feed-composer'; form.setAttribute('data-ovc', ''); form.setAttribute('data-ovc-max-files', '10'); form.setAttribute('data-ovc-max-mb', '300');
-        const ta = h('textarea'); ta.name = 'text'; ta.maxLength = 2000; ta.rows = 2; ta.required = true; ta.setAttribute('data-ovt-text', '');
         const first = String((o.user && (o.user.display_name || o.user.username)) || '').split(/\s+/)[0];
-        ta.placeholder = first ? `What's new, ${first}?` : "What's new?"; ta.setAttribute('aria-label', "What's new");
-        const row = h('div', 'ovt-c-row'), tools = h('div', 'ovt-c-tools');
-        // The composer's own + (its contract: label.ovt-btn.ovt-attach holding the file input), drawn by ov-composer.js's
-        // styles wherever the menu opens; a kit button had no styles here and drew bare ("Attach files").
-        const attach = h('label', 'ovt-btn ovt-attach'); attach.title = 'Attach files'; attach.setAttribute('aria-label', 'Attach files');
-        attach.append(svgIcon('attach'));
-        const file = h('input'); file.type = 'file'; file.multiple = true; file.hidden = true; file.setAttribute('data-ovt-files', ''); file.setAttribute('aria-label', 'Attach files');
-        attach.append(file); tools.append(attach);
-        const post = h('button', 'ovt-send', 'Post'); post.type = 'submit'; post.disabled = true; post.setAttribute('data-ovt-send', '');
-        const note = h('p', 'ovh-note'); note.hidden = true; note.setAttribute('data-ovt-note', '');
-        row.append(tools, post); form.append(ta, row); box.append(form, note);
-        const pics = new Map();
-        const ready = () => { post.disabled = !ta.value.trim() || [...pics.values()].some((alt) => !alt.value.trim()); };
-        form.addEventListener('input', ready);
-        form.addEventListener('ovc:file-added', (e) => {
-            const { file: f, chip } = e.detail;
-            if (!/^image\//.test(f.type)) return;
-            chip.classList.add('ovc-image');
-            const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What does it show?';
-            alt.setAttribute('aria-label', `What ${f.name || 'the picture'} shows`); alt.required = true;
-            chip.append(alt); pics.set(f, alt); queueMicrotask(ready);
-        });
-        form.addEventListener('ovc:file-removed', (e) => { pics.delete(e.detail.file); queueMicrotask(ready); });
         const auth = { Authorization: `Bearer ${o.token}` };
         const upload = async (url, f) => {
             const fd = new FormData(); fd.append('file', f, f.name || 'file');
@@ -886,47 +866,56 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             if (!r.ok || !id) throw new Error(j.detail || `${f.name || 'File'} did not upload.`);
             return id;
         };
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const text = ta.value.trim(), files = form.__ovc ? form.__ovc.files() : [...file.files];
-            if (!text) { ta.focus(); return; }
-            const images = files.filter((f) => /^image\//.test(f.type));
-            if (images.length > 4) { note.hidden = false; note.textContent = 'Choose up to four pictures.'; return; }
-            const missing = images.find((f) => !pics.get(f) || !pics.get(f).value.trim());
-            if (missing) { note.hidden = false; note.textContent = 'Describe each picture.'; pics.get(missing)?.focus(); return; }
-            post.disabled = true; note.hidden = true;
-            const label = post.textContent;
-            try {
-                const pictures = [], attachments = [];
-                for (const f of files) {
-                    post.textContent = `Uploading ${f.name || 'file'}`;
-                    if (/^image\//.test(f.type)) {
-                        const prepared = await preparePicture(f);
-                        const media_id = await upload(`${o.frameBase || FRAME}/attachments`, prepared.file);
-                        pictures.push({ media_id, alt: pics.get(f).value.trim() });
-                    } else {
-                        const media_id = await upload('https://openvibe.media/api/v1/attachments', f);
-                        attachments.push(media_id);
+        const start = () => {
+            if (!root.OpenVibeComposer || !root.OpenVibeComposer.mount || !box.isConnected || box.querySelector('#ovh-feed-composer')) return;
+            const pics = new Map();
+            const c = root.OpenVibeComposer.mount(box, {
+                preset: 'post', id: 'ovh-feed-composer', user: o.user, maxLength: 2000, maxFiles: 10, maxMb: 300,
+                placeholder: first ? `What's new, ${first}?` : "What's new?", label: "What's new",
+                async onSubmit(v, api) {
+                    const images = v.files.filter((f) => /^image\//.test(f.type));
+                    if (images.length > 4) { api.ctx.note('Choose up to four pictures.'); return false; }
+                    const missing = images.find((f) => !pics.get(f) || !pics.get(f).value.trim());
+                    if (missing) { api.ctx.note('Describe each picture: what does it show?'); pics.get(missing)?.focus(); return false; }
+                    const pictures = [], attachments = [];
+                    for (const f of v.files) {
+                        c.send.textContent = `Uploading ${f.name || 'file'}`;
+                        if (/^image\//.test(f.type)) {
+                            const prepared = await preparePicture(f);
+                            const media_id = await upload(`${o.frameBase || FRAME}/attachments`, prepared.file);
+                            pictures.push({ media_id, alt: pics.get(f).value.trim() });
+                        } else attachments.push(await upload('https://openvibe.media/api/v1/attachments', f));
                     }
-                }
-                post.textContent = 'Posting';
-                const url = files.length ? `${o.frameBase || FRAME}/posts` : `${o.frameBase || FRAME}/status`;
-                const body = files.length ? { text, pictures, attachments } : { text };
-                const r = await fetch(url, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify(body) });
-                const j = await r.json().catch(() => ({}));
-                if (!r.ok) throw new Error(j.detail || 'It did not post. Try again in a moment.');
-                ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true })); form.__ovc?.clearFiles(); pics.clear();
-                note.hidden = false; note.textContent = 'Posted. It is on your profile and in the Feed.';
-                if (o.onPosted) o.onPosted(j);
-            } catch (err) { note.hidden = false; note.textContent = String(err.message || err); ta.dispatchEvent(new Event('input', { bubbles: true })); }
-            post.textContent = label; ready();
-        });
-        const join = () => { if (root.OpenVibeComposer && form.isConnected) root.OpenVibeComposer.enhance(form); };
-        if (root.OpenVibeComposer) join();
+                    c.send.textContent = 'Posting';
+                    const url = v.files.length ? `${o.frameBase || FRAME}/posts` : `${o.frameBase || FRAME}/status`;
+                    const body = v.files.length ? { text: v.text, pictures, attachments } : { text: v.text };
+                    try {
+                        const r = await fetch(url, { method: 'POST', credentials: 'omit', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify(body) });
+                        const j = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(j.detail || 'It did not post. Try again in a moment.');
+                        pics.clear();
+                        api.ctx.note('Posted. It is on your profile and in the Feed.');
+                        if (o.onPosted) o.onPosted(j);
+                    } finally { c.send.textContent = 'Post'; }
+                    return true;
+                },
+            });
+            // Each picture asks what it shows (the Feed shows pictures with their descriptions).
+            c.form.addEventListener('ovc:file-added', (e) => {
+                const { file: f, chip } = e.detail;
+                if (!/^image\//.test(f.type)) return;
+                chip.classList.add('ovc-image');
+                const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What does it show?';
+                alt.setAttribute('aria-label', `What ${f.name || 'the picture'} shows`); alt.required = true;
+                chip.append(alt); pics.set(f, alt);
+            });
+            c.form.addEventListener('ovc:file-removed', (e) => { pics.delete(e.detail.file); });
+        };
+        if (root.OpenVibeComposer && root.OpenVibeComposer.mount) start();
         else if (typeof o.sibling === 'function') {
             let script = document.getElementById('ov-composer-script');
-            if (!script) { script = document.createElement('script'); script.id = 'ov-composer-script'; script.src = o.sibling('ov-composer.js'); script.onload = join; document.head.append(script); }
-            else script.addEventListener('load', join, { once: true });
+            if (!script) { script = document.createElement('script'); script.id = 'ov-composer-script'; script.src = o.sibling('ov-composer.js'); script.onload = start; document.head.append(script); }
+            else script.addEventListener('load', start, { once: true });
         }
     }
     function spark(series) {
