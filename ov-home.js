@@ -955,6 +955,17 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             t.addEventListener('pointerdown', (e) => {
                 if (e.button !== 0) return;
                 const start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+                // 4.225.0, a phone (the owner: a long press then a move lost the icon): entering Edit repaints the grid, so
+                // the tile under the finger leaves the page and the grid's own touchmove guard no longer hears this touch;
+                // the browser scrolled the menu and cancelled the press. The guard rides on the pressed tile itself, which
+                // keeps getting the touch's events after it is replaced, until the finger lifts.
+                if (e.pointerType === 'touch') {
+                    const hold = (ev) => { if ((state.edit || state.drag) && ev.cancelable) ev.preventDefault(); };
+                    const done = () => { t.removeEventListener('touchmove', hold); t.removeEventListener('touchend', done); t.removeEventListener('touchcancel', done); };
+                    t.addEventListener('touchmove', hold, { passive: false });
+                    t.addEventListener('touchend', done);
+                    t.addEventListener('touchcancel', done);
+                }
                 let timer = 0;
                 const cancel = () => { clearTimeout(timer); window.removeEventListener('pointermove', early); window.removeEventListener('pointerup', cancel); window.removeEventListener('pointercancel', cancel); };
                 const early = (m) => { if (m.pointerId === start.id && Math.hypot(m.clientX - start.x, m.clientY - start.y) > 8) { cancel(); if (state.edit) beginDrag(id, m); } };

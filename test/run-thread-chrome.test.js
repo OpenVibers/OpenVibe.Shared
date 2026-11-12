@@ -27,11 +27,25 @@ const STEPS = [
     { seq: 5, kind: 'message', from: 'agent', text: 'Done.', ui: { type: 'results', data: { results: [{ kind: 'timer', label: 'Timer, 10 min' }] } } },
     { seq: 6, kind: 'approval', title: 'Post it?', text: 'It goes to your channel.', result: { approval: 'ap_1', options: [{ id: 'approve', label: 'Post it' }, { id: 'decline', label: 'Not now' }] } },
 ];
+// The Action Center (Network GET /api/v1/me/actions, common.action-item@1): one confirmation that needs you, one AI run
+// working, and two the runs already show (the coding run, and the approval the task waits on): those two are not drawn twice.
+const ACTIONS = { buckets: {
+    waiting: [
+        { service: 'network', id: 'cf_1', kind: 'approval', title: 'Let Clipper post for you', summary: 'A new app wants to post clips', bucket: 'waiting', state: 'waiting', created_at: T, updated_at: '2026-11-12T09:50:00Z', href: 'https://openvibe.network/confirm/cf_1', actions: ['approve', 'decline'] },
+        { service: 'actor', id: 'apr_9', kind: 'approval', title: 'Post the clip', bucket: 'waiting', state: 'waiting', created_at: T, updated_at: T, href: 'https://openvibe.actor/a/apr_9', actions: ['approve', 'decline'] },
+    ],
+    running: [
+        { service: 'ai', id: 'air_4', kind: 'ai_run', title: 'Captions for your VOD', step: 'Listening, 40%', bucket: 'running', state: 'running', created_at: T, updated_at: '2026-11-12T09:40:00Z', href: 'https://openvibe.ai/runs/air_4', actions: [] },
+        { service: 'codes', id: 'k_3', kind: 'code_task', title: 'Fix the overlay', bucket: 'running', state: 'running', created_at: T, updated_at: T, href: 'https://openvibe.codes/tasks/k_3', actions: [] },
+    ],
+    scheduled: [], done: [], failed: [] } };
 const seen = { auth: new Set(), kinds: [], lastIds: [], posts: [] };
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/ov-run.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'ov-run.js'))); }
     if (u.pathname === '/') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#0b1020;color:#e6edf7"><div id="host" style="height:100vh"></div><script src="/ov-run.js"></script>'); }
+    if (u.pathname === '/api/v1/me/actions') { seen.auth.add(req.headers.authorization || ''); res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify(ACTIONS)); }
+    if (u.pathname === '/api/v1/me/actions/network/cf_1/approve' && req.method === 'POST') { seen.posts.push({ path: u.pathname, body: null }); res.writeHead(200, { 'content-type': 'application/json' }); return res.end('{"item":{}}'); }
     if (!u.pathname.startsWith('/api/frame/runs')) { res.writeHead(404); return res.end(); }
     seen.auth.add(req.headers.authorization || '');
     const json = (status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
@@ -154,6 +168,44 @@ const server = http.createServer((req, res) => {
             assert.deepEqual([...seen.auth], ['Bearer tok_1'], `${width}: every call carries the person's token`);
             await page.evaluate('window.view.destroy()');
             assert.equal(await page.evaluate(`document.getElementById('host').children.length`), 0, `${width}: destroy empties the host`);
+
+            // ── 4.225.0, the menu's Vibe: starters, the Action Center's work, the host's slot above, the place, prefill ──
+            await page.evaluate(`window.places = []; window.tops = 0; window.view = OpenVibeRun.mount(document.getElementById('host'), { base: '${base}/api/frame', token: 'tok_1',
+                actions: { base: '${base}' }, starters: [['bell', 'Remind me to stretch'], ['live', 'Who is live right now?']],
+                top(el) { window.tops++; el.innerHTML = '<div class="hosttop">Now</div>'; return { destroy() { window.tops--; } }; },
+                onPlace(p) { window.places.push(p.filter || p.ref); } })`);
+            assert.ok(await until(`document.querySelectorAll('.ovr-rows .ovr-row:not(.is-ghost)').length === 5`), `${width}: three runs and two from the Action Center`);
+            const merged = await page.evaluate(`({ titles: [...document.querySelectorAll('.ovr-row-top b')].map((b) => b.textContent),
+                links: [...document.querySelectorAll('a.ovr-row')].map((a) => a.getAttribute('href')), acts: [...document.querySelectorAll('.ovr-row-acts')].length,
+                starters: [...document.querySelectorAll('.ovr-starter')].map((b) => b.textContent), top: (document.querySelector('.ovr-top .hosttop') || {}).textContent })`);
+            assert.deepEqual(merged.titles, ['Let Clipper post for you', 'Post the clip', 'Goal bar ideas', 'Captions for your VOD', 'Fix the overlay'], `${width}: what needs you first, then newest; nothing twice`);
+            assert.deepEqual(merged.links, ['https://openvibe.network/confirm/cf_1', 'https://openvibe.ai/runs/air_4'], `${width}: the Action Center's rows open their own pages`);
+            assert.equal(merged.acts, 2, `${width}: both that need you can be answered in place`);
+            assert.deepEqual(merged.starters, ['Remind me to stretch', 'Who is live right now?'], `${width}: the starters above the box`);
+            assert.equal(merged.top, 'Now', `${width}: the host's slot above the list`);
+            await page.evaluate(`document.querySelector('.ovr-rows li.has-acts .ovr-btn.is-primary').click()`);
+            assert.ok(await until(`(document.querySelector('.ovr-rows li.has-acts .ovr-row-acts') || {}).textContent === 'Approved'`), `${width}: the Action Center's item approved in place`);
+            assert.ok(seen.posts.some((x) => x.path === '/api/v1/me/actions/network/cf_1/approve'), `${width}: through the Action Center's own route`);
+            // Code hides the slot and the starters; Chats shows the starters only.
+            await page.evaluate(`document.querySelector('.ovr-filter[data-filter="code"]').click()`);
+            assert.ok(await until(`document.querySelectorAll('.ovr-rows .ovr-row:not(.is-ghost)').length === 1`), `${width}: Code`);
+            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [true, true], `${width}: no slot and no starters on Code`);
+            await page.evaluate(`document.querySelector('.ovr-filter[data-filter="chat"]').click()`);
+            assert.ok(await until(`document.querySelector('.ovr-filter[aria-selected="true"]').dataset.filter === 'chat' && !document.querySelector('.ovr-rows .is-ghost')`), `${width}: Chats`);
+            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [true, false], `${width}: the starters on Chats`);
+            // Ask your agent: the words in the box, unsent.
+            await page.evaluate(`window.view.prefill('What is this page about?')`);
+            assert.ok(await until(`document.querySelector('.ovr-compose textarea').value === 'What is this page about?' && document.activeElement === document.querySelector('.ovr-compose textarea')`), `${width}: prefill puts the words in the box, focused`);
+            // A starter starts its run; the slot is handed back when the thread opens.
+            await page.evaluate(`document.querySelector('.ovr-filter[data-filter="all"]').click()`);
+            assert.ok(await until(`!document.querySelector('.ovr-rows .is-ghost') && !document.querySelector('.ovr-top').hidden`), `${width}: All again`);
+            const before = seen.posts.length;
+            await page.evaluate(`document.querySelector('.ovr-starter').click()`);
+            assert.ok(await until(`!!document.querySelector('.ovr.is-thread')`), `${width}: a starter opens its new run`);
+            assert.deepEqual(seen.posts.slice(before).find((x) => x.path === '').body, { text: 'Remind me to stretch' }, `${width}: started with the starter's words`);
+            assert.equal(await page.evaluate('window.tops'), 0, `${width}: the host's slot is handed back in a thread`);
+            assert.deepEqual(await page.evaluate('window.places'), ['all', 'code', 'chat', 'all', 'chat:c_2'], `${width}: each place is told to the host`);
+            await page.evaluate('window.view.destroy()');
             await page.close();
         }
         console.log('run-thread-chrome: the list, filters, a thread with every kind of step, the live stream and its resume, approvals, messages and a new run');

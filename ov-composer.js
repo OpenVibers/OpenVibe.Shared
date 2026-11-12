@@ -279,6 +279,23 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 /* Emoji: a small panel above the box. */
 .ovc-emoji { position: absolute; z-index: 41; left: 8px; bottom: calc(100% + 8px); display: grid; grid-template-columns: repeat(8, 38px); gap: 2px; max-width: calc(100% - 16px); max-height: 232px; overflow: auto; padding: 8px; border-radius: 16px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); background: var(--bg-card, #131c2e); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); animation: ovc-in .16s cubic-bezier(.2, .9, .3, 1) both; }
 .ovc-emoji[hidden] { display: none; }
+.ovc-repo { position: absolute; z-index: 41; left: 8px; right: 8px; bottom: calc(100% + 8px); display: grid; gap: 6px; max-width: 520px; max-height: min(420px, 60vh); padding: 10px; border-radius: 16px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); background: var(--bg-card, #131c2e); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); animation: ovc-in .16s cubic-bezier(.2, .9, .3, 1) both; }
+.ovc-repo[hidden] { display: none; }
+.ovc-repo-q { width: 100%; box-sizing: border-box; min-height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .22)); background: var(--bg-primary, rgba(0, 0, 0, .2)); color: inherit; font: inherit; font-size: 15px; outline: 0; }
+.ovc-repo-q:focus-visible { border-color: var(--ovt-accent, var(--accent, #3b82f6)); }
+.ovc-repo-list { display: grid; gap: 2px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.ovc-repo-list:empty { display: none; }
+.ovc-repo-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 52px; padding: 8px; border: 0; border-radius: 12px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovc-repo-row:hover, .ovc-repo-row:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); outline: 0; }
+.ovc-repo-av { flex: none; width: 32px; height: 32px; border-radius: 9px; object-fit: cover; display: grid; place-items: center; background: color-mix(in srgb, currentColor 8%, transparent); }
+.ovc-repo-av svg { width: 18px; height: 18px; }
+.ovc-repo-t { min-width: 0; display: grid; gap: 1px; }
+.ovc-repo-t b { font-size: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ovc-repo-t small { font-size: 12.5px; color: var(--text-secondary, #a8b3c4); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ovc-repo-t i { font-style: normal; font-size: 11.5px; color: var(--text-muted, #93a0b4); }
+.ovc-repo-note { margin: 2px 4px; font-size: 12.5px; color: var(--text-muted, #93a0b4); }
+.ovc-repo-note[hidden] { display: none; }
+html[data-ov-motion=off] .ovc-repo { animation: none; }
 .ovc-emoji button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; cursor: pointer; }
 .ovc-emoji button:hover, .ovc-emoji button:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
 @media (max-width: 480px) { .ovc-v2.ovt-composer { padding: 12px 12px 8px; } .ovc-emoji { grid-template-columns: repeat(7, 38px); } .ovc-v2 .ovt-send { padding: 0 16px; } }
@@ -370,6 +387,9 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
         mic: 'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3zM5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21',
         plus: 'M12 5v14M5 12h14',
         timer: 'M12 4.5a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4zM12 8.6v4.2l2.7 1.7M9.6 2.6h4.8',
+        // A repository: a branch from one commit to two (the registry's git-branch; no company's mark).
+        repo: 'M6.5 4.5v15M17.5 10a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM6.5 21.8a2.6 2.6 0 1 0 0-5.2 2.6 2.6 0 0 0 0 5.2zM17.5 10c0 4.5-4 6.2-11 6.6',
+        star: 'M12 4.2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z',
         up: 'M12 19V5.5M6.2 11.2L12 5.4l5.8 5.8',
         x: 'M7 7l10 10M17 7L7 17',
         file: 'M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v5h5',
@@ -938,6 +958,9 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
                 panel.querySelector('button').focus();
             },
         },
+        // 4.225.0: a repository from GitHub, found through OpenVibe Exchange's code search (the Frame's
+        // /api/frame/code/search): its address goes into the box, where every site draws it as a card.
+        github: { label: 'GitHub', path: IC.repo, extra: true, run: (ctx, button, form) => openRepoSearch(ctx, button, form) },
         voice: { label: 'Speak', builtin: true },   // enhance() draws the microphone where the browser can listen
         camera: { label: 'Camera', path: IC.camera, run: (ctx, button) => openCamera(ctx, button) },
     };
@@ -1005,6 +1028,70 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
         dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
         if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
         start();
+    }
+    /** The GitHub tool's panel: a field, the repositories as you type (a quarter second after the last key), one press
+     * puts the address in the box. Everything is text; only https pictures from GitHub's avatar host are drawn. */
+    function openRepoSearch(ctx, button, form) {
+        let panel = form.querySelector('.ovc-repo');
+        if (panel) { panel.hidden = !panel.hidden; if (!panel.hidden) panel.querySelector('input').focus(); return; }
+        styles();
+        panel = el('div', 'ovc-repo'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'A repository from GitHub');
+        const field = el('input', 'ovc-repo-q'); field.type = 'search'; field.placeholder = 'Search GitHub'; field.setAttribute('aria-label', 'Search GitHub repositories'); field.autocomplete = 'off'; field.spellcheck = false;
+        const list = el('div', 'ovc-repo-list'); list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', 'Repositories');
+        const note = el('p', 'ovc-repo-note'); note.textContent = 'Type what the project does: “goal bar overlay”, “markdown editor”.';
+        panel.append(field, list, note);
+        const frame = String(form.getAttribute('data-ovc-frame') || 'https://openvibe.network').replace(/\/+$/, '');
+        let t = 0, gen = 0;
+        const close = () => { panel.hidden = true; button.focus(); };
+        const pick = (r) => { ctx.insert(`${r.url} `); panel.hidden = true; };
+        const draw = (items) => {
+            list.textContent = '';
+            items.forEach((r) => {
+                const b = el('button', 'ovc-repo-row'); b.type = 'button'; b.setAttribute('role', 'option');
+                let av = null;
+                try { const u = new URL(String(r.owner_avatar_url || '')); if (u.protocol === 'https:' && u.hostname === 'avatars.githubusercontent.com') { av = el('img', 'ovc-repo-av'); av.src = u.href; av.alt = ''; av.loading = 'lazy'; } } catch { /* no picture */ }
+                if (!av) { av = el('span', 'ovc-repo-av'); av.innerHTML = svg(IC.repo); }
+                const t1 = el('span', 'ovc-repo-t');
+                const name = el('b'); name.textContent = String(r.full_name || '');
+                const sub = el('small'); sub.textContent = String(r.description || '');
+                const meta = el('i'); meta.textContent = [r.language, Number.isFinite(r.stars) ? `★ ${r.stars >= 1000 ? `${(r.stars / 1000).toFixed(1)}k` : r.stars}` : '', r.license].filter(Boolean).join(' · ');
+                t1.append(name, sub, meta);
+                b.append(av, t1);
+                b.addEventListener('click', () => pick(r));
+                list.appendChild(b);
+            });
+        };
+        const search = async () => {
+            const q = field.value.trim();
+            const my = ++gen;
+            if (q.length < 2) { list.textContent = ''; note.hidden = false; note.textContent = 'Type what the project does: “goal bar overlay”, “markdown editor”.'; return; }
+            note.hidden = false; note.textContent = 'Searching…';
+            try {
+                const r = await fetch(`${frame}/api/frame/code/search?q=${encodeURIComponent(q)}&limit=8`, { credentials: 'omit', headers: { accept: 'application/json' } });
+                const j = await r.json().catch(() => ({}));
+                if (my !== gen) return;
+                if (!r.ok) throw new Error(j.error || 'Search is unavailable right now');
+                const items = Array.isArray(j.items) ? j.items : [];
+                draw(items);
+                note.hidden = items.length > 0;
+                note.textContent = items.length ? '' : 'Nothing found. Try other words.';
+            } catch (err) { if (my === gen) { list.textContent = ''; note.hidden = false; note.textContent = (err && err.message) || 'Search is unavailable right now'; } }
+        };
+        field.addEventListener('input', () => { clearTimeout(t); t = setTimeout(search, 250); });
+        field.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { e.preventDefault(); close(); }
+            else if (e.key === 'Enter') { e.preventDefault(); const first = list.querySelector('.ovc-repo-row'); if (first) first.click(); else { clearTimeout(t); search(); } }
+            else if (e.key === 'ArrowDown') { const first = list.querySelector('.ovc-repo-row'); if (first) { e.preventDefault(); first.focus(); } }
+        });
+        list.addEventListener('keydown', (e) => {
+            const rows = [...list.querySelectorAll('.ovc-repo-row')]; const k = rows.indexOf(document.activeElement);
+            if (e.key === 'ArrowDown' && k < rows.length - 1) { e.preventDefault(); rows[k + 1].focus(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); (k > 0 ? rows[k - 1] : field).focus(); }
+            else if (e.key === 'Escape') { e.preventDefault(); close(); }
+        });
+        document.addEventListener('pointerdown', (e) => { if (!panel.hidden && !panel.contains(e.target) && !button.contains(e.target)) panel.hidden = true; });
+        form.appendChild(panel);
+        field.focus();
     }
     function tool(id, spec) {
         if (!/^[\w-]{1,30}$/.test(id || '') || !spec) return;

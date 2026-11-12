@@ -152,6 +152,11 @@
     for (const [k, g] of Object.entries(GLYPHS)) registry[k] = { glyph: g };
 
     const CSS = `
+.ov-appicon{--ova-h:215;--ova-size:56px;position:relative;display:inline-block;flex:none;width:var(--ova-size);height:var(--ova-size);border-radius:30%;overflow:hidden;vertical-align:middle;background:linear-gradient(150deg,hsl(var(--ova-h) 72% 58% / .36),hsl(var(--ova-h) 70% 38% / .2));box-shadow:inset 0 0 0 1px hsl(var(--ova-h) 70% 64% / .3)}
+.ov-appicon>.ov-icon{position:absolute;inset:0;width:100%;height:100%;display:block;--ovi-glyph:hsl(var(--ova-h) 92% 84%);color:hsl(var(--ova-h) 92% 84%)}
+.ov-appicon>.ov-icon svg{position:absolute;left:-13%;top:-13%;width:126%;height:126%;margin:0;transform:none!important}
+.ov-appicon .ovi-ring,.ov-appicon .ovi-bg,.ov-appicon .ovi-comet,.ov-appicon .ovi-prog{display:none}
+:root[data-theme="light"] .ov-appicon>.ov-icon{--ovi-glyph:hsl(var(--ova-h) 70% 30%);color:hsl(var(--ova-h) 70% 30%)}
 .ov-icon{--ovi-size:32px;display:inline-grid;place-items:center;width:var(--ovi-size);height:var(--ovi-size);flex:none;vertical-align:middle;line-height:0;color:var(--ovi-accent,var(--accent,#3b82f6));position:relative}
 .ov-icon svg{width:100%;height:100%;overflow:visible;display:block;transition:transform .25s cubic-bezier(.2,1.4,.3,1)}
 .ov-icon .ovi-bg{fill:currentColor;opacity:.1;transition:opacity .25s}
@@ -348,7 +353,36 @@ html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}`;
         applyProgress(el);
     }
 
-    function mount(rootEl) { (rootEl || document).querySelectorAll('.ov-icon').forEach(mountOne); }
+    function mount(rootEl) { (rootEl || document).querySelectorAll('.ov-appicon[data-icon]').forEach(fillApp); (rootEl || document).querySelectorAll('.ov-icon').forEach(mountOne); }
+
+    /** A site's (or an app's) steady hue: the same on every page and device (the menu's and Home's own). */
+    function hue(id) { let x = 7; const t = String(id || 'ov'); let i = 0; while (i < t.length) { x = (x * 31 + t.charCodeAt(i)) % 360; i++; } return x; }
+    /** 4.225.0 (design rule 142): an app icon, the same as the menu's and Home's: the app's own hue on a rounded square,
+     * its glyph at 58% of it. In markup, <span class="ov-appicon" data-icon="live" data-size="64"></span>; or
+     * OpenVibeIcons.app('live', { size: 64, label: 'Live' }). Without a label it is decoration (aria-hidden). */
+    function fillApp(el) {
+        const name = String(el.getAttribute('data-icon') || 'ov');
+        if (el.getAttribute('data-ova') === name) return;
+        el.setAttribute('data-ova', name);
+        el.style.setProperty('--ova-h', String(el.hasAttribute('data-hue') ? Number(el.getAttribute('data-hue')) % 360 : hue(name)));
+        const size = parseInt(el.getAttribute('data-size'), 10);
+        if (size) el.style.setProperty('--ova-size', `${size}px`);
+        const label = el.getAttribute('data-label');
+        if (label) { el.setAttribute('role', 'img'); el.setAttribute('aria-label', label); } else el.setAttribute('aria-hidden', 'true');
+        el.textContent = '';
+        const g = document.createElement('span'); g.className = 'ov-icon'; g.setAttribute('data-icon', name); g.setAttribute('data-fx', 'none');
+        el.appendChild(g);
+        mountOne(g);
+    }
+    function app(site, { size = 56, label = '', hue: h = null } = {}) {
+        const el = document.createElement('span'); el.className = 'ov-appicon';
+        el.setAttribute('data-icon', String(site || 'ov'));
+        if (size) el.setAttribute('data-size', String(size));
+        if (label) el.setAttribute('data-label', String(label));
+        if (h != null) el.setAttribute('data-hue', String(h));
+        fillApp(el);
+        return el;
+    }
 
     function set(el, patch) {
         if (!el || !patch) return;
@@ -364,7 +398,7 @@ html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}`;
         if (typeof document !== 'undefined') document.querySelectorAll(`.ov-icon[data-icon="${name}"]`).forEach((el) => { el.removeAttribute('data-ovi'); mountOne(el); });
     }
 
-    const api = { names: () => Object.keys(registry), register, mount, set, svg, sprite, use, resolve, CSS };
+    const api = { names: () => Object.keys(registry), register, mount, set, svg, sprite, use, resolve, app, hue, CSS };
     root.OpenVibeIcons = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
     if (typeof document === 'undefined') return;
@@ -375,8 +409,17 @@ html[data-ov-motion=off] .ov-icon .ovi-comet{display:none}`;
         try {
             new MutationObserver((muts) => {
                 for (const m of muts) {
-                    if (m.type === 'attributes') { if (m.target.classList && m.target.classList.contains('ov-icon')) mountOne(m.target); continue; }
-                    m.addedNodes.forEach((n) => { if (n.nodeType !== 1) return; if (n.classList.contains('ov-icon')) mountOne(n); else if (n.querySelector) n.querySelectorAll('.ov-icon').forEach(mountOne); });
+                    if (m.type === 'attributes') {
+                        if (m.target.classList && m.target.classList.contains('ov-appicon')) { m.target.removeAttribute('data-ova'); fillApp(m.target); continue; }
+                        if (m.target.classList && m.target.classList.contains('ov-icon')) mountOne(m.target);
+                        continue;
+                    }
+                    m.addedNodes.forEach((n) => {
+                        if (n.nodeType !== 1) return;
+                        if (n.classList.contains('ov-appicon') && n.hasAttribute('data-icon')) { fillApp(n); return; }
+                        if (n.classList.contains('ov-icon')) { mountOne(n); return; }
+                        if (n.querySelector) { n.querySelectorAll('.ov-appicon[data-icon]').forEach(fillApp); n.querySelectorAll('.ov-icon').forEach(mountOne); }
+                    });
                 }
             }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-icon', 'data-progress'] });
         } catch { /* */ }

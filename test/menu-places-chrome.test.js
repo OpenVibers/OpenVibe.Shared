@@ -76,41 +76,47 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             assert.ok(await until(`(document.querySelector('.ovs-starttabs [aria-selected="true"]') || {}).textContent.trim().startsWith('Feed')`), `${name}: Feed is chosen in place`);
             await page.evaluate('OpenVibeSearch.close()'); await wait(300);
             // With the Dock able to lend its panels (OpenVibeDock.mountInto): Messages and AI open INSIDE the menu, under its
-            // own head, and become the chosen place; AI has a Chat · Code · Agents switch; Feed and closing hand the panel back.
+            // own head, and become the chosen place; Feed and closing hand the panel back.
             // 4.220.0: on every screen (a computer opened a floating Dock; the owner, 11-12: "one unified UI").
+            // 4.224.0: Vibe is one list of runs (ov-run.js) with its own filters: no Chat · Code · Agents switch.
             await page.evaluate(`window.went = null; window.log = []; window.OpenVibeDock = { filterChats(q) { window.filtered = q; }, mountInto(host, o) { window.log.push('mount:' + o.tab); host.innerHTML = '<div class="stub"></div>';
-                return { show(t) { window.log.push('show:' + t); }, destroy() { window.log.push('destroy'); host.innerHTML = ''; } }; } }`);
+                return { show(t) { window.log.push('show:' + t); }, destroy() { window.log.push('destroy'); host.innerHTML = ''; } }; } };
+                window.OpenVibeRun = { mount(host, o) { window.log.push('runs:' + o.filter + (o.base.endsWith('/api/frame') ? '' : ' wrong base')); host.innerHTML = '<div class="ovr runstub"></div>';
+                    return { list(f) { window.log.push('list:' + f); }, start(t) { window.asked = t; return Promise.resolve({}); }, destroy() { window.log.push('runs-destroy'); host.innerHTML = ''; } }; } }`);
             await page.evaluate(OPEN(true)); await wait(350);
             const inside = async () => page.evaluate(`({ door: !!document.querySelector('.ovs.ovs-in-door'), list: !document.querySelector('.ovs-list').hidden, stub: !!document.querySelector('.ovs-door-host .stub'),
-                sw: document.querySelector('.ovs-door-sw') && !document.querySelector('.ovs-door-sw').hidden ? Array.from(document.querySelectorAll('.ovs-door-sw [data-part]')).map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')).join(' ') : '',
+                runs: !!document.querySelector('.ovs-door-host .runstub'), sw: !!document.querySelector('.ovs-door-sw, .ovs-door-top, [data-part]'),
                 chosen: Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab[aria-selected="true"]')).map((t) => t.textContent.trim()).join(' ') })`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(120);
             {
-                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Code Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`));
+                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: false, runs: true, sw: false, chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its runs, with no switch`));
                 await eventually(async () => assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`));
-                await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="code"]').click()`); await wait(80);
-                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat Code* Agents', chosen: 'Vibe' }, `${name}: the switch goes to Code`));
-                await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="agent"]').click()`); await wait(80);
-                await eventually(async () => assert.equal((await inside()).sw, 'Chat Code Agents*', `${name}: the switch goes to Agents`));
-                // 4.223.0: the timer is in every box's + (the owner: "the timer should be in the plus thing"), not in this row.
-                assert.equal(await page.evaluate(`!!document.querySelector('.ovs-door-top .ovs-ai-timer')`), false, `${name}: no timer button beside the switch`);
+                // 4.223.0: the timer is in every box's + (the owner: "the timer should be in the plus thing"), not in a row.
+                assert.equal(await page.evaluate(`!!document.querySelector('.ovs-ai-timer')`), false, `${name}: no timer button in Vibe`);
                 await page.evaluate(`document.querySelector('.ovs-input').value = 'find this'; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`); await wait(170);
                 await page.evaluate(`document.querySelector('.ovs-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));`);
-                await eventually(async () => assert.equal(await page.evaluate('window.asked'), 'find this', `${name}: AI Enter hands its text to Vibe`));
+                await eventually(async () => assert.equal(await page.evaluate('window.asked'), 'find this', `${name}: Enter in Vibe starts a run with the words`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = ''; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
-                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: '', chosen: 'Messages' }, `${name}: Messages inside the menu, no switch`));
+                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, runs: false, sw: false, chosen: 'Messages' }, `${name}: Messages inside the menu, the runs handed back`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = 'sara'; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`); await wait(180);
                 await eventually(async () => assert.equal(await page.evaluate('window.filtered'), 'sara', `${name}: Messages search filters conversations in place`));
                 await page.evaluate(`document.querySelector('.ovs-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));`);
                 await eventually(async () => assert.equal(await page.evaluate(`!!(document.querySelector('.ovs-input').value === '' && document.querySelector('.ovs.is-open'))`), true, `${name}: Escape clears before closing`));
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`); await wait(80);
-                await eventually(async () => assert.deepEqual(await inside(), { door: false, list: true, stub: false, sw: '', chosen: 'Feed' }, `${name}: Feed hands the panel back`));
+                await eventually(async () => assert.deepEqual(await inside(), { door: false, list: true, stub: false, runs: false, sw: false, chosen: 'Feed' }, `${name}: Feed hands the panel back`));
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
-                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`));
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:all', 'runs-destroy', 'mount:chats', 'destroy', 'runs:all', 'runs-destroy'], `${name}: one mount at a time, handed back on Messages, on Feed and on close`));
+                // A place asked for by name (the Dock's open({ tab: 'code' }), the composer's timer): Vibe on that list.
+                await page.evaluate(OPEN(true)); await wait(300);
+                await page.evaluate(`window.log = []; OpenVibeSearch.door('code')`); await wait(80);
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:code'], `${name}: door('code') opens Vibe on Code`));
+                await page.evaluate(`OpenVibeSearch.door('agent')`); await wait(80);
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:code', 'list:task'], `${name}: door('agent') moves the open Vibe to Tasks`));
+                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
             }
-            await page.evaluate('delete window.OpenVibeDock');
+            await page.evaluate('delete window.OpenVibeDock; delete window.OpenVibeRun');
             // Opened from a button: the sheet grows out of that button's centre, wherever the sheet itself was placed.
             if (width > 900) {
                 await page.evaluate(OPEN(true).replace("frame: {},", `frame: {}, anchor: { top: 52, left: ${width - 150}, cx: ${width - 130}, cy: 26 },`));

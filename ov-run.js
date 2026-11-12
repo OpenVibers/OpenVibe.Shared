@@ -13,8 +13,22 @@
  *     examples: ['A goal bar for my stream', …],     // what people make, shown in turn in the empty box
  *     start: { kind, target, context },              // what a new run starts with (the box's defaults)
  *   });
- *   view.list('code'); view.open('chat:c_8f3k2m'); view.start('A goal bar for my stream'); view.destroy();
+ *   view.list('code'); view.open('chat:c_8f3k2m'); view.start('A goal bar for my stream'); view.prefill('Words, unsent');
+ *   view.destroy();
  *   (o.filter: the list's first filter, all | chat | task | code; o.open: a run's ref to open first)
+ *
+ * 4.225.0, what the menu's Vibe needs to be the one place (the Dock's Vibe and Agents panels did all of it):
+ *   o.starters: [[glyph, words], …]  things to ask, as chips above the box (All and Chats); a press starts that run
+ *   o.actions: { base }               the Action Center's waiting and running work from every product (Network
+ *                                     GET /api/v1/me/actions), merged into the list (All and Tasks) when a run does not
+ *                                     already show it; approved or declined in place, and opened on its own page
+ *   o.top(el) → { destroy }           something of the host's above the list (All and Tasks): the menu puts the Dock's
+ *                                     Now, your Actor and the live agent view there
+ *   o.panes: { chat, task, code }     a filter the host still draws itself: pane(el) → { destroy }. The menu's Vibe
+ *                                     lends the Dock's Vibe, Agents and Code panels here until this view does all
+ *                                     they do; the pane replaces the rows and the box under the filters
+ *   o.onPlace({ filter } | { ref })   where the person is, for the host to remember
+ *   view.prefill(text)                the words in the list's box, unsent (Ask your agent)
  *
  *   OpenVibeRun.card(type, (data, step, ctx) => Node)   a rich card for a step's `ui.type` (a site or a mod adds its
  *                                                       own); an unknown type shows the step's words.
@@ -57,9 +71,13 @@
         compass: '<circle cx="12" cy="12" r="8.5"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1Z"/>',
         page: '<path d="M6.5 3h7.5l4 4v14h-11.5Z"/><path d="M14 3v4h4M9.5 12h5M9.5 15.5h5"/>',
         timer: '<path d="M12 4.5a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4zM12 8.6v4.2l2.7 1.7M9.6 2.6h4.8"/>',
+        bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15ZM10 20.5a2.2 2.2 0 0 0 4 0"/>',
+        calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+        phone: '<path d="M6.5 3.8h3l1.5 4-2 1.3a10.5 10.5 0 0 0 5.9 5.9l1.3-2 4 1.5v3a1.8 1.8 0 0 1-2 1.8A15.5 15.5 0 0 1 4.7 5.8a1.8 1.8 0 0 1 1.8-2Z"/>',
     };
     const KIND_GLYPH = { chat: 'chat', ask: 'search', task: 'robot', code: 'code', machine: 'tool', goal: 'spark' };
     const KIND_WORD = { chat: 'Chat', ask: 'Answer', task: 'Task', code: 'Code', machine: 'Machine', goal: 'Goal' };
+    const SERVICE_NAME = { actor: 'Actor', codes: 'Codes', ai: 'AI', network: 'OpenVibe', run: 'Run', domains: 'Domains' };
     const svg = (name, cls = '') => {
         const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); if (cls) s.setAttribute('class', cls);
@@ -217,6 +235,38 @@
         };
         const box = el('div', 'ovr');
         host.textContent = ''; host.append(box);
+        const actionsBase = o.actions ? String(o.actions.base || 'https://openvibe.network').replace(/\/+$/, '') : '';
+        const place = (p) => { try { if (typeof o.onPlace === 'function') o.onPlace(p); } catch { /* the host's */ } };
+        let topHandle = null, paneHandle = null, paneId = null;
+        const dropTop = () => { if (topHandle && typeof topHandle.destroy === 'function') { try { topHandle.destroy(); } catch { /* */ } } topHandle = null; };
+        const dropPane = () => { if (paneHandle && typeof paneHandle.destroy === 'function') { try { paneHandle.destroy(); } catch { /* */ } } paneHandle = null; paneId = null; };
+        const paneFor = (f) => (o.panes && typeof o.panes[f] === 'function' ? o.panes[f] : null);
+        /** The Action Center's items (common.action-item@1) that need you or are working, as rows beside the runs. */
+        async function actionRows(runs) {
+            if (!actionsBase || !['all', 'task'].includes(state.filter)) return [];
+            try {
+                const r = await fetch(`${actionsBase}/api/v1/me/actions`, { headers: { Accept: 'application/json', ...headers() }, credentials: 'omit' });
+                if (!r.ok) return [];
+                const doc = await r.json();
+                const shown = new Set(runs.map((x) => x.ref));
+                runs.forEach((x) => { if (x.waiting && x.waiting.approval) shown.add(`approval:${x.waiting.approval}`); });
+                const out = [];
+                for (const bucket of ['waiting', 'running']) {
+                    for (const it of (doc && doc.buckets && Array.isArray(doc.buckets[bucket]) ? doc.buckets[bucket] : []).slice(0, 30)) {
+                        if (!it || typeof it.id !== 'string' || shown.has(`${it.service}:${it.id}`) || (it.kind === 'approval' && shown.has(`approval:${it.id}`))) continue;
+                        out.push({
+                            action: it, id: it.id, kind: it.kind === 'code_task' ? 'code' : 'task', title: it.title, url: it.href,
+                            status: bucket === 'waiting' ? 'waiting' : 'running', updated_at: it.updated_at,
+                            waiting: bucket === 'waiting' ? { for: 'approval', what: it.summary || it.title } : null,
+                            doing: bucket === 'running' ? { text: it.step || it.summary || 'Working', glyph: it.kind === 'code_task' ? 'code' : 'robot' } : null,
+                            preview: it.summary ? { text: it.summary } : null,
+                            agent: { id: `${it.service}`, name: it.agent || SERVICE_NAME[it.service] || 'OpenVibe', glyph: it.kind === 'code_task' ? 'code' : it.kind === 'ai_run' ? 'spark' : 'robot' },
+                        });
+                    }
+                }
+                return out;
+            } catch { return []; }
+        }
         const state = { view: 'list', filter: FILTER_IDS.includes(o.filter) ? o.filter : 'all', runs: [], run: null, steps: new Map(), stopStream: null, abort: null, gen: 0 };
 
         function clearStream() { if (state.stopStream) state.stopStream(); state.stopStream = null; if (state.abort) state.abort.abort(); state.abort = null; }
@@ -289,10 +339,40 @@
                 head.append(tabs);
                 const rows = el('ul', 'ovr-rows'); rows.setAttribute('aria-label', 'Your runs');
                 const foot = el('div', 'ovr-list-note');
-                box.append(head, rows, foot);
+                const top = el('div', 'ovr-top');
+                const pane = el('div', 'ovr-pane'); pane.hidden = true;
+                box.append(head, top, rows, foot, pane);
+                dropTop(); dropPane();
+                if (Array.isArray(o.starters) && o.starters.length) {
+                    const st = el('div', 'ovr-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
+                    o.starters.slice(0, 8).forEach((x) => {
+                        const [ic, words] = Array.isArray(x) ? x : ['spark', String(x)];
+                        const b = el('button', 'ovr-starter'); b.type = 'button'; b.append(svg(G[ic] ? ic : 'spark'), el('span', '', words));
+                        b.addEventListener('click', async () => { b.disabled = true; try { await start(words); } catch (err) { b.disabled = false; foot.textContent = ''; foot.append(el('p', 'ovr-note is-err', err.message)); } });
+                        st.append(b);
+                    });
+                    box.append(st);
+                }
                 composer(box, { placeholder: o.placeholder || 'Ask, or say what to make', onSend: (v) => start(v.text) });
             }
+            place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+            // A filter the host draws itself (a pane): it takes the place of the rows, the starters and the box. The host's
+            // pieces may share one owner (the Dock lends one panel at a time), so the old one goes before the new one comes.
+            const pf = paneFor(state.filter);
+            const topEl = box.querySelector('.ovr-top'), paneEl = box.querySelector('.ovr-pane');
+            const wantTop = !pf && ['all', 'task'].includes(state.filter) && typeof o.top === 'function';
+            if (!wantTop) { dropTop(); topEl.textContent = ''; }
+            if (paneId !== (pf ? state.filter : null)) { dropPane(); paneEl.textContent = ''; }
+            box.classList.toggle('has-pane', !!pf);
+            paneEl.hidden = !pf; topEl.hidden = !wantTop;
+            { const st = box.querySelector('.ovr-starters'); if (st) st.hidden = !!pf || !['all', 'chat'].includes(state.filter); }
+            if (pf) {
+                if (!paneHandle) { paneId = state.filter; try { paneHandle = pf(paneEl) || {}; } catch { paneHandle = {}; } }
+                const rows0 = box.querySelector('.ovr-rows'); rows0.textContent = ''; rows0.removeAttribute('aria-busy'); box.querySelector('.ovr-list-note').textContent = '';
+                return;
+            }
+            if (wantTop && !topHandle) { try { topHandle = o.top(topEl) || null; } catch { topHandle = null; } }
             const rows = box.querySelector('.ovr-rows'); const foot = box.querySelector('.ovr-list-note');
             rows.textContent = ''; foot.textContent = ''; rows.setAttribute('aria-busy', 'true');
             for (let i = 0; i < 3; i++) rows.append(el('li', 'ovr-row is-ghost'));
@@ -306,13 +386,23 @@
             }
             if (gen !== state.gen) return;
             state.runs = Array.isArray(out.runs) ? out.runs : [];
+            const extra = await actionRows(state.runs);
+            if (gen !== state.gen) return;
+            if (extra.length) {
+                // What needs you first, then newest: the Action Center's rows join in that order.
+                const needs = (r) => (needsPerson(r) ? 1 : 0);
+                state.runs = state.runs.concat(extra).sort((x, y) => needs(y) - needs(x) || String(y.updated_at || '').localeCompare(String(x.updated_at || '')));
+            }
             rows.textContent = ''; rows.removeAttribute('aria-busy');
             if (!state.runs.length) foot.append(empty('Nothing here yet', state.filter === 'code' ? 'Say what to build below: a page, a fix, controls for your stream.' : 'Ask anything below. Chats, tasks and code you start show up here.'));
             state.runs.forEach((r, i) => { const li = el('li'); li.append(row(r, i)); const acts = answerRow(r); if (acts) { li.classList.add('has-acts'); li.append(acts); } rows.append(li); });
             if (Array.isArray(out.partial) && out.partial.length) foot.append(el('p', 'ovr-note', `Some of your runs did not load (${out.partial.join(', ')}).`));
         }
         function row(r, i) {
-            const b = el('button', `ovr-row${needsPerson(r) ? ' is-needs' : ''}`); b.type = 'button'; b.style.setProperty('--i', String(Math.min(i, 12)));
+            const away = r.action ? httpsUrl(r.url) : '';
+            const b = away ? el('a', `ovr-row${needsPerson(r) ? ' is-needs' : ''}`) : el('button', `ovr-row${needsPerson(r) ? ' is-needs' : ''}`);
+            if (away) { b.href = away; b.target = '_blank'; b.rel = 'noopener'; } else b.type = 'button';
+            b.style.setProperty('--i', String(Math.min(i, 12)));
             const t = el('span', 'ovr-row-t');
             const top = el('span', 'ovr-row-top'); top.append(el('b', '', r.title || (r.agent && r.agent.name) || KIND_WORD[r.kind] || 'Run'), el('time', '', ago(r.updated_at)));
             const line = el('span', 'ovr-row-line', needsPerson(r) || r.status === 'running' ? statusLine(r) : (r.preview && r.preview.text) || statusLine(r));
@@ -322,13 +412,15 @@
             else if (r.status === 'failed') meta.append(el('i', 'ovr-pill is-failed', 'Did not finish'));
             t.append(top, line, meta);
             b.append(face(r), t);
-            b.addEventListener('click', () => open(r.ref || r.id, r));
+            if (!away) b.addEventListener('click', () => open(r.ref || r.id, r));
             return b;
         }
         /** A run that asks before it acts is answered from the list (the Action Center's approve in place). */
         function answerRow(r) {
             const w = r && r.waiting;
-            if (!needsPerson(r) || w.for !== 'approval' || !w.approval || !/^[A-Za-z0-9._~-]{1,160}$/.test(String(w.approval))) return null;
+            const it = r && r.action;
+            if (it && !(needsPerson(r) && Array.isArray(it.actions) && it.actions.includes('approve'))) return null;
+            if (!it && (!needsPerson(r) || w.for !== 'approval' || !w.approval || !/^[A-Za-z0-9._~-]{1,160}$/.test(String(w.approval)))) return null;
             const box2 = el('div', 'ovr-row-acts');
             const say = (text, err) => { box2.textContent = ''; box2.append(el('p', `ovr-note${err ? ' is-err' : ''}`, text)); };
             [['approve', 'Approve', true], ['decline', 'Not now', false]].forEach(([id, label, primary]) => {
@@ -336,7 +428,13 @@
                 b.setAttribute('aria-label', `${label}: ${r.title || 'this run'}`);
                 b.addEventListener('click', async () => {
                     [...box2.querySelectorAll('button')].forEach((x) => { x.disabled = true; });
-                    try { await api(`/${encodeURIComponent(r.ref || r.id)}/approvals/${encodeURIComponent(w.approval)}`, { method: 'POST', body: JSON.stringify({ answer: id }) }); say(id === 'approve' ? 'Approved' : 'Declined'); }
+                    try {
+                        if (it) {
+                            const res = await fetch(`${actionsBase}/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/${id}`, { method: 'POST', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: '{}' });
+                            if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.detail || j.error || j.title || `That did not go through (${res.status})`); }
+                        } else await api(`/${encodeURIComponent(r.ref || r.id)}/approvals/${encodeURIComponent(w.approval)}`, { method: 'POST', body: JSON.stringify({ answer: id }) });
+                        say(id === 'approve' ? 'Approved' : 'Declined');
+                    }
                     catch (err) { [...box2.querySelectorAll('button')].forEach((x) => { x.disabled = false; }); box2.append(el('p', 'ovr-note is-err', err.message)); }
                 });
                 box2.append(b);
@@ -348,8 +446,10 @@
         // ── the thread ──
         async function open(ref, known) {
             clearStream();
+            dropTop(); dropPane();
             const gen = ++state.gen;
             state.view = 'thread'; state.run = known || null; state.steps = new Map();
+            place({ ref });
             box.textContent = ''; box.className = 'ovr is-thread';
             const head = el('div', 'ovr-thead');
             const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'));
@@ -472,7 +572,19 @@
             n.append(row);
         }
 
-        const view = { list, open, start, destroy() { clearStream(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
+        /** Words in the list's box, unsent, with the focus there (a page's "Ask your agent"). */
+        function prefill(text) {
+            if (state.view !== 'list' || paneFor(state.filter)) list(paneFor(state.filter) ? 'all' : undefined);
+            const put = (n = 0) => {
+                const ta = box.querySelector('.ovr-compose textarea');
+                if (!ta) { if (n < 40) setTimeout(() => put(n + 1), 50); return; }
+                ta.value = String(text || '').slice(0, 16000);
+                ta.dispatchEvent(new Event('input', { bubbles: true }));
+                try { ta.focus({ preventScroll: true }); ta.setSelectionRange(ta.value.length, ta.value.length); } catch { /* */ }
+            };
+            put();
+        }
+        const view = { list, open, start, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
         if (o.open) open(o.open); else list();
         return view;
     }
@@ -501,9 +613,10 @@
 .ovr-row-acts .ovr-note { margin: 0; }
 @media (max-width: 380px) { .ovr-row-acts { padding-left: 12px; } }
 .ovr-rows:empty { display: none; } .ovr-list-note:empty { display: none; } .ovr-list-note { padding: 0 4px; }
-.ovr.is-list > .ovr-compose { margin-top: auto; }
+.ovr.is-list > .ovr-compose, .ovr.is-list > .ovr-starters:not([hidden]) { margin-top: auto; }
+.ovr.is-list > .ovr-starters:not([hidden]) + .ovr-compose { margin-top: 0; }
 /* On a wide screen the list, the thread and the box keep a reading column. */
-.ovr-head, .ovr-rows, .ovr-list-note, .ovr-compose, .ovr-thead { width: 100%; max-width: 780px; margin-inline: auto; box-sizing: border-box; }
+.ovr-head, .ovr-top, .ovr-rows, .ovr-list-note, .ovr-starters, .ovr-compose, .ovr-thead { width: 100%; max-width: 780px; margin-inline: auto; box-sizing: border-box; }
 .ovr-thread { padding-inline: max(4px, calc((100% - 772px) / 2)); }
 .ovr-row { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 10px 12px; border-radius: 16px; cursor: pointer; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.07)); transition: background-color .15s, transform .15s; animation: ovr-rise .3s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i, 0) * 18ms); }
 .ovr-row.is-needs { box-shadow: inset 0 0 0 1px color-mix(in srgb, #f59e0b 50%, transparent); background: color-mix(in srgb, #f59e0b 7%, transparent); }
@@ -523,6 +636,7 @@
 .ovr-pill.is-failed { color: #f87171; background: color-mix(in srgb, #ef4444 14%, transparent); }
 .ovr-face { position: relative; flex: none; display: grid; place-items: center; border-radius: 30%; color: hsl(var(--ovr-h, 215) 92% 84%); background: linear-gradient(150deg, hsl(var(--ovr-h, 215) 72% 58% / .4), hsl(var(--ovr-h, 215) 70% 38% / .22)); box-shadow: inset 0 0 0 1px hsl(var(--ovr-h, 215) 70% 64% / .3); }
 :root[data-theme="light"] .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); } }
 .ovr-face.is-m { width: 48px; height: 48px; } .ovr-face.is-m > svg { width: 26px; height: 26px; }
 .ovr-face.is-s { width: 38px; height: 38px; } .ovr-face.is-s > svg { width: 21px; height: 21px; }
 .ovr-face img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
@@ -535,6 +649,16 @@
 .ovr-empty > div { display: grid; gap: 2px; } .ovr-empty b { font-size: 14.5px; } .ovr-empty span { font-size: 13px; color: var(--text-muted, #93a0b4); }
 .ovr-note { margin: 6px 4px; font-size: 13px; color: var(--text-muted, #93a0b4); } .ovr-note.is-err { color: #f87171; }
 .ovr-compose { flex: none; padding: 8px 4px 4px; }
+.ovr-top { flex: none; }
+.ovr-pane { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; } .ovr-pane[hidden] { display: none; }
+.ovr.has-pane > .ovr-rows, .ovr.has-pane > .ovr-list-note, .ovr.has-pane > .ovr-compose { display: none; } .ovr-top[hidden], .ovr-starters[hidden] { display: none; } .ovr-top:empty { display: none; }
+.ovr-starters { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 8px 4px 0; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.ovr-starters::-webkit-scrollbar { display: none; }
+.ovr-starter { all: unset; box-sizing: border-box; flex: none; display: inline-flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 13px 0 10px; border-radius: 999px; cursor: pointer; font-size: 13.5px; white-space: nowrap; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.07)); transition: background-color .15s, color .15s; }
+.ovr-starter svg { width: 16px; height: 16px; color: var(--accent-light, #60a5fa); }
+.ovr-starter:disabled { opacity: .5; cursor: default; } .ovr-starter:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .ovr-starter:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); } }
+a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-plain { display: flex; align-items: flex-end; gap: 8px; padding: 8px; border-radius: 18px; border: 1px solid var(--border, rgba(148,163,184,.2)); background: var(--bg-primary, rgba(0,0,0,.2)); }
 .ovr-plain textarea { flex: 1; min-height: 40px; max-height: 160px; resize: none; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 15px; }
 .ovr-send { all: unset; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; color: #fff; background: var(--accent-strong, var(--accent, #2563eb)); }
