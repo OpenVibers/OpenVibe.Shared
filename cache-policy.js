@@ -2,7 +2,7 @@
 /**
  * openvibe-shared/cache-policy — the one cache rule every OpenVibe site uses, so no site has to
  * remember it and no site invents its own numbers: a content-addressed asset is immutable for a
- * year, everything else is a short public window with a long stale-while-revalidate, and a page
+ * year, everything else is a short public window with a short stale-while-revalidate, and a page
  * that is personalised for the person reading it is never cached by anybody.
  *
  *   const cache = require('openvibe-shared/cache-policy');
@@ -13,12 +13,15 @@
  * A URL is content-addressed when it carries `?v=<hash>` (what serve.url() hands out) or a hashed
  * filename (`app.6f2a91c3.js`, `styles-a1b2c3d4e5.css`). Immutable is only ever right for those:
  * the bytes cannot change under the same URL. Everything else may change at any moment, so it gets
- * five minutes plus a day of stale-while-revalidate — a visitor is served the old copy for a
- * second while the new one is fetched, and nobody waits on the network twice.
+ * five minutes plus five more of stale-while-revalidate — a visitor is served the old copy for a
+ * second while the new one is fetched, and nobody waits on the network twice. 4.227.0: it was a day,
+ * and the first visit to each site after a release ran the old navbar.js (sites load it without ?v=),
+ * so the owner's phone showed an old menu hours after the new one shipped (11-12). After ten quiet
+ * minutes a browser asks again: a 304 for an unchanged file.
  */
 const IMMUTABLE = 'public, max-age=31536000, immutable';
 const ASSET_MAX_AGE = 300;
-const ASSET_SWR = 86400;
+const ASSET_SWR = 300;
 
 /** True when `path` is content-addressed: `?v=<hash>` or a hash in the filename. */
 function isHashed(path) {

@@ -17,9 +17,9 @@ const serve = require('../serve');
 
     // Assets: the hash means immutable for a year; anything else is short plus a long stale window.
     assert.strictEqual(cache.assetHeaders('/shared/navbar.js?v=6f2a91c3d4e5'), 'public, max-age=31536000, immutable');
-    assert.strictEqual(cache.assetHeaders('/shared/navbar.js'), 'public, max-age=300, stale-while-revalidate=86400');
+    assert.strictEqual(cache.assetHeaders('/shared/navbar.js'), 'public, max-age=300, stale-while-revalidate=300', 'a release reaches a returning visitor within minutes, not a day');
     assert.strictEqual(cache.assetHeaders('/logo.png', { hashed: true }), cache.IMMUTABLE, 'a caller that knows can say so');
-    assert.strictEqual(cache.assetHeaders('/logo.png', { hashed: false }), 'public, max-age=300, stale-while-revalidate=86400');
+    assert.strictEqual(cache.assetHeaders('/logo.png', { hashed: false }), 'public, max-age=300, stale-while-revalidate=300');
 
     // HTML: stale-while-revalidate at the edge, or nothing stored at all when personalised.
     assert.strictEqual(cache.htmlHeaders(), 'public, max-age=120, stale-while-revalidate=3600');
