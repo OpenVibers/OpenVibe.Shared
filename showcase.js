@@ -202,19 +202,19 @@ function parts({ name = 'parts', items = [], label = 'Sections', front = false, 
 }
 
 /**
- * pick({ key, label, head, panes: [{ id, label, html }], checked, front = true }) — 4.228.0: the "pick block" twenty-five
+ * pick({ key, label, head, headId, bodyClass, panes: [{ id, label, html }], checked, front = true }) — 4.228.0: the "pick block" twenty-five
  * sites each kept a copy of (server/render/short.js), now one: a heading over the page's own blocks, one at a time as
  * tabs on a phone (parts()), every block in the HTML. Each pane keeps its id, so a link to it opens its tab. The copies
  * drew a row of chips that only jumped to a pane, so a phone still showed them all (the owner, 11-12: "You also never
  * released the new GUI with the tabs"). checked: the pane open first (else the first). A pane with no html is left out.
  * It links ov-parts.css itself (by its content hash), so no site has to.
  */
-function pick({ key = 'pick', label = 'Sections', head = '', panes = [], checked = '', front = true } = {}) {
+function pick({ key = 'pick', label = 'Sections', head = '', headId = '', bodyClass = '', panes = [], checked = '', front = true } = {}) {
     const list = (panes || []).filter((p) => p && p.id && p.label && p.html != null && p.html !== '');
     if (!list.length) return '';
     serveMod = serveMod || require('./serve');
     const items = list.map((p) => ({ id: p.id, label: p.label, html: `<div class="pick-pane" id="${esc(p.id)}">${p.html}</div>` }));
-    return `<link rel="stylesheet" href="${esc(serveMod.url('ov-parts.css'))}"><div class="pick" id="pick-${esc(String(key).replace(/[^a-z0-9_-]/gi, '-'))}"><div class="pick-bar"><div class="pick-head"><h2>${esc(head || label)}</h2></div></div>${parts({ name: key, label, front, items, checked: list.some((p) => p.id === checked) ? checked : '' })}</div>`;
+    return `<link rel="stylesheet" href="${esc(serveMod.url('ov-parts.css'))}"><div class="pick" id="pick-${esc(String(key).replace(/[^a-z0-9_-]/gi, '-'))}"><div class="pick-bar"><div class="pick-head"><h2${headId ? ` id="${esc(headId)}"` : ''}>${esc(head || label)}</h2></div></div><div class="pick-body${bodyClass ? ` ${esc(bodyClass)}` : ''}">${parts({ name: key, label, front, items, checked: list.some((p) => p.id === checked) ? checked : '' })}</div></div>`;
 }
 let serveMod = null;
 
