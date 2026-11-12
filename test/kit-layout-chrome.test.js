@@ -28,7 +28,10 @@ const PAGE = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 <div id="co" class="ov-cover" style="--min:400px"><p>top</p><h1 class="is-centre">centred</h1><p>bottom</p></div>
 <div id="fr" class="ov-frame" style="--ratio:2/1;width:300px"><svg viewBox="0 0 10 10"></svg></div>
 <main class="ov-base"><h1 id="h1">A heading</h1><h2 id="h2" class="site-h2">A site's own colour</h2><p id="p">Text <a id="a" href="#">a link</a></p>
-<table id="t"><tr><th>A</th><td>1</td></tr></table><input id="in"><button id="bt">Go</button></main>
+<table id="t"><tr><th>A</th><td>1</td></tr></table><input id="in"><button id="bt">Go</button>
+<label><input id="ra" type="radio" name="r" checked> One</label><label><input id="rb" type="radio" name="r"> Two</label><label><input id="cb" type="checkbox" checked> Yes</label>
+<details id="dt"><summary id="sm">More</summary><p>Inside</p></details>
+<section class="ovk-section"><h2>A section</h2><p id="sp">Words straight in it</p></section></main>
 </body></html>`;
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
@@ -54,6 +57,9 @@ const MEASURE = `(() => {
         h2: cs('#h2').color, link: cs('#a').textDecorationLine, table: cs('#t').display,
         input: Math.round(r('#in').height), btnRadius: cs('#bt').borderRadius,
         over: document.documentElement.scrollWidth - innerWidth,
+        radio: cs('#ra').appearance, radioDot: getComputedStyle(document.querySelector('#ra'), '::before').transform, radioOff: getComputedStyle(document.querySelector('#rb'), '::before').transform,
+        boxBg: cs('#cb').backgroundColor, chevron: getComputedStyle(document.querySelector('#sm'), '::after').content, marker: cs('#sm').listStyleType,
+        sectionPad: Math.round(r('#sp').left - document.querySelector('.ovk-section').getBoundingClientRect().left),
     };
 })()`;
 
@@ -90,6 +96,14 @@ const MEASURE = `(() => {
         assert.ok(wide.input >= 44, 'fields are a finger tall');
         assert.notStrictEqual(wide.btnRadius, '0px', 'buttons are finished');
         assert.strictEqual(phone.over, 0, 'nothing pushes a 320 px page sideways');
+        // 4.219.0: radios and checkboxes drawn in the theme, a plain details gets its chevron, words in a section keep its padding.
+        assert.strictEqual(wide.radio, 'none', 'a radio is drawn by the base');
+        assert.ok(/matrix\(1, 0, 0, 1/.test(wide.radioDot) || wide.radioDot === 'none', `the chosen radio shows its dot (${wide.radioDot})`);
+        assert.ok(/matrix\(0, 0, 0, 0/.test(wide.radioOff), `the other's dot is hidden (${wide.radioOff})`);
+        assert.notStrictEqual(wide.boxBg, 'rgba(0, 0, 0, 0)', 'a ticked box is filled');
+        assert.strictEqual(wide.chevron, '""', 'a plain summary has its chevron');
+        assert.strictEqual(wide.marker, 'none', 'and no browser marker');
+        assert.strictEqual(wide.sectionPad, 15, 'words straight in a section keep its padding (14 px inside its 1 px border)');
     } finally {
         await browser.close();
         server.close();

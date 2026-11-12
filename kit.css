@@ -269,6 +269,10 @@ html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25
 .ovk-section-actions .ovk-btn { min-height: 44px; white-space: normal; text-align: center; }
 .ovk-section-actions form { margin: 0; }
 .ovk-section > .ovk-empty { margin: 0 14px 14px; }
+/* Words placed straight in a section keep its padding (4.219.0: a site's <p> and <a> sat flush against the box). */
+.ovk-section.ovk-section > p:not([class]) { margin: 4px 14px 12px; line-height: 1.5; }
+.ovk-section.ovk-section > a:not([class]) { display: inline-block; margin: 0 14px 14px; color: var(--ovk-accent); font-weight: 700; text-underline-offset: .18em; }
+.ovk-section.ovk-section > :is(details, ul, ol, blockquote, pre):not([class]) { margin: 4px 14px 14px; }
 .ovk-count { color: var(--ovk-text); font-weight: 800; letter-spacing: 0; }
 .ovk-note { margin: 0; padding: 0 14px 10px; color: var(--ovk-muted); font-size: .86rem; }
 .ovk-section > .ovk-form, .ovk-section > form:not(.ovk-find):not(.ovk-inline) { padding: 4px 14px 14px; }
