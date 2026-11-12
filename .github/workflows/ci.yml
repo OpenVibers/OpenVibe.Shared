@@ -34,6 +34,8 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm test
+      - name: icon audit (every icon name resolves)
+        run: node scripts/icon-audit.js --root .
       - name: pin drift (openvibe-* library pins)
         run: curl -fsSL https://raw.githubusercontent.com/OpenVibers/OpenVibe.Shared/main/scripts/pin-drift.js | node - "$GITHUB_WORKSPACE"
       - name: install acorn (floating promises check)

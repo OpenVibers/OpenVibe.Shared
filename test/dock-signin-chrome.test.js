@@ -1,7 +1,7 @@
 'use strict';
 // The Dock with the extension's read-only scopes and an async token (2026-10-30): every request uses the
 // token the function returns at call time; the Agents tab shows Details but no approve/decline; the Chats
-// tab reads but has no composer; the Activity tab loads through the same token function.
+// tab reads but has no composer. 4.220.0: the panels live in the menu (mountInto), not in a floating Dock with a pill.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const fs = require('fs');
@@ -77,23 +77,20 @@ async function until(p, expr, what, ms = 6000) {
     try {
         await p.goto(`${base}/page`, { maxMs: 5000 });
         await until(p, 'window.__calls > 0', 'the first dock read with the async token');
-        await until(p, "!!document.getElementById('ovdk-pill')", 'the pill');
+        assert.strictEqual(await p.evaluate("!!document.querySelector('#ovdk-pill, .ovdk-pill')"), false, 'no pill: the menu holds the panels');
         assert.ok(seenAuth.length && seenAuth.every((a) => a === 'Bearer tok_async'), 'every request used the token function result');
-        await p.evaluate("document.getElementById('ovdk-pill').click()");
-        await until(p, "!!document.querySelector('.ovdk [data-panel=agent]')", 'the Dock opens');
-        await p.evaluate("document.getElementById('ovdk-tab-agent').click()");
+        await p.evaluate("(() => { const host = document.createElement('div'); host.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column'; document.body.append(host); window.__dock = OpenVibeDock.mountInto(host, { tab: 'agent' }); })()");
+        await until(p, "!!document.querySelector('.ovdk [data-panel=agent]:not([hidden])')", 'the Agents panel, placed as the menu places it');
         await until(p, "document.querySelectorAll('.ovdk .ovac-item').length === 1", 'the action item');
         assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovdk .ovac-item [data-do=approve], .ovdk .ovac-item [data-do=decline]').length"), 0, 'no approve/decline with activity only');
         assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovac-item a[href]')"), true, 'Details stays');
-        await p.evaluate("document.getElementById('ovdk-tab-chats').click()");
+        await p.evaluate("window.__dock.show('chats')");
         await until(p, "document.querySelectorAll('.ovdk .ovdk-chat').length === 1", 'the chat list');
         await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
         await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 1", 'the thread');
         assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-send')"), false, 'no composer with chat.read only');
         assert.match(await p.evaluate("document.querySelector('.ovdk [data-panel=chats]').innerText"), /Reading only/);
-        await p.evaluate("document.getElementById('ovdk-tab-activity').click()");
-        await until(p, "document.querySelectorAll('.ovdk .openvibe-notif-item').length === 1", 'the activity list');
-        assert.ok((await p.evaluate('window.__calls')) >= 3, 'the async token was resolved for each tab');
+        assert.ok((await p.evaluate('window.__calls')) >= 3, 'the async token was resolved for each panel');
         assert.ok(seenAuth.every((a) => a === 'Bearer tok_async'), JSON.stringify([...new Set(seenAuth)]));
         console.log('dock signin chrome: all checks passed');
     } finally {
