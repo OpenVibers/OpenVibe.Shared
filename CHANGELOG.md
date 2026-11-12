@@ -1,5 +1,65 @@
 # Changelog
 
+## 4.225.0 — 2026-11-12
+
+**The menu's Vibe is one place: All · Chats · Tasks · Code, no switch** (the owner, 11-12, crossing out the Chat · Code ·
+Agents switch: "one new unified agent … a shared UI").
+
+- **Vibe opens on All:** every run from the Frame (Vibe chats, tasks, coding runs) in one list (`ov-run.js`, 4.224.0).
+  - The Action Center's waiting and running work from every product (Network `/api/v1/me/actions`) joins it, unless a
+    run already shows it. What needs you comes first, approved or declined in place; the rest open their own pages.
+  - Above the list: the Dock's Now and timeline, your Actor and your agent's live view (lent with
+    `OpenVibeDock.mountInto(el, { tab: 'agent', part: 'top' })`).
+  - Vibe's six starters sit above the box; a press starts that run. Enter in the menu's field starts a run too.
+- **Chats, Tasks and Code are the Dock's own panels, lent whole** (Vibe's conversations with voice, undo and the timer;
+  Agents with its history, skills and filters; Code with its repos). They move into the one view when it does all they
+  do, so nothing is lost on the way.
+- The Dock's places open their filter: `OpenVibeDock.open({ tab: 'vibe' })` opens Chats, `'agent'` Tasks, `'code'` Code.
+  The status on the menu button still opens what needs you. `OpenVibeNavbar.openMenu()` also takes `'code'` and
+  `'tasks'`.
+- **`ov-run.js` gains:**
+  - `o.starters`;
+  - `o.actions: { base }`, the Action Center's work in the list;
+  - `o.top(el)`, the host's slot above the list on All;
+  - `o.panes: { chat, task, code }`, filters the host draws itself;
+  - `o.onPlace`;
+  - `view.prefill(text)`, words in the box, unsent.
+- A system light theme darkens the agents' glyphs.
+- **The menu scrolls on a phone wherever the swipe begins** (the owner, 11-12: "scrolling is very buggy … on mobile …
+  especially in notifications").
+  - Inside the menu, the notifications list was a scroll box of its own that held its overscroll. It never overflowed
+    there, so a swipe that began on a notice moved nothing.
+  - Inside the menu it is now part of the menu's one scroller (one scroller per layer).
+  - Measured with real touches at 390 px, and checked on every tab: nothing else nests a scroll box like it.
+  - New test `notifications-menu-scroll-chrome` (it fails without the fix).
+  - `notification-ui.js`'s brotli budget grows from 25.9 to 26.1 KB for it.
+- **The composer's + has GitHub.**
+  - It searches repositories through OpenVibe Exchange's code search (the Frame's `/api/frame/code/search`, Network
+    #878) a quarter second after the last key.
+  - Each row shows the owner's picture (GitHub's avatar host only), the name, the description, the language, stars
+    and the licence, all as text. Enter or a press puts the repository's address in the box, where every site draws
+    it as a card.
+  - A box may point it at another Network with `data-ovc-frame`. `composer-v2-chrome` checks it.
+- **One app icon for every site: `.ov-appicon` and `OpenVibeIcons.app(site, { size, label })`** (design rule 142).
+  - It is the menu's and Home's own icon: the app's steady hue on a rounded square, with its glyph drawn over it.
+  - Use it from markup (`<span class="ov-appicon" data-icon="live" data-size="64">`) or from script. Markup added later,
+    or an app that changes, is drawn again.
+  - With a label it is an image with a name; otherwise it is decoration. `OpenVibeIcons.hue(id)` is the shared hue.
+    `ov-appicon-chrome` checks it.
+- **Home on a phone: a long press then a move keeps the app under the finger.**
+  - Entering Edit repaints the grid, so the tile under the finger left the page, and the grid's touch guard no longer
+    heard that touch: the first move scrolled the menu and cancelled the press.
+  - The guard now rides on the pressed tile itself until the finger lifts.
+  - `menu-home-screen-chrome` drags with a real touch (it fails without the fix).
+- The menu reads runs and the Action Center from the Dock's Network base (`runsBase`).
+- **Tests:**
+  - `dock-chrome` gains the All view at 390 px: the four filters on All; a run and the Action Center's work in one
+    order; the Dock's top lent without its list; the starters; Tasks as the Agents panel, remembered by the Network;
+    approve in place from All. Every Dock check before it still passes unchanged.
+  - `run-thread-chrome` gains the starters, the Action Center's rows (nothing twice), the host's slot, the place and
+    prefill.
+  - `menu-places-chrome` and `menu-home-screen-chrome` follow the filters in place of the switch.
+
 ## 4.224.0 — 2026-11-12
 
 **One thread view for every run: chats, tasks and code** (the owner, 11-12, crossing out the menu's Chat · Code · Agents

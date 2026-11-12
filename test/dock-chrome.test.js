@@ -126,6 +126,11 @@ const server = http.createServer((req, res) => {
             return json(200, { state: scenario.state || defaultState(), counts: scenario.counts || { running: 0, waiting: 0, unread: 0 }, sources_partial: false });
         }
         if (u.pathname === '/api/v1/me/actions') return json(200, scenario.actions || ACTIONS);
+        // 4.225.0: the menu's Vibe lists runs from the Frame (Network /api/frame/runs, agents.run@1).
+        if (u.pathname === '/api/frame/runs' && req.method === 'GET') {
+            assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'the runs are read with the person\'s own token');
+            return json(200, { runs: [{ id: 'v-1', ref: 'chat:v-1', kind: 'chat', title: 'Patch notes for 4.162', status: 'waiting', waiting: { for: 'message' }, agent: { id: 'vibe', name: 'Vibe', glyph: 'spark' }, preview: { text: 'I wrote the first draft.' }, updated_at: iso(4 * 60e3) }], next: null, partial: [] });
+        }
         // Actor's skill catalogue, as the Dock's overview reads it: through Network's actions.
         if (u.pathname === '/api/v1/me/actions/skills') return json(200, { listings: (scenario.skills || [1, 2, 3, 4, 5, 6]).map((n) => ({
             id: `skl_${n}`, skill: { slug: `skill-${n}`, name: ['Make an image', 'Make a wiki article', 'Write a blog post', 'Improve an article', 'Make a meme', 'Summarise a thread'][n - 1] },
@@ -325,6 +330,44 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "!document.querySelector('.ovs.is-open')", 'Escape closes the menu');
             await eventually(async () => assert.ok(puts.some((b) => b.tab === 'agent'), `the Network heard the place (${JSON.stringify(puts)})`));
             assert.ok(puts.length <= 3, `changes go as debounced PUTs, not one per click (${puts.length})`);
+            await p.close();
+        }
+
+        // ── 4.225.0: the menu's Vibe is one list (ov-run.js) under All · Chats · Tasks · Code: runs from the Frame and the
+        // Action Center's work together, the Dock's Now, Actor and live view above; Chats, Tasks and Code are the Dock's
+        // own panels, lent whole. No Chat · Code · Agents switch. ──
+        {
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 } };
+            agentView = null;
+            const p = await fresh(390, 780);
+            await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, "!!window.OpenVibeDock", 'the panels');
+            await p.evaluate(MENU_BUTTON);
+            await until(p, "!!document.querySelector('.ovs.is-open .ovs-starttabs [data-dock=\"vibe\"]')", 'the Vibe place');
+            await p.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
+            await until(p, "document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length === 4", 'the run and the Action Center\'s three');
+            const all = await p.evaluate(`({ filters: [...document.querySelectorAll('.ovs-door-host .ovr-filter')].map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')),
+                titles: [...document.querySelectorAll('.ovs-door-host .ovr-row-top b')].map((b) => b.textContent), sw: !!document.querySelector('.ovs-door-sw, [data-part]'),
+                top: !!document.querySelector('.ovs-door-host .ovr-top .ovdk.ovdk-part-top'), runsList: !!document.querySelector('.ovs-door-host .ovr-top .ovdk-scroll, .ovs-door-host .ovr-top .ovac-item'),
+                starters: document.querySelectorAll('.ovs-door-host .ovr-starter').length, wide: document.documentElement.scrollWidth > innerWidth })`);
+            assert.deepStrictEqual(all.filters, ['All*', 'Chats', 'Tasks', 'Code'], 'All · Chats · Tasks · Code, on All');
+            assert.deepStrictEqual(all.titles, ['Send the weekly digest?', 'Fix the flaky upload test', 'Compare three VPS offers', 'Patch notes for 4.162'], 'what needs you first, then newest (the work a minute ago, the chat four): a run and the Action Center\'s work in one list');
+            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.starters, all.wide], [false, true, false, 6, false], 'no switch; the Dock\'s top above (not its list); the six starters; nothing off the screen');
+            if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-all-390.png'), Buffer.from(r.data, 'base64')); }
+            // Tasks: the Dock's Agents panel, whole; the Network hears the place.
+            await p.evaluate(`document.querySelector('.ovs-door-host .ovr-filter[data-filter="task"]').click()`);
+            const place = await until(p, `(() => { const c = ${PLACE}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'Tasks: the Agents panel');
+            assert.strictEqual(place.items, 3, 'its own list, as before');
+            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovs-door-host .ovr-pane .ovdk') && document.querySelector('.ovs-door-host .ovr-top').hidden"), true, 'in the pane, and the top handed back');
+            if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-tasks-390.png'), Buffer.from(r.data, 'base64')); }
+            await eventually(async () => assert.ok(puts.some((b) => b.tab === 'agent'), 'the Network heard Tasks'));
+            // Approve in place from All, through the Action Center.
+            await p.evaluate(`document.querySelector('.ovs-door-host .ovr-filter[data-filter="all"]').click()`);
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'All again, with its answers');
+            decided.length = 0;
+            await p.evaluate("document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary').click()");
+            await until(p, "(document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-row-acts') || {}).textContent === 'Approved'", 'approved in place from All');
+            assert.deepStrictEqual(decided, ['actor:apr_1:approve'], 'through the Action Center');
             await p.close();
         }
 
