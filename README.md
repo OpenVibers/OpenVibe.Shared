@@ -1189,7 +1189,7 @@ vendored or rsynced from Network.
 ## Depends on
 
 - `jsonwebtoken` (the only runtime dependency, for `auth-client`)
-- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.416.0 is a devDependency
+- OpenVibe.Contracts (the release manifest contract; `openvibe-contracts` v0.417.0 is a devDependency
   the tests validate against)
 - in the browser, at run time: OpenVibe.Network (sessions, notifications and realtime tickets, the
   changelog feed) and OpenVibe.Events (the realtime stream for the notification bell)
@@ -1236,6 +1236,6 @@ Part of the [OpenVibe network](https://openvibe.network). Built in the open by [
 The Locker browser core currently uses the immutable SDK review commit `80f212323869347385e34545d6ee0a911017f5af` (OpenVibe.SDK #141). Replace it with the reviewed release pin before the next library release.
 
 <!-- versions:start -->
-- openvibe-contracts: v0.416.0
+- openvibe-contracts: v0.417.0
 - openvibe-sdk: v0.160.0
 <!-- versions:end -->
