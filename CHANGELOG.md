@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.219.0 — 2026-11-12
+
+Every plain element styled by the theme (the owner, 11-12, with circled screenshots of openvibe.exchange: "make sure all
+basic elements are styled … custom with the theme system … update the little dots … reflect and improve all existing
+elements … the spacing could be improved").
+
+- **Radios and checkboxes are drawn** under `.ov-base`: a ring in the theme's line colour, the site's fill when chosen,
+  the radio's dot growing in and the checkbox's tick popping in (Calm keeps the change, Off removes the movement), a
+  focus ring, and a label that holds its control is one tappable row.
+- **Text fields**: the placeholder in the muted colour, an accent ring on focus, room under each field.
+- **A plain details** (no class of its own) gets a chevron that turns when it opens, and no browser marker; a site's own
+  details keeps its own.
+- **Words straight in a kit section** (`<p>`, `<a>`, `<details>`, lists, quotes, code) keep the section's padding; they sat
+  flush against the box's edge.
+
+Test: `kit-layout-chrome` (the drawn radio and its dot, the filled checkbox, the plain summary's chevron, a section's
+padding).
+
 ## 4.218.0 — 2026-11-12
 
 One composer, three verbs: **Post · Ask · Do** (research-2026-11-12/composer-post-ask-do.md; the owner, 11-12: "make it so
