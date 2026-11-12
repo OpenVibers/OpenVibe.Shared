@@ -9,7 +9,7 @@ shared composer … interconnected through all sites with all the features we mi
 - **`OpenVibeComposer.mount(host, options)`** draws a whole composer from a preset, and everything `enhance()` gives
   comes with it (files by the picker, a paste or a drop, uploads with progress, `/` commands, `@` mentions, voice,
   drafts, the keys, your settings):
-  - **post**: your picture, who sees it as a chip above the box, a box that grows with the words, pictures as tiles
+  - **post**: one line with your picture, your name and who sees it (a chip), then the words over the full width, a box that grows with the words, pictures as tiles
     each with its description and files as chips under the words, photos, files, emoji and voice, the ring that fills
     toward the limit (amber near it, red past it) and Post;
   - **chat**: one line that grows, attach, emoji, voice and a round send;

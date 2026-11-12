@@ -112,11 +112,14 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
    sites … feature rich … modular"). A mounted composer (OpenVibeComposer.mount) is .ovc-v2[data-preset=post|chat|agent|
    comment]: the person's picture beside a box that grows, the attachments as a strip (pictures as tiles you describe),
    one row of round tools, the option chips, the count ring and the send. */
-.ovc-v2.ovt-composer { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 12px; max-width: none; padding: 14px 14px 10px; border-radius: 22px; border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: var(--bg-card, #131c2e); transition: border-color .18s, box-shadow .18s; }
+.ovc-v2.ovt-composer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-width: none; padding: 14px 14px 10px; border-radius: 22px; border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: var(--bg-card, #131c2e); transition: border-color .18s, box-shadow .18s; }
 .ovc-v2.ovt-composer:focus-within { border-color: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, var(--ovt-line, rgba(148, 163, 184, .18))); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
-.ovc-v2 > .ovc-av { grid-row: 1 / span 2; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 22%, var(--bg-card, #131c2e)); display: grid; place-items: center; color: var(--text-primary, #e6edf7); font-weight: 700; font-size: 16px; }
-.ovc-v2:not(:has(> .ovc-av)) { grid-template-columns: minmax(0, 1fr); }
-.ovc-v2 .ovc-body { grid-column: -2 / -1; min-width: 0; display: grid; gap: 8px; }
+/* The full width is the words' (the owner, 11-12: "a big space on the left … use the full space"): the person's
+   picture, their name and who sees it are one line above the box, as Threads and Bluesky compose. */
+.ovc-v2 .ovc-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ovc-v2 .ovc-av { flex: none; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 22%, var(--bg-card, #131c2e)); display: grid; place-items: center; color: var(--text-primary, #e6edf7); font-weight: 700; font-size: 15px; }
+.ovc-v2 .ovc-head-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 15px; color: var(--text-primary, #e6edf7); }
+.ovc-v2 .ovc-body { min-width: 0; display: grid; gap: 8px; }
 .ovc-v2 .ovc-body > * { min-width: 0; }
 .ovc-v2 .ovc-files { max-width: 100%; }
 .ovc-v2 textarea { display: block; width: 100%; min-height: 26px; max-height: 40vh; box-sizing: border-box; margin: 0; padding: 8px 2px 4px; border: 0; outline: 0; resize: none; overflow-y: auto; background: transparent; color: var(--text-primary, #e6edf7); font: inherit; font-size: 17px; line-height: 1.45; }
@@ -130,7 +133,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 .ovt-btn svg { width: 21px; height: 21px; }
 .ovc-v2 .ovt-btn input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .ovc-v2 .ovc-chips { display: flex; align-items: center; gap: 6px; flex: none; }
-.ovc-v2 .ovc-body > .ovc-chips { justify-self: start; margin-top: 2px; }
+.ovc-v2 .ovc-head .ovc-chips { margin-left: auto; }
 .ovc-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 160px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 45%, transparent); color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa))); font-size: 13px; font-weight: 650; white-space: nowrap; cursor: pointer; }
 .ovc-chip svg { flex: none; width: 15px; height: 15px; }
 .ovc-chip-v { overflow: hidden; text-overflow: ellipsis; }
@@ -154,7 +157,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-t, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-t { display: none; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image input, .ovc-v2[data-preset=comment] .ovc-file.ovc-image input { flex: none; width: 100%; min-height: 38px; margin: 0; border: 0; border-top: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); border-radius: 0 0 15px 15px; padding: 8px 10px; background: transparent; font-size: 13px; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-x, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-x { top: 6px; right: 6px; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 50%; }
-.ovc-v2 .ovc-note { grid-column: -2 / -1; margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #7386a3); }
+.ovc-v2 .ovc-note { margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #7386a3); }
 .ovc-v2 .ovc-note:empty { display: none; }
 .ovc-v2.is-busy { opacity: .8; }
 /* chat: one line that grows, the tools beside it, the send round. */
@@ -168,14 +171,15 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2[data-preset=agent] textarea { min-height: 52px; font-size: 16px; }
 /* comment: small, the picture smaller. */
 .ovc-v2[data-preset=comment].ovt-composer { padding: 10px 12px 8px; border-radius: 18px; }
-.ovc-v2[data-preset=comment] > .ovc-av { width: 32px; height: 32px; font-size: 13px; }
+.ovc-v2[data-preset=comment] .ovc-av { width: 28px; height: 28px; font-size: 12px; }
+.ovc-v2[data-preset=comment] .ovc-head-n { font-size: 14px; }
 .ovc-v2[data-preset=comment] textarea { font-size: 15px; }
 /* Emoji: a small panel above the box. */
 .ovc-emoji { position: absolute; z-index: 41; left: 8px; bottom: calc(100% + 8px); display: grid; grid-template-columns: repeat(8, 38px); gap: 2px; max-width: calc(100% - 16px); max-height: 232px; overflow: auto; padding: 8px; border-radius: 16px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); background: var(--bg-card, #131c2e); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); animation: ovc-in .16s cubic-bezier(.2, .9, .3, 1) both; }
 .ovc-emoji[hidden] { display: none; }
 .ovc-emoji button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; cursor: pointer; }
 .ovc-emoji button:hover, .ovc-emoji button:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
-@media (max-width: 480px) { .ovc-v2.ovt-composer { padding: 12px 10px 8px; gap: 0 10px; } .ovc-v2 > .ovc-av { width: 36px; height: 36px; } .ovc-emoji { grid-template-columns: repeat(7, 38px); } .ovc-v2 .ovt-send { padding: 0 16px; } }
+@media (max-width: 480px) { .ovc-v2.ovt-composer { padding: 12px 12px 8px; } .ovc-emoji { grid-template-columns: repeat(7, 38px); } .ovc-v2 .ovt-send { padding: 0 16px; } }
 html[data-ov-motion=off] .ovc-emoji { animation: none; }
 `;
     function styles() { if (document.getElementById('ovc-styles')) return; const st = document.createElement('style'); st.id = 'ovc-styles'; st.textContent = CSS; document.head.appendChild(st); }
@@ -677,15 +681,17 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         if (o.noDraft) form.setAttribute('data-ovc-no-draft', '');
         const want = (o.tools || p.tools).filter((t) => TOOL[t]);
         if (!want.includes('voice')) form.setAttribute('data-ovc-no-voice', '');
-        // The person's picture (post and comment), or their first letter.
+        // A post or a reply opens with one line: the person's picture (or first letter), their name and who sees it.
+        const body = el('div', 'ovc-body');
+        const head = el('div', 'ovc-head');
         if (p.avatar && o.user) {
             const src = o.user.avatar_url || o.user.avatar;
             const av = src ? el('img', 'ovc-av') : el('span', 'ovc-av');
             if (src) { av.src = src; av.alt = ''; av.loading = 'lazy'; } else av.textContent = initial(o.user);
             av.setAttribute('aria-hidden', 'true');
-            form.appendChild(av);
+            const nm = el('span', 'ovc-head-n'); nm.textContent = String(o.user.display_name || o.user.username || '');
+            head.append(av, nm);
         }
-        const body = el('div', 'ovc-body');
         const ta = el('textarea');
         ta.name = o.name || 'text'; ta.rows = p.rows; ta.maxLength = o.maxLength || p.max;
         ta.placeholder = o.placeholder || (name === 'post' ? "What's new?" : name === 'agent' ? 'Ask for anything' : name === 'comment' ? 'Write a reply' : 'Write a message');
@@ -747,7 +753,8 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         if (!above) row.appendChild(chips);
         if (ring) row.appendChild(ring);
         row.appendChild(send);
-        if (above && chips.children.length) body.appendChild(chips);
+        if (above && chips.children.length) head.appendChild(chips);
+        if (head.children.length) body.appendChild(head);
         body.append(ta, row);
         const note = el('p', 'ovc-note'); note.setAttribute('data-ovt-note', ''); note.setAttribute('role', 'status');
         form.append(body, note);

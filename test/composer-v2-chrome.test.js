@@ -47,11 +47,12 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         // Each preset draws its own tools, chips and send.
         const shape = await page.evaluate(`(() => [...document.querySelectorAll('.ovc-v2')].map((f) => ({ preset: f.dataset.preset,
             tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')),
-            avatar: !!f.querySelector(':scope > .ovc-av'), round: f.querySelector('[data-ovt-send]').classList.contains('ovt-send--round'),
+            avatar: !!f.querySelector('.ovc-head .ovc-av'), full: Math.abs(f.querySelector('textarea').getBoundingClientRect().left - f.querySelector('.ovc-body').getBoundingClientRect().left) < 4, round: f.querySelector('[data-ovt-send]').classList.contains('ovt-send--round'),
             send: f.querySelector('[data-ovt-send]').textContent.trim(), chips: [...f.querySelectorAll('.ovc-chip-v')].map((c) => c.textContent) })))()`);
         assert.deepEqual(shape.map((s) => s.preset), ['post', 'chat', 'agent', 'comment']);
         assert.deepEqual(shape[0].tools.slice(0, 4), ['Photos and video', 'Files', 'Emoji', 'Poll'], 'a post: photos, files, emoji and the site\'s own tool');
         assert.ok(shape[0].avatar && shape[0].send === 'Post' && !shape[0].round);
+        assert.ok(shape.every((x) => x.full), 'the words use the full width: no column kept for the picture');
         assert.deepEqual(shape[0].chips, ['Everyone']);
         assert.deepEqual(shape[1].tools.slice(0, 2), ['Attach', 'Emoji']);
         assert.ok(shape[1].round && !shape[1].avatar, 'a chat: a round send, no picture');
@@ -60,7 +61,8 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
 
         // A post: who sees it is above the box; a picture goes under the words.
         let order = await page.evaluate(`(() => { const b = document.querySelector('#p1 .ovc-body'); return [...b.children].map((n) => n.className || n.tagName.toLowerCase()); })()`);
-        assert.ok(order.indexOf('ovc-chips') < order.indexOf('textarea'), `the audience chip is above the box (${order})`);
+        assert.ok(order.indexOf('ovc-head') === 0 && order.indexOf('ovc-head') < order.indexOf('textarea'), `the picture, the name and who sees it are above the box (${order})`);
+        assert.ok(await page.evaluate(`!!document.querySelector('#p1 .ovc-head .ovc-chips .ovc-chip')`), 'the audience chip is in that line');
         await page.evaluate(`post.add([new File([new Uint8Array([71, 73, 70])], 'cat.gif', { type: 'image/gif' })])`);
         order = await page.evaluate(`(() => [...document.querySelector('#p1 .ovc-body').children].map((n) => n.className || n.tagName.toLowerCase()))()`);
         assert.ok(order.indexOf('textarea') < order.findIndex((c) => String(c).includes('ovc-files')), `pictures go under the words (${order})`);
