@@ -8,6 +8,45 @@
         return b.currency === 'USD' ? new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(value) : value.toLocaleString();
     }
     function close() { if (active) active.close(); }
+    // 4.221.0: the sheet's marks are the network's glyphs (openvibe-shared/glyphs, openvibe.design/icons);
+    // test/wallet-glyphs.test.js keeps them equal to the registry.
+    const GLYPHS = {
+        wallet: '<path d="M3.5 6.8A2.7 2.7 0 0 1 6.2 4.2H18.4v4.2M3.5 6.8V18a2.1 2.1 0 0 0 2.1 2.1h14.9V8.4H6.2A2.7 2.7 0 0 1 3.5 6.8Z"/><path d="M16.2 14.2h0"/>',
+        history: '<path d="M3.8 12.1a8.3 8.3 0 1 0 2.5-5.9L3.8 8.5M3.8 4.2v4.2h4.2"/><path d="M12 7.9v4.3l3.1 1.9"/>',
+        store: '<path d="M3.7 8.8L5.3 3.7h13.4L20.3 8.8M3.7 8.8h16.5v1.6a2.8 2.8 0 0 1-5.4 0a2.8 2.8 0 0 1-5.6 0A2.8 2.8 0 0 1 3.7 10.4ZM4.8 12.9v7.2h14.5v-7.2M9.9 20.1v-4.1h4.1v4.1"/>',
+        gift: '<rect x="4.4" y="8.8" width="15.1" height="10.4" rx="0.9"/><path d="M3.5 8.8h17M12 8.8v10.4M12 8.8c-1.4-2.8-4.7-3.8-4.7-1.4S12 8.8 12 8.8s4.7-0.9 4.7-3.3S13.4 6 12 8.8"/>',
+        list: '<path d="M8.2 5.5h11.9M8.2 12h11.9M8.2 18.5h11.9M3.3 5.5h0M3.3 12h0M3.3 18.5h0"/>',
+        trophy: '<path d="M7.9 4h8.4v5.2a4.1 4.1 0 0 1-8.4 0ZM7.9 6.1H4.7a3.2 3.2 0 0 0 3.2 4.1M16.2 6.1h3.2a3.2 3.2 0 0 1-3.2 4.1M12 13.4v4.1M7.9 20.8h8.4"/>',
+        check: '<path d="M3.7 12.1l5.4 5.4L20.4 6.1"/>',
+        chevron: '<path d="M7.9 3.6l8.4 8.4l-8.4 8.4"/>',
+    };
+    const glyph = (name, cls) => { const t = el('span', cls || 'ov-wallet-glyph'); t.setAttribute('aria-hidden', 'true'); t.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${GLYPHS[name] || ''}</svg>`; return t; };
+    /** "3 min ago", "2 h ago", "yesterday", or the date. */
+    function ago(at) {
+        const t = Date.parse(at || ''); if (!Number.isFinite(t)) return '';
+        const m = Math.max(0, Math.round((Date.now() - t) / 60000));
+        if (m < 1) return 'just now'; if (m < 60) return `${m} min ago`;
+        const h = Math.round(m / 60); if (h < 24) return `${h} h ago`;
+        return h < 48 ? 'yesterday' : new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    }
+    /**
+     * A currency's recent moves, grouped so they read as a list, not a paragraph: every "for the quest …" is one group
+     * (Quests done ×10, each quest named in the fold); any other reason is its own row, counted when it repeats.
+     */
+    function groupMoves(moves) {
+        const groups = new Map();
+        for (const m of moves) {
+            const label = String((m && m.label) || '').replace(/\s+/g, ' ').trim(); if (!label) continue;
+            const quest = /^for the quest\s+(.+)$/i.exec(label);
+            const key = quest ? 'quest' : label.toLowerCase();
+            const g = groups.get(key) || { key, title: quest ? 'Quests done' : label.charAt(0).toUpperCase() + label.slice(1), icon: quest ? 'trophy' : null, items: [], n: 0, delta: 0, at: '' };
+            const d = Number(m.delta); if (Number.isFinite(d)) g.delta += d;
+            if (quest) g.items.push({ text: quest[1], delta: Number.isFinite(d) ? d : null });
+            g.n += 1; if (String(m.at || '') > g.at) g.at = String(m.at || '');
+            groups.set(key, g);
+        }
+        return [...groups.values()].sort((a, b) => b.at.localeCompare(a.at));
+    }
     /**
      * A hosted checkout is followed only to a host Billing names for the chosen provider (checkout.providers:
      * [{ name, hosts }]) or to Billing itself. Anything else — http, a URL with a username, a foreign host — is refused.
@@ -60,9 +99,10 @@
         let win = null;
         const dialog = W ? el('div', 'ov-wallet ov-wallet-in') : el('dialog', 'ov-wallet');
         dialog.setAttribute('aria-labelledby', 'ov-wallet-title');
-        const header = el('header', 'ov-wallet-head'), heading = el('div');
-        heading.append(el('h2', '', 'Wallet'));
-        heading.lastChild.id = 'ov-wallet-title';
+        const header = el('header', 'ov-wallet-head'), heading = el('div', 'ov-wallet-name');
+        const title = el('h2', '', 'Wallet'); title.id = 'ov-wallet-title';
+        heading.append(title, el('small', '', 'Yours on every OpenVibe site'));
+        header.append(glyph('wallet', 'ov-wallet-mark'));
         const exit = el('button', 'ov-wallet-close', '×'); exit.type = 'button'; exit.setAttribute('aria-label', 'Close wallet');
         header.append(heading, exit);
         const body = el('div', 'ov-wallet-body is-first'), status = el('p', 'ov-wallet-status', '');
@@ -113,9 +153,14 @@
                 try { identity(); await action(); } catch (e) { message(e); } finally { if (b.isConnected) b.disabled = false; }
             }); return b;
         }
-        function section(title, description) {
-            const s = el('section', 'ov-wallet-section'); s.append(el('h3', '', title));
-            if (description) s.append(el('p', 'ov-wallet-muted', description)); body.append(s); return s;
+        function section(title, description, icon, into) {
+            const s = el('section', 'ov-wallet-section'), head = el('div', 'ov-wallet-sh'), words = el('div');
+            words.append(el('h3', '', title)); if (description) words.append(el('p', 'ov-wallet-muted', description));
+            if (icon) head.append(glyph(icon)); head.append(words); s.append(head); (into || body).append(s); return s;
+        }
+        /** Nothing here yet, said as a small card with its mark (never two grey lines under a heading). */
+        function empty(icon, line, sub) {
+            const e = el('div', 'ov-wallet-empty'); e.append(glyph(icon)); const w = el('div'); w.append(el('strong', '', line)); if (sub) w.append(el('span', '', sub)); e.append(w); return e;
         }
         function preview(art, name) {
             const p = el('div', 'ov-wallet-preview');
@@ -185,33 +230,53 @@
             status.classList.remove('is-error');
             // The bar keeps the last window in this tab after marking it read. A direct sheet read supplies it when
             // the bar has not yet fetched changes. Reasons are the API's plain labels, never ledger keys.
+            const balances = el('div', 'ov-wallet-balances'); body.append(balances);
+            const pair = el('div', 'ov-wallet-pair');
             const changeWindow = (root.OpenVibePurse && root.OpenVibePurse.recentChanges()) || changeData;
+            const changes = [];
             if (changeWindow) {
-                const entries = [['opencoins', 'OpenCoins'], ['vibes', 'Vibes'], ['channel_points', 'Channel points']]
-                    .map(([key, name]) => ({ key, name, part: changeWindow[key] }))
-                    .filter(({ part }) => part && Number.isSafeInteger(Number(part.net)) && Number(part.net) !== 0)
-                    .sort((a, b) => String((b.part.moves || []).at(-1)?.at || '').localeCompare(String((a.part.moves || []).at(-1)?.at || '')));
-                if (entries.length) {
-                    const section = el('section', 'ov-wallet-section ov-wallet-changes');
-                    section.append(el('h3', '', 'What changed'));
-                    let remaining = 10;
-                    for (const { name, part } of entries) {
-                        const row = el('div', 'ov-wallet-event'), info = el('div');
-                        info.append(el('strong', '', name));
-                        const moves = Array.isArray(part.moves) ? [...part.moves].sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))) : [];
-                        const reasons = moves.slice(0, remaining).map((move) => String(move.label || '')).filter(Boolean);
-                        remaining -= reasons.length;
-                        if (reasons.length) info.append(el('small', '', reasons.join(' · ')));
-                        const n = Number(part.net), full = `${n > 0 ? '+' : '−'}${Math.abs(n).toLocaleString().replace(/,/g, '\u2009')}`;
-                        const compact = Math.abs(n) > 10000 ? `${n > 0 ? '+' : '−'}${Math.round(Math.abs(n) / 1000)}k` : full;
-                        const value = el('span', n > 0 ? 'is-gain' : 'is-loss', compact);
-                        value.style.fontVariantNumeric = 'tabular-nums'; value.style.color = n > 0 ? 'var(--success, #17865a)' : 'var(--danger, #c84141)';
-                        value.title = full; value.setAttribute('aria-label', full); row.append(info, value); section.append(row);
+                for (const [key, id, name] of [['opencoins', 'coins', 'OpenCoins'], ['vibes', 'vibes', 'Vibes'], ['channel_points', 'channel-points', 'Channel points']]) {
+                    const part = changeWindow[key];
+                    if (part && Number.isSafeInteger(Number(part.net)) && Number(part.net) !== 0) changes.push({ id, name, part });
+                }
+                changes.sort((a, b) => String((b.part.moves || []).at(-1)?.at || '').localeCompare(String((a.part.moves || []).at(-1)?.at || '')));
+            }
+            if (changes.length) {
+                const sec = section('What changed', 'Since you last looked.', 'history', pair);
+                sec.classList.add('ov-wallet-changes');
+                for (const { id, name, part } of changes) {
+                    const row = el('div', 'ov-wallet-change'), info = el('div', 'ov-wallet-change-t');
+                    const purse = root.OpenVibePurse || null;
+                    const mark = el('span', 'ov-wallet-change-ic'); if (purse && purse.icon) { mark.innerHTML = purse.icon(id === 'channel-points' ? 'coins' : id, 22); mark.setAttribute('data-purse', id === 'channel-points' ? 'coins' : id); } else mark.append(glyph('wallet'));
+                    mark.setAttribute('aria-hidden', 'true');
+                    const moves = Array.isArray(part.moves) ? [...part.moves].sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))) : [];
+                    const groups = groupMoves(moves);
+                    info.append(el('strong', '', name));
+                    const line = groups.slice(0, 2).map((g) => (g.n > 1 ? `${g.title} ×${g.n}` : g.title)).join(' · ') + (groups.length > 2 ? ` · ${groups.length - 2} more` : '');
+                    const when = ago(moves[0] && moves[0].at);
+                    if (line || when) info.append(el('small', '', [line, when].filter(Boolean).join(' · ')));
+                    const n = Number(part.net), full = `${n > 0 ? '+' : '−'}${Math.abs(n).toLocaleString().replace(/,/g, '\u2009')}`;
+                    const compact = Math.abs(n) > 10000 ? `${n > 0 ? '+' : '−'}${Math.round(Math.abs(n) / 1000)}k` : full;
+                    const value = el('span', `ov-wallet-change-n ${n > 0 ? 'is-gain' : 'is-loss'}`, compact);
+                    value.style.fontVariantNumeric = 'tabular-nums'; value.title = full; value.setAttribute('aria-label', full);
+                    row.append(mark, info, value);
+                    // Each move, in a fold: the quests by name, the rest as they were said.
+                    if (moves.length > 1 || groups.some((g) => g.items.length)) {
+                        const more = el('details', 'ov-wallet-change-more'), sum = el('summary');
+                        sum.append(el('span', '', `See all ${moves.length}`), glyph('chevron', 'ov-wallet-chev'));
+                        const list = el('ul');
+                        const signed = (v) => (v == null || !v ? null : el('b', v > 0 ? 'is-gain' : 'is-loss', `${v > 0 ? '+' : '−'}${Math.abs(v).toLocaleString()}`));
+                        const item = (icon, text, v) => { const li = el('li'); li.append(glyph(icon), el('span', '', text)); const b = signed(v); if (b) li.append(b); list.append(li); };
+                        for (const g of groups) {
+                            if (g.items.length) for (const it of g.items) item(g.icon || 'list', it.text, it.delta);
+                            else item('list', g.n > 1 ? `${g.title} ×${g.n}` : g.title, g.delta);
+                        }
+                        more.append(sum, list); row.append(more);
                     }
-                    body.append(section);
+                    sec.append(row);
                 }
             }
-            const balances = el('div', 'ov-wallet-balances'); body.append(balances);
+            body.append(pair);
             for (const id of ['coins', 'vibes', 'balance']) {
                 const b = data.balances[id], card = el('article', `ov-wallet-balance is-${id}`);
                 const numeric = Number(b.amount) / Math.pow(10, b.scale || 0);
@@ -235,29 +300,36 @@
                     else if (was !== numeric) { purse.count(value, was, numeric, words); card.classList.add(numeric > was ? 'is-gain' : 'is-loss'); setTimeout(() => { if (card.isConnected) purse.burst(card, id, numeric - was); }, 60); }
                 }
             }
-            const store = section('Store', 'A little more you. Items travel with your OpenVibe account.');
+            const store = section('Store', 'A little more you. Items travel with your OpenVibe account.', 'store');
             const grid = el('div', 'ov-wallet-grid'); store.append(grid);
             if (!here.store) grid.append(wait(2, 'is-tile'));
-            else if (!storeItems.length) grid.append(el('p', 'ov-wallet-muted', 'New items will appear here after review.'));
+            else if (!storeItems.length) grid.append(empty('store', 'New items are on their way', 'They appear here once they pass review.'));
             for (const item of storeItems) {
                 const card = el('article', 'ov-wallet-item'); card.append(preview(item.preview, item.name), el('h4', '', item.name), el('p', 'ov-wallet-muted', `By ${maker(item.issuer)}`));
                 const owned = item.owned || (allItems && allItems.instances.some((i) => i.definition_id === item.id && i.state === 'owned'));
-                if (owned) card.append(el('span', 'ov-wallet-owned', '✓ Owned'));
+                const prices = el('div', 'ov-wallet-prices');
+                if (owned) { const o = el('span', 'ov-wallet-owned', 'Owned'); o.prepend(glyph('check', 'ov-wallet-tick')); prices.append(o); }
                 else for (const [currency, price] of Object.entries(item.prices)) {
-                    const buy = button(`Buy · ${price.toLocaleString()} ${currency === 'vibes' ? 'Vibes' : 'OpenCoins'}`, async () => {
+                    const word = currency === 'vibes' ? 'Vibes' : 'OpenCoins';
+                    const buy = button(`Buy · ${price.toLocaleString()} ${word}`, async () => {
                         let attempt = pending.get(item.id);
                         if (!attempt) { attempt = { currency, idempotency_key: root.crypto.randomUUID() }; pending.set(item.id, attempt); }
                         if (attempt.currency !== currency) throw new Error('Retry this item in the currency you chose first.');
                         await request(`/api/v1/store/${encodeURIComponent(item.id)}/buy`, 'POST', attempt);
                         await Promise.all([refreshWallet(), refreshItems()]); render();
-                    }); buy.disabled = data.money_writes_frozen || !item.available; card.append(buy);
+                    }, 'ov-wallet-price'); buy.disabled = data.money_writes_frozen || !item.available;
+                    buy.setAttribute('aria-label', `Buy ${item.name} for ${price.toLocaleString()} ${word}`); buy.title = `Buy for ${price.toLocaleString()} ${word}`;
+                    const purse = root.OpenVibePurse; buy.textContent = '';
+                    const ic = el('span', 'ov-wallet-price-ic'); ic.setAttribute('aria-hidden', 'true'); if (purse && purse.icon) { ic.innerHTML = purse.icon(currency === 'vibes' ? 'vibes' : 'coins', 16); ic.setAttribute('data-purse', currency === 'vibes' ? 'vibes' : 'coins'); } else ic.textContent = currency === 'vibes' ? 'V' : 'O';
+                    buy.append(ic, el('span', '', price.toLocaleString())); prices.append(buy);
                 }
+                card.append(prices);
                 grid.append(card);
             }
-            const mine = section('Your items', 'Wear them wherever their kind is supported.');
+            const mine = section('Your items', 'Wear them wherever their kind is supported.', 'gift');
             const owned = allItems ? allItems.instances.filter((i) => i.state === 'owned') : [];
             if (!here.items) mine.append(wait(2, 'is-row'));
-            else if (!owned.length) mine.append(el('p', 'ov-wallet-muted', 'Your collection starts here.'));
+            else if (!owned.length) mine.append(empty('gift', 'Your collection starts here', 'What you get or earn shows up here, ready to wear.'));
             for (const item of owned) {
                 const def = allItems.definitions[item.definition_id]; if (!def) continue;
                 const kind = kinds.find((k) => k.id === def.kind), row = el('article', 'ov-wallet-owned-row'), copy = el('div');
@@ -277,20 +349,22 @@
                 const page = await request('/api/v1/me/items?limit=100&cursor=' + encodeURIComponent(allItems.next_cursor));
                 allItems = { ...page, instances: allItems.instances.concat(page.instances), definitions: { ...allItems.definitions, ...page.definitions } }; render();
             }));
-            const recent = section('Recent activity', 'Your last five money events.');
-            if (!data.recent_activity.length) recent.append(el('p', 'ov-wallet-muted', 'No activity yet.'));
+            const recent = section('Recent activity', 'Your last five money events.', 'list', pair);
+            if (!data.recent_activity.length) recent.append(empty('list', 'No activity yet', 'Purchases, top-ups and tips show up here.'));
             for (const event of data.recent_activity) {
                 // The reason is a sentence made by billing.money-reason@1 (Billing or Network); when it names
                 // something with a page, the sentence is the link to it. The raw ledger key is never drawn.
-                const row = el('div', 'ov-wallet-event'), info = el('div');
+                const row = el('div', 'ov-wallet-event ov-wallet-act'), info = el('div', 'ov-wallet-act-t');
+                { const mk = el('span', 'ov-wallet-change-ic'); mk.setAttribute('aria-hidden', 'true'); const id = event.kind === 'balance' ? 'balance' : event.kind === 'vibes' ? 'vibes' : 'coins'; const purse = root.OpenVibePurse; if (purse && purse.icon) { mk.innerHTML = purse.icon(id, 20); mk.setAttribute('data-purse', id); } else mk.append(glyph('list')); row.append(mk); }
                 const url = event.subject && event.subject.url;
                 if (url && /^https:\/\//.test(url)) {
-                    const a = el('a', '', event.label);
+                    // The link is the reason and its line together: one target of a thumb's size, no underline across the row.
+                    const a = el('a'); a.append(el('strong', '', event.label), el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
                     a.href = url; a.target = '_blank'; a.rel = 'noopener';
-                    info.append(a, el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
+                    info.append(a);
                 } else info.append(el('strong', '', event.label), el('small', '', `${event.site} · ${new Date(event.at).toLocaleDateString()}`));
                 const units = event.kind === 'balance' ? { currency: 'USD', scale: 9 } : { currency: event.kind, scale: 0 };
-                row.append(info, el('span', '', `${Number(event.amount) > 0 ? '+' : ''}${amount({ ...units, amount: event.amount })}${event.kind === 'balance' ? '' : event.kind === 'vibes' ? ' Vibes' : ' OpenCoins'}`)); recent.append(row);
+                row.append(info, el('span', `ov-wallet-act-n ${Number(event.amount) > 0 ? 'is-gain' : 'is-loss'}`, `${Number(event.amount) > 0 ? '+' : ''}${amount({ ...units, amount: event.amount })}${event.kind === 'balance' ? '' : event.kind === 'vibes' ? ' Vibes' : ' OpenCoins'}`)); recent.append(row);
             }
         }
         exit.addEventListener('click', session.close);
@@ -322,7 +396,7 @@
         } catch (error) { if (seed && !disposed) { here.store = here.items = true; } message(error); }
         return session;
     }
-    const api = { open, close, amount, checkoutAllowed };
+    const api = { open, close, amount, checkoutAllowed, GLYPHS, groupMoves };
     root.OpenVibeWallet = api;
     if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

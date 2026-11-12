@@ -34,6 +34,8 @@
             /* At the very top the bar fades into the page (no background, no border); a scroll brings the frosted bar back.
                A page whose hero runs under the bar opts in with body.ov-nav-overlay: the bar then sits over the hero, with a
                soft scrim for the text. ovnav-top is kept by the navbar itself on every render and scroll. */
+            /* A tap area past the edge made pages 392 px at 390 (4.222.0). */
+            .openvibe-navbar { overflow-x: clip; }
             .openvibe-navbar { transition: background-color .45s cubic-bezier(.2,.7,.2,1), border-color .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s cubic-bezier(.2,.7,.2,1), -webkit-backdrop-filter .45s, backdrop-filter .45s, transform .32s cubic-bezier(.2,.7,.2,1); }
             /* On a phone the bar steps away while you read down the page and comes back the moment you scroll up (4.25.0;
                the owner, 2026-10-28: the bar's at-the-top effect "doesn't work on mobile… the whole thing needs to be
@@ -106,8 +108,8 @@
                 .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
-                /* Sign in is a 36px circle: its taps grow to the right and a little to the left, off the menu button's. */
-                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -5px -8px -5px -3px; }
+                /* Sign in's taps stop at the bar's edge (it clips) and go a little left, off the menu's. */
+                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -5px -6px -5px -4px; }
                 .openvibe-navbar .ovnav-burger::after { content: ''; position: absolute; inset: -3px -5px; }
                 /* The orb grows up and down, and sideways mostly to the right: the site's name sits 8px to its left and keeps
                    its own taps (4px there); the extra width goes to the open bar on its right (12px), so it measures 44px
@@ -602,7 +604,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'c1f8f8dfab77', 'dock.js': '328a715e0ecd', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '1dd1ca512625', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '88e9e57c3683', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '22286b70f8f6', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'cc406790c229', 'dock.js': '328a715e0ecd', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '1dd1ca512625', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '88e9e57c3683', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.

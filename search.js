@@ -290,6 +290,8 @@
    hairline, so the list reads as sections and not as one long column of small rings. */
 .ovs-grid.is-mini { gap: 4px; }
 .ovs-grid.is-mini .ovs-tile { min-height: 48px; padding: 6px 8px; border-radius: 12px; transition: background-color .15s, transform .12s; }
+/* 4.222.0: a site's whole name, never "Downlo…" or "Commu…": a long name takes a second line instead of an ellipsis. */
+.ovs-grid.is-mini .ovs-tile b { white-space: normal; text-overflow: clip; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.15; overflow-wrap: anywhere; }
 .ovs-grid.is-mini .ovs-tile:active { transform: scale(.97); }
 .ovs-grid.is-mini .ovs-ic { width: 32px; height: 32px; border-radius: 10px; }
 /* 4.202.0: on a phone a site's name sits under its mark, so the whole name shows (Download, Community: not "Downlo…"). */
