@@ -658,28 +658,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             const link = e.target.closest && e.target.closest('a[href]');
             if (link && !e.defaultPrevented && !e.button && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey && (!link.target || link.target === '_self') && !/^#/.test(link.getAttribute('href'))) close({ navigating: true });
         });
-        // 4.229.0 (the owner, 11-12: "when you click links … it loads async dynamically and is highly optimized"): a link
-        // warms up as a finger lands on it or a pointer rests on it, so the next page is on its way before the click.
-        el.addEventListener('pointerdown', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (a) warm(a); }, { passive: true });
-        let hoverTimer = 0;
-        el.addEventListener('pointerover', (e) => {
-            const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.pointerType === 'touch') return;
-            clearTimeout(hoverTimer); hoverTimer = setTimeout(() => warm(a), 90);
-        }, { passive: true });
-        el.addEventListener('pointerout', () => clearTimeout(hoverTimer), { passive: true });
         document.body.appendChild(el);
-    }
-
-    /** Ahead of a click on another OpenVibe site: its connection opens (DNS, TLS) while the finger is still down. This
-     *  site's pages are already prefetched by the bar's speculation rules (navbar.js), and browsers do not prefetch
-     *  another site's page for a person signed in there. At most 24 origins. */
-    const warmed = new Set();
-    function warm(a) {
-        let u;
-        try { u = new URL(a.getAttribute('href'), location.href); } catch { return; }
-        if (!/^https?:$/.test(u.protocol) || u.origin === location.origin || warmed.has(u.origin) || warmed.size >= 24) return;
-        warmed.add(u.origin);
-        try { const l = document.createElement('link'); l.rel = 'preconnect'; l.href = u.origin; document.head.appendChild(l); } catch { /* the click connects */ }
     }
 
     function onKey(e) {

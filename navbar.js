@@ -2619,6 +2619,26 @@
                 document.head.appendChild(sr);
             } catch { /* an old browser: links load as they always did */ }
         }
+        // 4.229.0 (the owner, 11-12: "when you click links and pages and other domains within the menu or navigation it
+        // loads async dynamically and is highly optimized"): a link to another OpenVibe site warms up as a finger lands on
+        // it or a pointer rests on it (its connection opens: DNS and TLS while the press is still down). This site's
+        // pages are already fetched ahead by the speculation rules above; browsers do not prefetch another site's page
+        // for a person signed in there. Anywhere on the page: the bar, the menu, a footer, a card. At most 24 origins.
+        const warmed = new Set();
+        const OV_HOST = /(^|\.)(openvibe\.[a-z]+|openre\.stream|open\.shoes)$/;
+        const warm = (a) => {
+            let u; try { u = new URL(a.getAttribute('href'), location.href); } catch { return; }
+            if (u.protocol !== 'https:' || u.origin === location.origin || warmed.has(u.origin) || warmed.size >= 24 || !OV_HOST.test(u.hostname)) return;
+            warmed.add(u.origin);
+            try { const l = document.createElement('link'); l.rel = 'preconnect'; l.href = u.origin; document.head.appendChild(l); } catch { /* the click connects */ }
+        };
+        document.addEventListener('pointerdown', (e) => { const a = e.target && e.target.closest && e.target.closest('a[href]'); if (a) warm(a); }, { capture: true, passive: true });
+        let hoverTimer = 0;
+        document.addEventListener('pointerover', (e) => {
+            if (e.pointerType === 'touch') return;
+            const a = e.target && e.target.closest && e.target.closest('a[href]'); if (!a) return;
+            clearTimeout(hoverTimer); hoverTimer = setTimeout(() => warm(a), 90);
+        }, { passive: true });
         // A plain same-site link on a server-rendered page: the mark starts working at once; the next page's mark takes over.
         document.addEventListener('click', (e) => {
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
