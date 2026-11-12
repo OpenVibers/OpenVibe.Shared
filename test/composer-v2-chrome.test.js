@@ -28,7 +28,9 @@ window.post = C.mount(document.getElementById('a'), { preset: 'post', id: 'p1', 
     audience: { name: 'audience', label: 'Who sees it', options: [['public', 'Everyone'], ['followers', 'Followers']], value: 'public' },
     onSubmit: async (v) => { window.got.push({ text: v.text, files: v.files.map((f) => f.name), audience: v.audience }); return window.keepNext ? false : true; } });
 window.chat = C.mount(document.getElementById('b'), { preset: 'chat', id: 'c1', onSubmit: async () => true });
-window.agent = C.mount(document.getElementById('c'), { preset: 'agent', id: 'g1', mode: { name: 'mode', label: 'Mode', options: [['balanced', 'Balanced'], ['best', 'Best']], value: 'balanced' }, onSubmit: async (v) => { window.got.push({ mode: v.mode }); } });
+window.agent = C.mount(document.getElementById('c'), { preset: 'agent', id: 'g1', mode: { name: 'mode', label: 'Mode', options: [['balanced', 'Balanced'], ['best', 'Best']], value: 'balanced' },
+    chips: [{ name: 'effort', label: 'Reasoning', icon: 'gauge', options: [['medium', 'Medium'], ['high', 'High']], value: 'high' }],
+    onSubmit: async (v) => { window.got.push({ mode: v.mode, effort: v.chips.effort }); } });
 window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r1', user: { display_name: 'Maticus', avatar_url: 'data:image/gif;base64,R0lGODlhAQABAAAAACw=' }, onSubmit: async () => true });
 </script>`);
 });
@@ -56,7 +58,7 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         assert.deepEqual(shape[0].chips, ['Everyone']);
         assert.deepEqual(shape[1].tools.slice(0, 2), ['Attach', 'Emoji']);
         assert.ok(shape[1].round && !shape[1].avatar, 'a chat: a round send, no picture');
-        assert.ok(shape[2].round && shape[2].chips[0] === 'Balanced', 'an agent: its mode chip and a round send');
+        assert.ok(shape[2].round && shape[2].chips.join() === 'Balanced,High', 'an agent: its mode and reasoning chips and a round send');
         assert.ok(shape[3].avatar && shape[3].send === 'Reply');
 
         // A post: who sees it is above the box; a picture goes under the words.
@@ -92,7 +94,15 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         // An agent's mode goes with the send.
         await page.evaluate(`(() => { agent.ctx.set('Plan my week'); document.querySelector('#g1 [data-ovt-send]').click(); })()`);
         assert.ok(await until(`window.got.length === 3`));
-        assert.deepEqual(await page.evaluate(`window.got[2]`), { mode: 'balanced' });
+        assert.deepEqual(await page.evaluate(`window.got[2]`), { mode: 'balanced', effort: 'high' }, 'the mode and any more chips go with the send');
+        // While a run works, the send is Stop.
+        await page.evaluate(`(() => { window.stopped = 0; agent.setRunning(true, () => { window.stopped++; }); })()`);
+        assert.equal(await page.evaluate(`document.querySelector('#g1 [data-ovt-send]').getAttribute('aria-label')`), 'Stop');
+        await page.evaluate(`document.querySelector('#g1 [data-ovt-send]').click()`);
+        assert.equal(await page.evaluate(`window.stopped`), 1, 'Stop calls onStop');
+        assert.equal(await page.evaluate(`window.got.length`), 3, 'and sends nothing');
+        await page.evaluate(`agent.setRunning(false)`);
+        assert.equal(await page.evaluate(`document.querySelector('#g1 [data-ovt-send]').getAttribute('aria-label')`), 'Send');
 
         // Nothing is wider than the phone.
         assert.equal(await page.evaluate(`document.documentElement.scrollWidth`), 390);
