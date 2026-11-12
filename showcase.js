@@ -179,6 +179,52 @@ function fold({ id: sid, title, hint, html, open = false } = {}) {
     return `<section class="sc-sec sc-fold-sec"${id(sid)} aria-labelledby="${h}"><details class="sc-fold"${open ? ' open' : ''}><summary><h2 id="${h}">${esc(title)}</h2>${hint ? `<span class="sc-fold-hint">${esc(hint)}</span>` : ''}</summary><div class="sc-fold-body">${html}</div></details></section>`;
 }
 
+/**
+ * parts({ name, items: [{ id, label, count, html }], label, front }) — 4.228.0: a page of sections shown one at a time as
+ * tabs on a phone (the owner, 11-11: "consolidate these into tabs, self-contained tabs, so the page isn't so freaking
+ * huge … at least on mobile"; design rule short-pages-tabs). Every part stays in the HTML (crawlers, AI readers, no
+ * script): radios and :has(), so a browser without :has() simply stacks them. A tab names its part and its count, so a
+ * part's own showcase heading steps aside on a phone (it still names the section for screen readers). Wide screens keep
+ * the parts stacked. Phones are 900 px and under; a front page (front: true) tabs only at 600 px and under. Two to eight
+ * parts get tabs; one, or more than eight, are stacked as they are. Parts with no html are left out, never an empty tab.
+ */
+function parts({ name = 'parts', items = [], label = 'Sections', front = false } = {}) {
+    const list = (items || []).filter((x) => x && x.id != null && x.label && x.html != null && x.html !== '');
+    if (!list.length) return '';
+    const n = slug(name);
+    const key = (x) => String(x.id).replace(/[^a-z0-9_-]/gi, '-');
+    const body = list.map((x) => `<section class="ov-part" data-part="${esc(key(x))}">${x.html}</section>`).join('');
+    if (list.length < 2 || list.length > 8) return `<div class="ov-parts is-stacked">${body}</div>`;
+    const radios = list.map((x, i) => `<input type="radio" class="ov-parts-r" name="ovp-${n}" id="ovp-${n}-${key(x)}" value="${esc(key(x))}"${i === 0 ? ' checked' : ''}>`).join('');
+    const bar = list.map((x) => `<label for="ovp-${n}-${key(x)}">${esc(x.label)}${x.count != null && x.count !== '' ? ` <span class="ov-parts-n">${esc(x.count)}</span>` : ''}</label>`).join('');
+    return `<div class="ov-parts${front ? ' ov-parts--front' : ''}" data-parts="${list.length}">${radios}<div class="ov-parts-bar" role="group" aria-label="${esc(label)}">${bar}</div>${body}</div>`;
+}
+
+/** parts()' look: phones see one part and a tab bar (generated for one to eight parts, at 900 px or, for a front page, 600). */
+const PARTS_CSS = (() => {
+    const on = (scope) => {
+        const k = [1, 2, 3, 4, 5, 6, 7, 8];
+        return [
+            `${scope}>.ov-parts-r{display:block;position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}`,
+            `${scope}>.ov-parts-bar{display:flex}`,
+            `${scope}>.ov-part>.sc-sec>h2:first-child,${scope}>.ov-part>.sc-sec>.sc-fold>summary>h2{display:none}`,
+            `${scope}>.ov-part>.sc-sec{margin-top:0;padding-top:0;border-top:0}`,
+            ...k.map((i) => `${scope}:has(>.ov-parts-r:nth-of-type(${i}):checked)>.ov-parts-bar>label:nth-of-type(${i}){background:var(--bg-card,#16213a);color:var(--text-primary,#e6edf7);box-shadow:0 1px 2px rgba(0,0,0,.25),inset 0 0 0 1px color-mix(in srgb,var(--accent,#3b82f6) 30%,transparent)}`),
+            ...k.map((i) => `${scope}:has(>.ov-parts-r:nth-of-type(${i}):checked)>.ov-part:not(:nth-of-type(${i})){display:none}`),
+            `${scope}:has(>.ov-parts-r:focus-visible)>.ov-parts-bar{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}`,
+        ].join('\n');
+    };
+    return [
+        '.ov-parts-r,.ov-parts-bar{display:none}',
+        '.ov-parts-bar{gap:4px;margin:18px 0 14px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--text-primary,#e6edf7) 5%,transparent);overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}.ov-parts-bar::-webkit-scrollbar{display:none}',
+        '.ov-parts-bar label{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 14px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--text-secondary,#a8b3c4);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s,color .2s}',
+        '.ov-parts-bar label:active{transform:scale(.97)}',
+        '.ov-parts-n{min-width:18px;padding:0 6px;border-radius:999px;font-size:11.5px;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--text-primary,#e6edf7) 9%,transparent)}',
+        `@supports selector(:has(*)){@media (max-width:900px){\n${on('.ov-parts:not(.is-stacked):not(.ov-parts--front)')}\n}@media (max-width:600px){\n${on('.ov-parts.ov-parts--front')}\n}}`,
+        'html[data-ov-motion=off] .ov-parts-bar label{transition:none}',
+    ].join('\n');
+})();
+
 const cell = (v) => (v === true ? '<span class="sc-yes" aria-label="yes">✓</span>' : v === false || v == null ? '<span class="sc-no" aria-label="no">—</span>' : esc(v));
 
 // A table wider than a phone scrolls inside its wrapper, so the wrapper is a region the keyboard can reach and name
@@ -519,6 +565,7 @@ const NETWORK_JS = "(function(){try{var box=document.querySelector('[data-ov-now
     + "if(n)box.hidden=false})}catch(e){}})();";
 
 const CSS = `
+${PARTS_CSS}
 /* The hero's visual (4.26.0): the aura (rings, dots, the mark) or an orbit of the site's places. */
 .sc-vis{position:relative;width:min(100%,380px);aspect-ratio:1;margin:0 auto;container-type:inline-size}
 .sc-aura-glow{position:absolute;inset:28%;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent,#3b82f6) 42%,transparent),transparent);filter:blur(8px);animation:sc-breathe 6s ease-in-out infinite}
@@ -746,4 +793,4 @@ html{overflow-x:clip}
 }
 `;
 
-module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, cta, jsonLd, faqJsonLd, RELATED, DEFAULT_RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, parts, PARTS_CSS, cta, jsonLd, faqJsonLd, RELATED, DEFAULT_RELATED, CSS, STYLESHEET: 'showcase.css', esc };
