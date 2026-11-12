@@ -295,6 +295,40 @@
 /* 4.202.0: on a phone a site's name sits under its mark, so the whole name shows (Download, Community: not "Downlo…"). */
 @media (max-width: 480px) { .ovs-grid.is-mini .ovs-tile { flex-direction: column; justify-content: center; gap: 5px; min-height: 64px; padding: 6px 2px 5px; text-align: center; } .ovs-grid.is-mini .ovs-tile b { max-width: 100%; font-size: 12.5px; } }
 .ovs-group[data-sec="all"] { display: flex; align-items: center; gap: 10px; }
+/* 4.223.0 (the owner, 11-12: "the icons are so small, they're hard to see … make the icons bigger so they actually take up
+   more of the square … fix the alignment"): a site's icon is an app icon in every tab — its own hue on a rounded square,
+   the glyph at 58% of it, placed absolutely so no hover transform can move it off centre. */
+.ovs-ic.ovs-site { position: relative; overflow: hidden; border-radius: 30%; background: linear-gradient(150deg, hsl(var(--ovs-h, 215) 72% 58% / .36), hsl(var(--ovs-h, 215) 70% 38% / .2)); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 70% 64% / .3); }
+.ovs-ic.ovs-site .ovi-ring, .ovs-ic.ovs-site .ovi-bg, .ovs-ic.ovs-site .ovi-comet, .ovs-ic.ovs-site .ovi-prog { display: none; }
+.ovs-ic.ovs-site > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovs-h, 215) 92% 84%); color: hsl(var(--ovs-h, 215) 92% 84%); }
+:root[data-theme="light"] .ovs-ic.ovs-site > .ov-icon { --ovi-glyph: hsl(var(--ovs-h, 215) 70% 30%); color: hsl(var(--ovs-h, 215) 70% 30%); }
+.ovs-ic.ovs-site > .ov-icon svg { position: absolute; left: -13%; top: -13%; width: 126%; height: 126%; margin: 0; transform: none !important; }
+/* The site list: a grid of app icons, four across on a phone and as many as fit beyond, names on two balanced lines. */
+.ovs-grid.is-mini { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px 0 6px; }
+@media (min-width: 560px) { .ovs-grid.is-mini { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
+.ovs-grid.is-mini .ovs-tile { flex-direction: column; justify-content: flex-start; align-items: center; gap: 7px; min-height: 0; padding: 6px 0 8px; border-radius: 16px; text-align: center; background: transparent; }
+.ovs-grid.is-mini .ovs-tile > span:last-child { max-width: 100%; }
+.ovs-grid.is-mini .ovs-ic { width: min(100% - 14px, 64px); height: auto; aspect-ratio: 1; border-radius: 29%; transition: transform .22s cubic-bezier(.2, 1.4, .4, 1), box-shadow .22s; }
+.ovs-grid.is-mini .ovs-tile b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; white-space: normal; text-overflow: clip; font-size: 12px; font-weight: 650; line-height: 1.2; text-wrap: balance; }
+.ovs-grid.is-mini .ovs-tile.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+.ovs-grid.is-mini .ovs-tile:active .ovs-ic { transform: scale(.93); transition-duration: .08s; }
+@media (hover: hover) and (pointer: fine) {
+  .ovs-grid.is-mini .ovs-tile:hover { background: transparent; }
+  .ovs-grid.is-mini .ovs-tile:hover .ovs-ic { transform: translateY(-3px) scale(1.04); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 75% 70% / .5), 0 12px 26px -8px hsl(var(--ovs-h, 215) 75% 45% / .6); }
+}
+html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
+/* Each section of sites wears its glyph. */
+.ovs-group-ic { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-group-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+/* A slow light drifts behind the menu (Calm slows it, only Off stops it; openvibe.design: calm reduces, only off removes). */
+.ovs-panel { isolation: isolate; }
+.ovs-panel::before { content: ""; position: absolute; inset: -20%; z-index: -1; pointer-events: none; opacity: .5;
+  background: radial-gradient(38% 30% at 20% 10%, color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent), transparent 70%), radial-gradient(34% 28% at 85% 30%, color-mix(in srgb, #a855f7 16%, transparent), transparent 70%), radial-gradient(40% 32% at 50% 95%, color-mix(in srgb, #14b8a6 12%, transparent), transparent 70%);
+  animation: ovs-drift 26s ease-in-out infinite alternate; }
+@keyframes ovs-drift { from { transform: translate3d(-3%, -2%, 0) rotate(0deg); } to { transform: translate3d(3%, 2%, 0) rotate(8deg); } }
+html[data-ov-motion=reduced] .ovs-panel::before { animation-duration: 60s; }
+html[data-ov-motion=off] .ovs-panel::before { animation: none; }
+:root[data-theme="light"] .ovs-panel::before { opacity: .35; }
 .ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
@@ -679,10 +713,30 @@
         ghost.append(typed, document.createTextNode(completion.slice(q.length)));
     }
 
+    /** A steady hue per site (ov-home.js has the same), so an app wears one colour in every tab. */
+    function hueOf(id) { let x = 7; const t = String(id || 'ov'); let i = 0; while (i < t.length) { x = (x * 31 + t.charCodeAt(i)) % 360; i++; } return x; }
+    // The glyphs a section of sites can wear (openvibe-shared/glyphs.js), and which one a section's name asks for.
+    const GROUP_GLYPH = {
+        'video': '<rect x="3.4" y="6.4" width="12.3" height="11.3" rx="1.9"/><path d="M15.6 10.2l4.7-2.8v9.4l-4.7-2.8"/>',
+        'chat': '<path d="M3.8 4.3h16.8v11.7H8l-4.2 4.2Z"/>',
+        'game': '<rect x="3.7" y="7.2" width="16.7" height="9.7" rx="4.4"/><path d="M7.6 10.7v2.7M6.4 12h2.7M15.1 11.6h0M17.4 12.9h0"/>',
+        'book': '<path d="M12 6.3C10 4.8 7 4.3 3.5 4.9v13.2c3.5-0.6 6.5-0.1 8.5 1.4c2-1.5 5-2 8.5-1.4V4.9C17 4.3 14 4.8 12 6.3Z"/><path d="M12 6.3v13.2"/>',
+        'store': '<path d="M3.7 8.8L5.3 3.7h13.4L20.3 8.8M3.7 8.8h16.5v1.6a2.8 2.8 0 0 1-5.4 0a2.8 2.8 0 0 1-5.6 0A2.8 2.8 0 0 1 3.7 10.4ZM4.8 12.9v7.2h14.5v-7.2M9.9 20.1v-4.1h4.1v4.1"/>',
+        'wrench': '<path d="M14.6 3.6a5.2 5.2 0 0 0-4.6 7.3L3.7 17.3V20.3h3.1l6.4-6.4a5.2 5.2 0 0 0 7.3-4.6l-3.2 1.2l-2.5-2.5l1.2-3.2Z"/>',
+        'spark': '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
+        'code': '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
+        'compass': '<circle cx="12" cy="12" r="8.5"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1Z"/>',
+    };
+    function groupGlyph(name) {
+        const n = String(name || '').toLowerCase();
+        return /watch|stream|video|live/.test(n) ? 'video' : /talk|belong|chat|social|community/.test(n) ? 'chat' : /play|game|fun/.test(n) ? 'game'
+            : /read|ask|news|learn/.test(n) ? 'book' : /shop|money|buy|market/.test(n) ? 'store' : /tool/.test(n) ? 'wrench'
+            : /\bai\b|make/.test(n) ? 'spark' : /develop|build|code/.test(n) ? 'code' : 'compass';
+    }
     function icon(it) {
         const ic = document.createElement('span');
         ic.className = 'ovs-ic';
-        if (it.site) { ic.classList.add('ovs-site'); const s = document.createElement('span'); s.className = 'ov-icon'; s.setAttribute('data-icon', it.site); s.setAttribute('data-size', '28'); s.setAttribute('data-fx', 'none'); ic.appendChild(s); }
+        if (it.site) { ic.classList.add('ovs-site'); ic.style.setProperty('--ovs-h', String(hueOf(it.site))); const s = document.createElement('span'); s.className = 'ov-icon'; s.setAttribute('data-icon', it.site); s.setAttribute('data-size', '28'); s.setAttribute('data-fx', 'none'); ic.appendChild(s); }
         else if (ICON[it.icon]) ic.innerHTML = ICON[it.icon];
         else ic.textContent = (it.icon || '•').slice(0, 2);
         return ic;
@@ -788,6 +842,8 @@
             h.className = 'ovs-group';
             h.setAttribute('role', 'presentation');
             if (g.section) h.setAttribute('data-sec', g.section);
+            // A section of sites wears its glyph (4.223.0), drawn from the glyph registry's set.
+            if (g.section === 'all' && g.title) { const gi = document.createElement('span'); gi.className = 'ovs-group-ic'; gi.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${GROUP_GLYPH[groupGlyph(g.title)]}</svg>`; h.appendChild(gi); }
             h.appendChild(document.createTextNode(g.title));
             if (g.clear) { const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Clear'; b.setAttribute('data-ovs-clear', ''); h.appendChild(b); }
             if (g.more && g.more.href) { const m = document.createElement('a'); m.className = 'ovs-more'; m.href = safeUrl(g.more.href) || '#'; m.textContent = g.more.label; h.appendChild(m); }
@@ -872,7 +928,7 @@
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
                 if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
                 const ic = icon(it);
-                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '26'); }
+                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '44'); }
                 a.append(ic, txt);
                 box.appendChild(a);
             });
@@ -1435,8 +1491,10 @@
     function youGroups() {
         const { take, ranked } = basis();
         const groups = [];
-        if (root.OpenVibeNotifications && ctx.token) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
-        if (homeLib()) {
+        const H = homeLib();
+        // With the home screen, Notifications is one of You's tabs (4.223.0); without it, the section stays at the top.
+        if (root.OpenVibeNotifications && ctx.token && !H) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
+        if (H) {
             groups.push({ as: 'home', items: [], section: 'home' });
             // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
             if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
@@ -1490,14 +1548,52 @@
         }
         // Jump back in (the last places, newest first) and what this person uses most (pages opened per site).
         const seenB = new Set();
-        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
+        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 60).map(backRow) : [];
         const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling,
+            // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
+            notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
+            startTab: ctx.section === 'notifications' ? 'notifications' : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             onSearch: (q) => { input.value = q; render(q); input.focus(); },
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
             feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
+    }
+
+    /** The whole notifications list for You's tab: a head with how many are new and Mark all read, then every notice. */
+    function mountNotes(host) {
+        const N = root.OpenVibeNotifications;
+        if (!N || typeof N.renderMenuNotifications !== 'function') {
+            // The navbar fetches notification-ui.js once you are signed in; the tab can open first. Wait for it (or fetch it
+            // here), start it with your token, then draw. It said "unavailable" for good before (11-12).
+            host.textContent = '';
+            const wait = document.createElement('p'); wait.className = 'ovs-note'; wait.textContent = 'Loading your notifications…'; host.appendChild(wait);
+            const ready = () => {
+                const M = root.OpenVibeNotifications;
+                if (!M || typeof M.renderMenuNotifications !== 'function') { wait.textContent = 'Notifications did not load. Close the menu and open it again.'; return; }
+                try { if (!M.__ovNavInit && ctx.token) { M.init({ token: ctx.token, apiBase: ctx.apiBase || 'https://openvibe.network' }); M.__ovNavInit = true; } } catch { /* the navbar's own init may follow */ }
+                host.textContent = ''; mountNotes(host);
+            };
+            let sc = document.getElementById('ov-notify-loader');
+            if (!sc && typeof ctx.sibling === 'function') { sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = ctx.sibling('notification-ui.js'); sc.async = true; document.head.appendChild(sc); }
+            if (!sc) { wait.textContent = 'Notifications are on openvibe.network/notifications.'; return; }
+            sc.addEventListener('load', () => setTimeout(ready, 0), { once: true });
+            sc.addEventListener('error', () => { wait.textContent = 'Notifications did not load. Check your connection and open the menu again.'; }, { once: true });
+            setTimeout(() => { if (root.OpenVibeNotifications && host.contains(wait)) ready(); }, 1200);
+            return;
+        }
+        const head = document.createElement('div'); head.className = 'ovs-nhead';
+        const title = document.createElement('b'); title.textContent = 'Notifications';
+        const unread = document.createElement('span'); unread.className = 'ovs-nhead-n'; unread.hidden = true;
+        const n = Number(N.unread ? N.unread() : 0) || 0;
+        if (n > 0) { unread.textContent = `${n > 99 ? '99+' : n} new`; unread.hidden = false; }
+        const all = document.createElement('button'); all.type = 'button'; all.className = 'ovs-nhead-more'; all.textContent = 'Mark all read'; all.hidden = !(n > 0 && typeof N.markAllRead === 'function');
+        all.addEventListener('click', async () => { all.disabled = true; try { await N.markAllRead(); unread.hidden = true; all.hidden = true; } catch { all.disabled = false; } });
+        head.append(title, unread, all);
+        const list = document.createElement('div'); list.className = 'ovs-notifications-host';
+        host.append(head, list);
+        try { const view = N.renderMenuNotifications(list, () => {}); if (view && view.showAll) view.showAll(); } catch { list.textContent = 'Notifications did not load.'; }
     }
 
     function renderTab() {
