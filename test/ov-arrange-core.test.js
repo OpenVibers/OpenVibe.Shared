@@ -27,20 +27,20 @@ const catalog = {
     grid: { columns: { phone: 4, tablet: 8, computer: 12 }, cell_px: { phone: 64, tablet: 64, computer: 64 } },
     theme_tokens: ['danger', 'surface', 'accent'],
     parts: [
-        { id: 'estop', name: 'E-stop', kind: 'button', required: true, pressed: true, min: { w: 2, h: 2, px: 56 }, styles: { tints: ['danger'], shapes: ['round'], label: true }, bindings: { keys: [], gamepad: [] } },
+        { id: 'stop', name: 'Stop', kind: 'button', required: true, pressed: true, min: { w: 2, h: 2, px: 56 }, styles: { tints: ['danger'], shapes: ['round'], label: true }, bindings: { keys: [], gamepad: [] } },
         { id: 'stick', name: 'Stick', kind: 'stick', required: false, pressed: true, min: { w: 2, h: 2 }, styles: { tints: ['surface'], shapes: ['round'], label: false }, bindings: { keys: ['W'], gamepad: [] } },
     ],
 };
-const part = (id, place) => ({ id, visible: true, place, style: { tint: id === 'estop' ? 'danger' : 'surface', shape: 'round', opacity: 1, label: id === 'estop' }, bindings: { keys: [], gamepad: [] } });
-const layout = (estop = { dock: 'right', order: 0, w: 2, h: 2 }) => ({
+const part = (id, place) => ({ id, visible: true, place, style: { tint: id === 'stop' ? 'danger' : 'surface', shape: 'round', opacity: 1, label: id === 'stop' }, bindings: { keys: [], gamepad: [] } });
+const layout = (stop = { dock: 'right', order: 0, w: 2, h: 2 }) => ({
     surface: 'bot.overlay', surface_version: 1, device: 'phone', name: 'Mine', author: { name: 'Ana' }, sharing: 'private',
-    parts: [part('estop', estop), part('stick', { dock: 'left', order: 0, w: 2, h: 2 })],
+    parts: [part('stop', stop), part('stick', { dock: 'left', order: 0, w: 2, h: 2 })],
 });
 assert.deepEqual(core.validate(catalog, layout()), { ok: true, reasons: [] });
-assert.ok(core.validate(catalog, layout({ dock: 'right', order: 0, w: 1, h: 1 })).reasons.includes('E-stop has to be at least 2 × 2 cells.'));
+assert.ok(core.validate(catalog, layout({ dock: 'right', order: 0, w: 1, h: 1 })).reasons.includes('Stop has to be at least 2 × 2 cells.'));
 const covered = layout();
 covered.parts[1].place = { dock: 'right', order: 0, w: 2, h: 2 };
-assert.ok(core.validate(catalog, covered).reasons.some((r) => /Stick covers E-stop/.test(r)));
+assert.ok(core.validate(catalog, covered).reasons.some((r) => /Stick covers Stop/.test(r)));
 const defaults = core.applyDefaults(catalog, 'phone');
 assert.deepEqual(core.validate(catalog, defaults), { ok: true, reasons: [] }, 'the SDK defaults are valid');
 assert.equal(core.merge(layout(), { parts: [{ id: 'stick', style: { opacity: 0.5 } }] }).parts[1].style.opacity, 0.5);

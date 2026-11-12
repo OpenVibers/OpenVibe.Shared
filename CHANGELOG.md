@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased — a plain Stop
+
+- `ov-arrange.js`: a Stop part docks right like any other optional part; no special E-STOP size or position.
+
 ## 4.223.1 — 2026-11-12
 
 The menu keeps its search field and tabs (the owner, 11-12, two phone screenshots: "the gui gets messed up and loses

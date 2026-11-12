@@ -219,8 +219,8 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
             const st = { tint: (p.styles && p.styles.tints && p.styles.tints[0]) || (catalog.theme_tokens || ['surface'])[0], shape: (p.styles && p.styles.shapes && p.styles.shapes[0]) || 'square', opacity: 1, label: true };
             const b = { keys: (p.bindings && p.bindings.keys || []).slice(0, 0), gamepad: [] };
             if (overlay) {
-                const dock = p.id === 'pill' || p.id === 'stick' ? 'left' : p.id === 'slider' || p.id === 'estop' ? 'bottom' : 'right';
-                return { id: p.id, visible: true, place: { dock, order: 0, w: Math.max(p.min.w, p.id === 'stick' ? 2 : p.id === 'estop' ? 2 : 1), h: Math.max(p.min.h, p.id === 'stick' ? 2 : p.id === 'estop' ? 2 : 1) }, style: st, bindings: b };
+                const dock = p.id === 'pill' || p.id === 'stick' ? 'left' : p.id === 'slider' ? 'bottom' : 'right';
+                return { id: p.id, visible: true, place: { dock, order: 0, w: Math.max(p.min.w, p.id === 'stick' ? 2 : 1), h: Math.max(p.min.h, p.id === 'stick' ? 2 : 1) }, style: st, bindings: b };
             }
             return { id: p.id, visible: true, place: { x: 0, y: 0, w: Math.min(spanFor({ ...p, _cols: cols }, device).w, cols), h: Math.max(p.min.h, 2) }, style: st, bindings: b };
         });
