@@ -1,5 +1,63 @@
 # Changelog
 
+## 4.220.0 — 2026-11-12
+
+**One UI: the floating Dock is gone; the menu holds Chat and Vibe on every screen** (the owner, 11-12, with a phone
+screenshot of the Dock crossed out: "there should only be the one unified UI … we're supposed to delete … that has the
+old tab system", and the menu marked "the one unified"). And the Vibe place redesigned (the owner: "sleek … nice on
+mobile … organized properly and sized well … without all these huge spaces … makes use of the full space … icons for
+everything using OpenVibe.design … modular … reusable for different sites").
+
+- **Gone:**
+  - the Dock's pill;
+  - its floating card with the Vibe · Code · Agents · Chat · Activity tab bar, More, pin and Close;
+  - corners, drag and resize;
+  - the phone sheet that opened out of the menu button;
+  - the window of its own (pop-out);
+  - the You tab's "The Dock" row;
+  - the Activity tab (the menu's You tab has the notifications; `OpenVibeNotifications.renderDock` is gone with it).
+  `dock.js` is 703 lines, from 1,129.
+- **The menu's Chat and Vibe open inside the menu on every screen.** A computer opened the floating Dock.
+  - Vibe's Chat · Code · Agents switch has the timer as an icon at its end; it was a full row under the box.
+  - On a computer the menu grows tall while a place is open (`min(820px, 86vh)`).
+  - `OpenVibeSearch.open({ door })` and `OpenVibeSearch.door(id)` open the menu on a place, or move an open menu there.
+- **`OpenVibeDock.open({ tab })`, `ask({ text })`, `share({ text, title })`, Alt+V and `OpenVibeNavbar.openDock(id)`**
+  open the menu on that place (`opts.openMenu`, given by `navbar.js`); `close()` closes the menu. A place in Your places
+  (Vibe, Agents) opens there too.
+- **What the pill said is a status on the bar's menu button** (`opts.status`, painted by `navbar.js`):
+  - a breathing accent dot while agents work;
+  - an amber one when one needs you (the button then opens the menu on Agents);
+  - a timer's minutes in a small label under the button.
+  The tooltip and the button's name say it in words. Calm slows the breathing; Off stops it.
+- **Vibe, redesigned:**
+  - a header that says what it is: back, Vibe's mark, "Vibe" over "Your AI on every OpenVibe site", New chat and Open
+    in Chat as icons;
+  - a greeting at the top ("What can I do for you?"), and a new chat opens there;
+  - six starters as full-width rows with their marks (two columns on a computer);
+  - the composer's two-row box (the words over the whole width, then picture, Build it in Code, the mic and a round
+    send);
+  - result cards with their actions under the words;
+  - long links wrap.
+- **Every Vibe mark is the network's glyph** (`openvibe-shared/glyphs`, shown on openvibe.design/icons); so is the
+  Dock's send. `test/dock-vibe-glyphs.test.js` keeps them equal.
+- **Direct messages take the network's message actions** (openvibe.design rule 138, as Live's chat and `messages.js`):
+  - Edit is a pencil beside your bubble on its empty side, on hover or focus, or a tap on a phone; it never covers words;
+  - the box is the editor, under an "Editing your message" bar (Escape or × lets go); the browser's prompt is gone;
+  - "edited" is one quiet word inside the bubble;
+  - `dock-chat-edits.js` keeps only Chat's socket.
+- `bottom.js`: the pill's stacking entries and `--ovb-composer` (which only the pill read) are gone.
+- **One head, not two** (the owner, 11-12: "part of the one UI instead of having two different areas"): inside the menu a
+  place has no header band of its own. An open conversation's + and ↗ move into the menu's search pill (as a list's
+  already did); it keeps a slim way back and its name; Vibe's mark is the greeting's.
+
+Tests:
+- Rewritten for the menu: `dock-chrome` and `dock-vibe-timer-chrome` (no pill or floating Dock ever; the status on
+  the menu button; Agents, Chats, Send to, the agent view, Vibe, voice, the timer and Ask your agent through the menu),
+  `dock-mount-chrome`, `dock-signin-chrome`, `menu-places-chrome` (Chat and Vibe inside the menu at 390 and 1280),
+  `menu-home-screen-chrome`, `bottom-chrome` (no pill).
+- New: `dock-vibe-glyphs`.
+- Gone: `pill-composer-chrome` (the pill it kept above a chat's box is gone).
+
 ## 4.219.0 — 2026-11-12
 
 Every plain element styled by the theme (the owner, 11-12, with circled screenshots of openvibe.exchange: "make sure all

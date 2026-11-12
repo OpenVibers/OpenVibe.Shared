@@ -324,17 +324,17 @@
             /* While the menu loads: the apps breathe in turn. */
             .ovnav-orb.is-busy .ovmb-app { animation: ovmb-busy .9s ease-in-out infinite; }
             /* Open: the bar is one stroke of the close mark, the three apps the other. */
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-app), .ovmb.is-x :is(.ovmb-bar, .ovmb-dot, .ovmb-app) { animation: none; }
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-bar, .ovmb.is-x .ovmb-bar { transform: translateY(4px) rotate(45deg) scale(.9, .43); fill: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-dot, .ovmb.is-x .ovmb-dot { transform: translate(4.6px, 4px) scale(0); opacity: 0; }
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-app, .ovmb.is-x .ovmb-app { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.3, .6); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(0, -4.6px) rotate(-45deg) scale(1.3, .6); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovnav-orb.is-dock, .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: translate(-2.4px, -8px) rotate(-45deg) scale(1.3, .6); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-app), .ovmb.is-x :is(.ovmb-bar, .ovmb-dot, .ovmb-app) { animation: none; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-bar, .ovmb.is-x .ovmb-bar { transform: translateY(4px) rotate(45deg) scale(.9, .43); fill: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-dot, .ovmb.is-x .ovmb-dot { transform: translate(4.6px, 4px) scale(0); opacity: 0; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-app, .ovmb.is-x .ovmb-app { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.3, .6); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(0, -4.6px) rotate(-45deg) scale(1.3, .6); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: translate(-2.4px, -8px) rotate(-45deg) scale(1.3, .6); }
             /* A close mark that arrives already made (the Dock's sheet) forms from the button it came from. */
             .ovmb.is-forming :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
             @keyframes ovmb-form { from { transform: none; } }
-            .ovnav-orb:not([aria-expanded="true"]):not(.is-dock) .ovmb:not(.is-x) .ovmb-app { animation: ovmb-idle 9s ease-in-out 3s infinite; }
+            .ovnav-orb:not([aria-expanded="true"]) .ovmb:not(.is-x) .ovmb-app { animation: ovmb-idle 9s ease-in-out 3s infinite; }
             .ovnav-orb .ovmb .ovmb-a1 { animation-delay: 3.09s !important; } .ovnav-orb .ovmb .ovmb-a2 { animation-delay: 3.18s !important; }
             @keyframes ovmb-idle { 0%, 4%, 100% { transform: none; } 2% { transform: translateY(calc(-2.2px * var(--ov-move, 1))); } }
             @keyframes ovmb-wave { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(calc(-2.6px * var(--ov-move, 1))); } }
@@ -602,7 +602,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '642a391c85d5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'f9f34e3030b0', 'dock.js': '68900e53dead', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '3b6d2e2933de', 'history.js': 'f9fb9e096c65', 'bottom.js': '4bcb219a2624', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '88e9e57c3683', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '22286b70f8f6', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '642a391c85d5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'c1f8f8dfab77', 'dock.js': '328a715e0ecd', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '1dd1ca512625', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '88e9e57c3683', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '22286b70f8f6', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1217,7 +1217,7 @@
             // site that turns the menu off (search: false) or asks for it (drawer: 'legacy').
             burger.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (_config.search !== false && _config.drawer !== 'legacy') { if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close(); else openSearch('', 'here', burger); return; }
+                if (_config.search !== false && _config.drawer !== 'legacy') { if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close(); else if (_menuStatus && _menuStatus.tone === 'waiting') openMenuOn('agent'); else openSearch('', 'here', burger); return; }
                 const open = drawer.classList.toggle('open'); burger.setAttribute('aria-expanded', String(open)); if (open) loadOvIcons(drawer);
             });
             drawer.addEventListener('click', (e) => {
@@ -1352,12 +1352,18 @@
         const sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = siblingV('notification-ui.js'); sc.async = true; sc.onload = () => setTimeout(go, 0); document.head.appendChild(sc);
     }
 
-    // ── The Dock (Dock plan K-D1): your agents and activity at the screen's edge. dock.js draws its pill and the Dock;
-    // for a signed-in person it loads alongside notifications. A Network without the route yet (dock.js
-    // keeps { off } for a day) is not asked again. dockApiBase and dockChatBase override the Network and Chat (tests, staging).
+    // ── The menu's Chat and Vibe (dock.js's panels; 4.220.0: no floating Dock). For a signed-in person dock.js reads their
+    // state (a Network without the route is not asked again for a day) and paints its status on the menu button.
     const dockBase = () => String(_config.dockApiBase || 'https://openvibe.network').replace(/\/+$/, '');
-    const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), chatBase: _config.dockChatBase, agentBase: _config.dockAgentBase, me: _config.user && _config.user.username, sibling });
-    const DOCK_GLYPH = '<svg class="ovnav-ic" viewBox="0 0 512 512" style="width:1em" aria-hidden="true" focusable="false"><path fill="currentColor" fill-rule="evenodd" d="M80 64h352a48 48 0 0 1 48 48v288a48 48 0 0 1-48 48H80a48 48 0 0 1-48-48V112a48 48 0 0 1 48-48Zm8 56v272h336V120ZM264 312h112a28 28 0 0 1 0 56H264a28 28 0 0 1 0-56Z"/></svg>';
+    const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), chatBase: _config.dockChatBase, agentBase: _config.dockAgentBase, me: _config.user && _config.user.username, sibling,
+        status: (s) => { _menuStatus = s || null; }, openMenu: (id) => openMenuOn(id), closeMenu: () => { if (root.OpenVibeSearch && menuOpen()) root.OpenVibeSearch.close(); } });
+    let _menuStatus = null;
+    /** The menu on one of its places ('chats', 'vibe', 'code', 'agent'): opened there, or moved there if it is open. */
+    function openMenuOn(id) {
+        if (menuOpen() && root.OpenVibeSearch && root.OpenVibeSearch.door && root.OpenVibeSearch.door(id)) return;
+        const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
+        openSearch('', 'here', orbs.find((x) => x.getBoundingClientRect && x.getBoundingClientRect().width > 0) || null, null, id);
+    }
     function loadDock(then) {
         if (root.OpenVibeDock) return then();
         let sc = document.getElementById('ov-dock-loader');
@@ -1427,7 +1433,7 @@
         // Back from the next page (the browser's page cache): the bar is gone.
         root.addEventListener('pageshow', () => { const b = document.getElementById('ovnav-leave'); if (b) b.classList.remove('is-run'); });
     }
-    // The Dock on a tab ('agent' | 'activity'); opts.task marks that step and brings it into view.
+    // The menu on a place ('chats' | 'vibe' | 'code' | 'agent'); opts.task marks an agent's step and brings it into view.
     function openDock(tab, opts) { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.open(Object.assign({ tab }, opts || {})); }); }
     // Ask your agent (4.135.0): Vibe opens with the question in its box; signed out, sign in first.
     function askAgent(text) {
@@ -2213,7 +2219,6 @@
                 bell ? null : { id: 'ov-notifications', label: 'Notifications', short: 'Alerts', drawn: navIcon('fa-bell'), href: 'https://openvibe.network/my#notifications' },
                 !isAnon ? { id: 'ov-ask', label: 'Ask Vibe', drawn: navIcon('fa-brain'), href: 'https://openvibe.chat/vibe', mark: 'data-ov-ask' } : null,
                 !isAnon ? { id: 'ov-work', label: 'Work together', short: 'Work', drawn: navIcon('fa-people-group'), href: 'https://openvibe.chat/work', mark: 'data-ov-work' } : null,
-                bell && _config.dock !== false ? { id: 'ov-dock', label: 'The Dock: your agents and activity on every page', short: 'Dock', drawn: DOCK_GLYPH, mark: 'data-ov-dock' } : null,
                 admin ? { id: 'ov-admin', label: 'Admin', drawn: navIcon('fa-shield-halved'), href: 'https://openvibe.network/admin' } : null,
                 !isAnon ? { id: 'ov-wallet', label: 'Wallet', drawn: navIcon('fa-wallet'), href: 'https://openvibe.network/my#wallet' } : null,
                 !isAnon && u.username ? { id: 'ov-profile', label: 'Profile', drawn: navIcon('fa-id-card'), href: `https://openvibe.network/@${encodeURIComponent(u.username)}` } : null,
@@ -2260,7 +2265,6 @@
             nav.appendChild(dropdown);
             _accountEl = dropdown;
             bindMenuItems(dropdown, before.concat(after, sectionItems(menuCfg.sections)));
-            dropdown.addEventListener('click', (e) => { if (!e.target.closest || !e.target.closest('[data-ov-dock]')) return; dropdown.classList.remove('open'); openDock(); });
             bindChips(dropdown);
             if (typeof _config.onNavigate === 'function') dropdown.addEventListener('click', (e) => { const a = e.target.closest && e.target.closest('a[href]'); if (!a || e.defaultPrevented || a.target === '_blank' || e.metaKey || e.ctrlKey) return; const path = sitePath(a); if (path != null) { if (_config.onNavigate(path, e) === false) e.preventDefault(); dropdown.classList.remove('open'); } });
             bindDisplayRows(dropdown);
@@ -2367,7 +2371,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl, section) {
+    function openSearch(q, tab, fromEl, section, door) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2381,14 +2385,14 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section,
+            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section, door,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
                 look: bindLook,
-                dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); openDock(t); } : null,
+                dock: _config.dock !== false && _config.user && !_config.user.is_anon && _config.token ? (t) => openDock(t) : null,
                 dockMore: (action) => { if (root.OpenVibeDock && root.OpenVibeDock.more) root.OpenVibeDock.more(action); },
-                ask: (text) => { if (root.OpenVibeSearch) root.OpenVibeSearch.close(); loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); }); },
+                ask: (text) => { loadDock(() => { root.OpenVibeDock.mount(dockOpts()); root.OpenVibeDock.ask({ text }); }); },
                 me: _accountEl ? { add: _config.accounts === false ? '' : addAccountHref(), out: () => { const b = _accountEl.querySelector('#openvibe-logout-btn'); if (b) b.click(); }, own: _own } : null,
                 onClose: () => { if (_accountEl && _navEl && _accountEl.parentNode !== _navEl) _navEl.appendChild(_accountEl); const b = _navEl && _navEl.querySelector('#openvibe-search-btn'); if (b) b.setAttribute('aria-expanded', 'false'); const g = _navEl && _navEl.querySelector('#openvibe-burger'); if (g) g.setAttribute('aria-expanded', 'false'); } });
             const b = fromEl || (_navEl && _navEl.querySelector('#openvibe-search-btn')); if (b) b.setAttribute('aria-expanded', 'true');
@@ -2404,6 +2408,7 @@
     // Every site: the menu on its first tab, scrolled to the sites, out of the menu button on screen.
     function openSwitcher() {
         if (menuOpen() && root.OpenVibeSearch) { root.OpenVibeSearch.close(); return; }
+        if (_menuStatus && _menuStatus.tone === 'waiting') { openMenuOn('agent'); return; }
         const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
         openSearch('', 'sites', orbs.find((o) => o.getBoundingClientRect && o.getBoundingClientRect().width > 0) || null);
     }
@@ -2471,7 +2476,8 @@
     function hookSearch(nav) {
         const b = nav.querySelector('#openvibe-search-btn');
         if (b) {
-            b.addEventListener('click', () => { if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close(); else openSearch(); });
+            // An agent that needs the person opens the menu on Agents (the Dock's pill did, 4.220.0).
+            b.addEventListener('click', () => { if (menuOpen() && root.OpenVibeSearch) root.OpenVibeSearch.close(); else if (_menuStatus && _menuStatus.tone === 'waiting') openMenuOn('agent'); else openSearch(); });
             for (const ev of ['pointerenter', 'touchstart', 'focus']) b.addEventListener(ev, () => { loadOvIcons(); OVFrame.get(); }, { once: true, passive: true });
             if (menuOpen()) b.setAttribute('aria-expanded', 'true');
             // One ripple a tab, a moment after the first paint: here is the menu.
