@@ -32,6 +32,26 @@
 .ovm-emoji-only { padding: 0 2px; background: transparent !important; font-size: 2.2rem; line-height: 1.15; }
 .ovm-reply { display: block; margin-bottom: 6px; padding-left: 8px; border-left: 2px solid currentColor; font-size: .86em; opacity: .75; }
 .ovm-link { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+/* A message's actions: one cluster just above its right end (openvibe.design rule 138), on hover or focus on a computer,
+   a tap on a phone; never in the words. "edited" is one quiet word after them. */
+.ovm-has-actions { position: relative; }
+.ovm-actions { position: absolute; bottom: calc(100% - 6px); right: 6px; z-index: 6; display: none; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--border, rgba(148, 163, 184, .22)); border-radius: 10px; background: var(--bg-card, #131c2e); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.ovm-messages > :first-child .ovm-actions, .ovm-messages > :first-child.ovm-has-actions > .ovm-actions { bottom: auto; top: calc(100% - 6px); }
+.ovm-has-actions:hover > .ovm-actions, .ovm-has-actions:focus-within > .ovm-actions, .ovm-has-actions.is-acting > .ovm-actions { display: inline-flex; }
+.ovm-act { display: grid; place-items: center; width: 28px; height: 26px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--text-muted, #93a0b4); cursor: pointer; }
+.ovm-act:hover, .ovm-act:focus-visible { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
+.ovm-act:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: -2px; }
+.ovm-act-delete:hover { color: #fca5a5; background: color-mix(in srgb, #ef4444 20%, transparent); }
+@media (hover: none) {
+    .ovm-has-actions:hover:not(.is-acting):not(:focus-within) > .ovm-actions { display: none; }
+    .ovm-actions { right: 4px; border-radius: 12px; }
+    .ovm-act { width: 44px; height: 40px; border-radius: 9px; }
+    .ovm-act svg { width: 18px; height: 18px; }
+}
+@media (hover: hover) { .ovm-room.ovm-has-actions:hover { background: color-mix(in srgb, var(--text-primary, #fff) 4%, transparent); } }
+.ovm-room.is-acting { background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); }
+.ovm-edited { margin-left: 5px; font-size: .72em; color: var(--text-muted, #93a0b4); opacity: .85; white-space: nowrap; }
+.ovm-group[data-mine="true"] .ovm-edited { color: inherit; opacity: .7; }
 
 /* Room: one line per message, the name in its colour, the words wrapping under it on a phone. */
 .ovm-messages[data-view="room"] { gap: 0; }

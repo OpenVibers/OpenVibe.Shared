@@ -1,5 +1,43 @@
 # Changelog
 
+## 4.216.0 — 2026-11-12
+
+One capture core for every camera, and a chat message's actions in one place on every site.
+
+- **`ov-capture.js`: `window.OVCapture`, one way to open a camera, a microphone or a screen, take a photo and record a
+  clip**, shared by Live's go-live page, OpenVibe.Cam's recorder and `<ov-camera>`, and the composer (the owner, 11-12:
+  Live's capture must be "completely customize[able] … highly over engineered modular editable", then "OpenVibe.cam is
+  actually fine … Harmony"). It began as Live's own system (OpenVibe.Live #847) and every site serves its own copy at
+  `/shared/ov-capture.js`, so a camera never waits on another site, a content policy or a cache (from 11-09 to 11-12
+  nobody could go live because Live loaded Cam's kit from openvibe.cam and the browser refused it).
+  - `open({ mode, facing, lens, mic, resolution })` runs the strategies in order (together, then each on its own, then
+    anything), each with a time limit; a refusal stops at once; the failure that says most is the one reported.
+  - `screen()`, `photo(stream, { mirror })`, `record(stream, { maxSeconds })` → `{ stop() → Blob, cancel() }` (the first
+    format the browser supports), `devices()`, `meter()`, `network()`, `can()` (what this browser allows here).
+  - `explain(error, mode, { instead })`: plain steps for each browser (Safari's "aA", Android's site settings,
+    Firefox's blocked icon, an app's in-app browser, a Mac's Screen Recording switch), with a last step of the site's
+    own.
+  - Settings: this device first; `settings.sync({ load, save })` lets the choices that mean the same anywhere (facing,
+    resolution, mirror, effects) follow the person, for example through OpenVibe.Cam's camera settings; camera and
+    microphone ids never leave the device.
+  - Every part (`use(name, impl)` returns the one it replaced), every strategy (`strategies.add/remove/replace/reset`)
+    and every event (`on('opened' | 'failed' | 'settings' | 'synced' | 'recorded' …)`) can be changed; it fetches
+    nothing. A newer copy replaces an older one, never the reverse.
+- **A message's actions are one cluster at its corner** (openvibe.design rule 138; the owner, 11-12, with phone
+  screenshots of a stream's chat: "The edit button needs improvement … so it never happens again", "it also looks
+  stupid as shit after you edit it"). `messages.js`:
+  - `render(root, { …, actions, onAction })`: `actions` names what to offer (`reply`, `edit`, `react`, `translate`,
+    `copy`, `delete`; edit and delete on your own messages only) as icon buttons in one cluster just above the
+    message's right end, on hover or focus on a computer and a tap on a phone (thumb-sized there), never in the words;
+    a press calls `onAction(id, message, row)` and bubbles `ovm:action`.
+  - `actions(row, ids, { onAction, message, mine })` gives a site's own rows (Live's chat) the same cluster.
+  - `edited(textNode, at)`: "edited" is one quiet word right after the words, the time as its title, never a line of
+    its own.
+- **The composer edits and replies in the box**: `api.edit({ text, onSave, onCancel })` puts your message's words in
+  the box under an "Editing your message" bar (Enter saves through `onSave`, never `onSubmit`; Esc or × puts back what
+  was in the box; the send is a check); `api.reply({ name, text, data })` shows "Replying to …" and the send carries
+  `reply: data`; `clearBar()`, `editing()`.
+
 ## 4.215.0 — 2026-11-12
 
 Composer v2: one elegant composer that every site mounts (the owner, 11-12: "this composer is completely ugly and

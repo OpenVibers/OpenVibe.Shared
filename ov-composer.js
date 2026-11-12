@@ -151,6 +151,15 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 .ovt-send:disabled { opacity: .45; cursor: default; }
 .ovc-v2 .ovt-send--round { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border-radius: 50%; }
 .ovc-v2 .ovt-send--round svg { width: 19px; height: 19px; }
+.ovc-v2 .ovc-bar { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); font-size: 13px; line-height: 1.3; }
+.ovc-v2 .ovc-bar > svg { flex: none; width: 15px; height: 15px; color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
+.ovc-v2 .ovc-bar > b { flex: none; font-weight: 700; color: var(--text-primary, #e6edf7); }
+.ovc-v2 .ovc-bar > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #93a0b4); }
+.ovc-v2 .ovc-bar-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted, #93a0b4); cursor: pointer; }
+.ovc-v2 .ovc-bar-x:hover, .ovc-v2 .ovc-bar-x:focus-visible { background: color-mix(in srgb, var(--text-primary, #fff) 10%, transparent); color: var(--text-primary, #e6edf7); }
+.ovc-v2 .ovc-bar-x svg { width: 15px; height: 15px; }
+@media (pointer: coarse) { .ovc-v2 .ovc-bar-x { width: 40px; height: 40px; } }
+.ovc-v2.is-editing { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 45%, transparent); }
 .ovc-v2.is-running .ovt-send { background: color-mix(in srgb, var(--text-primary, #fff) 14%, transparent); color: var(--text-primary, #e6edf7); }
 .ovc-v2 .ovc-files { margin: 0; padding: 0 0 2px; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image, .ovc-v2[data-preset=comment] .ovc-file.ovc-image { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 150px; max-width: 150px; height: auto; padding: 0; border-radius: 16px; overflow: hidden; }
@@ -223,6 +232,9 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         stop: 'M7 7h10v10H7z',
         cpu: 'M8 8h8v8H8zM9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3',
         gauge: 'M5 18a8 8 0 1 1 14 0M12 14l3-4',
+        reply: 'M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z',
+        pen: 'M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4',
+        check: 'M5 12.5l4.5 4.5L19 7',
     };
     const svg = (d, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
@@ -636,7 +648,11 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     //     submitLabel, upload(file, onProgress), mentions, commands, beforeSend,
     //     onSubmit({ text, files, uploads, audience, mode }, api) → a promise; false keeps the box as it is }
     //   → the enhance api plus { form, text, send, note, setBusy(bool), setRunning(bool, onStop) (the send becomes Stop
-    //     while a run works, as in the agents portal), values() (every chip's value by name) }.
+    //     while a run works, as in the agents portal), values() (every chip's value by name),
+    //     edit({ text, onSave(text) → false keeps editing, onCancel, label }) (the box takes your message's words under an
+    //     "Editing your message" bar; Enter saves, Esc or × puts back what was in the box; the send is a check),
+    //     reply({ name, text, data, onClear }) (a "Replying to …" bar; onSubmit's value carries reply: data),
+    //     clearBar(), editing() }.
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
     const PRESET = {
@@ -797,21 +813,83 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             if (on) { send.innerHTML = svg(IC.stop); send.classList.add('ovt-send--round'); send.setAttribute('aria-label', 'Stop'); send.title = 'Stop'; send.disabled = false; }
             else { send.innerHTML = sendFace; send.classList.toggle('ovt-send--round', !p.send); send.setAttribute('aria-label', sendLabel); send.title = ''; api.refresh(); }
         };
+        // One bar above the box at a time: "Editing your message" or "Replying to …" (openvibe.design rule 138: a
+        // message's actions are a cluster at its corner, and what they start is said here, in the box).
+        let bar = null, barClose = null, editing = null, replying = null;
+        const clearBar = () => {
+            const f = barClose; barClose = null;
+            if (bar) { bar.remove(); bar = null; }
+            form.classList.remove('is-editing', 'is-replying');
+            if (f) f();
+        };
+        const showBar = (icon, title, detail, onClose) => {
+            clearBar();
+            bar = el('div', 'ovc-bar', svg(icon));
+            const t = el('b'); t.textContent = title;
+            const d = el('span'); d.textContent = detail || '';
+            const x = el('button', 'ovc-bar-x', svg(IC.x)); x.type = 'button'; x.title = 'Cancel'; x.setAttribute('aria-label', `Cancel: ${title}`);
+            x.addEventListener('click', () => { clearBar(); ta.focus(); });
+            bar.append(t, d, x);
+            body.insertBefore(bar, head.parentNode === body ? head.nextSibling : body.firstChild);
+            barClose = onClose;
+        };
+        const sendFaceOf = () => { send.innerHTML = sendFace; send.classList.toggle('ovt-send--round', !p.send); send.setAttribute('aria-label', sendLabel); send.title = ''; };
+        const edit = (spec = {}) => {
+            const draft = editing ? editing.draft : ta.value;
+            if (replying) clearBar();
+            showBar(IC.pen, spec.label || 'Editing your message', 'Enter saves · Esc cancels', () => {
+                const was = editing; editing = null;
+                sendFaceOf();
+                if (was && !was.saved) { ta.value = was.draft; ta.dispatchEvent(new Event('input', { bubbles: true })); if (typeof was.onCancel === 'function') was.onCancel(); }
+                api.refresh();
+            });
+            editing = { draft, onSave: spec.onSave, onCancel: spec.onCancel, saved: false };
+            form.classList.add('is-editing');
+            ta.value = String(spec.text || '');
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+            send.innerHTML = svg(IC.check); send.classList.add('ovt-send--round'); send.setAttribute('aria-label', 'Save'); send.title = 'Save';
+            api.refresh();
+            ta.focus(); ta.selectionStart = ta.selectionEnd = ta.value.length;
+        };
+        const reply = (spec = {}) => {
+            if (editing) clearBar();
+            const who = String(spec.name || 'someone');
+            showBar(IC.reply, `Replying to ${who}`, String(spec.text || '').slice(0, 140), () => { const was = replying; replying = null; if (was && typeof was.onClear === 'function') was.onClear(); });
+            replying = { data: spec.data !== undefined ? spec.data : { name: who, text: spec.text }, onClear: spec.onClear };
+            form.classList.add('is-replying');
+            ta.focus();
+        };
+        ta.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bar) { e.preventDefault(); e.stopPropagation(); clearBar(); } });
+        // Saving an edit is not a send: it runs first and nothing else hears the submit.
+        form.addEventListener('submit', async (e) => {
+            if (!editing) return;
+            e.preventDefault(); e.stopImmediatePropagation();
+            if (form.classList.contains('is-busy')) return;
+            const text = ta.value.trim(), ed = editing;
+            if (!text) { api.ctx.note('A message can\'t be empty.'); return; }
+            setBusy(true);
+            let keep = false;
+            try { keep = typeof ed.onSave === 'function' ? (await ed.onSave(text)) === false : false; }
+            catch (err) { keep = true; api.ctx.note(String((err && err.message) || err)); }
+            setBusy(false);
+            if (!keep && editing === ed) { ed.saved = true; ta.value = ed.draft; ta.dispatchEvent(new Event('input', { bubbles: true })); clearBar(); }
+            api.refresh();
+        }, true);
         if (typeof o.onSubmit === 'function') {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (form.classList.contains('is-busy')) return;
-                const value = { text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values() };
+                const value = { text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values(), reply: replying ? replying.data : null };
                 setBusy(true);
                 let keep = false;
                 try { keep = (await o.onSubmit(value, api)) === false; }
                 catch (err) { keep = true; api.ctx.note(String((err && err.message) || err)); }
                 setBusy(false);
-                if (!keep) api.clear();
+                if (!keep) { api.clear(); if (replying) clearBar(); }
                 api.refresh();
             });
         }
-        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values });
+        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values, edit, reply, clearBar, editing: () => !!editing });
     }
 
     // ── Your settings, in a sheet: what sends, voice, compact, your own commands.
