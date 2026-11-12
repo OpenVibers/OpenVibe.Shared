@@ -13,7 +13,7 @@ const sec = (t, body) => `<section class="sc-sec"><h2>${t}</h2><p class="sc-lede
 const tall = (t) => `<div style="height:600px">${t} body</div>`;
 const page = (front) => sc.parts({ name: 'Channel', front, items: [
     { id: 'clips', label: 'Clips', count: 12, html: sec('Clips', tall('clips')) },
-    { id: 'videos', label: 'Videos', count: 3, html: sec('Videos', tall('videos')) },
+    { id: 'videos', label: 'Videos', count: 3, html: sec('Videos', tall('videos') + '<p id="deep-in-videos">a target</p>') },
     { id: 'about', label: 'About', html: sec('About', tall('about')) },
     { id: 'none', label: 'Nothing', html: '' },
 ] });
@@ -53,6 +53,9 @@ const server = http.createServer((req, res) => {
         await phone.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
         await wait(50);
         assert.deepEqual((await state(phone)).shown, ['about'], 'the arrow keys move between parts');
+        await phone.evaluate(`location.hash = '#deep-in-videos', true`);
+        await h.eventually(async () => assert.deepEqual((await state(phone)).shown, ['videos'], 'a link into a part opens it'));
+        await phone.evaluate(`history.replaceState(null, '', location.pathname), true`);
         await phone.close();
         const desk = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 900 });
         await desk.goto(url, { maxMs: 5000 });

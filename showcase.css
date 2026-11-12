@@ -26,6 +26,8 @@
 .ov-parts:not(.is-stacked):not(.ov-parts--front):has(>.ov-parts-r:nth-of-type(7):checked)>.ov-part:not(:nth-of-type(7)){display:none}
 .ov-parts:not(.is-stacked):not(.ov-parts--front):has(>.ov-parts-r:nth-of-type(8):checked)>.ov-part:not(:nth-of-type(8)){display:none}
 .ov-parts:not(.is-stacked):not(.ov-parts--front):has(>.ov-parts-r:focus-visible)>.ov-parts-bar{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}
+.ov-parts:not(.is-stacked):not(.ov-parts--front):has(>.ov-part:target,>.ov-part :target)>.ov-part:not(:target):not(:has(:target)){display:none}
+.ov-parts:not(.is-stacked):not(.ov-parts--front):has(>.ov-part:target,>.ov-part :target)>.ov-part:is(:target,:has(:target)){display:block!important}
 }@media (max-width:600px){
 .ov-parts.ov-parts--front>.ov-parts-r{display:block;position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
 .ov-parts.ov-parts--front>.ov-parts-bar{display:flex}
@@ -48,6 +50,8 @@
 .ov-parts.ov-parts--front:has(>.ov-parts-r:nth-of-type(7):checked)>.ov-part:not(:nth-of-type(7)){display:none}
 .ov-parts.ov-parts--front:has(>.ov-parts-r:nth-of-type(8):checked)>.ov-part:not(:nth-of-type(8)){display:none}
 .ov-parts.ov-parts--front:has(>.ov-parts-r:focus-visible)>.ov-parts-bar{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}
+.ov-parts.ov-parts--front:has(>.ov-part:target,>.ov-part :target)>.ov-part:not(:target):not(:has(:target)){display:none}
+.ov-parts.ov-parts--front:has(>.ov-part:target,>.ov-part :target)>.ov-part:is(:target,:has(:target)){display:block!important}
 }}
 html[data-ov-motion=off] .ov-parts-bar label{transition:none}
 /* The hero's visual (4.26.0): the aura (rings, dots, the mark) or an orbit of the site's places. */

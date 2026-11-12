@@ -212,6 +212,9 @@ const PARTS_CSS = (() => {
             ...k.map((i) => `${scope}:has(>.ov-parts-r:nth-of-type(${i}):checked)>.ov-parts-bar>label:nth-of-type(${i}){background:var(--bg-card,#16213a);color:var(--text-primary,#e6edf7);box-shadow:0 1px 2px rgba(0,0,0,.25),inset 0 0 0 1px color-mix(in srgb,var(--accent,#3b82f6) 30%,transparent)}`),
             ...k.map((i) => `${scope}:has(>.ov-parts-r:nth-of-type(${i}):checked)>.ov-part:not(:nth-of-type(${i})){display:none}`),
             `${scope}:has(>.ov-parts-r:focus-visible)>.ov-parts-bar{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}`,
+            // A link to something inside a part (#faq, a hero's anchor) opens that part, whichever tab was chosen.
+            `${scope}:has(>.ov-part:target,>.ov-part :target)>.ov-part:not(:target):not(:has(:target)){display:none}`,
+            `${scope}:has(>.ov-part:target,>.ov-part :target)>.ov-part:is(:target,:has(:target)){display:block!important}`,
         ].join('\n');
     };
     return [
