@@ -1,5 +1,36 @@
 # Changelog
 
+## 4.215.0 — 2026-11-12
+
+Composer v2: one elegant composer that every site mounts (the owner, 11-12: "this composer is completely ugly and
+broken … doesn't have the file attachment … it needs to be super elegant, like some kind of social media platform … a
+shared composer … interconnected through all sites with all the features we might ever need … really modular").
+
+- **`OpenVibeComposer.mount(host, options)`** draws a whole composer from a preset, and everything `enhance()` gives
+  comes with it (files by the picker, a paste or a drop, uploads with progress, `/` commands, `@` mentions, voice,
+  drafts, the keys, your settings):
+  - **post**: one line with your picture, your name and who sees it (a chip), then the words over the full width, a box that grows with the words, pictures as tiles
+    each with its description and files as chips under the words, photos, files, emoji and voice, the ring that fills
+    toward the limit (amber near it, red past it) and Post;
+  - **chat**: one line that grows, attach, emoji, voice and a round send;
+  - **agent**: a roomy box, attach and voice, the mode chip and a round send (Actor, Codes);
+  - **comment**: the small one, with your picture and Reply.
+  - `onSubmit({ text, files, uploads, audience, mode }, api)`: the box clears after it; `false` (or an error, shown in
+    the box) keeps it. `audience` and `mode` are chips over the browser's own list.
+- **For agents** (from the agents portal's own box): `chips: [{ name, label, icon, options, value }]` for any number of
+  choices (Model and Reasoning beside the mode), all sent as `chips` by name; `setRunning(true, onStop)` turns the send
+  into Stop while a run works (a click stops, nothing is sent), `setRunning(false)` brings it back.
+- **Tools are modules**: `OpenVibeComposer.tool(id, { label, path, accept | run(ctx, button, form) })` adds or replaces
+  one for every box; a preset or a site names the ones it shows (`tools: ['photo', 'file', 'emoji', 'poll', 'voice']`).
+  Built in: photo, file, attach, emoji (a panel of 90 at the caret), voice. `presets()` and `tools()` list them.
+- **The Feed's composer is the post preset.** Its own + drew an icon with no stroke, so it could not be seen; the
+  Feed's posting (pictures with their descriptions through the frame, other files to Media) is unchanged.
+- `enhance()`: a box takes a file any of its pickers takes; a mounted box grows with its words; the file strip sits
+  beside the box wherever the box is.
+
+Test: `test/composer-v2-chrome.test.js` (the four presets at 390 px, a post's chip above and pictures under, onSubmit
+and false, the ring, emoji, a site's tool); `menu-home-screen-chrome` reads the Feed's note inside the composer.
+
 ## 4.214.0 — 2026-11-11
 
 A train of four pull requests: the Arrange editor (#481), one inline comment thread for every site (#479), the bar's first paint following the sign-in hint (#482) and four redrawn glyphs (#484).

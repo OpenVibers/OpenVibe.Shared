@@ -11,6 +11,9 @@
  *     code; the count near the box's limit;
  *   - your settings (what sends, voice, compact, your snippets), from "/settings" or the slash list's last row.
  *
+ * 4.215.0, composer v2: OpenVibeComposer.mount(host, { preset: 'post' | 'chat' | 'agent' | 'comment', … }) draws a whole
+ * composer (see mount() below); OpenVibeComposer.tool(id, spec) adds or replaces a tool module for every box.
+ *
  * Mods (a site, or a script on it): OpenVibeComposer.mod({
  *   id, match(form) → bool,                         which boxes it joins (all when absent)
  *   tools: [{ id, label, path (24-unit path data), run(ctx) }],
@@ -105,6 +108,80 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc .ovt-c-row { display: flex; align-items: center; gap: 6px; }
 .ovc .ovt-c-tools { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .ovc .ovt-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* 4.215.0, composer v2 (the owner, 11-12: "super elegant … some kind of social media platform … shared in harmony across
+   sites … feature rich … modular"). A mounted composer (OpenVibeComposer.mount) is .ovc-v2[data-preset=post|chat|agent|
+   comment]: the person's picture beside a box that grows, the attachments as a strip (pictures as tiles you describe),
+   one row of round tools, the option chips, the count ring and the send. */
+.ovc-v2.ovt-composer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; max-width: none; padding: 14px 14px 10px; border-radius: 22px; border: 1px solid var(--ovt-line, var(--border, rgba(148, 163, 184, .18))); background: var(--bg-card, #131c2e); transition: border-color .18s, box-shadow .18s; }
+.ovc-v2.ovt-composer:focus-within { border-color: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, var(--ovt-line, rgba(148, 163, 184, .18))); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
+/* The full width is the words' (the owner, 11-12: "a big space on the left … use the full space"): the person's
+   picture, their name and who sees it are one line above the box, as Threads and Bluesky compose. */
+.ovc-v2 .ovc-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ovc-v2 .ovc-av { flex: none; width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 22%, var(--bg-card, #131c2e)); display: grid; place-items: center; color: var(--text-primary, #e6edf7); font-weight: 700; font-size: 15px; }
+.ovc-v2 .ovc-head-n { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 15px; color: var(--text-primary, #e6edf7); }
+.ovc-v2 .ovc-body { min-width: 0; display: grid; gap: 8px; }
+.ovc-v2 .ovc-body > * { min-width: 0; }
+.ovc-v2 .ovc-files { max-width: 100%; }
+.ovc-v2 textarea { display: block; width: 100%; min-height: 26px; max-height: 40vh; box-sizing: border-box; margin: 0; padding: 8px 2px 4px; border: 0; outline: 0; resize: none; overflow-y: auto; background: transparent; color: var(--text-primary, #e6edf7); font: inherit; font-size: 17px; line-height: 1.45; }
+.ovc-v2 textarea::placeholder { color: var(--text-muted, #7386a3); }
+.ovc-v2 .ovt-c-row { display: flex; align-items: center; gap: 4px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--ovt-line, rgba(148, 163, 184, .18)) 70%, transparent); }
+.ovc-v2 .ovt-c-tools { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.ovc-v2 .ovt-c-tools::-webkit-scrollbar { display: none; }
+.ovc-v2 .ovt-btn { position: relative; flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 0; background: none; color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa))); cursor: pointer; transition: background-color .15s, transform .12s; }
+.ovc-v2 .ovt-btn:hover, .ovc-v2 .ovt-btn:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
+.ovc-v2 .ovt-btn:active { transform: scale(.92); }
+.ovc-v2 .ovt-btn svg { width: 21px; height: 21px; }
+.ovc-v2 .ovt-btn input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ovc-v2 .ovc-chips { display: flex; align-items: center; gap: 6px; flex: none; }
+.ovc-v2 .ovc-head .ovc-chips { margin-left: auto; }
+.ovc-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 160px; height: 32px; padding: 0 12px 0 10px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 45%, transparent); color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa))); font-size: 13px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.ovc-chip svg { flex: none; width: 15px; height: 15px; }
+.ovc-chip-v { overflow: hidden; text-overflow: ellipsis; }
+.ovc-chip select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: inherit; }
+.ovc-chip:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent); }
+.ovc-ring { flex: none; width: 26px; height: 26px; margin: 0 4px; }
+.ovc-ring circle { fill: none; stroke-width: 3; }
+.ovc-ring .ovc-ring-bg { stroke: color-mix(in srgb, var(--text-primary, #fff) 12%, transparent); }
+.ovc-ring .ovc-ring-fg { stroke: var(--ovt-accent, var(--accent, #3b82f6)); stroke-linecap: round; transition: stroke-dashoffset .15s, stroke .15s; }
+.ovc-ring.is-near .ovc-ring-fg { stroke: #f59e0b; }
+.ovc-ring.is-over .ovc-ring-fg { stroke: var(--live-red, #ef4444); }
+.ovc-ring[hidden] { display: none; }
+.ovc-v2 .ovt-send { flex: none; min-height: 38px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--ovt-accent, var(--accent, #3b82f6)); color: var(--on-accent, #fff); font: inherit; font-weight: 700; font-size: 15px; cursor: pointer; transition: opacity .15s, transform .12s; }
+.ovc-v2 .ovt-send:not(:disabled):active { transform: scale(.96); }
+.ovc-v2 .ovt-send:disabled { opacity: .45; cursor: default; }
+.ovc-v2 .ovt-send--round { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border-radius: 50%; }
+.ovc-v2 .ovt-send--round svg { width: 19px; height: 19px; }
+.ovc-v2.is-running .ovt-send { background: color-mix(in srgb, var(--text-primary, #fff) 14%, transparent); color: var(--text-primary, #e6edf7); }
+.ovc-v2 .ovc-files { margin: 0; padding: 0 0 2px; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image, .ovc-v2[data-preset=comment] .ovc-file.ovc-image { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 150px; max-width: 150px; height: auto; padding: 0; border-radius: 16px; overflow: hidden; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-th, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-th { width: 100%; height: 150px; border-radius: 15px 15px 0 0; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-t, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-t { display: none; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image input, .ovc-v2[data-preset=comment] .ovc-file.ovc-image input { flex: none; width: 100%; min-height: 38px; margin: 0; border: 0; border-top: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); border-radius: 0 0 15px 15px; padding: 8px 10px; background: transparent; font-size: 13px; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-x, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-x { top: 6px; right: 6px; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 50%; }
+.ovc-v2 .ovc-note { margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #7386a3); }
+.ovc-v2 .ovc-note:empty { display: none; }
+.ovc-v2.is-busy { opacity: .8; }
+/* chat: one line that grows, the tools beside it, the send round. */
+.ovc-v2[data-preset=chat].ovt-composer { padding: 6px 6px 6px 10px; border-radius: 26px; }
+.ovc-v2[data-preset=chat] .ovc-body { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 4px; }
+.ovc-v2[data-preset=chat] .ovc-files { grid-column: 1 / -1; }
+.ovc-v2[data-preset=chat] textarea { font-size: 16px; padding: 9px 2px; }
+.ovc-v2[data-preset=chat] .ovt-c-row { padding: 0; border: 0; }
+.ovc-v2[data-preset=chat] .ovt-c-tools { flex: none; }
+/* agent: a roomy box, tools left, the mode chip and the round send right. */
+.ovc-v2[data-preset=agent] textarea { min-height: 52px; font-size: 16px; }
+/* comment: small, the picture smaller. */
+.ovc-v2[data-preset=comment].ovt-composer { padding: 10px 12px 8px; border-radius: 18px; }
+.ovc-v2[data-preset=comment] .ovc-av { width: 28px; height: 28px; font-size: 12px; }
+.ovc-v2[data-preset=comment] .ovc-head-n { font-size: 14px; }
+.ovc-v2[data-preset=comment] textarea { font-size: 15px; }
+/* Emoji: a small panel above the box. */
+.ovc-emoji { position: absolute; z-index: 41; left: 8px; bottom: calc(100% + 8px); display: grid; grid-template-columns: repeat(8, 38px); gap: 2px; max-width: calc(100% - 16px); max-height: 232px; overflow: auto; padding: 8px; border-radius: 16px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); background: var(--bg-card, #131c2e); box-shadow: 0 18px 50px rgba(0, 0, 0, .35); animation: ovc-in .16s cubic-bezier(.2, .9, .3, 1) both; }
+.ovc-emoji[hidden] { display: none; }
+.ovc-emoji button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: none; font-size: 22px; line-height: 1; cursor: pointer; }
+.ovc-emoji button:hover, .ovc-emoji button:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); }
+@media (max-width: 480px) { .ovc-v2.ovt-composer { padding: 12px 12px 8px; } .ovc-emoji { grid-template-columns: repeat(7, 38px); } .ovc-v2 .ovt-send { padding: 0 16px; } }
+html[data-ov-motion=off] .ovc-emoji { animation: none; }
 `;
     function styles() { if (document.getElementById('ovc-styles')) return; const st = document.createElement('style'); st.id = 'ovc-styles'; st.textContent = CSS; document.head.appendChild(st); }
     const mods = [];
@@ -137,6 +214,15 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
         at: 'M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1',
         gear: 'M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7',
         back: 'M9 14l-5-5 5-5M4 9h11a5 5 0 0 1 0 10h-3',
+        photo: 'M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 16l5-5 4 4 3-3 6 6M15.5 9.5h.01',
+        clip: 'M20 11.5l-8.3 8.3a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9',
+        smile: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01',
+        globe: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM3 12h18M12 3c2.5 2.7 3.6 5.7 3.6 9s-1.1 6.3-3.6 9c-2.5-2.7-3.6-5.7-3.6-9S9.5 5.7 12 3z',
+        spark: 'M12 3l1.9 5.1 5.1 1.9-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z',
+        send: 'M5 12h14M13 6l6 6-6 6',
+        stop: 'M7 7h10v10H7z',
+        cpu: 'M8 8h8v8H8zM9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3',
+        gauge: 'M5 18a8 8 0 1 1 14 0M12 14l3-4',
     };
     const svg = (d, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
@@ -220,10 +306,12 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
         strip.hidden = true;
         strip.setAttribute('aria-label', 'Attached files');
         const firstLabel = form.querySelector(`label[for="${text.id}"]`);
-        form.insertBefore(strip, firstLabel || text);
+        const anchor = firstLabel && firstLabel.parentNode === text.parentNode ? firstLabel : text;
+        anchor.parentNode.insertBefore(strip, anchor);
         const accepts = (file) => {
-            const acc = (inputs()[0] && inputs()[0].getAttribute('accept')) || '';
-            if (!acc) return true;
+            const list = inputs().map((i) => i.getAttribute('accept') || '');
+            if (!list.length || list.some((a) => !a)) return true;
+            const acc = list.join(',');
             const name = (file.name || '').toLowerCase(), type = (file.type || '').toLowerCase();
             return acc.split(',').map((x) => x.trim().toLowerCase()).some((a) => !a || (a.startsWith('.') ? name.endsWith(a) : a.endsWith('/*') ? type.startsWith(a.slice(0, -1)) : type === a));
         };
@@ -335,6 +423,11 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
             else if (wasRequired && !files.length && !text.required && !form.classList.contains('is-busy')) text.required = true;
         }
         text.addEventListener('input', syncSend);
+        if (form.classList.contains('ovc-v2')) {
+            const grow = () => { text.style.height = 'auto'; text.style.height = `${Math.min(text.scrollHeight + 2, Math.round((root.innerHeight || 800) * 0.4))}px`; };
+            text.addEventListener('input', grow);
+            requestAnimationFrame(grow);
+        }
 
         // The slash list and the mention list: one popover above the box.
         const pop = el('div', 'ovc-pop');
@@ -480,7 +573,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
         let mic = null, rec = null;
         function micButton() {
             if (!Speech || !tools) return;
-            if (!prefs.voice) { if (mic) { mic.remove(); mic = null; } return; }
+            if (!prefs.voice || form.hasAttribute('data-ovc-no-voice')) { if (mic) { mic.remove(); mic = null; } return; }
             if (mic) return;
             mic = el('button', 'ovt-btn ovc-mic', svg(IC.mic));
             mic.type = 'button'; mic.setAttribute('aria-label', 'Speak'); mic.title = 'Speak'; mic.setAttribute('aria-pressed', 'false');
@@ -528,6 +621,197 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
         form.classList.add('ovc');
         api.refresh();
         return api;
+    }
+
+
+    // ── 4.215.0: a whole composer, mounted (composer v2). ─────────────────────────────────────────────────────────────
+    // A site no longer draws its own box: OpenVibeComposer.mount(host, options) draws one of the presets, and everything
+    // enhance() gives (files, paste, drop, uploads, commands, mentions, voice, drafts, keys, the count) comes with it.
+    //   options: { preset: 'post' | 'chat' | 'agent' | 'comment', id, name ('text'), placeholder, label, maxLength,
+    //     user: { display_name | username, avatar_url }, tools: ['photo', 'file', 'attach', 'emoji', 'voice'] (the
+    //     preset's own when absent), accept, maxFiles, maxMb, required (true), noDraft,
+    //     audience / mode: { name, label, options: [[value, label]], value } (a chip each); chips: [{ name, label, icon
+    //     ('globe' | 'spark' | 'cpu' | 'gauge'), options, value, onChange }] for any more (an agent's Model and Reasoning,
+    //     as the agents portal's box has),
+    //     submitLabel, upload(file, onProgress), mentions, commands, beforeSend,
+    //     onSubmit({ text, files, uploads, audience, mode }, api) → a promise; false keeps the box as it is }
+    //   → the enhance api plus { form, text, send, note, setBusy(bool), setRunning(bool, onStop) (the send becomes Stop
+    //     while a run works, as in the agents portal), values() (every chip's value by name) }.
+    // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
+    // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
+    const PRESET = {
+        post: { tools: ['photo', 'file', 'emoji', 'voice'], send: 'Post', avatar: true, rows: 2, max: 2000, ring: true },
+        chat: { tools: ['attach', 'emoji', 'voice'], send: '', avatar: false, rows: 1, max: 4000, ring: false },
+        agent: { tools: ['attach', 'voice'], send: '', avatar: false, rows: 2, max: 16000, ring: false },
+        comment: { tools: ['photo', 'emoji'], send: 'Reply', avatar: true, rows: 1, max: 2000, ring: true },
+    };
+    const EMOJI = '😀 😂 🥹 😊 😍 🥰 😘 😎 🤩 🥳 😇 🙂 😉 😌 🤔 🤨 😐 🙄 😏 😬 😮 😱 😭 😤 😡 🤯 🥶 🥵 😴 🤤 🤗 🫡 🤝 👍 👎 👏 🙌 🙏 💪 👀 🫶 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 ✨ 🔥 💯 🎉 🎊 🏆 🎮 🎧 🎵 📸 🎬 🍕 🍔 🍿 ☕ 🍻 🌈 🌙 ⭐ ⚡ 💥 💀 🤖 👻 🐐 🦆 🐸 🚀 ✅ ❌ ⚠️ ❓ 👋 🫠'.split(' ');
+    const TOOL = {
+        photo: { label: 'Photos and video', path: IC.photo, accept: 'image/*,video/*' },
+        file: { label: 'Files', path: IC.file, accept: '' },
+        attach: { label: 'Attach', path: IC.clip, accept: '' },
+        emoji: {
+            label: 'Emoji', path: IC.smile,
+            run(ctx, button, form) {
+                let panel = form.querySelector('.ovc-emoji');
+                if (panel) { panel.hidden = !panel.hidden; if (!panel.hidden) panel.querySelector('button').focus(); return; }
+                panel = el('div', 'ovc-emoji'); panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Emoji');
+                EMOJI.forEach((e) => {
+                    const b = el('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', e);
+                    b.addEventListener('click', () => { ctx.insert(e); panel.hidden = true; });
+                    panel.appendChild(b);
+                });
+                panel.addEventListener('keydown', (e) => { if (e.key === 'Escape') { panel.hidden = true; button.focus(); } });
+                document.addEventListener('pointerdown', (e) => { if (!panel.hidden && !panel.contains(e.target) && !button.contains(e.target)) panel.hidden = true; });
+                form.appendChild(panel);
+                panel.querySelector('button').focus();
+            },
+        },
+        voice: { label: 'Speak', builtin: true },   // enhance() draws the microphone where the browser can listen
+    };
+    function tool(id, spec) {
+        if (!/^[\w-]{1,30}$/.test(id || '') || !spec) return;
+        TOOL[id] = Object.assign({}, TOOL[id] || {}, spec);
+    }
+    const initial = (u) => String((u && (u.display_name || u.username)) || '?').trim().charAt(0).toUpperCase() || '?';
+    function mount(host, o = {}) {
+        if (!host) return null;
+        styles();
+        const name = PRESET[o.preset] ? o.preset : 'post';
+        const p = PRESET[name];
+        const form = el('form', 'ovt-composer ovc-v2');
+        form.dataset.preset = name;
+        if (o.id) form.id = o.id;
+        form.setAttribute('data-ovc', '');
+        form.setAttribute('data-ovc-max-files', String(o.maxFiles || 10));
+        form.setAttribute('data-ovc-max-mb', String(o.maxMb || 100));
+        if (o.noDraft) form.setAttribute('data-ovc-no-draft', '');
+        const want = (o.tools || p.tools).filter((t) => TOOL[t]);
+        if (!want.includes('voice')) form.setAttribute('data-ovc-no-voice', '');
+        // A post or a reply opens with one line: the person's picture (or first letter), their name and who sees it.
+        const body = el('div', 'ovc-body');
+        const head = el('div', 'ovc-head');
+        if (p.avatar && o.user) {
+            const src = o.user.avatar_url || o.user.avatar;
+            const av = src ? el('img', 'ovc-av') : el('span', 'ovc-av');
+            if (src) { av.src = src; av.alt = ''; av.loading = 'lazy'; } else av.textContent = initial(o.user);
+            av.setAttribute('aria-hidden', 'true');
+            const nm = el('span', 'ovc-head-n'); nm.textContent = String(o.user.display_name || o.user.username || '');
+            head.append(av, nm);
+        }
+        const ta = el('textarea');
+        ta.name = o.name || 'text'; ta.rows = p.rows; ta.maxLength = o.maxLength || p.max;
+        ta.placeholder = o.placeholder || (name === 'post' ? "What's new?" : name === 'agent' ? 'Ask for anything' : name === 'comment' ? 'Write a reply' : 'Write a message');
+        ta.setAttribute('aria-label', o.label || ta.placeholder);
+        ta.setAttribute('data-ovt-text', '');
+        if (o.required !== false) ta.required = true;
+        const row = el('div', 'ovt-c-row'), tools = el('div', 'ovt-c-tools'), chips = el('div', 'ovc-chips');
+        const ctxOf = () => (form.__ovc && form.__ovc.ctx) || null;
+        for (const id of want) {
+            const t = TOOL[id];
+            if (t.builtin) continue;
+            if (typeof t.run !== 'function' && t.accept === undefined) continue;
+            const b = el(typeof t.run === 'function' ? 'button' : 'label', `ovt-btn ovc-t-${id}`, svg(t.path || IC.slash));
+            b.title = t.label; b.setAttribute('aria-label', t.label);
+            if (typeof t.run === 'function') { b.type = 'button'; b.addEventListener('click', () => { const c = ctxOf(); if (c) t.run(c, b, form); }); }
+            else {
+                const input = el('input'); input.type = 'file'; input.multiple = true; input.tabIndex = -1;
+                const acc = o.accept != null && id !== 'photo' ? o.accept : t.accept;
+                if (acc) input.accept = acc;
+                input.setAttribute('aria-label', t.label);
+                b.tabIndex = 0;
+                b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+                b.appendChild(input);
+            }
+            tools.appendChild(b);
+        }
+        // Option chips: who sees it (a post), how the agent works (agent). A select under a pill: the browser's own list.
+        const chip = (spec, path) => {
+            if (!spec || !Array.isArray(spec.options) || !spec.options.length) return null;
+            const c = el('label', 'ovc-chip', svg(path));
+            const v = el('span', 'ovc-chip-v');
+            const sel = el('select'); sel.name = spec.name || 'option'; sel.setAttribute('aria-label', spec.label || 'Option');
+            spec.options.forEach(([value, label]) => { const op = el('option'); op.value = value; op.textContent = label; sel.appendChild(op); });
+            if (spec.value != null) sel.value = spec.value;
+            const paint = () => { v.textContent = (sel.selectedOptions[0] && sel.selectedOptions[0].textContent) || ''; };
+            sel.addEventListener('change', () => { paint(); if (typeof spec.onChange === 'function') spec.onChange(sel.value); });
+            paint();
+            c.append(v, sel);
+            return c;
+        };
+        const aud = chip(o.audience, IC.globe), md = chip(o.mode, IC.spark);
+        if (aud) chips.appendChild(aud);
+        if (md) chips.appendChild(md);
+        (Array.isArray(o.chips) ? o.chips : []).forEach((spec) => { const c = chip(spec, IC[spec && spec.icon] || IC.spark); if (c) chips.appendChild(c); });
+        // The ring: how much of the limit is used; amber near it, red over it (the words stay; the send waits).
+        let ring = null;
+        if (p.ring) {
+            ring = el('span', 'ovc-ring');
+            ring.innerHTML = '<svg viewBox="0 0 26 26" width="26" height="26" aria-hidden="true"><circle class="ovc-ring-bg" cx="13" cy="13" r="10"/><circle class="ovc-ring-fg" cx="13" cy="13" r="10" stroke-dasharray="62.83" stroke-dashoffset="62.83" transform="rotate(-90 13 13)"/></svg>';
+            ring.hidden = true;
+        }
+        const send = el('button', p.send ? 'ovt-send' : 'ovt-send ovt-send--round', p.send ? '' : svg(IC.send));
+        if (p.send) send.textContent = o.submitLabel || p.send;
+        send.type = 'submit'; send.disabled = true; send.setAttribute('data-ovt-send', '');
+        send.setAttribute('aria-label', o.submitLabel || p.send || 'Send');
+        // A post or a reply says who sees it above the box (a phone's row keeps room for the tools); a chat or an agent's
+        // box keeps its chip beside the send.
+        const above = name === 'post' || name === 'comment';
+        row.appendChild(tools);
+        if (!above) row.appendChild(chips);
+        if (ring) row.appendChild(ring);
+        row.appendChild(send);
+        if (above && chips.children.length) head.appendChild(chips);
+        if (head.children.length) body.appendChild(head);
+        body.append(ta, row);
+        const note = el('p', 'ovc-note'); note.setAttribute('data-ovt-note', ''); note.setAttribute('role', 'status');
+        form.append(body, note);
+        host.appendChild(form);
+        if (o.upload || o.mentions || o.commands || o.beforeSend) {
+            mod({ id: `mount-${o.id || Math.random().toString(36).slice(2, 8)}`, match: (f) => f === form, upload: o.upload, mentions: o.mentions, commands: o.commands, beforeSend: o.beforeSend });
+        }
+        const api = enhance(form);
+        // A post's or a reply's pictures and files go under its words, as a feed shows them; a chat or an agent's box keeps
+        // them above the line it types in.
+        if (above) { const strip = body.querySelector('.ovc-files'); if (strip) ta.after(strip); }
+        if (ring) {
+            const C = 62.83, fg = ring.querySelector('.ovc-ring-fg');
+            const paint = () => {
+                const used = ta.value.length / ta.maxLength;
+                ring.hidden = !ta.value.length;
+                fg.setAttribute('stroke-dashoffset', String(C * (1 - Math.min(1, used))));
+                ring.classList.toggle('is-near', used >= 0.85 && used < 1);
+                ring.classList.toggle('is-over', used >= 1);
+            };
+            ta.addEventListener('input', paint); paint();
+        }
+        const setBusy = (on) => { form.classList.toggle('is-busy', !!on); send.disabled = !!on || (!ta.value.trim() && !api.files().length); };
+        const values = () => Object.fromEntries([...chips.querySelectorAll('select')].map((sel) => [sel.name, sel.value]));
+        // While a run works the send is Stop (the agents portal's box): a click calls onStop, nothing is sent.
+        let stopFn = null;
+        const sendFace = send.innerHTML, sendLabel = send.getAttribute('aria-label');
+        send.addEventListener('click', (e) => { if (!stopFn) return; e.preventDefault(); e.stopImmediatePropagation(); const f = stopFn; try { f(); } catch (err) { console.error(err); } }, true);
+        const setRunning = (on, onStop) => {
+            stopFn = on ? (typeof onStop === 'function' ? onStop : () => {}) : null;
+            form.classList.toggle('is-running', !!on);
+            if (on) { send.innerHTML = svg(IC.stop); send.classList.add('ovt-send--round'); send.setAttribute('aria-label', 'Stop'); send.title = 'Stop'; send.disabled = false; }
+            else { send.innerHTML = sendFace; send.classList.toggle('ovt-send--round', !p.send); send.setAttribute('aria-label', sendLabel); send.title = ''; api.refresh(); }
+        };
+        if (typeof o.onSubmit === 'function') {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (form.classList.contains('is-busy')) return;
+                const value = { text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values() };
+                setBusy(true);
+                let keep = false;
+                try { keep = (await o.onSubmit(value, api)) === false; }
+                catch (err) { keep = true; api.ctx.note(String((err && err.message) || err)); }
+                setBusy(false);
+                if (!keep) api.clear();
+                api.refresh();
+            });
+        }
+        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values });
     }
 
     // ── Your settings, in a sheet: what sends, voice, compact, your own commands.
@@ -597,8 +881,8 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
     }
     function scan(scope) { (scope || document).querySelectorAll('[data-ovt-composer], [data-ovc]').forEach((f) => enhance(f)); }
 
-    root.OpenVibeComposer = { enhance, mod, scan, settings: openSettings, get prefs() { return Object.assign({}, prefs); }, setPrefs };
-    if (typeof module === 'object' && module.exports) module.exports = { enhance, mod, scan };
+    root.OpenVibeComposer = { enhance, mount, tool, mod, scan, presets: () => Object.keys(PRESET), tools: () => Object.keys(TOOL), settings: openSettings, get prefs() { return Object.assign({}, prefs); }, setPrefs };
+    if (typeof module === 'object' && module.exports) module.exports = { enhance, mount, tool, mod, scan };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => scan(), { once: true }); else scan();
     document.addEventListener('ov:boost:load', () => { live.forEach((c) => { if (!c.form.isConnected) c.destroy(); }); scan(); });
     pull();

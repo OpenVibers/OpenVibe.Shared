@@ -232,8 +232,8 @@ const server = http.createServer((req, res) => {
         await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('#ovh-feed-composer').checkValidity()`), 'the picture needs a description'));
         await s.evaluate(`(() => { const a = document.querySelector('#ovh-feed-composer .ovc-image input'); a.value = 'A dark sky'; a.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         await s.evaluate(`document.querySelector('#ovh-feed-composer .ovt-send').click(), true`);
-        const posted = await until(s, `/Posted/.test(document.querySelector('#ovh-feed-composer + .ovh-note').textContent)`);
-        const postState = await s.evaluate(`({ note: document.querySelector('#ovh-feed-composer + .ovh-note').textContent, valid: document.querySelector('#ovh-feed-composer').checkValidity(), disabled: document.querySelector('#ovh-feed-composer .ovt-send').disabled, calls: window.__calls.filter((c) => /attachments|posts/.test(c.u)).map((c) => c.u) })`);
+        const posted = await until(s, `/Posted/.test(document.querySelector('#ovh-feed-composer .ovc-note').textContent)`);
+        const postState = await s.evaluate(`({ note: document.querySelector('#ovh-feed-composer .ovc-note').textContent, valid: document.querySelector('#ovh-feed-composer').checkValidity(), disabled: document.querySelector('#ovh-feed-composer .ovt-send').disabled, calls: window.__calls.filter((c) => /attachments|posts/.test(c.u)).map((c) => c.u) })`);
         assert.ok(posted, `it posts: ${JSON.stringify(postState)}`);
         const sent = await s.evaluate(`window.__calls.filter((c) => c.u.endsWith('/api/frame/attachments') || c.u.endsWith('/api/v1/attachments') || c.u.endsWith('/api/frame/posts')).map((c) => ({ u: c.u, auth: c.auth, body: typeof c.body === 'string' ? c.body : '' }))`);
         assert.deepStrictEqual(sent.map((c) => c.u.replace(/^https:\/\/(?:openvibe.network\/api\/frame|openvibe.media\/api\/v1)\//, '')), ['attachments', 'attachments', 'posts'], 'picture and PDF upload before the post');
