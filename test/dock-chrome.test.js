@@ -298,7 +298,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "!!window.OpenVibeDock", 'the panels beside the navbar');
             await wait(700);
             await eventually(async () => assert.strictEqual(await p.evaluate(STATUS), null, 'nothing to say while nothing runs or waits (unread alone is the bell\'s)'));
-            assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'no pill and no floating Dock');
+            await eventually(async () => assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'no pill and no floating Dock'));
             scenario.counts = { running: 2, waiting: 0, unread: 0 };
             await p.goto(`${base}/page`, { maxMs: 5000 });
             const st = await until(p, STATUS, 'the status on the menu button');
@@ -323,8 +323,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             assert.deepStrictEqual(decided, ['actor:apr_1:approve'], 'the approval goes to the Network for that item');
             await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
             await until(p, "!document.querySelector('.ovs.is-open')", 'Escape closes the menu');
-            await wait(900);
-            assert.ok(puts.some((b) => b.tab === 'agent'), `the Network heard the place (${JSON.stringify(puts)})`);
+            await eventually(async () => assert.ok(puts.some((b) => b.tab === 'agent'), `the Network heard the place (${JSON.stringify(puts)})`));
             assert.ok(puts.length <= 3, `changes go as debounced PUTs, not one per click (${puts.length})`);
             await p.close();
         }
@@ -342,6 +341,9 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
             const thread = await until(p, "(() => { const m = [...document.querySelectorAll('.ovdk .ovdk-msg')]; return m.length === 2 ? m.map((x) => (x.classList.contains('is-mine') ? 'me: ' : 'them: ') + x.querySelector('.ovdk-text').textContent) : null; })()", 'the thread');
             assert.deepStrictEqual(thread, ['them: see the shots?', 'me: <b>on it</b>'], 'theirs and mine, and what people wrote is text, never markup');
+            // The menu redraws when its own loads arrive and hands its (empty) search words on again: the open chat stays.
+            await p.evaluate("OpenVibeDock.filterChats(''), true");
+            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovdk .ovdk-msg').length"), 2, 'a menu redraw never swaps the open chat for the list'));
             const cards = await until(p, "(() => { const c = [...document.querySelectorAll('.ovdk .ovdk-msg .ovdk-card')]; return c.length === 2 ? c.map((x) => { const t = x.querySelector('.ovdk-card-t'), g = x.querySelector('.ovdk-card-go'), i = x.querySelector('img'); return [t.tagName, t.textContent, t.getAttribute('href'), i ? i.getAttribute('src') : null, g ? g.textContent + ' ' + g.getAttribute('href') : null]; }) : null; })()", 'the link cards');
             assert.deepStrictEqual(cards[0], ['A', 'The studio tour', 'https://openvibe.video/v/42', 'https://openvibe.media/t/abc?w=320', 'Watch together https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42'], 'a card: its picture, its title as a link, its one move');
             assert.deepStrictEqual(cards[1], ['B', '<img src=x>', null, null, null], 'a card is data: no script link, no picture from elsewhere, no script button, the title as text');
@@ -363,8 +365,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
             assert.deepStrictEqual(said, ['Looks good'], 'Enter sends it to Chat');
             assert.ok(reads.includes('11'), 'the thread is marked read as it is shown');
-            await wait(900);
-            assert.ok(puts.some((b) => b.chat === '11'), `the open chat is the Dock's state (${JSON.stringify(puts)})`);
+            await eventually(async () => assert.ok(puts.some((b) => b.chat === '11'), `the open chat is the Dock's state (${JSON.stringify(puts)})`));
             await p.evaluate("document.querySelector('.ovdk-back').click()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-chat').length === 2", 'back to the list');
             await p.close();
@@ -523,8 +524,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-res-c button')"), false, 'and is not offered again'));
             await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-typing')"), false, 'the writing dots go when it answers'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-away').href"), 'https://openvibe.chat/vibe/v1', 'Open in Chat goes to the same chat'));
-            await wait(900);
-            assert.ok(puts.some((b) => b.tab === 'vibe'), `the Network keeps the Vibe tab, so it follows the person to the next site (${JSON.stringify(puts)})`);
+            await eventually(async () => assert.ok(puts.some((b) => b.tab === 'vibe'), `the Network keeps the Vibe tab, so it follows the person to the next site (${JSON.stringify(puts)})`));
             await p.close();
         }
 
@@ -637,7 +637,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.goto(`${base}/page?in=0`, { maxMs: 5000 });
             await wait(600);
             await eventually(async () => assert.strictEqual(await p.evaluate(STATUS), null, 'signed out: no status'));
-            assert.strictEqual(await p.evaluate("!!document.querySelector('#ovdk-pill, .ovdk-pill')"), false, 'and no pill');
+            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('#ovdk-pill, .ovdk-pill')"), false, 'and no pill'));
             await p.close();
         }
         // ── Ask your agent (4.135.0): a page's [data-ov-ask] chip opens Vibe with the question in the box, unsent. ──

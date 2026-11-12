@@ -729,7 +729,9 @@
     }
 
     root.OpenVibeDock = { mount, mountInto, open, close, isOpen, update, ask, share,
-        filterChats: (v) => { chats.filter = v.toLowerCase(); chatList(); },
+        // The menu's search box filters the conversations. The menu redraws when its own loads arrive (and calls this with the
+        // same words): an unchanged filter does nothing, so an open chat is never swapped for the list under the person.
+        filterChats: (v) => { const f = String(v || '').toLowerCase(); if (f === chats.filter) return; chats.filter = f; chatList(); },
         // The timer's menu (the menu's Vibe tab has its button): presets, a focus round, your own.
         timer: (anchor) => withTimer((t) => t.menu(anchor || null)), more: (a) => { if (a === 'timer') withTimer((t) => t.menu(null)); },
         status, canSend: () => canWriteChat(), _state: () => ({ doc, tab, pending }) };
