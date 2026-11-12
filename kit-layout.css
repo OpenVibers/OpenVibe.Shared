@@ -97,7 +97,38 @@
     box-sizing: border-box; inline-size: 100%; min-block-size: var(--ovk-tap); padding: .5em .8em; border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm);
     background: var(--ovk-input); color: var(--ovk-text); font: inherit; }
 :where(.ov-base) :where(textarea) { min-block-size: 6em; resize: vertical; }
-:where(.ov-base) :where(input[type=checkbox], input[type=radio], input[type=range]) { accent-color: var(--ovk-fill); }
+:where(.ov-base) :where(input:not([type=checkbox], [type=radio], [type=range], [type=color], [type=hidden]), select, textarea) { margin-block-end: 1em; }
+:where(.ov-base) :where(input[type=range]) { accent-color: var(--ovk-fill); }
+/* Radios and checkboxes, drawn (4.219.0; the owner, 11-12: "update the little dots … make sure all basic elements are
+   styled … custom with the theme system"): the site's fill when chosen, a ring that grows its dot, a tick that pops. */
+:where(.ov-base) :where(input[type=radio], input[type=checkbox]) { appearance: none; -webkit-appearance: none; display: inline-grid; place-items: center;
+    inline-size: 1.25em; block-size: 1.25em; margin: 0 .45em 0 0; vertical-align: -.25em; flex: none;
+    border: 2px solid color-mix(in srgb, var(--ovk-text) 32%, transparent); background: transparent; cursor: pointer;
+    transition: border-color var(--ov-dur-2, .2s) ease, background-color var(--ov-dur-2, .2s) ease; }
+:where(.ov-base) :where(input[type=radio]) { border-radius: 50%; }
+:where(.ov-base) :where(input[type=checkbox]) { border-radius: .35em; }
+:where(.ov-base) :where(input[type=radio])::before { content: ""; inline-size: .5em; block-size: .5em; border-radius: 50%; background: var(--ovk-fill);
+    transform: scale(0); transition: transform var(--ov-dur-2, .2s) var(--ov-ease-out, cubic-bezier(.2, .9, .3, 1)); }
+:where(.ov-base) :where(input[type=checkbox])::before { content: ""; inline-size: .72em; block-size: .72em; background: var(--ovk-on-fill);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%); transform: scale(0);
+    transition: transform var(--ov-dur-2, .2s) var(--ov-ease-out, cubic-bezier(.2, .9, .3, 1)); }
+:where(.ov-base) :where(input[type=radio], input[type=checkbox]):hover { border-color: color-mix(in srgb, var(--ovk-fill) 70%, transparent); }
+:where(.ov-base) :where(input[type=radio]:checked) { border-color: var(--ovk-fill); }
+:where(.ov-base) :where(input[type=checkbox]:checked) { border-color: var(--ovk-fill); background: var(--ovk-fill); }
+:where(.ov-base) :where(input[type=radio]:checked, input[type=checkbox]:checked)::before { transform: scale(1); }
+:where(.ov-base) :where(input[type=radio], input[type=checkbox]):focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 2px; }
+:where(.ov-base) :where(label:has(> input[type=radio], > input[type=checkbox])) { display: flex; align-items: center; gap: .1em; font-weight: 500; cursor: pointer; }
+:where(.ov-base) :where(input, textarea)::placeholder { color: var(--ovk-muted); opacity: .85; }
+:where(.ov-base) :where(input:not([type=checkbox], [type=radio], [type=range], [type=color]), select, textarea):focus { outline: none; border-color: var(--ovk-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovk-accent) 24%, transparent); }
+/* A plain details (no class of its own) gets a chevron that turns; a site's own details keeps its own. */
+:where(.ov-base) :where(details:not([class]) > summary:not([class])) { display: flex; align-items: center; justify-content: space-between; gap: .6em; list-style: none; }
+:where(.ov-base) :where(details:not([class]) > summary:not([class]))::-webkit-details-marker { display: none; }
+:where(.ov-base) :where(details:not([class]) > summary:not([class]))::after { content: ""; flex: none; inline-size: .5em; block-size: .5em; margin-inline-end: .2em;
+    border-inline-end: 2px solid currentColor; border-block-end: 2px solid currentColor; opacity: .6; transform: rotate(45deg);
+    transition: transform var(--ov-dur-2, .2s) var(--ov-ease-out, ease); }
+:where(.ov-base) :where(details[open]:not([class]) > summary:not([class]))::after { transform: rotate(225deg); }
+:where(.ov-base) :where(details[open]:not([class]) > summary:not([class])) { margin-block-end: .5em; }
 :where(.ov-base) :where(button, input[type=submit], input[type=button]) { min-block-size: var(--ovk-tap); padding: .5em 1.1em; border: 0; border-radius: 999px; cursor: pointer;
     background: var(--ovk-fill); color: var(--ovk-on-fill); font: inherit; font-weight: 700; }
 :where(.ov-base) :where(button:disabled, input:disabled, select:disabled, textarea:disabled) { opacity: .55; cursor: not-allowed; }
