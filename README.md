@@ -581,9 +581,23 @@ breakdown and status classes in `getStats` and `getBotAnalysis` include the coun
    Never `express.static` the whole package directory. It also holds server code, tests and
    scripts.
 
+**Icons: OpenVibe's own markup (4.231.0).** Every icon is an OpenVibe glyph (openvibe.design/icons):
+
+```html
+<i data-ov-icon="live"></i>                     <!-- any glyph by name; a title names it to screen readers -->
+<i data-ov-icon="eye" class="ovg-lg ovg-fw"></i> <!-- ovg-xs … ovg-3x, ovg-fw, ovg-rotate-*, ovg-flip-h/-v, ovg-fill -->
+<i data-ov-brand="github"></i>                  <!-- a brand logo (brands.js, Simple Icons) -->
+```
+
+`ov-glyphs.js` draws them (the navbar loads it on any page that shows one); `OVGlyphs.icon('live', { title })` makes
+one in a page, `require('openvibe-shared/glyphs').markup('live')` writes one on a server. Font Awesome markup is still
+drawn with the glyph its name maps to while sites move: `node node_modules/openvibe-shared/scripts/fa-to-ov.js
+--write` rewrites a repository's static markup and lists what a person has to change (names built at run time, JS
+class strings, CSS rules, animations).
+
 **navbar.js and `nav-icons.js`.** navbar.js draws the icons for its own rows inline. The rest
-of the Font Awesome glyph set sites name in `links`, `chips` and menu sections lives in
-`nav-icons.js`. navbar.js fetches that file once, after first paint, from **the same directory
+of the bar's set (OpenVibe glyphs, keyed by the names sites pass in `links`, `chips` and menu sections) lives in
+`nav-icons.js`; a glyph name the set lacks is drawn as `<i data-ov-icon>` by `ov-glyphs.js`. navbar.js fetches that file once, after first paint, from **the same directory
 navbar.js was loaded from**, as `nav-icons.js?v=<first 12 hex of its sha256>`. It falls back to
 `https://openvibe.network/shared/` when navbar.js is bundled or inlined.
 
@@ -1078,7 +1092,7 @@ npm ci
 npm test                         # every test/*.test.js (fnm exec --using=22.22.1 npm test)
 npm test -- navbar               # only matching files
 npm run size                     # raw + brotli (q11) size of every browser file
-python3 scripts/build-nav-icons.py --font …/fa-solid-900.woff2 --css …/fontawesome.min.css
+node scripts/build-navbar-icons.js   # the bar's icons and the ring solids, from glyphs.js
 node scripts/build-theme-loader.js
 ```
 
