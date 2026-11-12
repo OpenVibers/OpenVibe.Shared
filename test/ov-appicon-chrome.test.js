@@ -79,7 +79,7 @@ const server = http.createServer((req, res) => {
         assert.deepEqual([(await box(1)).w, (await box(1)).label], [56, 'Tools & "more"'], 'server markup: the default size and its name');
         assert.equal((await box(2)).w, 26);
         await ssr.evaluate(`window.__svg = document.querySelector('.ov-appicon svg'); const sc = document.createElement('script'); sc.src = '/ov-icons.js'; document.head.append(sc); true`);
-        await wait(150);
+        await h.eventually(async () => assert.equal(await ssr.evaluate(`!!(window.OpenVibeIcons && document.getElementById('ov-icons-css'))`), true, 'ov-icons.js arrived'));
         assert.equal(await ssr.evaluate(`document.querySelector('.ov-appicon svg') === window.__svg && document.querySelectorAll('.ov-appicon svg').length === 3`), true, 'ov-icons.js finds them already filled and leaves them');
         await ssr.close();
         // A light theme draws the glyph dark.
