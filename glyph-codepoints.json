@@ -278,6 +278,15 @@
     "wizard": "E113",
     "book-open": "E114",
     "puzzle": "E115",
-    "flame": "E116"
+    "flame": "E116",
+    "binoculars": "E117",
+    "cpu": "E118",
+    "gpu": "E119",
+    "joystick": "E11A",
+    "layers-plus": "E11B",
+    "memory": "E11C",
+    "microscope": "E11D",
+    "telescope": "E11E",
+    "wand": "E11F"
   }
 }

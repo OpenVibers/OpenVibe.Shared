@@ -13,6 +13,11 @@ const kit = require('../kit');
 // ── The registry ──
 assert.ok(glyphs.NAMES.length >= 276, `${glyphs.NAMES.length} glyphs`);
 for (const name of kit.ICONS) assert.ok(glyphs.NAMES.includes(name), `the kit's ${name} is a glyph`);
+// kit.icon draws every glyph NAME (4.219.0, plan L32 I1): a page can name any of them, not only the kit's own set.
+for (const name of glyphs.NAMES) assert.ok(kit.icon(name).includes(`<svg`) && kit.icon(name).includes(glyphs.path(name)), `kit.icon(${name}) draws its glyph`);
+assert.strictEqual(kit.ICONS.length, glyphs.NAMES.length, 'the kit and the glyph registry name the same set');
+const kitBuilder = require('../scripts/build-kit-glyphs');
+assert.strictEqual(fs.readFileSync(path.join(__dirname, '..', 'kit.js'), 'utf8'), kitBuilder.build(), 'kit.js carries the current glyph block: run node scripts/build-kit-glyphs.js');
 for (const [fa, g] of Object.entries(glyphs.FA)) assert.ok(glyphs.path(g), `fa-${fa} → ${g}, a glyph that exists`);
 for (const name of glyphs.NAMES) {
     const d = glyphs.path(name);
@@ -44,6 +49,16 @@ assert.throws(() => glyphs.svg('eye', { style: 'heavy' }), /unsupported style/);
 for (const n of ['globe', 'mail', 'key', 'server', 'phone', 'help', 'cart', 'store', 'terminal', 'database', 'eye-off', 'mic-off']) assert.ok(glyphs.solid(n), `${n}: one of the next most-used shapes has its solid drawing (4.80.0)`);
 for (const n of ['copy', 'scissors', 'volume', 'robot', 'film', 'gear', 'search', 'pencil', 'save', 'chart']) assert.ok(glyphs.solid(n), `${n}: one of the sites' most-used shapes has its solid drawing`);
 for (const n of ['check', 'close', 'plus', 'link', 'code', 'ban', 'stop']) assert.strictEqual(glyphs.solid(n), '', `${n}: a glyph made of lines thickens when small instead`);
+// 4.219.0: the tools, machines and creative shapes the audit found missing, each in line and solid.
+for (const n of ['binoculars', 'telescope', 'microscope', 'gpu', 'cpu', 'memory', 'joystick', 'wand', 'layers-plus']) {
+    assert.ok(glyphs.path(n), `${n}: a line drawing`);
+    assert.ok(glyphs.solid(n), `${n}: a solid twin for small sizes`);
+    assert.ok(glyphs.META[n].tags.length, `${n}: keywords for search and suggest`);
+}
+for (const [fa, g] of [['fa-binoculars', 'binoculars'], ['fa-telescope', 'telescope'], ['fa-microscope', 'microscope'], ['fa-memory', 'memory'], ['fa-joystick', 'joystick'], ['fa-wand-magic-sparkles', 'wand'], ['fa-calendar-check', 'calendar'], ['fa-shoe-prints', 'walk'], ['fa-receipt', 'ticket']]) {
+    assert.strictEqual(glyphs.fromFa(fa), g, `${fa} → ${g}`);
+}
+for (const name of glyphs.NAMES) assert.ok(glyphs.META[name].tags.length, `${name}: META carries its keywords`);
 assert.strictEqual(glyphs.fromFa('fa-book-open'), 'book-open', 'an open book, not a square');
 assert.strictEqual(glyphs.inner('check'), glyphs.path('check'), 'a glyph without a solid one is its lines alone');
 assert.strictEqual(glyphs.fromFa('fa-tower-broadcast'), 'live');

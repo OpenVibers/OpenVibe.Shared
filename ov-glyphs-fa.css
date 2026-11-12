@@ -26,6 +26,7 @@
 .fa-chevron-left::before{content:"\e008"}
 .fa-ban::before{content:"\e009"}
 .fa-bell::before{content:"\e00a"}
+.fa-binoculars::before{content:"\e117"}
 .fa-book::before{content:"\e00b"}
 .fa-book-open::before{content:"\e114"}
 .fa-box::before{content:"\e0c5"}
@@ -42,6 +43,7 @@
 .fa-circle-notch::before{content:"\e00f"}
 .fa-spinner::before{content:"\e00f"}
 .fa-calendar::before{content:"\e010"}
+.fa-calendar-check::before{content:"\e010"}
 .fa-calendar-day::before{content:"\e010"}
 .fa-calendar-days::before{content:"\e010"}
 .fa-camera::before{content:"\e011"}
@@ -62,6 +64,7 @@
 .fa-chart-column::before{content:"\e014"}
 .fa-chart-line::before{content:"\e014"}
 .fa-chart-simple::before{content:"\e014"}
+.fa-magnifying-glass-chart::before{content:"\e014"}
 .fa-comment::before{content:"\e015"}
 .fa-comment-dots::before{content:"\e015"}
 .fa-comments::before{content:"\e015"}
@@ -113,6 +116,7 @@
 .fa-clone::before{content:"\e024"}
 .fa-copy::before{content:"\e024"}
 .fa-couch::before{content:"\e0d7"}
+.fa-cpu::before{content:"\e118"}
 .fa-crown::before{content:"\e025"}
 .fa-cubes::before{content:"\e0d8"}
 .fa-database::before{content:"\e026"}
@@ -127,6 +131,7 @@
 .fa-angle-down::before{content:"\e029"}
 .fa-caret-down::before{content:"\e029"}
 .fa-chevron-down::before{content:"\e029"}
+.fa-cloud-arrow-down::before{content:"\e02a"}
 .fa-download::before{content:"\e02a"}
 .fa-hard-drive::before{content:"\e0a2"}
 .fa-hdd::before{content:"\e0a2"}
@@ -179,6 +184,7 @@
 .fa-earth-americas::before{content:"\e03d"}
 .fa-earth-europe::before{content:"\e03d"}
 .fa-globe::before{content:"\e03d"}
+.fa-gpu::before{content:"\e119"}
 .fa-grid::before{content:"\e03e"}
 .fa-table-cells::before{content:"\e03e"}
 .fa-th::before{content:"\e03e"}
@@ -223,6 +229,7 @@
 .fa-circle-info::before{content:"\e048"}
 .fa-info-circle::before{content:"\e048"}
 .fa-user-plus::before{content:"\e049"}
+.fa-joystick::before{content:"\e11a"}
 .fa-key::before{content:"\e04a"}
 .fa-keyboard::before{content:"\e04b"}
 .fa-language::before{content:"\e04c"}
@@ -240,6 +247,7 @@
 .fa-list::before{content:"\e051"}
 .fa-list-ul::before{content:"\e051"}
 .fa-list-ol::before{content:"\e0ae"}
+.fa-broadcast::before{content:"\e052"}
 .fa-broadcast-tower::before{content:"\e052"}
 .fa-tower-broadcast::before{content:"\e052"}
 .fa-tower-cell::before{content:"\e052"}
@@ -258,10 +266,13 @@
 .fa-people-group::before{content:"\e056"}
 .fa-user-group::before{content:"\e056"}
 .fa-users::before{content:"\e056"}
+.fa-memory::before{content:"\e11c"}
+.fa-ram::before{content:"\e11c"}
 .fa-bars::before{content:"\e057"}
 .fa-microphone::before{content:"\e058"}
 .fa-microphone-lines::before{content:"\e058"}
 .fa-microphone-slash::before{content:"\e059"}
+.fa-microscope::before{content:"\e11d"}
 .fa-minus::before{content:"\e05a"}
 .fa-circle-minus::before{content:"\e0ed"}
 .fa-minus-circle::before{content:"\e0ed"}
@@ -319,6 +330,7 @@
 .fa-plug::before{content:"\e06a"}
 .fa-plug-circle-bolt::before{content:"\e06a"}
 .fa-plug-circle-check::before{content:"\e06a"}
+.fa-plug-circle-plus::before{content:"\e06a"}
 .fa-plug-circle-xmark::before{content:"\e06a"}
 .fa-plus::before{content:"\e06b"}
 .fa-circle-plus::before{content:"\e0f3"}
@@ -351,10 +363,12 @@
 .fa-save::before{content:"\e070"}
 .fa-balance-scale::before{content:"\e0b6"}
 .fa-scale-balanced::before{content:"\e0b6"}
+.fa-clip::before{content:"\e071"}
 .fa-cut::before{content:"\e071"}
 .fa-scissors::before{content:"\e071"}
 .fa-scroll::before{content:"\e0fb"}
 .fa-magnifying-glass::before{content:"\e072"}
+.fa-magnifying-glass-dollar::before{content:"\e072"}
 .fa-search::before{content:"\e072"}
 .fa-seedling::before{content:"\e0b7"}
 .fa-server::before{content:"\e074"}
@@ -382,11 +396,10 @@
 .fa-arrow-down-short-wide::before{content:"\e101"}
 .fa-sparkles::before{content:"\e07c"}
 .fa-star-of-life::before{content:"\e07c"}
-.fa-wand-magic::before{content:"\e07c"}
-.fa-wand-magic-sparkles::before{content:"\e07c"}
 .fa-square::before{content:"\e102"}
 .fa-star::before{content:"\e07d"}
 .fa-list-check::before{content:"\e07e"}
+.fa-power-off::before{content:"\e07f"}
 .fa-stop::before{content:"\e07f"}
 .fa-store::before{content:"\e080"}
 .fa-cloud-bolt::before{content:"\e0bb"}
@@ -401,11 +414,13 @@
 .fa-tag::before{content:"\e084"}
 .fa-tags::before{content:"\e084"}
 .fa-bullseye::before{content:"\e085"}
+.fa-telescope::before{content:"\e11e"}
 .fa-campground::before{content:"\e087"}
 .fa-terminal::before{content:"\e088"}
 .fa-font::before{content:"\e089"}
 .fa-text-height::before{content:"\e089"}
 .fa-thumbs-up::before{content:"\e104"}
+.fa-receipt::before{content:"\e08a"}
 .fa-ticket::before{content:"\e08a"}
 .fa-timeline::before{content:"\e0bd"}
 .fa-toolbox::before{content:"\e0be"}
@@ -442,7 +457,11 @@
 .fa-volume-high::before{content:"\e094"}
 .fa-volume-low::before{content:"\e094"}
 .fa-person-walking::before{content:"\e10e"}
+.fa-shoe-prints::before{content:"\e10e"}
 .fa-wallet::before{content:"\e095"}
+.fa-wand-magic::before{content:"\e11f"}
+.fa-wand-magic-sparkles::before{content:"\e11f"}
+.fa-wand-sparkles::before{content:"\e11f"}
 .fa-person-swimming::before{content:"\e096"}
 .fa-water::before{content:"\e096"}
 .fa-wave-square::before{content:"\e097"}
@@ -465,6 +484,7 @@
 .fa-duotone.fa-circle-exclamation::after{content:"\e002";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-box-archive::after{content:"\e003";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-bell::after{content:"\e00a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-binoculars::after{content:"\e117";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-book::after{content:"\e00b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-book-open::after{content:"\e114";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-box-open::after{content:"\e0c5";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -476,6 +496,7 @@
 .fa-duotone.fa-suitcase::after{content:"\e09c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-bug::after{content:"\e0c6";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-burst::after{content:"\e0c7";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-calendar-check::after{content:"\e010";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-calendar::after{content:"\e010";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-calendar-days::after{content:"\e010";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-calendar-day::after{content:"\e010";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -493,6 +514,7 @@
 .fa-duotone.fa-cart-plus::after{content:"\e013";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-closed-captioning::after{content:"\e0cb";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-chart-line::after{content:"\e014";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-magnifying-glass-chart::after{content:"\e014";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-chart-simple::after{content:"\e014";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-chart-bar::after{content:"\e014";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-chart-area::after{content:"\e014";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -538,6 +560,7 @@
 .fa-duotone.fa-copy::after{content:"\e024";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-clone::after{content:"\e024";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-couch::after{content:"\e0d7";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-cpu::after{content:"\e118";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-crown::after{content:"\e025";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-cubes::after{content:"\e0d8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-database::after{content:"\e026";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -549,6 +572,7 @@
 .fa-duotone.fa-door-open::after{content:"\e0a1";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-door-closed::after{content:"\e0a1";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-download::after{content:"\e02a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-cloud-arrow-down::after{content:"\e02a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-hard-drive::after{content:"\e0a2";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-hdd::after{content:"\e0a2";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-droplet::after{content:"\e02b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -592,6 +616,7 @@
 .fa-duotone.fa-globe::after{content:"\e03d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-earth-americas::after{content:"\e03d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-earth-europe::after{content:"\e03d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-gpu::after{content:"\e119";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-grid::after{content:"\e03e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-table-cells::after{content:"\e03e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-th::after{content:"\e03e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -625,6 +650,7 @@
 .fa-duotone.fa-circle-info::after{content:"\e048";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-info-circle::after{content:"\e048";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-user-plus::after{content:"\e049";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-joystick::after{content:"\e11a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-key::after{content:"\e04a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-keyboard::after{content:"\e04b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-face-laugh::after{content:"\e0e8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -637,6 +663,7 @@
 .fa-duotone.fa-tower-broadcast::after{content:"\e052";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-broadcast-tower::after{content:"\e052";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-tower-cell::after{content:"\e052";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-broadcast::after{content:"\e052";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-lock::after{content:"\e053";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-unlock::after{content:"\e053";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-envelope::after{content:"\e054";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -651,9 +678,12 @@
 .fa-duotone.fa-people-group::after{content:"\e056";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-user-group::after{content:"\e056";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-people-arrows::after{content:"\e056";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-memory::after{content:"\e11c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-ram::after{content:"\e11c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-microphone::after{content:"\e058";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-microphone-lines::after{content:"\e058";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-microphone-slash::after{content:"\e059";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-microscope::after{content:"\e11d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-circle-minus::after{content:"\e0ed";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-minus-circle::after{content:"\e0ed";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-money-bill::after{content:"\e0b0";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -703,6 +733,7 @@
 .fa-duotone.fa-play::after{content:"\e069";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-circle-play::after{content:"\e069";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-plug::after{content:"\e06a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-plug-circle-plus::after{content:"\e06a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-plug-circle-bolt::after{content:"\e06a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-plug-circle-check::after{content:"\e06a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-plug-circle-xmark::after{content:"\e06a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -729,8 +760,10 @@
 .fa-duotone.fa-save::after{content:"\e070";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-scissors::after{content:"\e071";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-cut::after{content:"\e071";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-clip::after{content:"\e071";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-magnifying-glass::after{content:"\e072";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-search::after{content:"\e072";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-magnifying-glass-dollar::after{content:"\e072";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-seedling::after{content:"\e0b7";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-server::after{content:"\e074";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-icons::after{content:"\e0b8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -748,8 +781,6 @@
 .fa-duotone.fa-sliders-h::after{content:"\e079";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-face-smile::after{content:"\e07a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-face-grin-stars::after{content:"\e07a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
-.fa-duotone.fa-wand-magic-sparkles::after{content:"\e07c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
-.fa-duotone.fa-wand-magic::after{content:"\e07c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-sparkles::after{content:"\e07c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-star-of-life::after{content:"\e07c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-square::after{content:"\e102";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -764,12 +795,14 @@
 .fa-duotone.fa-tag::after{content:"\e084";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-tags::after{content:"\e084";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-bullseye::after{content:"\e085";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-telescope::after{content:"\e11e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-campground::after{content:"\e087";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-terminal::after{content:"\e088";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-font::after{content:"\e089";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-text-height::after{content:"\e089";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-thumbs-up::after{content:"\e104";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-ticket::after{content:"\e08a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-receipt::after{content:"\e08a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-toolbox::after{content:"\e0be";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-train::after{content:"\e08b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-trash::after{content:"\e08c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
@@ -798,8 +831,12 @@
 .fa-duotone.fa-video-slash::after{content:"\e093";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-volume-high::after{content:"\e094";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-volume-low::after{content:"\e094";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-shoe-prints::after{content:"\e10e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-person-walking::after{content:"\e10e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-wallet::after{content:"\e095";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-wand-magic-sparkles::after{content:"\e11f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-wand-magic::after{content:"\e11f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-wand-sparkles::after{content:"\e11f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-water::after{content:"\e096";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-person-swimming::after{content:"\e096";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-weight-hanging::after{content:"\e10f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}

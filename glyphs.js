@@ -97,6 +97,16 @@
         drop: '<path d="M12 3.5s5.9 6.4 5.9 10.8a5.9 5.9 0 0 1-11.8 0c0-4.4 5.9-10.8 5.9-10.8Z"/>',
         wifi: '<path d="M3.7 9.4a12.4 12.4 0 0 1 16.7 0M6.4 12.5a8.4 8.4 0 0 1 11.5 0M9.1 15.6a4.4 4.4 0 0 1 6.2 0M12.1 18.6h0"/>',
         branch: '<circle cx="6.7" cy="5.6" r="1.9"/><circle cx="6.7" cy="18.6" r="1.9"/><circle cx="17.9" cy="7.5" r="1.9"/><path d="M6.7 7.5v9.3M17.9 9.3c0 5.1-6 3.7-10.2 7.9"/>',
+        // 2026-11-12: the tools, machines and creative shapes the icon audit found missing (plan L32 I1/I2).
+        binoculars: '<rect x="4.4" y="7.4" width="6" height="12.8" rx="3"/><rect x="13.6" y="7.4" width="6" height="12.8" rx="3"/><path d="M10.4 10.2h3.2M10.4 15.8h3.2"/><path d="M6.9 7.4V5.7a1.6 1.6 0 0 1 3.2 0v1.7M13.9 7.4V5.7a1.6 1.6 0 0 1 3.2 0v1.7"/>',
+        telescope: '<path d="M3.1 11.4l14.4-7.2l2.5 5l-14.4 7.2Z"/><path d="M9.1 14.9l-1.6 4.7M9.1 14.9l5.5 4.7M8.2 17.3h6.4"/>',
+        microscope: '<path d="M3.4 19.9h17.2M6.2 19.9v-3.4h5.8v3.4M9.2 16.5h8.6M14.1 16.5V7.4M14.1 7.4a4 4 0 0 1 4-4h1.2M19.3 3.4v4.8M9.9 9.9h3.6"/>',
+        gpu: '<rect x="3.5" y="5.5" width="14.4" height="10" rx="1.6"/><circle cx="8.2" cy="10.5" r="2.8"/><path d="M8.2 8.3v4.4M6 10.5h4.4"/><path d="M17.9 8h2.6v5h-2.6M3.5 15.5v2.5"/>',
+        cpu: '<rect x="7" y="7" width="10" height="10" rx="1.6"/><rect x="10.4" y="10.4" width="3.2" height="3.2" rx="0.6"/><path d="M9.5 3.5v3.5M14.5 3.5v3.5M9.5 17v3.5M14.5 17v3.5M3.5 9.5h3.5M3.5 14.5h3.5M17 9.5h3.5M17 14.5h3.5"/>',
+        memory: '<rect x="3.5" y="5.5" width="17" height="7.5" rx="1.2"/><path d="M3.5 15v3.5M6.6 15v3.5M9.7 15v3.5M12.8 15v3.5M15.9 15v3.5M19 15v3.5"/><path d="M6.7 8h4.8M6.7 10.8h3M13.4 8h3.9M13.4 10.8h2.4"/>',
+        joystick: '<path d="M4.3 19.6h15.4l-2.6-7.3H6.9Z"/><path d="M12 12.3V7.6"/><circle cx="12" cy="5.4" r="2.1"/><circle cx="8.3" cy="16.6" r="1.1"/><circle cx="15.7" cy="16.6" r="1.1"/>',
+        wand: '<path d="M3.7 20.3L13.9 10.1M12.1 8.3l3.6 3.6"/><path d="M17.9 3.7l0.9 2.3l2.3 0.9l-2.3 0.9l-0.9 2.3l-0.9-2.3l-2.3-0.9l2.3-0.9Z"/>',
+        'layers-plus': '<path d="M3.8 9.8l8.2-4.8l8.2 4.8M3.8 14l8.2 4.8l4.8-2.8"/><path d="M18.6 14.4v5M16.1 16.9h5"/>',
         // 4.63.0: the Font Awesome names the network still used most (openvibe.design/icons' "Still Font Awesome", 10-31).
         restroom: '<circle cx="7.1" cy="5.3" r="1.7"/><circle cx="16.4" cy="5.3" r="1.7"/><path d="M11.7 3.6v16.7M5.6 20.3v-5.1H4.7V10.6A1.4 1.4 0 0 1 6.1 9.2h1.9a1.4 1.4 0 0 1 1.4 1.4v4.6H8.5V20.3M15.5 20.3v-3.7h-2.4l1.9-6.1a0.9 0.9 0 0 1 0.9-0.9h0.9a0.9 0.9 0 0 1 0.9 0.9l1.9 6.1H17.3v3.7"/>',
         shelter: '<path d="M3.7 10.5L12 4l8.3 6.5M5.9 9.2v10.4M18.1 9.2v10.4"/><circle cx="12" cy="11" r="1.6"/><path d="M9.8 19.6v-3.9a2.2 2.2 0 0 1 4.3 0V19.6"/>',
@@ -459,15 +469,24 @@
         'hot-tub': '<circle cx="8.2" cy="5.4" r="2.4"/><path d="M2.6 10.9h18.8v4.2a5.1 5.1 0 0 1-5.1 5.1h-8.5a5.1 5.1 0 0 1-5.1-5.1Z"/><path class="ln" d="M6.3 10.9v-0.6A2.4 2.4 0 0 1 8.7 8H9.2M13.5 9.4c0.8-0.9-0.8-1.9 0-2.8M17.3 9.4c0.8-0.9-0.8-1.9 0-2.8"/>',
         group: '<rect x="6.9" y="6.8" width="6.4" height="4.8" rx="1.1"/><rect x="10.8" y="12.5" width="6.4" height="4.6" rx="1.1"/><path class="ln" d="M4 7.6V4h3.6M16.5 4h3.6v3.6M20 16.4v3.6h-3.6M7.6 20H4v-3.6"/>',
         gavel: '<path d="M11.3 5.5L5.5 11.3l6.1 6.1l5.8-5.8Z"/><path class="ln" d="M13.7 4.2l5 5M3.8 19.1l5.7-5.7M13.7 19.1h6.3"/>',
+        binoculars: '<rect x="2.9" y="5.4" width="6.8" height="16" rx="3.4"/><rect x="14.3" y="5.4" width="6.8" height="16" rx="3.4"/><rect x="9.3" y="10.7" width="5.4" height="2.8" rx="1"/><path class="ln" d="M5.8 5.4V5.2a1.3 1.3 0 0 1 2.6 0v0.2M17.6 5.4V5.2a1.3 1.3 0 0 1 2.6 0v0.2"/>',
+        telescope: '<path d="M2.2 12.2l15.6-7.8l3 6l-15.6 7.8Z"/><path class="ln" d="M9.1 14.9l-1.6 4.7M9.1 14.9l5.5 4.7M8.2 17.3h6.4"/>',
+        microscope: '<path d="M2.8 18.2h18.4v2.6H2.8Z"/><path d="M6.2 14.8h5.8v3.4H6.2Z"/><path d="M9.2 14.8h8.6v2.6H9.2Z"/><path d="M12.6 7.4a5 5 0 0 1 5-5h1.2v4.8h-1.2a1.8 1.8 0 0 0-1.8 1.8v6.4h-3.2Z"/><path class="ln" d="M19.3 3.4v4.8M9.9 9.9h3.6"/>',
+        gpu: '<rect x="4" y="5.5" width="14.4" height="10" rx="1.6"/><circle cx="8.7" cy="10.5" r="2.8"/><rect x="18.4" y="8" width="2.6" height="5" rx="0.8"/><path class="ln" d="M8.7 8.3v4.4M6.5 10.5h4.4M4 15.5v2.5"/>',
+        cpu: '<path fill-rule="evenodd" d="M7 5.8h10A1.2 1.2 0 0 1 18.2 7v10a1.2 1.2 0 0 1-1.2 1.2H7A1.2 1.2 0 0 1 5.8 17V7A1.2 1.2 0 0 1 7 5.8Zm3.4 4.6a0.6 0.6 0 0 0-0.6 0.6v3.2a0.6 0.6 0 0 0 0.6 0.6h3.2a0.6 0.6 0 0 0 0.6-0.6V11a0.6 0.6 0 0 0-0.6-0.6Z"/><path class="ln" d="M9.5 3.7v3.3M14.5 3.7v3.3M9.5 17v3.3M14.5 17v3.3M3.7 9.5h3.3M3.7 14.5h3.3M17 9.5h3.3M17 14.5h3.3"/>',
+        memory: '<rect x="3.5" y="5" width="17" height="7.5" rx="1.2"/><path class="ln" d="M3.5 14.5v3.5M6.6 14.5v3.5M9.7 14.5v3.5M12.8 14.5v3.5M15.9 14.5v3.5M19 14.5v3.5M6.7 7.5h4.8M6.7 10.3h3M13.4 7.5h3.9M13.4 10.3h2.4"/>',
+        joystick: '<path d="M3.8 21.2h16.4l-2.8-8.2H6.6Z"/><circle cx="12" cy="5.6" r="2.8"/><circle cx="8.3" cy="17.2" r="1.1"/><circle cx="15.7" cy="17.2" r="1.1"/><path class="ln" d="M12 13V8.4"/>',
+        wand: '<path class="ln" d="M3.7 20.3L13.9 10.1M12.1 8.3l3.6 3.6"/><path d="M17.9 3.7l0.9 2.3l2.3 0.9l-2.3 0.9l-0.9 2.3l-0.9-2.3l-2.3-0.9l2.3-0.9Z"/>',
+        'layers-plus': '<path d="M12 4.1l8.2 4.8l-8.2 4.8l-8.2-4.8Z"/><path class="ln" d="M3.8 14l8.2 4.8l4.8-2.8"/><path d="M17.6 13.9h1.6v2.2h2.2v1.6h-2.2v2.2h-1.6v-2.2h-2.2v-1.6h2.2Z"/>',
     });
     const BY = { kit: 'the OpenVibe Kit', opus: 'drawn by Opus for the glyph set (2026-10-31)' };
     const ALL = { ...(kit && kit.PATHS ? kit.PATHS : {}), ...DRAWN };
     const NAMES = Object.freeze(Object.keys(ALL).sort());
-    const META = Object.freeze(Object.fromEntries(NAMES.map((n) => [n, { by: DRAWN[n] ? BY.opus : BY.kit, tags: [] }])));
 
     // ── Font Awesome's names, as the network uses them, mapped to the glyph that stands for each ──
     const FA = Object.freeze({
-        'wand-magic-sparkles': 'spark', 'wand-magic': 'spark', sparkles: 'spark', 'star-of-life': 'spark', eye: 'eye', 'eye-slash': 'eye-off',
+        'wand-magic-sparkles': 'wand', 'wand-magic': 'wand', 'wand-sparkles': 'wand', sparkles: 'spark', 'star-of-life': 'spark', eye: 'eye', 'eye-slash': 'eye-off',
+        binoculars: 'binoculars', telescope: 'telescope', microscope: 'microscope', joystick: 'joystick', gpu: 'gpu', cpu: 'cpu', memory: 'memory', ram: 'memory',
         'tower-broadcast': 'live', 'broadcast-tower': 'live', 'satellite-dish': 'dish', 'tower-cell': 'live', 'signal': 'wifi', wifi: 'wifi',
         xmark: 'close', times: 'close', 'circle-xmark': 'x-circle', 'xmark-circle': 'x-circle', video: 'video', 'video-slash': 'video', camera: 'camera',
         robot: 'robot', scissors: 'scissors', cut: 'scissors', copy: 'copy', paste: 'clipboard', clipboard: 'clipboard', 'clipboard-list': 'clipboard',
@@ -498,6 +517,7 @@
         'right-from-bracket': 'leave', 'right-to-bracket': 'enter', 'arrow-right-from-bracket': 'leave', 'arrow-right-to-bracket': 'enter',
         gift: 'gift', lightbulb: 'idea', 'cart-shopping': 'cart', cart: 'cart', bullseye: 'target', trophy: 'trophy', tag: 'tag', tags: 'tag', shirt: 'shirt', reply: 'reply',
         'face-smile': 'smile', 'box-archive': 'archive', ticket: 'ticket', thumbtack: 'tack', store: 'store', keyboard: 'keyboard', gavel: 'gavel', droplet: 'drop',
+        'calendar-check': 'calendar', 'cloud-arrow-down': 'download', 'magnifying-glass-chart': 'chart', 'magnifying-glass-dollar': 'search', 'plug-circle-plus': 'plug', 'power-off': 'stop', receipt: 'ticket', 'shoe-prints': 'walk', broadcast: 'live', clip: 'scissors',
         flag: 'flag', calendar: 'calendar', 'calendar-days': 'calendar', phone: 'phone', 'mobile-screen': 'phone', 'hand': 'hand', 'hand-pointer': 'hand', grid: 'grid',
         'table-cells': 'grid', 'chart-simple': 'chart', 'chart-bar': 'chart', 'filter': 'filter', 'ellipsis': 'more', 'ellipsis-vertical': 'more', 'share-nodes': 'nodes',
         // 4.63.0
@@ -542,6 +562,27 @@
         'plug-circle-check': 'plug', 'puzzle-piece': 'puzzle', puzzle: 'puzzle', 'puzzle-piece-simple': 'puzzle', 'plug-circle-xmark': 'plug', save: 'save', th: 'grid', 'down-left-and-up-right-to-center': 'compress',
         paintbrush: 'palette', 'paint-brush': 'palette',
     });
+
+    // Each glyph's words, for openvibe.design/icons and the suggest API: the Font Awesome names it stands for, plus
+    // the synonyms a person would type for it. Every glyph has some (a name with no alias still gets its own).
+    const KEYWORDS = {
+        binoculars: 'look see view search find observe spy distance bird',
+        telescope: 'look far stars space astronomy observe lens',
+        microscope: 'science lab biology research tiny zoom',
+        gpu: 'graphics card render video hardware compute gaming',
+        cpu: 'processor chip computer hardware core',
+        memory: 'ram stick computer hardware storage',
+        joystick: 'game controller gamepad play arcade',
+        wand: 'magic sparkle spell create wizard',
+        'layers-plus': 'add stack new level create',
+        broadcast: 'live stream radio signal',
+        clip: 'cut attach scissors',
+    };
+    const META = Object.freeze(Object.fromEntries(NAMES.map((n) => {
+        const aliases = Object.entries(FA).filter(([, g]) => g === n).map(([fa]) => fa.replace(/-/g, ' '));
+        const words = [n.replace(/-/g, ' '), ...(KEYWORDS[n] || '').split(' ').filter(Boolean)];
+        return [n, { by: DRAWN[n] ? BY.opus : BY.kit, tags: [...new Set([...words, ...aliases])].slice(0, 24) }];
+    })));
 
     const path = (name) => (Object.prototype.hasOwnProperty.call(ALL, name) ? ALL[name] : '');
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
