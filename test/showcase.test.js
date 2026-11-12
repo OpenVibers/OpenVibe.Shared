@@ -128,6 +128,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     const net = sc.network({ service: 'live' });
     assert.ok(net.includes('More on OpenVibe') && net.includes('data-ov-now') && net.includes('https://openvibe.network/sites') && net.includes('https://openre.stream/?ov_from=live') && net.includes('data-icon="openre"'), 'related products, with the referral tag and ring icons');
     assert.ok(!net.includes('https://openvibe.live/'), 'never links a product to itself');
+    assert.ok(net.includes('<span class="ov-appicon" data-icon="openre" data-ova="openre" data-size="44"') && !net.includes('sc-ic-ov'), 'each related site is its app icon, whole on the server (design rule 142)');
     assert.ok(sc.network({ service: 'unknown-thing' }).includes('OpenVibe.Live'), 'a product without its own list gets the core ones');
     assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'));
     for (const [svc, list] of Object.entries(sc.RELATED)) for (const [to, what, href] of list) assert.ok(to && what && /^https:\/\//.test(href) && to !== svc, `${svc} → ${to}`);
@@ -180,6 +181,9 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(h.includes('<h3 class="sc-apps-group">Watch &lt;and&gt; stream</h3>') && !h.includes('>Empty<'), 'groups are escaped; an empty one is left out');
     assert.ok(h.includes('<b>Live &lt;x&gt;</b><small>Go live from your browser</small>') && h.includes('href="https://openvibe.live/"'), 'a tile: icon, name, text');
     assert.ok(!h.includes('javascript:') && !h.includes('>Bad<'), 'a tile with an unsafe link is dropped');
+    assert.ok(h.includes('<span class="ov-appicon" data-icon="live" data-ova="live" data-size="56"'), 'an app is its app icon (design rule 142), 56 px on a phone');
+    assert.ok(sc.CSS.includes('.sc-apps .ov-appicon{--ova-size:44px!important}'), 'and the row size from 600 px');
+    assert.ok(sc.apps({ items: [{ icon: 'fa-star', name: 'S', href: '/s' }] }).includes('<span class="sc-ic">'), 'a non-OpenVibe glyph keeps its tile');
     assert.ok(h.includes('<p class="sc-apps-more"><a href="/sites">All 48 sites →</a></p>'), 'See all');
     assert.strictEqual(sc.apps({ items: [] }), '', 'nothing to show, no section');
     assert.ok(sc.apps({ items: [{ name: 'A', href: '/a' }] }).includes('<ul class="sc-apps">'), 'items without groups is one grid');

@@ -34,6 +34,11 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':
 const has = (a) => Array.isArray(a) && a.length > 0;
 let ovIcons = null;
 let glyphSet = null;
+/** 4.227.0 (design rule 142): a site or an app is drawn as its app icon, the menu's and Home's, whole on the server. */
+function appIcon(key, size) {
+    ovIcons = ovIcons || require('./ov-icons');
+    return ovIcons.appHtml(String(key || 'ov').toLowerCase(), { size });
+}
 function icon(name, size = 22) {
     if (!name) return '';
     const n = String(name);
@@ -246,7 +251,7 @@ function nextSteps({ id: sid, title = 'Next steps', lede, items } = {}) {
         const to = SERVICE_NAME(s.to);
         const href = withFrom(safeHref(s.href), s.from);
         const embed = safeHref(s.embed);
-        return `<li class="sc-next-item"><a class="sc-next-main" href="${esc(href)}">${s.to && to ? `<span class="sc-ic sc-ic-ov">${icon(`ov:${String(s.to).toLowerCase()}`, 40)}</span>` : ''}<span class="sc-next-body"><b>${esc(s.what)}</b>${s.text ? `<small>${esc(s.text)}</small>` : ''}${to ? `<span class="sc-next-on">on ${esc(to)}</span>` : ''}</span><span class="sc-next-go" aria-hidden="true">→</span></a>${embed ? `<a class="sc-next-embed" href="${esc(embed)}">Embed it</a>` : ''}</li>`;
+        return `<li class="sc-next-item"><a class="sc-next-main" href="${esc(href)}">${s.to && to ? appIcon(s.to, 44) : ''}<span class="sc-next-body"><b>${esc(s.what)}</b>${s.text ? `<small>${esc(s.text)}</small>` : ''}${to ? `<span class="sc-next-on">on ${esc(to)}</span>` : ''}</span><span class="sc-next-go" aria-hidden="true">→</span></a>${embed ? `<a class="sc-next-embed" href="${esc(embed)}">Embed it</a>` : ''}</li>`;
     }).join('')}</ol></section>`;
 }
 
@@ -418,7 +423,7 @@ function network({ id: sid, service, title = 'More on OpenVibe', lede = 'One acc
         .filter((x) => x && x.what && safeHref(x.href) && x.to !== service).slice(0, 4);
     if (!list.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}"><span class="sc-ic sc-ic-ov">${icon(`ov:${String(x.to).toLowerCase()}`, 40)}</span><span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul><div class="sc-net-now" data-ov-now hidden></div><p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site →</a></p></section>`;
+    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul><div class="sc-net-now" data-ov-now hidden></div><p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site →</a></p></section>`;
 }
 
 /**
@@ -434,7 +439,8 @@ function apps({ id: sid, title = '', lede = '', groups = null, items = null, mor
     const sets = (groups || [{ name: '', items: items || [] }]).map((g) => ({ name: g.name || '', items: (g.items || []).filter((x) => x && x.name && safeHref(x.href)) })).filter((g) => g.items.length);
     if (!sets.length) return '';
     const h = `sc-${slug(title || 'apps')}`;
-    const tile = (x) => `<li><a href="${esc(safeHref(x.href))}"><span class="sc-ic sc-ic-ov">${icon(x.icon || 'ov:spark', 40)}</span><span class="sc-app-t"><b>${esc(x.name)}</b>${x.text ? `<small>${esc(x.text)}</small>` : ''}</span></a></li>`;
+    const glyph = (x) => { const k = String(x.icon || 'ov:spark'); return k.startsWith('ov:') ? appIcon(k.slice(3), 56) : `<span class="sc-ic">${icon(k, 22)}</span>`; };
+    const tile = (x) => `<li><a href="${esc(safeHref(x.href))}">${glyph(x)}<span class="sc-app-t"><b>${esc(x.name)}</b>${x.text ? `<small>${esc(x.text)}</small>` : ''}</span></a></li>`;
     // Six or nine are three a row (4.46.1): four columns left one tile alone on the last row.
     const cols = (n) => (n >= 2 && n <= 4 ? n : n % 4 === 0 ? 4 : n % 3 === 0 ? 3 : 0);
     const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps${cols(g.items.length) ? ` sc-apps--c${cols(g.items.length)}` : ''}">${g.items.map(tile).join('')}</ul>`).join('');
@@ -691,6 +697,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 @media (min-width:600px){
 .sc-apps{gap:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .sc-apps a{flex-direction:row;align-items:center;gap:12px;padding:10px 12px;text-align:left;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
+.sc-apps .ov-appicon{--ova-size:44px!important}
 .sc-apps a:hover,.sc-apps a:focus-visible{border-color:var(--accent,#3b82f6);background:var(--bg-secondary,#101828)}
 .sc-apps b{font-size:15px}
 .sc-apps small{position:static;width:auto;height:auto;clip:auto;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary,#96a7c2);font-size:13px}

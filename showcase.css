@@ -177,6 +177,7 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 @media (min-width:600px){
 .sc-apps{gap:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .sc-apps a{flex-direction:row;align-items:center;gap:12px;padding:10px 12px;text-align:left;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
+.sc-apps .ov-appicon{--ova-size:44px!important}
 .sc-apps a:hover,.sc-apps a:focus-visible{border-color:var(--accent,#3b82f6);background:var(--bg-secondary,#101828)}
 .sc-apps b{font-size:15px}
 .sc-apps small{position:static;width:auto;height:auto;clip:auto;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary,#96a7c2);font-size:13px}
