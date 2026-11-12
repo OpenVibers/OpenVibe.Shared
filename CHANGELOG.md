@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.232.0 — 2026-11-12
+
+**`ov-metrics.js`: the network's one way to show numbers** (ai-metrics.md). Report, Exchange, Compare and the admin panel
+draw their AI and usage numbers with it, and nobody draws a chart of their own. The look is the theme's (tokens only).
+Every piece works at 390 px and in both themes, and stays still with motion off.
+
+- `OVMetrics.tiles()`: label, value, unit, a delta that knows whether up is good, a sub-line and a trend.
+- `.spark()`: a trend line with its last point.
+- `.bars()`: a ranked bar list.
+- `.percentiles()`: p50, p90 and p95 on one scale, with a spoken summary.
+- `.split()`: one bar in parts, with a legend.
+- `.table()`: sortable on a click, with `aria-sort`, numeric columns and an optional in-cell bar.
+- `OVMetrics.format`: the same words everywhere, and servers get them from `require('openvibe-shared/ov-metrics')`:
+  - `ms` (540 ms · 1.3 s · 1 min 38 s), `usd` ($0.0042 · $61.20), `count` (18k · 9.1M), `tokens`, `rate` (99.4%);
+  - `tps` (86.0 tok/s), `bytes`, `delta` (+12%);
+  - unknown is a dash, never 0.
+- Test `ov-metrics-chrome`.
+
 ## 4.231.0 — 2026-11-12
 
 **OpenVibe's own icons, and no Font Awesome drawing left** (the owner, 11-12: "make sure no remnants of font awesome or

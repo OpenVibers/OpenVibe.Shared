@@ -1,6 +1,6 @@
 {
   "name": "openvibe-shared",
-  "version": "4.231.0",
+  "version": "4.232.0",
   "description": "Shared navbar, footer, themes, icons, legal pages, SEO, auth and analytics for every OpenVibe site",
   "main": "index.js",
   "bin": {
@@ -153,6 +153,7 @@
     "./ov-searchbox": "./ov-searchbox.js",
     "./ov-composer": "./ov-composer.js",
     "./ov-run": "./ov-run.js",
+    "./ov-metrics": "./ov-metrics.js",
     "./ov-capture": "./ov-capture.js",
     "./ov-ai-choice": "./ai-choice.js",
     "./ov-ai-choice.js": "./ov-ai-choice.js",
