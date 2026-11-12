@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.227.0 — 2026-11-12
+
+- **One app icon, drawn on the server too** (design rule 142). `OpenVibeIcons.appHtml(site, { size, label, hue })` returns the app icon as markup (no DOM needed): its hue and size inline and its glyph already drawn, so `ov-icons.js` finds nothing to fill and nothing moves when it arrives. `OpenVibeIcons.APP_CSS` is the app icon's own rules, sizes 20 · 26 · 32 · 44 · 56 · 64 included: a server-drawn page puts it in its stylesheet once and its icons are whole before any script runs.
+- **Every site's "More on OpenVibe", app launcher and next steps draw sites as their app icons** (showcase `network()`, `apps()`, the next-step list), whole on the server and the same as the menu's: 44 px in a row, 56 px as a launcher tile on a phone. A non-OpenVibe glyph (`fa-…`) keeps its tile.
+- **The square keeps its size before `ov-icons.js`**: the navbar's early rules hold every `.ov-appicon` at its `data-size`, so a page's app icons no longer pop in.
+- **The menu's "Across OpenVibe" sites and a quest's steps wear their app icons** instead of a small glyph in a ring.
+- **The Feed's chips name the one feed's new kinds**: Rundown, Jobs, Deals and Stats, beside the media kinds.
+- **A release reaches a returning visitor within minutes**: an unversioned asset (`cache-policy` `assetHeaders`) keeps five minutes of stale-while-revalidate, not a day. Sites load `navbar.js` without `?v=`, so the first visit to each site after a release ran the old menu.
+- **/updates passes its contrast check again**: a filter chip's count no longer fades to 70% (axe color-contrast, serious, on every site's /updates; the release browser check had paged as critical).
+
 ## 4.226.0 — 2026-11-12
 
 - **The menu's feed draws the one feed's new kinds (feed.item@1)** (the one-feed job's finding: they fell through to a

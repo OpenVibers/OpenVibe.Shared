@@ -190,6 +190,12 @@
             /* Icons have their size and a faint ring before ov-icons.js draws them: nothing moves or pops when they arrive. */
             .ovnav-drawer .ov-icon { display: inline-block; flex: none; width: 24px; height: 24px; border-radius: 50%; }
             .ovnav-drawer .ov-icon[data-size="22"] { width: 22px; height: 22px; }
+            /* An app icon (design rule 142) holds its square at its size before ov-icons.js draws it, on every page. */
+            .ov-appicon { display: inline-block; flex: none; width: var(--ova-size, 56px); height: var(--ova-size, 56px); border-radius: 30%; vertical-align: middle; }
+            .ov-appicon[data-size="20"] { --ova-size: 20px; } .ov-appicon[data-size="26"] { --ova-size: 26px; } .ov-appicon[data-size="32"] { --ova-size: 32px; }
+            .ov-appicon[data-size="44"] { --ova-size: 44px; } .ov-appicon[data-size="56"] { --ova-size: 56px; } .ov-appicon[data-size="64"] { --ova-size: 64px; }
+            .ov-appicon:empty { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+            .ovnav-drawer .ov-appicon > .ov-icon { width: 100%; height: 100%; border-radius: 0; }
             .ovnav-drawer .ov-icon:empty { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
             /* Several balance chips fold into one on a phone (owner, 2026-10-27: the two currencies pushed out the site
                switcher next to the logo); a tap lists each in full. */
@@ -604,7 +610,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '146282739c06', 'dock.js': '1ae182836461', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '437395e64eda', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '660e68d4f243', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': '293808b32ad7' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '146282739c06', 'dock.js': '1ae182836461', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'afd4d1deefc6', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': '293808b32ad7' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1313,7 +1319,7 @@
         if (!pick.length) return '';
         if (inDrawer) {
             return `<div class="ovnav-net-head"><span class="ov-icon" data-icon="ov" data-size="22" data-fx="none"></span><span class="ud-label">Across OpenVibe</span>${_config.launcher === false ? '' : '<button type="button" class="ovnav-net-all" data-open-launcher>All sites</button>'}</div>`
-                + `<div class="ovnav-net-grid">${pick.map(n => `<a class="ovnav-net" data-ov-net-link href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}"><span class="ov-icon" data-icon="${escapeAttr(n.icon || n.id)}" data-size="22" data-fx="none"></span><span>${escapeAttr(n.name)}</span></a>`).join('')}</div>`;
+                + `<div class="ovnav-net-grid">${pick.map(n => `<a class="ovnav-net" data-ov-net-link href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}"><span class="ov-appicon" data-icon="${escapeAttr(n.icon || n.id)}" data-size="26"></span><span>${escapeAttr(n.name)}</span></a>`).join('')}</div>`;
         }
         return `<span class="ovnav-sep" aria-hidden="true"></span>` + pick.map(n => `<a class="ovnav-net" data-ov-net-link href="${escapeAttr(n.url)}" title="${escapeAttr(n.tagline)}">${escapeAttr(n.name)}</a>`).join('');
     }

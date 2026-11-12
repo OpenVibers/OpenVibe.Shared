@@ -96,7 +96,7 @@ const server = http.createServer((req, res) => {
             kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
             bolds: document.querySelectorAll('.ovfd-list b b').length, posts: [...document.querySelectorAll('.ovfd-k-post .ovfd-title')].map((b) => b.textContent)[0],
             sections: [...document.querySelectorAll('.ovs-group')].map((g) => g.textContent.trim()).filter(Boolean), scroll: document.documentElement.scrollWidth })`);
-        assert.deepStrictEqual(first.chips, ['For you', 'Live', 'Videos', 'Clips', 'Pics', 'Posts', 'Memes', 'Games', 'Chat', 'Events', 'Wiki', 'Quests', 'Updates'], 'signed out: no Following chip');
+        assert.deepStrictEqual(first.chips, ['For you', 'Live', 'Videos', 'Clips', 'Pics', 'Posts', 'Rundown', 'Memes', 'Games', 'Chat', 'Events', 'Jobs', 'Deals', 'Stats', 'Wiki', 'Quests', 'Updates'], 'signed out: no Following chip');
         assert.strictEqual(first.selected, 'For you');
         assert.ok(first.kinds.some((c) => /\bovfd-k-live\b/.test(c)) && first.kinds.some((c) => /\bovfd-act\b/.test(c) && /\bovfd-k-update\b/.test(c)) && first.kinds.some((c) => /\bovfd-k-pic\b/.test(c)), `cards by kind (${first.kinds})`);
         assert.ok(first.live, 'a channel live now says LIVE (live_now)');
