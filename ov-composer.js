@@ -21,7 +21,7 @@
  *   mentions: { search(q) → Promise<[{ label, handle, sub, avatar, insert }]> },
  *   upload(file, onProgress) → Promise<{ id }>,      files go to the site's store before the send
  *   beforeSend(ctx) → false to hold the send })
- * ctx: { form, text, value, set(v), insert(s), files(), add(files), note(s), send() }.
+ * ctx: { form, text, value, set(v), insert(s), files(), alt(file), caption(file), add(files), note(s), send() }.
  * A box its page sends by script (a chat, an agent's run): form.__ovc.files() → the files (File objects), uploads(): the
  * ids a mod's upload gave, clear() after the send (the text, the chips, the draft); a form 'reset' clears the same.
  * A site without script says the same in data: data-ovt-commands='[{"name","hint","insert"}]', data-ovc-max-files,
@@ -55,6 +55,14 @@
 .ovc-file.is-bad .ovc-file-s { color: var(--live-red, #ef4444); }
 .ovc-file-x, .ovc-file-b { position: absolute; top: 4px; right: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--text-secondary, #b4c0d4); cursor: pointer; }
 .ovc-file-b { top: auto; bottom: 4px; }
+/* 4.228.0: Caption it with AI (Network /api/frame/caption). Its corner of the chip; a gentle pulse while it writes. */
+.ovc-file-ai { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 8px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 16%, transparent); color: var(--ovt-accent, var(--accent-light, #60a5fa)); cursor: pointer; }
+.ovc-file-ai:hover, .ovc-file-ai:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 28%, transparent); }
+.ovc-file-ai svg { width: 15px; height: 15px; }
+.ovc-file-ai.is-busy { cursor: progress; }
+.ovc-file-ai.is-busy svg { animation: ovc-spark 1.2s ease-in-out infinite; }
+@keyframes ovc-spark { 50% { transform: scale(.72) rotate(45deg); opacity: .55; } }
+html[data-ov-motion=off] .ovc-file-ai.is-busy svg, html[data-ov-motion=reduced] .ovc-file-ai.is-busy svg { animation: none; opacity: .6; }
 .ovc-file-x:hover, .ovc-file-b:hover, .ovc-file-x:focus-visible, .ovc-file-b:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 10%, transparent)); color: var(--text-primary, #e6edf7); }
 .ovc-file-x svg, .ovc-file-b svg { width: 15px; height: 15px; }
 .ovc-dropping { border-color: var(--ovt-accent, var(--accent, #3b82f6)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent), 0 8px 30px rgba(0, 0, 0, .25); }
@@ -258,6 +266,7 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-th, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-th { width: 100%; height: 150px; border-radius: 15px 15px 0 0; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-t, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-t { display: none; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image input, .ovc-v2[data-preset=comment] .ovc-file.ovc-image input { flex: none; width: 100%; min-height: 38px; margin: 0; border: 0; border-top: 1px solid var(--ovt-line, rgba(148, 163, 184, .18)); border-radius: 0 0 15px 15px; padding: 8px 10px; background: transparent; font-size: 13px; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-ai, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-ai { top: 6px; left: 6px; right: auto; bottom: auto; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 50%; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-x, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-x { top: 6px; right: 6px; background: rgba(0, 0, 0, .6); color: #fff; border-radius: 50%; }
 .ovc-v2 .ovc-note { margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #7386a3); }
 .ovc-v2 .ovc-note:empty { display: none; }
@@ -490,6 +499,8 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
             set(v) { text.value = v; fire(); },
             insert(s) { const a = text.selectionStart, b = text.selectionEnd; text.setRangeText(s, a, b, 'end'); fire(); text.focus(); },
             files: () => files.map((f) => f.file),
+            alt: (file) => { const f = files.find((x) => x.file === file); return f ? f.alt || '' : ''; },
+            caption: (file) => { const f = files.find((x) => x.file === file); return f ? caption(f) : Promise.resolve(); },
             add: (list) => add(list),
             note: say,
             send: () => { if (form.requestSubmit) form.requestSubmit(send || undefined); else form.submit(); },
@@ -531,11 +542,47 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
             chip.innerHTML = `${thumb}<span class="ovc-file-t"><span class="ovc-file-n"></span><span class="ovc-file-s"></span></span>`
                 + (f.pasted ? `<button type="button" class="ovc-file-b" data-ovc-back aria-label="Put the text back in the box" title="Put it back in the box">${svg(IC.back)}</button>` : '')
                 + (f.error && uploader() ? `<button type="button" class="ovc-file-r" data-ovc-retry aria-label="Try the upload again" title="Try again">${svg(IC.retry)}<span class="ovc-file-r-t">Try again</span></button>` : '')
+                + (kind === 'image' && !f.pasted && captionOn() ? `<button type="button" class="ovc-file-ai${f.captioning ? ' is-busy' : ''}" data-ovc-caption aria-label="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}" title="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}"${f.captioning ? ' aria-busy="true"' : ''}>${svg(IC.spark)}</button>` : '')
                 + `<button type="button" class="ovc-file-x" data-ovc-x aria-label="Remove">${svg(IC.x)}</button>`;
             chip.querySelector('.ovc-file-n').textContent = f.pasted ? 'Pasted text' : f.file.name || 'File';
             chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : size(f.file.size));
             chip.querySelector('[data-ovc-x]').setAttribute('aria-label', `Remove ${f.pasted ? 'the pasted text' : f.file.name || 'the file'}`);
             if (!chip.isConnected) strip.appendChild(chip);
+        }
+        // 4.228.0, Caption it (the owner, 11-12: "auto caption using OpenVibe.Exchange, using the AI features … like some
+        // Instagram"): the picture, made small (768 px, JPEG), goes to the Frame's /api/frame/caption on the person's own
+        // allowance; the caption fills an empty box (theirs to change) and ovc:caption carries the alt text for a page that
+        // keeps one with the picture (the Feed's post). A tap, never on its own: each one is a model call they pay for.
+        function captionOn() { return form.getAttribute('data-ovc-caption') !== 'off'; }
+        async function smallJpeg(file, max) {
+            if (typeof createImageBitmap !== 'function') return null;
+            let bmp = null;
+            try { bmp = await createImageBitmap(file); } catch { return null; }
+            const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, Math.round(bmp.width * k)); canvas.height = Math.max(1, Math.round(bmp.height * k));
+            canvas.getContext('2d').drawImage(bmp, 0, 0, canvas.width, canvas.height);
+            if (bmp.close) bmp.close();
+            try { return canvas.toDataURL('image/jpeg', 0.82); } catch { return null; }
+        }
+        async function caption(f) {
+            if (f.captioning) return;
+            f.captioning = true; paintFile(f);
+            try {
+                const dataUrl = await smallJpeg(f.file, 768);
+                if (!dataUrl) throw new Error('This picture cannot be read here.');
+                const base = String(form.getAttribute('data-ovc-frame') || 'https://openvibe.network').replace(/\/+$/, '');
+                const r = await fetch(`${base}/api/frame/caption`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ image: { data_url: dataUrl } }) });
+                const j = await r.json().catch(() => ({}));
+                if (r.status === 401) throw new Error('Sign in to caption a picture with AI.');
+                if (!r.ok) throw new Error(j.error || 'The AI could not caption it just now.');
+                if (!files.includes(f)) return;
+                f.alt = String(j.alt || ''); f.caption = String(j.caption || '');
+                form.dispatchEvent(new CustomEvent('ovc:caption', { detail: { file: f.file, chip: f.chip, alt: f.alt, caption: f.caption, tags: Array.isArray(j.tags) ? j.tags : [] } }));
+                if (f.caption && !text.value.trim()) { ctx.set(f.caption); text.focus(); say('Caption written by AI: change it as you like.'); }
+                else if (f.alt) say('Described by AI.');
+            } catch (e) { say((e && e.message) || 'The AI could not caption it just now.'); }
+            finally { f.captioning = false; if (files.includes(f)) paintFile(f); }
         }
         function remove(f) {
             const i = files.indexOf(f); if (i < 0) return;
@@ -590,6 +637,7 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
             if (e.target.closest('[data-ovc-x]')) { remove(f); text.focus(); }
             else if (e.target.closest('[data-ovc-back]')) { const t = f.text; remove(f); ctx.insert(t); }
             else if (e.target.closest('[data-ovc-retry]')) sendUp(f);
+            else if (e.target.closest('[data-ovc-caption]')) caption(f);
         });
         form.addEventListener('change', (e) => {
             const i = e.target; if (noFiles || !i || i.type !== 'file' || i.__ovcSync) return;

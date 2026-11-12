@@ -1296,15 +1296,23 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 async onSubmit(v, api) {
                     const images = v.files.filter((f) => /^image\//.test(f.type));
                     if (images.length > 4) { api.ctx.note('Choose up to four pictures.'); return false; }
-                    const missing = images.find((f) => !pics.get(f) || !pics.get(f).value.trim());
-                    if (missing) { api.ctx.note('Describe each picture: what does it show?'); pics.get(missing)?.focus(); return false; }
+                    // 4.228.0: words and descriptions are optional (the owner, 11-12: a picture alone, as on any social
+                    // app). A picture nobody described is described by AI as it posts (Network /api/frame/caption, the
+                    // person's own allowance); if that cannot be done it posts without, never stops the post.
+                    for (const f of images) {
+                        const field = pics.get(f);
+                        if (!field || field.value.trim()) continue;
+                        c.send.textContent = 'Describing your picture';
+                        try { await api.ctx.caption(f); } catch { /* posts without */ }
+                        if (!field.value.trim() && api.ctx.alt(f)) field.value = api.ctx.alt(f);
+                    }
                     const pictures = [], attachments = [];
                     for (const f of v.files) {
                         c.send.textContent = `Uploading ${f.name || 'file'}`;
                         if (/^image\//.test(f.type)) {
                             const prepared = await preparePicture(f);
                             const media_id = await upload(`${o.frameBase || FRAME}/attachments`, prepared.file);
-                            pictures.push({ media_id, alt: pics.get(f).value.trim() });
+                            pictures.push({ media_id, alt: ((pics.get(f) && pics.get(f).value) || '').trim().slice(0, 300) });
                         } else attachments.push(await upload('https://openvibe.media/api/v1/attachments', f));
                     }
                     c.send.textContent = 'Posting';
@@ -1326,9 +1334,14 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 const { file: f, chip } = e.detail;
                 if (!/^image\//.test(f.type)) return;
                 chip.classList.add('ovc-image');
-                const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What does it show?';
-                alt.setAttribute('aria-label', `What ${f.name || 'the picture'} shows`); alt.required = true;
+                const alt = h('input'); alt.type = 'text'; alt.maxLength = 300; alt.placeholder = 'What it shows (or ✨ AI)';
+                alt.setAttribute('aria-label', `What ${f.name || 'the picture'} shows (optional: AI writes it if you leave it)`);
                 chip.append(alt); pics.set(f, alt);
+            });
+            // ✨ on a picture wrote its description: it goes in the picture's field unless the person wrote one.
+            c.form.addEventListener('ovc:caption', (e) => {
+                const field = pics.get(e.detail.file);
+                if (field && !field.value.trim() && e.detail.alt) field.value = e.detail.alt;
             });
             c.form.addEventListener('ovc:file-removed', (e) => { pics.delete(e.detail.file); });
         };
