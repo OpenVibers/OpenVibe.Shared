@@ -1,23 +1,19 @@
 'use strict';
-// The Dock (dock.js, the pill in navbar.js; Dock plan 2026-10-30 K-D1) in a real headless Chrome, against a local
-// stand-in for the Network's GET/PUT /api/v1/me/dock, /api/v1/me/actions and the notification routes:
-//   • the pill shows only while an agent works, one needs you, or it is pinned; it names both, in its corner;
-//   • a 404 (Network without the route yet) keeps it away, and signed out there is none;
-//   • a tap opens the card on Agents when something needs you (waiting first, approve in place), Activity is the
-//     bell's list, Escape closes and gives the focus back to the pill;
-//   • every change reaches the Network as one debounced PUT; on a desktop the head drags the card to a corner and the
-//     free corner resizes it inside 320-720 × 360-900; an open Dock reopens by itself on a desktop, never on a phone;
-//   • desktop toasts are told to stack above the pill; nothing runs off a 320 px screen;
-//   • Chats (K-D2): the person's conversations from Chat's API with their unread counts, a thread opened in place (theirs
-//     and mine), Enter sends, the thread is marked read, the open chat is the Dock's state, and opening one on a phone
-//     never reads as a tap outside the sheet;
-//   • Vibe (L48 V2): the person's Vibe from Chat's /api/vibe, starters before the first message, a question posted and
-//     Vibe's answer arriving in place (an https link as a link), and the Vibe tab kept in the Network's state;
-//   • the timer (L48 R2): the header's menu starts one, the pill counts it down when the Dock is closed, its end
-//     clears it and says so, and a focus round's end writes its break from that same end (any page, the same result);
-//   • Pop out (K-D4): the button only where the browser can open a window of its own; the panel moves into it with
-//     its tabs and its styles, the agent view's stream and styles included, the page keeps the pill saying where the
-//     Dock went, and closing the window brings the panel back; the Network is told.
+// The menu's Chat and Vibe places (dock.js's panels; Dock plan 2026-10-30 K-D1, and 4.220.0: the owner, 11-12, "there
+// should only be the one unified UI … delete … the old tab system") in a real headless Chrome, against a local stand-in
+// for the Network's GET/PUT /api/v1/me/dock, /api/v1/me/actions, Chat's DM and Vibe APIs and Codes' agent view:
+//   • no floating Dock and no pill, ever: what the pill said is a status on the bar's menu button (agents working, one
+//     needs you, a timer's minutes), and a 404 (Network without the route yet) or a signed-out page says nothing;
+//   • the menu button opens on Agents when something needs you (waiting first, approve in place); Escape closes it;
+//     every change reaches the Network as one debounced PUT;
+//   • Chats (K-D2): the person's conversations with their unread counts, a thread opened in place (theirs and mine), Edit
+//     as a pencil at the bubble's corner with the box as the editor, Enter sends, read, the open chat is the state;
+//   • Send to (4.144.0), the agent view (K-D3), and nothing off a 320 px screen;
+//   • Vibe (L48 V2): starters before the first message, a question and Vibe's answer in place, voice without the
+//     browser's speech recognition, and the Vibe place kept in the Network's state;
+//   • the timer (L48 R2): the Vibe place's timer button starts one, the menu button counts it down, its end says so
+//     and clears it, and a focus round's end writes its break from that same end;
+//   • Ask your agent: a page's [data-ov-ask] opens the menu on Vibe with the question in the box, unsent.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('assert');
 const { eventually } = require('../browser-harness');   // a check retries until the page is there (5 s ceiling)
@@ -229,36 +225,16 @@ async function until(p, expr, what, ms = 15000) {   // a limit on a poll: a load
         await wait(80);
     }
 }
-const PILL = `(() => { const p = document.getElementById('ovdk-pill'); if (!p || p.hidden) return null; const b = p.getBoundingClientRect();
-    return { text: p.innerText.trim(), label: p.getAttribute('aria-label'), corner: p.dataset.corner, tone: p.dataset.tone, l: b.left, r: b.right, t: b.top, bt: b.bottom,
-        clear: getComputedStyle(document.documentElement).getPropertyValue('--ov-dock-clear').trim() }; })()`;
-const CARD = `(() => { const c = document.querySelector('.ovdk'); if (!c || c.hidden) return null; const b = c.getBoundingClientRect();
-    return { corner: c.dataset.corner, w: Math.round(b.width), h: Math.round(b.height), l: b.left, t: b.top, tab: (c.querySelector('[role=tab][aria-selected=true]') || {}).dataset?.tab,
-        groups: [...new Set([...c.querySelectorAll('.ovdk-run[data-bucket]')].map((g) => g.dataset.bucket))], items: c.querySelectorAll('.ovac-item').length, notes: c.querySelectorAll('.openvibe-notif-item').length }; })()`;
+// 4.220.0: what the Dock's pill said is the menu button's status; the panels are the menu's places.
+const STATUS = `(() => { const b = [...document.querySelectorAll('#openvibe-search-btn, #openvibe-burger.ovnav-orb')].find((x) => x.getBoundingClientRect().width > 0);
+    if (!b || !b.getAttribute('data-ov-status')) return null; const c = b.querySelector('.ovnav-st');
+    return { tone: b.getAttribute('data-ov-status'), label: b.getAttribute('data-ov-tip'), text: c ? c.textContent : '' }; })()`;
+const PLACE = `(() => { const c = document.querySelector('.ovs.is-open .ovs-door-host .ovdk'); if (!c) return null; const panel = c.querySelector('[data-panel]:not([hidden])');
+    return { tab: panel && panel.dataset.panel, groups: [...new Set([...c.querySelectorAll('.ovdk-run[data-bucket]')].map((g) => g.dataset.bucket))], items: c.querySelectorAll('.ovac-item').length }; })()`;
+const OPEN = (tab) => `(window.OpenVibeDock.open({ tab: '${tab}' }), true)`;
+const MENU_BUTTON = "[...document.querySelectorAll('#openvibe-search-btn, #openvibe-burger.ovnav-orb')].find((x) => x.getBoundingClientRect().width > 0).click()";
+const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...document.querySelectorAll('.ovdk')].every((d) => !!d.closest('.ovs-door-host'))";
 
-// A stand-in for the browser's Document Picture-in-Picture window: a same-origin frame with a real document, so the
-// Dock can move into it (K-D4) and be seen coming back. `__pip.close()` is the person closing that window.
-const PIP = `(() => {
-    const f = document.createElement('iframe');
-    f.id = 'pip-stub';
-    f.style.cssText = 'position:fixed;right:16px;bottom:16px;width:360px;height:520px;border:0;z-index:99999;background:#0d0d12';
-    document.body.appendChild(f);
-    const w = f.contentWindow;
-    const shut = () => { try { w.dispatchEvent(new w.Event('pagehide')); } catch (e) { } try { f.remove(); } catch (e) { } };
-    w.close = shut;
-    const dp = { requestWindow: async (o) => { window.__pip.opts = o || null; return w; } };
-    window.__pip = { win: w, frame: f, close: shut, dp };
-    // Chromium has its own Document Picture-in-Picture getter; an own, writable value stands in for it in the test.
-    Object.defineProperty(window, 'documentPictureInPicture', { value: dp, writable: true, configurable: true });
-    return true;
-})()`;
-
-async function drag(p, from, to) {
-    await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: from[0], y: from[1] });
-    await p.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: from[0], y: from[1], button: 'left', buttons: 1, clickCount: 1 });
-    for (let i = 1; i <= 8; i++) await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: from[0] + (to[0] - from[0]) * i / 8, y: from[1] + (to[1] - from[1]) * i / 8, button: 'left', buttons: 1 });
-    await p.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: to[0], y: to[1], button: 'left', buttons: 0, clickCount: 1 });
-}
 
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
@@ -299,12 +275,12 @@ async function drag(p, from, to) {
                 await shot(p, 'overview');
 
                 // The Vibe tab: the list of the person's conversations.
-                await p.evaluate("document.querySelector('#ovdk-tab-vibe').click()");
+                await p.evaluate(OPEN('vibe'));
                 await until(p, "document.querySelectorAll('.ovdk-vibe-list button').length >= 3", 'the Vibe list');
                 await shot(p, 'vibe');
 
                 // The Chats tab: the AI chats row among the DMs.
-                await p.evaluate("document.querySelector('#ovdk-tab-chats').click()");
+                await p.evaluate(OPEN('chats'));
                 await until(p, "!!document.querySelector('.ovdk-chat-b b')", 'the Chats rows');
                 await shot(p, 'chats');
                 await p.close();
@@ -314,55 +290,42 @@ async function drag(p, from, to) {
         // Two halves (each well under the runner's 60 s; the whole file took about 65 s and timed out on macOS): this file
         // runs the first (DOCK_CHROME_PART 1, the default), test/dock-vibe-timer-chrome.test.js the second, 0 both.
         if (PART !== 2) {
-        // ── Nothing runs, nothing waits, not pinned: no pill. Pinned: the pill, a mark alone. ──
+        // ── Nothing runs, nothing waits: the menu button says nothing. Agents working: a breathing dot on it. No pill. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 3 } };
             const p = await fresh(390);
             await p.goto(`${base}/page`, { maxMs: 5000 });
+            await until(p, "!!window.OpenVibeDock", 'the panels beside the navbar');
             await wait(700);
-            await eventually(async () => assert.strictEqual(await p.evaluate(PILL), null, 'no pill while nothing runs or waits (unread alone is the bell\'s)'));
-            scenario.state = { ...defaultState(), pinned: true };
+            await eventually(async () => assert.strictEqual(await p.evaluate(STATUS), null, 'nothing to say while nothing runs or waits (unread alone is the bell\'s)'));
+            assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'no pill and no floating Dock');
+            scenario.counts = { running: 2, waiting: 0, unread: 0 };
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            const pin = await until(p, PILL, 'the pinned pill');
-            assert.deepStrictEqual([pin.text, pin.tone, pin.label], ['', 'idle', 'Open the Dock'], 'pinned and idle: the mark alone');
+            const st = await until(p, STATUS, 'the status on the menu button');
+            assert.deepStrictEqual([st.tone, st.label, st.text], ['running', '2 working', ''], 'agents working: a dot, named in the tooltip');
             await p.close();
         }
 
-        // ── A phone: the pill says what matters, the sheet opens on Agents, Escape closes it. ──
+        // ── A phone: the menu button says what matters and opens on Agents; approve in place; Escape closes it. ──
         {
             scenario = { counts: { running: 2, waiting: 1, unread: 2 } };
             puts.length = 0; decided.length = 0;
             const p = await fresh(390, 780);
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            const pill = await until(p, PILL, 'the pill');
-            assert.deepStrictEqual([pill.text, pill.label, pill.corner, pill.tone], ['Needs you', '1 needs you, 2 working', 'bottom-right', 'waiting']);
-            assert.ok(pill.r <= 390 - 16 + 0.5 && pill.bt <= 780 - 16 + 0.5, `the pill keeps its 16 px from the edges (${pill.r}, ${pill.bt})`);
-            assert.strictEqual(pill.clear, '0px', 'phones: the toasts are at the top, nothing to clear');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            const card = await until(p, `(() => { const c = ${CARD}; return c && c.items ? c : null; })()`, 'the Agents tab');
-            assert.deepStrictEqual([card.tab, card.groups, card.items], ['agent', ['waiting', 'running'], 3], 'what needs you first, then what runs');
-            await new Promise((ok) => setTimeout(ok, 450));   // the sheet has finished rising
-            const placed = await p.evaluate(CARD);
-            assert.ok(placed.w === 390 && placed.t === 0 && placed.h === 780, `the whole phone, over the bar (owner, 11-09: "all the way to the top"; ${placed.t}, ${placed.h})`);
-            await eventually(async () => assert.strictEqual(await p.evaluate('document.getElementById("ovdk-pill").hidden'), true, 'the pill steps aside while the Dock is open'));
+            const st = await until(p, STATUS, 'the status');
+            assert.deepStrictEqual([st.tone, st.label], ['waiting', '1 needs you'], 'what needs you comes first');
+            await p.evaluate(MENU_BUTTON);
+            const place = await until(p, `(() => { const c = ${PLACE}; return c && c.items ? c : null; })()`, 'the menu, open on Agents');
+            assert.deepStrictEqual([place.tab, place.groups, place.items], ['agent', ['waiting', 'running'], 3], 'what needs you first, then what runs');
+            assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'inside the menu, nothing floating');
             await p.evaluate("document.querySelector('.ovdk .ovac-item[data-bucket=waiting] button[data-do=approve]').click()");
             await until(p, "document.querySelector('.ovdk .ovac-item[data-bucket=waiting] .primary').textContent === 'Approved'", 'approved in place');
             assert.deepStrictEqual(decided, ['actor:apr_1:approve'], 'the approval goes to the Network for that item');
-            await p.evaluate("document.getElementById('ovdk-tab-activity').click()");
-            await until(p, `(() => { const c = ${CARD}; return c && c.tab === 'activity' && c.notes === 2; })()`, 'the Activity tab');
-            await p.evaluate("document.querySelector('.ovdk [role=tab][aria-selected=true]').focus(); document.querySelector('.ovdk').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))");
-            await until(p, `!(${CARD})`, 'Escape closes');
-            await eventually(async () => assert.strictEqual(await p.evaluate('document.activeElement && document.activeElement.id'), 'ovdk-pill', 'the focus goes back to the pill'));
+            await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+            await until(p, "!document.querySelector('.ovs.is-open')", 'Escape closes the menu');
             await wait(900);
-            const all = Object.assign({}, ...puts);
-            assert.deepStrictEqual([all.open, all.tab], [false, 'activity'], `the Network heard where the Dock was left (${JSON.stringify(puts)})`);
+            assert.ok(puts.some((b) => b.tab === 'agent'), `the Network heard the place (${JSON.stringify(puts)})`);
             assert.ok(puts.length <= 3, `changes go as debounced PUTs, not one per click (${puts.length})`);
-            // The Network says it was left open: a phone does not throw a sheet over the next page.
-            scenario.state = { ...scenario.state, open: true };
-            await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, PILL, 'the pill again');
-            await wait(400);
-            await eventually(async () => assert.strictEqual(await p.evaluate(CARD), null, 'a phone opens the Dock only when asked'));
             await p.close();
         }
 
@@ -372,11 +335,8 @@ async function drag(p, from, to) {
             puts.length = 0; said.length = 0; reads.length = 0;
             const p = await fresh(390, 780);
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, PILL, 'the pill');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, "!!document.getElementById('ovdk-tab-chats')", 'the Chats tab');
-            await until(p, "document.querySelector('[data-n=chats]').textContent === '3'", 'the unread count from Chat');
-            await p.evaluate("document.getElementById('ovdk-tab-chats').click()");
+            await until(p, "!!window.OpenVibeDock", 'the panels');
+            await p.evaluate(OPEN('chats'));
             const rows = await until(p, "(() => { const r = [...document.querySelectorAll('.ovdk .ovdk-chat')]; return r.length ? r.map((b) => b.getAttribute('aria-label') + ' | ' + b.querySelector('.ovdk-chat-p').textContent) : null; })()", 'the conversations');
             assert.deepStrictEqual(rows, ['Kai Moreno, 2 unread | see the shots?', 'Design crit | You: Shipped it'], 'named for the other person (or the group), unread first, mine as "You:"');
             await p.evaluate("document.querySelector('.ovdk .ovdk-chat').click()");
@@ -398,7 +358,7 @@ async function drag(p, from, to) {
             await until(p, "document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-text').firstChild.textContent === 'updated by me'", 'the edited message');
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-text .ovdk-edited').textContent"), 'edited', 'one quiet word, inside the bubble'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-edit-bar').hidden && document.querySelector('.ovdk-send textarea').value === ''"), true, 'saved: the bar goes and the box is empty'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'opening a chat on a phone is not a tap outside the sheet'));
+            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovs.is-open .ovdk')"), true, 'the thread stays in the menu'));
             await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'Looks good'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
             assert.deepStrictEqual(said, ['Looks good'], 'Enter sends it to Chat');
@@ -416,7 +376,7 @@ async function drag(p, from, to) {
             said.length = 0; started.length = 0;
             const p = await fresh(390, 780);
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, PILL, 'the pill');
+            await until(p, "!!window.OpenVibeDock", 'the panels');
             const TEXT = 'Friday film https://openvibe.party/p/friday?k=abc';
             const share = (title) => p.evaluate(`OpenVibeDock.share({ text: ${JSON.stringify(TEXT)}${title ? `, title: ${JSON.stringify(title)}` : ''} })`);
             await share('Friday film');
@@ -439,17 +399,15 @@ async function drag(p, from, to) {
             await until(p, `document.querySelector('.ovdk-send textarea') && document.querySelector('.ovdk-send textarea').value === ${JSON.stringify(TEXT)}`, 'a new conversation with the message in the box');
             assert.deepStrictEqual(started, [[4]], 'the conversation is started with Mia, by her id');
             assert.deepStrictEqual(said, [], 'still nothing sent');
-            // On a phone, a page button that sends something opens the sheet and it stays open (the opening tap is not
-            // "a tap outside"); a later tap outside still closes it.
-            await p.evaluate("(() => { OpenVibeDock.close(); const b = document.createElement('button'); b.id = 'pagesend'; b.textContent = 'Send it'; b.addEventListener('click', () => OpenVibeDock.share({ text: 'From a page button' })); document.body.prepend(b); })()");
+            // A page button that sends something opens the menu on Chat, and the opening tap does not close it.
+            await p.evaluate("(() => { OpenVibeDock.close(); const b = document.createElement('button'); b.id = 'pagesend'; b.textContent = 'Send it'; b.addEventListener('click', () => OpenVibeDock.share({ text: 'From a page button' })); document.body.appendChild(b); })()");
+            await until(p, "!document.querySelector('.ovs.is-open')", 'closed first');
             await p.evaluate("document.getElementById('pagesend').click()");
-            await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar, opened by a tap on the page');
+            await until(p, "!!document.querySelector('.ovs.is-open .ovdk .ovdk-share')", 'the bar, opened by a tap on the page');
             await wait(300);
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'the opening tap does not close the sheet'));
-            await p.evaluate("document.body.click()");
-            // A phone's sheet folds back into the navbar's orb before it goes (4.185.0: 240 ms), so it is gone a moment
-            // after the tap, not in the same instant.
-            await until(p, "!document.querySelector('.ovdk:not([hidden])')", 'a later tap outside closes it');
+            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovs.is-open')"), true, 'the opening tap does not close the menu'));
+            await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
+            await until(p, "!document.querySelector('.ovs.is-open')", 'Escape closes it');
             await share();
             await until(p, "!!document.querySelector('.ovdk .ovdk-share')", 'the bar again');
             // Cancel: back to the list, nothing waiting.
@@ -477,9 +435,9 @@ async function drag(p, from, to) {
             // The embed is Live's own page; the harness blocks its address so the test never reaches it.
             const p = await h.openPage(browser, await browser.newContext(), { width: 390, height: 780, block: ['https://openvibe.live/*'] });
             await p.goto(`${base}/page`, { maxMs: 8000 });
-            await until(p, PILL, 'the pill');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, `(() => { const c = ${CARD}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents tab');
+            await until(p, "!!window.OpenVibeDock", 'the panels');
+            await p.evaluate(OPEN('agent'));
+            await until(p, `(() => { const c = ${PLACE}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents place');
             // The stream: Live's embed, the task, the numbers.
             const src = await until(p, "document.querySelector('.ovda iframe') && document.querySelector('.ovda iframe').getAttribute('src')", 'the embed');
             assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
@@ -509,9 +467,9 @@ async function drag(p, from, to) {
             // No stream at all: the view hides itself and the tab is just the list.
             agentView = null;
             await p.goto(`${base}/page`, { maxMs: 8000 });
-            await until(p, PILL, 'the pill again');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, `(() => { const c = ${CARD}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents tab again');
+            await until(p, "!!window.OpenVibeDock", 'the panels again');
+            await p.evaluate(OPEN('agent'));
+            await until(p, `(() => { const c = ${PLACE}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents place again');
             await wait(400);
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), false, 'nothing to show, and nowhere to show it'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovac-item').length"), 3, 'the list alone'));
@@ -523,135 +481,24 @@ async function drag(p, from, to) {
             scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
             const p = await fresh(320, 640);
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            const pill = await until(p, PILL, 'the pill at 320');
-            assert.strictEqual(pill.text, 'Working');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, CARD, 'the sheet at 320');
+            const st = await until(p, STATUS, 'the status at 320');
+            assert.strictEqual(st.tone, 'running');
+            await p.evaluate(OPEN('agent'));
+            await until(p, PLACE, 'the menu on Agents at 320');
             await eventually(async () => assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 320, 'no sideways scroll'));
             await p.close();
         }
-
-        // ── A desktop: the card at the corner, dragged and resized; an open Dock reopens by itself; toasts clear it. ──
-        {
-            scenario = { counts: { running: 2, waiting: 1, unread: 2 } };
-            puts.length = 0;
-            const p = await fresh(1280, 860);
-            await p.goto(`${base}/page`, { maxMs: 5000 });
-            const pill = await until(p, PILL, 'the desktop pill');
-            assert.strictEqual(pill.clear, '58px', 'desktop toasts stack above the pill in their corner');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, `(() => { const c = ${CARD}; return c && c.items ? c : null; })()`, 'the desktop card');
-            await wait(400); // past the grow-in (a transform), so the box is the card's own
-            let card = await p.evaluate(CARD);
-            assert.deepStrictEqual([card.corner, card.w, card.h], ['bottom-right', 420, 640], 'a 420 × 640 card in the pill\'s corner');
-            // Drag the head from its middle to near the top left: it snaps to that corner.
-            await drag(p, [card.l + 120, card.t + 26], [180, 90]); // from the Activity tab: a drag, not a tap
-            card = await until(p, `(() => { const c = ${CARD}; return c && c.corner === 'top-left' ? c : null; })()`, 'the card snaps to the top left');
-            assert.strictEqual(card.tab, 'agent', 'a drag that began on a tab does not pick it');
-            await wait(400);
-            card = await p.evaluate(CARD);
-            assert.ok(card.l <= 17 && card.t >= 60 && card.t < 80, `it sits in the top-left corner, under the bar (${card.l}, ${card.t})`);
-            // The free corner (bottom right, now) resizes it, inside the limits.
-            await drag(p, [card.l + card.w - 8, card.t + card.h - 8], [card.l + card.w + 2000, card.t + card.h - 400]);
-            card = await p.evaluate(CARD);
-            assert.deepStrictEqual([card.w, card.h], [720, 360], 'it stops at 720 wide and 360 tall');
-            await wait(900);
-            const place = Object.assign({}, ...puts.filter((b) => b.place).map((b) => b.place.desktop));
-            assert.deepStrictEqual([place.corner, place.width, place.height], ['top-left', 720, 360], `the Network keeps where and how big (${JSON.stringify(puts)})`);
-            // The next page restores it open on a desktop, where it was left.
-            await p.goto(`${base}/page`, { maxMs: 5000 });
-            card = await until(p, `(() => { const c = ${CARD}; return c && c.corner === 'top-left' ? c : null; })()`, 'the Dock reopens where it was');
-            assert.deepStrictEqual([card.w, card.h], [720, 360], 'the same size');
-            await p.close();
         }
-
-        // ── Pop out (K-D4): the button only where the browser can open a window; the panel goes there and comes back. ──
-        {
-            scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
-            puts.length = 0;
-            const p = await fresh(1280, 860);
-            await p.goto(`${base}/page`, { maxMs: 5000 });
-            // Where the browser cannot open a window of its own, there is nothing to press.
-            await p.evaluate("(() => { Object.defineProperty(window, 'documentPictureInPicture', { value: undefined, writable: true, configurable: true }); return true; })()");
-            await until(p, PILL, 'the pill');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, CARD, 'the card');
-            const POP = "document.querySelector('.ovdk [data-act=pop]')";
-            await eventually(async () => assert.strictEqual(await p.evaluate(`!!${POP}`), true, 'the header carries a pop-out button'));
-            await eventually(async () => assert.strictEqual(await p.evaluate(`${POP}.hidden`), true, 'hidden where the browser cannot open a window of its own'));
-            // The browser can: the button appears.
-            await p.evaluate(PIP);
-            await p.evaluate("document.querySelector('.ovdk [data-act=close]').click()");
-            await until(p, PILL, 'the pill again');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, `(() => { const b = ${POP}; return b && !b.hidden ? true : null; })()`, 'the pop-out button');
-            // The panel moves into the window: the same DOM, the same tabs, the styles come with it.
-            await p.evaluate(`${POP}.click()`);
-            await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the panel in the window');
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk')"), false, 'and not in the page any more'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("window.__pip.win.document.querySelectorAll('.ovdk [role=tab]').length"), 5, 'the same five tabs (Vibe, Code, Agents, Chat, Activity)'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovdk-styles')"), true, "the Dock's styles come with it"));
-            await eventually(async () => assert.deepStrictEqual(await p.evaluate("window.__pip.opts"), { width: 360, height: 520 }, 'a window of about 360 × 520'));
-            const inWindow = await until(p, PILL, 'the pill stays');
-            assert.strictEqual(inWindow.text, 'In a window', 'the page keeps the pill, and it says where the Dock went');
-            // The state write is debounced; a slow runner (macOS CI) needs more than a fixed wait.
-            for (let i = 0; i < 50 && !puts.some((b) => b.open === true); i++) await wait(100);
-            assert.ok(puts.some((b) => b.open === true), `the Network is told the Dock is open (${JSON.stringify(puts)})`);
-            assert.ok(!puts.some((b) => 'popped' in b), `and never where its window is: that stays with this page (${JSON.stringify(puts)})`);
-            // The window is closed: the panel comes back to the page.
-            await p.evaluate("window.__pip.close()");
-            await until(p, "!!document.querySelector('.ovdk')", 'the panel back on the page');
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!window.__pip.win.document.querySelector('.ovdk')"), false, 'and out of the window'));
-            await wait(900);
-            assert.ok(!puts.some((b) => 'popped' in b), `nor that it is back (${JSON.stringify(puts)})`);
-            await p.close();
-        }
-
-        // ── Pop out with the agent view (K-D3): the stream goes into the window too, and its styles follow the
-        //    document the view is actually in, not the page behind it. ──
-        {
-            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true, tab: 'activity' } };
-            agentView = {
-                id: AGENT_ID, state: 'live', title: 'Fix the flaky upload test',
-                task: { source: 'codes', ref: 'tsk_1', title: 'Fix the flaky upload test', url: 'https://openvibe.codes/run/tasks/tsk_1' },
-                curtain: { up: false }, viewers: 1, worked_seconds: 300, visibility: 'private',
-                page_url: `https://openvibe.live/@ada/agents/${AGENT_ID}`,
-                embed_url: `https://openvibe.live/embed/agent/${AGENT_ID}?vt=wvt_test`, last_frame_url: null,
-            };
-            const p = await fresh(1280, 860);
-            await p.goto(`${base}/page`, { maxMs: 8000 });
-            await until(p, PILL, 'the pinned pill');
-            await p.evaluate(PIP);
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, CARD, 'the Dock on Activity');
-            await p.evaluate("document.querySelector('.ovdk [data-act=pop]').click()");
-            await until(p, "!!(window.__pip && window.__pip.win.document.querySelector('.ovdk'))", 'the Dock in the window');
-            // The Agents tab opens for the first time in the window: the stream and its style belong there.
-            await p.evaluate("window.__pip.win.document.querySelector('#ovdk-tab-agent').click()");
-            const src = await until(p, "(() => { const w = window.__pip.win; const f = w.document.querySelector('.ovda iframe'); return f && f.getAttribute('src'); })()", 'the stream in the window');
-            assert.strictEqual(src, agentView.embed_url, 'the same ticket and stream, in the window');
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!window.__pip.win.document.getElementById('ovda-styles')"), true, 'the agent view keeps its styles in the window'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.getElementById('ovda-styles')"), false, 'and does not put them on the page behind it'));
-            // Back on the page, the same view is still there.
-            await p.evaluate("window.__pip.close()");
-            await until(p, "!!document.querySelector('.ovdk .ovda iframe')", 'the stream back on the page');
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda iframe').getAttribute('src')"), agentView.embed_url));
-            await p.close();
-        }
-
-        }
-        if (PART === 1) { console.log('dock-chrome (1 of 2): the pill only when it matters, a phone\'s sheet, Chats, Send to, the agent view, 320 px clean, a desktop\'s card, pop-out'); return; }
+        if (PART === 1) { console.log('dock-chrome (1 of 2): no pill and no floating Dock, the status on the menu button, Agents in the menu, Chats, Send to, the agent view, 320 px clean'); return; }
         // ── Vibe (L48 V2): starters, a question, Vibe's answer in place; the Network keeps the tab. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true } };
             puts.length = 0;
             const p = await fresh(1280, 860);
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, PILL, 'the pinned pill');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
-            await until(p, CARD, 'the card');
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [role=tab]').dataset.tab"), 'vibe', 'Vibe is the first tab'));
-            await p.evaluate("document.querySelector('#ovdk-tab-vibe').click()");
+            await until(p, "!!window.OpenVibeDock", 'the panels');
+            await p.evaluate(OPEN('vibe'));
+            await until(p, "document.querySelector('.ovs.is-open [data-dock=\"vibe\"]') && document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected') === 'true'", 'the menu on Vibe');
             await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the conversation list');
             await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
             await until(p, "document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip').length === 6", 'the starters before the first message, each with its icon');
@@ -698,8 +545,8 @@ async function drag(p, from, to) {
                     stop() { this.state = 'inactive'; window.__recording = false; this.ondataavailable({ data: new Blob([new Uint8Array(4096)], { type: 'audio/ogg' }) }); this.onstop(); }
                 };` });
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, PILL, 'the pinned pill');
-            await p.evaluate("document.getElementById('ovdk-pill').click()");
+            await until(p, "!!window.OpenVibeDock", 'the panels');
+            await p.evaluate(OPEN('vibe'));
             await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the Vibe list');
             await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
             await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-mic')", 'a mic, though the browser has no speech recognition');
@@ -737,9 +584,10 @@ async function drag(p, from, to) {
             puts.length = 0;
             const p = await fresh(1280, 860);
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            await p.evaluate("OpenVibeDock.open({ tab: 'activity' })");
-            await until(p, CARD, 'the card');
-            await p.evaluate("document.querySelector('.ovdk [data-act=timer]').click()");
+            await until(p, "!!window.OpenVibeDock", 'the panels');
+            await p.evaluate(OPEN('vibe'));
+            await until(p, PLACE, 'the menu on Vibe');
+            await p.evaluate("document.querySelector('.ovs .ovs-ai-timer').click()");
             await until(p, "!!document.querySelector('.ovdk .ovdk-tmenu')", 'the timer menu');
             await p.evaluate("document.querySelector('.ovdk .ovdk-tmenu [data-min=\"5\"]').click()");
             const strip = await until(p, "(() => { const s = document.querySelector('.ovdk .ovdk-timer'); return s ? s.innerText : null; })()", 'the timer strip in the Dock');
@@ -747,8 +595,8 @@ async function drag(p, from, to) {
             await wait(900);
             const started = puts.find((b) => b.timer);
             assert.ok(started && started.timer.kind === 'timer' && Date.parse(started.timer.ends_at) - Date.parse(started.timer.started_at) === 300000, `the Network keeps the timer (${JSON.stringify(puts)})`);
-            await p.evaluate("document.querySelector('.ovdk [data-act=close]').click()");
-            const pill = await until(p, `(() => { const q = ${PILL}; return q && /^\\d+:\\d\\d$/.test(q.text) ? q : null; })()`, 'the pill counts it down');
+            await p.evaluate("OpenVibeSearch.close()");
+            const pill = await until(p, `(() => { const q = ${STATUS}; return q && /^\\d+:\\d\\d$/.test(q.text) ? q : null; })()`, 'the menu button counts it down');
             assert.strictEqual(pill.tone, 'timer');
             assert.match(pill.label, /Timer: \d+:\d\d left/);
             // Another page's view: a timer two seconds from its end.
@@ -756,7 +604,7 @@ async function drag(p, from, to) {
             scenario.state = { ...defaultState(), timer: soon(1500) };
             puts.length = 0;
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            const up = await until(p, `(() => { const q = ${PILL}; return q && q.text === "Time's up" ? q : null; })()`, 'the end, said', 8000);
+            const up = await until(p, `(() => { const q = ${STATUS}; return q && q.tone === 'timer-done' && q.text === 'Done' ? q : null; })()`, 'the end, said', 8000);
             assert.match(up.label, /time's up/i);
             await wait(900);
             assert.ok(puts.some((b) => 'timer' in b && b.timer === null), `a plain timer clears itself at its end (${JSON.stringify(puts)})`);
@@ -765,7 +613,7 @@ async function drag(p, from, to) {
             scenario.state = { ...defaultState(), timer: { kind: 'focus', label: 'Write', started_at: new Date(end - 25 * 60000).toISOString(), ends_at: new Date(end).toISOString(), round: 1, rounds: 2, focus_min: 25, break_min: 5 } };
             puts.length = 0;
             await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, `(() => { const q = ${PILL}; return q && q.tone === 'timer' ? q : null; })()`, 'the focus round in the pill');
+            await until(p, `(() => { const q = ${STATUS}; return q && q.tone === 'timer' ? q : null; })()`, 'the focus round on the menu button');
             await wait(2600);
             const brk = puts.map((b) => b.timer).find((t) => t && t.kind === 'break');
             assert.ok(brk, `the break follows the focus round (${JSON.stringify(puts)})`);
@@ -775,20 +623,21 @@ async function drag(p, from, to) {
             await p.close();
         }
 
-        // ── Network without the route yet (404): no pill, and the site stops asking for a day. Signed out: none. ──
+        // ── Network without the route yet (404): no status, and the site stops asking for a day. Signed out: none. ──
         {
             scenario = { missing: true };
             const p = await fresh(1280);
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await wait(700);
-            await eventually(async () => assert.strictEqual(await p.evaluate(PILL), null, 'no pill without the route'));
+            await eventually(async () => assert.strictEqual(await p.evaluate(STATUS), null, 'nothing on the menu button without the route'));
             const off = await p.evaluate("JSON.parse(localStorage.getItem('ov-dock') || 'null')");
             assert.ok(off && off.off > Date.now() + 23 * 3600e3, 'and it waits a day before asking again');
             await p.evaluate("localStorage.removeItem('ov-dock')");
             scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
             await p.goto(`${base}/page?in=0`, { maxMs: 5000 });
             await wait(600);
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.getElementById('ovdk-pill')"), null, 'signed out: no pill at all'));
+            await eventually(async () => assert.strictEqual(await p.evaluate(STATUS), null, 'signed out: no status'));
+            assert.strictEqual(await p.evaluate("!!document.querySelector('#ovdk-pill, .ovdk-pill')"), false, 'and no pill');
             await p.close();
         }
         // ── Ask your agent (4.135.0): a page's [data-ov-ask] chip opens Vibe with the question in the box, unsent. ──
@@ -799,15 +648,15 @@ async function drag(p, from, to) {
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, "!!window.OpenVibeNavbar && typeof OpenVibeNavbar.askAgent === 'function'", 'the navbar');
             await p.evaluate("(() => { const b = document.createElement('button'); b.type = 'button'; b.id = 'ask'; b.setAttribute('data-ov-ask', 'About this stream: night walk in Asakusa. '); document.body.appendChild(b); b.click(); })()");
-            await until(p, CARD, 'the Dock opens');
+            await until(p, PLACE, 'the menu opens');
             const box = await until(p, "(() => { const t = document.querySelector('.ovdk [data-panel=vibe] textarea'); return t && t.value ? { value: t.value } : null; })()", 'the question in the box');
             assert.strictEqual(box.value, 'About this stream: night walk in Asakusa. ', 'the page question, as given');
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [role=tab][aria-selected=true]').dataset.tab"), 'vibe', 'on the Vibe tab'));
+            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected')"), 'true', 'on Vibe'));
             await wait(400);
             assert.strictEqual(asked.length, before, 'nothing is sent for the person');
             await p.close();
         }
-        console.log('dock-chrome: the pill only when it matters, Vibe, Ask your agent, Agents, Chats and Activity, the timer, debounced state, drag and resize, restore on desktops only, 320 px clean, the Dock pops out and comes back');
+        console.log('dock-chrome: Vibe, voice, the glyphs, the timer on the menu button, a Network without the route, Ask your agent');
     } finally {
         await browser.close();
         server.close();

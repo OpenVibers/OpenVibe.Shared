@@ -381,7 +381,8 @@
                 start.append(hello, chips);
                 list.append(start);
             }
-            if (first || atEnd || answered) scroll.scrollTop = scroll.scrollHeight;
+            if (first && !vibe.msgs.length) scroll.scrollTop = 0;
+            else if (first || atEnd || answered) scroll.scrollTop = scroll.scrollHeight;
             clearTimeout(vibe.timer);
             if (ctx.active()) vibe.timer = setTimeout(() => pull(), vibe.waitUntil ? 1500 : 15000);
         }

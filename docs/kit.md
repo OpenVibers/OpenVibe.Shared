@@ -546,7 +546,7 @@ One control on every site: the menu button at the top of the page (or `/`, or Ct
 to be two panels doing the same job, the launcher's dots (every site) and the magnifier (search).
 
 **The menu button** (4.187.0; the owner, 2026-11-10: the Arena's "Search and apps"): a search bar over three apps,
-drawn by `OpenVibeOrb.svg()` in the navbar, the menu's sheet and the Dock.
+drawn by `OpenVibeOrb.svg()` in the navbar and the menu's sheet.
 - **Hovered:** its parts lift in turn.
 - **While the menu loads:** the apps breathe.
 - **While it is open:** it becomes the × that closes the menu, in the same place.

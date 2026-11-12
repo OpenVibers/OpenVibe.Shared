@@ -1,6 +1,6 @@
 # One conversation UI: `openvibe-shared/thread`
 
-Plan L55 C4. Actor's chat proved the shape (L55 C1–C3). Vibe (openvibe.chat), Codes and the Dock use the same parts,
+Plan L55 C4. Actor's chat proved the shape (L55 C1–C3). Vibe (openvibe.chat), Codes and the menu's Chat and Vibe use the same parts,
 so a conversation looks and behaves the same on every OpenVibe site.
 
 - **Server:** `require('openvibe-shared/thread')` builds the markup. It is complete without script and every string is

@@ -246,32 +246,19 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(s, `!!document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]')`), 'the Chat summary is an Open Vibe button');
         await s.evaluate(`document.querySelector('.ovs-door-host .ovdk-chat[aria-label="Open Vibe"]').click()`);
         assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true'`), 'the Vibe row selects the menu Vibe tab');
-        // ── A phone's Dock opens out of the navbar's menu button, and that button is its close button (the owner,
-        // 2026-11-10: "that close button should… fade and have an animation effect from the top right, the menu button
-        // that already exists"). The close orb starts on the navbar's orb and settles into its x; the navbar's orb makes
-        // the same move underneath; closing runs it back, then the sheet is gone. With motion off there is no move.
+        // ── 4.220.0 (the owner, 11-12: "one unified UI"): the Dock's open() opens the menu on that place; there is no
+        // floating Dock, no pill and no sheet of its own, and close() closes the menu. ──
         await s.evaluate(`(document.querySelector('.ovs.is-open [data-close], .ovs-orb') || { click() {} }).click(), true`);
         await new Promise((ok) => setTimeout(ok, 700));
-        assert.ok(await until(s, `!!(window.OpenVibeDock && window.OpenVibeDock.open)`), 'the Dock is loaded beside the navbar');
-        const start = await s.evaluate(`(() => { const c = (e) => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
-            const nav = [...document.querySelectorAll('.openvibe-navbar .ovnav-orb')].find((b) => b.getBoundingClientRect().width > 0);
-            const before = c(nav.querySelector('svg'));
-            window.OpenVibeDock.open({ tab: 'activity' });
-            const dock = document.querySelector('.ovdk'), mine = dock.querySelector('.ovdk-orbx');
-            return { before, at: c(mine.querySelector('svg')), fromOrb: dock.classList.contains('from-orb'), isFrom: mine.classList.contains('is-from') }; })()`);
-        assert.ok(start.fromOrb && start.isFrom, 'the sheet opens from the orb');
-        assert.ok(Math.abs(start.at[0] - start.before[0]) <= 1.5 && Math.abs(start.at[1] - start.before[1]) <= 1.5, `the close orb starts on the navbar's orb (${JSON.stringify(start)})`);
-        await new Promise((ok) => setTimeout(ok, 900));
-        const open = await s.evaluate(`(() => { const dock = document.querySelector('.ovdk'), mine = dock.querySelector('.ovdk-orbx'), sv = mine.querySelector('svg'), r = sv.getBoundingClientRect(), b = mine.getBoundingClientRect();
-            return { settled: getComputedStyle(sv).transform === 'none' && !mine.classList.contains('is-from'), centred: Math.abs((r.left + r.width / 2) - (b.left + b.width / 2)) <= 1, navIsDock: !!document.querySelector('.openvibe-navbar .ovnav-orb.is-dock'), opacity: getComputedStyle(dock).opacity }; })()`);
-        assert.ok(open.settled && open.centred, `it settles into its place in the header (${JSON.stringify(open)})`);
-        assert.ok(open.navIsDock && open.opacity === '1', 'the navbar\'s orb made the same move underneath');
-        const closing = await s.evaluate(`(() => { window.OpenVibeDock.close(); const dock = document.querySelector('.ovdk'); return { hidden: dock.hidden, out: dock.classList.contains('is-out'), back: dock.querySelector('.ovdk-orbx').classList.contains('is-from'), navIsDock: !!document.querySelector('.ovnav-orb.is-dock') }; })()`);
-        assert.ok(!closing.hidden && closing.out && closing.back && !closing.navIsDock, `closing folds it back into the orb first (${JSON.stringify(closing)})`);
-        assert.ok(await until(s, `document.querySelector('.ovdk').hidden`), 'then the sheet is gone');
-        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovdk').classList.contains('from-orb') && !document.querySelector('.ovnav-orb.is-dock') && [...document.querySelectorAll('.openvibe-navbar .ovnav-orb')].every((b) => !b.style.transition)`), 'and the navbar\'s orb is as it was'));
-        const still = await s.evaluate(`(() => { document.documentElement.setAttribute('data-ov-motion', 'off'); window.OpenVibeDock.open({ tab: 'activity' }); const dock = document.querySelector('.ovdk'); const a = dock.classList.contains('from-orb'); window.OpenVibeDock.close(); const out = { fromOrb: a, hidden: dock.hidden }; document.documentElement.removeAttribute('data-ov-motion'); return out; })()`);
-        assert.ok(!still.fromOrb && still.hidden, 'motion off: no move, and it closes at once');
+        assert.ok(await until(s, `!!(window.OpenVibeDock && window.OpenVibeDock.open)`), 'the Dock\'s panels are loaded beside the navbar');
+        await s.evaluate(`window.OpenVibeDock.open({ tab: 'chats' }), true`);
+        assert.ok(await until(s, `!!document.querySelector('.ovs.is-open.ovs-in-door') && document.querySelector('.ovs [data-dock="chats"]').getAttribute('aria-selected') === 'true'`), 'open() opens the menu on Chat');
+        assert.ok(await until(s, `!!document.querySelector('.ovs-door-host .ovdk')`), 'the panel is inside the menu');
+        assert.strictEqual(await s.evaluate(`[...document.querySelectorAll('.ovdk')].every((d) => !!d.closest('.ovs-door-host')) && !document.querySelector('#ovdk-pill, .ovdk-pill')`), true, 'no floating Dock and no pill');
+        await s.evaluate(`window.OpenVibeDock.open({ tab: 'agent' }), true`);
+        assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true' && document.querySelector('.ovs-door-sw [data-part="agent"]').getAttribute('aria-selected') === 'true'`), 'open({ tab: agent }) moves the open menu to Vibe\'s Agents');
+        await s.evaluate(`window.OpenVibeDock.close(), true`);
+        assert.ok(await until(s, `!document.querySelector('.ovs.is-open')`), 'close() closes the menu');
         await s.close();
         if (process.env.OV_CAPTURE_MENU) {
             for (const width of [390, 1280]) {
@@ -282,7 +269,7 @@ const server = http.createServer((req, res) => {
                 const feedShot = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
                 fs.writeFileSync(path.join(ROOT, `docs/screenshots/360-feed-${width}.png`), Buffer.from(feedShot.data, 'base64'));
                 await shotPage.evaluate(`document.querySelector('.ovs [data-dock="chats"]').click()`);
-                if (width === 1280) assert.ok(await until(shotPage, `!document.querySelector('.ovs').classList.contains('is-open')`), 'desktop Chat closes the menu so the Dock is visible');
+                assert.ok(await until(shotPage, `document.querySelector('.ovs').classList.contains('is-open')`), 'Chat opens inside the menu on every screen');
                 assert.ok(await until(shotPage, `(() => { const b = document.querySelector('.ovdk-chat[aria-label="Open Vibe"]'), d = b && b.closest('.ovdk'), r = b && b.getBoundingClientRect(); return !!d && !d.hidden && d.getAnimations({ subtree: false }).every((a) => a.playState === 'finished') && r.width > 0 && r.left < innerWidth && r.top < innerHeight && b.contains(document.elementFromPoint((r.left+r.right)/2, (r.top+r.bottom)/2)); })()`), 'Chat is painted in the capture');
                 const chatShot = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
                 fs.writeFileSync(path.join(ROOT, `docs/screenshots/360-chat-${width}.png`), Buffer.from(chatShot.data, 'base64'));

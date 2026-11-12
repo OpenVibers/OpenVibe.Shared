@@ -101,6 +101,8 @@ assert.ok(dock.includes("h('b', '', 'Vibe')"), 'the Chat tab has the Vibe row (y
 assert.ok(dock.includes('vibeOnList'), 'and it opens the Vibe tab on its list');
 assert.ok(dock.includes('groupAvatar'), "a group's row shows faces, not a number sign");
 assert.ok(dock.includes('answered'), 'and when Vibe last answered');
-assert.ok(dock.includes('ovdk-size::after') || dock.includes('.ovdk-size'), 'the Dock has a grip to resize it with');
+// 4.220.0: the floating Dock is gone (the owner, 11-12: "one unified UI"): no pill, no card, no grip; its panels live in the menu.
+assert.ok(!dock.includes('ovdk-pill') && !dock.includes('.ovdk-size') && !dock.includes('popOut'), 'no floating Dock: no pill, no resize grip, no window of its own');
+assert.ok(dock.includes('mountInto') && dock.includes('o.openMenu'), 'the panels are placed in the menu, and open() opens the menu there');
 
 console.log("dock v2: the run rows, the overview, the Vibe list and the Chats row");

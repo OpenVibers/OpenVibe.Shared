@@ -69,27 +69,15 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             await page.evaluate(`document.querySelector('.ovs-list [data-sec="notifications"] .ovs-nhead-more').click()`);
             await eventually(async () => assert.equal(await page.evaluate('window.notificationsExpanded'), true, `${name}: notifications expand in place`));
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="you"]').click()`);
-            if (width <= 640) {
-                await page.evaluate(`document.querySelector('.ovs-list > li > .ovs-dockyou-b').click()`);
-                await eventually(async () => assert.deepEqual(await page.evaluate(`Array.from(document.querySelectorAll('.ovs-dock-you button')).map((b) => b.textContent)`), ['Start a timer', 'Keep the Dock button on every page', 'Open the Dock in its own window'], `${name}: The Dock row opens its three actions in place`));
-                await page.evaluate(`document.querySelector('.ovs-dock-you button').click()`);
-                await eventually(async () => assert.equal(await page.evaluate('window.timerCalled'), 'timer', `${name}: You Dock timer action`));
-            }
+            // 4.220.0: no "The Dock" row in You (the floating Dock is gone; the timer has its button on the Vibe tab).
+            await eventually(async () => assert.equal(await page.evaluate(`!!document.querySelector('.ovs-dockyou-b, .ovs-dock-you')`), false, `${name}: no Dock row in You`));
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="here"]').click()`);
-            if (width > 640) {
-                // A computer opens the floating Dock beside the menu.
-                await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-                await eventually(async () => assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: Vibe opens the Dock's Vibe`));
-                await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`);
-                await eventually(async () => assert.equal(await page.evaluate('window.went'), 'chats', `${name}: Messages opens the Dock's conversations`));
-                await eventually(async () => assert.deepEqual((await page.evaluate(ROW)).filter((t) => t.chosen).map((t) => t.label), ['Chat'], `${name}: the chosen tab is still this site's`));
-            }
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-tab="feed"]').click()`);
             assert.ok(await until(`(document.querySelector('.ovs-starttabs [aria-selected="true"]') || {}).textContent.trim().startsWith('Feed')`), `${name}: Feed is chosen in place`);
             await page.evaluate('OpenVibeSearch.close()'); await wait(300);
-            // On a phone, with the Dock able to lend its panels (OpenVibeDock.mountInto, 312 step 2): Messages and AI open
-            // INSIDE the menu, under its own head, and become the chosen place; AI has a Vibe · Agents switch; Feed and
-            // closing hand the panel back. A computer keeps the floating Dock.
+            // With the Dock able to lend its panels (OpenVibeDock.mountInto): Messages and AI open INSIDE the menu, under its
+            // own head, and become the chosen place; AI has a Chat · Code · Agents switch; Feed and closing hand the panel back.
+            // 4.220.0: on every screen (a computer opened a floating Dock; the owner, 11-12: "one unified UI").
             await page.evaluate(`window.went = null; window.log = []; window.OpenVibeDock = { filterChats(q) { window.filtered = q; }, mountInto(host, o) { window.log.push('mount:' + o.tab); host.innerHTML = '<div class="stub"></div>';
                 return { show(t) { window.log.push('show:' + t); }, destroy() { window.log.push('destroy'); host.innerHTML = ''; } }; } }`);
             await page.evaluate(OPEN(true)); await wait(350);
@@ -97,7 +85,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 sw: document.querySelector('.ovs-door-sw') && !document.querySelector('.ovs-door-sw').hidden ? Array.from(document.querySelectorAll('.ovs-door-sw [data-part]')).map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')).join(' ') : '',
                 chosen: Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab[aria-selected="true"]')).map((t) => t.textContent.trim()).join(' ') })`);
             await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(120);
-            if (width <= 640) {
+            {
                 await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, sw: 'Chat* Code Agents', chosen: 'Vibe' }, `${name}: Vibe opens inside the menu, on its chats`));
                 await eventually(async () => assert.equal(await page.evaluate('window.went'), null, `${name}: no floating Dock`));
                 await page.evaluate(`document.querySelector('.ovs-door-sw [data-part="code"]').click()`); await wait(80);
@@ -121,10 +109,6 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
                 await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['mount:vibe', 'show:code', 'show:agent', 'show:chats', 'destroy', 'mount:agent', 'destroy'], `${name}: one mount at a time, handed back on Feed and on close`));
-            } else {
-                await eventually(async () => assert.equal(await page.evaluate('window.went'), 'vibe', `${name}: AI still opens the floating Dock`));
-                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), [], `${name}: nothing mounted in the menu`));
-                await page.evaluate('OpenVibeSearch.close()'); await wait(300);
             }
             await page.evaluate('delete window.OpenVibeDock');
             // Opened from a button: the sheet grows out of that button's centre, wherever the sheet itself was placed.

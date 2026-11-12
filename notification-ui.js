@@ -8,7 +8,6 @@
 //        OpenVibeNotifications.init({ token, apiBase, swPath, onAction })
 //        OpenVibeNotifications.createBell(mountEl)
 //        OpenVibeNotifications.renderInbox(containerEl)      // full-page inbox
-//        OpenVibeNotifications.renderDock(containerEl)       // the Dock's Activity tab (dock.js): the same list, no frame
 //
 // Reads: GET /api/notifications?limit&offset&unread_only&tab&q&since
 //        GET /api/notifications/unread-count, /unread-by-tab (the counts on the bell's tabs)
@@ -131,7 +130,7 @@
 
             /* Toasts. Opaque cards on the theme's raised surface; held (hidden, timers paused) while a menu is open. */
             .openvibe-toast-container { position: fixed; z-index: 2147482600; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
-                right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--ov-dock-clear, 0px)); width: min(380px, calc(100vw - 32px));
+                right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px))); width: min(380px, calc(100vw - 32px));
                 font-family: inherit; transition: opacity .18s ease; }
             .openvibe-toast-container.ovn-held { opacity: 0; visibility: hidden; }
             .openvibe-toast-container.ovn-phone { top: var(--ovn-top, 64px); bottom: auto; left: max(8px, env(safe-area-inset-left, 0px)); right: max(8px, env(safe-area-inset-right, 0px)); width: auto; }
@@ -1478,15 +1477,6 @@
             container.classList.add('openvibe-notif-inbox');
             const v = buildView(container, { mode: 'inbox' });
             if (opts.tab) { v.tab = opts.tab; container.querySelectorAll('[data-tab]').forEach(b => { b.classList.toggle('active', b.dataset.tab === opts.tab); b.setAttribute('aria-selected', String(b.dataset.tab === opts.tab)); }); }
-            reload(v);
-            return v;
-        },
-        /** The Dock's Activity tab: the bell's list in the Dock's container (no frame, no title, no close). */
-        renderDock(container) {
-            injectStyles();
-            if (!container) return null;
-            container.classList.add('openvibe-notif-dock');
-            const v = buildView(container, { mode: 'dock' });
             reload(v);
             return v;
         },
