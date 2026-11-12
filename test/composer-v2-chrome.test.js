@@ -27,7 +27,8 @@ window.post = C.mount(document.getElementById('a'), { preset: 'post', id: 'p1', 
     tools: ['photo', 'file', 'emoji', 'poll', 'voice'],
     audience: { name: 'audience', label: 'Who sees it', options: [['public', 'Everyone'], ['followers', 'Followers']], value: 'public' },
     onSubmit: async (v) => { window.got.push({ text: v.text, files: v.files.map((f) => f.name), audience: v.audience }); return window.keepNext ? false : true; } });
-window.chat = C.mount(document.getElementById('b'), { preset: 'chat', id: 'c1', onSubmit: async () => true });
+window.chatSent = []; window.saved = [];
+window.chat = C.mount(document.getElementById('b'), { preset: 'chat', id: 'c1', onSubmit: async (v) => { window.chatSent.push({ text: v.text, reply: v.reply }); return true; } });
 window.agent = C.mount(document.getElementById('c'), { preset: 'agent', id: 'g1', mode: { name: 'mode', label: 'Mode', options: [['balanced', 'Balanced'], ['best', 'Best']], value: 'balanced' },
     chips: [{ name: 'effort', label: 'Reasoning', icon: 'gauge', options: [['medium', 'Medium'], ['high', 'High']], value: 'high' }],
     onSubmit: async (v) => { window.got.push({ mode: v.mode, effort: v.chips.effort }); } });
@@ -104,10 +105,33 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         await page.evaluate(`agent.setRunning(false)`);
         assert.equal(await page.evaluate(`document.querySelector('#g1 [data-ovt-send]').getAttribute('aria-label')`), 'Send');
 
+        // Editing your message in the box (openvibe.design rule 138): a bar says so, the send is Save, Enter saves
+        // through onSave (not onSubmit), Esc puts back what was in the box.
+        await page.evaluate(`(() => { const t = chat.text; t.value = 'half a draft'; t.dispatchEvent(new Event('input', { bubbles: true })); chat.edit({ text: 'Yo', onSave: async (x) => { window.saved.push(x); } }); })()`);
+        const ed = await page.evaluate(`(() => { const f = document.getElementById('c1'); return { bar: (f.querySelector('.ovc-bar b') || {}).textContent, text: f.querySelector('textarea').value, send: f.querySelector('[data-ovt-send]').getAttribute('aria-label'), editing: chat.editing(), first: f.querySelector('.ovc-body').firstElementChild.className }; })()`);
+        assert.deepEqual(ed, { bar: 'Editing your message', text: 'Yo', send: 'Save', editing: true, first: 'ovc-bar' });
+        await page.evaluate(`(() => { const t = chat.text; t.value += ' there'; t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await page.evaluate(`document.querySelector('#c1 [data-ovt-send]').click()`);
+        await until(`window.saved.length === 1`);
+        assert.deepEqual(await page.evaluate(`window.saved`), ['Yo there'], 'Save sends the edit to onSave');
+        assert.equal(await page.evaluate(`window.chatSent.length`), 0, 'an edit is not a new message');
+        assert.deepEqual(await page.evaluate(`({ bar: !!document.querySelector('#c1 .ovc-bar'), text: chat.text.value, send: document.querySelector('#c1 [data-ovt-send]').getAttribute('aria-label') })`),
+            { bar: false, text: 'half a draft', send: 'Send' }, 'after saving: the draft is back and the send is Send');
+        await page.evaluate(`chat.edit({ text: 'Yo', onSave: async () => {} })`);
+        await page.evaluate(`chat.text.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))`);
+        assert.deepEqual(await page.evaluate(`({ bar: !!document.querySelector('#c1 .ovc-bar'), text: chat.text.value, editing: chat.editing() })`), { bar: false, text: 'half a draft', editing: false }, 'Esc cancels');
+        // Replying: a bar names who, and the send carries the reply.
+        await page.evaluate(`chat.reply({ name: 'goosely', text: 'Yo', data: { id: 7 } })`);
+        assert.equal(await page.evaluate(`document.querySelector('#c1 .ovc-bar b').textContent`), 'Replying to goosely');
+        await page.evaluate(`document.querySelector('#c1 [data-ovt-send]').click()`);
+        await until(`window.chatSent.length === 1`);
+        assert.deepEqual(await page.evaluate(`window.chatSent[0]`), { text: 'half a draft', reply: { id: 7 } });
+        assert.equal(await page.evaluate(`!!document.querySelector('#c1 .ovc-bar')`), false, 'the reply bar goes with the send');
+
         // Nothing is wider than the phone.
         assert.equal(await page.evaluate(`document.documentElement.scrollWidth`), 390);
         await page.close();
-        console.log('composer-v2-chrome: four presets, a post\'s chip above and pictures under, onSubmit and false, the ring, emoji, a site\'s tool, 390 px');
+        console.log('composer-v2-chrome: four presets, a post\'s chip above and pictures under, onSubmit and false, the ring, emoji, a site\'s tool, editing and replying bars, 390 px');
     } finally {
         await browser.close();
         server.close();
