@@ -110,6 +110,10 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         await page.evaluate(`(() => { const t = chat.text; t.value = 'half a draft'; t.dispatchEvent(new Event('input', { bubbles: true })); chat.edit({ text: 'Yo', onSave: async (x) => { window.saved.push(x); } }); })()`);
         const ed = await page.evaluate(`(() => { const f = document.getElementById('c1'); return { bar: (f.querySelector('.ovc-bar b') || {}).textContent, text: f.querySelector('textarea').value, send: f.querySelector('[data-ovt-send]').getAttribute('aria-label'), editing: chat.editing(), first: f.querySelector('.ovc-body').firstElementChild.className }; })()`);
         assert.deepEqual(ed, { bar: 'Editing your message', text: 'Yo', send: 'Save', editing: true, first: 'ovc-bar' });
+        // In the one-line chat box the bar is a line of its own: the words keep the box's width under it.
+        const lay = await page.evaluate(`(() => { const f = document.getElementById('c1'), b = f.querySelector('.ovc-bar').getBoundingClientRect(), t = f.querySelector('textarea').getBoundingClientRect(), body = f.querySelector('.ovc-body').getBoundingClientRect();
+            return { barFull: Math.abs(b.width - body.width) < 2, below: t.top >= b.bottom - 1, left: Math.abs(t.left - body.left) < 4 }; })()`);
+        assert.deepEqual(lay, { barFull: true, below: true, left: true }, 'the editing bar spans the chat box and the words sit under it');
         await page.evaluate(`(() => { const t = chat.text; t.value += ' there'; t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         await page.evaluate(`document.querySelector('#c1 [data-ovt-send]').click()`);
         await until(`window.saved.length === 1`);
