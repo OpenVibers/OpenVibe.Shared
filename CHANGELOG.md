@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.217.0 — 2026-11-12
+
+The composer gets what the agents portal's own box had: a camera, Try again, and pictures made smaller before they go.
+
+- **A camera in the box** (`camera`, in the post and agent presets; any site can name it): a sheet over the page, the
+  whole screen on a phone, with the picture, Photo or Video, the shutter, Switch camera and Close, as a phone's camera
+  app has. A photo or a clip (up to a minute) goes into the box as a file, nothing kept or sent before the message is.
+  It opens through the shared capture core (`ov-capture.js`, loaded from beside the composer the first time), so its
+  help when a camera does not open is the same plain help Live's go-live page gives; the tool is not drawn where the
+  browser has no camera.
+- **Try again on a failed upload**: the file's own picture (or icon) becomes the button, and a post's picture tile says
+  "Try again" across it.
+- **Pictures made smaller before they upload**: `resize` (the long side in pixels; `data-ovc-resize` on a box made by
+  hand): 2560 for a post, a chat or a reply, 1568 for an agent (the size a model reads, as the agents portal sent them).
+  JPEG, PNG and WebP only; a smaller file is never swapped for a bigger one; GIFs and SVGs are left as they are.
+- **Fixed:** in the one-line chat box, the "Editing your message" and "Replying to …" bar is a line of its own above the
+  words (4.216.0 drew it in the box's first column, over the words).
+
 ## 4.216.0 — 2026-11-12
 
 One capture core for every camera, and a chat message's actions in one place on every site.

@@ -151,6 +151,33 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 .ovt-send:disabled { opacity: .45; cursor: default; }
 .ovc-v2 .ovt-send--round { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border-radius: 50%; }
 .ovc-v2 .ovt-send--round svg { width: 19px; height: 19px; }
+.ovc-cam { padding: 0; border: 0; border-radius: 22px; width: min(560px, 96vw); max-height: 94vh; overflow: hidden; background: #05070c; color: #fff; display: flex; flex-direction: column; }
+.ovc-cam::backdrop { background: rgba(2, 6, 14, .72); }
+.ovc-cam-stage { position: relative; flex: 1; min-height: 0; background: #000; }
+.ovc-cam-v { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #000; }
+.ovc-cam.is-mirror .ovc-cam-v { transform: scaleX(-1); }
+.ovc-cam-msg { position: absolute; inset: auto 14px 14px; margin: 0; padding: 10px 12px; border-radius: 12px; background: rgba(0, 0, 0, .72); font-size: 14px; line-height: 1.4; }
+.ovc-cam-t { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); padding: 3px 10px; border-radius: 999px; background: #dc2626; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ovc-cam-modes { display: flex; justify-content: center; gap: 4px; padding: 10px 0 0; }
+.ovc-cam-modes button { min-height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: none; color: rgba(255, 255, 255, .7); font: 600 13px/1 inherit; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+.ovc-cam-modes [aria-pressed="true"] { color: #fde047; }
+.ovc-cam-bar { display: flex; align-items: center; justify-content: space-between; padding: 12px 22px max(18px, env(safe-area-inset-bottom)); }
+.ovc-cam-b { display: grid; place-items: center; width: 48px; height: 48px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .14); color: #fff; cursor: pointer; }
+.ovc-cam-b svg { width: 22px; height: 22px; }
+.ovc-cam-shutter { width: 72px; height: 72px; border-radius: 50%; border: 4px solid #fff; background: #fff; box-shadow: inset 0 0 0 4px #05070c; cursor: pointer; transition: transform var(--ov-dur-1, .12s) ease, background-color var(--ov-dur-2, .2s) ease; }
+.ovc-cam-shutter:active { transform: scale(.94); }
+.ovc-cam.is-video .ovc-cam-shutter { background: #dc2626; }
+.ovc-cam.is-recording .ovc-cam-shutter { background: #dc2626; box-shadow: inset 0 0 0 20px #05070c; }
+.ovc-cam.is-recording .ovc-cam-modes, .ovc-cam.is-recording [data-a="flip"] { visibility: hidden; }
+@media (max-width: 600px) { .ovc-cam { width: 100vw; max-width: none; height: 100dvh; max-height: none; border-radius: 0; } .ovc-cam-v { height: 100%; aspect-ratio: auto; } }
+html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
+/* A failed upload: its own picture (or icon) becomes the Try again button; a post's tile says it in words. */
+.ovc-file-r { position: absolute; left: 5px; top: 5px; width: 40px; height: 40px; display: grid; grid-auto-flow: column; place-content: center; align-items: center; gap: 6px; padding: 0; border: 0; border-radius: 10px; background: rgba(5, 7, 12, .66); color: #fff; font: 700 13px/1 inherit; cursor: pointer; }
+.ovc-file-r svg { width: 18px; height: 18px; }
+.ovc-file-r:hover, .ovc-file-r:focus-visible { background: rgba(5, 7, 12, .8); }
+.ovc-file-r-t { display: none; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-r, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-r { left: 0; top: 0; width: 100%; height: 150px; border-radius: 15px 15px 0 0; }
+.ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-r-t, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-r-t { display: inline; }
 .ovc-v2 .ovc-bar { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); font-size: 13px; line-height: 1.3; }
 .ovc-v2 .ovc-bar > svg { flex: none; width: 15px; height: 15px; color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
 .ovc-v2 .ovc-bar > b { flex: none; font-weight: 700; color: var(--text-primary, #e6edf7); }
@@ -173,7 +200,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 /* chat: one line that grows, the tools beside it, the send round. */
 .ovc-v2[data-preset=chat].ovt-composer { padding: 6px 6px 6px 10px; border-radius: 26px; }
 .ovc-v2[data-preset=chat] .ovc-body { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 4px; }
-.ovc-v2[data-preset=chat] .ovc-files { grid-column: 1 / -1; }
+.ovc-v2[data-preset=chat] .ovc-files, .ovc-v2[data-preset=chat] .ovc-bar { grid-column: 1 / -1; }   /* a line of their own above the one-line box */
 .ovc-v2[data-preset=chat] textarea { font-size: 16px; padding: 9px 2px; }
 .ovc-v2[data-preset=chat] .ovt-c-row { padding: 0; border: 0; }
 .ovc-v2[data-preset=chat] .ovt-c-tools { flex: none; }
@@ -196,7 +223,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': 'd3d8f9e3e6d2' };
+    const COMPOSER_REV = { 'ov-window.js': 'd3d8f9e3e6d2', 'ov-capture.js': '91f3b2cb25e3' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
@@ -208,6 +235,34 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             sc.onload = () => ok(root.OVWindow || null); sc.onerror = () => ok(null);
             document.head.appendChild(sc);
         });
+    }
+    // 4.217.0: the camera button opens the shared capture core (ov-capture.js, OVCapture), loaded from beside this file.
+    function needCapture() {
+        return new Promise((ok) => {
+            if (root.OVCapture && root.OVCapture.version >= 2) return ok(root.OVCapture);
+            const m = /^(https?:\/\/[^?#]*\/)ov-composer(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+            if (!m) return ok(root.OVCapture || null);
+            const sc = document.createElement('script');
+            sc.src = m[1] + 'ov-capture.js' + (COMPOSER_REV['ov-capture.js'] ? '?v=' + COMPOSER_REV['ov-capture.js'] : '');
+            sc.onload = () => ok(root.OVCapture || null); sc.onerror = () => ok(null);
+            document.head.appendChild(sc);
+        });
+    }
+    // 4.217.0: a picture bigger than the box wants (data-ovc-resize, the long side in pixels; mount(): 2560, an agent's
+    // 1568 as the agents portal sent them) is made smaller here before it uploads. GIFs and SVGs are left alone.
+    async function shrink(file, max) {
+        if (!max || !/^image\/(jpeg|png|webp)$/.test(file.type || '') || typeof createImageBitmap !== 'function') return file;
+        let bmp = null;
+        try { bmp = await createImageBitmap(file); } catch { return file; }
+        const long = Math.max(bmp.width, bmp.height);
+        if (long <= max) { if (bmp.close) bmp.close(); return file; }
+        const k = max / long, w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
+        const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(bmp, 0, 0, w, h);
+        if (bmp.close) bmp.close();
+        const blob = await new Promise((r) => canvas.toBlob(r, file.type, 0.9));
+        if (!blob || blob.size >= file.size) return file;
+        try { return new File([blob], file.name, { type: file.type, lastModified: file.lastModified }); } catch { return file; }
     }
     const live = new Set();
     const PREFS_KEY = 'ov:composer';
@@ -235,6 +290,9 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         reply: 'M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z',
         pen: 'M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4',
         check: 'M5 12.5l4.5 4.5L19 7',
+        camera: 'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 10a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z',
+        flip: 'M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2M20 4v4h-4M4 20v-4h4',
+        retry: 'M4 12a8 8 0 1 0 2.3-5.7L4 8.5M4 4v4.5h4.5',
     };
     const svg = (d, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
@@ -348,6 +406,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             const thumb = f.url && kind === 'image' ? `<img class="ovc-file-th" src="${f.url}" alt="">` : f.url && kind === 'video' ? `<video class="ovc-file-th" src="${f.url}" muted preload="metadata"></video>` : `<span class="ovc-file-th ovc-file-ic">${f.pasted ? svg(IC.file) : ext}</span>`;
             chip.innerHTML = `${thumb}<span class="ovc-file-t"><span class="ovc-file-n"></span><span class="ovc-file-s"></span></span>`
                 + (f.pasted ? `<button type="button" class="ovc-file-b" data-ovc-back aria-label="Put the text back in the box" title="Put it back in the box">${svg(IC.back)}</button>` : '')
+                + (f.error && uploader() ? `<button type="button" class="ovc-file-r" data-ovc-retry aria-label="Try the upload again" title="Try again">${svg(IC.retry)}<span class="ovc-file-r-t">Try again</span></button>` : '')
                 + `<button type="button" class="ovc-file-x" data-ovc-x aria-label="Remove">${svg(IC.x)}</button>`;
             chip.querySelector('.ovc-file-n').textContent = f.pasted ? 'Pasted text' : f.file.name || 'File';
             chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : size(f.file.size));
@@ -376,26 +435,37 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
                 files.push(f);
                 paintFile(f);
                 form.dispatchEvent(new CustomEvent('ovc:file-added', { detail: { file, chip: f.chip } }));
-                if (up) {
-                    f.progress = 0; paintFile(f);
-                    Promise.resolve(up(file, (p) => { f.progress = Math.max(0, Math.min(0.99, Number(p) || 0)); paintFile(f); syncSend(); }))
-                        .then((r) => {
-                            if (!files.includes(f)) return;
-                            f.progress = 1; f.id = r && r.id;
-                            if (f.id) { f.hidden = el('input'); f.hidden.type = 'hidden'; f.hidden.name = form.getAttribute('data-ovc-ids') || 'attachments'; f.hidden.value = f.id; form.appendChild(f.hidden); }
-                            paintFile(f); syncSend();
-                        }, (e) => { f.error = (e && e.message) || 'Did not upload'; paintFile(f); syncSend(); });
+                const resize = Number(form.getAttribute('data-ovc-resize')) || 0;
+                if (up || resize) {
+                    if (up) { f.progress = 0; paintFile(f); }
+                    shrink(file, resize).then((small) => {
+                        if (!files.includes(f)) return;
+                        if (small !== f.file) { f.file = small; syncInputs(); paintFile(f); }
+                        if (up) sendUp(f);
+                    });
                 }
             }
             strip.hidden = !files.length;
             syncInputs();
             syncSend();
         }
+        function sendUp(f) {
+            const up = uploader(); if (!up) return;
+            f.error = null; f.progress = 0; paintFile(f); syncSend();
+            Promise.resolve(up(f.file, (p) => { f.progress = Math.max(0, Math.min(0.99, Number(p) || 0)); paintFile(f); syncSend(); }))
+                .then((r) => {
+                    if (!files.includes(f)) return;
+                    f.progress = 1; f.id = r && r.id;
+                    if (f.id) { f.hidden = el('input'); f.hidden.type = 'hidden'; f.hidden.name = form.getAttribute('data-ovc-ids') || 'attachments'; f.hidden.value = f.id; form.appendChild(f.hidden); }
+                    paintFile(f); syncSend();
+                }, (e) => { if (!files.includes(f)) return; f.error = (e && e.message) || 'Did not upload'; paintFile(f); syncSend(); });
+        }
         strip.addEventListener('click', (e) => {
             const chip = e.target.closest && e.target.closest('.ovc-file'); if (!chip) return;
             const f = files.find((x) => x.chip === chip); if (!f) return;
             if (e.target.closest('[data-ovc-x]')) { remove(f); text.focus(); }
             else if (e.target.closest('[data-ovc-back]')) { const t = f.text; remove(f); ctx.insert(t); }
+            else if (e.target.closest('[data-ovc-retry]')) sendUp(f);
         });
         form.addEventListener('change', (e) => {
             const i = e.target; if (noFiles || !i || i.type !== 'file' || i.__ovcSync) return;
@@ -656,10 +726,10 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
     const PRESET = {
-        post: { tools: ['photo', 'file', 'emoji', 'voice'], send: 'Post', avatar: true, rows: 2, max: 2000, ring: true },
-        chat: { tools: ['attach', 'emoji', 'voice'], send: '', avatar: false, rows: 1, max: 4000, ring: false },
-        agent: { tools: ['attach', 'voice'], send: '', avatar: false, rows: 2, max: 16000, ring: false },
-        comment: { tools: ['photo', 'emoji'], send: 'Reply', avatar: true, rows: 1, max: 2000, ring: true },
+        post: { tools: ['photo', 'camera', 'file', 'emoji', 'voice'], send: 'Post', avatar: true, rows: 2, max: 2000, ring: true, resize: 2560 },
+        chat: { tools: ['attach', 'emoji', 'voice'], send: '', avatar: false, rows: 1, max: 4000, ring: false, resize: 2560 },
+        agent: { tools: ['attach', 'camera', 'voice'], send: '', avatar: false, rows: 2, max: 16000, ring: false, resize: 1568 },
+        comment: { tools: ['photo', 'emoji'], send: 'Reply', avatar: true, rows: 1, max: 2000, ring: true, resize: 2560 },
     };
     const EMOJI = '😀 😂 🥹 😊 😍 🥰 😘 😎 🤩 🥳 😇 🙂 😉 😌 🤔 🤨 😐 🙄 😏 😬 😮 😱 😭 😤 😡 🤯 🥶 🥵 😴 🤤 🤗 🫡 🤝 👍 👎 👏 🙌 🙏 💪 👀 🫶 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 ✨ 🔥 💯 🎉 🎊 🏆 🎮 🎧 🎵 📸 🎬 🍕 🍔 🍿 ☕ 🍻 🌈 🌙 ⭐ ⚡ 💥 💀 🤖 👻 🐐 🦆 🐸 🚀 ✅ ❌ ⚠️ ❓ 👋 🫠'.split(' ');
     const TOOL = {
@@ -684,7 +754,73 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             },
         },
         voice: { label: 'Speak', builtin: true },   // enhance() draws the microphone where the browser can listen
+        camera: { label: 'Camera', path: IC.camera, run: (ctx, button) => openCamera(ctx, button) },
     };
+    // The camera (4.217.0): a photo or a clip straight into the box, through the shared capture core. A sheet over the
+    // page (the whole screen on a phone): the picture, Photo or Video, the shutter, flip and close. Nothing is kept or
+    // sent until the person sends the message.
+    async function openCamera(ctx, button) {
+        const C = await needCapture();
+        if (!C) { ctx.note('The camera could not start here.'); return; }
+        styles();
+        const dlg = el('dialog', 'ovc-cam'); dlg.setAttribute('aria-label', 'Camera');
+        dlg.innerHTML = `<div class="ovc-cam-stage"><video class="ovc-cam-v" playsinline muted autoplay></video><p class="ovc-cam-msg" hidden></p><span class="ovc-cam-t" hidden>0:00</span></div>
+<div class="ovc-cam-modes" role="group" aria-label="Photo or video"><button type="button" data-m="photo" aria-pressed="true">Photo</button><button type="button" data-m="video" aria-pressed="false">Video</button></div>
+<div class="ovc-cam-bar"><button type="button" class="ovc-cam-b" data-a="close" aria-label="Close the camera">${svg(IC.x)}</button><button type="button" class="ovc-cam-shutter" data-a="shoot" aria-label="Take a photo"></button><button type="button" class="ovc-cam-b" data-a="flip" aria-label="Switch camera">${svg(IC.flip)}</button></div>`;
+        document.body.appendChild(dlg);
+        const video = dlg.querySelector('video'), msg = dlg.querySelector('.ovc-cam-msg'), timer = dlg.querySelector('.ovc-cam-t'), shoot = dlg.querySelector('[data-a="shoot"]');
+        let stream = null, facing = (C.settings.load().facing) || 'user', mode = 'photo', rec = null, tick = 0;
+        const stamp = () => new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        const stop = () => { if (rec) { rec.cancel(); rec = null; } clearInterval(tick); C.stop(stream); stream = null; };
+        const close = () => { stop(); try { dlg.close(); } catch { /* closed */ } dlg.remove(); if (button) button.focus(); };
+        async function start() {
+            C.stop(stream); stream = null; msg.hidden = true;
+            try {
+                stream = await C.open({ mode: mode === 'video' ? 'camera' : 'camera_only', facing });
+                video.srcObject = stream; dlg.classList.toggle('is-mirror', facing === 'user');
+            } catch (err) {
+                const fix = C.explain(err, mode === 'video' ? 'camera' : 'camera_only');
+                msg.textContent = `${fix.title}. ${fix.steps.join(' ')}`; msg.hidden = false;
+            }
+        }
+        dlg.addEventListener('click', async (e) => {
+            const b = e.target.closest && e.target.closest('button'); if (!b) return;
+            if (b.dataset.m && !rec) {
+                mode = b.dataset.m;
+                dlg.querySelectorAll('[data-m]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+                dlg.classList.toggle('is-video', mode === 'video');
+                shoot.setAttribute('aria-label', mode === 'video' ? 'Record' : 'Take a photo');
+                start();
+            } else if (b.dataset.a === 'close') close();
+            else if (b.dataset.a === 'flip' && !rec) { facing = facing === 'user' ? 'environment' : 'user'; C.settings.save({ facing }); start(); }
+            else if (b.dataset.a === 'shoot' && stream) {
+                if (mode === 'photo') {
+                    try {
+                        const blob = await C.photo(stream, { mirror: facing === 'user' });
+                        ctx.add([new File([blob], `photo-${stamp()}.jpg`, { type: blob.type || 'image/jpeg' })]);
+                        close();
+                    } catch (err) { msg.textContent = 'The photo did not take. Try again.'; msg.hidden = false; }
+                } else if (!rec) {
+                    rec = C.record(stream, { maxSeconds: 60 });
+                    dlg.classList.add('is-recording'); shoot.setAttribute('aria-label', 'Stop recording');
+                    timer.hidden = false;
+                    tick = setInterval(() => { const t = Math.floor(rec ? rec.seconds() : 0); timer.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; }, 250);
+                } else {
+                    const r = rec; rec = null; clearInterval(tick);
+                    dlg.classList.remove('is-recording');
+                    const blob = await r.stop();
+                    if (blob) {
+                        const ext = /mp4/.test(blob.type) ? 'mp4' : /webm/.test(blob.type) ? 'webm' : 'video';
+                        ctx.add([new File([blob], `clip-${stamp()}.${ext}`, { type: blob.type || 'video/webm' })]);
+                    }
+                    close();
+                }
+            }
+        });
+        dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
+        if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+        start();
+    }
     function tool(id, spec) {
         if (!/^[\w-]{1,30}$/.test(id || '') || !spec) return;
         TOOL[id] = Object.assign({}, TOOL[id] || {}, spec);
@@ -702,6 +838,8 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         form.setAttribute('data-ovc-max-files', String(o.maxFiles || 10));
         form.setAttribute('data-ovc-max-mb', String(o.maxMb || 100));
         if (o.noDraft) form.setAttribute('data-ovc-no-draft', '');
+        const resize = o.resize != null ? Number(o.resize) || 0 : p.resize || 0;
+        if (resize) form.setAttribute('data-ovc-resize', String(resize));
         const want = (o.tools || p.tools).filter((t) => TOOL[t]);
         if (!want.includes('voice')) form.setAttribute('data-ovc-no-voice', '');
         // A post or a reply opens with one line: the person's picture (or first letter), their name and who sees it.
@@ -726,6 +864,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         for (const id of want) {
             const t = TOOL[id];
             if (t.builtin) continue;
+            if (id === 'camera' && !(navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function')) continue;
             if (typeof t.run !== 'function' && t.accept === undefined) continue;
             const b = el(typeof t.run === 'function' ? 'button' : 'label', `ovt-btn ovc-t-${id}`, svg(t.path || IC.slash));
             b.title = t.label; b.setAttribute('aria-label', t.label);
