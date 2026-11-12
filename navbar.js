@@ -34,6 +34,8 @@
             /* At the very top the bar fades into the page (no background, no border); a scroll brings the frosted bar back.
                A page whose hero runs under the bar opts in with body.ov-nav-overlay: the bar then sits over the hero, with a
                soft scrim for the text. ovnav-top is kept by the navbar itself on every render and scroll. */
+            /* A tap area past the bar's edge (Sign in's) made every page 392 px at 390 (4.222.0). */
+            .openvibe-navbar { overflow-x: clip; }
             .openvibe-navbar { transition: background-color .45s cubic-bezier(.2,.7,.2,1), border-color .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s cubic-bezier(.2,.7,.2,1), -webkit-backdrop-filter .45s, backdrop-filter .45s, transform .32s cubic-bezier(.2,.7,.2,1); }
             /* On a phone the bar steps away while you read down the page and comes back the moment you scroll up (4.25.0;
                the owner, 2026-10-28: the bar's at-the-top effect "doesn't work on mobile… the whole thing needs to be
