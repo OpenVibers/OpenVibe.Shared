@@ -61,6 +61,8 @@ the plus thing … usable on all composers across all sites").
 - **The menu:**
   - Close is a round × on every screen; the phone's close orb is glass with a hairline edge, never a thick ring;
   - a slow light drifts behind the panel (Calm slows it; Off stops it).
+  - `OpenVibeNavbar.openMenu(place)` opens the menu at a place: `notifications`, `recent`, `apps`, `you`, `feed`,
+    `vibe`, `chats` or `agent`. A site's own links use it (openvibe.my's Notifications tile clicked a bell that is gone).
 - **Times:** a time without a zone is UTC. Network's history sends "YYYY-MM-DD HH:MM:SS", and browsers read it as local
   time; west of UTC every visit said "just now".
 - **The notification rows:**

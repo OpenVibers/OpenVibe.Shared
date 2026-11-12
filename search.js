@@ -1611,7 +1611,7 @@ html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .o
             token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling,
             // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
             notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
-            startTab: ctx.section === 'notifications' ? 'notifications' : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            startTab: ['notifications', 'recent', 'apps'].includes(ctx.section) ? ctx.section : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             onSearch: (q) => { input.value = q; render(q); input.focus(); },
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.

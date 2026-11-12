@@ -604,7 +604,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'ad9e8e37779d', 'dock.js': '1fb16839cb0e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '4086b813ffda', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '02d7b0204716', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'f1d4e50592b4', 'dock.js': '1fb16839cb0e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '4086b813ffda', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '02d7b0204716', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -721,11 +721,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(() => { formWatch = null; go(); }, { timeout: 2000 });
         else { const t = setTimeout(() => { formWatch = null; go(); }, 1200); if (t && typeof t.unref === 'function') t.unref(); }
     }
-    // A box that scrolls (a code block, a wide table, a list held to a height) with nothing focusable inside it cannot be
-    // scrolled from a keyboard (WCAG 2.1.1; axe scrollable-region-focusable flagged pages on six sites, 2026-11-02). Each
-    // such box gets tabindex="0", so Tab reaches it and the arrow keys scroll it. A box with a link or a button inside is
-    // reachable already and is left alone; a page's own tabindex always wins. Run when the page settles, again a little
-    // later for content that loads after it, and after a resize changes what overflows.
+    // A scrolling box with nothing focusable gets tabindex="0" so a keyboard can scroll it (WCAG 2.1.1); a page's own wins.
     const SCROLL_FOCUSABLE = 'a[href],button,input,select,textarea,summary,iframe,[tabindex],[contenteditable="true"]';
     function focusScrollers() {
         if (!document.body || !document.body.getElementsByTagName) return 0;
@@ -2787,6 +2783,8 @@
 
         /** The Dock on a tab, signed in only; opts.task points at that step (see openDock above). */
         openDock(tab, opts) { if (_config.token && _config.dock !== false) openDock(tab, opts); },
+        /** The menu at a place (4.223.0). */
+        openMenu(p) { if (/^(vibe|chats|agent)$/.test(p)) return openMenuOn(p); const y = /^(notifications|recent|apps|you)$/.test(p); openSearch('', y ? 'you' : p === 'feed' ? 'feed' : 'here', null, y && p !== 'you' ? p : null); },
         pop: popFrom,
         unpop,
         askAgent(text) { askAgent(text); },
