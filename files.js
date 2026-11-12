@@ -59,6 +59,7 @@ const BROWSER = Object.freeze([
     'ov-thread.js',         // one conversation UI (L55 C4): the drawer, search, composer, copy, streaming turns; markup from openvibe-shared/thread, drawn with thread.css
     'ov-composer.js',       // shared composer
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
+    'ov-metrics.js',        // 4.232.0: the one way to show numbers (tiles, sparklines, bars, percentiles, splits, tables)
     'ov-capture.js',        // OVCapture: camera, microphone, screen, photo and recording for Live, Cam and the composer (4.216.0)
     'ov-combo.js',          // shared field dropdown
     'ov-searchbox.js',      // the one search field (4.229.0): pill, suggestions, recent searches, ghost completion; its list is ov-combo
