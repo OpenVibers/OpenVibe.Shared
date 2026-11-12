@@ -452,6 +452,10 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
 .ovh-actor .ovh-go.is-ic svg, .ovh-actor .ovh-go.is-answer svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ovh-actor .ovh-go.is-answer { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 11px; border-radius: 999px; background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); font-weight: 750; font-size: 13.5px; }
 @media (hover: hover) and (pointer: fine) { .ovh-actor:hover .ovh-go.is-ic { transform: translate(2px, -2px); background: color-mix(in srgb, var(--accent, #3b82f6) 24%, transparent); } }
+
+/* 4.223.1: the notice's name stays on one line ("Your own AI", not "Your own / AI"); its sentence takes the wrap. */
+.ovh-notice .ovh-actor.is-invite .ovh-actor-txt b { white-space: nowrap; overflow: hidden; text-overflow: clip; }
+@container ovh (max-width: 400px) { .ovh-notice .ovh-actor.is-invite .ovh-go { padding: 0 12px; font-size: 13px; } }
 `;
         document.head.appendChild(st);
     }
