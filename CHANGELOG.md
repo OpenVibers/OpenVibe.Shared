@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.228.0 — 2026-11-12
+
+- **A page's sections as tabs on a phone** (the owner, 11-11: "consolidate these into tabs, self-contained tabs, so the page isn't so freaking huge … at least on mobile"). `showcase.parts({ name, items: [{ id, label, count, html }], front })` shows one part at a time with a tab bar (its name and count) at 900 px and under, 600 for a front page; every part stays in the HTML (crawlers, AI readers); radios and `:has()`, no script; the arrow keys move between parts; wide screens and browsers without `:has()` stack them. `ov-parts.css` is the same look alone, for a page that does not load showcase.css (Live's home).
+- **`showcase.pick()`: the pick block, once.** Twenty-five sites kept a copy of a "pick block" (server/render/short.js) whose chips only jumped to a pane, so a phone still showed them all. `pick({ key, label, head, panes, checked })` is that block on `parts()`: a heading, then tabs on a phone, every pane in the HTML with its id, `ov-parts.css` linked by its hash. `parts()` takes `checked` too, and a link to something inside a part opens it (CSS `:target`, no script).
+- **Caption it with AI.** A picture in any composer has ✨: one tap sends it, made small (JPEG, 768 px), to the Frame's `/api/frame/caption` on the person's own allowance; the caption fills an empty box (theirs to change) and `ovc:caption` carries the alt text. `ctx.alt(file)` and `ctx.caption(file)` for a page; `data-ovc-caption="off"` leaves it out.
+- **`OpenVibeNavbar.token()`** reads the person's Network token the site gave `init()`. Caption it sends it as the Bearer on any site (the Network's session cookie is not sent cross-site), and the composer's settings sync, which asked for it all along, now finds it.
+- **A picture alone is a post.** The menu's Feed composer no longer asks for a description of every picture: one left empty is written by AI as it posts, and a post goes without one if that cannot be done.
+
 ## 4.227.0 — 2026-11-12
 
 - **One app icon, drawn on the server too** (design rule 142). `OpenVibeIcons.appHtml(site, { size, label, hue })` returns the app icon as markup (no DOM needed): its hue and size inline and its glyph already drawn, so `ov-icons.js` finds nothing to fill and nothing moves when it arrives. `OpenVibeIcons.APP_CSS` is the app icon's own rules, sizes 20 · 26 · 32 · 44 · 56 · 64 included: a server-drawn page puts it in its stylesheet once and its icons are whole before any script runs.

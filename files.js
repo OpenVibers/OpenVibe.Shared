@@ -104,6 +104,7 @@ const BROWSER = Object.freeze([
 // Stylesheets sites serve at /shared/<file> beside the scripts.
 const STYLES = Object.freeze([
     'showcase.css',         // openvibe-shared/showcase's sections + the ring icons (generated: scripts/build-styles.js)
+    'ov-parts.css',         // a page's sections as tabs on a phone, alone (showcase.parts(); generated: scripts/build-styles.js; 4.228.0)
     'items.css',            // Live's name effects for items.js (live.name_effect.css@1)
     'profile-panel.css',    // the panel profile-panel.js draws
     'player.css',           // player.js's controls
