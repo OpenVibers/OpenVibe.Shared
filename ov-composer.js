@@ -572,7 +572,9 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
                 const dataUrl = await smallJpeg(f.file, 768);
                 if (!dataUrl) throw new Error('This picture cannot be read here.');
                 const base = String(form.getAttribute('data-ovc-frame') || 'https://openvibe.network').replace(/\/+$/, '');
-                const r = await fetch(`${base}/api/frame/caption`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ image: { data_url: dataUrl } }) });
+                // The person's token when the bar has one (any site); else the Network's own cookie (on the Network).
+                const t = token();
+                const r = await fetch(`${base}/api/frame/caption`, { method: 'POST', credentials: t ? 'omit' : 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }, body: JSON.stringify({ image: { data_url: dataUrl } }) });
                 const j = await r.json().catch(() => ({}));
                 if (r.status === 401) throw new Error('Sign in to caption a picture with AI.');
                 if (!r.ok) throw new Error(j.error || 'The AI could not caption it just now.');

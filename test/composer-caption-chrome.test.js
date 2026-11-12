@@ -24,7 +24,7 @@ const server = http.createServer((req, res) => {
         let body = '';
         req.on('data', (c) => { body += c; });
         req.on('end', () => {
-            asked.push({ body: JSON.parse(body), cookie: req.headers.cookie || '' });
+            asked.push({ body: JSON.parse(body), cookie: req.headers.cookie || '', auth: req.headers.authorization || '' });
             res.writeHead(refuse ? 402 : 200, { 'content-type': 'application/json' });
             res.end(JSON.stringify(refuse ? { error: 'Your free AI allowance for today is used up' } : { alt: 'A small blue square on white', caption: 'Minimalism, but make it blue.', tags: ['blue', 'square'] }));
         });
@@ -69,6 +69,12 @@ const server = http.createServer((req, res) => {
         assert.equal(await page.evaluate(`document.getElementById('c1').__ovc.ctx.alt(document.getElementById('c1').__ovc.files()[0])`), 'A small blue square on white', 'ctx.alt(file)');
         assert.equal(await page.evaluate(`!!document.querySelector('#c1 [data-ovc-caption]:not(.is-busy)')`), true, 'the button is ready again');
 
+        // With the bar's token (any OpenVibe site), it goes as the Bearer, not a cookie.
+        await page.evaluate(`window.OpenVibeNavbar = { token: () => 'tok_person_abcdefghijklmnop' }; document.querySelector('#c1 textarea').value = ''; true`);
+        await page.evaluate(`document.querySelector('#c1 [data-ovc-caption]').click(), true`);
+        await h.eventually(async () => assert.equal(asked.length, 2));
+        assert.equal(asked[1].auth, 'Bearer tok_person_abcdefghijklmnop', 'the bar\'s token as the Bearer');
+        await h.eventually(async () => assert.equal(await page.evaluate(`!!document.querySelector('#c1 [data-ovc-caption]:not(.is-busy)')`), true));
         // Words already in the box stay; a refusal is said in the note.
         await page.evaluate(`(() => { const t = document.querySelector('#c1 textarea'); t.value = 'mine'; t.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         refuse = true;

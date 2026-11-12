@@ -610,7 +610,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '146282739c06', 'dock.js': 'fdc75546fe8f', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '69a80757ed04', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': '4219e44ff48a' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '146282739c06', 'dock.js': '221e1ce6454e', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '69a80757ed04', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': '78172198e098' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -2643,6 +2643,9 @@
     }
 
     const OpenVibeNavbar = {
+        /** 4.228.0: the person's Network token the site gave init() (or null), for Shared's own calls to the Network
+         * (the composer's settings sync and Caption it). The site already put it in the page; this only reads it. */
+        token() { return _config.token || null; },
         /** The mark works while something loads (an SPA's route, a long action): busy(true), then busy(false). */
         busy(on) { busy(!!on); },
         /** A floating card (overlay.js): OpenVibeNavbar.overlay({ id, src, title, href, live, side }) → Promise<handle|null>. */
