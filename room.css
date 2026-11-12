@@ -160,6 +160,8 @@
 .ovk-rail-prev { left: 6px; }
 .ovk-rail-next { right: 6px; }
 .ovk-pop.is-fixed { position: fixed; right: auto; top: auto; }
+/* In the top layer (kit-web.js): the browser's popover defaults (centred, its own colours) give way to the menu's own. */
+.ovk-pop.is-fixed[popover] { inset: auto; margin: 0; color: inherit; overflow: visible; }
 
 @media (max-width: 599px) {
     .ovk-rail { --ovk-rail-bleed: 16px; }

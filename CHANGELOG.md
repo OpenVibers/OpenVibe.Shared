@@ -1,5 +1,23 @@
 # Changelog
 
+## 4.213.0 — 2026-11-11
+
+- **The menu button's flight, polished** (the owner, 11-11: "the icon becomes whiter than it was when idle … needs
+  general polish … effects when it lands … improve both the open and close transitions"). search.js's flight now
+  copies the pressed button exactly as it looked before the press (every computed paint frozen onto the copy: the
+  navbar's colour rules stop at its edge, and the press had already turned it bright and half into an x). It drops
+  first and glides into its tab, swelling a little and tilting into the turn with a short trail and a soft glow; it
+  lands with a squash and a ring; flying back it does the same on the bar button. The menu's circle now grows from the
+  button around the flight (it was cut short), the close orb turns in once the button has left, and turns away when
+  closing with a button flying back. Calm plays the same path short, with no trail, tilt or glow; Off skips it.
+- **The carried Live card, designed** (the player that keeps playing across sites, 4.212.0): at rest a live card keeps a
+  small red dot in its corner; playing without sound (a browser that would not carry the sound over) it shows one
+  "Tap for sound" chip, at rest too, that turns the sound on (only its icon on a card under 200 px); "Open the full
+  page" draws a page with an arrow out of its corner, not fullscreen's two arrows.
+- **A menu in a rail opens in the top layer** (Community's paste cards, 11-11: the ⋯ menu was cut off). A rail's edge
+  fade is a mask, which hides even a fixed menu outside the rail's box; kit-web.js now shows a rail's `details.ovk-more`
+  menu with the Popover API, placed under its button, and keeps the fixed placement where the API is missing.
+
 ## 4.212.0 — 2026-11-11
 
 A train of four pull requests (one line each):
