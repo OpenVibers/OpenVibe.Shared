@@ -1,5 +1,25 @@
 # Changelog
 
+## 4.219.0 — 2026-11-12
+
+The icon system, audited end to end (plan L32 I1/I2; the owner, 11-12: "Broken icon. Improve the icons that exist, add
+more icons, and improve the icon system in general").
+
+- **No broken icon anywhere.** `scripts/icon-audit.js` reads every OpenVibers repository's main and lists every icon
+  name that does not resolve: `fa-*` classes, `kit.icon('…')`, `glyphs.*('…')`, and the `icon:` fields in NAVs, menus
+  and manifests. A site can run it from the package (`npx ov-icon-audit --root .`) and fail CI on a miss; the audit
+  found and this release fixes `fa-shoe-prints`, `fa-calendar-check`, `fa-cloud-arrow-down`,
+  `fa-magnifying-glass-chart`, `fa-magnifying-glass-dollar`, `fa-plug-circle-plus`, `fa-power-off` and `fa-receipt`.
+- **`kit.icon(name)` draws every glyph in `openvibe-shared/glyphs`**, not only the kit's own 86: the rest travel with
+  kit.js as a generated block (`scripts/build-kit-glyphs.js`) and a test checks the block is current. `compass`, `chip`,
+  `gauge`, `layers`, `route`, `scale` and `flask` no longer draw an empty `<svg>` through the kit.
+- **Nine new glyphs**, each with a solid twin: `binoculars`, `telescope`, `microscope`, `gpu`, `cpu`, `memory`,
+  `joystick`, `wand` and `layers-plus`; `wand-magic-sparkles` now draws the wand, and `ram` maps to `memory`. All are
+  centred and sized to the set (checked by test/glyph-metrics, test/icon-ink), reviewed at 16/20/24 px in light and
+  dark, and rebuilt into the sprite, CSS, web/desktop fonts and code points.
+- **Keywords for every glyph.** `glyphs.META[name].tags` carries the Font Awesome names a glyph stands for plus its
+  synonyms (for the icon pages and the suggest API), so every glyph has searchable words.
+
 ## 4.218.0 — 2026-11-12
 
 One composer, three verbs: **Post · Ask · Do** (research-2026-11-12/composer-post-ask-do.md; the owner, 11-12: "make it so

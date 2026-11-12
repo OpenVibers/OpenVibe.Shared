@@ -22,6 +22,7 @@
 .ovi-back::before{content:"\e008"}
 .ovi-ban::before{content:"\e009"}
 .ovi-bell::before{content:"\e00a"}
+.ovi-binoculars::before{content:"\e117"}
 .ovi-book::before{content:"\e00b"}
 .ovi-book-open::before{content:"\e114"}
 .ovi-box::before{content:"\e0c5"}
@@ -72,6 +73,7 @@
 .ovi-cookie::before{content:"\e0d6"}
 .ovi-copy::before{content:"\e024"}
 .ovi-couch::before{content:"\e0d7"}
+.ovi-cpu::before{content:"\e118"}
 .ovi-crown::before{content:"\e025"}
 .ovi-cubes::before{content:"\e0d8"}
 .ovi-database::before{content:"\e026"}
@@ -115,6 +117,7 @@
 .ovi-ghost::before{content:"\e0e2"}
 .ovi-gift::before{content:"\e03c"}
 .ovi-globe::before{content:"\e03d"}
+.ovi-gpu::before{content:"\e119"}
 .ovi-grid::before{content:"\e03e"}
 .ovi-grip::before{content:"\e0e3"}
 .ovi-group::before{content:"\e0a6"}
@@ -139,11 +142,13 @@
 .ovi-infinity::before{content:"\e0ac"}
 .ovi-info::before{content:"\e048"}
 .ovi-invite::before{content:"\e049"}
+.ovi-joystick::before{content:"\e11a"}
 .ovi-key::before{content:"\e04a"}
 .ovi-keyboard::before{content:"\e04b"}
 .ovi-language::before{content:"\e04c"}
 .ovi-laugh::before{content:"\e0e8"}
 .ovi-layers::before{content:"\e04d"}
+.ovi-layers-plus::before{content:"\e11b"}
 .ovi-leaf::before{content:"\e04e"}
 .ovi-leave::before{content:"\e04f"}
 .ovi-lifebuoy::before{content:"\e0ad"}
@@ -160,9 +165,11 @@
 .ovi-medical::before{content:"\e0af"}
 .ovi-megaphone::before{content:"\e0ec"}
 .ovi-members::before{content:"\e056"}
+.ovi-memory::before{content:"\e11c"}
 .ovi-menu::before{content:"\e057"}
 .ovi-mic::before{content:"\e058"}
 .ovi-mic-off::before{content:"\e059"}
+.ovi-microscope::before{content:"\e11d"}
 .ovi-minus::before{content:"\e05a"}
 .ovi-minus-circle::before{content:"\e0ed"}
 .ovi-money::before{content:"\e0b0"}
@@ -245,6 +252,7 @@
 .ovi-tag::before{content:"\e084"}
 .ovi-target::before{content:"\e085"}
 .ovi-task::before{content:"\e086"}
+.ovi-telescope::before{content:"\e11e"}
 .ovi-tent::before{content:"\e087"}
 .ovi-terminal::before{content:"\e088"}
 .ovi-text::before{content:"\e089"}
@@ -275,6 +283,7 @@
 .ovi-volume::before{content:"\e094"}
 .ovi-walk::before{content:"\e10e"}
 .ovi-wallet::before{content:"\e095"}
+.ovi-wand::before{content:"\e11f"}
 .ovi-water::before{content:"\e096"}
 .ovi-wave::before{content:"\e097"}
 .ovi-weight::before{content:"\e10f"}
@@ -292,6 +301,7 @@
 .ovi-duotone.ovi-alert-circle::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-alert-circle::after{content:"\e002";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-archive::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-archive::after{content:"\e003";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-bell::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-bell::after{content:"\e00a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-binoculars::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-binoculars::after{content:"\e117";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-book::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-book::after{content:"\e00b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-book-open::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-book-open::after{content:"\e114";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-box::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-box::after{content:"\e0c5";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
@@ -332,6 +342,7 @@
 .ovi-duotone.ovi-cookie::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-cookie::after{content:"\e0d6";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-copy::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-copy::after{content:"\e024";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-couch::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-couch::after{content:"\e0d7";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-cpu::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-cpu::after{content:"\e118";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-crown::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-crown::after{content:"\e025";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-cubes::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-cubes::after{content:"\e0d8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-database::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-database::after{content:"\e026";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
@@ -367,6 +378,7 @@
 .ovi-duotone.ovi-ghost::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-ghost::after{content:"\e0e2";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-gift::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-gift::after{content:"\e03c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-globe::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-globe::after{content:"\e03d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-gpu::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-gpu::after{content:"\e119";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-grid::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-grid::after{content:"\e03e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-group::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-group::after{content:"\e0a6";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-hammer::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-hammer::after{content:"\e0e4";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
@@ -385,10 +397,12 @@
 .ovi-duotone.ovi-inbox::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-inbox::after{content:"\e0ab";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-info::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-info::after{content:"\e048";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-invite::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-invite::after{content:"\e049";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-joystick::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-joystick::after{content:"\e11a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-key::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-key::after{content:"\e04a";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-keyboard::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-keyboard::after{content:"\e04b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-laugh::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-laugh::after{content:"\e0e8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-layers::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-layers::after{content:"\e04d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-layers-plus::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-layers-plus::after{content:"\e11b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-leaf::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-leaf::after{content:"\e04e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-lifebuoy::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-lifebuoy::after{content:"\e0ad";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-live::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-live::after{content:"\e052";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
@@ -399,8 +413,10 @@
 .ovi-duotone.ovi-medical::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-medical::after{content:"\e0af";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-megaphone::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-megaphone::after{content:"\e0ec";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-members::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-members::after{content:"\e056";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-memory::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-memory::after{content:"\e11c";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-mic::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-mic::after{content:"\e058";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-mic-off::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-mic-off::after{content:"\e059";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-microscope::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-microscope::after{content:"\e11d";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-minus-circle::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-minus-circle::after{content:"\e0ed";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-money::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-money::after{content:"\e0b0";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-moon::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-moon::after{content:"\e05b";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
@@ -460,6 +476,7 @@
 .ovi-duotone.ovi-tag::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-tag::after{content:"\e084";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-target::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-target::after{content:"\e085";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-task::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-task::after{content:"\e086";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-telescope::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-telescope::after{content:"\e11e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-tent::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-tent::after{content:"\e087";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-terminal::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-terminal::after{content:"\e088";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-text::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-text::after{content:"\e089";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
@@ -485,6 +502,7 @@
 .ovi-duotone.ovi-volume::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-volume::after{content:"\e094";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-walk::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-walk::after{content:"\e10e";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-wallet::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-wallet::after{content:"\e095";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
+.ovi-duotone.ovi-wand::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-wand::after{content:"\e11f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-water::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-water::after{content:"\e096";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-weight::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-weight::after{content:"\e10f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}
 .ovi-duotone.ovi-window::before{font-family:"OV Glyphs"}.ovi-duotone.ovi-window::after{content:"\e111";position:absolute;font-family:"OV Glyphs Solid";opacity:.2;pointer-events:none}

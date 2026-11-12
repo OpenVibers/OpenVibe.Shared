@@ -205,9 +205,15 @@ kit.action({ action: '/s/x/leave', icon: 'leave', label: 'Leave', confirm: 'Leav
 kit.badge(text, 'accent' | 'ok' | 'warn' | 'bad' | 'live') · kit.dot(n) · kit.icon(name) · kit.ICONS
 ```
 
-`kit.ICONS` lists the icon names: 24-unit line drawings in the text's colour, among them `back`, `plus`, `send`,
-`search`, `gear`, `members`, `invite`, `chat`, `bell`, `home`, `spark`, `live`, `video`, `image`, `tag`, `coin`,
-`trophy`, `map`, `code`, `robot` and `game`.
+`kit.ICONS` lists every icon name (the whole `openvibe-shared/glyphs` registry, 4.219.0): 24-unit line drawings in the
+text's colour, among them `back`, `plus`, `send`, `search`, `gear`, `members`, `invite`, `chat`, `bell`, `home`, `spark`,
+`live`, `video`, `image`, `tag`, `coin`, `trophy`, `map`, `code`, `robot`, `game`, `compass`, `binoculars`, `telescope`,
+`microscope`, `gpu`, `cpu`, `memory`, `joystick`, `wand` and `layers-plus`. A name the set does not have still draws
+nothing, so a page that names icons can be checked before it ships:
+
+```bash
+npx ov-icon-audit --root .        # every icon name in this repository resolves (exit 1 when one does not)
+```
 
 ### Cards and rails (4.28.0)
 
