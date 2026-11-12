@@ -61,6 +61,7 @@ const BROWSER = Object.freeze([
     'ov-run.js',            // 4.224.0: the one run thread (OpenVibeRun), loaded beside the navbar
     'ov-capture.js',        // OVCapture: camera, microphone, screen, photo and recording for Live, Cam and the composer (4.216.0)
     'ov-combo.js',          // shared field dropdown
+    'ov-searchbox.js',      // the one search field (4.229.0): pill, suggestions, recent searches, ghost completion; its list is ov-combo
     'ov-window.js',         // shared dialog, sheet, and panel
     'agent-sheet.js',       // an agent's sheet in the one window (4.211.0)
     'ov-float.js',          // the move engine behind a PiP or a panel: dock/float, tuck, size, place (4.208.0)

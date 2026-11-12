@@ -13,6 +13,16 @@
  * "Create “name” on OpenVibe Git": POST <create> { name, private: true } → { url, label }, and the new one goes in.
  * A site with its own data: OVCombo.enhance(input, { source: async (q, signal) => ({ sections }), create: async (name) => ({ url }) }).
  * Events on the input: 'ov-combo:pick' { detail: item } after a pick or a create.
+ *
+ * 4.229.0, for the one search field (ov-searchbox.js) and anything else that is not a value picker:
+ *   pick(item, q)    a chosen row goes here instead of into the field (a search goes to the row's page);
+ *   enter(q)         Enter with no row chosen (a search searches what was typed); the list closes;
+ *   onRows(items, q) the rows just drawn, in order (the search field's ghost reads the first);
+ *   selectFirst      false: the first row is not chosen ahead of the arrows (Enter is the typed text);
+ *   none(q)          the words when nothing matches; limit, the rows asked of a URL source (12);
+ *   cacheMs          how long an answer is kept per query (60000; 0 asks every time: the caller keeps its own);
+ *   anchor           the element the list lines up under (the search field's pill), else the field.
+ * A row may carry icon (search, recent, page, person, live, video, place) or image (a small picture's URL).
  */
 (function (root) {
     'use strict';
@@ -23,6 +33,12 @@
         'git.openvibe.codes': svg('<circle cx="7" cy="6" r="2.2"/><circle cx="7" cy="18" r="2.2"/><circle cx="17" cy="8" r="2.2"/><path d="M7 8.2v7.6M17 10.2c0 4-6 3-9.2 6"/>'),
         'github.com': svg('<path d="M9 19c-4 1.3-4-2-5.6-2.5M14.6 21v-3.3a2.9 2.9 0 0 0-.8-2.2c2.7-.3 5.6-1.3 5.6-6a4.6 4.6 0 0 0-1.3-3.2 4.3 4.3 0 0 0-.1-3.2s-1-.3-3.4 1.3a11.5 11.5 0 0 0-6 0C6.2 2.8 5.2 3.1 5.2 3.1a4.3 4.3 0 0 0-.1 3.2A4.6 4.6 0 0 0 3.8 9.5c0 4.6 2.8 5.7 5.5 6a2.9 2.9 0 0 0-.8 2.2V21"/>'),
         recent: svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+        search: svg('<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>'),
+        page: svg('<path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20z"/><path d="M14 3.5V8h4"/>'),
+        person: svg('<circle cx="12" cy="8.5" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>'),
+        live: svg('<circle cx="12" cy="12" r="2.2"/><path d="M8.1 8.1a5.5 5.5 0 0 0 0 7.8M15.9 8.1a5.5 5.5 0 0 1 0 7.8M5.3 5.3a9.5 9.5 0 0 0 0 13.4M18.7 5.3a9.5 9.5 0 0 1 0 13.4"/>'),
+        video: svg('<rect x="3.5" y="6" width="12.5" height="12" rx="2"/><path d="m16 10.5 4.5-2.5v8l-4.5-2.5"/>'),
+        place: svg('<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>'),
         repo: svg('<path d="M5 4.5h11.5a1.5 1.5 0 0 1 1.5 1.5v13H6.5A1.5 1.5 0 0 1 5 17.5z"/><path d="M5 17.5A1.5 1.5 0 0 1 6.5 16H18"/>'),
         plus: svg('<path d="M12 5v14M5 12h14"/>'),
         lock: '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="5.5" y="11" width="13" height="9" rx="2"/><path d="M8.5 11V8a3.5 3.5 0 0 1 7 0v3"/></svg>',
@@ -41,6 +57,7 @@
 .ovcombo-i[aria-selected="true"]:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 20%, transparent); }
 .ovcombo-ic { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
 .ovcombo-ic svg { width: 18px; height: 18px; }
+.ovcombo-ic img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .ovcombo-i.is-create .ovcombo-ic { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
 .ovcombo-t { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .ovcombo-t b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -68,6 +85,8 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
         const o = Object.assign({}, opts);
         const src = o.source || input.getAttribute('data-ov-combo');
         const createAt = o.create || input.getAttribute('data-ov-combo-create');
+        const limit = Math.max(1, Math.min(25, Number(o.limit) || 12));
+        const keepMs = o.cacheMs == null ? 60000 : Math.max(0, Number(o.cacheMs) || 0);
         const listId = `ovcombo-${++uid}`;
         input.setAttribute('role', 'combobox');
         input.setAttribute('aria-autocomplete', 'list');
@@ -80,13 +99,13 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
 
         async function fetchQ(q) {
             const hit = cache.get(q);
-            if (hit && Date.now() - hit.at < 60000) return hit.v;
+            if (hit && Date.now() - hit.at < keepMs) return hit.v;
             if (ctl) ctl.abort();
             ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
             let v;
             if (typeof src === 'function') v = await src(q, ctl && ctl.signal);
             else {
-                const u = new URL(src, location.href); u.searchParams.set('q', q); u.searchParams.set('limit', '12');
+                const u = new URL(src, location.href); u.searchParams.set('q', q); u.searchParams.set('limit', String(limit));
                 const r = await fetch(u.href, { credentials: 'same-origin', headers: { accept: 'application/json' }, signal: ctl && ctl.signal });
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 v = await r.json();
@@ -97,7 +116,7 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
         }
         function place() {
             if (!pop || pop.hidden) return;
-            const r = input.getBoundingClientRect();
+            const r = (o.anchor && o.anchor.isConnected ? o.anchor : input).getBoundingClientRect();
             const vh = root.innerHeight, vw = root.innerWidth;
             const below = vh - r.bottom - 12, above = r.top - 12;
             const up = below < 220 && above > below;
@@ -144,7 +163,10 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
             d.setAttribute('role', 'option');
             d.setAttribute('aria-selected', 'false');
             const ic = el('span', 'ovcombo-ic');
-            ic.innerHTML = kind === 'create' ? HOST_IC.plus : HOST_IC[item.host] || (kind === 'recent' ? HOST_IC.recent : HOST_IC.repo);
+            if (kind !== 'create' && item.image && /^(https?:\/\/|\/)/.test(String(item.image))) {
+                const im = el('img'); im.alt = ''; im.loading = 'lazy'; im.decoding = 'async'; im.referrerPolicy = 'no-referrer'; im.src = String(item.image);
+                ic.appendChild(im);
+            } else ic.innerHTML = kind === 'create' ? HOST_IC.plus : HOST_IC[item.icon] || HOST_IC[item.host] || (kind === 'recent' ? HOST_IC.recent : HOST_IC.repo);
             const t = el('span', 'ovcombo-t');
             t.appendChild(kind === 'create' ? el('b', null, item.label) : mark(String(item.label || item.url || ''), q));
             const subBits = kind === 'create' ? [item.sub] : [item.host && item.host !== 'git.openvibe.codes' ? item.host : item.host ? 'OpenVibe Git' : null, item.sub || (item.updated_at ? ago(item.updated_at) : null)].filter(Boolean);
@@ -187,18 +209,26 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
                 if (any) { const h = el('p', 'ovcombo-sec', 'New'); h.setAttribute('role', 'presentation'); pop.appendChild(h); }
                 pop.appendChild(row({ label: `Create “${name}” on ${c.host === 'git.openvibe.codes' || !c.host ? 'OpenVibe Git' : c.host}`, sub: `Private, under ${c.owner ? '@' + c.owner : 'your account'}. You can share it later.`, name }, q, 'create'));
             }
-            if (!rows.length) pop.appendChild(el('div', 'ovcombo-none', q ? `Nothing matches “${q}”. A full address works too.` : 'Nothing here yet. Paste an address, or type a name.'));
+            if (!rows.length) {
+                const words = typeof o.none === 'function' ? o.none(q) : q ? `Nothing matches “${q}”. A full address works too.` : 'Nothing here yet. Paste an address, or type a name.';
+                if (words) pop.appendChild(el('div', 'ovcombo-none', words)); else { close(); return; }
+            }
             place();
-            if (rows.length && q) select(0);
+            if (rows.length && q && o.selectFirst !== false) select(0);
+            if (typeof o.onRows === 'function') { try { o.onRows(rows.map((r) => r.item), q); } catch { /* the caller's */ } }
         }
         async function look(q) {
             lastQ = q;
-            if (!cache.has(q)) skeleton();
+            const hit = cache.get(q);
+            // Rows already showing stay while a quick answer comes (no flash of the skeleton on every key).
+            const sk = hit && Date.now() - hit.at < keepMs ? 0 : setTimeout(() => { if (lastQ === q) skeleton(); }, rows.length ? 180 : 0);
             try {
                 const v = await fetchQ(q);
+                clearTimeout(sk);
                 if (lastQ !== q || document.activeElement !== input) return;
                 paint(v, q);
             } catch (e) {
+                clearTimeout(sk);
                 if (e && e.name === 'AbortError') return;
                 if (lastQ !== q) return;
                 open(); pop.removeAttribute('aria-busy'); pop.replaceChildren(el('div', 'ovcombo-err', 'The list did not load. You can still paste an address.')); place();
@@ -206,7 +236,10 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
         }
         async function choose(i) {
             const r = rows[i]; if (!r || creating) return;
-            if (r.kind !== 'create') { put(r.item); return; }
+            if (r.kind !== 'create') {
+                if (typeof o.pick === 'function') { const q = input.value.trim(); close(); o.pick(r.item, q); return; }
+                put(r.item); return;
+            }
             creating = true;
             r.el.querySelector('b').textContent = `Creating “${r.item.name}”…`;
             try {
@@ -239,6 +272,7 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
         input.addEventListener('input', () => { if (input.__ovcomboPicked === input.value) return; input.__ovcomboPicked = null; clearTimeout(timer); timer = setTimeout(() => look(input.value.trim()), 160); });
         input.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== input) close(); }, 120));
         input.addEventListener('keydown', (e) => {
+            if (e.defaultPrevented) return;   // a field built on this one handled the key (the search field's Tab)
             const shown = pop && !pop.hidden && cur === api;
             if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -246,12 +280,13 @@ html[data-ov-motion=off] .ovcombo, html[data-ov-motion=off] .ovcombo-skel i, htm
                 if (!rows.length) return;
                 select(at < 0 ? (e.key === 'ArrowDown' ? 0 : rows.length - 1) : (at + (e.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length);
             } else if (e.key === 'Enter' && shown && at >= 0) { e.preventDefault(); e.stopPropagation(); choose(at); }
+            else if (e.key === 'Enter' && typeof o.enter === 'function' && !e.isComposing) { e.preventDefault(); const q = input.value.trim(); close(); o.enter(q); }
             else if (e.key === 'Escape' && shown) { e.preventDefault(); e.stopPropagation(); close(); }
             else if (e.key === 'Tab' && shown) close();
         });
         root.addEventListener('resize', place);
         root.addEventListener('scroll', place, true);
-        const api = { input, open: () => look(input.value.trim()), close, destroy() { close(); input.__ovcombo = null; root.removeEventListener('resize', place); root.removeEventListener('scroll', place, true); } };
+        const api = { input, open: () => look(input.value.trim()), close, get shown() { return !!(pop && !pop.hidden && cur === api); }, destroy() { close(); input.__ovcombo = null; root.removeEventListener('resize', place); root.removeEventListener('scroll', place, true); } };
         input.__ovcombo = api;
         return api;
     }

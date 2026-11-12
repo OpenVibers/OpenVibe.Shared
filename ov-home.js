@@ -128,6 +128,13 @@ html[data-ov-motion=reduced] .ovh.is-edit .ovh-grid:not(.ovh-recent) .ovh-ic { a
     border-radius: 14px; background: transparent; color: var(--text-primary, #e8ecf3); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .ovh-head { display: flex; align-items: center; gap: 8px; padding: 6px 2px; }
 .ovh-head b { flex: 1; font-size: 16px; }
+/* 4.229.0: a place's head inside You (All apps, a folder): its name, its count and a quiet hint, coming in with the view. */
+.ovh-head-t { flex: 1; min-width: 0; display: grid; gap: 1px; animation: ovh-head-in .28s cubic-bezier(.2, .8, .2, 1) both; }
+.ovh-head-t b { display: inline-flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 800; letter-spacing: -.01em; color: var(--text-primary, #e6edf7); }
+.ovh-head-n { min-width: 24px; padding: 0 8px; box-sizing: border-box; border-radius: 999px; background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, #93c5fd); font-size: 12.5px; font-weight: 800; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.ovh-head-t small { font-size: 12.5px; color: var(--text-muted, #8a96a8); }
+@keyframes ovh-head-in { from { opacity: 0; transform: translateX(-6px); } }
+html[data-ov-motion=off] .ovh-head-t { animation: none; }
 .ovh-back { min-height: 44px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--accent, #3b82f6); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .ovh-filter { width: calc(100% - 8px); min-height: 44px; margin: 2px 4px 4px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.14));
     background: var(--bg-primary, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 15px; }
@@ -595,6 +602,12 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     }
 
     // ── Drawing an icon ────────────────────────────────────────────────────────────────────────────────────────
+    /** 4.229.0: a card with no person behind it (Deals, Community, Report) wears its site's app icon (design rule 142),
+     *  40 px like a person's face beside it, the glyph filling it (the owner, 11-12: "icons to increase size"). */
+    function appFace(site) {
+        const s = h('span', 'ov-appicon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', '40'); s.setAttribute('aria-hidden', 'true');
+        return s;
+    }
     function siteIcon(site, size) {
         const s = h('span', 'ov-icon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', String(size)); s.setAttribute('data-fx', 'none');
         return s;
@@ -1083,10 +1096,15 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
 
         function paintDrawer() {
             el.textContent = '';
-            const head = backHead('All apps');
-            const field = h('input', 'ovh-filter'); field.type = 'search'; field.placeholder = `Find among ${L.byId.size} apps`; field.setAttribute('aria-label', 'Find an app'); field.value = state.filter;
-            head.querySelector('b').replaceWith(field);
+            // 4.229.0 (the owner, 11-12: "confusing"): one search. The menu's own pill reads "Find among 64 apps" and
+            // filters this list as you type (OpenVibeHome's filter()); the head is the place's name and its count.
+            const head = backHead('All apps', { count: L.byId.size, hint: typeof o.onView === 'function' ? 'Type above to find one' : '' });
             el.append(head);
+            let field = null;
+            if (typeof o.onView !== 'function') {   // a host without the menu's pill keeps the box of its own
+                field = h('input', 'ovh-filter'); field.type = 'search'; field.placeholder = `Find among ${L.byId.size} apps`; field.setAttribute('aria-label', 'Find an app'); field.value = state.filter;
+                head.append(field);
+            }
             const body = h('div');
             el.append(body);
             const groups = (o.groups && o.groups.length ? o.groups : [{ id: '', name: 'OpenVibe' }]).slice();
@@ -1125,16 +1143,23 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 });
                 icons();
             };
-            field.addEventListener('input', () => { state.filter = field.value; draw(); });
+            if (field) field.addEventListener('input', () => { state.filter = field.value; draw(); });
+            drawerDraw = draw;
             draw();
         }
+        let drawerDraw = null;
 
-        function backHead(title) {
+        function backHead(title, { count = null, hint = '' } = {}) {
             const head = h('div', 'ovh-head');
             const back = h('button', 'ovh-back'); back.type = 'button'; back.append(svgIcon('back'));
             back.setAttribute('aria-label', 'Back to your home'); back.setAttribute('data-ov-tip', 'Back to your home');
-            back.addEventListener('click', () => { state.view = 'home'; state.folder = null; paint(); const b = el.querySelector('.ovh-allbtn'); if (b) b.focus(); });
-            head.append(back, h('b', '', title));
+            back.addEventListener('click', () => { state.view = 'home'; state.folder = null; state.filter = ''; paint(); const b = el.querySelector('.ovh-allbtn'); if (b) b.focus(); });
+            const name = h('div', 'ovh-head-t');
+            const b = h('b', '', title);
+            if (count != null) b.append(h('span', 'ovh-head-n', String(count)));
+            name.append(b);
+            if (hint) name.append(h('small', '', hint));
+            head.append(back, name);
             return head;
         }
         function sec(text, glyph, count) {
@@ -1146,7 +1171,11 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             return s;
         }
 
-        function paint() { if (state.view === 'folder') return paintFolder(); if (state.view === 'drawer') return paintDrawer(); return paintHome(); }
+        function paint() {
+            // The menu hears which view shows, so its pill can search inside it (All apps) or go back to searching OpenVibe.
+            if (typeof o.onView === 'function') { try { o.onView(state.view, { apps: L.byId.size }); } catch { /* the menu's own */ } }
+            if (state.view === 'folder') return paintFolder(); if (state.view === 'drawer') return paintDrawer(); return paintHome();
+        }
         paint();
         // Network's copy wins when it answers and differs.
         pullRemote(o).then((r) => {
@@ -1160,6 +1189,12 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         });
         return {
             repaint: paint,
+            /** 4.229.0: which view shows ('home', 'drawer' for All apps, 'folder'), and the pill's words for All apps. */
+            get view() { return state.view; },
+            apps: () => L.byId.size,
+            filter(q) { state.filter = String(q || ''); if (state.view === 'drawer' && drawerDraw) drawerDraw(); },
+            /** Show 'drawer' (All apps) or 'home' from outside: a menu address (you/apps) opens All apps. */
+            show(view) { if (view !== 'drawer' && view !== 'home') return; state.view = view; state.folder = null; state.filter = ''; paint(); },
             /** The menu learned more (history, the catalogue): redraw with it, unless the person is arranging. */
             update(next) { o = next; L = layoutOf(o); if (!state.drag && !state.edit && state.view === 'home') paint(); },
         };
@@ -1498,7 +1533,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         const face = h('span', cls || 'ovfd-face');
         const av = c.actor && safe(c.actor.avatar);
         if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
-        else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 22)); }
+        else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         return face;
     }
@@ -1597,7 +1632,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         const av = c.actor && safe(c.actor.avatar);
         // No person behind it (the network's trending pictures): the site's icon and the card's label, not a "?".
         if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
-        else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 20)); }
+        else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovfd-who');
         const meta = h('small', '');
@@ -1745,6 +1780,9 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         const sentinel = h('div', 'ovfd-more');
         el.append(examples, resultHead, chips, list, sentinel);
         let kind = '', cursor = null, busy = false, done = false, seq = 0, lastDay = '';
+        // 4.229.0: a card already on the list is never drawn again (the owner, 11-12: "112 new deals" three times, one
+        // per page of a Deals poll; Network now names a burst once, and this keeps any repeat off the screen).
+        const shownIds = new Set();
         let query = '', searchSeq = 0;
         const loaded = [];
         const feedBase = `${o.frameBase || FRAME}/feed`;
@@ -1801,7 +1839,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         async function more(first) {
             if (busy || done) return;
             busy = true; const my = ++seq;
-            if (first) { list.textContent = ''; skeletons(); } else skeletons();
+            if (first) { list.textContent = ''; shownIds.clear(); skeletons(); } else skeletons();
             const j = await loadFeed(o, kind, cursor);
             if (my !== seq) return;
             clearSkels();
@@ -1821,7 +1859,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             // (no time of their own) sit between, under the day they were woven into.
             const day = (x) => { const t = Date.parse(String((x && x.at) || '')); return Number.isFinite(t) ? new Date(t).toDateString() : ''; };
             const mark = (x) => { const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
-            j.items.forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
+            j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
             flush();
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
@@ -1879,9 +1917,9 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
 .ovfd-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
 @media (hover:hover){.ovfd-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
 .ovfd-head{display:flex;align-items:center;gap:8px;min-width:0}
-.ovfd-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
+.ovfd-face{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:15px}
 .ovfd-face img{width:100%;height:100%;object-fit:cover}
-.ovfd-face.is-site{border-radius:10px;background:linear-gradient(150deg,hsl(var(--ovh-h,215) 72% 58% / .34),hsl(var(--ovh-h,215) 70% 38% / .18))}.ovfd-face.is-site .ov-icon{color:hsl(var(--ovh-h,215) 90% 82%)}
+.ovfd-face.is-site{border-radius:30%;background:none;overflow:visible}.ovfd-face.is-site>.ov-appicon{--ova-size:40px}
 .ovfd-who{min-width:0;display:grid}
 .ovfd-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ovfd-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}

@@ -526,7 +526,9 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
   .ovs.ovs-anchored .ovs-orb.is-from { transform: translate(var(--orb-dx, 0px), var(--orb-dy, 0px)) scale(.9); background: transparent; box-shadow: none; }
   .ovs.ovs-anchored .ovs-orb::after { content: ""; position: absolute; inset: -4px; }
   /* A ring leaves the orb as its sheet opens (4.186.0; the Dock's sheet does the same). */
-  .ovs.ovs-anchored .ovs-orb.is-x::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ovo-a); pointer-events: none; animation: ovs-ring .6s cubic-bezier(.2,.8,.2,1) .1s both; }
+  /* 4.229.0: the ring is invisible at rest, so where animations are off (a phone's "Remove animations", reduced motion)
+     it never stays as a white circle around the x (the owner, 11-12: "why is it white"). */
+  .ovs.ovs-anchored .ovs-orb.is-x::before { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--ovo-a); pointer-events: none; opacity: 0; animation: ovs-ring .6s cubic-bezier(.2,.8,.2,1) .1s both; }
   @keyframes ovs-ring { from { opacity: .8; transform: scale(.9); } to { opacity: 0; transform: scale(calc(1 + 2.2 * var(--ov-move, 1))); } }
   .ovs.ovs-anchored .ovs-orb:active { transform: scale(.9); }
   /* 4.213.0: when the pressed button flew to its tab, the close turns in at the pill once it has left (a quarter turn,
@@ -692,6 +694,14 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         }
     }
     const exact = (it, q) => !!it && ['site', 'family', 'tool', 'page'].includes(it.kind) && String(it.title).toLowerCase() === q.toLowerCase();
+    /** 4.229.0 (the owner, 11-12: "fix the history back button so it properly brings you back to this GUI"): the menu's
+     *  entry remembers where it was when a link took the person away, and Back reopens it there (navbar.js restoreMenu). */
+    function markBack() {
+        try {
+            const back = { tab, door: door || null, scroll: listEl ? Math.round(listEl.scrollTop) : 0, at: Date.now() };
+            history.replaceState(Object.assign({}, history.state || {}, { ovsMenu: false, ovsBack: back }), '');
+        } catch { /* a page that cannot keep state: Back shows the page */ }
+    }
     function remember(it) {
         if (pushed) { pushed = false; try { history.replaceState(Object.assign({}, history.state || {}, { ovsMenu: false }), ''); } catch { /* */ } }
         const q = input && input.value.trim();
@@ -798,12 +808,13 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             if (g.as === 'home' || g.as === 'walltop' || g.as === 'wall') {
                 const H = root.OpenVibeHome; if (!H) return;
                 const kept = homeViews[g.as];
-                if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); return; }
+                if (kept) { if (kept.api && kept.api.update) { try { kept.api.update(homeOpts()); } catch { /* keep what shows */ } } listEl.appendChild(kept.li); if (g.as === 'home') drawerIfAsked(kept.api); return; }
                 const li = document.createElement('li'); li.setAttribute('role', 'presentation');
                 let api = null;
                 try { api = (g.as === 'home' ? H.home : g.as === 'walltop' ? H.wallTop : (H.feed || H.timeline))(li, homeOpts()); } catch { return; }
                 homeViews[g.as] = { li, api };
                 listEl.appendChild(li);
+                if (g.as === 'home') drawerIfAsked(api);
                 return;
             }
             if (g.as === 'route') {
@@ -1604,6 +1615,13 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     }
     const slugOf = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
     /** What ov-home.js needs: every app (ranked), the person's own places, the tools, what they opened lately. */
+    /** 4.229.0: You's home tells the menu which view shows: All apps makes the pill its finder ("Find among 64 apps"),
+     *  and leaving it gives the pill back to searching OpenVibe. */
+    function homeView(view, info) {
+        if (!input || tab !== 'you') return;
+        if (view === 'drawer') { input.placeholder = `Find among ${(info && info.apps) || ''} apps`.replace('  ', ' '); input.value = ''; return; }
+        if (/^Find among /.test(input.placeholder)) { input.placeholder = `Search ${here()}, or ask Vibe`; input.value = ''; }
+    }
     function homeOpts() {
         const { all, ranked, f } = basis();
         const apps = ranked.map((x) => ({ id: x.id, title: x.name, url: x.url, site: x.icon || x.id, group: x.group })).filter((x) => x.url);
@@ -1620,7 +1638,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         const seenB = new Set();
         const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 60).map(backRow) : [];
         const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
-        return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
+        return { onView: homeView, apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
             token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling,
             // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
             notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
@@ -1668,6 +1686,14 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         el.classList.toggle('ovs-typing', !!q);
         if (door === 'chats' && canDoor()) { try { root.OpenVibeDock.filterChats(q); } catch { /* */ } return; }
         if (door === 'vibe') return;
+        // All apps open under You: the pill finds an app there, in place (4.229.0; one search, not a second box).
+        const homeApi = homeViews.home && homeViews.home.api;
+        if (tab === 'you' && homeApi && homeApi.view === 'drawer') {
+            tabsEl.hidden = false;
+            input.placeholder = `Find among ${homeApi.apps()} apps`;
+            homeApi.filter(q);
+            return;
+        }
         if (tab === 'feed' && homeLib()) {
             tabsEl.hidden = false;
             input.placeholder = 'Search the feed';
@@ -1950,6 +1976,11 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         fly(from, to, { fromFace: flyIdle });
     }
 
+    function drawerIfAsked(api) {
+        if (!wantDrawer || !api || typeof api.show !== 'function') return;
+        wantDrawer = false;
+        try { api.show('drawer'); } catch { /* the home screen stays */ }
+    }
     function open(opts = {}) {
         homeViews = {}; pulseReady = null;   // a fresh home screen and wall each time the menu opens
         if (typeof document === 'undefined') return;
@@ -1975,7 +2006,16 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         tickAgo();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.
-        try { if (!(history.state && history.state.ovsMenu)) { history.pushState(Object.assign({}, history.state || {}, { ovsMenu: true }), ''); pushed = true; } } catch { pushed = false; }
+        try {
+            if (opts.restore) { history.replaceState(Object.assign({}, history.state || {}, { ovsMenu: true, ovsBack: null }), ''); pushed = true; }
+            else if (!(history.state && history.state.ovsMenu)) { history.pushState(Object.assign({}, history.state || {}, { ovsMenu: true }), ''); pushed = true; }
+        } catch { pushed = false; }
+        if (opts.restore && opts.restore.scroll > 0) {
+            // Its parts arrive a moment later (the home screen, the wall): the scroll is put back as they land.
+            const want = opts.restore.scroll;
+            const put = () => { if (listEl && listEl.scrollTop < want) listEl.scrollTop = want; };
+            requestAnimationFrame(put); setTimeout(put, 250); setTimeout(put, 700);
+        }
         // Opened from the navbar's orb: the menu drops from it, under the bar; otherwise centred.
         const at = opts.anchor;
         el.classList.toggle('ovs-anchored', !!at);
@@ -2015,7 +2055,10 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         paintGhost();
         render(input.value);
         if (flyFrom && !input.value) requestAnimationFrame(flyIn);
-        if (opts.section) setTimeout(() => { const section = listEl.querySelector(`[data-sec="${opts.section}"]`); if (section && section.scrollIntoView) section.scrollIntoView({ block: 'start' }); }, 80);
+        // All apps is a view of You's home screen: it opens as the home screen arrives (4.229.0, you/apps).
+        wantDrawer = opts.section === 'apps';
+        const sec = opts.section === 'apps' ? 'home' : opts.section;
+        if (sec) setTimeout(() => { const section = listEl.querySelector(`[data-sec="${sec}"]`); if (section && section.scrollIntoView) section.scrollIntoView({ block: 'start' }); }, 80);
         // On a phone the orb opens a menu, not a search: focusing the field would raise the keyboard over the menu (owner
         // 11-08), so focus stays on the close orb until the person taps the field. A query, or a computer, still types.
         setTimeout(() => { if (phoneSheet() && !opts.q && !opts.search && orbEl && orbEl.isConnected) orbEl.focus({ preventScroll: true }); else input.focus(); }, 0);
@@ -2031,7 +2074,13 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     }
     // ownBack: the history.back() a close made itself. Its popstate arrives later, and must not close a menu opened
     // again in between (a quick close-and-reopen on the picture lost the second open, 2026-11-10).
-    let pushed = false, popping = false, surface = null, ownBack = false;
+    let pushed = false, popping = false, surface = null, ownBack = false, wantDrawer = false;
+    if (typeof window !== 'undefined') window.addEventListener('popstate', () => {
+        if (ownBack) return;
+        if (!(el && el.classList.contains('is-open'))) {
+            try { if (history.state && history.state.ovsBack) document.dispatchEvent(new CustomEvent('openvibe-menu-restore')); } catch { /* */ }
+        }
+    });
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (ownBack) { ownBack = false; return; } if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
@@ -2041,7 +2090,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         if (view === 'results' && rtabsEl) leaveResults();
         leaveDoor();
         if (!el || closing) return;
-        if (navigating) pushed = false;
+        if (navigating) { pushed = false; markBack(); }
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
         if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; history.back(); } } catch { /* */ } }
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.

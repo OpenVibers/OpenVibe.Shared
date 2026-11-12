@@ -610,7 +610,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '146282739c06', 'dock.js': '9f15df28050c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '69a80757ed04', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': 'ac7107f5d733' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'ef289c4550b1', 'dock.js': '9f15df28050c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'b11405559831', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': 'ac7107f5d733' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1363,6 +1363,52 @@
         status: (s) => { _menuStatus = s || null; }, openMenu: (id) => openMenuOn(id), closeMenu: () => { if (root.OpenVibeSearch && menuOpen()) root.OpenVibeSearch.close(); } });
     let _menuStatus = null;
     /** The menu on one of its places ('chats', 'vibe', 'code', 'agent'): opened there, or moved there if it is open. */
+    /** 4.229.0: Back to a page the menu was left from opens the menu again, where it was (its place, its door, its
+     *  scroll), whether the page comes back from the browser's cache, loads again, or is swapped in place. Only for a
+     *  Back or Forward, and only within half an hour of leaving. */
+    function restoreMenu(ev) {
+        let st = null;
+        try { st = history.state; } catch { return; }
+        const b = st && st.ovsBack;
+        if (!b || typeof b !== 'object' || !(Date.now() - Number(b.at || 0) < 30 * 60000)) return;
+        let nav = null;
+        try { nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]; } catch { nav = null; }
+        if (!(ev && ev.persisted) && !(nav && nav.type === 'back_forward')) return;
+        if (menuOpen()) return;
+        const tab = /^(here|feed|you)$/.test(String(b.tab || '')) ? b.tab : 'here';
+        const door = /^(vibe|chats|agent|code|tasks)$/.test(String(b.door || '')) ? b.door : undefined;
+        const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
+        openSearch('', tab, orbs.find((x) => x.getBoundingClientRect && x.getBoundingClientRect().width > 0) || null, null, door, { restore: { scroll: Math.max(0, Number(b.scroll) || 0) } });
+    }
+    /** 4.229.0 (the owner, 11-12: "other tools and buttons can open specific areas of the menu"): a menu address is
+     *  place[/part]. Places: here, feed, you, and the doors vibe, chats, agent, code, tasks. Parts: You's notifications,
+     *  recent, apps (All apps), feeds, display; this site's live, places, tools, all. A part alone names its place
+     *  ("notifications" is you/notifications). Anything else opens the menu on this site. */
+    const MENU_PARTS = { here: /^(live|places|tools|all|discover|news)$/, you: /^(notifications|recent|apps|feeds|display|home)$/, feed: /^$/ };
+    function menuAddress(addr) {
+        const [a = '', b = ''] = String(addr || '').trim().toLowerCase().replace(/^#?ov-menu=/, '').split('/');
+        if (/^(vibe|chats|agent|code|tasks)$/.test(a)) return { door: a };
+        if (MENU_PARTS.you.test(a)) return { tab: 'you', part: a };
+        if (MENU_PARTS.here.test(a)) return { tab: 'here', part: a };
+        const tab = /^(here|feed|you)$/.test(a) ? a : 'here';
+        return { tab, part: MENU_PARTS[tab].test(b) && b ? b : null };
+    }
+    function openMenuAt(addr, fromEl) {
+        const m = menuAddress(addr);
+        if (m.door) return openMenuOn(m.door);
+        openSearch('', m.tab, fromEl && fromEl.getBoundingClientRect ? fromEl : null, m.part);
+    }
+    /** An address in the page's own: #ov-menu=you/notifications (alone, or after other hash words with &). It opens
+     *  as the page loads or when a link on the page changes the hash, and leaves the address so Back is the page. */
+    function menuFromHash() {
+        let h = '';
+        try { h = root.location.hash || ''; } catch { return; }
+        const m = /(?:^#|&)ov-menu=([a-z/-]{1,40})(?=&|$)/.exec(h);
+        if (!m) return;
+        const rest = h.replace(m[0], '').replace(/^#&/, '#');
+        try { history.replaceState(history.state, '', root.location.pathname + root.location.search + (rest === '#' ? '' : rest)); } catch { /* the address keeps it */ }
+        openMenuAt(m[1]);
+    }
     function openMenuOn(id) {
         if (menuOpen() && root.OpenVibeSearch && root.OpenVibeSearch.door && root.OpenVibeSearch.door(id)) return;
         const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
@@ -2375,7 +2421,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl, section, door) {
+    function openSearch(q, tab, fromEl, section, door, extra) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2389,7 +2435,7 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section, door,
+            root.OpenVibeSearch.open({ ...(extra || {}), service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section, door,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, runsBase: dockBase(), user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
@@ -2602,6 +2648,26 @@
                 document.head.appendChild(sr);
             } catch { /* an old browser: links load as they always did */ }
         }
+        // 4.229.0 (the owner, 11-12: "when you click links and pages and other domains within the menu or navigation it
+        // loads async dynamically and is highly optimized"): a link to another OpenVibe site warms up as a finger lands on
+        // it or a pointer rests on it (its connection opens: DNS and TLS while the press is still down). This site's
+        // pages are already fetched ahead by the speculation rules above; browsers do not prefetch another site's page
+        // for a person signed in there. Anywhere on the page: the bar, the menu, a footer, a card. At most 24 origins.
+        const warmed = new Set();
+        const OV_HOST = /(^|\.)(openvibe\.[a-z]+|openre\.stream|open\.shoes)$/;
+        const warm = (a) => {
+            let u; try { u = new URL(a.getAttribute('href'), location.href); } catch { return; }
+            if (u.protocol !== 'https:' || u.origin === location.origin || warmed.has(u.origin) || warmed.size >= 24 || !OV_HOST.test(u.hostname)) return;
+            warmed.add(u.origin);
+            try { const l = document.createElement('link'); l.rel = 'preconnect'; l.href = u.origin; document.head.appendChild(l); } catch { /* the click connects */ }
+        };
+        document.addEventListener('pointerdown', (e) => { const a = e.target && e.target.closest && e.target.closest('a[href]'); if (a) warm(a); }, { capture: true, passive: true });
+        let hoverTimer = 0;
+        document.addEventListener('pointerover', (e) => {
+            if (e.pointerType === 'touch') return;
+            const a = e.target && e.target.closest && e.target.closest('a[href]'); if (!a) return;
+            clearTimeout(hoverTimer); hoverTimer = setTimeout(() => warm(a), 90);
+        }, { passive: true });
         // A plain same-site link on a server-rendered page: the mark starts working at once; the next page's mark takes over.
         document.addEventListener('click', (e) => {
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -2612,7 +2678,19 @@
             setTimeout(() => { if (!e.defaultPrevented) busy(true); }, 0);   // after the page's own handler (an SPA's router) had its say
         }, true);
         // Back from the browser's page cache: whatever was loading is done.
-        window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) busy(false); });
+        window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) { busy(false); restoreMenu(ev); } });
+        document.addEventListener('openvibe-menu-restore', () => restoreMenu({ persisted: true }));
+        setTimeout(() => restoreMenu(null), 0);
+        setTimeout(menuFromHash, 0);
+        window.addEventListener('hashchange', menuFromHash);
+        document.addEventListener('click', (e) => {
+            const t = e.target && e.target.closest ? e.target.closest('[data-ov-menu]') : null;
+            if (!t || e.defaultPrevented || e.button !== 0) return;
+            // A link that also has an address keeps the browser's own ways to open it elsewhere (a new tab, a window).
+            if (t.matches('a[href]') && (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)) return;
+            e.preventDefault();
+            openMenuAt(t.getAttribute('data-ov-menu'), t);
+        });
     }
     // ── The shared worker (openvibe-sw.js): the shell's cache, and the push notifications it always carried ──
     // A site opts in: OpenVibeNavbar.init({ sw: true }). The worker is the same file the notification bell registers for
@@ -2695,7 +2773,6 @@
 
         /** Open the search panel (search.js), with an optional query already in it. */
         openSearch(q, tab) { openSearch(q, tab); },
-        openMenu(tab) { openSearch('', tab || 'you'); },
         openSwitcher() { openSwitcher(); },
 
         /** The phone app bar: true (from the links that have icons), a list of { label, href, icon, id, page, dot }, or false. */
@@ -2792,8 +2869,11 @@
 
         /** The Dock on a tab, signed in only; opts.task points at that step (see openDock above). */
         openDock(tab, opts) { if (_config.token && _config.dock !== false) openDock(tab, opts); },
-        /** The menu at a place (4.223.0). */
-        openMenu(p) { if (/^(vibe|chats|agent|code|tasks)$/.test(p)) return openMenuOn(p); const y = /^(notifications|recent|apps|you)$/.test(p); openSearch('', y ? 'you' : p === 'feed' ? 'feed' : 'here', null, y && p !== 'you' ? p : null); },
+        /** The menu at an address: a place, or place/part ('you/notifications', 'you/apps', 'vibe'; 4.223.0, parts 4.229.0).
+         *  The same address works as data-ov-menu="…" on any element and as #ov-menu=… at the end of a page's address. */
+        openMenu(p, fromEl) { openMenuAt(p || 'you', fromEl); },
+        /** What an address opens: { door } or { tab, part } (for a site's own button that wants to show where it goes). */
+        menuAddress,
         pop: popFrom,
         unpop,
         askAgent(text) { askAgent(text); },
