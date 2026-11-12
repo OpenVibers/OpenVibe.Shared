@@ -17,6 +17,9 @@ shared composer … interconnected through all sites with all the features we mi
   - **comment**: the small one, with your picture and Reply.
   - `onSubmit({ text, files, uploads, audience, mode }, api)`: the box clears after it; `false` (or an error, shown in
     the box) keeps it. `audience` and `mode` are chips over the browser's own list.
+- **For agents** (from the agents portal's own box): `chips: [{ name, label, icon, options, value }]` for any number of
+  choices (Model and Reasoning beside the mode), all sent as `chips` by name; `setRunning(true, onStop)` turns the send
+  into Stop while a run works (a click stops, nothing is sent), `setRunning(false)` brings it back.
 - **Tools are modules**: `OpenVibeComposer.tool(id, { label, path, accept | run(ctx, button, form) })` adds or replaces
   one for every box; a preset or a site names the ones it shows (`tools: ['photo', 'file', 'emoji', 'poll', 'voice']`).
   Built in: photo, file, attach, emoji (a panel of 90 at the caret), voice. `presets()` and `tools()` list them.

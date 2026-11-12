@@ -151,6 +151,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 .ovt-send:disabled { opacity: .45; cursor: default; }
 .ovc-v2 .ovt-send--round { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border-radius: 50%; }
 .ovc-v2 .ovt-send--round svg { width: 19px; height: 19px; }
+.ovc-v2.is-running .ovt-send { background: color-mix(in srgb, var(--text-primary, #fff) 14%, transparent); color: var(--text-primary, #e6edf7); }
 .ovc-v2 .ovc-files { margin: 0; padding: 0 0 2px; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image, .ovc-v2[data-preset=comment] .ovc-file.ovc-image { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: 150px; max-width: 150px; height: auto; padding: 0; border-radius: 16px; overflow: hidden; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-th, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-th { width: 100%; height: 150px; border-radius: 15px 15px 0 0; }
@@ -219,6 +220,9 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         globe: 'M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18zM3 12h18M12 3c2.5 2.7 3.6 5.7 3.6 9s-1.1 6.3-3.6 9c-2.5-2.7-3.6-5.7-3.6-9S9.5 5.7 12 3z',
         spark: 'M12 3l1.9 5.1 5.1 1.9-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z',
         send: 'M5 12h14M13 6l6 6-6 6',
+        stop: 'M7 7h10v10H7z',
+        cpu: 'M8 8h8v8H8zM9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3',
+        gauge: 'M5 18a8 8 0 1 1 14 0M12 14l3-4',
     };
     const svg = (d, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
@@ -626,10 +630,13 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     //   options: { preset: 'post' | 'chat' | 'agent' | 'comment', id, name ('text'), placeholder, label, maxLength,
     //     user: { display_name | username, avatar_url }, tools: ['photo', 'file', 'attach', 'emoji', 'voice'] (the
     //     preset's own when absent), accept, maxFiles, maxMb, required (true), noDraft,
-    //     audience / mode: { name, label, options: [[value, label]], value } (a chip each),
+    //     audience / mode: { name, label, options: [[value, label]], value } (a chip each); chips: [{ name, label, icon
+    //     ('globe' | 'spark' | 'cpu' | 'gauge'), options, value, onChange }] for any more (an agent's Model and Reasoning,
+    //     as the agents portal's box has),
     //     submitLabel, upload(file, onProgress), mentions, commands, beforeSend,
     //     onSubmit({ text, files, uploads, audience, mode }, api) → a promise; false keeps the box as it is }
-    //   → the enhance api plus { form, text, send, note, setBusy(bool) }.
+    //   → the enhance api plus { form, text, send, note, setBusy(bool), setRunning(bool, onStop) (the send becomes Stop
+    //     while a run works, as in the agents portal), values() (every chip's value by name) }.
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
     const PRESET = {
@@ -735,6 +742,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         const aud = chip(o.audience, IC.globe), md = chip(o.mode, IC.spark);
         if (aud) chips.appendChild(aud);
         if (md) chips.appendChild(md);
+        (Array.isArray(o.chips) ? o.chips : []).forEach((spec) => { const c = chip(spec, IC[spec && spec.icon] || IC.spark); if (c) chips.appendChild(c); });
         // The ring: how much of the limit is used; amber near it, red over it (the words stay; the send waits).
         let ring = null;
         if (p.ring) {
@@ -778,11 +786,22 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             ta.addEventListener('input', paint); paint();
         }
         const setBusy = (on) => { form.classList.toggle('is-busy', !!on); send.disabled = !!on || (!ta.value.trim() && !api.files().length); };
+        const values = () => Object.fromEntries([...chips.querySelectorAll('select')].map((sel) => [sel.name, sel.value]));
+        // While a run works the send is Stop (the agents portal's box): a click calls onStop, nothing is sent.
+        let stopFn = null;
+        const sendFace = send.innerHTML, sendLabel = send.getAttribute('aria-label');
+        send.addEventListener('click', (e) => { if (!stopFn) return; e.preventDefault(); e.stopImmediatePropagation(); const f = stopFn; try { f(); } catch (err) { console.error(err); } }, true);
+        const setRunning = (on, onStop) => {
+            stopFn = on ? (typeof onStop === 'function' ? onStop : () => {}) : null;
+            form.classList.toggle('is-running', !!on);
+            if (on) { send.innerHTML = svg(IC.stop); send.classList.add('ovt-send--round'); send.setAttribute('aria-label', 'Stop'); send.title = 'Stop'; send.disabled = false; }
+            else { send.innerHTML = sendFace; send.classList.toggle('ovt-send--round', !p.send); send.setAttribute('aria-label', sendLabel); send.title = ''; api.refresh(); }
+        };
         if (typeof o.onSubmit === 'function') {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (form.classList.contains('is-busy')) return;
-                const value = { text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null };
+                const value = { text: ta.value.trim(), files: api.files(), uploads: api.uploads(), audience: aud ? aud.querySelector('select').value : null, mode: md ? md.querySelector('select').value : null, chips: values() };
                 setBusy(true);
                 let keep = false;
                 try { keep = (await o.onSubmit(value, api)) === false; }
@@ -792,7 +811,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
                 api.refresh();
             });
         }
-        return Object.assign(api, { form, text: ta, send, note, setBusy });
+        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values });
     }
 
     // ── Your settings, in a sheet: what sends, voice, compact, your own commands.
