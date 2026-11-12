@@ -55,3 +55,62 @@ html[data-ov-motion=off] .ov-wallet-body.is-first > *, html[data-ov-motion=off] 
 @media (prefers-reduced-motion: reduce) { html:not([data-ov-motion]) .ov-wallet-body.is-first > * { animation: ov-wallet-fade .2s ease both; animation-delay: 0s; } }
 @keyframes ov-wallet-fade { from { opacity: 0; } }
 .ov-wallet.ov-wallet-in{width:auto;max-height:none;border:0;border-radius:0;box-shadow:none;overflow:visible}.ovw:has(.ov-wallet-in){background:none;border:0}.ov-wallet-in{border-radius:inherit}.ov-wallet-in .ov-wallet-head{padding-right:64px}.ovw.is-sheet .ov-wallet-in .ov-wallet-head{padding-top:26px}.ov-wallet-in .ov-wallet-body{max-height:none;overflow:visible}.ovw-b:has(>.ov-wallet-in){padding:0}
+
+/* 4.221.0 (the owner, 11-12: "UGLY" on What changed and Store; "major design and stylistic improvements across both
+   mobile and desktop … nice looking icons"): the head says what this is; balances first; What changed is one row per
+   currency (its icon, a short summary, the amount in its colour, every move in a fold); each section has its mark; an
+   empty part is a small card with its mark; on a computer What changed and Recent activity sit side by side. */
+.ov-wallet-head{justify-content:flex-start;gap:14px;padding:18px 24px}
+.ov-wallet-mark{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:14px;color:#fff;background:linear-gradient(135deg,color-mix(in srgb,var(--accent,#3b82f6) 88%,#22c55e),color-mix(in srgb,#22c55e 70%,var(--accent,#3b82f6)));box-shadow:0 6px 18px color-mix(in srgb,var(--accent,#3b82f6) 26%,transparent)}
+.ov-wallet-mark svg{width:24px;height:24px}
+.ov-wallet-name{min-width:0;display:grid;gap:1px}.ov-wallet-name h2{font-size:22px;letter-spacing:-.4px}.ov-wallet-name small{color:var(--wallet-muted);font-size:13px}
+.ov-wallet-head .ov-wallet-close{margin-left:auto}
+.ov-wallet-glyph{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:11px;color:var(--accent-light,var(--accent,#60a5fa));background:color-mix(in srgb,var(--accent,#3b82f6) 13%,transparent)}
+.ov-wallet-glyph svg{width:19px;height:19px}
+.ov-wallet-section{margin-top:26px;min-width:0}
+.ov-wallet-sh{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.ov-wallet-sh h3{font-size:17px;letter-spacing:-.2px}.ov-wallet-sh .ov-wallet-muted{margin:1px 0 0}
+.ov-wallet-section>.ov-wallet-sh+p{margin-top:0}
+.ov-wallet-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:0 18px}
+@media(min-width:760px){.ov-wallet-pair{grid-template-columns:repeat(2,minmax(0,1fr))}.ov-wallet-pair>.ov-wallet-section:only-child{grid-column:1/-1}}
+/* What changed */
+.ov-wallet-change{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:4px 12px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--wallet-line);border-radius:14px;background:var(--wallet-card)}
+.ov-wallet-change-ic{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:color-mix(in srgb,var(--pc,var(--accent,#3b82f6)) 16%,transparent)}
+.ov-wallet-change-ic svg{width:24px;height:24px}
+.ov-wallet-change-t{min-width:0;display:grid;gap:1px}.ov-wallet-change-t strong{font-size:14.5px}
+.ov-wallet-change-t small{color:var(--wallet-muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-wallet-change-n{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+.ov-wallet-change-n.is-gain{color:var(--success,#22a06b)}.ov-wallet-change-n.is-loss{color:var(--danger,#d14343)}
+.ov-wallet-change-more{grid-column:1/-1;margin:2px 0 0}
+.ov-wallet-change-more summary{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 4px;color:var(--accent-light,var(--accent,#60a5fa));font-size:13px;font-weight:650;cursor:pointer;list-style:none}
+.ov-wallet-change-more summary::-webkit-details-marker{display:none}
+.ov-wallet-chev{display:inline-grid;transition:transform .2s}.ov-wallet-chev svg{width:13px;height:13px;transform:rotate(90deg)}
+.ov-wallet-change-more[open] .ov-wallet-chev{transform:rotate(180deg)}
+.ov-wallet-change-more ul{list-style:none;margin:4px 0 2px;padding:0;display:grid;gap:4px}
+.ov-wallet-change-more li{display:flex;align-items:center;gap:10px;min-height:36px;padding:4px 8px;border-radius:10px;background:color-mix(in srgb,var(--wallet-text) 4%,transparent);font-size:13.5px}
+.ov-wallet-change-more li>span:not(.ov-wallet-glyph){flex:1;min-width:0}.ov-wallet-change-more li b{font-variant-numeric:tabular-nums;font-size:13px}.ov-wallet-change-more li b.is-gain{color:var(--success,#22a06b)}.ov-wallet-change-more li b.is-loss{color:var(--danger,#d14343)}
+.ov-wallet-change-more li .ov-wallet-glyph{width:26px;height:26px;border-radius:8px}.ov-wallet-change-more li .ov-wallet-glyph svg{width:15px;height:15px}
+/* Recent activity, as rows in the same hand */
+.ov-wallet-pair .ov-wallet-event{padding:10px 2px}
+/* Empty, said with its mark */
+.ov-wallet-empty{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px dashed color-mix(in srgb,var(--wallet-muted) 45%,transparent);border-radius:14px;background:color-mix(in srgb,var(--wallet-text) 2%,transparent)}
+.ov-wallet-empty>div{display:grid;gap:2px;min-width:0}.ov-wallet-empty strong{font-size:14.5px}.ov-wallet-empty span:not(.ov-wallet-glyph){color:var(--wallet-muted);font-size:13px}
+@media(max-width:600px){.ov-wallet-head{padding:14px 18px 12px}.ov-wallet-mark{width:40px;height:40px;border-radius:12px}.ov-wallet-name h2{font-size:20px}.ov-wallet-section{margin-top:22px}.ov-wallet-change{padding:9px 10px;gap:2px 10px}.ov-wallet-change-ic{width:36px;height:36px}}
+html[data-ov-motion=off] .ov-wallet-chev{transition:none}
+/* Recent activity in the same hand as What changed */
+.ov-wallet-act{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:2px 12px;padding:10px 12px!important;margin-bottom:8px;border:1px solid var(--wallet-line)!important;border-radius:14px;background:var(--wallet-card)}
+.ov-wallet-act .ov-wallet-change-ic{width:36px;height:36px}.ov-wallet-act .ov-wallet-change-ic svg{width:20px;height:20px}
+.ov-wallet-act-t{min-width:0;display:grid;gap:1px;font-size:14px}.ov-wallet-act-t strong{display:block;font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-wallet-act-t>a{display:grid!important;align-content:center;gap:1px;min-height:44px!important;border:0!important;min-width:0}
+.ov-wallet-act-t strong::first-letter{text-transform:uppercase}
+.ov-wallet-act-t>a{color:inherit;text-decoration:none}.ov-wallet-act-t>a:hover strong{color:var(--accent-light,var(--accent,#60a5fa))}
+.ov-wallet-act-n{font-weight:750;font-size:13.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;max-width:none!important;overflow-wrap:normal!important}.ov-wallet-act-n.is-gain{color:var(--success,#22a06b)}.ov-wallet-act-n.is-loss{color:var(--wallet-text)}
+/* Store: a smaller picture, the name and its maker close together, the prices as pills with their currency's mark */
+.ov-wallet-item{gap:4px;padding:8px 8px 10px}.ov-wallet-item .ov-wallet-preview{height:88px;margin-bottom:4px}.ov-wallet-item h4{font-size:14.5px;padding:0 2px}.ov-wallet-item>.ov-wallet-muted{font-size:12.5px;padding:0 2px}
+.ov-wallet-prices{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.ov-wallet-price{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 12px 0 8px;border-radius:999px;border:1px solid var(--wallet-line);background:color-mix(in srgb,var(--wallet-text) 4%,transparent);color:var(--wallet-text);font:inherit;font-size:13.5px;font-weight:750;font-variant-numeric:tabular-nums;cursor:pointer}
+.ov-wallet-price:hover:not(:disabled){border-color:var(--accent,#3b82f6);background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent)}
+.ov-wallet-price-ic{display:grid;place-items:center;width:22px;height:22px}.ov-wallet-price-ic svg{width:18px;height:18px}
+.ov-wallet-owned{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px 0 6px!important;border-radius:999px;font-weight:650;color:var(--success,#22a06b)!important;background:color-mix(in srgb,var(--success,#22a06b) 12%,transparent)}
+.ov-wallet-tick{display:grid;place-items:center;width:22px;height:22px}.ov-wallet-tick svg{width:15px;height:15px}
+@media(pointer:coarse){.ov-wallet-price{min-height:44px}}
