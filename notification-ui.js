@@ -271,8 +271,10 @@
             .openvibe-notif-item .ovn-under span { display: inline-flex; align-items: center; gap: 6px; }
             .openvibe-notif-item .ovn-under svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
             .openvibe-notif-item .content { min-width: 0; }
-            .openvibe-notif-item .title { font-size: 13.5px; font-weight: 550; line-height: 1.32; display: flex; align-items: baseline; gap: 6px; }
-            .openvibe-notif-item .title .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+            /* 4.223.0: the title and its count are one run of text (the count overlapped the words when the title was a box). */
+            .openvibe-notif-item .title { font-size: 13.5px; font-weight: 550; line-height: 1.32; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+            .openvibe-notif-item .title .t { display: inline; }
+            .openvibe-notif-item .title .count { display: inline-block; margin-left: 6px; vertical-align: 1px; }
             .openvibe-notif-item.unread .title { font-weight: 700; }
             .openvibe-notif-item .title .count { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 50%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
             .openvibe-notif-item .msg { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); line-height: 1.42; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
@@ -1076,7 +1078,7 @@
                         ${p.message ? `<div class="msg">${esc(p.message)}</div>` : ''}
                         ${chipsHtml({ ...p, chips })}
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
-                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}<div class="row-actions">${unread ? `<button type="button" data-row="read" title="Mark as read" aria-label="Mark as read">${svg(ICON.read)}</button>` : ''}<button type="button" data-row="dismiss" title="Clear" aria-label="Clear">${svg(ICON.close)}</button></div></div>
+                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}<div class="row-actions"><button type="button" data-row="dismiss" title="Clear this notice" aria-label="Clear this notice">${svg(ICON.close)}</button></div></div>
                     </div>
                     ${thumb ? `<img class="thumb" src="${esc(thumb)}" alt="" loading="lazy">` : ''}
                     </div>

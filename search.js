@@ -159,14 +159,14 @@
     /** The person's history: one request per opening, kept two minutes (signed in only; anonymous sessions keep none). */
     async function loadHistory() {
         if (!ctx.token || !ctx.user || ctx.user.is_anon) return null;
-        const key = `ov_hist:${ctx.user.id || ctx.user.username || ''}`;
+        const key = `ov_hist2:${ctx.user.id || ctx.user.username || ''}`;
         try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.at < 120000) return c.data; } catch { /* */ }
         try {
             const r = await fetch(`${ctx.apiBase || 'https://openvibe.network'}/api/history?limit=60`, { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' });
             if (!r.ok) return null;
             const j = await r.json();
             const data = {
-                items: (j.items || []).map((h) => ({ title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: h.updated_at })).filter((h) => h.url && h.title),
+                items: (j.items || []).map((h) => ({ title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title),
                 services: (j.services || []).map((s) => ({ service: String(s.service || ''), count: Number(s.count) || 0 })),
             };
             try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* */ }
@@ -200,8 +200,11 @@
             el.querySelectorAll('[data-at]').forEach((m) => { const t = ago(m.dataset.at); if (t) m.textContent = [m.dataset.pre, t].filter(Boolean).join(' · '); });
         }, 60000);
     }
+    /** A time without a zone is UTC (Network's history and older APIs send "YYYY-MM-DD HH:MM:SS"; a browser reads that as
+     *  local time, and west of UTC every visit looked hours ahead: "just now" for all of them, 11-12). */
+    function utcOf(t) { const v = String(t || ''); return /^\d{4}-\d\d-\d\d[ T]\d\d:\d\d(:\d\d(\.\d+)?)?$/.test(v) ? `${v.replace(' ', 'T')}Z` : v; }
     function ago(iso) {
-        const t = Date.parse(iso || ''); if (!isFinite(t)) return '';
+        const t = Date.parse(utcOf(iso)); if (!isFinite(t)) return '';
         const m = Math.max(0, Math.round((Date.now() - t) / 60000));
         return m < 1 ? 'just now' : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} d ago`;
     }
@@ -237,6 +240,18 @@
 .ovs-x { flex: none; height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--text-muted, #93a0b4); font: inherit; font-size: 13px; cursor: pointer; }
 .ovs-x svg { display: none; width: 20px; height: 20px; }
 .ovs-x:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+/* 4.223.0 (the owner, 11-12: "Close … ICON"; "these buttons and borders … get extra wide … make that more sleek"): Close
+   is a round × on every screen; the phone's orb keeps a hairline edge and a soft glass, never a thick ring. */
+.ovs-x { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s, transform .12s; }
+.ovs-x svg { display: block; width: 18px; height: 18px; }
+.ovs-x span { display: none; }   /* the button's own aria-label (Close the menu) names it */
+.ovs-x:active { transform: scale(.9); }
+@media (hover: hover) { .ovs-x:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); } }
+@media (max-width: 640px) {
+  .ovs.ovs-anchored .ovs-orb { background: color-mix(in srgb, var(--bg-secondary, #121826) 72%, transparent); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 14%, transparent), 0 8px 22px -10px rgba(0, 0, 0, .6); }
+  .ovs.ovs-anchored .ovs-orb.is-x::before { border-width: 1px; }
+}
 /* Phones and small windows: the menu covers the screen (the bar under it too), so Close is always there, a round x at
    the end of the search pill (the owner, 11-07: "This needs a close button"). The hit area is 48 px. */
 @media (max-width: 860px) {
@@ -297,6 +312,42 @@
 /* 4.202.0: on a phone a site's name sits under its mark, so the whole name shows (Download, Community: not "Downlo…"). */
 @media (max-width: 480px) { .ovs-grid.is-mini .ovs-tile { flex-direction: column; justify-content: center; gap: 5px; min-height: 64px; padding: 6px 2px 5px; text-align: center; } .ovs-grid.is-mini .ovs-tile b { max-width: 100%; font-size: 12.5px; } }
 .ovs-group[data-sec="all"] { display: flex; align-items: center; gap: 10px; }
+/* 4.223.0 (the owner, 11-12: "the icons are so small, they're hard to see … make the icons bigger so they actually take up
+   more of the square … fix the alignment"): a site's icon is an app icon in every tab — its own hue on a rounded square,
+   the glyph at 58% of it, placed absolutely so no hover transform can move it off centre. */
+.ovs .ovs-ic.ovs-site { position: relative; overflow: hidden; border-radius: 30%; background: linear-gradient(150deg, hsl(var(--ovs-h, 215) 72% 58% / .36), hsl(var(--ovs-h, 215) 70% 38% / .2)); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 70% 64% / .3); }
+.ovs .ovs-ic.ovs-site .ovi-ring, .ovs-ic.ovs-site .ovi-bg, .ovs-ic.ovs-site .ovi-comet, .ovs-ic.ovs-site .ovi-prog { display: none; }
+.ovs .ovs-ic.ovs-site > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovs-h, 215) 92% 84%); color: hsl(var(--ovs-h, 215) 92% 84%); }
+:root[data-theme="light"] .ovs .ovs-ic.ovs-site > .ov-icon { --ovi-glyph: hsl(var(--ovs-h, 215) 70% 30%); color: hsl(var(--ovs-h, 215) 70% 30%); }
+.ovs .ovs-ic.ovs-site > .ov-icon svg { position: absolute; left: -13%; top: -13%; width: 126%; height: 126%; margin: 0; transform: none !important; }
+/* The site list: a grid of app icons, four across on a phone and as many as fit beyond, names on two balanced lines. */
+.ovs-grid.is-mini { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px 0 6px; }
+@media (min-width: 560px) { .ovs-grid.is-mini { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
+.ovs-grid.is-mini .ovs-tile { flex-direction: column; justify-content: flex-start; align-items: center; gap: 7px; min-height: 0; padding: 6px 0 8px; border-radius: 16px; text-align: center; background: transparent; }
+.ovs-grid.is-mini .ovs-tile > span:last-child { max-width: 100%; }
+.ovs-grid.is-mini .ovs-ic { width: min(100% - 14px, 64px); height: auto; aspect-ratio: 1; border-radius: 29%; transition: transform .22s cubic-bezier(.2, 1.4, .4, 1), box-shadow .22s; }
+.ovs-grid.is-mini .ovs-tile b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; white-space: normal; text-overflow: clip; font-size: 12px; font-weight: 650; line-height: 1.2; text-wrap: balance; }
+.ovs-grid.is-mini .ovs-tile.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
+.ovs-grid.is-mini .ovs-tile:active .ovs-ic { transform: scale(.93); transition-duration: .08s; }
+@media (hover: hover) { .ovs-grid.is-mini .ovs-tile:hover { background: transparent; } .ovs-grid.is-mini .ovs-tile:hover .ovs-ic { transform: translateY(-3px) scale(1.04); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 75% 70% / .5), 0 12px 26px -8px hsl(var(--ovs-h, 215) 75% 45% / .6); } }
+html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
+/* Each section of sites wears its glyph. */
+.ovs-group-ic { order: -1; flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-group-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+/* Names in the brand face (openvibe.design rule: a place's or an app's name in OV Brand 800; words you read in the UI
+   face): the site list, the tabs, Vibe's switch. */
+.ovs-grid.is-mini .ovs-tile b, .ovs-door-sw button, .ovs-starttabs .ovs-tab { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 800; letter-spacing: .005em; }
+.ovs-grid.is-mini .ovs-tile b { font-size: 13px; color: color-mix(in srgb, var(--text-primary, #e6edf7) 92%, transparent); }
+.ovs-group[data-sec="all"] { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 13.5px; font-weight: 800; letter-spacing: .01em; text-transform: none; color: var(--text-primary, #e6edf7); }
+/* A slow light drifts behind the menu (Calm slows it, only Off stops it; openvibe.design: calm reduces, only off removes). */
+.ovs-panel { isolation: isolate; }
+.ovs-panel::before { content: ""; position: absolute; inset: -20%; z-index: -1; pointer-events: none; opacity: .5;
+  background: radial-gradient(38% 30% at 20% 10%, color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent), transparent 70%), radial-gradient(34% 28% at 85% 30%, color-mix(in srgb, #a855f7 16%, transparent), transparent 70%), radial-gradient(40% 32% at 50% 95%, color-mix(in srgb, #14b8a6 12%, transparent), transparent 70%);
+  animation: ovs-drift 26s ease-in-out infinite alternate; }
+@keyframes ovs-drift { from { transform: translate3d(-3%, -2%, 0) rotate(0deg); } to { transform: translate3d(3%, 2%, 0) rotate(8deg); } }
+html[data-ov-motion=reduced] .ovs-panel::before { animation-duration: 60s; }
+html[data-ov-motion=off] .ovs-panel::before { animation: none; }
+:root[data-theme="light"] .ovs-panel::before { opacity: .35; }
 .ovs-group[data-sec="all"]::after { content: ""; flex: 1; height: 1px; background: var(--border, rgba(255,255,255,.1)); }
 .ovs-tabs[hidden] { display: none; }
 .ovs-tab { flex: none; height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13.5px; font-weight: 650; cursor: pointer; }
@@ -343,6 +394,24 @@
 .ovs-door-sw button[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
 .ovs-door-sw button[aria-selected="true"] .ovs-tab-ic { color: var(--accent-light, var(--accent, #60a5fa)); }
 .ovs-door-sw button:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+/* 4.223.0: one segmented control (You's tabs have the same): the ink slides to the chosen part, names at 15 px, glyphs at
+   20 px, the chosen glyph a touch larger in the accent. */
+.ovs-door-sw { position: relative; isolation: isolate; gap: 4px; padding: 4px; border-radius: 16px; }
+.ovs-door-sw button { min-height: 46px; gap: 8px; font-size: 15px; font-weight: 700; border-radius: 12px; transition: color .18s, background-color .18s; -webkit-tap-highlight-color: transparent; }
+.ovs-door-sw button[aria-selected="true"] { background: transparent; box-shadow: none; }
+.ovs-door-sw .ovs-tab-ic, .ovs-door-sw .ovs-tab-ic > svg { width: 20px; height: 20px; }
+.ovs-door-sw .ovs-tab-ic { transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-door-sw button[aria-selected="true"] .ovs-tab-ic { transform: scale(1.08); }
+.ovs-door-sw button:active .ovs-tab-ic { transform: scale(.9); }
+@media (hover: hover) and (pointer: fine) { .ovs-door-sw button:not([aria-selected="true"]):hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); } }
+.ovs-door-ink { position: absolute; left: 0; top: 4px; bottom: 4px; width: 0; z-index: -1; border-radius: 12px; opacity: 0; pointer-events: none;
+  background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent), 0 6px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent);
+  transition: transform .34s cubic-bezier(.3, 1.3, .4, 1), width .34s cubic-bezier(.3, 1.3, .4, 1), opacity .2s; }
+.ovs-door-ink.is-on { opacity: 1; }
+:root[data-theme="light"] .ovs-door-ink { background: #fff; }
+html[data-ov-motion=reduced] .ovs-door-ink { transition: opacity .25s; }
+html[data-ov-motion=off] .ovs-door-ink, html[data-ov-motion=off] .ovs-door-sw .ovs-tab-ic { transition: none; }
+@media (max-width: 380px) { .ovs-door-sw button { font-size: 14px; gap: 6px; } }
 .ovs-in-door .ovs-foot { display: none; }
 .ovs-group { display: flex; align-items: center; gap: 8px; padding: 10px 10px 4px; font-size: 11px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
 .ovs-group button { margin-left: auto; border: 0; background: none; color: var(--accent-light, #8ab4ff); font: inherit; font-size: 11.5px; font-weight: 650; text-transform: none; letter-spacing: 0; cursor: pointer; }
@@ -542,11 +611,30 @@
         // chats with it, your coding tasks, and your agents.
         doorSw.innerHTML = [['vibe', 'Chat', 'talk'], ['code', 'Code', 'code'], ['agent', 'Agents', 'agent']].map(([id, label, ic]) => `<button type="button" role="tab" data-part="${id}" aria-selected="false"><span class="ovs-tab-ic">${BRIDGE_SVG[ic]}</span><span>${label}</span></button>`).join('');
         doorSw.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-part]'); if (b && door === 'vibe') { aiPart = b.getAttribute('data-part'); openDoor('vibe'); } });
+        // 4.223.0: the switch's ink slides to the chosen part (the owner, 11-12: "animations, effects to the tabs"); it
+        // follows aria-selected wherever that is set, and the size of the row.
+        {
+            const ink = document.createElement('i'); ink.className = 'ovs-door-ink'; ink.setAttribute('aria-hidden', 'true'); doorSw.prepend(ink);
+            const place = () => {
+                const on = doorSw.querySelector('[data-part][aria-selected="true"]');
+                if (!on || !on.offsetWidth) { ink.classList.remove('is-on'); return; }
+                ink.style.transform = `translateX(${on.offsetLeft}px)`; ink.style.width = `${on.offsetWidth}px`; ink.classList.add('is-on');
+            };
+            if (typeof MutationObserver === 'function') new MutationObserver(() => requestAnimationFrame(place)).observe(doorSw, { subtree: true, attributes: true, attributeFilter: ['aria-selected', 'hidden'] });
+            if (typeof ResizeObserver === 'function') new ResizeObserver(() => { ink.style.transition = 'none'; place(); void ink.offsetWidth; ink.style.transition = ''; }).observe(doorSw);
+            doorSw.addEventListener('keydown', (e) => {
+                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                const all = [...doorSw.querySelectorAll('[data-part]')]; const k = all.indexOf(document.activeElement); if (k < 0) return;
+                const next = all[(k + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+                e.preventDefault(); next.focus(); next.click();
+            });
+        }
         doorHost = document.createElement('div'); doorHost.className = 'ovs-door-host';
         const timerButton = document.createElement('button'); timerButton.type = 'button'; timerButton.className = 'ovs-ai-timer'; timerButton.setAttribute('aria-label', 'Start a timer'); timerButton.setAttribute('data-ov-tip', 'Start a timer'); timerButton.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/></svg><span>Start a timer</span>'; timerButton.hidden = true;
         timerButton.addEventListener('click', () => { try { if (root.OpenVibeDock && root.OpenVibeDock.timer) root.OpenVibeDock.timer(timerButton); else if (ctx.dockMore) ctx.dockMore('timer'); } catch { /* not loaded */ } });
         // Vibe's switch and its timer share one row (4.220.0): the timer is an icon at its end, never a row under the box.
-        const doorTop = document.createElement('div'); doorTop.className = 'ovs-door-top'; doorTop.append(doorSw, timerButton);
+        // 4.223.0: the timer is in every box's + (the owner: "the timer should be in the plus thing"), not in this row.
+        const doorTop = document.createElement('div'); doorTop.className = 'ovs-door-top'; doorTop.append(doorSw); void timerButton;
         doorEl.append(doorTop, doorHost);
         listEl.after(doorEl);
         doorHost.addEventListener('openvibe:open-vibe', (e) => {
@@ -681,10 +769,30 @@
         ghost.append(typed, document.createTextNode(completion.slice(q.length)));
     }
 
+    /** A steady hue per site (ov-home.js has the same), so an app wears one colour in every tab. */
+    function hueOf(id) { let x = 7; const t = String(id || 'ov'); let i = 0; while (i < t.length) { x = (x * 31 + t.charCodeAt(i)) % 360; i++; } return x; }
+    // The glyphs a section of sites can wear (openvibe-shared/glyphs.js), and which one a section's name asks for.
+    const GROUP_GLYPH = {
+        'video': '<rect x="3.4" y="6.4" width="12.3" height="11.3" rx="1.9"/><path d="M15.6 10.2l4.7-2.8v9.4l-4.7-2.8"/>',
+        'chat': '<path d="M3.8 4.3h16.8v11.7H8l-4.2 4.2Z"/>',
+        'game': '<rect x="3.7" y="7.2" width="16.7" height="9.7" rx="4.4"/><path d="M7.6 10.7v2.7M6.4 12h2.7M15.1 11.6h0M17.4 12.9h0"/>',
+        'book': '<path d="M12 6.3C10 4.8 7 4.3 3.5 4.9v13.2c3.5-0.6 6.5-0.1 8.5 1.4c2-1.5 5-2 8.5-1.4V4.9C17 4.3 14 4.8 12 6.3Z"/><path d="M12 6.3v13.2"/>',
+        'store': '<path d="M3.7 8.8L5.3 3.7h13.4L20.3 8.8M3.7 8.8h16.5v1.6a2.8 2.8 0 0 1-5.4 0a2.8 2.8 0 0 1-5.6 0A2.8 2.8 0 0 1 3.7 10.4ZM4.8 12.9v7.2h14.5v-7.2M9.9 20.1v-4.1h4.1v4.1"/>',
+        'wrench': '<path d="M14.6 3.6a5.2 5.2 0 0 0-4.6 7.3L3.7 17.3V20.3h3.1l6.4-6.4a5.2 5.2 0 0 0 7.3-4.6l-3.2 1.2l-2.5-2.5l1.2-3.2Z"/>',
+        'spark': '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
+        'code': '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
+        'compass': '<circle cx="12" cy="12" r="8.5"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1Z"/>',
+    };
+    function groupGlyph(name) {
+        const n = String(name || '').toLowerCase();
+        return /watch|stream|video|live/.test(n) ? 'video' : /talk|belong|chat|social|community/.test(n) ? 'chat' : /play|game|fun/.test(n) ? 'game'
+            : /read|ask|news|learn/.test(n) ? 'book' : /shop|money|buy|market/.test(n) ? 'store' : /tool/.test(n) ? 'wrench'
+            : /\bai\b|make/.test(n) ? 'spark' : /develop|build|code/.test(n) ? 'code' : 'compass';
+    }
     function icon(it) {
         const ic = document.createElement('span');
         ic.className = 'ovs-ic';
-        if (it.site) { ic.classList.add('ovs-site'); const s = document.createElement('span'); s.className = 'ov-icon'; s.setAttribute('data-icon', it.site); s.setAttribute('data-size', '28'); s.setAttribute('data-fx', 'none'); ic.appendChild(s); }
+        if (it.site) { ic.classList.add('ovs-site'); ic.style.setProperty('--ovs-h', String(hueOf(it.site))); const s = document.createElement('span'); s.className = 'ov-icon'; s.setAttribute('data-icon', it.site); s.setAttribute('data-size', '28'); s.setAttribute('data-fx', 'none'); ic.appendChild(s); }
         else if (ICON[it.icon]) ic.innerHTML = ICON[it.icon];
         else ic.textContent = (it.icon || '•').slice(0, 2);
         return ic;
@@ -790,7 +898,10 @@
             h.className = 'ovs-group';
             h.setAttribute('role', 'presentation');
             if (g.section) h.setAttribute('data-sec', g.section);
+            // A section of sites wears its glyph (4.223.0), drawn from the glyph registry's set.
             h.appendChild(document.createTextNode(g.title));
+            // The name stays the first node (readers and the launcher read it there); the glyph is drawn before it (order -1).
+            if (g.section === 'all' && g.title) { const gi = document.createElement('span'); gi.className = 'ovs-group-ic'; gi.setAttribute('aria-hidden', 'true'); gi.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${GROUP_GLYPH[groupGlyph(g.title)]}</svg>`; h.appendChild(gi); }
             if (g.clear) { const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Clear'; b.setAttribute('data-ovs-clear', ''); h.appendChild(b); }
             if (g.more && g.more.href) { const m = document.createElement('a'); m.className = 'ovs-more'; m.href = safeUrl(g.more.href) || '#'; m.textContent = g.more.label; h.appendChild(m); }
             else if (g.more) { const b = document.createElement('button'); b.type = 'button'; b.textContent = g.more.label; b.setAttribute('data-ovs-tab', g.more.tab); h.appendChild(b); }
@@ -874,7 +985,7 @@
                 if (as === 'sites' && it.meta) { const sm = document.createElement('small'); sm.textContent = it.meta; txt.appendChild(sm); }
                 if (it.host) { const hs = document.createElement('span'); hs.className = 'ovs-host'; hs.textContent = it.host; txt.appendChild(hs); }
                 const ic = icon(it);
-                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '26'); }
+                if (as === 'mini') { const sp = ic.querySelector('.ov-icon'); if (sp) sp.setAttribute('data-size', '44'); }
                 a.append(ic, txt);
                 box.appendChild(a);
             });
@@ -1437,8 +1548,10 @@
     function youGroups() {
         const { take, ranked } = basis();
         const groups = [];
-        if (root.OpenVibeNotifications && ctx.token) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
-        if (homeLib()) {
+        const H = homeLib();
+        // With the home screen, Notifications is one of You's tabs (4.223.0); without it, the section stays at the top.
+        if (root.OpenVibeNotifications && ctx.token && !H) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
+        if (H) {
             groups.push({ as: 'home', items: [], section: 'home' });
             // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
             if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
@@ -1492,14 +1605,45 @@
         }
         // Jump back in (the last places, newest first) and what this person uses most (pages opened per site).
         const seenB = new Set();
-        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 8).map(backRow) : [];
+        const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 60).map(backRow) : [];
         const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
         return { apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling,
+            // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
+            notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
+            startTab: ['notifications', 'recent', 'apps'].includes(ctx.section) ? ctx.section : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
             onSearch: (q) => { input.value = q; render(q); input.focus(); },
             pulseReady: pulseReady || (pulseReady = root.OpenVibeHome.loadPulse({ token: ctx.token, user: ctx.user })),
             // The feed answered: the Feed tab is the stream (its sections would sit after an endless list); it did not: as before.
             feedLive: () => { if (!feedV2) { feedV2 = true; if (el && el.classList.contains('is-open') && !input.value && tab === 'feed') render(''); } } };
+    }
+
+    /** The whole notifications list for You's tab: a head with how many are new and Mark all read, then every notice. */
+    function mountNotes(host) {
+        const N = root.OpenVibeNotifications;
+        if (!N || typeof N.renderMenuNotifications !== 'function') {
+            // The navbar fetches notification-ui.js once you are signed in; the tab can open first. Wait for it (or fetch it
+            // here), start it with your token, then draw. It said "unavailable" for good before (11-12).
+            host.textContent = '';
+            const wait = document.createElement('p'); wait.className = 'ovs-note'; wait.textContent = 'Loading your notifications…'; host.appendChild(wait);
+            const ready = () => {
+                const M = root.OpenVibeNotifications;
+                if (!M || typeof M.renderMenuNotifications !== 'function') { wait.textContent = 'Notifications did not load. Close the menu and open it again.'; return; }
+                try { if (!M.__ovNavInit && ctx.token) { M.init({ token: ctx.token, apiBase: ctx.apiBase || 'https://openvibe.network' }); M.__ovNavInit = true; } } catch { /* the navbar's own init may follow */ }
+                host.textContent = ''; mountNotes(host);
+            };
+            let sc = document.getElementById('ov-notify-loader');
+            if (!sc && typeof ctx.sibling === 'function') { sc = document.createElement('script'); sc.id = 'ov-notify-loader'; sc.src = ctx.sibling('notification-ui.js'); sc.async = true; document.head.appendChild(sc); }
+            if (!sc) { wait.textContent = 'Notifications are on openvibe.network/notifications.'; return; }
+            sc.addEventListener('load', () => setTimeout(ready, 0), { once: true });
+            sc.addEventListener('error', () => { wait.textContent = 'Notifications did not load. Check your connection and open the menu again.'; }, { once: true });
+            setTimeout(() => { if (root.OpenVibeNotifications && host.contains(wait)) ready(); }, 1200);
+            return;
+        }
+        // The list draws its own search, tabs and Mark all read: the tab needs no second heading.
+        const list = document.createElement('div'); list.className = 'ovs-notifications-host';
+        host.append(list);
+        try { const view = N.renderMenuNotifications(list, () => {}); if (view && view.showAll) view.showAll(); } catch { list.textContent = 'Notifications did not load.'; }
     }
 
     function renderTab() {

@@ -84,6 +84,8 @@
             .ovdk-send-tools .ovdk-attach, .ovdk-send-tools .ovdk-mic { width: 40px; height: 40px; border-radius: 12px; color: var(--accent-light, var(--accent, #60a5fa)); }
             .ovdk-send-tools .ovdk-attach:hover, .ovdk-send-tools .ovdk-mic:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
             .ovdk-send-tools .ovdk-attach svg, .ovdk-send-tools .ovdk-mic svg { width: 20px; height: 20px; }
+            .ovdk-msg.is-you .ovdk-text a { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 55%, transparent); text-underline-offset: 2px; overflow-wrap: anywhere; }
+            .ovdk-send-tools .ovdk-go:not(:disabled) { background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #fff), var(--accent-strong, var(--accent, #2563eb))); color: var(--on-accent-strong, #fff); box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); }
             .ovdk-send-tools .ovdk-go { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; }
             .ovdk-send-tools .ovdk-go svg { width: 18px; height: 18px; stroke-width: 2.2; }
             .ovdk-msg.is-vibe .ovdk-text a { word-break: normal; overflow-wrap: anywhere; }
@@ -112,10 +114,11 @@
     // 4.203.0 (ask 349, "a better composer system unified across all sites"): Vibe's box is the one composer too, for
     // drafts, "/" commands and your own, the marks, what sends and your settings; its picture keeps its own upload.
     const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-    const VIBE_REV = { 'ov-composer.js': '203e770ec00f' };
+    const VIBE_REV = { 'ov-composer.js': '2d3782ec0b52' };
     function joinComposer(form) {
         if (!form || form.ownerDocument !== document) return;   // a popped-out Dock keeps its plain box
         form.setAttribute('data-ovc-no-files', '');
+        if (!form.dataset.ovcExamples) form.dataset.ovcExamples = JSON.stringify(['Ask Vibe, or hold the mic', 'Find a live stream about cooking', 'Start a 10-minute timer', 'What did people talk about on stream today?', 'Summarize today’s Rundown', 'Write a title for my stream']);
         const go = () => { try { if (root.OpenVibeComposer && form.isConnected) root.OpenVibeComposer.enhance(form); } catch (e) { console.error(e); } };
         if (root.OpenVibeComposer) { go(); return; }
         const m = /^(https?:\/\/[^?#]*\/)dock-vibe(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
@@ -295,13 +298,13 @@
             build.dispatchEvent(new CustomEvent('ov-dock:part', { bubbles: true, detail: { part: 'code', text: text.slice(0, 16000) } }));
         });
         form.classList.add('ovdk-send--two');
-        const tools = h('div', 'ovdk-send-tools');
+        const tools = h('div', 'ovdk-send-tools'); tools.setAttribute('data-ovc-tools', ''); form.setAttribute('data-ovc-contain', '');
         tools.append(attach, file, build);
         let mic = null;
         if (TALK) {
             mic = h('button', 'ovdk-mic'); mic.type = 'button'; mic.append(icon(G.mic));
             mic.setAttribute('aria-label', 'Talk to Vibe: hold, or press Alt+V'); mic.title = 'Hold to talk (Alt+V)'; mic.setAttribute('aria-pressed', 'false');
-            tools.append(mic);
+            tools.prepend(mic); form.setAttribute('data-ovc-no-voice', '');
         }
         go.textContent = ''; go.innerHTML = svg(V.send);
         tools.append(go);

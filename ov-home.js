@@ -36,7 +36,8 @@
     const safe = (u) => { if (u == null || String(u).trim() === '') return null; try { const x = new URL(String(u), location.href); return x.protocol === 'https:' || x.origin === location.origin ? x.href : null; } catch { return null; } };
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     const ago = (iso) => {
-        const t = Date.parse(iso || ''); if (!t) return '';
+        // A time without a zone is UTC (see search.js utcOf).
+        const v = String(iso || ''); const t = Date.parse(/^\d{4}-\d\d-\d\d[ T]\d\d:\d\d(:\d\d(\.\d+)?)?$/.test(v) ? `${v.replace(' ', 'T')}Z` : v); if (!t) return '';
         const s = Math.max(1, Math.round((Date.now() - t) / 1000));
         if (s < 60) return 'now'; if (s < 3600) return `${Math.round(s / 60)} min ago`; if (s < 86400) return `${Math.round(s / 3600)} h ago`;
         const d = Math.round(s / 86400); return d === 1 ? 'yesterday' : `${d} days ago`;
@@ -247,6 +248,210 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 .ovh-actor.is-invite .ovh-go { grid-column: 3; grid-row: 1; }
 .ovh-actor.is-invite .ovh-x { grid-column: 4; grid-row: 1; display: grid; place-items: center; width: 36px; min-width: 36px; padding: 0; border-radius: 50%; }
 .ovh-actor.is-invite .ovh-x svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+
+/* 4.223.0: You's three tabs, the one notice above them, and an empty tab said with its mark (openvibe.design rule 141). */
+.ovh-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 10px 0 12px; padding: 4px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
+.ovh-tab { all: unset; box-sizing: border-box; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 0 8px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 650; color: var(--text-secondary, #a8b3c4); }
+.ovh-tab svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-tab:hover { color: var(--text-primary, #e6edf7); }
+.ovh-tab:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: -2px; }
+.ovh-tab[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
+.ovh-tab[aria-selected="true"] svg { color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovh-tab-n { min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger, #ef4444); color: #fff; font: 750 11px/18px inherit; text-align: center; }
+@media (max-width: 380px) { .ovh-tab { gap: 5px; font-size: 13px; } .ovh-tab svg { width: 16px; height: 16px; } }
+.ovh-notes { min-height: 120px; }
+.ovh-empty { display: flex; align-items: center; gap: 14px; margin: 6px 0; padding: 14px 16px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--text-muted, #93a0b4) 45%, transparent); }
+.ovh-empty > svg { width: 22px; height: 22px; flex: none; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-empty > div { display: grid; gap: 2px; } .ovh-empty b { font-size: 14.5px; } .ovh-empty span { font-size: 13px; color: var(--text-muted, #93a0b4); }
+/* Your own AI is one notice under your row: a slim line, not a card (the owner: "make that a notification … up there"). */
+.ovh-notice .ovh-actor.is-invite { margin: 8px 0 0; padding: 8px 8px 8px 10px; gap: 10px; min-height: 0; border-radius: 14px; }
+.ovh-notice .ovh-actor.is-invite .ovh-face { width: 32px; height: 32px; border-radius: 10px; }
+.ovh-notice .ovh-actor.is-invite .ovh-actor-txt small { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.ovh-notice .ovh-actor.is-invite .ovh-acts { flex-direction: row; align-items: center; }
+@media (max-width: 480px) { .ovh-notice .ovh-actor.is-invite { flex-wrap: nowrap; } .ovh-notice .ovh-actor.is-invite .ovh-actor-txt small { -webkit-line-clamp: 2; } }
+
+/* ── 4.223.0: You, redone (the owner, 11-12) ──────────────────────────────────────────────────────────────────────────
+   One top (you, and your AI beside you when there is room), one tab row (Apps · Notifications · Recent, with All and
+   Edit at its end), then the tab. App icons draw the glyph at 58% of the tile, placed absolutely so a hover can never
+   pull it off centre; a folder's four sit in an even 2×2 with their glyphs at two thirds. Names wrap to two balanced
+   lines and never end in "…". */
+.ovh { container: ovh / inline-size; }
+.ovh-top { display: grid; gap: 6px; margin: 2px 4px 0; }
+.ovh-top > * { min-width: 0; }
+.ovh-top .ovh-me, .ovh-top .ovh-notice .ovh-actor { margin: 0; width: 100%; }
+@container ovh (min-width: 600px) {
+  .ovh-top:has(.ovh-notice > *) { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: stretch; }
+  .ovh-top .ovh-notice > .ovh-actor { height: 100%; }
+}
+.ovh-notice:empty { display: none; }
+.ovh-notice .ovh-actor { box-sizing: border-box; min-height: 56px; padding: 8px 12px; border-radius: 16px; }
+.ovh-notice .ovh-actor .ovh-face { width: 36px; height: 36px; font-size: 15px; }
+/* Your row: you, then your round buttons (this site's own first). On a narrow screen the buttons go under your name. */
+.ovh-me { flex-wrap: wrap; row-gap: 0; padding: 6px 6px 6px 8px; min-height: 56px; box-sizing: border-box; }
+.ovh-acts { display: flex; align-items: center; gap: 4px; flex: none; }
+.ovh-ib.is-own { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 13%, transparent); }
+.ovh-ib.is-text { width: auto; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 750; white-space: nowrap; }
+@container ovh (max-width: 520px) {
+  .ovh-me { padding: 8px 8px 6px 10px; }
+  .ovh-acts { flex: 1 1 100%; flex-wrap: wrap; gap: 6px; padding: 6px 0 0 52px; }
+  .ovh-acts .ovh-out { margin-left: auto; }
+}
+/* The tab row: on a phone only the chosen tab says its name (the others are their glyph and count), so the row also
+   holds All and Edit; from 520 px every tab says its name. It stays at the top while the apps scroll. */
+.ovh-tabrow { position: sticky; top: 0; z-index: 4; display: flex; align-items: center; gap: 8px; margin: 8px 0 6px; padding: 4px;
+  background: color-mix(in srgb, var(--bg-secondary, #121826) 90%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); border-radius: 16px; }
+.ovh-tabrow .ovh-tabs { flex: 1 1 auto; min-width: 0; display: flex; gap: 4px; margin: 0; padding: 0; background: none; }
+.ovh-tabrow .ovh-tab { flex: 0 0 auto; min-width: 44px; min-height: 42px; padding: 0 12px; border-radius: 12px; transition: background-color .18s, color .18s, flex-grow .25s; }
+.ovh-tabrow .ovh-tab[aria-selected="true"] { flex: 1 1 auto; }
+.ovh-tabrow .ovh-headtools { flex: none; display: flex; align-items: center; gap: 4px; }
+@container ovh (max-width: 519px) {
+  .ovh-tabrow .ovh-tab:not([aria-selected="true"]) .ovh-tab-t { display: none; }
+  .ovh-tabrow .ovh-tab:not([aria-selected="true"]) { padding: 0 10px; }
+}
+@container ovh (min-width: 520px) { .ovh-tabrow .ovh-tab { flex: 0 1 auto; } .ovh-tabrow .ovh-tab[aria-selected="true"] { flex: 0 1 auto; } }
+.ovh-tabrow .ovh-allbtn, .ovh-tabrow .ovh-edit { min-height: 42px; }
+.ovh-tabrow .ovh-edit { width: 42px; }
+.ovh-tabrow .ovh-edit.is-done { width: auto; }
+/* Section heads: a marked glyph, the name, its count; buttons at the end. */
+.ovh-sec { gap: 8px; padding: 12px 6px 6px; }
+.ovh-sec > span { flex: 0 1 auto; min-width: 0; }
+.ovh-sec-sp { flex: 1; }
+.ovh-sec-ic { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovh-sec-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-sec-n { flex: none; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 9%, transparent); color: var(--text-secondary, #a8b3c4); font-size: 11px; font-weight: 750; line-height: 20px; letter-spacing: 0; text-align: center; }
+/* Back is a round arrow; in All apps the search sits beside it. */
+.ovh-head { gap: 8px; padding: 6px 4px; }
+.ovh-back { flex: none; display: inline-grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); color: var(--text-primary, #e8ecf3); transition: background-color .15s, transform .12s; }
+.ovh-back svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-back:active { transform: scale(.92); }
+.ovh-back:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) { .ovh-back:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 15%, transparent); } }
+.ovh-head .ovh-filter { flex: 1; min-width: 0; width: auto; margin: 0; }
+/* The grid: four across on a phone, as many as fit from 560 px. */
+.ovh-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (min-width: 560px) { .ovh-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
+/* App icons: the glyph at 58% of the tile. */
+.ovh-ic > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.ovh-ic > .ov-icon svg { position: absolute; left: -13%; top: -13%; width: 126%; height: 126%; margin: 0; transform: none !important; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; gap: 9%; padding: 14%; box-sizing: border-box; place-content: center stretch; align-content: center; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 1; align-self: center; border-radius: 30%; overflow: hidden;
+  background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .55), hsl(var(--ovh-h, 215) 70% 38% / .35)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 66% / .3); }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovh-h, 215) 92% 86%); color: hsl(var(--ovh-h, 215) 92% 86%); }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span > .ov-icon svg { position: absolute; left: -23%; top: -23%; width: 146%; height: 146%; margin: 0; transform: none !important; }
+:root[data-theme="light"] .ovh-grid .ovh-folder .ovh-ic > span > .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 28%); color: hsl(var(--ovh-h, 215) 70% 28%); }
+/* Names: two balanced lines, centred, never "…". */
+.ovh-name { white-space: normal; text-overflow: clip; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-align: center; line-height: 1.2; text-wrap: balance; overflow-wrap: normal; word-break: normal; }
+.ovh-grid:not(.ovh-recent) .ovh-name { font-size: 12px; letter-spacing: -.005em; }
+/* A + to put an app on Home sits on its icon's corner, not in the cell's. */
+.ovh-grid .ovh-app > .ovh-badge { top: 0; left: calc(50% - min(50% - 6px, 36px) - 8px); width: 24px; height: 24px; font-size: 15px; }
+/* Touch, pen and mouse: a press sinks the icon at once; a mouse lifts it and lights it in its own hue. */
+.ovh-ic { transition: transform .22s cubic-bezier(.2, 1.4, .4, 1), box-shadow .22s; }
+.ovh-app:active .ovh-ic { transform: scale(.93); transition-duration: .08s; }
+@media (hover: hover) and (pointer: fine) {
+  .ovh-app:hover .ovh-ic { transform: translateY(-3px) scale(1.04); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 75% 70% / .5), 0 12px 26px -8px hsl(var(--ovh-h, 215) 75% 45% / .6); }
+  .ovh-app:hover .ovh-name { opacity: 1; }
+}
+html[data-ov-motion=off] .ovh-ic { transition: none; }
+/* Recent: where you were, in days, as cards with the whole title; two columns when there is room. */
+.ovh-hist-list { display: grid; gap: 8px; padding: 0 4px; }
+@container ovh (min-width: 600px) { .ovh-hist-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ovh-hist-day { grid-column: 1 / -1; margin: 8px 4px 0; font-size: 12px; font-weight: 800; letter-spacing: .02em; color: var(--text-muted, #93a0b4); }
+.ovh-hist-day:first-child { margin-top: 0; }
+.ovh-hrow { box-sizing: border-box; display: flex; align-items: center; gap: 12px; min-width: 0; min-height: 70px; padding: 10px 12px; border-radius: 16px; color: inherit; text-decoration: none;
+  background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.08));
+  transition: background-color .15s, transform .15s; animation: ovh-rise .34s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i, 0) * 22ms); }
+.ovh-hrow .ovh-ic { flex: none; width: 48px; height: 48px; border-radius: 15px; }
+.ovh-htxt { min-width: 0; display: grid; gap: 3px; }
+.ovh-htxt b { font-size: 14.5px; font-weight: 700; line-height: 1.28; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.ovh-htxt small { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovh-hrow.is-live { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live-red, #ef4444) 45%, transparent); }
+.ovh-hrow:active { transform: scale(.985); }
+.ovh-hrow:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) { .ovh-hrow:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 8%, transparent); transform: translateY(-1px); } }
+.ovh-hist-more[hidden] { display: none; }
+@keyframes ovh-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes ovh-rise-calm { from { opacity: 0; } }
+html[data-ov-motion=reduced] .ovh-hrow { animation-name: ovh-rise-calm; animation-delay: 0s; }
+html[data-ov-motion=off] .ovh-hrow { animation: none; }
+
+/* 4.223.0, round two: All and Edit in the tab row; the tabs as one segmented control whose ink slides to the chosen tab,
+   and the tab's content slides in from its side (the owner, 11-12: "animations, effects to the tabs … aligned more
+   perfectly … bigger font size and better icon size"). */
+.ovh-tabrow .ovh-tabs { position: relative; isolation: isolate; }
+.ovh-tab-ink { position: absolute; left: 0; top: 0; bottom: 0; width: 0; z-index: -1; border-radius: 12px; opacity: 0;
+  background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent), 0 6px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent);
+  transition: transform .34s cubic-bezier(.3, 1.3, .4, 1), width .34s cubic-bezier(.3, 1.3, .4, 1), opacity .2s; }
+.ovh-tab-ink.is-on { opacity: 1; }
+:root[data-theme="light"] .ovh-tab-ink { background: #fff; }
+.ovh-tabrow .ovh-tab[aria-selected="true"] { background: transparent; box-shadow: none; }
+.ovh-tabrow .ovh-tab { font-size: 14.5px; gap: 8px; }
+.ovh-tabrow .ovh-tab svg { width: 19px; height: 19px; transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
+.ovh-tabrow .ovh-tab[aria-selected="true"] svg { transform: scale(1.08); }
+@media (hover: hover) and (pointer: fine) { .ovh-tabrow .ovh-tab:not([aria-selected="true"]):hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); } }
+.ovh-tabrow .ovh-tab:active svg { transform: scale(.9); }
+html[data-ov-motion=reduced] .ovh-tab-ink { transition: opacity .25s; }
+html[data-ov-motion=off] .ovh-tab-ink, html[data-ov-motion=off] .ovh-tabrow .ovh-tab svg { transition: none; }
+.ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation: ovh-pane-r .3s cubic-bezier(.2, .8, .2, 1) both; }
+.ovh[data-enter="left"] > :not(.ovh-top):not(.ovh-tabrow) { animation-name: ovh-pane-l; }
+@keyframes ovh-pane-r { from { opacity: 0; transform: translateX(18px); } }
+@keyframes ovh-pane-l { from { opacity: 0; transform: translateX(-18px); } }
+html[data-ov-motion=reduced] .ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation-name: ovh-rise-calm; }
+html[data-ov-motion=off] .ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation: none; }
+.ovh-tabrow .ovh-allbtn, .ovh-tabrow .ovh-edit { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; border-radius: 12px; cursor: pointer;
+  font-size: 13.5px; font-weight: 700; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 6%, transparent); transition: background-color .15s, color .15s, transform .12s; -webkit-tap-highlight-color: transparent; }
+.ovh-tabrow .ovh-allbtn { padding: 0 12px 0 10px; }
+.ovh-tabrow .ovh-edit { width: 42px; }
+.ovh-tabrow .ovh-edit.is-done { width: auto; padding: 0 14px 0 11px; background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
+.ovh-tabrow .ovh-allbtn svg, .ovh-tabrow .ovh-edit svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-tabrow .ovh-allbtn b { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text-primary, #e8ecf3); }
+.ovh-tabrow .ovh-allbtn:focus-visible, .ovh-tabrow .ovh-edit:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovh-tabrow .ovh-allbtn:active, .ovh-tabrow .ovh-edit:active { transform: scale(.94); }
+@media (hover: hover) and (pointer: fine) { .ovh-tabrow .ovh-allbtn:hover, .ovh-tabrow .ovh-edit:not(.is-done):hover { color: var(--text-primary, #e8ecf3); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 13%, transparent); } }
+@container ovh (max-width: 380px) { .ovh-tabrow .ovh-allbtn span { display: none; } }
+
+/* Your own AI, not yet set up: one slim row under you (its mark, two short lines, Set it up, ×). */
+.ovh-notice .ovh-actor.is-invite { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 8px 8px 10px; }
+.ovh-notice .ovh-actor.is-invite .ovh-face { flex: none; grid-row: auto; align-self: center; width: 40px; height: 40px; border-radius: 12px; }
+.ovh-notice .ovh-actor.is-invite .ovh-actor-txt { display: grid; flex: 1; min-width: 0; gap: 1px; }
+.ovh-notice .ovh-actor.is-invite .ovh-actor-txt small { -webkit-line-clamp: 2; font-size: 12.5px; line-height: 1.3; }
+.ovh-notice .ovh-actor.is-invite .ovh-acts { flex: none; display: flex; flex-direction: row; align-items: center; gap: 4px; grid-column: auto; padding: 0; }
+.ovh-notice .ovh-actor.is-invite .ovh-go { height: 38px; padding: 0 14px; }
+.ovh-notice .ovh-actor.is-invite .ovh-x { display: grid; place-items: center; width: 38px; min-height: 38px; height: 38px; padding: 0; }
+.ovh-notice .ovh-actor.is-invite .ovh-x svg { width: 16px; height: 16px; }
+
+/* Names in the brand face (OV Brand, Nunito 700–900, loaded by the navbar on every site): app names, the tabs, section
+   heads; the words you read (times, notes) stay in the UI face. Section heads are names now, not small capitals. */
+.ovh-name, .ovh-tab, .ovh-sec > span, .ovh-allbtn, .ovh-hist-day, .ovh-htxt b, .ovh-who-txt b, .ovh-actor-txt b { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+.ovh-grid:not(.ovh-recent) .ovh-name { font-size: 13px; font-weight: 800; letter-spacing: .005em; color: color-mix(in srgb, var(--text-primary, #e8ecf3) 92%, transparent); opacity: 1; }
+.ovh-tabrow .ovh-tab { font-weight: 800; letter-spacing: .005em; }
+.ovh-sec { font-size: 15px; font-weight: 800; letter-spacing: .005em; text-transform: none; color: var(--text-primary, #e8ecf3); }
+.ovh-sec small { font-family: inherit; }
+.ovh-hist-day { font-size: 13px; font-weight: 800; letter-spacing: .01em; color: var(--text-secondary, #a8b3c4); }
+.ovh-who-txt b { font-size: 16px; font-weight: 800; letter-spacing: .005em; }
+.ovh-actor-txt b { font-weight: 800; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { gap: 7%; padding: 11%; }
+
+/* The AI card: its face says what it is doing (a glyph on its picture's corner, or the whole face), working ones breathe
+   (Calm: slower; Off: still); Open is a round arrow, Answer a pill with its glyph. */
+.ovh-actor .ovh-face { position: relative; overflow: visible; }
+.ovh-actor .ovh-face img { border-radius: 50%; }
+.ovh-doing { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #fff;
+  background: linear-gradient(140deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 45%, #a855f7)); box-shadow: 0 0 0 2px var(--bg-secondary, #141a24); }
+.ovh-doing svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-face.is-glyph { border-radius: 13px; background: linear-gradient(140deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 45%, #a855f7)); }
+.ovh-face.is-glyph .ovh-doing { position: static; width: 100%; height: 100%; border-radius: inherit; background: none; box-shadow: none; }
+.ovh-face.is-glyph .ovh-doing svg { width: 22px; height: 22px; }
+.ovh-doing.is-waiting { background: linear-gradient(140deg, #f59e0b, #ef4444); }
+.ovh-face.is-glyph:has(.is-waiting) { background: linear-gradient(140deg, #f59e0b, #ef4444); }
+.ovh-face.is-glyph:has(.is-working) { animation: ovh-breathe 2.4s ease-in-out infinite; }
+@keyframes ovh-breathe { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); } }
+html[data-ov-motion=reduced] .ovh-face.is-glyph:has(.is-working) { animation-duration: 5s; }
+html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; }
+.ovh-actor .ovh-go.is-ic { flex: none; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border-radius: 50%; color: var(--accent-light, var(--accent, #60a5fa));
+  background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); transition: transform .2s cubic-bezier(.3, 1.4, .4, 1), background-color .15s; }
+.ovh-actor .ovh-go.is-ic svg, .ovh-actor .ovh-go.is-answer svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ovh-actor .ovh-go.is-answer { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px 0 11px; border-radius: 999px; background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); font-weight: 750; font-size: 13.5px; }
+@media (hover: hover) and (pointer: fine) { .ovh-actor:hover .ovh-go.is-ic { transform: translate(2px, -2px); background: color-mix(in srgb, var(--accent, #3b82f6) 24%, transparent); } }
 `;
         document.head.appendChild(st);
     }
@@ -337,6 +542,8 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        bell: [['path', { d: 'M6 14.6V9.5a6.1 6.1 0 0 1 12.2 0v5.1l1.5 2.1h-15.3Z' }], ['path', { d: 'M10 18.7a2.1 2.1 0 0 0 4 0' }]],
+        history: [['path', { d: 'M3.8 12.1a8.3 8.3 0 1 0 2.5-5.9L3.8 8.5M3.8 4.2v4.2h4.2' }], ['path', { d: 'M12 7.9v4.3l3.1 1.9' }]],
         attach: [['path', { d: 'M12 5v14M5 12h14' }]],
         plus: [['circle', { cx: 9.5, cy: 8.5, r: 3.2 }], ['path', { d: 'M3.5 18.5c1-2.900 3.300-4.400 6-4.400 1.300 0 2.500.300 3.500 1' }], ['path', { d: 'M18 13.500v6M15 16.500h6' }]],
         out: [['path', { d: 'M13.500 4.500h4a1.500 1.500 0 0 1 1.500 1.500v12a1.500 1.500 0 0 1-1.500 1.500h-4' }], ['path', { d: 'M9.500 8l-4 4 4 4M5.500 12h9.500' }]],
@@ -355,11 +562,30 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         chat: [['path', { d: 'M5 5h11a2.5 2.5 0 0 1 2.5 2.5v6A2.5 2.5 0 0 1 16 16H10l-4.5 3.5V16H5a2.5 2.5 0 0 1-2.5-2.5v-6A2.5 2.5 0 0 1 5 5Z' }], ['path', { d: 'M7 9.5h7M7 12.5h4' }]],
         page: [['path', { d: 'M6.5 3h7.5l4 4v14h-11.5Z' }], ['path', { d: 'M14 3v4h4M9.5 12h5M9.5 15.5h5' }]],
         play: [['path', { d: 'M8 5.5v13l10.5-6.5Z' }]],
+        // 4.223.0: drawings from the glyph registry (openvibe-shared/glyphs.js).
+        arrow: [['path', { d: 'M7 17L17 7M9 7h8v8' }]],
+        clock: [['circle', { cx: 12, cy: 12, r: 8.5 }], ['path', { d: 'M12 7.5V12l3 2' }]],
+        back: [['path', { d: 'M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3' }]],
+        game: [['rect', { x: 3.7, y: 7.2, width: 16.7, height: 9.7, rx: 4.4 }], ['path', { d: 'M7.6 10.7v2.7M6.4 12h2.7M15.1 11.6h0M17.4 12.9h0' }]],
+        video: [['rect', { x: 3.4, y: 6.4, width: 12.3, height: 11.3, rx: 1.9 }], ['path', { d: 'M15.6 10.2l4.7-2.8v9.4l-4.7-2.8' }]],
+        book: [['path', { d: 'M12 6.3C10 4.8 7 4.3 3.5 4.9v13.2c3.5-0.6 6.5-0.1 8.5 1.4c2-1.5 5-2 8.5-1.4V4.9C17 4.3 14 4.8 12 6.3Z' }], ['path', { d: 'M12 6.3v13.2' }]],
+        store: [['path', { d: 'M3.7 8.8L5.3 3.7h13.4L20.3 8.8M3.7 8.8h16.5v1.6a2.8 2.8 0 0 1-5.4 0a2.8 2.8 0 0 1-5.6 0A2.8 2.8 0 0 1 3.7 10.4ZM4.8 12.9v7.2h14.5v-7.2M9.9 20.1v-4.1h4.1v4.1' }]],
+        wrench: [['path', { d: 'M14.6 3.6a5.2 5.2 0 0 0-4.6 7.3L3.7 17.3V20.3h3.1l6.4-6.4a5.2 5.2 0 0 0 7.3-4.6l-3.2 1.2l-2.5-2.5l1.2-3.2Z' }]],
+        code: [['path', { d: 'M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8' }]],
+        spark: [['path', { d: 'M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z' }]],
+        user: [['circle', { cx: 12, cy: 7.4, r: 3.8 }], ['path', { d: 'M4.3 20.5c0-3.9 3.4-6.6 7.7-6.6s7.7 2.6 7.7 6.6' }]],
+        star: [['path', { d: 'M12 4l2.6 5.3l5.7 0.6l-4.3 3.9l1.2 5.7L12 16.8l-5.2 2.9l1.2-5.7l-4.3-3.9l5.7-0.6Z' }]],
+        toolbox: [['rect', { x: 3.5, y: 8.1, width: 17, height: 11.3, rx: 1.9 }], ['path', { d: 'M9.2 8.1V5.8A1.4 1.4 0 0 1 10.6 4.3h2.8A1.4 1.4 0 0 1 14.8 5.8V8.1M3.5 12.8h17M8.2 11.4v2.8M15.8 11.4v2.8' }]],
+        compass: [['circle', { cx: 12, cy: 12, r: 8.5 }], ['path', { d: 'm15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1Z' }]],
+        home: [['path', { d: 'M3.6 10.6L12 3.3l8.4 7.3v8.4a1 1 0 0 1-1 1h-4.2v-6.3h-6.3v6.3H4.7a1 1 0 0 1-1-1Z' }]],
+        live: [['circle', { cx: 12, cy: 11.8, r: 2 }], ['path', { d: 'M8.6 8.4a4.9 4.9 0 0 0 0 7.1M15.4 8.4a4.9 4.9 0 0 1 0 7.1M6.3 6.1a8.1 8.1 0 0 0 0 11.9M17.7 6.1a8.1 8.1 0 0 1 0 11.9' }]],
+        shield: [['path', { d: 'M12 3.7L5.5 6.6v5.6c0 4.1 2.8 7.1 6.5 8.4c3.7-1.3 6.5-4.2 6.5-8.4V6.6Z' }]],
     };
     function svgIcon(name) {
         const NS = 'http://www.w3.org/2000/svg';
         const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
-        ICON[name].forEach(([tag, at]) => { const n = document.createElementNS(NS, tag); Object.keys(at).forEach((k) => n.setAttribute(k, String(at[k]))); s.append(n); });
+        const def = ICON[name] || ICON.grid;
+        def.forEach(([tag, at]) => { const n = document.createElementNS(NS, tag); Object.keys(at).forEach((k) => n.setAttribute(k, String(at[k]))); s.append(n); });
         return s;
     }
 
@@ -367,6 +593,14 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     function siteIcon(site, size) {
         const s = h('span', 'ov-icon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', String(size)); s.setAttribute('data-fx', 'none');
         return s;
+    }
+    /** A section's glyph from its name, so every group of apps is marked (the owner, 11-12: "each section should have an icon"). */
+    function groupGlyph(name) {
+        const n = String(name || '').toLowerCase();
+        return /your|yours/.test(n) ? 'user' : /watch|stream|video|live/.test(n) ? 'video' : /talk|belong|chat|social|community/.test(n) ? 'chat'
+            : /play|game|fun/.test(n) ? 'game' : /read|ask|news|learn/.test(n) ? 'book' : /shop|money|buy|market/.test(n) ? 'store'
+            : /quick/.test(n) ? 'toolbox' : /tool/.test(n) ? 'wrench' : /\bai\b|make/.test(n) ? 'spark' : /develop|build|code/.test(n) ? 'code'
+            : /home|popular/.test(n) ? 'home' : /used|most/.test(n) ? 'star' : /recent|where|history/.test(n) ? 'history' : 'compass';
     }
     /** A steady hue per site (the same on every page and device), so each app has its own colour. */
     function hueOf(id) { let x = 7; const t = String(id || 'ov'); let i = 0; while (i < t.length) { x = (x * 31 + t.charCodeAt(i)) % 360; i++; } return x; }
@@ -404,11 +638,13 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         styles();
         el.classList.add('ovh');
         el.setAttribute('data-sec', 'home');
-        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0 };
+        // 4.223.0: You is three tabs (Apps first); the one a person chose stays for this tab of the browser.
+        let keptTab = null; try { keptTab = sessionStorage.getItem('ovh-you-tab'); } catch { /* */ }
+        const state = { view: 'home', edit: false, folder: null, filter: '', drag: null, suppress: 0, tab: o.startTab || (['apps', 'notifications', 'recent'].includes(keptTab) ? keptTab : 'apps') };
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
-        let actorBox = null, meBox = null;
+        let actorBox = null, meBox = null, notesBox = null;
         // The Look panel (theme, text size, motion, icons) opens under your name, drawn by the navbar (the account menu's).
         if (typeof o.look === 'function') { try { o.look(el); } catch { /* the button stays a link to openvibe.design/look */ } }
 
@@ -434,24 +670,133 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const gear = h('a', 'ovh-ib'); gear.append(svgIcon('gear')); gear.href = 'https://openvibe.network/my'; gear.setAttribute('aria-label', 'Account and settings'); gear.title = 'Account and settings';
             bar.append(who);
             const m = o.me || {};
-            if (m.add && safe(m.add)) { const add = h('a', 'ovh-ib'); add.append(svgIcon('plus')); add.href = m.add; add.setAttribute('aria-label', 'Add or switch account'); add.setAttribute('data-ov-tip', 'Add or switch account'); bar.append(add); }
-            bar.append(look, gear);
-            if (typeof m.out === 'function') { const out = h('button', 'ovh-ib ovh-out'); out.type = 'button'; out.append(svgIcon('out')); out.setAttribute('aria-label', 'Sign out'); out.setAttribute('data-ov-tip', 'Sign out'); out.addEventListener('click', () => { try { m.out(); } catch { /* the bar signs out */ } }); bar.append(out); }
+            const acts = h('div', 'ovh-acts'); acts.setAttribute('role', 'group'); acts.setAttribute('aria-label', 'Yours');
+            // This site's own items (your channel, Admin, what a site adds) as round buttons beside Display and Settings:
+            // a known one with its glyph, a site's own with its short name (4.223.0; it was a row of its own).
+            const OWN_GLYPH = { 'ov-channel': 'live', 'ov-admin': 'shield' };
+            const own = (Array.isArray(m.own) ? m.own : []).filter((it) => it && it.label && (typeof it.onClick === 'function' || (it.href && safe(it.href)))).slice(0, 6);
+            own.forEach((it) => {
+                const g = OWN_GLYPH[it.id] || (ICON[it.glyph] ? it.glyph : '');
+                const b = it.href ? h('a', `ovh-ib is-own${g ? '' : ' is-text'}`) : h('button', `ovh-ib is-own${g ? '' : ' is-text'}`);
+                if (it.href) b.href = it.href; else { b.type = 'button'; b.addEventListener('click', () => { try { it.onClick(); } catch { /* the item is the site's */ } }); }
+                if (g) b.append(svgIcon(g)); else b.textContent = it.short || it.label;
+                b.setAttribute('aria-label', it.label); b.setAttribute('data-ov-tip', it.label);
+                acts.append(b);
+            });
+            if (m.add && safe(m.add)) { const add = h('a', 'ovh-ib'); add.append(svgIcon('plus')); add.href = m.add; add.setAttribute('aria-label', 'Add or switch account'); add.setAttribute('data-ov-tip', 'Add or switch account'); acts.append(add); }
+            acts.append(look, gear);
+            if (typeof m.out === 'function') { const out = h('button', 'ovh-ib ovh-out'); out.type = 'button'; out.append(svgIcon('out')); out.setAttribute('aria-label', 'Sign out'); out.setAttribute('data-ov-tip', 'Sign out'); out.addEventListener('click', () => { try { m.out(); } catch { /* the bar's own */ } }); acts.append(out); }
+            bar.append(acts);
             const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
             meBox.append(bar, panel);
-            // This site's own items, your status, Admin: small, in one line that wraps; nothing that the menu has elsewhere.
-            const own = (Array.isArray(m.own) ? m.own : []).filter((it) => it && it.label && (typeof it.onClick === 'function' || (it.href && safe(it.href)))).slice(0, 8);
-            if (own.length) {
-                const row = h('div', 'ovh-own'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Yours on this site');
-                own.forEach((it) => {
-                    const el2 = it.href ? h('a', 'ovh-own-i') : h('button', 'ovh-own-i');
-                    if (it.href) el2.href = it.href; else { el2.type = 'button'; el2.addEventListener('click', () => { try { it.onClick(); } catch { /* the item is the site's */ } }); }
-                    el2.textContent = it.short || it.label;
-                    row.append(el2);
-                });
-                meBox.append(row);
-            }
             return meBox;
+        }
+
+        /** The three tabs under your row; Notifications carries how many wait. */
+        let countBound = false, inkWas = null, tabWas = null;
+        function youTabs() {
+            const bar = h('div', 'ovh-tabs'); bar.setAttribute('role', 'tablist'); bar.setAttribute('aria-label', 'You');
+            if (!countBound && typeof document !== 'undefined') {
+                countBound = true;
+                const onCount = () => {
+                    if (!el.isConnected) { document.removeEventListener('openvibe-notifications-count', onCount); countBound = false; return; }
+                    const t = el.querySelector('.ovh-tab[data-tab="notifications"]'); if (!t) return;
+                    let n = 0; try { n = typeof o.unread === 'function' ? Number(o.unread()) || 0 : 0; } catch { n = 0; }
+                    let b = t.querySelector('.ovh-tab-n');
+                    if (n > 0) { if (!b) { b = h('b', 'ovh-tab-n'); t.append(b); } b.textContent = n > 99 ? '99+' : String(n); t.setAttribute('aria-label', `Notifications, ${n} new`); }
+                    else if (b) { b.remove(); t.setAttribute('aria-label', 'Notifications'); }
+                };
+                document.addEventListener('openvibe-notifications-count', onCount);
+            }
+            let unread = 0; try { unread = typeof o.unread === 'function' ? Number(o.unread()) || 0 : 0; } catch { unread = 0; }
+            [['apps', 'Apps', 'grid'], ['notifications', 'Notifications', 'bell'], ['recent', 'Recent', 'history']].forEach(([id, label, ic]) => {
+                const b = h('button', 'ovh-tab'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.tab = id;
+                b.setAttribute('aria-selected', String(state.tab === id));
+                b.append(svgIcon(ic), h('span', 'ovh-tab-t', label)); b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label);
+                if (id === 'notifications' && unread > 0) { b.append(h('b', 'ovh-tab-n', unread > 99 ? '99+' : String(unread))); b.setAttribute('aria-label', `Notifications, ${unread} new`); }
+                b.addEventListener('click', () => {
+                    if (state.tab === id) return;
+                    const on = bar.querySelector('.ovh-tab[aria-selected="true"]');
+                    inkWas = on ? { x: on.offsetLeft, w: on.offsetWidth } : null;
+                    tabWas = state.tab;
+                    state.tab = id; try { sessionStorage.setItem('ovh-you-tab', id); } catch { /* */ } paint();
+                });
+                // Arrow keys move along the tabs (a tablist's own keys).
+                b.addEventListener('keydown', (e) => {
+                    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                    const all = [...bar.querySelectorAll('.ovh-tab')]; const k = all.indexOf(b);
+                    const next = all[(k + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+                    e.preventDefault(); next.click(); requestAnimationFrame(() => { const t = el.querySelector(`.ovh-tab[data-tab="${next.dataset.tab}"]`); if (t) t.focus(); });
+                });
+                b.tabIndex = state.tab === id ? 0 : -1;
+                bar.append(b);
+            });
+            // The ink under the chosen tab: it starts where the last one was and slides over (Calm: a short fade; Off: none).
+            const ink = h('i', 'ovh-tab-ink'); ink.setAttribute('aria-hidden', 'true'); bar.prepend(ink);
+            const order = ['apps', 'notifications', 'recent'];
+            const from = inkWas, dir = tabWas ? Math.sign(order.indexOf(state.tab) - order.indexOf(tabWas)) : 0;
+            inkWas = null; tabWas = null;
+            requestAnimationFrame(() => {
+                const on = bar.querySelector('.ovh-tab[aria-selected="true"]'); if (!on) return;
+                if (from) { ink.style.transition = 'none'; ink.style.transform = `translateX(${from.x}px)`; ink.style.width = `${from.w}px`; void ink.offsetWidth; ink.style.transition = ''; }
+                ink.style.transform = `translateX(${on.offsetLeft}px)`; ink.style.width = `${on.offsetWidth}px`; ink.classList.add('is-on');
+            });
+            if (dir) el.dataset.enter = dir > 0 ? 'right' : 'left'; else delete el.dataset.enter;
+            return bar;
+        }
+        /** The whole notifications list, made once per opening (the menu gives the mount): a repaint keeps its place. */
+        function notes() {
+            if (notesBox) return notesBox;
+            notesBox = h('div', 'ovh-notes');
+            if (typeof o.notifications === 'function') { try { o.notifications(notesBox); } catch { notesBox.append(h('p', 'ovh-hint', 'Notifications did not load. Close the menu and open it again.')); } }
+            else notesBox.append(h('p', 'ovh-hint', 'Notifications are on openvibe.network/my.'));
+            return notesBox;
+        }
+
+        /** Recent (4.223.0; the owner, 11-12: "jump back in … shows a little more … like in the feed, longer"; "view full
+         *  history doesn't even work"): every place you were, newest first, in days, each a card with its whole title. */
+        function history() {
+            const items = (o.back || []).filter((x) => x && safe(x.url));
+            if (!items.length) return null;
+            const wrap = h('div', 'ovh-hist');
+            const dayOf = (at) => {
+                const t = Date.parse(at || ''); if (!t) return 'Earlier';
+                const d0 = new Date(); d0.setHours(0, 0, 0, 0);
+                const d = new Date(t); d.setHours(0, 0, 0, 0);
+                const diff = Math.round((d0 - d) / 864e5);
+                return diff <= 0 ? 'Today' : diff === 1 ? 'Yesterday' : diff < 7 ? 'This week' : 'Earlier';
+            };
+            const list = h('div', 'ovh-hist-list'); list.setAttribute('role', 'list'); list.setAttribute('aria-label', 'Where you were');
+            const more = h('button', 'ovh-all ovh-hist-more', 'Show more'); more.type = 'button';
+            let shown = 12;
+            const draw = () => {
+                list.textContent = '';
+                let last = '';
+                items.slice(0, shown).forEach((x, i) => {
+                    const d = dayOf(x.at);
+                    if (d !== last) { last = d; list.append(h('div', 'ovh-hist-day', d)); }
+                    const live = x.tag === 'Live';
+                    const c = h('a', `ovh-hrow${live ? ' is-live' : ''}`); c.href = safe(x.url); c.setAttribute('role', 'listitem'); c.style.setProperty('--i', String(i % 12));
+                    const ic = h('span', 'ovh-ic'); ic.style.setProperty('--ovh-h', String(hueOf(x.site || 'ov'))); ic.append(siteIcon(x.site || 'ov', 44));
+                    const t = h('span', 'ovh-htxt');
+                    t.append(h('b', '', x.title));
+                    const meta = h('small');
+                    if (live) meta.append(h('span', 'ovh-live', 'LIVE'));
+                    const pre = String(x.metaPre || '').replace(/^Live now(?: · )?/, '');
+                    const when = h('span', '', [pre, ago(x.at)].filter(Boolean).join(' · ') || x.meta || '');
+                    if (x.at) { when.dataset.at = x.at; when.dataset.pre = pre; }   // search.js keeps the times current
+                    meta.append(when); t.append(meta);
+                    c.append(ic, t);
+                    list.append(c);
+                });
+                more.hidden = shown >= items.length;
+            };
+            more.addEventListener('click', () => { shown += 12; draw(); icons(); });
+            draw();
+            const head = sec('Where you were', 'history');
+            const full = h('a', 'ovh-link', 'Full history'); full.href = 'https://openvibe.my/history'; head.append(full);
+            wrap.append(head, list, more);
+            return wrap;
         }
 
         /** Jump back in: the last places, as cards you swipe; a stream that is live now says so. */
@@ -490,7 +835,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const rows = (o.usage || []).map((u) => ({ a: L.byId.get(u.id), n: u.count })).filter((r) => r.a && r.n > 0).sort((x, y) => y.n - x.n).slice(0, 5);
             if (rows.length < 2) return null;
             const wrap = h('div');
-            const head = sec('Most used');
+            const head = sec('Most used', 'star');
             // Your stats on Report (private by default; you choose what is public), as the section's link.
             const more = h('a', 'ovh-link', 'Your stats'); more.href = 'https://openvibe.report/me';
             head.append(more);
@@ -524,33 +869,41 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const calm = (x) => { x.classList.add('ovh-calm'); x.inert = state.edit; return x; };
             // The account's block wherever the bar has a person (a site with its own session may have no token for
             // the network's reads yet: sign out and the rest must still be there); else the short bar.
-            if ((o.user && !o.user.is_anon) || signedIn(o)) el.append(calm(me()));
-            if (signedIn(o)) { actorBox = actorBox || h('div'); el.append(actorBox); }
-            const head = sec(L.arranged || signedIn(o) ? 'Your home' : 'Popular on OpenVibe');
-            const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
-            edit.type = 'button';
-            edit.append(svgIcon(state.edit ? 'check' : 'pencil'));
-            if (state.edit) edit.append(h('span', '', 'Done'));
-            edit.setAttribute('aria-label', state.edit ? 'Done arranging Home' : 'Edit Home');
-            edit.title = state.edit ? 'Done' : 'Edit Home: move apps, remove them, add folders';
-            edit.setAttribute('aria-pressed', state.edit ? 'true' : 'false');
-            edit.addEventListener('click', () => setEdit(!state.edit));
-            // All apps sits beside Edit, small, with its count (the owner, 2026-11-10: "all apps should just be in a
-            // button in the corner so it's more compact"): it was a bar the width of the sheet under the grid.
-            const total = L.byId.size;
-            const all = h('button', 'ovh-allbtn'); all.type = 'button';
-            all.append(svgIcon('grid'), h('span', '', 'All'), h('b', '', String(total)));
-            all.setAttribute('aria-label', `All apps (${total})`); all.title = `All apps (${total})`;
-            all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
-            const tools = h('div', 'ovh-headtools'); tools.append(all, edit);
-            head.append(tools);
-            el.append(head);
+            const top = h('div', 'ovh-top');
+            if ((o.user && !o.user.is_anon) || signedIn(o)) top.append(calm(me()));
+            if (signedIn(o)) { actorBox = actorBox || h('div', 'ovh-notice'); top.append(actorBox); }
+            if (top.childNodes.length) el.append(top);
+            // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … put the apps more front
+            // facing … the first tab"; then "compact … waste of space"): one row of tabs, and on Apps the All and Edit
+            // buttons at its end, so no head of its own. Edit stays pressable while the rest is quiet.
+            const tab = signedIn(o) ? state.tab : 'apps';
+            const tools = tab === 'apps' ? homeTools() : null;
+            if (signedIn(o)) {
+                const row = h('div', 'ovh-tabrow');
+                row.append(calm(youTabs()));
+                if (tools) row.append(tools);
+                el.append(row);
+            }
+            const later = () => { icons(); if (actorBox && !actorBox.childNodes.length) actor(actorBox, o); };
+            if (tab === 'notifications') { el.append(notes()); return later(); }
+            if (tab === 'recent') {
+                const u = usage(), b = history();
+                if (u) el.append(u);
+                if (b) el.append(b);
+                if (!u && !b) { const e = h('div', 'ovh-empty'); e.append(svgIcon('history')); const w = h('div'); w.append(h('b', '', 'Nothing here yet'), h('span', '', 'The places you open and the apps you use most show up here.')); e.append(w); el.append(e); }
+                return later();
+            }
+            if (!signedIn(o)) {
+                const head = sec(L.arranged ? 'Your home' : 'Popular on OpenVibe', 'home');
+                head.append(tools);
+                el.append(head);
+            }
             const grid = h('div', 'ovh-grid'); grid.setAttribute('aria-label', 'Your home');
             L.home.forEach((id, i) => grid.append(homeTile(id, i)));
             el.append(grid);
             if (state.edit) el.append(h('p', 'ovh-hint', 'Drag an app to move it, or use the arrow keys. − takes it off Home; All puts it back.'));
-            // Under your home: what you use most (shortcuts), then where you were last (history).
-            { const u = usage(); if (u) el.append(calm(u)); const b = backRail(); if (b) el.append(calm(b)); }
+            // Signed out there are no tabs: what you use most and where you were stay under the apps.
+            if (!signedIn(o)) { const u = usage(); if (u) el.append(calm(u)); const b = backRail(); if (b) el.append(calm(b)); }
             icons();
             if (signedIn(o) && actorBox && !actorBox.childNodes.length) actor(actorBox, o);
         }
@@ -677,7 +1030,26 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             window.addEventListener('pointercancel', end);
         }
 
-        function setEdit(on) { state.edit = on; paint(); const b = el.querySelector('.ovh-sec button'); if (b && !on) b.focus(); }
+        function homeTools() {
+            const edit = h('button', state.edit ? 'ovh-edit is-done' : 'ovh-edit');
+            edit.type = 'button';
+            edit.append(svgIcon(state.edit ? 'check' : 'pencil'));
+            if (state.edit) edit.append(h('span', '', 'Done'));
+            edit.setAttribute('aria-label', state.edit ? 'Done arranging Home' : 'Edit Home');
+            edit.title = state.edit ? 'Done' : 'Edit Home: move apps, remove them, add folders';
+            edit.setAttribute('aria-pressed', state.edit ? 'true' : 'false');
+            edit.addEventListener('click', () => setEdit(!state.edit));
+            // All apps sits beside Edit, small, with its count (the owner, 2026-11-10: "all apps should just be in a
+            // button in the corner so it's more compact").
+            const total = L.byId.size;
+            const all = h('button', 'ovh-allbtn'); all.type = 'button';
+            all.append(svgIcon('grid'), h('span', '', 'All'), h('b', '', String(total)));
+            all.setAttribute('aria-label', `All apps (${total})`); all.title = `All apps (${total})`;
+            all.addEventListener('click', () => { state.view = 'drawer'; paint(); });
+            const tools = h('div', 'ovh-headtools'); tools.append(all, edit);
+            return tools;
+        }
+        function setEdit(on) { state.edit = on; paint(); const b = el.querySelector('.ovh-edit'); if (b && !on) b.focus(); }
 
         function paintFolder() {
             const f = L.folders.find((x) => x.id === state.folder);
@@ -695,9 +1067,10 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 
         function paintDrawer() {
             el.textContent = '';
-            el.append(backHead('All apps'));
-            const field = h('input', 'ovh-filter'); field.type = 'search'; field.placeholder = 'Find an app'; field.setAttribute('aria-label', 'Find an app'); field.value = state.filter;
-            el.append(field);
+            const head = backHead('All apps');
+            const field = h('input', 'ovh-filter'); field.type = 'search'; field.placeholder = `Find among ${L.byId.size} apps`; field.setAttribute('aria-label', 'Find an app'); field.value = state.filter;
+            head.querySelector('b').replaceWith(field);
+            el.append(head);
             const body = h('div');
             el.append(body);
             const groups = (o.groups && o.groups.length ? o.groups : [{ id: '', name: 'OpenVibe' }]).slice();
@@ -718,7 +1091,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
                 L.folders.forEach((f) => { if (!q || f.name.toLowerCase().includes(q)) sets.push([`${f.name} folder`, [{ folder: f }]]); });
                 if (!sets.length) { body.append(h('p', 'ovh-note', 'No app has that name.')); return; }
                 sets.forEach(([name, list]) => {
-                    body.append(sec(`${name} (${list.length})`));
+                    body.append(sec(name, groupGlyph(name), list.length));
                     const grid = h('div', 'ovh-grid');
                     list.forEach((a) => {
                         const id = a.folder ? `folder:${a.folder.id}` : a.id;
@@ -742,12 +1115,20 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 
         function backHead(title) {
             const head = h('div', 'ovh-head');
-            const back = h('button', 'ovh-back', '← Home'); back.type = 'button';
+            const back = h('button', 'ovh-back'); back.type = 'button'; back.append(svgIcon('back'));
+            back.setAttribute('aria-label', 'Back to your home'); back.setAttribute('data-ov-tip', 'Back to your home');
             back.addEventListener('click', () => { state.view = 'home'; state.folder = null; paint(); const b = el.querySelector('.ovh-allbtn'); if (b) b.focus(); });
             head.append(back, h('b', '', title));
             return head;
         }
-        function sec(text) { const s = h('div', 'ovh-sec'); s.append(h('span', '', text)); return s; }
+        function sec(text, glyph, count) {
+            const s = h('div', 'ovh-sec');
+            if (glyph) { const i = h('i', 'ovh-sec-ic'); i.append(svgIcon(glyph)); s.append(i); }
+            s.append(h('span', '', text));
+            if (count != null) s.append(h('b', 'ovh-sec-n', String(count)));
+            s.append(h('i', 'ovh-sec-sp'));
+            return s;
+        }
 
         function paint() { if (state.view === 'folder') return paintFolder(); if (state.view === 'drawer') return paintDrawer(); return paintHome(); }
         paint();
@@ -769,6 +1150,23 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
     }
 
     // ── Your Actor, on top of You ──────────────────────────────────────────────────────────────────────────────
+    /** The glyph for what an agent is doing now (the owner, 11-12: "put an icon depending on the agent status … custom for
+     *  the agent"): its step's words first, then its state. A site or Actor may name one (`a.now.glyph`) from the registry. */
+    function doingGlyph(a, st) {
+        const named = a && a.now && a.now.glyph; if (named && ICON[named]) return named;
+        const t = String((a && a.now && a.now.current_step) || '').toLowerCase();
+        if (st === 'waiting') return 'chat';
+        if (st === 'paused') return 'clock';
+        if (/read|review|look|watch/.test(t)) return 'book';
+        if (/search|find|hunt|scan|brows/.test(t)) return 'compass';
+        if (/writ|draft|post|reply|edit/.test(t)) return 'pencil';
+        if (/code|build|fix|deploy|test/.test(t)) return 'code';
+        if (/stream|live|clip|video/.test(t)) return 'live';
+        if (/buy|deal|shop|price|sell/.test(t)) return 'store';
+        if (/game|play/.test(t)) return 'game';
+        if (/think|plan|idea/.test(t)) return 'spark';
+        return st === 'working' ? 'spark' : 'clock';
+    }
     async function actor(box, o) {
         const base = String(o.actorBase || ACTOR).replace(/\/+$/, '');
         let a = null;
@@ -786,13 +1184,20 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const face = h('span', 'ovh-face');
             const pic = a.avatar && /^https:\/\//.test(String(a.avatar.url || '')) ? a.avatar.url : '';
             if (pic) { const img = h('img'); img.alt = ''; img.src = pic; face.append(img); } else face.textContent = String(a.name || 'A').trim().charAt(0).toUpperCase() || 'A';
+            // What it is doing, as a glyph on its face (its whole face when it has no picture).
+            const doing = h('span', `ovh-doing is-${st}`); doing.append(svgIcon(doingGlyph(a, st))); doing.setAttribute('aria-hidden', 'true');
+            if (!pic) { face.textContent = ''; face.classList.add('is-glyph'); }
+            face.append(doing);
             const txt = h('span', 'ovh-actor-txt');
             const name = h('b', '', a.name || 'Your Actor');
             const chip = h('span', `ovh-chip is-${st}`); chip.append(h('span', 'ovh-dot'), document.createTextNode(label));
             name.append(chip);
             const now = a.now || {};
             txt.append(name, h('small', '', asks.length ? `It asks you: ${asks[0].text || ''}` : now.current_step ? String(now.current_step) : st === 'paused' ? 'Paused until you resume it' : 'Resting until its next goal is due'));
-            b.append(face, txt, h('span', 'ovh-go', asks.length ? 'Answer' : 'Open'));
+            const go = h('span', asks.length ? 'ovh-go is-answer' : 'ovh-go is-ic'); go.append(svgIcon(asks.length ? 'chat' : 'arrow'));
+            if (asks.length) go.append(h('span', '', 'Answer'));
+            b.setAttribute('aria-label', `${a.name || 'Your Actor'}, ${label}: ${asks.length ? 'answer it' : 'open it'}`);
+            b.append(face, txt, go);
             b.addEventListener('click', () => {
                 if (root.OpenVibeNavbar && typeof root.OpenVibeNavbar.openDock === 'function') { if (o.close) o.close(); try { root.OpenVibeNavbar.openDock('agent'); return; } catch { /* */ } }
                 location.href = `${base}/you`;
@@ -808,7 +1213,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         card.classList.add('is-invite');
         const face = h('span', 'ovh-face'); face.append(siteIcon('actor', 30));
         const txt = h('span', 'ovh-actor-txt');
-        txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch: finds work, posts and runs your channel.'));
+        txt.append(h('b', '', 'Your own AI'), h('small', '', 'It works for you while you watch.'));
         const acts = h('span', 'ovh-acts');
         const go = h('a', 'ovh-go', 'Set it up'); go.href = `${base}/you`;
         const no = h('button', 'ovh-x'); no.append(svgIcon('x')); no.type = 'button'; no.setAttribute('aria-label', 'Not now'); no.title = 'Not now';
@@ -1135,8 +1540,18 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         parts.forEach(([k, g, word]) => { const s = h('span', ''); s.setAttribute('aria-label', `${num(n[k])} ${word}`); s.title = `${num(n[k])} ${word}`; s.append(glyph(g), document.createTextNode(count(n[k]))); row.append(s); });
         return row;
     }
+    /** A length as people read it: 5203 → 1:26:43, 95 → 1:35; a length already written ("12:04") stays. */
+    function lenOf(v) {
+        const t = String(v == null ? '' : v).trim();
+        if (!/^\d+(\.\d+)?$/.test(t)) return t.slice(0, 10);
+        const n = Math.round(Number(t)); const hh = Math.floor(n / 3600), mm = Math.floor((n % 3600) / 60), ss = n % 60;
+        return hh ? `${hh}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${mm}:${String(ss).padStart(2, '0')}`;
+    }
+    /** The Rundown's episodes (Live writes them from what streamers said): Network's kind `rundown`, or the older items
+     *  that came as "System" with a "Rundown:" title. */
+    function isRundown(c) { return c.kind === 'rundown' || (/^Rundown:\s*/i.test(String(c.title || '')) && (!c.actor || /^system$/i.test(String(c.actor.name || '')))); }
     function feedCard(c) {
-        const kind = String(c.kind || 'post');
+        const kind = isRundown(c) ? 'rundown' : String(c.kind || 'post');
         const url = safe(c.url);
         if (!url) return null;
         if (ACTS.has(kind) && !(c.media && safe(c.media.thumb))) return activity(c);
@@ -1147,6 +1562,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             a.append(ic, t); return a;
         }
         const a = h('a', `ovfd-card ovfd-k-${kind.replace(/[^a-z]/g, '')}`); a.href = url;
+        if (kind === 'rundown') a.setAttribute('aria-label', `The Rundown: ${String(c.title || '').replace(/^Rundown:\s*/i, '').slice(0, 160)}`);
         const head = h('span', 'ovfd-head');
         const face = h('span', 'ovfd-face');
         const av = c.actor && safe(c.actor.avatar);
@@ -1155,9 +1571,19 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 20)); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovfd-who');
-        who.append(h('b', '', String((c.actor && c.actor.name) || c.label || c.site_name || '').slice(0, 60)));
         const meta = h('small', '');
-        meta.append(siteIcon(c.site || 'ov', 14), document.createTextNode(` ${[c.site_name || '', c.actor ? when(c.at) : String(c.text || when(c.at) || '').slice(0, 60)].filter(Boolean).join(' · ')}`));
+        if (kind === 'rundown') {
+            // 4.223.0 (the owner, 11-12: "the rundown should look visually distinct versus the live feeds"): its own face and
+            // name, whom it is about, and its picture marked as the Rundown's.
+            face.textContent = ''; face.className = 'ovfd-face is-rundown'; face.append(glyph('page'));
+            const about = c.subject && c.subject.name ? String(c.subject.name) : (/^Rundown:\s*([^:]{1,40}?)\s*(?:prep|:)/i.exec(String(c.title || '')) || [])[1] || '';
+            who.append(h('b', '', 'The Rundown'));
+            meta.append(siteIcon('live', 18), document.createTextNode(` ${[about ? `about ${about}` : 'from today’s streams', when(c.at)].filter(Boolean).join(' · ')}`));
+            a.classList.add('ovfd-k-rundown');
+        } else {
+            who.append(h('b', '', String((c.actor && c.actor.name) || c.label || c.site_name || '').slice(0, 60)));
+            meta.append(siteIcon(c.site || 'ov', 18), document.createTextNode(` ${[c.site_name || '', c.actor ? when(c.at) : String(c.text || when(c.at) || '').slice(0, 60)].filter(Boolean).join(' · ')}`));
+        }
         who.append(meta);
         head.append(face, who);
         if (kind === 'live' && c.live_now) { a.classList.add('is-on'); head.append(h('span', 'ovfd-livechip', 'LIVE')); }
@@ -1169,7 +1595,9 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
             const r = Number(media.ratio) > 0 ? Math.max(0.8, Math.min(1.91, Number(media.ratio))) : (kind === 'pic' || kind === 'meme' ? 1 : 16 / 9);
             box.style.aspectRatio = String(r);
             const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = thumb; box.append(img);
-            if (media.length) box.append(h('span', 'ovfd-len', String(media.length).slice(0, 10)));
+            const len = media.length || c.duration_s;
+            if (len) box.append(h('span', 'ovfd-len', lenOf(len)));
+            if (kind === 'rundown') { const rib = h('span', 'ovfd-ribbon'); rib.append(glyph('page'), document.createTextNode('Rundown')); box.append(rib); }
             if (kind === 'live' && c.counts && c.counts.viewers) box.append(h('span', 'ovfd-len ovfd-viewers', `${count(c.counts.viewers)} watching`));
             a.append(box);
             if (kind === 'clip' || kind === 'video' || kind === 'live') watchPreview(box, c);
@@ -1177,6 +1605,7 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
         let title = String(c.title || '');
         if (kind === 'post' && /^Status:\s*/.test(title) && c.text && String(c.text).startsWith(title.replace(/^Status:\s*/, '').replace(/…$/, '').slice(0, 40))) title = '';
         if (kind === 'live') title = title.replace(/^.{1,60}? went live:?\s*/i, '') || title;
+        if (kind === 'rundown') title = title.replace(/^Rundown:\s*/i, '') || title;
         if (title) a.append(h('b', 'ovfd-title', title.slice(0, 200)));
         if (c.text && (kind === 'post' || !thumb)) a.append(h('p', 'ovfd-text', String(c.text).slice(0, 500)));
         const counts = countsRow(c.counts);
@@ -1405,6 +1834,29 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 .ovfd-skel{display:block;height:180px;border-radius:16px;background:linear-gradient(90deg,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 0,color-mix(in srgb,var(--text-primary,#e8ecf3) 9%,transparent) 50%,color-mix(in srgb,var(--text-primary,#e8ecf3) 5%,transparent) 100%);background-size:200% 100%;animation:ovfd-shimmer 1.4s ease-in-out infinite}
 .ovfd-more{min-height:1px}.ovfd-caught{text-align:center;padding:10px 0}
 @keyframes ovfd-shimmer{to{background-position:-200% 0}}
+
+/* 4.223.0 (the owner, 11-12: "these icons are tiny … fix this icon shit"): the kind glyph beside the time at 18 px and a
+   site's face drawn as an app icon; lengths read as times. The Rundown has its own card: its mark, whom it is about, a
+   ribbon on its picture, and the picture graded so it never reads as the stream's own card above it. */
+.ovfd-who small{gap:6px;font-size:12.5px}
+.ovfd-who small .ov-icon{position:relative;flex:none;width:18px;height:18px;overflow:hidden;border-radius:5px}
+.ovfd-who small .ov-icon .ovi-ring,.ovfd-who small .ov-icon .ovi-bg,.ovfd-who small .ov-icon .ovi-comet,.ovfd-who small .ov-icon .ovi-prog{display:none}
+.ovfd-who small .ov-icon svg{position:absolute;left:-26%;top:-26%;width:152%;height:152%;transform:none!important}
+.ovfd-face{width:36px;height:36px}
+.ovfd-face.is-site{position:relative}
+.ovfd-face.is-site .ov-icon{position:absolute;inset:0;width:100%;height:100%;display:block;--ovi-glyph:hsl(var(--ovh-h,215) 90% 82%)}
+.ovfd-face.is-site .ov-icon .ovi-ring,.ovfd-face.is-site .ov-icon .ovi-bg,.ovfd-face.is-site .ov-icon .ovi-comet,.ovfd-face.is-site .ov-icon .ovi-prog{display:none}
+.ovfd-face.is-site .ov-icon svg{position:absolute;left:-13%;top:-13%;width:126%;height:126%;transform:none!important}
+.ovfd-act .ovfd-face,.ovfd-tile,.ovfd-tile-wrap{width:44px;height:44px}
+.ovfd-face.is-rundown{border-radius:12px;background:linear-gradient(140deg,#f59e0b,#ef4444 55%,#a855f7);color:#fff;box-shadow:0 4px 14px -4px rgba(239,68,68,.55)}
+.ovfd-face.is-rundown svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.ovfd-k-rundown{box-shadow:inset 0 0 0 1px color-mix(in srgb,#f59e0b 38%,transparent);background:linear-gradient(180deg,color-mix(in srgb,#f59e0b 7%,transparent),transparent 60%)}
+.ovfd-k-rundown .ovfd-media img{filter:saturate(1.35) contrast(1.06) sepia(.12)}
+.ovfd-k-rundown .ovfd-media::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(15,8,30,.55)),linear-gradient(120deg,rgba(245,158,11,.18),transparent 40%,rgba(168,85,247,.18))}
+.ovfd-ribbon{position:absolute;left:10px;top:10px;z-index:1;display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.02em;color:#fff;background:linear-gradient(140deg,#f59e0b,#ef4444 60%,#a855f7);box-shadow:0 4px 12px -2px rgba(0,0,0,.45)}
+.ovfd-ribbon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ovfd-media{position:relative}
+.ovfd-len{font-variant-numeric:tabular-nums;z-index:1}
 `;
         document.head.appendChild(st);
     }

@@ -1,5 +1,76 @@
 # Changelog
 
+## 4.223.0 — 2026-11-12
+
+You redone as tabs, icons that fill their squares everywhere in the menu, names in the brand face, and one composer with
+a + for every tool (the owner, 11-12, a run of phone and desktop screenshots: "the notifications area is ultra buggy …
+move the notifications into a tab … put the apps more front facing"; "make the icons bigger so they actually take up
+more of the square … fix the alignment"; "waste of space … compact"; "fix the mic to the left … the timer should be in
+the plus thing … usable on all composers across all sites").
+
+- **You:**
+  - **One top:** your row, then your AI. Side by side when the menu is wide. Your row holds every round button, with
+    this site's own (your channel, Admin, what a site adds) first as icons. The lone "Channel" row is gone.
+  - **Three tabs:** Apps (first) · Notifications · Recent. One row, with All and Edit at its end; no "Your home" head.
+    - An ink slides to the chosen tab and the tab's content slides in from its side. Calm fades; Off stills.
+    - On a phone, only the chosen tab says its name. The arrow keys move between tabs.
+  - **Notifications** is a tab:
+    - the whole list, with its own search, filters and Mark all read;
+    - it loads `notification-ui.js` itself when the tab opens first (it said "unavailable");
+    - its count follows the bell live.
+  - **Recent** is the whole history:
+    - newest first, in days (Today, Yesterday, This week, Earlier);
+    - each place a card with its whole title, its site and when, and LIVE when it is live;
+    - two columns when wide, Show more, and Full history to openvibe.my/history.
+  - **Your AI:**
+    - its face shows what it is doing (reading, writing, searching, coding, waiting for you…) as a glyph;
+    - it breathes while working;
+    - Open is a round arrow and Answer is a pill;
+    - not yet set up, it is one slim row.
+  - **All apps:** back is a round arrow, with the search beside it. Each group is marked with its glyph and its count.
+- **App icons, everywhere in the menu** (You, the site list, search rows, the feed):
+  - the site's hue on a rounded square, with the glyph at 58% of it;
+  - drawn absolutely, so no hover can move it off centre;
+  - a folder's four apps sit in an even 2×2 (they were offset and cut off);
+  - a + to add an app sits on the icon's corner;
+  - a mouse lifts an icon and lights it in its hue, and a press sinks it.
+- **Names in the brand face:**
+  - app, site, tab and section names are in OV Brand (Nunito 800, loaded by the navbar on every site); words you
+    read stay in the UI face;
+  - names wrap to two balanced lines and never end in "…";
+  - section heads are names, not small capitals.
+- **The site list** (a site's own tab) is a grid of app icons: four across on a phone, as many as fit beyond. Each
+  section wears its glyph.
+- **The feed:**
+  - a recording's length reads as a time (5203 → 1:26:43);
+  - the Rundown is its own card: "The Rundown · about Maticus", its mark, a ribbon on its picture, and a grade, so it
+    never reads as the stream's card;
+  - the kind glyph beside the time is 18 px.
+- **One composer** (`ov-composer.js`, every box on every site):
+  - **The row:** the mic first, then the + and the box's first tool on a phone; the + opens every tool of the box, big
+    and named. It lists the row's own tools, the mods' tools and the extras.
+  - **Timer:** a tool in every box's + (`OpenVibeComposer` TOOL `timer`, `extra: true`). Vibe's switch row no longer
+    has a timer of its own.
+  - **Examples:** an empty box shows what people do with it, in turn: `examples`, or a preset's own, or
+    `data-ovc-examples`. Calm is slower; Off keeps the first.
+  - **Send:** the round send is an arrow up, in the accent when there is something to send.
+- **Vibe:**
+  - its box is the same composer, with its hold-to-talk mic first and then the +;
+  - a link in your own message reads (it was blue on blue);
+  - Chat · Code · Agents is one segmented control with a sliding ink, at 15 px with 20 px glyphs.
+- **The menu:**
+  - Close is a round × on every screen; the phone's close orb is glass with a hairline edge, never a thick ring;
+  - a slow light drifts behind the panel (Calm slows it; Off stops it).
+  - `OpenVibeNavbar.openMenu(place)` opens the menu at a place: `notifications`, `recent`, `apps`, `you`, `feed`,
+    `vibe`, `chats` or `agent`. A site's own links use it (openvibe.my's Notifications tile clicked a bell that is gone).
+- **Times:** a time without a zone is UTC. Network's history sends "YYYY-MM-DD HH:MM:SS", and browsers read it as local
+  time; west of UTC every visit said "just now".
+- **The notification rows:**
+  - one way to clear a notice (×); a tap reads it, and a swipe still offers Read or Clear;
+  - the title and its ×N count are one run of text (the count overlapped the words).
+- **Tests updated:** menu-home-screen, menu-places, menu-close, dock-chrome (the timer through the +), composer-v2,
+  composer-camera, inline-composer.
+
 ## 4.222.0 — 2026-11-12
 
 The wallet sheet redesigned for phone and desktop, every phone page back to its true width, and whole site names in the
