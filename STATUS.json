@@ -8,7 +8,7 @@
   "plan": "OpenVibe End-to-End Realignment & Implementation Plan, revision 3 (20 Sep 2026)",
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
-  "contracts": "openvibe-contracts v0.416.0 (devDependency: the release manifest contract)",
+  "contracts": "openvibe-contracts v0.417.0 (devDependency: the release manifest contract)",
   "sdk": "openvibe-sdk v0.160.0",
   "features": [
     "the icon audit (a script that fails CI on any unresolved icon name in a repository), kit.icon drawing every glyph, nine new glyphs with solids, and keywords in every glyph's META (4.220.0)",
