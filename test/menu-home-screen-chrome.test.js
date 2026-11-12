@@ -147,10 +147,20 @@ const server = http.createServer((req, res) => {
         // Done, then All apps puts it back.
         await p.evaluate(`[...document.querySelectorAll('.ovh-sec button')].find((b) => b.textContent === 'Done').click(), true`);
         await p.evaluate(`document.querySelector('.ovh-allbtn').click(), true`);
-        assert.ok(await until(p, `!!document.querySelector('.ovh-filter')`), 'the drawer opened');
+        assert.ok(await until(p, `!!document.querySelector('.ovh-head-t b') && document.querySelector('.ovh-head-t b').textContent.startsWith('All apps')`), 'the drawer opened, named, with its count');
+        // 4.229.0: one search. No second box: the menu's own pill finds an app in All apps.
+        assert.strictEqual(await p.evaluate(`document.querySelectorAll('.ovh-filter').length`), 0, 'no second search box');
+        assert.match(await p.evaluate(`document.querySelector('.ovs-input').placeholder`), /^Find among \d+ apps$/, 'the pill says what it finds now');
+        const allN = await p.evaluate(`document.querySelectorAll('.ovh-grid .ovh-app').length`);
+        await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'zzzz-no-such-app'; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await eventually(async () => assert.strictEqual(await p.evaluate(`document.querySelectorAll('.ovh-grid .ovh-app').length`), 0, 'typing in the pill filters the apps'));
+        assert.ok(await p.evaluate(`!!document.querySelector('.ovh-head-t')`), 'and the apps stay in place (not search results)');
+        await p.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await eventually(async () => assert.strictEqual(await p.evaluate(`document.querySelectorAll('.ovh-grid .ovh-app').length`), allN, 'clearing it shows them all'));
         await p.evaluate(`document.querySelector('.ovh-grid .ovh-app[data-id="${keyed[0]}"] .ovh-badge.is-add').click(), true`);
         await p.evaluate(`document.querySelector('.ovh-back').click(), true`);
         assert.ok((await order(p)).includes(keyed[0]), 'All apps put it back on Home');
+        assert.doesNotMatch(await p.evaluate(`document.querySelector('.ovs-input').placeholder`), /^Find among/, 'back on Home, the pill searches OpenVibe again');
 
         // The Tools folder: tools with their own icons, and the count of all.
         await p.evaluate(`document.querySelector('.ovh-grid .ovh-app[data-id="folder:tools"]').click(), true`);

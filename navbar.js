@@ -1363,6 +1363,23 @@
         status: (s) => { _menuStatus = s || null; }, openMenu: (id) => openMenuOn(id), closeMenu: () => { if (root.OpenVibeSearch && menuOpen()) root.OpenVibeSearch.close(); } });
     let _menuStatus = null;
     /** The menu on one of its places ('chats', 'vibe', 'code', 'agent'): opened there, or moved there if it is open. */
+    /** 4.229.0: Back to a page the menu was left from opens the menu again, where it was (its place, its door, its
+     *  scroll), whether the page comes back from the browser's cache, loads again, or is swapped in place. Only for a
+     *  Back or Forward, and only within half an hour of leaving. */
+    function restoreMenu(ev) {
+        let st = null;
+        try { st = history.state; } catch { return; }
+        const b = st && st.ovsBack;
+        if (!b || typeof b !== 'object' || !(Date.now() - Number(b.at || 0) < 30 * 60000)) return;
+        let nav = null;
+        try { nav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0]; } catch { nav = null; }
+        if (!(ev && ev.persisted) && !(nav && nav.type === 'back_forward')) return;
+        if (menuOpen()) return;
+        const tab = /^(here|feed|you)$/.test(String(b.tab || '')) ? b.tab : 'here';
+        const door = /^(vibe|chats|agent|code|tasks)$/.test(String(b.door || '')) ? b.door : undefined;
+        const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
+        openSearch('', tab, orbs.find((x) => x.getBoundingClientRect && x.getBoundingClientRect().width > 0) || null, null, door, { restore: { scroll: Math.max(0, Number(b.scroll) || 0) } });
+    }
     function openMenuOn(id) {
         if (menuOpen() && root.OpenVibeSearch && root.OpenVibeSearch.door && root.OpenVibeSearch.door(id)) return;
         const orbs = _navEl && _navEl.querySelectorAll ? [..._navEl.querySelectorAll('#openvibe-burger.ovnav-orb, #openvibe-search-btn')] : [];
@@ -2375,7 +2392,7 @@
         if (typeof root.requestIdleCallback === 'function') root.requestIdleCallback(go, { timeout: 8000 }); else setTimeout(go, 6000);
     }
     /** The OpenVibe menu (search.js, loaded on first use): search, every site and every tool. tab: 'you' | 'sites' | 'tools'. */
-    function openSearch(q, tab, fromEl, section, door) {
+    function openSearch(q, tab, fromEl, section, door, extra) {
         // The orb that waves while the menu loads: the one pressed (the phone's menu button is an orb too, 4.148.0).
         const orb = (fromEl && fromEl.classList && fromEl.classList.contains('ovnav-orb') ? fromEl : null) || (_navEl && _navEl.querySelector('#openvibe-search-btn'));
         // The menu drops from the button that opened it (the orb, or the burger), under the bar.
@@ -2389,7 +2406,7 @@
             if (orb) orb.classList.remove('is-busy');
             if (!root.OpenVibeSearch) return;
             if (_navEl) _navEl.classList.remove('ovnav-hide');
-            root.OpenVibeSearch.open({ service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section, door,
+            root.OpenVibeSearch.open({ ...(extra || {}), service: _config.service, scope: Object.assign({ owner: _config.service }, _config.search || {}), links: flatLinks(rawLinks()), q, tab, from: fromEl || null, section, door,
                 frame: OVFrame.get(), token: _config.token, apiBase: _config.apiBase, runsBase: dockBase(), user: _config.user, icons: (scope) => loadOvIcons(scope), anchor: anchor(), navIcon, sibling: siblingV,
                 // Display (theme, text size, motion) at the menu's foot, drawn by the same controls the drawer had.
                 display: (el) => { const box = document.createElement('div'); box.className = 'ovnav-display ovs-display'; el.appendChild(box); bindDisplayControls(box); },
@@ -2612,7 +2629,9 @@
             setTimeout(() => { if (!e.defaultPrevented) busy(true); }, 0);   // after the page's own handler (an SPA's router) had its say
         }, true);
         // Back from the browser's page cache: whatever was loading is done.
-        window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) busy(false); });
+        window.addEventListener('pageshow', (ev) => { if (ev && ev.persisted) { busy(false); restoreMenu(ev); } });
+        document.addEventListener('openvibe-menu-restore', () => restoreMenu({ persisted: true }));
+        setTimeout(() => restoreMenu(null), 0);
     }
     // ── The shared worker (openvibe-sw.js): the shell's cache, and the push notifications it always carried ──
     // A site opts in: OpenVibeNavbar.init({ sw: true }). The worker is the same file the notification bell registers for
