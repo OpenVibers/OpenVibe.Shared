@@ -63,7 +63,12 @@ function parseArgs(argv) {
 
 /** The pin URL of `library` at `tag`. */
 const pinUrl = (library, tag) => `https://codeload.github.com/${ORG}/${LIBS[library]}/tar.gz/refs/tags/${tag}`;
-const PIN_RE = (library) => new RegExp(`https://codeload\\.github\\.com/${ORG}/${LIBS[library].replace('.', '\\.')}/tar\\.gz/refs/tags/(v\\d+\\.\\d+\\.\\d+)`, 'g');
+// A repo may pin through our own forge (git.openvibe.codes, OpenVibe.Git's own pins since 11-09): the same tag as an archive.
+// Both forms are found, and each pin keeps its own form when it moves (11-12: Git sat on Shared 4.206.0 because only
+// codeload pins were seen).
+const forgeUrl = (library, tag) => `https://git.openvibe.codes/api/v1/repos/${ORG.toLowerCase()}/${LIBS[library].toLowerCase()}/archive/${tag}.tar.gz`;
+const PIN_RE = (library) => new RegExp(`(?:https://codeload\\.github\\.com/${ORG}/${LIBS[library].replace('.', '\\.')}/tar\\.gz/refs/tags/|https://git\\.openvibe\\.codes/api/v1/repos/${ORG.toLowerCase()}/${LIBS[library].toLowerCase().replace('.', '\\.')}/archive/)(v\\d+\\.\\d+\\.\\d+)(?:\\.tar\\.gz)?`, 'g');
+const movePin = (library, tag) => (m) => (m.startsWith('https://git.openvibe.codes/') ? forgeUrl(library, tag) : pinUrl(library, tag));
 
 /** Every package.json the repository tracks, with the pins of `library` it holds below `tag`. */
 function stalePins(dir, library, tag) {
@@ -404,7 +409,7 @@ function main() {
             const changed = new Set();
             for (const { file } of stale) {
                 const p = path.join(dir, file);
-                fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(PIN_RE(library), pinUrl(library, tag)));
+                fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(PIN_RE(library), movePin(library, tag)));
                 changed.add(file);
                 const lock = refreshLock(dir, file);
                 if (lock) changed.add(lock);
@@ -498,4 +503,4 @@ if (require.main === module) {
     try { main(); } catch (err) { console.error(`pin-bump: ${err.message}`); process.exitCode = 1; }
 }
 
-module.exports = { stalePins, staleSecurityPins, updateSecurityPins, updateVersionLines, pinUrl, parseArgs, parseOverBudget, nextHalf, raiseBudgetText, findBudgetFile, raiseBudgets, SERVICE, shipOrder, shipCommand };
+module.exports = { stalePins, staleSecurityPins, updateSecurityPins, updateVersionLines, pinUrl, forgeUrl, PIN_RE, movePin, parseArgs, parseOverBudget, nextHalf, raiseBudgetText, findBudgetFile, raiseBudgets, SERVICE, shipOrder, shipCommand };

@@ -163,6 +163,17 @@ assert.deepStrictEqual(shipCommand('/tools', { repo: 'OpenVibe.Quest', number: 2
 assert.deepStrictEqual(shipCommand('/tools', { repo: 'OpenVibe.Contracts', number: 7 }), { run: [path.join('/tools', 'merge-after-ci.sh'), 'OpenVibe.Contracts#7'], describe: "merge-after-ci.sh 'OpenVibe.Contracts#7'" });
 assert.strictEqual(shipCommand('/tools', { repo: 'OpenVibe.New', number: 1 }).run, null, 'an unmapped repository is shipped by hand, never guessed');
 
+// A pin through our own forge (OpenVibe.Git pins Shared from git.openvibe.codes) is seen, and moves in its own form.
+{
+    const { PIN_RE, movePin, forgeUrl } = require('../scripts/pin-bump.js');
+    const text = '"openvibe-shared": "https://git.openvibe.codes/api/v1/repos/openvibers/openvibe.shared/archive/v4.206.0.tar.gz",\n"openvibe-sdk": "https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.160.0"';
+    assert.deepStrictEqual([...text.matchAll(PIN_RE('openvibe-shared'))].map((m) => m[1]), ['v4.206.0'], 'the forge pin is found');
+    assert.deepStrictEqual([...text.matchAll(PIN_RE('openvibe-sdk'))].map((m) => m[1]), ['v0.160.0'], 'a codeload pin still is');
+    const moved = text.replace(PIN_RE('openvibe-shared'), movePin('openvibe-shared', 'v4.227.0')).replace(PIN_RE('openvibe-sdk'), movePin('openvibe-sdk', 'v0.161.0'));
+    assert.ok(moved.includes(`"${forgeUrl('openvibe-shared', 'v4.227.0')}"`) && moved.includes('/archive/v4.227.0.tar.gz"'), 'the forge pin keeps its form');
+    assert.ok(moved.includes('https://codeload.github.com/OpenVibers/OpenVibe.SDK/tar.gz/refs/tags/v0.161.0"'), 'the codeload pin keeps its form');
+}
+
 fs.rmSync(bdir, { recursive: true, force: true });
 fs.rmSync(dir, { recursive: true, force: true });
 console.log('pin-bump: all checks passed');
