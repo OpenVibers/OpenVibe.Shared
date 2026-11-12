@@ -34,7 +34,7 @@
             /* At the very top the bar fades into the page (no background, no border); a scroll brings the frosted bar back.
                A page whose hero runs under the bar opts in with body.ov-nav-overlay: the bar then sits over the hero, with a
                soft scrim for the text. ovnav-top is kept by the navbar itself on every render and scroll. */
-            /* A tap area past the bar's edge (Sign in's) made every page 392 px at 390 (4.222.0). */
+            /* A tap area past the edge made pages 392 px at 390 (4.222.0). */
             .openvibe-navbar { overflow-x: clip; }
             .openvibe-navbar { transition: background-color .45s cubic-bezier(.2,.7,.2,1), border-color .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s cubic-bezier(.2,.7,.2,1), -webkit-backdrop-filter .45s, backdrop-filter .45s, transform .32s cubic-bezier(.2,.7,.2,1); }
             /* On a phone the bar steps away while you read down the page and comes back the moment you scroll up (4.25.0;
@@ -108,8 +108,8 @@
                 .openvibe-navbar .openvibe-navbar-brand .flame { position: relative; }
                 .openvibe-navbar .openvibe-navbar-brand .flame::after { content: ''; position: absolute; inset: -8px -4px -8px -12px; }
                 .openvibe-navbar .openvibe-navbar-login, .openvibe-navbar .ovnav-burger, .openvibe-navbar .ovnav-orb { position: relative; }
-                /* Sign in is a 36px circle: its taps grow to the right and a little to the left, off the menu button's. */
-                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -5px -8px -5px -3px; }
+                /* Sign in's taps stop at the bar's edge (it clips) and go a little left, off the menu's. */
+                .openvibe-navbar .openvibe-navbar-login::after { content: ''; position: absolute; inset: -5px -6px -5px -4px; }
                 .openvibe-navbar .ovnav-burger::after { content: ''; position: absolute; inset: -3px -5px; }
                 /* The orb grows up and down, and sideways mostly to the right: the site's name sits 8px to its left and keeps
                    its own taps (4px there); the extra width goes to the open bar on its right (12px), so it measures 44px
