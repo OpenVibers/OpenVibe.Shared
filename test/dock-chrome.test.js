@@ -387,9 +387,17 @@ async function drag(p, from, to) {
             assert.deepStrictEqual(cards[1], ['B', '<img src=x>', null, null, null], 'a card is data: no script link, no picture from elsewhere, no script button, the title as text');
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('script[src*=\"dock-card.js\"]').length"), 1, 'dock-card.js is loaded once, when a card first shows'));
             await until(p, "!!document.querySelector('.ovdk .ovdk-edit')", 'the edit action');
-            await p.evaluate("(() => { window.prompt = () => 'updated by me'; document.querySelector('.ovdk .ovdk-edit').click(); })()");
-            await until(p, "document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-text').textContent === 'updated by me'", 'the edited message');
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-edited').textContent.includes('edited')"), true));
+            // 4.220.0: Edit is a pencil at the bubble's corner, hidden until hover, focus or a tap (rule 138); the box is
+            // the editor (no browser prompt), and "edited" is one quiet word inside the bubble.
+            assert.strictEqual(await p.evaluate("getComputedStyle(document.querySelector('.ovdk .ovdk-acts')).display"), 'none', 'the pencil waits for a tap');
+            assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-edit').getAttribute('aria-label')"), 'Edit message');
+            await p.evaluate("(() => { window.prompt = () => { window.__prompted = true; return null; }; document.querySelector('.ovdk .ovdk-edit').click(); })()");
+            await until(p, "!document.querySelector('.ovdk .ovdk-edit-bar').hidden && document.querySelector('.ovdk-send textarea').value === '<b>on it</b>'", 'the box holds the words, under its editing bar');
+            assert.strictEqual(await p.evaluate("!!window.__prompted"), false, 'never the browser prompt');
+            await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'updated by me'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
+            await until(p, "document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-text').firstChild.textContent === 'updated by me'", 'the edited message');
+            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-msg.is-mine .ovdk-text .ovdk-edited').textContent"), 'edited', 'one quiet word, inside the bubble'));
+            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-edit-bar').hidden && document.querySelector('.ovdk-send textarea').value === ''"), true, 'saved: the bar goes and the box is empty'));
             await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk:not([hidden])')"), true, 'opening a chat on a phone is not a tap outside the sheet'));
             await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'Looks good'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
@@ -646,7 +654,8 @@ async function drag(p, from, to) {
             await p.evaluate("document.querySelector('#ovdk-tab-vibe').click()");
             await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the conversation list');
             await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
-            await until(p, "document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip').length === 4", 'the starters before the first message');
+            await until(p, "document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip').length === 6", 'the starters before the first message, each with its icon');
+            assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip')].filter((c) => c.querySelector('.ovdk-chip-ic svg')).length"), 6, 'every starter has its icon');
             await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] .ovdk-chip').click()");
             await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-mine')", 'my question in place');
             assert.strictEqual(asked[0].message, 'Remind me to stretch every 2 hours');

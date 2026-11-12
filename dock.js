@@ -21,11 +21,13 @@
         open: '<path d="M13.5 5.5h5v5M18.5 5.5l-8 8M16.5 13.5v4a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h4"/>',
         chat: '<path d="M5 6.5h14a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-7l-4 3v-3H5A1.5 1.5 0 0 1 3.5 16V8A1.5 1.5 0 0 1 5 6.5z"/>',
         back: '<path d="M14.5 6.5L9 12l5.5 5.5"/>',
-        send: '<path d="M4.5 12h11M11 6.5l5.5 5.5-5.5 5.5"/>',
+        send: '<path d="M12 20.7V4.2M3.7 12.4l8.3-8.3l8.3 8.3"/>',   // 4.220.0: the registry's (openvibe-shared/glyphs), as Vibe's box
         vibe: '<path d="M12 4.5a7.5 7.5 0 0 1 6.4 11.4L19.5 19.5l-3.6-1.1A7.5 7.5 0 1 1 12 4.5z"/><path d="M9 11.5h.01M12 11.5h.01M15 11.5h.01"/>',
         // Three filled dots on the exact centre line (a stroked h.01 path drew them a hair off centre: the owner, 11-09).
         more: '<g fill="currentColor" stroke="none"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></g>',
         clock: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M9.5 3h5"/>',
+        // 4.220.0: the registry's pencil (openvibe-shared/glyphs), for a message's Edit.
+        pencil: '<path d="M11.9 19.6h8.4M16.1 4.2a2 2 0 0 1 2.8 2.8L7.2 18.7l-3.7 0.9l0.9-3.7Z"/>',
     };
     // Vibe first (L48 V2): the person's AI, on every site.
     const ROBOT = '<rect x="5" y="8" width="14" height="10" rx="3"/><path d="M12 8V4.5M9.5 13h.01M14.5 13h.01M3 12.5v2M21 12.5v2"/>';   // as in the menu's row
@@ -89,7 +91,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '7869d3d345b4', 'dock-code.js': '7a768982eff3', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': 'f9aea671c7ad', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '21e125e3f1e9' };
+    const DOCK_REV = { 'dock-vibe.js': '30db4e69eeb8', 'dock-code.js': '7a768982eff3', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'e40346ec1f16', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': 'f9aea671c7ad', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -278,6 +280,37 @@
             .ovdk-go { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center;
                 color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }
             .ovdk-go:disabled { opacity: .55; cursor: default; }
+            /* 4.220.0: a message's actions at its corner (openvibe.design rule 138; the owner, 11-12, on chat's Edit: "hidden
+               until you tap"): on hover or focus on a computer, a tap on a phone; never under the words. "edited" is one
+               quiet word in the bubble. Editing happens in the box, under a slim bar that says so. */
+            .ovdk-msg.has-acts { position: relative; }
+            /* Beside the bubble, on its empty side (a bubble is at most 84% wide), so the cluster never covers anyone's words. */
+            .ovdk-acts { position: absolute; top: 50%; transform: translateY(-50%); right: calc(100% + 6px); z-index: 2; display: none; align-items: center; gap: 2px; padding: 2px; border-radius: 10px;
+                border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-secondary, #1b1d26); box-shadow: 0 6px 18px rgba(0,0,0,.28); }
+            .ovdk-msg:not(.is-mine) > .ovdk-acts { right: auto; left: calc(100% + 6px); }
+            .ovdk-msg.has-acts:hover > .ovdk-acts, .ovdk-msg.has-acts:focus-within > .ovdk-acts, .ovdk-msg.is-acting > .ovdk-acts { display: inline-flex; }
+            .ovdk-act { width: 30px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+            .ovdk-act:hover, .ovdk-act:focus-visible { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); outline: none; }
+            .ovdk-act .ovdk-i svg { width: 16px; height: 16px; }
+            @media (hover: none) {
+                .ovdk-msg.has-acts:hover:not(.is-acting):not(:focus-within) > .ovdk-acts { display: none; }
+                .ovdk-act { width: 44px; height: 40px; border-radius: 9px; }
+                .ovdk-act .ovdk-i svg { width: 18px; height: 18px; }
+            }
+            .ovdk-msg.is-acting .ovdk-text, .ovdk-msg.is-editing .ovdk-text { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); }
+            .ovdk-edited { margin-left: 6px; font-size: .74em; color: var(--text-muted, #8b8b96); white-space: nowrap; }
+            .ovdk-msg.is-mine .ovdk-edited { color: inherit; opacity: .72; }
+            .ovdk-edit-bar { flex: none; display: flex; align-items: center; gap: 8px; margin: 8px 10px -2px; padding: 2px 2px 2px 12px; min-height: 36px; border-radius: 12px;
+                font-size: 12.5px; font-weight: 650; color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 10%, transparent); }
+            .ovdk-edit-bar[hidden] { display: none; }
+            .ovdk-edit-bar span:not(.ovdk-i) { flex: 1; min-width: 0; }
+            .ovdk-edit-bar .ovdk-i svg { width: 15px; height: 15px; }
+            .ovdk-edit-bar button { width: 36px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 9px; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
+            .ovdk-edit-bar button:hover { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--text-primary, #ececf1) 8%, transparent); }
+            .ovdk-send.is-editing { border-color: var(--accent, #3b82f6); }
+            /* One send for every box in the Dock: round, as Vibe's. */
+            .ovdk-send { border-radius: 22px; padding: 4px 4px 4px 14px; }
+            .ovdk-send .ovdk-go { width: 40px; height: 40px; border-radius: 50%; }
             .ovdk-err { margin: 0 14px; font-size: 12.5px; color: color-mix(in srgb, var(--live-red, #e5484d) 60%, var(--text-primary, #ececf1)); }
             .ovdk-err[hidden] { display: none; }
             .ovdk-none b { display: block; margin-bottom: 4px; font-size: 15px; color: var(--text-primary, #ececf1); }
@@ -720,14 +753,37 @@
         }
         panel.append(scroll);
     }
+    /** "edited", one quiet word after a message's words; when, in its title. */
+    function editedMark(at) {
+        const mark = h('small', 'ovdk-edited', 'edited');
+        const d = new Date(String(at || '').replace(' ', 'T'));
+        if (!Number.isNaN(d.getTime())) mark.title = `Edited ${d.toLocaleString()}`;
+        return mark;
+    }
+    /** An edit arrived (mine, saved here, or another of my devices'): the words in place, marked, the card again. */
+    function applyEdit(list, m) {
+        const old = chats.msgs.find((x) => Number(x.id) === Number(m && m.id));
+        const li = old && list.querySelector(`[data-id="${Number(m.id)}"]`);
+        if (!li || !m.edited_at || (old.edited_at && old.edited_at >= m.edited_at)) return;
+        Object.assign(old, { message: m.message, card: m.card, edited_at: m.edited_at });
+        const words = li.querySelector('.ovdk-text');
+        words.textContent = String(m.message || ''); words.append(editedMark(m.edited_at));
+        const card = li.querySelector('.ovdk-card'); if (card) card.remove();
+        if (m.card) load('dock-card.js', () => !!root.OpenVibeDockCard).then((ok) => { if (ok && li.isConnected) { const c = root.OpenVibeDockCard(m.card, h); if (c) li.append(c); } });
+    }
     function bubble(m, prev) {
         const mine = m.username === me();
         const li = h('li', `ovdk-msg${mine ? ' is-mine' : ''}${prev && prev.username === m.username ? ' is-cont' : ''}`);
         if (!mine && !(prev && prev.username === m.username)) li.append(h('span', 'ovdk-who', m.display_name || m.username || ''));
         li.dataset.id = String(m.id);
-        li.append(h('span', 'ovdk-text', String(m.message || '')));
-        if (m.edited_at) li.append(h('small', 'ovdk-edited', `edited · ${String(m.edited_at).slice(11, 16)}`));
-        if (mine && canWriteChat()) { const edit = h('button', 'ovk-btn ovk-btn--quiet ovdk-edit', 'Edit'); edit.type = 'button'; li.append(edit); }
+        const words = h('span', 'ovdk-text', String(m.message || ''));
+        if (m.edited_at) words.append(editedMark(m.edited_at));
+        li.append(words);
+        if (mine && canWriteChat()) {
+            const acts = h('span', 'ovdk-acts');
+            const edit = h('button', 'ovdk-act ovdk-edit'); edit.type = 'button'; edit.setAttribute('aria-label', 'Edit message'); edit.setAttribute('data-ov-tip', 'Edit'); edit.append(icon(G.pencil));
+            acts.append(edit); li.append(acts); li.classList.add('has-acts');
+        }
         // A known OpenVibe link's card (Chat's link cards): dock-card.js draws it, loaded the first time one shows.
         if (m.card) load('dock-card.js', () => !!root.OpenVibeDockCard).then((ok) => { const c = ok && root.OpenVibeDockCard(m.card, h); if (c) li.append(c); });
         li.title = new Date(m.created_at).toLocaleString();
@@ -758,16 +814,65 @@
         const err = h('p', 'ovdk-err'); err.hidden = true;
         form.append(box, go);
         panel.append(head, scroll, err);
+        // Editing one of mine: the box holds its words, a slim bar over it says so, Escape or × lets go.
+        const bar = h('div', 'ovdk-edit-bar'); bar.hidden = true;
+        const stopX = h('button'); stopX.type = 'button'; stopX.setAttribute('aria-label', 'Stop editing'); stopX.setAttribute('data-ov-tip', 'Stop editing'); stopX.append(icon(G.close));
+        bar.append(icon(G.pencil), h('span', '', 'Editing your message'), stopX);
+        let editing = null;
+        const stopEditing = () => {
+            if (!editing) return;
+            if (editing.li) editing.li.classList.remove('is-editing');
+            editing = null; bar.hidden = true; form.classList.remove('is-editing');
+            box.value = ''; box.dispatchEvent(new Event('input')); go.setAttribute('aria-label', 'Send');
+        };
+        const startEditing = (li) => {
+            const old = li && chats.msgs.find((m) => Number(m.id) === Number(li.dataset.id));
+            if (!old) return;
+            if (editing && editing.li) editing.li.classList.remove('is-editing');
+            list.querySelectorAll('.is-acting').forEach((x) => x.classList.remove('is-acting'));
+            editing = { id: old.id, was: String(old.message || ''), li };
+            li.classList.add('is-editing'); bar.hidden = false; form.classList.add('is-editing'); go.setAttribute('aria-label', 'Save');
+            box.value = editing.was; box.dispatchEvent(new Event('input'));
+            try { box.focus(); box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ }
+        };
+        stopX.addEventListener('click', () => { stopEditing(); box.focus(); });
+        list.addEventListener('click', (e) => {
+            const edit = e.target.closest && e.target.closest('.ovdk-edit');
+            if (edit) { e.preventDefault(); startEditing(edit.closest('[data-id]')); return; }
+            // A finger: a tap on my bubble shows its actions (a second tap, or a tap on another, puts them away).
+            const li = e.target.closest && e.target.closest('.ovdk-msg.has-acts');
+            if (!li || !(typeof matchMedia === 'function' && matchMedia('(hover: none)').matches) || (e.target.closest('a, button'))) return;
+            const was = li.classList.contains('is-acting');
+            list.querySelectorAll('.is-acting').forEach((x) => x.classList.remove('is-acting'));
+            if (!was) li.classList.add('is-acting');
+        });
         if (canWriteChat()) {
-            panel.append(form);
+            panel.append(bar, form);
             const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
             box.addEventListener('input', fit);
             if (draft && root.OpenVibeDockShare) root.OpenVibeDockShare.ready({ draft, h, panel, form, box, fit });
-            box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); } });
+            box.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && editing) { e.preventDefault(); e.stopPropagation(); stopEditing(); return; }
+                if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (form.requestSubmit) form.requestSubmit(); else form.dispatchEvent(new Event('submit', { cancelable: true })); }
+            });
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = box.value.trim();
                 if (!text || chats.busy) return;
+                if (editing) {
+                    const ed = editing;
+                    if (text === ed.was.trim()) { stopEditing(); return; }
+                    chats.busy = true; go.disabled = true; err.hidden = true;
+                    try {
+                        const out = await chatCall(`/api/dm/conversations/${encodeURIComponent(chats.open)}/messages/${encodeURIComponent(ed.id)}`, { method: 'PATCH', body: JSON.stringify({ message: text }) });
+                        if (out && out.message) applyEdit(list, out.message);
+                        if (editing === ed) stopEditing();
+                    } catch (x) {
+                        err.textContent = x.status === 429 ? 'Slow down a little, then save it again.' : x.status === 403 ? 'That message can no longer be edited.' : 'The edit did not save. Try again.';
+                        err.hidden = false;
+                    } finally { chats.busy = false; go.disabled = false; box.focus(); }
+                    return;
+                }
                 chats.busy = true; go.disabled = true; err.hidden = true;
                 try {
                     await chatCall(`/api/dm/conversations/${encodeURIComponent(chats.open)}/messages`, { method: 'POST', body: JSON.stringify({ message: text }) });
@@ -784,7 +889,7 @@
         list.append(h('li', 'ovdk-wait', null));
         list.firstChild.innerHTML = '<span></span>';
         await pull(list, scroll, true);
-        load('dock-chat-edits.js', () => !!root.OpenVibeDockChatEdits).then((ok) => { if (ok && chats.open === String(id)) chats.edits = root.OpenVibeDockChatEdits({ id: String(id), list, messages: chats.msgs, error: err, tokenOf, chatCall, chatBase, active: () => chats.open === String(id) && panelActive('chats'), load, h }); });
+        load('dock-chat-edits.js', () => !!root.OpenVibeDockChatEdits).then((ok) => { if (ok && chats.open === String(id)) chats.edits = root.OpenVibeDockChatEdits({ id: String(id), apply: (m) => applyEdit(list, m), tokenOf, chatBase, active: () => chats.open === String(id) && panelActive('chats') }); });
         if (canWriteChat() && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */

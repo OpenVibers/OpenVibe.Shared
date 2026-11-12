@@ -1,5 +1,35 @@
 # Changelog
 
+## 4.220.0 — 2026-11-12
+
+The Dock's Vibe tab redesigned, and its direct messages on the network's message actions (the owner, 11-12, on the Vibe
+panel: "way more like sleek and like nice on mobile and … organized properly and sized well, and without all these huge
+spaces … makes use of the full space … actually has icons for everything using OpenVibe.design … modular … reusable for
+different sites like conversation system or chat system").
+
+- **Vibe's header says what it is**: back, Vibe's mark in a tile, "Vibe" over "Your AI on every OpenVibe site", then New
+  chat and Open in Chat as icon buttons. No empty band.
+- **The start of a chat** is a greeting at the top (the mark, "What can I do for you?" and what Vibe does) and six starters
+  as full-width rows, each with its mark, its words and a chevron: reminders, today, who is live, a focus timer, a call
+  reminder, what is new. They fill the panel's width instead of floating as small pills.
+- **The box is the composer's two-row shape**: the words over the whole width, then the tools (a picture, Build it in Code,
+  the mic) and a round send.
+- **What Vibe did** (a reminder or a timer) is a card with its actions under its words; a long link wraps instead of
+  breaking the panel.
+- **Every mark is the network's glyph** (`openvibe-shared/glyphs`, shown on openvibe.design/icons): Vibe's set is the
+  registry's drawings by name, and so is the Dock's send. A test keeps them equal, so a glyph redrawn on Design is
+  redrawn here.
+- **Direct messages in the Dock take the network's message actions** (openvibe.design rule 138, as Live's chat and
+  `messages.js`): Edit is a pencil beside your bubble, on its empty side, shown on hover or focus on a computer and on a
+  tap on a phone. It never covers anyone's words. Editing happens in the box under a slim "Editing your message" bar
+  (Escape or × lets go; the browser's prompt is gone). "edited" is one quiet word inside the bubble, its time in the
+  title, never a line of its own.
+- **Every box in the Dock** has the same round send.
+- `dock-chat-edits.js` keeps only Chat's socket: another device's edit is drawn by the Dock's own `applyEdit`.
+
+Tests: `dock-chrome` (six starters with their marks; the pencil waits for a tap, the box is the editor, never the browser
+prompt, the quiet word, the bar goes on save), `dock-vibe-glyphs` (new: every Vibe mark is the registry's drawing).
+
 ## 4.219.0 — 2026-11-12
 
 Every plain element styled by the theme (the owner, 11-12, with circled screenshots of openvibe.exchange: "make sure all
