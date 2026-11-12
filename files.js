@@ -48,6 +48,8 @@ const BROWSER = Object.freeze([
     'ov-labels.js',         // content labels (L1): each viewer's show / blur / hide; navbar.js loads it when a page has [data-ov-labels]
     'ov-forms.js',          // OpenVibe's own select (a menu on a computer, a sheet on a phone); navbar.js loads it when a page has a form control
     'ov-qr.js',             // a QR code from a link, on the device: the Share sheet's QR code (ov-share.js loads it on first use)
+    'ov-arrange.js',        // the Arrange editor (make your own controls, 2026-11-11): a person moves and resizes a surface's parts; a product loads it when Arrange is pressed
+    'ov-arrange-core.js',   // openvibe-sdk/ui-layout for the browser, generated (scripts/build-arrange-core.js): the one validator
     'ov-locker-core.js',    // openvibe-sdk/locker for the browser, generated (scripts/build-locker-core.js): WebCrypto only, the SDK's own vectors
     'ov-locker.js',         // Locker in the browser (plan Q2): a locked item's card, making and unlocking your locker; crypto in ov-locker-core.js
     'ov-wallet.js',
@@ -114,6 +116,7 @@ const STYLES = Object.freeze([
     'messages.css',         // the room and bubble views' look
     'room.css',             // kit.card, kit.rail and a room's accent (4.29.1; load after kit.css where cards, rails or sc.room() are)
     'thread.css',           // the conversation UI's look (openvibe-shared/thread, ov-thread.js; plan L55 C4)
+    'thread-inline.css',    // the inline Community thread's look (openvibe-shared/thread renderThread; 4.215.0)
     'kit-layout.css',       // the fluid scale, the layout primitives (.ov-stack, .ov-switcher…) and the opt-in .ov-base (4.78.0; after kit.css)
     'kit-data.css',         // Kit 2's look: steps, tables, charts, rankings, meters, drop zones, receipts (4.37.0; after kit.css)
     'agent-session.css',    // agent-session.js's look (4.32.0; the script links it from beside itself unless the page does)

@@ -600,6 +600,8 @@
 .fa-duotone.fa-hand::after{content:"\e03f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-hand-pointer::after{content:"\e03f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-hand-point-right::after{content:"\e03f";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-handshake::after{content:"\e0e5";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
+.fa-duotone.fa-handshake-angle::after{content:"\e0e5";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-headphones::after{content:"\e0a8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-headphones-simple::after{content:"\e0a8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}
 .fa-duotone.fa-headset::after{content:"\e0a8";position:absolute;font-family:"OV Glyphs Solid";opacity:.2}

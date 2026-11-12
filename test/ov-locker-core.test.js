@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 const { build } = require('../scripts/build-locker-core');
+assert.doesNotThrow(() => require('../ov-locker-core'), 'ov-locker-core.js loads in Node too (the browser globals are there)');
 
 const ROOT = path.join(__dirname, '..');
 const file = fs.readFileSync(path.join(ROOT, 'ov-locker-core.js'), 'utf8');

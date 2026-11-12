@@ -602,7 +602,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'aee8e54637c2', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'f9f34e3030b0', 'dock.js': 'aa5ad5d80283', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '3b6d2e2933de', 'history.js': 'f9fb9e096c65', 'bottom.js': '4bcb219a2624', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': '52439265b980', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0724f4913525', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '22286b70f8f6', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'soft.js': '98ab9b8080b1' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': '642a391c85d5', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'f9f34e3030b0', 'dock.js': 'aa5ad5d80283', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '3b6d2e2933de', 'history.js': 'f9fb9e096c65', 'bottom.js': '4bcb219a2624', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': 'aaa688bf6fc7', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0724f4913525', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '22286b70f8f6', 'ov-wallet.css': 'be8daa24c3a8', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': '898af091b3e1', 'soft.js': '98ab9b8080b1' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1822,11 +1822,25 @@
     }
 
     let _authInFlight = null;
+    let _hintPainted = false, _hintSettled = false;
 
     function ssoHint() {
         const m = (typeof document !== 'undefined' ? document.cookie : '').match(/(?:^|;\s*)ov_sso_hint=([^;]*)/);
         if (m) return m[1];
         try { return localStorage.getItem('ov_sso_hint'); } catch { return null; }
+    }
+
+    /**
+     * The first paint, before the session check: a hint that this browser signed in here. It is not
+     * authorization and carries no token; only the account's own name may ride along (account:<name>).
+     */
+    function hintUser() {
+        let raw = ssoHint() || '';
+        try { raw = decodeURIComponent(raw); } catch { /* as written */ }
+        const m = /^account(?::(.{1,64}))?$/.exec(raw);
+        if (!m) return null;
+        let name = (m[1] || '').replace(/^@/, '');
+        return { is_anon: false, username: /^[A-Za-z0-9_.-]{1,64}$/.test(name) ? name : '', __ssoHint: true };
     }
 
     /** One silent sign-in per tab, only after an earlier sign-in here (never after 'guest', never for bots): silent=1. */
@@ -1965,7 +1979,9 @@
                     enableHandoff();
                     startQuestGuide();
                 } else {
-                    maybeSilentLogin();
+                    const navigating = maybeSilentLogin();
+                    // The hint was only a first paint: no session behind it, so draw the guest bar.
+                    if (_hintPainted && !navigating) { _hintPainted = false; _hintSettled = true; render(); }
                 }
                 try {
                     document.dispatchEvent(new CustomEvent('openvibe-navbar-auth', {
@@ -2124,7 +2140,11 @@
         if (typeof nav.setAttribute === 'function') { nav.setAttribute('data-compact', _config.compact || 'auto'); nav.setAttribute('data-service', svc); }
         const links = currentLinks();
 
-        const u = _config.user;
+        // With the hint saying account, the bar starts in the signed-in shape (a neutral avatar, the
+        // account's name only when the hint carries it). refreshAuthState replaces or clears it.
+        const hinted = !_config.user && !_hintSettled && _config.auth !== 'external' ? hintUser() : null;
+        if (hinted) _hintPainted = true;
+        const u = _config.user || hinted;
         rememberAccount(u);
         const accounts = getAccounts();
         const isAnon = u && u.is_anon;

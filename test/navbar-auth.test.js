@@ -434,6 +434,44 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
             '/auth/login?silent=1&next=' + encodeURIComponent(href), 'preserves the page, query and fragment');
     }
 
+    // ── 12. First paint from the sign-in hint (no Sign In flash for a signed-in person) ──
+    {
+        // The hint saying account draws the avatar before the session check; a failed check corrects it.
+        const { navbar, storage } = loadNavbar({
+            hostname: 'openvibe.blog', cookie: 'ov_sso_hint=account',
+            fetch: async () => jsonResponse(401, {}),
+        });
+        navbar.init({ service: 'blog', sessionUrl: '/auth/me', fedcm: false, silentLogin: false });
+        assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-avatar'), 'account hint: avatar on the first paint');
+        assert.ok(!navbar.getElement().innerHTML.includes('openvibe-navbar-login'), 'account hint: no Sign In on the first paint');
+        await navbar.refreshAuth();
+        assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-login'), 'a failed check corrects the bar to guest');
+        assert.strictEqual(storage.getItem('openvibe_seen_accounts'), null, 'the hint is not remembered as an account');
+    }
+    {
+        // A named hint shows the account's own name; the picture stays the neutral initial.
+        const { navbar } = loadNavbar({
+            hostname: 'openvibe.blog', cookie: 'ov_sso_hint=account%3Avibe',
+            fetch: async () => jsonResponse(401, {}),
+        });
+        navbar.init({ service: 'blog', sessionUrl: '/auth/me', fedcm: false, silentLogin: false });
+        const html = navbar.getElement().innerHTML;
+        assert.ok(html.includes('openvibe-navbar-avatar'), 'named hint: avatar on the first paint');
+        assert.ok(html.includes('alt="vibe"'), 'named hint: the hint name is the avatar alt');
+        assert.ok(!html.includes('openvibe-navbar-login'), 'named hint: no Sign In on the first paint');
+    }
+    {
+        // An explicit guest hint keeps the guest bar and never starts the silent round trip.
+        const { navbar, calls } = loadNavbar({
+            hostname: 'openvibe.blog', cookie: 'ov_sso_hint=guest', referrer: 'https://openvibe.network/',
+            fetch: async () => jsonResponse(401, {}),
+        });
+        navbar.init({ service: 'blog', sessionUrl: '/auth/me', fedcm: false, silentLogin: '/auth/login?silent=1&next={url}' });
+        assert.ok(navbar.getElement().innerHTML.includes('openvibe-navbar-login'), 'guest hint: guest bar on the first paint');
+        await navbar.refreshAuth();
+        assert.strictEqual(calls.filter(c => c.navigation).length, 0, 'guest hint: no silent navigation');
+    }
+
     console.log('navbar-auth: all tests passed');
 })().catch((err) => {
     console.error(err);
