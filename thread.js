@@ -286,12 +286,12 @@ function optionsHtml({ html, label = 'Options' }) {
  *   commands: [{ name: 'fix', hint: 'Fix a bug', insert: 'Fix this: ' }] the box's "/" list (ov-composer.js, 4.201.0),
  *   with the person's own commands and the site's mods (files, @, voice and drafts come with it on every box)
  */
-function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '', options = null, examples = [], commands = [] } = {}) {
+function composer({ action = '', method = 'post', name = 'text', placeholder = 'Message', value = '', busy = false, sendLabel = 'Send', stopAction = null, hidden = {}, tools = '', starters = [], note = '', attach = null, label = 'Message', top = '', maxlength = null, id = null, attrs = {}, foot = '', options = null, examples = [], commands = [], preset = null } = {}) {
     const cmds = (commands || []).filter((c) => c && /^[\w-]{1,30}$/.test(c.name || '')).slice(0, 30).map((c) => ({ name: c.name, hint: String(c.hint || '').slice(0, 120), insert: String(c.insert || '').slice(0, 4000) }));
     const extra = Object.entries(attrs || {}).map(([k, v]) => attr(k, v)).join('') + (cmds.length ? attr('data-ovt-commands', JSON.stringify(cmds)) : '');
     const hid = Object.entries(hidden || {}).filter(([, v]) => v != null && v !== '').map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`).join('');
     return `${starters.length ? `<div class="ovt-starters">${starters.map((s) => `<button type="button" class="ovt-starter" data-ovt-starter="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}
-<form class="ovt-composer${busy ? ' is-busy' : ''}"${attr('id', id)} method="${esc(method)}" action="${esc(action)}" data-ovt-composer${attach ? ' enctype="multipart/form-data"' : ''}${extra}>${hid}
+<form class="ovt-composer${busy ? ' is-busy' : ''}"${attr('id', id)} method="${esc(method)}" action="${esc(action)}" data-ovt-composer${preset ? attr('data-ovt-preset', preset) : ''}${attach ? ' enctype="multipart/form-data"' : ''}${extra}>${hid}
 ${top || ''}<label class="ovt-sr" for="ovt-text">${esc(label)}</label>
 <textarea id="ovt-text" name="${esc(name)}" rows="1" placeholder="${esc(placeholder)}"${maxlength ? ` maxlength="${Number(maxlength) || ''}"` : ''}${examples && examples.length ? ` data-ovt-examples="${esc(JSON.stringify(examples.slice(0, 12).map((x) => String(x).slice(0, 140))))}"` : ''} data-ovt-text${busy ? '' : ' required'}>${esc(value)}</textarea>
 <div class="ovt-c-row"><div class="ovt-c-tools">${attach ? attachHtml(attach) : ''}${tools || ''}${options && options.html ? optionsHtml(options) : ''}</div>
@@ -348,7 +348,7 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
     const signIn = `<p class="ovc-signin">${comments.length ? 'Sign in to comment.' : 'Be the first to comment.'} <a class="ovk-btn ovk-btn--primary" href="/auth/login?next=${encodeURIComponent(query(base, sort))}">Sign in</a></p>`;
     const composer_html = (parent = null) => signedIn ? composer({ action: post, name: 'message', label: 'Comment', placeholder: parent ? 'Write a reply…' : 'Add a comment…', value: draft, maxlength: 2000,
         sendLabel: parent ? 'Reply' : 'Comment', hidden: parent ? { parent_id: parent } : {},
-        attach: attachmentsAllowed ? { name: 'files', accept: 'image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain' } : null,
+        attach: attachmentsAllowed ? { name: 'files', accept: 'image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain' } : null, preset: 'comment',
         note: attachmentsAllowed ? 'Up to four files, 16 MB each. JPEG, PNG, GIF, WebP, PDF or text.' : '',
     }) : signIn;
     const attachments = (c) => (Array.isArray(c.attachments) ? c.attachments : []).map((a) => {

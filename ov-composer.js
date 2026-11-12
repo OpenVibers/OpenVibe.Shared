@@ -178,14 +178,79 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-file-r-t { display: none; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-r, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-r { left: 0; top: 0; width: 100%; height: 150px; border-radius: 15px 15px 0 0; }
 .ovc-v2[data-preset=post] .ovc-file.ovc-image .ovc-file-r-t, .ovc-v2[data-preset=comment] .ovc-file.ovc-image .ovc-file-r-t { display: inline; }
+/* Post · Ask · Do (4.218.0) */
+.ovc-v2 .ovc-verbs--head { margin-left: auto; margin-right: 0; }
+.ovc-v2 .ovc-head .ovc-chips + .ovc-verbs--head { margin-left: 6px; }
+.ovc-v2 .ovc-verbs { flex: none; display: inline-flex; gap: 2px; padding: 3px; margin-right: 4px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent); }
+.ovc-v2 .ovc-verb { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--text-muted, #93a0b4); font: 600 13px/1 inherit; cursor: pointer; }
+.ovc-v2 .ovc-verb svg { width: 15px; height: 15px; }
+.ovc-v2 .ovc-verb[aria-pressed="true"] { background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); box-shadow: 0 1px 3px rgba(0, 0, 0, .3); }
+.ovc-v2 .ovc-verb[data-verb="ask"][aria-pressed="true"] svg { color: #c084fc; }
+.ovc-v2 .ovc-verb[data-verb="do"][aria-pressed="true"] svg { color: #fbbf24; }
+@media (max-width: 520px) { .ovc-v2 .ovc-verb:not([aria-pressed="true"]) span { display: none; } .ovc-v2 .ovc-verb:not([aria-pressed="true"]) { width: 34px; padding: 0; justify-content: center; } }
+.ovc-v2 .ovc-ask-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ovc-v2 .ovc-ask-chips::-webkit-scrollbar { display: none; }
+.ovc-v2 .ovc-ask-chips > * { flex: none; }
+.ovc-v2:not(.is-asking) .ovc-ask-chips { display: none; }
+.ovc-v2[data-preset=chat] .ovc-ask-chips { grid-column: 1 / -1; }
+.ovc-v2 .ovc-chip--btn { background: transparent; font-family: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.ovc-v2 .ovc-chip--btn .ovc-chip-v { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovc-v2 .ovc-chip--btn.is-on svg { color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
+.ovc-v2.is-asking { border-color: color-mix(in srgb, #a855f7 45%, var(--ovt-line, transparent)); }
+.ovc-v2.is-asking[data-verb="do"] { border-color: color-mix(in srgb, #f59e0b 45%, var(--ovt-line, transparent)); }
+.ovc-sheet { box-sizing: border-box; padding: 0; border: 1px solid var(--border, rgba(148, 163, 184, .2)); border-radius: 20px; width: min(520px, 94vw); max-height: 80vh; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); overflow: hidden; display: flex; flex-direction: column; }
+.ovc-sheet::backdrop { background: rgba(2, 6, 14, .6); }
+.ovc-sheet-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px 8px 18px; font-size: 16px; }
+.ovc-sheet-b { overflow: auto; padding: 0 10px 14px; display: grid; gap: 4px; }
+.ovc-sheet-find:focus { outline: none; border-color: var(--ovt-accent, var(--accent, #3b82f6)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 25%, transparent); }
+.ovc-sheet-find { width: 100%; box-sizing: border-box; height: 42px; margin: 0 0 6px; padding: 0 14px; border: 1px solid var(--border, rgba(148, 163, 184, .2)); border-radius: 12px; background: var(--bg-primary, #0b0f19); color: inherit; font: inherit; font-size: 16px; }
+.ovc-sheet h3 { margin: 12px 8px 4px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #93a0b4); }
+.ovc-sheet-note { margin: 8px; color: var(--text-muted, #93a0b4); font-size: 14px; }
+.ovc-models { display: grid; gap: 2px; }
+.ovc-model { display: flex; align-items: center; gap: 4px; }
+.ovc-model[hidden] { display: none; }
+.ovc-model-b { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 6px 10px; border: 0; border-radius: 12px; background: none; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.ovc-model-b:hover, .ovc-model-b:focus-visible { background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent); }
+.ovc-model-b[aria-pressed="true"] { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 16%, transparent); }
+.ovc-model-m { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 20%, transparent); font-weight: 800; font-size: 14px; }
+.ovc-model-t { min-width: 0; display: grid; }
+.ovc-model-n { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ovc-model-t b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.ovc-model-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #93a0b4); font-size: 12.5px; }
+.ovc-model-rec { flex: none; padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, #22c55e 18%, transparent); color: #86efac; font: 700 10.5px/1.6 inherit; font-style: normal; vertical-align: 2px; }
+.ovc-model-x { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--text-muted, #93a0b4); }
+.ovc-model-x:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #fff) 6%, transparent); }
+.ovc-model-x svg, .ovc-sheet-more svg { width: 16px; height: 16px; }
+.ovc-sheet-more { display: inline-flex; align-items: center; gap: 6px; margin: 10px 8px 0; color: var(--ovt-accent, var(--accent-light, #60a5fa)); font-size: 14px; font-weight: 600; text-decoration: none; }
+.ovc-src { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 6px 10px; border-radius: 12px; cursor: pointer; }
+.ovc-src:hover { background: color-mix(in srgb, var(--text-primary, #fff) 5%, transparent); }
+.ovc-src > svg { flex: none; width: 20px; height: 20px; color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
+.ovc-src > span { flex: 1; min-width: 0; display: grid; }
+.ovc-src small { color: var(--text-muted, #93a0b4); font-size: 12.5px; }
+.ovc-src input { flex: none; width: 20px; height: 20px; accent-color: var(--ovt-accent, var(--accent, #3b82f6)); }
+@media (max-width: 600px) { .ovc-sheet { width: 100vw; max-width: none; margin: auto 0 0; border-radius: 22px 22px 0 0; max-height: 86vh; padding-bottom: env(safe-area-inset-bottom); } }
+.ovc-answer { box-sizing: border-box; margin: 10px 0 0; padding: 12px 14px; border: 1px solid color-mix(in srgb, #a855f7 30%, var(--border, rgba(148, 163, 184, .2))); border-radius: 18px; background: color-mix(in srgb, #a855f7 6%, var(--bg-card, #131c2e)); color: var(--text-primary, #e6edf7); }
+.ovc-answer header { display: flex; align-items: center; gap: 8px; }
+.ovc-answer header > svg { width: 17px; height: 17px; color: #c084fc; }
+.ovc-answer header small { color: var(--text-muted, #93a0b4); }
+.ovc-answer header .ovc-bar-x { margin-left: auto; }
+.ovc-answer-t { margin: 6px 0 0; white-space: pre-wrap; line-height: 1.5; font-size: 15px; }
+.ovc-answer-t.is-waiting { color: var(--text-muted, #93a0b4); }
+.ovc-answer-t.is-bad { color: #fca5a5; }
+.ovc-cites { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.ovc-cites a { display: inline-block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #fff) 7%, transparent); color: var(--text-primary, #e6edf7); font-size: 12.5px; text-decoration: none; }
+.ovc-answer footer { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ovc-answer-a { min-height: 36px; padding: 0 14px; border: 1px solid var(--border, rgba(148, 163, 184, .22)); border-radius: 999px; background: none; color: var(--text-primary, #e6edf7); font: 600 13.5px/1 inherit; cursor: pointer; }
+.ovc-answer-a:first-child { background: var(--ovt-accent, var(--accent, #3b82f6)); border-color: transparent; color: #fff; }
+@media (pointer: coarse) { .ovc-answer-a { min-height: 44px; } }
 .ovc-v2 .ovc-bar { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); font-size: 13px; line-height: 1.3; }
 .ovc-v2 .ovc-bar > svg { flex: none; width: 15px; height: 15px; color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
 .ovc-v2 .ovc-bar > b { flex: none; font-weight: 700; color: var(--text-primary, #e6edf7); }
 .ovc-v2 .ovc-bar > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #93a0b4); }
-.ovc-v2 .ovc-bar-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted, #93a0b4); cursor: pointer; }
-.ovc-v2 .ovc-bar-x:hover, .ovc-v2 .ovc-bar-x:focus-visible { background: color-mix(in srgb, var(--text-primary, #fff) 10%, transparent); color: var(--text-primary, #e6edf7); }
-.ovc-v2 .ovc-bar-x svg { width: 15px; height: 15px; }
-@media (pointer: coarse) { .ovc-v2 .ovc-bar-x { width: 40px; height: 40px; } }
+.ovc-bar-x { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted, #93a0b4); cursor: pointer; }
+.ovc-bar-x:hover, .ovc-bar-x:focus-visible { background: color-mix(in srgb, var(--text-primary, #fff) 10%, transparent); color: var(--text-primary, #e6edf7); }
+.ovc-bar-x svg { width: 15px; height: 15px; }
+@media (pointer: coarse) { .ovc-bar-x { width: 40px; height: 40px; } }
 .ovc-v2.is-editing { box-shadow: 0 0 0 2px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 45%, transparent); }
 .ovc-v2.is-running .ovt-send { background: color-mix(in srgb, var(--text-primary, #fff) 14%, transparent); color: var(--text-primary, #e6edf7); }
 .ovc-v2 .ovc-files { margin: 0; padding: 0 0 2px; }
@@ -293,6 +358,10 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         camera: 'M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 10a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z',
         flip: 'M4 9a8 8 0 0 1 14-3l2 2M20 15a8 8 0 0 1-14 3l-2-2M20 4v4h-4M4 20v-4h4',
         retry: 'M4 12a8 8 0 1 0 2.3-5.7L4 8.5M4 4v4.5h4.5',
+        bolt: 'M13 3L5 13.5h6L10 21l9-11h-6.2z',
+        model: 'M12 3l7.5 4.3v8.4L12 20l-7.5-4.3V7.3zM12 8v4.2M12 12.2l3.6 2.1M12 12.2l-3.6 2.1',
+        layers: 'M12 4l8.5 4.5L12 13 3.5 8.5zM3.5 13L12 17.5 20.5 13',
+        ext: 'M14 5h5v5M19 5l-8 8M10 6H6a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-4',
     };
     const svg = (d, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
@@ -723,6 +792,14 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
     //     "Editing your message" bar; Enter saves, Esc or × puts back what was in the box; the send is a check),
     //     reply({ name, text, data, onClear }) (a "Replying to …" bar; onSubmit's value carries reply: data),
     //     clearBar(), editing() }.
+    // 4.218.0, Post · Ask · Do (research-2026-11-12/composer-post-ask-do.md): verbs: ['post', 'ask', 'do'] (a site
+    //   opts in; the first is where the box starts) draws one switch at the start of the row. Ask and Do add three chips:
+    //   Model (a sheet over the Frame's /choices?task=: Auto, then OpenVibe from Exchange's directory with prices, your
+    //   keys, your computers, your plans), Sources (web, OpenVibe, mine, this page) and Depth (quick, balanced, deep).
+    //   ask: { task, context: { site, url, title, kind, id } }, frameBase (default https://openvibe.network/api/frame),
+    //   onAsk(value, api) / onDo(value, api) to answer it yourself; without them the box asks the Frame (/ask, /do) and
+    //   streams the run into an answer card under the box (api.answer() gives the card to a site that answers itself).
+    //   value = { verb, text, files, uploads, model, sources, depth, context, chips }.
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
     const PRESET = {
@@ -826,6 +903,31 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         TOOL[id] = Object.assign({}, TOOL[id] || {}, spec);
     }
     const initial = (u) => String((u && (u.display_name || u.username)) || '?').trim().charAt(0).toUpperCase() || '?';
+    const FRAME = 'https://openvibe.network/api/frame';
+    const VERBS = { post: { icon: 'send', hint: 'to people' }, ask: { icon: 'spark', word: 'Ask', hint: 'AI answers you' }, do: { icon: 'bolt', word: 'Do', hint: 'Actor does it for you' } };
+    const SOURCES = [['web', 'Web', 'globe'], ['openvibe', 'OpenVibe', 'layers'], ['mine', 'Mine', 'file'], ['page', 'This page', 'photo']];
+    const choicesCache = new Map();
+    // The Frame's model list for a task, in one shape whatever answered (the Frame's groups, or AI's own options).
+    async function loadChoices(frame, task) {
+        const key = `${frame}|${task}`;
+        if (choicesCache.has(key)) return choicesCache.get(key);
+        const job = fetch(`${frame}/choices?task=${encodeURIComponent(task)}`, { credentials: 'include', headers: { Accept: 'application/json' } })
+            .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Models are unavailable right now.'))))
+            .then((d) => {
+                if (Array.isArray(d.groups)) return d;
+                const o = d.options || {};
+                return { recommended: d.recommended, groups: [['openvibe', 'OpenVibe'], ['keys', 'Your keys'], ['machines', 'Your computers']].map(([id, title]) => ({ id, title, rows: o[id] || [] })) };
+            });
+        choicesCache.set(key, job);
+        job.catch(() => choicesCache.delete(key));
+        return job;
+    }
+    const money = (row) => {
+        if (row.free || (row.price && row.price.in === 0) || row.price_estimate_usd === 0) return 'Free';
+        if (row.price && row.price.in != null) return `$${Number(row.price.in).toFixed(row.price.in < 1 ? 2 : 1)} / M`;
+        if (row.price_estimate_usd != null) return `about $${Number(row.price_estimate_usd).toFixed(3)}`;
+        return '';
+    };
     function mount(host, o = {}) {
         if (!host) return null;
         styles();
@@ -912,12 +1014,52 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
         // A post or a reply says who sees it above the box (a phone's row keeps room for the tools); a chat or an agent's
         // box keeps its chip beside the send.
         const above = name === 'post' || name === 'comment';
+        // Post · Ask · Do: one switch at the start of the row (a site opts in with verbs).
+        const verbs = (Array.isArray(o.verbs) ? o.verbs : []).filter((v) => VERBS[v]);
+        let verb = verbs.length ? (verbs.includes(o.verb) ? o.verb : verbs[0]) : 'post';
+        const frame = o.frameBase || FRAME;
+        const askTask = (o.ask && o.ask.task) || (name === 'agent' ? 'agent' : 'chat');
+        let model = null;
+        try { model = JSON.parse(localStorage.getItem(`ov:composer:model:${askTask}`) || 'null'); } catch { model = null; }
+        model = model || { model: 'openvibe/auto', source: 'openvibe', name: 'Auto' };
+        const sources = new Set((o.ask && o.ask.sources) || ['web', 'openvibe']);
+        let switcher = null;
+        if (verbs.length > 1) {
+            switcher = el('div', 'ovc-verbs'); switcher.setAttribute('role', 'group'); switcher.setAttribute('aria-label', 'What this box does');
+            verbs.forEach((v) => {
+                const word = v === 'post' ? (o.submitLabel || p.send || 'Send') : VERBS[v].word;
+                const b = el('button', 'ovc-verb', svg(IC[v === 'post' ? (p.send ? 'send' : 'send') : VERBS[v].icon]) + `<span>${word}</span>`);
+                b.type = 'button'; b.dataset.verb = v; b.title = `${word}: ${VERBS[v].hint}`; b.setAttribute('aria-label', `${word}: ${VERBS[v].hint}`);
+                b.addEventListener('click', () => setVerb(v));
+                switcher.appendChild(b);
+            });
+            if (above && head) { switcher.classList.add('ovc-verbs--head'); head.appendChild(switcher); } else row.appendChild(switcher);
+        }
+        const askChips = el('div', 'ovc-ask-chips'); askChips.setAttribute('role', 'group'); askChips.setAttribute('aria-label', 'How it is answered');
+        const modelChip = el('button', 'ovc-chip ovc-chip--btn', `${svg(IC.model)}<span class="ovc-chip-v"></span>`);
+        modelChip.type = 'button'; modelChip.setAttribute('aria-haspopup', 'dialog');
+        const paintModel = () => { modelChip.querySelector('.ovc-chip-v').textContent = model.name || model.model; modelChip.setAttribute('aria-label', `Model: ${model.name || model.model}. Change it`); };
+        const srcChip = el('button', 'ovc-chip ovc-chip--btn', `${svg(IC.globe)}<span class="ovc-chip-v"></span>`);
+        srcChip.type = 'button'; srcChip.setAttribute('aria-haspopup', 'dialog');
+        const paintSources = () => {
+            const on = SOURCES.filter(([id]) => sources.has(id) && (id !== 'page' || (o.ask && o.ask.context)));
+            srcChip.querySelector('.ovc-chip-v').textContent = on.length ? on.map(([, w]) => w).join(' · ') : 'No sources';
+            srcChip.classList.toggle('is-on', sources.has('web'));
+            srcChip.setAttribute('aria-label', `Sources: ${srcChip.textContent}. Change them`);
+        };
+        const depthChip = chip({ name: 'depth', label: 'Depth', options: [['quick', 'Quick'], ['balanced', 'Balanced'], ['deep', 'Deep research']], value: (o.ask && o.ask.depth) || 'balanced' }, IC.gauge);
+        askChips.append(modelChip, srcChip, depthChip);
+        paintModel(); paintSources();
+        modelChip.addEventListener('click', () => openModels());
+        srcChip.addEventListener('click', () => openSources());
         row.appendChild(tools);
         if (!above) row.appendChild(chips);
         if (ring) row.appendChild(ring);
         row.appendChild(send);
         if (above && chips.children.length) head.appendChild(chips);
         if (head.children.length) body.appendChild(head);
+        // Ask and Do's chips: a line of their own above the words (scrolls sideways on a narrow screen, never wider).
+        if (verbs.includes('ask') || verbs.includes('do')) body.appendChild(askChips);
         body.append(ta, row);
         const note = el('p', 'ovc-note'); note.setAttribute('data-ovt-note', ''); note.setAttribute('role', 'status');
         form.append(body, note);
@@ -999,6 +1141,176 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
             ta.focus();
         };
         ta.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bar) { e.preventDefault(); e.stopPropagation(); clearBar(); } });
+        // ── Post · Ask · Do ──
+        const postFace = send.innerHTML, postLabel = send.getAttribute('aria-label'), postRound = send.classList.contains('ovt-send--round');
+        function setVerb(v) {
+            if (!VERBS[v] || (verbs.length && !verbs.includes(v))) return;
+            verb = v;
+            form.dataset.verb = v;
+            form.classList.toggle('is-asking', v !== 'post');
+            if (switcher) switcher.querySelectorAll('.ovc-verb').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.verb === v)));
+            if (v === 'post') { send.innerHTML = postFace; send.classList.toggle('ovt-send--round', postRound); send.setAttribute('aria-label', postLabel); }
+            else { send.innerHTML = svg(IC[VERBS[v].icon]); send.classList.add('ovt-send--round'); send.setAttribute('aria-label', VERBS[v].word); }
+            ta.placeholder = v === 'ask' ? 'Ask anything' : v === 'do' ? 'Tell Actor what to do' : (o.placeholder || ta.dataset.ovcPlaceholder || ta.placeholder);
+            api.refresh();
+        }
+        ta.dataset.ovcPlaceholder = ta.placeholder;
+        // A sheet (the whole width on a phone) for the model list and the sources.
+        function sheet(title, build) {
+            const dlg = el('dialog', 'ovc-sheet'); dlg.setAttribute('aria-label', title);
+            dlg.innerHTML = `<div class="ovc-sheet-h"><b></b><button type="button" class="ovc-bar-x" aria-label="Close">${svg(IC.x)}</button></div><div class="ovc-sheet-b"></div>`;
+            dlg.querySelector('b').textContent = title;
+            const close = () => { try { dlg.close(); } catch { /* closed */ } dlg.remove(); };
+            dlg.querySelector('.ovc-bar-x').addEventListener('click', close);
+            dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+            dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });
+            document.body.appendChild(dlg);
+            build(dlg.querySelector('.ovc-sheet-b'), close);
+            if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+            return dlg;
+        }
+        function openModels() {
+            sheet('Model', async (b, close) => {
+                const find = el('input', 'ovc-sheet-find'); find.type = 'search'; find.placeholder = 'Find a model'; find.setAttribute('aria-label', 'Find a model');
+                const list = el('div', 'ovc-models');
+                b.append(find, list);
+                const pick = (row) => {
+                    model = { model: row.model, source: row.source || 'openvibe', ...(row.machine ? { machine: row.machine } : {}), name: row.name || row.model };
+                    try { localStorage.setItem(`ov:composer:model:${askTask}`, JSON.stringify(model)); } catch { /* private mode */ }
+                    paintModel(); close(); ta.focus();
+                };
+                const rowEl = (row, rec) => {
+                    const r = el('div', 'ovc-model');
+                    const btn = el('button', 'ovc-model-b'); btn.type = 'button';
+                    btn.setAttribute('aria-pressed', String(row.model === model.model && (row.source || 'openvibe') === (model.source || 'openvibe')));
+                    const mark = el('span', 'ovc-model-m'); mark.textContent = String(row.maker || row.name || row.model || '?').trim().charAt(0).toUpperCase();
+                    const t = el('span', 'ovc-model-t'); const line = el('span', 'ovc-model-n'); const n = el('b'); n.textContent = row.name || row.model; line.appendChild(n); const d = el('small');
+                    d.textContent = [money(row), row.speed ? `${row.speed}` : '', row.maker || ''].filter(Boolean).join(' · ') || row.detail || '';
+                    if (rec) { const badge = el('em', 'ovc-model-rec'); badge.textContent = 'Recommended'; line.appendChild(badge); }
+                    t.append(line, d); btn.append(mark, t);
+                    btn.addEventListener('click', () => pick(row));
+                    r.appendChild(btn);
+                    if (row.url) { const a = el('a', 'ovc-model-x', svg(IC.ext)); a.href = row.url; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Compare on OpenVibe.Exchange'; a.setAttribute('aria-label', `${row.name || row.model} on OpenVibe.Exchange`); r.appendChild(a); }
+                    r.dataset.find = `${row.name || ''} ${row.model || ''} ${row.maker || ''}`.toLowerCase();
+                    return r;
+                };
+                const auto = { model: 'openvibe/auto', source: 'openvibe', name: 'Auto', detail: 'OpenVibe picks a model for each question' };
+                list.appendChild(rowEl(auto));
+                const wait = el('p', 'ovc-sheet-note'); wait.textContent = 'Loading the models…'; list.appendChild(wait);
+                try {
+                    const data = await loadChoices(frame, askTask);
+                    wait.remove();
+                    const rec = data.recommended;
+                    (data.groups || []).forEach((g) => {
+                        if (!g.rows || !g.rows.length) return;
+                        const h = el('h3'); h.textContent = g.title || g.id; list.appendChild(h);
+                        g.rows.forEach((row) => list.appendChild(rowEl(row, rec && rec.model === row.model && (rec.source || 'openvibe') === (row.source || 'openvibe'))));
+                    });
+                    const more = el('a', 'ovc-sheet-more', `Every model, compared, on OpenVibe.Exchange ${svg(IC.ext)}`); more.href = 'https://openvibe.exchange/models'; more.target = '_blank'; more.rel = 'noopener';
+                    list.appendChild(more);
+                } catch (err) { wait.textContent = (err && err.message) || 'Models are unavailable right now.'; }
+                find.addEventListener('input', () => {
+                    const q = find.value.trim().toLowerCase();
+                    list.querySelectorAll('.ovc-model').forEach((r) => { r.hidden = !!q && !r.dataset.find.includes(q); });
+                });
+                find.focus();
+            });
+        }
+        function openSources() {
+            sheet('What the answer may read', (b) => {
+                SOURCES.forEach(([id, word, icon]) => {
+                    if (id === 'page' && !(o.ask && o.ask.context)) return;
+                    const lab = el('label', 'ovc-src', `${svg(IC[icon])}<span><b></b><small></small></span>`);
+                    lab.querySelector('b').textContent = word;
+                    lab.querySelector('small').textContent = id === 'web' ? 'Search the web (OpenVibe Search, then other engines)' : id === 'openvibe' ? 'Posts, streams, videos, wiki and pastes on OpenVibe' : id === 'mine' ? 'Your own posts, files and chats' : `This ${(o.ask.context && o.ask.context.kind) || 'page'}`;
+                    const box = el('input'); box.type = 'checkbox'; box.checked = sources.has(id); box.setAttribute('role', 'switch');
+                    box.addEventListener('change', () => { if (box.checked) sources.add(id); else sources.delete(id); paintSources(); });
+                    lab.appendChild(box);
+                    b.appendChild(lab);
+                });
+            });
+        }
+        // The answer (or the run) under the box: streamed text, its sources, the model and three ways on.
+        let card = null;
+        function answer(question) {
+            if (card) card.remove();
+            card = el('section', 'ovc-answer'); card.setAttribute('aria-live', 'polite');
+            card.innerHTML = `<header>${svg(IC[verb === 'do' ? 'bolt' : 'spark'])}<b></b><small></small><button type="button" class="ovc-bar-x" aria-label="Close the answer">${svg(IC.x)}</button></header><div class="ovc-answer-t"></div><ol class="ovc-cites" hidden></ol><footer hidden></footer>`;
+            card.querySelector('b').textContent = verb === 'do' ? 'Actor' : 'Answer';
+            card.querySelector('small').textContent = model.name || '';
+            const body = card.querySelector('.ovc-answer-t'), cites = card.querySelector('.ovc-cites'), foot = card.querySelector('footer');
+            body.textContent = verb === 'do' ? 'Planning…' : 'Thinking…'; body.classList.add('is-waiting');
+            card.querySelector('.ovc-bar-x').addEventListener('click', () => { card.remove(); card = null; });
+            form.after(card);
+            let started = false;
+            const ctl = {
+                el: card,
+                append(delta) { if (!started) { body.textContent = ''; body.classList.remove('is-waiting'); started = true; } body.textContent += String(delta || ''); },
+                set(t) { started = true; body.classList.remove('is-waiting'); body.textContent = String(t || ''); },
+                cite(list) {
+                    cites.replaceChildren();
+                    (list || []).forEach((c, i) => {
+                        const li = el('li'); const a = el('a'); a.href = c.url; a.target = '_blank'; a.rel = 'noopener nofollow';
+                        a.textContent = `${c.n || i + 1}. ${c.title || c.site || c.url}`; if (c.site) a.title = c.site;
+                        li.appendChild(a); cites.appendChild(li);
+                    });
+                    cites.hidden = !cites.children.length;
+                },
+                done(meta = {}) {
+                    if (meta.answer != null) ctl.set(meta.answer);
+                    if (meta.citations) ctl.cite(meta.citations);
+                    if (meta.cost != null) card.querySelector('small').textContent = `${model.name || ''} · $${Number(meta.cost).toFixed(3)}`;
+                    foot.replaceChildren();
+                    const act = (label, fn) => { const b = el('button', 'ovc-answer-a'); b.type = 'button'; b.textContent = label; b.addEventListener('click', fn); foot.appendChild(b); };
+                    if (verbs.includes('post')) act(name === 'chat' ? 'Send it' : name === 'comment' ? 'Reply with it' : 'Post it', () => { setVerb('post'); ta.value = body.textContent; ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); });
+                    act('Continue in Vibe', () => { form.dispatchEvent(new CustomEvent('ovc:continue', { bubbles: true, detail: { run: meta.run, question } })); if (root.OVDock && typeof root.OVDock.open === 'function') root.OVDock.open('vibe', { run: meta.run, text: question }); });
+                    if (verb === 'ask' && verbs.includes('do')) act('Do this', () => { setVerb('do'); ta.value = question; ta.dispatchEvent(new Event('input', { bubbles: true })); ta.focus(); });
+                    foot.hidden = false;
+                },
+                fail(msg) { started = true; body.classList.remove('is-waiting'); body.classList.add('is-bad'); body.textContent = String(msg || 'That did not work. Try again.'); },
+            };
+            return ctl;
+        }
+        // Ask or Do through the Frame: start the run, then follow its events (AG-UI) into the card.
+        async function viaFrame(value, ctl) {
+            const r = await fetch(`${frame}/${value.verb}`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(value) });
+            const d = await r.json().catch(() => ({}));
+            if (!r.ok || !d.run) throw new Error(d.detail || d.error || (r.status === 401 ? 'Sign in to ask.' : 'Could not ask right now.'));
+            const events = d.events || `${frame.replace(/\/api\/frame\/?$/, '')}/api/v1/runs/${encodeURIComponent(d.run)}/events`;
+            if (typeof EventSource !== 'function') return;
+            await new Promise((resolve) => {
+                const es = new EventSource(events, { withCredentials: true });
+                const end = () => { es.close(); resolve(); };
+                es.onmessage = (m) => {
+                    let ev = null; try { ev = JSON.parse(m.data); } catch { return; }
+                    if (ev.type === 'TEXT_MESSAGE_CONTENT') ctl.append(ev.delta);
+                    else if (ev.type === 'CUSTOM' && ev.name === 'citations') ctl.cite(ev.value);
+                    else if (ev.type === 'RUN_FINISHED') { ctl.done({ run: d.run, ...(ev.result || {}) }); end(); }
+                    else if (ev.type === 'RUN_ERROR') { ctl.fail(ev.message); end(); }
+                };
+                es.onerror = () => { if (es.readyState === 2) { ctl.fail('The answer stopped. Try again.'); end(); } };
+            });
+        }
+        form.addEventListener('submit', async (e) => {
+            if (verb === 'post' || editing) return;
+            e.preventDefault(); e.stopImmediatePropagation();
+            if (form.classList.contains('is-busy')) return;
+            const text = ta.value.trim();
+            if (!text && !api.files().length) return;
+            const value = { verb, text, files: api.files(), uploads: api.uploads(), model, sources: [...sources], depth: depthChip ? depthChip.querySelector('select').value : 'balanced', context: (o.ask && o.ask.context) || null, chips: values() };
+            const ctl = answer(text);
+            setBusy(true);
+            try {
+                const own = verb === 'ask' ? o.onAsk : o.onDo;
+                if (typeof own === 'function') await own(value, Object.assign(api, { card: ctl }));
+                else await viaFrame({ ...value, files: undefined }, ctl);
+                api.clear();
+            } catch (err) { ctl.fail((err && err.message) || String(err)); }
+            setBusy(false);
+            api.refresh();
+        }, true);
+        if (verbs.length) setVerb(verb);
+
         // Saving an edit is not a send: it runs first and nothing else hears the submit.
         form.addEventListener('submit', async (e) => {
             if (!editing) return;
@@ -1028,7 +1340,8 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
                 api.refresh();
             });
         }
-        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values, edit, reply, clearBar, editing: () => !!editing });
+        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values, edit, reply, clearBar, editing: () => !!editing,
+            verb: () => verb, setVerb, model: () => model, sources: () => [...sources], answer });
     }
 
     // ── Your settings, in a sheet: what sends, voice, compact, your own commands.
