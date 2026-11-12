@@ -62,7 +62,8 @@
 .ovc-file-ai.is-busy { cursor: progress; }
 .ovc-file-ai.is-busy svg { animation: ovc-spark 1.2s ease-in-out infinite; }
 @keyframes ovc-spark { 50% { transform: scale(.72) rotate(45deg); opacity: .55; } }
-html[data-ov-motion=off] .ovc-file-ai.is-busy svg, html[data-ov-motion=reduced] .ovc-file-ai.is-busy svg { animation: none; opacity: .6; }
+html[data-ov-motion=reduced] .ovc-file-ai.is-busy svg { animation-duration: 2.4s; }
+html[data-ov-motion=off] .ovc-file-ai.is-busy svg { animation: none; opacity: .6; }
 .ovc-file-x:hover, .ovc-file-b:hover, .ovc-file-x:focus-visible, .ovc-file-b:focus-visible { background: var(--bg-hover, color-mix(in srgb, var(--text-primary, #fff) 10%, transparent)); color: var(--text-primary, #e6edf7); }
 .ovc-file-x svg, .ovc-file-b svg { width: 15px; height: 15px; }
 .ovc-dropping { border-color: var(--ovt-accent, var(--accent, #3b82f6)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent), 0 8px 30px rgba(0, 0, 0, .25); }
