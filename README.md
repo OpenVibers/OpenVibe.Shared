@@ -5,7 +5,7 @@
 **Docs:** https://openvibe.services · **For AI:** https://openvibe.network/llms.txt
 **Install and test:** `npm ci && npm test`
 
-**Status:** alpha, v4.220.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
+**Status:** alpha, v4.221.0 (every release is a tag; see [CHANGELOG.md](CHANGELOG.md)). Every deployed
 consumer installs a tagged release and none keeps a vendored copy
 ([docs/migration-plan.md](docs/migration-plan.md) is done); each repository's `package.json` names
 the tag it pins.
@@ -626,26 +626,24 @@ there), Scheduled, Done (cost, steps, the page) and Failed (why). It reads Netwo
 `OpenVibeNotifications.init({ actions: false })` leaves the ✦ out; `OpenVibeNotifications.openActions(anchor)` opens it
 from a site's own control.
 
-**The Dock (4.51.0).** Your agents and your activity at the edge of every OpenVibe page (the Dock plan of 2026-10-30,
-K-D1). For a signed-in person `navbar.js` loads `dock.js` from beside itself after the bell (serve it there; it is in
-`files.js`), and it draws a pill in the Dock's corner: the mark, a word ("Needs you", "Working", "2 working") and a dot.
-The pill shows only while an agent works, one needs you, or the person pinned it. A tap opens the Dock. On a desktop it
-is a floating card that is not modal: drag its head to a corner, drag its free corner to resize it (320–720 × 360–900).
-On a phone it is a sheet. It has two tabs. **Agents** is the Action Center's waiting and running items, approved or
-declined in place (`OpenVibeActionCenter.mount(container, opts)`). **Activity** is the bell's list
-(`OpenVibeNotifications.renderDock(container)`). Its state (open, tab, pinned, where it sits per device class) is the
-Network's, so it follows the person from site to site:
-- reads: `GET /api/v1/me/dock` (`network.dock-result@1`);
-- writes: one debounced `PUT` (`network.dock-state@1`);
-- this site's copy paints it at once;
-- an open Dock reopens by itself on a desktop, never on a phone;
-- a 404 from a Network without the route keeps it away for a day.
+**The menu's Chat and Vibe (dock.js; 4.51.0, one UI since 4.220.0).** The OpenVibe menu holds the person's
+conversations (**Chat**: OpenVibe.Chat's `/api/dm/conversations`, read and answered in place, Edit as a pencil at the
+bubble's corner) and **Vibe** (Vibe's conversations, the person's coding tasks and their agents, by a Chat · Code ·
+Agents switch, with a timer button at its end). The panels are `dock.js`'s, placed in the menu with
+`OpenVibeDock.mountInto(host, { tab })` on every screen. There is no floating Dock, no pill and no window of its own
+(the owner, 2026-11-12: "there should only be the one unified UI"). For a signed-in person `navbar.js` loads `dock.js`
+from beside itself (it is in `files.js`); it reads the person's state from the Network so it follows them from site to
+site:
+- reads: `GET /api/v1/me/dock` (`network.dock-result@1`); writes: one debounced `PUT` (`network.dock-state@1`): the
+  place last open, the open chat, the Vibe conversation and the timer;
+- what needs saying is a status on the bar's menu button: a breathing dot while agents work, an amber one when one
+  needs you (the button then opens on Agents), a timer's minutes in a small label under it;
+- a 404 from a Network without the route keeps the status away for a day.
 
-The account menu has a Dock tile. A site can call `OpenVibeNavbar.openDock('agent' | 'activity')`, pass `dock: false`
-to leave it out, or pass `dockApiBase` for tests and staging. Desktop toasts stack above the pill (`--ov-dock-clear`).
-**Chats** (4.52.0) is the person's conversations and DMs from OpenVibe.Chat's API
-(`/api/dm/conversations`, read and answered in place, unread counts on the tab; `dockChatBase` overrides Chat's origin).
-The agent's live screen joins in K-D3.
+`OpenVibeNavbar.openDock('chats' | 'vibe' | 'code' | 'agent')`, `OpenVibeDock.open({ tab })`, `ask({ text })` and
+`share({ text, title })` open the menu there (`OpenVibeSearch.open({ door })` or `OpenVibeSearch.door(id)` when it is
+open). `dock: false` leaves Chat and Vibe out of the menu; `dockApiBase` and `dockChatBase` override the Network and
+Chat for tests and staging.
 
 **Quiet hours (4.30.0).** During the person's window (`GET /api/notifications/quiet-hours`, read at start and every ten
 minutes), toasts and sounds wait; the bell and the badge still fill, and a critical notice still shows.
@@ -872,10 +870,10 @@ New in 4.190: `ov-drop.js` is the one dropdown (`OVDrop.open(anchor, items,
   and on `setChip(id, value)` turns to that balance, counts the number and
   plays the gain or spend effect (`OpenVibePurse.play(id, delta)`). A site's
   single counter that is not a balance stays an ordinary chip.
-  The menu and the Dock (4.189): the menu button always opens this site's tab
-  (no tab is remembered; the picture still asks for You); under the tabs a row
-  opens the Dock on Vibe, Agents, Messages or Activity (`dock: false` leaves
-  it out), and the Dock's head has a button back to the menu.
+  The menu (4.189, one UI since 4.220): the menu button always opens this
+  site's tab (no tab is remembered; the picture still asks for You); Chat and
+  Vibe are places in the menu itself, on every screen (`dock: false` leaves
+  them out).
   The account's things (4.188): the person's picture opens the OpenVibe menu
   on You, where the account's block is (who you are, add account, settings,
   sign out, your other accounts, this site's own items from addMenuItem,

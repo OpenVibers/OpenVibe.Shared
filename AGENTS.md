@@ -3,7 +3,7 @@
 ## Project overview
 
 `openvibe-shared` is the versioned UI and server-helpers package every OpenVibe site renders: the
-OpenVibe Frame (navbar, footer, Dock, panels), themes and design tokens, glyphs and app icons, SEO,
+OpenVibe Frame (navbar, the menu with its Chat and Vibe places, footer, panels), themes and design tokens, glyphs and app icons, SEO,
 legal pages, analytics, readiness/metrics, egress and the web runtime. It is a library (MIT), not a
 service: it owns no database, port or process, and nothing is deployed from this repository.
 

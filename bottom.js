@@ -8,21 +8,17 @@
  * number every bottom-docked part needs and writes it where CSS can use it:
  *
  *   --ovb-lift    px between the bottom of the layout viewport and the bottom of the visible (visual) viewport;
- *                 the bar, the small player, the Dock's pill and the composer move up by it with `translate`
+ *                 the bar, the small player and the composer move up by it with `translate`
  *                 (a paint, never layout).
  *   --ovb-vh      the visible viewport's height in px (for a surface that must fit it), measured, never 100dvh.
  *   --ovb-bar     the app bar's height while it is on screen, measured from the bar itself (0 when it is away).
  *   --ovb-mini    the small player's height plus its 8 px gap, while it is the full-width bar on a phone.
  *   --ovb-base    max(--ovb-bar, safe-area-inset-bottom): where the first docked part starts.
  *   --ovb-dock    --ovb-base + --ovb-mini: how far anything above all of them sits from the bottom edge.
- *   --ovb-composer  how far a page's own composer docked at the bottom reaches up (its top, plus 8 px), so the Dock's
- *                 pill stands above a chat's box instead of on its send button (2026-11-11); 0 when there is none.
  *
  * One stacking order, written here only (the bottom of the screen, low to high):
  *   1. the app bar            --ovb-z-bar    9990
  *   2. the small player       --ovb-z-mini   9991
- *   3. the Dock's pill        --ovb-z-pill   9995
- *   4. the Dock's card        --ovb-z-dock   9996 (a phone's Dock sheet is 10010: it covers the navbar)
  *   Above them belong sheets (10060), the notification panel (99999), toasts and notices (2147483000+).
  *
  * navbar.js loads this before the bar, the Dock and the player draw. It is safe without it: every rule that uses
@@ -51,17 +47,15 @@
     --ovb-mini: 0px;
     --ovb-base: max(var(--ovb-bar, 0px), env(safe-area-inset-bottom, 0px));
     --ovb-dock: calc(var(--ovb-base) + var(--ovb-mini, 0px));
-    --ovb-composer: 0px;
     --ovb-z-bar: 9990;
     --ovb-z-mini: 9991;
-    --ovb-z-pill: 9995;
-    --ovb-z-dock: 9996;
 }
-.ovnav-appbar, .ovmini, .ovdk-pill { will-change: translate; }`;
+.ovnav-appbar, .ovmini { will-change: translate; }`;
         (document.head || html).appendChild(st);
     }
 
     const px = (n) => `${Math.round(n * 100) / 100}px`;
+    // A page's own composer docked at the bottom moves up with the toolbar like the bar does.
     const COMPOSERS = 'form[data-ovt-composer], [data-ov-bottom-dock]';
 
     /** The height of an element that is actually on screen (a bar hidden under the page is not). */
@@ -93,16 +87,6 @@
             }
         } catch { /* no matchMedia: no full-width small player to stack */ }
         html.style.setProperty('--ovb-mini', px(mini));
-        // A page's composer at the bottom of the screen (a chat's box, the shared composer, or anything marked
-        // data-ov-bottom-dock) that reaches the right-hand corner where the pill sits.
-        let composer = 0;
-        const visBottom = vv ? vv.offsetTop + vv.height : root.innerHeight;
-        for (const f of document.querySelectorAll(COMPOSERS)) {
-            if (!onScreen(f)) continue;
-            const r = f.getBoundingClientRect();
-            if (r.bottom >= visBottom - 48 && r.top < visBottom && r.right > root.innerWidth - 140) composer = Math.max(composer, visBottom - r.top + 8);
-        }
-        html.style.setProperty('--ovb-composer', px(composer));
     }
 
     const later = () => { if (!raf) raf = requestAnimationFrame(measure); };

@@ -8,7 +8,8 @@
 //     bottom: 0 is left behind);
 //   • the page scrolls up and down through four positions and the toolbar opens and closes;
 //   • the app bar's bottom edge stays on the visible viewport's bottom (within 1 px), the small player stays 8 px
-//     above the bar and the Dock's pill 16 px above the small player, and none of them overlap;
+//     above the bar, and they do not overlap (4.220.0: the Dock's pill is gone, the menu holds its places; no pill
+//     may come back);
 //   • the gaps do not jump by more than 1 px between samples.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('node:assert/strict');
@@ -90,17 +91,16 @@ const MEASURE = `(() => {
         if (!r.width || !r.height) return null;
         return { t: px(r.top), b: px(r.bottom), l: px(r.left), r: px(r.right), w: px(r.width), h: px(r.height) };
     };
-    const bar = box('.ovnav-appbar'), mini = box('.ovmini:not(.is-leaving)'), pill = box('#ovdk-pill');
+    const bar = box('.ovnav-appbar'), mini = box('.ovmini:not(.is-leaving)'), pill = document.querySelector('#ovdk-pill, .ovdk-pill');
     const area = (a, b) => (!a || !b) ? 0 : px(Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t)));
     return {
         visibleBottom: px(visibleBottom), innerHeight, lift: px(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ovb-lift')) || 0),
-        bar, mini, pill,
+        bar, mini, pill: !!pill,
         gaps: {
             bar: bar && px(visibleBottom - bar.b),
             mini: (bar && mini) ? px(bar.t - mini.b) : null,
-            pill: (mini && pill) ? px(mini.t - pill.b) : null,
         },
-        overlap: { barMini: area(bar, mini), barPill: area(bar, pill), miniPill: area(mini, pill) },
+        overlap: { barMini: area(bar, mini) },
     };
 })()`;
 
@@ -121,8 +121,8 @@ const SCROLLS = [0, 900, 1800, 500];
                 await page.send('Page.addScriptToEvaluateOnNewDocument', { source: SHIM });
                 await page.goto(`${base}/`, { maxMs: 15000, quietMs: 600 });
                 const until = async (expr, ms = 8000) => { const end = Date.now() + ms; while (Date.now() < end) { let v = false; try { v = await page.evaluate(expr); } catch { v = false; } if (v) return true; await wait(80); } return false; };
-                assert.ok(await until(`!!document.querySelector('.ovnav-appbar') && !!document.querySelector('.ovmini:not(.is-leaving)') && !!document.querySelector('#ovdk-pill') && !document.querySelector('#ovdk-pill').hidden`), `${width}x${height}: the bar, the small player and the Dock's pill are on the page`);
-                await wait(450);       // the small player's entrance and the Dock's first read
+                assert.ok(await until(`!!document.querySelector('.ovnav-appbar') && !!document.querySelector('.ovmini:not(.is-leaving)')`), `${width}x${height}: the bar, the small player and the Dock's pill are on the page`);
+                await wait(450);       // the small player's entrance and the Dock's first read (status only, no pill)
                 const samples = [];
                 for (const [i, y] of SCROLLS.entries()) {
                     for (const [label, visible] of [['toolbar-shown', height - 56], ['toolbar-collapsed', height], ['toolbar-half', height - 28], ['toolbar-collapsed', height]]) {
@@ -148,28 +148,22 @@ const SCROLLS = [0, 900, 1800, 500];
                     const at = `${m.y}px/${m.toolbar}`;
                     check(!!m.bar, `${at}: the app bar is on the page`);
                     check(!!m.mini, `${at}: the small player is on the page`);
-                    check(!!m.pill, `${at}: the Dock's pill is on the page`);
-                    if (!m.bar || !m.mini || !m.pill) continue;
+                    check(!m.pill, `${at}: no Dock pill (the menu holds its places)`);
+                    if (!m.bar || !m.mini) continue;
                     check(Math.abs(m.gaps.bar) <= 1, `${at}: the app bar's bottom is ${m.gaps.bar}px from the visible bottom`);
                     check(Math.abs(m.overlap.barMini) === 0, `${at}: the bar and the small player overlap by ${m.overlap.barMini}px²`);
-                    check(Math.abs(m.overlap.barPill) === 0, `${at}: the bar and the Dock overlap by ${m.overlap.barPill}px²`);
-                    check(Math.abs(m.overlap.miniPill) === 0, `${at}: the small player and the Dock overlap by ${m.overlap.miniPill}px²`);
                     check(Math.abs(m.gaps.mini - 8) <= 1, `${at}: the small player sits ${m.gaps.mini}px above the bar (8)`);
-                    check(Math.abs(m.gaps.pill - 16) <= 1, `${at}: the Dock sits ${m.gaps.pill}px above the small player (16)`);
                 }
                 const spread = (key) => { const v = samples.map((m) => m.gaps[key]).filter((n) => typeof n === 'number'); return v.length ? Math.max(...v) - Math.min(...v) : 0; };
                 check(spread('bar') <= 1, `${width}x${height}: the bar jumps ${spread('bar')}px between samples`);
                 check(spread('mini') <= 1, `${width}x${height}: the small player jumps ${spread('mini')}px between samples`);
-                check(spread('pill') <= 1, `${width}x${height}: the Dock jumps ${spread('pill')}px between samples`);
                 const barGaps = samples.map((m) => m.gaps.bar);
                 const miniGaps = samples.map((m) => m.gaps.mini);
-                const pillGaps = samples.map((m) => m.gaps.pill);
                 report.push({
                     size: `${width}x${height}`, samples: samples.length,
                     bar: [Math.min(...barGaps), Math.max(...barGaps)],
                     mini: [Math.min(...miniGaps), Math.max(...miniGaps)],
-                    pill: [Math.min(...pillGaps), Math.max(...pillGaps)],
-                    overlap: Math.max(...samples.map((m) => m.overlap.barMini + m.overlap.barPill + m.overlap.miniPill)),
+                    overlap: Math.max(...samples.map((m) => m.overlap.barMini)),
                 });
                 if (failures.length) {
                     failed++;
@@ -179,8 +173,8 @@ const SCROLLS = [0, 900, 1800, 500];
             } finally { await page.close(); }
         }
     } finally { await browser.close(); }
-    for (const r of report) console.log(`bottom-chrome ${r.size}: ${r.samples} samples, bar gap ${r.bar[0]}..${r.bar[1]}px, mini ${r.mini[0]}..${r.mini[1]}px, pill ${r.pill[0]}..${r.pill[1]}px, overlap ${r.overlap}px²`);
+    for (const r of report) console.log(`bottom-chrome ${r.size}: ${r.samples} samples, bar gap ${r.bar[0]}..${r.bar[1]}px, mini ${r.mini[0]}..${r.mini[1]}px, overlap ${r.overlap}px²`);
     if (failed || report.length !== SIZES.length) { console.error(`bottom-chrome: FAILED at ${failed} of ${SIZES.length} sizes`); process.exit(1); }
-    console.log('bottom-chrome: the bar, the small player and the Dock hold the bottom at every size and toolbar state');
+    console.log('bottom-chrome: the bar and the small player hold the bottom at every size and toolbar state, and no Dock pill is drawn');
     server.close();
 })().catch((e) => { console.error('bottom-chrome:', e.stack || e.message); try { server.close(); } catch { /* */ } process.exit(1); });

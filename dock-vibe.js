@@ -9,9 +9,25 @@
     if (typeof document === 'undefined' || root.OpenVibeDockVibe) return;
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-    const PLUS = '<path d="M12 5.5v13M5.5 12h13"/>';
-    const OUT = '<path d="M13.5 5.5h5v5M18.5 5.5l-7.5 7.5M17 13.5v4a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 5 17.5v-9A1.5 1.5 0 0 1 6.5 7h4"/>';
-    const MIC = '<rect x="9" y="3.5" width="6" height="10.5" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5v3"/>';
+    // 4.220.0: the panel's marks are the network's glyphs (openvibe-shared/glyphs, shown on openvibe.design/icons; the owner,
+    // 11-12: "actually has icons for everything using OpenVibe.design"). test/dock-vibe-glyphs.test.js keeps them equal.
+    const V = {
+        back: '<path d="M16.1 3.6l-8.4 8.4l8.4 8.4"/>',
+        spark: '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
+        image: '<rect x="3.5" y="5.4" width="16.7" height="13" rx="2.8"/><circle cx="9.1" cy="10" r="1.5"/><path d="M20.3 15.6l-4.7-4.7l-7.4 7.4"/>',
+        code: '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
+        send: '<path d="M12 20.7V4.2M3.7 12.4l8.3-8.3l8.3 8.3"/>',
+        bell: '<path d="M6 14.6V9.5a6.1 6.1 0 0 1 12.2 0v5.1l1.5 2.1h-15.3ZM10 18.7a2.1 2.1 0 0 0 4 0"/>',
+        calendar: '<rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10.5h16M9 3.5v4M15 3.5v4"/>',
+        live: '<circle cx="12" cy="11.8" r="2"/><path d="M8.6 8.4a4.9 4.9 0 0 0 0 7.1M15.4 8.4a4.9 4.9 0 0 1 0 7.1M6.3 6.1a8.1 8.1 0 0 0 0 11.9M17.7 6.1a8.1 8.1 0 0 1 0 11.9"/>',
+        clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+        phone: '<path d="M5.7 3.4h3.9l2 4.9l-2.5 1.5a10.8 10.8 0 0 0 4.9 4.9L15.6 12.3l4.9 2v3.9a2 2 0 0 1-2 2A15.8 15.8 0 0 1 3.8 5.4a2 2 0 0 1 2-2"/>',
+        search: '<circle cx="10.6" cy="10.6" r="7"/><path d="M20.4 20.4l-4.5-4.5"/>',
+        chevron: '<path d="M7.9 3.6l8.4 8.4l-8.4 8.4"/>',
+        plus: '<path d="M12 3.5v17M3.5 12h17"/>',
+        mic: '<rect x="9.2" y="3.5" width="5.7" height="10.4" rx="2.8"/><path d="M5.4 11.1a6.6 6.6 0 0 0 13.2 0M12 17.7v2.8"/>',
+        open: '<path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.2a2.1 2.1 0 0 1-2.1 2.1H5.6a2.1 2.1 0 0 1-2.1-2.1V7.9a2.1 2.1 0 0 1 2.1-2.1h4.2"/>',
+    };
     const CSS = `
             .ovdk-ib.is-new { background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
             .ovdk-ib.is-new:hover, .ovdk-ib.is-new:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 26%, transparent); }
@@ -30,11 +46,49 @@
             .ovdk-typing .ovdk-text { display: inline-flex; gap: 4px; align-items: center; padding: 10px 12px; }
             .ovdk-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted, #8b8b96); animation: ovdk-hop 1s ease-in-out infinite; }
             .ovdk-typing i:nth-child(2) { animation-delay: .15s; } .ovdk-typing i:nth-child(3) { animation-delay: .3s; }
-            .ovdk-vibe-start { list-style: none; display: grid; gap: 6px; padding: 18px 6px 8px; text-align: center; color: var(--text-muted, #8b8b96); font-size: 13.5px; line-height: 1.45; }
-            .ovdk-vibe-start b { color: var(--text-primary, #ececf1); font-size: 15.5px; }
-            .ovdk-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
-            .ovdk-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-primary, #ececf1); font: inherit; font-size: 12.5px; cursor: pointer; }
-            .ovdk-chip:hover { border-color: var(--accent, #3b82f6); }
+            /* 4.220.0 (the owner, 11-12: "sleek … organized … sized well … without huge spaces … uses the full space … icons for
+               everything"): a header that says what Vibe is, a greeting at the top, the starters as rows with their marks, and the
+               shared composer's two-row shape. */
+            .ovdk-vibe-h { gap: 8px; padding: 6px 8px; min-height: 56px; box-sizing: border-box; }
+            .ovdk-vibe-h .ovdk-vibe-back { width: 40px; height: 40px; min-width: 40px; min-height: 40px; border-radius: 12px; color: var(--text-secondary, #b6b6c0); }
+            .ovdk-vibe-h .ovdk-vibe-back:hover { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .ovdk-vibe-back svg { width: 17px; height: 17px; } .ovdk-chip-go svg { width: 13px; height: 13px; }
+            .ovdk-vibe-mark { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: #fff;
+                background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 90%, #a855f7), color-mix(in srgb, #a855f7 85%, var(--accent, #3b82f6))); box-shadow: 0 4px 14px color-mix(in srgb, #a855f7 28%, transparent); }
+            .ovdk-vibe-mark svg { width: 19px; height: 19px; }
+            .ovdk-vibe-mark.is-big { width: 46px; height: 46px; border-radius: 14px; }
+            .ovdk-vibe-mark.is-big svg { width: 24px; height: 24px; }
+            .ovdk-vibe-name { flex: 1; min-width: 0; display: grid; line-height: 1.2; }
+            .ovdk-vibe-name b { font-size: 15px; }
+            .ovdk-vibe-name small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #8b8b96); font-size: 12px; }
+            .ovdk-vibe-h .ovdk-ib { margin-left: 0; width: 40px; height: 40px; border-radius: 12px; background: transparent; color: var(--text-secondary, #b6b6c0); }
+            .ovdk-vibe-h .ovdk-ib:hover, .ovdk-vibe-h .ovdk-ib:focus-visible { background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .ovdk-vibe-h .ovdk-vibe-fresh { color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-vibe-start { list-style: none; display: grid; gap: 14px; padding: 14px 4px 6px; color: var(--text-muted, #8b8b96); font-size: 13.5px; line-height: 1.45; text-align: left; }
+            .ovdk-vibe-hello { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
+            .ovdk-vibe-hello-t { min-width: 0; display: grid; gap: 2px; }
+            .ovdk-vibe-start b { color: var(--text-primary, #ececf1); font-size: 16.5px; letter-spacing: -.01em; }
+            .ovdk-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 6px; margin: 0; }
+            .ovdk-chip { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 52px; padding: 8px 10px 8px 8px; border-radius: 14px;
+                border: 1px solid var(--border, rgba(255,255,255,.1)); background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, transparent); color: var(--text-primary, #ececf1);
+                font: inherit; font-size: 14px; text-align: left; cursor: pointer; transition: border-color var(--ov-dur-2, .2s) ease, background-color var(--ov-dur-2, .2s) ease; }
+            .ovdk-chip:hover, .ovdk-chip:focus-visible { border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 9%, transparent); outline: none; }
+            .ovdk-chip-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }
+            .ovdk-chip-ic svg { width: 18px; height: 18px; }
+            .ovdk-chip-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .ovdk-chip-go { display: grid; color: var(--text-muted, #8b8b96); }
+            /* The box: the words on top over the full width, the tools and a round send under them. */
+            .ovdk-send.ovdk-send--two { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 6px 6px 6px 8px; border-radius: 20px; }
+            .ovdk-send--two textarea { padding: 8px 6px 4px; min-height: 40px; font-size: 15.5px; }
+            .ovdk-send-tools { display: flex; align-items: center; gap: 2px; min-width: 0; }
+            .ovdk-send-tools .ovdk-attach, .ovdk-send-tools .ovdk-mic { width: 40px; height: 40px; border-radius: 12px; color: var(--accent-light, var(--accent, #60a5fa)); }
+            .ovdk-send-tools .ovdk-attach:hover, .ovdk-send-tools .ovdk-mic:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+            .ovdk-send-tools .ovdk-attach svg, .ovdk-send-tools .ovdk-mic svg { width: 20px; height: 20px; }
+            .ovdk-send-tools .ovdk-go { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; }
+            .ovdk-send-tools .ovdk-go svg { width: 18px; height: 18px; stroke-width: 2.2; }
+            .ovdk-msg.is-vibe .ovdk-text a { word-break: normal; overflow-wrap: anywhere; }
+            .ovdk-res-c { grid-template-columns: auto minmax(0, 1fr); }
+            .ovdk-res-c .ovdk-res-a { grid-column: 2; }
             .ovdk-mic, .ovdk-attach { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--text-muted, #8b8b96); touch-action: none; }
             .ovdk-attach:hover { color: var(--text-primary,#ececf1); }
             .ovdk-mic:hover { color: var(--text-primary, #ececf1); }
@@ -74,7 +128,7 @@
     /** A round icon button with its name as label and tooltip. */
     const iconButton = (tag, cls, path, label) => { const b = h(tag, cls); if (tag === 'button') b.type = 'button'; b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label); b.title = label; b.innerHTML = svg(path); return b; };
     /** Open Vibe in OpenVibe.Chat, as an icon (the thread's own address when one is open). */
-    const awayLink = () => { const a = iconButton('a', 'ovdk-ib ovdk-away', OUT, 'Open in Chat'); a.href = 'https://openvibe.chat/vibe'; a.target = '_blank'; a.rel = 'noopener'; return a; };
+    const awayLink = () => { const a = iconButton('a', 'ovdk-ib ovdk-away', V.open, 'Open in Chat'); a.href = 'https://openvibe.chat/vibe'; a.target = '_blank'; a.rel = 'noopener'; return a; };
 
     // ── Vibe (plan L48 V2; the owner, 11-01: "access your agent or the AI… from across all websites… use a voice
     // feature to tell it to set a reminder… have a conversation with your Vibe AI") ──
@@ -91,7 +145,14 @@
     const TALK = Boolean(SR || MR);
     const REC_TYPES = ['audio/webm;codecs=opus', 'audio/ogg;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg'];
     const REC_MAX_MS = 30000;
-    const STARTERS = ['Remind me to stretch every 2 hours', 'What is on today?', 'Who is live right now?', 'Remind me tomorrow at 9 to call Sam'];
+    const STARTERS = [
+        ['bell', 'Remind me to stretch every 2 hours'],
+        ['calendar', 'What is on today?'],
+        ['live', 'Who is live right now?'],
+        ['clock', 'Start a 25-minute focus timer'],
+        ['phone', 'Remind me tomorrow at 9 to call Sam'],
+        ['search', 'What is new on OpenVibe this week?'],
+    ];
     function linkified(text) {
         const span = h('span', 'ovdk-text');
         String(text || '').split(/(https:\/\/[^\s<>"')]+)/).forEach((part, i) => {
@@ -155,7 +216,7 @@
         // No heading (ask 335, the owner: "remove the text … new conversation … an icon plus button … open in Chat a
         // little button icon"): one slim row of two icon buttons over your chats.
         const head = h('div', 'ovdk-bar');
-        const newer = iconButton('button', 'ovdk-ib is-new ovdk-vibe-new', PLUS, 'New chat'); newer.addEventListener('click', () => { vibe.fresh = true; vibe.chat = null; ctx.save({ vibe: null }); openVibe(); });
+        const newer = iconButton('button', 'ovdk-ib is-new ovdk-vibe-new', V.plus, 'New chat'); newer.addEventListener('click', () => { vibe.fresh = true; vibe.chat = null; ctx.save({ vibe: null }); openVibe(); });
         head.append(newer, awayLink());
         const scroll = h('div', 'ovdk-scroll'); const list = h('ul', 'ovdk-vibe-list');
         scroll.append(list); panel.append(head, scroll);
@@ -189,14 +250,18 @@
         panel.textContent = '';
         const head = h('div', 'ovdk-thread-h ovdk-vibe-h');
         const title = h('b', '', 'Vibe');
-        const back = h('button', 'ovdk-vibe-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.textContent = '←'; back.addEventListener('click', () => { ctx.save({ vibe: null }); openList(); });
+        const back = iconButton('button', 'ovdk-vibe-back', V.back, 'Back to your chats'); back.addEventListener('click', () => { ctx.save({ vibe: null }); openList(); });
         const away = awayLink();
-        head.append(back, icon(G.vibe), title, away);
+        const mark = h('span', 'ovdk-vibe-mark'); mark.innerHTML = svg(V.spark);
+        const name = h('span', 'ovdk-vibe-name'); name.append(title, h('small', '', 'Your AI on every OpenVibe site'));
+        const fresh = iconButton('button', 'ovdk-ib ovdk-vibe-fresh', V.plus, 'New chat');
+        fresh.addEventListener('click', () => { vibe.fresh = true; vibe.chat = null; ctx.save({ vibe: null }); openVibe(); });
+        head.append(back, mark, name, fresh, away);
         const list = h('ol', 'ovdk-msgs'); list.setAttribute('aria-live', 'polite');
         const scroll = h('div', 'ovdk-scroll ovdk-thread'); scroll.append(list);
         const typing = h('li', 'ovdk-msg is-vibe ovdk-typing'); typing.innerHTML = '<span class="ovdk-text"><i></i><i></i><i></i></span>'; typing.setAttribute('aria-label', 'Vibe is writing');
         const form = h('form', 'ovdk-send');
-        const box = h('textarea'); box.rows = 1; box.maxLength = 8000; box.placeholder = TALK ? 'Ask Vibe, or hold the mic' : 'Ask Vibe'; box.setAttribute('aria-label', 'Message Vibe');
+        const box = h('textarea'); box.rows = 1; box.maxLength = 8000; box.placeholder = TALK ? 'Ask Vibe, or hold the mic' : 'Ask Vibe anything'; box.setAttribute('aria-label', 'Message Vibe');
         const go = h('button', 'ovdk-go'); go.type = 'submit'; go.setAttribute('aria-label', 'Send'); go.append(icon(G.send));
         const err = h('p', 'ovdk-err'); err.hidden = true;
         const reason = (e) => e && e.status === 401 ? 'Your sign in expired. Sign in again to continue.'
@@ -207,7 +272,7 @@
         const showFailure = (e, retry) => { err.textContent = `Vibe did not answer: ${reason(e)} `; err.hidden = false;
             if (retry) { const b = h('button', '', 'Retry'); b.type = 'button'; b.addEventListener('click', async () => { b.disabled = true; try { await retry(); } catch (x) { showFailure(x, retry); } finally { b.disabled = false; } }); err.append(b); }
         };
-        const attach = h('button', 'ovdk-attach', '＋'); attach.type = 'button'; attach.setAttribute('aria-label', 'Attach a picture'); attach.title = 'Attach a picture';
+        const attach = iconButton('button', 'ovdk-attach', V.image, 'Attach a picture');
         const file = h('input'); file.type = 'file'; file.accept = 'image/*'; file.hidden = true;
         attach.addEventListener('click', () => file.click());
         file.addEventListener('change', async () => {
@@ -222,21 +287,25 @@
             finally { attach.disabled = false; file.value = ''; }
         });
         // 350: Build it in Code. What you wrote, else Vibe's last answer, goes to the Code part as a new task's words.
-        const build = iconButton('button', 'ovdk-attach ovdk-build', 'M8 7l-5 5 5 5M16 7l5 5-5 5', 'Build it in Code');
+        const build = iconButton('button', 'ovdk-attach ovdk-build', V.code, 'Build it in Code');
         build.addEventListener('click', () => {
             const last = [...vibe.msgs].reverse().find((m) => m.from !== 'you');
             const text = box.value.trim() || (last && last.text) || '';
             if (!text) { box.focus(); return; }
             build.dispatchEvent(new CustomEvent('ov-dock:part', { bubbles: true, detail: { part: 'code', text: text.slice(0, 16000) } }));
         });
-        form.append(attach, file, build);
+        form.classList.add('ovdk-send--two');
+        const tools = h('div', 'ovdk-send-tools');
+        tools.append(attach, file, build);
         let mic = null;
         if (TALK) {
             mic = h('button', 'ovdk-mic'); mic.type = 'button'; mic.append(icon(G.mic));
             mic.setAttribute('aria-label', 'Talk to Vibe: hold, or press Alt+V'); mic.title = 'Hold to talk (Alt+V)'; mic.setAttribute('aria-pressed', 'false');
-            form.append(mic);
+            tools.append(mic);
         }
-        form.append(box, go);
+        go.textContent = ''; go.innerHTML = svg(V.send);
+        tools.append(go);
+        form.append(box, tools);
         panel.append(head, scroll, err, form);
         const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
         vibe.fill = (text) => { box.value = String(text || '').slice(0, 8000); fit(); try { box.focus(); box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } };
@@ -295,13 +364,25 @@
             }
             if (first && !vibe.msgs.length) {
                 const start = h('li', 'ovdk-vibe-start');
-                start.append(h('b', '', 'Ask Vibe anything'), h('span', '', TALK ? 'Type, or hold the mic and say it. It sets reminders, finds what is live, and answers from the whole network.' : 'It sets reminders, finds what is live, and answers from the whole network.'));
-                const chips = h('div', 'ovdk-chips');
-                STARTERS.forEach((s) => { const c = h('button', 'ovdk-chip', s); c.type = 'button'; c.addEventListener('click', () => send(s)); chips.append(c); });
-                start.append(chips);
+                const hello = h('div', 'ovdk-vibe-hello');
+                const big = h('span', 'ovdk-vibe-mark is-big'); big.innerHTML = svg(V.spark);
+                const words = h('div', 'ovdk-vibe-hello-t');
+                words.append(h('b', '', 'What can I do for you?'), h('span', '', TALK ? 'Ask anything, set reminders and timers, find what is live. Hold the mic to talk.' : 'Ask anything, set reminders and timers, find what is live.'));
+                hello.append(big, words);
+                const chips = h('div', 'ovdk-chips'); chips.setAttribute('role', 'list');
+                STARTERS.forEach(([ic, s]) => {
+                    const c = h('button', 'ovdk-chip'); c.type = 'button'; c.setAttribute('role', 'listitem');
+                    const m = h('span', 'ovdk-chip-ic'); m.innerHTML = svg(V[ic]);
+                    const t = h('span', 'ovdk-chip-t', s);
+                    const go2 = h('span', 'ovdk-chip-go'); go2.innerHTML = svg(V.chevron);
+                    c.append(m, t, go2);
+                    c.addEventListener('click', () => send(s)); chips.append(c);
+                });
+                start.append(hello, chips);
                 list.append(start);
             }
-            if (first || atEnd || answered) scroll.scrollTop = scroll.scrollHeight;
+            if (first && !vibe.msgs.length) scroll.scrollTop = 0;
+            else if (first || atEnd || answered) scroll.scrollTop = scroll.scrollHeight;
             clearTimeout(vibe.timer);
             if (ctx.active()) vibe.timer = setTimeout(() => pull(), vibe.waitUntil ? 1500 : 15000);
         }
@@ -382,7 +463,7 @@
 
     function mount(panel, c) {
         ctx = c || {};
-        G = { mic: MIC, ...(ctx.icons || {}) };
+        G = { mic: V.mic, ...(ctx.icons || {}) };
         const st = typeof ctx.styles === 'function' ? ctx.styles() : null;
         if (st && !st.textContent.includes('.ovdk-vibe-start')) st.textContent += CSS;
         else if (!st && !document.getElementById('ovdk-vibe-styles')) { const s = document.createElement('style'); s.id = 'ovdk-vibe-styles'; s.textContent = CSS; document.head.appendChild(s); }
@@ -401,5 +482,5 @@
             ask: (text) => { if (vibe.view === 'list') { vibe.pendingAsk = text; vibe.fresh = true; openVibe(); } else if (vibe.fill) vibe.fill(text); else vibe.pendingAsk = text; },
         };
     }
-    root.OpenVibeDockVibe = { mount };
+    root.OpenVibeDockVibe = { mount, GLYPHS: V };
 })(typeof window !== 'undefined' ? window : globalThis);

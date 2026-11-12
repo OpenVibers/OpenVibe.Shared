@@ -22,7 +22,7 @@ thing the person is looking at. `bottom.js` measures the difference and writes i
 | `--ovb-base` | `max(--ovb-bar, env(safe-area-inset-bottom))`: where the first docked part starts |
 | `--ovb-dock` | `--ovb-base + --ovb-mini`: how far anything above all of them sits from the bottom edge |
 
-`navbar.js` loads `bottom.js` on every page before the bar, the Dock and the small player draw. Every rule that uses
+`navbar.js` loads `bottom.js` on every page before the bar and the small player draw. Every rule that uses
 these variables keeps its old value as the fallback, so a page that did not get `bottom.js` keeps the bar it had.
 
 The parts move with `translate: 0 calc(-1 * var(--ovb-lift, 0px))`, never by changing `bottom` or `height` while the
@@ -38,10 +38,8 @@ The bottom of the screen, low to high (these are the only z-indexes that belong 
 |---|---|---|
 | the app bar | `.ovnav-appbar` | `--ovb-z-bar` (9990) |
 | the small player | `.ovmini` | `--ovb-z-mini` (9991) |
-| the Dock's pill | `.ovdk-pill` | `--ovb-z-pill` (9995) |
-| the Dock's card | `.ovdk` | `--ovb-z-dock` (9996) |
 
-A phone's Dock sheet (10010) covers the navbar; sheets (10060), the notification panel (99999) and toasts/notices
+Sheets (10060), the notification panel (99999) and toasts/notices
 (2147483000+) sit above all of these and do not belong to the bottom stack.
 
 ## The page's end
@@ -66,7 +64,7 @@ while a shimmed `visualViewport` opens and closes the toolbar (the layout viewpo
 update reaches the visible viewport first), and fails when:
 
 - the app bar's bottom edge is more than 1 px from the visible viewport's bottom;
-- the small player is not 8 px above the bar, or the Dock's pill not 16 px above the small player;
+- the small player is not 8 px above the bar;
 - any of the three overlaps another;
 - a gap jumps by more than 1 px between samples.
 
