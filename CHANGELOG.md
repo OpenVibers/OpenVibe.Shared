@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.223.1 — 2026-11-12
+
+The menu keeps its search field and tabs (the owner, 11-12, two phone screenshots: "the gui gets messed up and loses
+its tabs", "Missing top tabs").
+
+- **What went wrong:**
+  - 4.223.0's slow light behind the menu is drawn 20% past the panel's edges, and the panel was `overflow: hidden`.
+  - A hidden-overflow box is still a scroll container, so a focus or a scroll into view inside the menu scrolled the
+    whole panel up: the field and the tabs left the screen, with an empty band at the bottom.
+- **The fix:** the panel now clips (`overflow: clip` is never a scroll container), and any scroll an older engine
+  gives it anyway is put back at once.
+- "Your own AI" keeps its name on one line; its sentence takes the wrap.
+- **New test** `menu-panel-still-chrome`: at 390 and 1280 px, a focus deep in the site list moves the list, never the
+  panel.
+
 ## 4.223.0 — 2026-11-12
 
 You redone as tabs, icons that fill their squares everywhere in the menu, names in the brand face, and one composer with
