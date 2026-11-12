@@ -1,5 +1,34 @@
 # Changelog
 
+## 4.222.0 — 2026-11-12
+
+The wallet sheet redesigned for phone and desktop, every phone page back to its true width, and whole site names in the
+menu (the owner, 11-12, a phone screenshot of the wallet marked "UGLY" twice; "make everything a little more
+user-friendly and elegant … perfect the layout … across all sites").
+
+- **The wallet:**
+  - **Balances first.**
+  - **What changed reads as rows:** one per currency, with its mark, a counted summary ("Quests done ×10") and when, and
+    the amount in its colour ("+161k"). Each change, with its own amount, sits in a fold ("See all 10"). Before, every
+    quest was strung into one paragraph.
+  - **Every section has a head with its glyph:** What changed, Recent activity, Store, Your items.
+  - **Empty parts are a small card with their mark** saying what will appear (openvibe.design rule 141), never a grey
+    line under a heading.
+  - **Recent activity in the same hand:** the currency's mark, the reason as a 44 px link (no underline across the row),
+    its first letter up, the amount in its colour.
+  - **Store prices are pills with the currency's mark**, each named in full for a screen reader; "Owned" is a green
+    badge; pictures and names sit closer.
+  - **On a computer, What changed and Recent activity sit side by side.**
+  - The head is the wallet's mark, "Wallet" and "Yours on every OpenVibe site".
+  - The sheet's marks are the registry's glyphs (`test/wallet-glyphs.test.js`).
+- **The bar never widens a phone page.** Every OpenVibe page was 392 px wide on a 390 px phone (so phones zoomed out a
+  little): Sign in's larger tap area reached 8 px past the bar's edge. `.openvibe-navbar { overflow-x: clip }`;
+  dropdowns hang below, so only the sides clip.
+- **The menu keeps a site's whole name:** a long one takes a second line instead of "Downlo…".
+
+Tests: `wallet-chrome` and `purse-catchup-chrome` (the new rows), `wallet-glyphs` (new); the wallet fixture can give a
+rich history (`changes: 'many'`).
+
 ## 4.221.0 — 2026-11-12
 
 The icon system, audited end to end (plan L32 I1/I2; the owner, 11-12: "Broken icon. Improve the icons that exist, add

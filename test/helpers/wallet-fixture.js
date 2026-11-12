@@ -38,6 +38,11 @@ function fixture({ changes = false, changeNet = 5 } = {}) {
             if (pathname.startsWith('/changes') && changes) {
                 if (req.method === 'PUT' && pathname === '/changes/read') { readCursor = body.cursor; return json({ currency: body.currency, read_cursor: readCursor }); }
                 if (changes === 'unauthorized') return json({ error: 'Authentication required' }, 401);
+                if (changes === 'many') {
+                    const quests = ['Publish a video', 'Share a picture', 'Say hello in chat', 'Play a game', 'Wear an item', 'Live setup slot', 'Live setup method', 'Live setup restream', 'Live setup profile', 'Live setup emote'];
+                    const moves = quests.map((q, i) => ({ id: 100 + i, at: new Date(Date.now() - (i + 1) * 3600e3).toISOString(), delta: 16100, label: `for the quest ${q}` }));
+                    return json({ opencoins: { currency: 'opencoins', net: 161000, cursor: 110, moves }, vibes: { currency: 'vibes', net: 500, cursor: 7, moves: [{ id: 7, at: new Date(Date.now() - 1800e3).toISOString(), delta: 500, label: 'bought with your card' }] }, channel_points: null });
+                }
                 return json({ opencoins: { currency: 'opencoins', net: readCursor ? 0 : changeNet, cursor: 42, moves: readCursor ? [] : [{ id: 42, at: '2026-11-11T12:00:00Z', delta: changeNet, label: 'For a quest' }] }, vibes: null, channel_points: null });
             }
             if (pathname === '/api/v1/me/wallet') return json(wallet);

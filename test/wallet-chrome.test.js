@@ -24,7 +24,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
             const metrics = await p.evaluate(`(() => { const d=document.querySelector('.ov-wallet'); return {open:!!(d&&(d.open||d.closest('.ovw'))), width:document.documentElement.scrollWidth, inner:d&&d.scrollWidth, box:d&&d.clientWidth, lock:document.documentElement.style.overflow, text:d&&d.innerText, buttons:[...d.querySelectorAll('button,a')].map(b=>b.getBoundingClientRect().height)} })()`);
             assert(metrics.open, 'first chip tap opens wallet'); assert.strictEqual(metrics.width, width); assert(metrics.inner <= metrics.box + 1);
             assert.strictEqual(metrics.lock, 'hidden'); assert(metrics.text.includes('$0.00')); assert(metrics.text.includes('Buy Vibes')); assert(metrics.text.includes('Top up'));
-            assert(metrics.text.includes('for the quest Publish a video'), 'a money reason is a sentence, not a key');
+            assert(/for the quest Publish a video/i.test(metrics.text), 'a money reason is a sentence, not a key (4.221.0: drawn with its first letter up)');
             assert(!/quest:publish|Daily quest completed/.test(metrics.text));
             assert(await p.evaluate(`[...document.querySelectorAll('.ov-wallet-event a')].some(a=>a.getAttribute('href')==='https://openvibe.quest/quests/publish-a-video')`), 'the reason links to its subject');
             assert(metrics.buttons.every((height) => height >= 44), '44px controls');

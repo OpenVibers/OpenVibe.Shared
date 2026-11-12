@@ -34,7 +34,7 @@ if (!h.findChrome()) { console.log('purse catch-up Chrome: skipped (Chrome unava
                 if (mode === 'calm') assert.deepStrictEqual(await page.evaluate('window._pursePieces'), [], 'Calm has no flying pieces');
                 await page.evaluate("document.querySelector('[data-chip-id]').click()");
                 await eventually(async () => assert(await page.evaluate("document.querySelector('.ov-wallet-changes')?.innerText.includes('For a quest')")));
-                const line = await page.evaluate("(() => { const x=document.querySelector('.ov-wallet-changes .ov-wallet-event'); const v=x.querySelector('span'); return { text:x.innerText, title:v.title, aria:v.getAttribute('aria-label'), tabular:v.style.fontVariantNumeric }; })()");
+                const line = await page.evaluate("(() => { const x=document.querySelector('.ov-wallet-changes .ov-wallet-change'); const v=x.querySelector('.ov-wallet-change-n'); return { text:x.innerText, title:v.title, aria:v.getAttribute('aria-label'), tabular:v.style.fontVariantNumeric }; })()");
                 assert.match(line.text, /OpenCoins/); assert.match(line.text, mode === 'compact' ? /\+161k/ : /\+5/);
                 assert.strictEqual(line.title, mode === 'compact' ? '+160\u2009799' : '+5');
                 assert.strictEqual(line.aria, line.title); assert.strictEqual(line.tabular, 'tabular-nums');
