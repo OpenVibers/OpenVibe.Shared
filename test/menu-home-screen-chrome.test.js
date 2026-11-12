@@ -260,7 +260,9 @@ const server = http.createServer((req, res) => {
             const input = document.querySelector('#ovh-feed-composer input[type=file]'); input.files = dt.files; input.dispatchEvent(new Event('change', { bubbles: true }));
         })(), true`);
         assert.ok(await until(s, `document.querySelectorAll('#ovh-feed-composer .ovc-file').length === 2`), 'the picture and PDF become chips');
-        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('#ovh-feed-composer').checkValidity()`), 'the picture needs a description'));
+        // 4.228.0 (the owner, 11-12: a picture alone, as on any social app): a description is optional, and ✨ can write it.
+        await eventually(async () => assert.ok(await s.evaluate(`document.querySelector('#ovh-feed-composer').checkValidity()`), 'a picture without a description can still post'));
+        assert.ok(await s.evaluate(`!!document.querySelector('#ovh-feed-composer .ovc-image [data-ovc-caption]')`), 'the picture offers Caption it with AI');
         await s.evaluate(`(() => { const a = document.querySelector('#ovh-feed-composer .ovc-image input'); a.value = 'A dark sky'; a.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         await s.evaluate(`document.querySelector('#ovh-feed-composer .ovt-send').click(), true`);
         const posted = await until(s, `/Posted/.test(document.querySelector('#ovh-feed-composer .ovc-note').textContent)`);
