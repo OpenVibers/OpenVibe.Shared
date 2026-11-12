@@ -183,6 +183,12 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(!h.includes('javascript:') && !h.includes('>Bad<'), 'a tile with an unsafe link is dropped');
     assert.ok(h.includes('<span class="ov-appicon" data-icon="live" data-ova="live" data-size="56"'), 'an app is its app icon (design rule 142), 56 px on a phone');
     assert.ok(sc.CSS.includes('.sc-apps .ov-appicon{--ova-size:44px!important}'), 'and the row size from 600 px');
+    // pick() (4.228.0): the pick block twenty-five sites copied, one in Shared: a heading, then tabs on a phone.
+    const pk = sc.pick({ key: 'parts', label: 'What it does', head: 'Inside', checked: 'b', panes: [{ id: 'a', label: 'A', html: '<p>a</p>' }, { id: 'b', label: 'B', html: '<p>b</p>' }, { id: 'c', label: 'C', html: '' }] });
+    assert.match(pk, /^<link rel="stylesheet" href="\/shared\/ov-parts\.css\?v=[0-9a-f]+"><div class="pick" id="pick-parts"><div class="pick-bar"><div class="pick-head"><h2>Inside<\/h2><\/div><\/div><div class="ov-parts ov-parts--front" data-parts="2">/, 'its look linked by hash, its heading, then the tabs (a front page by default)');
+    assert.ok(pk.includes('id="ovp-parts-b" value="b" checked>') && !pk.includes('id="ovp-parts-a" value="a" checked'), 'checked opens that pane, the order kept');
+    assert.ok(pk.includes('<div class="pick-pane" id="a"><p>a</p></div>') && !pk.includes('>C<'), 'each pane keeps its id; an empty one is left out');
+    assert.strictEqual(sc.pick({ panes: [] }), '');
     assert.ok(sc.apps({ items: [{ icon: 'fa-star', name: 'S', href: '/s' }] }).includes('<span class="sc-ic">'), 'a non-OpenVibe glyph keeps its tile');
     assert.ok(h.includes('<p class="sc-apps-more"><a href="/sites">All 48 sites →</a></p>'), 'See all');
     assert.strictEqual(sc.apps({ items: [] }), '', 'nothing to show, no section');

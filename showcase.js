@@ -188,17 +188,35 @@ function fold({ id: sid, title, hint, html, open = false } = {}) {
  * the parts stacked. Phones are 900 px and under; a front page (front: true) tabs only at 600 px and under. Two to eight
  * parts get tabs; one, or more than eight, are stacked as they are. Parts with no html are left out, never an empty tab.
  */
-function parts({ name = 'parts', items = [], label = 'Sections', front = false } = {}) {
+function parts({ name = 'parts', items = [], label = 'Sections', front = false, checked = '' } = {}) {
     const list = (items || []).filter((x) => x && x.id != null && x.label && x.html != null && x.html !== '');
     if (!list.length) return '';
     const n = slug(name);
     const key = (x) => String(x.id).replace(/[^a-z0-9_-]/gi, '-');
     const body = list.map((x) => `<section class="ov-part" data-part="${esc(key(x))}">${x.html}</section>`).join('');
     if (list.length < 2 || list.length > 8) return `<div class="ov-parts is-stacked">${body}</div>`;
-    const radios = list.map((x, i) => `<input type="radio" class="ov-parts-r" name="ovp-${n}" id="ovp-${n}-${key(x)}" value="${esc(key(x))}"${i === 0 ? ' checked' : ''}>`).join('');
+    const open = checked && list.some((x) => String(x.id) === String(checked)) ? String(checked) : String(list[0].id);
+    const radios = list.map((x) => `<input type="radio" class="ov-parts-r" name="ovp-${n}" id="ovp-${n}-${key(x)}" value="${esc(key(x))}"${String(x.id) === open ? ' checked' : ''}>`).join('');
     const bar = list.map((x) => `<label for="ovp-${n}-${key(x)}">${esc(x.label)}${x.count != null && x.count !== '' ? ` <span class="ov-parts-n">${esc(x.count)}</span>` : ''}</label>`).join('');
     return `<div class="ov-parts${front ? ' ov-parts--front' : ''}" data-parts="${list.length}">${radios}<div class="ov-parts-bar" role="group" aria-label="${esc(label)}">${bar}</div>${body}</div>`;
 }
+
+/**
+ * pick({ key, label, head, panes: [{ id, label, html }], checked, front = true }) — 4.228.0: the "pick block" twenty-five
+ * sites each kept a copy of (server/render/short.js), now one: a heading over the page's own blocks, one at a time as
+ * tabs on a phone (parts()), every block in the HTML. Each pane keeps its id, so a link to it opens its tab. The copies
+ * drew a row of chips that only jumped to a pane, so a phone still showed them all (the owner, 11-12: "You also never
+ * released the new GUI with the tabs"). checked: the pane open first (else the first). A pane with no html is left out.
+ * It links ov-parts.css itself (by its content hash), so no site has to.
+ */
+function pick({ key = 'pick', label = 'Sections', head = '', panes = [], checked = '', front = true } = {}) {
+    const list = (panes || []).filter((p) => p && p.id && p.label && p.html != null && p.html !== '');
+    if (!list.length) return '';
+    serveMod = serveMod || require('./serve');
+    const items = list.map((p) => ({ id: p.id, label: p.label, html: `<div class="pick-pane" id="${esc(p.id)}">${p.html}</div>` }));
+    return `<link rel="stylesheet" href="${esc(serveMod.url('ov-parts.css'))}"><div class="pick" id="pick-${esc(String(key).replace(/[^a-z0-9_-]/gi, '-'))}"><div class="pick-bar"><div class="pick-head"><h2>${esc(head || label)}</h2></div></div>${parts({ name: key, label, front, items, checked: list.some((p) => p.id === checked) ? checked : '' })}</div>`;
+}
+let serveMod = null;
 
 /** parts()' look: phones see one part and a tab bar (generated for one to eight parts, at 900 px or, for a front page, 600). */
 const PARTS_CSS = (() => {
@@ -222,6 +240,7 @@ const PARTS_CSS = (() => {
         '.ov-parts-bar{gap:4px;margin:18px 0 14px;padding:4px;border-radius:14px;background:color-mix(in srgb,var(--text-primary,#e6edf7) 5%,transparent);overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}.ov-parts-bar::-webkit-scrollbar{display:none}',
         '.ov-parts-bar label{flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:0 14px;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--text-secondary,#a8b3c4);white-space:nowrap;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color .2s,color .2s}',
         '.ov-parts-bar label:active{transform:scale(.97)}',
+        '.pick .ov-part+.ov-part{margin-top:26px}.pick .ov-parts-bar{margin-top:10px}',
         '.ov-parts-n{min-width:18px;padding:0 6px;border-radius:999px;font-size:11.5px;line-height:18px;text-align:center;font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--text-primary,#e6edf7) 9%,transparent)}',
         `@supports selector(:has(*)){@media (max-width:900px){\n${on('.ov-parts:not(.is-stacked):not(.ov-parts--front)')}\n}@media (max-width:600px){\n${on('.ov-parts.ov-parts--front')}\n}}`,
         'html[data-ov-motion=off] .ov-parts-bar label{transition:none}',
@@ -796,4 +815,4 @@ html{overflow-x:clip}
 }
 `;
 
-module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, parts, PARTS_CSS, cta, jsonLd, faqJsonLd, RELATED, DEFAULT_RELATED, CSS, STYLESHEET: 'showcase.css', esc };
+module.exports = { NETWORK_JS, icon, room, hero, features, steps, code, demo, fold, compare, pricing, limits, stories, stats, cards, spotlight, faq, network, apps, nextSteps, parts, pick, PARTS_CSS, cta, jsonLd, faqJsonLd, RELATED, DEFAULT_RELATED, CSS, STYLESHEET: 'showcase.css', esc };
