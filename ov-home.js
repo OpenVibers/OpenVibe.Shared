@@ -546,6 +546,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        briefcase: [['rect', { x: 3.5, y: 7.2, width: 17, height: 12.3, rx: 2.4 }], ['path', { d: 'M8.8 7.2V5.6a1.8 1.8 0 0 1 1.8-1.8h2.8a1.8 1.8 0 0 1 1.8 1.8v1.6M3.5 12.6h17' }]],
         bell: [['path', { d: 'M6 14.6V9.5a6.1 6.1 0 0 1 12.2 0v5.1l1.5 2.1h-15.3Z' }], ['path', { d: 'M10 18.7a2.1 2.1 0 0 0 4 0' }]],
         history: [['path', { d: 'M3.8 12.1a8.3 8.3 0 1 0 2.5-5.9L3.8 8.5M3.8 4.2v4.2h4.2' }], ['path', { d: 'M12 7.9v4.3l3.1 1.9' }]],
         attach: [['path', { d: 'M12 5v14M5 12h14' }]],
@@ -1548,7 +1549,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     }
     const ACTS = new Set(['member', 'chat', 'event', 'quest', 'wiki', 'stream', 'update']);
     function countsRow(n) {
-        const parts = [['views', 'eye', 'views'], ['likes', 'heart', 'likes'], ['comments', 'reply', 'replies']]
+        const parts = [['views', 'eye', 'views'], ['watchers', 'eye', 'watched'], ['likes', 'heart', 'likes'], ['comments', 'reply', 'replies']]
             .filter(([k]) => Number(n && n[k]) > 0);
         if (!parts.length) return null;
         const row = h('span', 'ovfd-counts');
@@ -1591,7 +1592,9 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             // 4.223.0 (the owner, 11-12: "the rundown should look visually distinct versus the live feeds"): its own face and
             // name, whom it is about, and its picture marked as the Rundown's.
             face.textContent = ''; face.className = 'ovfd-face is-rundown'; face.append(glyph('page'));
-            const about = c.subject && c.subject.name ? String(c.subject.name) : (/^Rundown:\s*([^:]{1,40}?)\s*(?:prep|:)/i.exec(String(c.title || '')) || [])[1] || '';
+            // feed.item@1 (Contracts 0.415.0): `subject` is a person's id, so whom it is about is its actor's name.
+            const about = (c.subject && typeof c.subject === 'object' && c.subject.name ? String(c.subject.name) : '') || (c.actor && c.actor.name && !/^system$/i.test(String(c.actor.name)) ? String(c.actor.name) : '')
+                || (/^Rundown:\s*([^:]{1,40}?)\s*(?:prep|:)/i.exec(String(c.title || '')) || [])[1] || '';
             who.append(h('b', '', 'The Rundown'));
             meta.append(siteIcon('live', 18), document.createTextNode(` ${[about ? `about ${about}` : 'from today’s streams', when(c.at)].filter(Boolean).join(' · ')}`));
             a.classList.add('ovfd-k-rundown');
@@ -1622,10 +1625,63 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         if (kind === 'live') title = title.replace(/^.{1,60}? went live:?\s*/i, '') || title;
         if (kind === 'rundown') title = title.replace(/^Rundown:\s*/i, '') || title;
         if (title) a.append(h('b', 'ovfd-title', title.slice(0, 200)));
-        if (c.text && (kind === 'post' || !thumb)) a.append(h('p', 'ovfd-text', String(c.text).slice(0, 500)));
+        if (kind === 'report') { const st = statOf(c); if (st) a.append(st); }
+        // A card without a person says its text in the line under its name already (not twice).
+        const textInMeta = !c.actor && kind !== 'rundown' && !!c.text;
+        if (c.text && (kind === 'post' || !thumb) && kind !== 'report' && !textInMeta) a.append(h('p', 'ovfd-text', String(c.text).slice(0, 500)));
+        const many = groupList(c);
+        if (many) a.append(many);
+        const people = peopleOf(kind, c);
         const counts = countsRow(c.counts);
-        if (counts) a.append(counts);
+        if (people || counts) { const row = counts || h('span', 'ovfd-counts'); if (people) row.prepend(people); a.append(row); }
         return a;
+    }
+    /** 4.226.0, the one feed's new kinds (feed.item@1). A report is its number, large, with which way it moved. */
+    function statOf(c) {
+        const n = c.counts && Number(c.counts.people);
+        const t = c.trend && typeof c.trend === 'object' ? c.trend : null;
+        if (!Number.isFinite(n) && !t) return null;
+        const box = h('span', 'ovfd-stat');
+        if (Number.isFinite(n)) box.append(h('b', 'ovfd-stat-n', num(n)));
+        if (c.text) box.append(h('small', 'ovfd-stat-l', String(c.text).slice(0, 120)));
+        if (t && ['up', 'down', 'flat'].includes(t.direction)) {
+            const pct = Number.isFinite(Number(t.pct)) ? `${Math.round(Number(t.pct))}%` : '';
+            const was = Number.isFinite(Number(t.previous)) ? `was ${num(Number(t.previous))}` : '';
+            const pill = h('span', `ovfd-trend is-${t.direction}`, [t.direction === 'up' ? '▲' : t.direction === 'down' ? '▼' : '=', pct].filter(Boolean).join(' '));
+            pill.setAttribute('aria-label', `${t.direction === 'flat' ? 'about the same' : `${t.direction} ${pct}`}${was ? `, ${was}` : ''}`);
+            box.append(pill);
+            if (was) box.append(h('small', 'ovfd-stat-was', was));
+        }
+        return box;
+    }
+    /** A folded run of the same kind (new jobs, new deals): its first three, each to its own page. */
+    function groupList(c) {
+        const g = c.group && Array.isArray(c.group.items) ? c.group.items : [];
+        if (g.length < 2) return null;
+        const list = h('span', 'ovfd-group');
+        const pic = (x) => { const th = x && x.media && safe(x.media.thumb); return th && /^https:/.test(th) ? th : ''; };
+        const anyPic = g.slice(0, 3).some((x) => !!pic(x));
+        g.slice(0, 3).forEach((x) => {
+            const row = h('span', 'ovfd-group-i');
+            const th = pic(x);
+            // Rows line up: where one has a picture, the others hold its place.
+            if (th) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = th; row.append(img); }
+            else if (anyPic) row.append(h('i', 'ovfd-group-ph'));
+            row.append(h('span', '', String(x.title || '').slice(0, 120)));
+            list.append(row);
+        });
+        const more = Number(c.group.count) - Math.min(3, g.length);
+        if (more > 0) list.append(h('small', 'ovfd-group-more', `and ${num(more)} more`));
+        return list;
+    }
+    /** What `counts.people` means for a kind: jobs, voters, people online; nothing where it means nothing. */
+    function peopleOf(kind, c) {
+        const n = c.counts && Number(c.counts.people);
+        if (!Number.isFinite(n) || n <= 0 || kind === 'report') return null;
+        const word = kind === 'work' ? (n === 1 ? 'job' : 'jobs') : kind === 'poll' ? 'voted' : kind === 'deal' ? (n === 1 ? 'deal' : 'deals') : kind === 'member' ? 'joined' : 'people';
+        const sp = h('span', ''); sp.setAttribute('aria-label', `${num(n)} ${word}`); sp.title = `${num(n)} ${word}`;
+        sp.append(glyph(kind === 'work' ? 'briefcase' : kind === 'poll' ? 'check' : 'user'), document.createTextNode(`${count(n)} ${word}`));
+        return sp;
     }
     /** Several streamers who went live (and are not live now), as one card: their faces, then each name to their channel. */
     function livesCard(items) {
@@ -1794,6 +1850,19 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
 .ovfd-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
 .ovfd-list{display:grid;gap:10px;padding:4px 0}
 @media (min-width:861px){.ovfd{max-width:720px;margin-inline:auto}}
+.ovfd-stat{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:10px;row-gap:2px;padding:4px 2px}
+.ovfd-stat-n{font-family:'OV Brand',Nunito,Inter,sans-serif;font-size:34px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ovfd-stat-l{font-size:13px;color:var(--text-secondary,#a8b3c4);align-self:center}
+.ovfd-trend{grid-column:1;justify-self:start;font-size:12.5px;font-weight:750;padding:1px 8px;border-radius:999px;font-variant-numeric:tabular-nums}
+.ovfd-trend.is-up{color:#34d399;background:color-mix(in srgb,#10b981 16%,transparent)}.ovfd-trend.is-down{color:#f87171;background:color-mix(in srgb,#ef4444 14%,transparent)}.ovfd-trend.is-flat{color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent)}
+.ovfd-stat-was{font-size:12px;color:var(--text-muted,#93a0b4);align-self:center}
+.ovfd-group{display:grid;gap:4px;padding:2px 0}
+.ovfd-group-i{display:flex;align-items:center;gap:8px;min-width:0;font-size:13.5px;color:var(--text-secondary,#a8b3c4)}
+.ovfd-group-i img,.ovfd-group-ph{flex:none;width:36px;height:36px;border-radius:8px;object-fit:cover}
+.ovfd-group-ph{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
+.ovfd-group:not(:has(img)) .ovfd-group-i::before{content:'';flex:none;width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.55}
+.ovfd-group-i span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ovfd-group-more{font-size:12px;color:var(--text-muted,#93a0b4)}
 .ovfd-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
 @media (hover:hover){.ovfd-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
 .ovfd-head{display:flex;align-items:center;gap:8px;min-width:0}

@@ -44,6 +44,10 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
       const mk = (i, k) => ({ id: k + i + '-' + page, kind: k, live_now: k === 'live', url: 'https://openvibe.video/c/' + i, title: (k === 'post' ? '<b>bold</b> ' : '') + k + ' ' + i + ' page ' + page, text: 'words', at: new Date(Date.now() - i * 60000).toISOString(), site: k === 'pic' ? 'pics' : 'video', site_name: 'Video', actor: { name: 'ada' }, media: k === 'post' || k === 'update' ? {} : { thumb: 'https://openvibe.media/t/x.webp', ratio: 1.7778, length: '0:30' }, counts: { views: 1200, likes: 3 } });
       if (kind === 'event') { const at = (h) => new Date(Date.now() - h * 3600e3).toISOString(); const y = new Date(Date.now() - 86400e3); y.setHours(12, 0, 0, 0);
         return J({ items: [
+          { id: 'r', kind: 'report', url: 'https://openvibe.report/network', title: 'Peak today: 1,204 people online at 9 PM', text: 'Online peak across the network', at: at(0.03), site: 'report', site_name: 'Report', actor: null, subject: null, media: null, counts: { people: 1204 }, trend: { direction: 'up', pct: 12, previous: 1075 }, label: 'System' },
+          { id: 'j', kind: 'work', url: 'https://openvibe.work/jobs', title: '14 new jobs this hour', text: 'Remote: GIS engineer, and more', at: at(0.04), site: 'work', site_name: 'Work', actor: null, subject: null, media: null, counts: { people: 14 }, group: { count: 14, items: [{ id: 'j1', url: 'https://openvibe.work/j/1', title: 'GIS engineer', media: null }, { id: 'j2', url: 'https://openvibe.work/j/2', title: 'Product manager', media: { thumb: 'https://openvibe.media/t/j2.jpg' } }, { id: 'j3', url: 'https://openvibe.work/j/3', title: 'Infra lead', media: null }, { id: 'j4', url: 'https://openvibe.work/j/4', title: 'Designer', media: null }] } },
+          { id: 'v', kind: 'poll', url: 'https://openvibe.community/forum/status/poll', title: 'Which feed kind do you open first?', text: 'A poll', at: at(0.05), site: 'community', site_name: 'Community', actor: { name: 'Alex', avatar: null }, subject: 'usr_01JQ8Z6K6M0V8Y2Q3R4S5T6V7W', media: null, counts: { people: 41 } },
+          { id: 'rd', kind: 'rundown', url: 'https://openvibe.live/rundown/e/3005', title: 'Rundown: The Case Against Smooth Apologies', text: 'What the episode was about.', at: at(0.06), site: 'live', site_name: 'Live', actor: { name: 'Maticus', avatar: null }, subject: 'usr_01JQ8Z6K6M0V8Y2Q3R4S5T6V7W', media: null, counts: {} },
           { id: 'm', kind: 'member', url: 'https://openvibe.network/stats', title: '3 people joined today', text: '520 people on OpenVibe so far', at: at(0.01), site: 'network', site_name: 'Network', actor: null, media: null, counts: {} },
           { id: 'c', kind: 'chat', url: 'https://openvibe.chat/rooms/general', title: '#general: 15 messages this hour', text: '', at: at(0.02), site: 'chat', site_name: 'Chat', actor: null, media: null, counts: {} },
           { id: 'q', kind: 'quest', url: 'https://openvibe.quest/', title: 'Finished a quest: First Post', text: '', at: y.toISOString(), site: 'quest', site_name: 'Quest', actor: { name: 'Josh', avatar: null }, media: null, counts: {} },
@@ -118,6 +122,20 @@ const server = http.createServer((req, res) => {
         assert.ok(/^Nov1[12]$/.test(acts.date), `an event with a start: the date tile (${acts.date})`);
         assert.ok(acts.badge, 'a quest: the trophy on the face');
         assert.strictEqual(acts.selfImages, 0, 'no picture means no image (an empty address drew the page itself)');
+        // 4.226.0, the one feed's new kinds (feed.item@1): a report is its number with its trend; a folded run lists its
+        // first three; what counts.people means is said; the Rundown is about its actor (its subject is an id).
+        const kinds = await p.evaluate(`(() => { const q = (s) => document.querySelector(s);
+            return { stat: (q('.ovfd-k-report .ovfd-stat-n') || {}).textContent, trend: (q('.ovfd-k-report .ovfd-trend') || {}).textContent, was: (q('.ovfd-k-report .ovfd-stat-was') || {}).textContent,
+                up: !!q('.ovfd-k-report .ovfd-trend.is-up'), group: [...document.querySelectorAll('.ovfd-k-work .ovfd-group-i')].map((r) => r.textContent), more: (q('.ovfd-k-work .ovfd-group-more') || {}).textContent,
+                groupImgs: document.querySelectorAll('.ovfd-k-work .ovfd-group-i img').length, jobs: (q('.ovfd-k-work .ovfd-counts') || {}).textContent, voted: (q('.ovfd-k-poll .ovfd-counts') || {}).textContent,
+                about: (q('.ovfd-k-rundown .ovfd-who small') || {}).textContent || '' }; })()`);
+        assert.deepStrictEqual([kinds.stat, kinds.trend, kinds.was, kinds.up], ['1,204', '▲ 12%', 'was 1,075', true], 'a report: its number, which way it moved, and from what');
+        assert.deepStrictEqual(kinds.group, ['GIS engineer', 'Product manager', 'Infra lead'], 'a folded run: its first three');
+        assert.deepStrictEqual([kinds.more, kinds.groupImgs], ['and 11 more', 1], 'and how many more; a picture where there is one');
+        assert.strictEqual(kinds.jobs, '14 jobs', 'what the count means for jobs');
+        assert.strictEqual(kinds.voted, '41 voted', 'and for a poll');
+        assert.match(kinds.about, /about Maticus/, `the Rundown is about its actor (${kinds.about})`);
+        if (process.env.OV_CAPTURE_FEED) { await p.evaluate(`document.querySelector('.ovfd-k-report').scrollIntoView({ block: 'start' }), true`); await new Promise((r) => setTimeout(r, 400)); const shot = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(process.env.OV_CAPTURE_FEED, Buffer.from(shot.data, 'base64')); }
         console.log('menu-feed-v2-chrome: chips, cards by kind, text only, the next page, caught up, a chip by kind, the stream alone, activity rows and day lines ok');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((e) => { console.error(e); process.exit(1); });

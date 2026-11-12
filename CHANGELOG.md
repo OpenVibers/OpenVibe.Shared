@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.226.0 — 2026-11-12
+
+- **The menu's feed draws the one feed's new kinds (feed.item@1)** (the one-feed job's finding: they fell through to a
+  bare card):
+  - **A report** is its number, large, with which way it moved and from what (▲ 12%, was 1,075).
+  - **A folded run** (new jobs, new deals) lists its first three, each with its picture where there is one, rows
+    lined up, then "and 11 more".
+  - **What a count means** is said: "14 jobs", "41 voted"; `counts.watchers` reads "watched".
+  - **The Rundown** is about its actor (feed.item@1's `subject` is a person's id, so the old reading found nothing).
+  - A card without a person no longer says its text twice.
+  - `menu-feed-v2-chrome` checks each.
+
 ## 4.225.0 — 2026-11-12
 
 **The menu's Vibe is one place: All · Chats · Tasks · Code, no switch** (the owner, 11-12, crossing out the Chat · Code ·
