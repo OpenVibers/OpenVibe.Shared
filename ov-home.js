@@ -602,6 +602,12 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     }
 
     // ── Drawing an icon ────────────────────────────────────────────────────────────────────────────────────────
+    /** 4.229.0: a card with no person behind it (Deals, Community, Report) wears its site's app icon (design rule 142),
+     *  40 px like a person's face beside it, the glyph filling it (the owner, 11-12: "icons to increase size"). */
+    function appFace(site) {
+        const s = h('span', 'ov-appicon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', '40'); s.setAttribute('aria-hidden', 'true');
+        return s;
+    }
     function siteIcon(site, size) {
         const s = h('span', 'ov-icon'); s.setAttribute('data-icon', site || 'ov'); s.setAttribute('data-size', String(size)); s.setAttribute('data-fx', 'none');
         return s;
@@ -1525,7 +1531,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         const face = h('span', cls || 'ovfd-face');
         const av = c.actor && safe(c.actor.avatar);
         if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
-        else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 22)); }
+        else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         return face;
     }
@@ -1624,7 +1630,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         const av = c.actor && safe(c.actor.avatar);
         // No person behind it (the network's trending pictures): the site's icon and the card's label, not a "?".
         if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
-        else if (!c.actor) { face.classList.add('is-site'); face.style.setProperty('--ovh-h', String(hueOf(c.site || 'ov'))); face.append(siteIcon(c.site || 'ov', 20)); }
+        else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovfd-who');
         const meta = h('small', '');
@@ -1909,9 +1915,9 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
 .ovfd-card{display:grid;gap:8px;padding:10px;border-radius:16px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));color:inherit;text-decoration:none;min-width:0}
 @media (hover:hover){.ovfd-card:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}}
 .ovfd-head{display:flex;align-items:center;gap:8px;min-width:0}
-.ovfd-face{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:13px}
+.ovfd-face{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:15px}
 .ovfd-face img{width:100%;height:100%;object-fit:cover}
-.ovfd-face.is-site{border-radius:10px;background:linear-gradient(150deg,hsl(var(--ovh-h,215) 72% 58% / .34),hsl(var(--ovh-h,215) 70% 38% / .18))}.ovfd-face.is-site .ov-icon{color:hsl(var(--ovh-h,215) 90% 82%)}
+.ovfd-face.is-site{border-radius:30%;background:none;overflow:visible}.ovfd-face.is-site>.ov-appicon{--ova-size:40px}
 .ovfd-who{min-width:0;display:grid}
 .ovfd-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ovfd-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
