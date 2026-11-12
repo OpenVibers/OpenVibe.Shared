@@ -1,8 +1,48 @@
 # Changelog
 
-## Unreleased — a plain Stop
+## 4.224.0 — 2026-11-12
 
-- `ov-arrange.js`: a Stop part docks right like any other optional part; no special E-STOP size or position.
+**One thread view for every run: chats, tasks and code** (the owner, 11-12, crossing out the menu's Chat · Code · Agents
+switch: "one new unified agent … a shared UI … a full conversation with rich embedding").
+
+- **New module `ov-run.js` (`OpenVibeRun`)** draws any run from the Frame's Run API (Network `/api/frame/runs`; Contracts
+  `agents.run@1`, `agents.step@1`), on every site:
+  - `OpenVibeRun.mount(host, { base, token, me, sibling, examples, start, filter, open })` returns
+    `{ list(filter), open(ref), start(text), destroy() }`.
+  - `OpenVibeRun.card(type, render)` adds a rich card for a step's `ui.type`; built in: `results`, `table`, `link`,
+    `code`. A card it does not know shows the step's words.
+- **The list:**
+  - Filters: All · Chats · Tasks · Code.
+  - Order: what needs you first, then newest.
+  - Each run shows its agent's face (its picture, or its glyph on its own hue, with a badge saying what it is doing),
+    its title in the brand face, its last line and when.
+  - Pills say "Needs you", "Working" and "Did not finish". A product that did not answer is named under the list.
+  - A run that asks before it acts is answered from the list: Approve or Not now, in place.
+  - A filter reloads only the rows, so the words you are typing stay.
+- **The thread:**
+  - Your words on the right. The agent's on the left: paragraphs, lists, bold, inline code, links, and numbered
+    sources whose [n] marks link to them.
+  - Thinking is folded. Each tool is one quiet row (it opens to its output).
+  - An approval is a card with its answers. Child runs are rows that open them; files are chips or pictures.
+  - It follows the run live: server-sent events read with fetch, so the bearer goes along, resuming after the last step
+    it has.
+  - The composer underneath says the next thing. A new run starts from the list's box, sent once with an idempotency
+    key.
+  - Page text is never markup, and only https links are drawn.
+- **The menu keeps the Dock's panels for now.** Its Vibe moves to this view (and the switch goes) once the view does
+  everything those panels do:
+  - the Action Center's items from every product, approved in place;
+  - the live agent view (Pause, Curtain, Mute, End);
+  - Vibe's starters and voice;
+  - "Ask your agent" from a page;
+  - the place the Network remembers.
+- **Arrange:** Stop is an ordinary optional part; it docks right like any other (#501).
+- `ov-run.js` and `ov-composer.js` have content hashes in `SIBLING_REV`, ready for the menu. The package exports
+  `openvibe-shared/ov-run`.
+- **Tests:**
+  - New `run-thread-chrome` (390 and 1280 px): the list and filters; approve in place; every kind of step; the live
+    stream and where it resumes; approvals, messages and a new run reaching the API with the person's token; no markup
+    from page text; no overflow.
 
 ## 4.223.1 — 2026-11-12
 
