@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.230.0 — 2026-11-12
+
+- **OpenVibe's own controls on every site** (the owner, 11-12: "improve the selection boxes to use a more customized look integrated into openvibe.design and themed better with animations and effects for all inputs and buttons"). `ov-forms.css` now draws every checkbox and radio: a rounded box whose check pops in, and a ring whose dot grows. The mark is the box's own `::before` (a clip-path check, scaled), so no picture is fetched. Both lift their border on hover, squeeze on a press and glow with focus; the mixed state is a bar; disabled is faded. A switch (`role="switch"`) glows when on, its knob squeezes when pressed, and it has a focus ring. Buttons answer a press, and text fields, text areas and selects glow in the accent with focus. Everything is `:where()`, so a site's own rule wins; `data-ov-native` keeps the browser's control; motion follows the person (Calm slower, Off moves nothing).
+- The bar loads `ov-forms.css` on any page with a text field, a text area or a button. The select kit's script still waits for a select, a box or a file input.
+
 ## 4.229.0 — 2026-11-12
 
 - **Back brings you back to the menu** (the owner, 11-12: "fix the history back button so it properly brings you back to this GUI rather than the page behind it"). Leaving through a link in the menu marks where it was on its history entry (its place, its door, its scroll); Back to that page opens the menu again there, whether the page comes back from the browser's cache, loads again, or a site swaps it in place (Boost). It reuses that entry, so Forward still works, and closing it then leaves the page as it was. Only for a Back or Forward within half an hour.

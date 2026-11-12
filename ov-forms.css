@@ -1,9 +1,11 @@
 /* openvibe-shared/ov-forms.css — OpenVibe's own form controls, on every site (docs/forms.md). ov-forms.js draws the
  * select (a button, its menu on a computer, its sheet on a phone); the rest is this file alone:
  *
- *   every page   checkboxes, radios, sliders and progress take the site's accent; a checkbox with role="switch" is a
- *                switch; a file input's button is a button; nothing here moves a site's layout (all of it is
- *                :where(), so a site's own rule always wins)
+ *   every page   checkboxes and radios are drawn (4.230.0: a box with a check that pops in, a ring with a dot; hover, a
+ *                press, a focus glow), sliders and progress take the site's accent; a checkbox with role="switch" is
+ *                a switch that glows when on and squeezes when pressed; buttons answer a press, text fields glow
+ *                with focus; a file input's button is a button. All of it is :where(), so a site's own rule always
+ *                wins; motion follows the person's setting (Calm slower, Off none)
  *   opted in     .ov-field (a label, a control, a hint, an error) and .ov-input: the full field look;
  *                .ov-choices / .ov-choice: a choice drawn as a card (radio or checkbox inside)
  *   opted out    data-ov-native on a control or any ancestor, or <html data-ov-forms="off">
@@ -149,9 +151,60 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 .ov-sel-group:first-child { padding-top: 4px; }
 .ov-sel-none { padding: 18px 12px; color: var(--ovf-muted); text-align: center; }
 
-/* ── Every page: the browser's own boxes, in the site's colours (nothing here changes a size) ─────────────────── */
+/* ── Every page: OpenVibe's own controls, in the site's colours ──────────────────────────────────────────────── */
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"], input[type="range"], progress, meter):where(:not([data-ov-native], [data-ov-native] *)) {
     accent-color: var(--accent, #3b82f6);
+}
+/* 4.230.0 (the owner, 11-12: "improve the selection boxes … a more customized look … themed better with animations and
+   effects for all inputs and buttons"): a checkbox is a rounded box whose check pops in, a radio a ring whose dot
+   grows; both lift their border on hover, squeeze on a press and glow with focus. The mark is the box's own ::before
+   (clip-path check, scaled), so no picture is fetched and no page's image policy is involved. */
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *)) {
+    -webkit-appearance: none; appearance: none; box-sizing: border-box; flex: none; vertical-align: middle;
+    display: inline-grid; place-content: center; width: 18px; height: 18px; cursor: pointer;
+    border: 1.5px solid color-mix(in srgb, var(--text-primary, CanvasText) 38%, transparent); border-radius: 6px;
+    background: var(--bg-input, color-mix(in srgb, var(--text-primary, CanvasText) 5%, transparent)); color: var(--accent, #3b82f6);
+    transition: background-color .16s ease, border-color .16s ease, box-shadow .2s ease, transform .12s ease;
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *)) { border-radius: 50%; }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *))::before {
+    content: ""; width: 10px; height: 10px; transform: scale(0); transform-origin: 50% 60%;
+    box-shadow: inset 1em 1em var(--on-accent, #fff);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    transition: transform .18s cubic-bezier(.2, 1.5, .4, 1);
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *))::before {
+    width: 8px; height: 8px; border-radius: 50%; clip-path: none; box-shadow: inset 1em 1em var(--accent, #3b82f6); transform-origin: 50% 50%;
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]):checked, input[type="checkbox"]:not([role="switch"]):indeterminate):where(:not([data-ov-native], [data-ov-native] *)) {
+    background: var(--accent, #3b82f6); border-color: var(--accent, #3b82f6);
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="radio"]:checked):where(:not([data-ov-native], [data-ov-native] *)) {
+    border-color: var(--accent, #3b82f6); border-width: 2px;
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]):checked, input[type="radio"]:checked):where(:not([data-ov-native], [data-ov-native] *))::before { transform: scale(1); }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]):indeterminate):where(:not([data-ov-native], [data-ov-native] *))::before {
+    transform: scale(1); height: 2.5px; border-radius: 2px; clip-path: none;
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):hover {
+    border-color: color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent);
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { transform: scale(.88); }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent);
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *)):disabled { opacity: .5; cursor: not-allowed; }
+/* Buttons answer a press; text fields glow with focus (a site's own button or field rule wins over these). */
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)) {
+    transition: transform .12s ease, box-shadow .18s ease, background-color .16s ease, border-color .16s ease, color .16s ease;
+}
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { transform: scale(.97); }
+:where(html:not([data-ov-forms="off"])) :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], [type="button"], [type="submit"], [type="reset"]), textarea, select):where(:not([data-ov-native], [data-ov-native] *)) {
+    transition: border-color .15s ease, box-shadow .2s ease, background-color .15s ease;
+}
+:where(html:not([data-ov-forms="off"])) :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], [type="button"], [type="submit"], [type="reset"]), textarea, select):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
+    outline: 2px solid var(--accent, #3b82f6); outline-offset: 0; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent);
 }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"], input[type="range"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
     outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px;
@@ -167,7 +220,26 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *)) {
     background-color: var(--accent, #3b82f6); background-position: calc(100% - 2px) 50%;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 12%, transparent), 0 0 14px color-mix(in srgb, var(--accent, #3b82f6) 38%, transparent);
 }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):hover {
+    background-color: color-mix(in srgb, CanvasText 34%, transparent);
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *, :disabled)):hover {
+    background-color: color-mix(in srgb, var(--accent, #3b82f6) 88%, #fff);
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active {
+    transform: none; background-image: radial-gradient(ellipse 13px 8.5px, #fff 0 92%, transparent 100%); background-size: 26px 20px;
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { background-position: calc(100% - 2px) 50%; }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
+    outline: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent);
+}
+/* Motion follows the person: Calm takes its time, Off moves nothing (the state still changes). */
+html[data-ov-motion="calm"] :where(input[type="checkbox"], input[type="radio"], button, .btn)::before { transition-duration: .32s; }
+html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, input[type="button"], input[type="submit"], .btn, [role="button"], input, textarea, select),
+html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"])::before { transition: none !important; animation: none !important; }
+html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, .btn, [role="button"]):active { transform: none !important; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:disabled) { opacity: .5; cursor: not-allowed; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="file"]:not([data-ov-native]))::file-selector-button {
     font: inherit; font-weight: 600; margin-inline-end: .75em; padding: .38em .85em; cursor: pointer;
