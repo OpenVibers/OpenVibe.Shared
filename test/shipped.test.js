@@ -35,6 +35,7 @@ const data = {
     assert.strictEqual(node.querySelector('.ov-shipped-notes').getAttribute('href'), data.latest_post.url);
     // 4.53.1: the patch-notes link under the list wraps on a narrow screen (a whole post title ran past 320 px).
     assert.ok(require('fs').readFileSync(require.resolve('../shipped'), 'utf8').includes("'.ov-shipped-links .ov-shipped-notes{white-space:normal;min-width:0;overflow-wrap:anywhere}'"), 'the long notes link may wrap');
+    assert.ok(/`\.ov-shipped-n\{(?![^}]*opacity)[^}]*\}`/.test(require('fs').readFileSync(require.resolve('../shipped'), 'utf8')), 'a chip\'s count keeps the chip\'s full colour (axe color-contrast on /updates, 4.227.0)');
 
     const one = document.getElementById('n');
     shipped.render(one, data, { service: 'live', title: '' });

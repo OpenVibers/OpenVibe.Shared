@@ -6,6 +6,7 @@
 - **The square keeps its size before `ov-icons.js`**: the navbar's early rules hold every `.ov-appicon` at its `data-size`, so a page's app icons no longer pop in.
 - **The menu's "Across OpenVibe" sites and a quest's steps wear their app icons** instead of a small glyph in a ring.
 - **The Feed's chips name the one feed's new kinds**: Rundown, Jobs, Deals and Stats, beside the media kinds.
+- **/updates passes its contrast check again**: a filter chip's count no longer fades to 70% (axe color-contrast, serious, on every site's /updates; the release browser check had paged as critical).
 
 ## 4.226.0 — 2026-11-12
 
