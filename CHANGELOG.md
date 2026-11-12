@@ -32,6 +32,7 @@ Agents switch: "one new unified agent … a shared UI").
   - Inside the menu it is now part of the menu's one scroller (one scroller per layer).
   - Measured with real touches at 390 px, and checked on every tab: nothing else nests a scroll box like it.
   - New test `notifications-menu-scroll-chrome` (it fails without the fix).
+  - `notification-ui.js`'s brotli budget grows from 25.9 to 26.1 KB for it.
 - **The composer's + has GitHub.**
   - It searches repositories through OpenVibe Exchange's code search (the Frame's `/api/frame/code/search`, Network
     #878) a quarter second after the last key.

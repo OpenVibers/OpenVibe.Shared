@@ -187,8 +187,8 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`window.OpenVibeSearch && OpenVibeSearch.close(), true`); await wait(350);
         await openTab(p, 'you');
         assert.ok(await until(p, `document.querySelectorAll('.ovh-grid:not(.ovh-recent) .ovh-app').length >= 12`), 'Home again');
-        if (await p.evaluate(`!!document.querySelector('.ovh.is-edit')`)) { await p.evaluate(`document.querySelector('.ovh-edit').click(), true`); await wait(200); }
-        assert.strictEqual(await p.evaluate(`!!document.querySelector('.ovh.is-edit')`), false, 'out of Edit before the touch');
+        if (await p.evaluate(`!!document.querySelector('.ovh.is-edit')`)) await p.evaluate(`document.querySelector('.ovh-edit').click(), true`);
+        assert.ok(await until(p, `!document.querySelector('.ovh.is-edit')`, 3000), 'out of Edit before the touch');
         await wait(400);
         const before = await order(p);
         const f0 = await center(p, `.ovh-grid:not(.ovh-recent) .ovh-app[data-id="${before[0]}"]`);
@@ -197,16 +197,15 @@ const server = http.createServer((req, res) => {
         const top0 = await p.evaluate(scrollOf);
         await p.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
         await p.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: f0.x, y: f0.y }] });
-        await wait(650);
-        assert.ok(await p.evaluate(`!!document.querySelector('.ovh.is-edit')`), 'a touch long-press starts Edit');
+        assert.ok(await until(p, `!!document.querySelector('.ovh.is-edit')`, 3000), 'a touch long-press starts Edit');
+        await wait(120);   // the finger rests a moment after Edit starts, as a person's does
         // Mostly upward first, the way a thumb that means to drag still nudges the page.
         for (let k = 1; k <= 8; k++) { await p.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: f0.x + ((f2.x - f0.x) * k) / 8, y: f0.y - (k <= 2 ? 14 * k : 28) + ((f2.y - f0.y) * k) / 8 }] }); await wait(40); }
         await p.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: f2.x, y: f2.y }] }); await wait(40);
         await p.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-        await wait(450);
         await p.send('Emulation.setTouchEmulationEnabled', { enabled: false });
-        const after = await order(p);
-        assert.strictEqual(after.indexOf(before[0]), 2, `the app moved under the finger to where it was dropped (${after})`);
+        const moved = await until(p, `[...document.querySelectorAll('.ovh-grid:not(.ovh-recent) .ovh-app')].map((a) => a.getAttribute('data-id')).indexOf(${JSON.stringify(before[0])}) === 2`, 3000);
+        assert.ok(moved, `the app moved under the finger to where it was dropped (${await order(p)})`);
         assert.strictEqual(await p.evaluate(scrollOf), top0, 'and the menu did not scroll under it');
         await p.close();
 
