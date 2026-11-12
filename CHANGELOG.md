@@ -46,6 +46,9 @@ everything using OpenVibe.design … modular … reusable for different sites").
   - "edited" is one quiet word inside the bubble;
   - `dock-chat-edits.js` keeps only Chat's socket.
 - `bottom.js`: the pill's stacking entries and `--ovb-composer` (which only the pill read) are gone.
+- **One head, not two** (the owner, 11-12: "part of the one UI instead of having two different areas"): inside the menu a
+  place has no header band of its own. An open conversation's + and ↗ move into the menu's search pill (as a list's
+  already did); it keeps a slim way back and its name; Vibe's mark is the greeting's.
 
 Tests:
 - Rewritten for the menu: `dock-chrome` and `dock-vibe-timer-chrome` (no pill or floating Dock ever; the status on

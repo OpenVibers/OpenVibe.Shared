@@ -314,6 +314,15 @@
 /* A place's actions in the search pill (4.200.0); the panel's own row of them is hidden inside the menu. */
 .ovs-acts { display: flex; flex: none; gap: 2px; }
 .ovs-acts:empty, .ovs-door-host .ovdk-bar { display: none; }
+/* One UI (4.220.0; the owner, 11-12: "part of the one UI instead of having two different areas"): inside the menu a place has
+   no head of its own. A conversation keeps a slim way back and its name; its actions are the search pill's; its mark is the
+   greeting's; no band, no border. */
+.ovs-door-host .ovdk-thread-h { min-height: 40px; padding: 2px 12px 2px 6px; gap: 4px; border-bottom: 0; }
+.ovs-door-host .ovdk-thread-h > .ovdk-ib, .ovs-door-host .ovdk-vibe-h .ovdk-vibe-mark, .ovs-door-host .ovdk-vibe-name small { display: none; }
+.ovs-door-host .ovdk-thread-h .ovdk-back, .ovs-door-host .ovdk-vibe-h .ovdk-vibe-back { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+.ovs-door-host .ovdk-thread-h b, .ovs-door-host .ovdk-vibe-name b { font-size: 14px; font-weight: 700; color: var(--text-secondary, #b4c0d4); }
+.ovs-door-host .ovdk-vibe-start { padding-top: 2px; }
+
 .ovs-act { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
 .ovs-act svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
 .ovs-act:hover, .ovs-act:focus-visible { background: var(--hover-bg, rgba(127,127,127,.14)); color: var(--text-primary, #ececf1); }
@@ -1142,7 +1151,8 @@
         if (!actsEl) return;
         actsEl.textContent = '';
         if (!door || !doorHost) return;
-        doorHost.querySelectorAll('.ovdk-bar > .ovdk-ib').forEach((orig) => {
+        // A list's actions and an open conversation's (+ for a new chat, ↗ to open it in Chat): one head, the menu's (4.220.0).
+        doorHost.querySelectorAll('.ovdk-bar > .ovdk-ib, .ovdk-thread-h > .ovdk-ib').forEach((orig) => {
             const b = document.createElement('button'); b.type = 'button';
             b.className = 'ovs-act' + (orig.classList.contains('is-new') ? ' is-new' : '');
             const label = orig.getAttribute('aria-label') || ''; b.setAttribute('aria-label', label); b.title = label;
