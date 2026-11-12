@@ -1,5 +1,38 @@
 # Changelog
 
+## 4.218.0 — 2026-11-12
+
+One composer, three verbs: **Post · Ask · Do** (research-2026-11-12/composer-post-ask-do.md; the owner, 11-12: "make it so
+that the composer is able to … integrate directly to have the models list from OpenVibe.Exchange … the search the web
+feature, the search engine feature … more cohesive, interconnected", and "Actor should be more of an orchestrator … same
+features across all different sites").
+
+- **`verbs: ['post', 'ask', 'do']`** (a site opts in; the first is where the box starts) draws one switch: on a post or
+  a reply beside the name, in a chat or an agent's box at the start of the row; on a phone the chosen verb keeps its
+  word and the others are icons. **Ask**: an AI answers you; **Do**: Actor does it for you (the orchestrator, handing
+  parts to Codes, Bot, your computers); **Post** (Send, Reply) is unchanged.
+- **Ask and Do's chips**, a line of their own above the words:
+  - **Model**: a sheet (the whole width on a phone) over the Frame's `/choices?task=`: Auto, then OpenVibe's models
+    from Exchange's directory with their price per million and a link to each model's page on openvibe.exchange, your
+    keys, your computers, your plans; a find field; the choice is remembered per task;
+  - **Sources**: Web, OpenVibe, Mine, This page (when the site says what the page is), as switches;
+  - **Depth**: Quick, Balanced, Deep research.
+- **The answer card** under the box: the answer streamed from the run's events (AG-UI over
+  `/api/v1/runs/:id/events`), its sources as numbered chips, the model and the cost, and three ways on: **Post it**
+  (the answer becomes the box's own post or message), **Continue in Vibe**, **Do this**. An Ask never reaches the
+  box's onSubmit.
+- Without `onAsk` / `onDo` the box asks the Frame (`POST /ask`, `/do` at `frameBase`, default
+  https://openvibe.network/api/frame); a site that answers itself gets the same card (`api.card`: append, set, cite,
+  done, fail). The api adds `verb()`, `setVerb()`, `model()`, `sources()` and `answer()`.
+- **The inline Community thread is the comment preset** (#490): `thread.composer({ preset: 'comment' })` marks the
+  server form, and `ov-thread.js` replaces it in place with `OpenVibeComposer.mount(..., { preset: 'comment' })` for
+  every `[data-ovc-thread]`: the action, a reply's `parent_id`, files and the no-JS post stay. Video, Pics and a paste's
+  comments are the same box, once.
+
+Tests: `composer-verbs-chrome` (the switch, the chips, the Model sheet from a fake Frame with prices and Exchange
+links, find and pick, Sources, an Ask streamed into the card with its sources, Post it, a site's own answer, 390 px),
+`inline-composer-chrome` (the inline thread mounts the comment preset, keeps its action and `parent_id`, posts at 390 px).
+
 ## 4.217.0 — 2026-11-12
 
 The composer gets what the agents portal's own box had: a camera, Try again, and pictures made smaller before they go.
