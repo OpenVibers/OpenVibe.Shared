@@ -610,7 +610,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '06208fe89eac', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'ef289c4550b1', 'dock.js': '9f15df28050c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'b11405559831', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': 'ac7107f5d733' };
+    const SIBLING_REV = { 'ov-mark.js': 'f34f731c3a94', 'ov-glyphs.js': 'c96584376da1', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'dd84a30bb646', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '07e8f59d9e6d', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'ef289c4550b1', 'dock.js': '9f15df28050c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': 'a94e76bd1200', 'notification-ui.js': '0cef1f895965', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'c21485176ae9', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '3a88a5ba2565', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'b11405559831', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': '3fa6bb23b429', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'ae24086bd2be', 'soft.js': '98ab9b8080b1', 'ov-run.js': '91be6059adcf', 'ov-composer.js': 'ac7107f5d733' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -684,9 +684,17 @@
         }
         return false;
     }
+    // 4.230.0: the look of every field and button is in ov-forms.css, so a page with any text field, text area or button
+    // gets the stylesheet once it settles; the select kit's script still waits for a select, a box or a file input.
+    function formsCss() {
+        if (document.documentElement.getAttribute('data-ov-forms') === 'off' || document.querySelector('link[href*="ov-forms.css"]')) return;
+        if (!document.querySelector(FORM_CONTROLS + ',input,textarea,button')) return;
+        try { const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = siblingV('ov-forms.css'); document.head.appendChild(ln); } catch { /* */ }
+    }
     function loadForms() {
         if (root.OVForms || document.getElementById('ov-forms-loader')) return true;
         if (document.documentElement.getAttribute('data-ov-forms') === 'off') return true;
+        formsCss();
         if (!formsWanted()) return false;
         try {
             if (!document.querySelector('link[href*="ov-forms.css"]')) {
