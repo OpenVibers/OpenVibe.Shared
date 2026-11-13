@@ -1709,7 +1709,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     function faceOf(c, cls) {
         const face = h('span', cls || 'ovfd-face');
         const av = c.actor && safe(c.actor.avatar);
-        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; img.onerror = () => { img.remove(); face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase(); }; face.append(img); }
         else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         return face;
@@ -1848,7 +1848,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const face = h('span', 'ovfd-face');
         const av = personOf(c) && safe(c.actor.avatar);
         // No person behind it (the network's trending pictures, a report): the site's icon, not a "?".
-        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; img.onerror = () => { img.remove(); face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase(); }; face.append(img); }
         else if (!personOf(c)) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovfd-who');

@@ -361,8 +361,10 @@
     function avatar(p, group) {
         const a = h('span', 'ovdk-av');
         const url = p && /^https:\/\//.test(String(p.avatar_url || '')) ? p.avatar_url : '';
-        if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; a.append(img); }
-        else a.textContent = group ? '#' : String((p && (p.display_name || p.username)) || '?').trim().charAt(0).toUpperCase() || '?';
+        const first = () => String((p && (p.display_name || p.username)) || '?').trim().charAt(0).toUpperCase() || '?';
+        // A picture that does not load (a moved or deleted file) shows the initial, never an empty circle.
+        if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; img.onerror = () => { img.remove(); a.textContent = first(); }; a.append(img); }
+        else a.textContent = group ? '#' : first();
         return a;
     }
     function groupAvatar(c) {
