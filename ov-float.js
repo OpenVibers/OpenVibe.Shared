@@ -1,5 +1,5 @@
 /**
- * ov-float.js (openvibe-shared 4.208.0): the move engine behind a picture-in-picture, a panel window or any box that
+ * ov-float.js (openvibe-shared 4.208.0; the handle, the size and the window 4.235.0): the move engine behind a picture-in-picture, a panel window or any box that
  * floats over a page. It is Live's PiP move (public/js/stream-pip.js, 2026-11-11: "move it anywhere … mobile and
  * desktop … more solid feeling and more responsive") lifted out whole, so every floating thing behaves the same:
  *
@@ -8,14 +8,17 @@
  * - Docked in `frame` (an element) or floating over the page (position: fixed). It follows the finger or the mouse
  *   with a transform each animation frame and lands with a spring (FLIP); a flick carries on where it was thrown.
  * - Dropped over its frame it docks; anywhere else it floats. Near an edge it snaps; thrown past a side it tucks into
- *   that side, leaving a tab with its picture still showing. Two fingers pinch it, the corner sizes it, a double tap
- *   toggles small and large, and with focus the arrows move it, + and − size it, T tucks, F pops it out of its frame
- *   (or back in) and Home puts it back where it started.
+ *   that side: it folds into a small handle at the edge (4.235.0; it used to leave a strip as tall as itself), the
+ *   handle slides up and down that edge, a tap opens it where it was, and a pull brings it out under the finger.
+ * - Two fingers pinch it, the corner sizes it, a double tap toggles small and large, and with focus the arrows move it,
+ *   + and − size it, T tucks, F pops it out of its frame (or back in) and Home puts it back where it started. It grows
+ *   up to the whole width of the window: past what its frame holds it floats over the page and keeps growing.
  * - Its place is kept as fractions of its frame: in this browser under `key`, and in the person's account when the
- *   page has GET/PATCH /api/me/layout (the `pip` map Live keeps). `OVFloat.store` is the account plug:
+ *   page has GET/PATCH /api/me/layout (the `pip` map Live keeps). This browser's place wins; the account's fills a
+ *   device that has none (a phone and a desktop each keep their own). `OVFloat.store` is the account plug:
  *   { get(key), put(key, value), load?() }; assign your own to keep it somewhere else.
  * - `f.geom()`, `f.set(patch, { save })`, `f.tuck()`, `f.untuck()`, `f.toggleMode()`, `f.toggleSize()`, `f.reset()`,
- *   `f.paint()`, `f.settle()`, `f.save()`, `f.relayout()`, `f.destroy()`. `OVFloat.layout()` lists every attached box,
+ *   `f.paint()`, `f.settle()`, `f.save()`, `f.sizeTo(px)`, `f.relayout()`, `f.destroy()`. `OVFloat.layout()` lists every attached box,
  *   and each save dispatches `ov:float` ({ key, geom, el }).
  *
  * The CSS (injected once) is behaviour, not looks: positioning, the lift, the tuck's translate, the tab and the resize
@@ -27,12 +30,16 @@
     if (typeof document === 'undefined' || root.OVFloat) return;
 
     const BASE = 16 / 9;          // the shape `w` is measured for
-    const MIN_W = 0.08, MAX_W = 0.60;
-    const MAX_H = 0.85;           // of the frame's height, whatever the shape
+    const MIN_W = 0.08, MAX_W = 1;  // up to its frame's whole width (4.235.0; was 0.60, a phone's PiP could not grow)
+    const MAX_H = 0.85;           // docked: of the frame's height, whatever the shape
+    const FLOAT_MAX_H = 0.92;     // floating: of the window's height
     const MIN_PX = 150;           // the smallest 16:9 width on a phone-sized frame
     const SNAP = 0.04;            // within this fraction of an edge, a drop snaps to it
     const EDGE_PX = 12;           // the margin it snaps to
-    const TAB_PX = 30;            // what stays on screen of a tucked box
+    const TAB_PX = 30;            // the tucked handle's width (a finger's: 34), and what stays on screen in a drag
+    const TAB_H = 64;             // the tucked handle's height (a finger's: 72)
+    const TUCK_MS = 340;          // folding into the handle and opening out of it
+    const OPEN_CLIP = 'inset(-80px -80px -80px -80px round 0px)';   // nothing clipped, its shadow included
     const DRAG_PX = 4;            // a press that moves less is a tap
     const BIG_W = 0.5;            // a double tap's large size
     const PROJECT_MS = 120;       // how far a flick carries
@@ -41,17 +48,22 @@
     const LAND_MS = 300;
     const DEFAULT_IGNORE = 'a, button, input, textarea, select, [contenteditable], .ov-float-resize, [data-ov-float-resize], [data-ov-float-no-drag]';
 
-    const CSS = `:where(.ov-float) { position: absolute; box-sizing: border-box; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+    const CSS = `:where(.ov-float) { position: absolute; box-sizing: border-box; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  --ov-float-tab-w: ${TAB_PX}px; --ov-float-tab-h: ${TAB_H}px; }
+@media (pointer: coarse) { :where(.ov-float) { --ov-float-tab-w: 34px; --ov-float-tab-h: 72px; } }
 .ov-float.is-floating { position: fixed; z-index: 900; }
 .ov-float.is-lifted { position: fixed; z-index: 905; will-change: transform; transition: none; }
+.ov-float.is-lifted, .ov-float.is-lifted * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .ov-float.is-dragging { cursor: grabbing; }
-.ov-float.is-tucked-left { translate: calc(-100% + var(--ov-float-tab, ${TAB_PX}px)) 0; }
-.ov-float.is-tucked-right { translate: calc(100% - var(--ov-float-tab, ${TAB_PX}px)) 0; }
-.ov-float.is-tucked .ov-float-tab { display: grid; }
-.ov-float-tab { position: absolute; top: 0; bottom: 0; z-index: 4; width: var(--ov-float-tab, ${TAB_PX}px); display: none; place-items: center; padding: 0; border: 0; cursor: pointer;
-  color: #fff; font: 600 15px/1 system-ui, sans-serif; background: rgba(10, 12, 18, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.ov-float.is-tucked-left .ov-float-tab { right: 0; }
-.ov-float.is-tucked-right .ov-float-tab { left: 0; background: linear-gradient(270deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, .25)); }
+.ov-float.is-tucked { cursor: pointer; }
+.ov-float.is-tucked-right { clip-path: inset(max(0px, calc(50% - var(--ov-float-tab-h) / 2)) 0px max(0px, calc(50% - var(--ov-float-tab-h) / 2)) calc(100% - var(--ov-float-tab-w)) round 14px 0px 0px 14px); }
+.ov-float.is-tucked-left { clip-path: inset(max(0px, calc(50% - var(--ov-float-tab-h) / 2)) calc(100% - var(--ov-float-tab-w)) max(0px, calc(50% - var(--ov-float-tab-h) / 2)) 0px round 0px 14px 14px 0px); }
+.ov-float.is-tucked .ov-float-tab { display: grid; animation: ovFloatTabIn ${TUCK_MS}ms ease-out; }
+@keyframes ovFloatTabIn { from { opacity: 0; } }
+.ov-float-tab { position: absolute; top: 50%; z-index: 4; width: var(--ov-float-tab-w); height: min(var(--ov-float-tab-h), 100%); translate: 0 -50%; display: none; place-items: center; padding: 0; border: 0; cursor: pointer; touch-action: none;
+  color: #fff; font: 600 18px/1 system-ui, sans-serif; background: rgba(10, 12, 18, .62); -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2); }
+.ov-float.is-tucked-left .ov-float-tab { left: 0; border-radius: 0 14px 14px 0; box-shadow: inset -1px 0 0 rgba(255, 255, 255, .2); }
+.ov-float.is-tucked-right .ov-float-tab { right: 0; border-radius: 14px 0 0 14px; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .2); }
 .ov-float-tab-l, .ov-float-tab-r { display: none; }
 .ov-float.is-tucked-left .ov-float-tab-r, .ov-float.is-tucked-right .ov-float-tab-l { display: block; }
 .ov-float-resize { position: absolute; right: 0; bottom: 0; z-index: 3; width: 22px; height: 22px; cursor: nwse-resize; touch-action: none; opacity: 0;
@@ -59,7 +71,7 @@
 .ov-float:hover .ov-float-resize, .ov-float:focus-within .ov-float-resize, .ov-float.is-resizing .ov-float-resize { opacity: 1; }
 @media (pointer: coarse) { .ov-float-resize { width: 30px; height: 30px; opacity: .85; } }
 html[data-ov-motion="off"] .ov-float { transition: none !important; }
-html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-resize { transition: none !important; }
+html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-resize { transition: none !important; animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   html:not([data-ov-motion="on"]) .ov-float { transition: none !important; }
 }`;
@@ -263,7 +275,16 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         g.tuck = raw.tuck === 'left' || raw.tuck === 'right' ? raw.tuck : null;
         if (typeof raw.muted === 'boolean') g.muted = raw.muted;
         g.at = Number(raw.at) || 0;
+        // Where a box tucked by hand opens again (this browser only).
+        if (g.tuck && raw.ux != null && Number.isFinite(Number(raw.ux))) g.ux = clamp(raw.ux, 0, 1, 0);
         return g;
+    }
+
+    /** The place as an account keeps it (live.layout's fields): no browser-only extras. */
+    function placeOf(g) {
+        const out = { x: g.x, y: g.y, w: g.w, mode: g.mode, tuck: g.tuck || null, at: g.at || 0 };
+        if (typeof g.muted === 'boolean') out.muted = g.muted;
+        return out;
     }
 
     function readSaved(key, legacyKeys) {
@@ -282,10 +303,73 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
     /* ── the instance ──────────────────────────────────────────────────────────────────────────────────────── */
 
     function box(inst) {
+        const floating = inst.geom.mode === 'float' && !inFullscreen(inst);
         return boxOf(inst.geom, frameRect(inst), {
             aspect: inst.aspect, minPx: inst.minPx, minW: inst.minW, maxW: inst.maxW,
+            maxH: floating ? FLOAT_MAX_H : MAX_H,
             elHeight: inst.el.offsetHeight || 0,
         });
+    }
+
+    /** The handle a tucked box folds into, in px (the component may set its own with --ov-float-tab-w/-h). */
+    function tabSize(inst) {
+        let w = 0, h = 0;
+        try {
+            const cs = root.getComputedStyle(inst.el);
+            w = parseFloat(cs.getPropertyValue('--ov-float-tab-w'));
+            h = parseFloat(cs.getPropertyValue('--ov-float-tab-h'));
+        } catch { /* no computed style here */ }
+        return { w: w > 0 ? w : TAB_PX, h: h > 0 ? h : TAB_H };
+    }
+
+    /**
+     * The tuck's own motion: the box folds into its handle at the side, or opens out of it, as a clip, so nothing inside
+     * is squeezed (the move to the side is the landing's spring, at the same time). The CSS class holds the folded shape.
+     */
+    function animateClip(inst, opening, side) {
+        const el = inst.el;
+        if (!side || reduced() || typeof el.animate !== 'function') return;
+        const w = el.offsetWidth, h = el.offsetHeight;
+        if (!w || !h) return;
+        const t = tabSize(inst);
+        const v = Math.max(0, (h - t.h) / 2), across = Math.max(0, w - t.w);
+        const folded = side === 'right'
+            ? `inset(${v}px 0px ${v}px ${across}px round 14px 0px 0px 14px)`
+            : `inset(${v}px ${across}px ${v}px 0px round 0px 14px 14px 0px)`;
+        try {
+            if (inst.clipAnim) inst.clipAnim.cancel();
+            inst.clipAnim = el.animate([{ clipPath: opening ? folded : OPEN_CLIP }, { clipPath: opening ? OPEN_CLIP : folded }],
+                { duration: TUCK_MS, easing: 'cubic-bezier(.2, .9, .25, 1)' });
+        } catch { /* a browser that cannot animate a clip simply shows the end */ }
+    }
+
+    /**
+     * Size it so the box is `px` wide on screen (for another shape, the width it has at that 16:9 area): inside a docked
+     * frame while it fits; past what the frame holds it floats over the page, where it is, and keeps growing up to the
+     * window's width. Answers true when it changed frames (the caller takes its pointers back).
+     */
+    function sizeTo(inst, px) {
+        const a = inst.aspect;
+        const k = a ? Math.sqrt(a / BASE) || 1 : 1;
+        let b = box(inst);
+        if (inst.geom.mode === 'dock' && inst.frame && !inFullscreen(inst) && b.rw && b.rh) {
+            const hpx = a ? px / a : (inst.el.offsetHeight || 0);
+            if (px > b.rw + 0.5 || (a && hpx > MAX_H * b.rh + 0.5)) {
+                const r = inst.el.getBoundingClientRect();
+                toMode(inst, 'float', { left: r.left, top: r.top, width: px, height: hpx });
+                placeIn(inst);
+                paintNow(inst);
+                return true;
+            }
+        }
+        b = box(inst);
+        if (!b.rw) return false;
+        inst.geom.w = clamp(px / b.rw / k, inst.minW, inst.maxW, inst.geom.w);
+        b = box(inst);
+        inst.geom.x = Math.min(inst.geom.x, Math.max(0, 1 - b.wf));
+        inst.geom.y = Math.min(inst.geom.y, Math.max(0, 1 - b.hf));
+        paintNow(inst);
+        return false;
     }
 
     function paintNow(inst) {
@@ -321,15 +405,16 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         // reads the element's rect (a window's absolute place, for one) sees where it landed, not its static position.
         if (!inst.el.classList.contains('is-lifted')) paintNow(inst);
         inst.geom.at = Date.now();
+        // This browser keeps everything (where a tucked box opens again too); the account and listeners get the place.
         try { if (root.localStorage) root.localStorage.setItem(inst.key, JSON.stringify(inst.geom)); } catch { /* private mode */ }
         if (inst.store && typeof inst.store.put === 'function') {
-            try { inst.store.put(inst.accountKey, Object.assign({}, inst.geom)); } catch { /* the page's own store */ }
+            try { inst.store.put(inst.accountKey, placeOf(inst.geom)); } catch { /* the page's own store */ }
         }
         if (typeof inst.options.onChange === 'function') {
-            try { inst.options.onChange(Object.assign({}, inst.geom), inst.api); } catch (err) { console.error(err); }
+            try { inst.options.onChange(placeOf(inst.geom), inst.api); } catch (err) { console.error(err); }
         }
         try {
-            root.dispatchEvent(new root.CustomEvent('ov:float', { detail: { key: inst.key, geom: Object.assign({}, inst.geom), el: inst.el } }));
+            root.dispatchEvent(new root.CustomEvent('ov:float', { detail: { key: inst.key, geom: placeOf(inst.geom), el: inst.el } }));
         } catch { /* an environment without CustomEvent */ }
     }
 
@@ -372,26 +457,31 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
     }
 
     function tuck(inst, side) {
+        if (side === null) { untuck(inst); return; }
         const from = inst.el.getBoundingClientRect();
-        if (side === null) { inst.geom.tuck = null; }
-        else {
-            const b = box(inst);
-            inst.geom.tuck = side || (inst.geom.x + b.wf / 2 < 0.5 ? 'left' : 'right');
-        }
+        const b = box(inst);
+        // Tucked by hand (the button, T): it opens again where it was. Thrown at a side, it opens at that side.
+        if (!inst.geom.tuck) inst.geom.ux = inst.geom.x;
+        inst.geom.tuck = side || (inst.geom.x + b.wf / 2 < 0.5 ? 'left' : 'right');
         save(inst);
         land(inst, from);
+        animateClip(inst, false, inst.geom.tuck);
     }
 
     function untuck(inst) {
+        const side = inst.geom.tuck;
+        if (!side) return;
         const from = inst.el.getBoundingClientRect();
         const b = box(inst);
+        const margin = b.rw ? EDGE_PX / b.rw : 0;
         inst.geom.tuck = null;
-        inst.geom.x = from.left + from.width / 2 < (b.rl + b.rw / 2)
-            ? (b.rw ? EDGE_PX / b.rw : 0)
-            : Math.max(0, 1 - b.wf - (b.rw ? EDGE_PX / b.rw : 0));
+        inst.geom.x = inst.geom.ux != null ? inst.geom.ux : side === 'left' ? margin : Math.max(0, 1 - b.wf - margin);
+        delete inst.geom.ux;
+        inst.untuckedAt = performance.now();
         settleInst(inst);
         save(inst);
         land(inst, from);
+        animateClip(inst, true, side);
     }
 
     function toggleMode(inst) {
@@ -403,11 +493,18 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         return true;
     }
 
+    /** Small and large: large is half its frame, and on a phone the whole width of the screen (it floats to get it). */
     function toggleSize(inst) {
         const from = inst.el.getBoundingClientRect();
-        const big = inst.options.bigW == null ? BIG_W : inst.options.bigW;
-        inst.geom.w = inst.geom.w < big - 0.01 ? big : clamp(inst.defaults.w, inst.minW, inst.maxW, inst.defaults.w);
+        const vp = viewport(inst);
+        const b = box(inst);
+        const k = inst.aspect ? Math.sqrt(inst.aspect / BASE) || 1 : 1;
+        const bigW = inst.options.bigW == null ? BIG_W : inst.options.bigW;
+        const bigPx = vp.width && vp.width < 640 ? vp.width : bigW * k * b.rw;
+        delete inst.geom.ux;
         inst.geom.tuck = null;
+        if (from.width < bigPx * 0.95) sizeTo(inst, bigPx);
+        else inst.geom.w = clamp(inst.defaults.w, inst.minW, inst.maxW, inst.defaults.w);
         settleInst(inst);
         save(inst);
         land(inst, from);
@@ -417,6 +514,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         const from = inst.el.getBoundingClientRect();
         const d = inst.defaults;
         Object.assign(inst.geom, { x: d.x, y: d.y, w: d.w, mode: inst.frame ? d.mode : 'float', tuck: null });
+        delete inst.geom.ux;
         settleInst(inst);
         save(inst);
         land(inst, from);
@@ -432,7 +530,8 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         const store = inst.store;
         if (!store || typeof store.get !== 'function') return;
         const apply = () => {
-            if (inst.destroyed || inst.touched) return;
+            // This device's own place wins; the account's opens a device that has none where the person left it.
+            if (inst.destroyed || inst.touched || inst.hadLocal) return;
             const remote = normalize(store.get(inst.accountKey), inst.defaults, { hasFrame: !!inst.frame, minW: inst.minW, maxW: inst.maxW });
             if ((remote.at || 0) > (inst.geom.at || 0)) {
                 inst.geom = remote;
@@ -487,9 +586,11 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             clearTimeout(activeTimer);
             activeTimer = setTimeout(() => el.classList.remove('is-active'), ACTIVE_MS);
         };
+        const recapture = () => { for (const id of pts.keys()) { try { el.setPointerCapture(id); } catch { /* */ } } };
         const onDown = (e) => {
             if (e.button > 0) return;
-            if (e.target.closest && e.target.closest(ignore)) return;
+            // The tucked handle is a button that moves: a tap opens it, a drag slides it along its side or pulls it out.
+            if (e.target.closest && e.target.closest(ignore) && !e.target.closest('[data-ov-float-tab]')) return;
             if (typeof inst.options.canDrag === 'function' && !inst.options.canDrag(e)) return;
             inst.touched = true;
             pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -498,27 +599,46 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             if (pts.size === 2) {
                 if (drag && drag.lifted) el.style.transform = '';
                 drag = null;
-                pinch = { d: gap(), w: inst.geom.w };
+                pinch = { d: gap(), px: el.getBoundingClientRect().width };
                 el.classList.add('is-resizing');
                 return;
             }
             if (pts.size > 2) return;
             drag = {
                 sx: e.clientX, sy: e.clientY, dx: 0, dy: 0, r: el.getBoundingClientRect(), lifted: false,
+                tucked: inst.geom.tuck || null, slide: false,
                 hist: [{ x: e.clientX, y: e.clientY, t: performance.now() }],
             };
         };
         const onMove = (e) => {
             if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
             if (pinch && pts.size === 2) {
-                inst.geom.w = clamp(pinch.w * (gap() / pinch.d), inst.minW, inst.maxW, pinch.w);
-                paintNow(inst);
+                // Up to the whole width of the window: past its frame it floats over the page and keeps growing.
+                if (sizeTo(inst, pinch.px * (gap() / pinch.d))) recapture();
                 return;
             }
             if (!drag) return;
             const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
-            if (!drag.lifted && Math.hypot(dx, dy) < DRAG_PX) return;
-            if (!drag.lifted) lift();
+            if (!drag.lifted && !drag.slide && Math.hypot(dx, dy) < DRAG_PX) return;
+            if (drag.tucked && !drag.lifted && (drag.slide || Math.abs(dy) > Math.abs(dx))) {
+                // A tucked handle dragged up or down slides along its side, the whole box inside its frame.
+                if (!drag.slide) { drag.slide = true; el.classList.add('is-dragging'); el.style.transition = 'none'; }
+                const f = frameRect(inst), r = drag.r;
+                drag.dy = Math.min(Math.max(dy, f.top - r.top), f.top + f.height - r.bottom);
+                if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (drag && drag.slide) el.style.transform = `translate3d(0, ${drag.dy}px, 0)`; });
+                return;
+            }
+            if (!drag.lifted) {
+                if (drag.tucked) {
+                    // Pulled out of its side: it opens under the finger and follows it.
+                    const side = inst.geom.tuck;
+                    inst.geom.tuck = null;
+                    delete inst.geom.ux;
+                    el.classList.remove('is-tucked', 'is-tucked-left', 'is-tucked-right');
+                    animateClip(inst, true, side);
+                }
+                lift();
+            }
             // Anywhere on screen; most of it may go past a side (that is how it tucks), never past the top or bottom.
             const vp = viewport(inst);
             const r = drag.r, vw = vp.width, vh = vp.height, tab = inst.options.tabPx == null ? TAB_PX : inst.options.tabPx;
@@ -552,15 +672,28 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             const d = drag; drag = null;
             if (raf) { cancelAnimationFrame(raf); raf = 0; }
             hint(false);
+            if (d.slide) {
+                // Slid along its side: it stays tucked there, at that height.
+                el.classList.remove('is-dragging');
+                el.style.transition = 'none';
+                el.style.transform = '';
+                const b = box(inst);
+                if (b.rh) inst.geom.y = clamp((d.r.top + d.dy - b.rt) / b.rh, 0, Math.max(0, 1 - b.hf), inst.geom.y);
+                paintNow(inst);
+                el.style.transition = '';
+                save(inst);
+                return;
+            }
             if (!d.lifted) {
-                // A tap: the bar for a moment (a touch screen has no hover); a second within 300 ms toggles the size.
+                // A tap on a tucked box opens it; on an open one, the bar for a moment (a touch screen has no hover), and a
+                // second within 300 ms toggles the size.
+                if (inst.geom.tuck) { if (e.type === 'pointerup') untuck(inst); return; }
                 const now = performance.now();
                 if (inst.options.doubleTap !== false && now - lastTap < TAP_MS) { lastTap = 0; toggleSize(inst); }
                 else {
                     lastTap = now;
                     if (e.pointerType !== 'mouse' && inst.options.activeBar !== false) showActive();
                 }
-                if (inst.geom.tuck && e.type === 'pointerup') untuck(inst);
                 return;
             }
             el.classList.remove('is-dragging', 'is-lifted');
@@ -612,8 +745,10 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             else if (k === 'ArrowRight') inst.geom.x += step;
             else if (k === 'ArrowUp') inst.geom.y -= step;
             else if (k === 'ArrowDown') inst.geom.y += step;
-            else if (k === '+' || k === '=') inst.geom.w = clamp(inst.geom.w + 0.03, inst.minW, inst.maxW, inst.geom.w);
-            else if (k === '-' || k === '_') inst.geom.w = clamp(inst.geom.w - 0.03, inst.minW, inst.maxW, inst.geom.w);
+            else if (k === '+' || k === '=' || k === '-' || k === '_') {
+                const r = el.getBoundingClientRect();
+                sizeTo(inst, r.width * (k === '+' || k === '=' ? 1.12 : 1 / 1.12));
+            }
             else if (k === 'Home') { e.preventDefault(); reset(inst); return; }
             else if (k === 't' || k === 'T' || k === 'h' || k === 'H') { e.preventDefault(); inst.geom.tuck ? untuck(inst) : tuck(inst); return; }
             else if (k === 'f' || k === 'F') { e.preventDefault(); toggleMode(inst); return; }
@@ -622,6 +757,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             if (!moved) return;
             const b = box(inst);
             inst.geom.tuck = null;
+            delete inst.geom.ux;
             inst.geom.x = Math.min(Math.max(0, inst.geom.x), Math.max(0, 1 - b.wf));
             inst.geom.y = Math.min(Math.max(0, inst.geom.y), Math.max(0, 1 - b.hf));
             paintNow(inst);
@@ -643,7 +779,12 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             inst.el.append(tab);
             inst.ownedTab = tab;
         }
-        const onClick = (e) => { e.preventDefault(); e.stopPropagation(); untuck(inst); };
+        // A pointer tap already opened it (the gesture's pointerup); the click is a key's, or a tap the gesture missed.
+        const onClick = (e) => {
+            e.preventDefault(); e.stopPropagation();
+            if (performance.now() - (inst.untuckedAt || 0) < 700) return;
+            untuck(inst);
+        };
         tab.addEventListener('click', onClick);
         inst.cleanups.push(() => tab.removeEventListener('click', onClick));
     }
@@ -661,8 +802,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         let start = null;
         const onDown = (e) => {
             if (e.button > 0) return;
-            const b = box(inst);
-            start = { px: e.clientX, py: e.clientY, w: inst.geom.w, rw: b.rw };
+            start = { px: e.clientX, py: e.clientY, width: inst.el.getBoundingClientRect().width };
             inst.touched = true;
             inst.el.classList.add('is-resizing');
             try { handle.setPointerCapture(e.pointerId); } catch { /* */ }
@@ -670,15 +810,10 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             e.stopPropagation();
         };
         const onMove = (e) => {
-            if (!start || !start.rw) return;
-            // The handle's diagonal pull is the box's own width; `w` is the 16:9 width of the same area.
-            const k = inst.aspect ? Math.sqrt(inst.aspect / BASE) || 1 : 1;
+            if (!start || !start.width) return;
+            // The handle's diagonal pull is the box's own width; past its frame it floats and keeps growing.
             const pull = inst.aspect ? ((e.clientX - start.px) + (e.clientY - start.py) * inst.aspect) / 2 : (e.clientX - start.px);
-            inst.geom.w = clamp(start.w + pull / start.rw / k, inst.minW, inst.maxW, start.w);
-            const b = box(inst);
-            inst.geom.x = Math.min(inst.geom.x, Math.max(0, 1 - b.wf));
-            inst.geom.y = Math.min(inst.geom.y, Math.max(0, 1 - b.hf));
-            paintNow(inst);
+            if (sizeTo(inst, Math.max(1, start.width + pull))) { try { handle.setPointerCapture(e.pointerId); } catch { /* */ } }
         };
         const end = (e) => {
             if (!start) return;
@@ -702,8 +837,16 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
     }
 
     function wireWindow(inst) {
-        const onResize = () => relayout(inst);
+        // A turn of the phone, a keyboard, the address bar or a new window size: back inside, once a frame.
+        let queued = 0;
+        const onResize = () => {
+            if (queued) return;
+            queued = requestAnimationFrame(() => { queued = 0; relayout(inst); });
+        };
+        const vv = root.visualViewport;
         root.addEventListener('resize', onResize);
+        root.addEventListener('orientationchange', onResize);
+        if (vv && vv.addEventListener) vv.addEventListener('resize', onResize);
         document.addEventListener('fullscreenchange', onResize);
         let ro = null;
         if (typeof ResizeObserver === 'function') {
@@ -712,7 +855,10 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             ro.observe(inst.el);
         }
         inst.cleanups.push(() => {
+            if (queued) cancelAnimationFrame(queued);
             root.removeEventListener('resize', onResize);
+            root.removeEventListener('orientationchange', onResize);
+            if (vv && vv.removeEventListener) vv.removeEventListener('resize', onResize);
             document.removeEventListener('fullscreenchange', onResize);
             try { ro && ro.disconnect(); } catch { /* */ }
         });
@@ -737,7 +883,9 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
             store: o.store === null ? null : (o.store || root.OVFloat.store || null),
             geom: null, touched: false, destroyed: false, cleanups: [], landTimer: 0, ownedTab: null, ownedResize: null, api: null,
         };
-        inst.geom = normalize(readSaved(key, o.legacyKeys), defaults, { hasFrame: !!frame, minW, maxW });
+        const local = readSaved(key, o.legacyKeys);
+        inst.hadLocal = !!local;
+        inst.geom = normalize(local, defaults, { hasFrame: !!frame, minW, maxW });
         injectStyles();
         el.classList.add('ov-float');
         if (o.tab !== false) ensureTab(inst);
@@ -764,6 +912,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
                 paintNow(inst);
             },
             metrics: () => box(inst),
+            sizeTo: (px) => sizeTo(inst, px),
             paint: () => paintNow(inst),
             settle: () => { settleInst(inst); paintNow(inst); return Object.assign({}, inst.geom); },
             save: () => save(inst),
@@ -786,6 +935,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         inst.destroyed = true;
         instances.delete(inst);
         clearTimeout(inst.landTimer);
+        if (inst.clipAnim) { try { inst.clipAnim.cancel(); } catch { /* */ } }
         for (const fn of inst.cleanups) { try { fn(); } catch { /* */ } }
         inst.cleanups = [];
         if (inst.ownedTab) { try { inst.ownedTab.remove(); } catch { /* */ } }
@@ -809,7 +959,7 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         layout: () => [...instances].map((i) => ({ key: i.key, geom: Object.assign({}, i.geom), el: i.el })),
         _test: {
             boxOf, settle: settleGeom, flick, tuckFor, overFrame, paint, normalize,
-            BASE, MAX_H, MIN_W, MAX_W, EDGE_PX, SNAP, PROJECT_MS,
+            BASE, MAX_H, FLOAT_MAX_H, MIN_W, MAX_W, EDGE_PX, SNAP, PROJECT_MS, TAB_H, placeOf,
         },
     };
 })(typeof window !== 'undefined' ? window : globalThis);

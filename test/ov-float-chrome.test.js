@@ -1,6 +1,7 @@
 'use strict';
 // ov-float.js (4.208.0) in a real headless Chrome: a box docked in its frame, lifted on the first move and floating
-// over the page, dropped back over its frame it docks, thrown past a side it tucks with its tab, the tab brings it
+// over the page, dropped back over its frame it docks, thrown past a side it tucks into a small handle that slides
+// along that side and pulls out, the tab brings it
 // back, the arrows, + and T move and size it, the corner grip sizes it, Home puts it back, the place is kept and
 // comes back on a reload, a pluggable account store receives each save, and `ov:float` and OVFloat.layout() say where
 // it is.
@@ -116,8 +117,34 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         const tab = await page.evaluate(`(() => { const t = document.querySelector('.ov-float-tab'); return { display: getComputedStyle(t).display, label: t.getAttribute('aria-label') }; })()`);
         assert.equal(tab.display, 'grid', 'the tab is on screen');
         assert.equal(tab.label, 'Bring it back');
+        // 4.235.0: tucked, it is a small handle at the edge, not a strip as tall as itself.
+        const handle = async () => page.evaluate(`(() => { const t = document.querySelector('.ov-float-tab').getBoundingClientRect(); const el = document.getElementById('box'); return { w: t.width, h: t.height, left: t.left, top: t.top, clip: getComputedStyle(el).clipPath, frameLeft: document.getElementById('frame').getBoundingClientRect().left, y: window.f.geom().y }; })()`);
+        let hd;
+        await eventually(async () => {
+            hd = await handle();
+            assert.ok(Math.abs(hd.w - 30) < 1 && Math.abs(hd.h - 64) < 1, `a 30 × 64 handle (${hd.w} × ${hd.h})`);
+            assert.ok(Math.abs(hd.left) < 1, `at the side of the window it was thrown at (${hd.left})`);
+            assert.match(hd.clip, /inset/, 'the rest of it is folded away');
+        }, 'the handle');
+        // Dragged up or down, the handle slides along its side and stays tucked.
+        await drag(page, { x: hd.left + hd.w / 2, y: hd.top + hd.h / 2 }, { x: hd.left + hd.w / 2 + 3, y: hd.top + hd.h / 2 + 90 });
+        let slid;
+        await eventually(async () => {
+            slid = await handle();
+            assert.match((await box(page)).cls, /is-tucked-left/, 'still tucked after a slide');
+            assert.ok(slid.top > hd.top + 60 && slid.y > hd.y, `slid down its side (${hd.top} → ${slid.top})`);
+        }, 'the slide');
+        // Pulled out sideways, it opens under the finger and lands where it is let go.
+        await drag(page, { x: slid.left + slid.w / 2, y: slid.top + slid.h / 2 }, { x: slid.left + 260, y: slid.top + slid.h / 2 });
+        await eventually(async () => assert.doesNotMatch((await box(page)).cls, /is-tucked/, 'a pull brings it out'), 'pull');
+        assert.equal(await page.evaluate(`getComputedStyle(document.getElementById('box')).clipPath`), 'none', 'nothing folded once it is out');
+        // Thrown again and tapped: it opens at its side.
+        v = await box(page);
+        await drag(page, { x: v.left + v.width / 2, y: v.top + v.height / 2 }, { x: 1, y: v.top + v.height / 2 });
+        await eventually(async () => assert.match((await box(page)).cls, /is-tucked-left/, 'tucked again'), 'tuck again');
         await page.evaluate(`document.querySelector('.ov-float-tab').click()`);
         await eventually(async () => assert.doesNotMatch((await box(page)).cls, /is-tucked/, 'the tab brings it back'), 'untuck');
+        assert.ok(!(await page.evaluate(`window.puts.some((p) => 'ux' in p.value)`)), 'the account gets only the place, never the browser\'s extras');
 
         // The keyboard: an arrow moves it, + grows it, T tucks, Home puts it back where it started.
         await page.evaluate(`document.getElementById('box').focus()`);
@@ -143,6 +170,19 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         await eventually(async () => assert.ok((await box(page)).w > 0.25, 'the corner sizes it'), 'resize');
         assert.ok((await page.evaluate(`JSON.parse(localStorage.getItem('test-float')).w`)) > 0.25, 'the new size is kept');
 
+        // Past what its frame holds it floats over the page and keeps growing, up to the window's width.
+        v = await box(page);
+        const grip2 = await page.evaluate(`(() => { const r = document.querySelector('.ov-float-resize').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+        await drag(page, grip2, { x: 1270, y: grip2.y + 300 });
+        await eventually(async () => {
+            const g = await box(page);
+            assert.equal(g.mode, 'float', 'grown past its frame, it floats');
+            assert.ok(g.width > 800, `wider than its frame (${g.width})`);
+            assert.ok(g.width <= 1280 + 1 && g.left >= -1 && g.left + g.width <= 1281, 'and inside the window');
+        }, 'grow past the frame');
+        await key(page, 'Home');
+        await wait(400);
+
         // The place comes back on a reload.
         const last = await box(page);
         await page.goto(base, { maxMs: 5000 });
@@ -154,10 +194,27 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         // A phone-sized frame: the 150 px floor, and the box stays inside it.
         const ph = await openPage(browser, await browser.newContext(), { width: 390, height: 844, mobile: true });
         await ph.goto(base, { maxMs: 5000 });
-        await ph.evaluate(`Object.assign(document.getElementById('frame').style, { width: '390px', height: '219px' }); window.f.set({ w: 0.25, mode: 'dock', x: 0.9, y: 0.9 }, { settle: true, save: true })`);
+        await ph.evaluate(`Object.assign(document.getElementById('frame').style, { left: '0px', width: '390px', height: '219px' }); window.f.set({ w: 0.25, mode: 'dock', x: 0.9, y: 0.9 }, { settle: true, save: true })`);
         const small = await ph.evaluate(`(() => { const el = document.getElementById('box'); const r = el.getBoundingClientRect(); const f = document.getElementById('frame').getBoundingClientRect(); return { w: r.width, inside: r.left >= f.left - 1 && r.right <= f.right + 1 && r.top >= f.top - 1 && r.bottom <= f.bottom + 1 }; })()`);
         assert.ok(small.w >= 149.5, `never smaller than 150 px (${small.w})`);
         assert.ok(small.inside, 'shown inside its frame');
+        // A double tap on a phone: the whole width of the screen.
+        const pb = await ph.evaluate(`(() => { const r = document.getElementById('box').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+        for (let i = 0; i < 2; i += 1) {
+            await ph.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pb.x, y: pb.y, button: 'left', clickCount: 1 });
+            await ph.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pb.x, y: pb.y, button: 'left', clickCount: 1 });
+            await wait(60);
+        }
+        await eventually(async () => {
+            const full = await ph.evaluate(`(() => { const r = document.getElementById('box').getBoundingClientRect(); return { w: r.width, left: r.left, mode: window.f.geom().mode }; })()`);
+            assert.ok(full.w > 380 && full.left > -1 && full.left + full.w < 391, `a double tap fills the phone's width (${full.w})`);
+        }, 'double tap on a phone');
+        // This device's place wins over an older or newer one in the account; a device without one takes the account's.
+        await ph.evaluate(`window.remote = { 'test-float': { x: 0.5, y: 0.5, w: 0.3, mode: 'float', tuck: null, at: Date.now() + 60000 } }`);
+        const keep = await ph.evaluate(`JSON.parse(localStorage.getItem('test-float')).w`);
+        await ph.goto(base, { maxMs: 5000 });
+        await ph.evaluate(`window.remote = { 'test-float': { x: 0.5, y: 0.5, w: 0.3, mode: 'float', tuck: null, at: Date.now() + 60000 } }`);
+        await eventually(async () => assert.ok(Math.abs((await ph.evaluate('window.f.geom().w')) - keep) < 0.001, 'this phone keeps its own place'), 'own place');
         await ph.close();
         console.log('ov-float-chrome: docked and floating, the lift and the landing, the tuck and its tab, the keys, the corner, the kept place, the account store, ov:float and layout()');
     } finally {

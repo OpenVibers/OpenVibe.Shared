@@ -348,7 +348,7 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': 'd3d8f9e3e6d2', 'ov-capture.js': '91f3b2cb25e3' };
+    const COMPOSER_REV = { 'ov-window.js': '1c4db9b0ce9c', 'ov-capture.js': '91f3b2cb25e3' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
