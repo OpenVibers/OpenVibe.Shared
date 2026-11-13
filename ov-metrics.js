@@ -25,7 +25,7 @@
     const DASH = '—';
     const format = {
         ms(v) { const n = num(v); if (n == null) return DASH; if (n < 1000) return `${Math.round(n)} ms`; if (n < 60000) return `${(n / 1000).toFixed(n < 10000 ? 1 : 0)} s`; return `${Math.floor(n / 60000)} min ${Math.round((n % 60000) / 1000)} s`; },
-        usd(v) { const n = num(v); if (n == null) return DASH; if (n === 0) return '$0'; if (Math.abs(n) < 0.01) return `$${n.toFixed(4).replace(/0+$/, '')}`; if (Math.abs(n) < 100) return `$${n.toFixed(2)}`; return `$${Math.round(n).toLocaleString('en-US')}`; },
+        usd(v) { const n = num(v); if (n == null) return DASH; if (n === 0) return '$0'; if (Math.abs(n) < 1) { const d = Math.min(6, Math.max(2, 1 - Math.floor(Math.log10(Math.abs(n))))); return `$${n.toFixed(d).replace(/(\.\d\d\d*?)0+$/, '$1')}`; } if (Math.abs(n) < 100) return `$${n.toFixed(2)}`; return `$${Math.round(n).toLocaleString('en-US')}`; },
         count(v) { const n = num(v); if (n == null) return DASH; const a = Math.abs(n); if (a < 1000) return String(Math.round(n)); if (a < 1e6) return `${(n / 1e3).toFixed(a < 1e4 ? 1 : 0)}k`; if (a < 1e9) return `${(n / 1e6).toFixed(a < 1e7 ? 1 : 0)}M`; return `${(n / 1e9).toFixed(1)}B`; },
         tokens(v) { const s = format.count(v); return s === DASH ? s : `${s} tokens`; },
         rate(v) { const n = num(v); if (n == null) return DASH; const p = n * 100; return `${p >= 99.95 || p === 0 ? p.toFixed(0) : p >= 10 ? p.toFixed(1) : p.toFixed(2)}%`; },
@@ -58,11 +58,24 @@
         '.ovm-split{display:grid;gap:8px}.ovm-split-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--bg-tertiary,rgba(127,127,127,.15))}.ovm-split-bar>span{height:100%}',
         '.ovm-split-legend{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--text-secondary,#b7c0d3)}.ovm-split-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:6px;vertical-align:0}',
         '.ovm-t1{background:var(--accent,#5b8cff)}.ovm-t2{background:var(--success,#22c55e)}.ovm-t3{background:var(--warning,#f59e0b)}.ovm-t4{background:var(--text-muted,#8b96ad)}.ovm-t5{background:var(--danger,#ef4444)}',
-        '.ovm-table-wrap{overflow-x:auto;border:1px solid var(--border,#2a3346);border-radius:12px}',
+        '.ovm-table-wrap{overflow-x:auto;border:1px solid var(--border,#2a3346);border-radius:12px;container:ovm-table/inline-size}',
         '.ovm-table{border-collapse:collapse;width:100%;font-size:13.5px}.ovm-table caption{text-align:left;padding:10px 12px;font-weight:600}',
         '.ovm-table th,.ovm-table td{padding:8px 12px;border-bottom:1px solid var(--border,#2a3346);text-align:left;white-space:nowrap}.ovm-table tr:last-child td{border-bottom:0}',
         '.ovm-table th{font-size:12px;font-weight:600;color:var(--text-muted,#8b96ad)}.ovm-table th button{all:unset;cursor:pointer;display:inline-flex;gap:4px;align-items:center}.ovm-table th button:focus-visible{outline:2px solid var(--accent,#5b8cff);outline-offset:2px;border-radius:4px}',
         '.ovm-table td.is-num,.ovm-table th.is-num{text-align:right;font-variant-numeric:tabular-nums}.ovm-table th.is-num button{flex-direction:row-reverse}',
+        // A narrow box (a phone, a side column): each row is a card, its name on top and each value under its label;
+        // the heads become sort buttons. The roles keep it a table for a screen reader whatever its display. This
+        // block comes after the base table rules, so it wins the cascade at equal specificity.
+        '@container ovm-table (max-width:520px){.ovm-table,.ovm-table tbody,.ovm-table thead,.ovm-table td{display:block}'
+        + '.ovm-table caption{display:block;white-space:normal}.ovm-table thead tr{display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border,#2a3346)}'
+        + '.ovm-table thead th{display:block;border:0;padding:0}.ovm-table th button{min-height:36px;padding:0 10px;box-sizing:border-box;border:1px solid var(--border,#2a3346);border-radius:999px}'
+        + '.ovm-table th[aria-sort=ascending] button,.ovm-table th[aria-sort=descending] button{border-color:var(--accent,#5b8cff);color:var(--text-primary,#e6edf7)}'
+        + '.ovm-table th.is-num button{flex-direction:row}'
+        + '.ovm-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px;padding:10px 12px;border-bottom:1px solid var(--border,#2a3346)}.ovm-table tbody tr:last-child{border-bottom:0}'
+        + '.ovm-table td,.ovm-table td.is-num{border:0;padding:0;white-space:normal;text-align:left;min-width:0;overflow-wrap:anywhere}'
+        + '.ovm-table td:first-child{grid-column:1/-1;font-weight:600}'
+        + '.ovm-table td:not(:first-child)::before{content:attr(data-label);display:block;font-size:11.5px;font-weight:400;color:var(--text-muted,#8b96ad)}'
+        + '.ovm-table td .ovm-cellbar{display:block;width:100%;margin:4px 0 0}}',
         '.ovm-cellbar{display:inline-block;width:48px;height:5px;margin-left:8px;border-radius:999px;background:var(--bg-tertiary,rgba(127,127,127,.15));vertical-align:middle;overflow:hidden}.ovm-cellbar>span{display:block;height:100%;background:var(--accent,#5b8cff)}',
         '@media (prefers-reduced-motion:no-preference){html:not([data-ov-motion=off]) .ovm-bar-t>span,html:not([data-ov-motion=off]) .ovm-cellbar>span{transition:width .35s ease}}',
     ].join('');
@@ -163,9 +176,9 @@
         let dir = o.sort && o.sort.dir === 'asc' ? 1 : -1;
         const maxOf = {};
         for (const c of cols) if (c.bar) maxOf[c.key] = Math.max(1e-12, ...data.map((r) => num(r[c.key]) || 0));
-        const t = el('table', 'ovm-table', [o.caption ? el('caption', '', [o.caption]) : null]);
-        const head = el('tr');
-        const tbody = el('tbody');
+        const t = el('table', 'ovm-table', [o.caption ? el('caption', '', [o.caption]) : null], { role: 'table' });
+        const head = el('tr', '', [], { role: 'row' });
+        const tbody = el('tbody', '', [], { role: 'rowgroup' });
         function drawBody() {
             const sorted = sortKey ? [...data].sort((a, b) => { const x = a[sortKey]; const y = b[sortKey]; const nx = num(x); const ny = num(y); return (nx != null && ny != null ? nx - ny : String(x == null ? '' : x).localeCompare(String(y == null ? '' : y))) * dir; }) : data;
             tbody.replaceChildren(...sorted.map((r) => el('tr', '', cols.map((c) => {
@@ -173,17 +186,17 @@
                 const text = c.format ? c.format(v, r) : (v == null ? DASH : String(v));
                 const kids = [text];
                 if (c.bar && num(v) != null) kids.push(el('span', 'ovm-cellbar', [el('span', '', [], { style: `width:${((num(v) / maxOf[c.key]) * 100).toFixed(1)}%` })], { 'aria-hidden': 'true' }));
-                return el('td', c.numeric ? 'is-num' : '', kids);
-            }))));
+                return el('td', c.numeric ? 'is-num' : '', kids, { role: 'cell', 'data-label': c.label });
+            }), { role: 'row' })));
             head.querySelectorAll('th').forEach((th) => th.setAttribute('aria-sort', th.dataset.key === sortKey ? (dir === 1 ? 'ascending' : 'descending') : 'none'));
         }
         for (const c of cols) {
             const b = el('button', '', [c.label, el('span', '', ['↕'], { 'aria-hidden': 'true' })], { type: 'button' });
             b.addEventListener('click', () => { if (sortKey === c.key) dir = -dir; else { sortKey = c.key; dir = c.numeric ? -1 : 1; } drawBody(); });
-            const th = el('th', c.numeric ? 'is-num' : '', [b], { scope: 'col', 'data-key': c.key });
+            const th = el('th', c.numeric ? 'is-num' : '', [b], { scope: 'col', role: 'columnheader', 'data-key': c.key });
             head.append(th);
         }
-        t.append(el('thead', '', [head]), tbody);
+        t.append(el('thead', '', [head], { role: 'rowgroup' }), tbody);
         drawBody();
         return el('div', 'ovm-table-wrap', [t]);
     }
