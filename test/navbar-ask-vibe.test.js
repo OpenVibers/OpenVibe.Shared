@@ -96,7 +96,10 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(u.searchParams.get('from'), null, 'an http test page is not named');
         // The picture opens the menu on You, with your own row in it (4.195.0: the old account block is not set there).
         const until = async (expr, ms = 6000) => { const end = Date.now() + ms; while (Date.now() < end) { if (await p.evaluate(expr)) return true; await new Promise((r) => setTimeout(r, 80)); } return false; };
-        assert.ok(await until(`!!document.querySelector('.ovs.is-open .ovh-mebox .ovh-acct')`), "the picture opened the menu's You tab, with your row and your account's menu");
+        // 4.238.0: You opens at its tabs; your row and your account's menu are one tap away, on your picture in the pill.
+        assert.ok(await until(`!!document.querySelector('.ovs.is-open .ovs-starttabs [data-tab="you"][aria-selected="true"]') && !!document.querySelector('.ovs-lead.is-you')`), "the picture opened the menu's You tab, and you lead the pill");
+        await p.evaluate(`document.querySelector('.ovs-lead').click(), true`);
+        assert.ok(await until(`!!document.querySelector('.ovs.is-open .ovs-youpanel:not([hidden]) .ovh-mebox .ovh-acct')`), 'your picture in the pill opens your row and your account\'s menu');
         assert.strictEqual(await p.evaluate(`!!document.querySelector('.ovs .openvibe-navbar-dropdown')`), false, 'and the old account block is not in the menu');
         console.log('navbar-ask-vibe: browser ok');
     } finally {

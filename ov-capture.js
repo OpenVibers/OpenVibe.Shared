@@ -310,7 +310,7 @@
         }
         if (mode === 'screen' && refused(err)) {
             return { title: 'Screen sharing was stopped', steps: mac
-                ? ['Try again and pick a screen, a window or a tab.', 'Nothing to pick? Open System Settings → Privacy & Security → Screen Recording, turn on your browser, then reopen it.']
+                ? ['Try again and pick a screen, a window or a tab.', 'Nothing to pick? Open System Settings, then Privacy & Security, then Screen Recording, turn on your browser, then reopen it.']
                 : ['Try again and pick a screen, a window or a tab, then press Share.'] };
         }
         if (refused(err)) {
@@ -318,7 +318,7 @@
                 : ios ? ['Open the iPhone Settings app, find this browser, and turn on Camera and Microphone.', 'Come back here.']
                 : android && !firefox ? ['Tap the icon at the left of the address bar (a lock or two sliders).', 'Tap Permissions (or Site settings).', `Set Camera${both} to Allow.`]
                 : firefox ? ['Click the camera icon with a line through it, at the left of the address bar.', 'Remove "Blocked temporarily" (the ×).']
-                : safari ? ['Open Safari\'s menu → Settings for this website.', `Set Camera${both} to Allow.`]
+                : safari ? ['Open Safari\'s menu, then Settings for this website.', `Set Camera${both} to Allow.`]
                 : ['Click the camera icon at the right end of the address bar (or the lock at the left).', `Choose "Always allow" for the ${what}, then Done.`];
             return { title: `Your browser said no to the ${what}`, steps: [...steps, 'Then press Try again.'] };
         }

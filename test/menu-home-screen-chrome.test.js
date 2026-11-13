@@ -65,6 +65,10 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed?')) return J(${JSON.stringify(FEED_V2)});
     if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
     if (s.startsWith('https://openvibe.actor/api/v1/me/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
+    if (s === 'https://openvibe.network/api/frame/runs?limit=20') return J({ runs: [
+      { id: 'run_1', ref: 'run_1', kind: 'code', title: 'Fix the navbar', status: 'running', doing: { text: 'Running the tests' }, agent: { id: 'agt_code', name: 'Codes' } },
+      { id: 'run_2', ref: 'run_2', kind: 'task', title: 'Book the venue', status: 'waiting', waiting: { for: 'approval' }, agent: { id: 'agt_plan', name: 'Planner' } },
+      { id: 'run_3', ref: 'run_3', kind: 'chat', title: 'An old chat', status: 'done' }] });
     if (s.startsWith('https://')) return J({}, false, 404);
     return realFetch(u, o);
   };
@@ -168,7 +172,7 @@ const server = http.createServer((req, res) => {
         const folder = await p.evaluate(`({ n: document.querySelectorAll('.ovh-grid .ovh-app').length, icons: [...document.querySelectorAll('.ovh-grid .ovh-app .ov-icon')].slice(0, 4).map((i) => i.getAttribute('data-icon')), more: (document.querySelector('a.ovh-all') || {}).textContent })`);
         assert.strictEqual(folder.n, 24, 'the folder shows two dozen tools');
         assert.deepStrictEqual(folder.icons, ['pdf', 'image', 'qr', 'audio'], 'each tool wears its own icon');
-        assert.strictEqual(folder.more, 'All 30 tools →', 'and says how many there are in all');
+        assert.strictEqual(folder.more, 'All 30 tools', 'and says how many there are in all');
         await eventually(async () => assert.ok(await p.evaluate(`document.documentElement.scrollWidth <= 390`), 'no sideways scroll on You'));
 
         // ── Feed, signed out: today, the wall, went live in one row, text only, Show more; no composer.
@@ -224,8 +228,23 @@ const server = http.createServer((req, res) => {
         await s.goto(`${base}/?signed=1`, { maxMs: 6000 });
         assert.ok(await until(s, `!!document.getElementById('openvibe-burger')`), 'the navbar is up');
         await openTab(s, 'you');
-        assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
-        await eventually(async () => assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /Juniper.*Working.*Reading job posts/, 'it names the Actor, its state and its step'));
+        // 4.238.0 (the owner, 11-13: "move the actor thing so that it's at the top … merge … this little online thing …
+        // the colors and other settings"): you lead the pill (your picture, online) with your Actor's state on it; a tap
+        // drops your sheet under the pill (your row: Display and your account's menu; your Actor's card); You starts at
+        // its tabs. The pill is a composer: attach while empty, Ask Vibe once there are words.
+        // What runs for you is stacked behind your picture (the owner, 11-13: "stacked … your agents … that are active
+        // behind you, and there should be like status indicator"): what waits for you first, two faces on a phone, then
+        // a count; nothing is drawn on your own picture but the online dot.
+        assert.ok(await until(s, `document.querySelectorAll('.ovs-lead.is-you.has-stack .ovs-stack-f').length === 2`), 'you lead the pill, two faces behind you');
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-stack > *')].map((f) => f.className.replace('ovs-stack-', '') + (f.textContent || ''))`), ['f is-asks', 'f is-working', 'more+1'], 'what waits for you first, then what works, then the count');
+        assert.match(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-label')`), /^Ada: your account and display\. Running for you: Book the venue, waiting for you; Juniper, working; Fix the navbar, working$/, 'said in words');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs-lead-me svg, .ovs-lead-ring')`), 'nothing is drawn on your own picture');
+        assert.ok(await s.evaluate(`(() => { const l = document.querySelector('.ovs-lead').getBoundingClientRect(), b = document.querySelector('.ovs-bar').getBoundingClientRect(), i = document.querySelector('.ovs-input').getBoundingClientRect(); const inp = document.querySelector('.ovs-input'), c = document.createElement('canvas').getContext('2d'); c.font = '15px ' + getComputedStyle(inp).fontFamily; return l.right <= i.left + 1 && i.width >= c.measureText(inp.placeholder).width + 2 && b.right <= innerWidth; })()`), 'the pill\'s words show whole beside the stack');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovh .ovh-actor') && !document.querySelector('.ovh .ovh-mebox')`), 'You has no Actor strip and no row of its own');
+        await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
+        await eventually(async () => assert.match(await s.evaluate(`(document.querySelector('.ovs-youpanel:not([hidden]) .ovh-actor') || {}).textContent || ''`), /^Actor.*Working.*Juniper · Reading job posts/, 'your Actor\'s card is in your sheet'));
+        assert.strictEqual(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-expanded')`), 'true');
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-youpanel .ovs-active-row')].map((r) => r.querySelector('b').textContent + ': ' + r.querySelector('.ovs-active-st').textContent)`), ['Book the venue: Your turn', 'Fix the navbar: Working'], 'your sheet lists what is running'));
         // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … move the notifications into a
         // tab … put the apps more front facing … the first tab"; "waste of space"; "compact"): your row holds every round
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.
@@ -248,8 +267,22 @@ const server = http.createServer((req, res) => {
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-menu-390.png'), Buffer.from(m.data, 'base64'));
             await s.evaluate(`document.querySelector('.ovh-acct').click(), true`);
         }
+        await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
+        await eventually(async () => assert.ok(await s.evaluate(`document.querySelector('.ovs-youpanel').hidden`), 'your sheet folds again'));
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs-attach').hidden && document.querySelector('.ovs-send').hidden`), 'empty: attach, no send');
+        await s.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'what is live'; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs-send').hidden && document.querySelector('.ovs-attach').hidden`), 'words: Ask Vibe'));
+        await s.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         // The tab row: Apps first and chosen; All and Edit at its end; the tabs move with the arrow keys.
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].map((t) => t.dataset.tab + (t.getAttribute('aria-selected') === 'true' ? '*' : ''))`), ['apps*', 'notifications', 'recent'], 'Apps, Notifications, Recent; Apps first'));
+        // The chosen tab shows its name and the others only their glyphs, which are large (the owner, 11-13: "hide the
+        // label of the inactive tabs … the icons aren't big enough, not even nearly").
+        const named = `[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].filter((t) => t.querySelector('.ovh-tab-t').getBoundingClientRect().width > 12).map((t) => t.dataset.tab).join()`;
+        await eventually(async () => assert.strictEqual(await s.evaluate(named), 'apps', 'only Apps shows its name'));
+        assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab svg')].every((g) => g.getBoundingClientRect().width >= 24)`), 'tab glyphs are at least 24 px');
+        await s.evaluate(`document.querySelector('.ovh-tab[data-tab="notifications"]').click(), true`);
+        await eventually(async () => assert.strictEqual(await s.evaluate(named), 'notifications', 'Alerts opens its name; Apps folds to its glyph'));
+        await s.evaluate(`document.querySelector('.ovh-tab[data-tab="apps"]').click(), true`);
         await eventually(async () => assert.ok(await s.evaluate(`!!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-allbtn') && !!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-edit') && !document.querySelector('.ovh-sec .ovh-edit')`), 'All and Edit sit at the end of the tab row'));
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons'));
         // Recent: what you use most, then where you were, in days, each a card with its whole title and its time.
@@ -319,13 +352,24 @@ const server = http.createServer((req, res) => {
             const shotPage = await h.openPage(browser, context, { width: 390, height: 844, block: blocked });
             await shotPage.goto(`${base}/?signed=1`, { maxMs: 6000 });
             await openTab(shotPage, 'you');
-            assert.ok(await until(shotPage, `!!document.querySelector('.ovh-mebox .ovh-acct') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
+            assert.ok(await until(shotPage, `!!document.querySelector('.ovs-lead.is-you') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
             const you = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-390.png'), Buffer.from(you.data, 'base64'));
             await shotPage.evaluate(`document.querySelector('.ovh-edit').click(), true`);
             assert.ok(await until(shotPage, `!!document.querySelector('.ovh-tabrow .ovh-edit.is-done')`), 'Edit turns into the check');
             const ed = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-edit-390.png'), Buffer.from(ed.data, 'base64'));
+            await shotPage.evaluate(`document.querySelector('.ovh-tabrow .ovh-edit').click(), document.querySelector('.ovh-tab[data-tab="notifications"]').click(), true`);
+            await until(shotPage, `!!document.querySelector('.openvibe-nv-find')`, 4000);
+            await shotPage.evaluate(`(() => { const N = window.OpenVibeNotifications; if (N) N.unread = () => 4; document.dispatchEvent(new CustomEvent('openvibe-notifications-count')); })()`);
+            await until(shotPage, `!!document.querySelector('.ovh-tab[data-tab="notifications"] .ovh-tab-g .ovh-tab-n')`, 2000);
+            await new Promise((ok) => setTimeout(ok, 400));
+            const nv = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-notif-390.png'), Buffer.from(nv.data, 'base64'));
+            await shotPage.evaluate(`document.querySelector('.ovs-lead.is-you') && document.querySelector('.ovs-lead').click(), true`);
+            await new Promise((ok) => setTimeout(ok, 500));
+            const ac = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-actor-390.png'), Buffer.from(ac.data, 'base64'));
             await shotPage.close();
         }
         if (process.env.OV_CAPTURE_MENU) {

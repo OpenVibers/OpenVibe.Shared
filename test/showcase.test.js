@@ -191,7 +191,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.strictEqual(sc.pick({ panes: [] }), '');
     assert.match(sc.pick({ key: 'k', headId: 'what', bodyClass: 'grid', panes: [{ id: 'x', label: 'X', html: 'x' }] }), /<h2 id="what">Sections<\/h2><\/div><\/div><div class="pick-body grid">/, 'headId and bodyClass as the copies had them');
     assert.ok(sc.apps({ items: [{ icon: 'fa-star', name: 'S', href: '/s' }] }).includes('<span class="sc-ic">'), 'a non-OpenVibe glyph keeps its tile');
-    assert.ok(h.includes('<p class="sc-apps-more"><a href="/sites">All 48 sites →</a></p>'), 'See all');
+    assert.ok(/<p class="sc-apps-more"><a href="\/sites">All 48 sites <span class="sc-go" aria-hidden="true"><svg [^>]*><path d="M3\.2 12h16\.7[^"]*"\/><\/svg><\/span><\/a><\/p>/.test(h), 'See all, with the registry\'s arrow');
     assert.strictEqual(sc.apps({ items: [] }), '', 'nothing to show, no section');
     assert.ok(sc.apps({ items: [{ name: 'A', href: '/a' }] }).includes('<ul class="sc-apps">'), 'items without groups is one grid');
     // 4.39.0: no tile alone on a row. Four go four across on a phone and two by two from 600 px; eight like four.

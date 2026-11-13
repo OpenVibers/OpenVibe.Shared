@@ -24,7 +24,7 @@
     'use strict';
     if (typeof document === 'undefined' || root.OVWindow) return;
     const HERE = document.currentScript && document.currentScript.src;
-    const WINDOW_REV = { 'ov-float.js': '1e087a0a11fd' };
+    const WINDOW_REV = { 'ov-float.js': 'f41a3aefc6ad' };
 
     const STYLES = ['glass', 'solid', 'outline'];
     const CSS = `.ovw-scrim { position: fixed; inset: 0; z-index: var(--ovw-z, 10040); background: rgba(3, 7, 15, .5); animation: ovw-fade .2s ease-out both; }

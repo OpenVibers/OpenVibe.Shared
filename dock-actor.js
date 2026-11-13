@@ -26,7 +26,7 @@
     if (typeof document === 'undefined' || root.OpenVibeDockActor) return;
 
     const POLL_MS = 15000;
-    const ACTOR_REV = { 'ov-window.js': '1c4db9b0ce9c', 'agent-sheet.js': '8d150490ad64' };
+    const ACTOR_REV = { 'ov-window.js': '01be12417e83', 'agent-sheet.js': '8d9980041b99' };
     const SCRIPT_BASE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : '/shared/';
     const STATE = { working: 'Working', resting: 'Resting', paused: 'Paused', waiting: 'Waiting for you' };
     // The lines Actor sends as "the current step" when there is none: the state already says them.
@@ -54,6 +54,14 @@
             .ovdac .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
             .ovdac-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+            .ovdac-past { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 12px; cursor: pointer;
+              background: color-mix(in srgb, var(--ovdac-ink, #e6edf7) 6%, transparent); color: var(--text-secondary, #a8b3c4); }
+            .ovdac-past:hover, .ovdac-past[aria-expanded="true"] { color: var(--ovdac-ink, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); }
+            .ovdac-past svg { width: 19px; height: 19px; }
+            .ovdac-past.is-busy svg { animation: ovdac-spin-past 1s ease-in-out infinite; }
+            @keyframes ovdac-spin-past { 50% { opacity: .4; } }
+            html[data-ov-motion=off] .ovdac-past.is-busy svg { animation: none; }
+            .ovdac-foot:has(.ovdac-note:empty) { display: none; }
             .ovdac-id { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 2px 8px 2px 4px; margin-left: -4px; border-radius: 14px;
                 color: inherit; text-decoration: none; transition: background .15s ease; }
             .ovdac-id:hover { background: color-mix(in srgb, var(--ovdac-ink) 5%, transparent); }
@@ -245,10 +253,13 @@
         });
 
         const foot = h('div', 'ovdac-foot');
-        const past = h('button', 'ovdac-link'); past.type = 'button'; past.setAttribute('aria-expanded', 'false'); past.append(icon('past'), d.createTextNode('Recent history'));
+        // 4.238.0 (the owner, 11-13: a "Recent history" line was a waste of space): a clock in the Actor's own row.
+        const past = h('button', 'ovdac-past'); past.type = 'button'; past.setAttribute('aria-expanded', 'false'); past.append(icon('past'));
+        past.setAttribute('aria-label', 'Your Actor\'s recent steps'); past.setAttribute('data-ov-tip', 'Recent steps');
+        head.insertBefore(past, go);
         const note = h('div', 'ovdac-note'); note.setAttribute('role', 'status'); note.setAttribute('aria-live', 'polite');
         const hist = h('ul', 'ovdac-hist'); hist.hidden = true;
-        foot.append(past, note);
+        foot.append(note);
         // The button that opens the list closes it.
         past.addEventListener('click', async () => {
             if (!hist.hidden) { hist.hidden = true; past.setAttribute('aria-expanded', 'false'); return; }

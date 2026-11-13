@@ -191,7 +191,8 @@
             head.querySelectorAll('th').forEach((th) => th.setAttribute('aria-sort', th.dataset.key === sortKey ? (dir === 1 ? 'ascending' : 'descending') : 'none'));
         }
         for (const c of cols) {
-            const b = el('button', '', [c.label, el('span', '', ['↕'], { 'aria-hidden': 'true' })], { type: 'button' });
+            const sortIc = el('span', 'ovm-sort', [], { 'aria-hidden': 'true' }); sortIc.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14" style="vertical-align:-2px"><path d="M3.5 5.8h9.2M3.5 12h6.2M3.5 18.2h3M17.5 4.8v14.4M14.3 16.2l3 3l3-3"/></svg>';
+            const b = el('button', '', [c.label, sortIc], { type: 'button' });
             b.addEventListener('click', () => { if (sortKey === c.key) dir = -dir; else { sortKey = c.key; dir = c.numeric ? -1 : 1; } drawBody(); });
             const th = el('th', c.numeric ? 'is-num' : '', [b], { scope: 'col', role: 'columnheader', 'data-key': c.key });
             head.append(th);

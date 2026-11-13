@@ -409,7 +409,7 @@ const URL_DEFINITIONS = Object.freeze({
     },
     DEPLOY_SERVICE_MAP: {
         key: 'DEPLOY_SERVICE_MAP',
-        label: 'Service → Port / Domain Map (JSON)',
+        label: 'Service, port and domain map (JSON)',
         category: 'deploy_nginx',
         service: 'network',
         scope: 'global',

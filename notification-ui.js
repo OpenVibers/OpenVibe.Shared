@@ -67,7 +67,7 @@
         grid: '<rect x="4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="4" width="6.6" height="6.6" rx="1.6"/><rect x="4" y="13.4" width="6.6" height="6.6" rx="1.6"/><rect x="13.4" y="13.4" width="6.6" height="6.6" rx="1.6"/>',
         pulse: '<path d="M3 12.5h4.2l2.3-5.5 4.2 10.5 2.3-5h4.9"/>',
         check: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
-        bell: '<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/>',
+        bell: '<path d="M12 3.5a1.22 1.22 0 0 1 1.22 1.22v0.47a5.44 5.44 0 0 1 4.22 5.25v3.38c0 0.84 0.28 1.59 0.84 2.25l0.75 0.84a0.75 0.75 0 0 1 -0.56 1.31H5.53a0.75 0.75 0 0 1 -0.56 -1.31l0.75 -0.84c0.56 -0.66 0.84 -1.41 0.84 -2.25v-3.38a5.44 5.44 0 0 1 4.22 -5.25v-0.47A1.22 1.22 0 0 1 12 3.5ZM9.94 18.97a2.16 2.16 0 0 0 4.13 0"/>',
         // The set's solid bell (openvibe-shared/glyphs): shown where the person prefers solid icons (4.71.0).
         bellSolid: '<path d="M5.8 16.2V11a6.2 6.2 0 0 1 12.4 0v5.2l1.7 2.3H4.1ZM9.9 19.6h4.2a2.1 2.1 0 0 1-4.2 0Z"/>',
         key: '<circle cx="8.2" cy="14.8" r="4"/><path d="M11.1 12l8.2-8.2M16.4 6.7l2.3 2.3M14.2 8.9l1.8 1.8"/>',
@@ -209,6 +209,43 @@
                One scroller per layer: the menu's own list. */
             .openvibe-notif-dock .openvibe-nv-list { flex: none; overflow: visible; overscroll-behavior: auto; }
             .openvibe-notif-dock .openvibe-nv-tools { padding-top: 10px; }
+            /* 4.238.0 (the owner, 11-13: "a waste of space … moved into the corner as … little buttons … expand when
+               you tap them"): in the menu the tabs, a search glyph and an Unread glyph share one row; search opens over
+               the tabs while you type and folds back when it is empty. The full inbox keeps its wide field. */
+            .openvibe-notif-dock .openvibe-nv-tools { position: relative; flex-direction: row; align-items: center; gap: 6px; padding: 6px 12px 0; }
+            .openvibe-notif-dock .openvibe-nv-tabs { order: 0; flex: 1 1 auto; min-width: 0; }
+            .openvibe-notif-dock .openvibe-nv-find { order: 1; flex: none; display: flex; align-items: center; gap: 6px; padding-bottom: 3px; }
+            .openvibe-notif-dock .openvibe-nv-empty { padding: 22px 16px 24px; }
+            .openvibe-notif-dock .openvibe-nv-empty svg { width: 56px; height: 56px; margin-bottom: 10px; }
+            .openvibe-notif-dock .openvibe-nv-foot { padding: 8px 12px 10px; }
+            .openvibe-notif-dock .openvibe-nv-foot .ovn-foot-read, .openvibe-notif-dock .openvibe-nv-foot a { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px;
+              font-size: 13px; font-weight: 750; text-decoration: none; background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .openvibe-notif-dock .openvibe-nv-foot a { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #93c5fd)); }
+            .openvibe-notif-dock .openvibe-nv-foot .ovn-foot-read:hover, .openvibe-notif-dock .openvibe-nv-foot a:hover { filter: brightness(1.15); }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search { flex: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; opacity: .78;
+              background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); transition: opacity .15s; }
+            .openvibe-notif-dock .openvibe-nv-search > svg { position: absolute; left: 9px; top: 50%; width: 18px; height: 18px; margin: 0; transform: translateY(-50%); pointer-events: none; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 36px; min-width: 0; padding: 0; opacity: 0; cursor: pointer; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) .clear { display: none; }
+            .openvibe-notif-dock .openvibe-nv-search.is-open { position: absolute; z-index: 2; left: 12px; right: 52px; top: 6px; width: auto; height: 38px; border-radius: 12px; opacity: 1; cursor: auto;
+              background: var(--bg-secondary, #141a24); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent), 0 8px 22px -10px rgba(0, 0, 0, .7); animation: ovnSearchIn .18s ease-out; }
+            .openvibe-notif-dock .openvibe-nv-search.is-open input { width: 100%; }
+            @keyframes ovnSearchIn { from { opacity: 0; transform: scaleX(.9); transform-origin: right center; } }
+            .openvibe-notif-dock .openvibe-nv-unread { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; border: 0; font-size: 0; opacity: .78;
+              background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
+            .openvibe-notif-dock .openvibe-nv-unread svg { width: 18px; height: 18px; }
+            .openvibe-notif-dock .openvibe-nv-unread[aria-pressed="true"], .openvibe-notif-dock .openvibe-nv-unread:hover, .openvibe-notif-dock .openvibe-nv-search:hover { opacity: 1; }
+            html[data-ov-motion=off] .openvibe-notif-dock .openvibe-nv-search.is-open { animation: none; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open), .openvibe-notif-dock .openvibe-nv-unread { width: 44px; height: 44px; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 44px; }
+            .openvibe-notif-dock .openvibe-nv-search > svg { left: 11px; width: 22px; height: 22px; }
+            .openvibe-notif-dock .openvibe-nv-unread svg { width: 22px; height: 22px; }
+            .openvibe-notif-dock .openvibe-nv-unread { gap: 0; }   /* its word is hidden (font-size 0): no gap may push the glyph off centre */
+            .openvibe-notif-dock .openvibe-nv-search.is-open { right: 62px; height: 44px; }
+            .openvibe-notif-dock .openvibe-nv-foot .ovn-foot-read, .openvibe-notif-dock .openvibe-nv-foot a { min-height: 44px; gap: 8px; }
+            .openvibe-notif-dock .openvibe-nv-foot svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+            .openvibe-notif-dock .openvibe-nv-foot a svg { transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
+            @media (hover: hover) { .openvibe-notif-dock .openvibe-nv-foot a:hover svg { transform: translateX(3px); } }
 .openvibe-notif-dock.is-preview .openvibe-nv-tools, .openvibe-notif-dock.is-preview .openvibe-nv-foot, .openvibe-notif-dock.is-preview .openvibe-nv-head, .openvibe-notif-dock.is-preview .openvibe-nv-more { display: none; }
             .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }
             .openvibe-notif-dock .openvibe-nv-foot [data-role="status"] { margin-right: auto; }
@@ -296,7 +333,13 @@
             .openvibe-notif-item .copy { font: inherit; font-size: 11.5px; font-weight: 650; margin-top: 7px; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: transparent; color: var(--text-secondary, #b6b6c0); cursor: pointer; }
             .openvibe-notif-item .copy:hover { color: var(--text-primary, #ececf1); }
             .openvibe-nv-empty { text-align: center; padding: 48px 24px 56px; color: var(--text-muted, #8b8b96); font-size: 13.5px; }
-            .openvibe-nv-empty svg { width: 64px; height: 64px; display: block; margin: 0 auto 12px; fill: none; stroke: var(--accent, #3b82f6); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; opacity: .75; }
+            .openvibe-nv-empty svg { width: 64px; height: 64px; display: block; margin: 0 auto 12px; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; opacity: .9;
+              transform-origin: 50% 16%; animation: ovn-ring 1.8s cubic-bezier(.36, .07, .19, .97) .25s 1 both; }
+            .openvibe-nv-empty svg .ovn-wave { animation: ovn-wave 1.8s ease-out .25s 1 both; }
+            @keyframes ovn-ring { 10% { transform: rotate(15deg); } 22% { transform: rotate(-12deg); } 34% { transform: rotate(9deg); } 46% { transform: rotate(-6deg); } 58% { transform: rotate(3deg); } 70%, 100% { transform: rotate(0); } }
+            @keyframes ovn-wave { 0% { opacity: 0; } 15%, 60% { opacity: 1; } 100% { opacity: .5; } }
+            html[data-ov-motion=reduced] .openvibe-nv-empty svg, html[data-ov-motion=reduced] .openvibe-nv-empty svg .ovn-wave { animation-duration: 1s; }
+            html[data-ov-motion=off] .openvibe-nv-empty svg, html[data-ov-motion=off] .openvibe-nv-empty svg .ovn-wave { animation: none; }
             .openvibe-nv-empty b { display: block; font-size: 15px; color: var(--text-primary, #ececf1); margin-bottom: 4px; }
             .openvibe-nv-more { display: flex; justify-content: center; padding: 12px; }
             .openvibe-nv-more button { border: 1px solid var(--border, rgba(255,255,255,.1)); background: transparent; color: var(--text-secondary, #b6b6c0); font: inherit; font-size: 12.5px; padding: 7px 16px; border-radius: 999px; cursor: pointer; }
@@ -880,6 +923,7 @@
     const ICON = {
         search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
         filter: '<path d="M4 6.5h16M7 12h10M10 17.5h4"/>',
+        go: '<path d="M5 12h13M13 6.5l5.5 5.5L13 17.5"/>',
         checkAll: '<path d="M2.5 12.5l4.5 4.5L17 7"/><path d="M11.5 16.5l.5.5L22 7"/>',
         bellOn: GLYPH.bell,
         bellOff: '<path d="M6.2 16.2V11a5.8 5.8 0 0 1 9.6-4.4M17.8 10.4v5.8l1.6 2H6"/><path d="M10 20.2a2.1 2.1 0 0 0 4 0M3.5 3.5l17 17"/>',
@@ -887,7 +931,7 @@
         open: '<path d="M14 4h6v6M20 4l-9 9M19 14v5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H10"/>',
         read: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
         close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
-        empty: '<path d="M18 37V26a14 14 0 0 1 28 0v11l4 5H14z"/><path d="M27 49a5 5 0 0 0 10 0"/><path d="M50 14l4-4M53 22h5M44 8l1-5"/>',
+        empty: '<path d="M12 3.5a1.22 1.22 0 0 1 1.22 1.22v0.47a5.44 5.44 0 0 1 4.22 5.25v3.38c0 0.84 0.28 1.59 0.84 2.25l0.75 0.84a0.75 0.75 0 0 1 -0.56 1.31H5.53a0.75 0.75 0 0 1 -0.56 -1.31l0.75 -0.84c0.56 -0.66 0.84 -1.41 0.84 -2.25v-3.38a5.44 5.44 0 0 1 4.22 -5.25v-0.47A1.22 1.22 0 0 1 12 3.5ZM9.94 18.97a2.16 2.16 0 0 0 4.13 0"/><path class="ovn-wave" d="M3.84 9.31a8.63 8.63 0 0 1 2.34 -4.6M20.16 9.31a8.63 8.63 0 0 0 -2.34 -4.6"/>',
     };
 
     function buildView(root, { mode }) {
@@ -913,7 +957,7 @@
                 </div>
             </div>
             <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
-            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'dock' ? `<button type="button" class="ovn-foot-read" data-act="read-all-foot">${svg(ICON.checkAll)}Mark all read</button>` : ''}${mode === 'panel' || mode === 'dock' ? `<a href="${esc(inboxUrl())}">Full inbox →</a>` : ''}</div>`;
+            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'dock' ? `<button type="button" class="ovn-foot-read" data-act="read-all-foot">${svg(ICON.checkAll)}Mark all read</button>` : ''}${mode === 'panel' || mode === 'dock' ? `<a href="${esc(inboxUrl())}">Full inbox${svg(ICON.go)}</a>` : ''}</div>`;
         const list = root.querySelector('[data-role="list"]');
         const input = root.querySelector('input[type="search"]');
         let qTimer = null;
@@ -922,6 +966,16 @@
             clearTimeout(qTimer); qTimer = setTimeout(() => { v.q = input.value.trim(); reload(v); }, 260);
         });
         root.querySelector('.openvibe-nv-search .clear').addEventListener('click', () => { input.value = ''; v.q = ''; root.querySelector('.openvibe-nv-search').classList.remove('has-q'); reload(v); });
+        // The menu's folded search (4.238.0): it opens on focus or a tap and folds when it is left empty.
+        {
+            const sb = root.querySelector('.openvibe-nv-search');
+            const open = () => sb.classList.add('is-open');
+            const fold = () => { if (!input.value) sb.classList.remove('is-open'); };
+            input.addEventListener('focus', open);
+            input.addEventListener('blur', () => setTimeout(fold, 120));
+            input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !input.value) { e.stopPropagation(); input.blur(); } });
+            sb.addEventListener('click', () => { if (!sb.classList.contains('is-open')) input.focus(); });
+        }
         // Tabs: a click or the arrow keys (Home, End) pick one; the list reloads with Network's ?tab=.
         const tabs = [...root.querySelectorAll('.openvibe-nv-tabs [role="tab"]')];
         const selectTab = (btn, focus) => {
@@ -1097,7 +1151,7 @@
             const acLink = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
             const title = v.q ? 'Nothing matches that search' : (v.unread ? 'You\'re all caught up' : t0);
             const sub = v.q ? 'Try other words.' : (v.unread ? 'Nothing unread here.' : s0);
-            list.innerHTML = `${acLink}<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;
+            list.innerHTML = `${acLink}<div class="openvibe-nv-empty"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON.empty}</svg><b>${esc(title)}</b>${esc(sub)}</div>`;
         } else {
             const old = list.querySelector('.openvibe-nv-more'); if (old) old.remove();
             list.insertAdjacentHTML('beforeend', html);
@@ -1131,7 +1185,7 @@
             renderItems(v);
         } catch (e) {
             if (seq !== v.seq) return;
-            list.innerHTML = `<div class="openvibe-nv-empty"><svg viewBox="0 0 64 64" aria-hidden="true">${ICON.empty}</svg><b>${e.status === 401 ? 'Sign in to see your notifications' : 'Could not load notifications'}</b>${e.status === 401 ? '' : 'Check your connection and try again.'}</div>`;
+            list.innerHTML = `<div class="openvibe-nv-empty"><svg viewBox="0 0 24 24" aria-hidden="true">${ICON.empty}</svg><b>${e.status === 401 ? 'Sign in to see your notifications' : 'Could not load notifications'}</b>${e.status === 401 ? '' : 'Check your connection and try again.'}</div>`;
         } finally { if (seq === v.seq) v.loading = false; }
     }
     async function loadMore(v) {

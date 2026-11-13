@@ -56,6 +56,8 @@ function icon(name, size = 22) {
     return `<i class="fa-solid ${esc(n.replace(/[^a-z0-9 -]/gi, ''))}" aria-hidden="true"></i>`;
 }
 const id = (s) => (s ? ` id="${esc(String(s).replace(/[^a-z0-9_-]/gi, '-'))}"` : '');
+// The arrow on a "more" link is the glyph registry's (no text arrows: the owner, 11-13).
+const goGlyph = () => { headGlyphs = headGlyphs || require('./glyphs'); return headGlyphs.svg('arrow-right', { size: 16 }); };
 // Every section's heading carries an icon tile (the owner, 11-09: "these section titles should have an icon… look nicer
 // and more consistent, separate things"): the section's kind gives a default, a site may pass its own (icon: 'name').
 let headGlyphs = null;
@@ -319,7 +321,7 @@ function nextSteps({ id: sid, title = 'Next steps', lede, items } = {}) {
         const to = SERVICE_NAME(s.to);
         const href = withFrom(safeHref(s.href), s.from);
         const embed = safeHref(s.embed);
-        return `<li class="sc-next-item"><a class="sc-next-main" href="${esc(href)}">${s.to && to ? appIcon(s.to, 44) : ''}<span class="sc-next-body"><b>${esc(s.what)}</b>${s.text ? `<small>${esc(s.text)}</small>` : ''}${to ? `<span class="sc-next-on">on ${esc(to)}</span>` : ''}</span><span class="sc-next-go" aria-hidden="true">→</span></a>${embed ? `<a class="sc-next-embed" href="${esc(embed)}">Embed it</a>` : ''}</li>`;
+        return `<li class="sc-next-item"><a class="sc-next-main" href="${esc(href)}">${s.to && to ? appIcon(s.to, 44) : ''}<span class="sc-next-body"><b>${esc(s.what)}</b>${s.text ? `<small>${esc(s.text)}</small>` : ''}${to ? `<span class="sc-next-on">on ${esc(to)}</span>` : ''}</span><span class="sc-next-go" aria-hidden="true">${goGlyph()}</span></a>${embed ? `<a class="sc-next-embed" href="${esc(embed)}">Embed it</a>` : ''}</li>`;
     }).join('')}</ol></section>`;
 }
 
@@ -347,7 +349,7 @@ function cards({ id: sid, title, lede, items, layout = 'grid', ratio = '16/9', m
     const h = `sc-${slug(title)}`;
     const ar = RATIOS[ratio] || RATIOS['16/9'];
     const moreHref = more && safeHref(more.href);
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${title || moreHref ? `<div class="sc-head-row"><div>${head(title, lede, h, secIcon || 'image')}</div>${moreHref ? `<a class="sc-more" href="${esc(moreHref)}">${esc(more.label || 'See all')} <span aria-hidden="true">→</span></a>` : ''}</div>` : ''}<ul class="sc-cards sc-${layout === 'rail' ? 'rail' : 'wrap'}" style="--sc-ar:${ar}">${usable.map((c) => {
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${title || moreHref ? `<div class="sc-head-row"><div>${head(title, lede, h, secIcon || 'image')}</div>${moreHref ? `<a class="sc-more" href="${esc(moreHref)}">${esc(more.label || 'See all')} <span class="sc-go" aria-hidden="true">${goGlyph()}</span></a>` : ''}</div>` : ''}<ul class="sc-cards sc-${layout === 'rail' ? 'rail' : 'wrap'}" style="--sc-ar:${ar}">${usable.map((c) => {
         const img = /^(https:\/\/|\/(?!\/))/.test(c.image || '') ? `<img src="${esc(c.image)}" alt="${esc(c.alt || '')}" loading="lazy" decoding="async">` : '';
         const badge = c.live ? '<span class="sc-badge sc-live">LIVE</span>' : c.badge ? `<span class="sc-badge">${esc(c.badge)}</span>` : '';
         return `<li><a class="sc-tile" href="${esc(safeHref(c.href))}"><span class="sc-thumb">${img}${badge}</span><span class="sc-tile-body"><b>${esc(c.title)}</b>${c.meta ? `<small>${esc(c.meta)}</small>` : ''}${c.text ? `<span class="sc-tile-text">${esc(c.text)}</span>` : ''}</span></a></li>`;
@@ -491,7 +493,7 @@ function network({ id: sid, service, title = 'More on OpenVibe', lede = 'One acc
         .filter((x) => x && x.what && safeHref(x.href) && x.to !== service).slice(0, 4);
     if (!list.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul><div class="sc-net-now" data-ov-now hidden></div><p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site →</a></p></section>`;
+    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul><div class="sc-net-now" data-ov-now hidden></div><p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site <span class="sc-go" aria-hidden="true">${goGlyph()}</span></a></p></section>`;
 }
 
 /**
@@ -512,7 +514,7 @@ function apps({ id: sid, title = '', lede = '', groups = null, items = null, mor
     // Six or nine are three a row (4.46.1): four columns left one tile alone on the last row.
     const cols = (n) => (n >= 2 && n <= 4 ? n : n % 4 === 0 ? 4 : n % 3 === 0 ? 3 : 0);
     const body = sets.map((g) => `${g.name ? `<h3 class="sc-apps-group">${esc(g.name)}</h3>` : ''}<ul class="sc-apps${cols(g.items.length) ? ` sc-apps--c${cols(g.items.length)}` : ''}">${g.items.map(tile).join('')}</ul>`).join('');
-    const end = more && safeHref(more.href) ? `<p class="sc-apps-more"><a href="${esc(safeHref(more.href))}">${esc(more.label || 'See all')} →</a></p>` : '';
+    const end = more && safeHref(more.href) ? `<p class="sc-apps-more"><a href="${esc(safeHref(more.href))}">${esc(more.label || 'See all')} <span class="sc-go" aria-hidden="true">${goGlyph()}</span></a></p>` : '';
     return `<section class="sc-sec sc-apps-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'grid')}${body}${end}</section>`;
 }
 

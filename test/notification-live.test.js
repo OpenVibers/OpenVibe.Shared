@@ -482,7 +482,8 @@ const created = (subject, over = {}) => ({
     const size = (f) => brotli(fs.readFileSync(path.join(ROOT, f)));
     assert.ok(size('notification-live.js') <= 3 * 1024, `notification-live.js is ${(size('notification-live.js') / 1024).toFixed(2)} KB brotli, budget 3 KB`);
     // The Action Center loads on the ✦'s first click only.
-    assert.ok(size('action-center.js') <= 8 * 1024, `action-center.js is ${(size('action-center.js') / 1024).toFixed(2)} KB brotli, budget 8 KB`);
+    // 8.2 KB (4.238.0, 2026-11-13): its foot link's arrow became a drawn glyph (no text arrows).
+    assert.ok(size('action-center.js') <= 8.2 * 1024, `action-center.js is ${(size('action-center.js') / 1024).toFixed(2)} KB brotli, budget 8.2 KB`);
     // 13 → 20 KB on 2026-10-28 (4.27.0, Notifications 2.0: line glyphs, System cards, grouping, layering, priority, the
     // bell's rich list). It loads only after sign-in, when the bell mounts, never on first paint; measured 19.16 KB.
     // 20 → 24 KB on 2026-10-28 (4.30.0, the bell center: tabs with counts, the Unread filter, thumbnails, swipe to read or
@@ -495,7 +496,12 @@ const created = (subject, over = {}) => ({
     // 25.75 → 25.9 KB on 2026-11-11 (4.211.0): the You tab's three-row preview (is-preview, its rule, Show all).
     // 25.9 → 26.1 KB on 2026-11-12 (4.225.0): inside the menu the list is part of the menu's one scroller (the owner: scrolling
     // in notifications did not work on a phone).
-    assert.ok(size('notification-ui.js') <= 26.1 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 26.1 KB`);
+    // 26.1 → 26.5 KB on 2026-11-13 (4.238.0): in the menu, search and Unread are glyphs on the tabs' row and search opens over
+    // them (the owner: the full-width search row was "a waste of space"; 26.43 KB measured).
+    // 26.5 → 26.8 KB the same day (4.238.0): the menu's foot as two OV buttons and a compact empty state (26.52 KB measured).
+    // 27.1 KB (4.238.0, 2026-11-13): the ringing bell (its drawing, the swing and the waves), the drawn arrow on Full inbox,
+    // 44 px round buttons with centred glyphs.
+    assert.ok(size('notification-ui.js') <= 27.1 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 27.1 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

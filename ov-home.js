@@ -340,7 +340,8 @@ html[data-ov-motion=off] .ovh-mebox .ovh-acct svg { transition: none; }
    one lit; All and Edit are two round glyphs at the end (Edit turns into the check while you arrange). */
 .ovh-tabrow .ovh-tabs { flex: 1 1 auto; min-width: 0; display: flex; gap: 2px; margin: 0; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
 .ovh-tabrow .ovh-tab { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0 6px; gap: 6px; border-radius: 11px; justify-content: center; transition: background-color .18s, color .18s; }
-.ovh-tabrow .ovh-tab .ovh-tab-t { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-tabrow .ovh-tab .ovh-tab-t { font-size: 13.5px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-tabrow .ovh-tab svg { width: 19px; height: 19px; }
 .ovh-tabrow .ovh-headtools { gap: 8px; }
 .ovh-headtools .ovh-edit.is-done { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); animation: ovhDoneIn .3s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes ovhDoneIn { from { transform: scale(.8) rotate(-20deg); } }
@@ -419,20 +420,50 @@ html[data-ov-motion=off] .ovh-hrow { animation: none; }
    and the tab's content slides in from its side (the owner, 11-12: "animations, effects to the tabs … aligned more
    perfectly … bigger font size and better icon size"). */
 .ovh-tabrow .ovh-tabs { position: relative; isolation: isolate; }
-.ovh-tab-ink { position: absolute; left: 0; top: 0; bottom: 0; width: 0; z-index: -1; border-radius: 12px; opacity: 0;
-  background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent), 0 6px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent);
-  transition: transform .34s cubic-bezier(.3, 1.3, .4, 1), width .34s cubic-bezier(.3, 1.3, .4, 1), opacity .2s; }
-.ovh-tab-ink.is-on { opacity: 1; }
-:root[data-theme="light"] .ovh-tab-ink { background: #fff; }
 .ovh-tabrow .ovh-tab[aria-selected="true"] { background: transparent; box-shadow: none; }
 .ovh-tabrow .ovh-tab { font-size: 14.5px; gap: 8px; }
 .ovh-tabrow .ovh-tab svg { width: 19px; height: 19px; transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
 .ovh-tabrow .ovh-tab[aria-selected="true"] svg { transform: scale(1.08); }
 @media (hover: hover) and (pointer: fine) { .ovh-tabrow .ovh-tab:not([aria-selected="true"]):hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); } }
 .ovh-tabrow .ovh-tab:active svg { transform: scale(.9); }
-html[data-ov-motion=reduced] .ovh-tab-ink { transition: opacity .25s; }
-html[data-ov-motion=off] .ovh-tab-ink, html[data-ov-motion=off] .ovh-tabrow .ovh-tab svg { transition: none; }
+html[data-ov-motion=off] .ovh-tabrow .ovh-tab svg { transition: none; }
 .ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation: ovh-pane-r .3s cubic-bezier(.2, .8, .2, 1) both; }
+/* 4.238.0, labels and glyphs (the owner, 11-13: "the icons are so small, make them use more of the space, less padding …
+   the text apps … a little bigger … better consistency"): every app's name (yours too) one size and weight; the glyphs
+   fill more of their tiles and of the round buttons. */
+.ovh-grid:not(.ovh-recent) .ovh-name, .ovh-own-apps .ovh-name { font-size: 13.5px; font-weight: 800; letter-spacing: .005em; color: color-mix(in srgb, var(--text-primary, #e8ecf3) 94%, transparent); opacity: 1; }
+.ovh-own-apps .ovh-name { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; }
+.ovh-own-ic svg { width: 56%; height: 56%; stroke-width: 2; }
+.ovh-tabrow .ovh-allbtn, .ovh-tabrow .ovh-edit { width: 48px; min-width: 48px; height: 48px; }
+.ovh-tabrow .ovh-allbtn svg, .ovh-tabrow .ovh-edit svg { width: 26px; height: 26px; }
+.ovh-tabrow .ovh-tab .ovh-tab-t { text-overflow: clip; }
+.ovh-mebox .ovh-me .ovh-ib svg { width: 26px; height: 26px; }
+/* 4.238.0, round two (the owner's phone, 11-13: "the tabs are still off center … the icons aren't big enough, not even
+   nearly … and neither are the button icons"): the ink sits on its tab by the track's geometry; glyphs are 26 px on the
+   tabs and 22-24 px on every round button. */
+.ovh-tabrow .ovh-tab { min-height: 48px; gap: 8px; }
+.ovh-tabrow .ovh-tab svg { width: 26px; height: 26px; }
+/* Round three (the owner, 11-13: "hide the label of the inactive tabs … add the badges back"): the chosen tab is lit and
+   widens to show its name; the others are their glyphs; the count sits on the bell's corner. */
+.ovh-tabrow .ovh-tabs { gap: 4px; }
+.ovh-tabrow .ovh-tab { flex: 1 1 0; min-width: 52px; min-height: 48px; padding: 0 10px; gap: 0; transition: flex-grow .36s cubic-bezier(.3, 1.2, .4, 1), background-color .25s, box-shadow .25s, color .2s; }
+.ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new), .ovh-tabrow .ovh-tab.is-was { flex-grow: 2.4; color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826);
+  box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent), 0 6px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent); }
+:root[data-theme="light"] .ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new), :root[data-theme="light"] .ovh-tabrow .ovh-tab.is-was { background: #fff; }
+.ovh-tabrow .ovh-tab .ovh-tab-t { display: block; max-width: 0; margin-left: 0; opacity: 0; font-size: 14.5px; font-weight: 750; transition: max-width .36s cubic-bezier(.3, 1.1, .4, 1), margin-left .36s, opacity .2s; }
+.ovh-tabrow .ovh-tab[aria-selected="true"]:not(.is-new) .ovh-tab-t, .ovh-tabrow .ovh-tab.is-was .ovh-tab-t { max-width: 8em; margin-left: 8px; opacity: 1; }
+.ovh-tab-g { position: relative; flex: none; display: grid; place-items: center; }
+.ovh-tab-g .ovh-tab-n { position: absolute; top: -8px; left: calc(100% - 10px); margin: 0; }
+html[data-ov-motion=reduced] .ovh-tabrow .ovh-tab, html[data-ov-motion=reduced] .ovh-tabrow .ovh-tab .ovh-tab-t { transition-duration: .15s; }
+html[data-ov-motion=off] .ovh-tabrow .ovh-tab, html[data-ov-motion=off] .ovh-tabrow .ovh-tab .ovh-tab-t { transition: none; }
+.ovh-mebox .ovh-me .ovh-ib { width: 44px; height: 44px; }
+.ovh-mebox .ovh-me .ovh-ib svg { width: 24px; height: 24px; }
+.ovh-actor .ovh-go.is-ic svg, .ovh-actor .ovh-go.is-answer svg { width: 24px; height: 24px; }
+.ovh-tabrow .ovh-allbtn svg, .ovh-tabrow .ovh-edit svg { width: 22px; height: 22px; }
+.ovh-sec .ovh-edit svg { width: 22px; height: 22px; }
+.ovh-sec .ovh-allbtn svg { width: 20px; height: 20px; }
+.ovh-back svg { width: 24px; height: 24px; }
+.ovh-actor.is-invite .ovh-x svg, .ovh-notice .ovh-actor.is-invite .ovh-x svg { width: 20px; height: 20px; }
 .ovh[data-enter="left"] > :not(.ovh-top):not(.ovh-tabrow) { animation-name: ovh-pane-l; }
 @keyframes ovh-pane-r { from { opacity: 0; transform: translateX(18px); } }
 @keyframes ovh-pane-l { from { opacity: 0; transform: translateX(-18px); } }
@@ -498,6 +529,30 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
 /* 4.223.1: the notice's name stays on one line ("Your own AI", not "Your own / AI"); its sentence takes the wrap. */
 .ovh-notice .ovh-actor.is-invite .ovh-actor-txt b { white-space: nowrap; overflow: hidden; text-overflow: clip; }
 @container ovh (max-width: 400px) { .ovh-notice .ovh-actor.is-invite .ovh-go { padding: 0 12px; font-size: 13px; } }
+
+/* 4.238.0, the last word (later than every rule above): the round buttons' glyphs fill more of them (the owner, 11-13:
+   "the icons are so small, make them use more of the space, less padding"); the bell rings once when something is new;
+   the notifications tab takes the menu's whole height, its foot at the bottom ("take up the full height properly"). */
+.ovh-tabrow .ovh-allbtn, .ovh-tabrow .ovh-edit { width: 48px; min-width: 48px; height: 48px; }
+.ovh-tabrow .ovh-allbtn svg, .ovh-tabrow .ovh-edit svg { width: 26px; height: 26px; }
+.ovh-actor .ovh-go.is-ic { width: 44px; height: 44px; }
+.ovh-actor .ovh-go.is-ic svg, .ovh-actor .ovh-go.is-answer svg { width: 24px; height: 24px; }
+.ovh-mebox .ovh-me .ovh-ib { width: 46px; height: 46px; }
+.ovh-mebox .ovh-me .ovh-ib svg { width: 26px; height: 26px; }
+.ovh-tab.has-new .ovh-tab-g > svg { transform-origin: 50% 14%; animation: ovh-ring 1.6s cubic-bezier(.36, .07, .19, .97) .3s 1 both; }
+@keyframes ovh-ring { 10% { transform: rotate(16deg); } 22% { transform: rotate(-13deg); } 34% { transform: rotate(9deg); } 46% { transform: rotate(-6deg); } 58% { transform: rotate(3deg); } 70%, 100% { transform: rotate(0); } }
+html[data-ov-motion=reduced] .ovh-tab.has-new .ovh-tab-g > svg { animation-duration: .9s; }
+html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
+.ovs-list > .ovh:has(> .ovh-notes) { min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+.ovh > .ovh-notes { flex: 1 1 auto; display: flex; flex-direction: column; }
+.ovh > .ovh-notes > .openvibe-notif-dock { flex: 1 1 auto; }
+.ovh > .ovh-notes .openvibe-nv-foot { margin-top: auto; }
+.ovh > .ovh-notes .openvibe-nv-list:has(> .openvibe-nv-empty) { flex: 1 1 auto; display: grid; place-items: center; }
+.ovh-tabrow { margin: 0 0 4px; padding: 3px; gap: 6px; }
+.ovh-tabrow .ovh-tabs { padding: 2px; }
+.ovh-tabrow .ovh-tab { min-height: 42px; }
+.ovh-tabrow .ovh-tab svg { width: 27px; height: 27px; }
+.ovh-tabrow .ovh-allbtn, .ovh-tabrow .ovh-edit { width: 44px; min-width: 44px; height: 44px; }
 `;
         document.head.appendChild(st);
     }
@@ -593,7 +648,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
         chev: [['path', { d: 'M6.5 9.5l5.5 5.5 5.5-5.5' }]],
         briefcase: [['rect', { x: 3.5, y: 7.2, width: 17, height: 12.3, rx: 2.4 }], ['path', { d: 'M8.8 7.2V5.6a1.8 1.8 0 0 1 1.8-1.8h2.8a1.8 1.8 0 0 1 1.8 1.8v1.6M3.5 12.6h17' }]],
-        bell: [['path', { d: 'M6 14.6V9.5a6.1 6.1 0 0 1 12.2 0v5.1l1.5 2.1h-15.3Z' }], ['path', { d: 'M10 18.7a2.1 2.1 0 0 0 4 0' }]],
+        bell: [['path', { d: 'M12 3.5a1.22 1.22 0 0 1 1.22 1.22v0.47a5.44 5.44 0 0 1 4.22 5.25v3.38c0 0.84 0.28 1.59 0.84 2.25l0.75 0.84a0.75 0.75 0 0 1 -0.56 1.31H5.53a0.75 0.75 0 0 1 -0.56 -1.31l0.75 -0.84c0.56 -0.66 0.84 -1.41 0.84 -2.25v-3.38a5.44 5.44 0 0 1 4.22 -5.25v-0.47A1.22 1.22 0 0 1 12 3.5Z' }], ['path', { d: 'M9.94 18.97a2.16 2.16 0 0 0 4.13 0' }]],
         history: [['path', { d: 'M3.8 12.1a8.3 8.3 0 1 0 2.5-5.9L3.8 8.5M3.8 4.2v4.2h4.2' }], ['path', { d: 'M12 7.9v4.3l3.1 1.9' }]],
         attach: [['path', { d: 'M12 5v14M5 12h14' }]],
         plus: [['circle', { cx: 9.5, cy: 8.5, r: 3.2 }], ['path', { d: 'M3.5 18.5c1-2.900 3.300-4.400 6-4.400 1.300 0 2.500.300 3.500 1' }], ['path', { d: 'M18 13.500v6M15 16.500h6' }]],
@@ -615,6 +670,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         play: [['path', { d: 'M8 5.5v13l10.5-6.5Z' }]],
         // 4.223.0: drawings from the glyph registry (openvibe-shared/glyphs.js).
         arrow: [['path', { d: 'M7 17L17 7M9 7h8v8' }]],
+        go: [['path', { d: 'M3.2 12h16.7M13.7 5.7l6.3 6.3l-6.3 6.3' }]],
         clock: [['circle', { cx: 12, cy: 12, r: 8.5 }], ['path', { d: 'M12 7.5V12l3 2' }]],
         back: [['path', { d: 'M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3' }]],
         game: [['rect', { x: 3.7, y: 7.2, width: 16.7, height: 9.7, rx: 4.4 }], ['path', { d: 'M7.6 10.7v2.7M6.4 12h2.7M15.1 11.6h0M17.4 12.9h0' }]],
@@ -691,6 +747,63 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     }
 
     // ── You: the home screen ───────────────────────────────────────────────────────────────────────────────────
+    /** Your row: you (to your profile), Display, and your account's menu (profile, settings, switch, Sign out). Drawn by
+     *  the menu's top sheet (youCard) since 4.238.0, and by You where the top does not show you. */
+    function meRow(o) {
+        const u = o.user || {};
+        const m = o.me || {};
+        const meBox = h('div', 'ovh-mebox');
+        const bar = h('div', 'ovh-me');
+        const profile = u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
+        const who = h('a', 'ovh-who'); who.href = profile; who.setAttribute('data-ov-tip', 'Your profile');
+        const av = h('span', 'ovh-av');
+        const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
+        if (pic) { const img = h('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; av.append(img); } else av.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase();
+        const txt = h('span', 'ovh-who-txt');
+        txt.append(h('b', '', u.display_name || u.username || 'You'), h('small', '', [u.username ? `@${u.username}` : '', 'Online'].filter(Boolean).join(' · ')));
+        who.append(av, txt);
+        const look = h('a', 'ovh-ib ovh-me-look-btn'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
+        look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.setAttribute('data-ov-tip', 'Display');
+        const acct = h('button', 'ovh-ib ovh-acct'); acct.type = 'button'; acct.append(svgIcon('chev'));
+        acct.setAttribute('aria-haspopup', 'menu'); acct.setAttribute('aria-expanded', 'false');
+        acct.setAttribute('aria-label', 'Your account'); acct.setAttribute('data-ov-tip', 'Your account');
+        bar.append(who, look, acct);
+
+        const menu = h('div', 'ovh-acct-menu'); menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', 'Your account'); menu.hidden = true;
+        const item = (glyph, label, act, danger) => {
+            const it = typeof act === 'string' ? h('a', 'ovh-acct-i') : h('button', 'ovh-acct-i');
+            if (typeof act === 'string') it.href = act; else { it.type = 'button'; it.addEventListener('click', () => { close(); try { act(); } catch { /* the site's */ } }); }
+            if (danger) it.classList.add('is-danger');
+            it.setAttribute('role', 'menuitem');
+            it.append(svgIcon(glyph), h('span', '', label));
+            menu.append(it);
+        };
+        item('user', 'Your profile', profile);
+        item('gear', 'Account and settings', 'https://openvibe.network/my');
+        if (m.add && safe(m.add)) item('plus', 'Add or switch account', m.add);
+        if (typeof m.out === 'function') item('out', 'Sign out', () => m.out(), true);
+        let anchored = null;
+        const onDown = (e) => { if (!menu.contains(e.target) && !acct.contains(e.target)) close(); };
+        const onKey = (e) => { if (e.key === 'Escape') { close(); acct.focus(); } };
+        function close() {
+            if (menu.hidden) return;
+            menu.hidden = true; acct.setAttribute('aria-expanded', 'false');
+            if (anchored) { anchored.release(); anchored = null; }
+            document.removeEventListener('pointerdown', onDown, true); document.removeEventListener('keydown', onKey, true);
+        }
+        acct.addEventListener('click', () => {
+            if (!menu.hidden) { close(); return; }
+            menu.hidden = false; acct.setAttribute('aria-expanded', 'true');
+            const S = typeof window !== 'undefined' ? window.OVSurfaces : null;
+            if (S && typeof S.anchor === 'function') anchored = S.anchor(menu, acct, { place: 'bottom-end', sheet: false });
+            document.addEventListener('pointerdown', onDown, true); document.addEventListener('keydown', onKey, true);
+            const first = menu.querySelector('.ovh-acct-i'); if (first) first.focus({ preventScroll: true });
+        });
+        const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
+        meBox.append(bar, menu, panel);
+        return meBox;
+    }
+
     function home(el, o) {   // o is replaced by update() when the menu learns more (history, the catalogue)
         styles();
         el.classList.add('ovh');
@@ -701,7 +814,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         let L = layoutOf(o);
         const save = () => { const keep = { home: L.home.slice(0, HOME_MAX), folders: L.folders.map((f) => ({ id: f.id, name: f.name, apps: f.apps.slice(0, 400) })) }; writeLocal(keep); pushRemote(o, keep); L.arranged = true; };
         const icons = () => { if (typeof o.mountIcons === 'function') { try { o.mountIcons(el); } catch { /* optional */ } } };
-        let actorBox = null, meBox = null, notesBox = null;
+        let meBox = null, notesBox = null;
         // The Look panel (theme, text size, motion, icons) opens under your name, drawn by the navbar (the account menu's).
         if (typeof o.look === 'function') { try { o.look(el); } catch { /* the button stays a link to openvibe.design/look */ } }
 
@@ -717,61 +830,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
          * this site gives you as staff or as a creator (your channel, Admin, moderation) are apps at the start of the
          * grid, not buttons here (ownApps below).
          */
-        function me() {
-            if (meBox) return meBox;
-            const u = o.user || {};
-            const m = o.me || {};
-            meBox = h('div', 'ovh-mebox');
-            const bar = h('div', 'ovh-me');
-            const profile = u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
-            const who = h('a', 'ovh-who'); who.href = profile; who.setAttribute('data-ov-tip', 'Your profile');
-            const av = h('span', 'ovh-av');
-            const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
-            if (pic) { const img = h('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; av.append(img); } else av.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase();
-            const txt = h('span', 'ovh-who-txt');
-            txt.append(h('b', '', u.display_name || u.username || 'You'), h('small', '', [u.username ? `@${u.username}` : '', 'Online'].filter(Boolean).join(' · ')));
-            who.append(av, txt);
-            const look = h('a', 'ovh-ib ovh-me-look-btn'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
-            look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.setAttribute('data-ov-tip', 'Display');
-            const acct = h('button', 'ovh-ib ovh-acct'); acct.type = 'button'; acct.append(svgIcon('chev'));
-            acct.setAttribute('aria-haspopup', 'menu'); acct.setAttribute('aria-expanded', 'false');
-            acct.setAttribute('aria-label', 'Your account'); acct.setAttribute('data-ov-tip', 'Your account');
-            bar.append(who, look, acct);
-
-            const menu = h('div', 'ovh-acct-menu'); menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', 'Your account'); menu.hidden = true;
-            const item = (glyph, label, act, danger) => {
-                const it = typeof act === 'string' ? h('a', 'ovh-acct-i') : h('button', 'ovh-acct-i');
-                if (typeof act === 'string') it.href = act; else { it.type = 'button'; it.addEventListener('click', () => { close(); try { act(); } catch { /* the site's */ } }); }
-                if (danger) it.classList.add('is-danger');
-                it.setAttribute('role', 'menuitem');
-                it.append(svgIcon(glyph), h('span', '', label));
-                menu.append(it);
-            };
-            item('user', 'Your profile', profile);
-            item('gear', 'Account and settings', 'https://openvibe.network/my');
-            if (m.add && safe(m.add)) item('plus', 'Add or switch account', m.add);
-            if (typeof m.out === 'function') item('out', 'Sign out', () => m.out(), true);
-            let anchored = null;
-            const onDown = (e) => { if (!menu.contains(e.target) && !acct.contains(e.target)) close(); };
-            const onKey = (e) => { if (e.key === 'Escape') { close(); acct.focus(); } };
-            function close() {
-                if (menu.hidden) return;
-                menu.hidden = true; acct.setAttribute('aria-expanded', 'false');
-                if (anchored) { anchored.release(); anchored = null; }
-                document.removeEventListener('pointerdown', onDown, true); document.removeEventListener('keydown', onKey, true);
-            }
-            acct.addEventListener('click', () => {
-                if (!menu.hidden) { close(); return; }
-                menu.hidden = false; acct.setAttribute('aria-expanded', 'true');
-                const S = typeof window !== 'undefined' ? window.OVSurfaces : null;
-                if (S && typeof S.anchor === 'function') anchored = S.anchor(menu, acct, { place: 'bottom-end', sheet: false });
-                document.addEventListener('pointerdown', onDown, true); document.addEventListener('keydown', onKey, true);
-                const first = menu.querySelector('.ovh-acct-i'); if (first) first.focus({ preventScroll: true });
-            });
-            const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
-            meBox.append(bar, menu, panel);
-            return meBox;
-        }
+        function me() { if (!meBox) meBox = meRow(o); return meBox; }
 
         /** What this site gives you (your channel, Admin, moderation): apps at the start of the grid, by your rank. */
         function ownApps() {
@@ -793,7 +852,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         }
 
         /** The three tabs under your row; Notifications carries how many wait. */
-        let countBound = false, inkWas = null, tabWas = null;
+        let countBound = false, tabWas = null;
         function youTabs() {
             const bar = h('div', 'ovh-tabs'); bar.setAttribute('role', 'tablist'); bar.setAttribute('aria-label', 'You');
             if (!countBound && typeof document !== 'undefined') {
@@ -803,7 +862,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                     const t = el.querySelector('.ovh-tab[data-tab="notifications"]'); if (!t) return;
                     let n = 0; try { n = typeof o.unread === 'function' ? Number(o.unread()) || 0 : 0; } catch { n = 0; }
                     let b = t.querySelector('.ovh-tab-n');
-                    if (n > 0) { if (!b) { b = h('b', 'ovh-tab-n'); t.append(b); } b.textContent = n > 99 ? '99+' : String(n); t.setAttribute('aria-label', `Notifications, ${n} new`); }
+                    if (n > 0) { if (!b) { b = h('b', 'ovh-tab-n'); (t.querySelector('.ovh-tab-g') || t).append(b); } b.textContent = n > 99 ? '99+' : String(n); t.setAttribute('aria-label', `Notifications, ${n} new`); }
                     else if (b) { b.remove(); t.setAttribute('aria-label', 'Notifications'); }
                 };
                 document.addEventListener('openvibe-notifications-count', onCount);
@@ -812,12 +871,11 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             [['apps', 'Apps', 'grid'], ['notifications', 'Notifications', 'bell', 'Alerts'], ['recent', 'History', 'history']].forEach(([id, label, ic, short]) => {
                 const b = h('button', 'ovh-tab'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.tab = id;
                 b.setAttribute('aria-selected', String(state.tab === id));
-                b.append(svgIcon(ic), h('span', 'ovh-tab-t', short || label)); b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label);
-                if (id === 'notifications' && unread > 0) { b.append(h('b', 'ovh-tab-n', unread > 99 ? '99+' : String(unread))); b.setAttribute('aria-label', `Notifications, ${unread} new`); }
+                const g = h('span', 'ovh-tab-g'); g.append(svgIcon(ic));
+                b.append(g, h('span', 'ovh-tab-t', short || label)); b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label);
+                if (id === 'notifications' && unread > 0) { g.append(h('b', 'ovh-tab-n', unread > 99 ? '99+' : String(unread))); b.setAttribute('aria-label', `Notifications, ${unread} new`); b.classList.add('has-new'); }
                 b.addEventListener('click', () => {
                     if (state.tab === id) return;
-                    const on = bar.querySelector('.ovh-tab[aria-selected="true"]');
-                    inkWas = on ? { x: on.offsetLeft, w: on.offsetWidth } : null;
                     tabWas = state.tab;
                     state.tab = id; try { sessionStorage.setItem('ovh-you-tab', id); } catch { /* */ } paint();
                 });
@@ -831,16 +889,17 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 b.tabIndex = state.tab === id ? 0 : -1;
                 bar.append(b);
             });
-            // The ink under the chosen tab: it starts where the last one was and slides over (Calm: a short fade; Off: none).
-            const ink = h('i', 'ovh-tab-ink'); ink.setAttribute('aria-hidden', 'true'); bar.prepend(ink);
+            // The chosen tab is lit and widens to show its name; the others are their glyphs (the owner, 11-13: "hide the
+            // label of the inactive tabs"). Switching, the last one folds as the new one opens (Calm: shorter; Off: at once).
             const order = ['apps', 'notifications', 'recent'];
-            const from = inkWas, dir = tabWas ? Math.sign(order.indexOf(state.tab) - order.indexOf(tabWas)) : 0;
-            inkWas = null; tabWas = null;
-            requestAnimationFrame(() => {
-                const on = bar.querySelector('.ovh-tab[aria-selected="true"]'); if (!on) return;
-                if (from) { ink.style.transition = 'none'; ink.style.transform = `translateX(${from.x}px)`; ink.style.width = `${from.w}px`; void ink.offsetWidth; ink.style.transition = ''; }
-                ink.style.transform = `translateX(${on.offsetLeft}px)`; ink.style.width = `${on.offsetWidth}px`; ink.classList.add('is-on');
-            });
+            const dir = tabWas ? Math.sign(order.indexOf(state.tab) - order.indexOf(tabWas)) : 0;
+            const was = tabWas && tabWas !== state.tab ? bar.querySelector(`.ovh-tab[data-tab="${tabWas}"]`) : null;
+            const now = bar.querySelector(`.ovh-tab[data-tab="${state.tab}"]`);
+            tabWas = null;
+            if (was && now) {
+                was.classList.add('is-was'); now.classList.add('is-new');
+                requestAnimationFrame(() => requestAnimationFrame(() => { was.classList.remove('is-was'); now.classList.remove('is-new'); }));
+            }
             if (dir) el.dataset.enter = dir > 0 ? 'right' : 'left'; else delete el.dataset.enter;
             return bar;
         }
@@ -977,8 +1036,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             // The account's block wherever the bar has a person (a site with its own session may have no token for
             // the network's reads yet: sign out and the rest must still be there); else the short bar.
             const top = h('div', 'ovh-top');
-            if ((o.user && !o.user.is_anon) || signedIn(o)) top.append(calm(me()));
-            if (signedIn(o)) { actorBox = actorBox || h('div', 'ovh-notice'); top.append(actorBox); }
+            if (((o.user && !o.user.is_anon) || signedIn(o)) && !o.meInTop) top.append(calm(me()));
             if (top.childNodes.length) el.append(top);
             // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … put the apps more front
             // facing … the first tab"; then "compact … waste of space"): one row of tabs, and on Apps the All and Edit
@@ -991,7 +1049,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 if (tools) row.append(tools);
                 el.append(row);
             }
-            const later = () => { icons(); if (actorBox && !actorBox.childNodes.length) actor(actorBox, o); };
+            const later = () => { icons(); };
             if (tab === 'notifications') { el.append(notes()); return later(); }
             if (tab === 'recent') {
                 const u = usage(), b = history();
@@ -1015,7 +1073,6 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             // Signed out there are no tabs: what you use most and where you were stay under the apps.
             if (!signedIn(o)) { const u = usage(); if (u) el.append(calm(u)); const b = backRail(); if (b) el.append(calm(b)); }
             icons();
-            if (signedIn(o) && actorBox && !actorBox.childNodes.length) actor(actorBox, o);
         }
 
         function homeTile(id, i) {
@@ -1200,7 +1257,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             const shown = f.id === 'tools' ? ranked.slice(0, 24) : ranked;
             shown.forEach((a) => grid.append(appTile(o, a)));
             el.append(grid);
-            if (f.more) { const m = h('a', 'ovh-all', `${f.more.label} →`); m.href = f.more.href; el.append(m); }
+            if (f.more) { const m = h('a', 'ovh-all', f.more.label); m.append(svgIcon('go')); m.href = f.more.href; el.append(m); }
             icons();
         }
 
@@ -1350,11 +1407,11 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             if (!pic) { face.textContent = ''; face.classList.add('is-glyph'); }
             face.append(doing);
             const txt = h('span', 'ovh-actor-txt');
-            const name = h('b', '', a.name || 'Your Actor');
+            const name = h('b', '', 'Actor');
             const chip = h('span', `ovh-chip is-${st}`); chip.append(h('span', 'ovh-dot'), document.createTextNode(label));
             name.append(chip);
             const now = a.now || {};
-            txt.append(name, h('small', '', asks.length ? `It asks you: ${asks[0].text || ''}` : now.current_step ? String(now.current_step) : st === 'paused' ? 'Paused until you resume it' : 'Resting until its next goal is due'));
+            txt.append(name, h('small', '', (a.name && !asks.length ? `${a.name} · ` : '') + (asks.length ? `It asks you: ${asks[0].text || ''}` : now.current_step ? String(now.current_step) : st === 'paused' ? 'Paused until you resume it' : 'Resting until its next goal is due')));
             const go = h('span', asks.length ? 'ovh-go is-answer' : 'ovh-go is-ic'); go.append(svgIcon(asks.length ? 'chat' : 'arrow'));
             if (asks.length) go.append(h('span', '', 'Answer'));
             b.setAttribute('aria-label', `${a.name || 'Your Actor'}, ${label}: ${asks.length ? 'answer it' : 'open it'}`);
@@ -2106,5 +2163,15 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         document.head.appendChild(st);
     }
 
-    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, _defaultHome: defaultHome };
+    // actorCard(box, o): your Actor's card (or the invitation to make one), drawn by the menu's top since 4.238.0.
+    // youCard(box, o) (4.238.0; the owner, 11-13: "merge the actors … this little online thing … move up here … the colors
+    // and other settings"): the menu's top sheet: your row (Display, your account's menu) and your Actor's card.
+    function youCard(box, o) {
+        styles();
+        box.textContent = '';
+        box.append(meRow(o));
+        if (o.token) { const a = h('div', 'ovh-notice'); box.append(a); actor(a, o); }
+        if (typeof o.look === 'function') { try { o.look(box); } catch { /* the Display button stays a link */ } }
+    }
+    root.OpenVibeHome = { home, wallTop, timeline, feed, loadPulse, youCard, actorCard: (box, o) => actor(box, o), _defaultHome: defaultHome };
 })(typeof window !== 'undefined' ? window : globalThis);

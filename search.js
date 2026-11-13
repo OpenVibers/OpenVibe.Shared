@@ -240,6 +240,7 @@
 .ovs-x { flex: none; height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: transparent; color: var(--text-muted, #93a0b4); font: inherit; font-size: 13px; cursor: pointer; }
 .ovs-x svg { display: none; width: 20px; height: 20px; }
 .ovs-x:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovs-x:focus:not(:focus-visible) { outline: none; }
 /* 4.223.0 (the owner, 11-12: "Close … ICON"; "these buttons and borders … get extra wide … make that more sleek"): Close
    is a round × on every screen; the phone's orb keeps a hairline edge and a soft glass, never a thick ring. */
 .ovs-x { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; color: var(--text-secondary, #a8b3c4); transition: background-color .15s, color .15s, transform .12s; }
@@ -264,8 +265,8 @@
 .ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
 /* Five places in one row (4.194.0): on a phone each is its icon over its word; the doors to the Dock look like the tabs. */
 .ovs-starttabs.has-doors .ovs-tab { padding: 0 6px; }
-.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 20px; height: 20px; }
-@media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 54px; padding: 4px 2px; font-size: 11.5px; border-radius: 14px; } }
+.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 26px; height: 26px; }
+@media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 56px; padding: 4px 2px; font-size: 12.5px; border-radius: 14px; } }
 .ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
 .ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
   color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); transition: background-color .15s, color .15s, transform .12s; }
@@ -307,6 +308,18 @@ html[data-ov-motion=off] .ovs-tab .ovs-roll { animation: none; }
 .ovs-tab-ic > .ovs-tabnew { position: absolute; top: -7px; left: calc(100% - 8px); z-index: 1; }
 .ovs-tab span > .ovs-tabdot { display: inline-block; margin: 0 0 1px 5px; vertical-align: middle; animation: ovsLiveDot 2s ease-in-out infinite; }
 .ovs-tab > span:not(.ovs-tab-ic) { display: inline-flex; align-items: center; }
+/* 4.238.0, round two (the owner, 11-13: "the icons aren't big enough, not even nearly"): the place tabs' glyphs grow,
+   24 px beside the word and 30 px over it on a phone. */
+.ovs-starttabs .ovs-tab .ovs-tab-ic, .ovs-starttabs .ovs-tab .ovs-tab-ic .ov-icon { width: 24px; height: 24px; }
+.ovs-starttabs .ovs-tab .ovs-tab-ic > svg, .ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 24px; height: 24px; }
+.ovs-starttabs .ovs-tab .ovs-tab-ic .ov-icon svg { width: 44px; height: 44px; margin: -10px; }
+@media (max-width: 640px) {
+  .ovs-starttabs.has-doors .ovs-tab { height: 54px; gap: 2px; font-size: 12px; }
+  .ovs-starttabs.has-doors { padding-bottom: 6px; }
+  .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic, .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic .ov-icon { width: 30px; height: 30px; }
+  .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic > svg, .ovs-starttabs.has-doors .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 30px; height: 30px; }
+  .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic .ov-icon svg { width: 54px; height: 54px; margin: -12px; }
+}
 @keyframes ovsLiveDot { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--live-red, #ef4444) 10%, transparent); } }
 @keyframes ovsBadgeIn { from { transform: scale(.5); opacity: 0; } }
 html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .ovs-tabnew { animation: none; }
@@ -527,11 +540,93 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 /* The orb, on top of the phone's menu, in the button's place (4.150.0): it glides into the search pill as the menu grows
    from it, its nine dots turning into an x (the corners and the centre stay, the edges fold away); closing, it glides
    back and the menu folds into it. */
+/* 4.238.0, the top as a composer: the lead (your Actor's face with its state), the tools inside the pill, the Actor's card
+   under it; the close orb beside the pill on a phone, a solid disc with a bold x. */
+.ovs-lead { all: unset; box-sizing: border-box; position: relative; flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-left: -4px; border-radius: 50%; color: var(--text-muted, #93a0b4); }
+.ovs-lead > svg { width: 20px; height: 20px; }
+.ovs-lead-on { position: absolute; right: 2px; bottom: 2px; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }
+.ovs-lead.is-you { cursor: pointer; height: 40px; -webkit-tap-highlight-color: transparent; transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-lead.is-you:active { transform: scale(.92); }
+.ovs-lead.is-you:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: 2px; }
+.ovs-lead-face { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; font: 800 14px/1 Inter, system-ui, sans-serif; color: #fff;
+  background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in oklab, var(--accent, #3b82f6) 50%, #a855f7)); box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }
+.ovs-lead-face img { width: 100%; height: 100%; object-fit: cover; }
+.ovs-lead-me { position: relative; flex: none; display: grid; place-items: center; z-index: 4; }
+.ovs-lead.is-you { display: inline-flex; align-items: center; width: auto; min-width: 40px; padding: 0 2px; }
+/* What runs for you, stacked behind your picture: each a small face with its state on a ring (a comet while it works,
+   amber while it waits for you). They fan out from behind you as the menu opens. */
+.ovs-stack { display: inline-flex; align-items: center; margin-left: -4px; padding-right: 5px; }
+.ovs-stack-f, .ovs-stack-more { position: relative; flex: none; display: grid; place-items: center; width: 24px; height: 24px; margin-left: -5px; border-radius: 50%; z-index: calc(3 - var(--i, 0));
+  color: #fff; background: linear-gradient(140deg, hsl(var(--h, 220) 70% 56%), hsl(calc(var(--h, 220) + 40) 65% 40%)); box-shadow: 0 0 0 2px var(--bg-secondary, #121826);
+  animation: ovs-fan .42s cubic-bezier(.2, 1.3, .3, 1) both; animation-delay: calc(90ms + var(--i, 0) * 70ms); }
+.ovs-stack-f:first-child { margin-left: 0; }
+.ovs-stack-f img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovs-stack-f svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.ovs-stack-more { align-self: flex-start; width: auto; min-width: 17px; height: 17px; margin: -3px 0 0 -9px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; z-index: 5; background: var(--text-primary, #e6edf7); color: var(--bg-primary, #0b0f19); font: 800 10px/17px Inter, system-ui, sans-serif; letter-spacing: -.02em; }
+@keyframes ovs-fan { from { opacity: 0; transform: translateX(-16px) scale(.5); } }
+.ovs-stack-f.is-working::after, .ovs-active-f.is-working::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0 50%, color-mix(in srgb, var(--accent-light, #60a5fa) 70%, transparent) 80%, #fff 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  animation: ovs-comet 1.25s linear infinite; }
+@keyframes ovs-comet { to { transform: rotate(360deg); } }
+.ovs-stack-f.is-asks, .ovs-active-f.is-asks { box-shadow: 0 0 0 2px var(--bg-secondary, #121826), 0 0 0 4px #f59e0b; }
+.ovs-stack-f.is-asks { animation: ovs-fan .42s cubic-bezier(.2, 1.3, .3, 1) both, ovs-asks 2.2s ease-in-out 1s infinite; animation-delay: calc(90ms + var(--i, 0) * 70ms), 1s; }
+@keyframes ovs-asks { 50% { box-shadow: 0 0 0 2px var(--bg-secondary, #121826), 0 0 0 4px #f59e0b, 0 0 0 8px color-mix(in srgb, #f59e0b 22%, transparent); } }
+html[data-ov-motion=reduced] .ovs-stack-f.is-working::after, html[data-ov-motion=reduced] .ovs-active-f.is-working::after { animation-duration: 2.6s; }
+html[data-ov-motion=reduced] .ovs-stack-f, html[data-ov-motion=reduced] .ovs-stack-more { animation-duration: .2s; animation-delay: 0s; }
+html[data-ov-motion=off] .ovs-stack-f, html[data-ov-motion=off] .ovs-stack-more { animation: none; }
+html[data-ov-motion=off] .ovs-stack-f.is-working::after, html[data-ov-motion=off] .ovs-active-f.is-working::after { animation: none; background: var(--accent-light, #60a5fa); opacity: .8; }
+/* Your sheet's rows of what is running. */
+.ovs-active { display: grid; gap: 4px; }
+.ovs-active-h { margin: 2px 6px 0; font: 800 11.5px/1.4 'OV Brand', Nunito, Inter, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7c8aa0); }
+.ovs-active-row { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 6px 10px 6px 8px; border-radius: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); transition: background-color .15s, transform .15s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-active-row:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: 1px; }
+@media (hover: hover) { .ovs-active-row:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); } }
+.ovs-active-row:active { transform: scale(.985); }
+.ovs-active-f { position: relative; flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 3px; border-radius: 50%; color: #fff; background: linear-gradient(140deg, hsl(var(--h, 220) 70% 56%), hsl(calc(var(--h, 220) + 40) 65% 40%)); }
+.ovs-active-f img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovs-active-f svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ovs-active-t { flex: 1 1 auto; min-width: 0; display: grid; line-height: 1.3; }
+.ovs-active-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 14.5px/1.3 'OV Brand', Nunito, Inter, system-ui, sans-serif; color: var(--text-primary, #e6edf7); }
+.ovs-active-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovs-active-st { flex: none; font: 750 11.5px/1 Inter, system-ui, sans-serif; font-style: normal; padding: 6px 9px; border-radius: 999px; color: var(--accent-light, #93c5fd); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovs-active-st.is-asks { color: #fbbf24; background: color-mix(in srgb, #f59e0b 18%, transparent); }
+/* The sheet's parts rise in, one after the other. */
+.ovs-youpanel > * { animation: ovs-rise .3s cubic-bezier(.2, .8, .2, 1) both; }
+.ovs-youpanel > :nth-child(2) { animation-delay: .05s; } .ovs-youpanel > :nth-child(3) { animation-delay: .1s; }
+@keyframes ovs-rise { from { opacity: 0; transform: translateY(8px); } }
+html[data-ov-motion=off] .ovs-youpanel > * { animation: none; }
+.ovs-tools { flex: none; display: flex; align-items: center; gap: 4px; }
+.ovs-tool { all: unset; box-sizing: border-box; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; color: var(--text-secondary, #a8b3c4); -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s, color .15s, transform .15s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-tool[hidden] { display: none; }
+.ovs-tool svg { width: 22px; height: 22px; }
+.ovs-tool:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: 1px; }
+@media (hover: hover) { .ovs-tool:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); } }
+.ovs-tool:active { transform: scale(.9); }
+.ovs-send { color: var(--on-accent, #fff); background: var(--accent, #3b82f6); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); animation: ovs-send-in .22s cubic-bezier(.3, 1.4, .4, 1); }
+@media (hover: hover) { .ovs-send:hover { color: var(--on-accent, #fff); background: var(--accent-hover, color-mix(in oklab, var(--accent, #3b82f6) 85%, #fff)); } }
+@keyframes ovs-send-in { from { transform: scale(.5); opacity: 0; } }
+.ovs-mic.is-on { color: #fff; background: var(--live-red, #ef4444); animation: ovs-mic 1.2s ease-in-out infinite; }
+@keyframes ovs-mic { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--live-red, #ef4444) 25%, transparent); } }
+html[data-ov-motion=off] .ovs-send, html[data-ov-motion=off] .ovs-mic.is-on { animation: none; }
+.ovs-panel { position: relative; }
+/* The list fills the menu's height (You's notifications put their foot at the bottom: the owner, 11-13: "take up the full height properly"). */
+.ovs-panel > .ovs-list { flex: 1 1 auto; min-height: 0; }
+.ovs-youpanel { position: absolute; z-index: 6; left: 8px; right: 8px; top: var(--ovs-you-top, 64px); max-height: calc(100% - var(--ovs-you-top, 64px) - 12px); overflow: auto; overscroll-behavior: contain;
+  display: grid; gap: 8px; padding: 10px; border-radius: 22px; background: var(--bg-elevated, var(--bg-secondary, #141a26));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent), 0 24px 60px -18px rgba(0, 0, 0, .75); transform-origin: 32px 0; animation: ovs-drop .24s cubic-bezier(.2, .8, .2, 1); }
+.ovs-youpanel[hidden] { display: none; }
+@keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.96); } }
+html[data-ov-motion=off] .ovs-youpanel { animation: none; }
+@media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-bar .ovs-input::placeholder { font-size: 15px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
 .ovs-orb { display: none; }
+.ovs-foot kbd svg { width: 12px; height: 12px; vertical-align: -1px; }
 @media (max-width: 640px) {
   .ovs.ovs-anchored .ovs-x { display: none; }
-  .ovs.ovs-anchored .ovs-bar { padding-right: 52px; }
-  .ovs.ovs-anchored .ovs-orb { position: fixed; z-index: 3; left: var(--orb-x, calc(100vw - 52px)); top: var(--orb-y, 12px); width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  .ovs.ovs-anchored .ovs-bar { margin-right: 58px; }
+  .ovs.ovs-anchored .ovs-orb { position: fixed; z-index: 3; left: var(--orb-x, calc(100vw - 52px)); top: var(--orb-y, 12px); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
     background: color-mix(in srgb, var(--accent, #3b82f6) 16%, var(--bg-primary, #0b0f19)); color: var(--text-primary, #e6edf7); -webkit-tap-highlight-color: transparent;
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 35%, transparent), 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent);
     --ovo-a: var(--accent-light, var(--accent, #60a5fa)); --ovo-b: color-mix(in oklab, var(--accent, #3b82f6) 45%, #e879f9);
@@ -550,7 +645,21 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
   .ovs.ovs-anchored .ovs-orb.is-gone { animation: ovs-orb-out .22s cubic-bezier(.5, 0, .75, .2) both; }
   @keyframes ovs-orb-in { from { opacity: 0; transform: scale(.45) rotate(-90deg); } }
   @keyframes ovs-orb-out { to { opacity: 0; transform: scale(.5) rotate(90deg); } }
-  .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; }
+  .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; width: 24px; height: 24px; }
+  .ovs.ovs-anchored .ovs-orb.is-x { background: var(--bg-secondary, #121826); box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 14%, transparent), 0 8px 22px -8px rgba(0, 0, 0, .7); }
+  .ovs.ovs-anchored .ovs-orb.is-x::before { display: none; }
+  .ovs.ovs-anchored .ovs-orb { width: 48px; height: 48px; }
+  .ovs.ovs-anchored .ovs-orb:focus { outline: none; }
+  .ovs.ovs-anchored .ovs-orb:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--bg-primary, #0b0f19), 0 0 0 4px var(--accent-light, var(--accent, #60a5fa)); }
+  .ovs.ovs-anchored .ovs-orb.is-x { color: var(--text-primary, #e6edf7);
+    background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--accent, #3b82f6) 26%, var(--bg-secondary, #121826)), var(--bg-secondary, #121826) 70%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 22%, transparent), 0 10px 24px -10px color-mix(in srgb, var(--accent, #3b82f6) 70%, rgba(0, 0, 0, .8)); }
+  .ovs.ovs-anchored .ovs-orb.is-x svg { width: 26px; height: 26px; transition: transform .4s cubic-bezier(.3, 1.4, .4, 1); }
+  .ovs.ovs-anchored .ovs-orb.is-x.is-pop { animation: ovs-orb-spin .5s cubic-bezier(.2, 1.3, .3, 1) .06s both; }
+  @keyframes ovs-orb-spin { from { opacity: 0; transform: scale(.4) rotate(-180deg); } 60% { opacity: 1; } }
+  .ovs.ovs-anchored .ovs-orb.is-x:active svg { transform: rotate(90deg) scale(.86); }
+  html[data-ov-motion=off] .ovs.ovs-anchored .ovs-orb.is-x.is-pop { animation: none; }
+  @media (hover: hover) { .ovs.ovs-anchored .ovs-orb.is-x:hover svg { transform: rotate(90deg); } }
   .ovs.is-closing .ovs-panel { animation: ovs-fold .28s cubic-bezier(.5, 0, .75, .2) both; }
   .ovs.is-closing { animation: ovs-fade .28s ease-in both; }
 }
@@ -559,6 +668,11 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     }
 
     const ICON = {
+        up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 20.8V4M5.7 10.3l6.3-6.3l6.3 6.3"/></svg>',
+        down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 3.2v16.7M5.7 13.7l6.3 6.3l6.3-6.3"/></svg>',
+        mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>',
+        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+        send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg>',
         search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>',
         close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
         clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
@@ -584,10 +698,10 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         el.setAttribute('role', 'dialog');
         el.setAttribute('aria-modal', 'true');
         el.setAttribute('aria-label', 'Search and every OpenVibe site');
-        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar">${ICON.search}<div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
-            + '<div class="ovs-tabs ovs-starttabs" hidden></div>'
+        el.innerHTML = `<div class="ovs-panel"><div class="ovs-bar"><button type="button" class="ovs-lead" tabindex="-1" aria-hidden="true">${ICON.search}</button><div class="ovs-field"><span class="ovs-ghost" aria-hidden="true"></span><input class="ovs-input" type="search" role="combobox" aria-autocomplete="both" aria-expanded="true" aria-controls="ovs-list" autocomplete="off" spellcheck="false" enterkeyhint="search" maxlength="100"></div><div class="ovs-tools"><button type="button" class="ovs-tool ovs-mic" aria-label="Speak your search" data-ov-tip="Speak" hidden>${ICON.mic}</button><button type="button" class="ovs-tool ovs-attach" aria-label="Ask Vibe about a picture or a file" data-ov-tip="Attach" hidden>${ICON.plus}</button><button type="button" class="ovs-tool ovs-send" aria-label="Ask Vibe" data-ov-tip="Ask Vibe" hidden>${ICON.send}</button><input class="ovs-file" type="file" multiple hidden accept="image/*,video/*,audio/*,.pdf,.txt,.md,.csv,.json,.zip"></div><div class="ovs-acts"></div><button type="button" class="ovs-x" aria-label="Close the menu" title="Close (Esc)">${ICON.close}<span>Close</span></button></div>`
+            + '<div class="ovs-youpanel" role="region" aria-label="You and your Actor" hidden></div><div class="ovs-tabs ovs-starttabs" hidden></div>'
             + `<div class="ovs-tabs ovs-rtabs" role="tablist" aria-label="Results from" hidden>${RTABS.map(([id, label]) => `<button type="button" class="ovs-tab" role="tab" data-rtab="${id}" aria-selected="false">${label}</button>`).join('')}</div>`
-            + '<ul class="ovs-list" id="ovs-list" role="listbox"></ul><div class="ovs-foot" aria-hidden="true"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Tab</kbd> complete</span><span><kbd>Esc</kbd> close</span></div></div>';
+            + '<ul class="ovs-list" id="ovs-list" role="listbox"></ul><div class="ovs-foot" aria-hidden="true"><span><kbd>' + ICON.up + '</kbd><kbd>' + ICON.down + '</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Tab</kbd> complete</span><span><kbd>Esc</kbd> close</span></div></div>';
         input = el.querySelector('.ovs-input');
         ghost = el.querySelector('.ovs-ghost');
         listEl = el.querySelector('.ovs-list');
@@ -608,6 +722,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         rtabsEl.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-rtab]'); if (b) { showResults(rq, b.getAttribute('data-rtab')); input.focus(); } });
         el.addEventListener('mousedown', (e) => { if (e.target === el) close(); });
         el.querySelector('.ovs-x').addEventListener('click', close);
+        wireTop();
         // 4.223.1: the panel never scrolls as a whole (only its list does); an engine that still scrolls it on a focus
         // is put back at once, so the search field and the tabs stay in place.
         { const panel = el.querySelector('.ovs-panel'); if (panel) panel.addEventListener('scroll', () => { if (panel.scrollTop || panel.scrollLeft) { panel.scrollTop = 0; panel.scrollLeft = 0; } }, { passive: true }); }
@@ -675,6 +790,8 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     }
 
     function onKey(e) {
+        if (e.key === 'Escape' && el.classList.contains('ovs-you-open')) { e.preventDefault(); toggleYou(false); return; }
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && input.value.trim()) { e.preventDefault(); askVibe(input.value); return; }
         if (e.key === 'Escape') { e.preventDefault(); if (input.value) { input.value = ''; paintGhost(); render(''); return; } close(); return; }
         if ((e.key === 'Tab' && !e.shiftKey || e.key === 'ArrowRight' && input.selectionStart === input.value.length) && completion) {
             e.preventDefault(); input.value = completion; paintGhost(); schedule(input.value); return;
@@ -845,8 +962,8 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
                     if (!f.on && onCount >= FEEDS_MAX) box.disabled = true;
                     const t = document.createElement('span'); const b = document.createElement('b'); b.textContent = f.title; const m = document.createElement('small'); m.textContent = f.meta;
                     t.append(b, m); lab.append(box, t); row.appendChild(lab);
-                    [['up', '↑', 'Show it earlier'], ['down', '↓', 'Show it later']].forEach(([dir, glyph, name]) => {
-                        const mv = document.createElement('button'); mv.type = 'button'; mv.textContent = glyph; mv.setAttribute('aria-label', `${name}: ${f.title}`); mv.setAttribute('data-ovs-feed-move', `${dir}|${f.id}`); mv.disabled = !f.on; row.appendChild(mv);
+                    [['up', ICON.up, 'Show it earlier'], ['down', ICON.down, 'Show it later']].forEach(([dir, glyph, name]) => {
+                        const mv = document.createElement('button'); mv.type = 'button'; mv.innerHTML = glyph; mv.setAttribute('aria-label', `${name}: ${f.title}`); mv.setAttribute('data-ovs-feed-move', `${dir}|${f.id}`); mv.disabled = !f.on; row.appendChild(mv);
                     });
                     li.appendChild(row);
                 });
@@ -1232,6 +1349,220 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     /** A phone's menu with the Dock to hand: its places open inside the menu, under the menu's own head. */
     /** Chat and Vibe open inside the menu, on every screen (4.220.0: the floating Dock is gone). */
     function canDoor() { return !!(root.OpenVibeDock && typeof root.OpenVibeDock.mountInto === 'function'); }
+
+    // ── The top (4.238.0; the owner, 11-13: "redesign the whole entire top to be our agentic search … uses our composer
+    // … the actor … at the top … you can see your little avatar of your actor running in there … click for expand"):
+    // the pill is a composer. Your Actor's face leads it with its state on a ring (tap: its card drops under the pill);
+    // voice and attach sit inside it while it is empty, and Ask Vibe once there are words: the question becomes a Vibe
+    // run in place, a file goes into Vibe's box. Results still come as you type.
+    const ACTOR = 'https://openvibe.actor';
+    // The pill's words: the site's name where there is room; on a phone, with the tools beside them, the short form.
+    function askHint() { let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ } return narrow ? 'Search or ask Vibe' : `Search ${here()}, or ask Vibe`; }
+    let actorInfo = null, actorAt = 0, listening = null;
+    const signedInTop = () => !!(ctx && ctx.token && ctx.user && !ctx.user.is_anon);
+    function syncTools() {
+        if (!el) return;
+        const has = !!(input && input.value.trim());
+        const mic = el.querySelector('.ovs-mic'), att = el.querySelector('.ovs-attach'), send = el.querySelector('.ovs-send');
+        const canSpeak = !!(root.SpeechRecognition || root.webkitSpeechRecognition);
+        if (mic) mic.hidden = has || !canSpeak;
+        if (att) att.hidden = has || !signedInTop();
+        if (send) send.hidden = !has;
+    }
+    function askVibe(text, files) {
+        const words = String(text || '').trim();
+        if (!words && !(files && files.length)) return;
+        if (!canDoor() || !signedInTop()) { location.href = `https://openvibe.chat/vibe${words ? `?ask=${encodeURIComponent(words)}` : ''}`; return; }
+        if (input) { input.value = ''; paintGhost(); syncTools(); }
+        toggleYou(false);
+        openDoor('vibe');
+        const go = (n = 0) => {
+            if (!runView) { if (n < 80) setTimeout(() => go(n + 1), 50); return; }
+            if (files && files.length) {
+                try { runView.prefill(words); } catch { /* */ }
+                const put = (k = 0) => {
+                    const f = doorHost && doorHost.querySelector('.ovr-compose form');
+                    if (f && f.__ovc && typeof f.__ovc.add === 'function') { f.__ovc.add(files); return; }
+                    if (k < 60) setTimeout(() => put(k + 1), 50);
+                };
+                put();
+                return;
+            }
+            Promise.resolve(runView.start(words)).catch(() => { try { runView.prefill(words); } catch { /* */ } });
+        };
+        go();
+    }
+    async function loadActor() {
+        if (!signedInTop()) return null;
+        if (actorAt && Date.now() - actorAt < 60000) return actorInfo;
+        try {
+            const r = await fetch(`${String(ctx.actorBase || ACTOR).replace(/\/+$/, '')}/api/v1/me/actor`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } });
+            actorInfo = r.ok ? await r.json() : null;
+        } catch { actorInfo = null; }
+        actorAt = Date.now();
+        return actorInfo;
+    }
+    // What is running for you (4.238.0; the owner, 11-13: "when you have actors or tasks running … sessions,
+    // conversations, anything, there should be stacked … your agents … that are active behind you, and there should be
+    // like status indicator"): your Actor while it works or asks, and every run that is going or waits for you.
+    const KIND_SVG = {
+        chat: '<path d="M3.8 4.3h16.8v11.7H8l-4.2 4.2Z"/>',
+        task: '<rect x="5.4" y="8.3" width="13.2" height="10.4" rx="2.8"/><path d="M12 4.6v3.8M9.2 13.1h0M14.8 13.1h0M9.6 16.4h4.7M3.5 13.1v1.9M20.5 13.1v1.9"/>',
+        code: '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
+        ask: '<circle cx="10.6" cy="10.6" r="7"/><path d="M20.4 20.4l-4.5-4.5"/>',
+        spark: '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
+    };
+    const faceHue = (t) => { let n = 0; for (const c of String(t || 'ov')) n = (n * 31 + c.charCodeAt(0)) >>> 0; return n % 360; };
+    let activeList = [], activeAt = 0;
+    async function loadActive() {
+        if (!signedInTop()) return [];
+        if (activeAt && Date.now() - activeAt < 30000) return activeList;
+        const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
+        const [a, runs] = await Promise.all([
+            loadActor(),
+            fetch(`${net}/api/frame/runs?limit=20`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } })
+                .then((r) => (r.ok ? r.json() : { runs: [] })).then((d) => (Array.isArray(d.runs) ? d.runs : [])).catch(() => []),
+        ]);
+        const out = [];
+        if (a && a.id && a.enabled !== false) {
+            const asks = Array.isArray(a.asks) ? a.asks.length : 0;
+            if (asks || a.status === 'working') out.push({ key: `actor:${a.id}`, kind: 'actor', name: a.name || 'Your Actor', state: asks ? 'asks' : 'working',
+                pic: a.avatar && /^https:\/\//.test(String(a.avatar.url || '')) ? a.avatar.url : '', hue: faceHue(a.name || a.id), glyph: 'task',
+                line: asks ? `It asks you: ${(a.asks[0] && a.asks[0].text) || ''}` : (a.now && a.now.current_step) || 'Working' });
+        }
+        for (const r of runs) {
+            const needs = r.status === 'waiting' && r.waiting && r.waiting.for !== 'message';
+            if (!needs && !['running', 'planning'].includes(r.status)) continue;
+            const ag = r.agent || {};
+            out.push({ key: `run:${r.ref || r.id}`, kind: 'run', ref: r.ref || r.id, name: r.title || ag.name || { chat: 'Chat', task: 'Task', code: 'Code', ask: 'Answer' }[r.kind] || 'Run', state: needs ? 'asks' : 'working',
+                pic: /^https:\/\//.test(String(ag.avatar_url || '')) ? ag.avatar_url : '', hue: Number.isInteger(ag.hue) ? ag.hue : faceHue(ag.id || r.kind), glyph: KIND_SVG[r.kind] ? r.kind : 'spark',
+                line: needs ? 'Your turn' : (r.doing && r.doing.text) || (r.status === 'planning' ? 'Starting' : 'Working') });
+        }
+        out.sort((x, y) => (y.state === 'asks') - (x.state === 'asks'));
+        activeList = out; activeAt = Date.now();
+        return out;
+    }
+    function stackFace(it, cls) {
+        const f = document.createElement('span'); f.className = `${cls} is-${it.state}`; f.style.setProperty('--h', String(it.hue));
+        if (it.pic) { const img = document.createElement('img'); img.alt = ''; img.src = it.pic; img.decoding = 'async'; img.onerror = () => { img.remove(); f.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 24 24" aria-hidden="true">${KIND_SVG[it.glyph] || KIND_SVG.spark}</svg>`); }; f.appendChild(img); }
+        else f.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${KIND_SVG[it.glyph] || KIND_SVG.spark}</svg>`;
+        return f;
+    }
+    async function paintLead() {
+        const lead = el && el.querySelector('.ovs-lead'); if (!lead) return;
+        const u = ctx && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        lead.className = 'ovs-lead';
+        if (!u) {
+            lead.innerHTML = ICON.search; lead.tabIndex = -1; lead.setAttribute('aria-hidden', 'true');
+            ['aria-expanded', 'aria-label', 'data-ov-tip'].forEach((k) => lead.removeAttribute(k));
+            return;
+        }
+        // You: your picture (or first letter) and the online dot.
+        lead.classList.add('is-you');
+        lead.textContent = '';
+        const meEl = document.createElement('span'); meEl.className = 'ovs-lead-me';
+        const face = document.createElement('span'); face.className = 'ovs-lead-face';
+        const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
+        const letter = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase() || '?';
+        if (pic) { const img = document.createElement('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; img.onerror = () => { img.remove(); face.textContent = letter; }; face.appendChild(img); }
+        else face.textContent = letter;
+        const dot = document.createElement('i'); dot.className = 'ovs-lead-on'; dot.setAttribute('aria-hidden', 'true');
+        meEl.append(face, dot);
+        lead.append(meEl);
+        lead.tabIndex = 0; lead.removeAttribute('aria-hidden');
+        const name = u.display_name || u.username || 'You';
+        lead.setAttribute('aria-label', `${name}: your account and display`);
+        lead.setAttribute('aria-expanded', String(!!(el && el.classList.contains('ovs-you-open'))));
+        lead.setAttribute('data-ov-tip', 'You');
+        // Behind you: what is running for you, newest asks first; two faces on a phone, three on a computer, then a count.
+        const list = await loadActive();
+        if (!el || !lead.isConnected || !lead.classList.contains('is-you') || !list.length) return;
+        let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ }
+        const room = narrow ? 2 : 3;
+        const stack = document.createElement('span'); stack.className = 'ovs-stack'; stack.setAttribute('aria-hidden', 'true');
+        list.slice(0, room).forEach((it, i) => { const f = stackFace(it, 'ovs-stack-f'); f.style.setProperty('--i', String(i)); stack.appendChild(f); });
+        if (list.length > room) { const more = document.createElement('span'); more.className = 'ovs-stack-more'; more.style.setProperty('--i', String(room)); more.textContent = `+${list.length - room}`; stack.appendChild(more); }
+        lead.appendChild(stack);
+        lead.classList.add('has-stack');
+        const asks = list.filter((x) => x.state === 'asks').length;
+        if (asks) lead.classList.add('has-asks');
+        const say = list.slice(0, 3).map((x) => `${x.name}, ${x.state === 'asks' ? 'waiting for you' : 'working'}`).join('; ');
+        lead.setAttribute('aria-label', `${name}: your account and display. Running for you: ${say}${list.length > 3 ? `, and ${list.length - 3} more` : ''}`);
+    }
+    /** The rows of what is running, in your sheet: a tap opens that run in Vibe (your Actor has its own card above). */
+    function activeRows(panel) {
+        const old = panel.querySelector('.ovs-active'); if (old) old.remove();
+        const runs = activeList.filter((x) => x.kind === 'run');
+        if (!runs.length) return;
+        const box = document.createElement('div'); box.className = 'ovs-active'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Running for you');
+        const h = document.createElement('p'); h.className = 'ovs-active-h'; h.textContent = 'Running for you'; box.appendChild(h);
+        runs.slice(0, 6).forEach((it) => {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-active-row';
+            const t = document.createElement('span'); t.className = 'ovs-active-t';
+            const n = document.createElement('b'); n.textContent = it.name;
+            const l = document.createElement('small'); l.textContent = it.line;
+            t.append(n, l);
+            const st = document.createElement('i'); st.className = `ovs-active-st is-${it.state}`; st.textContent = it.state === 'asks' ? 'Your turn' : 'Working';
+            b.append(stackFace(it, 'ovs-active-f'), t, st);
+            b.setAttribute('aria-label', `${it.name}: ${it.state === 'asks' ? 'waiting for you' : 'working'}. Open it`);
+            b.addEventListener('click', () => {
+                toggleYou(false);
+                if (!canDoor()) { location.href = 'https://openvibe.chat/vibe'; return; }
+                openDoor('vibe');
+                const go = (k = 0) => { if (runView && typeof runView.open === 'function') { try { runView.open(it.ref); } catch { /* the list stands */ } return; } if (k < 80) setTimeout(() => go(k + 1), 50); };
+                go();
+            });
+            box.appendChild(b);
+        });
+        panel.appendChild(box);
+    }
+    function toggleYou(force) {
+        const panel = el && el.querySelector('.ovs-youpanel'), lead = el && el.querySelector('.ovs-lead');
+        if (!panel || !lead) return;
+        const show = force != null ? !!force : panel.hidden;
+        if (show && !lead.classList.contains('is-you')) return;
+        if (show) { const bar = el.querySelector('.ovs-bar'), pr = el.querySelector('.ovs-panel'); if (bar && pr) pr.style.setProperty('--ovs-you-top', `${Math.round(bar.getBoundingClientRect().bottom - pr.getBoundingClientRect().top + 6)}px`); }
+        panel.hidden = !show; el.classList.toggle('ovs-you-open', show);
+        if (lead.classList.contains('is-you')) lead.setAttribute('aria-expanded', String(show));
+        if (!show) { panel.textContent = ''; return; }
+        const draw = (n = 0) => {
+            const H = root.OpenVibeHome;
+            if (H && typeof H.youCard === 'function') { H.youCard(panel, { token: ctx.token, user: ctx.user, me: ctx.me, look: ctx.look, actorBase: ctx.actorBase, close }); loadActive().then(() => { if (!panel.hidden) activeRows(panel); }); return; }
+            homeLib();
+            if (n < 60) setTimeout(() => draw(n + 1), 50);
+        };
+        draw();
+    }
+    function listen() {
+        const SR = root.SpeechRecognition || root.webkitSpeechRecognition; if (!SR || !input) return;
+        const mic = el.querySelector('.ovs-mic');
+        if (listening) { try { listening.stop(); } catch { /* */ } return; }
+        let rec; try { rec = new SR(); } catch { return; }
+        rec.interimResults = true; rec.continuous = false;
+        try { rec.lang = document.documentElement.lang || navigator.language || 'en-US'; } catch { /* */ }
+        rec.onresult = (e) => { let t = ''; for (const r of e.results) t += r[0].transcript; input.value = t.slice(0, 100); paintGhost(); schedule(input.value); };
+        rec.onend = () => { listening = null; if (mic) { mic.classList.remove('is-on'); mic.setAttribute('aria-pressed', 'false'); } syncTools(); input.focus(); };
+        rec.onerror = rec.onend;
+        listening = rec;
+        if (mic) { mic.classList.add('is-on'); mic.setAttribute('aria-pressed', 'true'); }
+        try { rec.start(); } catch { rec.onend(); }
+    }
+    function wireTop() {
+        const lead = el.querySelector('.ovs-lead');
+        lead.addEventListener('click', () => { if (lead.classList.contains('is-you')) toggleYou(); else input.focus(); });
+        // A tap anywhere else folds your sheet (it floats over the menu).
+        el.addEventListener('pointerdown', (e) => {
+            if (!el.classList.contains('ovs-you-open')) return;
+            const panel = el.querySelector('.ovs-youpanel');
+            if (panel && !panel.contains(e.target) && !lead.contains(e.target)) toggleYou(false);
+        }, true);
+        el.querySelector('.ovs-mic').addEventListener('click', listen);
+        const file = el.querySelector('.ovs-file');
+        el.querySelector('.ovs-attach').addEventListener('click', () => file.click());
+        file.addEventListener('change', () => { const f = [...(file.files || [])]; file.value = ''; if (f.length) askVibe(input.value, f); });
+        el.querySelector('.ovs-send').addEventListener('click', () => askVibe(input.value));
+        input.addEventListener('input', syncTools);
+    }
     // A place's own actions (+ for a new chat, ↗ to open it in Chat) sit in the search pill, left of the close orb, so
     // they cost no row (asks 335, 336: "an icon plus button that looks nice and integrated", "open in Chat … a button
     // icon"). The Dock's panel draws them in its slim row; inside the menu that row is hidden and mirrored here, and
@@ -1334,7 +1665,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }
         }
         watchActs(true);
-        input.placeholder = id === 'chats' ? 'Search your chats' : `Search ${here()}, or ask Vibe`;
+        input.placeholder = id === 'chats' ? 'Search your chats' : askHint();
         paintTabs();
     }
     function closeDoorBody() {
@@ -1351,7 +1682,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         if (doorEl) doorEl.hidden = true;
         if (listEl) listEl.hidden = false;
         if (el) el.classList.remove('ovs-in-door', 'ovs-in-vibe');
-        if (input) input.placeholder = `Search ${here()}, or ask Vibe`;
+        if (input) input.placeholder = askHint();
     }
 
     function paintTabs() {
@@ -1700,7 +2031,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
     function homeView(view, info) {
         if (!input || tab !== 'you') return;
         if (view === 'drawer') { input.placeholder = `Find among ${(info && info.apps) || ''} apps`.replace('  ', ' '); input.value = ''; return; }
-        if (/^Find among /.test(input.placeholder)) { input.placeholder = `Search ${here()}, or ask Vibe`; input.value = ''; }
+        if (/^Find among /.test(input.placeholder)) { input.placeholder = askHint(); input.value = ''; }
     }
     function homeOpts() {
         const { all, ranked, f } = basis();
@@ -1719,7 +2050,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         const back = mine ? mine.items.filter((x) => { if (seenB.has(x.url)) return false; seenB.add(x.url); return true; }).slice(0, 60).map(backRow) : [];
         const usage = mine ? mine.services.filter((x) => x && x.count > 0).map((x) => ({ id: x.service === 'media' ? 'media-hub' : x.service, count: Number(x.count) || 0 })) : [];
         return { onView: homeView, apps, yours, tools, toolCount: catalog ? catalog.tools.length : 0, recent: recentIds, back, usage, groups: f && Array.isArray(f.groups) ? f.groups : [],
-            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling,
+            token: ctx.token, apiBase: ctx.apiBase, user: ctx.user, look: ctx.look, me: ctx.me, sibling: ctx.sibling, meInTop: !!(ctx.user && !ctx.user.is_anon),
             // You's Notifications tab: the whole list with Mark all read, mounted once; the count rides on the tab.
             notifications: (host) => mountNotes(host), unread: () => { try { return root.OpenVibeNotifications ? Number(root.OpenVibeNotifications.unread()) || 0 : 0; } catch { return 0; } },
             startTab: ['notifications', 'recent', 'apps'].includes(ctx.section) ? ctx.section : null, mountIcons: (scope) => { if (typeof ctx.icons === 'function') ctx.icons(scope); }, close,
@@ -1782,7 +2113,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             if (feed && feed.search && (q || feed.query)) feed.search(q);
             return;
         }
-        input.placeholder = `Search ${here()}, or ask Vibe`;
+        input.placeholder = askHint();
         if (q) leaveDoor();
         tabsEl.hidden = !!q;
         if (!q) { if (inflight) { inflight.abort(); inflight = null; } el.classList.remove('ovs-busy'); paintTabs(); renderTab(); return; }
@@ -2084,6 +2415,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         syncFeeds();
         el.classList.add('is-open');
         tickAgo();
+        actorAt = 0; activeAt = 0; toggleYou(false); syncTools(); paintLead();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.
         try {
@@ -2114,8 +2446,8 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
                 // button flies into its tab instead, the orb is simply there as the close X.
                 const cx = Number.isFinite(at && at.cx) ? at.cx : innerWidth - 24, cy = Number.isFinite(at && at.cy) ? at.cy : 28;
                 const bar = el.querySelector('.ovs-bar'), br = bar ? bar.getBoundingClientRect() : null;
-                const tx = br ? br.right - 26 : cx, ty = br ? br.top + br.height / 2 : cy;
-                orbEl.style.setProperty('--orb-x', `${Math.round(tx - 20)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 20)}px`);
+                const tx = br ? br.right + 6 + 24 : cx, ty = br ? br.top + br.height / 2 : cy;
+                orbEl.style.setProperty('--orb-x', `${Math.round(tx - 24)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 24)}px`);
                 orbEl.style.setProperty('--orb-dx', `${Math.round(cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(cy - ty)}px`);
                 if (flyFrom) orbEl.classList.add('is-x', 'is-pop');   // the button has flown to its tab: the close turns in at the pill
                 else {
@@ -2130,7 +2462,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
                 header: el.querySelector('.ovs-bar'), body: listEl, close });
             surface.open();
         } else document.documentElement.style.overflow = 'hidden';
-        input.placeholder = `Search ${here()}, or ask Vibe`;
+        input.placeholder = askHint();
         input.value = opts.q || '';
         paintGhost();
         render(input.value);

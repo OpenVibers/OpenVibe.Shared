@@ -43,7 +43,7 @@ const TYPES = Object.freeze({
     WHISPER:             { category: 'chat',        priority: 'normal',   icon: '🔇',  title: 'Whisper' },
 
     // Game
-    LEVEL_UP:            { category: 'game',        priority: 'normal',   icon: '⬆️',  title: 'Level Up!' },
+    LEVEL_UP:            { category: 'game',        priority: 'normal',   icon: '⭐',  title: 'Level Up!' },
     LOOT_DROP:           { category: 'game',        priority: 'normal',   icon: '🎁',  title: 'Loot Drop' },
     DUNGEON_INVITE:      { category: 'game',        priority: 'high',     icon: '🏰',  title: 'Dungeon Invite' },
     BATTLE_CHALLENGE:    { category: 'game',        priority: 'high',     icon: '⚔️',  title: 'Battle Challenge' },
@@ -56,7 +56,7 @@ const TYPES = Object.freeze({
     CLIP_CREATED:        { category: 'stream',      priority: 'normal',   icon: '🎬',  title: 'Clip Created' },
     VC_CALL_INVITE:      { category: 'chat',        priority: 'high',     icon: '📞',  title: 'Call Invite' },
     CONTENT_COMMENT:     { category: 'social',      priority: 'normal',   icon: '💬',  title: 'New Comment' },
-    CONTENT_REPLY:       { category: 'social',      priority: 'normal',   icon: '↩️',  title: 'New Reply' },
+    CONTENT_REPLY:       { category: 'social',      priority: 'normal',   icon: '💬',  title: 'New Reply' },
     TIP_RECEIVED:        { category: 'economy',     priority: 'normal',   icon: '💜',  title: 'Tip Received' },
     SUBSCRIPTION:        { category: 'economy',     priority: 'normal',   icon: '⭐',  title: 'New Subscriber' },
 

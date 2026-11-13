@@ -1,5 +1,57 @@
 # Changelog
 
+## 4.238.0 — 2026-11-13
+
+**The menu's top is a composer, you lead it, no text arrows anywhere, a ringing bell, You gets the height** (the owner's
+phone, 11-13: "redesign the whole entire top to be our agentic search … uses our composer", "move the actor thing so
+that it's at the top", "merge … this little online thing … the colors and other settings … shouldn't be taking up any
+space", "the close button can't be white", "get rid of every single instance of this right or left arrow", "regenerate
+the bell icon like that's ringing", "hide the label of the inactive tabs", "add the badges back", "the icons are so
+small", "take up the full height properly").
+
+- **The top (search.js).**
+  - The pill is a composer: voice and attach inside it while it is empty, **Ask Vibe** (a send disc) once there are
+    words; Ctrl/⌘+Enter asks Vibe whatever the list shows. A question becomes a Vibe run in the menu; an attached file
+    goes into Vibe's box.
+  - **You lead the pill:** your picture and the online dot.
+  - **What runs for you is stacked behind your picture** ("when you have actors or tasks running … sessions,
+    conversations, anything, there should be stacked … your agents … behind you, and … status indicator"): your Actor
+    while it works or asks, and every run that is going or waits for you; what waits for you first; two faces on a
+    phone and three on a computer, then a count. Each face has its picture, or its kind's glyph on its own hue, and
+    its state on a ring (a comet while it works, amber while it waits for you). They fan out from behind you as the menu
+    opens. Nothing is drawn on your own picture but the online dot (the arc on it read as a stray line).
+  - A tap on your picture floats **your sheet** over the menu: your row with Display and your account's menu, your
+    Actor's card, then **Running for you** (each run, its state, a tap opens it in Vibe); its parts rise in one after
+    the other. A tap elsewhere, Escape or your picture again folds it. You's own row and Actor strip are gone, so You
+    starts at its tabs.
+  - On a phone the pill says "Search or ask Vibe" (the site's name is its tab).
+  - **The close orb** sits beside the pill (not over it), 48 px, an accent disc with a 26 px x; it spins in and turns
+    on hover and press. The white ring was the browser's own focus outline: focus is now an accent ring, for keys only.
+  - The place tabs are shorter on a phone (54 px), their glyphs 30 px over the word (24 px beside it on a computer).
+  - The list fills the menu's height.
+- **You (ov-home.js).**
+  - Tabs: the chosen tab is lit and widens to show its name; the others are their glyphs (27 px); switching, the last
+    one folds as the new one opens. The count sits on the bell's corner; the bell rings once when something is new.
+    The row is shorter (42 px) and closer to the top.
+  - All and Edit: 44 px with 26 px glyphs. Every app's name (yours too) is 13.5 px, 800; your apps' glyphs fill more
+    of their tiles.
+  - `OpenVibeHome.youCard(box, o)` draws your sheet; `actorCard(box, o)` your Actor's card.
+- **Notifications (notification-ui.js).** The ringing bell for the empty state (it swings once, its waves fade in;
+  Calm shortens it, Off stills it), centred; search and Unread are 44 px circles with centred glyphs; the foot's
+  buttons are 44 px with drawn glyphs; in the menu the foot sits at the bottom.
+- **The bell** is redrawn everywhere (kit, glyphs, Dock, notifications, You), sized and centred to the set (19 of 24
+  units), and **`bell-ring`** joins the registry; the glyph fonts and the ink fixture are rebuilt.
+- **No text arrows.** Every →, ↗, ‹, ›, ↑, ↓, ↩ shown to a person is a drawn glyph now (agent-session, agent-sheet,
+  action-center, ov-float, ov-home, ov-look, ov-metrics, search, shipped, showcase, thread, user-card) or words (navbar,
+  url-resolver, components, ov-composer, ov-capture). `test/no-text-arrows.test.js` reads every module's strings with
+  a tokenizer and fails on one.
+- **Code is two ways** (dock-code.js): **Make or change** (something new or a project of yours, named in your words;
+  Codes works out which: `mode: 'make'`, Codes #448) and **OpenVibe**. No repository field.
+- **Vibe's list** (ov-run.js): tighter rows. **Your Actor** (dock-actor.js): its recent steps are a clock button.
+- Tests: `menu-home-screen-chrome` (you lead the pill with your Actor's state; your sheet; the composer's tools; only the
+  chosen tab is named; glyphs ≥ 24 px), `no-text-arrows`, `search-site-name-chrome`, `showcase`, `dock-code-chrome`,
+  `dock-actor-chrome`; budgets: notification-ui 27.1 KB, action-center 8.2 KB (dated notes).
+
 ## 4.237.0 — 2026-11-13
 
 **You is one slim row, your site's own are apps, and the menu's badges and the composer's row line up** (the owner's
