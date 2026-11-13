@@ -17,7 +17,7 @@
         image: '<rect x="3.5" y="5.4" width="16.7" height="13" rx="2.8"/><circle cx="9.1" cy="10" r="1.5"/><path d="M20.3 15.6l-4.7-4.7l-7.4 7.4"/>',
         code: '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
         send: '<path d="M12 20.7V4.2M3.7 12.4l8.3-8.3l8.3 8.3"/>',
-        bell: '<path d="M6 14.6V9.5a6.1 6.1 0 0 1 12.2 0v5.1l1.5 2.1h-15.3ZM10 18.7a2.1 2.1 0 0 0 4 0"/>',
+        bell: '<path d="M12 3.4a1.3 1.3 0 0 1 1.3 1.3v.5a5.8 5.8 0 0 1 4.5 5.6v3.6c0 .9.3 1.7.9 2.4l.8.9a.8.8 0 0 1-.6 1.4H5.1a.8.8 0 0 1-.6-1.4l.8-.9c.6-.7.9-1.5.9-2.4v-3.6a5.8 5.8 0 0 1 4.5-5.6v-.5A1.3 1.3 0 0 1 12 3.4ZM9.8 19.9a2.3 2.3 0 0 0 4.4 0"/>',
         calendar: '<rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10.5h16M9 3.5v4M15 3.5v4"/>',
         live: '<circle cx="12" cy="11.8" r="2"/><path d="M8.6 8.4a4.9 4.9 0 0 0 0 7.1M15.4 8.4a4.9 4.9 0 0 1 0 7.1M6.3 6.1a8.1 8.1 0 0 0 0 11.9M17.7 6.1a8.1 8.1 0 0 1 0 11.9"/>',
         clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
@@ -114,7 +114,7 @@
     // 4.203.0 (ask 349, "a better composer system unified across all sites"): Vibe's box is the one composer too, for
     // drafts, "/" commands and your own, the marks, what sends and your settings; its picture keeps its own upload.
     const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-    const VIBE_REV = { 'ov-composer.js': 'fbc3cc30fd2e' };
+    const VIBE_REV = { 'ov-composer.js': '0b6fa41f19fd' };
     function joinComposer(form) {
         if (!form || form.ownerDocument !== document) return;   // a popped-out Dock keeps its plain box
         form.setAttribute('data-ovc-no-files', '');

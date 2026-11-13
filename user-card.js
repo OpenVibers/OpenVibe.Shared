@@ -143,7 +143,7 @@
             actions += `<button data-act="accounts"><span class="icon">🔄</span> Switch Account</button>`;
         }
         for (const item of _menuItems.values()) {
-            actions += `<button data-act="site" data-site-id="${escapeHtml(item.id)}"><span class="icon">${escapeHtml(item.icon || '↗')}</span> ${escapeHtml(item.label)}</button>`;
+            actions += `<button data-act="site" data-site-id="${escapeHtml(item.id)}"><span class="icon">${item.icon ? escapeHtml(item.icon) : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.2a2.1 2.1 0 0 1-2.1 2.1H5.6a2.1 2.1 0 0 1-2.1-2.1V7.9a2.1 2.1 0 0 1 2.1-2.1h4.2"/></svg>'}</span> ${escapeHtml(item.label)}</button>`;
         }
 
         const card = document.createElement('div');

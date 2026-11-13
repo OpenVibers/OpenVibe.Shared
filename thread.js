@@ -368,7 +368,7 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
         const when = date(c.created_at);
         const targetId = ID.test(String(c.reply_to_id || '')) ? String(c.reply_to_id) : null;
         const topId = root || id;
-        const target = targetId && c.reply_to ? `<a class="ovc-target" href="${query(base, sort, { replies: topId }, `comment-${targetId}`)}">↪ @${esc(c.reply_to.display_name || 'Member')}</a>` : '';
+        const target = targetId && c.reply_to ? `<a class="ovc-target" href="${query(base, sort, { replies: topId }, `comment-${targetId}`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14" style="margin-right:4px;vertical-align:-2px"><path d="M9.2 5.8L4 11l5.1 5.1M4 11h10.3a6.2 6.2 0 0 1 6.2 6.2v1"/></svg>@${esc(c.reply_to.display_name || 'Member')}</a>` : '';
         const controls = !gone ? `<div class="ovc-actions">${signedIn ? `<a class="ovk-btn ovk-btn--quiet" href="${query(base, sort, { reply: id }, `comment-${id}`)}" data-ovc-reply="${id}">Reply</a>` : ''}${c.can_delete && signedIn ? `<form method="post" action="${esc(remove)}"><input type="hidden" name="comment_id" value="${id}"><button class="ovk-btn ovk-btn--quiet" type="submit">Delete</button></form>` : ''}</div>` : '';
         let replies = '';
         if (!root) {

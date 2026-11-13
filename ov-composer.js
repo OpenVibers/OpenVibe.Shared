@@ -370,7 +370,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': '1c4db9b0ce9c', 'ov-capture.js': '91f3b2cb25e3' };
+    const COMPOSER_REV = { 'ov-window.js': '01be12417e83', 'ov-capture.js': '6bdc48bfd415' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
@@ -684,7 +684,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 if (!uploader() && !accepts(asFile)) return;
                 e.preventDefault();
                 add([asFile], { lines, text: t });
-                say('The long paste went in as a file: ↩ on it puts it back in the box.');
+                say('The long paste went in as a file: its Put back button returns it to the box.');
             }
         });
         const zone = form.closest('[data-ovt]') || form;

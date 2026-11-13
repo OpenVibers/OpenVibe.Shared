@@ -61,10 +61,13 @@
         return el('button', { type: 'button', role: 'radio', 'aria-checked': String(checked), 'data-look': id, title: name }, [dot, el('small', {}, [name])]);
     }
 
+    // A link's arrow is the glyph registry's (no text arrows: the owner, 11-13).
+    function goIc() { const sp = document.createElement('span'); sp.setAttribute('aria-hidden', 'true'); sp.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14" style="margin-left:5px;vertical-align:-2px"><path d="M3.2 12h16.7M13.7 5.7l6.3 6.3l-6.3 6.3"/></svg>'; return sp; }
+
     function draw(box, opts) {
         const L = root.OpenVibeThemeLoader;
         box.textContent = '';
-        if (!L || !L.THEMES) { box.append(el('a', { class: 'ovlk-more', href: `${DESIGN}/look` }, ['Your look on openvibe.design', el('span', {}, ['\u2192'])])); return; }
+        if (!L || !L.THEMES) { box.append(el('a', { class: 'ovlk-more', href: `${DESIGN}/look` }, ['Your look on openvibe.design', goIc()])); return; }
         const season = L.seasons && L.seasons.now();
         const showing = L.seasons && L.seasons.showing();
         const cur = showing ? `season:${showing.id}` : L.getCurrent();
@@ -112,7 +115,7 @@
         const why = el('div', { class: 'ovlk-why' }, [`${named} \u00b7 ${signedIn ? 'saved to your account' : 'saved in this browser'}`]);
         const shareId = showing ? showing.theme : cur;
         panel.append(el('div', { class: 'ovlk-foot' }, [why].concat(L.THEMES[shareId] ? [el('button', { type: 'button', class: 'ovlk-share', 'data-look-share': shareId, 'aria-label': `Share the ${named} look` }, ['Share'])] : [])));
-        panel.append(el('a', { class: 'ovlk-more', href: `${DESIGN}/` }, ['More looks on openvibe.design', el('span', {}, ['\u2192'])]));
+        panel.append(el('a', { class: 'ovlk-more', href: `${DESIGN}/` }, ['More looks on openvibe.design', goIc()]));
         box.append(panel);
     }
 

@@ -168,7 +168,7 @@ const server = http.createServer((req, res) => {
         const folder = await p.evaluate(`({ n: document.querySelectorAll('.ovh-grid .ovh-app').length, icons: [...document.querySelectorAll('.ovh-grid .ovh-app .ov-icon')].slice(0, 4).map((i) => i.getAttribute('data-icon')), more: (document.querySelector('a.ovh-all') || {}).textContent })`);
         assert.strictEqual(folder.n, 24, 'the folder shows two dozen tools');
         assert.deepStrictEqual(folder.icons, ['pdf', 'image', 'qr', 'audio'], 'each tool wears its own icon');
-        assert.strictEqual(folder.more, 'All 30 tools →', 'and says how many there are in all');
+        assert.strictEqual(folder.more, 'All 30 tools', 'and says how many there are in all');
         await eventually(async () => assert.ok(await p.evaluate(`document.documentElement.scrollWidth <= 390`), 'no sideways scroll on You'));
 
         // ── Feed, signed out: today, the wall, went live in one row, text only, Show more; no composer.
@@ -224,8 +224,16 @@ const server = http.createServer((req, res) => {
         await s.goto(`${base}/?signed=1`, { maxMs: 6000 });
         assert.ok(await until(s, `!!document.getElementById('openvibe-burger')`), 'the navbar is up');
         await openTab(s, 'you');
-        assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
-        await eventually(async () => assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /^Actor.*Working.*Juniper · Reading job posts/, 'it names the Actor, its state and its step'));
+        // 4.238.0 (the owner, 11-13: "move the actor thing so that it's at the top … merge … this little online thing …
+        // the colors and other settings"): you lead the pill (your picture, online) with your Actor's state on it; a tap
+        // drops your sheet under the pill (your row: Display and your account's menu; your Actor's card); You starts at
+        // its tabs. The pill is a composer: attach while empty, Ask Vibe once there are words.
+        assert.ok(await until(s, `!!document.querySelector('.ovs-lead.is-you.is-actor.is-working .ovs-lead-ring')`), 'you lead the pill, your Actor working');
+        assert.match(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-label')`), /^Ada: your account, display and your Actor \(Juniper, working\)/, 'you, and your Actor\'s name and state');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovh .ovh-actor') && !document.querySelector('.ovh .ovh-mebox')`), 'You has no Actor strip and no row of its own');
+        await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
+        await eventually(async () => assert.match(await s.evaluate(`(document.querySelector('.ovs-youpanel:not([hidden]) .ovh-actor') || {}).textContent || ''`), /^Actor.*Working.*Juniper · Reading job posts/, 'your Actor\'s card is in your sheet'));
+        assert.strictEqual(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-expanded')`), 'true');
         // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … move the notifications into a
         // tab … put the apps more front facing … the first tab"; "waste of space"; "compact"): your row holds every round
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.
@@ -248,15 +256,21 @@ const server = http.createServer((req, res) => {
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-menu-390.png'), Buffer.from(m.data, 'base64'));
             await s.evaluate(`document.querySelector('.ovh-acct').click(), true`);
         }
+        await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
+        await eventually(async () => assert.ok(await s.evaluate(`document.querySelector('.ovs-youpanel').hidden`), 'your sheet folds again'));
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs-attach').hidden && document.querySelector('.ovs-send').hidden`), 'empty: attach, no send');
+        await s.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = 'what is live'; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs-send').hidden && document.querySelector('.ovs-attach').hidden`), 'words: Ask Vibe'));
+        await s.evaluate(`(() => { const i = document.querySelector('.ovs-input'); i.value = ''; i.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         // The tab row: Apps first and chosen; All and Edit at its end; the tabs move with the arrow keys.
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].map((t) => t.dataset.tab + (t.getAttribute('aria-selected') === 'true' ? '*' : ''))`), ['apps*', 'notifications', 'recent'], 'Apps, Notifications, Recent; Apps first'));
-        // The ink sits on the chosen tab (centred within a pixel, at any width) and the tab glyphs are large (the owner,
-        // 11-13: "the tabs are still off center … the icons aren't big enough, not even nearly").
-        const inkOn = (tab) => `(() => { const i = document.querySelector('.ovh-tab-ink.is-on'), t = document.querySelector('.ovh-tab[data-tab="${tab}"]'); if (!i || !t) return false; const a = i.getBoundingClientRect(), b = t.getBoundingClientRect(); return Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2) < 1.5 && Math.abs(a.width - b.width) < 1.5; })()`;
-        await eventually(async () => assert.ok(await s.evaluate(inkOn('apps')), 'the ink sits on Apps'));
+        // The chosen tab shows its name and the others only their glyphs, which are large (the owner, 11-13: "hide the
+        // label of the inactive tabs … the icons aren't big enough, not even nearly").
+        const named = `[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].filter((t) => t.querySelector('.ovh-tab-t').getBoundingClientRect().width > 12).map((t) => t.dataset.tab).join()`;
+        await eventually(async () => assert.strictEqual(await s.evaluate(named), 'apps', 'only Apps shows its name'));
         assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab svg')].every((g) => g.getBoundingClientRect().width >= 24)`), 'tab glyphs are at least 24 px');
         await s.evaluate(`document.querySelector('.ovh-tab[data-tab="notifications"]').click(), true`);
-        await eventually(async () => assert.ok(await s.evaluate(inkOn('notifications')), 'the ink slides onto Alerts, centred'));
+        await eventually(async () => assert.strictEqual(await s.evaluate(named), 'notifications', 'Alerts opens its name; Apps folds to its glyph'));
         await s.evaluate(`document.querySelector('.ovh-tab[data-tab="apps"]').click(), true`);
         await eventually(async () => assert.ok(await s.evaluate(`!!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-allbtn') && !!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-edit') && !document.querySelector('.ovh-sec .ovh-edit')`), 'All and Edit sit at the end of the tab row'));
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons'));
@@ -327,7 +341,7 @@ const server = http.createServer((req, res) => {
             const shotPage = await h.openPage(browser, context, { width: 390, height: 844, block: blocked });
             await shotPage.goto(`${base}/?signed=1`, { maxMs: 6000 });
             await openTab(shotPage, 'you');
-            assert.ok(await until(shotPage, `!!document.querySelector('.ovh-mebox .ovh-acct') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
+            assert.ok(await until(shotPage, `!!document.querySelector('.ovs-lead.is-you') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
             const you = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-390.png'), Buffer.from(you.data, 'base64'));
             await shotPage.evaluate(`document.querySelector('.ovh-edit').click(), true`);
@@ -336,8 +350,15 @@ const server = http.createServer((req, res) => {
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-edit-390.png'), Buffer.from(ed.data, 'base64'));
             await shotPage.evaluate(`document.querySelector('.ovh-tabrow .ovh-edit').click(), document.querySelector('.ovh-tab[data-tab="notifications"]').click(), true`);
             await until(shotPage, `!!document.querySelector('.openvibe-nv-find')`, 4000);
+            await shotPage.evaluate(`(() => { const N = window.OpenVibeNotifications; if (N) N.unread = () => 4; document.dispatchEvent(new CustomEvent('openvibe-notifications-count')); })()`);
+            await until(shotPage, `!!document.querySelector('.ovh-tab[data-tab="notifications"] .ovh-tab-g .ovh-tab-n')`, 2000);
+            await new Promise((ok) => setTimeout(ok, 400));
             const nv = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-notif-390.png'), Buffer.from(nv.data, 'base64'));
+            await shotPage.evaluate(`document.querySelector('.ovs-lead.is-you') && document.querySelector('.ovs-lead').click(), true`);
+            await new Promise((ok) => setTimeout(ok, 500));
+            const ac = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-actor-390.png'), Buffer.from(ac.data, 'base64'));
             await shotPage.close();
         }
         if (process.env.OV_CAPTURE_MENU) {

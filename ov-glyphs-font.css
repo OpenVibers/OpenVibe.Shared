@@ -22,6 +22,7 @@
 .ovi-back::before{content:"\e008"}
 .ovi-ban::before{content:"\e009"}
 .ovi-bell::before{content:"\e00a"}
+.ovi-bell-ring::before{content:"\e120"}
 .ovi-binoculars::before{content:"\e117"}
 .ovi-book::before{content:"\e00b"}
 .ovi-book-open::before{content:"\e114"}

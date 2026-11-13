@@ -309,9 +309,10 @@
         if (entries.length) node.appendChild(ul);
         const links = el('div', { class: 'ov-shipped-links' });
         const more = localHref(o.more);
-        if (more) links.appendChild(el('a', { href: more }, 'All updates →'));
+        const go = (a) => { a.insertAdjacentHTML('beforeend', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14" style="margin-left:5px;vertical-align:-2px"><path d="M3.2 12h16.7M13.7 5.7l6.3 6.3l-6.3 6.3"/></svg>'); return a; };
+        if (more) links.appendChild(go(el('a', { href: more }, 'All updates')));
         const post = data.latest_post && safeUrl(data.latest_post.url) ? data.latest_post : null;
-        if (post) links.appendChild(el('a', { class: 'ov-shipped-notes', href: post.url }, `Patch notes: ${String(post.title || 'latest').replace(/^Patch notes:\s*/, '')} →`));
+        if (post) links.appendChild(go(el('a', { class: 'ov-shipped-notes', href: post.url }, `Patch notes: ${String(post.title || 'latest').replace(/^Patch notes:\s*/, '')}`)));
         if (links.childNodes.length) node.appendChild(links);
         node.hidden = false;
         tick();

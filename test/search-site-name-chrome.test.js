@@ -67,7 +67,9 @@ const server = http.createServer((req, res) => {
                 tab: (document.querySelector('.ovs-tab[data-tab]') || {}).textContent || '',
                 group: ((document.querySelector('.ovs-group') || {}).firstChild || {}).textContent || '' })`);
         }
-        const name = (at) => seen[at].placeholder.replace(/^Search /, '').replace(/, or ask Vibe$/, '');
+        // The site's name is in the pill's words on a computer; on a phone (4.238.0: the pill holds the composer's tools and
+        // says "Search or ask Vibe") it is this site's tab.
+        const name = (at) => (seen[at].placeholder.match(/^Search (.+), or ask Vibe$/) || [])[1] || String(seen[at].tab || '').trim();
         assert.strictEqual(name('/website'), 'Website', `a tagline title gives the OpenVibe.X name: ${JSON.stringify(seen['/website'])}`);
         assert.ok(!/look finished/.test(seen['/website'].tab + seen['/website'].group), 'the tagline is nowhere in the tab or the heading');
         assert.strictEqual(name('/long-label'), 'Space', 'a long label is passed over for the name in the title');

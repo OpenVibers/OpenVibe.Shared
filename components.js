@@ -156,7 +156,7 @@ fun OvCard(title: String, onOpen: () -> Unit, image: String? = null, ratio: Floa
             anatomy: [
                 { part: 'head', tokens: { size: 'type.size.lead', weight: 'type.weight.heavy' }, note: 'the title and See all (44 px to the touch)' },
                 { part: 'track', tokens: { gap: 'space.md' }, note: 'snaps to each card; bleeds to the screen\'s edge on a phone' },
-                { part: 'arrows', optional: true, note: '‹ › on computers only, each hidden at its end' },
+                { part: 'arrows', optional: true, note: 'Back and next buttons on computers only, each hidden at its end' },
             ],
             props: { id: { type: 'string' }, title: { type: 'string' }, more: { type: 'link' }, size: { type: ['s', 'm', 'l'], default: 'm' }, wrap: { type: 'boolean' }, label: { type: 'string' } },
             variants: { size: { s: 'square things (memes, deals), 190 px', m: '16:9 pictures, 280 px', l: 'wide features, 400 px' } },
