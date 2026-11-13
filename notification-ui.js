@@ -236,6 +236,13 @@
             .openvibe-notif-dock .openvibe-nv-unread svg { width: 18px; height: 18px; }
             .openvibe-notif-dock .openvibe-nv-unread[aria-pressed="true"], .openvibe-notif-dock .openvibe-nv-unread:hover, .openvibe-notif-dock .openvibe-nv-search:hover { opacity: 1; }
             html[data-ov-motion=off] .openvibe-notif-dock .openvibe-nv-search.is-open { animation: none; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open), .openvibe-notif-dock .openvibe-nv-unread { width: 44px; height: 44px; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 44px; }
+            .openvibe-notif-dock .openvibe-nv-search > svg { left: 11px; width: 22px; height: 22px; }
+            .openvibe-notif-dock .openvibe-nv-unread svg { width: 22px; height: 22px; }
+            .openvibe-notif-dock .openvibe-nv-search.is-open { right: 62px; height: 44px; }
+            .openvibe-notif-dock .openvibe-nv-foot .ovn-foot-read, .openvibe-notif-dock .openvibe-nv-foot a { min-height: 44px; gap: 8px; }
+            .openvibe-notif-dock .openvibe-nv-foot svg { width: 20px; height: 20px; }
 .openvibe-notif-dock.is-preview .openvibe-nv-tools, .openvibe-notif-dock.is-preview .openvibe-nv-foot, .openvibe-notif-dock.is-preview .openvibe-nv-head, .openvibe-notif-dock.is-preview .openvibe-nv-more { display: none; }
             .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }
             .openvibe-notif-dock .openvibe-nv-foot [data-role="status"] { margin-right: auto; }

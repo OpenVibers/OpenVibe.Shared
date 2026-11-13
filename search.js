@@ -264,7 +264,7 @@
 .ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
 /* Five places in one row (4.194.0): on a phone each is its icon over its word; the doors to the Dock look like the tabs. */
 .ovs-starttabs.has-doors .ovs-tab { padding: 0 6px; }
-.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 22px; height: 22px; }
+.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 26px; height: 26px; }
 @media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 56px; padding: 4px 2px; font-size: 12.5px; border-radius: 14px; } }
 .ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
 .ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
@@ -307,6 +307,17 @@ html[data-ov-motion=off] .ovs-tab .ovs-roll { animation: none; }
 .ovs-tab-ic > .ovs-tabnew { position: absolute; top: -7px; left: calc(100% - 8px); z-index: 1; }
 .ovs-tab span > .ovs-tabdot { display: inline-block; margin: 0 0 1px 5px; vertical-align: middle; animation: ovsLiveDot 2s ease-in-out infinite; }
 .ovs-tab > span:not(.ovs-tab-ic) { display: inline-flex; align-items: center; }
+/* 4.238.0, round two (the owner, 11-13: "the icons aren't big enough, not even nearly"): the place tabs' glyphs grow,
+   24 px beside the word and 30 px over it on a phone. */
+.ovs-starttabs .ovs-tab .ovs-tab-ic, .ovs-starttabs .ovs-tab .ovs-tab-ic .ov-icon { width: 24px; height: 24px; }
+.ovs-starttabs .ovs-tab .ovs-tab-ic > svg, .ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 24px; height: 24px; }
+.ovs-starttabs .ovs-tab .ovs-tab-ic .ov-icon svg { width: 44px; height: 44px; margin: -10px; }
+@media (max-width: 640px) {
+  .ovs-starttabs.has-doors .ovs-tab { height: 62px; gap: 4px; }
+  .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic, .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic .ov-icon { width: 30px; height: 30px; }
+  .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic > svg, .ovs-starttabs.has-doors .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 30px; height: 30px; }
+  .ovs-starttabs.has-doors .ovs-tab .ovs-tab-ic .ov-icon svg { width: 54px; height: 54px; margin: -12px; }
+}
 @keyframes ovsLiveDot { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--live-red, #ef4444) 10%, transparent); } }
 @keyframes ovsBadgeIn { from { transform: scale(.5); opacity: 0; } }
 html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .ovs-tabnew { animation: none; }

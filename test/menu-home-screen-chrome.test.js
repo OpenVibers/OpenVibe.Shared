@@ -250,6 +250,14 @@ const server = http.createServer((req, res) => {
         }
         // The tab row: Apps first and chosen; All and Edit at its end; the tabs move with the arrow keys.
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].map((t) => t.dataset.tab + (t.getAttribute('aria-selected') === 'true' ? '*' : ''))`), ['apps*', 'notifications', 'recent'], 'Apps, Notifications, Recent; Apps first'));
+        // The ink sits on the chosen tab (centred within a pixel, at any width) and the tab glyphs are large (the owner,
+        // 11-13: "the tabs are still off center … the icons aren't big enough, not even nearly").
+        const inkOn = (tab) => `(() => { const i = document.querySelector('.ovh-tab-ink.is-on'), t = document.querySelector('.ovh-tab[data-tab="${tab}"]'); if (!i || !t) return false; const a = i.getBoundingClientRect(), b = t.getBoundingClientRect(); return Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2) < 1.5 && Math.abs(a.width - b.width) < 1.5; })()`;
+        await eventually(async () => assert.ok(await s.evaluate(inkOn('apps')), 'the ink sits on Apps'));
+        assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab svg')].every((g) => g.getBoundingClientRect().width >= 24)`), 'tab glyphs are at least 24 px');
+        await s.evaluate(`document.querySelector('.ovh-tab[data-tab="notifications"]').click(), true`);
+        await eventually(async () => assert.ok(await s.evaluate(inkOn('notifications')), 'the ink slides onto Alerts, centred'));
+        await s.evaluate(`document.querySelector('.ovh-tab[data-tab="apps"]').click(), true`);
         await eventually(async () => assert.ok(await s.evaluate(`!!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-allbtn') && !!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-edit') && !document.querySelector('.ovh-sec .ovh-edit')`), 'All and Edit sit at the end of the tab row'));
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-folder[data-id="folder:tools"] .ov-icon')].map((i) => i.getAttribute('data-icon'))`), ['pdf', 'image', 'qr', 'audio'], 'the Tools folder shows its tools\' own icons'));
         // Recent: what you use most, then where you were, in days, each a card with its whole title and its time.

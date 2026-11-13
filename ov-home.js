@@ -434,6 +434,27 @@ html[data-ov-motion=off] .ovh-hrow { animation: none; }
 html[data-ov-motion=reduced] .ovh-tab-ink { transition: opacity .25s; }
 html[data-ov-motion=off] .ovh-tab-ink, html[data-ov-motion=off] .ovh-tabrow .ovh-tab svg { transition: none; }
 .ovh[data-enter] > :not(.ovh-top):not(.ovh-tabrow) { animation: ovh-pane-r .3s cubic-bezier(.2, .8, .2, 1) both; }
+/* 4.238.0, round two (the owner's phone, 11-13: "the tabs are still off center … the icons aren't big enough, not even
+   nearly … and neither are the button icons"): the ink sits on its tab by the track's geometry; glyphs are 26 px on the
+   tabs and 22-24 px on every round button. */
+.ovh-tab-ink { left: 3px; top: 3px; bottom: 3px; border-radius: 11px; width: calc((100% - 6px - (var(--n, 3) - 1) * 2px) / var(--n, 3));
+  transform: translateX(calc(var(--i, 0) * (100% + 2px))); }
+.ovh-tabrow .ovh-tab { min-height: 48px; gap: 8px; }
+.ovh-tabrow .ovh-tab svg { width: 26px; height: 26px; }
+/* On a phone the glyph sits over its word (as the menu's place tabs do), so the three names fit beside All and Edit. */
+@container ovh (max-width: 440px) {
+  .ovh-tabrow .ovh-tab { position: relative; flex-direction: column; gap: 3px; min-height: 60px; padding: 4px 2px; }
+  .ovh-tabrow .ovh-tab .ovh-tab-t { display: block; max-width: 100%; font-size: 12.5px; }
+  .ovh-tabrow .ovh-tab .ovh-tab-n { position: absolute; top: 4px; left: calc(50% + 8px); }
+}
+.ovh-mebox .ovh-me .ovh-ib { width: 44px; height: 44px; }
+.ovh-mebox .ovh-me .ovh-ib svg { width: 24px; height: 24px; }
+.ovh-actor .ovh-go.is-ic svg, .ovh-actor .ovh-go.is-answer svg { width: 24px; height: 24px; }
+.ovh-tabrow .ovh-allbtn svg, .ovh-tabrow .ovh-edit svg { width: 22px; height: 22px; }
+.ovh-sec .ovh-edit svg { width: 22px; height: 22px; }
+.ovh-sec .ovh-allbtn svg { width: 20px; height: 20px; }
+.ovh-back svg { width: 24px; height: 24px; }
+.ovh-actor.is-invite .ovh-x svg, .ovh-notice .ovh-actor.is-invite .ovh-x svg { width: 20px; height: 20px; }
 .ovh[data-enter="left"] > :not(.ovh-top):not(.ovh-tabrow) { animation-name: ovh-pane-l; }
 @keyframes ovh-pane-r { from { opacity: 0; transform: translateX(18px); } }
 @keyframes ovh-pane-l { from { opacity: 0; transform: translateX(-18px); } }
@@ -794,7 +815,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         }
 
         /** The three tabs under your row; Notifications carries how many wait. */
-        let countBound = false, inkWas = null, tabWas = null;
+        let countBound = false, tabWas = null;
         function youTabs() {
             const bar = h('div', 'ovh-tabs'); bar.setAttribute('role', 'tablist'); bar.setAttribute('aria-label', 'You');
             if (!countBound && typeof document !== 'undefined') {
@@ -817,8 +838,6 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 if (id === 'notifications' && unread > 0) { b.append(h('b', 'ovh-tab-n', unread > 99 ? '99+' : String(unread))); b.setAttribute('aria-label', `Notifications, ${unread} new`); }
                 b.addEventListener('click', () => {
                     if (state.tab === id) return;
-                    const on = bar.querySelector('.ovh-tab[aria-selected="true"]');
-                    inkWas = on ? { x: on.offsetLeft, w: on.offsetWidth } : null;
                     tabWas = state.tab;
                     state.tab = id; try { sessionStorage.setItem('ovh-you-tab', id); } catch { /* */ } paint();
                 });
@@ -832,16 +851,19 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 b.tabIndex = state.tab === id ? 0 : -1;
                 bar.append(b);
             });
-            // The ink under the chosen tab: it starts where the last one was and slides over (Calm: a short fade; Off: none).
+            // The ink under the chosen tab: the tabs are equal, so CSS places it from its index (--i of --n) at any width;
+            // it starts where the last one was and slides over (Calm: a short fade; Off: none).
             const ink = h('i', 'ovh-tab-ink'); ink.setAttribute('aria-hidden', 'true'); bar.prepend(ink);
             const order = ['apps', 'notifications', 'recent'];
-            const from = inkWas, dir = tabWas ? Math.sign(order.indexOf(state.tab) - order.indexOf(tabWas)) : 0;
-            inkWas = null; tabWas = null;
-            requestAnimationFrame(() => {
-                const on = bar.querySelector('.ovh-tab[aria-selected="true"]'); if (!on) return;
-                if (from) { ink.style.transition = 'none'; ink.style.transform = `translateX(${from.x}px)`; ink.style.width = `${from.w}px`; void ink.offsetWidth; ink.style.transition = ''; }
-                ink.style.transform = `translateX(${on.offsetLeft}px)`; ink.style.width = `${on.offsetWidth}px`; ink.classList.add('is-on');
-            });
+            const dir = tabWas ? Math.sign(order.indexOf(state.tab) - order.indexOf(tabWas)) : 0;
+            const ids = [...bar.querySelectorAll('.ovh-tab')].map((t) => t.dataset.tab);
+            const at = ids.indexOf(state.tab), was = tabWas ? ids.indexOf(tabWas) : -1;
+            tabWas = null;
+            bar.style.setProperty('--n', String(ids.length || 1));
+            if (at >= 0) {
+                ink.style.setProperty('--i', String(was >= 0 ? was : at)); ink.classList.add('is-on');
+                if (was >= 0 && was !== at) requestAnimationFrame(() => { void ink.offsetWidth; ink.style.setProperty('--i', String(at)); });
+            }
             if (dir) el.dataset.enter = dir > 0 ? 'right' : 'left'; else delete el.dataset.enter;
             return bar;
         }

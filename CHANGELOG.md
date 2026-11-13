@@ -23,7 +23,14 @@ corner … expand when you tap them", "instead of Juniper, it should say Actor",
   - A compact empty state.
   - The foot is two OV buttons (Mark all read, Full inbox).
   - The full inbox keeps its wide search.
-- Tests: `dock-code-chrome` (two ways, words only, `mode: 'make'`), `dock-actor-chrome` (44 px clock),
+- **Round two, from the owner's look at the capture** ("the tabs are still off center … the icons aren't big enough,
+  not even nearly … neither are the button icons"):
+  - The tab ink is placed by the track's own geometry (the tabs are equal), so it sits centred on its tab at any width.
+  - Glyphs: 26 px on You's tabs, 24 px beside and 30 px over the word on the menu's place tabs, 22–24 px on every round
+    button (Display, account, the Actor's open, All, Edit, search, Unread), 20 px in the foot's buttons.
+  - On a phone You's tabs put the glyph over the word, so all three names fit beside All and Edit.
+  - Notifications' search and Unread are 44 px circles.
+- Tests: `menu-home-screen-chrome` (the ink centred on Apps and on Alerts, tab glyphs ≥ 24 px), `dock-code-chrome` (two ways, words only, `mode: 'make'`), `dock-actor-chrome` (44 px clock),
   `menu-home-screen-chrome` (the Actor line; `OV_CAPTURE_YOU` also saves the Notifications tab), `notification-live`
   (budget 26.8 KB with dated notes).
 
