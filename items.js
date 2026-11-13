@@ -31,7 +31,13 @@
     const cache = new Map();      // subject → { at, slots }
     const waiting = new Map();    // subject → Promise
     let defsPromise = null;       // Map(definition id → { art, attributes })
-    const api = () => String((root.OpenVibeItemsConfig && root.OpenVibeItemsConfig.api) || 'https://inventory.openvibe.network').replace(/\/+$/, '');
+    // Where the public reads come from. By default through Network's frame relay (4.246.0): every site's CSP allows
+    // openvibe.network, and almost none allows inventory.openvibe.network, so 4.244.0's names drew CSP refusals on 34
+    // sites. A page that names Inventory itself (OpenVibeItemsConfig.api) reads it directly, as before.
+    const own = () => root.OpenVibeItemsConfig && root.OpenVibeItemsConfig.api ? String(root.OpenVibeItemsConfig.api).replace(/\/+$/, '') : null;
+    const network = () => String((root.OpenVibeItemsConfig && root.OpenVibeItemsConfig.network) || 'https://openvibe.network').replace(/\/+$/, '');
+    const equippedUrl = (q) => (own() ? `${own()}/api/v1/equipped?${q}` : `${network()}/api/frame/items/equipped?${q}`);
+    const definitionsUrl = (q) => (own() ? `${own()}/api/v1/definitions?${q}` : `${network()}/api/frame/items/definitions?${q}`);
     const getJson = async (url) => {
         const r = await fetch(url, { credentials: 'omit', headers: { Accept: 'application/json' } });
         if (!r.ok) throw new Error(`inventory answered ${r.status}`);
@@ -39,7 +45,7 @@
     };
 
     async function fetchSets(subjects) {
-        const body = await getJson(`${api()}/api/v1/equipped?subjects=${subjects.map(encodeURIComponent).join(',')}`);
+        const body = await getJson(equippedUrl(`subjects=${subjects.map(encodeURIComponent).join(',')}`));
         const now = Date.now();
         const got = new Map();
         for (const set of (body && body.equipped) || []) if (set && SUBJECT.test(set.subject)) got.set(set.subject, set.slots || {});
@@ -64,7 +70,7 @@
     /** Live's item definitions (hats and particles carry their emoji, animation and characters there), once a page. */
     function definitions() {
         if (!defsPromise) {
-            defsPromise = getJson(`${api()}/api/v1/definitions?issuer=${encodeURIComponent('service:live')}&limit=500`)
+            defsPromise = getJson(definitionsUrl(`issuer=${encodeURIComponent('service:live')}&limit=500`))
                 .then((b) => new Map(((b && b.definitions) || []).map((d) => [d.id, { art: d.art || {}, attributes: d.attributes || {} }])))
                 .catch(() => { defsPromise = null; return new Map(); });
         }

@@ -2509,12 +2509,13 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (phoneSheet()) {
                 // From the button's centre to the pill's right end: the same orb, moving into the menu. When the pressed
                 // button flies into its tab instead, the orb is simply there as the close X.
-                const cx = Number.isFinite(at && at.cx) ? at.cx : innerWidth - 24, cy = Number.isFinite(at && at.cy) ? at.cy : 28;
+                const home = barButtonCentre();
                 const bar = el.querySelector('.ovs-bar'), br = bar ? bar.getBoundingClientRect() : null;
-                const tx = br ? br.right + 6 + 24 : cx, ty = br ? br.top + br.height / 2 : cy;
+                const tx = br ? br.right + 6 + 24 : innerWidth - 24, ty = br ? br.top + br.height / 2 : 28;
                 orbEl.style.setProperty('--orb-x', `${Math.round(tx - 24)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 24)}px`);
-                orbEl.style.setProperty('--orb-dx', `${Math.round(cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(cy - ty)}px`);
-                if (flyFrom) orbEl.classList.add('is-x', 'is-pop');   // the button has flown to its tab: the close turns in at the pill
+                if (home) { orbEl.style.setProperty('--orb-dx', `${Math.round(home.cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(home.cy - ty)}px`); }
+                // The button has flown to its tab, or no menu button is on screen: the close turns in at the pill.
+                if (flyFrom || !home) orbEl.classList.add('is-x', 'is-pop');
                 else {
                     orbEl.classList.add('is-from');
                     void orbEl.offsetWidth;
@@ -2559,6 +2560,21 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
     });
     if (typeof window !== 'undefined') window.addEventListener('popstate', () => { if (ownBack) { ownBack = false; return; } if (el && el.classList.contains('is-open')) { popping = true; pushed = false; close(); popping = false; } });
+    // The bar's menu button as it is now (11-13, the owner: "the close button … goes into the users avatar drop-down spot
+    // rather than where it should"). The orb is that button turned into the close, so it leaves from it and goes back
+    // into it: the button that opened the menu when it is a visible bar button, else the bar's menu button (the burger
+    // on a phone, the orb on a computer). Measured each time, never remembered: the bar may have scrolled away or come
+    // back since, and on a phone the computer's orb is hidden (zero size). Null when none is on screen.
+    function barButtonCentre() {
+        const list = [ctx && ctx.from, document.getElementById('openvibe-burger'), document.getElementById('openvibe-search-btn')];
+        for (const b of list) {
+            if (!b || typeof b.getBoundingClientRect !== 'function' || typeof b.closest !== 'function' || !b.closest('.openvibe-navbar')) continue;
+            const r = b.getBoundingClientRect();
+            if (r.width < 8 || r.height < 8 || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) continue;
+            return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+        }
+        return null;
+    }
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
         const backTo = flyFrom; flyFrom = null;
@@ -2575,7 +2591,22 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             el.classList.add('is-closing');
             // With a button flying back, the close turns away where it is (two things never land on the bar at once);
             // otherwise it glides back into the button's place.
-            if (orbEl) { orbEl.classList.remove('is-x', 'is-pop'); orbEl.classList.add(backTo ? 'is-gone' : 'is-from'); }
+            if (orbEl) {
+                orbEl.classList.remove('is-x', 'is-pop');
+                // Back into the bar's menu button where it will be once the sheet lets the page go (the bar sits 16 px
+                // off while the menu holds the page), so it is measured on the next frame, after this close has released
+                // it. With no button on screen (or a tab flying back) the close turns away where it is, never into a
+                // guessed corner.
+                const flying = backTo;
+                requestAnimationFrame(() => {
+                    const home = flying ? null : barButtonCentre();
+                    if (home) {
+                        const ox = parseFloat(orbEl.style.getPropertyValue('--orb-x')) + 24, oy = parseFloat(orbEl.style.getPropertyValue('--orb-y')) + 24;
+                        orbEl.style.setProperty('--orb-dx', `${Math.round(home.cx - ox)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(home.cy - oy)}px`);
+                    }
+                    if (closing) orbEl.classList.add(home ? 'is-from' : 'is-gone');
+                });
+            }
             closing = setTimeout(() => { closing = 0; el.classList.remove('is-open', 'is-closing'); if (orbEl) orbEl.classList.remove('is-from', 'is-gone'); }, 280);
         } else {
             el.classList.remove('is-open');
