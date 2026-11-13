@@ -2232,7 +2232,8 @@
         const t0 = visitStart();
         return {
             signedIn: !!u, rank, staff, owner,
-            id: (u && (u.id || u.subject_id)) || null, username: (u && u.username) || null,
+            // The usr_ subject, as GET /api/v1/viewer gives it; never a site's own numeric id.
+            id: (u && [u.subject_id, u.subject, u.id].find((x) => /^usr_/.test(String(x || '')))) || null, username: (u && u.username) || null,
             visit: { startedAt: new Date(t0).toISOString(), minutes: Math.max(0, Math.floor((Date.now() - t0) / 60000)) },
             device: {
                 phone: mm('(max-width: 640px)') && mm('(pointer: coarse)'), touch: mm('(pointer: coarse)'),

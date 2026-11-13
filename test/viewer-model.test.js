@@ -72,8 +72,9 @@ const RANKS = [
 ];
 RANKS.forEach(([role, caps, rank, tag, staff, owner, extra]) => {
     const { navbar, html } = load();
-    navbar.init({ ...base, user: { id: 7, username: 'maya', role, capabilities: caps, ...(extra || {}) } });
+    navbar.init({ ...base, user: { id: 7, subject_id: 'usr_01JZZZVIEWERTEST000000000', username: 'maya', role, capabilities: caps, ...(extra || {}) } });
     const v = navbar.viewer();
+    assert.strictEqual(v.id, 'usr_01JZZZVIEWERTEST000000000', 'the id is the usr_ subject, never the numeric one');
     assert.deepStrictEqual([v.signedIn, v.rank, v.staff, v.owner, v.username], [true, rank, staff, owner, 'maya'], `${role} ${JSON.stringify(caps)}`);
     assert.strictEqual(html.getAttribute('data-ov-viewer'), tag, role);
     assert.strictEqual(html.getAttribute('data-ov-rank'), rank, role);
