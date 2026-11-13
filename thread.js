@@ -309,6 +309,23 @@ const safeHttps = (value) => { try { const url = new URL(String(value)); return 
 const author = (c) => c.author || c;
 const username = (c) => author(c).username || c.username || '';
 const name = (c) => author(c).display_name || c.display_name || username(c) || c.anon_name || 'Member';
+// §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the answer carries is what is used.
+const OVC_SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+const ovcSubjectOf = (c) => {
+    if (!c || typeof c !== 'object') return null;
+    const a = author(c) || {};
+    for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+        const v = a[key] != null ? a[key] : c[key];
+        if (typeof v === 'string' && OVC_SUBJECT_RE.test(v)) return v;
+        if (v && typeof v === 'object' && typeof v.id === 'string' && OVC_SUBJECT_RE.test(v.id)) return v.id;
+    }
+    return null;
+};
+// §Z.3: the name wears its effect, hat and badge. The name text sits in its own span, so the hat stands beside it.
+const ovcNameMarkup = (who, words) => {
+    const subject = ovcSubjectOf(who);
+    return `<span${subject ? ` data-ov-subject="${subject}"` : ''}>${esc(words)}</span>`;
+};
 const date = (iso) => {
     const ms = Date.parse(String(iso || ''));
     if (!Number.isFinite(ms)) return { short: '', full: '' };
@@ -368,7 +385,7 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
         const when = date(c.created_at);
         const targetId = ID.test(String(c.reply_to_id || '')) ? String(c.reply_to_id) : null;
         const topId = root || id;
-        const target = targetId && c.reply_to ? `<a class="ovc-target" href="${query(base, sort, { replies: topId }, `comment-${targetId}`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14" style="margin-right:4px;vertical-align:-2px"><path d="M9.2 5.8L4 11l5.1 5.1M4 11h10.3a6.2 6.2 0 0 1 6.2 6.2v1"/></svg>@${esc(c.reply_to.display_name || 'Member')}</a>` : '';
+        const target = targetId && c.reply_to ? `<a class="ovc-target" href="${query(base, sort, { replies: topId }, `comment-${targetId}`)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="14" height="14" style="margin-right:4px;vertical-align:-2px"><path d="M9.2 5.8L4 11l5.1 5.1M4 11h10.3a6.2 6.2 0 0 1 6.2 6.2v1"/></svg>@${ovcNameMarkup(c.reply_to, c.reply_to.display_name || 'Member')}</a>` : '';
         const controls = !gone ? `<div class="ovc-actions">${signedIn ? `<a class="ovk-btn ovk-btn--quiet" href="${query(base, sort, { reply: id }, `comment-${id}`)}" data-ovc-reply="${id}">Reply</a>` : ''}${c.can_delete && signedIn ? `<form method="post" action="${esc(remove)}"><input type="hidden" name="comment_id" value="${id}"><button class="ovk-btn ovk-btn--quiet" type="submit">Delete</button></form>` : ''}</div>` : '';
         let replies = '';
         if (!root) {
@@ -376,7 +393,7 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
             const more = Math.max(0, Number(c.reply_count || 0) - rows.length);
             replies = `<div class="ovc-replies" data-ovc-replies="${id}">${rows.map((r) => comment(r, id)).join('')}${more ? `<a class="ovc-more ovk-btn ovk-btn--quiet" data-ovc-more="${id}" href="${query(base, sort, { replies: id })}">${more} more ${more === 1 ? 'reply' : 'replies'}</a>` : ''}</div>`;
         }
-        return `<article class="ovc-comment" id="comment-${id}"><header>${avatar ? `<img src="${esc(avatar)}" alt="" width="32" height="32" loading="lazy">` : ''}${profile ? `<a href="${profile}">${esc(name(c))}</a>` : `<span>${esc(name(c))}</span>`}${when.short ? `<time datetime="${esc(c.created_at)}" title="${esc(when.full)}">${esc(when.short)}</time>` : ''}</header>${target}${gone ? '<p>Comment removed</p>' : `<p>${esc(c.message || '')}</p>${attachments(c)}`}${controls}${validReply === id ? `<div data-ovc-composer-slot>${composer_html(id)}</div>` : ''}${replies}</article>`;
+        return `<article class="ovc-comment" id="comment-${id}"><header>${avatar ? `<img src="${esc(avatar)}" alt="" width="32" height="32" loading="lazy">` : ''}${profile ? `<a href="${profile}">${ovcNameMarkup(c, name(c))}</a>` : ovcNameMarkup(c, name(c))}${when.short ? `<time datetime="${esc(c.created_at)}" title="${esc(when.full)}">${esc(when.short)}</time>` : ''}</header>${target}${gone ? '<p>Comment removed</p>' : `<p>${esc(c.message || '')}</p>${attachments(c)}`}${controls}${validReply === id ? `<div data-ovc-composer-slot>${composer_html(id)}</div>` : ''}${replies}</article>`;
     };
     const hasReplySlot = validReply && comments.some((c) => String(c.id) === validReply || (validExpanded === String(c.id) && Array.isArray(expandedReplies) ? expandedReplies : c.replies || []).some((r) => String(r.id) === validReply));
     // Top and Newest only when there is something to put in order.

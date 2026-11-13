@@ -14,6 +14,20 @@
     let _cache = new Map();
     const _menuItems = new Map();
     const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the card carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    const subjectAttr = (data) => { const s = subjectOf(data); return s ? ` data-ov-subject="${s}"` : ''; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
 
     function injectStyles() {
         if (document.getElementById('openvibe-usercard-styles')) return;
@@ -155,7 +169,7 @@
             <img class="openvibe-usercard-avatar" src="${avatarUrl}" alt="${user.username}" width="56" height="56" decoding="async" onerror="this.style.display='none'">
             <div class="openvibe-usercard-body">
                 <div class="openvibe-usercard-name">
-                    <span class="${nameClass}" style="${nameColor}">${user.display_name || user.username}</span>
+                    <span class="${nameClass}" style="${nameColor}"${subjectAttr(user)}>${escapeHtml(user.display_name || user.username)}</span>
                     ${roleBadge}
                 </div>
                 <div class="openvibe-usercard-username">@${user.username}${data.anon_number ? ` · Anon #${data.anon_number}` : ''}</div>
@@ -180,6 +194,8 @@
         document.body.appendChild(overlay);
         document.body.appendChild(card);
         _cardEl = { card, overlay };
+        // §Z.3: the name in the card wears its effect, hat and badge.
+        wearNames(card);
 
         // Action handlers
         card.querySelectorAll('[data-act]').forEach(btn => {

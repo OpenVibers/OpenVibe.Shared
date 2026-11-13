@@ -47,6 +47,20 @@
     'use strict';
 
     const root = typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : {});
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the session carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    const subjectAttr = (data) => { const s = subjectOf(data); return s ? ` data-ov-subject="${s}"` : ''; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
     // Where this file was served from: shipped.js is loaded from the same place (the site's own
     // /shared/ copy, or openvibe.network), so the site's CSP already allows it.
     const OWN_SRC = (function () { try { return document.currentScript && document.currentScript.src ? document.currentScript.src : null; } catch { return null; } })();
@@ -361,7 +375,7 @@
             { name: 'Themes', url: `${NETWORK_URL}/themes`, icon: 'themes' },
             { name: 'Tools', url: 'https://openvibe.tools', icon: 'tools' },
         ];
-        return `<span class="ovf-account-who"><span class="ovf-avatar">${avatar}</span> Signed in as <strong>${name}</strong> across OpenVibe</span>
+        return `<span class="ovf-account-who"><span class="ovf-avatar">${avatar}</span> Signed in as <strong${subjectAttr(user)}>${name}</strong> across OpenVibe</span>
             <span class="ovf-account-links">${quick.map(q => `<a href="${esc(q.url)}"${/^https?:/.test(q.url) ? ' target="_blank" rel="noopener"' : ''}>${icon(q.icon)} ${esc(q.name)}</a>`).join('')}</span>`;
     }
 
@@ -389,6 +403,8 @@
         if (!user || !user.username) return;
         host.innerHTML = accountHTML(user, cfg.service || detectService());
         host.hidden = false;
+        // §Z.3: the name in the signed-in row wears its effect, hat and badge.
+        wearNames(host);
     }
 
     // ── Styles (injected once) ─────────────────────────────────
@@ -682,7 +698,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
             // and the first line of what a press opens (a finger never sees a tooltip).
             const head = `<span class="ovf-who-dot" aria-hidden="true"></span><span class="ovf-who-n" data-ov-tip="In the last 30 minutes"${parts ? ` data-ov-tip-sub="${esc(parts)}"` : ''}><b>${fmtN(o.total)}</b> online</span>${o.people.length ? `<span class="ovf-who-faces" aria-hidden="true">${o.people.slice(0, 5).map((p) => face(p, 24)).join('')}</span>` : ''}`;
             const when = `<p class="ovf-who-when">In the last 30 minutes${parts ? ` · ${parts}` : ''}</p>`;
-            const list = o.people.map((p) => `<li><a href="${NETWORK_URL}/@${encodeURIComponent(p.username)}">${face(p, 26)}<span>${esc(p.name)}</span>${p.site ? `<small>${esc(p.site)}</small>` : ''}</a></li>`).join('');
+            const list = o.people.map((p) => `<li><a href="${NETWORK_URL}/@${encodeURIComponent(p.username)}">${face(p, 26)}<span${subjectAttr(p)}>${esc(p.name)}</span>${p.site ? `<small>${esc(p.site)}</small>` : ''}</a></li>`).join('');
             who = `<details class="ovf-who"><summary>${head}</summary>${when}${list ? `<ul class="ovf-who-list">${list}</ul>` : ''}${o.more > 0 ? `<p class="ovf-who-more">and ${fmtN(o.more)} more</p>` : ''}</details>`;
         }
         // Then a row of small tiles, each opening what it counts: live (only while someone is), the counts, this
@@ -693,7 +709,7 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         const live = o.live;
         if (live && live.channels > 0) {
             tiles.push(tile('https://openvibe.live/', ' is-live', `<span class="ovf-dot" aria-hidden="true"></span><b>${fmtN(live.channels)}</b><span>live now</span>${live.watching > 0 ? `<small>${fmtN(live.watching)} watching</small>` : ''}`));
-            live.first.forEach((c) => tiles.push(tile(c.url, ' is-channel', `<span>${esc(c.name)}</span>`)));
+            live.first.forEach((c) => tiles.push(tile(c.url, ' is-channel', `<span>${esc(c.name)}</span>`)));   // a channel is nobody: no effect to wear
         }
         o.counts.forEach((c) => tiles.push(row(c)));
         o.items.forEach((i) => tiles.push(row(i)));

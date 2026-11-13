@@ -624,7 +624,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2f6cab5e0778', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '07e8f59d9e6d', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '7d5076132825', 'dock.js': '24539743248d', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'c993615033ae', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0f6074850291', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'a9008daa5af5', 'ov-composer.js': 'ce2ed7a5d349' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2f6cab5e0778', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '07e8f59d9e6d', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '7d5076132825', 'dock.js': '8f26f280607f', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'c993615033ae', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0f6074850291', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'a9008daa5af5', 'ov-composer.js': '5bd54df16c8f', 'items.js': '79a792035407', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -718,6 +718,66 @@
             const sc = document.createElement('script'); sc.id = 'ov-forms-loader'; sc.src = siblingV('ov-forms.js'); sc.async = true; document.head.appendChild(sc);
         } catch { /* */ }
         return true;
+    }
+    // §Z.3 (11-13), the owner: "make sure user name decoration … applies everywhere". One call for every renderer:
+    // OV.names(scope) gives every [data-ov-subject] under the scope what its person wears (items.js; items.css). It
+    // returns at once when the scope has no subject, loads items.js (and items.css) once a page the first time a name
+    // needs it, and never throws: a name stays plain when anything fails.
+    // A person's subject (usr_…): the only key a name effect hangs on. Never invented: what the data carries is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data) return null;
+        if (typeof data === 'string') return SUBJECT_RE.test(data) ? data : null;
+        if (typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject', 'sender_subject', 'sender_subject_id']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    // The attribute a name wears: data-ov-subject="usr_…", or nothing when the data carries no subject.
+    const subjectAttr = (data) => { const s = subjectOf(data); return s ? ` data-ov-subject="${s}"` : ''; };
+    let itemsReady = null;
+    /** items.css and items.js, once a page, the first time a name needs them. */
+    function items(then) {
+        try {
+            if (!document.querySelector('link[data-ov-items-css]')) {
+                const l = document.createElement('link');
+                l.rel = 'stylesheet'; l.href = siblingV('items.css'); l.setAttribute('data-ov-items-css', '');
+                document.head.appendChild(l);
+            }
+        } catch { /* names stay plain */ }
+        if (root.OpenVibeItems && typeof root.OpenVibeItems.decorate === 'function') { then(); return; }
+        if (!itemsReady) {
+            itemsReady = new Promise((resolve) => {
+                try {
+                    const sc = document.createElement('script');
+                    sc.id = 'ov-items-loader'; sc.src = siblingV('items.js'); sc.async = true;
+                    sc.onload = () => resolve(true); sc.onerror = () => resolve(false);
+                    document.head.appendChild(sc);
+                } catch { resolve(false); }
+            });
+        }
+        itemsReady.then((ok) => { if (ok) then(); });
+    }
+    /** Every person's name under the scope wears its effect, hat and badge (items.js; items.css). 0 when there is nothing to wear. */
+    function names(scope) {
+        try {
+            const node = scope || document;
+            if (!node || typeof node.querySelector !== 'function') return 0;
+            if (!node.querySelector('[data-ov-subject]')) return 0;
+            const Items = root.OpenVibeItems;
+            if (Items && typeof Items.decorate === 'function') { items(() => { }); return Items.decorate(node); }
+            items(() => { try { if (root.OpenVibeItems) root.OpenVibeItems.decorate(node); } catch { /* names stay plain */ } });
+            return 0;
+        } catch { return 0; }
+    }
+    // §Z.3: the names the page itself drew (a server-rendered comment, a footer's signed-in row) wear their effect too.
+    if (typeof document !== 'undefined' && document.addEventListener) {
+        const sweep = () => { try { names(document); } catch { /* names stay plain */ } };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sweep, { once: true });
+        else sweep();
     }
     // ov-share.js and ov-share.css (4.114.0, plan track Q): the one Share sheet, fetched the first time someone presses a
     // [data-ov-share-sheet] button, so a site gets it by putting the button on its page and nothing loads before that.
@@ -1701,7 +1761,8 @@
         if (!u || u.is_anon || u.id == null || !u.username) return;
         try {
             const seen = readList(SEEN_KEY).filter((a) => a && String(a.id) !== String(u.id));
-            seen.unshift({ id: u.id, username: u.username, display_name: u.display_name || u.username, avatar_url: u.avatar_url || null });
+            // §Z.3: the subject too, so the name wears its effect when it is drawn again later.
+            seen.unshift({ id: u.id, username: u.username, display_name: u.display_name || u.username, avatar_url: u.avatar_url || null, subject: subjectOf(u) });
             localStorage.setItem(SEEN_KEY, JSON.stringify(seen.slice(0, 10)));
         } catch { /* storage unavailable */ }
     }
@@ -2360,7 +2421,7 @@
                 <div class="openvibe-navbar-dropdown-header">
                     <a class="ud-me" href="${escapeAttr(meHref)}" tabindex="-1" aria-hidden="true">${avatarImg(u, 72, '', '')}</a>
                     <div class="info">
-                        <a class="name ud-me" href="${escapeAttr(meHref)}" title="${isAnon ? 'Your account' : 'Your profile'}">${escapeHtml(u.display_name || u.username)}</a>
+                        <a class="name ud-me" href="${escapeAttr(meHref)}" title="${isAnon ? 'Your account' : 'Your profile'}"${subjectAttr(u)}>${escapeHtml(u.display_name || u.username)}</a>
                         <div class="email">${isAnon ? `Anonymous #${u.anon_number || '?'}` : '@' + escapeHtml(u.username || '')}</div>
                         ${barWallet ? '' : menuCfg.headerChips ? `<div class="ud-chips">${chipsHTML(menuCfg.headerChips, 'ovnav-chip ovnav-chip--menu')}</div>` : '<div class="ud-wallet" id="openvibe-wallet" hidden></div><div class="ud-wallet ud-vibes" id="openvibe-vibes" hidden></div>'}
                     </div>
@@ -2371,7 +2432,7 @@
                     </div>
                 </div>
                 ${_config.accounts === false || (!others.length && !switcher) ? '' : `<div class="openvibe-navbar-dropdown-accounts" role="group" aria-label="Switch account">
-                    ${others.map(a => { const t = switcher ? 'div' : 'a'; return `<${t} class="account-item" ${switcher ? `data-account-id="${escapeAttr(String(a.id))}" role="button" tabindex="0"` : `href="${escapeAttr(switchHref(a))}"`} title="Switch to ${escapeAttr(a.display_name || a.username || '')}">${avatarImg(a, 48, '', '')}<span>${escapeHtml(a.display_name || a.username || '')}${a.is_anon ? ' (anon)' : ''}</span></${t}>`; }).join('')}
+                    ${others.map(a => { const t = switcher ? 'div' : 'a'; return `<${t} class="account-item" ${switcher ? `data-account-id="${escapeAttr(String(a.id))}" role="button" tabindex="0"` : `href="${escapeAttr(switchHref(a))}"`} title="Switch to ${escapeAttr(a.display_name || a.username || '')}">${avatarImg(a, 48, '', '')}<span><span${subjectAttr(a)}>${escapeHtml(a.display_name || a.username || '')}</span>${a.is_anon ? ' (anon)' : ''}</span></${t}>`; }).join('')}
                     ${switcher && !isAnon ? `<div class="account-item ud-anon" data-account-id="anon" role="button" tabindex="0" title="Browse without your name"><span class="icon">${navIcon('fa-user-secret')}</span><span>Anonymous</span></div>` : ''}
                 </div>`}
                 <div class="openvibe-navbar-dropdown-menu">
@@ -2386,6 +2447,8 @@
                 </div>
             `;
             dropdown.addEventListener('click', (e) => { const t = e.target.closest && e.target.closest('[data-use]'); if (t) countUse(t.getAttribute('data-use')); });
+            // §Z.3: the names in the menu wear what their people wear (items.js; items.css).
+            names(dropdown);
             // 4.188.0: not a popup under the picture. It rests in the bar, out of sight (so a site that looks for its
             // sign-out button or its own item still finds it), and the menu's You tab hosts it while the menu is open
             // (openSearch's account(); onClose brings it back).
@@ -2801,6 +2864,8 @@
     const OpenVibeNavbar = {
         /** 4.243.0 (§Z.2): who is looking, for the menu, a site's own nav, mods and apps; also OV.viewer(). */
         viewer() { return viewer(); },
+        /** 4.244.0 (§Z.3): every person's name under the scope wears its effect, hat and badge; also OV.names(scope). */
+        names(scope) { return names(scope); },
         /** 4.228.0: the person's Network token the site gave init() (or null), for Shared's own calls to the Network
          * (the composer's settings sync and Caption it). The site already put it in the page; this only reads it. */
         token() { return _config.token || null; },
@@ -2996,5 +3061,10 @@
         root.OV = root.OV || {};
         if (typeof root.OV.viewer !== 'function') root.OV.viewer = () => viewer();
     }
+    // §Z.3: OV.names(scope) — every person's name under the scope wears its effect, hat and badge. It is here in the
+    // browser and in Node (a site that renders names server-side asks for it the same way), so a renderer's call never
+    // depends on which of the two loaded the navbar.
+    root.OV = root.OV || {};
+    if (typeof root.OV.names !== 'function') root.OV.names = (scope) => names(scope);
 
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this);

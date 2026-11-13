@@ -25,6 +25,23 @@ function safeLinkify(node, value) {
 }
 function timeValue(message) { let raw = String(message.created_at || message.at || '').replace(' ', 'T'); if (raw && !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(raw)) raw += 'Z'; const d = new Date(raw); return Number.isNaN(d.getTime()) ? null : d; }
 function safeAvatar(value) { try { const u = new URL(String(value || '')); return u.protocol === 'https:' && !u.port && u.hostname.toLowerCase() === 'openvibe.media' ? u.href : ''; } catch { return ''; } }
+// §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the message carries is what is used.
+// The names carry an ovm- prefix: this file is a plain browser script, so a top-level const of a plain name would
+// clash with another script's (two scripts cannot both declare the same top-level const). See navbar.js's OV.names.
+const OVM_SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+const ovmSubjectOf = (data) => {
+    if (!data || typeof data !== 'object') return null;
+    for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject', 'sender_subject', 'sender_subject_id']) {
+        const v = data[key];
+        if (typeof v === 'string' && OVM_SUBJECT_RE.test(v)) return v;
+        if (v && typeof v === 'object' && typeof v.id === 'string' && OVM_SUBJECT_RE.test(v.id)) return v.id;
+    }
+    return null;
+};
+// The attribute a name wears, when the data carries a subject. Never invented.
+const ovmSetSubject = (node, data) => { const s = ovmSubjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
+// Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+const ovmWearNames = (scope) => { try { const OV = (typeof window !== 'undefined' && window.OV) || (typeof globalThis !== 'undefined' && globalThis.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stays plain */ } };
 /** A steady hue per person: their name in the room and their initial's circle keep one colour everywhere. */
 function hueOf(id) { let x = 7; for (const c of String(id || '')) x = (x * 31 + c.codePointAt(0)) % 360; return x; }
 function dayLabel(date, now) {
@@ -114,7 +131,9 @@ function render(root, { messages = [], view = 'room', me = null, now = new Date(
         if (view === 'room') {
             const row = document.createElement('li'); row.className = 'ovm-room'; row.dataset.id = String(message.id || '');
             const time = document.createElement('time'); if (date) { time.dateTime = date.toISOString(); text(time, new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date)); } row.appendChild(time);
-            const author = document.createElement('span'); author.className = 'ovm-room-author'; author.style.setProperty('--ovm-h', String(hueOf(sender))); text(author, message.display_name || message.username || 'Someone'); row.appendChild(author);
+            // §Z.3: the name wears its effect, hat and badge (the message's subject, when it carries one).
+            const author = ovmSetSubject(document.createElement('span'), message); author.className = 'ovm-room-author'; author.style.setProperty('--ovm-h', String(hueOf(sender))); text(author, message.display_name || message.username || 'Someone');
+            row.appendChild(author);
             const body = document.createElement('span'); body.className = 'ovm-room-text'; safeLinkify(body, message.message || message.text); row.appendChild(body); root.appendChild(row);
             if (message.edited_at) edited(body, message.edited_at);
             const ids = typeof offer === 'function' ? offer(message, { mine }) : offer;
@@ -126,7 +145,13 @@ function render(root, { messages = [], view = 'room', me = null, now = new Date(
             else if (!mine && !same) { const spacer = document.createElement('span'); spacer.className = 'ovm-avatar is-initial'; spacer.setAttribute('aria-hidden', 'true'); spacer.style.setProperty('--ovm-h', String(hueOf(sender))); text(spacer, String(message.display_name || message.username || '?').trim().charAt(0).toUpperCase()); group.appendChild(spacer); }
             else if (!mine) { const gap = document.createElement('span'); gap.className = 'ovm-avatar is-gap'; gap.setAttribute('aria-hidden', 'true'); group.appendChild(gap); }   // a run keeps the avatar's column
             const body = document.createElement('div'); body.className = 'ovm-group-body';
-            if (!mine && !same) { const author = document.createElement('div'); author.className = 'ovm-author'; text(author, message.display_name || message.username || 'Someone'); body.appendChild(author); }
+            if (!mine && !same) {
+                const author = document.createElement('div'); author.className = 'ovm-author';
+                // §Z.3: the name wears its effect, hat and badge; it sits in its own span, so the hat stands beside it.
+                const who = ovmSetSubject(document.createElement('span'), message); text(who, message.display_name || message.username || 'Someone');
+                author.appendChild(who);
+                body.appendChild(author);
+            }
             const bubble = document.createElement('div'); bubble.className = 'ovm-bubble';
             if (message.reply_to) { const quote = document.createElement('span'); quote.className = 'ovm-reply'; text(quote, message.reply_to.message || message.reply_to.text || 'Reply'); bubble.appendChild(quote); }
             const content = document.createElement('span'); content.className = 'ovm-text'; const value = String(message.message || message.text || '');
@@ -145,6 +170,8 @@ function render(root, { messages = [], view = 'room', me = null, now = new Date(
         previous = { sender, stamp };
     });
     if (offer) tapToAct(root);
+    // §Z.3: every name in the room wears its effect, hat and badge.
+    ovmWearNames(root);
     return root;
 }
 const api = { render, actions, edited, tapToAct };

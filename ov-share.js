@@ -110,6 +110,21 @@
     const same = (a, b) => !!a && !!b && sid(a) === sid(b);
     const handle = (p) => (p && p.username ? `@${p.username}` : '');
     const nameOf = (p) => (p && (p.display_name || p.username)) || 'Someone';
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the data carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    // The attribute a name wears, when the data carries a subject. Never invented.
+    const setSubject = (node, data) => { const s = subjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
     function when(iso, withYear) {
         const d = new Date(iso);
         if (!iso || isNaN(d)) return '';
@@ -559,6 +574,8 @@
         box.appendChild(foot(st));
         box.appendChild(el('p', `ov-share-toast${st.toastWords ? ' is-on' : ''}${st.toastQuiet ? ' is-quiet' : ''}`, { role: 'status', 'aria-live': 'polite' }, st.toastWords || ''));
         st.dlg.replaceChildren(box);
+        // §Z.3: every name in the sheet wears its effect, hat and badge.
+        wearNames(st.dlg);
         // A panel just opened (QR code, Embed, Mastodon) comes into view in the sheet's scroll.
         if (st.panel && st.panel !== st.shownPanel) {
             const pnl = st.dlg.querySelector('.ov-share-panel');
@@ -737,7 +754,8 @@
                 const ul = el('ul', 'ov-share-fps', { 'aria-label': 'Fingerprints' });
                 for (const m of known) {
                     const li = el('li', 'ov-share-fprow');
-                    li.appendChild(el('span', 'ov-share-fpwho', null, handle(m) || nameOf(m)));
+                    // §Z.3: the person's name in the sheet wears its effect, hat and badge (the member's subject).
+                    li.appendChild(setSubject(el('span', 'ov-share-fpwho', null, handle(m) || nameOf(m)), m));
                     li.appendChild(el('span', 'ov-share-fp', null, m.key_fingerprint));
                     if (m.fingerprint_changed) li.appendChild(el('span', 'ov-share-tag is-warn', null, 'key changed'));
                     ul.appendChild(li);
@@ -954,7 +972,9 @@
         li.appendChild(avatar(p));
         const words = el('div', 'ov-share-words');
         const top = el('div', 'ov-share-name');
-        top.appendChild(el('span', 'ov-share-display', null, nameOf(p)));
+        // §Z.3: the name wears its effect, hat and badge (the member's subject, when it carries one).
+        const shown = setSubject(el('span', 'ov-share-display', null, nameOf(p)), p);
+        top.appendChild(shown);
         if (x.you || (st.server && st.server.you && p.subject && same(p.subject, st.server.you.subject))) top.appendChild(el('span', 'ov-share-tag', null, 'You'));
         if (x.member && x.member.isNew) top.appendChild(el('span', 'ov-share-tag is-new', null, 'New'));
         words.appendChild(top);
@@ -1029,7 +1049,11 @@
         const li = el('li', 'ov-share-row');
         li.appendChild(avatar(r));
         const words = el('div', 'ov-share-words');
-        words.appendChild(el('div', 'ov-share-name', null, nameOf(r)));
+        // §Z.3: the name wears its effect, hat and badge; it sits in its own span, so the hat stands beside it.
+        const asked = el('div', 'ov-share-name');
+        const askedName = setSubject(el('span', null, null, nameOf(r)), r);
+        asked.appendChild(askedName);
+        words.appendChild(asked);
         const sub = el('div', 'ov-share-sub');
         if (r.username) sub.appendChild(el('span', null, null, handle(r)));
         if (r.requested_at) sub.appendChild(el('span', null, null, `asked ${when(r.requested_at)}`));
@@ -1057,7 +1081,8 @@
         b.appendChild(iconEl('give'));
         const p = el('p');
         p.appendChild(doc.createTextNode('Waiting for '));
-        p.appendChild(el('strong', null, null, handle(t.to) || nameOf(t.to)));
+        // §Z.3: the person's name wears its effect, hat and badge (the subject the offer carries, when it has one).
+        p.appendChild(setSubject(el('strong', null, null, handle(t.to) || nameOf(t.to)), t.to));
         p.appendChild(doc.createTextNode(` to accept ownership${t.expires_at ? `. The offer ends ${when(t.expires_at)}` : ''}.`));
         b.appendChild(p);
         const c = el('button', 'ov-share-btn is-small is-quiet', { type: 'button', 'data-k': 'cancel-give' }, 'Cancel offer');
@@ -1257,7 +1282,8 @@
             if (state === 'accepted') p.textContent = 'It is yours now. You decide who else can open it.';
             else if (state === 'declined') p.textContent = 'You declined. Nothing changed.';
             else {
-                p.appendChild(el('strong', null, null, handle(o.from) || nameOf(o.from)));
+                // §Z.3: the person's name wears its effect, hat and badge (the subject the offer carries, when it has one).
+                p.appendChild(setSubject(el('strong', null, null, handle(o.from) || nameOf(o.from)), o.from));
                 p.appendChild(doc.createTextNode(` wants to give you ${o.title ? `“${o.title}”` : 'this'}. `));
                 p.appendChild(doc.createTextNode(o.keep_access ? 'They would keep view access. ' : 'They would lose access. '));
                 if (o.expires_at) p.appendChild(doc.createTextNode(`The offer ends ${when(o.expires_at)}.`));

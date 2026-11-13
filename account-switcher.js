@@ -15,6 +15,20 @@
     const ANON_KEY = 'openvibe_anon_token';
     const ANON_TOKENS_KEY = 'openvibe_anon_tokens'; // Map<anonId, sessionToken>
     const MAX_ACCOUNTS = 10;
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the session carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    const subjectAttr = (data) => { const s = subjectOf(data); return s ? ` data-ov-subject="${s}"` : ''; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
 
     let _config = { apiBase: 'https://openvibe.network', onSwitch: null };
     let _panelEl = null;
@@ -101,6 +115,8 @@
             email: user.email || null,
             is_anon: isAnon,
             anon_number: anonNum,
+            // §Z.3: the subject too, so the name wears its effect when the list is drawn again later.
+            subject: subjectOf(user),
             token,
             added_at: Date.now(),
         };
@@ -471,7 +487,7 @@
                     <div class="openvibe-switcher-item ${String(a.id) === String(activeId) ? 'active' : ''}" data-id="${a.id}">
                         <img src="${a.avatar_url || '/data/avatars/default.png'}" alt="" width="40" height="40" decoding="async">
                         <div class="info">
-                            <div class="name">${a.display_name || a.username}</div>
+                            <div class="name"><span${subjectAttr(a)}>${a.display_name || a.username}</span></div>
                             <div class="sub">${a.email || `@${a.username}`}</div>
                         </div>
                         ${String(a.id) !== String(activeId) ? `<span class="remove" data-remove-id="${a.id}" title="Remove account">\u2715</span>` : ''}
@@ -508,6 +524,8 @@
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
         _panelEl = overlay;
+        // §Z.3: every name in the list wears its effect, hat and badge.
+        wearNames(panel);
 
         // Wire events
         panel.querySelectorAll('.openvibe-switcher-item[data-id]').forEach(el => {

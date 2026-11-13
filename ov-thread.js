@@ -24,7 +24,7 @@
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
-    const THREAD_REV = { 'ov-composer.js': 'ce2ed7a5d349', 'ov-combo.js': '8001a3b19c2f' };
+    const THREAD_REV = { 'ov-composer.js': '5bd54df16c8f', 'ov-combo.js': '8001a3b19c2f' };
     var selfSrc = (document.currentScript && document.currentScript.src) || '';
     // 4.202.0: the one dropdown for a field (ov-combo.js: a repository, a person), wherever a page asks for it.
     function loadCombo() {
@@ -255,6 +255,10 @@
     };
     root.OVThread = api;
 
+    // §Z.3: every person's name under the scope wears its effect, hat and badge (items.js; items.css). Never throws.
+    function wearNames(scope) {
+        try { if (root.OV && typeof root.OV.names === 'function') root.OV.names(scope || document); } catch (e) { /* names stay plain */ }
+    }
     function start() {
         loadCombo();
         qa(document, '[data-ovt], [data-ovc-thread]').forEach(function (box) {
@@ -479,6 +483,8 @@
             if (sbBtn) navLead(box, sbBtn, 0);
 
             enhance(box);
+            // §Z.3 (11-13): the names the server drew (the comment authors) wear their effect, hat and badge.
+            wearNames(box);
             if (!location.hash && q(box, '[data-ovt-thread] > li')) toBottom(false);
         });
     }

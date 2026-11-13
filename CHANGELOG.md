@@ -1,5 +1,20 @@
 # Changelog
 
+## 4.244.0 — 2026-11-13
+
+**Every name wears what its person wears** (the owner, 11-13: "make sure user name decoration … applies everywhere").
+
+- **Names wear their effect, their hat and their badge everywhere.** The name of a person in a card, in a message, in a
+  comment, in the menu, in the account list, in the profile, in the people picker and in the share sheet wears what that
+  person wears (OpenVibe.Inventory through items.js; items.css): the effect on the letters, the hat beside the name, the
+  badge before it. Before this, only the feed dressed a name.
+- **One call for every renderer.** `OV.names(scope)` (also `OpenVibeNavbar.names(scope)`) gives every name under a part of
+  the page what its person wears. It loads items.js once a page, and only when a name carries a subject; it never throws,
+  so a name stays plain when the Inventory cannot be reached.
+- **Only a real subject is used.** A name is dressed only when the data carries that person's own `usr_…` subject (a
+  subject, subject_id, user_subject, author_subject or owner_subject). Nothing is invented: a renderer whose API does not
+  carry a subject today leaves the name plain until that API adds it.
+
 ## 4.243.0 — 2026-11-13
 
 **One + everywhere, and a menu that knows who is looking** (the owner, 11-13: "I don't really like the plus …
