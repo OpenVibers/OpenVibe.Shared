@@ -664,7 +664,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
      make it look kind of cool"): a lit sphere (a highlight up and to the left, a shade under it, a rim of the accent),
      a soft glow around it, a sheen that sweeps across once as the menu opens, a brighter glow on hover, and a press
      that sinks it. Nothing moves at rest. */
-  .ovs.ovs-anchored .ovs-orb.is-x { color: #fff; overflow: hidden; --ovo-a: #fff; --ovo-b: #fff;
+  .ovs.ovs-anchored .ovs-orb.is-x { color: #fff; --ovo-a: #fff; --ovo-b: #fff;   /* no overflow clip: ::after is the 4 px wider hit area */
     background: radial-gradient(120% 120% at 32% 22%, color-mix(in srgb, #fff 30%, var(--accent-light, #60a5fa)) 0%, color-mix(in srgb, var(--accent, #3b82f6) 72%, #0b1220) 42%, color-mix(in srgb, var(--accent, #3b82f6) 30%, #04060c) 100%);
     box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .42), inset 0 -4px 8px rgba(0, 0, 0, .45), 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 55%, transparent),
       0 0 22px -2px color-mix(in srgb, var(--accent, #3b82f6) 75%, transparent), 0 10px 22px -8px rgba(0, 0, 0, .8);
