@@ -687,6 +687,12 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         home: [['path', { d: 'M3.6 10.6L12 3.3l8.4 7.3v8.4a1 1 0 0 1-1 1h-4.2v-6.3h-6.3v6.3H4.7a1 1 0 0 1-1-1Z' }]],
         live: [['circle', { cx: 12, cy: 11.8, r: 2 }], ['path', { d: 'M8.6 8.4a4.9 4.9 0 0 0 0 7.1M15.4 8.4a4.9 4.9 0 0 1 0 7.1M6.3 6.1a8.1 8.1 0 0 0 0 11.9M17.7 6.1a8.1 8.1 0 0 1 0 11.9' }]],
         shield: [['path', { d: 'M12 3.7L5.5 6.6v5.6c0 4.1 2.8 7.1 6.5 8.4c3.7-1.3 6.5-4.2 6.5-8.4V6.6Z' }]],
+        // 4.241.0: the feed's chips and actions.
+        tag: [['path', { d: 'M3.8 11.2V3.8h7.4l9.3 9.3l-7.4 7.4Z' }], ['circle', { cx: 8, cy: 8, r: 1.2 }]],
+        chart: [['path', { d: 'M3.9 3.4v16.7h16.7' }], ['path', { d: 'M7.7 14.5l3.6-4.1l3.2 2.7l5.2-6.3' }]],
+        scissors: [['circle', { cx: 6, cy: 7, r: 2.6 }], ['circle', { cx: 6, cy: 17, r: 2.6 }], ['path', { d: 'M8.2 8.6 20 18M8.2 15.4 20 6' }]],
+        smile: [['circle', { cx: 12, cy: 12, r: 8.5 }], ['path', { d: 'M8.5 14a4 4 0 0 0 7 0M9 9.5h.01M15 9.5h.01' }]],
+        share: [['path', { d: 'M12 15.2V3.3M7.4 8.1L12 3.3L16.6 8.1M4.9 12.9v6.1a1 1 0 0 0 1 1h12.2a1 1 0 0 0 1-1v-6.1' }]],
     };
     function svgIcon(name) {
         const NS = 'http://www.w3.org/2000/svg';
@@ -1652,6 +1658,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     // Following needs a signed-in person (the feed reads their Network follows); the rest are the feed's kinds (Community
     // #310: wiki pages, quest badges, busy chat rooms, calendar events and the people who joined, beside the media kinds).
     const KINDS = [['', 'For you'], ['following', 'Following'], ['live', 'Live'], ['video', 'Videos'], ['clip', 'Clips'], ['pic', 'Pics'], ['post', 'Posts'], ['rundown', 'Rundown'], ['meme', 'Memes'], ['game', 'Games'], ['chat', 'Chat'], ['event', 'Events'], ['work', 'Jobs'], ['deal', 'Deals'], ['report', 'Stats'], ['wiki', 'Wiki'], ['quest', 'Quests'], ['update', 'Updates']];
+    // 4.241.0: each kind's glyph on its chip.
+    const KIND_GL = { '': 'spark', following: 'people', live: 'live', video: 'video', clip: 'scissors', pic: 'image', post: 'pencil', rundown: 'page', meme: 'smile', game: 'game', chat: 'chat', event: 'calendar', work: 'briefcase', deal: 'tag', report: 'chart', wiki: 'book', quest: 'trophy', update: 'bell' };
     function feedUrl(o, kind, cursor) {
         const p = new URLSearchParams({ limit: '12' });
         if (kind === 'following') p.set('following', '1'); else if (kind) p.set('kind', kind);
@@ -1781,7 +1789,47 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     /** The Rundown's episodes (Live writes them from what streamers said): Network's kind `rundown`, or the older items
      *  that came as "System" with a "Rundown:" title. */
     function isRundown(c) { return c.kind === 'rundown' || (/^Rundown:\s*/i.test(String(c.title || '')) && (!c.actor || /^system$/i.test(String(c.actor.name || '')))); }
-    function feedCard(c) {
+    /** The person behind a card (4.241.0): their name wears its effect (items.css; Inventory by subject where the page
+     *  has items.js), their level and @handle beside it. "System" is nobody: the site speaks for itself. */
+    const personOf = (c) => (c.actor && c.actor.name && !/^system$/i.test(String(c.actor.name)) ? c.actor : null);
+    const FX = /^name-fx-[a-z]{2,24}$/;
+    let itemsCss = false;
+    function nameOf(c, actor, o) {
+        const name = h('b', 'ovfd-name', String(actor.name || '').slice(0, 60));
+        if (c.subject && /^usr_[0-9A-HJKMNP-TV-Z]{26}$/.test(String(c.subject))) name.setAttribute('data-ov-subject', String(c.subject));
+        if (actor.fx && FX.test(String(actor.fx))) {
+            name.classList.add('ov-fx', String(actor.fx));
+            if (!itemsCss && typeof document !== 'undefined' && o && typeof o.sibling === 'function' && !document.querySelector('link[data-ov-items-css]')) {
+                itemsCss = true;
+                const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = o.sibling('items.css'); l.setAttribute('data-ov-items-css', ''); document.head.append(l);
+            }
+        }
+        const line = h('span', 'ovfd-nameline'); line.append(name);
+        const lv = Number(actor.level);
+        if (Number.isInteger(lv) && lv > 0) { const b = h('span', 'ovfd-lvl', `Lv ${lv}`); b.setAttribute('aria-label', `level ${lv}`); line.append(b); }
+        return line;
+    }
+    const KIND_WORD = { post: 'Post', pic: 'A picture', clip: 'Clip', video: 'Video', live: 'Live', meme: 'Meme', deal: 'Deals', work: 'Jobs', report: 'Report', game: 'Game', wiki: 'Wiki', news: 'News', poll: 'Poll' };
+    /** Under a post, a picture, a clip or a video: reply (with the count), likes, and share. Never inside the card's link. */
+    function actsOf(c, url) {
+        const n = c.counts || {};
+        const row = h('div', 'ovfd-acts');
+        const reply = h('a', 'ovfd-act-b'); reply.href = `${url}#comments`; reply.append(glyph('reply'), h('span', '', Number(n.comments) > 0 ? count(n.comments) : 'Comment'));
+        reply.setAttribute('aria-label', Number(n.comments) > 0 ? `${num(n.comments)} comments` : 'Comment');
+        row.append(reply);
+        if (Number(n.likes) > 0) { const lk = h('span', 'ovfd-act-b is-static'); lk.append(glyph('heart'), h('span', '', count(n.likes))); lk.setAttribute('aria-label', `${num(n.likes)} likes`); row.append(lk); }
+        const sh = h('button', 'ovfd-act-b'); sh.type = 'button'; sh.append(glyph('share'), h('span', '', 'Share'));
+        sh.setAttribute('aria-label', 'Share');
+        sh.addEventListener('click', async () => {
+            const data = { title: String(c.title || '').slice(0, 120), url };
+            try { if (navigator.share) { await navigator.share(data); return; } } catch { return; }
+            try { await navigator.clipboard.writeText(url); sh.lastChild.textContent = 'Link copied'; setTimeout(() => { sh.lastChild.textContent = 'Share'; }, 1800); } catch { /* */ }
+        });
+        row.append(sh);
+        return row;
+    }
+    const SOCIAL = new Set(['post', 'pic', 'clip', 'video', 'meme', 'rundown']);
+    function feedCard(c, o) {
         const kind = isRundown(c) ? 'rundown' : String(c.kind || 'post');
         const url = safe(c.url);
         if (!url) return null;
@@ -1796,10 +1844,10 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         if (kind === 'rundown') a.setAttribute('aria-label', `The Rundown: ${String(c.title || '').replace(/^Rundown:\s*/i, '').slice(0, 160)}`);
         const head = h('span', 'ovfd-head');
         const face = h('span', 'ovfd-face');
-        const av = c.actor && safe(c.actor.avatar);
-        // No person behind it (the network's trending pictures): the site's icon and the card's label, not a "?".
+        const av = personOf(c) && safe(c.actor.avatar);
+        // No person behind it (the network's trending pictures, a report): the site's icon, not a "?".
         if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
-        else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
+        else if (!personOf(c)) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovfd-who');
         const meta = h('small', '');
@@ -1813,9 +1861,17 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             who.append(h('b', '', 'The Rundown'));
             meta.append(siteIcon('live', 18), document.createTextNode(` ${[about ? `about ${about}` : 'from today’s streams', when(c.at)].filter(Boolean).join(' · ')}`));
             a.classList.add('ovfd-k-rundown');
+        } else if (personOf(c)) {
+            const p = personOf(c);
+            who.append(nameOf(c, p, o));
+            meta.append(siteIcon(c.site || 'ov', 18), document.createTextNode(` ${[p.handle ? `@${String(p.handle).slice(0, 40)}` : '', c.site_name || '', when(c.at)].filter(Boolean).join(' · ')}`));
         } else {
-            who.append(h('b', '', String((c.actor && c.actor.name) || c.label || c.site_name || '').slice(0, 60)));
-            meta.append(siteIcon(c.site || 'ov', 18), document.createTextNode(` ${[c.site_name || '', c.actor ? when(c.at) : String(c.text || when(c.at) || '').slice(0, 60)].filter(Boolean).join(' · ')}`));
+            // Nobody behind it (a site's own card, or a picture whose author the feed does not know yet): the site's name,
+            // then what it is and when, never "Community · Community".
+            who.append(h('b', '', String(c.label && !/^system$/i.test(String(c.label)) ? c.label : c.site_name || '').slice(0, 60)));
+            // A report says its sentence beside its number (statOf); a member card says it here.
+            const what = kind === 'member' ? String(c.text || '').slice(0, 60) : kind === 'report' ? '' : KIND_WORD[kind] || '';
+            meta.append(siteIcon(c.site || 'ov', 18), document.createTextNode(` ${[what, when(c.at)].filter(Boolean).join(' · ')}`));
         }
         who.append(meta);
         head.append(face, who);
@@ -1842,12 +1898,21 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         if (title) a.append(h('b', 'ovfd-title', title.slice(0, 200)));
         if (kind === 'report') { const st = statOf(c); if (st) a.append(st); }
         // A card without a person says its text in the line under its name already (not twice).
-        const textInMeta = !c.actor && kind !== 'rundown' && !!c.text;
+        const textInMeta = !personOf(c) && kind === 'member' && !!c.text;
         if (c.text && (kind === 'post' || !thumb) && kind !== 'report' && !textInMeta) a.append(h('p', 'ovfd-text', String(c.text).slice(0, 500)));
         const many = groupList(c);
         if (many) a.append(many);
-        const people = peopleOf(kind, c);
+        // A run of deals says its count in its own link ("See all 37 deals"), not again under it.
+        const people = many && kind === 'deal' ? null : peopleOf(kind, c);
         const counts = countsRow(c.counts);
+        if (SOCIAL.has(kind)) {
+            // 4.241.0: a post reads like a post: the card, then reply, likes and share under it (outside its link).
+            if (people) { const row = h('span', 'ovfd-counts'); row.append(people); a.append(row); }
+            else if (counts && Number((c.counts || {}).views) > 0) { const row = h('span', 'ovfd-counts'); const v = counts.querySelector('[aria-label$="views"], [aria-label$="watched"]'); if (v) { row.append(v); a.append(row); } }
+            const post = h('article', `ovfd-post ovfd-k-${kind.replace(/[^a-z]/g, '')}`);
+            post.append(a, actsOf(c, url));
+            return post;
+        }
         if (people || counts) { const row = counts || h('span', 'ovfd-counts'); if (people) row.prepend(people); a.append(row); }
         return a;
     }
@@ -1876,17 +1941,32 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const list = h('span', 'ovfd-group');
         const pic = (x) => { const th = x && x.media && safe(x.media.thumb); return th && /^https:/.test(th) ? th : ''; };
         const anyPic = g.slice(0, 3).some((x) => !!pic(x));
-        g.slice(0, 3).forEach((x) => {
+        const money = (p) => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: p.currency }).format(Number(p.amount)); } catch { return `${Number(p.amount).toFixed(2)} ${p.currency}`; } };
+        const isDeal = c.kind === 'deal';
+        if (isDeal) list.classList.add('is-deals');
+        g.slice(0, isDeal ? 4 : 3).forEach((x) => {
             const row = h('span', 'ovfd-group-i');
             const th = pic(x);
-            // Rows line up: where one has a picture, the others hold its place.
+            // Rows line up: where one has a picture, the others hold its place (a deal's: its store's first letter).
             if (th) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = th; row.append(img); }
+            else if (isDeal) { const ph = h('i', 'ovfd-group-ph is-deal'); ph.append(glyph('tag')); row.append(ph); }
             else if (anyPic) row.append(h('i', 'ovfd-group-ph'));
-            row.append(h('span', '', String(x.title || '').slice(0, 120)));
+            const t = h('span', 'ovfd-group-t'); t.append(h('span', 'ovfd-group-n', String(x.title || '').replace(/\s+[—-]\s+[^—-]{2,40}$/, '').slice(0, 120)));
+            if (isDeal) {
+                const line = h('span', 'ovfd-price');
+                const p = x.price && Number.isFinite(Number(x.price.amount)) && /^[A-Z]{3}$/.test(String(x.price.currency || '')) ? x.price : null;
+                if (p) line.append(h('b', '', Number(p.amount) === 0 ? 'Free' : money(p)));
+                if (p && Number(x.was) > Number(p.amount)) { line.append(h('s', '', money({ amount: x.was, currency: p.currency }))); line.append(h('em', '', `-${Math.round((1 - Number(p.amount) / Number(x.was)) * 100)}%`)); }
+                const store = x.store || (/\s[—-]\s([^—-]{2,40})$/.exec(String(x.title || '')) || [])[1];
+                if (store) line.append(h('small', '', String(store).slice(0, 40)));
+                if (line.childNodes.length) t.append(line);
+            }
+            row.append(t);
             list.append(row);
         });
-        const more = Number(c.group.count) - Math.min(3, g.length);
+        const more = Number(c.group.count) - Math.min(c.kind === 'deal' ? 4 : 3, g.length);
         if (more > 0) list.append(h('small', 'ovfd-group-more', `and ${num(more)} more`));
+        if (more > 0 && isDeal) list.lastChild.textContent = `See all ${num(Number(c.group.count))} deals`;
         return list;
     }
     /** What `counts.people` means for a kind: jobs, voters, people online; nothing where it means nothing. */
@@ -1950,6 +2030,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         // 4.229.0: a card already on the list is never drawn again (the owner, 11-12: "112 new deals" three times, one
         // per page of a Deals poll; Network now names a burst once, and this keeps any repeat off the screen).
         const shownIds = new Set();
+        // Names wear what their people wear (OpenVibe.Inventory through items.js, where the page has it).
+        const decorate = () => { try { if (root.OpenVibeItems && typeof root.OpenVibeItems.decorate === 'function') root.OpenVibeItems.decorate(list); } catch { /* names stay plain */ } };
         let query = '', searchSeq = 0;
         const loaded = [];
         const feedBase = `${o.frameBase || FRAME}/feed`;
@@ -1998,7 +2080,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const clear = h('button', 'ovk-btn ovk-btn--quiet', '×'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear feed search');
             clear.addEventListener('click', () => { if (o.onSearch) o.onSearch(''); }); resultHead.append(clear);
             list.textContent = '';
-            found.forEach((x) => { const card = feedCard(x); if (card) list.append(card); });
+            found.forEach((x) => { const card = feedCard(x, o); if (card) list.append(card); }); decorate();
             if (typeof o.mountIcons === 'function') o.mountIcons(list);
         }
         const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovfd-skel')); };
@@ -2021,12 +2103,12 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // Back-to-back go-lives that are over fold into one card of faces (a wall of "X went live" was the whole feed).
             const past = (x) => x && (x.kind === 'stream' || (x.kind === 'live' && !x.live_now)) && safe(x.url);
             let run = [];
-            const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => { const c = feedCard(x); if (c) list.append(c); }); run = []; };
+            const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => { const c = feedCard(x, o); if (c) list.append(c); }); run = []; decorate(); };
             // Date by date (the owner, 11-09): a quiet day line where the day changes. The network's trending cards
             // (no time of their own) sit between, under the day they were woven into.
             const day = (x) => { const t = Date.parse(String((x && x.at) || '')); return Number.isFinite(t) ? new Date(t).toDateString() : ''; };
             const mark = (x) => { const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
-            j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x); if (c) list.append(c); });
+            j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x, o); if (c) list.append(c); });
             flush();
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
@@ -2038,7 +2120,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         }
         KINDS.forEach(([k, label]) => {
             if (k === 'following' && !signedIn(o)) return;
-            const b = h('button', 'ovfd-chip', label); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
+            const b = h('button', 'ovfd-chip'); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', k === kind ? 'true' : 'false');
+            { const g = svgIcon(KIND_GL[k] || 'spark'); g.setAttribute('class', 'ovfd-chip-g'); b.append(g, h('span', '', label)); }
             b.addEventListener('click', () => {
                 if (k === kind) return;
                 kind = k; cursor = null; done = false; busy = false; lastDay = '';
@@ -2159,6 +2242,48 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-ribbon svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .ovfd-media{position:relative}
 .ovfd-len{font-variant-numeric:tabular-nums;z-index:1}
+
+/* 4.241.0: the feed as social posts. Chips with glyphs; a person's line (face, name with its effect, level, @handle);
+   a post is its card and its reply, likes and share; a run of deals is a listing (picture, price, old price, store). */
+.ovfd-chip{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 15px 0 11px;transition:background-color .2s,color .2s,border-color .2s,transform .18s cubic-bezier(.3,1.4,.4,1)}
+.ovfd-chip-g{flex:none;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.ovfd-chip[aria-selected=true]{background:color-mix(in srgb,var(--accent,#3b82f6) 18%,transparent);color:var(--accent-light,#93c5fd);border-color:color-mix(in srgb,var(--accent,#3b82f6) 55%,transparent)}
+.ovfd-chip[aria-selected=true] .ovfd-chip-g{opacity:1}
+.ovfd-chip:active{transform:scale(.94)}
+@media (hover:hover){.ovfd-chip:not([aria-selected=true]):hover{color:var(--text-primary,#e8ecf3);border-color:color-mix(in srgb,var(--text-primary,#e8ecf3) 28%,transparent)}}
+.ovfd-nameline{display:flex;align-items:center;gap:6px;min-width:0}
+.ovfd-nameline .ovfd-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px;font-weight:800}
+.ovfd-lvl{flex:none;display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:.02em;color:#fde68a;background:linear-gradient(135deg,color-mix(in srgb,#f59e0b 32%,transparent),color-mix(in srgb,#f59e0b 14%,transparent));box-shadow:inset 0 0 0 1px color-mix(in srgb,#f59e0b 40%,transparent)}
+.ovfd-post{display:grid;border-radius:18px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);box-shadow:inset 0 0 0 1px var(--border,rgba(255,255,255,.08));min-width:0;overflow:hidden}
+.ovfd-post>.ovfd-card{border-radius:18px 18px 0 0;background:none;box-shadow:none;padding:12px 12px 8px}
+.ovfd-post .ovfd-face{width:42px;height:42px}
+.ovfd-post .ovfd-media{border-radius:14px}
+.ovfd-acts{display:flex;align-items:center;gap:4px;padding:2px 6px 6px;border-top:1px solid color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
+.ovfd-act-b{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:0 12px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:650;color:var(--text-secondary,#a8b3c4);text-decoration:none;transition:background-color .2s,color .2s,transform .18s cubic-bezier(.3,1.4,.4,1)}
+.ovfd-act-b .ovfd-gl{width:19px;height:19px}
+.ovfd-act-b:last-child{margin-left:auto}
+.ovfd-act-b.is-static{cursor:default}
+.ovfd-act-b:not(.is-static):active{transform:scale(.94)}
+.ovfd-act-b:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:2px}
+@media (hover:hover){.ovfd-act-b:not(.is-static):hover{color:var(--accent-light,#93c5fd);background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent)}.ovfd-post:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}}
+.ovfd-group.is-deals{gap:6px}
+.ovfd-group.is-deals .ovfd-group-i{align-items:center;gap:10px;padding:6px;border-radius:12px;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent)}
+.ovfd-group.is-deals .ovfd-group-i::before{display:none}
+.ovfd-group.is-deals .ovfd-group-i img,.ovfd-group-ph.is-deal{width:48px;height:48px;border-radius:10px}
+.ovfd-group-ph.is-deal{display:grid;place-items:center;color:#facc15;background:color-mix(in srgb,#facc15 12%,transparent)}
+.ovfd-group-ph.is-deal .ovfd-gl{width:22px;height:22px}
+.ovfd-group-t{min-width:0;display:grid;gap:2px}
+.ovfd-group-n{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:650;color:var(--text-primary,#e8ecf3)}
+.ovfd-price{display:flex;align-items:baseline;gap:7px;min-width:0;font-size:13px;white-space:nowrap}
+.ovfd-price b{font-size:14.5px;font-weight:800;color:#4ade80;font-variant-numeric:tabular-nums}
+.ovfd-price s{color:var(--text-muted,#93a0b4);font-variant-numeric:tabular-nums}
+.ovfd-price em{font-style:normal;font-weight:800;font-size:11.5px;padding:1px 6px;border-radius:6px;color:#4ade80;background:color-mix(in srgb,#22c55e 14%,transparent)}
+.ovfd-price small{min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted,#93a0b4)}
+.ovfd-group.is-deals .ovfd-group-more{justify-self:start;padding:4px 2px;font-size:13px;font-weight:700;color:var(--accent-light,#93c5fd)}
+@media (min-width:900px){.ovfd-group.is-deals{grid-template-columns:repeat(2,minmax(0,1fr))}.ovfd-group.is-deals .ovfd-group-more{grid-column:1/-1}}
+@media (prefers-color-scheme:light){.ovfd-lvl{color:#92400e}.ovfd-price b,.ovfd-price em{color:#15803d}.ovfd-group-ph.is-deal{color:#a16207}}
+:root[data-theme=light] .ovfd-lvl{color:#92400e} :root[data-theme=light] .ovfd-price b,:root[data-theme=light] .ovfd-price em{color:#15803d}
+html[data-ov-motion=off] :is(.ovfd-chip,.ovfd-act-b){transition:none}
 `;
         document.head.appendChild(st);
     }

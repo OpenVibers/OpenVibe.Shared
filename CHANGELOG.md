@@ -1,5 +1,39 @@
 # Changelog
 
+## 4.241.0 — 2026-11-13
+
+**The composer's + is what you can add, and the feed reads like posts by people** (the owner, 11-13: "the plus button
+on the composer … camera, photos, files … our own custom style … a modular system … it can still open this choose an
+action … share … each site can choose … highly configurable"; on openvibe.community's feed: "add icons to those [tags]
+and make those buttons nicer … make it more like a social media … it should say who posted it … their level … their
+username effects … update the listings for deals … way better on mobile, but also great on desktop").
+
+- **The + (ov-composer.js).**
+  - Big tiles for what you add: Camera (the shared capture core), Photos (pictures and videos), Files (any file; on
+    Android the system's Choose an action). Then rows: Paste (a picture or words you copied), Screenshot (a screen,
+    window or tab; desktop), Camera app (the phone's own camera), Share to an app (what you wrote, with its files),
+    Timer, GitHub, a site's own tools, and what a narrow row hides. Each row says what it does in a second line.
+  - A phone gets a sheet from the bottom (the top layer: no panel clips it; swipe it down, tap outside, or the ×); a
+    wide screen a panel under the row with the rows in columns. Tiles rise in turn; a press sinks them.
+  - What the + holds as a tile is not also a button in the row (rule: never twice); a file tool's input stays in the
+    form so the files still go with it.
+  - Configurable: `mount(host, { plus: { tiles, rows, only } })`, a form's `data-ovc-plus`, the site's
+    `OpenVibeComposer.configure({ plus, tools })`; a tool says where it fits with `sub`, `tile`, `accept`, `capture`
+    and `when(env)` (env: files, anyFile, touch, camera, screen, share, clip). `noPlus` leaves the + out.
+- **The feed (ov-home.js).**
+  - Each chip has its glyph (For you, Following, Live, Videos, Clips, Pics, Posts, Rundown, Memes, Games, Chat,
+    Events, Jobs, Deals, Stats, Wiki, Quests, Updates); the chosen one is tinted, not a white block.
+  - A person's card names them: their face, their name wearing its effect (`actor.fx`, drawn by items.css; Inventory
+    by `subject` where the page has items.js), their level badge, @handle, the site and when (feed.item@1 1.1.0,
+    Contracts 0.425.0). "System" is nobody: a site's own card is the site's name and what it is, never
+    "Community · Community".
+  - A post, a picture, a clip, a video, a meme or the Rundown is its card and, under it (outside its link), Comment
+    with the count, likes, and Share (the phone's share sheet, or the link copied).
+  - A run of deals is a listing: each with its picture (or a tag), its price, the old price struck through with the
+    saving, and the store; two columns on a wide screen; "See all 37 deals".
+- Tests: `composer-plus-chrome` (new: tiles and rows, the sheet and the panel, per box and per site, a site's tool,
+  picked files in the box); `composer-v2-chrome`, `dock-chrome` and `menu-feed-v2-chrome` follow the new markup.
+
 ## 4.240.0 — 2026-11-13
 
 **One agent in the menu's Vibe, and a menu button drawn from the menu** (the owner, 11-13: "all this separation of
