@@ -33,6 +33,9 @@
  *   OpenVibeRun.card(type, (data, step, ctx) => Node)   a rich card for a step's `ui.type` (a site or a mod adds its
  *                                                       own); an unknown type shows the step's words.
  *
+ * 4.242.0: quiet steps in a row fold into "Ran 6 steps · the last one", opening to each; words said while the run works
+ * wait in the thread as queued and go at its next turn; the list says how many are working now.
+ *
  * 4.240.0, one agent (the owner, 11-13: "all this separation of tasks and codes and chats … we shouldn't even have
  * that. It's just like filters … your actor is just your agent … it can orchestrate to openvibe.codes, or timer, task,
  * desktop, browser"):
@@ -491,6 +494,9 @@
                 state.runs = state.runs.concat(extra).sort((x, y) => needs(y) - needs(x) || String(y.updated_at || '').localeCompare(String(x.updated_at || '')));
             }
             rows.textContent = ''; rows.removeAttribute('aria-busy');
+            // 4.242.0: how many are working right now (a coding agent's "2 running tasks"), above the rows.
+            { const busy = state.runs.filter((r) => r.status === 'running' || r.status === 'planning').length; let pill = box.querySelector('.ovr-busy');
+              if (busy) { if (!pill) { pill = el('p', 'ovr-busy'); rows.before(pill); } pill.textContent = ''; pill.append(el('i', 'ovr-pulse'), el('span', '', `${busy} working now`)); } else if (pill) pill.remove(); }
             if (!state.runs.length) foot.append(empty('Nothing here yet', state.filter === 'code' ? 'Say what to build below: a page, a fix, controls for your stream. Your agent hands it to Codes.' : o.agent ? `Ask ${agentName()} anything below. It answers, sets timers and reminders, and hands coding and computer work on.` : 'Ask anything below. Chats, tasks and code you start show up here.'));
             state.runs.forEach((r, i) => { const li = el('li'); li.append(row(r, i)); const acts = answerRow(r); if (acts) { li.classList.add('has-acts'); li.append(acts); } rows.append(li); });
             if (Array.isArray(out.partial) && out.partial.length) foot.append(el('p', 'ovr-note', `Some of your runs did not load (${out.partial.join(', ')}).`));
@@ -572,19 +578,69 @@
             if (how.said && known && WENT[known.kind]) { const w = el('p', 'ovr-went'); w.append(svg(WENT[known.kind][0]), el('span', '', WENT[known.kind][1])); thread.append(w); }
             let wait = null;
             if (how.said) { const me = el('div', 'ovr-step is-you is-said'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(how.said)); me.append(b); thread.append(me); wait = typing(); thread.append(wait); }
-            composer(box, { placeholder: 'Say the next thing', onSend: async (v) => { const step = await api(`/${encodeURIComponent(ref)}/messages`, { method: 'POST', body: JSON.stringify({ text: v.text }) }); add(step); } });
+            // 4.242.0: say the next thing while it works. While the run is busy your words wait in the thread as queued
+            // and go at its next turn (a coding agent's "Queue a message"); Stop stays beside them.
+            const queue = [];
+            const sendNow = async (text, node) => {
+                const step = await api(`/${encodeURIComponent(ref)}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+                if (node) node.remove();
+                add(step);
+            };
+            const flushQueue = () => {
+                if (!queue.length || !state.run || ['running', 'planning'].includes(state.run.status)) return;
+                const next = queue.shift();
+                sendNow(next.text, next.node).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovr-queued').textContent = (err && err.message) || 'That did not send'; });
+            };
+            composer(box, { placeholder: 'Say the next thing', onSend: async (v) => {
+                if (state.run && ['running', 'planning'].includes(state.run.status)) {
+                    const q = el('div', 'ovr-step is-you is-queued'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(v.text)); q.append(b, el('small', 'ovr-queued', 'Queued: it reads this after the step it is on'));
+                    thread.append(q); queue.push({ text: v.text, node: q });
+                    requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+                    return;
+                }
+                await sendNow(v.text);
+            } });
+            // 4.242.0: quiet steps in a row fold into one line ("Ran 6 steps · the last one") that opens to each step, the
+            // plain words first and the command one tap deeper.
+            const isToolRow = (x) => !!x && x.classList && x.classList.contains('is-row') && x.classList.contains('is-tool');
+            const paintGroup = (g) => {
+                if (!g) return;
+                const rows = [...g.querySelectorAll(':scope > .ovr-tools-list > .ovr-step')];
+                const running = rows.find((x) => x.classList.contains('is-running'));
+                const failed = rows.filter((x) => x.classList.contains('is-failed')).length;
+                const last = running || rows[rows.length - 1];
+                const word = (x) => ((x && x.querySelector('.ovr-row-step > span')) || {}).textContent || '';
+                g.classList.toggle('is-running', !!running);
+                g.querySelector('.ovr-tools-n').textContent = running ? `Working, step ${rows.indexOf(running) + 1} of ${rows.length}` : `Ran ${rows.length} steps`;
+                g.querySelector('.ovr-tools-last').textContent = [word(last), failed ? `${failed} did not work` : ''].filter(Boolean).join(' · ');
+            };
+            const groupWith = (n) => {
+                const prev = n.previousElementSibling;
+                if (!prev) return;
+                if (prev.classList.contains('ovr-tools')) { prev.querySelector('.ovr-tools-list').append(n); paintGroup(prev); return; }
+                if (!isToolRow(prev)) return;
+                const g = el('details', 'ovr-step ovr-tools');
+                const sm = el('summary', 'ovr-tools-h'); sm.append(svg('tool'), el('b', 'ovr-tools-n'), el('span', 'ovr-tools-last'), el('i', 'ovr-pulse'));
+                const list = el('div', 'ovr-tools-list');
+                g.append(sm, list);
+                prev.replaceWith(g); list.append(prev, n);
+                paintGroup(g);
+            };
             const add = (s) => {
                 if (!s || !Number.isInteger(s.seq)) return;
                 // Your words came back as a step: the stand-in goes. Your agent's first words: the typing goes.
                 if (s.kind === 'message' && (s.from === 'person') && how.said) { const said = thread.querySelector(':scope > .is-said'); if (said) said.remove(); }
                 if (wait && !(s.kind === 'message' && s.from === 'person')) { wait.remove(); wait = null; }
-                if (state.steps.has(s.seq)) { const old = state.steps.get(s.seq); const n = stepNode(s); old.replaceWith(n); state.steps.set(s.seq, n); return; }
+                if (state.steps.has(s.seq)) { const old = state.steps.get(s.seq); const n = stepNode(s); const g = old.closest('.ovr-tools'); old.replaceWith(n); state.steps.set(s.seq, n); paintGroup(g); return; }
                 const wasNear = thread.scrollHeight - thread.scrollTop - thread.clientHeight < 160;
                 const none = thread.querySelector(':scope > .ovr-none'); if (none) none.remove();
                 const n = stepNode(s);
                 state.steps.set(s.seq, n);
                 const after = [...state.steps.keys()].filter((k) => k > s.seq).sort((a, b) => a - b)[0];
-                if (after !== undefined && state.steps.get(after).parentNode === thread) thread.insertBefore(n, state.steps.get(after)); else thread.append(n);
+                if (after !== undefined && state.steps.get(after).parentNode === thread) thread.insertBefore(n, state.steps.get(after));
+                else { thread.append(n); if (isToolRow(n)) groupWith(n); }
+                // Queued words stay last, under what the agent is doing.
+                thread.querySelectorAll(':scope > .is-queued').forEach((q) => thread.append(q));
                 if (wasNear) requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
             };
             try {
@@ -604,8 +660,8 @@
                     if (gen !== state.gen) return 'end';
                     if (event === 'step' && d && d.step) add(d.step);
                     else if (event === 'delta' && d && state.steps.has(d.seq)) { const w = state.steps.get(d.seq).querySelector('.ovr-words'); if (w) w.append(document.createTextNode(String(d.text || ''))); }
-                    else if (event === 'run' && d && d.run) paintHead(d.run);
-                    else if (event === 'end') { if (state.run) paintHead({ ...state.run, status: (d && d.status) || 'done' }); return 'end'; }
+                    else if (event === 'run' && d && d.run) { paintHead(d.run); flushQueue(); }
+                    else if (event === 'end') { if (state.run) paintHead({ ...state.run, status: (d && d.status) || 'done' }); flushQueue(); return 'end'; }
                     return null;
                 } });
         }
@@ -868,6 +924,25 @@ a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-went svg { flex: none; width: 15px; height: 15px; }
 html[data-ov-motion=reduced] .ovr-typing i, html[data-ov-motion=reduced] .ovr-face.ovr-me.is-working { animation-duration: 3s; }
 html[data-ov-motion=off] :is(.ovr-agent, .ovr-typing, .ovr-typing i, .ovr-went, .ovr-step.is-said, .ovr-face.ovr-me, .ovr-face.ovr-me::after) { animation: none !important; }
+/* 4.242.0: quiet steps fold into one line; words said while it works wait as queued; what is working now, counted. */
+.ovr-tools { align-self: stretch; max-width: 100%; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); }
+.ovr-tools-h { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 4px 12px; border-radius: 14px; cursor: pointer; list-style: none; font-size: 13.5px; color: var(--text-secondary, #a8b3c4); }
+.ovr-tools-h::-webkit-details-marker { display: none; }
+.ovr-tools-h > svg { flex: none; width: 16px; height: 16px; color: var(--text-muted, #93a0b4); }
+.ovr-tools-n { flex: none; font-weight: 750; color: var(--text-primary, #e6edf7); }
+.ovr-tools-last { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #93a0b4); }
+.ovr-tools-h > .ovr-pulse { margin-left: auto; }
+.ovr-tools:not(.is-running) .ovr-tools-h > .ovr-pulse { display: none; }
+.ovr-tools-h::after { content: ""; flex: none; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: .6; transition: transform .2s; }
+.ovr-tools.is-running .ovr-tools-h::after { margin-left: 6px; }
+.ovr-tools[open] > .ovr-tools-h::after { transform: rotate(225deg); }
+.ovr-tools-list { display: grid; gap: 2px; padding: 0 6px 8px 22px; border-left: 2px solid color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); margin-left: 18px; animation: ovr-rise .2s ease both; }
+.ovr-tools-h:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovr-step.is-queued { opacity: .75; }
+.ovr-step.is-queued .ovr-bubble { border: 1px dashed color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: transparent; }
+.ovr-queued { display: block; margin-top: 4px; text-align: right; font-size: 12px; color: var(--text-muted, #93a0b4); }
+.ovr-step.is-queued.is-failed .ovr-queued { color: #f87171; }
+.ovr-busy { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; width: auto; margin: 2px 0 0; padding: 4px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--accent-light, #93c5fd); background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
 @keyframes ovr-rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes ovr-shimmer { 50% { opacity: .55; } }
 @keyframes ovr-breathe { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); } }
