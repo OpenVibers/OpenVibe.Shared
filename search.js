@@ -491,6 +491,12 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-fold:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .ovs-tag { margin-left: 7px; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; vertical-align: 1px; color: color-mix(in srgb, var(--accent, #3b82f6) 72%, var(--text-primary, #e8ecf3)); background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
 .ovs-card { padding: 2px 6px 6px; }
+.ovs-guest { display: grid; gap: 8px; }
+.ovs-guest b { font-size: 15px; font-weight: 650; }
+.ovs-guest ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; color: var(--text-secondary, #a8b3c4); font-size: 13.5px; line-height: 1.4; }
+.ovs-guest li::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 8px 1px 2px; border-radius: 50%; background: var(--accent, #3b82f6); }
+.ovs-guest a.ovs-guest-go { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font-weight: 650; text-decoration: none; }
+.ovs-guest a.ovs-guest-go:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 .ovs-cardbody { border-radius: 16px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); padding: 12px 14px; }
 .ovs-displayrow { padding: 4px 8px 10px; }
 .ovs-displayrow .ovnav-display { margin-top: 4px; }
@@ -956,7 +962,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         items = [];
         listEl.textContent = '';
         if (doorMount && !door) { try { doorMount.destroy(); } catch { /* */ } doorMount = null; }
-        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card', 'display', 'feeds', 'home', 'walltop', 'wall', 'dock-activity', 'notifications'].includes(g.as)).forEach((g) => {
+        groups.filter((g) => (g.items && g.items.length) || ['note', 'loading', 'route', 'fold', 'card', 'signin', 'display', 'feeds', 'home', 'walltop', 'wall', 'dock-activity', 'notifications'].includes(g.as)).forEach((g) => {
             if (g.as === 'notifications') {
                 const li = document.createElement('li'); li.className = 'ovs-notifications'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'notifications');
                 const host = document.createElement('div'); host.className = 'ovs-notifications-host'; li.appendChild(host);
@@ -1008,6 +1014,21 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 });
                 const note = document.createElement('p'); note.className = 'ovs-feeds-note'; note.textContent = 'Every feed shows unless you turn it off; the arrows set the order.'; li.appendChild(note);
                 listEl.appendChild(li);
+                return;
+            }
+            if (g.as === 'signin') {
+                const bar = document.getElementById('openvibe-login-btn');
+                const href = (bar && bar.href) || `https://openvibe.network/login?return=${encodeURIComponent(location.href)}`;
+                const li = document.createElement('li'); li.className = 'ovs-card'; li.setAttribute('role', 'presentation'); li.setAttribute('data-sec', 'signin');
+                const body = document.createElement('div'); body.className = 'ovs-cardbody ovs-guest';
+                const head = document.createElement('b'); head.textContent = 'Sign in to make OpenVibe yours';
+                const list = document.createElement('ul');
+                for (const line of ['Your home screen, arranged your way, on every site', 'Your feed, messages and notifications', 'Your agents, and the AI that comes with your account', 'Your wallet, and what you own']) {
+                    const item = document.createElement('li'); item.textContent = line; list.appendChild(item);
+                }
+                const go = document.createElement('a'); go.className = 'ovs-guest-go'; go.href = href; go.textContent = 'Sign in';
+                go.addEventListener('click', () => close());
+                body.append(head, list, go); li.appendChild(body); listEl.appendChild(li);
                 return;
             }
             if (g.as === 'display') {
@@ -2051,6 +2072,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const H = homeLib();
         // With the home screen, Notifications is one of You's tabs (4.223.0); without it, the section stays at the top.
         if (root.OpenVibeNotifications && ctx.token && !H) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
+        // §Z.2 (4.247.0): a guest sees first what signing in adds, with the bar's own Sign in link.
+        if (!(ctx.token && ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' });
         if (H) {
             groups.push({ as: 'home', items: [], section: 'home' });
             // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).

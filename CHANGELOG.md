@@ -18,6 +18,11 @@
   from one table (pictures 20 MB, videos 300 MB, sound 50 MB, other files 25 MB; the type or the extension guides it, as
   `.mkv` often has no type in a browser), says an oversize file's limit in words, and cancels an upload when its chip is
   removed (a mod's `upload(file, onProgress, signal)` now gets an AbortSignal). A mod's own uploader still comes first.
+- **A guest sees what signing in adds** (plan §Z.2). The menu's You opens, for someone signed out, with one card: "Sign
+  in to make OpenVibe yours", four lines (your home screen on every site; your feed, messages and notifications; your
+  agents and the AI that comes with your account; your wallet and what you own) and a Sign in button whose link is the
+  bar's own, so it goes to this host's sign-in and comes back. A signed-in person never sees it
+  (`test/menu-guest-chrome.test.js`).
 - **A comment's video plays.** An attachment from Media (`att_…`) draws as the network's player (`video[data-ov-player]`,
   Media's web copy, its first frame as the poster, its own shape and length); one whose copy is still being made shows
   its first frame and a link to the file; a picture shows, a sound gets a bar. Nothing off `openvibe.media/a/` is drawn.
