@@ -27,6 +27,22 @@
     const api = () => String((root.OpenVibeProfilePanelConfig && root.OpenVibeProfilePanelConfig.api) || 'https://openvibe.network').replace(/\/+$/, '');
     const seen = new Map();   // username \u2192 Promise(profile | null), once a page
 
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the profile carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    // The attribute a name wears, when the data carries a subject. Never invented.
+    const setSubject = (node, data) => { const s = subjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
+
     function load(username) {
         if (!seen.has(username)) {
             // At most eight seconds, and a failure is not kept: a request held while Network restarted used to stay in
@@ -100,10 +116,14 @@
         pic.alt = ''; pic.width = 48; pic.height = 48;
         head.appendChild(pic);
         const who = el('span', 'ovpp-who');
-        who.appendChild(el('b', null, p.display_name || p.username));
+        // §Z.3: the name wears its effect, hat and badge (the profile's subject, when it carries one).
+        const nameEl = setSubject(el('b', null, p.display_name || p.username), p);
+        who.appendChild(nameEl);
         who.appendChild(el('small', null, `@${p.username}`));
         head.appendChild(who);
         card.appendChild(head);
+        // §Z.3: the name in the panel wears its effect, hat and badge.
+        wearNames(card);
         if (p.private) {
             card.appendChild(el('p', 'ovpp-note', 'This profile is private.'));
             target.replaceChildren(card);

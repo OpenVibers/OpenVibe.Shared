@@ -76,6 +76,21 @@ html[data-ov-motion=off] .ovu-live::before, html[data-ov-motion=off] .ovu-wait i
     }
     const mounts = new WeakMap();
     const bindings = new WeakMap();
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the card carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    // The attribute a name wears, when the data carries a subject. Never invented.
+    const setSubject = (node, data) => { const s = subjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
     const usernameOf = value => typeof value === 'string' && /^[A-Za-z0-9_]{3,24}$/.test(value.replace(/^@/, '')) ? value.replace(/^@/, '') : null;
     function safeUrl(value) {
         try {
@@ -111,10 +126,17 @@ html[data-ov-motion=off] .ovu-live::before, html[data-ov-motion=off] .ovu-wait i
         if (avatar) { const img = doc.createElement('img'); img.src = avatar; img.alt = ''; img.decoding = 'async'; img.addEventListener('error', () => { img.remove(); face.textContent = person.username[0].toUpperCase(); }); face.appendChild(img); }
         else face.textContent = person.username[0].toUpperCase();
         const names = element(doc, 'div', undefined, 'ovu-names');
-        names.appendChild(element(doc, 'h2', typeof person.display_name === 'string' && person.display_name.trim() ? person.display_name : person.username, 'ovu-name'));
+        // §Z.3: the name wears its effect, hat and badge. The name text sits in its own span, so the hat stands beside
+        // the name (not on a line of its own) and the heading keeps its own block.
+        const title = element(doc, 'h2', undefined, 'ovu-name');
+        const who = setSubject(element(doc, 'span', typeof person.display_name === 'string' && person.display_name.trim() ? person.display_name : person.username), person);
+        title.appendChild(who);
+        names.appendChild(title);
         names.appendChild(element(doc, 'p', `@${person.username}`, 'ovu-handle'));
         head.append(face, names);
         section.appendChild(head);
+        // §Z.3: the name in the card wears its effect, hat and badge.
+        wearNames(section);
         if (live) {
             const a = link(doc, 'Live now', person.live.url);
             if (a) { a.className = 'ovu-live'; if (typeof person.live.where === 'string' && person.live.where) a.appendChild(element(doc, 'small', `on ${person.live.where}`)); section.appendChild(a); }
