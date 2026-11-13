@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.238.0 — 2026-11-13
+
+**Code is two ways, Vibe and You are tighter, notifications give the list its height** (the owner's phone, 11-13:
+"combine … create and my code", "waste of space … recent history", "the search notifications and unread … into the
+corner … expand when you tap them", "instead of Juniper, it should say Actor", "increase the font sizes in the tabs").
+
+- **The Code tab (dock-code.js).** Two ways: **Make or change** (something new, or a project of yours, named in your
+  words; Codes works out which: OpenVibe.Codes `mode: 'make'`, Codes #448) and **OpenVibe** (a change to an OpenVibe
+  site). No repository field. When it is something new, the answer's place to build it (openvibe.space) is a link
+  under the box.
+- **Vibe's list (ov-run.js).** Tighter rows (60 px, a 40 px face, one line of what came back, 4 px apart).
+- **Your Actor (dock-actor.js).** Its recent steps are a clock button in its own row; there is no "Recent history"
+  line under the field.
+- **You (ov-home.js).**
+  - The Actor strip says **Actor**, with its state; the agent it runs and its step are on the line under it.
+  - The tabs' words are larger (13.5 px) and their glyphs 19 px.
+- **The menu's place tabs (search.js).** On a phone the words are 12.5 px and the glyphs 22 px.
+- **Notifications in the menu (notification-ui.js).**
+  - Search and Unread are two faded glyph circles at the end of the tabs' row, centred, at the row's edge; search opens
+    over the tabs while you type and folds back when empty.
+  - A compact empty state.
+  - The foot is two OV buttons (Mark all read, Full inbox).
+  - The full inbox keeps its wide search.
+- Tests: `dock-code-chrome` (two ways, words only, `mode: 'make'`), `dock-actor-chrome` (44 px clock),
+  `menu-home-screen-chrome` (the Actor line; `OV_CAPTURE_YOU` also saves the Notifications tab), `notification-live`
+  (budget 26.8 KB with dated notes).
+
 ## 4.237.0 — 2026-11-13
 
 **You is one slim row, your site's own are apps, and the menu's badges and the composer's row line up** (the owner's

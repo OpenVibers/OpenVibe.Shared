@@ -225,7 +225,7 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(s, `!!document.getElementById('openvibe-burger')`), 'the navbar is up');
         await openTab(s, 'you');
         assert.ok(await until(s, `!!document.querySelector('.ovh-actor')`), 'the Actor strip is on top');
-        await eventually(async () => assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /Juniper.*Working.*Reading job posts/, 'it names the Actor, its state and its step'));
+        await eventually(async () => assert.match(await s.evaluate(`document.querySelector('.ovh-actor').textContent`), /^Actor.*Working.*Juniper · Reading job posts/, 'it names the Actor, its state and its step'));
         // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … move the notifications into a
         // tab … put the apps more front facing … the first tab"; "waste of space"; "compact"): your row holds every round
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.
@@ -326,6 +326,10 @@ const server = http.createServer((req, res) => {
             assert.ok(await until(shotPage, `!!document.querySelector('.ovh-tabrow .ovh-edit.is-done')`), 'Edit turns into the check');
             const ed = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-edit-390.png'), Buffer.from(ed.data, 'base64'));
+            await shotPage.evaluate(`document.querySelector('.ovh-tabrow .ovh-edit').click(), document.querySelector('.ovh-tab[data-tab="notifications"]').click(), true`);
+            await until(shotPage, `!!document.querySelector('.openvibe-nv-find')`, 4000);
+            const nv = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-notif-390.png'), Buffer.from(nv.data, 'base64'));
             await shotPage.close();
         }
         if (process.env.OV_CAPTURE_MENU) {

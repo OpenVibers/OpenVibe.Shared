@@ -264,8 +264,8 @@
 .ovs-tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid var(--border, rgba(255,255,255,.1)); }
 /* Five places in one row (4.194.0): on a phone each is its icon over its word; the doors to the Dock look like the tabs. */
 .ovs-starttabs.has-doors .ovs-tab { padding: 0 6px; }
-.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 20px; height: 20px; }
-@media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 54px; padding: 4px 2px; font-size: 11.5px; border-radius: 14px; } }
+.ovs-starttabs .ovs-tab[data-dock] .ovs-tab-ic > svg { width: 22px; height: 22px; }
+@media (max-width: 640px) { .ovs-starttabs.has-doors { gap: 4px; padding: 2px 8px 8px; } .ovs-starttabs.has-doors .ovs-tab { flex-direction: column; gap: 3px; height: 56px; padding: 4px 2px; font-size: 12.5px; border-radius: 14px; } }
 .ovs-bridge { flex: 1 0 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
 .ovs-bridge-b { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; border-radius: 12px; cursor: pointer; font-size: 12.5px; font-weight: 650;
   color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--accent, #3b82f6) 7%, transparent); transition: background-color .15s, color .15s, transform .12s; }

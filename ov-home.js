@@ -340,7 +340,8 @@ html[data-ov-motion=off] .ovh-mebox .ovh-acct svg { transition: none; }
    one lit; All and Edit are two round glyphs at the end (Edit turns into the check while you arrange). */
 .ovh-tabrow .ovh-tabs { flex: 1 1 auto; min-width: 0; display: flex; gap: 2px; margin: 0; padding: 3px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
 .ovh-tabrow .ovh-tab { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 0 6px; gap: 6px; border-radius: 11px; justify-content: center; transition: background-color .18s, color .18s; }
-.ovh-tabrow .ovh-tab .ovh-tab-t { font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-tabrow .ovh-tab .ovh-tab-t { font-size: 13.5px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovh-tabrow .ovh-tab svg { width: 19px; height: 19px; }
 .ovh-tabrow .ovh-headtools { gap: 8px; }
 .ovh-headtools .ovh-edit.is-done { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); animation: ovhDoneIn .3s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes ovhDoneIn { from { transform: scale(.8) rotate(-20deg); } }
@@ -1350,11 +1351,11 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
             if (!pic) { face.textContent = ''; face.classList.add('is-glyph'); }
             face.append(doing);
             const txt = h('span', 'ovh-actor-txt');
-            const name = h('b', '', a.name || 'Your Actor');
+            const name = h('b', '', 'Actor');
             const chip = h('span', `ovh-chip is-${st}`); chip.append(h('span', 'ovh-dot'), document.createTextNode(label));
             name.append(chip);
             const now = a.now || {};
-            txt.append(name, h('small', '', asks.length ? `It asks you: ${asks[0].text || ''}` : now.current_step ? String(now.current_step) : st === 'paused' ? 'Paused until you resume it' : 'Resting until its next goal is due'));
+            txt.append(name, h('small', '', (a.name && !asks.length ? `${a.name} · ` : '') + (asks.length ? `It asks you: ${asks[0].text || ''}` : now.current_step ? String(now.current_step) : st === 'paused' ? 'Paused until you resume it' : 'Resting until its next goal is due')));
             const go = h('span', asks.length ? 'ovh-go is-answer' : 'ovh-go is-ic'); go.append(svgIcon(asks.length ? 'chat' : 'arrow'));
             if (asks.length) go.append(h('span', '', 'Answer'));
             b.setAttribute('aria-label', `${a.name || 'Your Actor'}, ${label}: ${asks.length ? 'answer it' : 'open it'}`);

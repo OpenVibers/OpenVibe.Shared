@@ -638,6 +638,14 @@
 :root[data-theme="light"] .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .ovr-face { color: hsl(var(--ovr-h, 215) 70% 30%); } }
 .ovr-face.is-m { width: 48px; height: 48px; } .ovr-face.is-m > svg { width: 26px; height: 26px; }
+/* 4.238.0 (the owner, 11-13: "waste of space … only a tiny bit of space between"): the list is tight, its rows one
+   line of title and time, one of what came back, their face a size down. */
+.ovr-rows { gap: 4px; padding: 0 2px 8px; }
+.ovr-row { min-height: 60px; gap: 10px; padding: 8px 10px; border-radius: 14px; }
+.ovr-row-t { gap: 1px; }
+.ovr-row-line { -webkit-line-clamp: 1; }
+.ovr-rows .ovr-face.is-m { width: 40px; height: 40px; border-radius: 12px; } .ovr-rows .ovr-face.is-m > svg { width: 22px; height: 22px; }
+.ovr-row-acts { padding-left: 60px; }
 .ovr-face.is-s { width: 38px; height: 38px; } .ovr-face.is-s > svg { width: 21px; height: 21px; }
 .ovr-face img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .ovr-face.is-needs { box-shadow: 0 0 0 2px #f59e0b; }

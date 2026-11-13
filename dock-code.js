@@ -5,8 +5,8 @@
 //   OpenVibeDockCode.mount(container, { token, frameBase, base, codes, active, take }) → { refresh(), focus(), destroy() }
 // take() → the words another part handed over (Vibe's "Build it in Code"), which go in the box.
 //
-// One box to start a coding task, the way openvibe.codes starts one (Create: a new website, game or app; OpenVibe:
-// a change to OpenVibe itself; My code: a repository of yours), and your latest tasks under it, running ones first,
+// One box to start a coding task (Make or change: something new or a project of yours, worked out from the words;
+// OpenVibe: a change to an OpenVibe site), and your latest tasks under it, running ones first,
 // each with its state, its repository, how long ago, and Stop while it runs. The reads go through Network's same-origin
 // relay (/api/frame/codes-tasks…), because every site's connect-src allows openvibe.network and refuses openvibe.codes;
 // `base` reaches Codes itself in a test. While a task runs the list is read again every 8 seconds, only while the part
@@ -20,9 +20,12 @@
     const CODES = 'https://openvibe.codes';
     const SCRIPT_BASE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : '/shared/';
     const POLL_MS = 8000;
-    const MODES = [['create', 'Create', 'A new website, game or app'], ['openvibe', 'OpenVibe', 'A change to OpenVibe itself'], ['repo', 'My code', 'A repository of yours']];
+    // 4.238.0 (the owner, 11-13: "combine … create and my code … infer that information based on the prompt"): two ways.
+    // Make or change: something new, or a project of yours, worked out by Codes from the words (mode make); OpenVibe: a
+    // change to an OpenVibe site.
+    const MODES = [['make', 'Make or change', 'Something new, or a project of yours: name it in your words'], ['openvibe', 'OpenVibe', 'Fix or improve an OpenVibe site']];
     const STATE = { queued: 'Waiting', running: 'Running', 'needs-you': 'Needs you', done: 'Done', failed: 'Failed', stopped: 'Stopped' };
-    const PLACEHOLDER = { create: 'A goal bar for my sub goal', openvibe: 'Make the menu remember my last tab', repo: 'Fix the login redirect and add a test' };
+    const PLACEHOLDER = { make: 'A goal bar for my stream, or: fix the login in my-site', openvibe: 'Make the menu remember my last tab' };
     const svg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const G = {
         send: 'M5 12h13M13 6l6 6-6 6',
@@ -40,8 +43,6 @@
             .ovdc-box { display: grid; gap: 8px; padding: 10px 10px 8px 12px; border-radius: 18px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-card, rgba(255,255,255,.03)); }
             .ovdc-box:focus-within { border-color: color-mix(in srgb, var(--accent, #3b82f6) 60%, var(--border, rgba(255,255,255,.1))); }
             .ovdc-text { display: block; width: 100%; box-sizing: border-box; min-height: 44px; max-height: 30vh; padding: 2px 0; border: 0; outline: 0; resize: none; background: none; color: var(--text-primary, #ececf1); font: inherit; font-size: 15.5px; line-height: 1.45; }
-            .ovdc-repo { width: 100%; box-sizing: border-box; height: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-input, rgba(0,0,0,.2)); color: inherit; font: inherit; font-size: 14px; }
-            .ovdc-repo[hidden] { display: none; }
             .ovdc-row { display: flex; align-items: center; gap: 6px; }
             .ovdc-modes { flex: 1; min-width: 0; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
             .ovdc-mode { flex: none; height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid transparent; background: none; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -99,7 +100,7 @@
             ? direct + ({ list: '/api/v1/me/tasks?limit=8', start: '/api/v1/tasks', stop: `/api/v1/tasks/${encodeURIComponent(id)}/stop` })[what]
             : relay + ({ list: '/codes-tasks?limit=8', start: '/codes-tasks', stop: `/codes-tasks/${encodeURIComponent(id)}/stop` })[what]);
         const h = (tag, cls, text) => { const n = d.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
-        let gone = false, timer = 0, mode = 'create', tasks = null, reachable = true;
+        let gone = false, timer = 0, mode = 'make', tasks = null, reachable = true;
 
         function loadScript(file, ready) {
             if (ready()) return Promise.resolve(true);
@@ -172,10 +173,8 @@
         const box = h('form', 'ovdc-box');
         box.setAttribute('aria-label', 'Start a coding task');
         const text = h('textarea', 'ovdc-text');
-        text.rows = 2; text.maxLength = 16000; text.placeholder = PLACEHOLDER.create;
+        text.rows = 2; text.maxLength = 16000; text.placeholder = PLACEHOLDER.make;
         text.setAttribute('aria-label', 'What should we make?');
-        const repo = h('input', 'ovdc-repo');
-        repo.placeholder = 'Repository: owner/name or its address'; repo.setAttribute('aria-label', 'Repository'); repo.hidden = true; repo.maxLength = 300;
         const row = h('div', 'ovdc-row');
         const modes = h('div', 'ovdc-modes');
         modes.setAttribute('role', 'radiogroup'); modes.setAttribute('aria-label', 'Where it works');
@@ -188,28 +187,27 @@
         const go = h('button', 'ovdc-go'); go.type = 'submit'; go.innerHTML = svg(G.send); go.setAttribute('aria-label', 'Start'); go.disabled = true;
         row.append(modes, go);
         const note = h('p', 'ovdc-note'); note.setAttribute('role', 'status');
-        box.append(text, repo, row, note);
+        box.append(text, row, note);
         const head = h('div', 'ovdc-head');
         const all = h('a', 'ovdc-all'); all.href = `${codes}/`; all.innerHTML = `<span>Open Codes</span>${svg(G.open)}`;
         head.append(h('b', null, 'Your tasks'), all);
         const list = h('ul', 'ovdc-list');
         container.append(box, head, list);
 
-        const ready = () => { go.disabled = !text.value.trim() || (mode === 'repo' && !repo.value.trim()); };
+        const ready = () => { go.disabled = !text.value.trim(); };
         text.addEventListener('input', () => { text.style.height = 'auto'; text.style.height = Math.min(text.scrollHeight, d.defaultView.innerHeight * 0.3) + 'px'; ready(); });
-        repo.addEventListener('input', ready);
         text.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !go.disabled) { e.preventDefault(); box.requestSubmit ? box.requestSubmit() : start(); } });
         modes.addEventListener('click', (e) => {
             const b = e.target.closest && e.target.closest('[data-mode]'); if (!b) return;
             mode = b.dataset.mode;
             modes.querySelectorAll('[data-mode]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
             text.placeholder = PLACEHOLDER[mode];
-            repo.hidden = mode !== 'repo';
+
             ready();
-            (mode === 'repo' && !repo.value ? repo : text).focus();
+            text.focus();
         });
 
-        const fallback = () => `${codes}/?${new URLSearchParams({ prompt: text.value.trim(), mode, ...(mode === 'repo' ? { repo: repo.value.trim() } : {}) })}`;
+        const fallback = () => `${codes}/?${new URLSearchParams({ prompt: text.value.trim(), mode })}`;
         async function call(what, id, body) {
             const t = tok(); if (!t) throw new Error('signed out');
             const r = await fetch(url(what, id), { method: body || what === 'stop' ? 'POST' : 'GET', headers: { authorization: `Bearer ${t}`, accept: 'application/json', ...(body ? { 'content-type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined, credentials: 'omit' });
@@ -221,11 +219,14 @@
             if (!reachable) { d.defaultView.location.assign(fallback()); return; }
             go.disabled = true; note.textContent = 'Starting…';
             try {
-                const r = await call('start', null, { text: text.value.trim(), mode, ...(mode === 'repo' ? { repo: repo.value.trim() } : {}) });
+                const r = await call('start', null, { text: text.value.trim(), mode });
                 text.value = ''; text.dispatchEvent(new Event('input'));
                 note.textContent = '';
                 const there = onCodes(r && r.url);
                 if (there) { const a = h('a', null, 'Follow it on openvibe.codes'); a.href = there; note.textContent = 'Started. '; note.appendChild(a); }
+                // Something new: Codes answers where to build it (OpenVibe AI on openvibe.space).
+                const space = r && !r.id && /^https:\/\/([a-z0-9-]+\.)?openvibe\.space\//.test(String(r.url || '')) ? r.url : null;
+                if (space) { const a = h('a', null, 'Build it in OpenVibe AI'); a.href = space; note.textContent = 'Something new. '; note.appendChild(a); a.focus(); }
                 read();
             } catch (e) {
                 ready();

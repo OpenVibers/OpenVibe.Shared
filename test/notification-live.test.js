@@ -495,7 +495,10 @@ const created = (subject, over = {}) => ({
     // 25.75 → 25.9 KB on 2026-11-11 (4.211.0): the You tab's three-row preview (is-preview, its rule, Show all).
     // 25.9 → 26.1 KB on 2026-11-12 (4.225.0): inside the menu the list is part of the menu's one scroller (the owner: scrolling
     // in notifications did not work on a phone).
-    assert.ok(size('notification-ui.js') <= 26.1 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 26.1 KB`);
+    // 26.1 → 26.5 KB on 2026-11-13 (4.238.0): in the menu, search and Unread are glyphs on the tabs' row and search opens over
+    // them (the owner: the full-width search row was "a waste of space"; 26.43 KB measured).
+    // 26.5 → 26.8 KB the same day (4.238.0): the menu's foot as two OV buttons and a compact empty state (26.52 KB measured).
+    assert.ok(size('notification-ui.js') <= 26.8 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 26.8 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

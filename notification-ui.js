@@ -209,6 +209,33 @@
                One scroller per layer: the menu's own list. */
             .openvibe-notif-dock .openvibe-nv-list { flex: none; overflow: visible; overscroll-behavior: auto; }
             .openvibe-notif-dock .openvibe-nv-tools { padding-top: 10px; }
+            /* 4.238.0 (the owner, 11-13: "a waste of space … moved into the corner as … little buttons … expand when
+               you tap them"): in the menu the tabs, a search glyph and an Unread glyph share one row; search opens over
+               the tabs while you type and folds back when it is empty. The full inbox keeps its wide field. */
+            .openvibe-notif-dock .openvibe-nv-tools { position: relative; flex-direction: row; align-items: center; gap: 6px; padding: 6px 12px 0; }
+            .openvibe-notif-dock .openvibe-nv-tabs { order: 0; flex: 1 1 auto; min-width: 0; }
+            .openvibe-notif-dock .openvibe-nv-find { order: 1; flex: none; display: flex; align-items: center; gap: 6px; padding-bottom: 3px; }
+            .openvibe-notif-dock .openvibe-nv-empty { padding: 22px 16px 24px; }
+            .openvibe-notif-dock .openvibe-nv-empty svg { width: 44px; height: 44px; margin-bottom: 8px; }
+            .openvibe-notif-dock .openvibe-nv-foot { padding: 8px 12px 10px; }
+            .openvibe-notif-dock .openvibe-nv-foot .ovn-foot-read, .openvibe-notif-dock .openvibe-nv-foot a { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 14px; border-radius: 999px;
+              font-size: 13px; font-weight: 750; text-decoration: none; background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); color: var(--text-primary, #ececf1); }
+            .openvibe-notif-dock .openvibe-nv-foot a { background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent-light, var(--accent, #93c5fd)); }
+            .openvibe-notif-dock .openvibe-nv-foot .ovn-foot-read:hover, .openvibe-notif-dock .openvibe-nv-foot a:hover { filter: brightness(1.15); }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search { flex: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; opacity: .78;
+              background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); transition: opacity .15s; }
+            .openvibe-notif-dock .openvibe-nv-search > svg { position: absolute; left: 9px; top: 50%; width: 18px; height: 18px; margin: 0; transform: translateY(-50%); pointer-events: none; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 36px; min-width: 0; padding: 0; opacity: 0; cursor: pointer; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) .clear { display: none; }
+            .openvibe-notif-dock .openvibe-nv-search.is-open { position: absolute; z-index: 2; left: 12px; right: 52px; top: 6px; width: auto; height: 38px; border-radius: 12px; opacity: 1; cursor: auto;
+              background: var(--bg-secondary, #141a24); box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent), 0 8px 22px -10px rgba(0, 0, 0, .7); animation: ovnSearchIn .18s ease-out; }
+            .openvibe-notif-dock .openvibe-nv-search.is-open input { width: 100%; }
+            @keyframes ovnSearchIn { from { opacity: 0; transform: scaleX(.9); transform-origin: right center; } }
+            .openvibe-notif-dock .openvibe-nv-unread { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; border: 0; font-size: 0; opacity: .78;
+              background: color-mix(in srgb, var(--text-primary, #ececf1) 7%, transparent); }
+            .openvibe-notif-dock .openvibe-nv-unread svg { width: 18px; height: 18px; }
+            .openvibe-notif-dock .openvibe-nv-unread[aria-pressed="true"], .openvibe-notif-dock .openvibe-nv-unread:hover, .openvibe-notif-dock .openvibe-nv-search:hover { opacity: 1; }
+            html[data-ov-motion=off] .openvibe-notif-dock .openvibe-nv-search.is-open { animation: none; }
 .openvibe-notif-dock.is-preview .openvibe-nv-tools, .openvibe-notif-dock.is-preview .openvibe-nv-foot, .openvibe-notif-dock.is-preview .openvibe-nv-head, .openvibe-notif-dock.is-preview .openvibe-nv-more { display: none; }
             .openvibe-notif-dock .openvibe-nv-foot { gap: 12px; }
             .openvibe-notif-dock .openvibe-nv-foot [data-role="status"] { margin-right: auto; }
@@ -922,6 +949,16 @@
             clearTimeout(qTimer); qTimer = setTimeout(() => { v.q = input.value.trim(); reload(v); }, 260);
         });
         root.querySelector('.openvibe-nv-search .clear').addEventListener('click', () => { input.value = ''; v.q = ''; root.querySelector('.openvibe-nv-search').classList.remove('has-q'); reload(v); });
+        // The menu's folded search (4.238.0): it opens on focus or a tap and folds when it is left empty.
+        {
+            const sb = root.querySelector('.openvibe-nv-search');
+            const open = () => sb.classList.add('is-open');
+            const fold = () => { if (!input.value) sb.classList.remove('is-open'); };
+            input.addEventListener('focus', open);
+            input.addEventListener('blur', () => setTimeout(fold, 120));
+            input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !input.value) { e.stopPropagation(); input.blur(); } });
+            sb.addEventListener('click', () => { if (!sb.classList.contains('is-open')) input.focus(); });
+        }
         // Tabs: a click or the arrow keys (Home, End) pick one; the list reloads with Network's ?tab=.
         const tabs = [...root.querySelectorAll('.openvibe-nv-tabs [role="tab"]')];
         const selectTab = (btn, focus) => {

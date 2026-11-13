@@ -1,7 +1,7 @@
 'use strict';
 // The Code part (dock-code.js, 4.201.0; ask 350: "chat, codes, and agents all in the same place") in a real headless
 // Chrome against a stub of Network's relay: your tasks, running first, with their state, repository and Stop; a task's
-// address is a link only on openvibe.codes; My code asks for the repository before it can start; Ctrl+Enter starts a
+// address is a link only on openvibe.codes; Make or change needs only words (Codes reads the project from them); Ctrl+Enter starts a
 // task with the person's token and the list reads again; Stop stops it; signed out, it says to sign in; when Codes cannot
 // be reached, the box opens openvibe.codes with what was written in it.
 const assert = require('node:assert/strict');
@@ -75,19 +75,17 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         assert.equal(await page.evaluate(`document.querySelector('.ovw a[href="https://openvibe.codes/tasks/t1"]') !== null`), true);
         await page.evaluate(`OVWindow.closeAll()`);
 
-        // My code wants a repository; Ctrl+Enter starts the task.
-        await page.evaluate(`document.querySelector('[data-mode="repo"]').click()`);
-        const box = () => page.evaluate(`({ repo: !document.querySelector('.ovdc-repo').hidden, go: document.querySelector('.ovdc-go').disabled, ph: document.querySelector('.ovdc-text').placeholder, checked: document.querySelector('.ovdc-mode[aria-checked="true"]').textContent })`);
+        // 4.238.0: two ways (Make or change, OpenVibe); no repository field: Codes reads the project from the words.
+        // Ctrl+Enter starts the task.
+        const box = () => page.evaluate(`({ repo: !!document.querySelector('.ovdc-repo'), go: document.querySelector('.ovdc-go').disabled, modes: [...document.querySelectorAll('.ovdc-mode')].map((m) => m.textContent), checked: document.querySelector('.ovdc-mode[aria-checked="true"]').textContent })`);
         let b = await box();
-        assert.deepEqual([b.repo, b.go, b.checked], [true, true, 'My code'], 'My code shows the repository field and waits for words');
-        await page.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = 'Fix the login redirect'; t.dispatchEvent(new Event('input')); })()`);
-        assert.equal((await box()).go, true, 'still waiting for the repository');
-        await page.evaluate(`(() => { const r = document.querySelector('.ovdc-repo'); r.value = 'someone/site'; r.dispatchEvent(new Event('input')); })()`);
-        assert.equal((await box()).go, false);
+        assert.deepEqual([b.repo, b.go, b.modes, b.checked], [false, true, ['Make or change', 'OpenVibe'], 'Make or change'], 'two ways, Make or change first, no repository field, waiting for words');
+        await page.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = 'Fix the login redirect in someone/site'; t.dispatchEvent(new Event('input')); })()`);
+        assert.equal((await box()).go, false, 'words are enough');
         await page.evaluate(`document.querySelector('.ovdc-text').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true }))`);
         assert.ok(await until(`document.querySelectorAll('.ovdc-task').length === 3`), 'the new task is in the list');
         const start = seen.find((x) => x.method === 'POST' && x.path === '/api/frame/codes-tasks');
-        assert.deepEqual(start.body, { text: 'Fix the login redirect', mode: 'repo', repo: 'someone/site' });
+        assert.deepEqual(start.body, { text: 'Fix the login redirect in someone/site', mode: 'make' });
         assert.equal(start.auth, 'Bearer tok_abc');
         b = await page.evaluate(`({ text: document.querySelector('.ovdc-text').value, note: document.querySelector('.ovdc-note').textContent, link: document.querySelector('.ovdc-note a') && document.querySelector('.ovdc-note a').getAttribute('href') })`);
         assert.deepEqual(b, { text: '', note: 'Started. Follow it on openvibe.codes', link: 'https://openvibe.codes/tasks/t3' });
@@ -96,8 +94,8 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         // Vibe's Build it in Code: the words another part hands over go in the box, ready to start.
         await page.evaluate(`window.handed = 'Build a goal bar for my sub goal'; window.part.refresh()`);
         b = await page.evaluate(`({ text: document.querySelector('.ovdc-text').value, note: document.querySelector('.ovdc-note').textContent, focused: document.activeElement === document.querySelector('.ovdc-text'), go: document.querySelector('.ovdc-go').disabled })`);
-        assert.deepEqual(b, { text: 'Build a goal bar for my sub goal', note: 'From your chat with Vibe. Start it, or change it first.', focused: true, go: false }, 'handed-over words are in the box, ready to start (My code keeps its repository)');
-        await page.evaluate(`document.querySelector('[data-mode="create"]').click()`);
+        assert.deepEqual(b, { text: 'Build a goal bar for my sub goal', note: 'From your chat with Vibe. Start it, or change it first.', focused: true, go: false }, 'handed-over words are in the box, ready to start');
+        await page.evaluate(`document.querySelector('[data-mode="make"]').click()`);
         await eventually(async () => assert.equal(await page.evaluate(`document.querySelector('.ovdc-go').disabled`), false));
         await page.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = ''; t.dispatchEvent(new Event('input')); })()`);
 
@@ -124,9 +122,9 @@ window.part = OpenVibeDockCode.mount(document.getElementById('part'), { token: (
         await eventually(async () => assert.match(await down.evaluate(`document.querySelector('.ovdc-list').textContent`), /Your tasks are on openvibe\.codes/));
         await down.evaluate(`(() => { const t = document.querySelector('.ovdc-text'); t.value = 'A goal bar'; t.dispatchEvent(new Event('input')); document.querySelector('.ovdc-go').click(); })()`);
         const went = await (async () => { const end = Date.now() + 5000; while (Date.now() < end) { const v = await down.evaluate('location.pathname + location.search').catch(() => ''); if (v.startsWith('/codes')) return v; await wait(50); } return ''; })();
-        assert.equal(went, '/codes/?prompt=A+goal+bar&mode=create', 'it opens Codes with what you wrote');
+        assert.equal(went, '/codes/?prompt=A+goal+bar&mode=make', 'it opens Codes with what you wrote');
         await down.close();
-        console.log('dock-code-chrome: tasks (running first, state, repository, Stop), My code asks for the repository, Ctrl+Enter starts one, signed out, Codes unreachable opens Codes with your words');
+        console.log('dock-code-chrome: tasks (running first, state, repository, Stop), Make or change needs only words, Ctrl+Enter starts one, signed out, Codes unreachable opens Codes with your words');
     } finally {
         await browser.close();
         server.close();
