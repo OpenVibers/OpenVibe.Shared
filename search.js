@@ -545,19 +545,58 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-lead { all: unset; box-sizing: border-box; position: relative; flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin-left: -4px; border-radius: 50%; color: var(--text-muted, #93a0b4); }
 .ovs-lead > svg { width: 20px; height: 20px; }
 .ovs-lead-on { position: absolute; right: 2px; bottom: 2px; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }
-.ovs-lead.is-you { cursor: pointer; width: 40px; height: 40px; -webkit-tap-highlight-color: transparent; transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-lead.is-you { cursor: pointer; height: 40px; -webkit-tap-highlight-color: transparent; transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
 .ovs-lead.is-you:active { transform: scale(.92); }
 .ovs-lead.is-you:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: 2px; }
 .ovs-lead-face { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; overflow: hidden; font: 800 14px/1 Inter, system-ui, sans-serif; color: #fff;
   background: linear-gradient(135deg, var(--accent, #3b82f6), color-mix(in oklab, var(--accent, #3b82f6) 50%, #a855f7)); box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }
 .ovs-lead-face img { width: 100%; height: 100%; object-fit: cover; }
-.ovs-lead-ring { position: absolute; inset: 0; width: 40px; height: 40px; fill: none; stroke: var(--accent-light, var(--accent, #60a5fa)); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 34 82; transform-origin: 50% 50%; animation: ovs-lead-turn 1.4s linear infinite; }
-@keyframes ovs-lead-turn { to { transform: rotate(360deg); } }
-html[data-ov-motion=reduced] .ovs-lead-ring { animation-duration: 2.8s; }
-html[data-ov-motion=off] .ovs-lead-ring { animation: none; stroke-dasharray: none; opacity: .7; }
-.ovs-lead.is-asks .ovs-lead-face { box-shadow: 0 0 0 2px var(--bg-secondary, #121826), 0 0 0 4px #f59e0b; }
-.ovs-lead.is-paused .ovs-lead-face { filter: saturate(.3); }
-.ovs-lead-n { position: absolute; top: -3px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #f59e0b; color: #111; font: 800 11px/18px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }
+.ovs-lead-me { position: relative; flex: none; display: grid; place-items: center; z-index: 4; }
+.ovs-lead.is-you { display: inline-flex; align-items: center; width: auto; min-width: 40px; padding: 0 2px; }
+/* What runs for you, stacked behind your picture: each a small face with its state on a ring (a comet while it works,
+   amber while it waits for you). They fan out from behind you as the menu opens. */
+.ovs-stack { display: inline-flex; align-items: center; margin-left: -4px; padding-right: 5px; }
+.ovs-stack-f, .ovs-stack-more { position: relative; flex: none; display: grid; place-items: center; width: 24px; height: 24px; margin-left: -5px; border-radius: 50%; z-index: calc(3 - var(--i, 0));
+  color: #fff; background: linear-gradient(140deg, hsl(var(--h, 220) 70% 56%), hsl(calc(var(--h, 220) + 40) 65% 40%)); box-shadow: 0 0 0 2px var(--bg-secondary, #121826);
+  animation: ovs-fan .42s cubic-bezier(.2, 1.3, .3, 1) both; animation-delay: calc(90ms + var(--i, 0) * 70ms); }
+.ovs-stack-f:first-child { margin-left: 0; }
+.ovs-stack-f img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovs-stack-f svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+.ovs-stack-more { align-self: flex-start; width: auto; min-width: 17px; height: 17px; margin: -3px 0 0 -9px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; z-index: 5; background: var(--text-primary, #e6edf7); color: var(--bg-primary, #0b0f19); font: 800 10px/17px Inter, system-ui, sans-serif; letter-spacing: -.02em; }
+@keyframes ovs-fan { from { opacity: 0; transform: translateX(-16px) scale(.5); } }
+.ovs-stack-f.is-working::after, .ovs-active-f.is-working::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0 50%, color-mix(in srgb, var(--accent-light, #60a5fa) 70%, transparent) 80%, #fff 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  animation: ovs-comet 1.25s linear infinite; }
+@keyframes ovs-comet { to { transform: rotate(360deg); } }
+.ovs-stack-f.is-asks, .ovs-active-f.is-asks { box-shadow: 0 0 0 2px var(--bg-secondary, #121826), 0 0 0 4px #f59e0b; }
+.ovs-stack-f.is-asks { animation: ovs-fan .42s cubic-bezier(.2, 1.3, .3, 1) both, ovs-asks 2.2s ease-in-out 1s infinite; animation-delay: calc(90ms + var(--i, 0) * 70ms), 1s; }
+@keyframes ovs-asks { 50% { box-shadow: 0 0 0 2px var(--bg-secondary, #121826), 0 0 0 4px #f59e0b, 0 0 0 8px color-mix(in srgb, #f59e0b 22%, transparent); } }
+html[data-ov-motion=reduced] .ovs-stack-f.is-working::after, html[data-ov-motion=reduced] .ovs-active-f.is-working::after { animation-duration: 2.6s; }
+html[data-ov-motion=reduced] .ovs-stack-f, html[data-ov-motion=reduced] .ovs-stack-more { animation-duration: .2s; animation-delay: 0s; }
+html[data-ov-motion=off] .ovs-stack-f, html[data-ov-motion=off] .ovs-stack-more { animation: none; }
+html[data-ov-motion=off] .ovs-stack-f.is-working::after, html[data-ov-motion=off] .ovs-active-f.is-working::after { animation: none; background: var(--accent-light, #60a5fa); opacity: .8; }
+/* Your sheet's rows of what is running. */
+.ovs-active { display: grid; gap: 4px; }
+.ovs-active-h { margin: 2px 6px 0; font: 800 11.5px/1.4 'OV Brand', Nunito, Inter, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #7c8aa0); }
+.ovs-active-row { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 6px 10px 6px 8px; border-radius: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); transition: background-color .15s, transform .15s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-active-row:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: 1px; }
+@media (hover: hover) { .ovs-active-row:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); } }
+.ovs-active-row:active { transform: scale(.985); }
+.ovs-active-f { position: relative; flex: none; display: grid; place-items: center; width: 36px; height: 36px; margin: 3px; border-radius: 50%; color: #fff; background: linear-gradient(140deg, hsl(var(--h, 220) 70% 56%), hsl(calc(var(--h, 220) + 40) 65% 40%)); }
+.ovs-active-f img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.ovs-active-f svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ovs-active-t { flex: 1 1 auto; min-width: 0; display: grid; line-height: 1.3; }
+.ovs-active-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 14.5px/1.3 'OV Brand', Nunito, Inter, system-ui, sans-serif; color: var(--text-primary, #e6edf7); }
+.ovs-active-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-secondary, #a8b3c4); }
+.ovs-active-st { flex: none; font: 750 11.5px/1 Inter, system-ui, sans-serif; font-style: normal; padding: 6px 9px; border-radius: 999px; color: var(--accent-light, #93c5fd); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); }
+.ovs-active-st.is-asks { color: #fbbf24; background: color-mix(in srgb, #f59e0b 18%, transparent); }
+/* The sheet's parts rise in, one after the other. */
+.ovs-youpanel > * { animation: ovs-rise .3s cubic-bezier(.2, .8, .2, 1) both; }
+.ovs-youpanel > :nth-child(2) { animation-delay: .05s; } .ovs-youpanel > :nth-child(3) { animation-delay: .1s; }
+@keyframes ovs-rise { from { opacity: 0; transform: translateY(8px); } }
+html[data-ov-motion=off] .ovs-youpanel > * { animation: none; }
 .ovs-tools { flex: none; display: flex; align-items: center; gap: 4px; }
 .ovs-tool { all: unset; box-sizing: border-box; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; color: var(--text-secondary, #a8b3c4); -webkit-tap-highlight-color: transparent;
   transition: background-color .15s, color .15s, transform .15s cubic-bezier(.3, 1.4, .4, 1); }
@@ -581,6 +620,7 @@ html[data-ov-motion=off] .ovs-send, html[data-ov-motion=off] .ovs-mic.is-on { an
 .ovs-youpanel[hidden] { display: none; }
 @keyframes ovs-drop { from { opacity: 0; transform: translateY(-8px) scale(.96); } }
 html[data-ov-motion=off] .ovs-youpanel { animation: none; }
+@media (max-width: 640px) { .ovs-bar { gap: 8px; padding: 0 4px 0 8px; } .ovs-bar .ovs-input::placeholder { font-size: 15px; } .ovs-tools { gap: 0; } .ovs-tool { width: 36px; height: 36px; } }
 .ovs-orb { display: none; }
 .ovs-foot kbd svg { width: 12px; height: 12px; vertical-align: -1px; }
 @media (max-width: 640px) {
@@ -1362,6 +1402,52 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         actorAt = Date.now();
         return actorInfo;
     }
+    // What is running for you (4.238.0; the owner, 11-13: "when you have actors or tasks running … sessions,
+    // conversations, anything, there should be stacked … your agents … that are active behind you, and there should be
+    // like status indicator"): your Actor while it works or asks, and every run that is going or waits for you.
+    const KIND_SVG = {
+        chat: '<path d="M3.8 4.3h16.8v11.7H8l-4.2 4.2Z"/>',
+        task: '<rect x="5.4" y="8.3" width="13.2" height="10.4" rx="2.8"/><path d="M12 4.6v3.8M9.2 13.1h0M14.8 13.1h0M9.6 16.4h4.7M3.5 13.1v1.9M20.5 13.1v1.9"/>',
+        code: '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
+        ask: '<circle cx="10.6" cy="10.6" r="7"/><path d="M20.4 20.4l-4.5-4.5"/>',
+        spark: '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
+    };
+    const faceHue = (t) => { let n = 0; for (const c of String(t || 'ov')) n = (n * 31 + c.charCodeAt(0)) >>> 0; return n % 360; };
+    let activeList = [], activeAt = 0;
+    async function loadActive() {
+        if (!signedInTop()) return [];
+        if (activeAt && Date.now() - activeAt < 30000) return activeList;
+        const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
+        const [a, runs] = await Promise.all([
+            loadActor(),
+            fetch(`${net}/api/frame/runs?limit=20`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } })
+                .then((r) => (r.ok ? r.json() : { runs: [] })).then((d) => (Array.isArray(d.runs) ? d.runs : [])).catch(() => []),
+        ]);
+        const out = [];
+        if (a && a.id && a.enabled !== false) {
+            const asks = Array.isArray(a.asks) ? a.asks.length : 0;
+            if (asks || a.status === 'working') out.push({ key: `actor:${a.id}`, kind: 'actor', name: a.name || 'Your Actor', state: asks ? 'asks' : 'working',
+                pic: a.avatar && /^https:\/\//.test(String(a.avatar.url || '')) ? a.avatar.url : '', hue: faceHue(a.name || a.id), glyph: 'task',
+                line: asks ? `It asks you: ${(a.asks[0] && a.asks[0].text) || ''}` : (a.now && a.now.current_step) || 'Working' });
+        }
+        for (const r of runs) {
+            const needs = r.status === 'waiting' && r.waiting && r.waiting.for !== 'message';
+            if (!needs && !['running', 'planning'].includes(r.status)) continue;
+            const ag = r.agent || {};
+            out.push({ key: `run:${r.ref || r.id}`, kind: 'run', ref: r.ref || r.id, name: r.title || ag.name || { chat: 'Chat', task: 'Task', code: 'Code', ask: 'Answer' }[r.kind] || 'Run', state: needs ? 'asks' : 'working',
+                pic: /^https:\/\//.test(String(ag.avatar_url || '')) ? ag.avatar_url : '', hue: Number.isInteger(ag.hue) ? ag.hue : faceHue(ag.id || r.kind), glyph: KIND_SVG[r.kind] ? r.kind : 'spark',
+                line: needs ? 'Your turn' : (r.doing && r.doing.text) || (r.status === 'planning' ? 'Starting' : 'Working') });
+        }
+        out.sort((x, y) => (y.state === 'asks') - (x.state === 'asks'));
+        activeList = out; activeAt = Date.now();
+        return out;
+    }
+    function stackFace(it, cls) {
+        const f = document.createElement('span'); f.className = `${cls} is-${it.state}`; f.style.setProperty('--h', String(it.hue));
+        if (it.pic) { const img = document.createElement('img'); img.alt = ''; img.src = it.pic; img.decoding = 'async'; img.onerror = () => { img.remove(); f.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 24 24" aria-hidden="true">${KIND_SVG[it.glyph] || KIND_SVG.spark}</svg>`); }; f.appendChild(img); }
+        else f.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${KIND_SVG[it.glyph] || KIND_SVG.spark}</svg>`;
+        return f;
+    }
     async function paintLead() {
         const lead = el && el.querySelector('.ovs-lead'); if (!lead) return;
         const u = ctx && ctx.user && !ctx.user.is_anon ? ctx.user : null;
@@ -1374,27 +1460,61 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // You: your picture (or first letter) and the online dot.
         lead.classList.add('is-you');
         lead.textContent = '';
+        const meEl = document.createElement('span'); meEl.className = 'ovs-lead-me';
         const face = document.createElement('span'); face.className = 'ovs-lead-face';
         const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
-        if (pic) { const img = document.createElement('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; img.onerror = () => { img.remove(); face.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase(); }; face.appendChild(img); }
-        else face.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase() || '?';
+        const letter = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase() || '?';
+        if (pic) { const img = document.createElement('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; img.onerror = () => { img.remove(); face.textContent = letter; }; face.appendChild(img); }
+        else face.textContent = letter;
         const dot = document.createElement('i'); dot.className = 'ovs-lead-on'; dot.setAttribute('aria-hidden', 'true');
-        lead.append(face, dot);
+        meEl.append(face, dot);
+        lead.append(meEl);
         lead.tabIndex = 0; lead.removeAttribute('aria-hidden');
         const name = u.display_name || u.username || 'You';
-        const say = (actorWord) => lead.setAttribute('aria-label', `${name}: your account, display${actorWord ? ` and your Actor (${actorWord})` : ''}`);
-        say('');
+        lead.setAttribute('aria-label', `${name}: your account and display`);
         lead.setAttribute('aria-expanded', String(!!(el && el.classList.contains('ovs-you-open'))));
         lead.setAttribute('data-ov-tip', 'You');
-        // Your Actor's state rides on your picture: a turning ring while it works, a count when it asks you.
-        const a = await loadActor();
-        if (!el || !lead.isConnected || !a || !a.id || a.enabled === false) return;
-        const asks = Array.isArray(a.asks) ? a.asks.length : 0;
-        const st = asks ? 'asks' : ['working', 'paused'].includes(a.status) ? a.status : 'resting';
-        lead.classList.add('is-actor', `is-${st}`);
-        if (st === 'working') lead.insertAdjacentHTML('beforeend', '<svg class="ovs-lead-ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5"/></svg>');
-        if (asks) { const n = document.createElement('b'); n.className = 'ovs-lead-n'; n.textContent = asks > 9 ? '9+' : String(asks); lead.appendChild(n); }
-        say(`${a.name ? `${a.name}, ` : ''}${{ asks: `it asks you ${asks === 1 ? 'one thing' : `${asks} things`}`, working: 'working', paused: 'paused', resting: 'resting' }[st]}`);
+        // Behind you: what is running for you, newest asks first; two faces on a phone, three on a computer, then a count.
+        const list = await loadActive();
+        if (!el || !lead.isConnected || !lead.classList.contains('is-you') || !list.length) return;
+        let narrow = false; try { narrow = root.matchMedia('(max-width: 640px)').matches; } catch { /* */ }
+        const room = narrow ? 2 : 3;
+        const stack = document.createElement('span'); stack.className = 'ovs-stack'; stack.setAttribute('aria-hidden', 'true');
+        list.slice(0, room).forEach((it, i) => { const f = stackFace(it, 'ovs-stack-f'); f.style.setProperty('--i', String(i)); stack.appendChild(f); });
+        if (list.length > room) { const more = document.createElement('span'); more.className = 'ovs-stack-more'; more.style.setProperty('--i', String(room)); more.textContent = `+${list.length - room}`; stack.appendChild(more); }
+        lead.appendChild(stack);
+        lead.classList.add('has-stack');
+        const asks = list.filter((x) => x.state === 'asks').length;
+        if (asks) lead.classList.add('has-asks');
+        const say = list.slice(0, 3).map((x) => `${x.name}, ${x.state === 'asks' ? 'waiting for you' : 'working'}`).join('; ');
+        lead.setAttribute('aria-label', `${name}: your account and display. Running for you: ${say}${list.length > 3 ? `, and ${list.length - 3} more` : ''}`);
+    }
+    /** The rows of what is running, in your sheet: a tap opens that run in Vibe (your Actor has its own card above). */
+    function activeRows(panel) {
+        const old = panel.querySelector('.ovs-active'); if (old) old.remove();
+        const runs = activeList.filter((x) => x.kind === 'run');
+        if (!runs.length) return;
+        const box = document.createElement('div'); box.className = 'ovs-active'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Running for you');
+        const h = document.createElement('p'); h.className = 'ovs-active-h'; h.textContent = 'Running for you'; box.appendChild(h);
+        runs.slice(0, 6).forEach((it) => {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-active-row';
+            const t = document.createElement('span'); t.className = 'ovs-active-t';
+            const n = document.createElement('b'); n.textContent = it.name;
+            const l = document.createElement('small'); l.textContent = it.line;
+            t.append(n, l);
+            const st = document.createElement('i'); st.className = `ovs-active-st is-${it.state}`; st.textContent = it.state === 'asks' ? 'Your turn' : 'Working';
+            b.append(stackFace(it, 'ovs-active-f'), t, st);
+            b.setAttribute('aria-label', `${it.name}: ${it.state === 'asks' ? 'waiting for you' : 'working'}. Open it`);
+            b.addEventListener('click', () => {
+                toggleYou(false);
+                if (!canDoor()) { location.href = 'https://openvibe.chat/vibe'; return; }
+                openDoor('vibe');
+                const go = (k = 0) => { if (runView && typeof runView.open === 'function') { try { runView.open(it.ref); } catch { /* the list stands */ } return; } if (k < 80) setTimeout(() => go(k + 1), 50); };
+                go();
+            });
+            box.appendChild(b);
+        });
+        panel.appendChild(box);
     }
     function toggleYou(force) {
         const panel = el && el.querySelector('.ovs-youpanel'), lead = el && el.querySelector('.ovs-lead');
@@ -1407,7 +1527,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!show) { panel.textContent = ''; return; }
         const draw = (n = 0) => {
             const H = root.OpenVibeHome;
-            if (H && typeof H.youCard === 'function') { H.youCard(panel, { token: ctx.token, user: ctx.user, me: ctx.me, look: ctx.look, actorBase: ctx.actorBase, close }); return; }
+            if (H && typeof H.youCard === 'function') { H.youCard(panel, { token: ctx.token, user: ctx.user, me: ctx.me, look: ctx.look, actorBase: ctx.actorBase, close }); loadActive().then(() => { if (!panel.hidden) activeRows(panel); }); return; }
             homeLib();
             if (n < 60) setTimeout(() => draw(n + 1), 50);
         };
@@ -2295,7 +2415,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         syncFeeds();
         el.classList.add('is-open');
         tickAgo();
-        actorAt = 0; toggleYou(false); syncTools(); paintLead();
+        actorAt = 0; activeAt = 0; toggleYou(false); syncTools(); paintLead();
         // Back closes the menu first (the owner, 11-07: pressing Back on a phone left the page instead): opening adds one
         // history entry; Back pops it and only closes the menu.
         try {

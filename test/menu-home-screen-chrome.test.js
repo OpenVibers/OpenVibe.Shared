@@ -65,6 +65,10 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed?')) return J(${JSON.stringify(FEED_V2)});
     if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
     if (s.startsWith('https://openvibe.actor/api/v1/me/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
+    if (s === 'https://openvibe.network/api/frame/runs?limit=20') return J({ runs: [
+      { id: 'run_1', ref: 'run_1', kind: 'code', title: 'Fix the navbar', status: 'running', doing: { text: 'Running the tests' }, agent: { id: 'agt_code', name: 'Codes' } },
+      { id: 'run_2', ref: 'run_2', kind: 'task', title: 'Book the venue', status: 'waiting', waiting: { for: 'approval' }, agent: { id: 'agt_plan', name: 'Planner' } },
+      { id: 'run_3', ref: 'run_3', kind: 'chat', title: 'An old chat', status: 'done' }] });
     if (s.startsWith('https://')) return J({}, false, 404);
     return realFetch(u, o);
   };
@@ -228,12 +232,19 @@ const server = http.createServer((req, res) => {
         // the colors and other settings"): you lead the pill (your picture, online) with your Actor's state on it; a tap
         // drops your sheet under the pill (your row: Display and your account's menu; your Actor's card); You starts at
         // its tabs. The pill is a composer: attach while empty, Ask Vibe once there are words.
-        assert.ok(await until(s, `!!document.querySelector('.ovs-lead.is-you.is-actor.is-working .ovs-lead-ring')`), 'you lead the pill, your Actor working');
-        assert.match(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-label')`), /^Ada: your account, display and your Actor \(Juniper, working\)/, 'you, and your Actor\'s name and state');
+        // What runs for you is stacked behind your picture (the owner, 11-13: "stacked … your agents … that are active
+        // behind you, and there should be like status indicator"): what waits for you first, two faces on a phone, then
+        // a count; nothing is drawn on your own picture but the online dot.
+        assert.ok(await until(s, `document.querySelectorAll('.ovs-lead.is-you.has-stack .ovs-stack-f').length === 2`), 'you lead the pill, two faces behind you');
+        assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-stack > *')].map((f) => f.className.replace('ovs-stack-', '') + (f.textContent || ''))`), ['f is-asks', 'f is-working', 'more+1'], 'what waits for you first, then what works, then the count');
+        assert.match(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-label')`), /^Ada: your account and display\. Running for you: Book the venue, waiting for you; Juniper, working; Fix the navbar, working$/, 'said in words');
+        assert.ok(await s.evaluate(`!document.querySelector('.ovs-lead-me svg, .ovs-lead-ring')`), 'nothing is drawn on your own picture');
+        assert.ok(await s.evaluate(`(() => { const l = document.querySelector('.ovs-lead').getBoundingClientRect(), b = document.querySelector('.ovs-bar').getBoundingClientRect(), i = document.querySelector('.ovs-input').getBoundingClientRect(); const inp = document.querySelector('.ovs-input'), c = document.createElement('canvas').getContext('2d'); c.font = '15px ' + getComputedStyle(inp).fontFamily; return l.right <= i.left + 1 && i.width >= c.measureText(inp.placeholder).width + 2 && b.right <= innerWidth; })()`), 'the pill\'s words show whole beside the stack');
         assert.ok(await s.evaluate(`!document.querySelector('.ovh .ovh-actor') && !document.querySelector('.ovh .ovh-mebox')`), 'You has no Actor strip and no row of its own');
         await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
         await eventually(async () => assert.match(await s.evaluate(`(document.querySelector('.ovs-youpanel:not([hidden]) .ovh-actor') || {}).textContent || ''`), /^Actor.*Working.*Juniper · Reading job posts/, 'your Actor\'s card is in your sheet'));
         assert.strictEqual(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-expanded')`), 'true');
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-youpanel .ovs-active-row')].map((r) => r.querySelector('b').textContent + ': ' + r.querySelector('.ovs-active-st').textContent)`), ['Book the venue: Your turn', 'Fix the navbar: Working'], 'your sheet lists what is running'));
         // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … move the notifications into a
         // tab … put the apps more front facing … the first tab"; "waste of space"; "compact"): your row holds every round
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.

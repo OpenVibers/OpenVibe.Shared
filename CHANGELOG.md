@@ -13,11 +13,17 @@ small", "take up the full height properly").
   - The pill is a composer: voice and attach inside it while it is empty, **Ask Vibe** (a send disc) once there are
     words; Ctrl/⌘+Enter asks Vibe whatever the list shows. A question becomes a Vibe run in the menu; an attached file
     goes into Vibe's box.
-  - **You lead the pill:** your picture and the online dot; your Actor's state rides on it (a turning ring while it
-    works, an amber count when it asks you).
-  - A tap on your picture floats **your sheet** over the menu (your row with Display and your account's menu, then your
-    Actor's card); a tap elsewhere, Escape or your picture again folds it. You's own row and Actor strip are gone, so
-    You starts at its tabs.
+  - **You lead the pill:** your picture and the online dot.
+  - **What runs for you is stacked behind your picture** ("when you have actors or tasks running … sessions,
+    conversations, anything, there should be stacked … your agents … behind you, and … status indicator"): your Actor
+    while it works or asks, and every run that is going or waits for you; what waits for you first; two faces on a
+    phone and three on a computer, then a count. Each face has its picture, or its kind's glyph on its own hue, and
+    its state on a ring (a comet while it works, amber while it waits for you). They fan out from behind you as the menu
+    opens. Nothing is drawn on your own picture but the online dot (the arc on it read as a stray line).
+  - A tap on your picture floats **your sheet** over the menu: your row with Display and your account's menu, your
+    Actor's card, then **Running for you** (each run, its state, a tap opens it in Vibe); its parts rise in one after
+    the other. A tap elsewhere, Escape or your picture again folds it. You's own row and Actor strip are gone, so You
+    starts at its tabs.
   - On a phone the pill says "Search or ask Vibe" (the site's name is its tab).
   - **The close orb** sits beside the pill (not over it), 48 px, an accent disc with a 26 px x; it spins in and turns
     on hover and press. The white ring was the browser's own focus outline: focus is now an accent ring, for keys only.
@@ -33,8 +39,8 @@ small", "take up the full height properly").
 - **Notifications (notification-ui.js).** The ringing bell for the empty state (it swings once, its waves fade in;
   Calm shortens it, Off stills it), centred; search and Unread are 44 px circles with centred glyphs; the foot's
   buttons are 44 px with drawn glyphs; in the menu the foot sits at the bottom.
-- **The bell** is redrawn everywhere (kit, glyphs, Dock, notifications, You) and **`bell-ring`** joins the registry;
-  the glyph fonts are rebuilt.
+- **The bell** is redrawn everywhere (kit, glyphs, Dock, notifications, You), sized and centred to the set (19 of 24
+  units), and **`bell-ring`** joins the registry; the glyph fonts and the ink fixture are rebuilt.
 - **No text arrows.** Every →, ↗, ‹, ›, ↑, ↓, ↩ shown to a person is a drawn glyph now (agent-session, agent-sheet,
   action-center, ov-float, ov-home, ov-look, ov-metrics, search, shipped, showcase, thread, user-card) or words (navbar,
   url-resolver, components, ov-composer, ov-capture). `test/no-text-arrows.test.js` reads every module's strings with
