@@ -24,7 +24,7 @@
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
-    const THREAD_REV = { 'ov-composer.js': '8a4f9f30bb39', 'ov-combo.js': '8001a3b19c2f' };
+    const THREAD_REV = { 'ov-composer.js': 'ce2ed7a5d349', 'ov-combo.js': '8001a3b19c2f' };
     var selfSrc = (document.currentScript && document.currentScript.src) || '';
     // 4.202.0: the one dropdown for a field (ov-combo.js: a repository, a person), wherever a page asks for it.
     function loadCombo() {

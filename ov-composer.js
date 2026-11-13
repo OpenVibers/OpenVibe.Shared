@@ -335,7 +335,7 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
    sinks when pressed; open, it springs into a x, the disc fills and rings once, and the petals burst. */
 .ovc-more { position: relative; isolation: isolate; overflow: visible; }
 .ovc-more::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: radial-gradient(120% 120% at 30% 25%, color-mix(in srgb, #fff 14%, transparent), transparent 60%); opacity: .7; pointer-events: none; transition: opacity .25s; }
-.ovc-more::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, transparent); opacity: 0; }
+.ovc-more::after { content: ""; position: absolute; inset: -2px; border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, transparent); opacity: 0; }
 .ovc-plus { display: block; overflow: visible; }
 .ovc-plus-x path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; transform-box: view-box; transform-origin: 12px 12px; transition: transform .28s cubic-bezier(.3, 1.5, .4, 1); }
 .ovc-plus-x { transform-box: view-box; transform-origin: 12px 12px; transition: transform .45s cubic-bezier(.3, 1.6, .4, 1); }
@@ -351,13 +351,16 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
 .ovc-more[aria-expanded="true"] { color: var(--on-accent, #fff); background: linear-gradient(150deg, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 92%, #fff), var(--ovt-accent, var(--accent-strong, var(--accent, #2563eb)))) !important; box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 75%, transparent) !important; }
 .ovc-more[aria-expanded="true"] .ovc-plus-x { transform: rotate(135deg); }
 .ovc-more[aria-expanded="true"]::after { animation: ovc-plus-ring .6s ease-out; }
-.ovc-more[aria-expanded="true"] .ovc-plus-p circle { animation: ovc-plus-burst .55s cubic-bezier(.2, .8, .3, 1) both; }
-.ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(1) { --dx: -5px; --dy: -5px; } .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(2) { --dx: 5px; --dy: -5px; }
-.ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(3) { --dx: -5px; --dy: 5px; } .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(4) { --dx: 5px; --dy: 5px; }
-@keyframes ovc-plus-burst { 0% { transform: scale(.6); opacity: 1; } 60% { opacity: .9; } 100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(0); opacity: 0; } }
-@keyframes ovc-plus-ring { 0% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, transparent); } 100% { opacity: 0; box-shadow: 0 0 0 10px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 0%, transparent); } }
-html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle { animation: none; opacity: 0; }
-html[data-ov-motion=reduced] .ovc-plus-x { transition-duration: .2s; }
+.ovc-more[aria-expanded="true"] .ovc-plus-p circle { fill: currentColor; animation: ovc-plus-burst .55s cubic-bezier(.2, .8, .3, 1) both; }
+.ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(1) { --dx: -7px; --dy: -7px; } .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(2) { --dx: 7px; --dy: -7px; }
+.ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(3) { --dx: -7px; --dy: 7px; } .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(4) { --dx: 7px; --dy: 7px; }
+@keyframes ovc-plus-burst { 0% { transform: scale(1.15); opacity: 1; } 55% { opacity: .95; } 100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(.25); opacity: 0; } }
+@keyframes ovc-plus-ring { 0% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, transparent); } 100% { opacity: 0; box-shadow: 0 0 0 5px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 0%, transparent); } }
+/* Calm: the petals still burst, a third as far and slower (Calm reduces; only Off removes). */
+html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle { animation-duration: .9s; }
+html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(1) { --dx: -2px; --dy: -2px; } html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(2) { --dx: 2px; --dy: -2px; }
+html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(3) { --dx: -2px; --dy: 2px; } html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(4) { --dx: 2px; --dy: 2px; }
+html[data-ov-motion=reduced] :is(.ovc-plus-x, .ovc-plus-x path) { transition-timing-function: ease-out; }
 html[data-ov-motion=off] :is(.ovc-plus-x, .ovc-plus-x path, .ovc-plus-p circle) { transition: none; animation: none !important; }
 html[data-ov-motion=off] .ovc-more::after { animation: none; }
 /* 4.237.0 (the owner, 11-13: the row looked "offset"): every tool in the row is the same quiet disc, so the first one's
