@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.234.0 — 2026-11-13
+
+**The bottom bar hides all the way, and the composer stops repeating itself** (the owner's phone screenshots, 11-13).
+
+- **The bottom bar (`appbar.js`).** It stepped aside for a keyboard or an open panel with `translateY(110%)` while its
+  lift above the visible viewport still applied, so above a keyboard, or with Android's toolbar gap, it stopped half on
+  the screen. A hidden bar now drops the lift, sits fully below the screen, and is invisible and not clickable until it
+  comes back.
+- **The + sheet.** It no longer repeats a tool the row already shows; the emoji button and an "Emoji" tile side by
+  side were the same thing twice. The sheet holds what a narrow row hides, and the extras (Timer, GitHub).
+- **The GitHub picker:**
+  - each row's mark is its owner's initial on a colour of the name; GitHub's own pictures were blocked by most sites'
+    image policy, so every row showed a broken picture, and each one asked GitHub;
+  - the same words are answered from the page's cache for ten minutes;
+  - a new search cancels the one still running;
+  - it waits a third of a second after the last key;
+  - the list scrolls inside its panel and no longer runs over the box.
+- Tests `composer-v2-chrome` (nothing repeated, the initial, the cache) and `navbar-appbar` (hidden is all the way).
+
 ## 4.233.0 — 2026-11-13
 
 **`ov-metrics.js` on a phone, and prices under a dollar.**

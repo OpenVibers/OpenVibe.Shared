@@ -108,3 +108,12 @@ const LINKS = [
     assert.strictEqual(barOf(body), null, 'one tab is no tab bar');
 }
 console.log('navbar app bar: opt-in, from links or a list, More, the open page, escaping, removal ok');
+
+// 4.234.0: a hidden bar is all the way hidden. With the lift still applied it stopped half on the screen above a keyboard
+// or Android's toolbar gap (the owner's screenshot, 11-13).
+{
+    const css = require('fs').readFileSync(require('path').join(__dirname, '..', 'appbar.js'), 'utf8');
+    const hidden = /body\.ov-panel-open \.ovnav-appbar \{([^}]*)\}/.exec(css);
+    require('assert').ok(hidden && /translate: none/.test(hidden[1]) && /visibility: hidden/.test(hidden[1]) && /pointer-events: none/.test(hidden[1]) && /translateY\(calc\(100% \+ 24px\)\)/.test(hidden[1]), 'hidden: no lift, below the screen, invisible, not clickable');
+    console.log('navbar-appbar: a hidden bar is all the way hidden');
+}

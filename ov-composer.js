@@ -294,6 +294,8 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-repo-q { width: 100%; box-sizing: border-box; min-height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .22)); background: var(--bg-primary, rgba(0, 0, 0, .2)); color: inherit; font: inherit; font-size: 15px; outline: 0; }
 .ovc-repo-q:focus-visible { border-color: var(--ovt-accent, var(--accent, #3b82f6)); }
 .ovc-repo-list { display: grid; gap: 2px; overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.ovc-repo:not([hidden]) { grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.ovc-repo-mono { font-weight: 700; font-size: 15px; color: hsl(var(--ovc-mono-h, 210) 70% 72%); background: hsl(var(--ovc-mono-h, 210) 45% 22%); }
 .ovc-repo-list:empty { display: none; }
 .ovc-repo-row { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 52px; padding: 8px; border: 0; border-radius: 12px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ovc-repo-row:hover, .ovc-repo-row:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); outline: 0; }
@@ -847,6 +849,9 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
             [...tools.children].forEach((t) => {
                 if (t === mic || t === more || !t.matches('.ovt-btn, button, label') || t.matches('[type="submit"], [data-ovt-send], .ovc-mic, .ovdk-mic, .ovdk-go, [hidden]')) return;
                 const label = t.getAttribute('aria-label') || t.title || ''; if (!label || seen.has(label)) return; seen.add(label);
+                // 4.234.0: a tool the row shows is not repeated in the sheet (the owner, 11-13: "why twice"); the sheet has
+                // what a narrow row hides, and the extras.
+                if (getComputedStyle(t).display !== 'none' && t.getClientRects().length) return;
                 const input = t.querySelector('input[type=file]');
                 add(label, '', () => { if (input) input.click(); else t.click(); }, t.querySelector('svg'));
             });
@@ -1080,8 +1085,12 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
         if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
         start();
     }
-    /** The GitHub tool's panel: a field, the repositories as you type (a quarter second after the last key), one press
-     * puts the address in the box. Everything is text; only https pictures from GitHub's avatar host are drawn. */
+    /** Repository searches already answered on this page, by their words, for ten minutes (60 at most). */
+    const REPO_CACHE = new Map();
+    const REPO_CACHE_MS = 10 * 60 * 1000;
+
+    /** The GitHub tool's panel: a field, the repositories as you type (a third of a second after the last key), one press
+     * puts the address in the box. Everything is text, and each row's mark is its owner's initial (no picture is fetched). */
     function openRepoSearch(ctx, button, form) {
         let panel = form.querySelector('.ovc-repo');
         if (panel) { panel.hidden = !panel.hidden; if (!panel.hidden) panel.querySelector('input').focus(); return; }
@@ -1092,16 +1101,20 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
         const note = el('p', 'ovc-repo-note'); note.textContent = 'Type what the project does: “goal bar overlay”, “markdown editor”.';
         panel.append(field, list, note);
         const frame = String(form.getAttribute('data-ovc-frame') || 'https://openvibe.network').replace(/\/+$/, '');
-        let t = 0, gen = 0;
+        let t = 0, gen = 0, ctl = null;
         const close = () => { panel.hidden = true; button.focus(); };
         const pick = (r) => { ctx.insert(`${r.url} `); panel.hidden = true; };
         const draw = (items) => {
             list.textContent = '';
             items.forEach((r) => {
                 const b = el('button', 'ovc-repo-row'); b.type = 'button'; b.setAttribute('role', 'option');
-                let av = null;
-                try { const u = new URL(String(r.owner_avatar_url || '')); if (u.protocol === 'https:' && u.hostname === 'avatars.githubusercontent.com') { av = el('img', 'ovc-repo-av'); av.src = u.href; av.alt = ''; av.loading = 'lazy'; } } catch { /* no picture */ }
-                if (!av) { av = el('span', 'ovc-repo-av'); av.innerHTML = svg(IC.repo); }
+                // 4.234.0: the owner's initial on a colour of its name, drawn here. GitHub's pictures were blocked by most
+                // sites' image policy (a broken picture on every row) and asked GitHub once per row.
+                const owner = String(r.full_name || '').split('/')[0] || '?';
+                const av = el('span', 'ovc-repo-av ovc-repo-mono'); av.setAttribute('aria-hidden', 'true');
+                let h = 0; for (const ch of owner) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+                av.style.setProperty('--ovc-mono-h', String(h % 360));
+                av.textContent = owner.slice(0, 1).toUpperCase();
                 const t1 = el('span', 'ovc-repo-t');
                 const name = el('b'); name.textContent = String(r.full_name || '');
                 const sub = el('small'); sub.textContent = String(r.description || '');
@@ -1113,22 +1126,31 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
             });
         };
         const search = async () => {
-            const q = field.value.trim();
+            const q = field.value.trim().replace(/\s+/g, ' ');
             const my = ++gen;
+            if (ctl) { try { ctl.abort(); } catch { /* */ } ctl = null; }
             if (q.length < 2) { list.textContent = ''; note.hidden = false; note.textContent = 'Type what the project does: “goal bar overlay”, “markdown editor”.'; return; }
-            note.hidden = false; note.textContent = 'Searching…';
+            const key = q.toLowerCase();
+            const hit = REPO_CACHE.get(key);
+            if (hit && Date.now() - hit.at < REPO_CACHE_MS) { draw(hit.items); note.hidden = hit.items.length > 0; note.textContent = hit.items.length ? '' : 'Nothing found. Try other words.'; return; }
+            // The list stays while a new one is asked for; only an empty panel says it is searching.
+            if (!list.children.length) { note.hidden = false; note.textContent = 'Searching…'; }
             try {
-                const r = await fetch(`${frame}/api/frame/code/search?q=${encodeURIComponent(q)}&limit=8`, { credentials: 'omit', headers: { accept: 'application/json' } });
+                ctl = typeof AbortController === 'function' ? new AbortController() : null;
+                const r = await fetch(`${frame}/api/frame/code/search?q=${encodeURIComponent(q)}&limit=8`, { credentials: 'omit', headers: { accept: 'application/json' }, signal: ctl ? ctl.signal : undefined });
                 const j = await r.json().catch(() => ({}));
                 if (my !== gen) return;
                 if (!r.ok) throw new Error(j.error || 'Search is unavailable right now');
                 const items = Array.isArray(j.items) ? j.items : [];
+                REPO_CACHE.set(key, { at: Date.now(), items });
+                if (REPO_CACHE.size > 60) REPO_CACHE.delete(REPO_CACHE.keys().next().value);
                 draw(items);
                 note.hidden = items.length > 0;
                 note.textContent = items.length ? '' : 'Nothing found. Try other words.';
-            } catch (err) { if (my === gen) { list.textContent = ''; note.hidden = false; note.textContent = (err && err.message) || 'Search is unavailable right now'; } }
+            } catch (err) { if (my === gen && !(err && err.name === 'AbortError')) { list.textContent = ''; note.hidden = false; note.textContent = (err && err.message) || 'Search is unavailable right now'; } }
         };
-        field.addEventListener('input', () => { clearTimeout(t); t = setTimeout(search, 250); });
+        // A third of a second after the last key, and never the same words twice in ten minutes (REPO_CACHE).
+        field.addEventListener('input', () => { clearTimeout(t); t = setTimeout(search, 350); });
         field.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { e.preventDefault(); close(); }
             else if (e.key === 'Enter') { e.preventDefault(); const first = list.querySelector('.ovc-repo-row'); if (first) first.click(); else { clearTimeout(t); search(); } }
