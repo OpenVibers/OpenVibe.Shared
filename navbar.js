@@ -359,9 +359,9 @@
             @keyframes ovmb-twinkle { 0% { transform: none; } 50% { transform: rotate(45deg) scale(1.45); } 100% { transform: rotate(90deg); } }
             @keyframes ovmb-spin { to { transform: rotate(360deg); } }
             @keyframes ovmb-busy { 0%, 100% { transform: scale(.72); opacity: .35; } 50% { transform: scale(1.12); opacity: .9; } }
-            html:is([data-ov-motion=reduced], [data-ov-motion=off]) .ovmb :is(.ovmb-lit, .ovmb-spark) { animation: none !important; }
+            html[data-ov-motion=reduced] .ovmb :is(.ovmb-lit, .ovmb-spark, .ovmb-app) { animation-duration: 18s; }
+            html[data-ov-motion=reduced] :is(.ovnav-orb, .ovs-orb):is(:hover, .ovo-intro) .ovmb :is(.ovmb-bar, .ovmb-app, .ovmb-lit, .ovmb-spark) { animation-duration: 1.4s; }
             html[data-ov-motion=off] .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-words, .ovmb-spark, .ovmb-app, .ovmb-lit) { animation: none !important; transition: none; }
-            @media (prefers-reduced-motion: reduce) { html:not([data-ov-motion]) .ovmb :is(.ovmb-lit, .ovmb-spark, .ovmb-app) { animation: none !important; } }
             .openvibe-navbar .ovnav-orb[aria-expanded="true"] { color: var(--text-primary, #e6edf7); }
             .openvibe-navbar :is(.ovnav-orb, .openvibe-bell, .openvibe-navbar-avatar) { transition: transform .18s cubic-bezier(.2, 1.4, .3, 1), background-color .15s, color .15s; }
             .openvibe-navbar :is(.ovnav-orb, .openvibe-bell, .openvibe-navbar-avatar):active { transform: scale(.9); }

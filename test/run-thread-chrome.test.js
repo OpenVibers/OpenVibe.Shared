@@ -190,10 +190,11 @@ const server = http.createServer((req, res) => {
             // Code hides the slot and the starters; Chats shows the starters only.
             await page.evaluate(`document.querySelector('.ovr-filter[data-filter="code"]').click()`);
             assert.ok(await until(`document.querySelectorAll('.ovr-rows .ovr-row:not(.is-ghost)').length === 1`), `${width}: Code`);
-            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [true, true], `${width}: no slot and no starters on Code`);
+            // 4.240.0: the host's slot (Now: timers, an agent at work) shows on every filter; the starters stay on All and Chats.
+            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [false, true], `${width}: the slot, and no starters, on Code`);
             await page.evaluate(`document.querySelector('.ovr-filter[data-filter="chat"]').click()`);
             assert.ok(await until(`document.querySelector('.ovr-filter[aria-selected="true"]').dataset.filter === 'chat' && !document.querySelector('.ovr-rows .is-ghost')`), `${width}: Chats`);
-            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [true, false], `${width}: the starters on Chats`);
+            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [false, false], `${width}: the slot and the starters on Chats`);
             // Ask your agent: the words in the box, unsent.
             await page.evaluate(`window.view.prefill('What is this page about?')`);
             assert.ok(await until(`document.querySelector('.ovr-compose textarea').value === 'What is this page about?' && document.activeElement === document.querySelector('.ovr-compose textarea')`), `${width}: prefill puts the words in the box, focused`);
