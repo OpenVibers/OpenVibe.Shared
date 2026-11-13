@@ -161,7 +161,8 @@ const server = http.createServer((req, res) => {
             await page.evaluate(`document.querySelector('.ovr-thead .ovr-ib').click()`);
             assert.ok(await until(`document.querySelectorAll('.ovr-rows .ovr-row:not(.is-ghost)').length === 3`), `${width}: back to the list`);
             await page.evaluate(`document.querySelector('.ovr-compose textarea').value = 'A raid alert'; document.querySelector('.ovr-compose form').requestSubmit()`);
-            assert.ok(await until(`document.querySelector('.ovr-who b') && document.querySelector('.ovr-thread .ovr-none')`), `${width}: the new run opens`);
+            // 4.240.0: the thread opens at once with your words and your agent typing, until its first words arrive.
+            assert.ok(await until(`document.querySelector('.ovr-who b') && [...document.querySelectorAll('.ovr-thread .ovr-step.is-you')].some((s) => s.textContent === 'A raid alert') && document.querySelector('.ovr-thread .ovr-typing')`), `${width}: the new run opens with your words and your agent typing`);
             const start = seen.posts.find((p) => p.path === '');
             assert.deepEqual(start.body, { text: 'A raid alert' }, `${width}: started with the words`);
             assert.match(start.key, /^ovr-[a-z0-9]+-[a-z0-9]+$/, `${width}: once (an idempotency key)`);
