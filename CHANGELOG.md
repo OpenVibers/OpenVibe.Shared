@@ -1,5 +1,37 @@
 # Changelog
 
+## 4.247.0 — 2026-11-13
+
+**Any video in a comment** (the owner, 11-13: "full support for our composer to support all video file types"; plan
+§Z.9 step 3).
+
+- **The comment box takes any video.** `thread.renderThread({ mediaAttachments: true })` draws a box that accepts any
+  video, picture, sound, PDF or text (MP4, MOV, MKV, AVI, WebM, 3GP and the rest; HEIC and AVIF pictures) and says
+  Media's limits: pictures 20 MB, videos 300 MB, sound 50 MB, other files 25 MB. Each file goes to Media's composer
+  attachments as it is picked (`POST https://openvibe.media/api/v1/attachments`, the viewer's own token; the chip shows
+  the progress), and the form carries the ids in `attachments`, never the bytes. Media sniffs what the file really is
+  and makes a web copy of a video no browser plays. Only on a post route that reads `attachments` (Community's, from
+  #439); a page without a viewer token keeps the plain upload. Off by default: nothing changes on a page that does not
+  ask.
+- **Any box can do it: `OpenVibeComposer.mount(host, { media: true })`** (composer v3's file queue, first module), or
+  `data-ovc-media` on a form. The core composer sends each file to Media as it is picked, with Media's limits per kind
+  from one table (pictures 20 MB, videos 300 MB, sound 50 MB, other files 25 MB; the type or the extension guides it, as
+  `.mkv` often has no type in a browser), says an oversize file's limit in words, and cancels an upload when its chip is
+  removed (a mod's `upload(file, onProgress, signal)` now gets an AbortSignal). A mod's own uploader still comes first.
+- **A guest sees what signing in adds** (plan §Z.2). The menu's You opens, for someone signed out, with one card: "Sign
+  in to make OpenVibe yours", four lines (your home screen on every site; your feed, messages and notifications; your
+  agents and the AI that comes with your account; your wallet and what you own) and a Sign in button whose link is the
+  bar's own, so it goes to this host's sign-in and comes back. A signed-in person never sees it
+  (`test/menu-guest-chrome.test.js`).
+- **A comment's video plays.** An attachment from Media (`att_…`) draws as the network's player (`video[data-ov-player]`,
+  Media's web copy, its first frame as the poster, its own shape and length); one whose copy is still being made shows
+  its first frame and a link to the file; a picture shows, a sound gets a bar. Nothing off `openvibe.media/a/` is drawn.
+  `ov-thread.js` loads `player.js` and `player.css` when a thread has a video (content-hashed in `THREAD_REV`).
+- Checks: `test/thread-media-attachments.test.js` (the box, every kind, URLs off Media refused) and
+  `test/comment-video-chrome.test.js` (a picked `.mkv` goes to Media with the viewer's token, the form sends its id and
+  no bytes, a 21 MB picture is refused in words, removing a chip mid-upload cancels it, no token keeps the plain upload,
+  the video plays in the player at 390 px).
+
 ## 4.246.0 — 2026-11-13
 
 **The menu's close goes home** (the owner, 11-13: "the close button … goes into the users avatar drop-down spot rather
@@ -16,6 +48,7 @@ than where it should").
   stayed plain. items.js now reads the same public data through Network's frame relay (`/api/frame/items/equipped`,
   `/api/frame/items/definitions`; every site allows openvibe.network). A page that sets `OpenVibeItemsConfig.api` still
   reads Inventory directly.
+
 
 ## 4.245.0 — 2026-11-13
 

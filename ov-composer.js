@@ -25,7 +25,7 @@
  * A box its page sends by script (a chat, an agent's run): form.__ovc.files() → the files (File objects), uploads(): the
  * ids a mod's upload gave, clear() after the send (the text, the chips, the draft); a form 'reset' clears the same.
  * A site without script says the same in data: data-ovt-commands='[{"name","hint","insert"}]', data-ovc-max-files,
- * data-ovc-max-mb, data-ovc-no-draft.
+ * data-ovc-max-mb, data-ovc-no-draft, data-ovc-media (4.247.0: the files go to Media's composer attachments).
  *
  * 4.241.0, the +: one sheet of what you can add. Big tiles first (Camera, Photos, Files), then rows (Paste, Screenshot,
  * the phone's own camera app, Share to an app, Timer, GitHub, the mods' tools, what a narrow row hides). A phone gets
@@ -606,6 +606,47 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     };
     const size = (n) => (n < 1024 ? `${n} B` : n < 1048576 ? `${Math.round(n / 1024)} KB` : `${(n / 1048576).toFixed(n < 10485760 ? 1 : 0)} MB`);
 
+    // 4.247.0 (plan §Z.9, composer v3's file queue): Media's composer attachments, where a box's files go when it says
+    // data-ovc-media (mount({ media: true })). One table of limits, Media's own (OpenVibe.Media docs/attachments.md);
+    // the bytes decide the kind there, the type or the extension guides it here. Each file goes as it is picked, with
+    // the viewer's own token, its chip shows the progress, × cancels it, and the form carries its id.
+    const MEDIA_URL = 'https://openvibe.media/api/v1/attachments';
+    const MEDIA_MB = { image: 20, video: 300, audio: 50, other: 25 };
+    const MEDIA_WORD = { image: 'Pictures', video: 'Videos', audio: 'Sound files', other: 'Files' };
+    const EXT = { video: /\.(mp4|m4v|mov|mkv|avi|webm|ogv|wmv|flv|mpe?g|3gp|3g2|ts|mts|m2ts|vob)$/i, audio: /\.(mp3|m4a|aac|wav|flac|oga|ogg|opus|wma|aiff?)$/i, image: /\.(jpe?g|png|gif|webp|bmp|heic|heif|avif|tiff?)$/i };
+    function mediaKind(file) {
+        const t = String((file && file.type) || '').toLowerCase(), n = String((file && file.name) || '');
+        const top = t.split('/')[0];
+        if (top === 'image' || top === 'video' || top === 'audio') return top;
+        for (const k of ['video', 'audio', 'image']) if (EXT[k].test(n)) return k;
+        return 'other';
+    }
+    function viewerToken() {
+        try { const N = root.OpenVibeNavbar; return N && typeof N.viewerToken === 'function' ? String(N.viewerToken() || '') : ''; } catch { return ''; }
+    }
+    function mediaUpload(file, onProgress, signal) {
+        return new Promise((resolve, reject) => {
+            const tok = viewerToken();
+            if (!tok) { reject(new Error('Sign in again to attach files.')); return; }
+            const fd = new FormData();
+            fd.append('file', file, file.name || 'file');
+            const x = new XMLHttpRequest();
+            x.open('POST', MEDIA_URL);
+            x.setRequestHeader('Authorization', `Bearer ${tok}`);
+            x.setRequestHeader('Accept', 'application/json');
+            if (x.upload && onProgress) x.upload.onprogress = (e) => { if (e.lengthComputable && e.total) onProgress(e.loaded / e.total); };
+            x.onload = () => {
+                let j = {};
+                try { j = JSON.parse(x.responseText || '{}'); } catch { j = {}; }
+                if (x.status >= 200 && x.status < 300 && j && /^att_/.test(String(j.id || ''))) { resolve({ id: j.id, attachment: j }); return; }
+                reject(new Error((j && (j.detail || j.title)) || (x.status === 413 ? 'That file is too large to attach.' : x.status === 415 ? 'That kind of file cannot be attached.' : 'The file did not upload.')));
+            };
+            x.onerror = () => reject(new Error('The file did not upload. Check the connection and try again.'));
+            if (signal) signal.addEventListener('abort', () => { try { x.abort(); } catch { /* gone */ } reject(Object.assign(new Error('Cancelled'), { cancelled: true })); }, { once: true });
+            x.send(fd);
+        });
+    }
+
     // ── Your settings: this browser's copy, and your account's when the Network keeps them (the same on every site).
     let prefs = Object.assign({}, DEFAULTS, store.get(PREFS_KEY) || {});
     let synced = false, rev = null;
@@ -683,7 +724,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         const send = form.querySelector('[data-ovt-send]') || form.querySelector('[type="submit"]');
         const inputs = () => [...form.querySelectorAll('input[type="file"]')];
         const mine = () => mods.filter((m) => !m.match || m.match(form));
-        const uploader = () => { const m = mine().find((x) => typeof x.upload === 'function'); return m ? m.upload : null; };
+        const media = () => form.hasAttribute('data-ovc-media') && !!viewerToken();
+        const uploader = () => { const m = mine().find((x) => typeof x.upload === 'function'); return m ? m.upload : (media() ? mediaUpload : null); };
         // data-ovc-no-files: the box handles its own files (the Dock's Vibe box uploads a picture as it is picked).
         const noFiles = form.hasAttribute('data-ovc-no-files');
         const canFile = () => !noFiles && !!(inputs().length || uploader());
@@ -740,14 +782,18 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             chip.classList.toggle('is-up', f.progress != null && f.progress < 1 && !f.error);
             chip.style.setProperty('--p', String(f.progress == null ? 1 : f.progress));
             const ext = ((f.file.name || '').split('.').pop() || 'file').slice(0, 4).toUpperCase();
-            const thumb = f.url && kind === 'image' ? `<img class="ovc-file-th" src="${f.url}" alt="">` : f.url && kind === 'video' ? `<video class="ovc-file-th" src="${f.url}" muted preload="metadata"></video>` : `<span class="ovc-file-th ovc-file-ic">${f.pasted ? svg(IC.file) : ext}</span>`;
+            const thumb = f.url && kind === 'image' ? `<img class="ovc-file-th" src="${f.url}" alt="">` : f.url && kind === 'video' ? `<video class="ovc-file-th" src="${f.url}#t=0.1" muted playsinline preload="metadata"></video>` : `<span class="ovc-file-th ovc-file-ic">${f.pasted ? svg(IC.file) : ext}</span>`;
             chip.innerHTML = `${thumb}<span class="ovc-file-t"><span class="ovc-file-n"></span><span class="ovc-file-s"></span></span>`
                 + (f.pasted ? `<button type="button" class="ovc-file-b" data-ovc-back aria-label="Put the text back in the box" title="Put it back in the box">${svg(IC.back)}</button>` : '')
                 + (f.error && uploader() ? `<button type="button" class="ovc-file-r" data-ovc-retry aria-label="Try the upload again" title="Try again">${svg(IC.retry)}<span class="ovc-file-r-t">Try again</span></button>` : '')
                 + (kind === 'image' && !f.pasted && captionOn() ? `<button type="button" class="ovc-file-ai${f.captioning ? ' is-busy' : ''}" data-ovc-caption aria-label="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}" title="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}"${f.captioning ? ' aria-busy="true"' : ''}>${svg(IC.spark)}</button>` : '')
                 + `<button type="button" class="ovc-file-x" data-ovc-x aria-label="Remove">${svg(IC.x)}</button>`;
             chip.querySelector('.ovc-file-n').textContent = f.pasted ? 'Pasted text' : f.file.name || 'File';
-            chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : size(f.file.size));
+            // 4.247.0 (§Z.9): a video says its length beside its size once the browser has read it.
+            const length = f.duration > 0 ? `${Math.floor(f.duration / 60)}:${String(Math.round(f.duration % 60)).padStart(2, '0')} · ` : '';
+            chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : length + size(f.file.size));
+            const vid = !f.duration && chip.querySelector('video.ovc-file-th');
+            if (vid) vid.addEventListener('loadedmetadata', () => { if (Number.isFinite(vid.duration) && vid.duration > 0 && files.includes(f)) { f.duration = vid.duration; paintFile(f); } }, { once: true });
             chip.querySelector('[data-ovc-x]').setAttribute('aria-label', `Remove ${f.pasted ? 'the pasted text' : f.file.name || 'the file'}`);
             if (!chip.isConnected) strip.appendChild(chip);
         }
@@ -791,6 +837,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         function remove(f) {
             const i = files.indexOf(f); if (i < 0) return;
             files.splice(i, 1);
+            if (f.abort && f.progress != null && f.progress < 1) f.abort.abort();
             if (f.url) URL.revokeObjectURL(f.url);
             if (f.hidden) f.hidden.remove();
             form.dispatchEvent(new CustomEvent('ovc:file-removed', { detail: { file: f.file, chip: f.chip } }));
@@ -804,7 +851,10 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             for (const file of [...(list || [])]) {
                 if (files.length >= maxFiles) { say(`Up to ${maxFiles} files at a time.`); break; }
                 if (!accepts(file)) { say(`${file.name || 'That file'}: this box does not take that kind of file.`); continue; }
-                if (file.size > maxBytes) { say(`${file.name || 'That file'} is ${size(file.size)}: the limit is ${size(maxBytes)}.`); continue; }
+                if (media()) {
+                    const k = mediaKind(file), cap = MEDIA_MB[k] * 1048576;
+                    if (file.size > cap) { say(`${file.name || 'That file'} is ${size(file.size)}. ${MEDIA_WORD[k]} can be up to ${MEDIA_MB[k]} MB.`); continue; }
+                } else if (file.size > maxBytes) { say(`${file.name || 'That file'} is ${size(file.size)}: the limit is ${size(maxBytes)}.`); continue; }
                 const kind = (file.type || '').split('/')[0];
                 const f = { file, url: kind === 'image' || kind === 'video' ? URL.createObjectURL(file) : null, pasted: !!pasted, lines: pasted ? pasted.lines : 0, text: pasted ? pasted.text : null };
                 files.push(f);
@@ -827,13 +877,14 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         function sendUp(f) {
             const up = uploader(); if (!up) return;
             f.error = null; f.progress = 0; paintFile(f); syncSend();
-            Promise.resolve(up(f.file, (p) => { f.progress = Math.max(0, Math.min(0.99, Number(p) || 0)); paintFile(f); syncSend(); }))
+            f.abort = typeof AbortController === 'function' ? new AbortController() : null;
+            Promise.resolve(up(f.file, (p) => { f.progress = Math.max(0, Math.min(0.99, Number(p) || 0)); paintFile(f); syncSend(); }, f.abort ? f.abort.signal : undefined))
                 .then((r) => {
                     if (!files.includes(f)) return;
                     f.progress = 1; f.id = r && r.id;
                     if (f.id) { f.hidden = el('input'); f.hidden.type = 'hidden'; f.hidden.name = form.getAttribute('data-ovc-ids') || 'attachments'; f.hidden.value = f.id; form.appendChild(f.hidden); }
                     paintFile(f); syncSend();
-                }, (e) => { if (!files.includes(f)) return; f.error = (e && e.message) || 'Did not upload'; paintFile(f); syncSend(); });
+                }, (e) => { if (!files.includes(f) || (e && e.cancelled)) return; f.error = (e && e.message) || 'Did not upload'; paintFile(f); syncSend(); });
         }
         strip.addEventListener('click', (e) => {
             const chip = e.target.closest && e.target.closest('.ovc-file'); if (!chip) return;
@@ -1224,6 +1275,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     //   options: { preset: 'post' | 'chat' | 'agent' | 'comment', id, name ('text'), placeholder, label, maxLength,
     //     user: { display_name | username, avatar_url }, tools: ['photo', 'file', 'attach', 'emoji', 'voice'] (the
     //     preset's own when absent), accept, maxFiles, maxMb, required (true), noDraft,
+    //     media (4.247.0: true sends each file to Media's composer attachments as it is picked, at Media's limits per kind,
+    //     and the form carries the ids in `attachments`, or idsName; a page without a viewer token keeps the plain upload),
     //     audience / mode: { name, label, options: [[value, label]], value } (a chip each); chips: [{ name, label, icon
     //     ('globe' | 'spark' | 'cpu' | 'gauge'), options, value, onChange }] for any more (an agent's Model and Reasoning,
     //     as the agents portal's box has),
@@ -1524,7 +1577,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         if (o.id) form.id = o.id;
         form.setAttribute('data-ovc', '');
         form.setAttribute('data-ovc-max-files', String(o.maxFiles || 10));
-        form.setAttribute('data-ovc-max-mb', String(o.maxMb || 100));
+        form.setAttribute('data-ovc-max-mb', String(o.maxMb || (o.media ? 300 : 100)));
+        if (o.media) { form.setAttribute('data-ovc-media', '1'); form.setAttribute('data-ovc-ids', o.idsName || 'attachments'); }
         if (o.noDraft) form.setAttribute('data-ovc-no-draft', '');
         if (o.noPlus) form.setAttribute('data-ovc-no-more', '');
         if (o.plus && typeof o.plus === 'object') form.dataset.ovcPlus = JSON.stringify(cleanPlus(o.plus));

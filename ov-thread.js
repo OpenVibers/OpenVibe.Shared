@@ -24,7 +24,7 @@
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
-    const THREAD_REV = { 'ov-composer.js': '5bd54df16c8f', 'ov-combo.js': '8001a3b19c2f' };
+    const THREAD_REV = { 'ov-composer.js': '9b2a27f70f5f', 'ov-combo.js': '8001a3b19c2f', 'player.js': '8f4b6892e572', 'player.css': '699a7c4927d5' };
     var selfSrc = (document.currentScript && document.currentScript.src) || '';
     // 4.202.0: the one dropdown for a field (ov-combo.js: a repository, a person), wherever a page asks for it.
     function loadCombo() {
@@ -35,6 +35,24 @@
         var s = document.createElement('script');
         s.async = true;
         s.src = (m ? m[1] : 'https://openvibe.network/shared/') + 'ov-combo.js' + (THREAD_REV['ov-combo.js'] ? '?v=' + THREAD_REV['ov-combo.js'] : '');
+        document.head.appendChild(s);
+    }
+    // 4.247.0 (§Z.9): a video in a comment plays in the network's one player (player.js on video[data-ov-player]).
+    function loadPlayer() {
+        if (root.OpenVibePlayer) { qa(document, 'video[data-ov-player]').forEach(function (v) { try { root.OpenVibePlayer.enhance(v); } catch (e) { /* the browser's own controls stay */ } }); return; }
+        if (loadPlayer.on || !document.querySelector('[data-ovc-thread] video[data-ov-player]')) return;
+        loadPlayer.on = true;
+        var m = /^(https?:\/\/[^?#]*\/)ov-thread(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+        var base = m ? m[1] : 'https://openvibe.network/shared/';
+        if (!document.querySelector('link[href*="player.css"]')) {
+            var l = document.createElement('link');
+            l.rel = 'stylesheet';
+            l.href = base + 'player.css' + (THREAD_REV['player.css'] ? '?v=' + THREAD_REV['player.css'] : '');
+            document.head.appendChild(l);
+        }
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = base + 'player.js' + (THREAD_REV['player.js'] ? '?v=' + THREAD_REV['player.js'] : '');
         document.head.appendChild(s);
     }
     function loadComposer(after) {
@@ -261,6 +279,7 @@
     }
     function start() {
         loadCombo();
+        loadPlayer();
         qa(document, '[data-ovt], [data-ovc-thread]').forEach(function (box) {
             if (box.dataset.ovtReady) return;
             box.dataset.ovtReady = '1';
@@ -353,6 +372,7 @@
                 var sendBtn = q(f, '[data-ovt-send]');
                 var label = (sendBtn && (sendBtn.getAttribute('aria-label') || sendBtn.textContent.trim())) || 'Reply';
                 var preset = f.getAttribute('data-ovt-preset') || 'comment';
+                var media = f.hasAttribute('data-ovc-media');
                 var host = document.createElement('div');
                 f.replaceWith(host);
                 var c = null;
@@ -360,7 +380,8 @@
                     c = root.OpenVibeComposer.mount(host, {
                         preset: preset, name: oldText.name || 'message', placeholder: oldText.placeholder || '',
                         maxLength: Number(oldText.getAttribute('maxlength')) || 2000, submitLabel: label,
-                        tools: file ? ['photo', 'emoji'] : ['emoji'], maxFiles: Number(f.getAttribute('data-ovc-max-files')) || 10,
+                        tools: file ? (media ? ['photo', 'file', 'emoji'] : ['photo', 'emoji']) : ['emoji'], maxFiles: Number(f.getAttribute('data-ovc-max-files')) || 10,
+                        media: media, maxMb: media ? 300 : undefined,
                     });
                 } catch (e) { c = null; }
                 if (!c) { host.replaceWith(f); return null; }
@@ -371,6 +392,7 @@
                     qa(c.form, 'input[type=file]').forEach(function (i) { i.name = field; if (file.accept) i.accept = file.accept; });
                 }
                 hidden.forEach(function (h) { var i = document.createElement('input'); i.type = 'hidden'; i.name = h[0]; i.value = h[1]; c.form.appendChild(i); });
+                // 4.247.0 (§Z.9): mount({ media }) sends the box's files to Media as they are picked; the form carries their ids.
                 if (oldText.value) c.text.value = oldText.value;
                 if (note && note.textContent) c.note.textContent = note.textContent;
                 c.form.__ovtUpgraded = true;

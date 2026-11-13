@@ -16,6 +16,14 @@
 .ovc-attach { display: inline-block; margin: 4px 8px 4px 0; }
 .ovc-attach--file { border: 1px solid currentColor; border-radius: 999px; padding: 4px 12px; }
 .ovc-attach img { max-width: 120px; max-height: 90px; object-fit: cover; }
+/* 4.247.0 (§Z.9): a video plays in the comment, at its own shape, never wider than the thread; a sound gets a bar. */
+.ovc-attach--video, .ovc-attach--audio { display: block; margin: 8px 0; max-width: min(100%, 560px); }
+.ovc-attach--video video { display: block; width: 100%; height: auto; max-height: 70vh; border-radius: 12px; background: #000; }
+.ovc-attach--audio audio { display: block; width: 100%; }
+.ovc-attach--video figcaption, .ovc-attach--audio figcaption { margin-top: 4px; font-size: 12.5px; opacity: .75; overflow-wrap: anywhere; }
+.ovc-attach--video.is-preparing { display: inline-grid; gap: 6px; padding: 8px; border: 1px dashed currentColor; border-radius: 12px; text-decoration: none; }
+.ovc-attach--video.is-preparing img { max-width: 240px; max-height: 135px; border-radius: 8px; }
+.ovc-attach--video.is-preparing span { font-size: 13px; }
 .ovc-order { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: color-mix(in srgb, currentColor 8%, transparent); }
 .ovc-order a { min-height: 36px; padding: 4px 14px; border: 0; border-radius: 999px; font-size: .875rem; }
 .ovc-order .is-active { font-weight: 700; background: color-mix(in srgb, currentColor 16%, transparent); }
