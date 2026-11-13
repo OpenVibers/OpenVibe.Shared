@@ -782,14 +782,18 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             chip.classList.toggle('is-up', f.progress != null && f.progress < 1 && !f.error);
             chip.style.setProperty('--p', String(f.progress == null ? 1 : f.progress));
             const ext = ((f.file.name || '').split('.').pop() || 'file').slice(0, 4).toUpperCase();
-            const thumb = f.url && kind === 'image' ? `<img class="ovc-file-th" src="${f.url}" alt="">` : f.url && kind === 'video' ? `<video class="ovc-file-th" src="${f.url}" muted preload="metadata"></video>` : `<span class="ovc-file-th ovc-file-ic">${f.pasted ? svg(IC.file) : ext}</span>`;
+            const thumb = f.url && kind === 'image' ? `<img class="ovc-file-th" src="${f.url}" alt="">` : f.url && kind === 'video' ? `<video class="ovc-file-th" src="${f.url}#t=0.1" muted playsinline preload="metadata"></video>` : `<span class="ovc-file-th ovc-file-ic">${f.pasted ? svg(IC.file) : ext}</span>`;
             chip.innerHTML = `${thumb}<span class="ovc-file-t"><span class="ovc-file-n"></span><span class="ovc-file-s"></span></span>`
                 + (f.pasted ? `<button type="button" class="ovc-file-b" data-ovc-back aria-label="Put the text back in the box" title="Put it back in the box">${svg(IC.back)}</button>` : '')
                 + (f.error && uploader() ? `<button type="button" class="ovc-file-r" data-ovc-retry aria-label="Try the upload again" title="Try again">${svg(IC.retry)}<span class="ovc-file-r-t">Try again</span></button>` : '')
                 + (kind === 'image' && !f.pasted && captionOn() ? `<button type="button" class="ovc-file-ai${f.captioning ? ' is-busy' : ''}" data-ovc-caption aria-label="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}" title="${f.captioning ? 'Writing a caption…' : 'Caption it with AI'}"${f.captioning ? ' aria-busy="true"' : ''}>${svg(IC.spark)}</button>` : '')
                 + `<button type="button" class="ovc-file-x" data-ovc-x aria-label="Remove">${svg(IC.x)}</button>`;
             chip.querySelector('.ovc-file-n').textContent = f.pasted ? 'Pasted text' : f.file.name || 'File';
-            chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : size(f.file.size));
+            // 4.247.0 (§Z.9): a video says its length beside its size once the browser has read it.
+            const length = f.duration > 0 ? `${Math.floor(f.duration / 60)}:${String(Math.round(f.duration % 60)).padStart(2, '0')} · ` : '';
+            chip.querySelector('.ovc-file-s').textContent = f.error || (f.pasted ? `${f.lines} lines · ${size(f.file.size)}` : f.progress != null && f.progress < 1 ? `${Math.round(f.progress * 100)}%` : length + size(f.file.size));
+            const vid = !f.duration && chip.querySelector('video.ovc-file-th');
+            if (vid) vid.addEventListener('loadedmetadata', () => { if (Number.isFinite(vid.duration) && vid.duration > 0 && files.includes(f)) { f.duration = vid.duration; paintFile(f); } }, { once: true });
             chip.querySelector('[data-ovc-x]').setAttribute('aria-label', `Remove ${f.pasted ? 'the pasted text' : f.file.name || 'the file'}`);
             if (!chip.isConnected) strip.appendChild(chip);
         }
