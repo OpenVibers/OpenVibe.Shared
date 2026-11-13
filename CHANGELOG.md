@@ -1,5 +1,31 @@
 # Changelog
 
+## 4.239.0 — 2026-11-13
+
+**One floating action, a composer that fits its column, a close button with depth** (the owner, 11-13: "this button
+is buggy … it disappears when you scroll … it should just use a floating button that actually moves its position …
+it's one button, it's not jumping around, it's transitioning"; "this camera button will flash in and out"; "improve
+composer … better responsive support and size on mobile to fit better"; "make the close button look slightly 3D and …
+glowing … make it look kind of cool").
+
+- **`OVFloat.action(el, opts)` (ov-float.js), the floating action.** One element with a home in the page: while its
+  home is on screen it sits there; when the home scrolls away (before the person reaches it, after they pass it, or
+  either: `side`), the same element glides to the dock at the bottom of the window, above the bars
+  (`[data-ov-bottom-bar]`, the app bar), the keyboard and a footer that has come up, and back when its home returns.
+  Never a copy and never hidden: its home keeps the space, the move is a transform (FLIP; from far away it rises from
+  just past the edge), Calm shortens it and Off places it at once. `when()` keeps it home (e.g. only phones float it);
+  `maxWidth`, `stretch`, `gap`, `above`, `avoid`; `ov:fab` and `data-ov-fab="floating|home"` say where it is;
+  `check()` and `destroy()`; `OVFloat.actions()` lists them. Live's Go live adopts it next, replacing its copied dock.
+- **The composer fits its column (ov-composer.js).**
+  - A box narrower than its words says their short form ("Message…", or the site's `data-ovc-short`) and the long
+    one again when there is room; a site that changes its words later is followed. Words never wrap or clip.
+  - Under 340 px the chat preset's tools tighten into quiet 36 px discs; under 240 px they go under the words.
+- **The close orb (search.js)** is a lit sphere: a highlight up and to the left, a shade under it, an accent rim, a
+  soft glow, a white ×; a sheen sweeps across once as the menu opens; hover brightens the glow; a press sinks it.
+  Nothing moves at rest.
+- Tests: `float-action-chrome` (one element floats and comes home, above the bar and the footer, `when()`,
+  `ov:fab`, `destroy()`).
+
 ## 4.238.0 — 2026-11-13
 
 **The menu's top is a composer, you lead it, no text arrows anywhere, a ringing bell, You gets the height** (the owner's

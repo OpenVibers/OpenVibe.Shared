@@ -365,12 +365,28 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
 .ovc-v2 .ovt-send--round:not(:disabled):active { transform: scale(.9); }
 .ovc-v2 .ovt-send--round:not(:disabled):active svg { transform: translateY(-3px); }
 html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc-v2 .ovt-send--round svg { animation: none; transition: none; }
+/* 4.239.0 (the owner, 11-13: the stream's side chat wrapped "Send a message…" onto two lines beside three tools,
+   "improve composer … better responsive support and size on mobile to fit better"): the words keep one line; in a
+   narrow box the tools tighten into quiet discs, and in a very narrow one they go under the words. */
+.ovc-v2 textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@container ovc (max-width: 340px) {
+  .ovc-v2[data-preset=chat].ovt-composer { padding: 4px 4px 4px 10px; }
+  .ovc-v2[data-preset=chat] .ovt-c-row { gap: 2px; }
+  .ovc-v2[data-preset=chat] .ovt-c-tools { gap: 0; }
+  .ovc-v2[data-preset=chat] .ovt-c-tools > .ovt-btn, .ovc-v2[data-preset=chat] .ovt-send { width: 36px; height: 36px; min-width: 36px; }
+  .ovc-v2[data-preset=chat] .ovt-c-tools > .ovt-btn:not([aria-expanded="true"]):not([aria-pressed="true"]) { background: transparent; }
+  .ovc-v2[data-preset=chat] textarea { padding: 7px 2px; }
+}
+@container ovc (max-width: 240px) {
+  .ovc-v2[data-preset=chat] .ovc-body { grid-template-columns: minmax(0, 1fr); }
+  .ovc-v2[data-preset=chat] .ovt-c-row { justify-content: flex-end; }
+}
 `;
     function styles() { if (document.getElementById('ovc-styles')) return; const st = document.createElement('style'); st.id = 'ovc-styles'; st.textContent = CSS; document.head.appendChild(st); }
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': '01be12417e83', 'ov-capture.js': '6bdc48bfd415' };
+    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
@@ -493,12 +509,42 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     }
     root.addEventListener('storage', (e) => { if (e.key === PREFS_KEY) { prefs = Object.assign({}, DEFAULTS, store.get(PREFS_KEY) || {}); live.forEach((c) => c.refresh()); } });
 
+    // 4.239.0 (the owner, 11-13: the stream's side chat cut "Send a message…" beside its tools): a box narrower than its
+    // words says their short form ("Message…", or the site's data-ovc-short), and the long one again when there is
+    // room. A site that changes the words later is followed (the long form is whatever it set last).
+    function fitPlaceholder(text) {
+        if (typeof ResizeObserver !== 'function' || text.__ovcFit) return;
+        text.__ovcFit = true;
+        let full = text.placeholder || '';
+        const shortOf = () => text.getAttribute('data-ovc-short') || (full.length > 12 ? 'Message…' : full);
+        let ctx = null;
+        const width = (s) => {
+            try {
+                ctx = ctx || document.createElement('canvas').getContext('2d');
+                const cs = getComputedStyle(text);
+                ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+                return ctx.measureText(s).width + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0) + 4;
+            } catch { return 0; }
+        };
+        const fit = () => {
+            const now = text.placeholder || '';
+            if (now !== full && now !== shortOf()) full = now;
+            const w = text.clientWidth;
+            if (!w || !full) return;
+            const next = width(full) > w ? shortOf() : full;
+            if (next !== now) text.placeholder = next;
+        };
+        new ResizeObserver(fit).observe(text);
+        fit();
+    }
+
     // ── One box.
     function enhance(form) {
         if (!form || form.__ovc) return form && form.__ovc;
         styles();
         const text = form.querySelector('[data-ovt-text]') || form.querySelector('textarea');
         if (!text) return null;
+        fitPlaceholder(text);
         const row = form.querySelector('.ovt-c-row');
         // A box drawn by its own page marks its row with data-ovc-tools (Vibe's); else the composer's own row.
         const tools = form.querySelector('.ovt-c-tools') || form.querySelector('[data-ovc-tools]');

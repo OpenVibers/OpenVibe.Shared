@@ -74,7 +74,14 @@ html[data-ov-motion="off"] .ov-float { transition: none !important; }
 html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-resize { transition: none !important; animation: none !important; }
 @media (prefers-reduced-motion: reduce) {
   html:not([data-ov-motion="on"]) .ov-float { transition: none !important; }
-}`;
+}
+/* The floating action (4.239.0): its home holds the space; floating, it is fixed at the dock with a lift. */
+.ov-fab-home { position: relative; }
+.ov-fab-floating { position: fixed !important; z-index: 70; left: 0; right: 0; bottom: calc(var(--ov-fab-bottom, 12px) + env(safe-area-inset-bottom, 0px));
+  width: var(--ov-fab-w, auto); max-width: calc(100vw - 32px); margin: 0 auto !important;   /* centred by margins: the glide owns transform */
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, .45)) drop-shadow(0 2px 6px rgba(0, 0, 0, .3)); transition: bottom .25s cubic-bezier(.2, 1, .3, 1); }
+html[data-ov-motion=off] .ov-fab-floating { transition: none; }
+`;
 
     const instances = new Set();
     let uid = 0;
@@ -943,6 +950,124 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
         inst.el.classList.remove('ov-float', 'is-floating', 'is-lifted', 'is-dragging', 'is-tucked', 'is-tucked-left', 'is-tucked-right', 'is-resizing', 'is-active');
     }
 
+    // ── The floating action (4.239.0; the owner, 11-13: "this button is buggy … it disappears when you scroll … it should
+    // just use a floating button that actually moves its position … it's one button, it's not jumping around, it's
+    // transitioning … aware of the page design"; "this camera button will flash in and out … a single button with smart
+    // positioning"). One element with a home in the page: while its home is on screen it sits there; when the home
+    // scrolls away, the same element glides to the dock (the bottom of the window, above the bars, the keyboard and a
+    // footer that has come up), and back when the home returns. Never a copy, never a blink: its home keeps the space,
+    // and the move is a transform (FLIP) the browser composites. Calm shortens it; Off places it at once.
+    //
+    //   const a = OVFloat.action(el, { when, side, gap, maxWidth, stretch, above, avoid, onChange });
+    //   a.floating · a.check() · a.destroy()
+    //
+    //   when()     whether it may float at all now (e.g. only on a phone); default always
+    //   side       'both' (default): it floats while its home is above or below the window; 'below' only before the
+    //              person reaches it; 'above' only after they pass it
+    //   gap        px between the dock and what is under it (12)
+    //   maxWidth   the floating width at most (560); stretch: true widens it to the window less the gutters
+    //   above      the bars it sits over (selector; default the app bar and any [data-ov-bottom-bar])
+    //   avoid      what it rises above when on screen (default the footer)
+    // Every change dispatches `ov:fab` ({ floating }) on the element; `data-ov-fab="floating|home"` styles it.
+    const fabs = new Set();
+    function action(el, o = {}) {
+        if (!el || !el.parentNode || el.__ovFab) return el && el.__ovFab;
+        injectStyles();
+        const home = document.createElement('div');
+        home.className = 'ov-fab-home';
+        el.parentNode.insertBefore(home, el);
+        home.appendChild(el);
+        el.dataset.ovFab = 'home';
+        let floating = false, seen = true, raf = 0, dead = false, anim = null;
+        const motion = () => document.documentElement.getAttribute('data-ov-motion') || 'auto';
+        const may = () => { try { return typeof o.when === 'function' ? !!o.when() : true; } catch { return false; } };
+        const gap = Number.isFinite(o.gap) ? o.gap : 12;
+        const vh = () => (root.visualViewport ? root.visualViewport.height + root.visualViewport.offsetTop : innerHeight);
+        // How high the dock must sit: over the fixed bars at the bottom, over the keyboard, over a footer on screen.
+        function floor() {
+            let lift = Math.max(0, innerHeight - vh());
+            const bars = o.above || '[data-ov-bottom-bar], .ovnav-appbar, .ov-appbar';
+            document.querySelectorAll(bars).forEach((b) => {
+                const r = b.getBoundingClientRect(); if (!r.height || r.bottom < innerHeight - 4) return;
+                const pos = getComputedStyle(b).position; if (pos !== 'fixed' && pos !== 'sticky') return;
+                lift = Math.max(lift, innerHeight - r.top);
+            });
+            document.querySelectorAll(o.avoid || '#ov-footer, footer.ov-footer').forEach((f) => {
+                const r = f.getBoundingClientRect(); if (r.height && r.top < innerHeight) lift = Math.max(lift, innerHeight - r.top);
+            });
+            return lift;
+        }
+        function place() {
+            if (!floating) return;
+            const max = Number.isFinite(o.maxWidth) ? o.maxWidth : 560;
+            const room = document.documentElement.clientWidth - 32;
+            const w = Math.min(max, room, o.stretch ? room : Math.max(home.getBoundingClientRect().width, 1));
+            el.style.setProperty('--ov-fab-w', `${Math.round(w)}px`);
+            el.style.setProperty('--ov-fab-bottom', `${Math.round(floor() + gap)}px`);
+        }
+        function glide(from) {
+            if (anim) { try { anim.cancel(); } catch { /* */ } anim = null; }
+            const m = motion();
+            if (m === 'off' || !from || !from.width || typeof el.animate !== 'function') return;
+            const to = el.getBoundingClientRect();
+            const dx = (from.left + from.width / 2) - (to.left + to.width / 2), dy = (from.top + from.height / 2) - (to.top + to.height / 2);
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+            // Over a long way (from far above or below the window) it rises from just past the edge instead.
+            const far = Math.abs(dy) > innerHeight * 0.6;
+            const start = far ? `translate(0, ${dy > 0 ? 40 : -40}px) scale(.96)` : `translate(${dx}px, ${dy}px)`;
+            anim = el.animate([{ transform: start, opacity: far ? 0 : 1 }, { transform: 'none', opacity: 1 }],
+                { duration: m === 'reduced' ? 180 : (far ? 360 : 460), easing: 'cubic-bezier(.2, 1, .3, 1)' });
+            anim.onfinish = () => { anim = null; };
+        }
+        function set(next) {
+            if (next === floating || dead) return;
+            const from = el.getBoundingClientRect();
+            if (next) home.style.minHeight = `${Math.round(from.height)}px`;
+            floating = next;
+            el.dataset.ovFab = next ? 'floating' : 'home';
+            el.classList.toggle('ov-fab-floating', next);
+            if (next) place(); else { el.style.removeProperty('--ov-fab-w'); el.style.removeProperty('--ov-fab-bottom'); }
+            if (!next) home.style.minHeight = '';
+            glide(from);
+            try { el.dispatchEvent(new CustomEvent('ov:fab', { bubbles: true, detail: { floating: next } })); } catch { /* */ }
+            if (typeof o.onChange === 'function') { try { o.onChange(next); } catch { /* the page's */ } }
+        }
+        function check() {
+            raf = 0;
+            if (dead) return;
+            const r = home.getBoundingClientRect();
+            const below = r.top >= vh() - floor() - 8, above = r.bottom <= 8;
+            seen = !(below || above);
+            const side = o.side || 'both';
+            const want = may() && !seen && (side === 'both' || (side === 'below' && below) || (side === 'above' && above));
+            set(want);
+            place();
+        }
+        const later = () => { if (!raf) raf = requestAnimationFrame(check); };
+        const io = typeof IntersectionObserver === 'function' ? new IntersectionObserver(later, { threshold: [0, 0.5, 1] }) : null;
+        if (io) io.observe(home);
+        addEventListener('scroll', later, { passive: true });
+        addEventListener('resize', later);
+        if (root.visualViewport) root.visualViewport.addEventListener('resize', later);
+        const handle = {
+            el, home,
+            get floating() { return floating; },
+            check: later,
+            destroy() {
+                dead = true; if (io) io.disconnect();
+                removeEventListener('scroll', later); removeEventListener('resize', later);
+                if (root.visualViewport) root.visualViewport.removeEventListener('resize', later);
+                el.classList.remove('ov-fab-floating'); delete el.dataset.ovFab; el.__ovFab = null;
+                if (home.parentNode) { home.parentNode.insertBefore(el, home); home.remove(); }
+                fabs.delete(handle);
+            },
+        };
+        el.__ovFab = handle;
+        fabs.add(handle);
+        later();
+        return handle;
+    }
+
     function injectStyles() {
         if (document.getElementById('ov-float-styles')) return;
         const st = document.createElement('style');
@@ -954,6 +1079,8 @@ html[data-ov-motion="off"] .ov-float-tab, html[data-ov-motion="off"] .ov-float-r
     const defaultStore = makeDefaultStore();
     root.OVFloat = {
         attach,
+        action,
+        actions: () => [...fabs],
         store: defaultStore,
         newStore: makeDefaultStore,
         layout: () => [...instances].map((i) => ({ key: i.key, geom: Object.assign({}, i.geom), el: i.el })),

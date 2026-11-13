@@ -660,6 +660,24 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
   .ovs.ovs-anchored .ovs-orb.is-x:active svg { transform: rotate(90deg) scale(.86); }
   html[data-ov-motion=off] .ovs.ovs-anchored .ovs-orb.is-x.is-pop { animation: none; }
   @media (hover: hover) { .ovs.ovs-anchored .ovs-orb.is-x:hover svg { transform: rotate(90deg); } }
+  /* 4.239.0 (the owner, 11-13: "make the close button look slightly 3D and look kind of like glowing … a better effect …
+     make it look kind of cool"): a lit sphere (a highlight up and to the left, a shade under it, a rim of the accent),
+     a soft glow around it, a sheen that sweeps across once as the menu opens, a brighter glow on hover, and a press
+     that sinks it. Nothing moves at rest. */
+  .ovs.ovs-anchored .ovs-orb.is-x { color: #fff; overflow: hidden; --ovo-a: #fff; --ovo-b: #fff;
+    background: radial-gradient(120% 120% at 32% 22%, color-mix(in srgb, #fff 30%, var(--accent-light, #60a5fa)) 0%, color-mix(in srgb, var(--accent, #3b82f6) 72%, #0b1220) 42%, color-mix(in srgb, var(--accent, #3b82f6) 30%, #04060c) 100%);
+    box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .42), inset 0 -4px 8px rgba(0, 0, 0, .45), 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 55%, transparent),
+      0 0 22px -2px color-mix(in srgb, var(--accent, #3b82f6) 75%, transparent), 0 10px 22px -8px rgba(0, 0, 0, .8);
+    transition: transform .42s cubic-bezier(.2, 1.1, .3, 1), box-shadow .25s, filter .25s; }
+  .ovs.ovs-anchored .ovs-orb.is-x svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
+  .ovs.ovs-anchored .ovs-orb.is-x::before { display: block; content: ""; position: absolute; inset: 0; border-radius: 50%; border: 0; opacity: 1; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .55) 48%, transparent 62%) no-repeat; background-size: 260% 100%; background-position: 130% 0;
+    animation: ovs-orb-sheen .9s cubic-bezier(.3, .6, .3, 1) .38s 1 both; }
+  @keyframes ovs-orb-sheen { to { background-position: -40% 0; } }
+  @media (hover: hover) { .ovs.ovs-anchored .ovs-orb.is-x:hover { filter: brightness(1.12); box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, .5), inset 0 -4px 8px rgba(0, 0, 0, .4), 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 70%, transparent), 0 0 30px 0 color-mix(in srgb, var(--accent, #3b82f6) 85%, transparent), 0 10px 22px -8px rgba(0, 0, 0, .8); } }
+  .ovs.ovs-anchored .ovs-orb.is-x:active { transform: scale(.9); box-shadow: inset 0 3px 8px rgba(0, 0, 0, .55), 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 50%, transparent), 0 0 14px -2px color-mix(in srgb, var(--accent, #3b82f6) 60%, transparent); }
+  html[data-ov-motion=off] .ovs.ovs-anchored .ovs-orb.is-x::before { animation: none; background: none; }
+  html[data-ov-motion=reduced] .ovs.ovs-anchored .ovs-orb.is-x::before { animation-duration: .5s; }
   .ovs.is-closing .ovs-panel { animation: ovs-fold .28s cubic-bezier(.5, 0, .75, .2) both; }
   .ovs.is-closing { animation: ovs-fade .28s ease-in both; }
 }
