@@ -60,17 +60,20 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         // Each preset draws its own tools, chips and send.
         const shape = await page.evaluate(`(() => [...document.querySelectorAll('.ovc-v2')].map((f) => ({ preset: f.dataset.preset,
             // 4.223.0: the mic and the + lead the row; the box's own tools follow.
-            lead: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')).filter((l) => l === 'Speak' || l === 'More: attach, timer and tools'),
-            tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')).filter((l) => l !== 'Speak' && l !== 'More: attach, timer and tools'),
+            lead: [...f.querySelectorAll('.ovt-c-tools .ovt-btn:not([hidden])')].map((b) => b.getAttribute('aria-label')).filter((l) => l === 'Speak' || l === 'Add: camera, photos, files and more'),
+            // 4.241.0: what the + shows as a tile (camera, photos, files; attach) is not a button in the row too.
+            tools: [...f.querySelectorAll('.ovt-c-tools .ovt-btn:not([hidden])')].map((b) => b.getAttribute('aria-label')).filter((l) => l !== 'Speak' && l !== 'Add: camera, photos, files and more'),
+            kept: f.querySelectorAll('.ovt-c-tools input[type=file]').length,
             avatar: !!f.querySelector('.ovc-head .ovc-av'), full: Math.abs(f.querySelector('textarea').getBoundingClientRect().left - f.querySelector('.ovc-body').getBoundingClientRect().left) < 4, round: f.querySelector('[data-ovt-send]').classList.contains('ovt-send--round'),
             send: f.querySelector('[data-ovt-send]').textContent.trim(), chips: [...f.querySelectorAll('.ovc-chip-v')].map((c) => c.textContent) })))()`);
         assert.deepEqual(shape.map((s) => s.preset), ['post', 'chat', 'agent', 'comment']);
-        assert.ok(shape.every((s) => s.lead[s.lead.length - 1] === 'More: attach, timer and tools' && (s.lead.length === 1 || s.lead[0] === 'Speak')), `the mic, then the +, lead every row (${JSON.stringify(shape.map((s) => s.lead))})`);
-        assert.deepEqual(shape[0].tools.slice(0, 4), ['Photos and video', 'Files', 'Emoji', 'Poll'], 'a post: photos, files, emoji and the site\'s own tool');
+        assert.ok(shape.every((s) => s.lead[s.lead.length - 1] === 'Add: camera, photos, files and more' && (s.lead.length === 1 || s.lead[0] === 'Speak')), `the mic, then the +, lead every row (${JSON.stringify(shape.map((s) => s.lead))})`);
+        assert.deepEqual(shape[0].tools.slice(0, 2), ['Emoji', 'Poll'], 'a post: emoji and the site\'s own tool in the row; photos and files in the +');
+        assert.ok(shape.every((x) => x.preset === 'agent' || x.kept > 0), 'the file inputs stay in the form, so files still go with it');
         assert.ok(shape[0].avatar && shape[0].send === 'Post' && !shape[0].round);
         assert.ok(shape.every((x) => x.full), 'the words use the full width: no column kept for the picture');
         assert.deepEqual(shape[0].chips, ['Everyone']);
-        assert.deepEqual(shape[1].tools.slice(0, 2), ['Attach', 'Emoji']);
+        assert.deepEqual(shape[1].tools.slice(0, 1), ['Emoji'], 'a chat: emoji in the row; attaching is the +\'s');
         assert.ok(shape[1].round && !shape[1].avatar, 'a chat: a round send, no picture');
         assert.ok(shape[2].round && shape[2].chips.join() === 'Balanced,High', 'an agent: its mode and reasoning chips and a round send');
         assert.ok(shape[3].avatar && shape[3].send === 'Reply');
@@ -148,11 +151,11 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         // 4.225.0: the + has GitHub. A repository found through the Frame's code search goes into the box as its address.
         await page.evaluate(`document.getElementById('g1').setAttribute('data-ovc-frame', location.origin), true`);
         await page.evaluate(`document.querySelector('#g1 .ovc-more').click(), true`);
-        assert.ok((await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-tray-t')].map((t) => t.textContent)`)).includes('GitHub'), 'GitHub is in the +');
+        assert.ok((await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-add-t, #g1 .ovc-add-rt b, dialog.ovc-add[open] .ovc-add-t, dialog.ovc-add[open] .ovc-add-rt b')].map((t) => t.textContent)`)).includes('GitHub'), 'GitHub is in the +');
         // 4.234.0: the sheet does not repeat a tool the row already shows (the owner, 11-13: "why twice").
-        const repeat = await page.evaluate(`(() => { const row = [...document.querySelectorAll('#g1 .ovt-c-tools > .ovt-btn')].filter((b) => getComputedStyle(b).display !== 'none' && b.getClientRects().length).map((b) => b.getAttribute('aria-label')); const sheet = [...document.querySelectorAll('#g1 .ovc-tray-t')].map((t) => t.textContent); return row.filter((l) => l && sheet.includes(l)); })()`);
+        const repeat = await page.evaluate(`(() => { const row = [...document.querySelectorAll('#g1 .ovt-c-tools > .ovt-btn')].filter((b) => getComputedStyle(b).display !== 'none' && b.getClientRects().length).map((b) => b.getAttribute('aria-label')); const sheet = [...document.querySelectorAll('#g1 .ovc-add-t, #g1 .ovc-add-rt b, dialog.ovc-add[open] .ovc-add-t, dialog.ovc-add[open] .ovc-add-rt b')].map((t) => t.textContent); return row.filter((l) => l && sheet.includes(l)); })()`);
         assert.deepEqual(repeat, [], 'nothing the row shows is in the + again');
-        await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-tray-i')].find((b) => b.textContent === 'GitHub').click(), true`);
+        await page.evaluate(`document.querySelector('#g1 .ovc-add-row[data-tool=github], dialog.ovc-add[open] .ovc-add-row[data-tool=github]').click(), true`);
         assert.equal(await page.evaluate(`document.activeElement === document.querySelector('#g1 .ovc-repo-q')`), true, 'the search field has the focus');
         await page.evaluate(`(() => { const f = document.querySelector('#g1 .ovc-repo-q'); f.value = 'goal bar'; f.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         let rows = 0;
