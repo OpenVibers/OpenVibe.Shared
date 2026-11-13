@@ -27,7 +27,10 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     // 2026-11-10: soft pages (intent prefetch, cross-document view transitions); not loaded by navbar.js yet.
     'soft.js',
     // 4.224.0: Vibe's runs in the menu, and the one composer they write with.
-    'ov-run.js', 'ov-composer.js'];
+    'ov-run.js', 'ov-composer.js',
+    // 4.244.0 (§Z.3): what people wear on their names (items.js; items.css), loaded by the navbar the first time a page
+    // draws a name that carries a subject.
+    'items.js', 'items.css'];
 // The files dock.js and notification-ui.js load from beside themselves: their own tables, in their own files.
 const OWN = { 'dock.js': { name: 'DOCK_REV', files: ['dock-vibe.js', 'dock-code.js', 'dock-mount.js', 'dock-runs.js', 'ai-marks-client.js', 'action-center.js', 'dock-timeline.js', 'dock-actor.js', 'dock-agent.js', 'dock-timer.js', 'dock-share.js', 'dock-card.js', 'dock-chat-edits.js'] },
     'notification-ui.js': { name: 'NOTIFY_REV', files: ['notification-live.js'] },

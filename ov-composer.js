@@ -585,6 +585,21 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     };
     const svg = (d, cls) => `<svg${cls ? ` class="${cls}"` : ''} viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
     const el = (tag, cls, html) => { const n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; };
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the data carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    // The attribute a name wears, when the data carries a subject. Never invented.
+    const setSubject = (node, data) => { const s = subjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
     const store = {
         get(k) { try { return JSON.parse(root.localStorage.getItem(k) || 'null'); } catch { return null; } },
         set(k, v) { try { if (v == null) root.localStorage.removeItem(k); else root.localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
@@ -1529,8 +1544,10 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             const av = src ? el('img', 'ovc-av') : el('span', 'ovc-av');
             if (src) { av.src = src; av.alt = ''; av.loading = 'lazy'; } else av.textContent = initial(o.user);
             av.setAttribute('aria-hidden', 'true');
-            const nm = el('span', 'ovc-head-n'); nm.textContent = String(o.user.display_name || o.user.username || '');
+            // §Z.3: the name wears its effect, hat and badge (the account's subject, when it carries one).
+            const nm = setSubject(el('span', 'ovc-head-n'), o.user); nm.textContent = String(o.user.display_name || o.user.username || '');
             head.append(av, nm);
+            wearNames(head);
         }
         const ta = el('textarea');
         ta.name = o.name || 'text'; ta.rows = p.rows; ta.maxLength = o.maxLength || p.max;

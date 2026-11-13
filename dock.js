@@ -84,7 +84,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'd8d4ea13d12a', 'dock-code.js': 'cb97274524d0', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '759f07eebc81', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '1b6262204e91', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'dock-vibe.js': 'e41403255108', 'dock-code.js': 'cb97274524d0', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '759f07eebc81', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '1b6262204e91', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -334,6 +334,21 @@
     const scopes = () => Array.isArray(o.scopes) ? o.scopes : null;
     const canWriteChat = () => !scopes() || scopes().includes('chat.write');
     const h = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+    // §Z.3: a person's subject (usr_…), the only key a name effect hangs on. Never invented: what the data carries is what is used.
+    const SUBJECT_RE = /^usr_[0-9A-HJKMNP-TV-Z]{26}$/;
+    const subjectOf = (data) => {
+        if (!data || typeof data !== 'object') return null;
+        for (const key of ['subject', 'subject_id', 'user_subject', 'author_subject', 'owner_subject', 'sender_subject', 'sender_subject_id']) {
+            const v = data[key];
+            if (typeof v === 'string' && SUBJECT_RE.test(v)) return v;
+            if (v && typeof v === 'object' && typeof v.id === 'string' && SUBJECT_RE.test(v.id)) return v.id;
+        }
+        return null;
+    };
+    // The attribute a name wears, when the data carries a subject. Never invented.
+    const setSubject = (node, data) => { const s = subjectOf(data); if (s && node && node.setAttribute) node.setAttribute('data-ov-subject', s); return node; };
+    // Every name under the scope wears its effect, hat and badge (items.js; items.css). Never throws: a name stays plain.
+    const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
     const toChat = (href) => { const a = h('a', 'ovdk-ib ovdk-away'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Open in Chat'; a.setAttribute('aria-label', 'Open in Chat'); a.setAttribute('data-ov-tip', 'Open in Chat'); a.innerHTML = svg('<path d="M13.5 5.5h5v5M18.5 5.5l-7.5 7.5M17 13.5v4a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 5 17.5v-9A1.5 1.5 0 0 1 6.5 7h4"/>'); return a; };
     async function chatCall(path, init = {}) {
@@ -376,6 +391,21 @@
     }
     const others = (c) => (c.participants || []).filter((p) => p.username !== me());
     const titleOf = (c) => c.name || others(c).map((p) => p.display_name || p.username).join(', ') || 'Just you';
+    // §Z.3: the conversation's title with each person's name in a span of its own, so every name wears its effect.
+    const titleInto = (el, c) => {
+        if (!c) { el.textContent = 'Conversation'; return el; }
+        if (c.name) { el.textContent = c.name; return el; }
+        const people = others(c);
+        if (!people.length) { el.textContent = 'Just you'; return el; }
+        el.textContent = '';
+        people.forEach((p, i) => {
+            if (i) el.appendChild(document.createTextNode(', '));
+            const s = setSubject(h('span', ''), p); s.textContent = p.display_name || p.username || '';
+            el.appendChild(s);
+        });
+        return el;
+    };
+    const titleEl = (c) => titleInto(h('b', ''), c);
     async function chatList() {
         clearTimeout(chats.timer);
         if (chats.edits) { chats.edits.stop(); chats.edits = null; }
@@ -420,7 +450,7 @@
                 const unread = Number(c.unread_count) || 0;
                 const mine = (c.participants || []).some((p) => p.id === c.last_sender_id && p.username === me());
                 const body = h('span', 'ovdk-chat-b');
-                body.append(h('b', '', titleOf(c)), h('span', 'ovdk-chat-p', c.last_message ? `${mine ? 'You: ' : ''}${String(c.last_message).replace(/\s+/g, ' ').slice(0, 140)}` : 'No messages yet'));
+                body.append(titleEl(c), h('span', 'ovdk-chat-p', c.last_message ? `${mine ? 'You: ' : ''}${String(c.last_message).replace(/\s+/g, ' ').slice(0, 140)}` : 'No messages yet'));
                 const meta = h('span', 'ovdk-chat-m');
                 meta.append(h('time', '', when(c.last_message_at || c.updated_at)));
                 if (unread) meta.append(h('b', 'ovdk-unread', unread > 99 ? '99+' : String(unread)));
@@ -433,6 +463,8 @@
             scroll.append(ul);
         }
         panel.append(scroll);
+        // §Z.3: every name in the conversation list wears its effect, hat and badge.
+        wearNames(panel);
     }
     /** "edited", one quiet word after a message's words; when, in its title. */
     function editedMark(at) {
@@ -455,7 +487,11 @@
     function bubble(m, prev) {
         const mine = m.username === me();
         const li = h('li', `ovdk-msg${mine ? ' is-mine' : ''}${prev && prev.username === m.username ? ' is-cont' : ''}`);
-        if (!mine && !(prev && prev.username === m.username)) li.append(h('span', 'ovdk-who', m.display_name || m.username || ''));
+        if (!mine && !(prev && prev.username === m.username)) {
+            // §Z.3: the name wears its effect, hat and badge (the message's subject, when it carries one).
+            const who = setSubject(h('span', 'ovdk-who'), m); who.textContent = m.display_name || m.username || '';
+            li.append(who);
+        }
         li.dataset.id = String(m.id);
         const words = h('span', 'ovdk-text', String(m.message || ''));
         if (m.edited_at) words.append(editedMark(m.edited_at));
@@ -483,10 +519,11 @@
         const head = h('div', 'ovdk-thread-h');
         const back = h('button', 'ovdk-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your chats'); back.append(icon(G.back));
         back.addEventListener('click', () => { save({ chat: null }); chatList(); });
-        const title = h('b', '', conv ? titleOf(conv) : 'Conversation');
+        // §Z.3: the title's names wear their effect, hat and badge (each person's name in a span of its own).
+        const title = titleInto(h('b', ''), conv);
         head.append(back, title, toChat('https://openvibe.chat/messages'));
         // Opened from the Dock's state on another page: the list is not here yet, so the title comes with it.
-        if (!conv) chatCall('/api/dm/conversations').then((b) => { chats.list = b.conversations || []; const c = chats.list.find((x) => String(x.id) === String(id)); if (c && chats.open === String(id)) title.textContent = titleOf(c); }).catch(() => { /* the title stays */ });
+        if (!conv) chatCall('/api/dm/conversations').then((b) => { chats.list = b.conversations || []; const c = chats.list.find((x) => String(x.id) === String(id)); if (c && chats.open === String(id)) titleInto(title, c); }).catch(() => { /* the title stays */ });
         const list = h('ol', 'ovdk-msgs'); list.setAttribute('aria-live', 'polite');
         const scroll = h('div', 'ovdk-scroll ovdk-thread'); scroll.append(list);
         const form = h('form', 'ovdk-send');
@@ -572,6 +609,8 @@
         await pull(list, scroll, true);
         load('dock-chat-edits.js', () => !!root.OpenVibeDockChatEdits).then((ok) => { if (ok && chats.open === String(id)) chats.edits = root.OpenVibeDockChatEdits({ id: String(id), apply: (m) => applyEdit(list, m), tokenOf, chatBase, active: () => chats.open === String(id) && panelActive('chats') }); });
         if (canWriteChat() && !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches)) setTimeout(() => { try { box.focus({ preventScroll: true }); if (draft) box.setSelectionRange(box.value.length, box.value.length); } catch { /* */ } }, 0);
+        // §Z.3: every name in the room (the title and the messages) wears its effect, hat and badge.
+        wearNames(panel);
     }
     /** New messages of the open thread (all of them the first time), drawn in place; read once shown. */
     async function pull(list, scroll, first) {
@@ -585,6 +624,8 @@
         if (first) list.textContent = '';
         const atEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 40;
         got.forEach((m) => { if (chats.msgs.some((x) => x.id === m.id)) return; list.append(bubble(m, chats.msgs[chats.msgs.length - 1])); chats.msgs.push(m); chats.last = Math.max(chats.last, Number(m.id) || 0); });
+        // §Z.3: every name in the room wears its effect, hat and badge.
+        wearNames(list);
         if (first && !chats.msgs.length) list.append(h('li', 'ovdk-none', 'No messages yet. Say hello.'));
         if (first || atEnd) scroll.scrollTop = scroll.scrollHeight;
         if (got.length || first) chatCall(`/api/dm/conversations/${encodeURIComponent(id)}/read`, { method: 'POST', body: '{}' }).then(readUnread).catch(() => { /* */ });
