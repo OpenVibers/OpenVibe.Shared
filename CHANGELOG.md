@@ -14,7 +14,8 @@ read it … more mobile friendly").
   guest, the rank (member, streamer, mod, admin), staff, the owner; how long this visit has run (kept per tab); and the
   device (phone, touch, installed, the motion setting). The navbar writes it on `<html data-ov-viewer="guest|member|
   staff|owner" data-ov-rank="…">`, so a site's CSS can adapt its nav, and fires `openvibe-viewer` on window when it
-  changes (a sign-in, a sign-out, never a re-render). Nothing in it leaves the page.
+  changes (a sign-in, a sign-out, never a re-render). Nothing in it leaves the page. The id is the person's usr_
+  subject; apps and servers read the same model from Network's `GET /api/v1/viewer`.
 
 ## 4.242.0 — 2026-11-13
 
