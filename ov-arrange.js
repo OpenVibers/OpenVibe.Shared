@@ -98,7 +98,7 @@ html[data-ov-motion="reduced"] { --ov-arrange-dur: .12s; }
     }
 
     // ── The SDK's rules, as a browser sibling (scripts/build-arrange-core.js) ─────────────────────────
-    const ARRANGE_CORE_REV = { 'ov-arrange-core.js': 'cbf71f9cebb2' };
+    const ARRANGE_CORE_REV = { 'ov-arrange-core.js': 'f9cdb84b18d1' };
     let coreLoading = null;
     function loadCore(opts) {
         if (opts && opts.core) return Promise.resolve(opts.core);
