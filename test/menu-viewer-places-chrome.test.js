@@ -67,7 +67,8 @@ const HREF = (word) => `(() => { const a = [...document.querySelectorAll('.ovs a
                 await eventually(async () => assert.deepStrictEqual([...new Set(await p.evaluate(PLACES))], [want[0]], `${who} sees ${want[0]}`));
                 assert.strictEqual(await p.evaluate(HREF(want[0])), want[1], `${who}'s ${want[0]} opens ${want[1]}`);
             } else {
-                await wait(1500);
+                // Absence is checked once the You apps are drawn (their own first), never after a fixed sleep.
+                await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs .ovh-app').length > 0"), 'the You apps are drawn'));
                 assert.deepStrictEqual(await p.evaluate(PLACES), [], 'a member sees no staff place');
             }
             seen.push(`${who}: ${want ? want[0] : 'none'}`);
