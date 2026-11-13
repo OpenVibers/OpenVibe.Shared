@@ -15,6 +15,10 @@ assert.equal(M.format.ms(1310), '1.3 s');
 assert.equal(M.format.ms(98000), '1 min 38 s');
 assert.equal(M.format.usd(0.0042), '$0.0042');
 assert.equal(M.format.usd(61.2), '$61.20');
+assert.equal(M.format.usd(0.0118), '$0.012', 'two significant digits under a dollar: $0.0118 is not $0.01');
+assert.equal(M.format.usd(0.25), '$0.25');
+assert.equal(M.format.usd(0.1), '$0.10');
+assert.equal(M.format.usd(0.0000012), '$0.000001');
 assert.equal(M.format.count(18420), '18k');
 assert.equal(M.format.count(9100000), '9.1M');
 assert.equal(M.format.rate(0.9941), '99.4%');
@@ -63,7 +67,12 @@ document.getElementById('tb').append(OVMetrics.table([{ model: 'b', tps: 40 }, {
             const asc = rows();
             const sort = document.querySelectorAll('.ovm-table th')[1].getAttribute('aria-sort');
             const overflow = document.documentElement.scrollWidth > innerWidth;
-            return { deltas, bars, spark, marks, pctLabel, legend, before, desc, asc, sort, overflow, css: !!document.getElementById('ov-metrics-css') };
+            const wrap = document.querySelector('.ovm-table-wrap');
+            const card = getComputedStyle(document.querySelector('.ovm-table tbody tr')).display;
+            const labels = [...document.querySelector('.ovm-table tbody tr').children].map((td) => td.dataset.label).join('|');
+            const roles = [document.querySelector('.ovm-table').getAttribute('role'), document.querySelector('.ovm-table tbody tr').getAttribute('role'), document.querySelector('.ovm-table td').getAttribute('role')].join(',');
+            const sideways = wrap.scrollWidth > wrap.clientWidth;
+            return { deltas, bars, spark, marks, pctLabel, legend, before, desc, asc, sort, overflow, card, labels, roles, sideways, css: !!document.getElementById('ov-metrics-css') };
         })()`);
         assert.deepEqual(got.deltas, [['+12%', 'good'], ['+8.0%', 'bad']], 'more calls is good; a slower first token is bad');
         assert.deepEqual(got.bars.slice(0, 2), ['deepseek-v4-flash', 'gpt-5.1-mini'], 'ranked by value');
@@ -73,6 +82,10 @@ document.getElementById('tb').append(OVMetrics.table([{ model: 'b', tps: 40 }, {
         assert.match(got.legend, /Charged \$61\.20 \(75\.6%\).*Saved by cache \$19\.80/);
         assert.deepEqual([got.before, got.desc, got.asc, got.sort], ['bac', 'acb', 'bca', 'ascending'], 'a click sorts, a second click turns it');
         assert.equal(got.overflow, false, 'no page overflow at 390 px');
+        assert.equal(got.card, 'grid', 'a narrow table shows each row as a card');
+        assert.equal(got.labels, 'Model|Speed', 'each value carries its column label');
+        assert.equal(got.roles, 'table,row,cell', 'still a table to a screen reader');
+        assert.equal(got.sideways, false, 'no sideways scroll inside the table at 390 px');
         assert.ok(got.css);
         console.log('ov-metrics-chrome: words in Node; tiles with deltas and trends, ranked bars, p50/p95, split with legend, a sortable table, no overflow at 390 px');
     } finally {

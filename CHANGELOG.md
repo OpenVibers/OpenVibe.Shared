@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.233.0 — 2026-11-13
+
+**`ov-metrics.js` on a phone, and prices under a dollar.**
+
+- **A narrow table is cards** (`OVMetrics.table`):
+  - in a box under 520 px wide (a container query, so a side column counts too), each row is a card: its name on top
+    and each value under its label;
+  - the column heads become a row of sort buttons, and the one in use is outlined;
+  - nothing scrolls sideways;
+  - the table, its rows, cells and heads carry their roles, so a screen reader still reads a table whatever the display.
+- **`format.usd` keeps two significant digits under a dollar**: $0.0118 is `$0.012`, not `$0.01`; $0.25 stays `$0.25`.
+  A per-call price no longer rounds away.
+- Test `ov-metrics-chrome`: the card form at 390 px, the labels, the roles, no sideways scroll, and the new prices.
+
 ## 4.232.0 — 2026-11-12
 
 **`ov-metrics.js`: the network's one way to show numbers** (ai-metrics.md). Report, Exchange, Compare and the admin panel
