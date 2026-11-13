@@ -624,7 +624,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2f6cab5e0778', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '07e8f59d9e6d', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': 'f14df235d61d', 'dock.js': '24539743248d', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'c993615033ae', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0f6074850291', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'a9008daa5af5', 'ov-composer.js': 'ce2ed7a5d349' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2f6cab5e0778', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '07e8f59d9e6d', 'ov-share.js': 'd419508a797e', 'ov-share.css': 'd609a71f611a', 'search.js': '7d5076132825', 'dock.js': '24539743248d', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'c993615033ae', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0f6074850291', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'a9008daa5af5', 'ov-composer.js': 'ce2ed7a5d349' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -2207,7 +2207,57 @@
             }).catch(failed);
     }
 
+    // §Z.2 (11-13): one viewer model, read by the menu, every site's own nav, mods and apps (OV.viewer()). It says who
+    // is looking (a guest; a member, streamer, mod or admin; the owner), how long this visit has run and on what device.
+    // It is written on <html data-ov-viewer="guest|member|staff|owner" data-ov-rank="…"> so CSS can adapt, and
+    // `openvibe-viewer` fires on window when it changes. Nothing in it leaves the page.
+    const VIEWER_RANKS = { user: 'member', streamer: 'streamer', global_mod: 'mod', admin: 'admin' };
+    const _pageAt = Date.now();
+    let _viewerKey = '';
+    function visitStart() {
+        try {
+            let t = Number(root.sessionStorage.getItem('ov.visit.t0'));
+            if (!t) { t = _pageAt; root.sessionStorage.setItem('ov.visit.t0', String(t)); }
+            return t;
+        } catch { return _pageAt; }
+    }
+    function viewer() {
+        const u = _config.user || null;
+        const caps = (u && u.capabilities) || {};
+        const rank = u ? (VIEWER_RANKS[u.role] || 'member') : 'guest';
+        const owner = !!(u && (u.is_owner || caps.is_owner)); // Network's /api/auth/me says is_owner on the user
+        const staff = owner || rank === 'mod' || rank === 'admin';
+        const mm = (q) => { try { return !!(root.matchMedia && root.matchMedia(q).matches); } catch { return false; } };
+        const set = typeof document !== 'undefined' && document.documentElement && document.documentElement.getAttribute('data-ov-motion');
+        const t0 = visitStart();
+        return {
+            signedIn: !!u, rank, staff, owner,
+            // The usr_ subject, as GET /api/v1/viewer gives it; never a site's own numeric id.
+            id: (u && [u.subject_id, u.subject, u.id].find((x) => /^usr_/.test(String(x || '')))) || null, username: (u && u.username) || null,
+            visit: { startedAt: new Date(t0).toISOString(), minutes: Math.max(0, Math.floor((Date.now() - t0) / 60000)) },
+            device: {
+                phone: mm('(max-width: 640px)') && mm('(pointer: coarse)'), touch: mm('(pointer: coarse)'),
+                installed: mm('(display-mode: standalone)'),
+                motion: set === 'off' || set === 'reduced' ? set : (mm('(prefers-reduced-motion: reduce)') ? 'reduced' : 'full'),
+            },
+        };
+    }
+    function syncViewer() {
+        if (typeof document === 'undefined') return;
+        const v = viewer();
+        const tag = v.owner ? 'owner' : v.staff ? 'staff' : v.signedIn ? 'member' : 'guest';
+        const html = document.documentElement;
+        if (!html) return;
+        if (html.getAttribute('data-ov-viewer') !== tag) html.setAttribute('data-ov-viewer', tag);
+        if (html.getAttribute('data-ov-rank') !== v.rank) html.setAttribute('data-ov-rank', v.rank);
+        const key = `${tag}|${v.rank}|${v.id || ''}`;
+        if (key === _viewerKey) return;
+        _viewerKey = key;
+        try { root.dispatchEvent(new CustomEvent('openvibe-viewer', { detail: v })); } catch { /* */ }
+    }
+
     function render() {
+        syncViewer();
         syncWalletChips();
         // A site may put state classes on the bar (Live's transparent hero mode). A re-render must not lose them.
         let carried = []; try { carried = Array.from((_navEl && _navEl.classList) || []).filter(c => c !== 'openvibe-navbar'); } catch { carried = []; }
@@ -2749,6 +2799,8 @@
     }
 
     const OpenVibeNavbar = {
+        /** 4.243.0 (§Z.2): who is looking, for the menu, a site's own nav, mods and apps; also OV.viewer(). */
+        viewer() { return viewer(); },
         /** 4.228.0: the person's Network token the site gave init() (or null), for Shared's own calls to the Network
          * (the composer's settings sync and Caption it). The site already put it in the page; this only reads it. */
         token() { return _config.token || null; },
@@ -2938,6 +2990,11 @@
     };
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;
-    else root.OpenVibeNavbar = OpenVibeNavbar;
+    else {
+        root.OpenVibeNavbar = OpenVibeNavbar;
+        // The one short name apps and mods read (§Z.2): OV.viewer() → { signedIn, rank, staff, owner, visit, device }.
+        root.OV = root.OV || {};
+        if (typeof root.OV.viewer !== 'function') root.OV.viewer = () => viewer();
+    }
 
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : this);

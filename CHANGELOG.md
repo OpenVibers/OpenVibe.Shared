@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.243.0 — 2026-11-13
+
+**One + everywhere, and a menu that knows who is looking** (the owner, 11-13: "I don't really like the plus …
+way more animated, better effects"; "user aware and session aware and … aware of rank … user can through API and SDK
+read it … more mobile friendly").
+
+- **The menu's + is the composer's.** The Ask bar's attach button wears the same mark as the composer: two arms over
+  four petals that peek under the pointer and burst outward on a tap as the file picker opens, the arms turning a
+  quarter and settling back. Calm slows the bloom and shortens its travel; Off stills it (rule: Calm reduces, only Off
+  removes).
+- **The viewer model (plan §Z.2).** `OpenVibeNavbar.viewer()`, also `OV.viewer()`, says who is looking: signed in or a
+  guest, the rank (member, streamer, mod, admin), staff, the owner; how long this visit has run (kept per tab); and the
+  device (phone, touch, installed, the motion setting). The navbar writes it on `<html data-ov-viewer="guest|member|
+  staff|owner" data-ov-rank="…">`, so a site's CSS can adapt its nav, and fires `openvibe-viewer` on window when it
+  changes (a sign-in, a sign-out, never a re-render). Nothing in it leaves the page. The id is the person's usr_
+  subject; apps and servers read the same model from Network's `GET /api/v1/viewer`.
+
 ## 4.242.0 — 2026-11-13
 
 **One agent you can watch work, cards that act, and a + that blooms** (the owner, 11-13: "it needs to use a universal
