@@ -11,6 +11,11 @@ than where it should").
   that point was the screen's right edge, the person's picture; and the bar sits a little off while the menu holds the
   page. Now the bar's menu button is measured as the menu closes, after the page is let go (the burger on a phone, the
   orb on a computer); with no button on screen the close turns away where it is.
+- **Names wear their effects on every site, without CSP refusals.** 4.244.0 read what people wear from
+  inventory.openvibe.network, which 34 sites' Content-Security-Policy refuses: signed-in pages logged refusals and names
+  stayed plain. items.js now reads the same public data through Network's frame relay (`/api/frame/items/equipped`,
+  `/api/frame/items/definitions`; every site allows openvibe.network). A page that sets `OpenVibeItemsConfig.api` still
+  reads Inventory directly.
 
 ## 4.245.0 — 2026-11-13
 

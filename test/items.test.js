@@ -25,7 +25,7 @@ const subjectOf = (i) => `usr_01JZ${String(i).padStart(22, '0')}`;
     global.fetch = async (url, opts) => {
         calls.push({ url: String(url), opts });
         if (down) throw new Error('offline');
-        if (String(url).includes('/api/v1/definitions?')) return { ok: true, json: async () => ({ definitions: DEFS }) };
+        if (String(url).includes('/definitions?')) return { ok: true, json: async () => ({ definitions: DEFS }) };
         const subjects = decodeURIComponent(String(url).split('subjects=')[1] || '').split(',');
         return {
             ok: true,
@@ -51,7 +51,8 @@ const subjectOf = (i) => `usr_01JZ${String(i).padStart(22, '0')}`;
     const sets = calls.filter((c) => c.url.includes('/equipped?'));
     assert.strictEqual(sets.length, 2, '154 people in two requests (100 + 54)');
     assert.strictEqual(calls.filter((c) => c.url.includes('/definitions?')).length, 1, 'definitions once, because someone wears a hat or particles');
-    assert.ok(calls.every((c) => c.url.startsWith('https://inventory.openvibe.network/api/v1/') && c.opts.credentials === 'omit'));
+    // Through Network's frame relay by default (4.246.0): every site's CSP allows openvibe.network.
+    assert.ok(calls.every((c) => c.url.startsWith('https://openvibe.network/api/frame/items/') && c.opts.credentials === 'omit'), 'read through openvibe.network');
     assert.deepStrictEqual([...document.getElementById('a').classList].sort(), ['name-fx-rainbow', 'ov-fx'], 'Ana wears her rainbow');
     const hat = document.getElementById('a').previousElementSibling;
     assert.ok(hat && hat.className === 'ov-hat ov-hat-pulse' && hat.textContent === '👑' && hat.getAttribute('aria-hidden') === 'true', 'and her crown sits just before her name');
