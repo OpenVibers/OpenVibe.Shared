@@ -605,6 +605,26 @@ html[data-ov-motion=off] .ovs-youpanel > * { animation: none; }
 .ovs-tool:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: 1px; }
 @media (hover: hover) { .ovs-tool:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); } }
 .ovs-tool:active { transform: scale(.9); }
+.ovs-plus { overflow: visible; }
+.ovs-plus-x path { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; transform-box: view-box; transform-origin: 12px 12px; transition: transform .28s cubic-bezier(.3, 1.5, .4, 1); }
+.ovs-plus-x { transform-box: view-box; transform-origin: 12px 12px; transition: transform .45s cubic-bezier(.3, 1.6, .4, 1); }
+.ovs-plus-p circle { fill: var(--accent-light, var(--accent, #60a5fa)); transform-box: fill-box; transform-origin: center; transform: scale(0); opacity: 0; transition: transform .3s cubic-bezier(.3, 1.6, .4, 1), opacity .2s; }
+@media (hover: hover) {
+  .ovs-attach:hover .ovs-plus-h { transform: scaleX(1.12); } .ovs-attach:hover .ovs-plus-v { transform: scaleY(1.12); }
+  .ovs-attach:hover .ovs-plus-p circle { transform: scale(.75); opacity: .9; }
+}
+.ovs-attach:focus-visible .ovs-plus-p circle { transform: scale(.75); opacity: .9; }
+.ovs-attach:active .ovs-plus-x { transform: scale(.82); }
+.ovs-attach.is-bloom .ovs-plus-x { transform: rotate(90deg); }
+.ovs-attach.is-bloom .ovs-plus-p circle { animation: ovs-plus-burst .55s cubic-bezier(.2, .8, .3, 1) both; }
+.ovs-attach.is-bloom .ovs-plus-p circle:nth-child(1) { --dx: -7px; --dy: -7px; } .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(2) { --dx: 7px; --dy: -7px; }
+.ovs-attach.is-bloom .ovs-plus-p circle:nth-child(3) { --dx: -7px; --dy: 7px; } .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(4) { --dx: 7px; --dy: 7px; }
+@keyframes ovs-plus-burst { 0% { transform: scale(1.15); opacity: 1; } 55% { opacity: .95; } 100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(.25); opacity: 0; } }
+html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle { animation-duration: .9s; }
+html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(1) { --dx: -2px; --dy: -2px; } html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(2) { --dx: 2px; --dy: -2px; }
+html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(3) { --dx: -2px; --dy: 2px; } html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(4) { --dx: 2px; --dy: 2px; }
+html[data-ov-motion=reduced] :is(.ovs-plus-x, .ovs-plus-x path) { transition-timing-function: ease-out; }
+html[data-ov-motion=off] :is(.ovs-plus-x, .ovs-plus-x path, .ovs-plus-p circle) { transition: none; animation: none !important; }
 .ovs-send { color: var(--on-accent, #fff); background: var(--accent, #3b82f6); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); animation: ovs-send-in .22s cubic-bezier(.3, 1.4, .4, 1); }
 @media (hover: hover) { .ovs-send:hover { color: var(--on-accent, #fff); background: var(--accent-hover, color-mix(in oklab, var(--accent, #3b82f6) 85%, #fff)); } }
 @keyframes ovs-send-in { from { transform: scale(.5); opacity: 0; } }
@@ -689,7 +709,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 20.8V4M5.7 10.3l6.3-6.3l6.3 6.3"/></svg>',
         down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 3.2v16.7M5.7 13.7l6.3 6.3l6.3-6.3"/></svg>',
         mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>',
-        plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+        // The composer's + (ov-composer.js PLUS_MARK): four petals behind two arms; the petals bloom out on a tap.
+        plus: '<svg class="ovs-plus" viewBox="0 0 24 24" aria-hidden="true"><g class="ovs-plus-p"><circle cx="6.2" cy="6.2" r="1.35"/><circle cx="17.8" cy="6.2" r="1.35"/><circle cx="6.2" cy="17.8" r="1.35"/><circle cx="17.8" cy="17.8" r="1.35"/></g><g class="ovs-plus-x"><path class="ovs-plus-h" d="M5.5 12h13"/><path class="ovs-plus-v" d="M12 5.5v13"/></g></svg>',
         send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/></svg>',
         search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>',
         close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>',
@@ -1593,7 +1614,16 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }, true);
         el.querySelector('.ovs-mic').addEventListener('click', listen);
         const file = el.querySelector('.ovs-file');
-        el.querySelector('.ovs-attach').addEventListener('click', () => file.click());
+        // The + blooms (its petals fly out, the arms turn a quarter) as the picker opens, then settles back.
+        const attach = el.querySelector('.ovs-attach');
+        attach.addEventListener('click', () => {
+            attach.classList.remove('is-bloom');
+            void attach.offsetWidth; // a second tap restarts the bloom
+            attach.classList.add('is-bloom');
+            clearTimeout(attach._bloom);
+            attach._bloom = setTimeout(() => attach.classList.remove('is-bloom'), 950);
+            file.click();
+        });
         file.addEventListener('change', () => { const f = [...(file.files || [])]; file.value = ''; if (f.length) askVibe(input.value, f); });
         el.querySelector('.ovs-send').addEventListener('click', () => askVibe(input.value));
         input.addEventListener('input', syncTools);
