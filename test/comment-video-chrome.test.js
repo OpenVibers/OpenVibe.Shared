@@ -117,9 +117,9 @@ const server = http.createServer((req, res) => {
         await page.goto(base + '/anon', { maxMs: 6000 });
         assert.ok(await until(`!!document.querySelector('form.ovc-v2[data-preset="comment"]')`));
         await page.evaluate(pick);
-        await wait(300);
+        // The file lands in the form first (the plain upload), and by then no upload was started.
+        assert.ok(await until(`[...document.querySelectorAll('form.ovc-v2 input[type=file]')].reduce((n, i) => n + i.files.length, 0) === 1`), 'the file rides the form');
         assert.equal(await page.evaluate(`window.__sent.length`), 0, 'no token, no call to Media');
-        assert.equal(await page.evaluate(`[...document.querySelectorAll('form.ovc-v2 input[type=file]')].reduce((n, i) => n + i.files.length, 0)`), 1, 'the file rides the form');
         await page.close();
         console.log('comment-video-chrome: a picked video goes to Media with the viewer\'s token, the form sends its id, and the comment plays it');
     } finally {

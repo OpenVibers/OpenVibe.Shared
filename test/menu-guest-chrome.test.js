@@ -46,7 +46,7 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`(document.getElementById('openvibe-burger') || document.getElementById('openvibe-search-btn')).click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open')`), 'the menu opened');
         await p.evaluate(`(() => { const t = document.querySelector('.ovs [data-tab="you"]'); if (t) t.click(); return true; })()`);
-        await wait(300);
+        assert.ok(await until(p, `!!document.querySelector('.ovs [data-sec]')`), 'You has drawn its sections');
     };
     try {
         let p = await h.openPage(browser, await browser.newContext(), { width: 390, height: 900 });
@@ -68,7 +68,6 @@ const server = http.createServer((req, res) => {
         p = await h.openPage(browser, await browser.newContext(), { width: 390, height: 900 });
         await p.goto(`${base}/in`, { maxMs: 6000 });
         await openYou(p);
-        await wait(300);
         assert.strictEqual(await p.evaluate(`!!document.querySelector('.ovs [data-sec="signin"]')`), false, 'a signed-in person never sees it');
         await p.close();
         console.log('menu-guest-chrome: a guest sees what signing in adds, with the bar\'s own sign-in link');
