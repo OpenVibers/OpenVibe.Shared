@@ -119,17 +119,21 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         assert.equal(tab.label, 'Bring it back');
         // 4.235.0: tucked, it is a small handle at the edge, not a strip as tall as itself.
         const handle = async () => page.evaluate(`(() => { const t = document.querySelector('.ov-float-tab').getBoundingClientRect(); const el = document.getElementById('box'); return { w: t.width, h: t.height, left: t.left, top: t.top, clip: getComputedStyle(el).clipPath, frameLeft: document.getElementById('frame').getBoundingClientRect().left, y: window.f.geom().y }; })()`);
-        await wait(450);
-        let hd = await handle();
-        assert.ok(Math.abs(hd.w - 30) < 1 && Math.abs(hd.h - 64) < 1, `a 30 × 64 handle (${hd.w} × ${hd.h})`);
-        assert.ok(Math.abs(hd.left) < 1, `at the side of the window it was thrown at (${hd.left})`);
-        assert.match(hd.clip, /inset/, 'the rest of it is folded away');
+        let hd;
+        await eventually(async () => {
+            hd = await handle();
+            assert.ok(Math.abs(hd.w - 30) < 1 && Math.abs(hd.h - 64) < 1, `a 30 × 64 handle (${hd.w} × ${hd.h})`);
+            assert.ok(Math.abs(hd.left) < 1, `at the side of the window it was thrown at (${hd.left})`);
+            assert.match(hd.clip, /inset/, 'the rest of it is folded away');
+        }, 'the handle');
         // Dragged up or down, the handle slides along its side and stays tucked.
         await drag(page, { x: hd.left + hd.w / 2, y: hd.top + hd.h / 2 }, { x: hd.left + hd.w / 2 + 3, y: hd.top + hd.h / 2 + 90 });
-        await wait(150);
-        const slid = await handle();
-        assert.match((await box(page)).cls, /is-tucked-left/, 'still tucked after a slide');
-        assert.ok(slid.top > hd.top + 60 && slid.y > hd.y, `slid down its side (${hd.top} → ${slid.top})`);
+        let slid;
+        await eventually(async () => {
+            slid = await handle();
+            assert.match((await box(page)).cls, /is-tucked-left/, 'still tucked after a slide');
+            assert.ok(slid.top > hd.top + 60 && slid.y > hd.y, `slid down its side (${hd.top} → ${slid.top})`);
+        }, 'the slide');
         // Pulled out sideways, it opens under the finger and lands where it is let go.
         await drag(page, { x: slid.left + slid.w / 2, y: slid.top + slid.h / 2 }, { x: slid.left + 260, y: slid.top + slid.h / 2 });
         await eventually(async () => assert.doesNotMatch((await box(page)).cls, /is-tucked/, 'a pull brings it out'), 'pull');
@@ -210,8 +214,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
         const keep = await ph.evaluate(`JSON.parse(localStorage.getItem('test-float')).w`);
         await ph.goto(base, { maxMs: 5000 });
         await ph.evaluate(`window.remote = { 'test-float': { x: 0.5, y: 0.5, w: 0.3, mode: 'float', tuck: null, at: Date.now() + 60000 } }`);
-        await wait(200);
-        assert.ok(Math.abs((await ph.evaluate('window.f.geom().w')) - keep) < 0.001, 'this phone keeps its own place');
+        await eventually(async () => assert.ok(Math.abs((await ph.evaluate('window.f.geom().w')) - keep) < 0.001, 'this phone keeps its own place'), 'own place');
         await ph.close();
         console.log('ov-float-chrome: docked and floating, the lift and the landing, the tuck and its tab, the keys, the corner, the kept place, the account store, ov:float and layout()');
     } finally {

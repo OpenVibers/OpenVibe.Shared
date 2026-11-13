@@ -112,8 +112,7 @@
 [data-ov-anchored][data-ov-side="sheet"][data-ov-anim] { animation: ovAnchorSheet var(--ov-dur-3, .26s) var(--ov-ease-out, cubic-bezier(.2, .9, .25, 1)); }
 @keyframes ovAnchorIn { from { opacity: 0; transform: scale(.96); } }
 @keyframes ovAnchorSheet { from { transform: translateY(100%); } }
-html[data-ov-motion="off"] [data-ov-anchored] { animation: none !important; }
-@media (prefers-reduced-motion: reduce) { html:not([data-ov-motion="on"]) [data-ov-anchored] { animation: none !important; } }`;
+html[data-ov-motion="off"] [data-ov-anchored] { animation: none !important; }`;
 
     function anchorStyles() {
         if (document.getElementById('ov-anchor-styles')) return;
