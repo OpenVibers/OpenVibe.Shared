@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.246.0 — 2026-11-13
+
+**The menu's close goes home** (the owner, 11-13: "the close button … goes into the users avatar drop-down spot rather
+than where it should").
+
+- **The phone menu's close goes back into the menu button.** The close orb is the menu button turned into an x; when
+  the menu closes it turns back into the button's dots and glides into the button. It used to glide to the point it
+  remembered when the menu opened: with no button passed (the menu opened from You, the keyboard or a site's own call)
+  that point was the screen's right edge, the person's picture; and the bar sits a little off while the menu holds the
+  page. Now the bar's menu button is measured as the menu closes, after the page is let go (the burger on a phone, the
+  orb on a computer); with no button on screen the close turns away where it is.
+
 ## 4.245.0 — 2026-11-13
 
 **The menu knows your rank** (the owner, 11-13: navigation "user aware and session aware and … aware of rank").
