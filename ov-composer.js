@@ -252,7 +252,13 @@ html[data-ov-motion=off] .ovc-cam-shutter { transition: none; }
 .ovc-answer-a { min-height: 36px; padding: 0 14px; border: 1px solid var(--border, rgba(148, 163, 184, .22)); border-radius: 999px; background: none; color: var(--text-primary, #e6edf7); font: 600 13.5px/1 inherit; cursor: pointer; }
 .ovc-answer-a:first-child { background: var(--ovt-accent, var(--accent, #3b82f6)); border-color: transparent; color: #fff; }
 @media (pointer: coarse) { .ovc-answer-a { min-height: 44px; } }
-.ovc-v2 .ovc-bar { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 4px 4px 4px 10px; border-radius: 12px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent); font-size: 13px; line-height: 1.3; }
+.ovc-v2 .ovc-bar { position: relative; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 3px 4px 3px 15px; border-radius: 12px; background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 13%, transparent); font-size: 13px; line-height: 1.3;
+  animation: ovcBarIn .2s cubic-bezier(.2, .9, .25, 1); }
+/* 4.236.0: what the message answers, quotes or changes is a part of the box: a rail of the accent at its start. */
+.ovc-v2 .ovc-bar::before { content: ""; position: absolute; left: 6px; top: 7px; bottom: 7px; width: 3px; border-radius: 3px; background: var(--ovt-accent, var(--accent, #3b82f6)); }
+.ovc-v2 .ovc-bar[data-kind=edit]::before { background: var(--warning, #f59e0b); }
+@keyframes ovcBarIn { from { opacity: 0; transform: translateY(4px); } }
+html[data-ov-motion=off] .ovc-v2 .ovc-bar { animation: none; }
 .ovc-v2 .ovc-bar > svg { flex: none; width: 15px; height: 15px; color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
 .ovc-v2 .ovc-bar > b { flex: none; font-weight: 700; color: var(--text-primary, #e6edf7); }
 .ovc-v2 .ovc-bar > span { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted, #93a0b4); }
@@ -340,9 +346,17 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
 .ovc textarea.ovc-ph-swap::placeholder, .ovt-composer textarea.ovc-ph-swap::placeholder { opacity: 0; }
 .ovc-v2 .ovt-send--round { background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #fff), var(--accent-strong, var(--accent, #2563eb))); color: var(--on-accent-strong, #fff);
   box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); transition: transform .2s cubic-bezier(.3, 1.4, .4, 1), opacity .2s, box-shadow .2s; }
-.ovc-v2 .ovt-send--round svg { width: 20px; height: 20px; stroke-width: 2.3; }
-.ovc-v2 .ovt-send--round:disabled { opacity: 1; background: color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); color: var(--text-muted, #7386a3); box-shadow: none; }
+.ovc-v2 .ovt-send--round svg { width: 20px; height: 20px; stroke-width: 2.4; transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
+/* 4.236.0 (the owner, 11-13: "improve the send button … the icon's all screwed up"): with nothing to send it is a quiet
+   outline round its arrow, not a grey disc; the moment there is, it fills with the accent on a spring, and the arrow
+   lifts under a pointer and on a press. */
+.ovc-v2 .ovt-send--round:disabled { opacity: 1; background: transparent; color: var(--text-muted, #7386a3); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 16%, transparent); }
+.ovc-v2 .ovt-send--round:not(:disabled) { animation: ovcSendReady .32s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes ovcSendReady { from { transform: scale(.8); } }
+@media (hover: hover) and (pointer: fine) { .ovc-v2 .ovt-send--round:not(:disabled):hover svg { transform: translateY(-2px); } }
 .ovc-v2 .ovt-send--round:not(:disabled):active { transform: scale(.9); }
+.ovc-v2 .ovt-send--round:not(:disabled):active svg { transform: translateY(-3px); }
+html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc-v2 .ovt-send--round svg { animation: none; transition: none; }
 `;
     function styles() { if (document.getElementById('ovc-styles')) return; const st = document.createElement('style'); st.id = 'ovc-styles'; st.textContent = CSS; document.head.appendChild(st); }
     const mods = [];
@@ -960,7 +974,8 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
     //     edit({ text, onSave(text) → false keeps editing, onCancel, label }) (the box takes your message's words under an
     //     "Editing your message" bar; Enter saves, Esc or × puts back what was in the box; the send is a check),
     //     reply({ name, text, data, onClear }) (a "Replying to …" bar; onSubmit's value carries reply: data),
-    //     clearBar(), editing() }.
+    //     bar({ icon, title, detail, kind, onClose }) (4.236.0: any context above the words, inside the box, with a rail of
+    //     the accent: a quote, a file being answered; one bar at a time), clearBar(), editing() }.
     // 4.218.0, Post · Ask · Do (research-2026-11-12/composer-post-ask-do.md): verbs: ['post', 'ask', 'do'] (a site
     //   opts in; the first is where the box starts) draws one switch at the start of the row. Ask and Do add three chips:
     //   Model (a sheet over the Frame's /choices?task=: Auto, then OpenVibe from Exchange's directory with prices, your
@@ -1372,9 +1387,10 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
             form.classList.remove('is-editing', 'is-replying');
             if (f) f();
         };
-        const showBar = (icon, title, detail, onClose) => {
+        const showBar = (icon, title, detail, onClose, kind) => {
             clearBar();
             bar = el('div', 'ovc-bar', svg(icon));
+            if (kind) bar.dataset.kind = kind;
             const t = el('b'); t.textContent = title;
             const d = el('span'); d.textContent = detail || '';
             const x = el('button', 'ovc-bar-x', svg(IC.x)); x.type = 'button'; x.title = 'Cancel'; x.setAttribute('aria-label', `Cancel: ${title}`);
@@ -1392,7 +1408,7 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
                 sendFaceOf();
                 if (was && !was.saved) { ta.value = was.draft; ta.dispatchEvent(new Event('input', { bubbles: true })); if (typeof was.onCancel === 'function') was.onCancel(); }
                 api.refresh();
-            });
+            }, 'edit');
             editing = { draft, onSave: spec.onSave, onCancel: spec.onCancel, saved: false };
             form.classList.add('is-editing');
             ta.value = String(spec.text || '');
@@ -1404,10 +1420,16 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
         const reply = (spec = {}) => {
             if (editing) clearBar();
             const who = String(spec.name || 'someone');
-            showBar(IC.reply, `Replying to ${who}`, String(spec.text || '').slice(0, 140), () => { const was = replying; replying = null; if (was && typeof was.onClear === 'function') was.onClear(); });
+            showBar(IC.reply, `Replying to ${who}`, String(spec.text || '').slice(0, 140), () => { const was = replying; replying = null; if (was && typeof was.onClear === 'function') was.onClear(); }, 'reply');
             replying = { data: spec.data !== undefined ? spec.data : { name: who, text: spec.text }, onClear: spec.onClear };
             form.classList.add('is-replying');
             ta.focus();
+        };
+        // 4.236.0: any context above the words, inside the box (a quote, a file being answered, a poll being set up):
+        // bar({ icon: an SVG path, title, detail, kind, onClose }). One bar at a time, as edit and reply.
+        const contextBar = (spec = {}) => {
+            if (editing || replying) clearBar();
+            showBar(PATH_OK.test(spec.icon || '') ? spec.icon : IC.reply, String(spec.title || ''), String(spec.detail || '').slice(0, 140), typeof spec.onClose === 'function' ? spec.onClose : null, String(spec.kind || 'context').slice(0, 20));
         };
         ta.addEventListener('keydown', (e) => { if (e.key === 'Escape' && bar) { e.preventDefault(); e.stopPropagation(); clearBar(); } });
         // ── Post · Ask · Do ──
@@ -1609,7 +1631,7 @@ html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { ani
                 api.refresh();
             });
         }
-        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values, edit, reply, clearBar, editing: () => !!editing,
+        return Object.assign(api, { form, text: ta, send, note, setBusy, setRunning, values, edit, reply, bar: contextBar, clearBar, editing: () => !!editing,
             verb: () => verb, setVerb, model: () => model, sources: () => [...sources], answer });
     }
 
