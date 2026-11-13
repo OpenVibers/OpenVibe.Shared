@@ -303,9 +303,39 @@ ${foot || ''}<p class="ovt-c-note" data-ovt-note role="status">${esc(note || '')
 // The inline Community thread a page shows under a thing (MediaHub's Video and Pics item pages, Community's paste
 // and /c pages): the same markup on every site, from the comment service's answer. Draw with thread-inline.css.
 const MEDIA_ID = /^med_[0-9A-HJKMNP-TV-Z]{26}$/;
+// 4.247.0 (plan §Z.9): a comment's file uploaded through Media's composer attachments (composer.attachment@1): a video
+// plays (Media's web copy when the original is not one a browser plays), a picture shows, a sound plays.
+const ATT_ID = /^att_[0-9A-HJKMNP-TV-Z]{26}$/;
+const ATT_URL = /^https:\/\/openvibe\.media\/a\/att_[0-9A-HJKMNP-TV-Z]{26}\/[^?#]{1,300}$/;
+// What a comment box with mediaAttachments takes: Media sniffs the bytes, so the list only guides the picker.
+const MEDIA_ACCEPT = 'image/*,video/*,audio/*,application/pdf,text/plain,.mkv,.avi,.mov,.m4v,.3gp,.3g2,.webm,.ogv,.wmv,.flv,.mpg,.mpeg,.ts,.mts,.m2ts,.vob,.heic,.heif,.avif';
+const MEDIA_NOTE = 'Up to four files: pictures up to 20 MB, videos up to 300 MB (MP4, MOV, MKV, AVI, WebM and the rest), sound up to 50 MB, PDFs and text up to 25 MB.';
 const USERNAME = /^[A-Za-z0-9_]{1,32}$/;
 const ID = /^\d{1,15}$/;
 const safeHttps = (value) => { try { const url = new URL(String(value)); return url.protocol === 'https:' ? url.href : null; } catch { return null; } };
+/** One Media composer attachment on a comment: a player, a picture, a sound or a file link (never a URL off openvibe.media). */
+function mediaAttachment(a) {
+    const url = ATT_URL.test(String(a.url || '')) ? String(a.url) : null;
+    if (!url) return '';
+    const poster = ATT_URL.test(String(a.poster || '')) ? String(a.poster) : null;
+    const type = String(a.media_type || a.mime || '');
+    const kind = a.kind || (type.startsWith('video/') ? 'video' : type.startsWith('image/') ? 'image' : type.startsWith('audio/') ? 'audio' : 'file');
+    const title = esc(a.name || (kind === 'video' ? 'Video' : kind === 'image' ? 'Picture' : kind === 'audio' ? 'Sound' : 'Attached file'));
+    const w = Number(a.width || a.w) || 0, h = Number(a.height || a.h) || 0;
+    const size = w > 0 && h > 0 && w <= 10000 && h <= 10000 ? ` width="${Math.round(w)}" height="${Math.round(h)}"` : '';
+    if (kind === 'video') {
+        const pb = a.playback && a.playback.ready && ATT_URL.test(String(a.playback.url || '')) ? String(a.playback.url) : null;
+        const secs = Number(a.duration_s);
+        const length = Number.isFinite(secs) && secs > 0 ? `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')}` : '';
+        if (!pb) {
+            return `<a class="ovc-attach ovc-attach--video is-preparing" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${poster ? `<img src="${esc(poster)}" alt="" loading="lazy"${size}>` : ''}<span>Getting the video ready to play here. Open the file</span></a>`;
+        }
+        return `<figure class="ovc-attach ovc-attach--video"><video data-ov-player controls preload="none" playsinline src="${esc(pb)}"${poster ? ` poster="${esc(poster)}"` : ''}${size} aria-label="${title}"></video>${length ? `<figcaption>${title} · ${length}</figcaption>` : ''}</figure>`;
+    }
+    if (kind === 'image') return `<a class="ovc-attach ovc-attach--image" href="${esc(url)}" target="_blank" rel="noopener noreferrer"><img src="${esc(poster || url)}" alt="${title}" loading="lazy" width="120"></a>`;
+    if (kind === 'audio') return `<figure class="ovc-attach ovc-attach--audio"><audio controls preload="none" src="${esc(url)}" aria-label="${title}"></audio><figcaption>${title}</figcaption></figure>`;
+    return `<a class="ovc-attach ovc-attach--file" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${title}</a>`;
+}
 const author = (c) => c.author || c;
 const username = (c) => author(c).username || c.username || '';
 const name = (c) => author(c).display_name || c.display_name || username(c) || c.anon_name || 'Member';
@@ -351,10 +381,13 @@ function query(base, sort, extra = {}, anchor = 'comments') {
  *   has commented on;  base: the page's own address (sorting, paging and reply links come back here)
  *   post, remove: where the composer and Delete post;  signedIn: this person may write
  *   attachmentsAllowed: the composer offers files (Community's paste page and Pics say yes; elsewhere no)
+ *   mediaAttachments: 4.247.0 (§Z.9), the files go to Media's composer attachments as they are picked (any video,
+ *   picture, sound, PDF or text, at Media's limits) and the form carries their ids in `attachments`; only for a post
+ *   route that reads that field (Community's, from #439). Without a viewer token the box keeps the plain upload.
  *   draft: the message kept in the box after a failed post
  *   sort, replyId, expandedId, expandedReplies, error: as the page received them
  */
-function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed = true, sort = 'top', replyId = null, expandedId = null, expandedReplies = null, error = null, draft = '' }) {
+function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed = true, mediaAttachments = false, sort = 'top', replyId = null, expandedId = null, expandedReplies = null, error = null, draft = '' }) {
     const comments = Array.isArray(answer && answer.comments) ? answer.comments : [];
     const accessId = answer && answer.thread && String(answer.thread.access_id || answer.thread.id || '');
     const threadUrl = safeHttps(answer && answer.thread && answer.thread.url) || (/^cth_[A-Za-z0-9_-]{22}$/.test(accessId) ? `https://openvibe.community/c/${accessId}` : null);
@@ -365,10 +398,12 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
     const signIn = `<p class="ovc-signin">${comments.length ? 'Sign in to comment.' : 'Be the first to comment.'} <a class="ovk-btn ovk-btn--primary" href="/auth/login?next=${encodeURIComponent(query(base, sort))}">Sign in</a></p>`;
     const composer_html = (parent = null) => signedIn ? composer({ action: post, name: 'message', label: 'Comment', placeholder: parent ? 'Write a reply…' : 'Add a comment…', value: draft, maxlength: 2000,
         sendLabel: parent ? 'Reply' : 'Comment', hidden: parent ? { parent_id: parent } : {},
-        attach: attachmentsAllowed ? { name: 'files', accept: 'image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain' } : null, preset: 'comment',
-        note: attachmentsAllowed ? 'Up to four files, 16 MB each. JPEG, PNG, GIF, WebP, PDF or text.' : '',
+        attach: attachmentsAllowed ? { name: 'files', accept: mediaAttachments ? MEDIA_ACCEPT : 'image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain' } : null, preset: 'comment',
+        note: attachmentsAllowed ? (mediaAttachments ? MEDIA_NOTE : 'Up to four files, 16 MB each. JPEG, PNG, GIF, WebP, PDF or text.') : '',
+        attrs: attachmentsAllowed && mediaAttachments ? { 'data-ovc-media': '1', 'data-ovc-max-files': '4' } : {},
     }) : signIn;
     const attachments = (c) => (Array.isArray(c.attachments) ? c.attachments : []).map((a) => {
+        if (ATT_ID.test(String(a.id || ''))) return mediaAttachment(a);
         if (!MEDIA_ID.test(String(a.id || ''))) return '';
         const url = `https://openvibe.media/o/${a.id}`;
         const title = esc(a.name || 'Attached file');
