@@ -149,16 +149,23 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         await page.evaluate(`document.getElementById('g1').setAttribute('data-ovc-frame', location.origin), true`);
         await page.evaluate(`document.querySelector('#g1 .ovc-more').click(), true`);
         assert.ok((await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-tray-t')].map((t) => t.textContent)`)).includes('GitHub'), 'GitHub is in the +');
+        // 4.234.0: the sheet does not repeat a tool the row already shows (the owner, 11-13: "why twice").
+        const repeat = await page.evaluate(`(() => { const row = [...document.querySelectorAll('#g1 .ovt-c-tools > .ovt-btn')].filter((b) => getComputedStyle(b).display !== 'none' && b.getClientRects().length).map((b) => b.getAttribute('aria-label')); const sheet = [...document.querySelectorAll('#g1 .ovc-tray-t')].map((t) => t.textContent); return row.filter((l) => l && sheet.includes(l)); })()`);
+        assert.deepEqual(repeat, [], 'nothing the row shows is in the + again');
         await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-tray-i')].find((b) => b.textContent === 'GitHub').click(), true`);
         assert.equal(await page.evaluate(`document.activeElement === document.querySelector('#g1 .ovc-repo-q')`), true, 'the search field has the focus');
         await page.evaluate(`(() => { const f = document.querySelector('#g1 .ovc-repo-q'); f.value = 'goal bar'; f.dispatchEvent(new Event('input', { bubbles: true })); })()`);
         let rows = 0;
         for (let i = 0; i < 40 && rows < 2; i++) { await wait(50); rows = await page.evaluate(`document.querySelectorAll('#g1 .ovc-repo-row').length`); }
         assert.equal(rows, 2, 'the repositories as you type');
-        assert.deepEqual(searched, ['goal bar'], 'asked once, a quarter second after the last key');
-        const shown = await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-repo-row')].map((r) => ({ name: r.querySelector('b').textContent, sub: r.querySelector('small').textContent, meta: r.querySelector('i').textContent, img: r.querySelector('img') ? r.querySelector('img').getAttribute('src') : null, bold: !!r.querySelector('small b') }))`);
-        assert.deepEqual(shown[0], { name: 'ada/goal-bar', sub: 'A goal bar <b>for</b> streams', meta: 'JavaScript · ★ 1.3k · MIT', img: 'https://avatars.githubusercontent.com/u/1?v=4', bold: false }, 'everything as text');
-        assert.equal(shown[1].img, null, 'a picture from anywhere but GitHub\'s avatar host is not drawn');
+        assert.deepEqual(searched, ['goal bar'], 'asked once, a third of a second after the last key');
+        const shown = await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-repo-row')].map((r) => ({ name: r.querySelector('b').textContent, sub: r.querySelector('small').textContent, meta: r.querySelector('i').textContent, img: r.querySelector('img') ? r.querySelector('img').getAttribute('src') : null, mono: (r.querySelector('.ovc-repo-mono') || {}).textContent || null, bold: !!r.querySelector('small b') }))`);
+        assert.deepEqual(shown[0], { name: 'ada/goal-bar', sub: 'A goal bar <b>for</b> streams', meta: 'JavaScript · ★ 1.3k · MIT', img: null, mono: 'A', bold: false }, 'everything as text; the owner\'s initial, no picture fetched');
+        assert.ok(shown.every((r) => r.img === null), 'no row asks for a picture (they were broken on every site with an image policy)');
+        // The same words again: from the page's cache, not another search.
+        await page.evaluate(`(() => { const f = document.querySelector('#g1 .ovc-repo-q'); f.value = 'goal  bar'; f.dispatchEvent(new Event('input', { bubbles: true })); })()`);
+        await wait(500);
+        assert.deepEqual(searched, ['goal bar'], 'the same words are answered from the cache');
         await page.evaluate(`document.querySelector('#g1 .ovc-repo-q').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })), true`);
         assert.match(await page.evaluate(`document.querySelector('#g1 textarea').value`), /https:\/\/github\.com\/ada\/goal-bar $/, 'Enter puts the first one\'s address in the box');
         assert.equal(await page.evaluate(`document.querySelector('#g1 .ovc-repo').hidden`), true, 'and the panel goes');
