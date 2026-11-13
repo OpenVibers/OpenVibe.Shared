@@ -26,7 +26,7 @@
     if (typeof document === 'undefined' || root.OpenVibeDockActor) return;
 
     const POLL_MS = 15000;
-    const ACTOR_REV = { 'ov-window.js': 'd3d8f9e3e6d2', 'agent-sheet.js': '8d150490ad64' };
+    const ACTOR_REV = { 'ov-window.js': '1c4db9b0ce9c', 'agent-sheet.js': '8d150490ad64' };
     const SCRIPT_BASE = document.currentScript && document.currentScript.src ? new URL('.', document.currentScript.src).href : '/shared/';
     const STATE = { working: 'Working', resting: 'Resting', paused: 'Paused', waiting: 'Waiting for you' };
     // The lines Actor sends as "the current step" when there is none: the state already says them.

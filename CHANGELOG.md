@@ -1,5 +1,47 @@
 # Changelog
 
+## 4.235.0 — 2026-11-13
+
+**The layers: what floats folds into a small handle and grows to the window, and what opens from a button is anchored
+to it** (the owner's phone, watching a live stream, 11-13: "a small button that lets you pop it in and out", "doesn't
+allow it to be off screen", "I can't even resize it bigger", "the little three dots doesn't actually open a menu").
+
+- **ov-float.js, tucked.**
+  - Thrown past a side (or T, or a tuck button), a box folds into a small handle at that edge: 30 × 64 px, 34 × 72 to
+    a finger, set with `--ov-float-tab-w/-h`. It used to leave a strip as tall as itself hanging off the screen.
+  - The fold is a clip animated with the Web Animations API, so nothing inside is squeezed, while the landing's spring
+    moves it to the side.
+  - The handle is a button that moves: a tap opens it, a drag up or down slides it along its side, and a pull sideways
+    brings it out under the finger.
+  - Tucked by hand, it opens again where it was (`ux`, kept in this browser only).
+- **ov-float.js, size.**
+  - It grows to the whole width of the window: `MAX_W` is 1 (was 0.60).
+  - Past what a docked frame holds (its width, or 85% of its height), a pinch, the corner or + lifts it over the page
+    where it is, and it keeps growing, up to 92% of the window's height.
+  - A double tap on a phone makes it the screen's width.
+  - New `f.sizeTo(px)`.
+- **ov-float.js, the place.**
+  - This browser's place wins. The account's (`/api/me/layout`) fills a device that has none, so a phone and a
+    desktop each keep their own.
+  - The account and `onChange` get only the account's fields (`placeOf`), never the browser's extras.
+  - A turn of the phone, the keyboard (the visual viewport), the address bar or a resize puts it back inside, once a
+    frame.
+  - While it moves, nothing in it is blurred: a backdrop blur repainted every frame made a phone's drag stutter.
+- **surfaces.js, `OVSurfaces.anchor(el, trigger, { place, gap, margin, sheet, animate })`.**
+  - The element goes in the top layer (the Popover API; fixed without it). No `overflow: hidden`, mask or stacking
+    context clips it.
+  - It is placed beside its button: `place` is side-align. It flips to the side with room, shifts to stay inside the
+    visual viewport, and is kept no taller than its side's room.
+  - It is placed again on scroll, resize and size changes, and released when its button leaves the page.
+  - `sheet: 'phone'` makes it a bottom sheet under 560 px.
+  - `data-ov-side` says where it went, and the default entrance grows from the button.
+  - `OVSurfaces.popover({ …, pop, place, sheet })` anchors its menu while it is open.
+- **kit-web.js.** Every `details.ovk-more` menu is anchored, not only those inside a rail: a phone's clipped layout, a
+  sheet or a rail no longer hides it.
+- Tests: `ov-float-chrome` (the handle's size and place, a slide, a pull, growing past the frame, a phone's double tap,
+  this device's place, the account's fields) and `surfaces-chrome` (a clipped menu at a phone's bottom opens above,
+  on top, inside the screen, and is released; `placeBox`).
+
 ## 4.234.0 — 2026-11-13
 
 **The bottom bar hides all the way, and the composer stops repeating itself** (the owner's phone screenshots, 11-13).

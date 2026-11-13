@@ -72,11 +72,14 @@
             if (!once(d, 'ovkMore')) return;
             d.addEventListener('toggle', () => {
                 if (d.open) all('details.ovk-more[open]').forEach((o) => { if (o !== d) o.open = false; });
+                // The layer (surfaces.js 4.235.0): the menu is anchored to its button, in the top layer, placed on the screen,
+                // flipped above it when there is no room below, everywhere (a phone's clipped live layout, a rail, a sheet).
                 if (root.OVSurfaces) {
-                    if (!d.__ovSurface) d.__ovSurface = root.OVSurfaces.popover({ el: d, trigger: d.querySelector('summary'), close: () => { d.open = false; } });
+                    if (!d.__ovSurface) d.__ovSurface = root.OVSurfaces.popover({ el: d, trigger: d.querySelector('summary'), pop: d.querySelector('.ovk-pop'), close: () => { d.open = false; } });
                     if (d.open) d.__ovSurface.open(); else d.__ovSurface.close();
+                    if (typeof root.OVSurfaces.anchor === 'function') return;
                 }
-                // Inside a rail (a sideways scroller clips anything that hangs out of it, and its edge fade is a mask that hides
+                // Until surfaces.js has loaded: inside a rail (a sideways scroller clips anything that hangs out of it, and its edge fade is a mask that hides
                 // even a fixed menu outside its box: Community's paste cards, 11-11) the menu opens in the top layer, placed on
                 // the screen. Without the Popover API it stays fixed, as before.
                 const pop = d.querySelector('.ovk-pop');
