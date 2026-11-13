@@ -114,7 +114,7 @@ const server = http.createServer((req, res) => {
         await eventually(async () => assert.strictEqual(await p.evaluate(`(document.querySelector('.ovh-sec span') || {}).textContent`), 'Popular on OpenVibe', 'until arranged, it says what it is'));
         await eventually(async () => assert.notStrictEqual(await p.evaluate(`document.querySelector('.ovs [data-tab="here"]').textContent`), 'Home', 'a page titled Home never names the first tab'));
         await eventually(async () => assert.ok(await p.evaluate(`!document.querySelector('[data-sec="recent"]') && ![...document.querySelectorAll('.ovs-group')].some((g) => /Recent searches/.test(g.textContent))`), 'no Recent searches'));
-        await eventually(async () => assert.ok(await p.evaluate(`(() => { const b = document.querySelector('.ovh-headtools .ovh-allbtn'); return !!b && /All apps \\(\\d+\\)/.test(b.getAttribute('aria-label')) && /^All\\d+$/.test(b.textContent.replace(/\\s/g, '')) && b.getBoundingClientRect().width < 120; })()`), 'All apps is a small button beside Edit, and says how many'));
+        await eventually(async () => assert.ok(await p.evaluate(`(() => { const b = document.querySelector('.ovh-headtools .ovh-allbtn'); return !!b && /All apps \\(\\d+\\)/.test(b.getAttribute('aria-label')) && /^\\d+$/.test(b.textContent.replace(/\\s/g, '')) && b.getBoundingClientRect().width < 120 && !!b.getAttribute('data-ov-tip'); })()`), 'All apps is a small glyph button with its count, and a tooltip (4.236.0)'));
         await eventually(async () => assert.ok(await p.evaluate(`!document.querySelector('.ovh-actor')`), 'signed out: no Actor strip'));
 
         // A long-press starts Edit, and the same press drags the first app onto the third's place.
@@ -145,7 +145,7 @@ const server = http.createServer((req, res) => {
         const removed = await order(p);
         assert.ok(!removed.includes(keyed[0]) && removed.length === 12, '− takes it off Home');
         // Done, then All apps puts it back.
-        await p.evaluate(`[...document.querySelectorAll('.ovh-sec button')].find((b) => b.textContent === 'Done').click(), true`);
+        await p.evaluate(`document.querySelector('.ovh-edit.is-done[aria-label="Done arranging Home"]').click(), true`);
         await p.evaluate(`document.querySelector('.ovh-allbtn').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovh-head-t b') && document.querySelector('.ovh-head-t b').textContent.startsWith('All apps')`), 'the drawer opened, named, with its count');
         // 4.229.0: one search. No second box: the menu's own pill finds an app in All apps.
@@ -231,13 +231,16 @@ const server = http.createServer((req, res) => {
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.
         await eventually(async () => assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-me .ovh-who-txt b').textContent`), 'Ada', 'your name on top'));
         await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs .ovh-account, .ovs .openvibe-navbar-dropdown, .ovs .ud-grid')`), 'the old account block and its grid of tiles are not in the menu'));
-        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-me .ovh-acts > .ovh-ib:not(.is-own)')].map((b) => b.getAttribute('aria-label'))`), ['Add or switch account', 'Display: theme, text size, motion', 'Account and settings', 'Sign out'], 'add or switch account, Display, Settings, Sign out, in that order'));
-        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovh-own') && [...document.querySelectorAll('.ovh-me .ovh-acts > .is-own')].every((b) => !!b.getAttribute('aria-label'))`), 'this site\'s own items are buttons in your row, never a row of their own'));
-        await eventually(async () => assert.ok(await s.evaluate(`/[?&]add_account=1/.test(document.querySelector('.ovh-me a.ovh-ib[aria-label="Add or switch account"]').getAttribute('href')) && !!document.querySelector('.ovh-me [data-ov-look-open]') && !!document.querySelector('.ovh-me a[href="https://openvibe.network/my"]')`), 'the add-account address is the bar\'s; Display and Settings are in the row'));
+        // 4.236.0 (the owner, 11-13: "completely redesign this area … confusing what these buttons even do … not perfectly
+        // aligned … tooltips … a waste of space in the corners"): your name and the gear on one line, then one row of
+        // actions across the whole card, each its glyph with its name, in equal columns; this site's own first.
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-mebox > .ovh-acts > .ovh-act:not(.is-own)')].map((b) => b.getAttribute('aria-label'))`), ['Display: theme, text size, motion', 'Add or switch account', 'Sign out'], 'Display, add or switch account, Sign out, in that order'));
+        await eventually(async () => assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-mebox .ovh-act')].every((b) => !!b.getAttribute('data-ov-tip') && !!b.querySelector('.ovh-act-t').textContent.trim())`), 'every action says its name and has a tooltip'));
+        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovh-own') && [...document.querySelectorAll('.ovh-mebox .ovh-acts > .is-own')].every((b) => !!b.getAttribute('aria-label'))`), 'this site\'s own items are in your row, never a row of their own'));
+        await eventually(async () => assert.ok(await s.evaluate(`/[?&]add_account=1/.test(document.querySelector('.ovh-mebox a.ovh-act[aria-label="Add or switch account"]').getAttribute('href')) && !!document.querySelector('.ovh-mebox [data-ov-look-open]') && !!document.querySelector('.ovh-me a.ovh-me-gear[href="https://openvibe.network/my"]')`), 'switch, Display, and the gear beside your name'));
         await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow')`), 'Display is not at the foot any more'));
-        await eventually(async () => assert.ok(await s.evaluate(`document.querySelector('.ovh-me').getBoundingClientRect().height <= 112`), 'your row is one card: you, then your buttons'));
-        await eventually(async () => assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-me .ovh-ib')].every((b) => { const r = b.getBoundingClientRect(); return r.height >= 44 && r.width >= 40; })`), 'and its buttons are full touch targets'));
-        await eventually(async () => assert.ok(await s.evaluate(`(() => { const m = document.querySelector('.ovh-me').getBoundingClientRect(); return m.right <= innerWidth && [...document.querySelectorAll('.ovh-me .ovh-ib')].every((x) => x.getBoundingClientRect().right <= m.right + 1); })()`), 'nothing in your row runs off the screen'));
+        await eventually(async () => assert.ok(await s.evaluate(`(() => { const acts = [...document.querySelectorAll('.ovh-mebox .ovh-act')].map((b) => b.getBoundingClientRect()); const box = document.querySelector('.ovh-mebox').getBoundingClientRect(); return acts.length > 0 && acts.every((r) => r.height >= 44 && r.width >= 44 && r.right <= box.right + 1 && r.left >= box.left - 1) && Math.abs(acts[0].left - (box.left + 8)) < 2; })()`), 'full touch targets, inside the card, the row starting at its edge (no indent)'));
+        await eventually(async () => { const t = await s.evaluate(`[...document.querySelectorAll('.ovh-mebox .ovh-act')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.left), Math.round(r.width), b.className]; })`); assert.strictEqual(new Set(t.map((x) => x[0])).size, 1, `one row, aligned: ${JSON.stringify(t)}`); });
         // The tab row: Apps first and chosen; All and Edit at its end; the tabs move with the arrow keys.
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].map((t) => t.dataset.tab + (t.getAttribute('aria-selected') === 'true' ? '*' : ''))`), ['apps*', 'notifications', 'recent'], 'Apps, Notifications, Recent; Apps first'));
         await eventually(async () => assert.ok(await s.evaluate(`!!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-allbtn') && !!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-edit') && !document.querySelector('.ovh-sec .ovh-edit')`), 'All and Edit sit at the end of the tab row'));
@@ -304,6 +307,20 @@ const server = http.createServer((req, res) => {
         await s.evaluate(`window.OpenVibeDock.close(), true`);
         assert.ok(await until(s, `!document.querySelector('.ovs.is-open')`), 'close() closes the menu');
         await s.close();
+        // OV_CAPTURE_YOU=<dir>: You at a phone's width (your card, the tabs, the grid; and Edit with its Done), for a look.
+        if (process.env.OV_CAPTURE_YOU) {
+            const shotPage = await h.openPage(browser, context, { width: 390, height: 844, block: blocked });
+            await shotPage.goto(`${base}/?signed=1`, { maxMs: 6000 });
+            await openTab(shotPage, 'you');
+            assert.ok(await until(shotPage, `!!document.querySelector('.ovh-mebox .ovh-act') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
+            const you = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-390.png'), Buffer.from(you.data, 'base64'));
+            await shotPage.evaluate(`document.querySelector('.ovh-edit').click(), true`);
+            assert.ok(await until(shotPage, `!!document.querySelector('.ovh-tabrow .ovh-edit.is-done')`), 'Edit turns into the check');
+            const ed = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-edit-390.png'), Buffer.from(ed.data, 'base64'));
+            await shotPage.close();
+        }
         if (process.env.OV_CAPTURE_MENU) {
             for (const width of [390, 1280]) {
                 const shotPage = await h.openPage(browser, context, { width, height: width === 390 ? 844 : 900, block: blocked });

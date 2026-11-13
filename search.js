@@ -283,6 +283,11 @@
 .ovs-starttabs .ovs-tab .ovs-tab-ic { position: relative; flex: none; display: grid; place-items: center; width: 22px; height: 22px; overflow: visible; }
 .ovs-tab-ic > svg { width: 20px; height: 20px; }
 .ovs-tab-ic .ov-icon { display: grid; place-items: center; }
+/* 4.236.0, the tab's nudge: this site's tab rolls its glyph and name through the places in its section, and back. */
+.ovs-tab .ovs-roll { animation: ovsRoll .38s cubic-bezier(.2, .9, .25, 1); }
+@keyframes ovsRoll { from { opacity: 0; transform: translateY(65%); } 60% { opacity: 1; } }
+.ovs-tab.is-rolling > span:not(.ovs-tab-ic) { color: var(--accent-light, var(--accent, #60a5fa)); transition: color .3s; }
+html[data-ov-motion=off] .ovs-tab .ovs-roll { animation: none; }
 /* The site's tab wears its glyph like Feed and You (owner, 11-09): no disc and no ring, the glyph at their weight and in
    the label's colour. The icon's box is drawn larger than the slot so the solid glyph itself is about 18 px. */
 .ovs-tab-ic .ov-icon .ovi-bg, .ovs-tab-ic .ov-icon .ovi-ring, .ovs-tab-ic .ov-icon .ovi-comet, .ovs-tab-ic .ov-icon .ovi-prog { display: none; }
@@ -1351,7 +1356,9 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
         try { localStorage.setItem(FEED_COUNT, String(fresh)); } catch { /* */ }
         paintFeedDot(fresh);
         try { feedChannel?.postMessage({ type: 'count', count: fresh }); } catch { /* */ }
-        const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        // Your picture on You whenever the bar knows you, with or without a token for the network's reads (4.236.0; the
+        // owner, 11-13: "what happened to the user avatar": on a site with its own session it fell back to a glyph).
+        const me = ctx.user && !ctx.user.is_anon ? ctx.user : null;
         let siteId = ctx.service || '';
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
         // One row of places (4.194.0): this site, the feed, your messages, AI (Vibe and your agents), you. Messages and
@@ -1393,6 +1400,70 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             tabsEl.appendChild(b);
         }
         if (typeof ctx.icons === 'function') { try { ctx.icons(tabsEl); } catch { /* the glyphs come with ov-icons.js */ } }
+        if (!tabsEl.__ovsRollWired) { tabsEl.__ovsRollWired = true; tabsEl.addEventListener('pointerdown', rollStop, true); tabsEl.addEventListener('keydown', rollStop, true); }
+        rollSchedule();
+    }
+    /**
+     * The tab's nudge (4.236.0; the owner, 11-13: "every once in a while it swaps between all the options that exist in
+     * that section … scroll through all these icons and labels … nudges the user"): this site's tab rolls its glyph and
+     * name through the other places in its section, a beat each, and back to its own; once a little after the menu
+     * opens, then every 40 s while it is open and nobody is typing or pointing at the tabs. Calm rolls once an opening;
+     * Off never. Its accessible name stays its own, and a press stops it at once.
+     */
+    let rollTimer = 0, rollRun = 0, rolledOpen = false;
+    function rollSteps() {
+        try {
+            const b0 = basis();
+            const mineSite = b0.mineSite;
+            if (!mineSite) return [];
+            return b0.ranked.filter((x) => x.group === mineSite.group && x.id !== mineSite.id && x.name).slice(0, 6).map((x) => ({ label: x.name, icon: x.icon || x.id }));
+        } catch { return []; }
+    }
+    function rollStop() {
+        rollRun += 1;
+        const b = tabsEl && tabsEl.querySelector('.ovs-tab[data-tab="here"].is-rolling');
+        if (!b || !b.__ovsOwn) return;
+        const t = b.querySelector(':scope > span:not(.ovs-tab-ic)'), g = b.querySelector('.ovs-tab-ic .ov-icon');
+        if (t) t.textContent = b.__ovsOwn.label;
+        if (g && b.__ovsOwn.icon) { g.setAttribute('data-icon', b.__ovsOwn.icon); if (typeof ctx.icons === 'function') { try { ctx.icons(b); } catch { /* */ } } }
+        b.classList.remove('is-rolling');
+    }
+    function rollHere() {
+        if (document.documentElement.getAttribute('data-ov-motion') === 'off') return;
+        const b = tabsEl && tabsEl.querySelector('.ovs-tab[data-tab="here"]');
+        const steps = rollSteps();
+        if (!b || steps.length < 2 || b.classList.contains('is-rolling')) return;
+        const t = b.querySelector(':scope > span:not(.ovs-tab-ic)'), g = b.querySelector('.ovs-tab-ic .ov-icon');
+        if (!t) return;
+        b.__ovsOwn = { label: t.textContent, icon: g ? g.getAttribute('data-icon') : null };
+        b.setAttribute('aria-label', b.__ovsOwn.label);
+        const seq = steps.concat([b.__ovsOwn]);
+        const run = ++rollRun;
+        b.classList.add('is-rolling');
+        let i = 0;
+        const beat = () => {
+            if (run !== rollRun || !b.isConnected) return;
+            const st = seq[i++];
+            for (const x of [t, g]) if (x) x.classList.remove('ovs-roll');
+            void t.offsetWidth;
+            t.textContent = st.label;
+            if (g && st.icon) { g.setAttribute('data-icon', st.icon); if (typeof ctx.icons === 'function') { try { ctx.icons(b); } catch { /* */ } } }
+            for (const x of [t, g]) if (x) x.classList.add('ovs-roll');
+            if (i < seq.length) setTimeout(beat, 820); else setTimeout(() => { if (run === rollRun) b.classList.remove('is-rolling'); }, 420);
+        };
+        beat();
+    }
+    function rollSchedule() {
+        if (rolledOpen) return;
+        rolledOpen = true;
+        setTimeout(() => { if (el && el.classList.contains('is-open') && !input.value) rollHere(); }, 1400);
+        clearInterval(rollTimer);
+        rollTimer = setInterval(() => {
+            if (!el || !el.classList.contains('is-open')) { clearInterval(rollTimer); rolledOpen = false; return; }
+            if (document.hidden || input.value || tabsEl.matches(':hover, :focus-within')) return;
+            if (document.documentElement.getAttribute('data-ov-motion') === 'reduced') return;
+            rollHere();
+        }, 40000);
     }
     const bsvg = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     const BRIDGE_SVG = {
@@ -2102,6 +2173,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             closing = setTimeout(() => { closing = 0; el.classList.remove('is-open', 'is-closing'); if (orbEl) orbEl.classList.remove('is-from', 'is-gone'); }, 280);
         } else {
             el.classList.remove('is-open');
+            rollStop(); clearInterval(rollTimer); rolledOpen = false;
             if (orbEl) orbEl.classList.remove('is-x', 'is-from', 'is-pop', 'is-gone');
         }
         if (surface) { surface.destroy(); surface = null; }

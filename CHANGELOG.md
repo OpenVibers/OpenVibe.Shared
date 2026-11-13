@@ -1,5 +1,44 @@
 # Changelog
 
+## 4.236.0 — 2026-11-13
+
+**You is yours on every site, the wait is the logo, and the box says what a message answers** (the owner's phone,
+11-13: "what happened to all the tabs … bring all that back", "what happened to the user avatar", "completely redesign
+this area", "in edit mode … you can't scroll up", "improve the O so it actually looks like the original", "improve the
+send button", "a replying to area or different content above").
+
+- **You, on a site with its own session (Run's).** The menu knew the person but had no token for the network's reads,
+  so You lost its tabs (Apps, Notifications, Recent) and the You tab its picture. Both follow the person now
+  (`known(o)` in ov-home.js, `me` in search.js's tabs). Without a token, Notifications links to the person's account.
+- **Your card, redesigned.**
+  - Your name and the gear on one line.
+  - Under it, one row of actions across the whole card in equal columns: this site's own (Channel, Admin), Display,
+    Switch, Sign out. Each is its glyph with its name under it and a tooltip; the row starts at the card's edge (it was
+    indented 52 px).
+  - Sign out's red only under a pointer; the gear turns under one.
+- **You's tabs look like tabs.**
+  - Apps, Alerts (Notifications) and History are one segmented track, each with its glyph and name; the chosen one is
+    lit.
+  - All apps and Edit are two glyph buttons at the end: All with its count on its corner, and Edit a pencil that turns
+    into the check, filled with the accent, while you arrange. That check is the one Done; the row is sticky, so it is
+    always in reach.
+- **Editing your home on a phone.** A quick swipe up or down scrolls the menu. A hold of a fifth of a second, or a
+  sideways move, takes the app (it lifts); only then does the page hold still.
+- **The menu's tabs nudge.** This site's tab rolls its glyph and name through the other places in its section, a beat
+  each, and back to its own: a little after the menu opens, then every 40 s while it is open and idle. Calm rolls once
+  per opening and Off never. Its accessible name stays its own; a press stops it.
+- **The wait (ov-mark busy).** The O stays the logo's ring at its full weight, a faint track, with a bright arc
+  running round it that grows as it goes and draws in behind. The V lifts 2.5 units in time (it bobbed 6, off the
+  O's line) and the glow breathes, one 1.25 s rhythm. It replaces eight thinner dots that sat inside the ring's line.
+- **The composer.**
+  - `bar({ icon, title, detail, kind, onClose })` puts any context above the words, inside the box, as reply and edit
+    do: a quote, or a file being answered.
+  - Bars carry a rail of the accent (editing in its own colour) and come in with a short rise.
+  - Send with nothing to send is a quiet outline round its arrow (it was a grey disc). With something to send it
+    fills with the accent on a spring, and the arrow lifts under a pointer and on a press.
+- Tests: `composer-bar-send` (new), `ov-mark` (the arc), `menu-home-screen-chrome` (the card in one aligned row with
+  names and tooltips; `OV_CAPTURE_YOU=<dir>` saves You and Edit at 390 px).
+
 ## 4.235.0 — 2026-11-13
 
 **The layers: what floats folds into a small handle and grows to the window, and what opens from a button is anchored

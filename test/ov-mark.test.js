@@ -352,10 +352,13 @@ function setup({ reduce = false, session = memoryStorage(), start = 1000000, roo
         assert.match(css, /\.ov-mark\[data-ovm-intro\] \.gr\{animation:ovmGlint/, 'a glint ends the intro');
         assert.match(css, /\.ov-mark:hover \.gr\{animation:ovmGlint|\.ov-mark:hover \.gr,/, 'and crosses on hover');
         assert.match(css, /\.ov-mark\[data-glow\]::before\{opacity:\.42/, 'data-glow keeps the glow on');
-        // Working and thinking (4.186.0): the O as eight dots with three bright ones going round, dot to dot; three dots
-        // rising in turn inside the O while the V's strokes glimmer. One sign each, wherever something works or writes.
-        assert.match(css, /\.ov-mark\[data-state=busy\] \.ot\{opacity:\.3;stroke-dasharray:0 12\.5\}/, 'working: the O is eight dots');
-        assert.match(css, /\.ov-mark\[data-state=busy\] \.o\{stroke-dasharray:0 12\.5 0 12\.5 0 75;animation:ovmDots \.96s steps\(8,end\) infinite\}/, 'three bright ones hop round it');
+        // Working (4.236.0): the O stays the logo's ring at its own weight, a faint track with a bright arc going round
+        // that grows and draws in; thinking (4.186.0): three dots rising in turn inside the O while the V's strokes glimmer.
+        assert.match(css, /\.ov-mark\[data-state=busy\] \.ot\{opacity:\.24\}/, 'working: the whole ring is the track, at its own weight');
+        assert.match(css, /\.ov-mark\[data-state=busy\] \.o\{stroke-linecap:round;stroke-dasharray:6 94;animation:ovmArc 1\.25s [^}]*infinite\}/, 'a bright arc runs round it');
+        assert.match(css, /@keyframes ovmArc\{0%\{stroke-dasharray:6 94;stroke-dashoffset:0\}50%\{stroke-dasharray:44 56;stroke-dashoffset:-20\}100%\{stroke-dasharray:6 94;stroke-dashoffset:-100\}\}/, 'growing and drawing in, once round');
+        assert.ok(!/ovm-dot-w|ovmDots/.test(css), 'no thinner dots inside the ring\'s line');
+        assert.match(css, /\.ov-mark\[data-state=busy\] \.vg\{animation:ovmLift 1\.25s/, 'the V lifts in time, level with the O');
         assert.ok(!/\[data-state=busy\] \.og\{animation:ovmBreathe/.test(css), 'the O no longer just breathes while it works');
         assert.match(css, /\.ov-mark\[data-state=think\] \.td\{display:inline;animation:ovmThink 1\.2s ease-in-out infinite\}/, 'thinking: three dots inside the O');
         assert.match(css, /\.ov-mark\[data-state=think\] \.vb\{animation:ovmSpeak 1\.2s ease-in-out \.6s infinite\}/, 'and the V glimmers, one stroke after the other');
