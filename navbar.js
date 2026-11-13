@@ -2399,7 +2399,11 @@
             const after = ((_config.menu && _config.menu.after) || []).concat(_runtimeMenu.after);
             // The bar shows the balances (a site's chips, or wallet: true): the menu does not repeat them.
             const barWallet = !!_config.wallet || (Array.isArray(_config.chips) && _config.chips.some(c => c && (c.id === 'coins' || c.id === 'vibes')));
-            const admin = u.role === 'admin' || !!(u.capabilities && (u.capabilities.is_owner || u.capabilities.admin_panel));
+            // §Z.2 (11-13): the rank comes from the viewer model. Admins and the owner get Admin (Network's panel, which only
+            // admins may use); a global mod gets Moderation, Live's staff console (bans, chat logs: global_mod and up).
+            const v = viewer();
+            const admin = v.owner || v.rank === 'admin' || !!(u.capabilities && u.capabilities.admin_panel);
+            const mod = !admin && v.rank === 'mod';
 
             const bell = _config.notifications !== false && !!_config.token && !isAnon;
             const places = before.concat(after).filter((it) => it && !it.sep).concat(menuCfg.defaults === false ? [] : [
@@ -2409,6 +2413,7 @@
                 !isAnon ? { id: 'ov-ask', label: 'Ask Vibe', drawn: navIcon('fa-brain'), href: 'https://openvibe.chat/vibe', mark: 'data-ov-ask' } : null,
                 !isAnon ? { id: 'ov-work', label: 'Work together', short: 'Work', drawn: navIcon('fa-people-group'), href: 'https://openvibe.chat/work', mark: 'data-ov-work' } : null,
                 admin ? { id: 'ov-admin', label: 'Admin', drawn: navIcon('fa-shield-halved'), href: 'https://openvibe.network/admin' } : null,
+                mod ? { id: 'ov-mod', label: 'Moderation', drawn: navIcon('fa-shield-halved'), href: 'https://openvibe.live/admin' } : null,
                 !isAnon ? { id: 'ov-wallet', label: 'Wallet', drawn: navIcon('fa-wallet'), href: 'https://openvibe.network/my#wallet' } : null,
                 !isAnon && u.username ? { id: 'ov-profile', label: 'Profile', drawn: navIcon('fa-id-card'), href: `https://openvibe.network/@${encodeURIComponent(u.username)}` } : null,
             ].filter(Boolean));

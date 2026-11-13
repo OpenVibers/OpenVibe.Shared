@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.245.0 — 2026-11-13
+
+**The menu knows your rank** (the owner, 11-13: navigation "user aware and session aware and … aware of rank").
+
+- **Your rank's place, first in You.** The menu's You apps start with what your rank opens, read from the viewer model
+  (`OV.viewer()`): the owner and admins get Admin (Network's panel, which only admins may use), and a global moderator now
+  gets Moderation, Live's staff console (bans and chat logs). A member sees neither. Before this, a moderator had no way
+  in from the menu.
+
 ## 4.244.0 — 2026-11-13
 
 **Every name wears what its person wears** (the owner, 11-13: "make sure user name decoration … applies everywhere").
