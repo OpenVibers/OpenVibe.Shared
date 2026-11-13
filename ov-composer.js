@@ -331,8 +331,35 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
 /* 4.223.0: the + sheet, the mic first, the examples' fade, the round send. */
 .ovc-v2, form.ovc[data-ovc-contain] { container: ovc / inline-size; }
 .ovc-more[aria-expanded="true"] { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 18%, transparent); }
-.ovc-more svg { transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
-.ovc-more[aria-expanded="true"] svg { transform: rotate(45deg); }
+/* 4.242.0, the + (plan §Z.1.6): a bold rounded plus in a lit disc; arms reach and petals peek under the pointer; it
+   sinks when pressed; open, it springs into a x, the disc fills and rings once, and the petals burst. */
+.ovc-more { position: relative; isolation: isolate; overflow: visible; }
+.ovc-more::before { content: ""; position: absolute; inset: 0; border-radius: inherit; z-index: -1; background: radial-gradient(120% 120% at 30% 25%, color-mix(in srgb, #fff 14%, transparent), transparent 60%); opacity: .7; pointer-events: none; transition: opacity .25s; }
+.ovc-more::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, transparent); opacity: 0; }
+.ovc-plus { display: block; overflow: visible; }
+.ovc-plus-x path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; transform-box: view-box; transform-origin: 12px 12px; transition: transform .28s cubic-bezier(.3, 1.5, .4, 1); }
+.ovc-plus-x { transform-box: view-box; transform-origin: 12px 12px; transition: transform .45s cubic-bezier(.3, 1.6, .4, 1); }
+.ovc-plus-p circle { fill: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa))); transform-box: fill-box; transform-origin: center; transform: scale(0); opacity: 0; transition: transform .3s cubic-bezier(.3, 1.6, .4, 1), opacity .2s; }
+@media (hover: hover) and (pointer: fine) {
+  .ovc-more:not([aria-expanded="true"]):hover .ovc-plus-h { transform: scaleX(1.12); }
+  .ovc-more:not([aria-expanded="true"]):hover .ovc-plus-v { transform: scaleY(1.12); }
+  .ovc-more:not([aria-expanded="true"]):hover .ovc-plus-p circle { transform: scale(.75); opacity: .9; }
+  .ovc-more:hover::before { opacity: 1; }
+}
+.ovc-more:not([aria-expanded="true"]):focus-visible .ovc-plus-p circle { transform: scale(.75); opacity: .9; }
+.ovc-more:active .ovc-plus-x { transform: scale(.82); }
+.ovc-more[aria-expanded="true"] { color: var(--on-accent, #fff); background: linear-gradient(150deg, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 92%, #fff), var(--ovt-accent, var(--accent-strong, var(--accent, #2563eb)))) !important; box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 75%, transparent) !important; }
+.ovc-more[aria-expanded="true"] .ovc-plus-x { transform: rotate(135deg); }
+.ovc-more[aria-expanded="true"]::after { animation: ovc-plus-ring .6s ease-out; }
+.ovc-more[aria-expanded="true"] .ovc-plus-p circle { animation: ovc-plus-burst .55s cubic-bezier(.2, .8, .3, 1) both; }
+.ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(1) { --dx: -5px; --dy: -5px; } .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(2) { --dx: 5px; --dy: -5px; }
+.ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(3) { --dx: -5px; --dy: 5px; } .ovc-more[aria-expanded="true"] .ovc-plus-p circle:nth-child(4) { --dx: 5px; --dy: 5px; }
+@keyframes ovc-plus-burst { 0% { transform: scale(.6); opacity: 1; } 60% { opacity: .9; } 100% { transform: translate(var(--dx, 0), var(--dy, 0)) scale(0); opacity: 0; } }
+@keyframes ovc-plus-ring { 0% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 55%, transparent); } 100% { opacity: 0; box-shadow: 0 0 0 10px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 0%, transparent); } }
+html[data-ov-motion=reduced] .ovc-more[aria-expanded="true"] .ovc-plus-p circle { animation: none; opacity: 0; }
+html[data-ov-motion=reduced] .ovc-plus-x { transition-duration: .2s; }
+html[data-ov-motion=off] :is(.ovc-plus-x, .ovc-plus-x path, .ovc-plus-p circle) { transition: none; animation: none !important; }
+html[data-ov-motion=off] .ovc-more::after { animation: none; }
 /* 4.237.0 (the owner, 11-13: the row looked "offset"): every tool in the row is the same quiet disc, so the first one's
    edge lines up with the words above it and an open + is that disc tinted, not the only solid shape in the row; Send
    is the same size at the other end. */
@@ -404,7 +431,7 @@ html[data-ov-motion=off] :is(.ovc-add-tile, .ovc-add-row, dialog.ovc-add, dialog
 @keyframes ovc-tray-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 html[data-ov-motion=reduced] .ovc-tray { animation-name: ovc-fade-calm; }
 @keyframes ovc-fade-calm { from { opacity: 0; } }
-html[data-ov-motion=off] .ovc-tray, html[data-ov-motion=off] .ovc-more svg { animation: none; transition: none; }
+html[data-ov-motion=off] .ovc-tray { animation: none; transition: none; }
 .ovc textarea::placeholder, .ovt-composer textarea::placeholder { transition: opacity .25s ease; }
 .ovc textarea.ovc-ph-swap::placeholder, .ovt-composer textarea.ovc-ph-swap::placeholder { opacity: 0; }
 .ovc-v2 .ovt-send--round { background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #fff), var(--accent-strong, var(--accent, #2563eb))); color: var(--on-accent-strong, #fff);
@@ -494,6 +521,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         video: '<rect x="3.4" y="6.4" width="12.3" height="11.3" rx="1.9"/><path d="M15.6 10.2l4.7-2.8v9.4l-4.7-2.8"/>',
         chevron: '<path d="M7.9 3.6l8.4 8.4l-8.4 8.4"/>',
     };
+    // 4.242.0: the + as its own mark (plan §Z.1.6): two arms, four petals that peek and burst, all drawn on the 24 grid.
+    const PLUS_MARK = '<svg class="ovc-plus" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><g class="ovc-plus-p"><circle cx="6.2" cy="6.2" r="1.35"/><circle cx="17.8" cy="6.2" r="1.35"/><circle cx="6.2" cy="17.8" r="1.35"/><circle cx="17.8" cy="17.8" r="1.35"/></g><g class="ovc-plus-x"><path class="ovc-plus-h" d="M5.5 12h13"/><path class="ovc-plus-v" d="M12 5.5v13"/></g></svg>';
     const gsvg = (inner) => `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
     const PLUS_DEFAULT = { tiles: ['camera', 'photo', 'file'], rows: ['paste', 'screenshot', 'camapp', 'share', 'timer', 'github'], only: false };
     const CONFIG = { plus: null };
@@ -1094,7 +1123,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             if (ev && ev.detail === 0) { const first = sheet.querySelector('.ovc-add-tile, .ovc-add-row'); if (first) first.focus(); }
         }
         if (tools && !form.hasAttribute('data-ovc-no-more')) {
-            more = el('button', 'ovt-btn ovc-more', svg(IC.plus));
+            more = el('button', 'ovt-btn ovc-more', PLUS_MARK);
             more.type = 'button'; more.setAttribute('aria-label', 'Add: camera, photos, files and more'); more.title = 'Add';
             more.setAttribute('aria-haspopup', 'dialog'); more.setAttribute('aria-expanded', 'false');
             more.addEventListener('click', openSheet);
