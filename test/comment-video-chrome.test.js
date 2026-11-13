@@ -1,8 +1,9 @@
 'use strict';
 // A video in a comment, end to end in headless Chrome (4.247.0, plan §Z.9): the box of a thread drawn with
 // mediaAttachments sends a picked .mkv to Media's composer attachments with the viewer's own token, as it is picked;
-// the form then carries the id in `attachments` and no file bytes; a box without a viewer token keeps the plain upload;
-// and a comment's video plays in the network's player (player.js loaded by ov-thread.js). Skipped without Chrome.
+// the form then carries the id in `attachments` and no file bytes; Media's limit for the kind is said in words; removing
+// a chip while it uploads cancels the upload; a box without a viewer token keeps the plain upload; and a comment's
+// video plays in the network's player (player.js loaded by ov-thread.js). Skipped without Chrome.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -27,16 +28,18 @@ window.OpenVibeNavbar = { viewerToken: function () { return window.__token || ''
 (function () {
     var Real = window.XMLHttpRequest;
     function Fake() { this.upload = {}; this.headers = {}; this.status = 0; this.responseText = ''; }
+    Fake.prototype.abort = function () { this.aborted = true; window.__aborted = (window.__aborted || 0) + 1; };
     Fake.prototype.open = function (m, u) { this.method = m; this.url = u; };
     Fake.prototype.setRequestHeader = function (k, v) { this.headers[k.toLowerCase()] = v; };
     Fake.prototype.send = function (body) {
         var self = this, file = body && body.get ? body.get('file') : null;
         window.__sent.push({ method: self.method, url: self.url, auth: self.headers.authorization || '', name: file && file.name, size: file && file.size });
         setTimeout(function () {
+            if (self.aborted) return;
             if (self.upload.onprogress) self.upload.onprogress({ lengthComputable: true, loaded: 5, total: 10 });
             self.status = 201; self.responseText = JSON.stringify({ id: '${ATT}', kind: 'video', status: 'processing' });
             self.onload && self.onload();
-        }, 30);
+        }, window.__slow ? 3000 : 30);
     };
     window.XMLHttpRequest = function () { return new Fake(); };
     window.XMLHttpRequest.Real = Real;
@@ -93,6 +96,16 @@ const server = http.createServer((req, res) => {
         const sent = await page.evaluate(`window.__sent[0]`);
         assert.deepEqual(sent, { method: 'POST', url: 'https://openvibe.media/api/v1/attachments', auth: 'Bearer viewer-token', name: 'clip.mkv', size: 4096 });
         assert.ok(await until(`[...document.querySelectorAll('form.ovc-v2 input[name=attachments]')].map((i) => i.value).join() === '${ATT}'`), 'the form carries the id');
+        // Media's limit for the kind, in words: a 21 MB picture is over the 20 MB a picture may be.
+        await page.evaluate(`(() => { const f = document.querySelector('form.ovc-v2[data-preset="comment"]'); const c = f.__ovc && (f.__ovc.ctx || f.__ovc); c.add([new File([new Uint8Array(21 * 1048576)], 'big.jpg', { type: 'image/jpeg' })]); })()`);
+        assert.ok(await until(`/Pictures can be up to 20 MB/.test(document.querySelector('form.ovc-v2 [data-ovt-note]').textContent)`), 'the limit is said');
+        assert.equal(await page.evaluate(`window.__sent.length`), 1, 'an oversize file never leaves');
+        // Removing a chip while it uploads cancels the upload.
+        await page.evaluate(`(() => { window.__slow = true; const f = document.querySelector('form.ovc-v2[data-preset="comment"]'); const c = f.__ovc && (f.__ovc.ctx || f.__ovc); c.add([new File([new Uint8Array(1024)], 'slow.mov', { type: 'video/quicktime' })]); })()`);
+        assert.ok(await until(`window.__sent.length === 2`));
+        await page.evaluate(`[...document.querySelectorAll('form.ovc-v2 .ovc-file')].pop().querySelector('[data-ovc-x]').click()`);
+        assert.ok(await until(`window.__aborted === 1`), 'the upload is cancelled');
+        assert.equal(await page.evaluate(`document.querySelectorAll('form.ovc-v2 input[name=attachments]').length`), 1, 'only the first file\'s id stays');
         await page.evaluate(`(() => { const t = document.querySelector('form.ovc-v2 textarea'); t.value = 'Here it is'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('form.ovc-v2 [data-ovt-send]').click(); })()`);
         await until(`!!document.getElementById('posted')`);
         assert.ok(posted, 'the form posted to the page\'s action');

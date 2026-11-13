@@ -13,13 +13,19 @@
   and makes a web copy of a video no browser plays. Only on a post route that reads `attachments` (Community's, from
   #439); a page without a viewer token keeps the plain upload. Off by default: nothing changes on a page that does not
   ask.
+- **Any box can do it: `OpenVibeComposer.mount(host, { media: true })`** (composer v3's file queue, first module), or
+  `data-ovc-media` on a form. The core composer sends each file to Media as it is picked, with Media's limits per kind
+  from one table (pictures 20 MB, videos 300 MB, sound 50 MB, other files 25 MB; the type or the extension guides it, as
+  `.mkv` often has no type in a browser), says an oversize file's limit in words, and cancels an upload when its chip is
+  removed (a mod's `upload(file, onProgress, signal)` now gets an AbortSignal). A mod's own uploader still comes first.
 - **A comment's video plays.** An attachment from Media (`att_…`) draws as the network's player (`video[data-ov-player]`,
   Media's web copy, its first frame as the poster, its own shape and length); one whose copy is still being made shows
   its first frame and a link to the file; a picture shows, a sound gets a bar. Nothing off `openvibe.media/a/` is drawn.
   `ov-thread.js` loads `player.js` and `player.css` when a thread has a video (content-hashed in `THREAD_REV`).
 - Checks: `test/thread-media-attachments.test.js` (the box, every kind, URLs off Media refused) and
   `test/comment-video-chrome.test.js` (a picked `.mkv` goes to Media with the viewer's token, the form sends its id and
-  no bytes, no token keeps the plain upload, the video plays in the player at 390 px).
+  no bytes, a 21 MB picture is refused in words, removing a chip mid-upload cancels it, no token keeps the plain upload,
+  the video plays in the player at 390 px).
 
 ## 4.246.0 — 2026-11-13
 

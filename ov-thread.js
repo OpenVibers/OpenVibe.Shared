@@ -24,7 +24,7 @@
     // Motion off (html[data-ov-motion=off], theme-loader.js) is the only setting that skips an effect; Calm plays it.
     var reduce = document.documentElement.getAttribute('data-ov-motion') === 'off';
     var canCopy = !!(root.navigator && navigator.clipboard && navigator.clipboard.writeText);
-    const THREAD_REV = { 'ov-composer.js': '5bd54df16c8f', 'ov-combo.js': '8001a3b19c2f', 'player.js': '8f4b6892e572', 'player.css': '699a7c4927d5' };
+    const THREAD_REV = { 'ov-composer.js': 'b9d22a19904b', 'ov-combo.js': '8001a3b19c2f', 'player.js': '8f4b6892e572', 'player.css': '699a7c4927d5' };
     var selfSrc = (document.currentScript && document.currentScript.src) || '';
     // 4.202.0: the one dropdown for a field (ov-combo.js: a repository, a person), wherever a page asks for it.
     function loadCombo() {
@@ -68,43 +68,6 @@
         document.head.appendChild(s);
     }
     loadComposer.waiting = [];
-
-    // 4.247.0 (plan §Z.9): a comment box with data-ovc-media sends each file to Media's composer attachments as it is
-    // picked (any video, picture, sound, PDF or text; Media's limits: 300 MB for a video), with the viewer's own token,
-    // and the form carries the ids in `attachments`. A box with no viewer token keeps the plain upload (its page's own).
-    var MEDIA_ATTACH = 'https://openvibe.media/api/v1/attachments';
-    function viewerToken() {
-        try { var N = root.OpenVibeNavbar; return N && typeof N.viewerToken === 'function' ? String(N.viewerToken() || '') : ''; } catch (e) { return ''; }
-    }
-    function mediaMod() {
-        if (mediaMod.on || !root.OpenVibeComposer || typeof root.OpenVibeComposer.mod !== 'function') return;
-        mediaMod.on = true;
-        root.OpenVibeComposer.mod({
-            id: 'ovt-media-attachments',
-            match: function (form) { return !!form && form.hasAttribute('data-ovc-media') && !!viewerToken(); },
-            upload: function (file, onProgress) {
-                return new Promise(function (resolve, reject) {
-                    var tok = viewerToken();
-                    if (!tok) { reject(new Error('Sign in again to attach files.')); return; }
-                    var fd = new FormData();
-                    fd.append('file', file, file.name || 'file');
-                    var x = new XMLHttpRequest();
-                    x.open('POST', MEDIA_ATTACH);
-                    x.setRequestHeader('Authorization', 'Bearer ' + tok);
-                    x.setRequestHeader('Accept', 'application/json');
-                    if (x.upload && onProgress) x.upload.onprogress = function (e) { if (e.lengthComputable && e.total) onProgress(e.loaded / e.total); };
-                    x.onload = function () {
-                        var j = {};
-                        try { j = JSON.parse(x.responseText || '{}'); } catch (e) { j = {}; }
-                        if (x.status >= 200 && x.status < 300 && j && /^att_/.test(String(j.id || ''))) { resolve({ id: j.id }); return; }
-                        reject(new Error((j && (j.detail || j.title)) || (x.status === 413 ? 'That file is too large to attach.' : x.status === 415 ? 'That kind of file cannot be attached.' : 'The file did not upload.')));
-                    };
-                    x.onerror = function () { reject(new Error('The file did not upload. Check the connection and try again.')); };
-                    x.send(fd);
-                });
-            },
-        });
-    }
 
     function q(el, sel) { return el ? el.querySelector(sel) : null; }
     function qa(el, sel) { return el ? Array.prototype.slice.call(el.querySelectorAll(sel)) : []; }
@@ -388,7 +351,6 @@
                     return;
                 }
                 if (!root.OpenVibeComposer) { loadComposer(function () { bootComposer(box); }); return; }
-                if (f.hasAttribute('data-ovc-media')) mediaMod();
                 if (root.OpenVibeComposer.mount) {
                     var upgraded = upgradeComposer(f);
                     if (upgraded) { wireComposer(upgraded); return; }
@@ -419,7 +381,7 @@
                         preset: preset, name: oldText.name || 'message', placeholder: oldText.placeholder || '',
                         maxLength: Number(oldText.getAttribute('maxlength')) || 2000, submitLabel: label,
                         tools: file ? (media ? ['photo', 'file', 'emoji'] : ['photo', 'emoji']) : ['emoji'], maxFiles: Number(f.getAttribute('data-ovc-max-files')) || 10,
-                        maxMb: media ? 300 : undefined,
+                        media: media, maxMb: media ? 300 : undefined,
                     });
                 } catch (e) { c = null; }
                 if (!c) { host.replaceWith(f); return null; }
@@ -430,8 +392,7 @@
                     qa(c.form, 'input[type=file]').forEach(function (i) { i.name = field; if (file.accept) i.accept = file.accept; });
                 }
                 hidden.forEach(function (h) { var i = document.createElement('input'); i.type = 'hidden'; i.name = h[0]; i.value = h[1]; c.form.appendChild(i); });
-                // 4.247.0 (§Z.9): the box's files go to Media as they are picked; the form carries their ids.
-                if (media) { c.form.setAttribute('data-ovc-media', '1'); c.form.setAttribute('data-ovc-ids', 'attachments'); c.form.setAttribute('data-ovc-max-mb', '300'); }
+                // 4.247.0 (§Z.9): mount({ media }) sends the box's files to Media as they are picked; the form carries their ids.
                 if (oldText.value) c.text.value = oldText.value;
                 if (note && note.textContent) c.note.textContent = note.textContent;
                 c.form.__ovtUpgraded = true;
