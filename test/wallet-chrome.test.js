@@ -21,6 +21,9 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
             await p.evaluate(`document.querySelector('[data-chip-id]').click()`); await wait(500);
             // 4.202.0: the wallet opens in the one window, which grows in (.28 s): measure once it has settled.
             { const end = Date.now() + 4000; while (Date.now() < end && !(await p.evaluate(`(() => { const w = document.querySelector('.ovw'); return !w || (w.getAnimations ? w.getAnimations().every((a) => a.playState !== 'running') : true); })()`))) await wait(50); }
+            // The wallet opens with a scale animation; sizes are read once it has settled (a measurement mid-animation read
+            // 40 px buttons as smaller, about one run in four).
+            await p.evaluate(`Promise.all(document.getAnimations().filter((a) => a.effect && a.effect.getComputedTiming().iterations !== Infinity).map((a) => a.finished.catch(() => {}))).then(() => true)`);
             const metrics = await p.evaluate(`(() => { const d=document.querySelector('.ov-wallet'); return {open:!!(d&&(d.open||d.closest('.ovw'))), width:document.documentElement.scrollWidth, inner:d&&d.scrollWidth, box:d&&d.clientWidth, lock:document.documentElement.style.overflow, text:d&&d.innerText, buttons:[...d.querySelectorAll('button,a')].map(b=>b.getBoundingClientRect().height)} })()`);
             assert(metrics.open, 'first chip tap opens wallet'); assert.strictEqual(metrics.width, width); assert(metrics.inner <= metrics.box + 1);
             assert.strictEqual(metrics.lock, 'hidden'); assert(metrics.text.includes('$0.00')); assert(metrics.text.includes('Buy Vibes')); assert(metrics.text.includes('Top up'));
