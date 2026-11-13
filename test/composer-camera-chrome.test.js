@@ -51,7 +51,7 @@ window.bigPicture = async (w, h) => { const c = document.createElement('canvas')
         assert.ok(await until(`!!window.post`), 'the composers mount');
 
         // The camera: an agent's box and a post have it.
-        const tools = await page.evaluate(`[...document.querySelectorAll('.ovc-v2')].map((f) => [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')).filter((l) => l !== 'Speak' && l !== 'More: attach, timer and tools'))`);
+        const tools = await page.evaluate(`[...document.querySelectorAll('.ovc-v2')].map((f) => [...f.querySelectorAll('.ovt-c-tools .ovt-btn')].map((b) => b.getAttribute('aria-label')).filter((l) => l !== 'Speak' && l !== 'Add: camera, photos, files and more'))`);
         assert.deepEqual(tools[0].slice(0, 2), ['Attach', 'Camera'], 'an agent: attach and the camera');
         assert.ok(tools[1].includes('Camera'), 'a post: the camera beside photos');
         assert.equal(await page.evaluate(`document.getElementById('g1').getAttribute('data-ovc-resize')`), '1568');

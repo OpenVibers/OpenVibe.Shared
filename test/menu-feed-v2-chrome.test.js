@@ -91,9 +91,9 @@ const server = http.createServer((req, res) => {
         await p.evaluate(`document.getElementById('openvibe-burger').click(), true`);
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open [data-tab="feed"]')`), 'the menu opened');
         await p.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);
-        assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a').length >= 12`), 'the feed painted');
+        assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 12`), 'the feed painted');
         const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovfd-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovfd-chip[aria-selected=true]') || {}).textContent,
-            kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
+            kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
             bolds: document.querySelectorAll('.ovfd-list b b').length, posts: [...document.querySelectorAll('.ovfd-k-post .ovfd-title')].map((b) => b.textContent)[0],
             sections: [...document.querySelectorAll('.ovs-group')].map((g) => g.textContent.trim()).filter(Boolean), scroll: document.documentElement.scrollWidth })`);
         assert.deepStrictEqual(first.chips, ['For you', 'Live', 'Videos', 'Clips', 'Pics', 'Posts', 'Rundown', 'Memes', 'Games', 'Chat', 'Events', 'Jobs', 'Deals', 'Stats', 'Wiki', 'Quests', 'Updates'], 'signed out: no Following chip');
@@ -106,11 +106,11 @@ const server = http.createServer((req, res) => {
         assert.ok(!first.sections.some((t) => /New to you|Next from|What's new/.test(t)), `the Feed tab is the stream when the feed answers (${first.sections})`);
         assert.ok(first.scroll <= 390, 'no sideways scroll');
         await p.evaluate(`(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; })()`);
-        assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a').length >= 24`), 'the next page loads as the end comes near');
+        assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24`), 'the next page loads as the end comes near');
         assert.ok(await until(p, `!!document.querySelector('.ovfd-caught')`), 'the end says so');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Clips').click(), true`);
         assert.ok(await until(p, `(window.__feedCalls || []).some((u) => u.includes('kind=clip'))`), 'the chip asks for its kind');
-        assert.ok(await until(p, `[...document.querySelectorAll('.ovfd-list > a')].every((a) => a.className === 'ovfd-card ovfd-k-clip') && document.querySelectorAll('.ovfd-list > a').length === 12`), 'only clips, from the first page');
+        assert.ok(await until(p, `[...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].every((a) => a.className === 'ovfd-card ovfd-k-clip') && document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length === 12`), 'only clips, from the first page');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Events').click(), true`);
         assert.ok(await until(p, `document.querySelectorAll('.ovfd-act').length === 5`), 'every activity kind is one row');
         const acts = await p.evaluate(`({ titles: [...document.querySelectorAll('.ovfd-act-txt > b')].map((b) => b.textContent), days: [...document.querySelectorAll('.ovfd-day')].map((d) => d.textContent),

@@ -26,6 +26,15 @@
  * ids a mod's upload gave, clear() after the send (the text, the chips, the draft); a form 'reset' clears the same.
  * A site without script says the same in data: data-ovt-commands='[{"name","hint","insert"}]', data-ovc-max-files,
  * data-ovc-max-mb, data-ovc-no-draft.
+ *
+ * 4.241.0, the +: one sheet of what you can add. Big tiles first (Camera, Photos, Files), then rows (Paste, Screenshot,
+ * the phone's own camera app, Share to an app, Timer, GitHub, the mods' tools, what a narrow row hides). A phone gets
+ * it as a sheet from the bottom (swipe it down, or tap outside); a wide screen as a panel under the box's row.
+ *   Which ones: mount(host, { plus: { tiles: [ids], rows: [ids], only } }), the form's data-ovc-plus='{"tiles":…}',
+ *   or the site's OpenVibeComposer.configure({ plus }); `only: true` leaves out the extras not named.
+ *   A tool says where it fits: OpenVibeComposer.tool(id, { label, sub, tile, path, accept, capture, when(env), run })
+ *   (env: files, anyFile, touch, camera, screen, share, clip). A tool with `accept` (and `capture`) is a file picker:
+ *   on Android, a picker with no `accept` is the system's Choose an action (Camera, Camcorder, Files).
  */
 (function (root) {
     'use strict';
@@ -346,6 +355,52 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
 .ovc-tray-i:active .ovc-tray-ic { transform: scale(.92); }
 .ovc-tray-i:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) { .ovc-tray-i:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); } .ovc-tray-i:hover .ovc-tray-ic { transform: translateY(-2px); } }
+/* 4.241.0, the +: tiles for what you add, rows for the rest; a sheet from the bottom on a phone. */
+.ovc-add-b { display: grid; gap: 12px; }
+.ovc-add-tiles { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 10px; }
+.ovc-add-tile { all: unset; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; min-height: 96px; padding: 14px 6px 12px; border-radius: 20px; cursor: pointer; text-align: center; -webkit-tap-highlight-color: transparent;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 14%, transparent), color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent), 0 1px 0 color-mix(in srgb, #fff 6%, transparent) inset;
+  animation: ovc-add-in .34s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--k, 0) * 35ms); transition: transform .18s cubic-bezier(.3, 1.4, .4, 1), box-shadow .2s, background-color .2s; }
+.ovc-add-tile .ovc-add-ic { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 15px; color: var(--ovt-accent, var(--accent-light, var(--accent, #60a5fa)));
+  background: radial-gradient(120% 120% at 30% 20%, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 32%, transparent), color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 10%, transparent)); box-shadow: 0 6px 16px -8px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 70%, transparent); }
+.ovc-add-tile .ovc-add-ic svg { width: 26px; height: 26px; }
+.ovc-add-t { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; font-weight: 800; line-height: 1.15; color: var(--text-primary, #e6edf7); }
+.ovc-add-tile:active { transform: scale(.94); }
+.ovc-add-rows { display: grid; gap: 4px; }
+.ovc-add-row { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 10px 8px 8px; border-radius: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); animation: ovc-add-in .34s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--k, 0) * 30ms); transition: transform .18s cubic-bezier(.3, 1.4, .4, 1), background-color .2s; }
+.ovc-add-row .ovc-add-ic { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
+.ovc-add-row .ovc-add-ic svg { width: 21px; height: 21px; }
+.ovc-add-rt { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.ovc-add-rt b { font-size: 15px; font-weight: 700; color: var(--text-primary, #e6edf7); }
+.ovc-add-rt small { font-size: 12.5px; color: var(--text-muted, #8b98ad); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovc-add-go { flex: none; width: 16px; height: 16px; color: var(--text-muted, #8b98ad); transition: transform .2s; }
+.ovc-add-row:active { transform: scale(.98); }
+.ovc-add-tile:focus-visible, .ovc-add-row:focus-visible, .ovc-add-x:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .ovc-add-tile:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 45%, transparent), 0 10px 24px -14px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 80%, transparent); }
+  .ovc-add-row:hover { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 10%, transparent); }
+  .ovc-add-row:hover .ovc-add-go { transform: translateX(2px); color: var(--ovt-accent, var(--accent-light, #60a5fa)); }
+}
+@keyframes ovc-add-in { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+.ovc-add-inline { padding-top: 12px; }
+.ovc-add-inline .ovc-add-tiles { grid-template-columns: repeat(var(--n, 3), minmax(0, 150px)); }
+.ovc-add-inline .ovc-add-tile { min-height: 88px; }
+.ovc-add-inline .ovc-add-rows { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+dialog.ovc-add { padding: 0 14px calc(18px + env(safe-area-inset-bottom)); max-height: 88vh; overflow: auto; transition: transform .28s cubic-bezier(.2, .9, .3, 1); animation: ovc-add-up .32s cubic-bezier(.2, .9, .3, 1.05) both; }
+dialog.ovc-add::backdrop { background: rgba(2, 6, 14, .55); animation: ovc-fade-calm .25s ease both; }
+dialog.ovc-add.is-out { transform: translateY(110%); }
+dialog.ovc-add.is-out::backdrop { opacity: 0; transition: opacity .2s; }
+@keyframes ovc-add-up { from { transform: translateY(100%); } }
+.ovc-add-grip { width: 40px; height: 5px; margin: 8px auto 2px; border-radius: 3px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 26%, transparent); touch-action: none; }
+.ovc-add-h { position: relative; display: flex; align-items: center; justify-content: center; min-height: 48px; margin-bottom: 6px; touch-action: none; }
+.ovc-add-h b { font: 800 17px/1 'OV Brand', Nunito, Inter, sans-serif; color: var(--text-primary, #e6edf7); }
+.ovc-add-x { all: unset; position: absolute; left: 0; top: 50%; translate: 0 -50%; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; color: var(--text-secondary, #a8b3c4); }
+.ovc-add-x svg { width: 22px; height: 22px; }
+html[data-ov-motion=reduced] :is(.ovc-add-tile, .ovc-add-row) { animation-name: ovc-fade-calm; animation-delay: 0s; }
+html[data-ov-motion=reduced] dialog.ovc-add { animation-name: ovc-fade-calm; }
+html[data-ov-motion=off] :is(.ovc-add-tile, .ovc-add-row, dialog.ovc-add, dialog.ovc-add::backdrop) { animation: none; transition: none; }
 @keyframes ovc-tray-in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
 html[data-ov-motion=reduced] .ovc-tray { animation-name: ovc-fade-calm; }
 @keyframes ovc-fade-calm { from { opacity: 0; } }
@@ -426,6 +481,35 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         const blob = await new Promise((r) => canvas.toBlob(r, file.type, 0.9));
         if (!blob || blob.size >= file.size) return file;
         try { return new File([blob], file.name, { type: file.type, lastModified: file.lastModified }); } catch { return file; }
+    }
+    // 4.241.0: the +'s glyphs, the registry's line drawings (glyphs.js), and what a site chose for its boxes' +.
+    const GL = {
+        camera: '<path d="M3.5 8h3.4l1.8-2.8h6.6L17.1 8h3.4v11.5h-17Z"/><circle cx="12" cy="13.3" r="3.4"/>',
+        image: '<rect x="3.5" y="5.4" width="16.7" height="13" rx="2.8"/><circle cx="9.1" cy="10" r="1.5"/><path d="M20.3 15.6l-4.7-4.7l-7.4 7.4"/>',
+        file: '<path d="M6.4 3.5h7.6l3.8 3.8v13.2H6.4Z"/><path d="M13.9 3.5v3.8h3.8"/>',
+        folder: '<path d="M3.8 7.3a1.9 1.9 0 0 1 1.9-1.9h3.6l1.9 1.9h7.4a1.9 1.9 0 0 1 1.9 1.9v7.4a1.9 1.9 0 0 1-1.9 1.9H5.8a1.9 1.9 0 0 1-1.9-1.9Z"/>',
+        clipboard: '<rect x="5.7" y="5" width="12.6" height="15.5" rx="1.9"/><path d="M9.1 5V3.5h5.8V5M9.1 10.8h5.8M9.1 14.7h3.9"/>',
+        computer: '<rect x="3.5" y="4.5" width="17" height="11.3" rx="1.9"/><path d="M8.2 19.7h7.6M12 15.9v3.8"/>',
+        share: '<path d="M12 15.2V3.3M7.4 8.1L12 3.3L16.6 8.1M4.9 12.9v6.1a1 1 0 0 0 1 1h12.2a1 1 0 0 0 1-1v-6.1"/>',
+        video: '<rect x="3.4" y="6.4" width="12.3" height="11.3" rx="1.9"/><path d="M15.6 10.2l4.7-2.8v9.4l-4.7-2.8"/>',
+        chevron: '<path d="M7.9 3.6l8.4 8.4l-8.4 8.4"/>',
+    };
+    const gsvg = (inner) => `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+    const PLUS_DEFAULT = { tiles: ['camera', 'photo', 'file'], rows: ['paste', 'screenshot', 'camapp', 'share', 'timer', 'github'], only: false };
+    const CONFIG = { plus: null };
+    function configure(o = {}) {
+        if (o && o.plus && typeof o.plus === 'object') CONFIG.plus = cleanPlus(o.plus);
+        if (o && o.tools && typeof o.tools === 'object') Object.keys(o.tools).forEach((id) => tool(id, o.tools[id]));
+        return { plus: CONFIG.plus };
+    }
+    function cleanPlus(p) {
+        const ids = (v, n) => (Array.isArray(v) ? v.map(String).filter((x) => /^[\w-]{1,30}$/.test(x)).slice(0, n) : null);
+        const out = {};
+        const t = ids(p.tiles, 4), r = ids(p.rows, 16);
+        if (t) out.tiles = t;
+        if (r) out.rows = r;
+        if (typeof p.only === 'boolean') out.only = p.only;
+        return out;
     }
     const live = new Set();
     const PREFS_KEY = 'ov:composer';
@@ -898,45 +982,120 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
 
         // Voice: the browser listens, the words go in at the caret as they come.
         let mic = null, rec = null;
-        // 4.223.0, the +: every tool of this box in one sheet (its row's own, the mods', and the extras such as Timer), big
-        // and named. On a narrow box the row keeps the mic, the + and the first tool; the sheet has the rest.
+        // 4.241.0, the +: what you can add, in one sheet (see the header). Big tiles, then rows; a sheet from the bottom on
+        // a phone (the top layer, so no panel clips it), a panel under the row on a wide screen.
         let more = null, sheet = null;
-        function closeSheet() { if (sheet) { sheet.remove(); sheet = null; } if (more) more.setAttribute('aria-expanded', 'false'); }
+        const motionOff = () => document.documentElement.getAttribute('data-ov-motion') === 'off';
+        const env = () => ({
+            files: canFile(), anyFile: !noFiles && (!!uploader() || inputs().some((i) => !i.getAttribute('accept'))),
+            touch: !!(root.matchMedia && root.matchMedia('(pointer: coarse)').matches),
+            camera: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+            screen: !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia),
+            share: typeof navigator.share === 'function', clip: !!(navigator.clipboard && navigator.clipboard.read),
+        });
+        function plusSpec() {
+            let own = null; try { own = JSON.parse(form.dataset.ovcPlus || 'null'); } catch { own = null; }
+            return Object.assign({}, PLUS_DEFAULT, CONFIG.plus || {}, own && typeof own === 'object' ? cleanPlus(own) : {});
+        }
+        const iconOf = (t) => (t.glyph && GL[t.glyph] ? gsvg(GL[t.glyph]) : svg(PATH_OK.test(t.path || '') ? t.path : IC.slash));
+        function closeSheet(now) {
+            if (!sheet) return;
+            const s0 = sheet; sheet = null;
+            if (more) more.setAttribute('aria-expanded', 'false');
+            // A tool that runs closes it at once (a modal sheet keeps the page inert while it slides away); dismissed, it
+            // slides down first.
+            if (s0.tagName === 'DIALOG') { if (now === true || motionOff()) { try { s0.close(); } catch { /* */ } s0.remove(); } else { s0.classList.add('is-out'); setTimeout(() => { try { s0.close(); } catch { /* */ } s0.remove(); }, 200); } }
+            else s0.remove();
+        }
+        /** A file tool: the browser's picker for its kinds; what is picked joins the box. */
+        function pick(t) {
+            const i = document.createElement('input'); i.type = 'file'; i.multiple = true;
+            if (t.accept) i.accept = t.accept;
+            if (t.capture) i.setAttribute('capture', t.capture);
+            i.tabIndex = -1; i.setAttribute('aria-hidden', 'true');
+            i.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0';
+            i.addEventListener('change', () => { const list = [...(i.files || [])]; i.remove(); if (list.length) ctx.add(list); }, { once: true });
+            document.body.appendChild(i);
+            i.click();
+            setTimeout(() => { if (i.isConnected) i.remove(); }, 300000);
+        }
+        function runTool(t) { closeSheet(true); try { if (typeof t.run === 'function') t.run(ctx, more, form); else pick(t); } catch (err) { console.error(err); } }
         function openSheet(ev) {
             if (sheet) { closeSheet(); return; }
-            sheet = el('div', 'ovc-tray'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Tools');
-            const grid = el('div', 'ovc-tray-grid');
-            const add = (label, path, act, drawn) => {
-                const b = el('button', 'ovc-tray-i', `<span class="ovc-tray-ic">${drawn ? '' : svg(PATH_OK.test(path || '') ? path : IC.slash)}</span><span class="ovc-tray-t"></span>`);
-                if (drawn) { const c = drawn.cloneNode(true); c.removeAttribute('width'); c.removeAttribute('height'); c.removeAttribute('class'); b.firstChild.appendChild(c); }   // the button's own whole drawing
-                b.type = 'button'; b.querySelector('.ovc-tray-t').textContent = label;
-                b.addEventListener('click', () => { closeSheet(); try { act(); } catch (e) { console.error(e); } });
-                grid.appendChild(b);
+            const e = env(), spec = plusSpec();
+            const ok = (id) => { const t = TOOL[id]; return !!t && !t.builtin && !form.hasAttribute(`data-ovc-no-${id}`) && (typeof t.when !== 'function' || !!t.when(e)) && (typeof t.run === 'function' || t.accept !== undefined); };
+            const body = el('div', 'ovc-add-b');
+            const tileIds = spec.tiles.filter(ok).slice(0, 4);
+            if (tileIds.length) {
+                const g = el('div', 'ovc-add-tiles'); g.style.setProperty('--n', String(tileIds.length));
+                tileIds.forEach((id, k) => {
+                    const t = TOOL[id];
+                    const b = el('button', 'ovc-add-tile', `<span class="ovc-add-ic">${iconOf(t)}</span><span class="ovc-add-t"></span>`);
+                    b.type = 'button'; b.dataset.tool = id; b.style.setProperty('--k', String(k));
+                    b.querySelector('.ovc-add-t').textContent = t.tile || t.label;
+                    b.setAttribute('aria-label', t.sub ? `${t.tile || t.label}: ${t.sub}` : (t.tile || t.label));
+                    b.addEventListener('click', () => runTool(t));
+                    g.appendChild(b);
+                });
+                body.appendChild(g);
+            }
+            const list = el('div', 'ovc-add-rows');
+            const seen = new Set(tileIds.map((id) => TOOL[id].label));
+            const row = (key, label, sub, icon, act) => {
+                if (!label || seen.has(label)) return; seen.add(label);
+                const b = el('button', 'ovc-add-row', `<span class="ovc-add-ic">${icon}</span><span class="ovc-add-rt"><b></b><small></small></span>${gsvg(GL.chevron).replace('<svg ', '<svg class="ovc-add-go" ')}`);
+                b.type = 'button'; b.dataset.tool = key; b.style.setProperty('--k', String(list.children.length + tileIds.length));
+                b.querySelector('b').textContent = label;
+                const sm = b.querySelector('small'); if (sub) sm.textContent = sub; else sm.remove();
+                b.addEventListener('click', act);
+                list.appendChild(b);
             };
-            const seen = new Set();
+            spec.rows.filter(ok).forEach((id) => { const t = TOOL[id]; row(id, t.label, t.sub, iconOf(t), () => runTool(t)); });
+            // What this box's row hides on a narrow screen, and the mods' tools, follow.
             [...tools.children].forEach((t) => {
                 if (t === mic || t === more || !t.matches('.ovt-btn, button, label') || t.matches('[type="submit"], [data-ovt-send], .ovc-mic, .ovdk-mic, .ovdk-go, [hidden]')) return;
-                const label = t.getAttribute('aria-label') || t.title || ''; if (!label || seen.has(label)) return; seen.add(label);
-                // 4.234.0: a tool the row shows is not repeated in the sheet (the owner, 11-13: "why twice"); the sheet has
-                // what a narrow row hides, and the extras.
-                if (getComputedStyle(t).display !== 'none' && t.getClientRects().length) return;
+                const label = t.getAttribute('aria-label') || t.title || '';
+                if (!label || (getComputedStyle(t).display !== 'none' && t.getClientRects().length)) return;
                 const input = t.querySelector('input[type=file]');
-                add(label, '', () => { if (input) input.click(); else t.click(); }, t.querySelector('svg'));
+                const drawn = t.querySelector('svg');
+                row(`row-${label}`, label, '', drawn ? drawn.outerHTML : svg(IC.slash), () => { closeSheet(true); if (input) input.click(); else t.click(); });
             });
-            Object.keys(TOOL).forEach((id) => {
-                const t = TOOL[id]; if (!t || !t.extra || seen.has(t.label) || form.hasAttribute(`data-ovc-no-${id}`)) return; seen.add(t.label);
-                add(t.label, t.path, () => t.run(ctx, more, form));
-            });
-            sheet.appendChild(grid);
-            form.appendChild(sheet);   // inside the box, under its row: nothing can clip it
+            if (!spec.only) Object.keys(TOOL).forEach((id) => { const t = TOOL[id]; if (t && t.extra && !spec.rows.includes(id) && ok(id)) row(id, t.label, t.sub, iconOf(t), () => runTool(t)); });
+            if (list.children.length) body.appendChild(list);
+            if (!body.children.length) return;
+            const narrow = (root.innerWidth || 1024) <= 600 || (e.touch && (root.innerWidth || 1024) < 760);
+            if (narrow && typeof HTMLDialogElement === 'function') {
+                const dlg = el('dialog', 'ovc-sheet ovc-add');
+                dlg.setAttribute('aria-label', 'Add to this');
+                dlg.innerHTML = `<div class="ovc-add-grip" aria-hidden="true"></div><div class="ovc-add-h"><b>Add</b><button type="button" class="ovc-add-x" aria-label="Close">${svg(IC.x)}</button></div>`;
+                dlg.appendChild(body);
+                dlg.querySelector('.ovc-add-x').addEventListener('click', () => { closeSheet(); if (more) more.focus(); });
+                dlg.addEventListener('click', (e2) => { if (e2.target === dlg) closeSheet(); });
+                dlg.addEventListener('cancel', (e2) => { e2.preventDefault(); closeSheet(); });
+                // Swipe it down to close (the grip and the header).
+                let y0 = null, dy = 0;
+                const head = dlg.querySelector('.ovc-add-h'), grip = dlg.querySelector('.ovc-add-grip');
+                const down = (p) => { y0 = p.clientY; dy = 0; dlg.style.transition = 'none'; };
+                const moveY = (p) => { if (y0 == null) return; dy = Math.max(0, p.clientY - y0); dlg.style.transform = `translateY(${dy}px)`; };
+                const up = () => { if (y0 == null) return; y0 = null; dlg.style.transition = ''; if (dy > 80) closeSheet(); else dlg.style.transform = ''; };
+                [head, grip].forEach((h0) => { h0.addEventListener('pointerdown', down); });
+                dlg.addEventListener('pointermove', moveY); dlg.addEventListener('pointerup', up); dlg.addEventListener('pointercancel', up);
+                document.body.appendChild(dlg);
+                if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+                sheet = dlg;
+            } else {
+                sheet = el('div', 'ovc-tray ovc-add-inline'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Add to this');
+                sheet.appendChild(body);
+                form.appendChild(sheet);   // inside the box, under its row: nothing can clip it
+                sheet.addEventListener('keydown', (e2) => { if (e2.key === 'Escape') { closeSheet(); more.focus(); } });
+            }
             more.setAttribute('aria-expanded', 'true');
             // From the keyboard (a click with no pointer) focus moves into the sheet; a tap leaves it on the +.
-            if (ev && ev.detail === 0) { const first = sheet.querySelector('button'); if (first) first.focus(); }
-            sheet.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeSheet(); more.focus(); } });
+            if (ev && ev.detail === 0) { const first = sheet.querySelector('.ovc-add-tile, .ovc-add-row'); if (first) first.focus(); }
         }
         if (tools && !form.hasAttribute('data-ovc-no-more')) {
             more = el('button', 'ovt-btn ovc-more', svg(IC.plus));
-            more.type = 'button'; more.setAttribute('aria-label', 'More: attach, timer and tools'); more.title = 'More';
+            more.type = 'button'; more.setAttribute('aria-label', 'Add: camera, photos, files and more'); more.title = 'Add';
             more.setAttribute('aria-haspopup', 'dialog'); more.setAttribute('aria-expanded', 'false');
             more.addEventListener('click', openSheet);
             const lead = tools.querySelector(':scope > .ovdk-mic');   // a page's own mic stays first
@@ -1052,10 +1211,10 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     };
     const EMOJI = '😀 😂 🥹 😊 😍 🥰 😘 😎 🤩 🥳 😇 🙂 😉 😌 🤔 🤨 😐 🙄 😏 😬 😮 😱 😭 😤 😡 🤯 🥶 🥵 😴 🤤 🤗 🫡 🤝 👍 👎 👏 🙌 🙏 💪 👀 🫶 ❤️ 🧡 💛 💚 💙 💜 🖤 🤍 💔 ✨ 🔥 💯 🎉 🎊 🏆 🎮 🎧 🎵 📸 🎬 🍕 🍔 🍿 ☕ 🍻 🌈 🌙 ⭐ ⚡ 💥 💀 🤖 👻 🐐 🦆 🐸 🚀 ✅ ❌ ⚠️ ❓ 👋 🫠'.split(' ');
     const TOOL = {
-        photo: { label: 'Photos and video', path: IC.photo, accept: 'image/*,video/*' },
+        photo: { label: 'Photos and video', tile: 'Photos', sub: 'Pictures and videos', glyph: 'image', path: IC.photo, accept: 'image/*,video/*', when: (e) => e.files },
         // 4.223.0: in every box's + (extra: never in a row of its own). Your timers are Vibe's: one list on every site.
         timer: {
-            label: 'Timer', path: IC.timer, extra: true,
+            label: 'Timer', sub: 'Counts down on every OpenVibe site', path: IC.timer, extra: true,
             run(ctx, button) {
                 const D = root.OpenVibeDock;
                 if (D && typeof D.timer === 'function') { try { D.timer(button); return; } catch (e) { console.error(e); } }
@@ -1064,8 +1223,51 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 ctx.note('Sign in to set timers: they ring on every OpenVibe site.');
             },
         },
-        file: { label: 'Files', path: IC.file, accept: '' },
+        file: { label: 'Files', sub: 'Any file from this device', glyph: 'file', path: IC.file, accept: '', when: (e) => e.files && e.anyFile },
         attach: { label: 'Attach', path: IC.clip, accept: '' },
+        // 4.241.0: the +'s rows. The phone's own camera app (its chooser on Android), what you copied, a picture of a
+        // screen, and what you wrote sent to another app.
+        camapp: { label: 'Camera app', sub: 'Your phone\u2019s own camera, or its chooser', glyph: 'video', path: IC.camera, accept: 'image/*,video/*', capture: 'environment', extra: true, when: (e) => e.files && e.touch },
+        paste: {
+            label: 'Paste', sub: 'A picture or words you copied', glyph: 'clipboard', path: IC.file, extra: true, when: (e) => e.clip,
+            async run(ctx) {
+                let items = [];
+                try { items = await navigator.clipboard.read(); } catch { ctx.note('This browser did not share what you copied. Press and hold in the box, then Paste.'); return; }
+                const found = [];
+                for (const it of items) {
+                    const pic = it.types.find((t) => /^image\//.test(t));
+                    if (pic) { const b = await it.getType(pic); found.push(new File([b], `pasted.${pic.split('/')[1].replace('jpeg', 'jpg')}`, { type: pic })); continue; }
+                    if (it.types.includes('text/plain')) { const t = await (await it.getType('text/plain')).text(); if (t) ctx.insert(t); }
+                }
+                if (found.length) ctx.add(found); else if (!items.length) ctx.note('Nothing is copied right now.');
+            },
+        },
+        screenshot: {
+            label: 'Screenshot', sub: 'A picture of a screen, a window or a tab', glyph: 'computer', path: IC.photo, extra: true, when: (e) => e.files && e.screen && !e.touch,
+            async run(ctx) {
+                let stream = null;
+                try {
+                    stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+                    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.srcObject = stream;
+                    await v.play(); await new Promise((r) => setTimeout(r, 250));
+                    const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+                    c.getContext('2d').drawImage(v, 0, 0);
+                    const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
+                    if (blob) ctx.add([new File([blob], `screenshot-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.png`, { type: 'image/png' })]);
+                } catch (err) { if (err && err.name !== 'NotAllowedError') ctx.note('The screenshot did not work in this browser.'); }
+                finally { if (stream) stream.getTracks().forEach((t) => t.stop()); }
+            },
+        },
+        share: {
+            label: 'Share to an app', sub: 'Send what you wrote somewhere else', glyph: 'share', path: IC.ext, extra: true, when: (e) => e.share,
+            async run(ctx) {
+                const text = String(ctx.value || '').trim(), files = ctx.files();
+                if (!text && !files.length) { ctx.note('Write something or add a file first, then share it.'); return; }
+                const data = text ? { text } : {};
+                if (files.length && navigator.canShare && navigator.canShare({ files })) data.files = files;
+                try { await navigator.share(data); } catch { /* the person closed it */ }
+            },
+        },
         emoji: {
             label: 'Emoji', path: IC.smile,
             run(ctx, button, form) {
@@ -1085,9 +1287,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         },
         // 4.225.0: a repository from GitHub, found through OpenVibe Exchange's code search (the Frame's
         // /api/frame/code/search): its address goes into the box, where every site draws it as a card.
-        github: { label: 'GitHub', path: IC.repo, extra: true, run: (ctx, button, form) => openRepoSearch(ctx, button, form) },
+        github: { label: 'GitHub', sub: 'A repository, as a card', path: IC.repo, extra: true, run: (ctx, button, form) => openRepoSearch(ctx, button, form) },
         voice: { label: 'Speak', builtin: true },   // enhance() draws the microphone where the browser can listen
-        camera: { label: 'Camera', path: IC.camera, run: (ctx, button) => openCamera(ctx, button) },
+        camera: { label: 'Camera', sub: 'A photo or a clip, here', glyph: 'camera', path: IC.camera, run: (ctx, button) => openCamera(ctx, button), when: (e) => e.files && e.camera },
     };
     // The camera (4.217.0): a photo or a clip straight into the box, through the shared capture core. A sheet over the
     // page (the whole screen on a phone): the picture, Photo or Video, the shutter, flip and close. Nothing is kept or
@@ -1277,9 +1479,15 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         form.setAttribute('data-ovc-max-files', String(o.maxFiles || 10));
         form.setAttribute('data-ovc-max-mb', String(o.maxMb || 100));
         if (o.noDraft) form.setAttribute('data-ovc-no-draft', '');
+        if (o.noPlus) form.setAttribute('data-ovc-no-more', '');
+        if (o.plus && typeof o.plus === 'object') form.dataset.ovcPlus = JSON.stringify(cleanPlus(o.plus));
         const resize = o.resize != null ? Number(o.resize) || 0 : p.resize || 0;
         if (resize) form.setAttribute('data-ovc-resize', String(resize));
         const want = (o.tools || p.tools).filter((t) => TOOL[t]);
+        // 4.241.0: what the + shows as a tile is not also a button in the row (the owner, 11-13: "why twice"); a file
+        // tool keeps its input in the form, hidden, so the files still go with it.
+        const plusTiles = o.noPlus ? [] : (Object.assign({}, PLUS_DEFAULT, CONFIG.plus || {}, o.plus && typeof o.plus === 'object' ? cleanPlus(o.plus) : {}).tiles || []);
+        const inPlus = (id) => plusTiles.includes(id) || (id === 'attach' && (plusTiles.includes('file') || plusTiles.includes('photo')));
         if (!want.includes('voice')) form.setAttribute('data-ovc-no-voice', '');
         // A post or a reply opens with one line: the person's picture (or first letter), their name and who sees it.
         const body = el('div', 'ovc-body');
@@ -1318,6 +1526,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
                 b.appendChild(input);
             }
+            if (inPlus(id)) { b.hidden = true; b.tabIndex = -1; }
             tools.appendChild(b);
         }
         // Option chips: who sees it (a post), how the agent works (agent). A select under a pill: the browser's own list.
@@ -1756,8 +1965,8 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     }
     function scan(scope) { (scope || document).querySelectorAll('[data-ovt-composer], [data-ovc]').forEach((f) => enhance(f)); }
 
-    root.OpenVibeComposer = { enhance, mount, tool, mod, scan, presets: () => Object.keys(PRESET), tools: () => Object.keys(TOOL), settings: openSettings, get prefs() { return Object.assign({}, prefs); }, setPrefs };
-    if (typeof module === 'object' && module.exports) module.exports = { enhance, mount, tool, mod, scan };
+    root.OpenVibeComposer = { enhance, mount, tool, mod, scan, configure, presets: () => Object.keys(PRESET), tools: () => Object.keys(TOOL), settings: openSettings, get prefs() { return Object.assign({}, prefs); }, setPrefs };
+    if (typeof module === 'object' && module.exports) module.exports = { enhance, mount, tool, mod, scan, configure };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => scan(), { once: true }); else scan();
     document.addEventListener('ov:boost:load', () => { live.forEach((c) => { if (!c.form.isConnected) c.destroy(); }); scan(); });
     pull();
