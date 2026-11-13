@@ -161,7 +161,8 @@ const server = http.createServer((req, res) => {
             await page.evaluate(`document.querySelector('.ovr-thead .ovr-ib').click()`);
             assert.ok(await until(`document.querySelectorAll('.ovr-rows .ovr-row:not(.is-ghost)').length === 3`), `${width}: back to the list`);
             await page.evaluate(`document.querySelector('.ovr-compose textarea').value = 'A raid alert'; document.querySelector('.ovr-compose form').requestSubmit()`);
-            assert.ok(await until(`document.querySelector('.ovr-who b') && document.querySelector('.ovr-thread .ovr-none')`), `${width}: the new run opens`);
+            // 4.240.0: the thread opens at once with your words and your agent typing, until its first words arrive.
+            assert.ok(await until(`document.querySelector('.ovr-who b') && [...document.querySelectorAll('.ovr-thread .ovr-step.is-you')].some((s) => s.textContent === 'A raid alert') && document.querySelector('.ovr-thread .ovr-typing')`), `${width}: the new run opens with your words and your agent typing`);
             const start = seen.posts.find((p) => p.path === '');
             assert.deepEqual(start.body, { text: 'A raid alert' }, `${width}: started with the words`);
             assert.match(start.key, /^ovr-[a-z0-9]+-[a-z0-9]+$/, `${width}: once (an idempotency key)`);
@@ -189,10 +190,11 @@ const server = http.createServer((req, res) => {
             // Code hides the slot and the starters; Chats shows the starters only.
             await page.evaluate(`document.querySelector('.ovr-filter[data-filter="code"]').click()`);
             assert.ok(await until(`document.querySelectorAll('.ovr-rows .ovr-row:not(.is-ghost)').length === 1`), `${width}: Code`);
-            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [true, true], `${width}: no slot and no starters on Code`);
+            // 4.240.0: the host's slot (Now: timers, an agent at work) shows on every filter; the starters stay on All and Chats.
+            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [false, true], `${width}: the slot, and no starters, on Code`);
             await page.evaluate(`document.querySelector('.ovr-filter[data-filter="chat"]').click()`);
             assert.ok(await until(`document.querySelector('.ovr-filter[aria-selected="true"]').dataset.filter === 'chat' && !document.querySelector('.ovr-rows .is-ghost')`), `${width}: Chats`);
-            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [true, false], `${width}: the starters on Chats`);
+            assert.deepEqual(await page.evaluate(`[document.querySelector('.ovr-top').hidden, document.querySelector('.ovr-starters').hidden]`), [false, false], `${width}: the slot and the starters on Chats`);
             // Ask your agent: the words in the box, unsent.
             await page.evaluate(`window.view.prefill('What is this page about?')`);
             assert.ok(await until(`document.querySelector('.ovr-compose textarea').value === 'What is this page about?' && document.activeElement === document.querySelector('.ovr-compose textarea')`), `${width}: prefill puts the words in the box, focused`);

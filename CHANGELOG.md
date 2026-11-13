@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.240.0 — 2026-11-13
+
+**One agent in the menu's Vibe, and a menu button drawn from the menu** (the owner, 11-13: "all this separation of
+tasks and codes and chats … we shouldn't even have that. It's just like filters … your actor is just your agent … it
+can orchestrate to openvibe.codes, or timer, task, desktop, browser"; "I tried typing test in and just like nothing
+happens … not seamless and sleek"; "regenerate this icon … based on what the menu actually looks like and what the
+menu has to offer … good animations and effects … highlight differently and glow").
+
+- **The menu's Vibe is one agent (ov-run.js, search.js).**
+  - Your agent heads the list (`o.agent`): its face with a state dot (ready, working, asks you, paused), its name,
+    what it is doing and today's spend, and Pause or Resume. A tap shows its work. It reads the Frame's `/actor`.
+  - All · Chats · Tasks · Code are filter chips over one list, never modes: the Dock's Chat, Agents and Code panels
+    and its Actor card are no longer lent into the menu (only Now and the live view of an agent at work, the Dock's
+    new `part: 'live'`).
+  - One box starts everything ("Ask, or say what to do"); the Frame places the words (Network #911: Codes for a change
+    to code, your computer for "on my computer", Vibe for the rest). The thread opens at once with your words and
+    your agent typing until it answers; a run your agent handed on says where it went ("Sent to Codes"). A start that
+    fails goes back to the list with the words in the box and why.
+  - Now (timers, what is on) shows above the list on every filter; Ask your agent (`[data-ov-ask]`, the Dock's
+    `ask()`) puts the words in the one box, unsent; words put in the box before the shared composer loads carry over.
+- **The menu button (navbar.js)** is the menu, small: the ask bar you lead (your face, the words, Vibe's spark) over
+  the place tabs, one lit. Now and then the light walks across the tabs; under the pointer the tabs lift and light,
+  the spark turns and the mark glows; while an agent works the spark turns slowly (`.is-working`); open, the bar and
+  the tabs fold into the ×. Calm and Off keep it still. Class names are M57's, so callers and tests are unchanged.
+- Tests: `run-thread-chrome` (a new run opens with your words and the typing), `dock-chrome` (the menu's Vibe is one
+  list with your agent; Tasks is a filter; the live view above it).
+
 ## 4.239.0 — 2026-11-13
 
 **One floating action, a composer that fits its column, a close button with depth** (the owner, 11-13: "this button

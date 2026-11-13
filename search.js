@@ -1651,12 +1651,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const D = () => root.OpenVibeDock;
         const opts = {
             base: `${net}/api/frame`, token: () => ctx.token, me, sibling: ctx.sibling, filter: runFilter,
-            // All: every run, with the Action Center's work from every product, the Dock's Now, your Actor and the live
-            // agent view above it, and Vibe's starters. Chats, Tasks and Code are still the Dock's own panels (its Vibe,
-            // Agents and Code: their history, skills, voice, undo, repos), lent whole until the one view does all they do.
-            actions: { base: net }, starters: VIBE_STARTERS,
-            top: (slot) => lend(slot, { tab: 'agent', part: 'top' }),
-            panes: { chat: (slot) => lend(slot, { tab: 'vibe' }), task: (slot) => lend(slot, { tab: 'agent' }), code: (slot) => lend(slot, { tab: 'code' }) },
+            // 4.240.0 (the owner, 11-13: "it's just like filters … your actor is just your agent"): one view. Your agent
+            // heads the list, Chats, Tasks and Code are filters over the same runs, and one box starts everything; the
+            // Dock's Vibe, Agents and Code panels are no longer lent here.
+            actions: { base: net }, starters: VIBE_STARTERS, agent: true,
+            // Above the list: Now (timers, what is on) and the live view of an agent at work, from the Dock's agent top.
+            top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
             onPlace: (p) => { if (p.filter) runFilter = p.filter; },
         };
         const go = (R) => {

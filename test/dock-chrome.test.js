@@ -126,6 +126,19 @@ const server = http.createServer((req, res) => {
             return json(200, { state: scenario.state || defaultState(), counts: scenario.counts || { running: 0, waiting: 0, unread: 0 }, sources_partial: false });
         }
         if (u.pathname === '/api/v1/me/actions') return json(200, scenario.actions || ACTIONS);
+        // 4.240.0: one agent. A run starts through the Frame with the words alone; its thread and stream follow.
+        if (u.pathname === '/api/frame/runs' && req.method === 'POST') {
+            const b = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+            asked.push({ message: b.text, kind: b.kind || null });
+            return json(201, { id: 'c_new', ref: 'chat:c_new', kind: 'chat', title: String(b.text || '').slice(0, 60), status: 'running', agent: { id: 'vibe', name: 'Vibe', glyph: 'spark' }, updated_at: new Date().toISOString() });
+        }
+        if (decodeURIComponent(u.pathname) === '/api/frame/runs/chat:c_new') return json(200, { id: 'c_new', ref: 'chat:c_new', kind: 'chat', title: (asked.at(-1) || {}).message || 'Chat', status: 'waiting', waiting: { for: 'message' }, agent: { id: 'vibe', name: 'Vibe', glyph: 'spark' }, updated_at: new Date().toISOString() });
+        if (decodeURIComponent(u.pathname) === '/api/frame/runs/chat:c_new/steps') return json(200, { steps: [
+            { seq: 1, kind: 'message', from: 'person', text: (asked.at(-1) || {}).message || '' },
+            { seq: 2, kind: 'message', from: 'agent', text: 'Reminder set: Stretch, every 2 hours from 9 am to 5 pm.', ui: { type: 'results', data: { results: [{ kind: 'reminder', label: 'Stretch, every 2 hours' }] } } },
+        ], next: null });
+        if (decodeURIComponent(u.pathname) === '/api/frame/runs/chat:c_new/events') { res.writeHead(200, { 'content-type': 'text/event-stream' }); return res.end('event: end\ndata: {"status":"waiting"}\n\n'); }
+        if (u.pathname === '/api/frame/actor') return json(200, { id: 'act_1', name: 'Juniper', status: 'resting', enabled: true, asks: [], now: { cost_today: 0.12 }, caps: { usd: 1 } });
         // 4.225.0: the menu's Vibe lists runs from the Frame (Network /api/frame/runs, agents.run@1).
         if (u.pathname === '/api/frame/runs' && req.method === 'GET') {
             assert.strictEqual(req.headers.authorization, 'Bearer tok_user', 'the runs are read with the person\'s own token');
@@ -320,22 +333,23 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             const st = await until(p, STATUS, 'the status');
             assert.deepStrictEqual([st.tone, st.label], ['waiting', '1 needs you'], 'what needs you comes first');
             await p.evaluate(MENU_BUTTON);
-            const place = await until(p, `(() => { const c = ${PLACE}; return c && c.items ? c : null; })()`, 'the menu, open on Agents');
-            assert.deepStrictEqual([place.tab, place.groups, place.items], ['agent', ['waiting', 'running'], 3], 'what needs you first, then what runs');
+            // 4.240.0 (one agent): the menu opens on Vibe with Tasks chosen, one list where what needs you comes first; no
+            // Dock panel is lent into it.
+            const place = await until(p, `(() => { const f = document.querySelector('.ovs.is-open .ovs-door-host .ovr-filter[aria-selected="true"]'); const rows = [...document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)')]; return f && rows.length >= 3 ? { filter: f.dataset.filter, needs: rows.map((r) => r.classList.contains('is-needs')), lent: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovr-pane .ovdk') } : null; })()`, 'the menu, open on your agent\'s tasks');
+            assert.deepStrictEqual([place.filter, place.needs[0], place.lent], ['task', true, false], 'Tasks chosen, what needs you first, and no Dock panel lent');
             assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'inside the menu, nothing floating');
-            await p.evaluate("document.querySelector('.ovdk .ovac-item[data-bucket=waiting] button[data-do=approve]').click()");
-            await until(p, "document.querySelector('.ovdk .ovac-item[data-bucket=waiting] .primary').textContent === 'Approved'", 'approved in place');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'its answer buttons');
+            decided.length = 0;
+            await p.evaluate("document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary').click()");
+            await until(p, "(document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-row-acts') || {}).textContent === 'Approved'", 'approved in place');
             assert.deepStrictEqual(decided, ['actor:apr_1:approve'], 'the approval goes to the Network for that item');
             await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
             await until(p, "!document.querySelector('.ovs.is-open')", 'Escape closes the menu');
-            await eventually(async () => assert.ok(puts.some((b) => b.tab === 'agent'), `the Network heard the place (${JSON.stringify(puts)})`));
-            assert.ok(puts.length <= 3, `changes go as debounced PUTs, not one per click (${puts.length})`);
             await p.close();
         }
 
-        // ── 4.225.0: the menu's Vibe is one list (ov-run.js) under All · Chats · Tasks · Code: runs from the Frame and the
-        // Action Center's work together, the Dock's Now, Actor and live view above; Chats, Tasks and Code are the Dock's
-        // own panels, lent whole. No Chat · Code · Agents switch. ──
+        // ── 4.240.0: the menu's Vibe is one agent: one list (ov-run.js) with All · Chats · Tasks · Code as filters over it,
+        // runs from the Frame and the Action Center's work together, your agent at the top; no Dock panel lent. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 } };
             agentView = null;
@@ -348,19 +362,17 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length === 4", 'the run and the Action Center\'s three');
             const all = await p.evaluate(`({ filters: [...document.querySelectorAll('.ovs-door-host .ovr-filter')].map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')),
                 titles: [...document.querySelectorAll('.ovs-door-host .ovr-row-top b')].map((b) => b.textContent), sw: !!document.querySelector('.ovs-door-sw, [data-part]'),
-                top: !!document.querySelector('.ovs-door-host .ovr-top .ovdk.ovdk-part-top'), runsList: !!document.querySelector('.ovs-door-host .ovr-top .ovdk-scroll, .ovs-door-host .ovr-top .ovac-item'),
+                top: !!document.querySelector('.ovs-door-host .ovr-agent'), runsList: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovdk .ovdk-actor, .ovs-door-host .ovr-pane .ovdk'),
                 starters: document.querySelectorAll('.ovs-door-host .ovr-starter').length, wide: document.documentElement.scrollWidth > innerWidth })`);
             assert.deepStrictEqual(all.filters, ['All*', 'Chats', 'Tasks', 'Code'], 'All · Chats · Tasks · Code, on All');
             assert.deepStrictEqual(all.titles, ['Send the weekly digest?', 'Fix the flaky upload test', 'Compare three VPS offers', 'Patch notes for 4.162'], 'what needs you first, then newest (the work a minute ago, the chat four): a run and the Action Center\'s work in one list');
-            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.starters, all.wide], [false, true, false, 6, false], 'no switch; the Dock\'s top above (not its list); the six starters; nothing off the screen');
+            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.starters, all.wide], [false, true, false, 6, false], 'no switch; your agent above, no Dock list or Actor card; the six starters; nothing off the screen');
             if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-all-390.png'), Buffer.from(r.data, 'base64')); }
-            // Tasks: the Dock's Agents panel, whole; the Network hears the place.
+            // Tasks: a filter over the same list, never a panel of its own.
             await p.evaluate(`document.querySelector('.ovs-door-host .ovr-filter[data-filter="task"]').click()`);
-            const place = await until(p, `(() => { const c = ${PLACE}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'Tasks: the Agents panel');
-            assert.strictEqual(place.items, 3, 'its own list, as before');
-            assert.strictEqual(await p.evaluate("!!document.querySelector('.ovs-door-host .ovr-pane .ovdk') && document.querySelector('.ovs-door-host .ovr-top').hidden"), true, 'in the pane, and the top handed back');
+            await until(p, "document.querySelector('.ovs-door-host .ovr-filter[data-filter=task]').getAttribute('aria-selected') === 'true' && document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3", 'Tasks: the same list, filtered');
+            assert.strictEqual(await p.evaluate("!document.querySelector('.ovs-door-host .ovr-pane .ovdk') && !document.querySelector('.ovs-door-host .ovdk .ovac-item')"), true, 'no Dock panel');
             if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-tasks-390.png'), Buffer.from(r.data, 'base64')); }
-            await eventually(async () => assert.ok(puts.some((b) => b.tab === 'agent'), 'the Network heard Tasks'));
             // Approve in place from All, through the Action Center.
             await p.evaluate(`document.querySelector('.ovs-door-host .ovr-filter[data-filter="all"]').click()`);
             await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'All again, with its answers');
@@ -481,7 +493,8 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.goto(`${base}/page`, { maxMs: 8000 });
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('agent'));
-            await until(p, `(() => { const c = ${PLACE}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents place');
+            // 4.240.0: the agent at work shows above your one list in the menu's Vibe (Tasks chosen).
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-top .ovdk-agent')", 'the Agents place');
             // The stream: Live's embed, the task, the numbers.
             const src = await until(p, "document.querySelector('.ovda iframe') && document.querySelector('.ovda iframe').getAttribute('src')", 'the embed');
             assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
@@ -507,16 +520,16 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             assert.deepStrictEqual(controls, ['curtain', 'pause', 'mute', 'end'], 'Pause, Mute and End reached Codes, which puts them to Live');
             await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovda iframe')"), false, 'no player once it has ended'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Ended · worked 12 min'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovac-item').length"), 3, 'the agents list is untouched under the stream'));
+            await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3"), 'the one list is untouched under the stream'));
             // No stream at all: the view hides itself and the tab is just the list.
             agentView = null;
             await p.goto(`${base}/page`, { maxMs: 8000 });
             await until(p, "!!window.OpenVibeDock", 'the panels again');
             await p.evaluate(OPEN('agent'));
-            await until(p, `(() => { const c = ${PLACE}; return c && c.tab === 'agent' && c.items ? c : null; })()`, 'the Agents place again');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-top .ovdk-agent') && document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3", 'the Agents place again');
             await wait(400);
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), false, 'nothing to show, and nowhere to show it'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelectorAll('.ovac-item').length"), 3, 'the list alone'));
+            await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3"), 'the list alone'));
             await p.close();
         }
 
@@ -528,80 +541,36 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             const st = await until(p, STATUS, 'the status at 320');
             assert.strictEqual(st.tone, 'running');
             await p.evaluate(OPEN('agent'));
-            await until(p, PLACE, 'the menu on Agents at 320');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)')", 'the menu on Agents at 320');
             await eventually(async () => assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 320, 'no sideways scroll'));
             await p.close();
         }
         }
         if (PART === 1) { console.log('dock-chrome (1 of 2): no pill and no floating Dock, the status on the menu button, Agents in the menu, Chats, Send to, the agent view, 320 px clean'); return; }
-        // ── Vibe (L48 V2): starters, a question, Vibe's answer in place; the Network keeps the tab. ──
+        // ── 4.240.0, one agent: your agent heads the menu's Vibe; a starter starts a conversation at once (your words, the
+        //    typing), the Frame's run carries Vibe's answer and what it did. The Dock's own Vibe panel is not used. ──
         {
-            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true } };
-            puts.length = 0;
-            const p = await fresh(1280, 860);
+            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState() } };
+            asked.length = 0;
+            const p = await fresh(390, 780);
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('vibe'));
             await until(p, "document.querySelector('.ovs.is-open [data-dock=\"vibe\"]') && document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected') === 'true'", 'the menu on Vibe');
-            await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the conversation list');
-            await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
-            await until(p, "document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip').length === 6", 'the starters before the first message, each with its icon');
-            assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-chip')].filter((c) => c.querySelector('.ovdk-chip-ic svg')).length"), 6, 'every starter has its icon');
-            await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] .ovdk-chip').click()");
-            await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-mine')", 'my question in place');
+            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-agent'); return a && /Juniper/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), go: !!a.querySelector('.ovr-agent-go') } : null; })()", 'your agent at the top');
+            assert.match(me.text, /Juniper your agent Ready · \$0\.12 of \$1\.00 today/, 'its name, its state and today\'s spend');
+            assert.ok(me.go, 'and Pause beside it');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovr-filter[data-filter=chat]').click()");
+            await until(p, "document.querySelectorAll('.ovs-door-host .ovr-starter').length === 6 && [...document.querySelectorAll('.ovs-door-host .ovr-starter')].every((b) => b.querySelector('svg'))", 'the starters, each with its glyph');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovr-starter').click()");
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-thread .ovr-step.is-you')", 'my words at once');
             assert.strictEqual(asked[0].message, 'Remind me to stretch every 2 hours');
-            assert.ok(asked[0].timezone, 'with the person\'s time zone, for "at 9"');
-            const answer = await until(p, "(() => { const m = document.querySelector('.ovdk [data-panel=vibe] .ovdk-msg.is-vibe:not(.ovdk-typing)'); return m ? { text: m.innerText, link: (m.querySelector('a') || {}).href || null } : null; })()", 'Vibe\'s answer', 6000);
-            assert.match(answer.text, /Reminder set: Stretch, every 2 hours/);
-            assert.strictEqual(answer.link, 'https://openvibe.today/reminders', 'an https link is a link');
-            // What Vibe did, under its answer: a reminder chip with Undo and Open (plan L48 V2, result chips).
-            const chip = await until(p, "(() => { const c = document.querySelector('.ovdk [data-panel=vibe] .ovdk-res-c'); return c ? { text: c.innerText, open: (c.querySelector('a') || {}).href, undo: !!c.querySelector('button') } : null; })()", 'the result chip');
-            assert.match(chip.text, /Reminder set: Stretch/);
-            assert.match(chip.text, /Every 2 hours, 9 am–5 pm/);
-            assert.strictEqual(chip.open, 'https://openvibe.today/me#reminders');
-            assert.ok(chip.undo, 'Undo while it can be undone');
-            await p.evaluate("document.querySelector('.ovdk .ovdk-res-c button').click()");
-            await until(p, "!!document.querySelector('.ovdk .ovdk-res-c.is-stopped')", 'the chip says it is stopped');
-            assert.deepStrictEqual(undone[0], { message_id: vibeMsgs.find((m) => m.from === 'vibe').id, index: 0 }, 'undo names the answer and the result');
-            await eventually(async () => assert.match(await p.evaluate("document.querySelector('.ovdk .ovdk-res-c').innerText"), /Reminder stopped: Stretch/));
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-res-c button')"), false, 'and is not offered again'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovdk .ovdk-typing')"), false, 'the writing dots go when it answers'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-away').href"), 'https://openvibe.chat/vibe/v1', 'Open in Chat goes to the same chat'));
-            await eventually(async () => assert.ok(puts.some((b) => b.tab === 'vibe'), `the Network keeps the Vibe tab, so it follows the person to the next site (${JSON.stringify(puts)})`));
-            await p.close();
-        }
-
-        // ── Vibe by voice without the browser's speech recognition (Firefox): the mic records, Chat's /api/vibe/listen
-        //    says what was said, and it is asked like typed text. The recorder is a stand-in: no microphone in CI. ──
-        {
-            scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState(), pinned: true, tab: 'vibe' } };
-            asked.length = 0;
-            const p = await fresh(1280, 860);
-            await p.send('Page.addScriptToEvaluateOnNewDocument', { source: `
-                delete window.SpeechRecognition; delete window.webkitSpeechRecognition;
-                window.__tracksStopped = 0;
-                navigator.mediaDevices.getUserMedia = async () => ({ getTracks: () => [{ stop() { window.__tracksStopped++; } }] });
-                window.MediaRecorder = class {
-                    static isTypeSupported(t) { return t === 'audio/ogg;codecs=opus'; }
-                    constructor(stream, o) { this.mimeType = (o && o.mimeType) || ''; this.state = 'inactive'; }
-                    start() { this.state = 'recording'; window.__recording = true; }
-                    stop() { this.state = 'inactive'; window.__recording = false; this.ondataavailable({ data: new Blob([new Uint8Array(4096)], { type: 'audio/ogg' }) }); this.onstop(); }
-                };` });
-            await p.goto(`${base}/page`, { maxMs: 5000 });
-            await until(p, "!!window.OpenVibeDock", 'the panels');
-            await p.evaluate(OPEN('vibe'));
-            await until(p, "!!document.querySelector('.ovdk-vibe-new')", 'the Vibe list');
-            await p.evaluate("document.querySelector('.ovdk-vibe-new').click()");
-            await until(p, "!!document.querySelector('.ovdk [data-panel=vibe] .ovdk-mic')", 'a mic, though the browser has no speech recognition');
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk [data-panel=vibe] textarea').placeholder"), 'Ask Vibe, or hold the mic'));
-            await p.evaluate("document.querySelector('.ovdk .ovdk-mic').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))");
-            await until(p, "window.__recording === true && document.querySelector('.ovdk .ovdk-mic').getAttribute('aria-pressed') === 'true'", 'recording, and the mic says so');
-            await p.evaluate("document.querySelector('.ovdk .ovdk-mic').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))");
-            await until(p, "[...document.querySelectorAll('.ovdk [data-panel=vibe] .ovdk-msg.is-mine')].some((m) => /drink water at 3/.test(m.innerText))", 'what was said, asked');
-            assert.deepStrictEqual(listened[0], { type: 'audio/ogg', bytes: 4096, lang: 'en', auth: 'Bearer tok_user' }, 'the recording goes to Chat as itself, with the person\'s token');
-            assert.strictEqual(asked[0].message, 'remind me to drink water at 3');
-            await eventually(async () => assert.strictEqual(await p.evaluate('window.__tracksStopped'), 1, 'the microphone is released'));
-            await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovdk .ovdk-mic').getAttribute('aria-pressed')"), 'false'));
+            assert.strictEqual(asked[0].kind, null, 'no kind: the Frame places the words');
+            const answer = await until(p, "(() => { const m = document.querySelector('.ovs-door-host .ovr-step.is-agent'); return m ? m.innerText : null; })()", 'the answer in place');
+            assert.match(answer, /Reminder set: Stretch, every 2 hours/);
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-chip') && !document.querySelector('.ovs-door-host .ovr-typing')", 'what it did as a chip, and the typing gone');
+            assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovs-door-host .ovr-step.is-you')].length"), 1, 'my words once, not twice');
+            assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'nothing off the screen');
             await p.close();
         }
 
@@ -629,7 +598,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('vibe'));
-            await until(p, PLACE, 'the menu on Vibe');
+            await until(p, "!!document.querySelector('.ovs.is-open .ovs-door-host .ovr-compose textarea')", 'the menu on Vibe');
             // 4.223.0: the timer is in the box's + (every composer's), not a button of Vibe's own.
             await p.evaluate("(document.querySelector('.ovs .ovdk-vibe-new') || { click() {} }).click()");
             await until(p, "!!document.querySelector('.ovs .ovc-more')", 'the box and its +');
@@ -696,8 +665,9 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, "!!window.OpenVibeNavbar && typeof OpenVibeNavbar.askAgent === 'function'", 'the navbar');
             await p.evaluate("(() => { const b = document.createElement('button'); b.type = 'button'; b.id = 'ask'; b.setAttribute('data-ov-ask', 'About this stream: night walk in Asakusa. '); document.body.appendChild(b); b.click(); })()");
-            await until(p, PLACE, 'the menu opens');
-            const box = await until(p, "(() => { const t = document.querySelector('.ovdk [data-panel=vibe] textarea'); return t && t.value ? { value: t.value } : null; })()", 'the question in the box');
+            await until(p, "!!document.querySelector('.ovs.is-open')", 'the menu opens');
+            // 4.240.0: the question waits in the one box of the menu's Vibe (your agent), unsent.
+            const box = await until(p, "(() => { const t = document.querySelector('.ovs-door-host .ovr-compose textarea'); return t && t.value ? { value: t.value } : null; })()", 'the question in the box');
             assert.strictEqual(box.value, 'About this stream: night walk in Asakusa. ', 'the page question, as given');
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected')"), 'true', 'on Vibe'));
             await wait(400);
