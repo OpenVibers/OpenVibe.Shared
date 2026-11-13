@@ -324,6 +324,14 @@ html[data-ov-motion=off] .ovc-emoji { animation: none; }
 .ovc-more[aria-expanded="true"] { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 18%, transparent); }
 .ovc-more svg { transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
 .ovc-more[aria-expanded="true"] svg { transform: rotate(45deg); }
+/* 4.237.0 (the owner, 11-13: the row looked "offset"): every tool in the row is the same quiet disc, so the first one's
+   edge lines up with the words above it and an open + is that disc tinted, not the only solid shape in the row; Send
+   is the same size at the other end. */
+.ovc-v2 .ovt-c-tools { gap: 6px; }
+.ovc-v2 .ovt-c-tools > .ovt-btn { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovc-v2 .ovt-c-tools > .ovt-btn:hover, .ovc-v2 .ovt-c-tools > .ovt-btn:focus-visible { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 16%, transparent); }
+.ovc-v2 .ovt-c-tools > .ovc-more[aria-expanded="true"], .ovc-v2 .ovt-c-tools > .ovt-btn[aria-pressed="true"] { background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 22%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 45%, transparent); }
+.ovc-v2 .ovt-c-tools > .ovt-btn svg { width: 20px; height: 20px; }
 @container ovc (max-width: 460px) {
   .ovt-c-tools > .ovt-btn:not(.ovc-mic):not(.ovc-more) ~ .ovt-btn:not(.ovc-mic):not(.ovc-more):not([aria-pressed="true"]) { display: none; }
 }
