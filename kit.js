@@ -807,7 +807,9 @@
      */
     function table({ columns = [], rows = [], caption = '', label = '', empty: none = '', stack = true, id = null } = {}) {
         const cols = (columns || []).filter((c) => c && c.key != null);
-        if (!rows || !rows.length) return none ? `<p class="ovk-table-empty">${esc(none)}</p>` : '';
+        // 4.242.0 (plan §Y.1 A10, rule 141 empty-says-what-comes): an empty table is the kit's designed empty card, not a
+        // muted line; `empty` is its words, or { title, text, action, icon }.
+        if (!rows || !rows.length) { if (!none) return ''; const spec = typeof none === 'object' ? none : { text: String(none), icon: 'inbox' }; return `<div class="ovk-table-empty">${empty(spec)}</div>`; }
         const primary = cols.find((c) => c.primary) || cols[0];
         const cell = (c, v) => {
             if (c.html) return v == null ? '' : String(v);
