@@ -2225,7 +2225,7 @@
         const u = _config.user || null;
         const caps = (u && u.capabilities) || {};
         const rank = u ? (VIEWER_RANKS[u.role] || 'member') : 'guest';
-        const owner = !!(u && caps.is_owner);
+        const owner = !!(u && (u.is_owner || caps.is_owner)); // Network's /api/auth/me says is_owner on the user
         const staff = owner || rank === 'mod' || rank === 'admin';
         const mm = (q) => { try { return !!(root.matchMedia && root.matchMedia(q).matches); } catch { return false; } };
         const set = typeof document !== 'undefined' && document.documentElement && document.documentElement.getAttribute('data-ov-motion');

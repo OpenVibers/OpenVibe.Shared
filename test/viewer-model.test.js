@@ -67,10 +67,12 @@ const RANKS = [
     ['admin', {}, 'admin', 'staff', true, false],
     ['user', { is_owner: true }, 'member', 'owner', true, true],
     ['something_new', {}, 'member', 'member', false, false],
+    // Network's own /api/auth/me shape: is_owner on the user, no capabilities.
+    ['admin', undefined, 'admin', 'owner', true, true, { is_owner: true }],
 ];
-RANKS.forEach(([role, caps, rank, tag, staff, owner]) => {
+RANKS.forEach(([role, caps, rank, tag, staff, owner, extra]) => {
     const { navbar, html } = load();
-    navbar.init({ ...base, user: { id: 7, username: 'maya', role, capabilities: caps } });
+    navbar.init({ ...base, user: { id: 7, username: 'maya', role, capabilities: caps, ...(extra || {}) } });
     const v = navbar.viewer();
     assert.deepStrictEqual([v.signedIn, v.rank, v.staff, v.owner, v.username], [true, rank, staff, owner, 'maya'], `${role} ${JSON.stringify(caps)}`);
     assert.strictEqual(html.getAttribute('data-ov-viewer'), tag, role);
