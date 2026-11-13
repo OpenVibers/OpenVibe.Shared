@@ -2905,6 +2905,8 @@
         pop: popFrom,
         unpop,
         askAgent(text) { askAgent(text); },
+        /** 4.242.0: the signed-in viewer's Network token for the page's own shared parts (the user card's actions), or ''. */
+        viewerToken() { const u = _config.user; return u && !u.is_anon && _config.token ? String(_config.token) : ''; },
 
         /** Get the bell mount point for OpenVibeNotifications. */
         getBellMount() {
