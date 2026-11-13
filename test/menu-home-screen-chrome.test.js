@@ -231,16 +231,23 @@ const server = http.createServer((req, res) => {
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.
         await eventually(async () => assert.strictEqual(await s.evaluate(`document.querySelector('.ovh-me .ovh-who-txt b').textContent`), 'Ada', 'your name on top'));
         await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs .ovh-account, .ovs .openvibe-navbar-dropdown, .ovs .ud-grid')`), 'the old account block and its grid of tiles are not in the menu'));
-        // 4.236.0 (the owner, 11-13: "completely redesign this area … confusing what these buttons even do … not perfectly
-        // aligned … tooltips … a waste of space in the corners"): your name and the gear on one line, then one row of
-        // actions across the whole card, each its glyph with its name, in equal columns; this site's own first.
-        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-mebox > .ovh-acts > .ovh-act:not(.is-own)')].map((b) => b.getAttribute('aria-label'))`), ['Display: theme, text size, motion', 'Add or switch account', 'Sign out'], 'Display, add or switch account, Sign out, in that order'));
-        await eventually(async () => assert.ok(await s.evaluate(`[...document.querySelectorAll('.ovh-mebox .ovh-act')].every((b) => !!b.getAttribute('data-ov-tip') && !!b.querySelector('.ovh-act-t').textContent.trim())`), 'every action says its name and has a tooltip'));
-        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovh-own') && [...document.querySelectorAll('.ovh-mebox .ovh-acts > .is-own')].every((b) => !!b.getAttribute('aria-label'))`), 'this site\'s own items are in your row, never a row of their own'));
-        await eventually(async () => assert.ok(await s.evaluate(`/[?&]add_account=1/.test(document.querySelector('.ovh-mebox a.ovh-act[aria-label="Add or switch account"]').getAttribute('href')) && !!document.querySelector('.ovh-mebox [data-ov-look-open]') && !!document.querySelector('.ovh-me a.ovh-me-gear[href="https://openvibe.network/my"]')`), 'switch, Display, and the gear beside your name'));
-        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow')`), 'Display is not at the foot any more'));
-        await eventually(async () => assert.ok(await s.evaluate(`(() => { const acts = [...document.querySelectorAll('.ovh-mebox .ovh-act')].map((b) => b.getBoundingClientRect()); const box = document.querySelector('.ovh-mebox').getBoundingClientRect(); return acts.length > 0 && acts.every((r) => r.height >= 44 && r.width >= 44 && r.right <= box.right + 1 && r.left >= box.left - 1) && Math.abs(acts[0].left - (box.left + 8)) < 2; })()`), 'full touch targets, inside the card, the row starting at its edge (no indent)'));
-        await eventually(async () => { const t = await s.evaluate(`[...document.querySelectorAll('.ovh-mebox .ovh-act')].map((b) => { const r = b.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.left), Math.round(r.width), b.className]; })`); assert.strictEqual(new Set(t.map((x) => x[0])).size, 1, `one row, aligned: ${JSON.stringify(t)}`); });
+        // 4.237.0 (the owner, 11-13: "completely redesign this card … the buttons are below"): one slim row (you, Display,
+        // your account's menu); the menu holds profile, settings, switch and Sign out; the site's own are apps in the grid.
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-mebox > .ovh-me > .ovh-ib')].map((b) => b.getAttribute('aria-label'))`), ['Display: theme, text size, motion', 'Your account'], 'one row: Display and your account'));
+        await eventually(async () => assert.ok(await s.evaluate(`(() => { const r = document.querySelector('.ovh-mebox > .ovh-me').getBoundingClientRect(); return r.height <= 64 && r.right <= innerWidth; })()`), 'a slim row, inside the screen'));
+        await s.evaluate(`document.querySelector('.ovh-acct').click(), true`);
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-acct-menu:not([hidden]) .ovh-acct-i')].map((i) => i.textContent)`), ['Your profile', 'Account and settings', 'Add or switch account', 'Sign out'], 'the account menu'));
+        assert.ok(/[?&]add_account=1/.test(await s.evaluate(`document.querySelector('.ovh-acct-menu a.ovh-acct-i:nth-child(3)').getAttribute('href')`)), 'switch carries add_account');
+        await s.evaluate(`document.querySelector('.ovh-acct').click(), true`);
+        await eventually(async () => assert.ok(await s.evaluate(`document.querySelector('.ovh-acct-menu').hidden`), 'the button that opens it closes it'));
+        await eventually(async () => assert.ok(await s.evaluate(`!document.querySelector('.ovs-displayrow') && [...document.querySelectorAll('.ovh-own-apps .ovh-own-app')].every((a) => !!a.getAttribute('data-ov-tip'))`), 'the site\'s own are apps with a tooltip'));
+        if (process.env.OV_CAPTURE_YOU) {
+            await s.evaluate(`document.querySelector('.ovh-acct').click(), true`);
+            await new Promise((ok) => setTimeout(ok, 250));
+            const m = await s.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+            fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-menu-390.png'), Buffer.from(m.data, 'base64'));
+            await s.evaluate(`document.querySelector('.ovh-acct').click(), true`);
+        }
         // The tab row: Apps first and chosen; All and Edit at its end; the tabs move with the arrow keys.
         await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovh-tabrow .ovh-tab')].map((t) => t.dataset.tab + (t.getAttribute('aria-selected') === 'true' ? '*' : ''))`), ['apps*', 'notifications', 'recent'], 'Apps, Notifications, Recent; Apps first'));
         await eventually(async () => assert.ok(await s.evaluate(`!!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-allbtn') && !!document.querySelector('.ovh-tabrow .ovh-headtools .ovh-edit') && !document.querySelector('.ovh-sec .ovh-edit')`), 'All and Edit sit at the end of the tab row'));
@@ -312,7 +319,7 @@ const server = http.createServer((req, res) => {
             const shotPage = await h.openPage(browser, context, { width: 390, height: 844, block: blocked });
             await shotPage.goto(`${base}/?signed=1`, { maxMs: 6000 });
             await openTab(shotPage, 'you');
-            assert.ok(await until(shotPage, `!!document.querySelector('.ovh-mebox .ovh-act') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
+            assert.ok(await until(shotPage, `!!document.querySelector('.ovh-mebox .ovh-acct') && !!document.querySelector('.ovh-tabrow .ovh-tab')`));
             const you = await shotPage.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
             fs.writeFileSync(path.join(process.env.OV_CAPTURE_YOU, 'you-390.png'), Buffer.from(you.data, 'base64'));
             await shotPage.evaluate(`document.querySelector('.ovh-edit').click(), true`);

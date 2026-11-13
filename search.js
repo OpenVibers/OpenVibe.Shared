@@ -82,7 +82,7 @@
         const b = tabsEl.querySelector('[data-tab="feed"]'); if (!b) return;
         const old = b.querySelector('.ovs-tabnew'); if (old) old.remove();
         const n = Number(count) || 0;
-        if (n) { const badge = document.createElement('b'); badge.className = 'ovs-tabnew'; badge.textContent = n > 9 ? '9+' : String(n); badge.setAttribute('aria-label', `${n} new since you last looked`); b.appendChild(badge); }
+        if (n) { const badge = document.createElement('b'); badge.className = 'ovs-tabnew'; badge.textContent = n > 9 ? '9+' : String(n); badge.setAttribute('aria-label', `${n} new since you last looked`); (b.querySelector('.ovs-tab-ic') || b).appendChild(badge); }
     }
     let feedChannel;
     try { if (typeof BroadcastChannel === 'function') { feedChannel = new BroadcastChannel('openvibe-feed-seen'); feedChannel.onmessage = (e) => { const n = Number(e.data && e.data.count) || 0; paintFeedDot(n); paintFeedTabCount(n); }; } } catch { feedChannel = null; }
@@ -297,11 +297,19 @@ html[data-ov-motion=off] .ovs-tab .ovs-roll { animation: none; }
 .ovs-tab-av { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: block; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 18%, transparent); }
 .ovs-tab[aria-selected="true"] .ovs-tab-av { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
 .ovs-tab-on { position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%; background: var(--success, #22c55e); box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
-.ovs-tabnew { flex: none; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--accent, #3b82f6); color: var(--on-accent, #fff); font: 700 11px/18px Inter, system-ui, sans-serif; text-align: center; }
+.ovs-tabnew { flex: none; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; font: 750 11px/18px Inter, system-ui, sans-serif; letter-spacing: -.01em; text-align: center; font-variant-numeric: tabular-nums; color: #fff; box-shadow: 0 0 0 2px var(--bg-secondary, #141a24), 0 3px 8px -2px rgba(0, 0, 0, .55); animation: ovsBadgeIn .3s cubic-bezier(.34, 1.56, .64, 1); background: var(--accent, #3b82f6); }
 .ovs-tabnew-red { background: var(--danger, #ef4444); }
 .openvibe-navbar .ovnav-orb .ovs-feed-dot { position: absolute; top: 2px; right: 2px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-light, var(--accent, #60a5fa)); }
 .openvibe-navbar .ovnav-orb .ovs-feed-dot[hidden] { display: none; }
 .ovs-tabdot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--live-red, #ef4444); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live-red, #ef4444) 22%, transparent); }
+/* 4.237.0: one badge for every count in the menu (the You tab's, Feed's, Notifications'), on the icon's corner; the live
+   dot after the word, breathing. */
+.ovs-tab-ic > .ovs-tabnew { position: absolute; top: -7px; left: calc(100% - 8px); z-index: 1; }
+.ovs-tab span > .ovs-tabdot { display: inline-block; margin: 0 0 1px 5px; vertical-align: middle; animation: ovsLiveDot 2s ease-in-out infinite; }
+.ovs-tab > span:not(.ovs-tab-ic) { display: inline-flex; align-items: center; }
+@keyframes ovsLiveDot { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--live-red, #ef4444) 10%, transparent); } }
+@keyframes ovsBadgeIn { from { transform: scale(.5); opacity: 0; } }
+html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .ovs-tabnew { animation: none; }
 .ovs-grid.is-mini { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 0 2px 4px; }
 .ovs-grid.is-mini .ovs-tile { gap: 8px; min-height: 40px; padding: 4px 8px; border-radius: 10px; }
 .ovs-grid.is-mini .ovs-ic { width: 26px; height: 26px; border-radius: 8px; }
@@ -1391,11 +1399,12 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
             } else if (TAB_SVG[id]) ic.innerHTML = TAB_SVG[id];
             if (ic.firstChild) b.appendChild(ic);
             const t = document.createElement('span'); t.textContent = id === 'here' ? here() : label; b.appendChild(t);
-            if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); b.appendChild(d); }
-            else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); b.appendChild(n); }
+            // 4.237.0 (the owner, 11-13): the live dot after the word, a count on the icon's corner, never a third line.
+            if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); t.appendChild(d); }
+            else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); (b.querySelector('.ovs-tab-ic') || b).appendChild(n); }
             if (id === 'you' && ctx.token && root.OpenVibeNotifications) {
                 const count = Number(root.OpenVibeNotifications.unread ? root.OpenVibeNotifications.unread() : 0) || 0;
-                if (count) { const n = document.createElement('b'); n.className = 'ovs-tabnew ovs-tabnew-red'; n.textContent = count > 99 ? '99+' : String(count); n.setAttribute('aria-label', `${count} unread notifications`); b.appendChild(n); }
+                if (count) { const n = document.createElement('b'); n.className = 'ovs-tabnew ovs-tabnew-red'; n.textContent = count > 99 ? '99+' : String(count); n.setAttribute('aria-label', `${count} unread notifications`); (b.querySelector('.ovs-tab-ic') || b).appendChild(n); }
             }
             tabsEl.appendChild(b);
         }

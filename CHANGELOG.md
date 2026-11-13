@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.237.0 — 2026-11-13
+
+**You is one slim row, your site's own are apps, and the menu's badges and the composer's row line up** (the owner's
+phone, 11-13: "completely redesign this card … the buttons are below", "it can be … an app … for admin, mod rank",
+"the red dot … next to the word feed", "improve … match" the badges, the composer's row "offset").
+
+- **You (ov-home.js).**
+  - Your card is one slim row: your picture with its online dot, your name and handle, Display, and your account's
+    menu (a chevron).
+  - The menu is anchored in the top layer (OVSurfaces.anchor) and holds Your profile, Account and settings, Add or
+    switch account and Sign out. The button that opens it closes it; Escape and a press elsewhere do too.
+  - What the site gives you (your channel, Admin, moderation: `me.own`) are apps at the start of the Apps tab, by
+    rank, each with a tooltip; they are no longer buttons in the card. They are their own row (`.ovh-own-apps`), never
+    part of the grid you arrange.
+- **The menu's tabs (search.js).**
+  - Feed's live dot sits after the word and breathes.
+  - Counts (Feed's new, You's unread) ride on the icon's corner instead of a third line under the label.
+  - Every count in the menu (the tabs' and You's Notifications tab) is one badge: an 18 px pill, a ring of the
+    ground, a soft shadow, and a pop-in.
+- **The composer's row.**
+  - Every tool is the same quiet 40 px disc, so the first one lines up with the words above it.
+  - An open + (or a pressed tool) is that disc tinted with a ring, not the only solid shape in the row.
+- Tests: `menu-home-screen-chrome` (the slim row, the account menu, own apps; `OV_CAPTURE_YOU` saves the open menu),
+  `menu-places-chrome` and `navbar-ask-vibe` updated.
+
 ## 4.236.0 — 2026-11-13
 
 **You is yours on every site, the wait is the logo, and the box says what a message answers** (the owner's phone,

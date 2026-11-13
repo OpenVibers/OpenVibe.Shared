@@ -25,7 +25,7 @@ const server = http.createServer((req, res) => {
 const OPEN = (dock) => `OpenVibeSearch.open({ service: 'chat', scope: { label: 'Chat', page: '/search' }, links: [{ label: 'Rooms', href: '/rooms' }], frame: {}, token: ${dock ? "'t'" : 'null'}, from: document.body,
     user: ${dock ? "{ id: 7, username: 'maya', display_name: 'Maya' }" : 'null'}, dock: ${dock ? '(id) => { window.went = id; }' : 'null'},
     dockMore: (action) => { window.timerCalled = action; }, ask: (text) => { window.asked = text; }, section: 'notifications' })`;
-const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).map((t) => { const r = t.getBoundingClientRect(); return { label: t.textContent.trim(), chosen: t.getAttribute('aria-selected') === 'true', door: t.getAttribute('data-dock') || '', role: t.getAttribute('role'), top: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right) }; })`;
+const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).map((t) => { const r = t.getBoundingClientRect(); return { label: (t.querySelector(':scope > span:not(.ovs-tab-ic)') || t).textContent.trim(), chosen: t.getAttribute('aria-selected') === 'true', door: t.getAttribute('data-dock') || '', role: t.getAttribute('role'), top: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right) }; })`;
 (async () => {
     await new Promise((ok) => server.listen(0, '127.0.0.1', ok));
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ov-places-'));

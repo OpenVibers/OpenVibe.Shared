@@ -63,7 +63,7 @@
    its glyph is about half the tile, folders scale their four with it, and the grid lines up with the cards above. */
 .ovh-grid:not(.ovh-recent) { gap: 4px 2px; padding: 2px 0 0; justify-items: stretch; }
 .ovh-grid:not(.ovh-recent) .ovh-app { min-height: 0; padding: 6px 0 8px; gap: 7px; }
-.ovh-grid:not(.ovh-recent) .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: 29%; }
+.ovh-grid:not(.ovh-recent) .ovh-ic, .ovh-own-apps .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: 29%; }
 .ovh-ic > .ov-icon { --ovi-size: 74.4%; display: grid; place-items: center; }
 .ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { grid-template-columns: repeat(2, 36%); grid-auto-rows: 36%; gap: 7%; place-content: center; }
@@ -87,7 +87,7 @@
     box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.1)); transition: transform .18s cubic-bezier(.2,1.4,.4,1); }
 .ovh-recent .ovh-ic { width: 48px; height: 48px; border-radius: 15px; }
 /* App icons: the ring goes, the glyph fills the tile, each app keeps its own hue (11-09). */
-.ovh-grid .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic, .ovh-key .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
+.ovh-grid .ovh-ic, .ovh-own-apps .ovh-ic, .ovh-recent .ovh-ic, .ovh-card .ovh-ic, .ovh-key .ovh-ic { background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .34), hsl(var(--ovh-h, 215) 70% 38% / .18)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 64% / .28), 0 4px 14px hsl(var(--ovh-h, 215) 70% 30% / .18); overflow: hidden; }
 .ovh-ic .ovi-ring, .ovh-ic .ovi-bg, .ovh-ic .ovi-comet, .ovh-ic .ovi-prog { display: none; }
 .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 90% 82%); color: hsl(var(--ovh-h, 215) 90% 82%); }
 :root[data-theme="light"] .ovh-ic .ov-icon { --ovi-glyph: hsl(var(--ovh-h, 215) 70% 32%); color: hsl(var(--ovh-h, 215) 70% 32%); }
@@ -266,7 +266,9 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 .ovh-tab:focus-visible { outline: 2px solid var(--accent-light, var(--accent, #60a5fa)); outline-offset: -2px; }
 .ovh-tab[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0,0,0,.3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent); }
 .ovh-tab[aria-selected="true"] svg { color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovh-tab-n { min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--danger, #ef4444); color: #fff; font: 750 11px/18px inherit; text-align: center; }
+.ovh-tab-n { min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; font: 750 11px/18px Inter, system-ui, sans-serif; letter-spacing: -.01em; text-align: center; font-variant-numeric: tabular-nums; color: #fff; box-shadow: 0 0 0 2px var(--bg-secondary, #141a24), 0 3px 8px -2px rgba(0, 0, 0, .55); animation: ovhBadgeIn .3s cubic-bezier(.34, 1.56, .64, 1); background: var(--danger, #ef4444); }
+@keyframes ovhBadgeIn { from { transform: scale(.5); opacity: 0; } }
+html[data-ov-motion=off] .ovh-tab-n { animation: none; }
 @media (max-width: 380px) { .ovh-tab { gap: 5px; font-size: 13px; } .ovh-tab svg { width: 16px; height: 16px; } }
 .ovh-notes { min-height: 120px; }
 .ovh-empty { display: flex; align-items: center; gap: 14px; margin: 6px 0; padding: 14px 16px; border-radius: 14px; border: 1px dashed color-mix(in srgb, var(--text-muted, #93a0b4) 45%, transparent); }
@@ -298,33 +300,30 @@ html[data-ov-motion=reduced] .ovh-card { animation-name: ovh-fade; animation-dur
 /* Your row: you, then your round buttons (this site's own first). On a narrow screen the buttons go under your name. */
 .ovh-me { flex-wrap: wrap; row-gap: 0; padding: 6px 6px 6px 8px; min-height: 56px; box-sizing: border-box; }
 .ovh-acts { display: flex; align-items: center; gap: 4px; flex: none; }
-/* 4.236.0, your card: your name and the gear on one line, then one row of actions across the card, each its glyph with
-   its name under it in equal columns (a tooltip says the whole of it); Sign out last, its red only under a pointer. */
-.ovh-mebox { margin: 2px 4px 8px; padding: 8px; border-radius: 18px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); }
-.ovh-mebox > .ovh-me { margin: 0; padding: 0 0 0 4px; min-height: 48px; background: none; box-shadow: none; flex-wrap: nowrap; }
-.ovh-mebox .ovh-av { width: 42px; height: 42px; }
-.ovh-me-gear { margin-left: auto; color: var(--text-secondary, #a8b3c4); }
-.ovh-me-gear svg { transition: transform .5s cubic-bezier(.3, 1.4, .4, 1); }
-@media (hover: hover) and (pointer: fine) { .ovh-me-gear:hover svg { transform: rotate(60deg); } }
-.ovh-mebox > .ovh-acts { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; padding: 8px 0 0; margin: 8px 0 0; border-top: 1px solid color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); }
-.ovh-mebox > .ovh-acts > .ovh-act { margin: 0; }
-.ovh-mebox .ovh-act { align-self: stretch; min-width: 0; width: auto; height: auto; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 14px;
-  background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); color: var(--text-primary, #e6edf7);
-  transition: background-color .18s, color .18s, transform .18s cubic-bezier(.3, 1.4, .4, 1); }
-.ovh-mebox .ovh-act svg { width: 20px; height: 20px; transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
-.ovh-act-t { font-size: 11.5px; font-weight: 700; line-height: 1.1; color: var(--text-secondary, #a8b3c4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.ovh-act-ab { font-size: 13px; font-weight: 800; line-height: 20px; }
-.ovh-mebox .ovh-act.is-own { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 13%, transparent); }
-.ovh-mebox .ovh-act.is-own .ovh-act-t { color: inherit; }
-@media (hover: hover) and (pointer: fine) {
-  .ovh-mebox .ovh-act:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); transform: translateY(-1px); }
-  .ovh-mebox .ovh-act:hover svg { transform: translateY(-1px) scale(1.06); }
-  .ovh-mebox .ovh-out:hover { color: var(--danger, #f87171); background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent); }
-}
-.ovh-mebox .ovh-act:active { transform: scale(.94); }
-.ovh-mebox .ovh-act[aria-expanded="true"] { background: var(--accent-strong, var(--accent, #2563eb)); color: var(--on-accent-strong, #fff); }
-.ovh-mebox .ovh-act[aria-expanded="true"] .ovh-act-t { color: inherit; }
-html[data-ov-motion=off] .ovh-mebox .ovh-act, html[data-ov-motion=off] .ovh-mebox .ovh-act svg, html[data-ov-motion=off] .ovh-me-gear svg { transition: none; }
+/* 4.237.0, you: one slim row (your picture with its online dot, your name, Display, your account's menu); the menu sits
+   in the top layer; what the site gives you are apps at the start of the grid. */
+.ovh-mebox { margin: 2px 4px 8px; }
+.ovh-mebox > .ovh-me { display: flex; align-items: center; gap: 6px; margin: 0; padding: 6px 6px 6px 8px; min-height: 0; border-radius: 18px; flex-wrap: nowrap;
+  background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); }
+.ovh-mebox .ovh-who { flex: 1 1 auto; min-width: 0; min-height: 44px; gap: 11px; padding: 2px 6px 2px 2px; border-radius: 14px; transition: background-color .15s; }
+@media (hover: hover) and (pointer: fine) { .ovh-mebox .ovh-who:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); } }
+.ovh-mebox .ovh-av { width: 40px; height: 40px; }
+.ovh-mebox .ovh-who-txt b { font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+.ovh-mebox .ovh-who-txt small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+.ovh-mebox .ovh-me .ovh-ib { flex: none; width: 42px; height: 42px; border-radius: 13px; color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovh-mebox .ovh-acct svg { transition: transform .25s cubic-bezier(.3, 1.4, .4, 1); }
+.ovh-mebox .ovh-acct[aria-expanded="true"] { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
+.ovh-mebox .ovh-acct[aria-expanded="true"] svg { transform: rotate(180deg); }
+.ovh-acct-menu { min-width: 230px; padding: 6px; border-radius: 16px; background: var(--bg-secondary, #141a24); color: var(--text-primary, #e6edf7);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent), 0 18px 40px -12px rgba(0, 0, 0, .7); }
+.ovh-acct-i { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 11px; cursor: pointer; font-size: 14.5px; font-weight: 650; }
+.ovh-acct-i svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; color: var(--text-secondary, #a8b3c4); }
+.ovh-acct-i:hover, .ovh-acct-i:focus-visible { background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); }
+.ovh-acct-i.is-danger, .ovh-acct-i.is-danger svg { color: var(--danger, #f87171); }
+.ovh-own-apps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; padding: 2px; margin-bottom: 4px; padding-bottom: 10px; border-bottom: 1px solid color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
+.ovh-own-ic { color: hsl(var(--ovh-h, 220) 80% 72%); }
+.ovh-own-ic svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+html[data-ov-motion=off] .ovh-mebox .ovh-acct svg { transition: none; }
 .ovh-ib.is-own { color: var(--accent-light, var(--accent, #60a5fa)); background: color-mix(in srgb, var(--accent, #3b82f6) 13%, transparent); }
 .ovh-ib.is-text { width: auto; padding: 0 12px; border-radius: 999px; font-size: 12.5px; font-weight: 750; white-space: nowrap; }
 @container ovh (max-width: 520px) {
@@ -370,8 +369,8 @@ html[data-ov-motion=off] .ovh-headtools .ovh-edit.is-done { animation: none; }
 @media (hover: hover) { .ovh-back:hover { background: color-mix(in srgb, var(--text-primary, #e8ecf3) 15%, transparent); } }
 .ovh-head .ovh-filter { flex: 1; min-width: 0; width: auto; margin: 0; }
 /* The grid: four across on a phone, as many as fit from 560 px. */
-.ovh-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-@media (min-width: 560px) { .ovh-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
+.ovh-grid, .ovh-own-apps { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (min-width: 560px) { .ovh-grid, .ovh-own-apps { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
 /* App icons: the glyph at 58% of the tile. */
 .ovh-ic > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .ovh-ic > .ov-icon svg { position: absolute; left: -13%; top: -13%; width: 126%; height: 126%; margin: 0; transform: none !important; }
@@ -592,6 +591,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
     const ICON = {
         pencil: [['path', { d: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z' }], ['path', { d: 'M13.5 6.5l4 4' }]],
         check: [['path', { d: 'M5 12.5l4.5 4.5L19 7.5' }]],
+        chev: [['path', { d: 'M6.5 9.5l5.5 5.5 5.5-5.5' }]],
         briefcase: [['rect', { x: 3.5, y: 7.2, width: 17, height: 12.3, rx: 2.4 }], ['path', { d: 'M8.8 7.2V5.6a1.8 1.8 0 0 1 1.8-1.8h2.8a1.8 1.8 0 0 1 1.8 1.8v1.6M3.5 12.6h17' }]],
         bell: [['path', { d: 'M6 14.6V9.5a6.1 6.1 0 0 1 12.2 0v5.1l1.5 2.1h-15.3Z' }], ['path', { d: 'M10 18.7a2.1 2.1 0 0 0 4 0' }]],
         history: [['path', { d: 'M3.8 12.1a8.3 8.3 0 1 0 2.5-5.9L3.8 8.5M3.8 4.2v4.2h4.2' }], ['path', { d: 'M12 7.9v4.3l3.1 1.9' }]],
@@ -710,47 +710,86 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
         // Your row (4.195.0): the old account block is not set here any more (the owner: "get rid of this thing … we
         // didn't really need [it] here, other than like adding your account"). The row has the five things a person needs of
         // an account; under it, only what has no other home in the menu.
+        /**
+         * You (4.237.0; the owner, 11-13: "completely redesign this card … I hate that thing … the buttons are below"):
+         * one slim row, your picture, your name and that you are online, Display, and your account's menu. The menu
+         * (anchored in the top layer, OVSurfaces) holds your profile, settings, switching account and signing out. What
+         * this site gives you as staff or as a creator (your channel, Admin, moderation) are apps at the start of the
+         * grid, not buttons here (ownApps below).
+         */
         function me() {
             if (meBox) return meBox;
             const u = o.user || {};
-            meBox = h('div');
+            const m = o.me || {};
+            meBox = h('div', 'ovh-mebox');
             const bar = h('div', 'ovh-me');
-            const who = h('a', 'ovh-who'); who.href = u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
+            const profile = u.username ? `https://openvibe.network/@${encodeURIComponent(u.username)}` : 'https://openvibe.network/my';
+            const who = h('a', 'ovh-who'); who.href = profile; who.setAttribute('data-ov-tip', 'Your profile');
             const av = h('span', 'ovh-av');
             const pic = /^https:\/\//.test(String(u.avatar_url || '')) ? u.avatar_url : '';
             if (pic) { const img = h('img'); img.alt = ''; img.src = pic; img.decoding = 'async'; av.append(img); } else av.textContent = String(u.display_name || u.username || '?').trim().charAt(0).toUpperCase();
             const txt = h('span', 'ovh-who-txt');
             txt.append(h('b', '', u.display_name || u.username || 'You'), h('small', '', [u.username ? `@${u.username}` : '', 'Online'].filter(Boolean).join(' · ')));
             who.append(av, txt);
-            const look = h('a', 'ovh-ib'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
-            look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.title = 'Display';
-            const gear = h('a', 'ovh-ib ovh-me-gear'); gear.append(svgIcon('gear')); gear.href = 'https://openvibe.network/my'; gear.setAttribute('aria-label', 'Account and settings'); gear.setAttribute('data-ov-tip', 'Account and settings');
-            // 4.236.0 (the owner, 11-13: "completely redesign this area … confusing what these buttons even do … not
-            // perfectly aligned … tooltips … a waste of space in the corners"): your name and the gear on one line; under
-            // it one row of actions across the whole card, each its glyph with its name under it, in equal columns.
-            const named = (b, label, short) => { b.classList.add('ovh-act'); b.append(h('span', 'ovh-act-t', short || label)); b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label); return b; };
-            bar.append(who, gear);
-            const m = o.me || {};
-            const acts = h('div', 'ovh-acts'); acts.setAttribute('role', 'group'); acts.setAttribute('aria-label', 'Yours');
-            // This site's own items (your channel, Admin, what a site adds) as round buttons beside Display and Settings:
-            // a known one with its glyph, a site's own with its short name (4.223.0; it was a row of its own).
-            const OWN_GLYPH = { 'ov-channel': 'live', 'ov-admin': 'shield' };
-            const own = (Array.isArray(m.own) ? m.own : []).filter((it) => it && it.label && (typeof it.onClick === 'function' || (it.href && safe(it.href)))).slice(0, 6);
-            own.forEach((it) => {
-                const g = OWN_GLYPH[it.id] || (ICON[it.glyph] ? it.glyph : '');
-                const b = it.href ? h('a', `ovh-ib is-own${g ? '' : ' is-text'}`) : h('button', `ovh-ib is-own${g ? '' : ' is-text'}`);
-                if (it.href) b.href = it.href; else { b.type = 'button'; b.addEventListener('click', () => { try { it.onClick(); } catch { /* the item is the site's */ } }); }
-                b.append(g ? svgIcon(g) : h('b', 'ovh-act-ab', String(it.short || it.label).slice(0, 2)));
-                acts.append(named(b, it.label, it.short || (it.id === 'ov-channel' ? 'Channel' : it.id === 'ov-admin' ? 'Admin' : '')));
+            const look = h('a', 'ovh-ib ovh-me-look-btn'); look.append(svgIcon('look')); look.href = 'https://openvibe.design/look'; look.setAttribute('data-ov-look-open', '');
+            look.setAttribute('aria-expanded', 'false'); look.setAttribute('aria-label', 'Display: theme, text size, motion'); look.setAttribute('data-ov-tip', 'Display');
+            const acct = h('button', 'ovh-ib ovh-acct'); acct.type = 'button'; acct.append(svgIcon('chev'));
+            acct.setAttribute('aria-haspopup', 'menu'); acct.setAttribute('aria-expanded', 'false');
+            acct.setAttribute('aria-label', 'Your account'); acct.setAttribute('data-ov-tip', 'Your account');
+            bar.append(who, look, acct);
+
+            const menu = h('div', 'ovh-acct-menu'); menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', 'Your account'); menu.hidden = true;
+            const item = (glyph, label, act, danger) => {
+                const it = typeof act === 'string' ? h('a', 'ovh-acct-i') : h('button', 'ovh-acct-i');
+                if (typeof act === 'string') it.href = act; else { it.type = 'button'; it.addEventListener('click', () => { close(); try { act(); } catch { /* the site's */ } }); }
+                if (danger) it.classList.add('is-danger');
+                it.setAttribute('role', 'menuitem');
+                it.append(svgIcon(glyph), h('span', '', label));
+                menu.append(it);
+            };
+            item('user', 'Your profile', profile);
+            item('gear', 'Account and settings', 'https://openvibe.network/my');
+            if (m.add && safe(m.add)) item('plus', 'Add or switch account', m.add);
+            if (typeof m.out === 'function') item('out', 'Sign out', () => m.out(), true);
+            let anchored = null;
+            const onDown = (e) => { if (!menu.contains(e.target) && !acct.contains(e.target)) close(); };
+            const onKey = (e) => { if (e.key === 'Escape') { close(); acct.focus(); } };
+            function close() {
+                if (menu.hidden) return;
+                menu.hidden = true; acct.setAttribute('aria-expanded', 'false');
+                if (anchored) { anchored.release(); anchored = null; }
+                document.removeEventListener('pointerdown', onDown, true); document.removeEventListener('keydown', onKey, true);
+            }
+            acct.addEventListener('click', () => {
+                if (!menu.hidden) { close(); return; }
+                menu.hidden = false; acct.setAttribute('aria-expanded', 'true');
+                const S = typeof window !== 'undefined' ? window.OVSurfaces : null;
+                if (S && typeof S.anchor === 'function') anchored = S.anchor(menu, acct, { place: 'bottom-end', sheet: false });
+                document.addEventListener('pointerdown', onDown, true); document.addEventListener('keydown', onKey, true);
+                const first = menu.querySelector('.ovh-acct-i'); if (first) first.focus({ preventScroll: true });
             });
-            look.classList.remove('ovh-ib'); look.classList.add('ovh-ib'); named(look, 'Display: theme, text size, motion', 'Display'); look.removeAttribute('title');
-            acts.append(look);
-            if (m.add && safe(m.add)) { const add = h('a', 'ovh-ib'); add.append(svgIcon('plus')); add.href = m.add; acts.append(named(add, 'Add or switch account', 'Switch')); }
-            if (typeof m.out === 'function') { const out = h('button', 'ovh-ib ovh-out'); out.type = 'button'; out.append(svgIcon('out')); named(out, 'Sign out'); out.addEventListener('click', () => { try { m.out(); } catch { /* the bar's own */ } }); acts.append(out); }
             const panel = h('div', 'ud-look ovh-me-look'); panel.hidden = true;
-            meBox.className = 'ovh-mebox';
-            meBox.append(bar, acts, panel);
+            meBox.append(bar, menu, panel);
             return meBox;
+        }
+
+        /** What this site gives you (your channel, Admin, moderation): apps at the start of the grid, by your rank. */
+        function ownApps() {
+            const m = o.me || {};
+            const OWN = { 'ov-channel': ['live', 'Your channel'], 'ov-admin': ['shield', 'Admin'], 'ov-mod': ['shield', 'Moderation'] };
+            const own = (Array.isArray(m.own) ? m.own : []).filter((it) => it && it.label && (typeof it.onClick === 'function' || (it.href && safe(it.href)))).slice(0, 8);
+            if (!own.length) return null;
+            const row = h('div', 'ovh-own-apps'); row.setAttribute('aria-label', 'Yours on this site');
+            own.forEach((it) => {
+                const [g, name] = OWN[it.id] || [ICON[it.glyph] ? it.glyph : 'star', it.short || it.label];
+                const el = it.href ? h('a', 'ovh-app ovh-own-app') : h('button', 'ovh-app ovh-own-app');
+                if (it.href) el.href = it.href; else { el.type = 'button'; el.addEventListener('click', () => { try { it.onClick(); } catch { /* the site's */ } }); }
+                el.setAttribute('data-ov-tip', it.label);
+                const ic = h('span', 'ovh-ic ovh-own-ic'); ic.style.setProperty('--ovh-h', String(hueOf(it.id))); ic.append(svgIcon(g));
+                el.append(ic, h('span', 'ovh-name', name));
+                row.append(el);
+            });
+            return row;
         }
 
         /** The three tabs under your row; Notifications carries how many wait. */
@@ -966,6 +1005,7 @@ html[data-ov-motion=off] .ovh-face.is-glyph:has(.is-working) { animation: none; 
                 head.append(tools);
                 el.append(head);
             }
+            if (known(o)) { const own = ownApps(); if (own) el.append(calm(own)); }
             const grid = h('div', 'ovh-grid'); grid.setAttribute('aria-label', 'Your home');
             L.home.forEach((id, i) => grid.append(homeTile(id, i)));
             el.append(grid);
