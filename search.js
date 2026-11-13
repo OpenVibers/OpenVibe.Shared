@@ -1414,7 +1414,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!signedInTop()) return null;
         if (actorAt && Date.now() - actorAt < 60000) return actorInfo;
         try {
-            const r = await fetch(`${String(ctx.actorBase || ACTOR).replace(/\/+$/, '')}/api/v1/me/actor`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } });
+            // 4.242.0: through the Frame (every site's connect-src allows openvibe.network, most refuse openvibe.actor).
+            const url = ctx.actorBase ? `${String(ctx.actorBase).replace(/\/+$/, '')}/api/v1/me/actor` : `${ctx.runsBase || ctx.apiBase || 'https://openvibe.network'}/api/frame/actor`;
+            const r = await fetch(url, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } });
             actorInfo = r.ok ? await r.json() : null;
         } catch { actorInfo = null; }
         actorAt = Date.now();
@@ -1436,13 +1438,25 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!signedInTop()) return [];
         if (activeAt && Date.now() - activeAt < 30000) return activeList;
         const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
-        const [a, runs] = await Promise.all([
+        const [a, runs, faces] = await Promise.all([
             loadActor(),
             fetch(`${net}/api/frame/runs?limit=20`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } })
                 .then((r) => (r.ok ? r.json() : { runs: [] })).then((d) => (Array.isArray(d.runs) ? d.runs : [])).catch(() => []),
+            // 4.242.0: your agents (Experts) with their faces, while they work or ask you something.
+            fetch(`${net}/api/frame/actor/faces`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${ctx.token}` } })
+                .then((r) => (r.ok ? r.json() : { agents: [] })).then((d) => (Array.isArray(d.agents) ? d.agents : [])).catch(() => []),
         ]);
         const out = [];
-        if (a && a.id && a.enabled !== false) {
+        for (const ag of faces.slice(0, 12)) {
+            if (!ag || !ag.id || !['working', 'asks'].includes(ag.state)) continue;
+            out.push({ key: `agent:${ag.id}`, kind: 'agent', name: String(ag.name || 'Your agent').slice(0, 40), state: ag.state,
+                pic: /^https:\/\//.test(String(ag.avatar_url || '')) ? ag.avatar_url : '', hue: Number.isInteger(ag.hue) ? ag.hue : faceHue(ag.name || ag.id),
+                glyph: KIND_SVG[ag.glyph] ? ag.glyph : 'spark',
+                line: ag.state === 'asks' ? (ag.asks > 1 ? `${ag.asks} things for you` : 'It asks you something') : String(ag.step || 'Working').slice(0, 120) });
+        }
+        // Your Actor's own agent is already among the faces: once, with its face.
+        const shownAgent = (x) => out.some((f) => f.kind === 'agent' && ((x.agent_id && f.key === `agent:${x.agent_id}`) || f.name === String(x.name || '')));
+        if (a && a.id && a.enabled !== false && !shownAgent(a)) {
             const asks = Array.isArray(a.asks) ? a.asks.length : 0;
             if (asks || a.status === 'working') out.push({ key: `actor:${a.id}`, kind: 'actor', name: a.name || 'Your Actor', state: asks ? 'asks' : 'working',
                 pic: a.avatar && /^https:\/\//.test(String(a.avatar.url || '')) ? a.avatar.url : '', hue: faceHue(a.name || a.id), glyph: 'task',
@@ -1510,7 +1524,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     /** The rows of what is running, in your sheet: a tap opens that run in Vibe (your Actor has its own card above). */
     function activeRows(panel) {
         const old = panel.querySelector('.ovs-active'); if (old) old.remove();
-        const runs = activeList.filter((x) => x.kind === 'run');
+        // 4.242.0: your agents at work (with their faces) and the runs that go or wait for you.
+        const runs = activeList.filter((x) => x.kind === 'run' || x.kind === 'agent');
         if (!runs.length) return;
         const box = document.createElement('div'); box.className = 'ovs-active'; box.setAttribute('role', 'group'); box.setAttribute('aria-label', 'Running for you');
         const h = document.createElement('p'); h.className = 'ovs-active-h'; h.textContent = 'Running for you'; box.appendChild(h);
@@ -1526,6 +1541,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             b.addEventListener('click', () => {
                 toggleYou(false);
                 if (!canDoor()) { location.href = 'https://openvibe.chat/vibe'; return; }
+                // An agent opens its work (Tasks); a run opens its thread.
+                if (it.kind === 'agent') { runFilter = 'task'; openDoor('vibe'); return; }
                 openDoor('vibe');
                 const go = (k = 0) => { if (runView && typeof runView.open === 'function') { try { runView.open(it.ref); } catch { /* the list stands */ } return; } if (k < 80) setTimeout(() => go(k + 1), 50); };
                 go();
