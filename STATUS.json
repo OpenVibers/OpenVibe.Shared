@@ -9,7 +9,7 @@
   "deployed": false,
   "deployment": "none of its own: a package released as git tags; OpenVibe.Network serves /shared/* from its pinned tag, and a site can serve its own pinned copy (openvibe-shared/serve)",
   "contracts": "openvibe-contracts v0.419.0 (devDependency: the release manifest contract)",
-  "sdk": "openvibe-sdk v0.160.0",
+  "sdk": "openvibe-sdk v0.166.0",
   "features": [
     "the icon audit (a script that fails CI on any unresolved icon name in a repository), kit.icon drawing every glyph, nine new glyphs with solids, and keywords in every glyph's META (4.220.0)",
     "the Quest guide on any page and the current Live step in the Dock's agent view (4.209.0)",
@@ -63,5 +63,5 @@
     "openvibe-shared/config accepts x-unit seconds for an integer owner setting, so an owner form can label the input in seconds",
     "a navbar link can be the site's one featured piece (featured: true): a quiet accent pill with its glyph, first in the phone's menu (4.117.0)"
   ],
-  "updated": "2026-11-12"
+  "updated": "2026-11-13"
 }
