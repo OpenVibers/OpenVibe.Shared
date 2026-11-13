@@ -63,6 +63,37 @@ const event = (type, extras = {}) => { const e = new window.Event(type, { bubble
     mention.dispatchEvent(event('click')); assert.strictEqual(opened.length, 4, 'rebinding does not duplicate listeners');
     unbind(); mention.dispatchEvent(event('click')); assert.strictEqual(opened.length, 4);
 
+    // 4.242.0 (plan §Y.1 A2): with the viewer's token the card reads with it and draws Network's actions for them; an
+    // action calls Network with the token and the card reads itself again.
+    {
+        const sent = [];
+        body = Object.assign({}, person, { actions: [
+            { id: 'profile', label: 'Profile', href: person.profile_url },
+            { id: 'message', label: 'Message', href: 'https://openvibe.chat/messages' },
+            { id: 'follow', label: 'Follow', method: 'PUT', path: '/api/v1/me/follows/channel/Example', state: { following: false } },
+            { id: 'block', label: 'Block', method: 'PUT', path: '/api/v1/me/blocks/Example', state: { blocked: false } },
+            { id: 'evil', label: 'Evil', method: 'PUT', path: 'https://evil.example/x' },
+        ] });
+        const withToken = async (url, options) => { sent.push({ url, options }); return { ok: true, json: async () => body }; };
+        const mine = OVUser.card(host, { username: 'Example', fetchImpl: withToken, token: () => 'tok_viewer' });
+        await mine.ready;
+        assert.strictEqual(sent[0].options.headers.Authorization, 'Bearer tok_viewer', 'the card reads with the viewer token');
+        const labels = [...host.querySelectorAll('.ovu-more a, .ovu-more button')].map((b) => b.textContent);
+        assert.deepStrictEqual(labels, ['Message', 'Follow', 'Block'], 'Network\'s actions, not a foreign address');
+        assert.ok(host.querySelector('.ovu-more button').className.includes('is-main'), 'Follow leads');
+        host.querySelector('.ovu-more button').dispatchEvent(event('click'));
+        await new Promise((r) => setImmediate(r)); await new Promise((r) => setImmediate(r));
+        const put = sent.find((c) => c.options && c.options.method === 'PUT');
+        assert.ok(put && put.url === 'https://openvibe.network/api/v1/me/follows/channel/Example' && put.options.headers.Authorization === 'Bearer tok_viewer', 'the action goes to Network with the token');
+        assert.ok(sent.filter((c) => /\/card$/.test(c.url)).length >= 2, 'then the card reads itself again');
+        mine.destroy();
+        const anonymous = OVUser.card(host, { username: 'Example', fetchImpl });
+        await anonymous.ready;
+        assert.strictEqual(host.querySelector('.ovu-more'), null, 'no token, no actions');
+        anonymous.destroy();
+        body = person;
+    }
+
     // Native dialog opening/closing and request disposal through the default hook.
     const create = document.createElement.bind(document);
     document.createElement = name => { const el = create(name); if (name === 'dialog') el.showModal = () => el.setAttribute('open', ''); return el; };

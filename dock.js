@@ -84,7 +84,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': 'ca316ecbc9c3', 'dock-code.js': 'cb97274524d0', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '759f07eebc81', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '1b6262204e91', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'dock-vibe.js': 'd8d4ea13d12a', 'dock-code.js': 'cb97274524d0', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '4368f039df7c', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': '759f07eebc81', 'dock-timeline.js': 'bffaed38fccf', 'dock-actor.js': '1b6262204e91', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -361,8 +361,10 @@
     function avatar(p, group) {
         const a = h('span', 'ovdk-av');
         const url = p && /^https:\/\//.test(String(p.avatar_url || '')) ? p.avatar_url : '';
-        if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; a.append(img); }
-        else a.textContent = group ? '#' : String((p && (p.display_name || p.username)) || '?').trim().charAt(0).toUpperCase() || '?';
+        const first = () => String((p && (p.display_name || p.username)) || '?').trim().charAt(0).toUpperCase() || '?';
+        // A picture that does not load (a moved or deleted file) shows the initial, never an empty circle.
+        if (url && !group) { const img = h('img'); img.src = url; img.alt = ''; img.loading = 'lazy'; img.referrerPolicy = 'no-referrer'; img.onerror = () => { img.remove(); a.textContent = first(); }; a.append(img); }
+        else a.textContent = group ? '#' : first();
         return a;
     }
     function groupAvatar(c) {

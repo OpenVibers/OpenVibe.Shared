@@ -49,7 +49,7 @@
 .ovk-table a { color: var(--ovk-accent); text-decoration: none; }
 .ovk-table a:hover { text-decoration: underline; }
 .ovk-table tbody tr:hover > * { background: color-mix(in srgb, var(--ovk-panel-2) 55%, transparent); }
-.ovk-table-empty { margin: 0 0 14px; padding: 18px 16px; border: 1px dashed var(--ovk-line); border-radius: var(--ovk-radius); color: var(--ovk-muted); text-align: center; }
+.ovk-table-empty { margin: 0; }   /* 4.242.0: it holds the designed empty card (.ovk-empty), which draws itself */
 @media (max-width: 599px) {
     .ovk-table--stack { overflow: visible; }
     .ovk-table--stack .ovk-table, .ovk-table--stack tbody, .ovk-table--stack tr, .ovk-table--stack td, .ovk-table--stack tbody th { display: block; }

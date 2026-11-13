@@ -1392,10 +1392,12 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         return st === 'working' ? 'spark' : 'clock';
     }
     async function actor(box, o) {
-        const base = String(o.actorBase || ACTOR).replace(/\/+$/, '');
+        // 4.242.0: through the Frame unless the page names Actor itself (every site's connect-src allows openvibe.network
+        // and most refuse openvibe.actor, so a direct read failed there and the card said "Set it up" to people who had one).
+        const url = o.actorBase ? `${String(o.actorBase).replace(/\/+$/, '')}/api/v1/me/actor` : o.frameBase ? `${String(o.frameBase).replace(/\/+$/, '')}/actor` : `${String(o.apiBase || 'https://openvibe.network').replace(/\/+$/, '')}/api/frame/actor`;
         let a = null;
         try {
-            const r = await fetch(`${base}/api/v1/me/actor`, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${o.token}` } });
+            const r = await fetch(url, { credentials: 'omit', headers: { Accept: 'application/json', Authorization: `Bearer ${o.token}` } });
             if (r.ok) a = await r.json();
         } catch { a = null; }
         if (!box.isConnected) return;
@@ -1707,7 +1709,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     function faceOf(c, cls) {
         const face = h('span', cls || 'ovfd-face');
         const av = c.actor && safe(c.actor.avatar);
-        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; img.onerror = () => { img.remove(); face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase(); }; face.append(img); }
         else if (!c.actor) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         return face;
@@ -1846,7 +1848,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const face = h('span', 'ovfd-face');
         const av = personOf(c) && safe(c.actor.avatar);
         // No person behind it (the network's trending pictures, a report): the site's icon, not a "?".
-        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; face.append(img); }
+        if (av && /^https:/.test(av)) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; img.onerror = () => { img.remove(); face.textContent = String((c.actor && c.actor.name) || '?').charAt(0).toUpperCase(); }; face.append(img); }
         else if (!personOf(c)) { face.classList.add('is-site'); face.append(appFace(c.site || 'ov')); }
         else face.textContent = String(c.actor.name || '?').charAt(0).toUpperCase();
         const who = h('span', 'ovfd-who');

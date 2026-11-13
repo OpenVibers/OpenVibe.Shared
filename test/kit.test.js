@@ -160,7 +160,9 @@ const kit = require('../kit');
     assert.ok(t.includes('<a href="https://hetzner.com">hetzner.com</a>') && !t.includes('javascript:'), 'links are checked');
     assert.ok(t.includes('class="is-hide-sm"') && t.includes('<code>x</code>'), 'html columns pass trusted markup');
     assert.ok(t.includes('data-label="Per month">–</td>'), 'a missing number is a dash');
-    assert.strictEqual(kit.table({ columns: [{ key: 'a', label: 'A' }], rows: [], empty: 'Nothing yet' }), '<p class="ovk-table-empty">Nothing yet</p>');
+    // 4.242.0 (plan Y.1 A10): an empty table is the designed empty card (rule 141), with its words as text.
+    { const e = kit.table({ columns: [{ key: 'a', label: 'A' }], rows: [], empty: 'Nothing yet' });
+      assert.ok(e.startsWith('<div class="ovk-table-empty"><div class="ovk-empty">') && e.includes('<p>Nothing yet</p>') && e.includes('<svg'), 'an empty table is the empty card'); }
 }
 
 // ── Kit 2: charts ──

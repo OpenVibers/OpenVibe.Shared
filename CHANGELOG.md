@@ -1,5 +1,32 @@
 # Changelog
 
+## 4.242.0 — 2026-11-13
+
+**One agent you can watch work, cards that act, and a + that blooms** (the owner, 11-13: "it needs to use a universal
+agent system … your actor is just your agent"; "this doesn't work … typing test … nothing happens … not seamless and
+sleek"; "why don't the avatars show up properly"; "I don't really like the plus … reanalyze and make it a better one …
+way more animated, better effects").
+
+- **The run thread (ov-run.js).** Quiet tool steps fold into one line ("Ran 6 steps", open to see each). Words you
+  send while it works wait as queued messages (Send now, or they go when the turn ends). The list counts what is
+  working now.
+- **Your agents in the menu (search.js, dock.js).** The stack and You's agent card read through Network's Frame
+  (`/api/frame/actor`, `/api/frame/actor/faces`). Your agents at work show with their faces among the active rows; a tap
+  opens their tasks.
+- **Faces that fail to load show the initial** (the feed, the chat list, the Dock), never an empty circle.
+- **The user card acts (ov-user.js).** It reads with the viewer's token (`options.token`, else the bar's new
+  `OpenVibeNavbar.viewerToken()`) and draws the actions Network computed for that viewer: Message, Follow, Add friend,
+  Tip, Watch together, Mute, Block, Report and staff tools. An action calls Network, then the card reads itself again
+  (plan §Y.1 A2).
+- **An empty table is the designed empty card** (kit.js `table(…, { empty })`, rule 141; plan §Y.1 A10).
+- **The composer's + is its own mark (ov-composer.js).**
+  - At rest: a bold rounded plus in a softly lit disc (nothing moves).
+  - Under the pointer, or focused: the arms reach and four petals peek from the diagonals (the tiles it holds).
+  - Pressed: it sinks.
+  - Open: it springs a turn and a half of a quarter into an ×; the disc fills with the accent, rings once, and the petals
+    burst outward in the disc's white.
+  - Calm keeps all of it, slower, a third as far, with no overshoot. Off stills it.
+
 ## 4.241.0 — 2026-11-13
 
 **The composer's + is what you can add, and the feed reads like posts by people** (the owner, 11-13: "the plus button

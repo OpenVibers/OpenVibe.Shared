@@ -64,7 +64,9 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed/search')) return J({ items: ${JSON.stringify(FEED_V2.items.slice(0, 1))}, next_cursor: null });
     if (location.search.includes('feedv2=1') && s.startsWith('https://openvibe.network/api/frame/feed?')) return J(${JSON.stringify(FEED_V2)});
     if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
-    if (s.startsWith('https://openvibe.actor/api/v1/me/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
+    // 4.242.0: your Actor and your agents' faces come through the Frame (every site's connect-src allows openvibe.network).
+    if (s === 'https://openvibe.network/api/frame/actor/faces') return J({ agents: [{ id: 'agt_jun', name: 'Juniper', avatar_url: null, hue: 258, glyph: 'spark', state: 'working', step: 'Reading job posts', asks: 0 }] });
+    if (s.startsWith('https://openvibe.network/api/frame/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
     if (s === 'https://openvibe.network/api/frame/runs?limit=20') return J({ runs: [
       { id: 'run_1', ref: 'run_1', kind: 'code', title: 'Fix the navbar', status: 'running', doing: { text: 'Running the tests' }, agent: { id: 'agt_code', name: 'Codes' } },
       { id: 'run_2', ref: 'run_2', kind: 'task', title: 'Book the venue', status: 'waiting', waiting: { for: 'approval' }, agent: { id: 'agt_plan', name: 'Planner' } },
@@ -244,7 +246,7 @@ const server = http.createServer((req, res) => {
         await s.evaluate(`document.querySelector('.ovs-lead').click(), true`);
         await eventually(async () => assert.match(await s.evaluate(`(document.querySelector('.ovs-youpanel:not([hidden]) .ovh-actor') || {}).textContent || ''`), /^Actor.*Working.*Juniper · Reading job posts/, 'your Actor\'s card is in your sheet'));
         assert.strictEqual(await s.evaluate(`document.querySelector('.ovs-lead').getAttribute('aria-expanded')`), 'true');
-        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-youpanel .ovs-active-row')].map((r) => r.querySelector('b').textContent + ': ' + r.querySelector('.ovs-active-st').textContent)`), ['Book the venue: Your turn', 'Fix the navbar: Working'], 'your sheet lists what is running'));
+        await eventually(async () => assert.deepStrictEqual(await s.evaluate(`[...document.querySelectorAll('.ovs-youpanel .ovs-active-row')].map((r) => r.querySelector('b').textContent + ': ' + r.querySelector('.ovs-active-st').textContent)`), ['Book the venue: Your turn', 'Juniper: Working', 'Fix the navbar: Working'], 'your sheet lists what is running'));
         // 4.223.0 (the owner, 11-12: "at the top … the goosely Online bar. Under that is tabs … move the notifications into a
         // tab … put the apps more front facing … the first tab"; "waste of space"; "compact"): your row holds every round
         // button (this site's own first, as icons), one AI notice, then one row of tabs with All and Edit at its end.

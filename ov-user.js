@@ -40,6 +40,13 @@
 .ovu-sites a { display: inline-flex; align-items: center; min-height: 32px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.12)); color: inherit; text-decoration: none; font-size: 13px; font-weight: 600; }
 .ovu-sites a:hover { border-color: var(--accent, #3b82f6); }
 .ovu-acts { display: flex; gap: 8px; margin: 2px 16px 0; }
+.ovu-more { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 16px; }
+.ovu-more a, .ovu-more button { all: unset; box-sizing: border-box; display: inline-grid; place-items: center; min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer; font-size: 13.5px; font-weight: 650; color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 7%, transparent); }
+.ovu-more .is-main { color: var(--on-accent, #fff); background: var(--accent, #3b82f6); }
+.ovu-more .is-quiet { color: var(--text-secondary, #a8b3c4); background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 14%, transparent); }
+.ovu-more .is-danger { color: #fca5a5; }
+.ovu-more button:disabled { opacity: .55; cursor: default; }
+.ovu-more :is(a, button):focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
 .ovu-acts a { flex: 1; display: grid; place-items: center; min-height: 42px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); color: inherit; font-weight: 650; text-decoration: none; }
 .ovu-acts a:first-child { background: var(--accent, #3b82f6); color: var(--on-accent, #fff); }
 .ovu-acts a:hover { filter: brightness(1.1); }
@@ -137,6 +144,23 @@ html[data-ov-motion=off] .ovu-live::before, html[data-ov-motion=off] .ovu-wait i
             if (a) { a.className = ''; acts.appendChild(a); }
         }
         if (acts.childNodes.length) section.appendChild(acts);
+        // 4.242.0 (plan §Y.1 A2): what this viewer can do with this person, as Network computed it for their token:
+        // Message, Follow, Add friend, Tip, Watch together, Mute, Block, Report, and staff tools by capability. A link
+        // opens; an action calls Network with the viewer's token, then the card reads itself again for the new state.
+        const more = Array.isArray(person.actions) ? person.actions.filter((x) => x && x.id && x.label && !['profile', 'channel'].includes(x.id)).slice(0, 14) : [];
+        if (!more.length || !section.__ovuAct) return;
+        const row = element(doc, 'div', undefined, 'ovu-more'); row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'Actions');
+        const MAIN = new Set(['follow', 'add-friend']), QUIET = new Set(['unfollow', 'unmute', 'unblock', 'unfriend', 'cancel-request', 'mute']), DANGER = new Set(['block', 'report']);
+        for (const x of more) {
+            const cls = MAIN.has(x.id) ? 'is-main' : DANGER.has(x.id) ? 'is-quiet is-danger' : QUIET.has(x.id) ? 'is-quiet' : '';
+            if (x.href) { const a = link(doc, String(x.label).slice(0, 40), x.href); if (a) { a.className = cls; row.appendChild(a); } continue; }
+            if (!/^(PUT|POST|DELETE)$/.test(String(x.method || '')) || !/^\/api\/v1\/[A-Za-z0-9_\/%.-]{1,200}$/.test(String(x.path || ''))) continue;
+            const b = element(doc, 'button', String(x.label).slice(0, 40), cls); b.type = 'button';
+            if (x.id === 'report' && x.state && x.state.reported) { b.textContent = 'Reported'; b.disabled = true; }
+            b.addEventListener('click', () => section.__ovuAct(x, b));
+            row.appendChild(b);
+        }
+        if (row.childNodes.length) section.appendChild(row);
     }
     function card(host, options = {}) {
         const username = usernameOf(options.username);
@@ -163,9 +187,21 @@ html[data-ov-motion=off] .ovu-live::before, html[data-ov-motion=off] .ovu-wait i
                 section.style.setProperty('--ovu-h', String(hueOf(username)));
                 section.replaceChildren(element(doc, 'div', undefined, 'ovu-banner'), status); section.setAttribute('aria-busy', 'true');
                 const fetcher = options.fetchImpl || ((...args) => root.fetch(...args));
-                const url = `${String(options.networkUrl || NETWORK).replace(/\/+$/, '')}/api/v1/people/${encodeURIComponent(username)}/card`;
+                const base = String(options.networkUrl || NETWORK).replace(/\/+$/, '');
+                const url = `${base}/api/v1/people/${encodeURIComponent(username)}/card`;
+                // 4.242.0: with the viewer's token (the page's, or the bar's), so Network can say what they may do.
+                const tok = (() => { try { const t = typeof options.token === 'function' ? options.token() : options.token; if (t) return String(t); const N = root.OpenVibeNavbar; return N && typeof N.viewerToken === 'function' ? N.viewerToken() : ''; } catch { return ''; } })();
+                const auth = tok ? { Authorization: `Bearer ${tok}` } : {};
+                section.__ovuAct = tok ? async (x, button) => {
+                    if (button) button.disabled = true;
+                    try {
+                        const r = await fetcher(`${base}${x.path}`, { method: x.method, credentials: 'omit', headers: Object.assign({ Accept: 'application/json' }, x.body ? { 'Content-Type': 'application/json' } : {}, auth), body: x.body ? JSON.stringify(x.body) : undefined });
+                        if (!r.ok) throw new Error(String(r.status));
+                        api.refresh();
+                    } catch { if (button) { button.disabled = false; button.textContent = 'Try again'; } }
+                } : null;
                 api.ready = Promise.resolve().then(() => fetcher(url, { credentials: 'omit', cache: 'no-store',
-                    headers: { Accept: 'application/json' }, signal: request.signal }))
+                    headers: Object.assign({ Accept: 'application/json' }, auth), signal: request.signal }))
                     .then(async response => {
                         if (!response.ok) throw new Error('Profile unavailable');
                         const person = await response.json();
