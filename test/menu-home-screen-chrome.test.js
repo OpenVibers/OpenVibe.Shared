@@ -96,10 +96,28 @@ const server = http.createServer((req, res) => {
     const browser = await h.launch({ tmpDir });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const until = async (p, expr, ms = 6000) => { const end = Date.now() + ms; for (;;) { const v = await p.evaluate(expr); if (v || Date.now() > end) return v; await wait(50); } };
+    // A slow runner (GitHub's macOS) may still be closing the menu when the test opens it again: wait for it to be shut,
+    // and press the button once more if the first press landed while it was folding.
     const openTab = async (p, which) => {
-        await p.evaluate(`(document.getElementById('openvibe-burger') || document.getElementById('openvibe-search-btn')).click(), true`);
+        await until(p, `!document.querySelector('.ovs.is-closing')`, 3000);
+        const press = `(document.getElementById('openvibe-burger') || document.getElementById('openvibe-search-btn')).click(), true`;
+        await p.evaluate(press);
+        if (!await until(p, `!!document.querySelector('.ovs.is-open [data-tab="${which}"]')`, 3000)) {
+            await until(p, `!document.querySelector('.ovs.is-closing')`, 3000);
+            if (!await p.evaluate(`!!document.querySelector('.ovs.is-open')`)) await p.evaluate(press);
+        }
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open [data-tab="${which}"]')`), 'the menu opened');
         await p.evaluate(`document.querySelector('.ovs [data-tab="${which}"]').click(), true`);
+    };
+    // A tile is measured once it stops moving (the menu's opening and the catalogue's repaint end later on a slow runner).
+    const still = async (p, sel) => {
+        let last = null;
+        for (let i = 0; i < 40; i++) {
+            const box = await p.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return Math.round(r.x) + ',' + Math.round(r.y); })()`);
+            if (box === last) return;
+            last = box;
+            await wait(60);
+        }
     };
     const order = (p) => p.evaluate(`[...document.querySelectorAll('.ovh-grid:not(.ovh-recent) .ovh-app')].map((a) => a.getAttribute('data-id'))`);
     const center = (p, sel) => p.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; })()`);
@@ -125,6 +143,7 @@ const server = http.createServer((req, res) => {
 
         // A long-press starts Edit, and the same press drags the first app onto the third's place.
         await wait(400);   // the menu's opening animation and the catalogue's repaint are over before measuring
+        await still(p, `.ovh-grid .ovh-app[data-id="${first[0]}"]`);
         const a0 = await center(p, `.ovh-grid .ovh-app[data-id="${first[0]}"]`);
         const a2 = await center(p, `.ovh-grid .ovh-app[data-id="${first[2]}"]`);
         await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: a0.x, y: a0.y });
@@ -206,6 +225,7 @@ const server = http.createServer((req, res) => {
         if (await p.evaluate(`!!document.querySelector('.ovh.is-edit')`)) await p.evaluate(`document.querySelector('.ovh-edit').click(), true`);
         assert.ok(await until(p, `!document.querySelector('.ovh.is-edit')`, 3000), 'out of Edit before the touch');
         await wait(400);
+        await still(p, '.ovh-grid:not(.ovh-recent) .ovh-app');
         const before = await order(p);
         const f0 = await center(p, `.ovh-grid:not(.ovh-recent) .ovh-app[data-id="${before[0]}"]`);
         const f2 = await center(p, `.ovh-grid:not(.ovh-recent) .ovh-app[data-id="${before[2]}"]`);
@@ -213,7 +233,7 @@ const server = http.createServer((req, res) => {
         const top0 = await p.evaluate(scrollOf);
         await p.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
         await p.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: f0.x, y: f0.y }] });
-        assert.ok(await until(p, `!!document.querySelector('.ovh.is-edit')`, 3000), 'a touch long-press starts Edit');
+        assert.ok(await until(p, `!!document.querySelector('.ovh.is-edit')`, 6000), 'a touch long-press starts Edit');
         await wait(120);   // the finger rests a moment after Edit starts, as a person's does
         // Mostly upward first, the way a thumb that means to drag still nudges the page.
         for (let k = 1; k <= 8; k++) { await p.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: f0.x + ((f2.x - f0.x) * k) / 8, y: f0.y - (k <= 2 ? 14 * k : 28) + ((f2.y - f0.y) * k) / 8 }] }); await wait(40); }
