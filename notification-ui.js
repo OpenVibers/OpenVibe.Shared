@@ -295,7 +295,22 @@
             .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
             .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
             /* A row: the opaque .ovn-row over .ovn-under, which a swipe uncovers (Read on the left, Clear on the right). */
-            .openvibe-notif-item { position: relative; margin: 0 6px; border-radius: 14px; overflow: hidden; cursor: pointer; }
+            .openvibe-notif-item { position: relative; margin: 0 6px 6px; border-radius: 14px; overflow: hidden; cursor: pointer; }
+            /* 4.248.0 (the owner, 11-14: "no spacing between them … confusing to have an X … more like social media"): every row
+               the same card with room between, the face larger, unread a tint and a dot at the right, a ⋯ menu instead of a
+               bare X, buttons a notice brings (Approve, Deny, Watch). */
+            .openvibe-notif-item .ovn-row { background: color-mix(in srgb, var(--text-primary, #ececf1) 3%, var(--ovn-bg, #1d1f27)); }
+            .openvibe-notif-item.is-menu { overflow: visible; z-index: 3; }
+            .openvibe-notif-item .ovn-menu { position: absolute; right: 8px; top: 42px; z-index: 4; min-width: 220px; padding: 6px; border-radius: 14px; background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); border: 1px solid var(--border, rgba(255,255,255,.12)); box-shadow: 0 14px 40px -12px rgba(0,0,0,.6); display: grid; gap: 2px; }
+            .openvibe-notif-item .ovn-menu[hidden] { display: none; }
+            .openvibe-notif-item .ovn-menu button { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--text-primary, #ececf1); font: inherit; font-size: 13.5px; font-weight: 600; text-align: left; cursor: pointer; }
+            .openvibe-notif-item .ovn-menu button:hover, .openvibe-notif-item .ovn-menu button:focus-visible { background: var(--bg-hover, rgba(255,255,255,.08)); outline: 0; }
+            .openvibe-notif-item .ovn-menu button[data-row="dismiss"] { color: var(--danger-text, #f87171); }
+            .openvibe-notif-item .ovn-menu svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+            .openvibe-notif-item .ovn-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+            .openvibe-notif-item .ovn-act { font: inherit; font-size: 12.5px; font-weight: 700; min-height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.14)); background: transparent; color: var(--text-primary, #ececf1); cursor: pointer; }
+            .openvibe-notif-item .ovn-act.is-primary { border-color: transparent; background: var(--accent-strong, var(--accent, #3b82f6)); color: var(--on-accent-strong, #fff); }
+            .openvibe-notif-item .ovn-act.is-danger { color: var(--danger-text, #f87171); border-color: color-mix(in srgb, var(--danger, #ef4444) 40%, transparent); }
             .openvibe-notif-item .ovn-row { position: relative; z-index: 1; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; padding: 10px 14px 10px 16px; border-radius: 14px;
                 background: var(--ovn-bg, var(--bg-elevated, #1d1f27)); transition: background .15s, transform .2s ease; touch-action: pan-y; outline: none; }
             .openvibe-notif-item .ovn-row.has-thumb { grid-template-columns: 38px minmax(0, 1fr) 56px; }
@@ -312,7 +327,7 @@
             .openvibe-notif-item[data-swipe="read"] .ovn-under .clear, .openvibe-notif-item[data-swipe="clear"] .ovn-under .read { display: none; }
             .openvibe-notif-item .ovn-under span { display: inline-flex; align-items: center; gap: 6px; }
             .openvibe-notif-item .ovn-under svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-            .openvibe-notif-item .content { min-width: 0; }
+            .openvibe-notif-item .content { min-width: 0; padding-right: 26px; }
             /* 4.223.0: the title and its count are one run of text (the count overlapped the words when the title was a box). */
             .openvibe-notif-item .title { font-size: 13.5px; font-weight: 550; line-height: 1.32; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
             .openvibe-notif-item .title .t { display: inline; }
@@ -322,8 +337,10 @@
             .openvibe-notif-item .msg { margin-top: 2px; font-size: 12.5px; color: var(--text-secondary, #b6b6c0); line-height: 1.42; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
             .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
-            .openvibe-notif-item .unread-dot { position: absolute; left: 5px; top: 26px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #3b82f6); }
-            .openvibe-notif-item .row-actions { margin-left: auto; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+            .openvibe-notif-item .unread-dot { position: absolute; right: 14px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
+            .openvibe-notif-item.unread .ovn-row { padding-right: 34px; }
+            .openvibe-notif-item .row-actions { position: absolute; right: 6px; top: 6px; z-index: 2; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+            .openvibe-notif-item.unread .row-actions { right: 30px; }
             .openvibe-notif-item:hover .row-actions, .openvibe-notif-item:focus-within .row-actions { opacity: 1; }
             /* The row's buttons sit on its time line, never over its text; touch screens always show them. */
             @media (hover: none), (pointer: coarse) { .openvibe-notif-item .row-actions { opacity: 1; } }
@@ -531,6 +548,14 @@
         const img = p.kind === 'ops' ? null : avatarOf(n);
         if (img) return `<span class="ovn-glyph ovn-avatar" style="--ovn-tone:${tone}"><img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()"><span class="ovn-badge">${svg(GLYPH[p.glyph] || GLYPH.bell)}</span></span>`;
         return `<span class="ovn-glyph" style="--ovn-tone:${tone}">${svg(GLYPH[p.glyph] || GLYPH.bell)}</span>`;
+    }
+    /** Buttons a notice carries (rich_content.actions: [{ label, url, style: 'primary'|'danger'|'' }], https only, at most
+     *  three): Approve and Deny on an approval, Watch on a live notice (4.248.0; the owner, 11-14: "the approval system can
+     *  go through here"). A press opens its address; the service on the other end does the action. */
+    function actsHtml(n) {
+        const acts = (Array.isArray(richOf(n).actions) ? richOf(n).actions : []).filter((a) => a && typeof a.label === 'string' && a.label.trim() && /^https:\/\//.test(String(a.url || ''))).slice(0, 3);
+        if (!acts.length) return '';
+        return `<div class="ovn-acts">${acts.map((a) => `<button type="button" class="ovn-act${a.style === 'primary' ? ' is-primary' : a.style === 'danger' ? ' is-danger' : ''}" data-row="go" data-url="${esc(a.url)}">${esc(String(a.label).slice(0, 28))}</button>`).join('')}</div>`;
     }
     function chipsHtml(p, extra = []) {
         const sev = p.severity ? [`<span class="ovn-chip sev" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">${esc(p.severity)}</span>`] : [];
@@ -930,6 +955,8 @@
         gear: GLYPH.gear,
         open: '<path d="M14 4h6v6M20 4l-9 9M19 14v5a1.5 1.5 0 0 1-1.5 1.5h-12A1.5 1.5 0 0 1 4 19V7a1.5 1.5 0 0 1 1.5-1.5H10"/>',
         read: '<path d="M5 12.6l4.6 4.6L19 7.6"/>',
+        more: '<circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/>',
+        trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"/>',
         close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
         empty: '<path d="M12 3.5a1.22 1.22 0 0 1 1.22 1.22v0.47a5.44 5.44 0 0 1 4.22 5.25v3.38c0 0.84 0.28 1.59 0.84 2.25l0.75 0.84a0.75 0.75 0 0 1 -0.56 1.31H5.53a0.75 0.75 0 0 1 -0.56 -1.31l0.75 -0.84c0.56 -0.66 0.84 -1.41 0.84 -2.25v-3.38a5.44 5.44 0 0 1 4.22 -5.25v-0.47A1.22 1.22 0 0 1 12 3.5ZM9.94 18.97a2.16 2.16 0 0 0 4.13 0"/><path class="ovn-wave" d="M3.84 9.31a8.63 8.63 0 0 1 2.34 -4.6M20.16 9.31a8.63 8.63 0 0 0 -2.34 -4.6"/>',
     };
@@ -1026,6 +1053,16 @@
             const act = e.target.closest('[data-row]');
             if (act) {
                 e.stopPropagation();
+                const menu = item.querySelector('.ovn-menu');
+                if (act.dataset.row === 'more') {
+                    const open = menu && menu.hidden;
+                    v.root.querySelectorAll('.openvibe-notif-item.is-menu').forEach((x) => { x.classList.remove('is-menu'); const m = x.querySelector('.ovn-menu'); if (m) m.hidden = true; });
+                    if (menu && open) { menu.hidden = false; item.classList.add('is-menu'); const first = menu.querySelector('button'); if (first) first.focus({ preventScroll: true }); }
+                    return;
+                }
+                if (menu) { menu.hidden = true; item.classList.remove('is-menu'); }
+                if (act.dataset.row === 'go') { if (ids.length) markRead(ids); navigateTo(act.dataset.url); return; }
+                if (act.dataset.row === 'settings') { navigateTo('https://openvibe.network/settings#notifications'); return; }
                 if (act.dataset.row === 'dismiss') ids.forEach(x => dismiss(v, x));
                 else if (act.dataset.row === 'read') markRead(ids);
                 else if (act.dataset.row === 'copy') copyText(act.dataset.cmd || '', act);
@@ -1137,7 +1174,10 @@
                         ${p.message ? `<div class="msg">${esc(p.message)}</div>` : ''}
                         ${chipsHtml({ ...p, chips })}
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
-                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}<div class="row-actions"><button type="button" data-row="dismiss" title="Clear this notice" aria-label="Clear this notice">${svg(ICON.close)}</button></div></div>
+                        ${actsHtml(n)}
+                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
+                    <div class="row-actions"><button type="button" data-row="more" title="More" aria-label="More for this notice" aria-haspopup="menu">${svg(ICON.more)}</button></div>
+                    <div class="ovn-menu" role="menu" hidden>${unread ? '<button type="button" role="menuitem" data-row="read">' + svg(ICON.read) + '<span>Mark as read</span></button>' : ''}<button type="button" role="menuitem" data-row="dismiss">${svg(ICON.trash)}<span>Remove this notice</span></button><button type="button" role="menuitem" data-row="settings">${svg(ICON.gear)}<span>Notification settings</span></button></div>
                     </div>
                     ${thumb ? `<img class="thumb" src="${esc(thumb)}" alt="" loading="lazy">` : ''}
                     </div>

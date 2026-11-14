@@ -45,6 +45,12 @@ ring icon without its ring; on a phone the tile sits beside the title and the wo
 question is a compact row (48 px) with a glyph (its own third item, or one its words suggest), whatever a site's own
 details rule says, and the block after a showcase section is spaced like a section.
 
+**Notifications read like a social feed** (the owner, 11-14: "no spacing between them … confusing to have an X. Like,
+what does that do? … more like social media … rich content … the approval system can go through here"): every row the
+same card with room between, unread a tint and a dot at the right, a ⋯ menu (Mark as read, Remove this notice,
+Notification settings) instead of the bare X, and up to three buttons a notice brings in `rich_content.actions`
+([{ label, url, style: primary|danger }], https only: Approve and Deny on an approval, Watch on a live notice).
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.
