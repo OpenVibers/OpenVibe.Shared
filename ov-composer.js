@@ -476,6 +476,14 @@ html[data-ov-motion=reduced] .ovc-tray { animation-name: ovc-fade-calm; }
 html[data-ov-motion=off] .ovc-tray { animation: none; transition: none; }
 .ovc textarea::placeholder, .ovt-composer textarea::placeholder { transition: opacity .25s ease; }
 .ovc textarea.ovc-ph-swap::placeholder, .ovt-composer textarea.ovc-ph-swap::placeholder { opacity: 0; }
+/* 4.249.0: a new example rises into place. */
+.ovc textarea.ovc-ph-in::placeholder, .ovt-composer textarea.ovc-ph-in::placeholder { animation: ovc-ph-rise .38s cubic-bezier(.2, .8, .2, 1); }
+@keyframes ovc-ph-rise { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } }
+html[data-ov-motion=off] .ovt-composer textarea::placeholder { animation: none; transition: none; }
+/* 4.249.0 (the owner: "the inner text field doesn't need to be highlighted … the double outlines"): the box takes the
+   focus ring; the words inside it never draw their own (ov-forms gives every textarea one). */
+.ovt-composer textarea, .ovt-composer textarea:focus, .ovt-composer textarea:focus-visible, .ovc textarea:focus, .ovc textarea:focus-visible { outline: none !important; box-shadow: none !important; border-color: transparent !important; background: transparent; }
+.ovt-composer.ovc-v2:focus-within { border-color: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 60%, var(--ovt-line, var(--border, rgba(148,163,184,.18)))); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 16%, transparent); }
 .ovc-v2 .ovt-send--round { background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #fff), var(--accent-strong, var(--accent, #2563eb))); color: var(--on-accent-strong, #fff);
   box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); transition: transform .2s cubic-bezier(.3, 1.4, .4, 1), opacity .2s, box-shadow .2s; }
 .ovc-v2 .ovt-send--round svg { width: 20px; height: 20px; stroke-width: 2.4; transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
@@ -1250,7 +1258,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                     if (motion() === 'off' || text.value || document.activeElement === text) return;
                     k = (k + 1) % ex.length;
                     text.classList.add('ovc-ph-swap');
-                    setTimeout(() => { text.placeholder = String(ex[k]).slice(0, 80); text.classList.remove('ovc-ph-swap'); }, motion() === 'reduced' ? 120 : 260);
+                    setTimeout(() => { text.placeholder = String(ex[k]).slice(0, 80); text.classList.remove('ovc-ph-swap'); text.classList.add('ovc-ph-in'); setTimeout(() => text.classList.remove('ovc-ph-in'), 420); }, motion() === 'reduced' ? 120 : 260);
                 }, motion() === 'reduced' ? 8000 : 4200);
             }
         }
@@ -1344,7 +1352,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
     const EXAMPLES = {
-        agent: ['Ask for anything', 'Find a live stream about cooking', 'Start a 10-minute timer', 'Summarize today’s Rundown', 'Write a title for my stream', 'What did people post today?'],
+        agent: ['Ask for anything', 'Find a live stream about cooking', 'Start a 10-minute timer', 'Summarize today’s Rundown', 'Write a title for my stream', 'What did people post today?', 'Find me a deal on a 4090', 'Make a goal bar for my stream', 'Remind me to stretch every 2 hours'],
+        chat: ['Write a message', 'Say hi 👋', 'Share a link or a picture', 'Ask the room something', '@vibe can answer here too'],
+        comment: ['Write a reply…', 'Add to the conversation', 'Ask a question', 'Share what you think'],
         post: ["What's new?", 'Share a photo from today', 'Ask your followers a question', 'Post a clip you made'],
     };
     const PRESET = {
@@ -1651,7 +1661,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         ta.name = o.name || 'text'; ta.rows = p.rows; ta.maxLength = o.maxLength || p.max;
         ta.placeholder = o.placeholder || (name === 'post' ? "What's new?" : name === 'agent' ? 'Ask for anything' : name === 'comment' ? 'Write a reply' : 'Write a message');
         ta.setAttribute('aria-label', o.label || ta.placeholder);
-        { const ex = Array.isArray(o.examples) ? o.examples : (o.placeholder ? null : EXAMPLES[name]); if (ex && ex.length > 1) form.dataset.ovcExamples = JSON.stringify(ex.slice(0, 8)); }
+        // 4.249.0 (the owner, 11-14: "scroll through different examples people type … more animated"): a box with its own
+        // first line keeps it first, then turns through the preset's examples.
+        { const base = Array.isArray(o.examples) ? o.examples : EXAMPLES[name]; const ex = base ? (o.placeholder && !Array.isArray(o.examples) ? [o.placeholder, ...base.slice(1)] : base) : null; if (ex && ex.length > 1) form.dataset.ovcExamples = JSON.stringify(ex.slice(0, 8)); }
         ta.setAttribute('data-ovt-text', '');
         if (o.required !== false) ta.required = true;
         const row = el('div', 'ovt-c-row'), tools = el('div', 'ovt-c-tools'), chips = el('div', 'ovc-chips');

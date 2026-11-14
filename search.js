@@ -1797,7 +1797,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
         // One row of places (4.194.0): this site, the feed, your messages, AI (Vibe and your agents), you. Messages and
         // AI are the Dock's; they are in this row, between Feed and You, where the bar can open the Dock for this person.
-        const doors = typeof ctx.dock === 'function' ? [['chats', ctx.service === 'chat' ? 'Messages' : 'Chat'], ['vibe', 'Vibe']] : [];
+        // 4.249.0 (the owner on openvibe.chat: "Rename as chat and combine"): the door is Chat everywhere (your friends and
+        // conversations); on openvibe.chat the site's own tab is its Rooms (servers, rooms, Global chat), so no two say Chat.
+        const doors = typeof ctx.dock === 'function' ? [['chats', 'Chat'], ['vibe', 'Vibe']] : [];
         const row = [TABS[0], TABS[1], ...doors.map(([id, label]) => [id, label, true]), TABS[2]];
         tabsEl.classList.toggle('has-doors', doors.length > 0);
         for (const [id, label, isDoor] of row) {
@@ -1824,7 +1826,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 const on = document.createElement('i'); on.className = 'ovs-tab-on'; on.setAttribute('aria-hidden', 'true'); ic.appendChild(on);
             } else if (TAB_SVG[id]) ic.innerHTML = TAB_SVG[id];
             if (ic.firstChild) b.appendChild(ic);
-            const t = document.createElement('span'); t.textContent = id === 'here' ? here() : label; b.appendChild(t);
+            const t = document.createElement('span'); t.textContent = id === 'here' ? (ctx.service === 'chat' && doors.length ? 'Rooms' : here()) : label; b.appendChild(t);
             // 4.237.0 (the owner, 11-13): the live dot after the word, a count on the icon's corner, never a third line.
             if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); t.appendChild(d); }
             else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); (b.querySelector('.ovs-tab-ic') || b).appendChild(n); }

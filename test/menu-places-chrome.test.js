@@ -44,7 +44,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             await wait(350);
             const row = await page.evaluate(ROW);
             // You wears the red unread count (437), so the count is stripped before comparing places.
-            assert.deepEqual(row.map((t) => t.label.replace(/\d+$/, '') + (t.chosen ? '*' : '') + (t.door ? `>${t.door}` : '')), ['Chat*', 'Feed', 'Messages>chats', 'Vibe>vibe', 'You'], `${name}: this site, Feed, Messages (Chat's own site keeps the word: its tab is Chat), Vibe, You, in that order`);
+            assert.deepEqual(row.map((t) => t.label.replace(/\d+$/, '') + (t.chosen ? '*' : '') + (t.door ? `>${t.door}` : '')), ['Rooms*', 'Feed', 'Chat>chats', 'Vibe>vibe', 'You'], `${name}: this site, Feed, Messages (Chat's own site keeps the word: its tab is Chat), Vibe, You, in that order`);
             if (width <= 640) {
                 // On another site the door is called Chat (ask 336).
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
@@ -98,7 +98,7 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await eventually(async () => assert.equal(await page.evaluate('window.asked'), 'find this', `${name}: Enter in Vibe starts a run with the words`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = ''; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`);
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="chats"]').click()`); await wait(80);
-                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, runs: false, sw: false, chosen: 'Messages' }, `${name}: Messages inside the menu, the runs handed back`));
+                await eventually(async () => assert.deepEqual(await inside(), { door: true, list: false, stub: true, runs: false, sw: false, chosen: 'Chat' }, `${name}: Chat inside the menu, the runs handed back`));
                 await page.evaluate(`document.querySelector('.ovs-input').value = 'sara'; document.querySelector('.ovs-input').dispatchEvent(new Event('input', { bubbles: true }));`); await wait(180);
                 await eventually(async () => assert.equal(await page.evaluate('window.filtered'), 'sara', `${name}: Messages search filters conversations in place`));
                 await page.evaluate(`document.querySelector('.ovs-input').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));`);
