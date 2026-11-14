@@ -2,6 +2,13 @@
 
 ## 4.249.0 — 2026-11-14
 
+**The feed counts what people saw** (the owner, 11-14: "add view count to this feed and everything in the feed … so
+you can see analytics … like Twitter does"). ov-home's feed: a card at least half on screen for a second is seen, once
+per page; the ids go to the Network's `POST /api/v1/feed/views` (Network #944) in batches of up to 20 by
+`navigator.sendBeacon`, with a page session id (`ovfd-sess` in sessionStorage). The Network counts each as one preview
+view in Media's one view store, where the cards' `counts.views` come from. `o.views: false` turns it off; `o.viewsUrl`
+overrides the address.
+
 **Vibe is a messenger of agents; the player, rows, switches and comments fixed across sites** (the owner, 11-14, on a phone).
 
 - **Vibe (ov-run.js)**: your agents' faces in a row on top (yours first, then the agents your conversations are with,

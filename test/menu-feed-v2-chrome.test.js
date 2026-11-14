@@ -27,6 +27,8 @@ const TODAY = { people: { today: 1204, series: [800, 900, 1000, 1204] }, streams
 const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Home</title><link rel="icon" href="data:,">
 <script>
   window.__calls = [];
+  window.__beacons = [];
+  navigator.sendBeacon = (u, b) => { b.text().then((t) => window.__beacons.push({ u: String(u), t })); return true; };
   const J = (b, ok = true, status = 200) => Promise.resolve({ ok, status, json: async () => b });
   const realFetch = window.fetch;
   window.fetch = (u, o) => {
@@ -41,7 +43,7 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
     if (s.startsWith('https://openvibe.network/api/history')) return J({ items: [{ title: 'A stream', url: 'https://openvibe.live/ada', service: 'live', updated_at: new Date().toISOString() }, { title: 'A pic', url: 'https://openvibe.pics/1', service: 'pics', updated_at: new Date(Date.now() - 1000).toISOString() }], services: [{ service: 'live', count: 5 }, { service: 'pics', count: 2 }] });
     if (s.startsWith('https://openvibe.network/api/v1/me/home-screen')) return (o && o.method === 'PUT') ? J({ ok: true }) : J({}, false, 404);
     if (s.startsWith('https://openvibe.network/api/frame/feed')) { window.__feedCalls = (window.__feedCalls || []).concat([s]); const u = new URL(s); const kind = u.searchParams.get('kind') || ''; const page = u.searchParams.get('cursor') ? 2 : 1;
-      const mk = (i, k) => ({ id: k + i + '-' + page, kind: k, live_now: k === 'live', url: 'https://openvibe.video/c/' + i, title: (k === 'post' ? '<b>bold</b> ' : '') + k + ' ' + i + ' page ' + page, text: 'words', at: new Date(Date.now() - i * 60000).toISOString(), site: k === 'pic' ? 'pics' : 'video', site_name: 'Video', actor: { name: 'ada' }, media: k === 'post' || k === 'update' ? {} : { thumb: 'https://openvibe.media/t/x.webp', ratio: 1.7778, length: '0:30' }, counts: { views: 1200, likes: 3 } });
+      const mk = (i, k) => ({ id: 'f:video:' + k + ':' + i + '-' + page, kind: k, live_now: k === 'live', url: 'https://openvibe.video/c/' + i, title: (k === 'post' ? '<b>bold</b> ' : '') + k + ' ' + i + ' page ' + page, text: 'words', at: new Date(Date.now() - i * 60000).toISOString(), site: k === 'pic' ? 'pics' : 'video', site_name: 'Video', actor: { name: 'ada' }, media: k === 'post' || k === 'update' ? {} : { thumb: 'https://openvibe.media/t/x.webp', ratio: 1.7778, length: '0:30' }, counts: { views: 1200, likes: 3 } });
       if (kind === 'event') { const at = (h) => new Date(Date.now() - h * 3600e3).toISOString(); const y = new Date(Date.now() - 86400e3); y.setHours(12, 0, 0, 0);
         return J({ items: [
           { id: 'r', kind: 'report', url: 'https://openvibe.report/network', title: 'Peak today: 1,204 people online at 9 PM', text: 'Online peak across the network', at: at(0.03), site: 'report', site_name: 'Report', actor: null, subject: null, media: null, counts: { people: 1204 }, trend: { direction: 'up', pct: 12, previous: 1075 }, label: 'System' },
@@ -92,6 +94,11 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(p, `!!document.querySelector('.ovs.is-open [data-tab="feed"]')`), 'the menu opened');
         await p.evaluate(`document.querySelector('.ovs [data-tab="feed"]').click(), true`);
         assert.ok(await until(p, `document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 12`), 'the feed painted');
+        // 4.250.0: the cards a person saw count as views: after a second half on screen, one beacon to the Network.
+        assert.ok(await until(p, `window.__beacons.some((b) => b.u === 'https://openvibe.network/api/v1/feed/views')`, 9000), 'the seen cards go to the Network as views');
+        const beacon = await p.evaluate(`JSON.parse(window.__beacons.find((b) => b.u.endsWith('/api/v1/feed/views')).t)`);
+        assert.ok(beacon.ids.length >= 1 && beacon.ids.length <= 20 && beacon.ids.every((id) => /^f:video:/.test(id)) && new Set(beacon.ids).size === beacon.ids.length, `card ids, each once (${beacon.ids})`);
+        assert.ok(/^[A-Za-z0-9_-]{8,64}$/.test(beacon.session), 'with the page session');
         const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovfd-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovfd-chip[aria-selected=true]') || {}).textContent,
             kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
             bolds: document.querySelectorAll('.ovfd-list b b').length, posts: [...document.querySelectorAll('.ovfd-k-post .ovfd-title')].map((b) => b.textContent)[0],

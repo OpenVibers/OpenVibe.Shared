@@ -1781,6 +1781,51 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         return null;
     }
     const ACTS = new Set(['member', 'chat', 'event', 'quest', 'wiki', 'stream', 'update']);
+    /** The cards a person actually saw, counted as views (4.250.0; the owner, 11-14: "add view count to this feed and
+     *  everything in the feed … so you can see analytics … like Twitter does"). A card at least half on screen for a
+     *  second is seen, once per page; the ids go to the Network in batches of up to 20 (a beacon, so leaving the page
+     *  still sends them), which counts each as one preview view in Media's one view store, where counts.views comes
+     *  from. A page session id (sessionStorage) lets the store count one person scrolling past twice once.
+     *  o.views === false turns it off; o.viewsUrl overrides the address (tests). */
+    function seenCounter(o, el) {
+        const none = { watch() {}, flush() {} };
+        if (o.views === false || typeof IntersectionObserver !== 'function') return none;
+        const url = o.viewsUrl || `${o.frameBase ? String(o.frameBase).replace(/\/api\/frame\/?$/, '') : 'https://openvibe.network'}/api/v1/feed/views`;
+        const fresh = () => `${Math.random().toString(36).slice(2, 12)}${Date.now().toString(36)}`;
+        let session = '';
+        try { session = sessionStorage.getItem('ovfd-sess') || ''; if (!/^[A-Za-z0-9_-]{8,64}$/.test(session)) { session = fresh(); sessionStorage.setItem('ovfd-sess', session); } } catch { session = fresh(); }
+        const sent = new Set(), queue = [], timers = new Map();
+        let flushT = 0;
+        const flush = () => {
+            clearTimeout(flushT); flushT = 0;
+            while (queue.length) {
+                const body = JSON.stringify({ ids: queue.splice(0, 20), session });
+                let ok = false;
+                try { ok = !!(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }))); } catch { ok = false; }
+                if (!ok) { try { fetch(url, { method: 'POST', body, keepalive: true, credentials: 'omit', headers: { 'Content-Type': 'text/plain' } }).catch(() => {}); } catch { /* a view lost, never the page */ } }
+            }
+        };
+        const counted = (card, id) => {
+            timers.delete(id);
+            if (sent.has(id) || !card.isConnected || document.visibilityState === 'hidden') return;
+            sent.add(id); io.unobserve(card); queue.push(id);
+            if (queue.length >= 20) flush(); else if (!flushT) flushT = setTimeout(flush, 4000);
+        };
+        const io = new IntersectionObserver((es) => {
+            es.forEach((e) => {
+                const card = e.target, id = card.dataset.feedId;
+                if (!id || sent.has(id)) { io.unobserve(card); return; }
+                if (e.isIntersecting && e.intersectionRatio >= 0.5) { if (!timers.has(id)) timers.set(id, setTimeout(() => counted(card, id), 1000)); }
+                else if (timers.has(id)) { clearTimeout(timers.get(id)); timers.delete(id); }
+            });
+        }, { root: el.closest('.ovs-list') || null, threshold: [0, 0.5] });
+        addEventListener('pagehide', flush);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+        return {
+            watch(card, id) { if (!card || !card.dataset || typeof id !== 'string' || !/^f:/.test(id) || sent.has(id)) return; card.dataset.feedId = id; io.observe(card); },
+            flush,
+        };
+    }
     function countsRow(n) {
         const parts = [['views', 'eye', 'views'], ['watchers', 'eye', 'watched'], ['likes', 'heart', 'likes'], ['comments', 'reply', 'replies']]
             .filter(([k]) => Number(n && n[k]) > 0);
@@ -2055,6 +2100,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         // 4.229.0: a card already on the list is never drawn again (the owner, 11-12: "112 new deals" three times, one
         // per page of a Deals poll; Network now names a burst once, and this keeps any repeat off the screen).
         const shownIds = new Set();
+        const seen = seenCounter(o, el);
+        const add = (x, card) => { if (!card) return; list.append(card); seen.watch(card, x && x.id); };
         // Names wear what their people wear (OpenVibe.Inventory through items.js, where the page has it).
         const decorate = () => { try { if (root.OpenVibeItems && typeof root.OpenVibeItems.decorate === 'function') root.OpenVibeItems.decorate(list); } catch { /* names stay plain */ } };
         let query = '', searchSeq = 0;
@@ -2105,7 +2152,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const clear = h('button', 'ovk-btn ovk-btn--quiet', '×'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear feed search');
             clear.addEventListener('click', () => { if (o.onSearch) o.onSearch(''); }); resultHead.append(clear);
             list.textContent = '';
-            found.forEach((x) => { const card = feedCard(x, o); if (card) list.append(card); }); decorate();
+            found.forEach((x) => add(x, feedCard(x, o))); decorate();
             if (typeof o.mountIcons === 'function') o.mountIcons(list);
         }
         const skeletons = () => { for (let k = 0; k < 3; k++) list.append(h('span', 'ovfd-skel')); };
@@ -2128,12 +2175,12 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // Back-to-back go-lives that are over fold into one card of faces (a wall of "X went live" was the whole feed).
             const past = (x) => x && (x.kind === 'stream' || (x.kind === 'live' && !x.live_now)) && safe(x.url);
             let run = [];
-            const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => { const c = feedCard(x, o); if (c) list.append(c); }); run = []; decorate(); };
+            const flush = () => { if (run.length >= 2) list.append(livesCard(run)); else run.forEach((x) => add(x, feedCard(x, o))); run = []; decorate(); };
             // Date by date (the owner, 11-09): a quiet day line where the day changes. The network's trending cards
             // (no time of their own) sit between, under the day they were woven into.
             const day = (x) => { const t = Date.parse(String((x && x.at) || '')); return Number.isFinite(t) ? new Date(t).toDateString() : ''; };
             const mark = (x) => { const d = day(x); if (!d || d === lastDay) return; flush(); lastDay = d; list.append(dayLine(Date.parse(String(x.at)))); };
-            j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); const c = feedCard(x, o); if (c) list.append(c); });
+            j.items.filter((x) => x && x.id && !shownIds.has(x.id) && shownIds.add(x.id)).forEach((x) => { mark(x); if (past(x) && !kind) { run.push(x); return; } flush(); add(x, feedCard(x, o)); });
             flush();
             if (typeof o.mountIcons === 'function') { try { o.mountIcons(list); } catch { /* */ } }
             cursor = j.next_cursor || null;
