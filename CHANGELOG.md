@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.250.0 — 2026-11-14
+
+**The feed counts what people saw** (the owner, 11-14: "add view count to this feed and everything in the feed … so you
+can see analytics … like Twitter does").
+
+- ov-home's feed: a card at least half on screen for a second is seen, once per page. The ids go to the Network's
+  `POST /api/v1/feed/views` (Network #944) in batches of up to 20 by `navigator.sendBeacon` (text/plain JSON, so
+  leaving the page still sends them), with a page session id kept in sessionStorage (`ovfd-sess`). The Network counts
+  each as one preview view in Media's one view store, which is where the cards' `counts.views` come from.
+- `o.views: false` turns it off; `o.viewsUrl` overrides the address; with `o.frameBase` the address follows it.
+
 ## 4.248.0 — 2026-11-14
 
 **Every time in the reader's own clock** (the owner, 11-14: "make it so areas like this show the time based on the
