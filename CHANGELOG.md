@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.257.0 — 2026-11-14
+
+**The feed keeps paging when its end was in reach while a page loaded.** An IntersectionObserver reports only a
+crossing: if the end of the feed was already within reach while a page loaded (the call dropped as busy), no later
+scroll crossed again and the feed stopped there. After each page the observer is armed again, so the next page comes
+while the end is in reach. A slow macOS runner showed it twice on 11-14 (`menu-feed-v2-chrome`, "the next page loads as
+the end comes near").
+
 ## 4.256.1 — 2026-11-14
 
 **A site's own network list keeps its own heading and lede.** 4.256.0's `network({ items })` fell back to "More on

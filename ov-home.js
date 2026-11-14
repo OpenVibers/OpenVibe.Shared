@@ -2288,6 +2288,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const chips = h('div', 'ovfd-chips'); chips.setAttribute('role', 'tablist'); chips.setAttribute('aria-label', 'Feed');
         const list = h('div', 'ovfd-list');
         const sentinel = h('div', 'ovfd-more');
+        let io = null;   // the next page's observer (below); re-armed after each page lands
         el.append(examples, resultHead, chips, list, sentinel);
         let kind = '', cursor = null, busy = false, done = false, seq = 0, lastDay = '';
         // 4.229.0: a card already on the list is never drawn again (the owner, 11-12: "112 new deals" three times, one
@@ -2380,6 +2381,10 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             done = !cursor;
             busy = false;
             sentinel.textContent = '';
+            // An observer only reports a crossing: if the end was already in reach while this page loaded (busy, so that
+            // call was dropped), no later scroll crosses again and the feed stopped there (a slow macOS runner, 11-14).
+            // Observing again reports where the end is now, and the next page comes if it is still in reach.
+            if (!done && io) { io.unobserve(sentinel); io.observe(sentinel); }
             if (done) sentinel.append(h('p', 'ovh-note ovfd-caught', list.querySelector('.ovfd-card,.ovfd-act,.ovfd-update') ? "You're all caught up."
                 : (kind === 'following' ? 'Nothing yet from the people you follow. Follow someone on their profile and what they share shows here.' : 'Nothing here yet.')));
         }
@@ -2396,7 +2401,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             chips.append(b);
         });
         if (typeof IntersectionObserver === 'function') {
-            const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
+            io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
             io.observe(sentinel);
         }
         more(true);
