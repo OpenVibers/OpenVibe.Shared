@@ -152,6 +152,7 @@
             .ovdk-friend { all: unset; flex: none; display: grid; justify-items: center; gap: 4px; width: 58px; cursor: pointer; }
             .ovdk-friend .ovdk-av { width: 46px; height: 46px; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease; }
             .ovdk-friend:hover .ovdk-av, .ovdk-friend:focus-visible .ovdk-av { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
+            .ovdk-friend .ovdk-av.is-online { box-shadow: 0 0 0 2px var(--bg-elevated, #1d1f27), 0 0 0 4px #22c55e; }
             .ovdk-friend-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11.5px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
             .ovdk-request { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 4px; }
             .ovdk-request .ovdk-av { width: 32px; height: 32px; font-size: 12px; }
@@ -433,8 +434,8 @@
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try {
-            const [dm, ai, people] = await Promise.all([chatCall('/api/dm/conversations'), chatCall('/api/vibe/conversations').catch(() => null), chatCall('/api/dm/contacts').catch(() => null)]);
-            chats.people = people && Array.isArray(people.friends) ? people : null;
+            const [dm, ai, people] = await Promise.all([chatCall('/api/dm/conversations'), chatCall('/api/vibe/conversations').catch(() => null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null))]);
+            chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], network: true } : people && Array.isArray(people.friends) ? people : null;
             chats.list = dm.conversations || [];
             chats.vibeSummary = ai && ai.count ? { kind: 'vibe', count: ai.count, latest: ai.conversations && ai.conversations[0], last_message_at: ai.conversations && ai.conversations[0] && ai.conversations[0].last_message_at } : null;
         } catch (e) { if (panel !== chats.panel || !panelActive('chats')) return; panel.textContent = ''; panel.append(h('div', 'ovdk-none', e.status === 401 ? 'Sign in to Chat to see your conversations.' : 'Your chats did not load. Check your connection, then open them again.')); chatFoot(panel); return; }
@@ -493,19 +494,29 @@
      * faces (a press opens your conversation with them, or starts one), the requests waiting for you with Accept, and
      * Add a friend by username. Chat's /api/dm/contacts.
      */
+    /** Friends are the account's (Network, 4.249.0): /api/v1/me/friends with the person's token. */
+    async function friendsCall(path, init = {}) {
+        const t = await tokenOf();
+        if (!t) throw new Error('signed out');
+        const r = await fetch(`https://openvibe.network/api/v1/me/friends${path}`, { ...init, credentials: 'omit', headers: { accept: 'application/json', ...(init.body ? { 'content-type': 'application/json' } : {}), authorization: `Bearer ${t}` } });
+        const b = await r.json().catch(() => ({}));
+        if (!r.ok) { const e = new Error(b.detail || b.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
+        return b;
+    }
     function friendsStrip(people) {
         const box = h('div', 'ovdk-friends');
         const row = h('div', 'ovdk-friends-row'); row.setAttribute('role', 'list'); row.setAttribute('aria-label', 'Your friends');
         const talkTo = async (p) => {
-            const one = (chats.list || []).find((c) => !c.is_group && others(c).some((x) => Number(x.id) === Number(p.id)));
+            const one = (chats.list || []).find((c) => !c.is_group && others(c).some((x) => (p.id != null && Number(x.id) === Number(p.id)) || (p.username && String(x.username || '').toLowerCase() === String(p.username).toLowerCase())));
             if (one) { openChat(String(one.id), true); return; }
-            try { const out = await chatCall('/api/dm/conversations', { method: 'POST', body: JSON.stringify({ user_ids: [p.id] }) }); const id = out && (out.conversation ? out.conversation.id : out.id); if (id) openChat(String(id), true); }
+            try { const out = await chatCall('/api/dm/conversations', { method: 'POST', body: JSON.stringify(p.id != null && !people.network ? { user_ids: [p.id] } : { usernames: [p.username] }) }); const id = out && (out.conversation ? out.conversation.id : out.id); if (id) openChat(String(id), true); }
             catch { /* the list stays */ }
         };
         for (const p of (people.friends || []).slice(0, 24)) {
             const b = h('button', 'ovdk-friend'); b.type = 'button'; b.setAttribute('role', 'listitem');
             b.setAttribute('aria-label', `Message ${p.display_name || p.username}`);
-            b.append(avatar(p, false), h('span', 'ovdk-friend-n', String(p.display_name || p.username).slice(0, 14)));
+            const face = avatar(p, false); if (p.online) { face.classList.add('is-online'); face.title = p.site ? `Online on ${p.site}` : 'Online'; }
+            b.append(face, h('span', 'ovdk-friend-n', String(p.display_name || p.username).slice(0, 14)));
             b.addEventListener('click', () => talkTo(p));
             row.append(b);
         }
@@ -518,7 +529,12 @@
             e.preventDefault();
             const u = input.value.trim().replace(/^@/, ''); if (!u) return;
             go.disabled = true; note.hidden = false; note.textContent = 'Sending…';
-            try { const out = await chatCall('/api/dm/contacts', { method: 'POST', body: JSON.stringify({ username: u }) }); note.textContent = out && out.status === 'friend' ? `You and @${u} are friends.` : `Asked @${u} to be your friend.`; input.value = ''; }
+            try {
+                let mutual = false;
+                if (people.network) { const out = await friendsCall(`/${encodeURIComponent(u)}`, { method: 'PUT', body: '{}' }); mutual = !!(out && out.friend && out.friend.state === 'friends'); }
+                else { const out = await chatCall('/api/dm/contacts', { method: 'POST', body: JSON.stringify({ username: u }) }); mutual = !!(out && out.status === 'friend'); }
+                note.textContent = mutual ? `You and @${u} are friends.` : `Asked @${u} to be your friend.`; input.value = '';
+            }
             catch (err) { note.textContent = (err && err.message) || 'That did not send.'; }
             finally { go.disabled = false; }
         });
@@ -526,7 +542,7 @@
         for (const p of (people.requests || []).slice(0, 5)) {
             const r = h('div', 'ovdk-request');
             const ok = h('button', 'ovdk-request-ok', 'Accept'); ok.type = 'button';
-            ok.addEventListener('click', async () => { ok.disabled = true; try { await chatCall(`/api/dm/contacts/${encodeURIComponent(p.id)}/accept`, { method: 'POST', body: '{}' }); chatList(); } catch { ok.disabled = false; } });
+            ok.addEventListener('click', async () => { ok.disabled = true; try { if (people.network) await friendsCall(`/${encodeURIComponent(p.subject || p.username)}/accept`, { method: 'POST', body: '{}' }); else await chatCall(`/api/dm/contacts/${encodeURIComponent(p.id)}/accept`, { method: 'POST', body: '{}' }); chatList(); } catch { ok.disabled = false; } });
             r.append(avatar(p, false), h('span', 'ovdk-request-t', `${p.display_name || p.username} wants to be your friend`), ok);
             box.append(r);
         }
