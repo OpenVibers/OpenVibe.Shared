@@ -17,6 +17,8 @@
  *   .ov-rail      one row that scrolls sideways, items --item wide, snapping
  *   .ov-cover     a box at least --min tall with one child (.is-centre) centred in it
  *   .ov-frame     a box of --ratio that crops a picture or a video to fill it
+ *   .ov-places    a page's own places (My files, Shared links, Bin…): icon rows in a side column on a computer, a fixed
+ *                 row of icon tabs at the top on a phone (4.248.0). Put it first in the page so a phone shows it on top.
  *
  * The classless base (Pico's idea): put .ov-base on <body> or <main> and plain HTML (headings, text, links, lists,
  * quotes, code, tables, forms) looks finished on the site's theme, light or dark. Every selector is inside :where(),
@@ -134,3 +136,49 @@
 :where(.ov-base) :where(button:disabled, input:disabled, select:disabled, textarea:disabled) { opacity: .55; cursor: not-allowed; }
 :where(.ov-base) :where(fieldset) { margin: 0 0 1em; padding: var(--space-xs) var(--space-s); border: 1px solid var(--ovk-line); border-radius: var(--ovk-radius-sm); }
 :where(.ov-base) :where(mark) { padding: 0 .2em; border-radius: 4px; background: color-mix(in srgb, var(--ovk-warn) 35%, transparent); color: inherit; }
+
+/* ── .ov-places (4.248.0; the owner, 11-14, on Download: "move our tab to the top … a fixed tab system … add icons …
+   kind of like our main menu area … so the layout can be reused for pages like this"). One markup, two shapes:
+     <nav class="ov-places" aria-label="Places">
+       <a href="/files" aria-current="page"><svg …/><span>My files</span><em>4</em></a> …
+       <div class="ov-places-extra">…a meter, a button…</div>
+     </nav>
+   A computer: a column of icon rows (beside the content in an .ov-sidebar). A phone (< 861 px): a row of icon tabs
+   that stays under the bar while the page scrolls, the menu's tabs in small; the extra part is left for the page. */
+.ov-places { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ov-places > a, .ov-places > button {
+    position: relative; display: flex; align-items: center; gap: 10px; min-height: 42px; box-sizing: border-box;
+    padding: 8px 12px; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary, #b6bdd2);
+    font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; text-align: left;
+    transition: background-color .15s ease, color .15s ease, scale .12s ease;
+}
+.ov-places > a:hover, .ov-places > button:hover { background: color-mix(in srgb, var(--text-primary, #f1f4fb) 6%, transparent); color: var(--text-primary, #f1f4fb); }
+.ov-places > a:active, .ov-places > button:active { scale: .97; }
+.ov-places > [aria-current="page"], .ov-places > [aria-selected="true"] {
+    background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent); color: var(--text-primary, #f1f4fb);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent);
+}
+.ov-places > a > svg, .ov-places > button > svg, .ov-places > a > .ov-ic, .ov-places > button > .ov-ic { flex: none; width: 20px; height: 20px; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ov-places > a > em, .ov-places > button > em {
+    margin-left: auto; padding: 1px 7px; border-radius: 999px; font-style: normal; font-size: .74rem; font-weight: 800;
+    font-variant-numeric: tabular-nums; color: var(--text-primary, #f1f4fb); background: color-mix(in srgb, var(--text-primary, #f1f4fb) 10%, transparent);
+}
+.ov-places-extra { margin-top: 12px; }
+@media (max-width: 860px) {
+    .ov-places {
+        position: sticky; top: var(--ovnav-real-h, 52px); z-index: 20; flex-direction: row; gap: 6px;
+        margin: 0 calc(-1 * var(--ov-gutter, 16px)); padding: 8px var(--ov-gutter, 16px);
+        overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+        background: color-mix(in srgb, var(--bg-primary, #0b1220) 86%, transparent);
+        -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    }
+    .ov-places::-webkit-scrollbar { display: none; }
+    .ov-places > a, .ov-places > button {
+        flex: 1 0 auto; flex-direction: column; justify-content: center; gap: 4px; min-width: 76px; min-height: 58px;
+        padding: 8px 10px; font-size: .78rem; text-align: center; background: color-mix(in srgb, var(--text-primary, #f1f4fb) 5%, transparent);
+    }
+    .ov-places > a > em, .ov-places > button > em { position: absolute; top: 4px; right: 6px; margin: 0; font-size: .66rem; padding: 0 6px; }
+    .ov-places-extra { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ov-places > a, .ov-places > button { transition: none; } }
+

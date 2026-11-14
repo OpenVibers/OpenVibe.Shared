@@ -29,6 +29,11 @@ people and its peak, the peak's time in the reader's clock; open, the people are
 two columns. An open box stays open across the minute's repaint. Reads Network's /api/frame/online `guest_sites`,
 `people[].live` and `today` (OpenVibe.Network #937).
 
+**`.ov-places`, a page's own places in one shape** (kit-layout.css; the owner, 11-14, on Download: "move our tab to the
+top … a fixed tab system … icons … like our main menu area … so the layout can be reused for pages like this"): icon
+rows in a side column on a computer, a row of icon tabs that stays under the bar on a phone, counts as badges, an
+extra part (a meter) on the computer only.
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.
