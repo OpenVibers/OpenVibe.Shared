@@ -2268,10 +2268,13 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     function wearSiteLines(scope, o) {
         if (o.siteLines === false) return;
         siteLines(o).then((sites) => {
+            // Once a feed: a site's first card says it (4.253.0; Deals' hourly cards each repeated "3,839 new deals today").
+            const said = scope.__ovfdSaid || (scope.__ovfdSaid = new Set());
             scope.querySelectorAll('[data-ovfd-site]:not([data-ovfd-lined])').forEach((m) => {
                 m.setAttribute('data-ovfd-lined', '');
-                const s = sites[m.getAttribute('data-ovfd-site')];
-                if (s) m.append(h('span', 'ovfd-line', s.line));
+                const site = m.getAttribute('data-ovfd-site');
+                const s = sites[site];
+                if (s && !said.has(site)) { said.add(site); m.append(h('span', 'ovfd-line', s.line)); }
             });
         });
     }

@@ -1890,11 +1890,15 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const b0 = basis();
             const mineSite = b0.mineSite;
             if (!mineSite) return [];
-            // 4.249.0 (the owner, 11-14: "keep that roll … not randomized, but connected sites … stuff people go to from"):
-            // the sites this person goes to most, then (for a new person) the rest of this site's section.
+            // The owner, 11-14: "keep that roll … not randomized, but connected sites … stuff people go to from". 4.253.0:
+            // first the sites people go to next from this one (the Frame's `next`, from the network's own flows), then
+            // the sites this person goes to most, then (for a new person on a site with no flows yet) its section.
             const others = b0.ranked.filter((x) => x.id !== mineSite.id && x.name);
-            const used = others.filter((x) => useOf(x.id) > 0);
-            const pool = used.length >= 2 ? used : others.filter((x) => x.group === mineSite.group);
+            const byId = new Map(others.map((x) => [x.id, x]));
+            const f = ctx.frame;
+            const flows = (f && f.next && Array.isArray(f.next[mineSite.id]) ? f.next[mineSite.id] : []).map((id) => byId.get(id)).filter(Boolean);
+            const used = others.filter((x) => useOf(x.id) > 0 && !flows.includes(x));
+            const pool = flows.length + used.length >= 2 ? flows.concat(used) : others.filter((x) => x.group === mineSite.group);
             return pool.slice(0, 6).map((x) => ({ label: x.name, icon: x.icon || x.id }));
         } catch { return []; }
     }
@@ -1981,13 +1985,43 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
      * This site's tab: its own pages, then every OpenVibe site, compact and grouped (this site's group first). People
      * live show here only on Live itself; everywhere else they are the Feed's.
      */
+    /** A page's glyph from its name, for sites that name none (4.253.0): the first rule that fits, most specific first. */
+    const PAGE_GLYPHS = [
+        [/^(home|start|front page)$/i, 'fa-house'], [/search|\bfind\b/i, 'fa-magnifying-glass'], [/clip/i, 'fa-scissors'],
+        [/watchlist/i, 'fa-eye'], [/camera/i, 'fa-camera'], [/album/i, 'fa-images'], [/dashboard/i, 'fa-gauge'], [/receipt/i, 'fa-receipt'],
+        [/\blive\b|stream|broadcast/i, 'fa-tower-broadcast'], [/video|\bwatch\b|recording/i, 'fa-video'], [/flight/i, 'fa-plane'],
+        [/\btrips?\b|\bstays?\b|travel/i, 'fa-suitcase'], [/filing|document/i, 'fa-file-lines'], [/\bsources?\b|\blinks?\b/i, 'fa-link'],
+        [/\bbuild\b/i, 'fa-hammer'], [/\bspaces?\b/i, 'fa-layer-group'], [/deliver|food|meal|recipe/i, 'fa-utensils'],
+        [/\blists?\b|listing/i, 'fa-list'], [/this week|brief/i, 'fa-newspaper'],
+        [/message|chat|inbox/i, 'fa-comments'], [/\bjobs?\b|career|\bgigs?\b/i, 'fa-briefcase'], [/deal|coupon|sale|offer|pricing/i, 'fa-tag'],
+        [/\bdocs?\b|guide|learn|wiki|help|faq|support/i, 'fa-book'], [/\bapi\b|developer|\bcode\b|\bsdk\b/i, 'fa-code'],
+        [/coin|wallet|billing|money|earn|payout/i, 'fa-wallet'], [/alert|notification/i, 'fa-bell'],
+        [/stat|report|metric|analytic|leaderboard|ranking/i, 'fa-chart-line'], [/history|recent/i, 'fa-clock-rotate-left'],
+        [/\bfiles?\b|folder|drive|storage/i, 'fa-folder'], [/photo|picture|image|\bpics?\b|gallery|meme/i, 'fa-image'],
+        [/game|\bplay\b|arcade/i, 'fa-gamepad'], [/news|stor(y|ies)|blog|\bposts?\b/i, 'fa-newspaper'],
+        [/event|calendar|today|schedule/i, 'fa-calendar'], [/agent|\bbots?\b|robot|\bai\b|actor/i, 'fa-robot'],
+        [/server|\bnodes?\b|machine|computer|\bhost/i, 'fa-server'], [/security|privacy|safety|moderat/i, 'fa-shield-halved'],
+        [/people|member|friend|follow|community|forum/i, 'fa-users'], [/\bshop|store|market/i, 'fa-store'],
+        [/quest|badge|achievement|trophy|reward/i, 'fa-trophy'], [/\bmaps?\b|cit(y|ies)|route|tour|place/i, 'fa-map'],
+        [/music|audio|sound|voice/i, 'fa-music'], [/e-?mail|\bmail\b/i, 'fa-envelope'], [/\bkeys?\b|token|password|locker/i, 'fa-key'],
+        [/download|install|\bapps?\b/i, 'fa-download'], [/explore|discover|browse/i, 'fa-compass'], [/paste/i, 'fa-paste'],
+        [/design|theme|style/i, 'fa-wand-magic-sparkles'], [/setting|preference|account/i, 'fa-gear'], [/profile|^you$|^me$/i, 'fa-user'],
+    ];
+    function pageGlyphOf(label) {
+        const t = String(label || '').trim();
+        for (const [re, fa] of PAGE_GLYPHS) if (re.test(t)) return fa;
+        return '';
+    }
     function hereGroups() {
         const { all, mineSite, byId, f } = basis();
         const groups = [];
         if (mineSite && mineSite.id === 'live') { const g = liveGroup(); if (g) groups.push(g); }
         // This site's own cards (a drop zone on Download, go-live status on Live, a new task on Codes…).
         for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
-        const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: l.icon && typeof ctx.navIcon === 'function' ? ctx.navIcon(l.icon) : '', kind: 'page' })).filter((x) => x.url);
+        // Every page row wears its own glyph (4.253.0, plan §AA.38): the site's own (links[].icon), else one read from
+        // its name ("Jobs" a briefcase, "Live tours" a broadcast), else the arrow.
+        const pageIcon = (l) => l.icon || pageGlyphOf(l.label);
+        const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: pageIcon(l) && typeof ctx.navIcon === 'function' ? ctx.navIcon(pageIcon(l)) : '', kind: 'page' })).filter((x) => x.url);
         // A site's links that never name its home get one first, so the home page has a place of its own in the menu
         // and wears the highlight there too (owner 11-09, on openvibe.exchange: "shouldn't there be a link to home that's
         // highlighted").

@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.253.0 — 2026-11-14
+
+**The site tab's roll goes where people go next** (plan §AB.33; the owner: "keep that randomized roll, I like that …
+not randomized, but connected sites … stuff people go to from"). The menu's first tab rolls its name and glyph first
+through the sites people go to next from this one (the Frame's `next`, from the network's own flows), then the sites this
+person goes to most, and only for a site with no flows yet through its own section. Test:
+`test/menu-roll-flows-chrome.test.js`.
+
+**A site's line once a feed.** A site's live line ("3,839 new deals today") is said on its first card in the feed,
+not again on each of its hourly cards.
+
+**Every page in the menu wears its own glyph** (plan §AA.38). A page row uses the site's own icon (`links[].icon`) when
+it names one, else one read from the page's name ("Jobs" a briefcase, "Live tours" a broadcast, "Watchlists" an eye,
+"Albums" pictures, "Dashboard" a gauge), else the arrow; of the 129 pages the sites list today, 45 named no icon and
+all but one now have one. Test: `test/menu-page-glyphs-chrome.test.js`.
+
 ## 4.252.0 — 2026-11-14
 
 **No broken pictures in the feed** (plan §AB.43; the owner: "lots of broken and missing icons and images"). A video,
