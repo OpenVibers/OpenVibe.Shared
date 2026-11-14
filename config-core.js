@@ -276,6 +276,9 @@ const OWNER_INPUT_GROUPS = Object.freeze({
     money: 'Money',
     'ai-providers': 'AI providers',
     gpus: 'GPUs',
+    // 4.250.0 (plan §AB.17, §AB.19): servers for agent desktops, Codes runners and routers; sending and receiving mail.
+    servers: 'Servers',
+    email: 'Email',
     voices: 'Voices',
     'chat-apps': 'Chat apps',
     'sign-in-apps': 'Sign-in apps',

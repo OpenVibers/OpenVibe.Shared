@@ -14,6 +14,10 @@ hooks: `onOpen(ref, run)`, `onStart(text, files)`, `onBack()`.
 new conversation or the message (`attachments`; Chat #582 reads them). A picture shows under your words, any other
 file by its name; a message waiting in the queue keeps its files.
 
+**Two more setup steps** (plan §AB.17, §AB.19): `config.OWNER_INPUT_GROUPS` gains `servers` (Servers: agent desktops,
+Codes runners and routers) and `email` (Email: sending and receiving), after GPUs, so an owning service's
+`x-owner-input.group` can put a key there.
+
 ## 4.249.0 — 2026-11-14
 
 **Glyphs stand alone** (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and
