@@ -63,11 +63,11 @@
    its glyph is about half the tile, folders scale their four with it, and the grid lines up with the cards above. */
 .ovh-grid:not(.ovh-recent) { gap: 4px 2px; padding: 2px 0 0; justify-items: stretch; }
 .ovh-grid:not(.ovh-recent) .ovh-app { min-height: 0; padding: 6px 0 8px; gap: 7px; }
-.ovh-grid:not(.ovh-recent) .ovh-ic, .ovh-own-apps .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: 29%; }
+.ovh-grid:not(.ovh-recent) .ovh-ic, .ovh-own-apps .ovh-ic { width: min(100% - 12px, 72px); height: auto; aspect-ratio: 1; border-radius: var(--ov-app-corner, 22.5%); }
 .ovh-ic > .ov-icon { --ovi-size: 74.4%; display: grid; place-items: center; }
 .ovh-ic > .ov-icon svg { width: 100%; height: 100%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { grid-template-columns: repeat(2, 36%); grid-auto-rows: 36%; gap: 7%; place-content: center; }
-.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { width: 100%; height: 100%; border-radius: 30%; }
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { width: 100%; height: 100%; border-radius: var(--ov-app-corner, 22.5%); }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span .ov-icon { display: grid; place-items: center; width: 100%; height: 100%; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span .ov-icon svg { width: 150%; height: 150%; }
 .ovh-grid:not(.ovh-recent) .ovh-name { font-size: 12.5px; color: var(--text-primary, #e8ecf3); opacity: .86; }
@@ -376,7 +376,7 @@ html[data-ov-motion=off] .ovh-headtools .ovh-edit.is-done { animation: none; }
 .ovh-ic > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .ovh-ic > .ov-icon svg { position: absolute; left: -13%; top: -13%; width: 126%; height: 126%; margin: 0; transform: none !important; }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; gap: 9%; padding: 14%; box-sizing: border-box; place-content: center stretch; align-content: center; }
-.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 1; align-self: center; border-radius: 30%; overflow: hidden;
+.ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span { position: relative; display: block; width: 100%; height: auto; aspect-ratio: 1; align-self: center; border-radius: var(--ov-app-corner, 22.5%); overflow: hidden;
   background: linear-gradient(150deg, hsl(var(--ovh-h, 215) 72% 58% / .55), hsl(var(--ovh-h, 215) 70% 38% / .35)); box-shadow: inset 0 0 0 1px hsl(var(--ovh-h, 215) 70% 66% / .3); }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovh-h, 215) 92% 86%); color: hsl(var(--ovh-h, 215) 92% 86%); }
 .ovh-grid:not(.ovh-recent) .ovh-folder .ovh-ic > span > .ov-icon svg { position: absolute; left: -23%; top: -23%; width: 146%; height: 146%; margin: 0; transform: none !important; }
@@ -2405,7 +2405,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-head{display:flex;align-items:center;gap:8px;min-width:0}
 .ovfd-face{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--accent,#3b82f6);color:#fff;font-weight:800;font-size:15px}
 .ovfd-face img{width:100%;height:100%;object-fit:cover}
-.ovfd-face.is-site{border-radius:30%;background:none;overflow:visible}.ovfd-face.is-site>.ov-appicon{--ova-size:40px}
+.ovfd-face.is-site{border-radius:var(--ov-app-corner, 22.5%);background:none;overflow:visible}.ovfd-face.is-site>.ov-appicon{--ova-size:40px}
 .ovfd-who{min-width:0;display:grid}
 .ovfd-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ovfd-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}

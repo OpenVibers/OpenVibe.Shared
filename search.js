@@ -341,7 +341,7 @@ html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .
 /* 4.223.0 (the owner, 11-12: "the icons are so small, they're hard to see … make the icons bigger so they actually take up
    more of the square … fix the alignment"): a site's icon is an app icon in every tab — its own hue on a rounded square,
    the glyph at 58% of it, placed absolutely so no hover transform can move it off centre. */
-.ovs .ovs-ic.ovs-site { position: relative; overflow: hidden; border-radius: 30%; background: linear-gradient(150deg, hsl(var(--ovs-h, 215) 72% 58% / .36), hsl(var(--ovs-h, 215) 70% 38% / .2)); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 70% 64% / .3); }
+.ovs .ovs-ic.ovs-site { position: relative; overflow: hidden; border-radius: var(--ov-app-corner, 22.5%); background: linear-gradient(150deg, hsl(var(--ovs-h, 215) 72% 58% / .36), hsl(var(--ovs-h, 215) 70% 38% / .2)); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 70% 64% / .3); }
 .ovs .ovs-ic.ovs-site .ovi-ring, .ovs-ic.ovs-site .ovi-bg, .ovs-ic.ovs-site .ovi-comet, .ovs-ic.ovs-site .ovi-prog { display: none; }
 .ovs .ovs-ic.ovs-site > .ov-icon { position: absolute; inset: 0; width: 100%; height: 100%; display: block; --ovi-glyph: hsl(var(--ovs-h, 215) 92% 84%); color: hsl(var(--ovs-h, 215) 92% 84%); }
 :root[data-theme="light"] .ovs .ovs-ic.ovs-site > .ov-icon { --ovi-glyph: hsl(var(--ovs-h, 215) 70% 30%); color: hsl(var(--ovs-h, 215) 70% 30%); }
@@ -351,7 +351,7 @@ html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .
 @media (min-width: 560px) { .ovs-grid.is-mini { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); } }
 .ovs-grid.is-mini .ovs-tile { flex-direction: column; justify-content: flex-start; align-items: center; gap: 7px; min-height: 0; padding: 6px 0 8px; border-radius: 16px; text-align: center; background: transparent; }
 .ovs-grid.is-mini .ovs-tile > span:last-child { max-width: 100%; }
-.ovs-grid.is-mini .ovs-ic { width: min(100% - 14px, 64px); height: auto; aspect-ratio: 1; border-radius: 29%; transition: transform .22s cubic-bezier(.2, 1.4, .4, 1), box-shadow .22s; }
+.ovs-grid.is-mini .ovs-ic { width: min(100% - 14px, 64px); height: auto; aspect-ratio: 1; border-radius: var(--ov-app-corner, 22.5%); transition: transform .22s cubic-bezier(.2, 1.4, .4, 1), box-shadow .22s; }
 .ovs-grid.is-mini .ovs-tile b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%; white-space: normal; text-overflow: clip; font-size: 12px; font-weight: 650; line-height: 1.2; text-wrap: balance; }
 .ovs-grid.is-mini .ovs-tile.is-here { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
 .ovs-grid.is-mini .ovs-tile:active .ovs-ic { transform: scale(.93); transition-duration: .08s; }

@@ -83,7 +83,10 @@ const server = http.createServer((req, res) => {
         await p.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [head] });
         await p.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: head.x, y: head.y + 130 }] });
         await p.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-        assert.strictEqual(await p.evaluate('document.querySelector("#sheet").open'), false, 'a downward header swipe closes the sheet');
+        // The close may land a frame after the touch ends on a slow runner (macOS, 2026-11-14): wait for it, briefly.
+        let closed = false;
+        for (let i = 0; i < 30 && !closed; i++) { closed = await p.evaluate('!document.querySelector("#sheet").open'); if (!closed) await new Promise((ok) => setTimeout(ok, 50)); }
+        assert.strictEqual(closed, true, 'a downward header swipe closes the sheet');
         await p.evaluate('document.querySelector("#one").click()');
         await p.evaluate('document.querySelector("#two").click()');
         assert.deepStrictEqual(await p.evaluate('[document.querySelector("#pop1").hidden, document.querySelector("#pop2").hidden]'), [true, false], 'opening another closes the first');

@@ -562,7 +562,7 @@
     }
     function avatarOf(n) {
         const rich = richOf(n);
-        const img = n.sender_avatar || rich.thumbnail || (rich.user && rich.user.avatar_url);
+        const img = n.sender_avatar || (rich.agent && rich.agent.avatar_url) || rich.thumbnail || (rich.user && rich.user.avatar_url);
         return img && /^https?:\/\//.test(String(img)) ? String(img) : null;
     }
     /** A picture for the right of a row (rich_content.image, thumbnail_url or thumbnail), unless it is the avatar. */
@@ -575,6 +575,9 @@
     function glyphHtml(n, p) {
         const tone = TONE[p.tone] || TONE.accent;
         const img = p.kind === 'ops' ? null : avatarOf(n);
+        // 4.251.0: an agent with no picture is its glyph on its own hue (Actor's rich_content.agent { name, hue, glyph }).
+        const agent = richOf(n).agent;
+        if (!img && agent && Number.isInteger(agent.hue) && agent.hue >= 0 && agent.hue <= 359) return `<span class="ovn-glyph ovn-agent" style="--ovn-tone:hsl(${agent.hue} 75% 62%)" title="${esc(String(agent.name || 'Your agent').slice(0, 60))}">${svg(GLYPH[agent.glyph] || GLYPH[p.glyph] || GLYPH.bell)}</span>`;
         if (img) return `<span class="ovn-glyph ovn-avatar" style="--ovn-tone:${tone}"><img src="${esc(img)}" alt="" loading="lazy" onerror="this.remove()"><span class="ovn-badge">${svg(GLYPH[p.glyph] || GLYPH.bell)}</span></span>`;
         return `<span class="ovn-glyph" style="--ovn-tone:${tone}">${svg(GLYPH[p.glyph] || GLYPH.bell)}</span>`;
     }
@@ -999,7 +1002,7 @@
             <div class="openvibe-nv-head">
                 <h3>Notifications <span class="count zero">0</span></h3>
                 <div class="openvibe-nv-actions">
-                    <button type="button" data-act="read-all" title="Mark all as read">${svg(ICON.checkAll)}<span>Mark all read</span></button>
+                    <button type="button" data-act="read-all" title="Mark every notification read">${svg(ICON.checkAll)}<span>Clear all</span></button>
                     <button type="button" data-act="push" title="Push alerts on this device">${svg(ICON.bellOff)}<span>Push alerts</span></button>
                     <a href="${esc(inboxUrl().replace(/\/notifications$/, '/notifications#prefs'))}" data-act="prefs" title="Notification settings">${svg(ICON.gear)}<span>Settings</span></a>
                     ${mode === 'panel' ? `<a href="${esc(inboxUrl())}" data-act="inbox" title="Open the full inbox">${svg(ICON.open)}<span>Open inbox</span></a><button type="button" data-act="close" title="Close">${svg(ICON.close)}<span>Close</span></button>` : ''}
@@ -1016,7 +1019,7 @@
                 </div>
             </div>
             <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
-            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'dock' ? `<button type="button" class="ovn-foot-read" data-act="read-all-foot">${svg(ICON.checkAll)}Mark all read</button>` : ''}${mode === 'panel' || mode === 'dock' ? `<a href="${esc(inboxUrl())}">Full inbox${svg(ICON.go)}</a>` : ''}</div>`;
+            <div class="openvibe-nv-foot"><span data-role="status"></span>${mode === 'dock' ? `<button type="button" class="ovn-foot-read" data-act="read-all-foot">${svg(ICON.checkAll)}Clear all</button>` : ''}${mode === 'panel' || mode === 'dock' ? `<a href="${esc(inboxUrl())}">Full inbox${svg(ICON.go)}</a>` : ''}</div>`;
         const list = root.querySelector('[data-role="list"]');
         const input = root.querySelector('input[type="search"]');
         let qTimer = null;

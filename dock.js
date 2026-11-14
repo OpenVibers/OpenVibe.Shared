@@ -19,6 +19,9 @@
 
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const G = {
+        globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.6 5.4 3.6 8.5s-1.2 5.9-3.6 8.5c-2.4-2.6-3.6-5.4-3.6-8.5s1.2-5.9 3.6-8.5z"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        search: '<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/>',
         code: '<path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/>',
         spark: '<path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9-1.9 5.1-1.9-5.1L5 10.5l5.1-1.9z"/><path d="M18.4 15.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z"/>',
         bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/>',
@@ -145,6 +148,20 @@
             .ovdk-ib:hover, .ovdk-ib:focus-visible { background: var(--hover-bg, rgba(127,127,127,.12)); color: var(--text-primary, #ececf1); }
             .ovdk-thread-h .ovdk-ib { margin-left: auto; }
             .ovdk-chats { list-style: none; margin: 0; padding: 6px; display: grid; gap: 2px; }
+            .ovdk-rail { display: flex; gap: 8px; overflow-x: auto; padding: 10px 10px 8px; scrollbar-width: none; border-bottom: 1px solid var(--border, rgba(148,163,184,.14)); }
+            .ovdk-rail::-webkit-scrollbar { display: none; }
+            .ovdk-rail-i { all: unset; flex: none; display: grid; justify-items: center; gap: 4px; width: 54px; cursor: pointer; text-decoration: none; }
+            .ovdk-rail-t { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--ov-app-corner, 22.5%); color: var(--text-secondary, #a8b3c4); background: color-mix(in srgb, var(--text-primary, #e6edf3) 7%, transparent); transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), background-color .2s; }
+            .ovdk-rail-t svg { width: 22px; height: 22px; }
+            .ovdk-rail-t.is-server { color: #fff; background: hsl(var(--rh, 215) 55% 42%); overflow: visible; }
+            .ovdk-rail-t.is-server img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+            .ovdk-rail-t.is-server b { font-size: 17px; font-weight: 800; }
+            .ovdk-rail-i:hover .ovdk-rail-t, .ovdk-rail-i:focus-visible .ovdk-rail-t { transform: translateY(-2px); background-color: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
+            .ovdk-rail-i:hover .ovdk-rail-t.is-server, .ovdk-rail-i:focus-visible .ovdk-rail-t.is-server { background-color: hsl(var(--rh, 215) 60% 48%); }
+            .ovdk-rail-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--text-secondary, #a8b3c4); }
+            .ovdk-rail-div { flex: none; align-self: center; width: 1px; height: 32px; margin: 0 2px 16px; background: var(--border, rgba(148,163,184,.2)); }
+            .ovdk-rail-dot { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; display: grid; place-items: center; font: 700 10.5px/1 Inter, sans-serif; font-style: normal; color: #fff; background: #ef4444; box-shadow: 0 0 0 2px var(--bg-elevated, #1d1f27); }
+            html[data-ov-motion="off"] .ovdk-rail-t { transition: none; }
             .ovdk-friends { display: grid; gap: 8px; padding: 8px 10px 4px; border-bottom: 1px solid var(--border, rgba(148,163,184,.14)); }
             .ovdk-sec { margin: 0 2px; font-size: 11.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted, #8b8b96); }
             .ovdk-friends-row { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none; }
@@ -434,7 +451,8 @@
         if (!chats.list) { panel.innerHTML = '<div class="ovdk-wait"><span></span></div>'; }
         const sharing = chats.draft && canWriteChat() ? load('dock-share.js', () => !!(root.OpenVibeDockShare && root.OpenVibeDockShare.bar)) : null;
         try {
-            const [dm, ai, people] = await Promise.all([chatCall('/api/dm/conversations'), chatCall('/api/vibe/conversations').catch(() => null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null))]);
+            const [dm, ai, people, srv] = await Promise.all([chatCall('/api/dm/conversations'), chatCall('/api/vibe/conversations').catch(() => null), friendsCall('').catch(() => chatCall('/api/dm/contacts').catch(() => null)), chatCall('/api/chat/servers?limit=12').catch(() => null)]);
+            chats.servers = srv && Array.isArray(srv.mine) ? srv.mine.slice(0, 12) : [];
             chats.people = people && Array.isArray(people.mutual) ? { friends: people.mutual, requests: people.requests || [], network: true } : people && Array.isArray(people.friends) ? people : null;
             chats.list = dm.conversations || [];
             chats.vibeSummary = ai && ai.count ? { kind: 'vibe', count: ai.count, latest: ai.conversations && ai.conversations[0], last_message_at: ai.conversations && ai.conversations[0] && ai.conversations[0].last_message_at } : null;
@@ -446,6 +464,7 @@
         // Open in Chat, as an icon over your conversations (ask 336).
         const bar = h('div', 'ovdk-bar'); bar.append(toChat('https://openvibe.chat/messages')); panel.append(bar);
         const scroll = h('div', 'ovdk-scroll');
+        scroll.append(railStrip(chats.servers || []));
         if (chats.people) scroll.append(friendsStrip(chats.people));
         if (!chats.list.length && !chats.vibeSummary) {
             const none = h('div', 'ovdk-none');
@@ -504,6 +523,41 @@
         const b = await r.json().catch(() => ({}));
         if (!r.ok) { const e = new Error(b.detail || b.error || `HTTP ${r.status}`); e.status = r.status; throw e; }
         return b;
+    }
+    /** 4.251.0 (plan §AB.53; the owner: "the same system … like the Discord thing … integrated together as one cohesive
+     *  product, and also available in the menu"): openvibe.chat's rail as a strip on top of the menu's Chat, the same
+     *  places in the same order: Home (your messages), Global, Vibe, your servers (unread marked), New and Explore. */
+    function railStrip(servers) {
+        const CHAT = 'https://openvibe.chat';
+        const wrap = h('nav', 'ovdk-rail'); wrap.setAttribute('aria-label', 'Chat places');
+        const place = (label, glyph, href, extra) => {
+            const a = h(href ? 'a' : 'button', 'ovdk-rail-i'); if (href) a.href = href; else a.type = 'button';
+            const tile = h('span', 'ovdk-rail-t'); tile.append(glyph);
+            a.append(tile, h('span', 'ovdk-rail-n', label)); a.setAttribute('aria-label', label);
+            if (extra) extra(a, tile);
+            return a;
+        };
+        wrap.append(place('Home', icon(G.chat), `${CHAT}/messages`), place('Global', icon(G.globe), `${CHAT}/`));
+        wrap.append(place('Vibe', icon(G.vibe || G.spark), null, (a) => a.addEventListener('click', () => {
+            if (!a.dispatchEvent(new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true }))) return;
+            vibeOnList = true; save({ vibe: null }); setTab('vibe', true);
+        })));
+        if (servers.length) wrap.append(h('span', 'ovdk-rail-div'));
+        servers.forEach((sv) => {
+            const slug = String(sv.slug || ''); if (!/^[a-z0-9][a-z0-9-]{0,63}$/i.test(slug)) return;
+            const name = String(sv.name || slug).slice(0, 40);
+            let hue = 0; for (let i = 0; i < slug.length; i++) hue = (hue * 31 + slug.charCodeAt(i)) % 360;
+            const pic = typeof sv.picture_url === 'string' && /^https:\/\//.test(sv.picture_url) ? sv.picture_url : '';
+            wrap.append(place(name, (() => {
+                if (pic) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.src = pic; return img; }
+                return h('b', '', name.charAt(0).toUpperCase());
+            })(), `${CHAT}/s/${encodeURIComponent(slug)}`, (a, tile) => {
+                tile.classList.add('is-server'); tile.style.setProperty('--rh', String(hue));
+                const n = Number(sv.unread) || 0; if (n) { tile.append(h('i', 'ovdk-rail-dot', n > 99 ? '99+' : String(n))); a.setAttribute('aria-label', `${name}, ${n} unread`); }
+            }));
+        });
+        wrap.append(place('New', icon(G.plus), `${CHAT}/servers#oc-new-server`), place('Explore', icon(G.search), `${CHAT}/servers`));
+        return wrap;
     }
     function friendsStrip(people) {
         const box = h('div', 'ovdk-friends');

@@ -160,7 +160,7 @@
     /** The app icon's own rules (design rule 142). A page drawn on the server puts these in its stylesheet once
      * (OpenVibeIcons.APP_CSS) and its appHtml() icons are whole before any script runs. */
     const APP_CSS = `
-.ov-appicon{--ova-h:215;--ova-size:56px;position:relative;display:inline-block;flex:none;width:var(--ova-size);height:var(--ova-size);border-radius:30%;overflow:hidden;vertical-align:middle;background:linear-gradient(150deg,hsl(var(--ova-h) 72% 58% / .36),hsl(var(--ova-h) 70% 38% / .2));box-shadow:inset 0 0 0 1px hsl(var(--ova-h) 70% 64% / .3)}
+.ov-appicon{--ova-h:215;--ova-size:56px;position:relative;display:inline-block;flex:none;width:var(--ova-size);height:var(--ova-size);border-radius:var(--ov-app-corner, 22.5%);overflow:hidden;vertical-align:middle;background:linear-gradient(150deg,hsl(var(--ova-h) 72% 58% / .36),hsl(var(--ova-h) 70% 38% / .2));box-shadow:inset 0 0 0 1px hsl(var(--ova-h) 70% 64% / .3)}
 .ov-appicon>.ov-icon{position:absolute;inset:0;width:100%;height:100%;display:block;--ovi-glyph:hsl(var(--ova-h) 92% 84%);color:hsl(var(--ova-h) 92% 84%)}
 .ov-appicon>.ov-icon svg{position:absolute;left:-13%;top:-13%;width:126%;height:126%;margin:0;transform:none!important}
 .ov-appicon .ovi-ring,.ov-appicon .ovi-bg,.ov-appicon .ovi-comet,.ov-appicon .ovi-prog{display:none}
