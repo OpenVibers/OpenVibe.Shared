@@ -17,9 +17,9 @@ const MEMBERS = [
     ['community', 'chat', 'tips', 'vip', 'email', 'help', 'network'],
     ['games', 'quest', 'surf', 'fun', 'meme', 'casino', 'inventory'],
     ['news', 'today', 'report', 'search', 'wiki', 'blog', 'vision'],
-    ['deals', 'coupons', 'shoes', 'reviews', 'trade', 'rent', 'work'],
+    ['deals', 'coupons', 'shoes', 'reviews', 'trade', 'markets', 'finance', 'rent', 'work'],
     ['tools', 'design', 'domains', 'host', 'studio', 'locker', 'food'],
-    ['space', 'codes', 'bot', 'actor', 'computer', 'connect'],
+    ['space', 'codes', 'bot', 'actor', 'expert', 'computer', 'connect'],
     ['services', 'exchange', 'run', 'zone', 'events', 'watch', 'git'],
 ];
 
