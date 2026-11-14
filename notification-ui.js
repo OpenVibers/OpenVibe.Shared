@@ -236,8 +236,16 @@
             .openvibe-notif-dock .openvibe-nv-unread svg { width: 18px; height: 18px; }
             .openvibe-notif-dock .openvibe-nv-unread[aria-pressed="true"], .openvibe-notif-dock .openvibe-nv-unread:hover, .openvibe-notif-dock .openvibe-nv-search:hover { opacity: 1; }
             html[data-ov-motion=off] .openvibe-notif-dock .openvibe-nv-search.is-open { animation: none; }
-            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open), .openvibe-notif-dock .openvibe-nv-unread { width: 44px; height: 44px; }
-            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 44px; }
+            /* 4.248.0 (the owner, 11-14: "these icons are offset … waste of space"): two 40 px disks, their glyphs centred on a
+               grid, on the tabs' own line; the row sits right under the switch above it. */
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open), .openvibe-notif-dock .openvibe-nv-unread { width: 40px; height: 40px; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 40px; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) > svg { left: 50%; transform: translate(-50%, -50%); }
+            .openvibe-notif-dock .openvibe-nv-unread { display: grid; place-items: center; }
+            .openvibe-notif-dock .openvibe-nv-unread svg { display: block; margin: 0; }
+            .openvibe-notif-dock .openvibe-nv-find { padding-bottom: 0; align-self: center; gap: 4px; }
+            .openvibe-notif-dock .openvibe-nv-tools { padding: 0 8px 0 10px; gap: 4px; min-height: 44px; }
+            .openvibe-notif-dock .openvibe-nv-search, .openvibe-notif-dock .openvibe-nv-unread { box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 3px 8px -5px rgba(0,0,0,.6); }
             .openvibe-notif-dock .openvibe-nv-search > svg { left: 11px; width: 22px; height: 22px; }
             .openvibe-notif-dock .openvibe-nv-unread svg { width: 22px; height: 22px; }
             .openvibe-notif-dock .openvibe-nv-unread { gap: 0; }   /* its word is hidden (font-size 0): no gap may push the glyph off centre */
