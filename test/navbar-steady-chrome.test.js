@@ -47,7 +47,7 @@ const server = http.createServer((req, res) => {
         await p.evaluate("window.__bar = document.querySelector('.openvibe-navbar'); window.__mark = document.querySelector('.openvibe-navbar-brand .ov-mark'); true");
         // The same person again: the same bar.
         await p.evaluate("OpenVibeNavbar.setUser({ id: 'u1', username: 'ada', display_name: 'Ada' }, 'tok-1'); true");
-        await wait(200);
+        // A redraw would happen at once (render is synchronous): the same element, still, after the call returns.
         assert.strictEqual(await p.evaluate("document.querySelector('.openvibe-navbar') === window.__bar"), true, 'the same person: the bar is not drawn again');
         // Another person: a new bar, the same mark.
         await p.evaluate("OpenVibeNavbar.setUser({ id: 'u2', username: 'grace', display_name: 'Grace' }, 'tok-2'); true");
@@ -60,7 +60,7 @@ const server = http.createServer((req, res) => {
         await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: near.x, y: near.y });
         await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: near.x + 2, y: near.y });
         await p.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: out.x, y: out.y });
-        await wait(200);
+        await until(p, "document.querySelectorAll('link[rel=prefetch]').length > 0", 'the prefetch hint');
         const hints = await p.evaluate("[...document.querySelectorAll('link[rel=prefetch]')].map((l) => new URL(l.href).pathname)");
         assert.deepStrictEqual(hints, ['/next'], 'the next page is fetched ahead once; sign-out never');
         console.log('navbar-steady-chrome: ok');
