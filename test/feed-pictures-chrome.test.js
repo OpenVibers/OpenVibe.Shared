@@ -29,6 +29,7 @@ const items = [
             { id: 'f:work:job:a', url: 'https://openvibe.work/j/a', title: 'GIS engineer', media: { thumb: BROKEN } },
             { id: 'f:work:job:b', url: 'https://openvibe.work/j/b', title: 'Night editor', media: null },
             { id: 'f:work:job:c', url: 'https://openvibe.work/j/c', title: 'Sound tech', media: null }] } },
+    { id: 'f:work:job:9', kind: 'work', url: 'https://openvibe.work/jobs/job_aaaaaaaaaa9', title: 'Night porter', at: at(4.5), site: 'work', site_name: 'Work', actor: null, label: 'Work', media: null },
     { id: 'f:live:stream:5', kind: 'live', live_now: false, url: 'https://openvibe.live/@dee', title: 'Dee went live: art', at: at(5), site: 'live', site_name: 'Live', actor: { name: 'Dee', avatar: BROKEN } },
     { id: 'f:live:stream:6', kind: 'live', live_now: false, url: 'https://openvibe.live/@eve', title: 'Eve went live: games', at: at(6), site: 'live', site_name: 'Live', actor: { name: 'Eve', avatar: BROKEN } },
 ];
@@ -78,7 +79,7 @@ const server = http.createServer((req, res) => {
             'no broken picture is left showing');
         // A site's own card wears the site's live line (plan §AB.46); a person's card does not.
         assert.ok(await wait(`(document.querySelector('[data-ovfd-site="work"] .ovfd-line') || {}).textContent === '14 new jobs today'`), 'a site\'s card says what is new there');
-        assert.strictEqual(await page.evaluate(`document.querySelectorAll('.ovfd-line').length`), 1, 'only the site\'s own card wears it');
+        assert.strictEqual(await page.evaluate(`document.querySelectorAll('.ovfd-line').length`), 1, 'only the site\'s own card wears it, once a feed (two Work cards, one line)');
         // The views beacon: the cards were on screen for a second; hiding the page sends them.
         await new Promise((ok) => setTimeout(ok, 1400));
         await page.evaluate(`Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true }); document.dispatchEvent(new Event('visibilitychange'))`);
