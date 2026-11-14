@@ -2,6 +2,11 @@
 
 ## 4.249.0 — 2026-11-14
 
+**Each Vibe chat wears its persona** (the owner, 11-12: "for each vibe chat, it should generate a name … and then it'll
+generate an avatar for that chat bot"; OpenVibe.Chat makes them, docs/vibe-personas.md). The Dock's Vibe list and an
+open chat show the persona's picture (https only), else its registry glyph on its own hue, with its topic under the
+name; the Chat list's Vibe row shows the latest chat's picture. No persona yet: Vibe's mark, as before.
+
 **The feed counts what people saw** (the owner, 11-14: "add view count to this feed and everything in the feed … so
 you can see analytics … like Twitter does"). ov-home's feed: a card at least half on screen for a second is seen, once
 per page; the ids go to the Network's `POST /api/v1/feed/views` (Network #944) in batches of up to 20 by

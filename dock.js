@@ -459,7 +459,9 @@
                     const body = h('span', 'ovdk-chat-b'); body.append(h('b', '', 'Vibe'), h('span', 'ovdk-chat-p', `${c.count} chat${c.count === 1 ? '' : 's'}${c.latest && c.latest.name ? ` · ${c.latest.name}` : ''}`));
                     const meta = h('span', 'ovdk-chat-m'); const at = c.latest && c.latest.last_answer_at;
                     const t = h('time', '', when(at || c.last_message_at)); if (at) t.title = answered(at); meta.append(t);
-                    const av = h('span', 'ovdk-av ovdk-av-vibe'); av.append(icon(G.vibe));
+                    const av = h('span', 'ovdk-av ovdk-av-vibe'); const lp = c.latest && c.latest.persona;
+                    // 4.249.0: the latest Vibe chat's persona picture, when it has one (Chat's personas); else Vibe's mark.
+                    if (lp && typeof lp.image_url === 'string' && /^https:\/\//.test(lp.image_url)) { const img = h('img'); img.alt = ''; img.src = lp.image_url; img.loading = 'lazy'; img.onerror = () => { img.remove(); av.append(icon(G.vibe)); }; av.append(img); } else av.append(icon(G.vibe));
                     b.append(av, body, meta); b.setAttribute('aria-label', 'Open Vibe');
                     b.addEventListener('click', () => {
                         if (!b.dispatchEvent(new CustomEvent('openvibe:open-vibe', { bubbles: true, cancelable: true }))) return;
