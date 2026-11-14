@@ -417,7 +417,7 @@
             box.textContent = ''; box.className = 'ovr is-thread is-pending';
             const head = el('div', 'ovr-thead');
             const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.append(svg('back'));
-            back.addEventListener('click', () => list());
+            back.addEventListener('click', () => { if (typeof o.onBack === 'function') o.onBack(); else list(); });
             const who = el('div', 'ovr-who'); who.append(el('b', '', agentName()), el('small', '', 'Starting'));
             head.append(back, agentFace('s', 'working'), who);
             const thread = el('div', 'ovr-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
@@ -544,7 +544,7 @@
                     });
                     box.append(st);
                 }
-                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => start(v.text) });
+                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => (typeof o.onStart === 'function' ? o.onStart(v.text) : start(v.text)) });
             }
             place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
@@ -619,7 +619,8 @@
             if (o.agent && !meta.querySelector('.ovr-pill')) t.append(top, line); else t.append(top, line, meta);
             const mine = o.agent && r.agent && (r.agent.id === 'vibe' || r.agent.name === agentName());
             b.append(mine ? agentFace('m', r.status === 'running' ? 'working' : undefined) : face(r), t);
-            if (!away) b.addEventListener('click', () => open(r.ref || r.id, r));
+            b.dataset.ref = String(r.ref || r.id || '');
+            if (!away) b.addEventListener('click', () => { if (typeof o.onOpen === 'function') o.onOpen(r.ref || r.id, r); else open(r.ref || r.id, r); });
             return b;
         }
         /** A run that asks before it acts is answered from the list (the Action Center's approve in place). */
@@ -660,7 +661,7 @@
             box.textContent = ''; box.className = `ovr is-thread${how.home ? ' is-home' : ''}`;
             const head = el('div', 'ovr-thead');
             const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'));
-            back.addEventListener('click', () => list());
+            back.addEventListener('click', () => { if (typeof o.onBack === 'function') o.onBack(); else list(); });
             const who = el('div', 'ovr-who'); const title = el('b'); const sub = el('small');
             who.append(title, sub);
             const away = el('a', 'ovr-ib'); away.setAttribute('aria-label', 'Open on its own page'); away.title = 'Open on its own page'; away.target = '_blank'; away.rel = 'noopener'; away.append(svg('open'));
@@ -850,8 +851,33 @@
             };
             put();
         }
-        const view = { list, open, start, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
-        if (o.open) open(o.open); else list();
+        /** A new conversation with your agent before anything is said (4.250.0, the page's right side): its face and
+         *  name, what it does, the starters, and the box. */
+        function blank() {
+            clearStream(); dropTop(); dropPane();
+            state.gen++; state.view = 'blank'; state.run = null; state.steps = new Map();
+            place({ blank: true });
+            box.textContent = ''; box.className = 'ovr is-blank';
+            const hello = el('div', 'ovr-blank');
+            const faceSlot = el('span', 'ovr-blank-face'); faceSlot.append(agentFace('xl'));
+            const name = el('b', 'ovr-blank-n', agentName());
+            hello.append(faceSlot, name, el('p', 'ovr-blank-s', 'Ask anything. It answers, searches the web and OpenVibe, makes things, and hands bigger work to the right place: code to Codes, tasks to your agents.'));
+            box.append(hello);
+            if (Array.isArray(o.starters) && o.starters.length) {
+                const st = el('div', 'ovr-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
+                o.starters.slice(0, 8).forEach((x) => {
+                    const [ic, words] = Array.isArray(x) ? x : ['spark', String(x)];
+                    const b = el('button', 'ovr-starter'); b.type = 'button'; b.append(svg(G[ic] ? ic : 'spark'), el('span', '', words));
+                    b.addEventListener('click', () => { b.disabled = true; start(words); });
+                    st.append(b);
+                });
+                box.append(st);
+            }
+            composer(box, { placeholder: `Message ${agentName()}`, onSend: (v) => start(v.text) });
+            if (o.agent) loadAgent().then(() => { if (state.view !== 'blank' || !faceSlot.isConnected) return; faceSlot.textContent = ''; faceSlot.append(agentFace('xl')); name.textContent = agentName(); });
+        }
+        const view = { list, open, start, blank, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
+        if (o.open) open(o.open); else if (o.blank) blank(); else list();
         return view;
     }
 
@@ -861,6 +887,24 @@
         styled = true;
         const st = document.createElement('style'); st.id = 'ovr-styles';
         st.textContent = `
+.ovr-page { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); height: 100%; min-height: 0; }
+.ovr-page-list { min-height: 0; overflow: hidden; display: flex; flex-direction: column; border-right: 1px solid var(--border, rgba(255,255,255,.08)); padding: 10px 10px 0; }
+.ovr-page-main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px clamp(10px, 3vw, 28px) 0; }
+.ovr-page-main > .ovr { max-width: 860px; width: 100%; margin-inline: auto; }
+.ovr-page .ovr .ovr-rows .ovr-row.is-open { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 3px 0 0 var(--accent, #3b82f6); }
+@media (min-width: 900px) { .ovr-page-main .ovr-thead > .ovr-ib:first-child { display: none; } }
+@media (max-width: 899px) {
+  .ovr-page { grid-template-columns: minmax(0, 1fr); }
+  .ovr-page-list { border-right: 0; }
+  .ovr-page-main { display: none; }
+  .ovr-page.is-open .ovr-page-list { display: none; }
+  .ovr-page.is-open .ovr-page-main { display: flex; }
+}
+.ovr.is-blank { justify-content: flex-end; }
+.ovr-blank { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px 12px; }
+.ovr-blank-n { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.ovr-blank-s { margin: 0; max-width: 46ch; color: var(--text-secondary, #96a7c2); font-size: 14.5px; line-height: 1.5; }
+.ovr-blank-face { display: grid; place-items: center; margin-bottom: 4px; }
 .ovr { --ovr-gap: 12px; display: flex; flex-direction: column; min-height: 0; height: 100%; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text-primary, #e6edf7); }
 .ovr svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .ovr-head { padding: 4px 4px 8px; }
@@ -1110,6 +1154,37 @@ html[data-ov-motion=off] .ovr-row, html[data-ov-motion=off] .ovr-step, html[data
         document.head.appendChild(st);
     }
 
-    root.OpenVibeRun = { mount, card, version: 1 };
+    /**
+     * 4.250.0, the page (plan §AB.8/47; the owner: "the same conversation system everywhere … capable of everything"):
+     * openvibe.chat/vibe, Codes' start page and Actor's console draw the menu's messenger full-page. A computer: your
+     * agents and conversations on the left, the open conversation on the right. A phone: one at a time, Back between.
+     *   const page = OpenVibeRun.page(host, { ...the mount options, open?: ref });   page.list, page.main, page.destroy()
+     * The host gives `host` its height (the page under the navbar); the two sides scroll on their own.
+     */
+    function page(host, o = {}) {
+        styles();
+        host.textContent = '';
+        const wrap = el('div', 'ovr-page');
+        const left = el('div', 'ovr-page-list'), right = el('div', 'ovr-page-main');
+        wrap.append(left, right); host.append(wrap);
+        let main = null, list = null, openRef = '';
+        const mark = (ref) => { openRef = String(ref || ''); left.querySelectorAll('.ovr-row').forEach((r) => r.classList.toggle('is-open', !!openRef && r.dataset.ref === openRef)); };
+        const show = (on) => wrap.classList.toggle('is-open', !!on);
+        const placed = (p) => {
+            if (p && p.ref) { mark(p.ref); if (list && list.state.view === 'list' && !left.querySelector(`.ovr-row[data-ref="${CSS.escape(String(p.ref))}"]`)) list.list(undefined, { stay: true, history: true }); }
+            if (p && p.blank) mark('');
+            try { if (typeof o.onPlace === 'function') o.onPlace(p); } catch { /* the host's */ }
+        };
+        main = mount(right, { ...o, open: o.open || null, blank: !o.open, onBack: () => { show(false); mark(''); }, onPlace: placed });
+        list = mount(left, { ...o, open: null,
+            onOpen: (ref, r) => { main.open(ref, r); show(true); mark(ref); },
+            onStart: (text) => { main.start(text); show(true); } });
+        // The list repaints its rows on its own (a filter, a refresh): the open one stays marked.
+        if (typeof MutationObserver === 'function') new MutationObserver(() => mark(openRef)).observe(left, { childList: true, subtree: true });
+        if (o.open) show(true);
+        const newer = () => { main.blank(); show(true); };
+        return { list, main, blank: newer, destroy() { try { list.destroy(); } catch { /* */ } try { main.destroy(); } catch { /* */ } host.textContent = ''; } };
+    }
+    root.OpenVibeRun = { mount, page, card, version: 1 };
     if (typeof module !== 'undefined' && module.exports) module.exports = root.OpenVibeRun;
 })(typeof window !== 'undefined' ? window : globalThis);
