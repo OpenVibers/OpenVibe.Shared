@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.255.0 — 2026-11-14
+
+**The composer's icons draw on every page** (plan §AB.49). The classless base (kit-layout.css, `.ov-base`) pads every
+bare button `.5em 1.1em`, and the composer's 40 px icon buttons (`.ovt-btn` in ov-composer.js and thread.css) set a
+width but no padding: on openvibe.exchange the mic and the + under the model search drew 4.5 px wide, two blank boxes.
+Each icon button now sets `padding: 0` and border-box sizing. Test: `test/composer-on-base-chrome.test.js` (Exchange's
+own server-rendered search composer and the mounted presets on an `.ov-base` page; it fails on 4.254.0).
+
 ## 4.254.0 — 2026-11-14
 
 **A code grid is never wider than the phone** (plan §AB.49). `.sc-code`'s columns were at least 320 px and, on a phone,
