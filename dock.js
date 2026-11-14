@@ -516,7 +516,7 @@
             const b = h('button', 'ovdk-friend'); b.type = 'button'; b.setAttribute('role', 'listitem');
             b.setAttribute('aria-label', `Message ${p.display_name || p.username}`);
             const face = avatar(p, false); if (p.online) { face.classList.add('is-online'); face.title = p.site ? `Online on ${p.site}` : 'Online'; }
-            b.append(face, h('span', 'ovdk-friend-n', String(p.display_name || p.username).slice(0, 14)));
+            b.append(face, setSubject(h('span', 'ovdk-friend-n', String(p.display_name || p.username).slice(0, 14)), p));
             b.addEventListener('click', () => talkTo(p));
             row.append(b);
         }
@@ -543,7 +543,8 @@
             const r = h('div', 'ovdk-request');
             const ok = h('button', 'ovdk-request-ok', 'Accept'); ok.type = 'button';
             ok.addEventListener('click', async () => { ok.disabled = true; try { if (people.network) await friendsCall(`/${encodeURIComponent(p.subject || p.username)}/accept`, { method: 'POST', body: '{}' }); else await chatCall(`/api/dm/contacts/${encodeURIComponent(p.id)}/accept`, { method: 'POST', body: '{}' }); chatList(); } catch { ok.disabled = false; } });
-            r.append(avatar(p, false), h('span', 'ovdk-request-t', `${p.display_name || p.username} wants to be your friend`), ok);
+            const who = setSubject(h('b', 'ovdk-request-n', String(p.display_name || p.username).slice(0, 40)), p); const t = h('span', 'ovdk-request-t'); t.append(who, document.createTextNode(' wants to be your friend'));
+            r.append(avatar(p, false), t, ok);
             box.append(r);
         }
         box.append(add, note);

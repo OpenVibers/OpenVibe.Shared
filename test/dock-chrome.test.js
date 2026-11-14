@@ -335,8 +335,9 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.evaluate(MENU_BUTTON);
             // 4.240.0 (one agent): the menu opens on Vibe with Tasks chosen, one list where what needs you comes first; no
             // Dock panel is lent into it.
-            const place = await until(p, `(() => { const f = document.querySelector('.ovs.is-open .ovs-door-host .ovr-filter[aria-selected="true"]'); const rows = [...document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)')]; return f && rows.length >= 3 ? { filter: f.dataset.filter, needs: rows.map((r) => r.classList.contains('is-needs')), lent: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovr-pane .ovdk') } : null; })()`, 'the menu, open on your agent\'s tasks');
-            assert.deepStrictEqual([place.filter, place.needs[0], place.lent], ['task', true, false], 'Tasks chosen, what needs you first, and no Dock panel lent');
+            // 4.249.0 (a messenger of agents): your agents' faces on top, then one list where what needs you comes first.
+            const place = await until(p, `(() => { const s = document.querySelector('.ovs.is-open .ovs-door-host .ovr-people .ovr-person'); const rows = [...document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)')]; return s && rows.length >= 3 ? { filters: document.querySelectorAll('.ovs-door-host .ovr-filter').length, needs: rows.map((r) => r.classList.contains('is-needs')), lent: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovr-pane .ovdk') } : null; })()`, 'the menu, open on your agent\'s conversations');
+            assert.deepStrictEqual([place.filters, place.needs[0], place.lent], [0, true, false], 'no filters, what needs you first, and no Dock panel lent');
             assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'inside the menu, nothing floating');
             await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'its answer buttons');
             decided.length = 0;
@@ -362,20 +363,14 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length === 4", 'the run and the Action Center\'s three');
             const all = await p.evaluate(`({ filters: [...document.querySelectorAll('.ovs-door-host .ovr-filter')].map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')),
                 titles: [...document.querySelectorAll('.ovs-door-host .ovr-row-top b')].map((b) => b.textContent), sw: !!document.querySelector('.ovs-door-sw, [data-part]'),
-                top: !!document.querySelector('.ovs-door-host .ovr-agent'), runsList: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovdk .ovdk-actor, .ovs-door-host .ovr-pane .ovdk'),
-                starters: document.querySelectorAll('.ovs-door-host .ovr-starter').length, wide: document.documentElement.scrollWidth > innerWidth })`);
-            assert.deepStrictEqual(all.filters, ['All*', 'Chats', 'Tasks', 'Code'], 'All · Chats · Tasks · Code, on All');
+                top: !!document.querySelector('.ovs-door-host .ovr-people .ovr-person'), runsList: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovdk .ovdk-actor, .ovs-door-host .ovr-pane .ovdk'),
+                starters: document.querySelectorAll('.ovs-door-host .ovr-starters:not([hidden]) .ovr-starter').length, wide: document.documentElement.scrollWidth > innerWidth })`);
+            assert.deepStrictEqual(all.filters, [], '4.249.0: no filters over your agent\'s conversations');
             assert.deepStrictEqual(all.titles, ['Send the weekly digest?', 'Fix the flaky upload test', 'Compare three VPS offers', 'Patch notes for 4.162'], 'what needs you first, then newest (the work a minute ago, the chat four): a run and the Action Center\'s work in one list');
-            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.starters, all.wide], [false, true, false, 6, false], 'no switch; your agent above, no Dock list or Actor card; the six starters; nothing off the screen');
+            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.starters, all.wide], [false, true, false, 0, false], 'no switch; your agents\' faces above, no Dock list or Actor card; no starters over conversations; nothing off the screen');
             if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-all-390.png'), Buffer.from(r.data, 'base64')); }
-            // Tasks: a filter over the same list, never a panel of its own.
-            await p.evaluate(`document.querySelector('.ovs-door-host .ovr-filter[data-filter="task"]').click()`);
-            await until(p, "document.querySelector('.ovs-door-host .ovr-filter[data-filter=task]').getAttribute('aria-selected') === 'true' && document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3", 'Tasks: the same list, filtered');
-            assert.strictEqual(await p.evaluate("!document.querySelector('.ovs-door-host .ovr-pane .ovdk') && !document.querySelector('.ovs-door-host .ovdk .ovac-item')"), true, 'no Dock panel');
-            if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-tasks-390.png'), Buffer.from(r.data, 'base64')); }
-            // Approve in place from All, through the Action Center.
-            await p.evaluate(`document.querySelector('.ovs-door-host .ovr-filter[data-filter="all"]').click()`);
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'All again, with its answers');
+            // Approve in place, through the Action Center.
+            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'its answers');
             decided.length = 0;
             await p.evaluate("document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary').click()");
             await until(p, "(document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-row-acts') || {}).textContent === 'Approved'", 'approved in place from All');
@@ -557,10 +552,12 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('vibe'));
             await until(p, "document.querySelector('.ovs.is-open [data-dock=\"vibe\"]') && document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected') === 'true'", 'the menu on Vibe');
-            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-agent'); return a && /Juniper/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), go: !!a.querySelector('.ovr-agent-go') } : null; })()", 'your agent at the top');
-            assert.match(me.text, /Juniper your agent Ready · \$0\.12 of \$1\.00 today/, 'its name, its state and today\'s spend');
-            assert.ok(me.go, 'and Pause beside it');
-            await p.evaluate("document.querySelector('.ovs-door-host .ovr-filter[data-filter=chat]').click()");
+            await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-people .ovr-person'); return !!a && /Juniper/.test(a.innerText); })()", 'your agent at the top');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovr-people .ovr-person').click()");
+            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-sheet'); return a && /today/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), go: !!a.querySelector('button.ovr-sheet-btn') } : null; })()", 'its card');
+            assert.match(me.text, /Juniper Ready · \$0\.12 of \$1\.00 today/, 'its name, its state and today\'s spend');
+            assert.ok(me.go, 'and Pause on its card');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovr-sheet-x').click()");
             await until(p, "document.querySelectorAll('.ovs-door-host .ovr-starter').length === 6 && [...document.querySelectorAll('.ovs-door-host .ovr-starter')].every((b) => b.querySelector('svg'))", 'the starters, each with its glyph');
             await p.evaluate("document.querySelector('.ovs-door-host .ovr-starter').click()");
             await until(p, "!!document.querySelector('.ovs-door-host .ovr-thread .ovr-step.is-you')", 'my words at once');

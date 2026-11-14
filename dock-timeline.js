@@ -72,6 +72,7 @@
             '.ovdt{font:inherit;font-size:14px;line-height:1.45;color:var(--text-primary,#ececf1);padding:4px 12px 20px}',
             '.ovdt h3{margin:14px 2px 8px;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--text-muted,#93a0b4)}',
             '.ovdt h3:first-child{margin-top:6px}',
+            '.ovdt .ovdt-gone{display:none!important}',
             '.ovdt-card{border:1px solid var(--border,rgba(255,255,255,.1));border-radius:14px;padding:12px 14px;margin:0 0 8px;background:color-mix(in srgb,var(--text-primary,#ececf1) 4%,transparent)}',
             '.ovdt-needs .ovdt-card{border-color:color-mix(in srgb,var(--warning,#f5a524) 38%,var(--border,rgba(255,255,255,.1)));background:color-mix(in srgb,var(--warning,#f5a524) 7%,transparent)}',
             '.ovdt-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}',
@@ -140,6 +141,8 @@
         // no timeline folds (those are History's). The Dock's own Agents panel keeps everything.
         const quiet = !!opts.quiet;
         if (quiet) { wrap.classList.add('is-quiet'); chips.hidden = true; list.hidden = true; }
+        // 4.249.0 (the owner crossed out Now / Needs you): quiet has no headings, and what needs you is in the list below.
+        if (quiet) { nowHead.classList.add('ovdt-gone'); needsHead.classList.add('ovdt-gone'); needsBox.classList.add('ovdt-gone'); }
         container.appendChild(wrap);
 
         async function api(path, options = {}) {

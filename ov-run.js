@@ -553,7 +553,7 @@
             // pieces may share one owner (the Dock lends one panel at a time), so the old one goes before the new one comes.
             const pf = paneFor(state.filter);
             const topEl = box.querySelector('.ovr-top'), paneEl = box.querySelector('.ovr-pane');
-            const wantTop = !pf && !o.agent && typeof o.top === 'function';   // 4.249.0: not above your agent's conversations (the owner crossed out Now / Needs you)
+            const wantTop = !pf && typeof o.top === 'function';   // 4.249.0: above your agent's conversations only what is happening (a timer, an agent at work), no headings (the owner crossed out Now / Needs you)
             if (!wantTop) { dropTop(); topEl.textContent = ''; }
             if (paneId !== (pf ? state.filter : null)) { dropPane(); paneEl.textContent = ''; }
             box.classList.toggle('has-pane', !!pf);

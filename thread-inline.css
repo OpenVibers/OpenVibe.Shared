@@ -43,4 +43,4 @@
 .ovc-order { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: color-mix(in srgb, currentColor 8%, transparent); }
 .ovc-order a { min-height: 36px; padding: 4px 14px; border: 0; border-radius: 999px; font-size: .875rem; }
 .ovc-order .is-active { font-weight: 700; background: color-mix(in srgb, currentColor 16%, transparent); }
-@media (prefers-reduced-motion: reduce) { .ovc-open { transition: none; } .ovc-open:active { transform: none; } }
+html[data-ov-motion="off"] .ovc-open { transition: none; } html[data-ov-motion="off"] .ovc-open:active { transform: none; }
