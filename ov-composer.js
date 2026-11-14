@@ -42,7 +42,7 @@
 
     // 4.203.0: the composer carries its own look (it was in thread.css), so any box on any page gets it: the Dock's
     // Vibe and Code boxes included. Injected once, before the first box is joined.
-    const CSS = `.ovt-composer { position: relative; display: grid; gap: 6px; max-width: 780px; margin: 0 auto; padding: 10px 12px; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 18px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); }
+    const CSS = `.ovt-composer { position: relative; display: grid; gap: 6px; width: 100%; box-sizing: border-box; max-width: 780px; margin: 0 auto; padding: 10px 12px; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 18px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); }
 .ovt-composer textarea { width: 100%; min-height: 48px; box-sizing: border-box; padding: 6px 2px; border: 0; outline: 0; resize: vertical; background: transparent; color: inherit; font: inherit; }
 .ovt-c-row { display: flex; align-items: center; gap: 8px; }
 .ovt-c-tools { flex: 1; display: flex; align-items: center; gap: 6px; }
