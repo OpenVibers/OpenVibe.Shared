@@ -1113,7 +1113,9 @@
     // 4.248.0 (the owner, 11-14): the bar is the little input again, its dot on the left and a typed line in it (the
     // spark that sat beside the dot read as two dots, and its pink is gone: every colour is the theme's); three tabs
     // under it, the first lit.
-    const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="3.6"/>'
+    // 4.249.0 (the owner, 11-14: "too round compared to how it is in the actual menu"): the bar's corner is the menu field's
+    // ratio (16 px on a 52 px field, about .31), the same as the three tiles under it.
+    const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="2.2"/>'
         + '<circle class="ovmb-dot" cx="6.9" cy="7.9" r="1.5"/><path class="ovmb-words" d="M10 7.9h7.2"/>'
         + '<path class="ovmb-spark" d="M17.2 7.9h0"/>'
         + '<rect class="ovmb-app ovmb-a0" x="3" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a1" x="9.4" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a2" x="15.8" y="14.7" width="5.2" height="5" rx="1.6"/>'
