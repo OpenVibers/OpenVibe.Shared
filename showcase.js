@@ -781,6 +781,14 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-fold-body{padding:0 18px 18px}
 .sc-fold-body .sc-sec{max-width:none;margin:0;padding:0}
 .sc-fold-body .sc-sec+.sc-sec{margin-top:22px}
+/* 4.249.0 (the owner, 11-14, on openvibe.bot: "a bunch of empty space between shit for no reason"): a section put straight
+   inside a fold (no .sc-fold-body) takes no section margin, rule or repeated title (the summary says it); folded rows
+   stack close; and on a phone a section starts 28 px after the last, not 80. */
+.sc-fold>.sc-sec{max-width:none;margin:0;padding:0 18px 18px;border-top:0}
+.sc-fold>.sc-sec>h2:first-child,.sc-fold>.sc-sec>.ovk-list-head>h2,.sc-fold>.sc-sec>.sc-head>h2{display:none}
+.sc-fold>.sc-sec>.ovk-list-head{justify-content:flex-end;margin-top:0}
+.sc-sec.sc-fold-sec{margin-top:10px;padding-top:0;border-top:0}
+@media (max-width:599px){.sc-sec{margin-top:28px;padding-top:20px}.sc-sec.sc-fold-sec{margin-top:8px;padding-top:0}}
 /* A list that is one sideways row on a phone (scroll snap, the next card peeking) and whatever the page made it on wide
    screens. Every item stays in the HTML. --sc-row-w sets a card's width (82% by default; 46% for small tiles). */
 @media (max-width:599px){
