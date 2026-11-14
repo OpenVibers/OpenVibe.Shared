@@ -2369,7 +2369,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     //   - the menu's own circle grows from the button while it flies (it was cut short before), and the close orb turns
     //     in once the button has left its place.
     // Motion Off skips it all; Calm plays the same path short, with no trail, tilt or glow (Calm reduces, only Off removes).
-    let flyFrom = null, flyIdle = null;
+    let flyFrom = null, flyIdle = null, fromTab = null;
     const motionLevel = () => (typeof document !== 'undefined' && document.documentElement.getAttribute('data-ov-motion')) || '';
     function tabFace(id) {
         const b = tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${id}"], .ovs-tab[data-dock="${id}"]`);
@@ -2498,6 +2498,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const asked = { here: 'here', sites: 'here', feed: 'feed', you: 'you', tools: 'you' }[opts.tab];
         // The menu opens on this site's tab unless a tab was asked (the picture asks You): no tab is remembered (4.189.0).
         tab = asked || 'here';
+        fromTab = tab;   // what the opener opened: only that tab flies back into it
         allOpen = false; hereOpen = true; leadHere = false; discoverPick = null;
         drainCards();
         syncFeeds();
@@ -2589,7 +2590,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     // on a phone, the orb on a computer). Measured each time, never remembered: the bar may have scrolled away or come
     // back since, and on a phone the computer's orb is hidden (zero size). Null when none is on screen.
     function barButtonCentre() {
-        const list = [ctx && ctx.from, document.getElementById('openvibe-burger'), document.getElementById('openvibe-search-btn')];
+        // The orb is the menu button turned into the close: it goes home into the menu button, never into the picture or
+        // another opener (11-14, the owner: still went into the avatar).
+        const list = [document.getElementById('openvibe-burger'), document.getElementById('openvibe-search-btn')];
         for (const b of list) {
             if (!b || typeof b.getBoundingClientRect !== 'function' || typeof b.closest !== 'function' || !b.closest('.openvibe-navbar')) continue;
             const r = b.getBoundingClientRect();
@@ -2600,7 +2603,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     }
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
-        const backTo = flyFrom; flyFrom = null;
+        // Only while the menu still shows what the opener opened (11-14, the owner: "it goes to the user avatar instead of
+        // … going to the right icon"): opened from the picture and moved to Community, the close is the menu's own.
+        const backTo = flyFrom && !door && tab === fromTab ? flyFrom : null; flyFrom = null; fromTab = null;
         if (backTo && !navigating && el && el.classList.contains('is-open') && !closing) fly(tabFace(door || tab), backTo, { back: true, toFace: flyIdle });
         flyIdle = null;
         if (view === 'results' && rtabsEl) leaveResults();
@@ -2608,7 +2613,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!el || closing) return;
         if (navigating) { pushed = false; markBack(); }
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
-        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; history.back(); } } catch { /* */ } }
+        // The page stays where it is (11-14, the owner: closing "scrolls the page down"): the browser restores no scroll
+        // for this Back, and focus returns without scrolling.
+        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; keepScroll(); history.back(); } } catch { /* */ } }
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
         if (phoneSheet() && !calm() && el.classList.contains('is-open')) {
             el.classList.add('is-closing');
@@ -2641,7 +2648,20 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (inflight) { inflight.abort(); inflight = null; }
         if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
-        if (lastFocus && lastFocus.focus) lastFocus.focus();
+        if (lastFocus && lastFocus.focus) { try { lastFocus.focus({ preventScroll: true }); } catch { /* */ } }
+    }
+    /** Back taken by the menu itself: no scroll restored by the browser, and the page put back where it was if anything
+     *  moved it (the scroll lock's release, a late restore). */
+    function keepScroll() {
+        try {
+            const was = history.scrollRestoration;
+            history.scrollRestoration = 'manual';
+            const y = Number(document.body && document.body.style.position === 'fixed' ? -parseFloat(document.body.style.top || '0') : root.scrollY) || 0;
+            let over = false;
+            const done = () => { if (over) return; over = true; root.removeEventListener('popstate', done); setTimeout(() => { try { history.scrollRestoration = was; } catch { /* */ } if (Math.abs((root.scrollY || 0) - y) > 2) root.scrollTo(0, y); }, 0); };
+            root.addEventListener('popstate', done);
+            setTimeout(done, 600);
+        } catch { /* */ }
     }
 
     // On a phone the empty menu keeps focus on its orb to avoid raising the keyboard. Escape must still close it.

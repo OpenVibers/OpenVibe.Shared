@@ -500,6 +500,24 @@
 .ovf-who-list img,.ovf-who-list i{flex:none;width:26px;height:26px;border-radius:50%;object-fit:cover}
 .ovf-who-list small{color:var(--text-muted,#8b93ad);font-weight:500}
 .ovf-who-more{margin:8px 2px 0;color:var(--text-muted,#8b93ad)}
+/* 4.248.0 (the owner, 11-14): who is live wears red; where the guests are; today; open, everything stacks. */
+.ovf-who img.is-live,.ovf-who i.is-live{box-shadow:0 0 0 2px var(--bg-secondary,#0f1420),0 0 0 4px var(--live-red-text,#ef4444)!important}
+.ovf-who-list li.is-live a{background:color-mix(in srgb,var(--live-red-text,#ef4444) 14%,transparent)}
+.ovf-who-live{font-style:normal;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;color:#fff;background:var(--live-red,#dc2626)}
+.ovf-who-today{margin:4px 2px 0;color:var(--text-secondary,#b6bdd2)}.ovf-who-today b{color:var(--text-primary,#f1f4fb);font-variant-numeric:tabular-nums}
+.ovf-split{display:flex;gap:2px;height:10px;margin:12px 0 0;border-radius:999px;overflow:hidden;background:color-mix(in srgb,var(--text-primary,#f1f4fb) 6%,transparent)}
+.ovf-split-s{flex:1 1 0;min-width:4px;transition:filter .15s,flex-grow .4s cubic-bezier(.2,.9,.3,1)}.ovf-split-s:hover{filter:brightness(1.25)}
+.ovf-split-l{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:4px 12px;margin:10px 0 0;padding:0}
+.ovf-split-l a,.ovf-split-l li>span{display:flex;align-items:center;gap:7px;min-width:0;min-height:30px;padding:3px 8px;border-radius:9px;color:var(--text-secondary,#b6bdd2);text-decoration:none}
+.ovf-split-l a:hover{background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);color:var(--text-primary,#f1f4fb)}
+.ovf-who .ovf-split-l i{display:block;flex:none;width:10px;height:10px;border-radius:3px;align-self:center}
+.ovf-split-l b{color:var(--text-primary,#f1f4fb);font-variant-numeric:tabular-nums}.ovf-split-l small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted,#8b93ad)}
+.ovf-who .ovf-c0{background:var(--accent,#60a5fa)}.ovf-who .ovf-c1{background:var(--success-text,#34d399)}.ovf-who .ovf-c2{background:var(--warning-text,#fbbf24)}.ovf-who .ovf-c3{background:#a78bfa}.ovf-who .ovf-c4{background:#f472b6}.ovf-who .ovf-c5{background:#22d3ee}.ovf-who .ovf-c6{background:#fb923c}.ovf-who .ovf-c7{background:#94a3b8}.ovf-who .ovf-c8{background:#64748b}
+/* Open, the box is a column: the people one per line, the tiles stacked (11-14: "start stacking vertically"). */
+.ovf-who[open] .ovf-who-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}
+.ovf-who[open] .ovf-who-list a{display:flex;border-radius:12px}
+.ovf-now:has(>.ovf-who[open])>.ovf-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));margin:6px 0 0;padding:0;overflow:visible}
+.ovf-now:has(>.ovf-who[open])>.ovf-tiles>.ovf-tile{border-radius:12px;white-space:normal}
 .ovf-tiles{display:flex;gap:6px;margin:0 -14px;padding:0 14px 2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
 .ovf-tiles::-webkit-scrollbar{display:none}
 .ovf-tile{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;box-sizing:border-box;padding:0 12px 0 10px;border-radius:999px;white-space:nowrap;font-weight:500!important;color:var(--text-secondary,#b6bdd2);background:color-mix(in srgb,var(--text-primary,#f1f4fb) 5%,transparent);transition:background-color .15s,transform .12s}
@@ -662,7 +680,8 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
             const username = onlineText(p && p.username, 40);
             const avatar = onlineUrl(p && p.avatar);
             return username && /^[A-Za-z0-9_.-]+$/.test(username)
-                ? { name: onlineText(p.name, 60) || username, username, avatar, site: onlineText(p.site, 40) }
+                ? { name: onlineText(p.name, 60) || username, username, avatar, site: onlineText(p.site, 40),
+                    ...(p.live === true ? { live: true, liveUrl: onlineUrl(p.live_url), viewers: onlineN(p.viewers) } : {}) }
                 : null;
         }).filter(Boolean);
         const row = (r, withLine) => {
@@ -683,6 +702,9 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
             counts: (Array.isArray(o.counts) ? o.counts : []).map((c) => row({ ...c, link: c && (c.link || c.url) }, false)).filter(Boolean),
             items: (Array.isArray(o.items) ? o.items : []).map((i) => row(i, true)).filter(Boolean),
             sites: onlineN(o.sites), views_7d: onlineN(o.views_7d),
+            // 4.248.0 (the owner, 11-14: "see the split of where the guests are"): a count per site with what people do there.
+            guestSites: (Array.isArray(o.guest_sites) ? o.guest_sites : []).slice(0, 9).map((g) => ({ name: onlineText(g && g.name, 30), n: onlineN(g && g.n), doing: onlineText(g && g.doing, 40), url: onlineUrl(g && g.url) })).filter((g) => g.name && g.n > 0),
+            today: o.today && typeof o.today === 'object' && onlineN(o.today.peak) > 0 ? { peak: onlineN(o.today.peak), peakAt: Number.isFinite(Date.parse(o.today.peak_at)) ? String(o.today.peak_at) : '', people: onlineN(o.today.people), signedIn: onlineN(o.today.signed_in) } : null,
         };
     }
     /** The strip from the one read: the old facts it carries, who is online, the counts and this site's own items. */
@@ -691,15 +713,26 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         // had under its pages: every member by name, then how many more and how many guests. A guest is a number only.
         let who = '';
         if (o.total > 0) {
-            const face = (p, size) => (p.avatar ? `<img src="${esc(p.avatar)}" alt="" width="${size}" height="${size}" loading="lazy" decoding="async" data-ov-initial="${esc(p.name.charAt(0).toUpperCase())}">` : `<i aria-hidden="true">${esc(p.name.charAt(0).toUpperCase())}</i>`);
+            // Someone live now wears a red ring (11-14, the owner: "detect if … a user's live and make them red").
+            const face = (p, size) => (p.avatar ? `<img${p.live ? ' class="is-live"' : ''} src="${esc(p.avatar)}" alt="" width="${size}" height="${size}" loading="lazy" decoding="async" data-ov-initial="${esc(p.name.charAt(0).toUpperCase())}">` : `<i${p.live ? ' class="is-live"' : ''} aria-hidden="true">${esc(p.name.charAt(0).toUpperCase())}</i>`);
             const parts = [o.members > 0 ? `${fmtN(o.members)} member${o.members === 1 ? '' : 's'}` : '', o.guests > 0 ? `${fmtN(o.guests)} guest${o.guests === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ');
             // Shorthand (the owner, 2026-11-10: "Make it like shorthand '3 online'. If you put your mouse over it, it says
             // 'last 30 minutes'"): the count and the faces. When, and how many are members and guests, are the tooltip's
             // and the first line of what a press opens (a finger never sees a tooltip).
             const head = `<span class="ovf-who-dot" aria-hidden="true"></span><span class="ovf-who-n" data-ov-tip="In the last 30 minutes"${parts ? ` data-ov-tip-sub="${esc(parts)}"` : ''}><b>${fmtN(o.total)}</b> online</span>${o.people.length ? `<span class="ovf-who-faces" aria-hidden="true">${o.people.slice(0, 5).map((p) => face(p, 24)).join('')}</span>` : ''}`;
             const when = `<p class="ovf-who-when">In the last 30 minutes${parts ? ` · ${parts}` : ''}</p>`;
-            const list = o.people.map((p) => `<li><a href="${NETWORK_URL}/@${encodeURIComponent(p.username)}">${face(p, 26)}<span${subjectAttr(p)}>${esc(p.name)}</span>${p.site ? `<small>${esc(p.site)}</small>` : ''}</a></li>`).join('');
-            who = `<details class="ovf-who"><summary>${head}</summary>${when}${list ? `<ul class="ovf-who-list">${list}</ul>` : ''}${o.more > 0 ? `<p class="ovf-who-more">and ${fmtN(o.more)} more</p>` : ''}</details>`;
+            const list = o.people.map((p) => `<li${p.live ? ' class="is-live"' : ''}><a href="${p.live && p.liveUrl ? esc(p.liveUrl) : `${NETWORK_URL}/@${encodeURIComponent(p.username)}`}">${face(p, 26)}<span${subjectAttr(p)}>${esc(p.name)}</span>${p.live ? `<em class="ovf-who-live">Live${p.viewers > 0 ? ` · ${fmtN(p.viewers)}` : ''}</em>` : p.site ? `<small>${esc(p.site)}</small>` : ''}</a></li>`).join('');
+            // Today so far: the day's people and its peak, the peak's time in the reader's clock (theme-loader time).
+            const t = o.today;
+            const whole = (n) => (n < 100000 ? Number(n).toLocaleString('en-US') : fmtN(n));   // 1,043, not 1k
+            const today = t ? `<p class="ovf-who-today">Today${t.people > 0 ? ` <b>${whole(t.people)}</b> people${t.signedIn > 0 ? ` (${whole(t.signedIn)} signed in)` : ''} ·` : ''} peak <b>${whole(t.peak)}</b>${t.peakAt ? ` at <time datetime="${esc(t.peakAt)}" data-ov-time="time">${esc(t.peakAt.slice(11, 16))} UTC</time>` : ''}</p>` : '';
+            // Where the guests are: one bar split by site (hover or focus a part for what people do there), then the parts in
+            // words. Counts only, never anything about a guest.
+            const gs = o.guestSites || [];
+            const gsum = gs.reduce((a, g) => a + g.n, 0);
+            const split = gs.length && gsum > 0 ? `<div class="ovf-split" role="img" aria-label="Guests by site: ${esc(gs.map((g) => `${g.name} ${g.n}`).join(', '))}">${gs.map((g, i) => `<span class="ovf-split-s ovf-c${i}" data-grow="${g.n}" data-ov-tip="${esc(g.name)}: ${fmtN(g.n)} guest${g.n === 1 ? '' : 's'}" data-ov-tip-sub="${esc(g.doing)}"></span>`).join('')}</div>`
+                + `<ul class="ovf-split-l">${gs.map((g, i) => { const inner = `<i class="ovf-c${i}" aria-hidden="true"></i><b>${fmtN(g.n)}</b><span>${esc(g.name)}</span><small>${esc(g.doing)}</small>`; return `<li>${g.url ? `<a href="${esc(g.url)}">${inner}</a>` : `<span>${inner}</span>`}</li>`; }).join('')}</ul>` : '';
+            who = `<details class="ovf-who"><summary>${head}</summary>${when}${today}${split}${list ? `<ul class="ovf-who-list">${list}</ul>` : ''}${o.more > 0 ? `<p class="ovf-who-more">and ${fmtN(o.more)} more</p>` : ''}</details>`;
         }
         // Then a row of small tiles, each opening what it counts: live (only while someone is), the counts, this
         // site's own items, and the two facts the strip always had.
@@ -721,7 +754,14 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
     function paintPulse() {
         if (!_mounted) return;
         const html = _online ? onlineHTML(_online) : (_pulse ? pulseHTML(_pulse) : '');
-        for (const el of _mounted.querySelectorAll('[data-ovf-pulse]')) { el.innerHTML = html; el.hidden = !html; }
+        for (const el of _mounted.querySelectorAll('[data-ovf-pulse]')) {
+            // Keep an open box open across the 60 s repaint (it used to snap shut under a reading finger).
+            const wasOpen = !!el.querySelector('details.ovf-who[open]');
+            el.innerHTML = html; el.hidden = !html;
+            if (wasOpen) { const d = el.querySelector('details.ovf-who'); if (d) d.open = true; }
+            el.querySelectorAll('[data-grow]').forEach((seg) => { seg.style.flexGrow = String(Number(seg.getAttribute('data-grow')) || 1); });
+            try { const L = typeof window !== 'undefined' && window.OpenVibeThemeLoader; if (L && L.time) L.time.upgrade(el); } catch { /* the UTC fallback stays */ }
+        }
     }
     function readPulse() {
         if (typeof fetch === 'undefined' || (typeof document !== 'undefined' && document.hidden)) return;

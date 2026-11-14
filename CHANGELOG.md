@@ -21,6 +21,18 @@ users computer by default or configurable setting if logged in and changed").
 **Pictures that do not load leave no empty frame** (the owner, 11-14: "broken images"): a feed card drops its picture
 box, a group row (a run of deals) shows its placeholder.
 
+**The footer's online box opens into a column** (the owner, 11-14: "see the split of where the guests are … which sites
+they're on and what they're up to", "make them red" when live, "these cards also start stacking vertically"):
+someone live now wears a red ring and a LIVE badge with their viewers and links to their channel; the guests are one bar
+split by site (hover or focus a part for what people do there) with the parts in words; a Today line says the day's
+people and its peak, the peak's time in the reader's clock; open, the people are one per line and the tiles stack in
+two columns. An open box stays open across the minute's repaint. Reads Network's /api/frame/online `guest_sites`,
+`people[].live` and `today` (OpenVibe.Network #937).
+
+**The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
+menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
+flies back into the button that opened it only while the menu still shows that tab.
+
 **A pressed button keeps its place** (the owner, 11-14, Live's Chat button "shifts way down … makes you un-click it"):
 the forms press is `scale: .97`, not `transform: scale(.97)`, which replaced any transform a site positioned a button
 with (centered, slid in). Checkboxes and Motion off likewise.
