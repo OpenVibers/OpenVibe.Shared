@@ -6,6 +6,10 @@
 (`rich_content.agent.avatar_url`), else its glyph on its own hue (`rich_content.agent { name, hue, glyph }`, which Actor
 sends). With Unread the default view, "Mark all read" empties the list, so it says "Clear all".
 
+**One corner for app icons** (plan §AB.29): every app icon (the menu's sites, You's home and folders, the feed's site
+faces, `.ov-appicon`) takes `--ov-app-corner`, 22.5 % by default: Design's `round` (OpenVibe.Design #340, SDK 0.169.0
+`design.icons.export({ rounding })`), so the menu, the marks and the generated icons agree (they were 29–30 %).
+
 ## 4.250.0 — 2026-11-14
 
 **The messenger, full-page** (plan §AB.8/47; the owner: "the same conversation system everywhere … capable of
