@@ -38,6 +38,13 @@ extra part (a meter) on the computer only.
 OpenVibe yours" under their own avatar): the guest card, the workspace and the menu's "me" follow the signed-in person,
 not a token; a site that signs in by its own session cookie has no token in the page.
 
+**Feature cards and questions, remade** (showcase; the owner, 11-14, on OpenRestream: "redesign all these icons … use the
+full space … modern and minimalist … stands out"; the questions have "so much padding for no reason" and no space
+before the next block): a feature's icon is a filled tile on its own hue (six in turn down a grid), its glyph large, a
+ring icon without its ring; on a phone the tile sits beside the title and the words take the card's whole width. A
+question is a compact row (48 px) with a glyph (its own third item, or one its words suggest), whatever a site's own
+details rule says, and the block after a showcase section is spaced like a section.
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.

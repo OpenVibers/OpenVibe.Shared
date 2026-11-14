@@ -75,7 +75,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(real.includes('data-icon="calendar"') && !real.includes('sc-ovi--glyph'), 'a name the ring set has is its own mark');
     assert.ok(!/data-icon="calendar"[^>]*>[^<]*<svg viewBox="0 0 48 48"/.test(cal), 'not the ring set\'s fallback');
     assert.ok(ring.includes('<span class="sc-ic"><i class="fa-solid fa-code"'), 'a Font Awesome icon keeps the plain slot');
-    assert.ok(sc.CSS.includes('.sc-ic.sc-ic-ov{background:none'), 'the slot drops its tile for a ring icon');
+    assert.ok(sc.CSS.includes('.sc-ic .ovi-ring') && sc.CSS.includes('.sc-ic.sc-ic-ov{border-radius:14px}'), 'a ring icon sits in the tile without its ring (4.248.0)');
 }
 
 // Next steps (Shared ADR 0002): safe links only, the referral tag, the target's ring icon and name, escaping, at most four.
@@ -121,7 +121,7 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(sp.includes('<video src="/v.mp4" muted loop playsinline autoplay preload="none" poster="/p.jpg"'), 'a short muted loop, with its poster');
     assert.strictEqual((sp.match(/class="sc-spot"/g) || []).length, 2);
     const fq = sc.faq({ items: [['Do I need OBS?', 'No.'], ['Broken'], ['Free?', 'Yes.']] });
-    assert.ok(fq.includes('<details open><summary>Do I need OBS?</summary>') && (fq.match(/<details/g) || []).length === 2, 'an accordion, the first open');
+    assert.ok(fq.includes('<details open><summary><span class="sc-q-ic" aria-hidden="true">') && fq.includes('<span>Do I need OBS?</span></summary>') && (fq.match(/<details/g) || []).length === 2, 'an accordion, the first open');
     const ld = sc.faqJsonLd([['Q </script>', 'A']]);
     assert.ok(ld.startsWith('<script type="application/ld+json">') && !ld.slice(35, -9).includes('<'), 'JSON-LD cannot close its script early');
     assert.ok(JSON.parse(ld.slice(35, -9).replace(/\\u003c/g, '<')).mainEntity[0].name === 'Q </script>');

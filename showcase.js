@@ -374,7 +374,20 @@ function faq({ id: sid, title = 'Questions', lede, items, icon: secIcon } = {}) 
     const usable = (items || []).filter((q) => Array.isArray(q) && q[0] && q[1]);
     if (!usable.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'help')}<div class="sc-faq">${usable.map(([q, a], i) => `<details${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</div></section>`;
+    // 4.248.0 (the owner, 11-14: "so much padding for no reason … more compact … add icons"): each question wears a glyph,
+    // its own third item or one its words suggest; the row is compact whatever the site's own details rule says.
+    return `<section class="sc-sec"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'help')}<div class="sc-faq">${usable.map(([q, a, ic], i) => `<details${i === 0 ? ' open' : ''}><summary><span class="sc-q-ic" aria-hidden="true">${qGlyph(ic, q)}</span><span>${esc(q)}</span></summary><p>${esc(a)}</p></details>`).join('')}</div></section>`;
+}
+/** The glyph a question wears: the one it names, else the first its words suggest, else a question mark. */
+const Q_WORDS = [[/\b(free|cost|price|pay|paid|money|charge)/i, 'coin'], [/\b(key|safe|secure|privacy|private|password)/i, 'lock'],
+    [/\b(platform|where|which site|countr|languag)/i, 'globe'], [/\b(encode|quality|bitrate|resolution|setting)/i, 'sliders'],
+    [/\b(obs|camera|webcam|record|video|vod|clip)/i, 'video'], [/\b(appear|show|see|visible|public)/i, 'eye'], [/\b(delete|remove|cancel)/i, 'trash'],
+    [/\b(account|sign|login|profile)/i, 'user'], [/\b(api|sdk|code|developer|bot)/i, 'code'], [/\b(live|stream|broadcast)/i, 'live'],
+    [/\b(how long|when|time|schedule)/i, 'clock'], [/\b(download|export|backup)/i, 'download'], [/\b(ai|agent|model)/i, 'spark']];
+function qGlyph(named, q) {
+    headGlyphs = headGlyphs || require('./glyphs');
+    const want = named && headGlyphs.NAMES.includes(String(named)) ? String(named) : ((Q_WORDS.find(([re]) => re.test(String(q || ''))) || [])[1] || 'help');
+    return headGlyphs.svg(headGlyphs.NAMES.includes(want) ? want : 'help', { size: 16 });
 }
 /** A JSON-LD block that cannot close its script early. */
 const jsonLd = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
@@ -654,8 +667,19 @@ a.sc-orb-node:hover .sc-orb-face>*:first-child,a.sc-orb-node:focus-visible .sc-o
 @media (min-width:900px){.sc-grid:has(>:nth-child(5):last-child),.sc-grid:has(>:nth-child(6):last-child),.sc-grid:has(>:nth-child(9):last-child){grid-template-columns:repeat(3,minmax(0,1fr))}}
 .sc-card{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 a.sc-card:hover,a.sc-card:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
-.sc-ic{width:40px;height:40px;flex:none;display:grid;place-items:center;border-radius:12px;font-size:17px;color:var(--accent-light,#60a5fa);background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent)}
-.sc-ic.sc-ic-ov{background:none;border-radius:50%}
+/* 4.248.0 (the owner, 11-14: "redesign all these icons … use the full space … modern and minimalist … stands out
+   unique"): a filled tile on its own hue (six, in turn down a grid), the glyph large in it; a ring icon loses its ring. */
+.sc-card,.sc-grid>*{--sc-h:var(--accent,#3b82f6)}
+.sc-grid>:nth-child(6n+2){--sc-h:#10b981}.sc-grid>:nth-child(6n+3){--sc-h:#f59e0b}.sc-grid>:nth-child(6n+4){--sc-h:#8b5cf6}.sc-grid>:nth-child(6n+5){--sc-h:#ec4899}.sc-grid>:nth-child(6n){--sc-h:#06b6d4}
+.sc-ic{width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:14px;font-size:20px;overflow:hidden;color:color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 28%,#fff);background:linear-gradient(150deg,color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 42%,transparent),color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 16%,transparent));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 20px -10px color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 70%,transparent)}
+html[data-theme-mode=light] .sc-ic{color:color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 78%,#0b1220);background:linear-gradient(150deg,color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 24%,#fff),color-mix(in srgb,var(--sc-h,var(--accent,#3b82f6)) 10%,#fff))}
+.sc-ic.sc-ic-ov{border-radius:14px}
+.sc-ic .ovi-bg,.sc-ic .ovi-ring,.sc-ic .ovi-comet,.sc-ic .ovi-prog{display:none}
+.sc-ic .sc-ovi{--ovi-size:46px!important;display:grid;place-items:center;width:46px;height:46px;color:inherit}.sc-ic .sc-ovi svg{width:46px;height:46px;transform:scale(1.32)}.sc-ic .ovi-glyph{stroke:currentColor;stroke-width:2.3}
+.sc-ic .sc-ovi--glyph{--ovi-size:26px!important;width:26px;height:26px}.sc-ic>i{font-size:21px}
+a.sc-card:hover .sc-ic,a.sc-card:focus-visible .sc-ic{scale:1.06}.sc-ic{transition:scale .2s cubic-bezier(.2,.9,.3,1.2)}
+/* A phone: the tile beside the title, the words under both, the card's whole width (no empty column under the icon). */
+@media (max-width:600px){.sc-grid .sc-card{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:center}.sc-grid .sc-card>span:last-child{display:contents}.sc-grid .sc-card b{grid-column:2}.sc-grid .sc-card small{grid-column:1/-1;margin-top:8px}}
 .sc-ovi--glyph{border-radius:50%;color:var(--accent,#3b82f6);background:color-mix(in srgb,var(--accent,#3b82f6) 13%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--accent,#3b82f6) 42%,transparent)}.sc-ovi--glyph svg{width:54%!important;height:54%!important}
 .sc-card b{display:block;font-size:15.5px}.sc-card small{display:block;margin-top:3px;color:var(--text-secondary,#96a7c2);font-size:13.5px;line-height:1.45}
 .sc-steps{list-style:none;margin:0;padding:0;counter-reset:sc;display:grid;gap:14px 24px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
@@ -724,14 +748,24 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-spot-media img,.sc-spot-media video{display:block;width:100%;height:auto}
 .sc-spot h3{margin:0 0 8px;font-size:clamp(20px,2.2vw,26px);letter-spacing:-.01em}.sc-spot h3 a{color:inherit;text-decoration:none}.sc-spot h3 a:hover{color:var(--accent-light,#60a5fa)}
 .sc-spot p{margin:0;color:var(--text-secondary,#96a7c2);line-height:1.6;font-size:15.5px}.sc-spot-act{margin-top:16px}
-.sc-faq{display:grid;gap:8px;max-width:820px}
-.sc-faq details,.sc-sec>details:not([class]){border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
-.sc-faq summary,.sc-sec>details:not([class])>summary{cursor:pointer;list-style:none;padding:14px 44px 14px 16px;font-weight:700;position:relative}
+/* 4.248.0 (the owner, 11-14: "so much padding for no reason … more compact … no space between your streams and the
+   question section"): a compact row whatever a site's own details rule says, its glyph, the next block spaced. */
+.sc-faq{display:grid;gap:6px;max-width:820px}
+.sc-faq details,.sc-sec>details:not([class]){margin:0;padding:0!important;border-radius:12px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);transition:border-color .15s,background-color .15s}
+.sc-faq details[open]{border-color:color-mix(in srgb,var(--accent,#3b82f6) 34%,var(--border,rgba(255,255,255,.08)))}
+.sc-faq summary,.sc-sec>details:not([class])>summary{cursor:pointer;list-style:none;padding:12px 44px 12px 16px;font-weight:700;position:relative}
+.sc-faq summary{display:flex;align-items:center;gap:10px;min-height:48px;box-sizing:border-box;padding:8px 40px 8px 10px;font-weight:650;line-height:1.35}
+.sc-faq summary:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 4%,transparent);border-radius:12px}
+.sc-q-ic{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;color:var(--accent-light,#60a5fa);background:color-mix(in srgb,var(--accent,#3b82f6) 14%,transparent)}
+.sc-q-ic svg{width:16px;height:16px}
+.sc-sec:has(>.sc-faq)+:not(.sc-sec),.sc-sec+:not(.sc-sec):not(script):not(style):not(link){margin-top:clamp(28px,5vw,44px)}
 .sc-faq summary::-webkit-details-marker,.sc-sec>details:not([class])>summary::-webkit-details-marker{display:none}
 .sc-faq summary::after,.sc-sec>details:not([class])>summary::after{content:'';position:absolute;right:18px;top:50%;width:8px;height:8px;margin-top:-6px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);transition:transform .2s;opacity:.7}
 .sc-faq details[open] summary::after,.sc-sec>details[open]:not([class])>summary::after{transform:rotate(-135deg);margin-top:-2px}
 .sc-sec>details:not([class])+details:not([class]){margin-top:8px}
 .sc-faq p,.sc-sec>details:not([class])>p{margin:0;padding:0 16px 16px;color:var(--text-secondary,#96a7c2);line-height:1.6}
+.sc-faq p{padding:0 14px 12px 50px;font-size:14.5px}
+@media (max-width:600px){.sc-faq p{padding-left:14px}}
 .sc-fold{border-radius:16px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828)}
 .sc-fold>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:0 48px 0 18px;cursor:pointer;list-style:none;position:relative}
 .sc-fold>summary::-webkit-details-marker{display:none}
