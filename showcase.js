@@ -429,6 +429,9 @@ const GROUPS = {
         ['shoes', 'Every shoe, every price', 'https://open.shoes/'],
         ['reviews', 'Honest reviews', 'https://openvibe.reviews/'],
         ['trade', 'Watch the markets', 'https://openvibe.trade/'],
+        // The three doors of 2026-11-13: Markets and Finance sit with Deals and Trade, Expert with the agents.
+        ['markets', 'Every marketplace in one search', 'https://openvibe.markets/'],
+        ['finance', 'Your money in one private place', 'https://openvibe.finance/'],
         ['rent', 'Places to rent', 'https://openvibe.rent/'],
         ['work', 'Find a job', 'https://openvibe.work/'],
     ],
@@ -446,6 +449,7 @@ const GROUPS = {
         ['codes', 'Code with any agent', 'https://openvibe.codes/'],
         ['bot', 'Drive a robot', 'https://openvibe.bot/'],
         ['actor', 'The agent engine', 'https://openvibe.actor/'],
+        ['expert', 'Agents you make, with a soul', 'https://openvibe.expert/'],
         ['computer', 'Your computer, your way', 'https://openvibe.computer/'],
         ['connect', 'Share a port with Link', 'https://connect.openvibe.link/'],
     ],
