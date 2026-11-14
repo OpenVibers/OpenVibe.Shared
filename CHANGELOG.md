@@ -80,6 +80,11 @@ and on every page a row that scrolls sideways (a rail, chips, tabs, pills, a str
 way and back the first time it is on screen, so it is plain that it scrolls (once per row; never under a finger;
 Calm less, Off never; `data-ov-peek="off"` opts out).
 
+**A tip can start the work** (tooltip.js; the owner, 11-14, on Live's Build tip: "bring users to openvibe.codes and … use
+their agent … start working on OpenVibe yourself … make that more prevalent"): `data-ovtip-build` and
+`data-ovtip-build-href` (https) draw the main action first and wide, on a computer too (the tip stays open under the
+pointer), with Got it and the trigger's own place under it.
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.
