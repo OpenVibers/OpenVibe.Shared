@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.249.0 — 2026-11-14
+
+**Vibe is a messenger of agents; the player, rows, switches and comments fixed across sites** (the owner, 11-14, on a phone).
+
+- **Vibe (ov-run.js)**: your agents' faces in a row on top (yours first, then the agents your conversations are with,
+  then New on OpenVibe.Actor), conversations as message rows, "Message Vibe" in the box; a press on your agent opens its
+  card (state, today's spend, Pause or Resume, name, face and rules). The head bar, the All/Chats/Tasks/Code filters and
+  the host's Now/Needs you blocks are gone. A face without a picture is a blob of the agent's colour with two eyes,
+  its shape fixed per agent.
+- **Player**: the phone rules apply at last (an unclosed comment since 4.201.0 had disabled them, so the fullscreen
+  button ran off the edge); a phone's ambient glow stays inside the screen (pages scrolled sideways by 12 px).
+  test/css-comments.test.js fails on any unclosed comment.
+- **Rows that scroll sideways keep room** for a lifted, ringed or glowing child (tops were cut off on press).
+- **The switch**, ov-forms [role=switch] and kit .ovk-switch: recessed track, lit raised thumb that springs and
+  stretches, a bloom when it turns on; min sizes keep its shape under a page's own width.
+- **Comments** (thread.js): a count in the head, the discussion as an icon button (no text arrow), an empty state with
+  a mark, the composer's file note in the flow (it sat on top of the next line).
+- **Composer**: fills its row in a flex column (Chat's box was a sliver).
+- **Footer**: the sites count opens openvibe.network/sites, page views open openvibe.report/stats.
+- **Menu**: the site tab's roll is back, through the sites you go to most; the bottom bar lifts only for a keyboard;
+  Send follows the field; the mic's listening ring; notifications' Unread toggle and one-field search.
+
 ## 4.248.0 — 2026-11-14
 
 **Every time in the reader's own clock** (the owner, 11-14: "make it so areas like this show the time based on the
