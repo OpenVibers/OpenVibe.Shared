@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
                 glyph: g ? getComputedStyle(g).color : null, bg: cs.backgroundImage.startsWith('linear-gradient') }; })()`);
         await wait(100);
         const a = await look('#a');
-        assert.deepEqual([a.w, a.h, a.radius, a.hue, a.svg, a.ring, a.hidden, a.bg], [64, 64, '30%', String(icons.hue('live')), true, 'none', 'true', true], 'from markup: its size, its hue, the glyph, no ring, decoration');
+        assert.deepEqual([a.w, a.h, a.radius, a.hue, a.svg, a.ring, a.hidden, a.bg], [64, 64, '22.5%', String(icons.hue('live')), true, 'none', 'true', true], 'from markup: its size, its hue, the glyph, no ring, decoration');
         const b = await look('#b');
         assert.deepEqual([b.w, b.role, b.label], [56, 'img', 'Tools'], 'the default size, and a label makes it an image with a name');
         // Script, and markup added later.
@@ -75,7 +75,7 @@ const server = http.createServer((req, res) => {
         const box = (i) => ssr.evaluate(`(() => { const e = document.querySelectorAll('.ov-appicon')[${i}]; const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); const ring = e.querySelector('.ovi-ring');
             return { w: Math.round(r.width), h: Math.round(r.height), bg: cs.backgroundImage.startsWith('linear-gradient'), radius: cs.borderRadius, ring: ring ? getComputedStyle(ring).display : 'none', label: e.getAttribute('aria-label'), svg: e.querySelector('svg') }; })()`);
         const s0 = await box(0);
-        assert.deepEqual([s0.w, s0.h, s0.bg, s0.radius, s0.ring], [44, 44, true, '30%', 'none'], 'server markup: its size, its look and no ring, with no script');
+        assert.deepEqual([s0.w, s0.h, s0.bg, s0.radius, s0.ring], [44, 44, true, '22.5%', 'none'], 'server markup: its size, its look and no ring, with no script');
         assert.deepEqual([(await box(1)).w, (await box(1)).label], [56, 'Tools & "more"'], 'server markup: the default size and its name');
         assert.equal((await box(2)).w, 26);
         await ssr.evaluate(`window.__svg = document.querySelector('.ov-appicon svg'); const sc = document.createElement('script'); sc.src = '/ov-icons.js'; document.head.append(sc); true`);
