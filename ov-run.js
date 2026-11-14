@@ -61,6 +61,8 @@
         open: '<path d="M7 17L17 7M9 7h8v8"/>',
         send: '<path d="M12 19.5V5M5.8 11.2L12 5l6.2 6.2"/>',
         plus: '<path d="M12 5v14M5 12h14"/>',
+        pause: '<path d="M9 6v12M15 6v12"/>',
+        play: '<path d="M8 5.5v13l10.5-6.5z"/>',
         spark: '<path d="M10.4 3.6l1.7 4.8L17 10.1l-4.8 1.7L10.4 16.7l-1.7-4.8L3.9 10.1l4.8-1.7ZM17 14.8l0.8 2.1L19.8 17.6l-2.1 0.8L17 20.3l-0.8-2.1L14.3 17.6l2.1-0.8Z"/>',
         chat: '<path d="M3.8 4.3h16.8v11.7H8l-4.2 4.2Z"/>',
         code: '<path d="M7.8 7.8l-4.2 4.2l4.2 4.2M16.2 7.8l4.2 4.2l-4.2 4.2M14.2 4.6l-4.2 14.8"/>',
@@ -180,9 +182,18 @@
         f.style.setProperty('--ovr-h', String(Number.isInteger(a.hue) ? a.hue : hueOf(a.id || (run && run.kind))));
         const pic = httpsUrl(a.avatar_url);
         if (pic) { const i = el('img'); i.src = pic; i.alt = ''; i.loading = 'lazy'; f.append(i); }
-        else f.append(svg(G[a.glyph] ? a.glyph : KIND_GLYPH[run && run.kind] || 'spark'));
+        else blob(f, a.id || a.name || (run && run.kind));
         if (run && run.doing && run.status === 'running') { const d = el('i', 'ovr-doing'); d.append(svg(G[run.doing.glyph] ? run.doing.glyph : 'spark')); f.append(d); f.classList.add('is-working'); }
         if (needsPerson(run)) f.classList.add('is-needs');
+        return f;
+    }
+/** A face without a picture (4.249.0, the owner's messenger of agents): a soft shape of the agent's own colour with two
+     *  eyes; the shape follows from the agent, so the same agent is always the same blob. */
+    const SHAPES = ['round', 'squircle', 'drop', 'leaf', 'pebble'];
+    function blob(f, key) {
+        f.classList.add('ovr-blob');
+        f.dataset.shape = SHAPES[Math.abs(hueOf(String(key || 'agent')) * 7) % SHAPES.length];
+        f.append(el('i', 'ovr-eye'), el('i', 'ovr-eye'));
         return f;
     }
     function statusLine(run) {
@@ -289,7 +300,7 @@
             const f = el('span', `ovr-face is-${size} ovr-me is-${st || agentState()}`);
             f.style.setProperty('--ovr-h', String(hueOf(agentName())));
             const pic = agent && agent.avatar && httpsUrl(agent.avatar.url);
-            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); } else f.append(svg('spark'));
+            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); } else blob(f, 'vibe:' + agentName());
             return f;
         }
         async function loadAgent() {
@@ -420,8 +431,65 @@
 
         // ── the home head (4.248.0; the owner, 11-14: the filters "need to be above the actor … the actor … a fixed thing
         // that's on top, kind of like how Muse is") ──
+        /** The agents' row (4.249.0; the owner, 11-14, crossing out the head bar, the filters and Now / Needs you: "Remove
+         *  this … remake", with a messenger of agents as the picture): your agent first, then each agent your
+         *  conversations are with, then New. A press on yours opens its card; on another, its conversations alone. */
+        function paintPeople(strip) {
+            strip.textContent = '';
+            const chip = (faceEl, name, label, onClick, on) => {
+                const b = el('button', `ovr-person${on ? ' is-on' : ''}`); b.type = 'button'; b.setAttribute('role', 'listitem');
+                b.setAttribute('aria-label', label); b.setAttribute('aria-pressed', String(!!on));
+                b.append(faceEl, el('span', 'ovr-person-n', name)); b.addEventListener('click', onClick); return b;
+            };
+            strip.append(chip(agentFace('l'), agentName(), `${agentName()}, your agent: ${AGENT_WORD[agentState()]}`, () => profile(), false));
+            const seen = new Set();
+            for (const r of state.runs) {
+                const a = r && r.agent; if (!a || !a.id || seen.has(a.id) || a.name === agentName()) continue;
+                seen.add(a.id);
+                strip.append(chip(face(r, 'l'), String(a.name || 'Agent').slice(0, 18), `${a.name || 'Agent'}: only its conversations`, () => { state.only = state.only === a.id ? null : a.id; list('all', { history: true }); }, state.only === a.id));
+                if (seen.size >= 10) break;
+            }
+            const plus = el('a', 'ovr-person is-new'); plus.href = 'https://openvibe.actor/new'; plus.target = '_blank'; plus.rel = 'noopener';
+            plus.setAttribute('role', 'listitem'); plus.setAttribute('aria-label', 'Make a new agent on OpenVibe.Actor');
+            const pf = el('span', 'ovr-face is-l ovr-face-new'); pf.append(svg('plus')); plus.append(pf, el('span', 'ovr-person-n', 'New'));
+            strip.append(plus);
+        }
+        /** Your agent's card: what it is doing, today's spend, Pause or Resume, and where to change it. */
+        function profile() {
+            const old = box.querySelector('.ovr-sheet'); if (old) { old.remove(); return; }
+            const st = agentState();
+            const sheet = el('div', 'ovr-sheet'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', `${agentName()}, your agent`);
+            const close = el('button', 'ovr-ib ovr-sheet-x'); close.type = 'button'; close.setAttribute('aria-label', 'Close'); close.append(svg('x'));
+            close.addEventListener('click', () => sheet.remove());
+            const now = (agent && agent.now) || {};
+            const cap = agent && agent.caps && Number(agent.caps.usd) > 0 ? ` of ${money(agent.caps.usd)}` : '';
+            const top = el('div', 'ovr-sheet-top'); top.append(agentFace('xl', st), el('b', 'ovr-sheet-n', agentName()), el('span', 'ovr-sheet-s', [AGENT_WORD[st], agent ? `${money(now.cost_today)}${cap} today` : ''].filter(Boolean).join(' · ')));
+            const acts = el('div', 'ovr-sheet-acts');
+            if (agent && agent.id) {
+                const paused = st === 'paused';
+                const go = el('button', 'ovr-sheet-btn'); go.type = 'button'; go.append(svg(paused ? 'play' : 'pause'), el('span', '', paused ? 'Resume' : 'Pause'));
+                go.addEventListener('click', async () => {
+                    go.disabled = true;
+                    try { await fetch(`${base}/actor/${paused ? 'resume' : 'pause'}`, { method: 'POST', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: '{}' }); agentAt = 0; await loadAgent(); }
+                    catch { /* it stays as it was */ }
+                    sheet.remove(); const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
+                });
+                acts.append(go);
+            }
+            const edit = el('a', 'ovr-sheet-btn'); edit.href = 'https://openvibe.actor/me'; edit.target = '_blank'; edit.rel = 'noopener'; edit.append(svg('pencil'), el('span', '', 'Name, face and rules'));
+            acts.append(edit);
+            sheet.append(close, top, acts);
+            box.append(sheet);
+        }
         function homeHead(where) {
             const wrap = el('div', 'ovr-home');
+            if (o.agent) {
+                const strip = el('div', 'ovr-people'); strip.setAttribute('role', 'list'); strip.setAttribute('aria-label', 'Your agents');
+                wrap.append(strip); where.append(wrap);
+                paintPeople(strip);
+                loadAgent().then(() => { if (strip.isConnected) paintPeople(strip); });
+                return wrap;
+            }
             const head = el('div', 'ovr-head');
             const tabs = el('div', 'ovr-filters'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Show');
             for (const [id, label, ic] of FILTERS) {
@@ -458,7 +526,7 @@
             // The list's frame (filters, the box) is drawn once; a filter only reloads the rows, so the words being typed stay.
             if (state.view !== 'list' || !box.querySelector('.ovr-rows')) {
                 state.view = 'list'; state.run = null;
-                box.textContent = ''; box.className = 'ovr is-list';
+                box.textContent = ''; box.className = `ovr is-list${o.agent ? ' is-agent' : ''}`;
                 homeHead(box);
                 const rows = el('ul', 'ovr-rows'); rows.setAttribute('aria-label', 'Your runs');
                 const foot = el('div', 'ovr-list-note');
@@ -476,7 +544,7 @@
                     });
                     box.append(st);
                 }
-                composer(box, { placeholder: o.placeholder || (o.agent ? 'Ask, or say what to do' : 'Ask, or say what to make'), onSend: (v) => start(v.text) });
+                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => start(v.text) });
             }
             place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
@@ -485,7 +553,7 @@
             // pieces may share one owner (the Dock lends one panel at a time), so the old one goes before the new one comes.
             const pf = paneFor(state.filter);
             const topEl = box.querySelector('.ovr-top'), paneEl = box.querySelector('.ovr-pane');
-            const wantTop = !pf && typeof o.top === 'function';   // 4.240.0: Now (timers) and an agent at work show on every filter
+            const wantTop = !pf && !o.agent && typeof o.top === 'function';   // 4.249.0: not above your agent's conversations (the owner crossed out Now / Needs you)
             if (!wantTop) { dropTop(); topEl.textContent = ''; }
             if (paneId !== (pf ? state.filter : null)) { dropPane(); paneEl.textContent = ''; }
             box.classList.toggle('has-pane', !!pf);
@@ -519,11 +587,16 @@
             }
             // All, for your agent, is the conversation (Muse, dots): today's chat opens in place; History shows the list.
             // Anything waiting on you (an approval, a question) keeps the list first, where it can be answered in place.
-            if (o.agent && state.filter === 'all' && !how.history && !how.stay && !state.runs.some(needsPerson)) {
+            if (false && o.agent && state.filter === 'all' && !how.history && !how.stay && !state.runs.some(needsPerson)) {   // 4.249.0: the home is the conversations
                 const last = latestChat(state.runs);
                 if (last) { open(last.ref || last.id, last, { home: true }); return; }
             }
             rows.textContent = ''; rows.removeAttribute('aria-busy');
+            if (o.agent) {
+                const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
+                const st0 = box.querySelector('.ovr-starters'); if (st0) st0.hidden = state.runs.length > 0;
+                if (state.only) state.runs = state.runs.filter((r) => r.agent && r.agent.id === state.only);
+            }
             // 4.242.0: how many are working right now (a coding agent's "2 running tasks"), above the rows.
             { const busy = state.runs.filter((r) => r.status === 'running' || r.status === 'planning').length; let pill = box.querySelector('.ovr-busy');
               if (busy) { if (!pill) { pill = el('p', 'ovr-busy'); rows.before(pill); } pill.textContent = ''; pill.append(el('i', 'ovr-pulse'), el('span', '', `${busy} working now`)); } else if (pill) pill.remove(); }
@@ -543,8 +616,9 @@
             if (needsPerson(r)) meta.append(el('i', 'ovr-pill is-needs', 'Needs you'));
             else if (r.status === 'running') meta.append(el('i', 'ovr-pill is-working', 'Working'));
             else if (r.status === 'failed') meta.append(el('i', 'ovr-pill is-failed', 'Did not finish'));
-            t.append(top, line, meta);
-            b.append(face(r), t);
+            if (o.agent && !meta.querySelector('.ovr-pill')) t.append(top, line); else t.append(top, line, meta);
+            const mine = o.agent && r.agent && (r.agent.id === 'vibe' || r.agent.name === agentName());
+            b.append(mine ? agentFace('m', r.status === 'running' ? 'working' : undefined) : face(r), t);
             if (!away) b.addEventListener('click', () => open(r.ref || r.id, r));
             return b;
         }
@@ -842,6 +916,47 @@
 .ovr-face.is-s { width: 38px; height: 38px; } .ovr-face.is-s > svg { width: 21px; height: 21px; }
 .ovr-face img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .ovr-face.is-needs { box-shadow: 0 0 0 2px #f59e0b; }
+/* 4.249.0, the messenger of agents: a row of faces, blobs with eyes, a card for your agent, rows like messages. */
+.ovr-people { display: flex; gap: 14px; overflow-x: auto; padding: 8px 4px 10px; margin: 0 -4px; scrollbar-width: none; }
+.ovr-people::-webkit-scrollbar { display: none; }
+.ovr-person { all: unset; box-sizing: border-box; flex: none; display: grid; justify-items: center; gap: 6px; width: 66px; cursor: pointer; text-decoration: none; color: inherit; -webkit-tap-highlight-color: transparent; }
+.ovr-person .ovr-face { transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), box-shadow .2s ease; }
+.ovr-person:hover .ovr-face, .ovr-person:focus-visible .ovr-face { transform: translateY(-2px) scale(1.04); }
+.ovr-person:active .ovr-face { transform: scale(.94); }
+.ovr-person:focus-visible { outline: none; }
+.ovr-person:focus-visible .ovr-face { box-shadow: 0 0 0 3px var(--accent, #3b82f6); }
+.ovr-person.is-on .ovr-face { box-shadow: 0 0 0 2.5px var(--bg-card, #131c2e), 0 0 0 4.5px var(--accent, #3b82f6); }
+.ovr-person-n { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--text-secondary, #96a7c2); }
+.ovr-face.is-l { width: 56px; height: 56px; } .ovr-face.is-l > svg { width: 26px; height: 26px; }
+.ovr-face.is-xl { width: 88px; height: 88px; }
+.ovr-face-new { border: 1.5px dashed color-mix(in srgb, var(--text-secondary, #96a7c2) 55%, transparent); background: transparent !important; color: var(--text-secondary, #96a7c2) !important; }
+.ovr-blob { color: transparent; background: radial-gradient(circle at 32% 26%, hsl(var(--ovr-h, 215) 90% 74%), hsl(var(--ovr-h, 215) 78% 56%) 62%, hsl(var(--ovr-h, 215) 70% 46%)) !important; box-shadow: inset 0 -3px 6px hsl(var(--ovr-h, 215) 70% 30% / .35), 0 4px 12px -6px hsl(var(--ovr-h, 215) 70% 30% / .7); }
+.ovr .ovr-face.ovr-blob[data-shape="round"] { border-radius: 50%; }
+.ovr .ovr-face.ovr-blob[data-shape="squircle"] { border-radius: 32%; }
+.ovr .ovr-face.ovr-blob[data-shape="drop"] { border-radius: 50% 50% 50% 14%; }
+.ovr .ovr-face.ovr-blob[data-shape="leaf"] { border-radius: 54% 16% 54% 16%; }
+.ovr .ovr-face.ovr-blob[data-shape="pebble"] { border-radius: 58% 42% 52% 48% / 48% 56% 44% 52%; }
+/* Messenger rows: lines, not boxes. */
+.ovr.is-agent .ovr-rows .ovr-row:not(.is-needs) { border-color: transparent; background: transparent; box-shadow: none; }
+.ovr.is-agent .ovr-rows .ovr-row:not(.is-needs):hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
+.ovr-blob > .ovr-eye { position: absolute; top: 36%; width: 9%; height: 19%; min-width: 3px; border-radius: 99px; background: rgba(255, 255, 255, .92); transform: rotate(12deg); animation: ovr-blink 6s infinite; }
+.ovr-blob > .ovr-eye:first-of-type { left: 36%; } .ovr-blob > .ovr-eye:last-of-type { left: 55%; }
+@keyframes ovr-blink { 0%, 94%, 100% { transform: rotate(12deg) scaleY(1); } 96% { transform: rotate(12deg) scaleY(.15); } }
+html[data-ov-motion="off"] .ovr-blob > .ovr-eye, html[data-ov-motion="off"] .ovr-person .ovr-face { animation: none; transition: none; }
+.ovr-blob.is-working > .ovr-eye { animation: ovr-look 1.6s ease-in-out infinite; }
+@keyframes ovr-look { 0%, 100% { translate: 0 0; } 50% { translate: 2px 0; } }
+.ovr-sheet { position: absolute; inset: 0; z-index: 6; display: grid; align-content: start; justify-items: center; gap: 14px; padding: 28px 18px 18px; background: var(--bg-card, #131c2e); animation: ovr-sheet-in .24s cubic-bezier(.2, .8, .2, 1); overflow-y: auto; }
+@keyframes ovr-sheet-in { from { opacity: 0; transform: translateY(10px); } }
+.ovr-sheet > .ovr-sheet-x { position: absolute; top: 10px; right: 10px; margin: 0; }
+.ovr-sheet-top { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.ovr-sheet-n { font-size: 20px; }
+.ovr-sheet-s { font-size: 13.5px; color: var(--text-secondary, #96a7c2); }
+.ovr-sheet-acts { display: grid; gap: 8px; width: min(100%, 320px); }
+.ovr-sheet-btn { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); color: var(--text-primary, #e6edf7); font-weight: 650; cursor: pointer; text-decoration: none; transition: background-color .15s ease, transform .12s ease; }
+.ovr-sheet-btn:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 13%, transparent); }
+.ovr-sheet-btn:active { transform: scale(.98); }
+.ovr-sheet-btn svg { width: 18px; height: 18px; }
+.ovr.is-list { position: relative; }
 .ovr-face.is-working { animation: ovr-breathe 2.4s ease-in-out infinite; }
 .ovr-doing { position: absolute; right: -4px; bottom: -4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #fff; background: linear-gradient(140deg, var(--accent, #3b82f6), color-mix(in srgb, var(--accent, #3b82f6) 45%, #a855f7)); box-shadow: 0 0 0 2px var(--bg-secondary, #121826); }
 .ovr-doing svg { width: 12px; height: 12px; stroke-width: 2.3; }
