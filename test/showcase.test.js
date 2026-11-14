@@ -141,6 +141,10 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     assert.ok(other.includes('<details class="sc-fold sc-onenet-g" open><summary><h3>Watch &amp; stream') && !other.includes('aria-current'), 'a product the groups do not know opens the first group');
     assert.ok(sc.network({ service: 'help' }).includes('<details class="sc-fold sc-onenet-g" open><summary><h3>Talk &amp; belong'), 'Help opens its own group');
     assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'), 'a caller\'s own short list keeps the four cards');
+    const own = sc.network({ service: 'shoes', title: 'Part of OpenVibe', lede: 'Shoes is one room of the network.', items: [['deals', 'Offers', 'https://openvibe.deals/']] });
+    assert.ok(own.includes('Part of OpenVibe') && own.includes('Shoes is one room of the network.') && !own.includes('More on OpenVibe'), 'and its own heading and lede (4.256.1)');
+    assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/']] }).includes('More on OpenVibe'), 'without them, the list\'s own defaults');
+    assert.ok(sc.network({ service: 'live', lede: 'Our line.' }).includes('Our line.') && sc.network({ service: 'live' }).includes('Every OpenVibe site opens with the same sign-in'), 'the whole network takes a lede too, else its own');
     for (const [svc, list] of Object.entries(sc.RELATED)) for (const [to, what, href] of list) assert.ok(to && what && /^https:\/\//.test(href) && to !== svc, `${svc} → ${to}`);
     assert.ok(sc.CSS.includes('animation-timeline:view()') && sc.CSS.includes('html[data-ov-motion=off] .sc-sec{animation:none}') && sc.CSS.includes('translateY(calc(18px * var(--ov-move,1)))'), 'scroll reveal: a third as far under Calm, none with motion off');
     const rise = sc.CSS.match(/@keyframes scRise\{[^@]*?\}\}/);
