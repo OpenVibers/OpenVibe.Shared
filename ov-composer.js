@@ -90,7 +90,11 @@ html[data-ov-motion=off] .ovc-file-ai.is-busy svg { animation: none; opacity: .6
 .ovc-pop-t b { font-weight: 650; font-size: 14px; color: var(--text-primary, #e6edf7); }
 .ovc-pop-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-muted, #7386a3); }
 .ovc-pop-tag { font-size: 11px; font-weight: 650; padding: 2px 7px; border-radius: 999px; color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); }
-.ovc-mic[aria-pressed="true"] { color: var(--live-red, #ef4444); background: color-mix(in srgb, var(--live-red, #ef4444) 14%, transparent); animation: ovc-listen 1.4s ease-in-out infinite; }
+/* 4.249.0 (the owner, 11-14: the listening glow was cut off into a square): listening is a ring inside the disk, never a glow
+   spread past it that a row clips; blocked is its own state: a red ring and a short shake, and the note says why. */
+.ovc-mic { border-radius: 50%; }
+.ovc-mic[aria-pressed="true"] { color: var(--live-red, #ef4444); background: color-mix(in srgb, var(--live-red, #ef4444) 16%, transparent); animation: ovc-listen 1.4s ease-in-out infinite; }
+.ovc-mic.is-denied { color: var(--live-red, #ef4444); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--live-red, #ef4444) 70%, transparent) !important; animation: ovc-deny .42s cubic-bezier(.36,.07,.19,.97) both; }
 .ovc-count { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted, #7386a3); }
 .ovc-count.is-low { color: var(--live-red, #ef4444); }
 .ovc-count[hidden] { display: none; }
@@ -98,7 +102,8 @@ html[data-ov-motion=off] .ovc-file-ai.is-busy svg { animation: none; opacity: .6
 .ovt-composer.ovc-compact .ovt-c-row { margin-top: 0; }
 .ovt-composer.ovc-compact .ovt-btn, .ovt-composer.ovc-compact .ovt-send { width: 36px; min-width: 36px; height: 36px; }
 @keyframes ovc-in { from { opacity: 0; transform: translateY(4px) scale(.98); } }
-@keyframes ovc-listen { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--live-red, #ef4444) 18%, transparent); } }
+@keyframes ovc-listen { 0%, 100% { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--live-red, #ef4444) 55%, transparent); } 50% { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--live-red, #ef4444) 30%, transparent); } }
+@keyframes ovc-deny { 20%, 60% { translate: -3px 0; } 40%, 80% { translate: 3px 0; } }
 html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data-ov-motion=off] .ovc-mic { animation: none; }
 .ovc-set { width: min(460px, calc(100vw - 24px)); max-height: min(640px, calc(100vh - 32px)); padding: 0; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .2)); border-radius: 20px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); }
 .ovc-set::backdrop { background: rgba(2, 6, 14, .55); }
@@ -1261,7 +1266,12 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 const pad = head && !/\s$/.test(head) ? ' ' : '';
                 rec.onresult = (ev) => { let s = ''; for (let i = 0; i < ev.results.length; i++) s += ev.results[i][0].transcript; text.value = head + pad + s + tail; text.setSelectionRange((head + pad + s).length, (head + pad + s).length); fire(); };
                 rec.onend = () => { rec = null; mic.setAttribute('aria-pressed', 'false'); mic.title = 'Speak'; text.focus(); };
-                rec.onerror = (ev) => { if (ev.error === 'not-allowed') say('The microphone is blocked for this site.'); };
+                rec.onerror = (ev) => {
+                    if (ev.error !== 'not-allowed' && ev.error !== 'service-not-allowed') return;
+                    say('The microphone is blocked for this site: allow it from the lock or tune icon beside the address, then try again.');
+                    mic.classList.remove('is-denied'); void mic.offsetWidth; mic.classList.add('is-denied'); mic.title = 'The microphone is blocked for this site';
+                    setTimeout(() => { if (mic) mic.classList.remove('is-denied'); }, 2400);
+                };
                 try { rec.start(); mic.setAttribute('aria-pressed', 'true'); mic.title = 'Stop listening'; } catch { rec = null; }
             });
             tools.insertBefore(mic, tools.firstChild);

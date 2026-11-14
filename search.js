@@ -631,7 +631,7 @@ html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(1
 html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(3) { --dx: -2px; --dy: 2px; } html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(4) { --dx: 2px; --dy: 2px; }
 html[data-ov-motion=reduced] :is(.ovs-plus-x, .ovs-plus-x path) { transition-timing-function: ease-out; }
 html[data-ov-motion=off] :is(.ovs-plus-x, .ovs-plus-x path, .ovs-plus-p circle) { transition: none; animation: none !important; }
-.ovs-send { color: var(--on-accent, #fff); background: var(--accent, #3b82f6); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); animation: ovs-send-in .22s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-send { color: #fff; background: linear-gradient(160deg, color-mix(in srgb, var(--accent, #3b82f6) 72%, #fff), var(--accent, #3b82f6) 50%, color-mix(in srgb, var(--accent, #3b82f6) 78%, #000)); box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -2px 0 rgba(0,0,0,.22), 0 8px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 85%, transparent); animation: ovs-send-in .22s cubic-bezier(.3, 1.4, .4, 1); }
 @media (hover: hover) { .ovs-send:hover { color: var(--on-accent, #fff); background: var(--accent-hover, color-mix(in oklab, var(--accent, #3b82f6) 85%, #fff)); } }
 @keyframes ovs-send-in { from { transform: scale(.5); opacity: 0; } }
 .ovs-mic.is-on { color: #fff; background: var(--live-red, #ef4444); animation: ovs-mic 1.2s ease-in-out infinite; }
@@ -1864,6 +1864,10 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         b.classList.remove('is-rolling');
     }
     function rollHere() {
+        // 4.249.0 (the owner, 11-14: opening the menu "blink[s] in … kind of like flashes and like does weird stuff"; caught
+        // mid-roll, Live's own tab read "Download"): the site tab says where you are and stays still. Kept as a function so
+        // a site may still ask for the roll (data-ov-roll on <html>).
+        if (!document.documentElement.hasAttribute('data-ov-roll')) return;
         if (document.documentElement.getAttribute('data-ov-motion') === 'off') return;
         const b = tabsEl && tabsEl.querySelector('.ovs-tab[data-tab="here"]');
         const steps = rollSteps();
@@ -2192,6 +2196,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     }
 
     function render(q) {
+        // The field's buttons follow its words on every render (4.249.0; the owner, 11-14: typed, closed, reopened: "empty …
+        // lit up"): a clear that set the value by script left Send showing.
+        try { syncTools(); } catch { /* the menu is being built */ }
         q = String(q || '').trim();
         el.classList.toggle('ovs-typing', !!q);
         if (door === 'chats' && canDoor()) { try { root.OpenVibeDock.filterChats(q); } catch { /* */ } return; }
@@ -2566,6 +2573,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         } else document.documentElement.style.overflow = 'hidden';
         input.placeholder = askHint();
         input.value = opts.q || '';
+        try { syncTools(); } catch { /* */ }
         paintGhost();
         render(input.value);
         if (flyFrom && !input.value) requestAnimationFrame(flyIn);

@@ -51,6 +51,8 @@
                 .ovnav-appbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--ovb-z-bar, 9990); translate: 0 calc(-1 * var(--ovb-lift, 0px)); display: flex; align-items: stretch; height: var(--ovnav-appbar-h); box-sizing: border-box; padding: 0 4px env(safe-area-inset-bottom, 0px);
                     background: color-mix(in srgb, var(--bg-secondary, #121826) 90%, transparent); -webkit-backdrop-filter: saturate(1.5) blur(16px); backdrop-filter: saturate(1.5) blur(16px);
                     border-top: 1px solid var(--border, rgba(255,255,255,.1)); font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: transform .2s ease, visibility 0s; }
+                /* 4.249.0: the bar's colour runs on below its edge, so a phone's toolbar sliding away never shows the page under it. */
+                .ovnav-appbar::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 160px; pointer-events: none; background: var(--bg-secondary, #121826); }
                 .ovnav-appbar .ovnav-ab { all: unset; box-sizing: border-box; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; cursor: pointer;
                     color: var(--text-muted, #93a0b4); font-size: 12px; font-weight: 650; line-height: 1.1; text-align: center; -webkit-tap-highlight-color: transparent; }
                 .ovnav-appbar .ovnav-ab:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: -4px; border-radius: 12px; }
