@@ -161,11 +161,11 @@
             .openvibe-toast.priority-critical { border-color: color-mix(in srgb, var(--ovn-tone) 60%, var(--border, #333)); }
 
             /* The glyph (or avatar with a glyph badge), shared by toasts and the list. */
-            .ovn-glyph { position: relative; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none;
+            .ovn-glyph { position: relative; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none;
                 color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 68%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
-            .ovn-glyph svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            .ovn-glyph svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
             .ovn-glyph.ovn-avatar { border-radius: 50%; background: var(--bg-tertiary, #2a2b33); }
-            .ovn-glyph.ovn-avatar img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; display: block; }
+            .ovn-glyph.ovn-avatar img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: block; }
             .ovn-glyph .ovn-badge { position: absolute; right: -3px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
                 background: var(--ovn-tone, var(--accent, #3b82f6)); color: var(--bg-elevated, var(--bg-card, #1f2129)); box-shadow: 0 0 0 2px var(--bg-elevated, var(--bg-card, #1f2129)); }
             .ovn-glyph .ovn-badge svg { width: 11px; height: 11px; stroke-width: 2.4; }
@@ -316,7 +316,7 @@
             .openvibe-nv-list { flex: 1; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
             .openvibe-nv-day { position: sticky; top: 0; z-index: 1; padding: 10px 16px 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted, #8b8b96); background: var(--bg-elevated, var(--bg-secondary, #1d1f27)); }
             /* A row: the opaque .ovn-row over .ovn-under, which a swipe uncovers (Read on the left, Clear on the right). */
-            .openvibe-notif-item { position: relative; margin: 0 6px 6px; border-radius: 14px; overflow: hidden; cursor: pointer; }
+            .openvibe-notif-item { position: relative; margin: 0 8px 8px; border-radius: 16px; overflow: hidden; cursor: pointer; }
             /* 4.248.0 (the owner, 11-14: "no spacing between them … confusing to have an X … more like social media"): every row
                the same card with room between, the face larger, unread a tint and a dot at the right, a ⋯ menu instead of a
                bare X, buttons a notice brings (Approve, Deny, Watch). */
@@ -332,9 +332,9 @@
             .openvibe-notif-item .ovn-act { font: inherit; font-size: 12.5px; font-weight: 700; min-height: 32px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border, rgba(255,255,255,.14)); background: transparent; color: var(--text-primary, #ececf1); cursor: pointer; }
             .openvibe-notif-item .ovn-act.is-primary { border-color: transparent; background: var(--accent-strong, var(--accent, #3b82f6)); color: var(--on-accent-strong, #fff); }
             .openvibe-notif-item .ovn-act.is-danger { color: var(--danger-text, #f87171); border-color: color-mix(in srgb, var(--danger, #ef4444) 40%, transparent); }
-            .openvibe-notif-item .ovn-row { position: relative; z-index: 1; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; padding: 10px 14px 10px 16px; border-radius: 14px;
+            .openvibe-notif-item .ovn-row { position: relative; z-index: 1; display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 12px 40px 12px 14px; border-radius: 14px;
                 background: var(--ovn-bg, var(--bg-elevated, #1d1f27)); transition: background .15s, transform .2s ease; touch-action: pan-y; outline: none; }
-            .openvibe-notif-item .ovn-row.has-thumb { grid-template-columns: 38px minmax(0, 1fr) 56px; }
+            .openvibe-notif-item .ovn-row.has-thumb { grid-template-columns: 44px minmax(0, 1fr) 56px; }
             .openvibe-notif-item .ovn-row:focus-visible { box-shadow: inset 0 0 0 2px var(--accent, #3b82f6); }
             .openvibe-notif-item:hover .ovn-row { background: color-mix(in srgb, var(--text-primary, #ececf1) 5%, var(--ovn-bg, #1d1f27)); }
             .openvibe-notif-item.unread .ovn-row { background: color-mix(in srgb, var(--accent, #3b82f6) 8%, var(--ovn-bg, #1d1f27)); }
@@ -343,8 +343,8 @@
             .openvibe-notif-item .thumb { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; display: block; background: var(--bg-tertiary, #2a2b33); }
             .openvibe-notif-item .ovn-under { position: absolute; inset: 0; display: none; align-items: center; justify-content: space-between; padding: 0 22px; font-size: 13px; font-weight: 750; }
             .openvibe-notif-item[data-swipe] .ovn-under { display: flex; }
-            .openvibe-notif-item[data-swipe="read"] .ovn-under { background: var(--accent-strong, var(--accent, #3472d8)); color: var(--on-accent-strong, var(--on-accent, #fff)); }
-            .openvibe-notif-item[data-swipe="clear"] .ovn-under { background: var(--danger-strong, #c42b30); color: #fff; justify-content: flex-end; }
+            .openvibe-notif-item[data-swipe] .ovn-under { background: color-mix(in srgb, var(--accent, #3b82f6) 70%, #0b1220); color: #fff; }
+            .openvibe-notif-item[data-swipe="clear"] .ovn-under { justify-content: flex-end; }
             .openvibe-notif-item[data-swipe="read"] .ovn-under .clear, .openvibe-notif-item[data-swipe="clear"] .ovn-under .read { display: none; }
             .openvibe-notif-item .ovn-under span { display: inline-flex; align-items: center; gap: 6px; }
             .openvibe-notif-item .ovn-under svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1124,6 +1124,7 @@
             img.remove();
         }, true);
         attachRowSwipe(v, list);
+        if (mode === 'dock') swipeHint(v);
         refreshPushButton(v);
         v.destroy = () => { clearTimeout(qTimer); v.seq++; };
         _views.set(root, v);
@@ -1134,6 +1135,23 @@
      * Touch: a row follows the finger sideways. Past a third of its width (at most 96 px), right marks it read and left
      * clears it (Network's dismiss); short of that it springs back. A vertical move is the list scrolling, not a swipe.
      */
+    /** The first openings (4.249.0; the owner: "the first couple times … waits a sec and then does a little animation to
+     *  let them know"): the top unread row slides a little aside, showing Clear under it, and back. */
+    function swipeHint(v) {
+        try {
+            if (localStorage.getItem('ovn-swiped') === '1') return;
+            const n = Number(localStorage.getItem('ovn-hint') || 0); if (n >= 2) return;
+            if (document.documentElement.getAttribute('data-ov-motion') === 'off') return;
+            setTimeout(() => {
+                const item = v.root.querySelector('.openvibe-notif-item.unread') || v.root.querySelector('.openvibe-notif-item');
+                const row = item && item.querySelector('.ovn-row'); if (!row || !item.isConnected) return;
+                localStorage.setItem('ovn-hint', String(n + 1));
+                item.dataset.swipe = 'clear';
+                row.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-72px)', offset: 0.4 }, { transform: 'translateX(-72px)', offset: 0.6 }, { transform: 'translateX(0)' }], { duration: 1300, easing: 'cubic-bezier(.2, .8, .2, 1)' })
+                    .onfinish = () => { delete item.dataset.swipe; };
+            }, 1100);
+        } catch { /* storage refused: no hint */ }
+    }
     function attachRowSwipe(v, list) {
         if (typeof root.PointerEvent !== 'function') return;
         let s = null;
@@ -1152,24 +1170,38 @@
                 s.on = true; s.item.classList.add('swiping');
                 try { s.row.setPointerCapture(e.pointerId); } catch { /* */ }
             }
-            // Already read: a short give to the right, nothing to do.
-            s.dx = dx > 0 && !s.item.classList.contains('unread') ? Math.min(dx, 24) : dx;
-            s.item.dataset.swipe = s.dx > 0 ? 'read' : 'clear';
-            s.row.style.transform = `translateX(${s.dx}px)`;
+            // 4.249.0 (the owner, 11-14: "swipe alerts out in either direction … like Android and Samsung … clearing them,
+            // but you can still view the history"): either way clears, the row fading as it goes.
+            s.dx = dx; s.t = e.timeStamp || Date.now(); if (!s.t0) s.t0 = s.t;
+            s.item.dataset.swipe = dx > 0 ? 'read' : 'clear';
+            const w0 = s.row.offsetWidth || 320;
+            s.row.style.transform = `translateX(${dx}px)`;
+            s.row.style.opacity = String(Math.max(0.35, 1 - Math.abs(dx) / (w0 * 1.1)));
         });
         const end = () => {
             if (!s) return;
-            const { row, item, dx, on } = s; s = null;
+            const { row, item, dx, on } = s; const s0t = s.t || 0, s0t0 = s.t0 || 0; s = null;
             item.classList.remove('swiping');
             if (!on) return;
             item.__ovnSwipedAt = Date.now();
             const ids = (item.dataset.ids || item.dataset.id || '').split(',').filter(Boolean);
             const w = row.offsetWidth || 320;
             const far = Math.min(96, w / 3);
+            const fast = Math.abs(dx) > 40 && Math.abs(dx) / Math.max(1, (s0t - s0t0)) > 0.6;   // a flick, px per ms
             const settle = () => setTimeout(() => { if (!item.classList.contains('swiping')) delete item.dataset.swipe; }, 220);
-            if (dx < -far) { row.style.transform = `translateX(${-w}px)`; setTimeout(() => ids.forEach((x) => dismiss(v, x)), 180); return; }
-            row.style.transform = '';
-            if (dx > far && item.classList.contains('unread')) markRead(ids);
+            row.style.transition = 'transform .26s cubic-bezier(.2, .8, .2, 1), opacity .26s ease';
+            if (Math.abs(dx) > far || fast) {
+                // Cleared: it slides off the side it was pushed to, read; in Unread it folds away, in All it stays as history.
+                row.style.transform = `translateX(${dx > 0 ? w : -w}px)`; row.style.opacity = '0';
+                if (ids.length) markRead(ids);
+                setTimeout(() => {
+                    if (v.unread) { item.style.transition = 'height .22s ease, margin .22s ease, opacity .22s ease'; item.style.height = `${item.offsetHeight}px`; requestAnimationFrame(() => { item.style.height = '0px'; item.style.marginBottom = '0px'; item.style.opacity = '0'; }); setTimeout(() => item.remove(), 240); }
+                    else { row.style.transition = 'none'; row.style.transform = ''; row.style.opacity = ''; item.classList.remove('unread'); settle(); requestAnimationFrame(() => { row.style.transition = ''; }); }
+                }, 260);
+                try { localStorage.setItem('ovn-swiped', '1'); } catch { /* */ }
+                return;
+            }
+            row.style.transform = ''; row.style.opacity = '';
             settle();
         };
         list.addEventListener('pointerup', end);
@@ -1205,7 +1237,7 @@
                 const label = p.label ? `<span class="dot"></span><span>${esc(p.label)}</span>` : '';
                 const thumb = p.kind === 'ops' ? null : thumbOf(n);
                 return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">
-                    <div class="ovn-under" aria-hidden="true"><span class="read">${svg(ICON.read)}Read</span><span class="clear">Clear${svg(ICON.close)}</span></div>
+                    <div class="ovn-under" aria-hidden="true"><span class="read">${svg(ICON.read)}Clear</span><span class="clear">Clear${svg(ICON.read)}</span></div>
                     <div class="ovn-row${thumb ? ' has-thumb' : ''}" tabindex="0">
                     ${unread ? '<span class="ovn-sr">Unread. </span>' : ''}
                     ${glyphHtml(n, p)}
