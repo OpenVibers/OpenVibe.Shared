@@ -18,6 +18,15 @@ file by its name; a message waiting in the queue keeps its files.
 Codes runners and routers) and `email` (Email: sending and receiving), after GPUs, so an owning service's
 `x-owner-input.group` can put a key there.
 
+**Moving between pages without a glitch** (plan §AB.30; the owner: "loads multiple times and then jumps around … the
+logo will glitch … I have to reload"). The navbar no longer tears itself down to draw the same bar again: a render
+that would draw the identical bar (the sign-in resolving to the person the first paint already showed, a repeat
+call) keeps the one on the page, listeners and all; a real change swaps in place and carries the mark ov-mark.js
+already drew, so its entrance never replays. A link on this site under the pointer or a finger is prefetched (at most
+24 a page; never sign-in, sign-out, API, downloads, new tabs, nofollow or data-no-prefetch; not on Save-Data or 2G),
+so the next page is already there when it is pressed. The bar and the app bar keep their view-transition names
+(kit.css, soft.js), so a same-site page change cross-fades under a bar that stays put.
+
 ## 4.249.0 — 2026-11-14
 
 **Glyphs stand alone** (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and

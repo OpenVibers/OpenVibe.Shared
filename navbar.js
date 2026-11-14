@@ -1554,6 +1554,21 @@
         if (waiting) loadOverlay();
     }
     // Faster to the next OpenVibe site: when a pointer or finger reaches for a link to another one, connect to it then.
+    // 4.250.0 (plan §AB.30): a link on this site under the pointer or a finger is fetched ahead (<link rel=prefetch>, at
+    // most 24 a page), so the next page is already here when it is pressed. Never sign-in, sign-out, API, a download,
+    // a new tab, a link that opts out (data-no-prefetch, rel=nofollow), or the page itself; not on a saving connection.
+    const _prefetched = new Set();
+    function prefetchHere(a, u) {
+        try {
+            if (_prefetched.size >= 24 || a.target === '_blank' || a.hasAttribute('download') || a.hasAttribute('data-no-prefetch') || /\bnofollow\b/.test(a.rel || '')) return;
+            if (/^\/(auth|api|internal|logout|login|signout|sign-out)\b/i.test(u.pathname) || /logout|sign-?out/i.test(u.pathname)) return;
+            const key = u.pathname + u.search;
+            if (key === root.location.pathname + root.location.search || _prefetched.has(key)) return;
+            const c = root.navigator && root.navigator.connection; if (c && (c.saveData || /2g/.test(String(c.effectiveType || '')))) return;
+            _prefetched.add(key);
+            const l = document.createElement('link'); l.rel = 'prefetch'; l.href = u.href; l.as = 'document'; document.head.appendChild(l);
+        } catch { /* a hint only */ }
+    }
     function warmLinks() {
         if (root.__ovWarm || typeof document.addEventListener !== 'function') return;
         root.__ovWarm = true;
@@ -1562,7 +1577,8 @@
             const a = e.target && e.target.closest && e.target.closest('a[href]');
             if (!a) return;
             let u; try { u = new URL(a.href, root.location.href); } catch { return; }
-            if (u.protocol !== 'https:' || u.origin === root.location.origin || done.has(u.origin) || !/(^|\.)openvibe\.[a-z]+$/.test(u.hostname) || done.size > 12) return;
+            if (u.origin === root.location.origin) { prefetchHere(a, u); return; }
+            if (u.protocol !== 'https:' || done.has(u.origin) || !/(^|\.)openvibe\.[a-z]+$/.test(u.hostname) || done.size > 12) return;
             done.add(u.origin);
             const l = document.createElement('link'); l.rel = 'preconnect'; l.href = u.origin; l.crossOrigin = ''; document.head.appendChild(l);
             const d = document.createElement('link'); d.rel = 'dns-prefetch'; d.href = u.origin; document.head.appendChild(d);
@@ -2344,14 +2360,15 @@
         try { root.dispatchEvent(new CustomEvent('openvibe-viewer', { detail: v })); } catch { /* */ }
     }
 
+    let _navSig = '';
     function render() {
         syncViewer();
         syncWalletChips();
         // A site may put state classes on the bar (Live's transparent hero mode). A re-render must not lose them.
         let carried = []; try { carried = Array.from((_navEl && _navEl.classList) || []).filter(c => c !== 'openvibe-navbar'); } catch { carried = []; }
-        if (_navEl) _navEl.remove();
-        if (_renderAbort) { _renderAbort.abort(); _panelQueue.length = 0; }
-        _renderAbort = typeof AbortController === 'function' ? new AbortController() : null;
+        // 4.250.0 (plan §AB.30; the owner: "loads multiple times and then jumps around … the logo will glitch"): the old
+        // bar stays until the new one is known to differ; the same bar is never drawn twice, and a new one keeps the mark.
+        const oldNav = _navEl;
 
         const nav = document.createElement('nav');
         nav.className = 'openvibe-navbar';
@@ -2400,6 +2417,19 @@
             ${links.length ? `<div class="ovnav-drawer" id="openvibe-drawer" role="menu">${drawerOrder(links).map(l => linkHTML(l, true)).join('')}<div class="ovnav-drawer-net">${networkLinksHTML(links, true)}</div>${u ? '' : '<div class="ovnav-display" hidden></div>'}</div>` : ''}
         `;
         if (_config.className) String(_config.className).split(/\s+/).filter(Boolean).forEach(c => nav.classList.add(c));
+        const sig = `${nav.innerHTML}|${u ? `${u.id}|${u.username || ''}|${u.avatar_url || ''}|${u.role || ''}` : ''}|${accounts.map((a) => a && a.id).join(',')}|${_config.className || ''}`;
+        if (oldNav && oldNav.isConnected && sig === _navSig) return oldNav;   // the same bar: nothing to redraw, nothing jumps
+        _navSig = sig;
+        if (oldNav) {
+            // The mark ov-mark.js already drew (and whose entrance already played) moves into the new bar unchanged.
+            try {
+                const was = oldNav.querySelector('.openvibe-navbar-brand .ov-mark[data-ov]'), now = nav.querySelector('.openvibe-navbar-brand .ov-mark');
+                if (was && now && typeof now.replaceWith === 'function' && was.getAttribute('data-variant') === now.getAttribute('data-variant') && was.getAttribute('data-size') === now.getAttribute('data-size')) now.replaceWith(was);
+            } catch { /* a fresh mark then */ }
+            if (typeof oldNav.remove === 'function') oldNav.remove();
+        }
+        if (_renderAbort) { _renderAbort.abort(); _panelQueue.length = 0; }
+        _renderAbort = typeof AbortController === 'function' ? new AbortController() : null;
         bindLinks(nav, links);
         hookSearch(nav);
         hookSwitcher(nav); hookPages(nav); hookSignIn(nav); hookFit(nav);
