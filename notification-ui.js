@@ -161,9 +161,10 @@
             .openvibe-toast.priority-critical { border-color: color-mix(in srgb, var(--ovn-tone) 60%, var(--border, #333)); }
 
             /* The glyph (or avatar with a glyph badge), shared by toasts and the list. */
-            .ovn-glyph { position: relative; width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; flex: none;
-                color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 68%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 15%, transparent); }
-            .ovn-glyph svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+            /* 4.249.0 (the owner, 11-14: no "tacky like circle design"): the kind's glyph alone, in its colour; a face stays round. */
+            .ovn-glyph { position: relative; width: 44px; height: 44px; display: grid; place-items: center; flex: none;
+                color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 78%, var(--text-primary, #ececf1)); }
+            .ovn-glyph svg { width: 28px; height: 28px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
             .ovn-glyph.ovn-avatar { border-radius: 50%; background: var(--bg-tertiary, #2a2b33); }
             .ovn-glyph.ovn-avatar img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; display: block; }
             .ovn-glyph .ovn-badge { position: absolute; right: -3px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;

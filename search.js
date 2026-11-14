@@ -358,8 +358,10 @@ html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .
 @media (hover: hover) { .ovs-grid.is-mini .ovs-tile:hover { background: transparent; } .ovs-grid.is-mini .ovs-tile:hover .ovs-ic { transform: translateY(-3px) scale(1.04); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 75% 70% / .5), 0 12px 26px -8px hsl(var(--ovs-h, 215) 75% 45% / .6); } }
 html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
 /* Each section of sites wears its glyph. */
-.ovs-group-ic { order: -1; flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovs-group-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+/* 4.249.0 (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and minimalist"): a glyph stands
+   alone; a tile or disk is kept only where it means something (an app's icon, a face, a status, a button). */
+.ovs-group-ic { order: -1; flex: none; display: grid; place-items: center; width: 22px; height: 22px; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-group-ic svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
 /* Names in the brand face (openvibe.design rule: a place's or an app's name in OV Brand 800; words you read in the UI
    face): the site list, the tabs, Vibe's switch. */
 .ovs-grid.is-mini .ovs-tile b, .ovs-starttabs .ovs-tab { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 800; letter-spacing: .005em; }

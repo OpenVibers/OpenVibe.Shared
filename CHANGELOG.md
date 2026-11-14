@@ -2,6 +2,11 @@
 
 ## 4.249.0 — 2026-11-14
 
+**Glyphs stand alone** (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and
+minimalist"). The tinted tile or disk behind a glyph is gone from the menu's group heads, showcase section heads,
+feature cards (the glyph in its card's hue, larger), questions and notifications; it stays only where it means
+something: an app's icon, a face, a status, a button. A question about deleting wears the bin, not the camera.
+
 **Each Vibe chat wears its persona** (the owner, 11-12: "for each vibe chat, it should generate a name … and then it'll
 generate an avatar for that chat bot"; OpenVibe.Chat makes them, docs/vibe-personas.md). The Dock's Vibe list and an
 open chat show the persona's picture (https only), else its registry glyph on its own hue, with its topic under the
