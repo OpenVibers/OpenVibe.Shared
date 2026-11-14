@@ -1895,7 +1895,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             box.style.aspectRatio = String(r);
             const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = thumb; box.append(img);
             // A picture that does not load leaves no empty frame (11-14, the owner: "broken images").
-            img.onerror = () => { if (kind === 'clip' || kind === 'video' || kind === 'live') { img.remove(); box.classList.add('is-empty'); } else box.remove(); };
+            img.onerror = () => { box.classList.add(kind === 'clip' || kind === 'video' || kind === 'live' ? 'is-empty' : 'is-broken'); };
             const len = media.length || c.duration_s;
             if (len) box.append(h('span', 'ovfd-len', lenOf(len)));
             if (kind === 'rundown') { const rib = h('span', 'ovfd-ribbon'); rib.append(glyph('page'), document.createTextNode('Rundown')); box.append(rib); }
@@ -1972,7 +1972,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // Rows line up: where one has a picture, the others hold its place (a deal's: its store's first letter).
             if (th) {
                 const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = th; row.append(img);
-                img.onerror = () => { const ph = h('i', `ovfd-group-ph${isDeal ? ' is-deal' : ''}`); if (isDeal) ph.append(glyph('tag')); img.replaceWith(ph); };
+                img.onerror = () => { const ph = h('i', `ovfd-group-ph${isDeal ? ' is-deal' : ''}`); if (isDeal) ph.append(glyph('tag')); img.classList.add('is-broken'); img.before(ph); };
             }
             else if (isDeal) { const ph = h('i', 'ovfd-group-ph is-deal'); ph.append(glyph('tag')); row.append(ph); }
             else if (anyPic) row.append(h('i', 'ovfd-group-ph'));
@@ -2182,7 +2182,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-facts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .ovfd-fact{display:inline-flex;align-items:baseline;gap:4px;padding:4px 10px;border-radius:999px;font-size:12.5px;color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
 .ovfd-fact b{color:var(--text-primary,#e8ecf3);font-weight:750;font-variant-numeric:tabular-nums}
-.ovfd-media.is-empty{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
+.ovfd-media.is-empty{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}.ovfd-media.is-empty img{visibility:hidden}.ovfd-media.is-broken{display:none}.ovfd-group-i img.is-broken{display:none}
 .ovfd-trend{grid-column:1;justify-self:start;font-size:12.5px;font-weight:750;padding:1px 8px;border-radius:999px;font-variant-numeric:tabular-nums}
 .ovfd-trend.is-up{color:#34d399;background:color-mix(in srgb,#10b981 16%,transparent)}.ovfd-trend.is-down{color:#f87171;background:color-mix(in srgb,#ef4444 14%,transparent)}.ovfd-trend.is-flat{color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent)}
 .ovfd-stat-was{font-size:12px;color:var(--text-muted,#93a0b4);align-self:center}
