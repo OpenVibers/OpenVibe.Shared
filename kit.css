@@ -102,8 +102,14 @@ html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25
 
 /* ── Buttons ── */
 .ovk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; min-height: var(--ovk-tap); padding: 10px 18px; border-radius: calc(var(--ov-radius-1) + 2px); border: 1px solid transparent; font: inherit; font-weight: 700; font-size: .95rem; line-height: 1.2; text-decoration: none; cursor: pointer; transition: filter .12s, border-color .12s, background .12s; }
-.ovk-btn--primary { background: var(--ovk-fill); color: var(--ovk-on-fill); }
-.ovk-btn--primary:hover { filter: brightness(1.08); }
+/* 4.249.0: the primary button is lit from above (the composer's send, the 3D switch): a soft gradient, a highlight on its
+   top edge and a coloured shadow under it; it lifts a hair on hover and settles when pressed. */
+.ovk-btn--primary { background: linear-gradient(to bottom, color-mix(in srgb, var(--ovk-fill) 88%, #fff), var(--ovk-fill) 55%, color-mix(in srgb, var(--ovk-fill) 90%, #000)); color: var(--ovk-on-fill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 16px -8px color-mix(in srgb, var(--ovk-fill) 75%, transparent); transition: translate .16s ease, box-shadow .2s ease, filter .15s ease; }
+.ovk-btn--primary:hover { filter: brightness(1.06); translate: 0 -1px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .24), 0 9px 20px -8px color-mix(in srgb, var(--ovk-fill) 80%, transparent); }
+.ovk-btn--primary:active { translate: 0 0; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .22); }
+.ovk-btn--quiet { box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent); }
+html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--primary:hover { translate: none; transition: none; }
 .ovk-btn--quiet { background: var(--ovk-panel); color: var(--ovk-text); border-color: var(--ovk-line); }
 .ovk-btn--quiet:hover { border-color: var(--ovk-accent); }
 .ovk-btn--ghost { background: transparent; color: var(--ovk-accent); padding-left: 8px; padding-right: 8px; }

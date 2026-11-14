@@ -247,11 +247,32 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 :where(html[data-theme-mode="light"]:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :checked)) { background: linear-gradient(to bottom, #c9d2de, #dbe2ec); }
 html[data-ov-motion="off"] :where(input[type="checkbox"][role="switch"]), html[data-ov-motion="off"] :where(input[type="checkbox"][role="switch"])::before { animation: none; transition: none; }
 html[data-ov-motion="calm"] :where(input[type="checkbox"][role="switch"])::before { transition-timing-function: ease; transition-duration: .3s; }
+/* Every button's states (4.249.0; the owner, 11-14: "buttons across all sites … animations and effects built in … modes and
+   status … improve the grayed out effect"). Zero weight, so a site's own button keeps its look:
+   - not now (:disabled, aria-disabled): quieter colour, no shadow, a not-allowed pointer; never a flat grey slab
+   - working (aria-busy="true"): a light sweeps across it while it waits
+   - done / failed (data-ov-state="done" | "error"): a short green glow or a small shake, then back
+   - hover: a touch brighter */
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:not([data-ov-native], [data-ov-native] *, :disabled, [aria-disabled="true"])):hover { filter: brightness(1.06); }
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:disabled, [aria-disabled="true"]):where(:not([data-ov-native], [data-ov-native] *)) {
+    cursor: not-allowed; opacity: .55; filter: saturate(.35); box-shadow: none; text-shadow: none;
+}
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where([aria-busy="true"]):where(:not([data-ov-native], [data-ov-native] *)) {
+    position: relative; overflow: hidden; cursor: progress;
+    background-image: linear-gradient(100deg, transparent 20%, color-mix(in srgb, #fff 22%, transparent) 50%, transparent 80%);
+    background-size: 220% 100%; background-repeat: no-repeat; animation: ov-btn-busy 1.15s ease-in-out infinite;
+}
+@keyframes ov-btn-busy { from { background-position: 140% 0; } to { background-position: -40% 0; } }
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where([data-ov-state="done"]):where(:not([data-ov-native], [data-ov-native] *)) { animation: ov-btn-done .9s ease-out; }
+@keyframes ov-btn-done { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, #22c55e 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where([data-ov-state="error"]):where(:not([data-ov-native], [data-ov-native] *)) { animation: ov-btn-shake .4s cubic-bezier(.36, .07, .19, .97); }
+@keyframes ov-btn-shake { 20%, 60% { translate: -3px 0; } 40%, 80% { translate: 3px 0; } }
 /* Motion follows the person: Calm takes its time, Off moves nothing (the state still changes). */
 html[data-ov-motion="calm"] :where(input[type="checkbox"], input[type="radio"], button, .btn)::before { transition-duration: .32s; }
 html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, input[type="button"], input[type="submit"], .btn, [role="button"], input, textarea, select),
 html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"])::before { transition: none !important; animation: none !important; }
 html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, .btn, [role="button"]):active { scale: none !important; }
+html[data-ov-motion="off"] :where(button, .btn, [role="button"]):where([aria-busy="true"], [data-ov-state]) { animation: none !important; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:disabled) { opacity: .5; cursor: not-allowed; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="file"]:not([data-ov-native]))::file-selector-button {
     font: inherit; font-weight: 600; margin-inline-end: .75em; padding: .38em .85em; cursor: pointer;
