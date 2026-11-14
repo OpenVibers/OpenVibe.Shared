@@ -147,7 +147,7 @@
     };
     // [dx, dy] in glyph units that move each glyph's drawn bounds onto the centre of the ring. Generated.
     const OFFSETS = {"ov":[0,-0.05],"logo":[0.15,0.05],"computer":[0,-0.15],"mail":[0,-0.05],"lock":[0.05,0.2],"git":[-0.35,-0.05],"barcode":[0.1,0],"party":[0,-0.1],"studio":[0.05,0],"home":[0,0.35],"heart":[0,-0.38],"calendar":[0,-0.05],"camera":[0,0.25],"shoe":[-0.1,0.35]};
-    const ALIASES = { yt: 'youtube', net: 'dns', dev: 'code', img: 'image', sound: 'audio', document: 'pdf', pastes: 'paste', openre: 'stream', maps: 'map', user: 'account', notifications: 'bell', 'media-hub': 'drive', mediahub: 'drive', sources: 'feeds', agent: 'actor', jobs: 'work', homes: 'homes', page: 'docs', db: 'zone', database: 'zone', location: 'ip', gamepad: 'games', robot: 'bot', deploy: 'upload', copy: 'paste', activity: 'ping',
+    const ALIASES = { yt: 'youtube', net: 'dns', dev: 'code', img: 'image', sound: 'audio', document: 'pdf', pastes: 'paste', openre: 'stream', maps: 'map', directory: 'docs', compare: 'bench', user: 'account', notifications: 'bell', 'media-hub': 'drive', mediahub: 'drive', sources: 'feeds', agent: 'actor', jobs: 'work', homes: 'homes', page: 'docs', db: 'zone', database: 'zone', location: 'ip', gamepad: 'games', robot: 'bot', deploy: 'upload', copy: 'paste', activity: 'ping',
         // The 2026-10-28 rooms, on the nearest glyph until each has its own (rooms.js): never the fallback mark.
         domains: 'dns', design: 'theme', today: 'history', report: 'gauge', surf: 'games', casino: 'games', fun: 'quest', meme: 'image', exchange: 'trade', cam: 'video', tours: 'map', vision: 'ai', shoes: 'deals',
         // OpenVibe Connect (Website Connect v0, 2026-11-02): a port on your machine, on the web.

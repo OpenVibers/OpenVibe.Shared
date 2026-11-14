@@ -431,6 +431,7 @@ const GROUPS = {
         ['news', 'Sourced, not spun', 'https://openvibe.news/'],
         ['today', 'Your schedule', 'https://openvibe.today/'],
         ['report', 'Your numbers, honest', 'https://openvibe.report/'],
+        ['compare', 'Compare anything, dated', 'https://openvibe.compare/'],
         ['search', 'Search everything', 'https://search.openvibe.network/'],
         ['wiki', 'Facts with sources', 'https://openvibe.wiki/'],
         ['blog', 'Write long-form', 'https://openvibe.blog/'],
@@ -464,7 +465,9 @@ const GROUPS = {
         ['actor', 'The agent engine', 'https://openvibe.actor/'],
         ['expert', 'Agents you make, with a soul', 'https://openvibe.expert/'],
         ['computer', 'Your computer, your way', 'https://openvibe.computer/'],
+        ['link', 'Your machines, connected', 'https://openvibe.link/'],
         ['connect', 'Share a port with Link', 'https://connect.openvibe.link/'],
+        ['directory', 'Listings with sources', 'https://openvibe.directory/'],
     ],
     build: [
         ['services', 'APIs, SDK and keys', 'https://openvibe.services/'],
@@ -501,16 +504,51 @@ const DEFAULT_RELATED = ['live', 'community', 'games', 'news'].map((id) => {
 });
 
 /**
- * "Part of OpenVibe": up to four related products for this one (RELATED, or the caller's own items in the same
- * [to, what, href] or { to, what, href } shape), each a ring icon, its name and why to go there.
+ * network({ service }) — "One account. 61 sites." (plan §AA.37): every OpenVibe site in the menu's eight groups, as plain
+ * links a crawler reads. This site's own group is open, its icons whole on the server (design rule 142); every other
+ * group is a fold row (its name, how many sites, a chevron) whose icons ov-icons.js draws when it is opened, so the
+ * section costs one group's icons, not 61. This site is "You are here", never a link to itself; every other link
+ * carries ?ov_from. The live strip (data-ov-now) and "Every OpenVibe site" follow.
+ *
+ * items: a caller's own short list ([to, what, href] or { to, what, href }) keeps the four-card "More on OpenVibe".
  */
-function network({ id: sid, service, title = 'More on OpenVibe', lede = 'One account across every OpenVibe site.', items, icon: secIcon } = {}) {
-    const list = (items || RELATED[String(service || '').toLowerCase()] || DEFAULT_RELATED)
-        .map((x) => (Array.isArray(x) ? { to: x[0], what: x[1], href: x[2] } : x))
+const GROUP_NAMES = { watch: 'Watch & stream', talk: 'Talk & belong', play: 'Play', read: 'Read & ask', shop: 'Shop & money', tools: 'Free tools', make: 'Make with AI', build: 'For developers' };
+const shortName = (to) => (to === 'openre' ? 'OpenRestream' : (SERVICE_NAME(to) || to).replace(/^OpenVibe\./, ''));
+function related({ id: sid, service, title = 'More on OpenVibe', lede = 'One account across every OpenVibe site.', items, icon: secIcon } = {}) {
+    const list = (items || []).map((x) => (Array.isArray(x) ? { to: x[0], what: x[1], href: x[2] } : x))
         .filter((x) => x && x.what && safeHref(x.href) && x.to !== service).slice(0, 4);
     if (!list.length) return '';
     const h = `sc-${slug(title)}`;
-    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul><div class="sc-net-now" data-ov-now hidden></div><p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site <span class="sc-go" aria-hidden="true">${goGlyph()}</span></a></p></section>`;
+    return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul></section>`;
+}
+function network({ id: sid, service, title = null, lede = 'Every OpenVibe site opens with the same sign-in, wears your theme and carries your OpenCoins and Vibes.', items, icon: secIcon } = {}) {
+    if (items) return related({ id: sid, service, items, icon: secIcon });
+    const here = RELATED_ALIAS[String(service || '').toLowerCase()] || String(service || '').toLowerCase();
+    const own = (RELATED_BY_ID.get(here) || {}).group || 'watch';
+    const count = RELATED_ALL.length;
+    const heading = title || `One account. ${count} sites.`;
+    const h = `sc-${slug(heading)}`;
+    // A folded group's icon is an empty square of its hue: ov-icons.js fills it (the bar holds its size until then).
+    const later = (to, size) => {
+        const ovi = ovIcons || (ovIcons = require('./ov-icons'));
+        return `<span class="ov-appicon" data-icon="${esc(to)}" data-size="${size}" style="--ova-h:${ovi.hue(to)};--ova-size:${size}px" aria-hidden="true"></span>`;
+    };
+    const site = (x, open) => {
+        const glyph = open ? appIcon(x.to, 40) : later(x.to, 40);
+        const words = `<span><b>${esc(shortName(x.to))}</b><small>${esc(x.to === here ? 'You are here' : x.what)}</small></span>`;
+        return x.to === here
+            ? `<li><span class="sc-onenet-here" aria-current="page">${glyph}${words}</span></li>`
+            : `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${glyph}${words}</a></li>`;
+    };
+    const groups = Object.keys(GROUPS).map((g) => {
+        const members = RELATED_ALL.filter((x) => x.group === g);
+        const open = g === own;
+        return `<details class="sc-fold sc-onenet-g"${open ? ' open' : ''}><summary><h3>${esc(GROUP_NAMES[g] || g)}</h3><span class="sc-fold-hint">${members.length} sites</span></summary>`
+            + `<ul class="sc-onenet-list">${members.map((x) => site(x, open)).join('')}</ul></details>`;
+    }).join('');
+    return `<section class="sc-sec sc-network sc-onenet"${id(sid)}${labelled(heading, h)}>${head(heading, lede, h, secIcon || 'spark')}`
+        + `<div class="sc-onenet-groups">${groups}</div><div class="sc-net-now" data-ov-now hidden></div>`
+        + `<p class="sc-net-all"><a href="https://openvibe.network/sites">Every OpenVibe site, with what each one is <span class="sc-go" aria-hidden="true">${goGlyph()}</span></a></p></section>`;
 }
 
 /**
@@ -830,6 +868,8 @@ a.sc-stat:hover{border-color:var(--accent,#3b82f6)}
 .sc-net-now a .live{color:var(--live,#ef4444)}
 .sc-net-all{margin:12px 0 0;font-weight:700}.sc-net-all a{color:var(--accent-light,#60a5fa);text-decoration:none}
 .sc-net{list-style:none;margin:0;padding:0;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+/* 4.256.0 (plan §AA.37): One account. 61 sites. */
+.sc-onenet-groups{display:grid;gap:10px;align-items:start;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr))}.sc-onenet-g[open]{grid-column:1/-1}.sc-onenet-g>summary h3{margin:0;font-size:clamp(16px,1.8vw,18px);font-weight:700;color:var(--text-primary,#e6edf7)}.sc-onenet-g .sc-fold-hint{display:inline;font-size:13px}.sc-onenet-list{list-style:none;margin:0;padding:2px 10px 14px;display:grid;gap:4px;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr))}.sc-onenet-list li{min-width:0}.sc-onenet-list a,.sc-onenet-here{display:flex;gap:12px;align-items:center;min-height:56px;padding:8px;border-radius:12px;color:inherit;text-decoration:none;transition:background var(--ov-dur-2,.2s)}.sc-onenet-list a:hover,.sc-onenet-list a:focus-visible{background:color-mix(in srgb,var(--accent,#3b82f6) 10%,transparent);outline:0}.sc-onenet-here{background:color-mix(in srgb,var(--accent,#3b82f6) 12%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent,#3b82f6) 40%,transparent)}.sc-onenet-list li>*>span{min-width:0}.sc-onenet-list b{display:block;font-size:15px;line-height:1.25}.sc-onenet-list small{display:block;color:var(--text-secondary,#96a7c2);font-size:13px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sc-net a{display:flex;gap:12px;align-items:center;padding:14px;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-secondary,#101828);color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
 .sc-net a:hover,.sc-net a:focus-visible{border-color:var(--accent,#3b82f6);transform:translateY(-2px);outline:0}
 .sc-net b{display:block;font-size:15px}.sc-net small{display:block;color:var(--text-secondary,#96a7c2);font-size:13px;line-height:1.4}
