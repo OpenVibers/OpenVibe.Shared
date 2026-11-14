@@ -258,6 +258,35 @@
         };
         const box = el('div', 'ovr');
         host.textContent = ''; host.append(box);
+        /** 4.250.0: the files picked in the box, stored as the person (Frame POST /runs/files → Chat → Media), as ai.file@1
+         *  references for `attachments`. At most 10, 10 MB each; a refusal says why in plain words. */
+        async function uploadFiles(files) {
+            const out = [];
+            for (const f of (Array.isArray(files) ? files : []).slice(0, 10)) {
+                if (!f || typeof f.size !== 'number') continue;
+                if (f.size > 10 * 1024 * 1024) throw new Error(`${f.name || 'That file'} is over 10 MB`);
+                const r = await fetch(`${base}/runs/files`, { method: 'POST', credentials: 'omit', body: f,
+                    headers: { Accept: 'application/json', 'Content-Type': f.type || 'application/octet-stream', 'X-Filename': encodeURIComponent(String(f.name || 'file').slice(0, 200)), ...headers() } });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok || !j.file) { const e = new Error(j.error || `${f.name || 'A file'} did not upload`); e.status = r.status; throw e; }
+                out.push(j.file);
+            }
+            return out;
+        }
+        /** What the person sent, beside their words: a picture as a small preview, any other file as its name. */
+        function fileChips(files) {
+            const list = (Array.isArray(files) ? files : []).filter(Boolean);
+            if (!list.length) return null;
+            const row = el('div', 'ovr-files');
+            list.slice(0, 10).forEach((f) => {
+                const isPic = /^image\//.test(String(f.type || f.media_type || ''));
+                const chip = el('span', `ovr-file${isPic ? ' is-pic' : ''}`);
+                if (isPic && typeof f.size === 'number' && typeof URL !== 'undefined' && URL.createObjectURL) { const img = el('img'); img.alt = String(f.name || 'Picture'); img.src = URL.createObjectURL(f); chip.append(img); }
+                else { chip.append(svg(G.attach ? 'attach' : 'open'), el('span', '', String(f.name || 'file').slice(0, 60))); }
+                row.append(chip);
+            });
+            return row;
+        }
         const actionsBase = o.actions ? String(o.actions.base || 'https://openvibe.network').replace(/\/+$/, '') : '';
         const place = (p) => { try { if (typeof o.onPlace === 'function') o.onPlace(p); } catch { /* the host's */ } };
         let topHandle = null, paneHandle = null, paneId = null;
@@ -392,11 +421,11 @@
         }
 
         /** A new run with these words (Vibe answers, or hands the work on), then its thread. */
-        async function start(text) {
+        async function start(text, files) {
             const words = String(text || '').slice(0, 16000);
-            const gen0 = pending(words);
+            const gen0 = pending(words, files);
             let run;
-            try { run = await api('', { method: 'POST', headers: { 'Idempotency-Key': `ovr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}` }, body: JSON.stringify({ ...(o.start || {}), text: words }) }); }
+            try { const attachments = files && files.length ? await uploadFiles(files) : []; run = await api('', { method: 'POST', headers: { 'Idempotency-Key': `ovr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}` }, body: JSON.stringify({ ...(o.start || {}), ...(attachments.length ? { attachments } : {}), text: words }) }); }
             catch (err) {
                 // It did not start: back to the list, the words back in the box, and why, in plain words.
                 if (gen0 !== state.gen) return null;
@@ -406,22 +435,23 @@
                 return null;
             }
             if (gen0 !== state.gen) return run;   // the person went elsewhere while it started
-            open(run.ref || run.id, run, { said: words });
+            open(run.ref || run.id, run, { said: words, files });
             return run;
         }
         /** The thread before the run exists: your words on the right, your agent typing on the left. */
-        function pending(words) {
+        function pending(words, files) {
             clearStream(); dropTop(); dropPane();
             const gen = ++state.gen;
             state.view = 'thread'; state.run = null; state.steps = new Map();
             box.textContent = ''; box.className = 'ovr is-thread is-pending';
             const head = el('div', 'ovr-thead');
             const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.append(svg('back'));
-            back.addEventListener('click', () => list());
+            back.addEventListener('click', () => { if (typeof o.onBack === 'function') o.onBack(); else list(); });
             const who = el('div', 'ovr-who'); who.append(el('b', '', agentName()), el('small', '', 'Starting'));
             head.append(back, agentFace('s', 'working'), who);
             const thread = el('div', 'ovr-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
-            const me = el('div', 'ovr-step is-you'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(words)); me.append(b);
+            const me = el('div', 'ovr-step is-you'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(words)); if (words) me.append(b);
+            { const fc = fileChips(files); if (fc) me.append(fc); }
             thread.append(me, typing());
             box.append(head, thread);
             return gen;
@@ -544,7 +574,7 @@
                     });
                     box.append(st);
                 }
-                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => start(v.text) });
+                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => (typeof o.onStart === 'function' ? o.onStart(v.text, v.files) : start(v.text, v.files)) });
             }
             place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
@@ -619,7 +649,8 @@
             if (o.agent && !meta.querySelector('.ovr-pill')) t.append(top, line); else t.append(top, line, meta);
             const mine = o.agent && r.agent && (r.agent.id === 'vibe' || r.agent.name === agentName());
             b.append(mine ? agentFace('m', r.status === 'running' ? 'working' : undefined) : face(r), t);
-            if (!away) b.addEventListener('click', () => open(r.ref || r.id, r));
+            b.dataset.ref = String(r.ref || r.id || '');
+            if (!away) b.addEventListener('click', () => { if (typeof o.onOpen === 'function') o.onOpen(r.ref || r.id, r); else open(r.ref || r.id, r); });
             return b;
         }
         /** A run that asks before it acts is answered from the list (the Action Center's approve in place). */
@@ -660,7 +691,7 @@
             box.textContent = ''; box.className = `ovr is-thread${how.home ? ' is-home' : ''}`;
             const head = el('div', 'ovr-thead');
             const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'));
-            back.addEventListener('click', () => list());
+            back.addEventListener('click', () => { if (typeof o.onBack === 'function') o.onBack(); else list(); });
             const who = el('div', 'ovr-who'); const title = el('b'); const sub = el('small');
             who.append(title, sub);
             const away = el('a', 'ovr-ib'); away.setAttribute('aria-label', 'Open on its own page'); away.title = 'Open on its own page'; away.target = '_blank'; away.rel = 'noopener'; away.append(svg('open'));
@@ -681,28 +712,33 @@
             const WENT = { code: ['code', 'Sent to Codes: it works on the code and shows you the change'], task: ['robot', `Sent to ${agentName()}'s tasks: it works on it and asks before anything that matters`], machine: ['tool', 'Sent to your computer: it runs there and shows you each step'], goal: ['spark', 'A goal: your agent plans the steps'] };
             if (how.said && known && WENT[known.kind]) { const w = el('p', 'ovr-went'); w.append(svg(WENT[known.kind][0]), el('span', '', WENT[known.kind][1])); thread.append(w); }
             let wait = null;
-            if (how.said) { const me = el('div', 'ovr-step is-you is-said'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(how.said)); me.append(b); thread.append(me); wait = typing(); thread.append(wait); }
+            if (how.said || (how.files && how.files.length)) { const me = el('div', 'ovr-step is-you is-said'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(how.said)); if (how.said) me.append(b); { const fc = fileChips(how.files); if (fc) me.append(fc); } thread.append(me); wait = typing(); thread.append(wait); }
             // 4.242.0: say the next thing while it works. While the run is busy your words wait in the thread as queued
             // and go at its next turn (a coding agent's "Queue a message"); Stop stays beside them.
             const queue = [];
-            const sendNow = async (text, node) => {
-                const step = await api(`/${encodeURIComponent(ref)}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+            const sendNow = async (text, node, files) => {
+                const attachments = files && files.length ? await uploadFiles(files) : [];
+                const step = await api(`/${encodeURIComponent(ref)}/messages`, { method: 'POST', body: JSON.stringify({ text, ...(attachments.length ? { attachments } : {}) }) });
                 if (node) node.remove();
                 add(step);
+                // The step comes back as words; the files the person picked show under them.
+                const fc = fileChips(files);
+                if (fc) { const mine = [...thread.querySelectorAll('.ovr-step.is-you')].pop(); if (mine) mine.append(fc); }
             };
             const flushQueue = () => {
                 if (!queue.length || !state.run || ['running', 'planning'].includes(state.run.status)) return;
                 const next = queue.shift();
-                sendNow(next.text, next.node).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovr-queued').textContent = (err && err.message) || 'That did not send'; });
+                sendNow(next.text, next.node, next.files).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovr-queued').textContent = (err && err.message) || 'That did not send'; });
             };
             composer(box, { placeholder: how.home ? `Message ${agentName()}` : 'Say the next thing', onSend: async (v) => {
                 if (state.run && ['running', 'planning'].includes(state.run.status)) {
                     const q = el('div', 'ovr-step is-you is-queued'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(v.text)); q.append(b, el('small', 'ovr-queued', 'Queued: it reads this after the step it is on'));
-                    thread.append(q); queue.push({ text: v.text, node: q });
+                    { const fc = fileChips(v.files); if (fc) q.append(fc); }
+                    thread.append(q); queue.push({ text: v.text, node: q, files: v.files });
                     requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
                     return;
                 }
-                await sendNow(v.text);
+                await sendNow(v.text, null, v.files);
             } });
             // 4.242.0: quiet steps in a row fold into one line ("Ran 6 steps · the last one") that opens to each step, the
             // plain words first and the command one tap deeper.
@@ -850,8 +886,33 @@
             };
             put();
         }
-        const view = { list, open, start, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
-        if (o.open) open(o.open); else list();
+        /** A new conversation with your agent before anything is said (4.250.0, the page's right side): its face and
+         *  name, what it does, the starters, and the box. */
+        function blank() {
+            clearStream(); dropTop(); dropPane();
+            state.gen++; state.view = 'blank'; state.run = null; state.steps = new Map();
+            place({ blank: true });
+            box.textContent = ''; box.className = 'ovr is-blank';
+            const hello = el('div', 'ovr-blank');
+            const faceSlot = el('span', 'ovr-blank-face'); faceSlot.append(agentFace('xl'));
+            const name = el('b', 'ovr-blank-n', agentName());
+            hello.append(faceSlot, name, el('p', 'ovr-blank-s', 'Ask anything. It answers, searches the web and OpenVibe, makes things, and hands bigger work to the right place: code to Codes, tasks to your agents.'));
+            box.append(hello);
+            if (Array.isArray(o.starters) && o.starters.length) {
+                const st = el('div', 'ovr-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
+                o.starters.slice(0, 8).forEach((x) => {
+                    const [ic, words] = Array.isArray(x) ? x : ['spark', String(x)];
+                    const b = el('button', 'ovr-starter'); b.type = 'button'; b.append(svg(G[ic] ? ic : 'spark'), el('span', '', words));
+                    b.addEventListener('click', () => { b.disabled = true; start(words); });
+                    st.append(b);
+                });
+                box.append(st);
+            }
+            composer(box, { placeholder: `Message ${agentName()}`, onSend: (v) => start(v.text, v.files) });
+            if (o.agent) loadAgent().then(() => { if (state.view !== 'blank' || !faceSlot.isConnected) return; faceSlot.textContent = ''; faceSlot.append(agentFace('xl')); name.textContent = agentName(); });
+        }
+        const view = { list, open, start, blank, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
+        if (o.open) open(o.open); else if (o.blank) blank(); else list();
         return view;
     }
 
@@ -861,6 +922,29 @@
         styled = true;
         const st = document.createElement('style'); st.id = 'ovr-styles';
         st.textContent = `
+.ovr-files { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-top: 6px; max-width: min(100%, 420px); }
+.ovr-file { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 32px; padding: 4px 10px; border-radius: 10px; font-size: 13px; color: var(--text-secondary, #96a7c2); background: var(--bg-tertiary, rgba(255,255,255,.06)); }
+.ovr-file > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovr-file.is-pic { padding: 0; overflow: hidden; background: none; }
+.ovr-file.is-pic img { display: block; max-width: 220px; max-height: 180px; border-radius: 12px; object-fit: cover; }
+.ovr-page { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); height: 100%; min-height: 0; }
+.ovr-page-list { min-height: 0; overflow: hidden; display: flex; flex-direction: column; border-right: 1px solid var(--border, rgba(255,255,255,.08)); padding: 10px 10px 0; }
+.ovr-page-main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px clamp(10px, 3vw, 28px) 0; }
+.ovr-page-main > .ovr { max-width: 860px; width: 100%; margin-inline: auto; }
+.ovr-page .ovr .ovr-rows .ovr-row.is-open { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); box-shadow: inset 3px 0 0 var(--accent, #3b82f6); }
+@media (min-width: 900px) { .ovr-page-main .ovr-thead > .ovr-ib:first-child { display: none; } }
+@media (max-width: 899px) {
+  .ovr-page { grid-template-columns: minmax(0, 1fr); }
+  .ovr-page-list { border-right: 0; }
+  .ovr-page-main { display: none; }
+  .ovr-page.is-open .ovr-page-list { display: none; }
+  .ovr-page.is-open .ovr-page-main { display: flex; }
+}
+.ovr.is-blank { justify-content: flex-end; }
+.ovr-blank { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 24px 12px; }
+.ovr-blank-n { font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.ovr-blank-s { margin: 0; max-width: 46ch; color: var(--text-secondary, #96a7c2); font-size: 14.5px; line-height: 1.5; }
+.ovr-blank-face { display: grid; place-items: center; margin-bottom: 4px; }
 .ovr { --ovr-gap: 12px; display: flex; flex-direction: column; min-height: 0; height: 100%; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: var(--text-primary, #e6edf7); }
 .ovr svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .ovr-head { padding: 4px 4px 8px; }
@@ -1110,6 +1194,37 @@ html[data-ov-motion=off] .ovr-row, html[data-ov-motion=off] .ovr-step, html[data
         document.head.appendChild(st);
     }
 
-    root.OpenVibeRun = { mount, card, version: 1 };
+    /**
+     * 4.250.0, the page (plan §AB.8/47; the owner: "the same conversation system everywhere … capable of everything"):
+     * openvibe.chat/vibe, Codes' start page and Actor's console draw the menu's messenger full-page. A computer: your
+     * agents and conversations on the left, the open conversation on the right. A phone: one at a time, Back between.
+     *   const page = OpenVibeRun.page(host, { ...the mount options, open?: ref });   page.list, page.main, page.destroy()
+     * The host gives `host` its height (the page under the navbar); the two sides scroll on their own.
+     */
+    function page(host, o = {}) {
+        styles();
+        host.textContent = '';
+        const wrap = el('div', 'ovr-page');
+        const left = el('div', 'ovr-page-list'), right = el('div', 'ovr-page-main');
+        wrap.append(left, right); host.append(wrap);
+        let main = null, list = null, openRef = '';
+        const mark = (ref) => { openRef = String(ref || ''); left.querySelectorAll('.ovr-row').forEach((r) => r.classList.toggle('is-open', !!openRef && r.dataset.ref === openRef)); };
+        const show = (on) => wrap.classList.toggle('is-open', !!on);
+        const placed = (p) => {
+            if (p && p.ref) { mark(p.ref); if (list && list.state.view === 'list' && !left.querySelector(`.ovr-row[data-ref="${CSS.escape(String(p.ref))}"]`)) list.list(undefined, { stay: true, history: true }); }
+            if (p && p.blank) mark('');
+            try { if (typeof o.onPlace === 'function') o.onPlace(p); } catch { /* the host's */ }
+        };
+        main = mount(right, { ...o, open: o.open || null, blank: !o.open, onBack: () => { show(false); mark(''); }, onPlace: placed });
+        list = mount(left, { ...o, open: null,
+            onOpen: (ref, r) => { main.open(ref, r); show(true); mark(ref); },
+            onStart: (text, files) => { main.start(text, files); show(true); } });
+        // The list repaints its rows on its own (a filter, a refresh): the open one stays marked.
+        if (typeof MutationObserver === 'function') new MutationObserver(() => mark(openRef)).observe(left, { childList: true, subtree: true });
+        if (o.open) show(true);
+        const newer = () => { main.blank(); show(true); };
+        return { list, main, blank: newer, destroy() { try { list.destroy(); } catch { /* */ } try { main.destroy(); } catch { /* */ } host.textContent = ''; } };
+    }
+    root.OpenVibeRun = { mount, page, card, version: 1 };
     if (typeof module !== 'undefined' && module.exports) module.exports = root.OpenVibeRun;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,5 +1,40 @@
 # Changelog
 
+## 4.250.0 — 2026-11-14
+
+**The messenger, full-page** (plan §AB.8/47; the owner: "the same conversation system everywhere … capable of
+everything"). `OpenVibeRun.page(host, o)` draws the menu's Vibe as a page, for openvibe.chat/vibe, Codes' start page
+and Actor's console: on a computer your agents and conversations on the left and the open conversation on the right
+(the open row marked, no Back); on a phone one at a time, Back between. With nothing open the right side is a new
+conversation with your agent (`view.blank()`: its face, its name, what it does, the starters, the box). New mount
+hooks: `onOpen(ref, run)`, `onStart(text, files)`, `onBack()`.
+
+**Files go with a message.** A picture or file picked in the messenger's box is stored as the person (the Frame's
+`POST /api/frame/runs/files`, Network #945, which hands it to Chat and Media) and its ai.file@1 reference rides on the
+new conversation or the message (`attachments`; Chat #582 reads them). A picture shows under your words, any other
+file by its name; a message waiting in the queue keeps its files.
+
+**Two more setup steps** (plan §AB.17, §AB.19): `config.OWNER_INPUT_GROUPS` gains `servers` (Servers: agent desktops,
+Codes runners and routers) and `email` (Email: sending and receiving), after GPUs, so an owning service's
+`x-owner-input.group` can put a key there.
+
+**Moving between pages without a glitch** (plan §AB.30; the owner: "loads multiple times and then jumps around … the
+logo will glitch … I have to reload"). The navbar no longer tears itself down to draw the same bar again: a render
+that would draw the identical bar (the sign-in resolving to the person the first paint already showed, a repeat
+call) keeps the one on the page, listeners and all; a real change swaps in place and carries the mark ov-mark.js
+already drew, so its entrance never replays. A link on this site under the pointer or a finger is prefetched (at most
+24 a page; never sign-in, sign-out, API, downloads, new tabs, nofollow or data-no-prefetch; not on Save-Data or 2G),
+so the next page is already there when it is pressed. The bar and the app bar keep their view-transition names
+(kit.css, soft.js), so a same-site page change cross-fades under a bar that stays put.
+
+**Comments open in the menu** (plan §AA.21; the owner: "it shouldn't bring you to a new page … seamless, like Facebook
+or Twitter … but you can also go to the actual forum post … icon buttons … replies"). A feed card's Comment opens its
+thread in a sheet over the menu (a bottom sheet on a phone, a panel on a computer): the comments with their replies,
+Like and Reply as icon buttons, a reply box (Enter sends), and the forum post one press away. It reads and writes
+through the Frame (`/api/frame/comments/*`, Network #947 → Community's comment threads) with the person's token; what
+people wrote is text. A card Community takes no comments for, or no answer: the post's page, as before; a modified
+click still opens a new tab.
+
 ## 4.249.0 — 2026-11-14
 
 **Glyphs stand alone** (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and

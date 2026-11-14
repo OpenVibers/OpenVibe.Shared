@@ -47,7 +47,7 @@ const classify = (k) => (/_(token|secret)$/.test(k) ? 'secret' : undefined);
 
 (async () => {
     // ── The groups the Setup page shows, in order ──
-    assert.deepStrictEqual(Object.keys(OWNER_INPUT_GROUPS), ['money', 'ai-providers', 'gpus', 'voices', 'chat-apps', 'sign-in-apps', 'data-sources', 'design-publishing', 'domains', 'legal']);
+    assert.deepStrictEqual(Object.keys(OWNER_INPUT_GROUPS), ['money', 'ai-providers', 'gpus', 'servers', 'email', 'voices', 'chat-apps', 'sign-in-apps', 'data-sources', 'design-publishing', 'domains', 'legal']);
     assert.ok(Object.isFrozen(OWNER_INPUT_GROUPS));
 
     const db = createDb({ pglite: true, log: { log() {}, warn() {} } });
