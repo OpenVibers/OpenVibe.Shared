@@ -10,6 +10,11 @@ sends). With Unread the default view, "Mark all read" empties the list, so it sa
 faces, `.ov-appicon`) takes `--ov-app-corner`, 22.5 % by default: Design's `round` (OpenVibe.Design #340, SDK 0.169.0
 `design.icons.export({ rounding })`), so the menu, the marks and the generated icons agree (they were 29–30 %).
 
+**Chat's rail in the menu** (plan §AB.53; the owner: "the same system … like the Discord thing … integrated together as
+one cohesive product, and also available in the menu"): the menu's Chat opens with openvibe.chat's rail as a strip, the
+same places in the same order: Home (your messages), Global, Vibe, your servers (their picture or initial on their hue,
+unread counted), New and Explore (Chat's `GET /api/chat/servers`, nothing when Chat does not answer).
+
 ## 4.250.0 — 2026-11-14
 
 **The messenger, full-page** (plan §AB.8/47; the owner: "the same conversation system everywhere … capable of
