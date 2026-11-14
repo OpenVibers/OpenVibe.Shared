@@ -26,6 +26,7 @@
  * ids a mod's upload gave, clear() after the send (the text, the chips, the draft); a form 'reset' clears the same.
  * A site without script says the same in data: data-ovt-commands='[{"name","hint","insert"}]', data-ovc-max-files,
  * data-ovc-max-mb, data-ovc-no-draft, data-ovc-media (4.247.0: the files go to Media's composer attachments).
+ * data-ovc-no-more drops the + and data-ovc-no-files the file chips: a search box takes words, typed or spoken.
  *
  * 4.241.0, the +: one sheet of what you can add. Big tiles first (Camera, Photos, Files), then rows (Paste, Screenshot,
  * the phone's own camera app, Share to an app, Timer, GitHub, the mods' tools, what a narrow row hides). A phone gets

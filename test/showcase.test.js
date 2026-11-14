@@ -125,12 +125,22 @@ assert.ok(/@container \(min-width:520px\) and \(max-width:1035px\)\{\.sc-grid:ha
     const ld = sc.faqJsonLd([['Q </script>', 'A']]);
     assert.ok(ld.startsWith('<script type="application/ld+json">') && !ld.slice(35, -9).includes('<'), 'JSON-LD cannot close its script early');
     assert.ok(JSON.parse(ld.slice(35, -9).replace(/\\u003c/g, '<')).mainEntity[0].name === 'Q </script>');
+    // 4.256.0 (plan §AA.37): "One account. 61 sites.", every site in the menu's eight groups.
     const net = sc.network({ service: 'live' });
-    assert.ok(net.includes('More on OpenVibe') && net.includes('data-ov-now') && net.includes('https://openvibe.network/sites') && net.includes('https://openre.stream/?ov_from=live') && net.includes('data-icon="openre"'), 'related products, with the referral tag and ring icons');
-    assert.ok(!net.includes('https://openvibe.live/'), 'never links a product to itself');
-    assert.ok(net.includes('<span class="ov-appicon" data-icon="openre" data-ova="openre" data-size="44"') && !net.includes('sc-ic-ov'), 'each related site is its app icon, whole on the server (design rule 142)');
-    assert.ok(sc.network({ service: 'unknown-thing' }).includes('OpenVibe.Live'), 'a product without its own list gets the core ones');
-    assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'));
+    assert.ok(net.includes('One account. 61 sites.') && net.includes('data-ov-now') && net.includes('https://openvibe.network/sites'), 'the whole network, the live strip and every site');
+    assert.equal((net.match(/<li>/g) || []).length, 61, 'every site once');
+    assert.equal((net.match(/<details class="sc-fold sc-onenet-g"/g) || []).length, 8, 'in the menu\'s eight groups');
+    assert.ok(/<details class="sc-fold sc-onenet-g" open><summary><h3>Watch &amp; stream<\/h3><span class="sc-fold-hint">7 sites<\/span>/.test(net), 'this site\'s own group is open, with its count');
+    assert.equal((net.match(/ open>/g) || []).length, 1, 'and only that one');
+    assert.ok(net.includes('https://openre.stream/?ov_from=live'), 'links carry the referral tag');
+    assert.ok(!net.includes('href="https://openvibe.live/') && net.includes('<span class="sc-onenet-here" aria-current="page">') && net.includes('You are here'), 'never links a product to itself');
+    assert.ok(net.includes('<span class="ov-appicon" data-icon="openre" data-ova="openre" data-size="40"'), 'the open group\'s icons are whole on the server (design rule 142)');
+    assert.ok(/<span class="ov-appicon" data-icon="exchange" data-size="40" style="--ova-h:\d+;--ova-size:40px" aria-hidden="true"><\/span>/.test(net), 'a folded group\'s icon is an empty square of its hue for ov-icons.js to fill');
+    ['openvibe.link', 'openvibe.directory', 'openvibe.compare', 'openvibe.markets', 'openvibe.finance', 'openvibe.expert'].forEach((host) => assert.ok(net.includes(`https://${host}/`), `${host} is listed`));
+    const other = sc.network({ service: 'unknown-thing' });
+    assert.ok(other.includes('<details class="sc-fold sc-onenet-g" open><summary><h3>Watch &amp; stream') && !other.includes('aria-current'), 'a product the groups do not know opens the first group');
+    assert.ok(sc.network({ service: 'help' }).includes('<details class="sc-fold sc-onenet-g" open><summary><h3>Talk &amp; belong'), 'Help opens its own group');
+    assert.ok(sc.network({ service: 'x', items: [['tools', 'Tools', 'https://openvibe.tools/'], ['bad', 'Bad', 'ftp://x']] }).includes('OpenVibe.Tools'), 'a caller\'s own short list keeps the four cards');
     for (const [svc, list] of Object.entries(sc.RELATED)) for (const [to, what, href] of list) assert.ok(to && what && /^https:\/\//.test(href) && to !== svc, `${svc} → ${to}`);
     assert.ok(sc.CSS.includes('animation-timeline:view()') && sc.CSS.includes('html[data-ov-motion=off] .sc-sec{animation:none}') && sc.CSS.includes('translateY(calc(18px * var(--ov-move,1)))'), 'scroll reveal: a third as far under Calm, none with motion off');
     const rise = sc.CSS.match(/@keyframes scRise\{[^@]*?\}\}/);

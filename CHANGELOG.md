@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.256.0 — 2026-11-14
+
+**One account. 61 sites.** (plan §AA.37). `showcase.network({ service })` is the whole network on every site's home:
+the menu's eight groups, every site once as a plain link a crawler reads. This site's own group is open, its icons whole
+on the server (design rule 142); the other seven are fold rows (the group, how many sites, a chevron) whose icons are
+empty squares of their hue that ov-icons.js fills, so the section is 21 KB of HTML (2.7 KB brotli), not 48. This site
+is "You are here", never a link to itself; the live strip and "Every OpenVibe site" stay. On a computer the open group
+spans the width and the rows sit two a line. Link, Directory and Compare join the groups (61, as the Frame lists);
+Directory and Compare get app icons (docs, bench). A caller that passes its own `items` keeps the four-card "More on
+OpenVibe". Tests: `test/showcase.test.js`, `test/network-sites-chrome.test.js`.
+
+`data-ovc-no-more` (no +) and `data-ovc-no-files` are documented in ov-composer.js's header.
+
 ## 4.255.0 — 2026-11-14
 
 **The composer's icons draw on every page** (plan §AB.49). The classless base (kit-layout.css, `.ov-base`) pads every
