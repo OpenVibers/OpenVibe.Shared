@@ -521,8 +521,11 @@ function related({ id: sid, service, title = 'More on OpenVibe', lede = 'One acc
     const h = `sc-${slug(title)}`;
     return `<section class="sc-sec sc-network"${id(sid)}${labelled(title, h)}>${head(title, lede, h, secIcon || 'spark')}<ul class="sc-net">${list.map((x) => `<li><a href="${esc(withFrom(safeHref(x.href), service))}">${appIcon(x.to, 44)}<span><b>${esc(SERVICE_NAME(x.to) || x.to)}</b><small>${esc(x.what)}</small></span></a></li>`).join('')}</ul></section>`;
 }
-function network({ id: sid, service, title = null, lede = 'Every OpenVibe site opens with the same sign-in, wears your theme and carries your OpenCoins and Vibes.', items, icon: secIcon } = {}) {
-    if (items) return related({ id: sid, service, items, icon: secIcon });
+function network({ id: sid, service, title = null, lede = null, items, icon: secIcon } = {}) {
+    // A caller's own list keeps its own heading and lede (4.256.1: 4.256.0 dropped them, and Shoes, Actor and Connect
+    // said "More on OpenVibe" with the default line instead of "Part of OpenVibe" and theirs).
+    if (items) return related({ id: sid, service, items, icon: secIcon, ...(title ? { title } : {}), ...(lede ? { lede } : {}) });
+    lede = lede || 'Every OpenVibe site opens with the same sign-in, wears your theme and carries your OpenCoins and Vibes.';
     const here = RELATED_ALIAS[String(service || '').toLowerCase()] || String(service || '').toLowerCase();
     const own = (RELATED_BY_ID.get(here) || {}).group || 'watch';
     const count = RELATED_ALL.length;

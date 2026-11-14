@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.256.1 — 2026-11-14
+
+**A site's own network list keeps its own heading and lede.** 4.256.0's `network({ items })` fell back to "More on
+OpenVibe" and the default line: Shoes, Actor and Connect lost "Part of OpenVibe" and their own sentence. The heading
+and lede pass through again; without them the list keeps its defaults. Test: `test/showcase.test.js`.
+
 ## 4.256.0 — 2026-11-14
 
 **One account. 61 sites.** (plan §AA.37). `showcase.network({ service })` is the whole network on every site's home:
