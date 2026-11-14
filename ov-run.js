@@ -258,6 +258,35 @@
         };
         const box = el('div', 'ovr');
         host.textContent = ''; host.append(box);
+        /** 4.250.0: the files picked in the box, stored as the person (Frame POST /runs/files → Chat → Media), as ai.file@1
+         *  references for `attachments`. At most 10, 10 MB each; a refusal says why in plain words. */
+        async function uploadFiles(files) {
+            const out = [];
+            for (const f of (Array.isArray(files) ? files : []).slice(0, 10)) {
+                if (!f || typeof f.size !== 'number') continue;
+                if (f.size > 10 * 1024 * 1024) throw new Error(`${f.name || 'That file'} is over 10 MB`);
+                const r = await fetch(`${base}/runs/files`, { method: 'POST', credentials: 'omit', body: f,
+                    headers: { Accept: 'application/json', 'Content-Type': f.type || 'application/octet-stream', 'X-Filename': encodeURIComponent(String(f.name || 'file').slice(0, 200)), ...headers() } });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok || !j.file) { const e = new Error(j.error || `${f.name || 'A file'} did not upload`); e.status = r.status; throw e; }
+                out.push(j.file);
+            }
+            return out;
+        }
+        /** What the person sent, beside their words: a picture as a small preview, any other file as its name. */
+        function fileChips(files) {
+            const list = (Array.isArray(files) ? files : []).filter(Boolean);
+            if (!list.length) return null;
+            const row = el('div', 'ovr-files');
+            list.slice(0, 10).forEach((f) => {
+                const isPic = /^image\//.test(String(f.type || f.media_type || ''));
+                const chip = el('span', `ovr-file${isPic ? ' is-pic' : ''}`);
+                if (isPic && typeof f.size === 'number' && typeof URL !== 'undefined' && URL.createObjectURL) { const img = el('img'); img.alt = String(f.name || 'Picture'); img.src = URL.createObjectURL(f); chip.append(img); }
+                else { chip.append(svg(G.attach ? 'attach' : 'open'), el('span', '', String(f.name || 'file').slice(0, 60))); }
+                row.append(chip);
+            });
+            return row;
+        }
         const actionsBase = o.actions ? String(o.actions.base || 'https://openvibe.network').replace(/\/+$/, '') : '';
         const place = (p) => { try { if (typeof o.onPlace === 'function') o.onPlace(p); } catch { /* the host's */ } };
         let topHandle = null, paneHandle = null, paneId = null;
@@ -392,11 +421,11 @@
         }
 
         /** A new run with these words (Vibe answers, or hands the work on), then its thread. */
-        async function start(text) {
+        async function start(text, files) {
             const words = String(text || '').slice(0, 16000);
-            const gen0 = pending(words);
+            const gen0 = pending(words, files);
             let run;
-            try { run = await api('', { method: 'POST', headers: { 'Idempotency-Key': `ovr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}` }, body: JSON.stringify({ ...(o.start || {}), text: words }) }); }
+            try { const attachments = files && files.length ? await uploadFiles(files) : []; run = await api('', { method: 'POST', headers: { 'Idempotency-Key': `ovr-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}` }, body: JSON.stringify({ ...(o.start || {}), ...(attachments.length ? { attachments } : {}), text: words }) }); }
             catch (err) {
                 // It did not start: back to the list, the words back in the box, and why, in plain words.
                 if (gen0 !== state.gen) return null;
@@ -406,11 +435,11 @@
                 return null;
             }
             if (gen0 !== state.gen) return run;   // the person went elsewhere while it started
-            open(run.ref || run.id, run, { said: words });
+            open(run.ref || run.id, run, { said: words, files });
             return run;
         }
         /** The thread before the run exists: your words on the right, your agent typing on the left. */
-        function pending(words) {
+        function pending(words, files) {
             clearStream(); dropTop(); dropPane();
             const gen = ++state.gen;
             state.view = 'thread'; state.run = null; state.steps = new Map();
@@ -421,7 +450,8 @@
             const who = el('div', 'ovr-who'); who.append(el('b', '', agentName()), el('small', '', 'Starting'));
             head.append(back, agentFace('s', 'working'), who);
             const thread = el('div', 'ovr-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
-            const me = el('div', 'ovr-step is-you'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(words)); me.append(b);
+            const me = el('div', 'ovr-step is-you'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(words)); if (words) me.append(b);
+            { const fc = fileChips(files); if (fc) me.append(fc); }
             thread.append(me, typing());
             box.append(head, thread);
             return gen;
@@ -544,7 +574,7 @@
                     });
                     box.append(st);
                 }
-                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => (typeof o.onStart === 'function' ? o.onStart(v.text) : start(v.text)) });
+                composer(box, { placeholder: o.placeholder || (o.agent ? `Message ${agentName()}` : 'Ask, or say what to make'), onSend: (v) => (typeof o.onStart === 'function' ? o.onStart(v.text, v.files) : start(v.text, v.files)) });
             }
             place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
@@ -682,28 +712,33 @@
             const WENT = { code: ['code', 'Sent to Codes: it works on the code and shows you the change'], task: ['robot', `Sent to ${agentName()}'s tasks: it works on it and asks before anything that matters`], machine: ['tool', 'Sent to your computer: it runs there and shows you each step'], goal: ['spark', 'A goal: your agent plans the steps'] };
             if (how.said && known && WENT[known.kind]) { const w = el('p', 'ovr-went'); w.append(svg(WENT[known.kind][0]), el('span', '', WENT[known.kind][1])); thread.append(w); }
             let wait = null;
-            if (how.said) { const me = el('div', 'ovr-step is-you is-said'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(how.said)); me.append(b); thread.append(me); wait = typing(); thread.append(wait); }
+            if (how.said || (how.files && how.files.length)) { const me = el('div', 'ovr-step is-you is-said'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(how.said)); if (how.said) me.append(b); { const fc = fileChips(how.files); if (fc) me.append(fc); } thread.append(me); wait = typing(); thread.append(wait); }
             // 4.242.0: say the next thing while it works. While the run is busy your words wait in the thread as queued
             // and go at its next turn (a coding agent's "Queue a message"); Stop stays beside them.
             const queue = [];
-            const sendNow = async (text, node) => {
-                const step = await api(`/${encodeURIComponent(ref)}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+            const sendNow = async (text, node, files) => {
+                const attachments = files && files.length ? await uploadFiles(files) : [];
+                const step = await api(`/${encodeURIComponent(ref)}/messages`, { method: 'POST', body: JSON.stringify({ text, ...(attachments.length ? { attachments } : {}) }) });
                 if (node) node.remove();
                 add(step);
+                // The step comes back as words; the files the person picked show under them.
+                const fc = fileChips(files);
+                if (fc) { const mine = [...thread.querySelectorAll('.ovr-step.is-you')].pop(); if (mine) mine.append(fc); }
             };
             const flushQueue = () => {
                 if (!queue.length || !state.run || ['running', 'planning'].includes(state.run.status)) return;
                 const next = queue.shift();
-                sendNow(next.text, next.node).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovr-queued').textContent = (err && err.message) || 'That did not send'; });
+                sendNow(next.text, next.node, next.files).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovr-queued').textContent = (err && err.message) || 'That did not send'; });
             };
             composer(box, { placeholder: how.home ? `Message ${agentName()}` : 'Say the next thing', onSend: async (v) => {
                 if (state.run && ['running', 'planning'].includes(state.run.status)) {
                     const q = el('div', 'ovr-step is-you is-queued'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(v.text)); q.append(b, el('small', 'ovr-queued', 'Queued: it reads this after the step it is on'));
-                    thread.append(q); queue.push({ text: v.text, node: q });
+                    { const fc = fileChips(v.files); if (fc) q.append(fc); }
+                    thread.append(q); queue.push({ text: v.text, node: q, files: v.files });
                     requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
                     return;
                 }
-                await sendNow(v.text);
+                await sendNow(v.text, null, v.files);
             } });
             // 4.242.0: quiet steps in a row fold into one line ("Ran 6 steps · the last one") that opens to each step, the
             // plain words first and the command one tap deeper.
@@ -873,7 +908,7 @@
                 });
                 box.append(st);
             }
-            composer(box, { placeholder: `Message ${agentName()}`, onSend: (v) => start(v.text) });
+            composer(box, { placeholder: `Message ${agentName()}`, onSend: (v) => start(v.text, v.files) });
             if (o.agent) loadAgent().then(() => { if (state.view !== 'blank' || !faceSlot.isConnected) return; faceSlot.textContent = ''; faceSlot.append(agentFace('xl')); name.textContent = agentName(); });
         }
         const view = { list, open, start, blank, prefill, destroy() { clearStream(); dropTop(); dropPane(); state.gen++; host.textContent = ''; }, get state() { return { view: state.view, run: state.run, filter: state.filter }; } };
@@ -887,6 +922,11 @@
         styled = true;
         const st = document.createElement('style'); st.id = 'ovr-styles';
         st.textContent = `
+.ovr-files { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-top: 6px; max-width: min(100%, 420px); }
+.ovr-file { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 32px; padding: 4px 10px; border-radius: 10px; font-size: 13px; color: var(--text-secondary, #96a7c2); background: var(--bg-tertiary, rgba(255,255,255,.06)); }
+.ovr-file > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ovr-file.is-pic { padding: 0; overflow: hidden; background: none; }
+.ovr-file.is-pic img { display: block; max-width: 220px; max-height: 180px; border-radius: 12px; object-fit: cover; }
 .ovr-page { display: grid; grid-template-columns: minmax(280px, 360px) minmax(0, 1fr); height: 100%; min-height: 0; }
 .ovr-page-list { min-height: 0; overflow: hidden; display: flex; flex-direction: column; border-right: 1px solid var(--border, rgba(255,255,255,.08)); padding: 10px 10px 0; }
 .ovr-page-main { min-height: 0; overflow: hidden; display: flex; flex-direction: column; padding: 10px clamp(10px, 3vw, 28px) 0; }
@@ -1178,7 +1218,7 @@ html[data-ov-motion=off] .ovr-row, html[data-ov-motion=off] .ovr-step, html[data
         main = mount(right, { ...o, open: o.open || null, blank: !o.open, onBack: () => { show(false); mark(''); }, onPlace: placed });
         list = mount(left, { ...o, open: null,
             onOpen: (ref, r) => { main.open(ref, r); show(true); mark(ref); },
-            onStart: (text) => { main.start(text); show(true); } });
+            onStart: (text, files) => { main.start(text, files); show(true); } });
         // The list repaints its rows on its own (a filter, a refresh): the open one stays marked.
         if (typeof MutationObserver === 'function') new MutationObserver(() => mark(openRef)).observe(left, { childList: true, subtree: true });
         if (o.open) show(true);

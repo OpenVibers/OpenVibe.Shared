@@ -19,6 +19,7 @@ const RUNS = [
     { id: 'k_3', ref: 'codes:k_3', kind: 'code', title: 'Fix the overlay', status: 'running', doing: { text: 'Running the tests', glyph: 'code' }, agent: { id: 'codes', name: 'Codes', glyph: 'code' }, updated_at: NOW },
 ];
 let made = false;
+const got = { uploads: [], starts: [] };
 const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
     if (u.pathname === '/ov-run.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'ov-run.js'))); }
@@ -36,7 +37,10 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
         if (u.pathname.startsWith('/api/frame/actor')) return json(200, { id: 'act_1', name: 'Juniper', enabled: true, status: 'idle', now: {}, asks: [] });
         if (rest === '' && req.method === 'GET') return json(200, { runs: made ? [{ ...RUNS[0], id: 'c_2', ref: 'chat:c_2', title: 'A new one' }, ...RUNS] : RUNS, next: null });
-        if (rest === '' && req.method === 'POST') { made = true; return json(201, { ...RUNS[0], id: 'c_2', ref: 'chat:c_2', title: 'A new one', status: 'running' }); }
+        if (rest === '/files' && req.method === 'POST') { got.uploads.push({ type: req.headers['content-type'], name: req.headers['x-filename'], bytes: Buffer.byteLength(body) });
+            return json(201, { file: { id: 'med_01ARZ3NDEKTSV4RRFFQ69G5FAV', name: decodeURIComponent(req.headers['x-filename'] || ''), media_type: req.headers['content-type'] } }); }
+        if (rest === '' && req.method === 'POST') { got.starts.push(JSON.parse(body || '{}'));
+            made = true; return json(201, { ...RUNS[0], id: 'c_2', ref: 'chat:c_2', title: 'A new one', status: 'running' }); }
         if (/^\/chat:c_[12]$/.test(rest)) return json(200, rest.includes('c_2') ? { ...RUNS[0], id: 'c_2', ref: 'chat:c_2', title: 'A new one' } : RUNS[0]);
         if (/^\/chat:c_[12]\/steps$/.test(rest)) return json(200, { steps: [{ seq: 1, kind: 'message', from: 'agent', text: 'Here are three.' }], next: null });
         if (/\/events$/.test(rest)) { res.writeHead(200, { 'content-type': 'text/event-stream' }); return setTimeout(() => res.end(), 100); }
@@ -69,6 +73,13 @@ const server = http.createServer((req, res) => {
             await until(p, "!!document.querySelector('.ovr-page-main .ovr-step.is-you')", 'your words on the right');
             await until(p, "!!document.querySelector('.ovr-page-list .ovr-row[data-ref=\"chat:c_2\"]')", 'the new one in the list', 8000);
             if (process.env.OV_CAPTURE) { await wait(600); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE, 'run-page-1280.png'), Buffer.from(r.data, 'base64')); }
+            // A picture with the words (4.250.0): uploaded first, its reference rides on the run, and it shows under the words.
+            await p.evaluate("page.main.start('What is this?', [new File([new Uint8Array([137, 80, 78, 71])], 'cat.png', { type: 'image/png' })]), true");
+            await until(p, "!!document.querySelector('.ovr-page-main .ovr-step.is-you .ovr-file.is-pic img')", 'the picture under the words');
+            const deadline = Date.now() + 5000; while (!got.starts.some((b) => b.attachments) && Date.now() < deadline) await wait(60);
+            assert.deepEqual([got.uploads[0].type, got.uploads[0].name, got.uploads[0].bytes > 0], ['image/png', 'cat.png', true], 'the file goes up as itself, typed and named');
+            const withFile = got.starts.find((b) => b.attachments);
+            assert.ok(withFile && withFile.attachments[0].id === 'med_01ARZ3NDEKTSV4RRFFQ69G5FAV' && withFile.text === 'What is this?', 'its reference rides on the run');
             await p.close();
         }
         // ── A phone ──
