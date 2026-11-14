@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.248.0 — 2026-11-14
+
+**Every time in the reader's own clock** (the owner, 11-14: "make it so areas like this show the time based on the
+users computer by default or configurable setting if logged in and changed").
+
+- theme-loader's `time`: `format(value, 'time'|'date'|'datetime'|'day'|'ago'|'full')`, `zone()`, `device()`,
+  `hour12()`, `zones()`, `upgrade(scope)`. Two new display settings, synced to the account like the rest: `clock`
+  (auto, 12, 24) and `tz` (auto, or any IANA zone the browser knows). Auto is this device's zone and clock.
+- `<time datetime="…" data-ov-time="…">` anywhere on a page is rewritten in the reader's time (its title says the full
+  moment with the zone), again when the setting changes and for any such element added later. A server keeps writing
+  UTC as the fallback for crawlers.
+- The Look panel has Clock (Auto, 12-hour, 24-hour) and Time zone.
+- Comments (thread.js): the time's title is the reader's moment, not "UTC".
+- The feed: a card from before today says its day and time ("Yesterday 9:14 PM", "Tue 3:05 PM"), not a bare time as if
+  it were today's; an event's start too. A report card (feed.item@1 1.2.0 `stat`) says when its number happened ("The
+  most people on OpenVibe at once today, at 3:47 AM") and today's side numbers as chips (people today, signed in, page
+  views, new accounts, live now).
+
+**Pictures that do not load leave no empty frame** (the owner, 11-14: "broken images"): a feed card drops its picture
+box, a group row (a run of deals) shows its placeholder.
+
+**A pressed button keeps its place** (the owner, 11-14, Live's Chat button "shifts way down … makes you un-click it"):
+the forms press is `scale: .97`, not `transform: scale(.97)`, which replaced any transform a site positioned a button
+with (centered, slid in). Checkboxes and Motion off likewise.
+
 ## 4.247.0 — 2026-11-13
 
 **Any video in a comment** (the owner, 11-13: "full support for our composer to support all video file types"; plan

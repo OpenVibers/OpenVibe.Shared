@@ -353,7 +353,11 @@
 
     // ── Display settings, one record for every OpenVibe site: display.get() → DISPLAY_OPTS' values; display.set(patch)
     // applies here and in other tabs and saves to the account. <html data-ov-*> and --ov-text-scale before first paint.
-    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'full', 'reduced', 'off'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'], window: ['glass', 'solid', 'outline'] };
+    const DISPLAY_KEY = 'ov_display', DISPLAY_OPTS = { motion: ['auto', 'full', 'reduced', 'off'], text: ['100', '112', '125'], seasonal: ['on', 'off'], scheme: ['manual', 'auto'], contrast: ['normal', 'more'], font: ['default', 'readable'], colors: ['default', 'cb-safe'], oled: ['off', 'on'], icons: ['auto', 'line', 'solid'], window: ['glass', 'solid', 'outline'], clock: ['auto', '12', '24'], tz: ['auto'] };
+    // Time (4.248.0; the owner, 11-14: "show the time based on the user's computer by default or configurable setting if
+    // logged in and changed"): clock auto|12|24 and tz auto or an IANA zone (any zone this browser knows, not only 'auto').
+    function zoneOk(z) { if (!/^[A-Za-z][A-Za-z0-9_+\-]*(\/[A-Za-z0-9_+\-]+){0,2}$/.test(String(z || '')) || String(z).length > 40) return false; try { new Intl.DateTimeFormat('en-US', { timeZone: String(z) }); return true; } catch (e) { return false; } }
+    function okDisplay(k, v) { return !!DISPLAY_OPTS[k] && (DISPLAY_OPTS[k].indexOf(String(v)) >= 0 || (k === 'tz' && zoneOk(v))); }
     // Status names some sites use (--error, --error-text, --ok, --warn, --accent-text) that no theme sets: they resolve to the theme's
     // readable status colours instead of each site's fallback literal (pale on light themes). :where() keeps them
     // below any site's own value (4.86.0).
@@ -404,8 +408,8 @@
         document.addEventListener('animationstart', function (e) { if (document.documentElement.getAttribute('data-ov-motion') === 'reduced') paceLoops(e.target); }, true);
     }
     function readDisplay() {
-        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off', icons: 'auto', window: 'glass' };
-        try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(d[k])) >= 0) out[k] = String(d[k]); } catch (e) { /* */ }
+        const out = { motion: 'auto', text: '100', seasonal: 'on', scheme: 'manual', contrast: 'normal', font: 'default', colors: 'default', oled: 'off', icons: 'auto', window: 'glass', clock: 'auto', tz: 'auto' };
+        try { const d = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}; for (const k in DISPLAY_OPTS) if (okDisplay(k, d[k])) out[k] = String(d[k]); } catch (e) { /* */ }
         return out;
     }
     function applyDisplay(d) {
@@ -430,7 +434,7 @@
     function setDisplay(patch, opts) {
         const d = readDisplay();
         const was = d.seasonal + '|' + d.scheme;
-        for (const k in DISPLAY_OPTS) if (patch && DISPLAY_OPTS[k].indexOf(String(patch[k])) >= 0) d[k] = String(patch[k]);
+        for (const k in DISPLAY_OPTS) if (patch && okDisplay(k, patch[k])) d[k] = String(patch[k]);
         // A change made here is dated now; one adopted from the account or another site keeps its own date.
         const at = opts && Number(opts.at) > 0 ? Number(opts.at) : (opts && opts.local ? displayAt() : Date.now());
         try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(Object.assign({}, d, { at: at }))); } catch (e) { /* */ }
@@ -587,7 +591,7 @@
         const da = clamp(L.da), ta = clamp(L.ta);
         if (L.d && typeof L.d === 'object' && da > displayAt()) {
             const d = readDisplay();
-            for (const k in DISPLAY_OPTS) if (DISPLAY_OPTS[k].indexOf(String(L.d[k])) >= 0) d[k] = String(L.d[k]);
+            for (const k in DISPLAY_OPTS) if (okDisplay(k, L.d[k])) d[k] = String(L.d[k]);
             try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(Object.assign({}, d, { at: da }))); } catch (e) { /* */ }
         }
         const id = String(L.t || '');
@@ -704,10 +708,87 @@
         if (from && typeof location !== 'undefined' && from !== location.hostname) setTimeout(syncFromServer, 2500);
     }
 
+    // ── Time, in the reader's own clock (4.248.0) ────────────
+    // Every OpenVibe page says a moment in the reader's time zone and clock: the device's by default, the account's choice
+    // when they made one (display tz and clock). A server writes <time datetime="…Z" data-ov-time="datetime|date|time|day">
+    // with a UTC fallback for crawlers and no-script; this rewrites it in place, again when the choice changes and for any
+    // such element added later. Script that draws a time calls time.format(value, kind).
+    function deviceZone() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'; } catch (e) { return 'UTC'; } }
+    function timeZone() { const z = readDisplay().tz; return z && z !== 'auto' ? z : deviceZone(); }
+    function hour12() { const c = readDisplay().clock; return c === '12' ? true : c === '24' ? false : undefined; }
+    const KINDS = {
+        time: { hour: 'numeric', minute: '2-digit' },
+        date: { year: 'numeric', month: 'short', day: 'numeric' },
+        datetime: { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+        full: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' },
+    };
+    function dayKey(ms, zone) { try { return new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(ms); } catch (e) { return ''; } }
+    /** One moment as words in the reader's time: kind time | date | datetime | day (Today 3:05 PM, Yesterday …) | full. */
+    function formatTime(value, kind, opts) {
+        const ms = value instanceof Date ? value.getTime() : typeof value === 'number' ? value : Date.parse(String(value || ''));
+        if (!Number.isFinite(ms)) return '';
+        const zone = timeZone(), h12 = hour12(), lang = (opts && opts.locale) || undefined;
+        const other = zone !== deviceZone();   // a zone the reader picked that is not this device's: say which
+        const fmt = (o) => { try { return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: zone }, o, h12 === undefined ? {} : { hour12: h12 })).format(ms); } catch (e) { return new Date(ms).toISOString().slice(0, 16).replace('T', ' ') + ' UTC'; } };
+        const tzName = () => { try { const p = new Intl.DateTimeFormat(lang, { timeZone: zone, timeZoneName: 'short' }).formatToParts(ms).find((x) => x.type === 'timeZoneName'); return p ? ' ' + p.value : ''; } catch (e) { return ''; } };
+        const k = String(kind || 'datetime');
+        if (k === 'ago') {
+            // How long ago, the same words in every zone; the title (upgradeTimes) says the moment in the reader's time.
+            const sec = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+            if (sec < 60) return 'just now';
+            const u = sec < 3600 ? ['minute', Math.floor(sec / 60)] : sec < 86400 ? ['hour', Math.floor(sec / 3600)] : sec < 2592000 ? ['day', Math.floor(sec / 86400)] : sec < 31536000 ? ['month', Math.floor(sec / 2592000)] : ['year', Math.floor(sec / 31536000)];
+            return u[1] + ' ' + u[0] + (u[1] === 1 ? '' : 's') + ' ago';
+        }
+        if (k === 'day') {
+            const now = Date.now(), today = dayKey(now, zone), that = dayKey(ms, zone), yesterday = dayKey(now - 86400000, zone);
+            const t = fmt(KINDS.time) + (other ? tzName() : '');
+            if (that === today) return 'Today ' + t;
+            if (that === yesterday) return 'Yesterday ' + t;
+            if (Math.abs(now - ms) < 6 * 86400000) return fmt({ weekday: 'short' }) + ' ' + t;
+            return fmt(new Date(ms).getUTCFullYear() === new Date(now).getUTCFullYear() ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' } : KINDS.datetime) + (other ? tzName() : '');
+        }
+        if (k === 'full') return fmt(KINDS.full);
+        return fmt(KINDS[k] || KINDS.datetime) + (other && k !== 'date' ? tzName() : '');
+    }
+    function upgradeTimes(scope) {
+        if (typeof document === 'undefined') return;
+        const list = (scope && scope.querySelectorAll ? scope : document).querySelectorAll('time[data-ov-time][datetime]');
+        for (let i = 0; i < list.length; i++) {
+            const el = list[i], words = formatTime(el.getAttribute('datetime'), el.getAttribute('data-ov-time'));
+            if (!words) continue;
+            if (el.textContent !== words) el.textContent = words;
+            const full = formatTime(el.getAttribute('datetime'), 'full');
+            if (full && el.getAttribute('title') !== full) el.setAttribute('title', full);
+        }
+    }
+    if (typeof document !== 'undefined' && document.addEventListener && typeof window !== 'undefined') {
+        let queued = null;
+        const later = (node) => {
+            if (!queued) { queued = []; (window.requestAnimationFrame || setTimeout)(function () { const q = queued; queued = null; for (let i = 0; i < q.length; i++) upgradeTimes(q[i]); }); }
+            queued.push(node);
+        };
+        const watch = function () {
+            upgradeTimes(document);
+            if (typeof MutationObserver === 'undefined' || !document.body) return;
+            new MutationObserver(function (records) {
+                for (let i = 0; i < records.length; i++) {
+                    const added = records[i].addedNodes;
+                    for (let j = 0; j < added.length; j++) { const n = added[j]; if (n.nodeType === 1 && (n.matches('time[data-ov-time]') ? true : n.querySelector && n.querySelector('time[data-ov-time]'))) later(n.matches('time[data-ov-time]') ? n.parentNode || n : n); }
+                }
+            }).observe(document.body, { childList: true, subtree: true });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', watch); else setTimeout(watch, 0);
+        window.addEventListener('ov:display', function () { upgradeTimes(document); });
+    }
+
     // ── Public API ───────────────────────────────────────────
     const OpenVibeThemeLoader = {
         THEMES: THEMES,
         display: { get: readDisplay, set: setDisplay, options: DISPLAY_OPTS, motion: function () { return motionOf(); }, move: moveOf },
+        // The reader's time (4.248.0): format(value, 'time'|'date'|'datetime'|'day'|'full'), zone(), device(), hour12(),
+        // upgrade(scope) for <time data-ov-time> drawn by script, zones() → every IANA zone this browser knows.
+        time: { format: formatTime, zone: timeZone, device: deviceZone, hour12: hour12, upgrade: upgradeTimes, ok: zoneOk,
+            zones: function () { try { return Intl.supportedValuesOf('timeZone'); } catch (e) { return ['UTC']; } } },
         apply: applyById,
         applyVars: applyVars,
         // Seasons: SEASONS, now() → the season today (or null), showing() → the season whose theme is on screen (or null)

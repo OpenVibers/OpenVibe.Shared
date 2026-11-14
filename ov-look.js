@@ -38,6 +38,7 @@
         + '.ovlk-icons{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 6px 6px 10px;border-radius:12px;background:var(--bg-tertiary,rgba(255,255,255,.05))}'
         + '.ovlk-icons>b{color:var(--text-primary,#e6edf7);font-weight:650}'
         + '.ovlk-seg{display:inline-flex;gap:2px;padding:2px;border-radius:999px;background:var(--bg-primary,rgba(0,0,0,.25))}'
+        + '.ovlk-tz{min-width:0;max-width:62%;padding:6px 10px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:var(--bg-primary,rgba(0,0,0,.25));color:var(--text-primary,#e6edf7);font:inherit;font-size:.86rem}'
         + '.ovlk .ovlk-seg button{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 10px;border-radius:999px;cursor:pointer;font-size:12.5px;color:var(--text-secondary,#a8b3c4)}'
         + '.ovlk .ovlk-seg button[aria-checked=true]{background:var(--accent-strong,var(--accent,#3472d8));color:var(--on-accent-strong,#fff)}'
         + '.ovlk .ovlk-seg button:focus-visible{outline:2px solid var(--accent,#3b82f6);outline-offset:1px}'
@@ -109,6 +110,18 @@
             panel.append(row('motion', 'Motion', [['auto', 'Auto'], ['full', 'Full'], ['reduced', 'Calm'], ['off', 'Off']]));
             // Windows (4.202.0, asks 304 and 318): every window at once (ov-window.js), glass, solid or outlined.
             panel.append(row('window', 'Windows', [['glass', 'Glass'], ['solid', 'Solid'], ['outline', 'Outline']]));
+            // Time (4.248.0; the owner, 11-14): every time on every site in this zone and clock. Auto is this device's.
+            if (L.time && L.display.options.clock) {
+                panel.append(row('clock', 'Clock', [['auto', 'Auto'], ['12', '12-hour'], ['24', '24-hour']]));
+                const dev = L.time.device();
+                const cur = d.tz && d.tz !== 'auto' ? d.tz : 'auto';
+                const sel = el('select', { class: 'ovlk-tz', 'data-look-tz': '', 'aria-label': 'Time zone' }, [el('option', { value: 'auto' }, [`Auto (${dev.replace(/_/g, ' ')})`])]);
+                const zones = L.time.zones();
+                if (cur !== 'auto' && zones.indexOf(cur) < 0) zones.unshift(cur);
+                zones.forEach((z) => sel.append(el('option', { value: z }, [z.replace(/_/g, ' ')])));
+                sel.value = cur;
+                panel.append(el('div', { class: 'ovlk-icons' }, [el('b', {}, ['Time zone']), sel]));
+            }
         }
         const signedIn = opts.signedIn != null ? !!opts.signedIn : /(?:^|; )ov_sso_hint=account/.test(document.cookie || '') || !!(root.localStorage && (() => { try { return root.localStorage.getItem('ov_token'); } catch (e) { return null; } })());
         const named = showing ? showing.name : ((PICKS.find(([id]) => id === cur) || [0, cur])[1]);
@@ -161,7 +174,11 @@
             else L.save(id);
             draw(box, opts);
         });
-        ['ov:theme', 'ov:display'].forEach((ev) => root.addEventListener(ev, () => { if (box.isConnected) draw(box, opts); }));
+        box.addEventListener('change', (e) => {
+            const L = root.OpenVibeThemeLoader; const t = e.target;
+            if (L && t && t.matches && t.matches('[data-look-tz]')) { e.stopPropagation(); L.display.set({ tz: t.value || 'auto' }); }
+        });
+        ['ov:theme', 'ov:display'].forEach((ev) => root.addEventListener(ev, () => { if (box.isConnected && !(document.activeElement && document.activeElement.matches && document.activeElement.matches('[data-look-tz]'))) draw(box, opts); }));
     }
 
     root.OVLook = { mount, PICKS, shareLink };

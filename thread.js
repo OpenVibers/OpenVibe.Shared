@@ -356,6 +356,7 @@ const ovcNameMarkup = (who, words) => {
     const subject = ovcSubjectOf(who);
     return `<span${subject ? ` data-ov-subject="${subject}"` : ''}>${esc(words)}</span>`;
 };
+// UTC is what the server knows; the reader's own zone and clock replace it in the page (theme-loader's time, 4.248.0).
 const date = (iso) => {
     const ms = Date.parse(String(iso || ''));
     if (!Number.isFinite(ms)) return { short: '', full: '' };
@@ -428,7 +429,7 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
             const more = Math.max(0, Number(c.reply_count || 0) - rows.length);
             replies = `<div class="ovc-replies" data-ovc-replies="${id}">${rows.map((r) => comment(r, id)).join('')}${more ? `<a class="ovc-more ovk-btn ovk-btn--quiet" data-ovc-more="${id}" href="${query(base, sort, { replies: id })}">${more} more ${more === 1 ? 'reply' : 'replies'}</a>` : ''}</div>`;
         }
-        return `<article class="ovc-comment" id="comment-${id}"><header>${avatar ? `<img src="${esc(avatar)}" alt="" width="32" height="32" loading="lazy">` : ''}${profile ? `<a href="${profile}">${ovcNameMarkup(c, name(c))}</a>` : ovcNameMarkup(c, name(c))}${when.short ? `<time datetime="${esc(c.created_at)}" title="${esc(when.full)}">${esc(when.short)}</time>` : ''}</header>${target}${gone ? '<p>Comment removed</p>' : `<p>${esc(c.message || '')}</p>${attachments(c)}`}${controls}${validReply === id ? `<div data-ovc-composer-slot>${composer_html(id)}</div>` : ''}${replies}</article>`;
+        return `<article class="ovc-comment" id="comment-${id}"><header>${avatar ? `<img src="${esc(avatar)}" alt="" width="32" height="32" loading="lazy">` : ''}${profile ? `<a href="${profile}">${ovcNameMarkup(c, name(c))}</a>` : ovcNameMarkup(c, name(c))}${when.short ? `<time datetime="${esc(c.created_at)}" data-ov-time="ago" title="${esc(when.full)}">${esc(when.short)}</time>` : ''}</header>${target}${gone ? '<p>Comment removed</p>' : `<p>${esc(c.message || '')}</p>${attachments(c)}`}${controls}${validReply === id ? `<div data-ovc-composer-slot>${composer_html(id)}</div>` : ''}${replies}</article>`;
     };
     const hasReplySlot = validReply && comments.some((c) => String(c.id) === validReply || (validExpanded === String(c.id) && Array.isArray(expandedReplies) ? expandedReplies : c.replies || []).some((r) => String(r.id) === validReply));
     // Top and Newest only when there is something to put in order.
