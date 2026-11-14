@@ -990,7 +990,10 @@
     };
 
     function buildView(root, { mode }) {
-        const v = { root, mode, tab: 'all', unread: false, q: '', items: [], offset: 0, hasMore: false, loading: false, seq: 0, ids: new Set() };
+        // 4.249.0 (the owner, 11-14: "like Android or iOS notifications … only shows unread by default"): the list opens on
+        // what is unread; Unread off shows everything. The choice is kept for the next opening.
+        let unreadFirst = true; try { unreadFirst = localStorage.getItem('ovn-unread') !== '0'; } catch { /* */ }
+        const v = { root, mode, tab: 'all', unread: unreadFirst, q: '', items: [], offset: 0, hasMore: false, loading: false, seq: 0, ids: new Set() };
         root.innerHTML = `
             <div class="openvibe-nv-head">
                 <h3>Notifications <span class="count zero">0</span></h3>
@@ -1005,7 +1008,7 @@
             <div class="openvibe-nv-tools">
                 <div class="openvibe-nv-find">
                     <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
-                    <button type="button" class="openvibe-nv-unread" aria-pressed="false" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span>Unread</button>
+                    <button type="button" class="openvibe-nv-unread" aria-pressed="${v.unread ? 'true' : 'false'}" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span>Unread</button>
                 </div>
                 <div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
                     ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}">${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}
@@ -1061,7 +1064,7 @@
             if (j >= 0) { e.preventDefault(); selectTab(tabs[j], true); }
         });
         const unreadBtn = root.querySelector('.openvibe-nv-unread');
-        unreadBtn.addEventListener('click', () => { v.unread = !v.unread; unreadBtn.setAttribute('aria-pressed', String(v.unread)); reload(v); });
+        unreadBtn.addEventListener('click', () => { v.unread = !v.unread; unreadBtn.setAttribute('aria-pressed', String(v.unread)); try { localStorage.setItem('ovn-unread', v.unread ? '1' : '0'); } catch { /* */ } reload(v); });
         root.querySelector('[data-act="read-all"]').addEventListener('click', () => markAllRead());
         const footRead = root.querySelector('[data-act="read-all-foot"]'); if (footRead) footRead.addEventListener('click', () => markAllRead());
         root.querySelector('[data-act="push"]').addEventListener('click', () => togglePush(v));

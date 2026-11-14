@@ -401,6 +401,10 @@ const created = (subject, over = {}) => ({
         tabs[1].dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
         assert.strictEqual(lists().pop().get('tab'), 'mentions', 'a tab asks Network for that tab');
         assert.deepStrictEqual(tabs.map((t) => t.getAttribute('aria-selected')), ['false', 'true', 'false', 'false', 'false', 'false']);
+        // 4.249.0: Unread is on when the list opens (a phone's notifications); a press shows everything, a second only unread.
+        assert.strictEqual(panel.querySelector('.openvibe-nv-unread').getAttribute('aria-pressed'), 'true', 'Unread first');
+        panel.querySelector('.openvibe-nv-unread').dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
+        assert.strictEqual(lists().pop().get('unread_only'), null, 'everything');
         panel.querySelector('.openvibe-nv-unread').dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
         const last = lists().pop();
         assert.deepStrictEqual([last.get('tab'), last.get('unread_only')], ['mentions', '1'], 'the Unread filter combines with the tab');
