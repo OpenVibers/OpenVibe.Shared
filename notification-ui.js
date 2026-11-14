@@ -359,7 +359,14 @@
             .openvibe-notif-item .meta { font-size: 11.5px; color: var(--text-muted, #8b8b96); margin-top: 5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
             .openvibe-notif-item .meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: .6; }
             .openvibe-notif-item .unread-dot { position: absolute; right: 14px; top: 50%; margin-top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
-            .openvibe-notif-item.unread .ovn-row { padding-right: 34px; }
+            .openvibe-notif-item.unread .ovn-row { box-shadow: inset 3px 0 0 var(--accent, #3b82f6); }
+            .openvibe-notif-item .ovn-row { padding-right: 40px; }
+            .openvibe-notif-item .ovn-go { position: absolute; right: 12px; top: 50%; width: 20px; height: 20px; margin-top: -10px; display: grid; place-items: center; color: var(--text-muted, #8b8b96); opacity: .55; transition: opacity .15s ease, transform .2s cubic-bezier(.2, .8, .2, 1), color .15s ease; pointer-events: none; }
+            .openvibe-notif-item .ovn-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+            .openvibe-notif-item:hover .ovn-go, .openvibe-notif-item:focus-within .ovn-go { opacity: 1; color: var(--accent, #3b82f6); transform: translateX(3px); }
+            html[data-ov-motion=off] .openvibe-notif-item .ovn-go { transition: none; transform: none; }
+            .openvibe-notif-item .ovn-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+            .openvibe-notif-item .ovn-menu { top: 50%; transform: translateY(-50%); }
             .openvibe-notif-item .row-actions { position: absolute; right: 6px; top: 6px; z-index: 2; display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
             .openvibe-notif-item.unread .row-actions { right: 30px; }
             .openvibe-notif-item:hover .row-actions, .openvibe-notif-item:focus-within .row-actions { opacity: 1; }
@@ -1096,6 +1103,15 @@
             if (u) navigateTo(u);
         });
         list.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('ovn-row')) { e.preventDefault(); e.target.click(); } });
+        // 4.249.0 (the owner, 11-14: "I don't like the three dots … an arrow that brings you to that thing"): the row goes
+        // to its notice; its menu (Mark as read, Remove, Settings) opens on a long press, a right-click or Shift+F10.
+        const openMenuOf = (item) => {
+            v.root.querySelectorAll('.openvibe-notif-item.is-menu').forEach((x) => { x.classList.remove('is-menu'); const m = x.querySelector('.ovn-menu'); if (m) m.hidden = true; });
+            const menu = item && item.querySelector('.ovn-menu'); if (!menu) return;
+            menu.hidden = false; item.classList.add('is-menu'); const first = menu.querySelector('button'); if (first) first.focus({ preventScroll: true });
+        };
+        list.addEventListener('contextmenu', (e) => { const item = e.target.closest('.openvibe-notif-item'); if (!item) return; e.preventDefault(); openMenuOf(item); });
+        list.addEventListener('keydown', (e) => { if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') { const item = e.target.closest && e.target.closest('.openvibe-notif-item'); if (item) { e.preventDefault(); openMenuOf(item); } } });
         // A thumbnail or avatar that does not load leaves its row (no inline handlers: a site's CSP may forbid them).
         list.addEventListener('error', (e) => {
             const img = e.target;
@@ -1188,7 +1204,7 @@
                 return `${head}<div class="openvibe-notif-item ${unread ? 'unread' : ''}" data-id="${esc(n.id)}" data-ids="${esc(ids.join(','))}" style="--ovn-tone:${TONE[p.tone] || TONE.accent}">
                     <div class="ovn-under" aria-hidden="true"><span class="read">${svg(ICON.read)}Read</span><span class="clear">Clear${svg(ICON.close)}</span></div>
                     <div class="ovn-row${thumb ? ' has-thumb' : ''}" tabindex="0">
-                    ${unread ? '<span class="unread-dot" role="img" aria-label="Unread"></span>' : ''}
+                    ${unread ? '<span class="ovn-sr">Unread. </span>' : ''}
                     ${glyphHtml(n, p)}
                     <div class="content">
                         <div class="title"><span class="t">${esc(p.title)}</span>${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}</div>
@@ -1197,7 +1213,7 @@
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
                         ${actsHtml(n)}
                         <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
-                    <div class="row-actions"><button type="button" data-row="more" title="More" aria-label="More for this notice" aria-haspopup="menu">${svg(ICON.more)}</button></div>
+                    ${p.url ? `<span class="ovn-go" aria-hidden="true">${svg(ICON.go)}</span>` : ''}
                     <div class="ovn-menu" role="menu" hidden>${unread ? '<button type="button" role="menuitem" data-row="read">' + svg(ICON.read) + '<span>Mark as read</span></button>' : ''}<button type="button" role="menuitem" data-row="dismiss">${svg(ICON.trash)}<span>Remove this notice</span></button><button type="button" role="menuitem" data-row="settings">${svg(ICON.gear)}<span>Notification settings</span></button></div>
                     </div>
                     ${thumb ? `<img class="thumb" src="${esc(thumb)}" alt="" loading="lazy">` : ''}
