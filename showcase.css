@@ -140,7 +140,7 @@ a.sc-card:hover .sc-ic,a.sc-card:focus-visible .sc-ic{scale:1.06}.sc-ic{transiti
 .sc-steps li::before{content:counter(sc);grid-row:span 2;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:13px;color:var(--accent-light,#60a5fa);border:1px solid var(--border-light,#2c3d5c);background:var(--bg-secondary,#101828)}
 .sc-steps b{font-size:15.5px}.sc-steps b a{color:inherit;text-decoration:underline;text-decoration-color:var(--accent,#3b82f6);text-underline-offset:3px}
 .sc-steps span{color:var(--text-secondary,#96a7c2);font-size:14px;line-height:1.5}
-.sc-code{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.sc-code{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr))}
 .sc-code figure{margin:0;border-radius:14px;border:1px solid var(--border,rgba(255,255,255,.08));background:var(--bg-primary,#0a0f1c);overflow:hidden;min-width:0}
 .sc-code figcaption{padding:8px 14px;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted,#7386a3);border-bottom:1px solid var(--border,rgba(255,255,255,.08))}
 .sc-code pre{margin:0;padding:14px;overflow:auto;font-size:13px;line-height:1.55}
@@ -292,7 +292,7 @@ html{overflow-x:clip}
 @keyframes scRise{from{transform:translateY(calc(18px * var(--ov-move,1)))}to{transform:none}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media (max-width:860px){.sc-hero.sc-split{grid-template-columns:1fr}.sc-hero{padding-top:36px}.sc-spot{grid-template-columns:1fr;gap:14px}.sc-spot:nth-child(even) .sc-spot-media{order:0}}
-@media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:1fr}}
+@media (max-width:520px){.sc-actions .sc-btn{flex:1 1 100%;justify-content:center}.sc-code{grid-template-columns:minmax(0,1fr)}}
 .sc-stat dd{display:flex;align-items:center;gap:8px}.sc-stat-ic{display:inline-flex;color:var(--accent-light,var(--accent,#60a5fa))}
 @media (max-width:640px){
 .sc-hero,.sc-sec,.sc-cta{padding-left:16px;padding-right:16px}
