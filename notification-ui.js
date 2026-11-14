@@ -241,6 +241,19 @@
             .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open), .openvibe-notif-dock .openvibe-nv-unread { width: 40px; height: 40px; }
             .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 40px; }
             .openvibe-notif-dock .openvibe-nv-search:not(.is-open) > svg { left: 50%; transform: translate(-50%, -50%); }
+            /* 4.249.0 (the owner, 11-14: the filter-lines button "doesn't represent what the feature is … a better icon … toggle
+               … animation"): it is a pill that says Unread, its dot lit and popping when it is on. The open search is one field
+               ("a weird double thing"): the box carries the line and the glow, the input inside none. */
+            .openvibe-notif-dock .openvibe-nv-unread { width: auto !important; height: 40px; padding: 0 12px 0 10px !important; gap: 7px; display: inline-flex !important; align-items: center; border-radius: 999px !important; font-size: 13px !important; font-weight: 700; color: var(--text-secondary, #b6b6c0); opacity: 1 !important; }
+            .openvibe-notif-dock .openvibe-nv-unread > svg { display: none; }
+            .openvibe-notif-dock .openvibe-nv-unread .ovn-dot { flex: none; margin-right: 7px; width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 2px currentColor; transition: background-color .2s, box-shadow .2s, transform .3s cubic-bezier(.3,1.6,.4,1); }
+            .openvibe-notif-dock .openvibe-nv-unread[aria-pressed="true"] { color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); }
+            .openvibe-notif-dock .openvibe-nv-unread[aria-pressed="true"] .ovn-dot { background: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent); transform: scale(1.15); animation: ovn-dot-pop .35s cubic-bezier(.3,1.6,.4,1); }
+            @keyframes ovn-dot-pop { from { transform: scale(.4); } }
+            html[data-ov-motion=off] .openvibe-notif-dock .openvibe-nv-unread .ovn-dot { animation: none; transition: none; }
+            .openvibe-notif-dock .openvibe-nv-search.is-open { right: 112px; height: 40px; top: 2px; border-radius: var(--ov-radius-1, 10px); background: var(--bg-primary, #0b0f19); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); }
+            .openvibe-notif-dock .openvibe-nv-search.is-open:focus-within { box-shadow: inset 0 0 0 1px var(--accent, #3b82f6), 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); }
+            .openvibe-notif-dock .openvibe-nv-search.is-open input { height: 100%; border: 0 !important; outline: none !important; box-shadow: none !important; background: transparent !important; border-radius: inherit; }
             .openvibe-notif-dock .openvibe-nv-unread { display: grid; place-items: center; }
             .openvibe-notif-dock .openvibe-nv-unread svg { display: block; margin: 0; }
             .openvibe-notif-dock .openvibe-nv-find { padding-bottom: 0; align-self: center; gap: 4px; }
@@ -985,7 +998,7 @@
             <div class="openvibe-nv-tools">
                 <div class="openvibe-nv-find">
                     <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
-                    <button type="button" class="openvibe-nv-unread" aria-pressed="false" title="Show only unread">${svg(ICON.filter)}Unread</button>
+                    <button type="button" class="openvibe-nv-unread" aria-pressed="false" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span>Unread</button>
                 </div>
                 <div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
                     ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}">${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}

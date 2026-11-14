@@ -503,7 +503,8 @@ const created = (subject, over = {}) => ({
     // 44 px round buttons with centred glyphs.
     // 28.2 KB (4.248.0, 2026-11-14): the ⋯ menu instead of the X, the buttons a notice brings (rich_content.actions), the
     // social-feed rows (the owner: "no spacing … confusing to have an X … more like social media").
-    assert.ok(size('notification-ui.js') <= 28.2 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 28.2 KB`);
+    // 28.7 KB (4.249.0): the Unread toggle that says what it does and one-field search (the owner, 11-14).
+    assert.ok(size('notification-ui.js') <= 28.7 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 28.7 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });
