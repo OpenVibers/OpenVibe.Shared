@@ -226,7 +226,7 @@
 .ovs-fly-part--count { width: auto !important; height: auto !important; }
 .ovs-fly-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font: 800 11px/1 system-ui, sans-serif; }
 .ovs-panel { position: absolute; left: 50%; top: 8vh; width: min(720px, calc(100vw - 32px)); max-height: 80vh; transform: translateX(-50%); display: flex; flex-direction: column; border-radius: 18px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-secondary, #121826); box-shadow: 0 30px 80px rgba(0,0,0,.55); overflow: hidden; }
-.ovs-bar { display: flex; align-items: center; gap: 10px; margin: 10px 10px 6px; padding: 0 6px 0 14px; border-radius: 999px; background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); transition: box-shadow .2s, background .2s; }
+.ovs-bar { display: flex; align-items: center; gap: 10px; margin: 10px 10px 6px; padding: 0 6px 0 14px; border-radius: calc(var(--ov-radius-2, 14px) + 2px); background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); transition: box-shadow .2s, background .2s; }
 .ovs-bar:focus-within { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent), 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
 /* A site's own focus ring (the orange box on openvibe.download, 10-29) never draws on the field: the pill shows focus. */
 .ovs .ovs-input, .ovs .ovs-input:focus, .ovs .ovs-input:focus-visible { outline: none !important; box-shadow: none !important; border: 0 !important; background: transparent !important; }
@@ -672,7 +672,14 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
   @keyframes ovs-orb-in { from { opacity: 0; transform: scale(.45) rotate(-90deg); } }
   @keyframes ovs-orb-out { to { opacity: 0; transform: scale(.5) rotate(90deg); } }
   .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; width: 24px; height: 24px; }
-  .ovs.ovs-anchored .ovs-orb.is-x { background: var(--bg-secondary, #121826); box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 14%, transparent), 0 8px 22px -8px rgba(0, 0, 0, .7); }
+  .ovs.ovs-anchored .ovs-orb.is-x { background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)), 0 8px 22px -10px rgba(0, 0, 0, .7); }
+  /* 4.248.0 (the owner, 11-14: "the top thing … needs to be less round … make everything more consistent"): the field and
+     its close share the kit's radius scale (--ov-radius-2 + 2, the tabs' own), so the close is a rounded square beside it. */
+  .ovs.ovs-anchored .ovs-orb.is-x { border-radius: calc(var(--ov-radius-2, 14px) + 2px); }
+  .ovs.ovs-anchored .ovs-orb.is-x::after { border-radius: inherit; }
+  /* 4.248.0: as tall as the search field beside it, centred on it (placeOrb measures both). */
+  .ovs.ovs-anchored .ovs-orb.is-x { width: var(--orb-size, 48px); height: var(--orb-size, 48px); transition: transform .42s cubic-bezier(.2, 1.1, .3, 1), background-color .3s, box-shadow .3s, top .25s ease, left .25s ease; }
+  .ovs.ovs-anchored .ovs-orb.is-x:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 55%, var(--border, rgba(255,255,255,.12))), 0 8px 22px -10px rgba(0, 0, 0, .7); }
   .ovs.ovs-anchored .ovs-orb.is-x::before { display: none; }
   .ovs.ovs-anchored .ovs-orb { width: 48px; height: 48px; }
   .ovs.ovs-anchored .ovs-orb:focus { outline: none; }
@@ -1040,7 +1047,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (g.as === 'card') {
                 const body = document.createElement('div'); body.className = 'ovs-cardbody';
                 try {
-                    g.card.render(body, { close, here: here(), user: ctx.user || null, signedIn: !!(ctx.token && ctx.user && !ctx.user.is_anon) });
+                    g.card.render(body, { close, here: here(), user: ctx.user || null, signedIn: !!(ctx.user && !ctx.user.is_anon) });
                 } catch { return; }
                 if (!body.childNodes.length) return;
                 if (g.title) { const h = document.createElement('li'); h.className = 'ovs-group'; h.setAttribute('role', 'presentation'); h.setAttribute('data-sec', g.section); h.textContent = g.title; listEl.appendChild(h); }
@@ -1713,7 +1720,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         try { return root.OpenVibeDock && root.OpenVibeDock.mountInto ? root.OpenVibeDock.mountInto(slot, how) : null; } catch { return null; }
     }
     function mountRuns() {
-        const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        const me = ctx.user && !ctx.user.is_anon ? ctx.user : null;
         // Runs and the Action Center are the person's Network places, like the Dock's (navbar.js passes its base).
         const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
         const D = () => root.OpenVibeDock;
@@ -1724,6 +1731,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             // Dock's Vibe, Agents and Code panels are no longer lent here.
             actions: { base: net }, starters: VIBE_STARTERS, agent: true,
             // Above the list: Now (timers, what is on) and the live view of an agent at work, from the Dock's agent top.
+            // Above the list: what is happening now (a timer, an agent at work, what needs you), quiet otherwise (4.248.0: no
+            // idle line, no "Nothing needs you", no timeline folds; the owner, 11-14).
             top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
             onPlace: (p) => { if (p.filter) runFilter = p.filter; },
         };
@@ -2073,14 +2082,16 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // With the home screen, Notifications is one of You's tabs (4.223.0); without it, the section stays at the top.
         if (root.OpenVibeNotifications && ctx.token && !H) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
         // §Z.2 (4.247.0): a guest sees first what signing in adds, with the bar's own Sign in link.
-        if (!(ctx.token && ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' });
+        // Signed in is the person the bar shows, not a token: a site that signs in by its own session cookie (Download) has
+        // no token in the page, and the menu said "Sign in to make OpenVibe yours" under their avatar (11-14).
+        if (!(ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' });
         if (H) {
             groups.push({ as: 'home', items: [], section: 'home' });
             // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
-            if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
+            if (!(ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
         }
-        if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
+        if (ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
         const yours = mine && mine.services.some((x) => x.count > 0);
         // Without their own history, developer services are not places to visit: they come up here once used.
         const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
@@ -2124,7 +2135,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     function homeOpts() {
         const { all, ranked, f } = basis();
         const apps = ranked.map((x) => ({ id: x.id, title: x.name, url: x.url, site: x.icon || x.id, group: x.group })).filter((x) => x.url);
-        const yours = ctx.token && ctx.user && !ctx.user.is_anon ? youItems().filter((y) => y.title !== 'Agents').map((y) => ({ id: `you:${slugOf(y.title)}`, title: y.title, url: y.url, site: y.site, group: 'you' })) : [];
+        const yours = ctx.user && !ctx.user.is_anon ? youItems().filter((y) => y.title !== 'Agents').map((y) => ({ id: `you:${slugOf(y.title)}`, title: y.title, url: y.url, site: y.site, group: 'you' })) : [];
         const tools = catalog ? catalog.tools.map((t) => [toolUse(t), t]).sort((a, b) => b[0] - a[0]).map(([, t]) => ({ id: `tool:${slugOf(t.name)}`, title: t.name, url: t.go || t.url, site: t.icon || 'tools' })) : [];
         const seen = new Set(), recentIds = [];
         for (const h of (mine ? mine.items : [])) {
@@ -2369,7 +2380,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     //   - the menu's own circle grows from the button while it flies (it was cut short before), and the close orb turns
     //     in once the button has left its place.
     // Motion Off skips it all; Calm plays the same path short, with no trail, tilt or glow (Calm reduces, only Off removes).
-    let flyFrom = null, flyIdle = null;
+    let flyFrom = null, flyIdle = null, fromTab = null;
     const motionLevel = () => (typeof document !== 'undefined' && document.documentElement.getAttribute('data-ov-motion')) || '';
     function tabFace(id) {
         const b = tabsEl && tabsEl.querySelector(`.ovs-tab[data-tab="${id}"], .ovs-tab[data-dock="${id}"]`);
@@ -2498,6 +2509,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const asked = { here: 'here', sites: 'here', feed: 'feed', you: 'you', tools: 'you' }[opts.tab];
         // The menu opens on this site's tab unless a tab was asked (the picture asks You): no tab is remembered (4.189.0).
         tab = asked || 'here';
+        fromTab = tab;   // what the opener opened: only that tab flies back into it
         allOpen = false; hereOpen = true; leadHere = false; discoverPick = null;
         drainCards();
         syncFeeds();
@@ -2536,6 +2548,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 const bar = el.querySelector('.ovs-bar'), br = bar ? bar.getBoundingClientRect() : null;
                 const tx = br ? br.right + 6 + 24 : innerWidth - 24, ty = br ? br.top + br.height / 2 : 28;
                 orbEl.style.setProperty('--orb-x', `${Math.round(tx - 24)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 24)}px`);
+                settleOrb();
                 if (home) { orbEl.style.setProperty('--orb-dx', `${Math.round(home.cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(home.cy - ty)}px`); }
                 // The button has flown to its tab, or no menu button is on screen: the close turns in at the pill.
                 if (flyFrom || !home) orbEl.classList.add('is-x', 'is-pop');
@@ -2589,7 +2602,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     // on a phone, the orb on a computer). Measured each time, never remembered: the bar may have scrolled away or come
     // back since, and on a phone the computer's orb is hidden (zero size). Null when none is on screen.
     function barButtonCentre() {
-        const list = [ctx && ctx.from, document.getElementById('openvibe-burger'), document.getElementById('openvibe-search-btn')];
+        // The orb is the menu button turned into the close: it goes home into the menu button, never into the picture or
+        // another opener (11-14, the owner: still went into the avatar).
+        const list = [document.getElementById('openvibe-burger'), document.getElementById('openvibe-search-btn')];
         for (const b of list) {
             if (!b || typeof b.getBoundingClientRect !== 'function' || typeof b.closest !== 'function' || !b.closest('.openvibe-navbar')) continue;
             const r = b.getBoundingClientRect();
@@ -2598,9 +2613,32 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         }
         return null;
     }
+    /** The close sits beside the search field, centred on it and as tall as it (4.248.0; the owner, 11-14: "the close
+     *  button's offset … more consistent with the search input"). Measured again once the sheet has slid in and when the
+     *  window changes, never only at the first frame (the field was still moving then). */
+    let orbWatch = null;
+    function placeOrb() {
+        if (!orbEl || !el || !el.classList.contains('is-open') || !phoneSheet()) return;
+        const bar = el.querySelector('.ovs-bar'); if (!bar) return;
+        const r = bar.getBoundingClientRect(); if (!r.height) return;
+        const size = Math.max(44, Math.min(56, Math.round(r.height)));
+        orbEl.style.setProperty('--orb-size', `${size}px`);
+        orbEl.style.setProperty('--orb-x', `${Math.round(Math.min(innerWidth - size - 4, r.right + 8))}px`);
+        orbEl.style.setProperty('--orb-y', `${Math.round(r.top + (r.height - size) / 2)}px`);
+    }
+    function settleOrb() {
+        [140, 360, 700].forEach((t) => setTimeout(placeOrb, t));
+        if (!orbWatch && typeof window !== 'undefined') {
+            orbWatch = () => requestAnimationFrame(placeOrb);
+            window.addEventListener('resize', orbWatch, { passive: true });
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', orbWatch, { passive: true });
+        }
+    }
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).
-        const backTo = flyFrom; flyFrom = null;
+        // Only while the menu still shows what the opener opened (11-14, the owner: "it goes to the user avatar instead of
+        // … going to the right icon"): opened from the picture and moved to Community, the close is the menu's own.
+        const backTo = flyFrom && !door && tab === fromTab ? flyFrom : null; flyFrom = null; fromTab = null;
         if (backTo && !navigating && el && el.classList.contains('is-open') && !closing) fly(tabFace(door || tab), backTo, { back: true, toFace: flyIdle });
         flyIdle = null;
         if (view === 'results' && rtabsEl) leaveResults();
@@ -2608,7 +2646,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (!el || closing) return;
         if (navigating) { pushed = false; markBack(); }
         // Closed by the person (Close, Escape, a tap outside): take back the entry Back would have used.
-        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; history.back(); } } catch { /* */ } }
+        // The page stays where it is (11-14, the owner: closing "scrolls the page down"): the browser restores no scroll
+        // for this Back, and focus returns without scrolling.
+        if (pushed && !popping) { pushed = false; try { if (history.state && history.state.ovsMenu) { ownBack = true; keepScroll(); history.back(); } } catch { /* */ } }
         // A phone's menu folds back into the orb (its x turns back into dots) before it goes; elsewhere it closes at once.
         if (phoneSheet() && !calm() && el.classList.contains('is-open')) {
             el.classList.add('is-closing');
@@ -2641,7 +2681,20 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         if (inflight) { inflight.abort(); inflight = null; }
         if (ctx && typeof ctx.onClose === 'function') { try { ctx.onClose(); } catch { /* */ } }
         try { document.dispatchEvent(new CustomEvent('openvibe-menu', { detail: { open: false } })); } catch { /* */ }
-        if (lastFocus && lastFocus.focus) lastFocus.focus();
+        if (lastFocus && lastFocus.focus) { try { lastFocus.focus({ preventScroll: true }); } catch { /* */ } }
+    }
+    /** Back taken by the menu itself: no scroll restored by the browser, and the page put back where it was if anything
+     *  moved it (the scroll lock's release, a late restore). */
+    function keepScroll() {
+        try {
+            const was = history.scrollRestoration;
+            history.scrollRestoration = 'manual';
+            const y = Number(document.body && document.body.style.position === 'fixed' ? -parseFloat(document.body.style.top || '0') : root.scrollY) || 0;
+            let over = false;
+            const done = () => { if (over) return; over = true; root.removeEventListener('popstate', done); setTimeout(() => { try { history.scrollRestoration = was; } catch { /* */ } if (Math.abs((root.scrollY || 0) - y) > 2) root.scrollTo(0, y); }, 0); };
+            root.addEventListener('popstate', done);
+            setTimeout(done, 600);
+        } catch { /* */ }
     }
 
     // On a phone the empty menu keeps focus on its orb to avoid raising the keyboard. Escape must still close it.

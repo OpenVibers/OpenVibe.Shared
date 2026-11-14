@@ -321,8 +321,8 @@
             .ovmb { display: block; overflow: visible; transition: filter .3s; }
             .ovmb-bar { fill: transparent; stroke: currentColor; stroke-width: 1.7; }
             .ovmb-dot { fill: currentColor; }
-            .ovmb-spark { fill: var(--ovo-b, #e879f9); }
-            .ovmb-words { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: .55; }
+            .ovmb-spark { fill: none; stroke: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
+            .ovmb-words { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; opacity: .6; }
             .ovmb-app { fill: currentColor; opacity: .42; }
             .ovmb-lit { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
             .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-words, .ovmb-spark, .ovmb-app, .ovmb-lit) { transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.2,1.3,.3,1), fill .3s, stroke-width .3s, opacity .25s; }
@@ -406,8 +406,20 @@
             :hover > .ovsi .ovsi-a { animation: none; opacity: 1; }
             html[data-ov-motion=off] .ovsi :is(.ovsi-p, .ovsi-a) { animation: none; }
             .ovsi-o { opacity: 0; stroke-dasharray: 30 39; }
-            .is-going .ovsi-o { opacity: 1; animation: ovsi-go 1s linear infinite; }
-            .is-going .ovsi-p { opacity: .55; }
+            /* 4.248.0 (the owner, 11-14: "the spinning circle should be on the outer rim … animated better"): signing in, a
+               comet of light runs around the button's rim (not inside its glyph), the glyph breathing within. */
+            .openvibe-navbar-login { position: relative; }
+            .openvibe-navbar-login.is-going::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
+                background: conic-gradient(from 0deg, transparent 0 52%, color-mix(in srgb, var(--accent-light, #93c5fd) 40%, transparent) 70%, var(--accent-light, #93c5fd) 92%, #fff 100%);
+                -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+                animation: ovsi-rim .85s linear infinite; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent)); }
+            .is-going .ovsi-o { display: none; }
+            .is-going .ovsi-p { opacity: .85; animation: ovsi-breathe 1.1s ease-in-out infinite; transform-origin: 12px 12px; }
+            @keyframes ovsi-rim { to { transform: rotate(1turn); } }
+            @keyframes ovsi-breathe { 50% { opacity: .5; transform: scale(.9); } }
+            html[data-ov-motion=reduced] .openvibe-navbar-login.is-going::before { animation-duration: 1.6s; }
+            html[data-ov-motion=off] .openvibe-navbar-login.is-going::before { animation: none; background: color-mix(in srgb, var(--accent-light, #93c5fd) 70%, transparent); }
+            html[data-ov-motion=off] .is-going .ovsi-p { animation: none; }
             @keyframes ovsi-p { 0%, 62%, 100% { opacity: 1; transform: none; } 70%, 92% { opacity: 0; transform: translateX(4px); } }
             @keyframes ovsi-a { 0%, 62%, 100% { opacity: 0; transform: translateX(-5px); } 70%, 92% { opacity: 1; transform: none; } }
             @keyframes ovsi-go { to { stroke-dashoffset: -69; } }
@@ -624,7 +636,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': '2f6cab5e0778', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '07e8f59d9e6d', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': 'dc2028f84893', 'dock.js': '0a657bac86b2', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'c993615033ae', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '0f6074850291', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'a9008daa5af5', 'ov-composer.js': '9b2a27f70f5f', 'items.js': 'a38f01f90c40', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '38d7cab3b420', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '89f2b938b3ae', 'dock.js': '5f29e88f48dc', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'aebc7358ae27', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '7b0c89b39ac8', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': '60b6e6de9f97', 'ov-composer.js': 'c29a98f058e6', 'items.js': 'a38f01f90c40', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1098,9 +1110,12 @@
     // the same place, the one that closes it (rule opens-it-closes-it). One drawing for the bar, the menu's sheet and
     // the Dock's (root.OpenVibeOrb); its styles are above (.ovmb). Class names kept from M57 (.ovmb-bar, .ovmb-dot for
     // the face, .ovmb-app .ovmb-a0..2 for the tabs) so every caller and test still finds its parts.
+    // 4.248.0 (the owner, 11-14): the bar is the little input again, its dot on the left and a typed line in it (the
+    // spark that sat beside the dot read as two dots, and its pink is gone: every colour is the theme's); three tabs
+    // under it, the first lit.
     const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="3.6"/>'
-        + '<circle class="ovmb-dot" cx="6.9" cy="7.9" r="1.5"/><path class="ovmb-words" d="M10 7.9h3.4"/>'
-        + '<path class="ovmb-spark" d="M16.6 5.75l.62 1.53 1.53.62-1.53.62-.62 1.53-.62-1.53-1.53-.62 1.53-.62z"/>'
+        + '<circle class="ovmb-dot" cx="6.9" cy="7.9" r="1.5"/><path class="ovmb-words" d="M10 7.9h7.2"/>'
+        + '<path class="ovmb-spark" d="M17.2 7.9h0"/>'
         + '<rect class="ovmb-app ovmb-a0" x="3" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a1" x="9.4" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a2" x="15.8" y="14.7" width="5.2" height="5" rx="1.6"/>'
         + '<rect class="ovmb-lit" x="3" y="14.7" width="5.2" height="5" rx="1.6"/>';
     function orbSVG(size = 22, open = false) {
@@ -1969,6 +1984,11 @@
     let _authInFlight = null;
     let _hintPainted = false, _hintSettled = false;
 
+    /** The hint the site's own server set (a sign-out writes 'guest' here), as opposed to one this script kept. */
+    function cookieHint() {
+        const m = (typeof document !== 'undefined' ? document.cookie : '').match(/(?:^|;\s*)ov_sso_hint=([^;]*)/);
+        return m ? m[1] : null;
+    }
     function ssoHint() {
         const m = (typeof document !== 'undefined' ? document.cookie : '').match(/(?:^|;\s*)ov_sso_hint=([^;]*)/);
         if (m) return m[1];
@@ -2021,7 +2041,12 @@
      */
     function maybeSilentLogin() {
         if (!_config.silentLogin || typeof location === 'undefined') return false;
-        if (ssoHint() === 'guest') return false;
+        // A sign-out here (the 'guest' cookie) is final. A round trip that once found no session (the 'guest' kept in
+        // storage: a visit before signing in) is not: arriving from another OpenVibe site, where the person may well be
+        // signed in now, earns one quiet round trip (11-14, the owner: openvibe.tours showed Sign in though every other
+        // site had them signed in). The 10-minute limit below still holds.
+        if (cookieHint() === 'guest') return false;
+        if (ssoHint() === 'guest' && !fromOpenVibe()) return false;
         if (/bot|crawl|spider|slurp|headless/i.test(navigator.userAgent || '')) return false;
         if (/[?&]sso=none\b/.test(location.search)) return false;
         try {
@@ -3058,6 +3083,51 @@
         _wallet: { loadWallet, walletOrder, syncWalletChips, loadWalletChips, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
         _defaults: { linksFor },
     };
+
+    // ── Rows that scroll sideways say so (4.248.0; the owner, 11-14: "it waits a sec and then … does a little animation
+    // so that it's apparent that it can scroll"). Every OpenVibe page: a row wider than its box (a rail, chips, tabs,
+    // pills, a strip, or anything marked data-ov-peek), the first time most of it is on screen, waits, then peeks a
+    // little way and back. Once per row per page; never while a finger or the pointer is on it; Calm peeks less, Off
+    // not at all; data-ov-peek="off" opts a row out. Design rule: a row that scrolls sideways shows it (a peek and a fade).
+    function startPeeks() {
+        if (typeof document === 'undefined' || typeof IntersectionObserver !== 'function' || root.__ovPeeks) return;
+        root.__ovPeeks = true;
+        const seen = new WeakSet();
+        const motion = () => document.documentElement.getAttribute('data-ov-motion') || '';
+        const wide = (el) => { try { if (el.scrollWidth - el.clientWidth < 24 || el.scrollLeft > 4) return false; const o = getComputedStyle(el).overflowX; return o === 'auto' || o === 'scroll'; } catch { return false; } };
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (!e.isIntersecting || e.intersectionRatio < 0.6) continue;
+                const el = e.target; io.unobserve(el);
+                if (motion() === 'off' || !wide(el)) continue;
+                let touched = false; const stop = () => { touched = true; };
+                el.addEventListener('pointerdown', stop, { once: true, passive: true }); el.addEventListener('wheel', stop, { once: true, passive: true });
+                setTimeout(() => {
+                    if (touched || !el.isConnected || el.scrollLeft > 4 || el.matches(':hover')) return;
+                    const far = Math.min(motion() === 'reduced' ? 22 : 56, el.scrollWidth - el.clientWidth);
+                    try { el.scrollTo({ left: far, behavior: 'smooth' }); } catch { el.scrollLeft = far; return; }
+                    setTimeout(() => { if (!touched && Math.abs(el.scrollLeft - far) < 6) { try { el.scrollTo({ left: 0, behavior: 'smooth' }); } catch { el.scrollLeft = 0; } } }, 520);
+                }, 700);
+            }
+        }, { threshold: [0.6] });
+        const SEL = '[data-ov-peek]:not([data-ov-peek="off"]), [class*="rail"], [class*="chips"], [class*="tabs"], [class*="pills"], [class*="strip"], [class*="carousel"], [class*="scroller"]';
+        let queued = false;
+        const scan = () => {
+            queued = false;
+            let n = 0;
+            document.querySelectorAll(SEL).forEach((el) => {
+                if (n > 60 || seen.has(el) || el.getAttribute('data-ov-peek') === 'off' || el.closest('.openvibe-navbar, .ovs-panel, [role=dialog]')) return;
+                seen.add(el); n++;
+                if (wide(el)) io.observe(el);
+            });
+        };
+        const later = () => { if (queued) return; queued = true; (root.requestIdleCallback || ((f) => setTimeout(f, 300)))(scan, { timeout: 1500 }); };
+        later();
+        if (typeof MutationObserver === 'function' && document.body) new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+    }
+    if (typeof document !== 'undefined' && typeof window !== 'undefined' && !(typeof module !== 'undefined' && module.exports)) {
+        if (document.readyState === 'complete') setTimeout(startPeeks, 1200); else window.addEventListener('load', () => setTimeout(startPeeks, 1200), { once: true });
+    }
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;
     else {

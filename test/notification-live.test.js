@@ -501,7 +501,9 @@ const created = (subject, over = {}) => ({
     // 26.5 → 26.8 KB the same day (4.238.0): the menu's foot as two OV buttons and a compact empty state (26.52 KB measured).
     // 27.1 KB (4.238.0, 2026-11-13): the ringing bell (its drawing, the swing and the waves), the drawn arrow on Full inbox,
     // 44 px round buttons with centred glyphs.
-    assert.ok(size('notification-ui.js') <= 27.1 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 27.1 KB`);
+    // 28.2 KB (4.248.0, 2026-11-14): the ⋯ menu instead of the X, the buttons a notice brings (rich_content.actions), the
+    // social-feed rows (the owner: "no spacing … confusing to have an X … more like social media").
+    assert.ok(size('notification-ui.js') <= 28.2 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 28.2 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

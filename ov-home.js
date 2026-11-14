@@ -1691,17 +1691,25 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         player.observe(box);
     }
     const glyph = (name) => { const g = svgIcon(name); g.setAttribute('class', 'ovfd-gl'); return g; };
+    // A moment in the reader's own zone and clock (theme-loader's time, 4.248.0; the owner, 11-14: "show the time based on the
+    // users computer by default or configurable setting"). Without the loader: this device's.
+    const tf = (v, kind) => {
+        const L = root.OpenVibeThemeLoader;
+        if (L && L.time && typeof L.time.format === 'function') return L.time.format(v, kind);
+        const d = new Date(typeof v === 'string' ? Date.parse(v) : v); if (!Number.isFinite(d.getTime())) return '';
+        return kind === 'time' ? d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) : d.toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    };
     const when = (iso) => {
         const t = Date.parse(iso || ''); if (!t) return '';
-        const d = new Date(t);
-        return d.toDateString() === new Date().toDateString() ? ago(iso) : d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        // Today: how long ago; before that, the day and the time (it used to print a bare time, as if it were today's).
+        return Date.now() - t < 12 * 3600000 ? ago(iso) : tf(t, 'day');
     };
     /** "Starts 2026-11-12 18:00 UTC" (Today's line when an event has no description) in the reader's own time. */
     const startsLocal = (text) => {
         const m = /^Starts (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) UTC$/.exec(String(text || ''));
         if (!m) return text;
         const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]));
-        return `Starts ${d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+        return `Starts ${tf(d.getTime(), 'day')}`;
     };
     const tidy = (v) => String(v || '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
     const cap = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
@@ -1886,6 +1894,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const r = Number(media.ratio) > 0 ? Math.max(0.8, Math.min(1.91, Number(media.ratio))) : (kind === 'pic' || kind === 'meme' ? 1 : 16 / 9);
             box.style.aspectRatio = String(r);
             const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = thumb; box.append(img);
+            // A picture that does not load leaves no empty frame (11-14, the owner: "broken images").
+            img.onerror = () => { box.classList.add(kind === 'clip' || kind === 'video' || kind === 'live' ? 'is-empty' : 'is-broken'); };
             const len = media.length || c.duration_s;
             if (len) box.append(h('span', 'ovfd-len', lenOf(len)));
             if (kind === 'rundown') { const rib = h('span', 'ovfd-ribbon'); rib.append(glyph('page'), document.createTextNode('Rundown')); box.append(rib); }
@@ -1922,10 +1932,13 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     function statOf(c) {
         const n = c.counts && Number(c.counts.people);
         const t = c.trend && typeof c.trend === 'object' ? c.trend : null;
-        if (!Number.isFinite(n) && !t) return null;
+        if (!Number.isFinite(n) && !t && !(c.stat && typeof c.stat === 'object')) return null;
         const box = h('span', 'ovfd-stat');
         if (Number.isFinite(n)) box.append(h('b', 'ovfd-stat-n', num(n)));
-        if (c.text) box.append(h('small', 'ovfd-stat-l', String(c.text).slice(0, 120)));
+        // feed.item@1 1.2.0 stat.at: when it happened, in the reader's time (the words no longer carry "01:10 UTC").
+        const st = c.stat && typeof c.stat === 'object' ? c.stat : null;
+        const at = st && Date.parse(String(st.at || ''));
+        if (c.text || at) box.append(h('small', 'ovfd-stat-l', [String(c.text || '').slice(0, 120), at ? `at ${tf(at, 'time')}` : ''].filter(Boolean).join(', ')));
         if (t && ['up', 'down', 'flat'].includes(t.direction)) {
             const pct = Number.isFinite(Number(t.pct)) ? `${Math.round(Number(t.pct))}%` : '';
             const was = Number.isFinite(Number(t.previous)) ? `was ${num(Number(t.previous))}` : '';
@@ -1933,6 +1946,13 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             pill.setAttribute('aria-label', `${t.direction === 'flat' ? 'about the same' : `${t.direction} ${pct}`}${was ? `, ${was}` : ''}`);
             box.append(pill);
             if (was) box.append(h('small', 'ovfd-stat-was', was));
+        }
+        // Today's side numbers (stat.facts; the owner, 11-14: "add total users per day or other cool metrics").
+        const facts = st && Array.isArray(st.facts) ? st.facts.filter((x) => x && Number.isFinite(Number(x.n)) && x.label).slice(0, 6) : [];
+        if (facts.length) {
+            const row = h('span', 'ovfd-facts');
+            facts.forEach((x) => { const f = h('span', 'ovfd-fact'); f.append(h('b', '', num(Number(x.n))), document.createTextNode(` ${String(x.label).slice(0, 40)}`)); row.append(f); });
+            box.append(row);
         }
         return box;
     }
@@ -1950,7 +1970,10 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             const row = h('span', 'ovfd-group-i');
             const th = pic(x);
             // Rows line up: where one has a picture, the others hold its place (a deal's: its store's first letter).
-            if (th) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = th; row.append(img); }
+            if (th) {
+                const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = th; row.append(img);
+                img.onerror = () => { const ph = h('i', `ovfd-group-ph${isDeal ? ' is-deal' : ''}`); if (isDeal) ph.append(glyph('tag')); img.classList.add('is-broken'); img.before(ph); };
+            }
             else if (isDeal) { const ph = h('i', 'ovfd-group-ph is-deal'); ph.append(glyph('tag')); row.append(ph); }
             else if (anyPic) row.append(h('i', 'ovfd-group-ph'));
             const t = h('span', 'ovfd-group-t'); t.append(h('span', 'ovfd-group-n', String(x.title || '').replace(/\s+[—-]\s+[^—-]{2,40}$/, '').slice(0, 120)));
@@ -2156,6 +2179,10 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-stat{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:10px;row-gap:2px;padding:4px 2px}
 .ovfd-stat-n{font-family:'OV Brand',Nunito,Inter,sans-serif;font-size:34px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ovfd-stat-l{font-size:13px;color:var(--text-secondary,#a8b3c4);align-self:center}
+.ovfd-facts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ovfd-fact{display:inline-flex;align-items:baseline;gap:4px;padding:4px 10px;border-radius:999px;font-size:12.5px;color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
+.ovfd-fact b{color:var(--text-primary,#e8ecf3);font-weight:750;font-variant-numeric:tabular-nums}
+.ovfd-media.is-empty{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}.ovfd-media.is-empty img{visibility:hidden}.ovfd-media.is-broken{display:none}.ovfd-group-i img.is-broken{display:none}
 .ovfd-trend{grid-column:1;justify-self:start;font-size:12.5px;font-weight:750;padding:1px 8px;border-radius:999px;font-variant-numeric:tabular-nums}
 .ovfd-trend.is-up{color:#34d399;background:color-mix(in srgb,#10b981 16%,transparent)}.ovfd-trend.is-down{color:#f87171;background:color-mix(in srgb,#ef4444 14%,transparent)}.ovfd-trend.is-flat{color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent)}
 .ovfd-stat-was{font-size:12px;color:var(--text-muted,#93a0b4);align-self:center}

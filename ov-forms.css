@@ -190,16 +190,16 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
     border-color: color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent);
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent);
 }
-:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { transform: scale(.88); }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { scale: .88; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 28%, transparent);
 }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"]:not([role="switch"]), input[type="radio"]):where(:not([data-ov-native], [data-ov-native] *)):disabled { opacity: .5; cursor: not-allowed; }
 /* Buttons answer a press; text fields glow with focus (a site's own button or field rule wins over these). */
 :where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)) {
-    transition: transform .12s ease, box-shadow .18s ease, background-color .16s ease, border-color .16s ease, color .16s ease;
+    transition: scale .12s ease, box-shadow .18s ease, background-color .16s ease, border-color .16s ease, color .16s ease;
 }
-:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { transform: scale(.97); }
+:where(html:not([data-ov-forms="off"])) :where(button, input[type="button"], input[type="submit"], input[type="reset"], a.btn, .btn, [role="button"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { scale: .97; }   /* `scale`, not `transform`: a button placed with a transform (centered, slid in) keeps its place while pressed (4.248.0; the owner, 11-14: Live's Chat button dropped 19 px and lost the click) */
 :where(html:not([data-ov-forms="off"])) :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], [type="button"], [type="submit"], [type="reset"]), textarea, select):where(:not([data-ov-native], [data-ov-native] *)) {
     transition: border-color .15s ease, box-shadow .2s ease, background-color .15s ease;
 }
@@ -239,7 +239,7 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 html[data-ov-motion="calm"] :where(input[type="checkbox"], input[type="radio"], button, .btn)::before { transition-duration: .32s; }
 html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, input[type="button"], input[type="submit"], .btn, [role="button"], input, textarea, select),
 html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"])::before { transition: none !important; animation: none !important; }
-html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, .btn, [role="button"]):active { transform: none !important; }
+html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, .btn, [role="button"]):active { scale: none !important; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:disabled) { opacity: .5; cursor: not-allowed; }
 :where(html:not([data-ov-forms="off"])) :where(input[type="file"]:not([data-ov-native]))::file-selector-button {
     font: inherit; font-weight: 600; margin-inline-end: .75em; padding: .38em .85em; cursor: pointer;

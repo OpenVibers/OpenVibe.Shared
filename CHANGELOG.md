@@ -1,5 +1,99 @@
 # Changelog
 
+## 4.248.0 — 2026-11-14
+
+**Every time in the reader's own clock** (the owner, 11-14: "make it so areas like this show the time based on the
+users computer by default or configurable setting if logged in and changed").
+
+- theme-loader's `time`: `format(value, 'time'|'date'|'datetime'|'day'|'ago'|'full')`, `zone()`, `device()`,
+  `hour12()`, `zones()`, `upgrade(scope)`. Two new display settings, synced to the account like the rest: `clock`
+  (auto, 12, 24) and `tz` (auto, or any IANA zone the browser knows). Auto is this device's zone and clock.
+- `<time datetime="…" data-ov-time="…">` anywhere on a page is rewritten in the reader's time (its title says the full
+  moment with the zone), again when the setting changes and for any such element added later. A server keeps writing
+  UTC as the fallback for crawlers.
+- The Look panel has Clock (Auto, 12-hour, 24-hour) and Time zone.
+- Comments (thread.js): the time's title is the reader's moment, not "UTC".
+- The feed: a card from before today says its day and time ("Yesterday 9:14 PM", "Tue 3:05 PM"), not a bare time as if
+  it were today's; an event's start too. A report card (feed.item@1 1.2.0 `stat`) says when its number happened ("The
+  most people on OpenVibe at once today, at 3:47 AM") and today's side numbers as chips (people today, signed in, page
+  views, new accounts, live now).
+
+**Pictures that do not load leave no empty frame** (the owner, 11-14: "broken images"): a feed card drops its picture
+box, a group row (a run of deals) shows its placeholder.
+
+**The footer's online box opens into a column** (the owner, 11-14: "see the split of where the guests are … which sites
+they're on and what they're up to", "make them red" when live, "these cards also start stacking vertically"):
+someone live now wears a red ring and a LIVE badge with their viewers and links to their channel; the guests are one bar
+split by site (hover or focus a part for what people do there) with the parts in words; a Today line says the day's
+people and its peak, the peak's time in the reader's clock; open, the people are one per line and the tiles stack in
+two columns. An open box stays open across the minute's repaint. Reads Network's /api/frame/online `guest_sites`,
+`people[].live` and `today` (OpenVibe.Network #937).
+
+**`.ov-places`, a page's own places in one shape** (kit-layout.css; the owner, 11-14, on Download: "move our tab to the
+top … a fixed tab system … icons … like our main menu area … so the layout can be reused for pages like this"): icon
+rows in a side column on a computer, a row of icon tabs that stays under the bar on a phone, counts as badges, an
+extra part (a meter) on the computer only.
+
+**Signed in is the person the bar shows** (the owner, 11-14, on openvibe.download: the menu said "Sign in to make
+OpenVibe yours" under their own avatar): the guest card, the workspace and the menu's "me" follow the signed-in person,
+not a token; a site that signs in by its own session cookie has no token in the page.
+
+**Feature cards and questions, remade** (showcase; the owner, 11-14, on OpenRestream: "redesign all these icons … use the
+full space … modern and minimalist … stands out"; the questions have "so much padding for no reason" and no space
+before the next block): a feature's icon is a filled tile on its own hue (six in turn down a grid), its glyph large, a
+ring icon without its ring; on a phone the tile sits beside the title and the words take the card's whole width. A
+question is a compact row (48 px) with a glyph (its own third item, or one its words suggest), whatever a site's own
+details rule says, and the block after a showcase section is spaced like a section.
+
+**Notifications read like a social feed** (the owner, 11-14: "no spacing between them … confusing to have an X. Like,
+what does that do? … more like social media … rich content … the approval system can go through here"): every row the
+same card with room between, unread a tint and a dot at the right, a ⋯ menu (Mark as read, Remove this notice,
+Notification settings) instead of the bare X, and up to three buttons a notice brings in `rich_content.actions`
+([{ label, url, style: primary|danger }], https only: Approve and Deny on an approval, Watch on a live notice).
+
+**Vibe is a conversation** (ov-run.js and the menu; the owner, 11-14: "you see how it says now your agent's idle? You
+don't even need that … more like a conversation view … move this history … to a history button in the corner … the tabs
+… need to be above the actor. And the actor … a fixed thing that's on top, kind of like how Muse is"): All, Chats, Tasks
+and Code on top, your agent fixed under them (face, state, today's spend, History and Pause), and All opens today's
+conversation with it in place, with "Message Vibe" below. History lists every conversation, task and code run; pressed
+again, it is back to the conversation. The menu no longer lends the Dock's Now / Needs you / timeline above Vibe.
+The footer no longer names a live streamer twice (their row says LIVE; the channel tile goes).
+
+**One button system in every composer** (ov-composer.js; the owner, 11-14: "How is the centering and offset of icons
+still such a problem?", "give them that more 3D look … the post button … completely customized … an animation", "the
+attached file should be just in the plus button"): the tools a + already holds (photos, files, the camera) were still
+drawn in the row wherever a box sat outside a thread page, because `[hidden]` lost to the button's own display; hidden
+now means gone everywhere. Every icon button is a 40 px disk lit from above, its glyph centred on a grid and never
+nudged; Post, Reply and the round send are their own lit buttons with a shine that crosses on hover, a press you can
+feel and the arrow lifting; nothing to send is a dim disk (not an outline); a one-line box centres its buttons. Motion
+Off keeps them still.
+
+**Signed in on one site, signed in on the next** (navbar.js; the owner, 11-14: openvibe.tours showed Sign in though every
+other site had them signed in): a round trip that once found no session there (the 'guest' this script keeps) no longer
+stops the next one when the person arrives from another OpenVibe site; a sign-out (the site's own 'guest' cookie)
+still does. Once per tab per 10 minutes, as before.
+
+**The bar** (navbar.js; the owner, 11-14): the menu button keeps the little input (its dot on the left and a typed line;
+the spark beside the dot, which read as two dots, and its pink are gone: every colour is the theme's) over its three
+tabs; signing in, a comet of light runs around the Sign in button's rim instead of a ring inside its glyph; and on every
+page a row that scrolls sideways (a rail, chips, tabs, pills, a strip, or `data-ov-peek`) peeks a little way and back
+the first time it is on screen, so it is plain that it scrolls (once per row; never under a finger; Calm less, Off
+never; `data-ov-peek="off"` opts out).
+
+**The menu's field and close** (search.js; the owner, 11-14: "the close button's offset … more consistent with the
+search input", "the top thing … needs to be less round"): the field and its close share the kit's radius scale (a
+rounded rectangle, not a pill), the close is as tall as the field, centred on it, measured again once the sheet has
+slid in and when the window changes, and wears the field's surface and line. Vibe's strip above its list is quiet:
+only a timer, an agent at work or something that needs you shows (no idle line, no "Nothing needs you", no folds).
+
+**The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
+menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
+flies back into the button that opened it only while the menu still shows that tab.
+
+**A pressed button keeps its place** (the owner, 11-14, Live's Chat button "shifts way down … makes you un-click it"):
+the forms press is `scale: .97`, not `transform: scale(.97)`, which replaced any transform a site positioned a button
+with (centered, slid in). Checkboxes and Motion off likewise.
+
 ## 4.247.0 — 2026-11-13
 
 **Any video in a comment** (the owner, 11-13: "full support for our composer to support all video file types"; plan

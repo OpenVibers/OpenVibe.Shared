@@ -64,6 +64,10 @@
 .ovtip-dismiss{flex:0 0 auto;color:var(--text-muted,#8b93ad);background:none;border:1px solid var(--border,rgba(255,255,255,.12))}
 .ovtip-go:active,.ovtip-dismiss:active{transform:scale(.975)}
 .ovtip-go i{font-size:.72rem}
+.ovtip-actions.is-build{flex-direction:column;align-items:stretch;gap:8px}
+.ovtip-build{flex:none;min-height:44px;text-decoration:none;font-weight:750;gap:9px;background:linear-gradient(160deg,color-mix(in srgb,var(--ovtip-accent,var(--accent,#60a5fa)) 70%,#fff),var(--ovtip-accent,var(--accent,#3b82f6)) 50%,color-mix(in srgb,var(--ovtip-accent,var(--accent,#3b82f6)) 75%,#000));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 22px -10px var(--ovtip-accent,var(--accent,#3b82f6))}
+.ovtip-build i{font-size:.9rem}
+.ovtip-second{color:var(--text-primary,#e6edf7)}
 /* On a phone a 330px tip pinned beside a button is unreadable and often half off-screen. Dock it
    to the bottom of the viewport as a full-width card instead. */
 @media (hover:none){
@@ -97,10 +101,19 @@
         // On touch the first tap opens the tip and swallows the click, so without an explicit
         // action the visitor is left tapping a button that appears to do nothing. Give them the
         // destination as a real button inside the tip — and a way out that isn't "tap elsewhere".
-        const act = isTouch() ? `<div class="ovtip-actions">
+        // 4.248.0 (the owner, 11-14, on Live's Build tip: "bring users to openvibe.codes and … use their agent … right in the
+        // UI … start working on OpenVibe yourself … make that more prevalent"): data-ovtip-build (its words) and
+        // data-ovtip-build-href (https) put the main action first, wide, on every device; the trigger's own place second.
+        const buildHref = /^https:\/\//.test(el.getAttribute('data-ovtip-build-href') || '') ? el.getAttribute('data-ovtip-build-href') : '';
+        const build = el.getAttribute('data-ovtip-build') && buildHref ? `<div class="ovtip-actions is-build">
+                <a class="ovtip-go ovtip-build" href="${esc(buildHref)}"><i class="fa-solid fa-wand-magic-sparkles"></i>${esc(el.getAttribute('data-ovtip-build'))}</a>
+                <div class="ovtip-actions"><button type="button" class="ovtip-dismiss" data-ovtip-dismiss>Got it</button>
+                <button type="button" class="ovtip-dismiss ovtip-second" data-ovtip-go>${esc(el.getAttribute('data-ovtip-go') || 'Open')}</button></div>
+            </div>` : '';
+        const act = build || (isTouch() ? `<div class="ovtip-actions">
                 <button type="button" class="ovtip-dismiss" data-ovtip-dismiss>Got it</button>
                 <button type="button" class="ovtip-go" data-ovtip-go>${esc(el.getAttribute('data-ovtip-go') || 'Open')}<i class="fa-solid fa-arrow-right"></i></button>
-            </div>` : '';
+            </div>` : '');
         return `${title ? `<div class="ovtip-head">${icon ? `<span class="ovtip-ico"><i class="fa-solid ${icon}"></i></span>` : ''}<span class="ovtip-title">${title}</span></div>` : ''}
             <div class="ovtip-body">${body}</div>
             ${foot ? `<div class="ovtip-foot">${foot}</div>` : ''}${act}`;
@@ -142,7 +155,7 @@
         tip.style.setProperty('--ovtip-accent', el.getAttribute('data-ovtip-accent') || '');
         arrow.style.setProperty('--ovtip-accent', el.getAttribute('data-ovtip-accent') || '');
         tip.innerHTML = content(el);
-        tip.classList.toggle('is-interactive', el.hasAttribute('data-ovtip-interactive') || isTouch());
+        tip.classList.toggle('is-interactive', el.hasAttribute('data-ovtip-interactive') || el.hasAttribute('data-ovtip-build') || isTouch());
         tip.classList.remove('is-on'); arrow.classList.remove('is-on');
         cancelAnimationFrame(raf);
         place();

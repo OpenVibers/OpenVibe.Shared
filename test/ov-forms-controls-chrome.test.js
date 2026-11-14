@@ -44,7 +44,8 @@ const server = http.createServer((req, res) => {
         assert.equal(await cs('sw', 'transform', '::before'), 'none', 'a switch has no check mark');
         assert.equal(await cs('mine', 'width'), '30px', 'a site\'s own rule wins');
         assert.notEqual(await cs('native', 'appearance'), 'none', 'data-ov-native keeps the browser\'s box');
-        assert.ok(/transform/.test(await cs('b', 'transitionProperty')), 'a button answers a press');
+        // 4.248.0: the press is `scale` (never `transform`, which a site may position a button with).
+        assert.ok(/scale/.test(await cs('b', 'transitionProperty')), 'a button answers a press');
         await p.goto(`${base}/?motion=off`, { maxMs: 5000 });
         assert.equal(await cs('off', 'transitionDuration', '::before'), '0s', 'motion Off: the check does not move');
         assert.equal(await cs('b', 'transitionDuration'), '0s', 'motion Off: buttons do not move');

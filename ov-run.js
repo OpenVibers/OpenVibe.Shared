@@ -318,8 +318,15 @@
             const top = el('span', 'ovr-agent-top'); top.append(el('b', '', agentName()), el('i', 'ovr-agent-tag', 'your agent'));
             t.append(top, el('span', 'ovr-agent-line', [AGENT_WORD[st], step, agent ? `${money(now.cost_today)}${cap} today` : ''].filter(Boolean).join(' · ')));
             who.append(agentFace('m', st), t);
-            who.addEventListener('click', () => list('task'));
+            who.addEventListener('click', () => list('task', { history: true }));
             card.append(who);
+            // 4.248.0 (the owner, 11-14: "move this history … to a history button in the corner"): every conversation, task
+            // and code run behind one button; the view itself is the conversation.
+            const hist = el('button', `ovr-agent-go ovr-agent-hist${state.view === 'list' ? ' is-on' : ''}`); hist.type = 'button';
+            hist.setAttribute('aria-label', 'History: your conversations, tasks and code'); hist.title = 'History';
+            hist.append(svg('clock'));
+            hist.addEventListener('click', () => { if (state.view === 'list') list('all'); else list(state.filter, { history: true }); });   // pressed again: back to the conversation
+            card.append(hist);
             if (agent && agent.id) {
                 const paused = st === 'paused';
                 const go = el('button', `ovr-agent-go${paused ? ' is-main' : ''}`); go.type = 'button';
@@ -411,8 +418,40 @@
         function typing() { const t = el('div', 'ovr-typing'); t.setAttribute('aria-label', `${agentName()} is writing`); t.append(el('i'), el('i'), el('i')); return t; }
 
 
+        // ── the home head (4.248.0; the owner, 11-14: the filters "need to be above the actor … the actor … a fixed thing
+        // that's on top, kind of like how Muse is") ──
+        function homeHead(where) {
+            const wrap = el('div', 'ovr-home');
+            const head = el('div', 'ovr-head');
+            const tabs = el('div', 'ovr-filters'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Show');
+            for (const [id, label, ic] of FILTERS) {
+                const b = el('button', 'ovr-filter'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.filter = id;
+                b.append(svg(ic), el('span', '', label));
+                const on = id === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1;
+                b.addEventListener('click', () => list(id, { fromTab: true }));
+                tabs.append(b);
+            }
+            tabs.addEventListener('keydown', (e) => {
+                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                const all = [...tabs.children]; const k = all.indexOf(document.activeElement); if (k < 0) return;
+                const next = all[(k + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
+                e.preventDefault(); next.focus(); next.click();
+            });
+            head.append(tabs);
+            wrap.append(head);
+            const me = el('div', 'ovr-agent-slot'); me.hidden = true;
+            if (o.agent) { wrap.append(me); paintAgent(me); loadAgent().then(() => { if (me.isConnected) paintAgent(me); }); }
+            where.append(wrap);
+            return wrap;
+        }
+        /** All, for your agent: the conversation itself (your latest chat with it), not a list; the list is History. */
+        function latestChat(runs) {
+            const day = Date.now() - 36 * 3600e3;
+            return runs.find((r) => r && r.kind === 'chat' && Date.parse(r.updated_at || r.created_at || '') > day && !needsPerson(r)) || null;
+        }
+
         // ── the list ──
-        async function list(filter) {
+        async function list(filter, how = {}) {
             if (filter && FILTER_IDS.includes(filter)) state.filter = filter;
             clearStream();
             const gen = ++state.gen;
@@ -420,28 +459,12 @@
             if (state.view !== 'list' || !box.querySelector('.ovr-rows')) {
                 state.view = 'list'; state.run = null;
                 box.textContent = ''; box.className = 'ovr is-list';
-                const head = el('div', 'ovr-head');
-                const tabs = el('div', 'ovr-filters'); tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Show');
-                for (const [id, label, ic] of FILTERS) {
-                    const b = el('button', 'ovr-filter'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.filter = id;
-                    b.append(svg(ic), el('span', '', label));
-                    b.addEventListener('click', () => { if (state.filter !== id || state.view !== 'list') list(id); });
-                    tabs.append(b);
-                }
-                tabs.addEventListener('keydown', (e) => {
-                    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-                    const all = [...tabs.children]; const k = all.indexOf(document.activeElement); if (k < 0) return;
-                    const next = all[(k + (e.key === 'ArrowRight' ? 1 : all.length - 1)) % all.length];
-                    e.preventDefault(); next.focus(); next.click();
-                });
-                head.append(tabs);
-                const me = el('div', 'ovr-agent-slot'); me.hidden = true;
-                if (o.agent) { box.append(me); paintAgent(me); loadAgent().then(() => { if (me.isConnected) paintAgent(me); }); }
+                homeHead(box);
                 const rows = el('ul', 'ovr-rows'); rows.setAttribute('aria-label', 'Your runs');
                 const foot = el('div', 'ovr-list-note');
                 const top = el('div', 'ovr-top');
                 const pane = el('div', 'ovr-pane'); pane.hidden = true;
-                box.append(head, top, rows, foot, pane);
+                box.append(top, rows, foot, pane);
                 dropTop(); dropPane();
                 if (Array.isArray(o.starters) && o.starters.length) {
                     const st = el('div', 'ovr-starters'); st.setAttribute('role', 'group'); st.setAttribute('aria-label', 'Things to ask');
@@ -457,6 +480,7 @@
             }
             place({ filter: state.filter });
             box.querySelectorAll('.ovr-filter').forEach((b) => { const on = b.dataset.filter === state.filter; b.setAttribute('aria-selected', String(on)); b.tabIndex = on ? 0 : -1; });
+            { const h = box.querySelector('.ovr-agent-hist'); if (h) h.classList.add('is-on'); }
             // A filter the host draws itself (a pane): it takes the place of the rows, the starters and the box. The host's
             // pieces may share one owner (the Dock lends one panel at a time), so the old one goes before the new one comes.
             const pf = paneFor(state.filter);
@@ -492,6 +516,12 @@
                 // What needs you first, then newest: the Action Center's rows join in that order.
                 const needs = (r) => (needsPerson(r) ? 1 : 0);
                 state.runs = state.runs.concat(extra).sort((x, y) => needs(y) - needs(x) || String(y.updated_at || '').localeCompare(String(x.updated_at || '')));
+            }
+            // All, for your agent, is the conversation (Muse, dots): today's chat opens in place; History shows the list.
+            // Anything waiting on you (an approval, a question) keeps the list first, where it can be answered in place.
+            if (o.agent && state.filter === 'all' && !how.history && !how.stay && !state.runs.some(needsPerson)) {
+                const last = latestChat(state.runs);
+                if (last) { open(last.ref || last.id, last, { home: true }); return; }
             }
             rows.textContent = ''; rows.removeAttribute('aria-busy');
             // 4.242.0: how many are working right now (a coding agent's "2 running tasks"), above the rows.
@@ -553,7 +583,7 @@
             const gen = ++state.gen;
             state.view = 'thread'; state.run = known || null; state.steps = new Map();
             place({ ref });
-            box.textContent = ''; box.className = 'ovr is-thread';
+            box.textContent = ''; box.className = `ovr is-thread${how.home ? ' is-home' : ''}`;
             const head = el('div', 'ovr-thead');
             const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'));
             back.addEventListener('click', () => list());
@@ -563,7 +593,7 @@
             const faceSlot = el('span', 'ovr-face-slot');
             head.append(back, faceSlot, who, away);
             const thread = el('div', 'ovr-thread'); thread.setAttribute('role', 'log'); thread.setAttribute('aria-live', 'polite');
-            box.append(head, thread);
+            if (how.home && o.agent) { homeHead(box); box.append(thread); } else box.append(head, thread);
             const paintHead = (r) => {
                 state.run = r;
                 faceSlot.textContent = ''; faceSlot.append(face(r, 's'));
@@ -591,7 +621,7 @@
                 const next = queue.shift();
                 sendNow(next.text, next.node).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovr-queued').textContent = (err && err.message) || 'That did not send'; });
             };
-            composer(box, { placeholder: 'Say the next thing', onSend: async (v) => {
+            composer(box, { placeholder: how.home ? `Message ${agentName()}` : 'Say the next thing', onSend: async (v) => {
                 if (state.run && ['running', 'planning'].includes(state.run.status)) {
                     const q = el('div', 'ovr-step is-you is-queued'); const b = el('div', 'ovr-bubble'); b.append(document.createTextNode(v.text)); q.append(b, el('small', 'ovr-queued', 'Queued: it reads this after the step it is on'));
                     thread.append(q); queue.push({ text: v.text, node: q });
@@ -892,6 +922,15 @@ a.ovr-row { color: inherit; text-decoration: none; }
 .ovr-filter[aria-selected="true"] { color: var(--accent-light, #93c5fd) !important; border-color: color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); background: color-mix(in srgb, var(--accent, #3b82f6) 16%, transparent) !important; }
 .ovr-filter:active { transform: scale(.94); }
 .ovr-agent-slot { flex: none; width: 100%; max-width: 780px; margin-inline: auto; box-sizing: border-box; }
+/* 4.248.0: the filters, then your agent, fixed at the top of Vibe while the conversation scrolls under them. */
+.ovr-home { position: sticky; top: 0; z-index: 4; flex: none; display: grid; gap: 6px; width: 100%; max-width: 780px; margin-inline: auto; padding: 2px 0 8px; box-sizing: border-box;
+  background: linear-gradient(to bottom, var(--ovs-sheet-bg, var(--bg-primary, #0b1220)) 82%, transparent); }
+.ovr-home .ovr-head { padding: 0 2px; }
+.ovr-home .ovr-agent { padding: 6px 6px 6px 4px; border-radius: 18px; }
+.ovr-home .ovr-agent-who { min-height: 46px; gap: 10px; }
+.ovr-home .ovr-face.is-m { width: 40px; height: 40px; border-radius: 50%; }
+.ovr-agent-hist.is-on { background: color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent); color: var(--text-primary, #e6edf7); }
+.ovr.is-home > .ovr-thread { padding-top: 4px; width: 100%; max-width: 780px; margin-inline: auto; box-sizing: border-box; }
 .ovr-agent-slot[hidden] { display: none; }
 .ovr-agent { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 6px; border-radius: 20px; background: linear-gradient(135deg, color-mix(in srgb, hsl(var(--ovr-ah, 220) 70% 55%) 14%, transparent), color-mix(in srgb, var(--text-primary, #e6edf7) 3%, transparent)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 9%, transparent); animation: ovr-rise .32s cubic-bezier(.2,.9,.3,1.1) both; }
 .ovr-agent-who { all: unset; box-sizing: border-box; flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 2px 6px; border-radius: 14px; cursor: pointer; }
