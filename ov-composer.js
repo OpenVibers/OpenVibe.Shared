@@ -169,6 +169,37 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-v2 .ovt-send:disabled { opacity: .45; cursor: default; }
 .ovc-v2 .ovt-send--round { display: grid; place-items: center; width: 40px; min-width: 40px; height: 40px; padding: 0; border-radius: 50%; }
 .ovc-v2 .ovt-send--round svg { width: 19px; height: 19px; }
+/* ── 4.248.0, one button system for every box (the owner, 11-14: "How is the centering and offset of icons still such a
+   problem?", "give them that more 3D look … the post button … completely customized … an animation"). Design rule
+   (openvibe.design/rules): an icon button is a square box, display:grid and place-items:center, its glyph a block of
+   a fixed size with no margin, never nudged; a hidden tool is gone (display:none) wherever the box sits. ── */
+.ovc-v2 [hidden], .ovt-composer [hidden] { display: none !important; }
+.ovc-v2 .ovt-c-tools .ovt-btn { box-sizing: border-box; width: 40px; min-width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center;
+  color: var(--accent-light, var(--ovt-accent, #60a5fa));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--text-primary, #e6edf7) 12%, transparent), color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16), inset 0 -1px 0 rgba(0,0,0,.3), 0 4px 10px -5px rgba(0,0,0,.6);
+  transition: translate .15s ease, box-shadow .15s ease, color .15s ease; }
+.ovc-v2 .ovt-c-tools .ovt-btn > svg, .ovc-v2 .ovt-c-tools .ovt-btn > .ovt-ic { display: block; width: 20px; height: 20px; margin: 0; flex: none; }
+.ovc-v2 .ovt-c-tools .ovt-btn:hover { translate: 0 -1px; color: var(--text-primary, #e6edf7); box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -1px 0 rgba(0,0,0,.3), 0 8px 16px -7px rgba(0,0,0,.65); }
+.ovc-v2 .ovt-c-tools .ovt-btn:active { translate: 0 1px; box-shadow: inset 0 2px 5px rgba(0,0,0,.4); }
+html[data-theme-mode=light] .ovc-v2 .ovt-c-tools .ovt-btn { background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--text-primary, #0f172a) 6%, #fff)); box-shadow: inset 0 -1px 0 rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.12), 0 4px 10px -6px rgba(15,23,42,.25); color: var(--accent, #2563eb); }
+/* Send: a button of its own, lit from above, a shine that crosses it on hover, a press you can feel, the arrow lifting. */
+.ovc-v2 .ovt-send { position: relative; isolation: isolate; overflow: hidden; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 20px;
+  color: #fff; letter-spacing: .01em;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 72%, #fff), var(--ovt-accent, var(--accent, #3b82f6)) 48%, color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 78%, #000));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -2px 0 rgba(0,0,0,.22), 0 10px 22px -10px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 85%, transparent);
+  transition: translate .15s ease, scale .12s ease, box-shadow .2s ease, filter .2s ease; }
+.ovc-v2 .ovt-send::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.38) 50%, transparent 70%); translate: -130% 0; transition: translate .7s cubic-bezier(.2,.8,.2,1); }
+.ovc-v2 .ovt-send:not(:disabled):hover { translate: 0 -1px; box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.22), 0 14px 26px -10px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 95%, transparent); }
+.ovc-v2 .ovt-send:not(:disabled):hover::after { translate: 130% 0; }
+.ovc-v2 .ovt-send:not(:disabled):hover svg { translate: 0 -2px; }
+.ovc-v2 .ovt-send svg { transition: translate .2s cubic-bezier(.3,1.6,.4,1); }
+.ovc-v2 .ovt-send:not(:disabled):active { translate: 0 1px; scale: .97; transform: none; box-shadow: inset 0 2px 6px rgba(0,0,0,.3); }
+.ovc-v2 .ovt-send:disabled { opacity: 1; filter: saturate(.25) brightness(.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.14); cursor: default; }
+.ovc-v2 .ovt-send--round { width: 40px; min-width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; }
+.ovc-v2 .ovt-send--round svg { display: block; width: 18px; height: 18px; margin: 0; }
+.ovc-v2[data-preset="chat"] .ovt-c-row { margin-top: 0; }   /* one line: the buttons sit in its middle, not 2 px low */
+html[data-ov-motion=off] .ovc-v2 .ovt-send::after { display: none; } html[data-ov-motion=off] .ovc-v2 :is(.ovt-send, .ovt-btn, .ovt-send svg) { transition: none; translate: none; }
 .ovc-cam { padding: 0; border: 0; border-radius: 22px; width: min(560px, 96vw); max-height: 94vh; overflow: hidden; background: #05070c; color: #fff; display: flex; flex-direction: column; }
 .ovc-cam::backdrop { background: rgba(2, 6, 14, .72); }
 .ovc-cam-stage { position: relative; flex: 1; min-height: 0; background: #000; }
@@ -443,7 +474,7 @@ html[data-ov-motion=off] .ovc-tray { animation: none; transition: none; }
 /* 4.236.0 (the owner, 11-13: "improve the send button … the icon's all screwed up"): with nothing to send it is a quiet
    outline round its arrow, not a grey disc; the moment there is, it fills with the accent on a spring, and the arrow
    lifts under a pointer and on a press. */
-.ovc-v2 .ovt-send--round:disabled { opacity: 1; background: transparent; color: var(--text-muted, #7386a3); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--text-primary, #e6edf7) 16%, transparent); }
+.ovc-v2 .ovt-send--round:disabled { opacity: 1; filter: none; background: linear-gradient(180deg, color-mix(in srgb, var(--text-primary, #e6edf7) 12%, transparent), color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent)); color: var(--text-muted, #7386a3); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.3), 0 4px 10px -5px rgba(0,0,0,.6); }   /* 4.248.0: a dim disk like its neighbours, never an outline */
 .ovc-v2 .ovt-send--round:not(:disabled) { animation: ovcSendReady .32s cubic-bezier(.34, 1.56, .64, 1); }
 @keyframes ovcSendReady { from { transform: scale(.8); } }
 @media (hover: hover) and (pointer: fine) { .ovc-v2 .ovt-send--round:not(:disabled):hover svg { transform: translateY(-2px); } }

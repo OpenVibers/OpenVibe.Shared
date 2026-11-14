@@ -59,6 +59,15 @@ conversation with it in place, with "Message Vibe" below. History lists every co
 again, it is back to the conversation. The menu no longer lends the Dock's Now / Needs you / timeline above Vibe.
 The footer no longer names a live streamer twice (their row says LIVE; the channel tile goes).
 
+**One button system in every composer** (ov-composer.js; the owner, 11-14: "How is the centering and offset of icons
+still such a problem?", "give them that more 3D look … the post button … completely customized … an animation", "the
+attached file should be just in the plus button"): the tools a + already holds (photos, files, the camera) were still
+drawn in the row wherever a box sat outside a thread page, because `[hidden]` lost to the button's own display; hidden
+now means gone everywhere. Every icon button is a 40 px disk lit from above, its glyph centred on a grid and never
+nudged; Post, Reply and the round send are their own lit buttons with a shine that crosses on hover, a press you can
+feel and the arrow lifting; nothing to send is a dim disk (not an outline); a one-line box centres its buttons. Motion
+Off keeps them still.
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.

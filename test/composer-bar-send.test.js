@@ -15,7 +15,9 @@ assert.ok(/const contextBar = \(spec = \{\}\) => \{[\s\S]{0,400}showBar\(PATH_OK
 assert.ok(/\}, 'edit'\);/.test(src) && /was\.onClear\(\); \}, 'reply'\);/.test(src), 'edit and reply say their kind');
 assert.ok(/\.ovc-v2 \.ovc-bar::before \{ content: ""; position: absolute; left: 6px;[^}]*background: var\(--ovt-accent/.test(src), 'a rail of the accent at its start');
 assert.ok(/\.ovc-v2 \.ovc-bar\[data-kind=edit\]::before \{ background: var\(--warning/.test(src), 'editing wears its own colour');
-assert.ok(/\.ovc-v2 \.ovt-send--round:disabled \{ opacity: 1; background: transparent;[^}]*box-shadow: inset 0 0 0 1\.5px/.test(src), 'nothing to send: a quiet outline, not a grey disc');
+// 4.248.0 (the owner, 11-14, circling the outlined send: "How is the centering and offset of icons still such a problem?";
+// "give them that more 3D look"): nothing to send is a dim disk like the buttons beside it, never an outline.
+assert.ok(/\.ovc-v2 \.ovt-send--round:disabled \{ opacity: 1; filter: none; background: linear-gradient/.test(src) && !/\.ovc-v2 \.ovt-send--round:disabled \{[^}]*inset 0 0 0 1\.5px/.test(src), 'nothing to send: a dim disk, not an outline');
 assert.ok(/\.ovc-v2 \.ovt-send--round:not\(:disabled\) \{ animation: ovcSendReady/.test(src), 'ready: it fills on a spring');
 assert.ok(/html\[data-ov-motion=off\] \.ovc-v2 \.ovt-send--round/.test(src) && /html\[data-ov-motion=off\] \.ovc-v2 \.ovc-bar \{ animation: none; \}/.test(src), 'and nothing moves with motion off');
 console.log('composer-bar-send: a context bar of any kind inside the box, a quiet Send until there is something to send');
