@@ -102,8 +102,14 @@ html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25
 
 /* ── Buttons ── */
 .ovk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-sizing: border-box; min-height: var(--ovk-tap); padding: 10px 18px; border-radius: calc(var(--ov-radius-1) + 2px); border: 1px solid transparent; font: inherit; font-weight: 700; font-size: .95rem; line-height: 1.2; text-decoration: none; cursor: pointer; transition: filter .12s, border-color .12s, background .12s; }
-.ovk-btn--primary { background: var(--ovk-fill); color: var(--ovk-on-fill); }
-.ovk-btn--primary:hover { filter: brightness(1.08); }
+/* 4.249.0: the primary button is lit from above (the composer's send, the 3D switch): a soft gradient, a highlight on its
+   top edge and a coloured shadow under it; it lifts a hair on hover and settles when pressed. */
+.ovk-btn--primary { background: linear-gradient(to bottom, color-mix(in srgb, var(--ovk-fill) 88%, #fff), var(--ovk-fill) 55%, color-mix(in srgb, var(--ovk-fill) 90%, #000)); color: var(--ovk-on-fill);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 16px -8px color-mix(in srgb, var(--ovk-fill) 75%, transparent); transition: translate .16s ease, box-shadow .2s ease, filter .15s ease; }
+.ovk-btn--primary:hover { filter: brightness(1.06); translate: 0 -1px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .24), 0 9px 20px -8px color-mix(in srgb, var(--ovk-fill) 80%, transparent); }
+.ovk-btn--primary:active { translate: 0 0; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .22); }
+.ovk-btn--quiet { box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent); }
+html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--primary:hover { translate: none; transition: none; }
 .ovk-btn--quiet { background: var(--ovk-panel); color: var(--ovk-text); border-color: var(--ovk-line); }
 .ovk-btn--quiet:hover { border-color: var(--ovk-accent); }
 .ovk-btn--ghost { background: transparent; color: var(--ovk-accent); padding-left: 8px; padding-right: 8px; }
@@ -222,7 +228,7 @@ html[data-ov-motion=reduced] { --ov-move: .35; --ov-dur-1: .15s; --ov-dur-2: .25
 .ovk-heading-icon > .ovk-i { width: 22px; height: 22px; }
 .ovk-heading-icon.ovk-i { box-sizing: border-box; width: 40px; height: 40px; padding: 9px; vertical-align: middle; }
 .ovk-titled.ovk-titled { display: flex; align-items: center; gap: 10px; white-space: normal; overflow-wrap: anywhere; }
-.ovk-tabs { position: relative; display: flex; gap: 4px; margin: 0 -16px; padding: 0 16px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ovk-tabs { position: relative; display: flex; gap: 4px; margin: -6px -16px 0; padding: 6px 16px 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .ovk-tabs::-webkit-scrollbar { display: none; }
 .ovk-tabs a { display: inline-flex; align-items: center; gap: 6px; flex: none; min-height: 36px; padding: 6px 14px; border-radius: 999px; color: var(--ovk-muted); font-size: .9rem; font-weight: 650; text-decoration: none; white-space: nowrap; }
 .ovk-tabs a:hover { color: var(--ovk-text); background: var(--ovk-panel-2); }
@@ -311,11 +317,23 @@ div.ovk-set-row { cursor: default; }
 .ovk-set-ic { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--ov-radius-1); background: color-mix(in srgb, var(--ovk-accent) 12%, transparent); color: var(--ovk-accent); }
 .ovk-set-ic .ovk-i { width: 19px; height: 19px; }
 .ovk-set-row .ovk-switch { margin-left: auto; }
-.ovk-switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 44px; height: 26px; margin: 0; padding: 0; border-radius: 999px; border: 0; background: var(--ovk-line); cursor: pointer; transition: background .15s; }
-.ovk-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: var(--ov-elev-1); transition: transform .15s; }
-.ovk-switch:checked { background: var(--ovk-fill); }
-.ovk-switch:checked::after { transform: translateX(18px); }
-.ovk-switch:focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 2px; }
+/* The switch, as ov-forms.css draws [role=switch] (4.249.0): a recessed track, a raised lit thumb that springs across
+   and stretches while held, a bloom when it turns on. */
+.ovk-switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; box-sizing: border-box; width: 46px; height: 26px; min-width: 46px; margin: 0; padding: 0; border-radius: 999px; border: 0; cursor: pointer;
+  background: linear-gradient(to bottom, color-mix(in srgb, CanvasText 30%, transparent), color-mix(in srgb, CanvasText 20%, transparent));
+  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .38), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 1px 0 rgba(255, 255, 255, .05); transition: box-shadow .25s ease; }
+.ovk-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 999px; background: radial-gradient(circle at 38% 28%, #fff 0 30%, #eef2f8 58%, #cfd7e3 100%);
+  box-shadow: var(--ov-elev-1), 0 2px 5px rgba(0, 0, 0, .3), inset 0 -1.5px 1px rgba(0, 0, 0, .1), inset 0 1px 0 #fff; transition: transform .34s cubic-bezier(.34, 1.56, .64, 1), width .16s ease; }
+.ovk-switch:checked { background: linear-gradient(to bottom, color-mix(in srgb, var(--ovk-fill) 78%, #000), var(--ovk-fill));
+  box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .3), inset 0 -1px 0 rgba(255, 255, 255, .14), 0 0 14px color-mix(in srgb, var(--ovk-fill) 40%, transparent); animation: ov-switch-on .5s ease-out; }
+.ovk-switch:checked::after { transform: translateX(20px); }
+.ovk-switch:not(:disabled):active::after { width: 26px; }
+.ovk-switch:checked:not(:disabled):active::after { transform: translateX(14px); }
+.ovk-switch:focus-visible { outline: 2px solid var(--ovk-accent); outline-offset: 3px; }
+@keyframes ov-switch-on { 0% { box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .3), 0 0 0 0 color-mix(in srgb, var(--ovk-fill, #3b82f6) 55%, transparent); } 100% { box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .3), 0 0 14px color-mix(in srgb, var(--ovk-fill, #3b82f6) 40%, transparent), 0 0 0 9px transparent; } }
+html[data-ov-motion=off] .ovk-switch, html[data-ov-motion=off] .ovk-switch::after { animation: none; transition: none; }
+.ovk-switch::before { content: none; }   /* ov-forms draws a lone checkbox's check mark on ::before: not on a switch */
+:root[data-theme-mode="light"] .ovk-switch:not(:checked) { background: linear-gradient(to bottom, #c9d2de, #dbe2ec); }
 .ovk-seg { display: inline-flex; flex: none; flex-wrap: wrap; max-width: 100%; gap: 2px; padding: 3px; border-radius: var(--ov-radius-1); background: var(--ovk-panel-2); }
 .ovk-seg input, .ovk-chip input { position: absolute; opacity: 0; pointer-events: none; }
 .ovk-seg span { display: block; padding: 6px 12px; border-radius: max(0px, calc(var(--ov-radius-1) - 2px)); color: var(--ovk-muted); font-size: .86rem; font-weight: 650; cursor: pointer; }
@@ -372,7 +390,7 @@ div.ovk-set-row { cursor: default; }
 }
 
 /* ── Numbers, empty states, notices, code, sheets ── */
-.ovk-stats { position: relative; display: flex; gap: 8px; margin: 12px -16px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
+.ovk-stats { position: relative; display: flex; gap: 8px; margin: 6px -16px; padding: 6px 16px; overflow-x: auto; scrollbar-width: none; }
 .ovk-stats::-webkit-scrollbar { display: none; }
 .ovk-stats > div { display: flex; flex-direction: column-reverse; flex: 0 0 auto; min-width: 104px; box-sizing: border-box; padding: 8px 14px; border: 1px solid var(--ovk-line); border-radius: calc(var(--ov-radius-1) + 2px); background: var(--ovk-panel); }
 .ovk-stats dt { margin: 0; color: var(--ovk-muted); font-size: .76rem; line-height: 1.25; }
@@ -499,6 +517,11 @@ div.ovk-set-row { cursor: default; }
 .ov-scroll { overflow: auto; overscroll-behavior: auto; -webkit-overflow-scrolling: touch; }
 .ov-scroll-fill { overflow: auto; overscroll-behavior: contain; }
 .ov-scroll-x { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x pan-y; scrollbar-width: none; }
+/* 4.249.0 (the owner, 11-14: "the top gets cut off when it's being clicked or it's active or hovered", across sites): a
+   row that scrolls sideways clips up and down too (CSS makes the other axis auto), so a lifted, ringed or glowing child
+   lost its top. Every sideways row keeps 6 px of room above and below and takes it back with a negative margin, so
+   the page does not move. :where() keeps it at no weight: a row with its own padding keeps it. */
+:where(.ov-scroll-x, .ov-rail) { padding-block: 6px; margin-block: -6px; }
 .ov-scroll-x::-webkit-scrollbar { display: none; }
 @media (max-width: 900px), (hover: none) {
     .ovk-sidebar-secs { overscroll-behavior-y: auto; }

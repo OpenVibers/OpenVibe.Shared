@@ -396,11 +396,15 @@ const created = (subject, over = {}) => ({
         assert.strictEqual(rows.length, 2);
         assert.strictEqual(rows[0].classList.contains('has-thumb'), false, 'a thumbnail that is the avatar is not shown twice');
         assert.strictEqual(rows[1].querySelector('img.thumb').getAttribute('src'), 'https://openvibe.deals/i/shoe.jpg', 'rich_content.image is the row\'s thumbnail');
-        assert.ok(rows[0].querySelector('.unread-dot') && !rows[1].querySelector('.unread-dot'), 'the unread row has its dot');
+        assert.ok(rows[0].querySelector('.ovn-sr') && !rows[1].querySelector('.ovn-sr'), 'the unread row says so (its edge bar is CSS, 4.249.0)');
 
         tabs[1].dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
         assert.strictEqual(lists().pop().get('tab'), 'mentions', 'a tab asks Network for that tab');
         assert.deepStrictEqual(tabs.map((t) => t.getAttribute('aria-selected')), ['false', 'true', 'false', 'false', 'false', 'false']);
+        // 4.249.0: Unread is on when the list opens (a phone's notifications); a press shows everything, a second only unread.
+        assert.strictEqual(panel.querySelector('.openvibe-nv-unread').getAttribute('aria-pressed'), 'true', 'Unread first');
+        panel.querySelector('.openvibe-nv-unread').dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
+        assert.strictEqual(lists().pop().get('unread_only'), null, 'everything');
         panel.querySelector('.openvibe-nv-unread').dispatchEvent(new p.ctx.Event('click', { bubbles: true })); await p.settle();
         const last = lists().pop();
         assert.deepStrictEqual([last.get('tab'), last.get('unread_only')], ['mentions', '1'], 'the Unread filter combines with the tab');
@@ -503,7 +507,8 @@ const created = (subject, over = {}) => ({
     // 44 px round buttons with centred glyphs.
     // 28.2 KB (4.248.0, 2026-11-14): the ⋯ menu instead of the X, the buttons a notice brings (rich_content.actions), the
     // social-feed rows (the owner: "no spacing … confusing to have an X … more like social media").
-    assert.ok(size('notification-ui.js') <= 28.2 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 28.2 KB`);
+    // 28.7 KB (4.249.0): the Unread toggle that says what it does and one-field search (the owner, 11-14).
+    assert.ok(size('notification-ui.js') <= 29.8 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 29.8 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

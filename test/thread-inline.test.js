@@ -35,7 +35,8 @@ assert.match(signedOut, /&lt;picture&gt;/);
 assert.match(signedOut, /<img src="https:\/\/openvibe.media\/o\/med_/);
 assert.match(signedOut, /notes.pdf/);
 assert.match(signedOut, /%2Fwatch%3Fv%3D12345678901%26sort%3Dtop/);
-assert.match(signedOut, /<p class="ovc-community"><a href="https:\/\/openvibe.community\/c\/cth_1234567890123456789012">Discuss on OpenVibe.Community<\/a><\/p>/);
+assert.match(signedOut, /<a class="ovc-open" href="https:\/\/openvibe.community\/c\/cth_1234567890123456789012" title="Discuss on OpenVibe.Community"><i class="ovg-fill" data-ov-icon="open" aria-hidden="true"><\/i><span>Discuss on OpenVibe.Community<\/span><\/a>/, 'the discussion is an icon button in the head');
+assert.doesNotMatch(signedOut, /ovc-community|\u2192/, 'no text arrow');
 
 // Top and Newest appear only when there is something to order.
 const two = renderThread({ ...options, answer: { ...answer, comments: [...answer.comments, { ...answer.comments[0], id: 20, replies: [], reply_count: 0 }] }, signedIn: false });
@@ -63,10 +64,10 @@ assert.match(draft, /data-ovt-text required>half &lt;b&gt;written&lt;\/b&gt;<\/t
 
 // Signed out with no comments yet: one line, not the line plus an empty-state box.
 const emptyOut = renderThread({ ...options, answer: { ...answer, comments: [] }, signedIn: false });
-assert.match(emptyOut, /<p class="ovc-signin">Be the first to comment\. <a /, 'signed out with no comments: one line, sign-in beside it');
+assert.match(emptyOut, /<p class="ovc-signin"><span class="ovc-none-mark" aria-hidden="true">.*?<\/span><span>Be the first to comment\.<\/span> <a /, 'signed out with no comments: one line with its mark, sign-in beside it');
 assert.doesNotMatch(emptyOut, /ovk-empty/);
 assert.doesNotMatch(emptyOut, /<nav class="ovc-order"/);
-assert.match(renderThread({ ...options, answer: { ...answer, comments: [] }, signedIn: true }), /<p class="ovc-none">Be the first to comment\.<\/p>/);
+assert.match(renderThread({ ...options, answer: { ...answer, comments: [] }, signedIn: true }), /<p class="ovc-none"><span class="ovc-none-mark" aria-hidden="true">.*?<\/span><span>No comments yet\. Say the first thing\.<\/span><\/p>/);
 
 // The stylesheet is a sibling this package serves like thread.css: listed, present, content-addressed.
 assert.ok(files.STYLES.includes('thread-inline.css'), 'thread-inline.css is a browser stylesheet');

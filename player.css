@@ -241,6 +241,8 @@ html[data-ov-motion=off] .ov-player-spinner,html[data-ov-motion=off] .ov-player-
    would otherwise win over the phone rules: speed and picture-in-picture step out, the volume slider is shorter, under
    380 px the mute button stands alone (a phone's own buttons set the volume) and under 360 px the time shows the
    position alone (the scrubber has the length). Measured at 390 px: play, mute, slider, time, captions, fullscreen fit.
+   4.249.0: this comment was never closed, so none of these rules ever applied (the owner, 11-14: the fullscreen button
+   ran off a phone's edge on openvibe.video). test/css-comments.test.js now fails on an unclosed comment anywhere. */
 @media (max-width: 520px) {
     .ov-player-speed, .ov-player-pip { display: none; }
     .ov-player-time { padding: 0 8px; font-size: 12px; }
@@ -248,3 +250,6 @@ html[data-ov-motion=off] .ov-player-spinner,html[data-ov-motion=off] .ov-player-
 }
 @media (max-width: 380px) { .ov-player.can-volume .ov-player-volume-slider { display: none; } }
 @media (max-width: 360px) { .ov-player-dur { display: none; } }
+/* A phone's player runs edge to edge: its glow goes above and below, never past the screen's sides (it made the whole
+   page scroll sideways by 12 px on openvibe.video, 11-14). */
+@media (max-width: 600px) { .ov-player-ambient { inset: -4% 0; } }

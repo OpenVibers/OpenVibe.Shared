@@ -89,6 +89,12 @@
         space: '<circle cx="12" cy="10.1" r="1.6"/><path d="M12 3.5c3.3 2.2 4.9 5.5 4.9 9.9l-2.2 3.3h-5.5l-2.2-3.3c0-4.4 1.6-7.7 4.9-9.9ZM9.3 16.6l-2.2 3.8M14.7 16.6l2.2 3.8"/>',
         watch: '<circle cx="12" cy="12" r="2.5"/>' + P('M3.5 12s3-5.5 8.5-5.5 8.5 5.5 8.5 5.5-3 5.5-8.5 5.5S3.5 12 3.5 12z'),
         actor: '<circle cx="10.1" cy="8.8" r="3.3"/><path d="M3.5 20.4a6.7 6.7 0 0 1 13.4 0M18.4 4.2l0.7 1.5l1.5 0.7l-1.5 0.7l-0.7 1.5l-0.7-1.5l-1.5-0.7l1.5-0.7Z"/>',
+        // The three doors of 2026-11-13 (openvibe.expert, openvibe.markets, openvibe.finance): Expert is a person with
+        // a spark inside the head (an agent with a soul), Markets is a magnifier over a grid of listings (one search over
+        // every marketplace), Finance is a wallet (a person's own money). Each on its own hue: the hue follows the name.
+        expert: '<circle cx="12" cy="7.2" r="3.8"/><path d="M12 4.8l0.8 1.7l1.7 0.8l-1.7 0.8l-0.8 1.7l-0.8-1.7l-1.7-0.8l1.7-0.8Z"/><path d="M3.9 20.6a8.1 8.1 0 0 1 16.2 0"/>',
+        markets: '<circle cx="10" cy="10" r="6.8"/><path d="M15 15l5.4 5.4M6.2 8.2h5.6M6.2 11.6h5.6M6.2 15h3.4"/>',
+        finance: '<rect x="3.5" y="6.4" width="17" height="11.6" rx="2.4"/><path d="M3.5 9.9h17"/><circle cx="16.4" cy="14" r="1.2"/>',
         events: '<path d="M13.5 3.5L6.5 13.5h5l-1 7l7-10h-5Z"/>',
         ai: '<rect x="6.3" y="6.3" width="11.3" height="11.3" rx="1.7"/><path d="M9.7 3.5V6.3M14.3 3.5V6.3M9.7 17.7v2.8M14.3 17.7v2.8M3.5 9.7H6.3M3.5 14.3H6.3M17.7 9.7h2.8M17.7 14.3h2.8"/>',
         run: '<rect x="3.5" y="5.5" width="17" height="13" rx="2"/>' + P('M7.5 10l2.5 2-2.5 2M12 14.5h4'),

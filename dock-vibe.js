@@ -56,6 +56,10 @@
             .ovdk-vibe-mark { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px; color: #fff;
                 background: linear-gradient(135deg, color-mix(in srgb, var(--accent, #3b82f6) 90%, #a855f7), color-mix(in srgb, #a855f7 85%, var(--accent, #3b82f6))); box-shadow: 0 4px 14px color-mix(in srgb, #a855f7 28%, transparent); }
             .ovdk-vibe-mark svg { width: 19px; height: 19px; }
+            .ovdk-vibe-site.is-persona, .ovdk-vibe-mark.is-persona { overflow: hidden; color: hsl(var(--ph, 210) 85% 72%); background: radial-gradient(120% 120% at 30% 20%, hsl(var(--ph, 210) 70% 46% / .55), hsl(var(--ph, 210) 60% 28% / .55)); }
+            html[data-theme-mode=light] .ovdk-vibe-site.is-persona, html[data-theme-mode=light] .ovdk-vibe-mark.is-persona { color: hsl(var(--ph, 210) 70% 30%); background: hsl(var(--ph, 210) 80% 88%); }
+            .ovdk-vibe-site.is-persona img, .ovdk-vibe-mark.is-persona img { width: 100%; height: 100%; object-fit: cover; display: block; }
+            .ovdk-vibe-site.is-persona [data-ov-icon], .ovdk-vibe-mark.is-persona [data-ov-icon] { display: grid; place-items: center; font-size: 19px; line-height: 1; }
             .ovdk-vibe-mark.is-big { width: 46px; height: 46px; border-radius: 14px; }
             .ovdk-vibe-mark.is-big svg { width: 24px; height: 24px; }
             .ovdk-vibe-name { flex: 1; min-width: 0; display: grid; line-height: 1.2; }
@@ -114,7 +118,7 @@
     // 4.203.0 (ask 349, "a better composer system unified across all sites"): Vibe's box is the one composer too, for
     // drafts, "/" commands and your own, the marks, what sends and your settings; its picture keeps its own upload.
     const selfSrc = (typeof document !== 'undefined' && document.currentScript && document.currentScript.src) || '';
-    const VIBE_REV = { 'ov-composer.js': 'c29a98f058e6' };
+    const VIBE_REV = { 'ov-composer.js': '794eb277bb24' };
     function joinComposer(form) {
         if (!form || form.ownerDocument !== document) return;   // a popped-out Dock keeps its plain box
         form.setAttribute('data-ovc-no-files', '');
@@ -128,6 +132,23 @@
         sc.addEventListener('load', go, { once: true });
     }
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
+    // 4.249.0: a Vibe chat's persona (OpenVibe.Chat docs/vibe-personas.md: { name, glyph, hue, image_url, topic }), made
+    // by AI from what the chat is about: its picture, or its glyph on its own hue. No persona yet: Vibe's mark.
+    const personaGlyph = (p) => {
+        const name = String((p && p.glyph) || '').toLowerCase();
+        if (!/^[a-z0-9-]{1,40}$/.test(name)) return icon(G.vibe);
+        const i = h('i'); i.setAttribute('data-ov-icon', name); i.setAttribute('aria-hidden', 'true'); return i;
+    };
+    const personaFace = (face, p) => {
+        face.textContent = ''; face.classList.remove('is-persona'); face.style.removeProperty('--ph');
+        if (!p || typeof p !== 'object') { face.append(icon(G.vibe)); return face; }
+        const hue = Number(p.hue);
+        face.classList.add('is-persona'); face.style.setProperty('--ph', String(Number.isFinite(hue) ? Math.round(Math.abs(hue)) % 360 : 210));
+        const pic = typeof p.image_url === 'string' && /^https:\/\//.test(p.image_url) ? p.image_url : '';
+        if (pic) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = pic; img.onerror = () => { img.remove(); face.append(personaGlyph(p)); }; face.append(img); }
+        else face.append(personaGlyph(p));
+        return face;
+    };
     /** A round icon button with its name as label and tooltip. */
     const iconButton = (tag, cls, path, label) => { const b = h(tag, cls); if (tag === 'button') b.type = 'button'; b.setAttribute('aria-label', label); b.setAttribute('data-ov-tip', label); b.title = label; b.innerHTML = svg(path); return b; };
     /** Open Vibe in OpenVibe.Chat, as an icon (the thread's own address when one is open). */
@@ -236,9 +257,10 @@
                 const host = String(c.site || '').replace(/^https?:\/\//, '').replace(/\/.*$/, '');
                 const name = host ? (/^openvibe\.([a-z]+)$/.exec(host) || [])[1] : '';
                 const site = h('small', '', name ? name.charAt(0).toUpperCase() + name.slice(1) : host);
-                const mark = h('span', 'ovdk-vibe-site'); mark.append(icon(G.vibe));
+                const mark = personaFace(h('span', 'ovdk-vibe-site'), c.persona);
                 b.append(mark, title, time, line, site);
                 b.setAttribute('aria-label', `${c.name || 'Conversation'}, ${age(c.last_message_at)}`);
+                if (c.persona && c.persona.topic) b.title = String(c.persona.topic).slice(0, 120);
                 b.addEventListener('click', () => { vibe.fresh = false; vibe.chat = { slug: c.slug }; ctx.save({ vibe: { slug: c.slug, at: new Date().toISOString() } }); openVibe(); });
                 li.append(b); list.append(li);
             });
@@ -347,7 +369,10 @@
                 return;
             }
             if (generation !== vibe.generation || !ctx.active() || vibe.panel !== panel) return;
-            if (got.chat) { vibe.chat = got.chat; away.href = got.chat.url; title.textContent = got.chat.name || 'Vibe'; }
+            if (got.chat) {
+                vibe.chat = got.chat; away.href = got.chat.url; title.textContent = got.chat.name || 'Vibe';
+                if (got.chat.persona) { personaFace(mark, got.chat.persona); const sub = name.querySelector('small'); if (sub && got.chat.persona.topic) sub.textContent = String(got.chat.persona.topic).slice(0, 80); }
+            }
             if (first) list.textContent = '';
             const atEnd = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight < 40;
             let answered = false;

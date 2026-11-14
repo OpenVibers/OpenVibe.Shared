@@ -32,6 +32,7 @@ const SKIP = [
     { file: 'profile-panel.js', at: /@\$\{p\.username\}/, reason: 'the @handle under the name — a handle, not the name' },
     { file: 'messages.js', at: /message\.display_name \|\| message\.username \|\| '\?'/, reason: 'the picture\'s initial letter — a letter, not the name' },
     { file: 'dock.js', at: /prev\.username === m\.username/, reason: 'a comparison that picks a class, not a name in markup' },
+    { file: 'dock.js', at: /input\.name = 'username'/, reason: 'a form field\'s name attribute, not a person\'s name' },
     { file: 'dock-share.js', at: /found\[0\]\.username/, reason: 'a sentence that names a handle to say nobody is called that' },
     { file: 'ov-share.js', at: /s\.owner\.username/, reason: 'the owner\'s handle in a line of the sheet' },
     { file: 'ov-share.js', at: /sugg-\$\{p\.username\}/, reason: 'a chip\'s key — the handle as a key' },

@@ -53,6 +53,7 @@ const html = f.onlineHTML(clean);
 assert.ok(html.includes('<a class="ovf-tile is-live" href="https://openvibe.live/"><span class="ovf-dot" aria-hidden="true"></span><b>2</b><span>live now</span><small>41 watching</small></a>'), 'live is one small tile, with its dot and its way in');
 assert.ok(html.indexOf('ovf-who') < html.indexOf('is-live'), 'who is online comes first; live is among the tiles');
 assert.ok(html.includes('<b>56</b><span>sites, one account</span>') && html.includes('<b>81k</b><span>page views this week</span>'), 'the old facts are kept, as tiles');
+assert.ok(html.includes('href="https://openvibe.network/sites"') && html.includes('href="https://openvibe.report/stats"'), 'the counts open the sites list and every site\'s numbers (4.249.0)');
 assert.ok(html.includes('<details class="ovf-who">') && html.includes('<b>10</b> online</span>') && html.includes('data-ov-tip="In the last 30 minutes" data-ov-tip-sub="3 members · 7 guests"'), 'shorthand: the count, with when and who in its tooltip');
 assert.ok(html.includes('<p class="ovf-who-when">In the last 30 minutes · 3 members · 7 guests</p>'), 'a press opens the same words (a finger never sees a tooltip)');
 assert.ok(!/online in the last 30 min/.test(html), 'the strip itself stays short');

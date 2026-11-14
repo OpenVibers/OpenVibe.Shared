@@ -309,6 +309,8 @@ const ATT_ID = /^att_[0-9A-HJKMNP-TV-Z]{26}$/;
 const ATT_URL = /^https:\/\/openvibe\.media\/a\/att_[0-9A-HJKMNP-TV-Z]{26}\/[^?#]{1,300}$/;
 // What a comment box with mediaAttachments takes: Media sniffs the bytes, so the list only guides the picker.
 const MEDIA_ACCEPT = 'image/*,video/*,audio/*,application/pdf,text/plain,.mkv,.avi,.mov,.m4v,.3gp,.3g2,.webm,.ogv,.wmv,.flv,.mpg,.mpeg,.ts,.mts,.m2ts,.vob,.heic,.heif,.avif';
+/** The empty state's mark (4.249.0): the chat glyph in a soft disk, before "Be the first to comment." */
+const EMPTY_MARK = '<span class="ovc-none-mark" aria-hidden="true"><i class="ovg-fill" data-ov-icon="chat"></i></span>';
 const MEDIA_NOTE = 'Up to four files: pictures up to 20 MB, videos up to 300 MB (MP4, MOV, MKV, AVI, WebM and the rest), sound up to 50 MB, PDFs and text up to 25 MB.';
 const USERNAME = /^[A-Za-z0-9_]{1,32}$/;
 const ID = /^\d{1,15}$/;
@@ -396,7 +398,7 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
     const validExpanded = ID.test(String(expandedId || '')) ? String(expandedId) : null;
     // Signed out, the composer's spot is one line; with no comments yet that line is the whole empty state (no second
     // box saying the same thing).
-    const signIn = `<p class="ovc-signin">${comments.length ? 'Sign in to comment.' : 'Be the first to comment.'} <a class="ovk-btn ovk-btn--primary" href="/auth/login?next=${encodeURIComponent(query(base, sort))}">Sign in</a></p>`;
+    const signIn = `<p class="ovc-signin">${comments.length ? '' : EMPTY_MARK}<span>${comments.length ? 'Sign in to comment.' : 'Be the first to comment.'}</span> <a class="ovk-btn ovk-btn--primary" href="/auth/login?next=${encodeURIComponent(query(base, sort))}">Sign in</a></p>`;
     const composer_html = (parent = null) => signedIn ? composer({ action: post, name: 'message', label: 'Comment', placeholder: parent ? 'Write a reply…' : 'Add a comment…', value: draft, maxlength: 2000,
         sendLabel: parent ? 'Reply' : 'Comment', hidden: parent ? { parent_id: parent } : {},
         attach: attachmentsAllowed ? { name: 'files', accept: mediaAttachments ? MEDIA_ACCEPT : 'image/jpeg,image/png,image/gif,image/webp,application/pdf,text/plain' } : null, preset: 'comment',
@@ -435,7 +437,12 @@ function renderThread({ answer, base, post, remove, signedIn, attachmentsAllowed
     // Top and Newest only when there is something to put in order.
     const order = comments.length < 2 && !(answer && answer.next_cursor) ? '' : `<nav class="ovc-order" aria-label="Comment order">${[['top', 'Top'], ['new', 'Newest']].map(([key, label]) => `<a class="ovk-btn ovk-btn--quiet${sort === key ? ' is-active' : ''}" href="${query(base, key)}"${sort === key ? ' aria-current="page"' : ''} data-ovc-order>${label}</a>`).join('')}</nav>`;
     const next = answer && answer.next_cursor ? `<a class="ovk-btn ovk-btn--quiet ovc-more" href="${query(base, sort, { after: answer.next_cursor })}" data-ovc-order>More comments</a>` : '';
-    return `<section class="ovc-thread" id="comments" data-ovc-thread><div class="ovc-head"><h2>Comments</h2>${order}</div>${error ? `<p role="alert">${esc(error)}</p>` : ''}${!hasReplySlot ? `<div data-ovc-composer-slot>${composer_html()}</div>` : ''}${comments.length ? `<div class="ovc-list">${comments.map((c) => comment(c)).join('')}</div>` : (signedIn ? '<p class="ovc-none">Be the first to comment.</p>' : '')}${next}${threadUrl ? `<p class="ovc-community"><a href="${esc(threadUrl)}">Discuss on OpenVibe.Community</a></p>` : ''}</section>`;
+    const total = Number(answer && answer.thread && answer.thread.comment_count);
+    const count = Number.isFinite(total) && total > 0 ? total : (answer && answer.next_cursor ? 0 : comments.length);
+    // 4.249.0 (the owner, 11-14: "that old arrow thing … replace all those with actual OpenVibe.design icons"): the
+    // discussion's own page is a quiet icon button in the head, not a line with a text arrow under everything.
+    const community = threadUrl ? `<a class="ovc-open" href="${esc(threadUrl)}" title="Discuss on OpenVibe.Community"><i class="ovg-fill" data-ov-icon="open" aria-hidden="true"></i><span>Discuss on OpenVibe.Community</span></a>` : '';
+    return `<section class="ovc-thread" id="comments" data-ovc-thread><div class="ovc-head"><h2>Comments${count ? ` <span class="ovc-count">${count.toLocaleString('en-US')}</span>` : ''}</h2>${order}${community}</div>${error ? `<p role="alert">${esc(error)}</p>` : ''}${!hasReplySlot ? `<div data-ovc-composer-slot>${composer_html()}</div>` : ''}${comments.length ? `<div class="ovc-list">${comments.map((c) => comment(c)).join('')}</div>` : (signedIn ? `<p class="ovc-none">${EMPTY_MARK}<span>No comments yet. Say the first thing.</span></p>` : '')}${next}</section>`;
 }
 
 /**

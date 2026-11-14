@@ -73,7 +73,13 @@
         const vv = root.visualViewport;
         const vh = vv ? vv.height : root.innerHeight;
         const top = vv ? vv.offsetTop : 0;
-        const lift = Math.max(0, root.innerHeight - (top + vh));
+        // Lift only for a keyboard (4.249.0; the owner, 11-14: "when scrolling … the bottom … becomes real buggy and broken, and
+        // the offset from the bottom improperly, especially on mobile"): while a phone's toolbar slides or a fling settles, the
+        // visual viewport's offset twitches and the bar jumped with it. Typing in a field, more than 80 px, not zoomed: lift.
+        const ae = document.activeElement;
+        const typing = !!(ae && ae.matches && ae.matches('input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=button]):not([type=submit]), textarea, select, [contenteditable=""], [contenteditable="true"]'));
+        const raw = Math.max(0, root.innerHeight - (top + vh));
+        const lift = typing && raw > 80 && !(vv && Math.abs((vv.scale || 1) - 1) > 0.01) ? raw : 0;
         html.style.setProperty('--ovb-lift', px(lift));
         // A visible height of 0 happens between two documents; keep the last real one.
         if (vh > 0) html.style.setProperty('--ovb-vh', px(vh));
@@ -107,6 +113,7 @@
         if (vv && vv.addEventListener) { vv.addEventListener('resize', later); vv.addEventListener('scroll', later); }
         root.addEventListener('resize', later);
         root.addEventListener('orientationchange', later);
+        document.addEventListener('focusin', later); document.addEventListener('focusout', () => setTimeout(later, 60));
         root.addEventListener('load', later);
         document.addEventListener('visibilitychange', later);
         if (typeof MutationObserver === 'function' && document.body) {

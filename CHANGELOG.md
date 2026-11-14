@@ -1,5 +1,44 @@
 # Changelog
 
+## 4.249.0 — 2026-11-14
+
+**Glyphs stand alone** (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and
+minimalist"). The tinted tile or disk behind a glyph is gone from the menu's group heads, showcase section heads,
+feature cards (the glyph in its card's hue, larger), questions and notifications; it stays only where it means
+something: an app's icon, a face, a status, a button. A question about deleting wears the bin, not the camera.
+
+**Each Vibe chat wears its persona** (the owner, 11-12: "for each vibe chat, it should generate a name … and then it'll
+generate an avatar for that chat bot"; OpenVibe.Chat makes them, docs/vibe-personas.md). The Dock's Vibe list and an
+open chat show the persona's picture (https only), else its registry glyph on its own hue, with its topic under the
+name; the Chat list's Vibe row shows the latest chat's picture. No persona yet: Vibe's mark, as before.
+
+**The feed counts what people saw** (the owner, 11-14: "add view count to this feed and everything in the feed … so
+you can see analytics … like Twitter does"). ov-home's feed: a card at least half on screen for a second is seen, once
+per page; the ids go to the Network's `POST /api/v1/feed/views` (Network #944) in batches of up to 20 by
+`navigator.sendBeacon`, with a page session id (`ovfd-sess` in sessionStorage). The Network counts each as one preview
+view in Media's one view store, where the cards' `counts.views` come from. `o.views: false` turns it off; `o.viewsUrl`
+overrides the address.
+
+**Vibe is a messenger of agents; the player, rows, switches and comments fixed across sites** (the owner, 11-14, on a phone).
+
+- **Vibe (ov-run.js)**: your agents' faces in a row on top (yours first, then the agents your conversations are with,
+  then New on OpenVibe.Actor), conversations as message rows, "Message Vibe" in the box; a press on your agent opens its
+  card (state, today's spend, Pause or Resume, name, face and rules). The head bar, the All/Chats/Tasks/Code filters and
+  the host's Now/Needs you blocks are gone. A face without a picture is a blob of the agent's colour with two eyes,
+  its shape fixed per agent.
+- **Player**: the phone rules apply at last (an unclosed comment since 4.201.0 had disabled them, so the fullscreen
+  button ran off the edge); a phone's ambient glow stays inside the screen (pages scrolled sideways by 12 px).
+  test/css-comments.test.js fails on any unclosed comment.
+- **Rows that scroll sideways keep room** for a lifted, ringed or glowing child (tops were cut off on press).
+- **The switch**, ov-forms [role=switch] and kit .ovk-switch: recessed track, lit raised thumb that springs and
+  stretches, a bloom when it turns on; min sizes keep its shape under a page's own width.
+- **Comments** (thread.js): a count in the head, the discussion as an icon button (no text arrow), an empty state with
+  a mark, the composer's file note in the flow (it sat on top of the next line).
+- **Composer**: fills its row in a flex column (Chat's box was a sliver).
+- **Footer**: the sites count opens openvibe.network/sites, page views open openvibe.report/stats.
+- **Menu**: the site tab's roll is back, through the sites you go to most; the bottom bar lifts only for a keyboard;
+  Send follows the field; the mic's listening ring; notifications' Unread toggle and one-field search.
+
 ## 4.248.0 — 2026-11-14
 
 **Every time in the reader's own clock** (the owner, 11-14: "make it so areas like this show the time based on the

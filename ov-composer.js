@@ -42,7 +42,7 @@
 
     // 4.203.0: the composer carries its own look (it was in thread.css), so any box on any page gets it: the Dock's
     // Vibe and Code boxes included. Injected once, before the first box is joined.
-    const CSS = `.ovt-composer { position: relative; display: grid; gap: 6px; max-width: 780px; margin: 0 auto; padding: 10px 12px; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 18px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); }
+    const CSS = `.ovt-composer { position: relative; display: grid; gap: 6px; width: 100%; box-sizing: border-box; max-width: 780px; margin: 0 auto; padding: 10px 12px; border: 1px solid var(--border, rgba(148,163,184,.18)); border-radius: 18px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); }
 .ovt-composer textarea { width: 100%; min-height: 48px; box-sizing: border-box; padding: 6px 2px; border: 0; outline: 0; resize: vertical; background: transparent; color: inherit; font: inherit; }
 .ovt-c-row { display: flex; align-items: center; gap: 8px; }
 .ovt-c-tools { flex: 1; display: flex; align-items: center; gap: 6px; }
@@ -90,7 +90,11 @@ html[data-ov-motion=off] .ovc-file-ai.is-busy svg { animation: none; opacity: .6
 .ovc-pop-t b { font-weight: 650; font-size: 14px; color: var(--text-primary, #e6edf7); }
 .ovc-pop-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--text-muted, #7386a3); }
 .ovc-pop-tag { font-size: 11px; font-weight: 650; padding: 2px 7px; border-radius: 999px; color: var(--ovt-accent, var(--accent, #3b82f6)); background: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 12%, transparent); }
-.ovc-mic[aria-pressed="true"] { color: var(--live-red, #ef4444); background: color-mix(in srgb, var(--live-red, #ef4444) 14%, transparent); animation: ovc-listen 1.4s ease-in-out infinite; }
+/* 4.249.0 (the owner, 11-14: the listening glow was cut off into a square): listening is a ring inside the disk, never a glow
+   spread past it that a row clips; blocked is its own state: a red ring and a short shake, and the note says why. */
+.ovc-mic { border-radius: 50%; }
+.ovc-mic[aria-pressed="true"] { color: var(--live-red, #ef4444); background: color-mix(in srgb, var(--live-red, #ef4444) 16%, transparent); animation: ovc-listen 1.4s ease-in-out infinite; }
+.ovc-mic.is-denied { color: var(--live-red, #ef4444); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--live-red, #ef4444) 70%, transparent) !important; animation: ovc-deny .42s cubic-bezier(.36,.07,.19,.97) both; }
 .ovc-count { flex: none; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted, #7386a3); }
 .ovc-count.is-low { color: var(--live-red, #ef4444); }
 .ovc-count[hidden] { display: none; }
@@ -98,7 +102,8 @@ html[data-ov-motion=off] .ovc-file-ai.is-busy svg { animation: none; opacity: .6
 .ovt-composer.ovc-compact .ovt-c-row { margin-top: 0; }
 .ovt-composer.ovc-compact .ovt-btn, .ovt-composer.ovc-compact .ovt-send { width: 36px; min-width: 36px; height: 36px; }
 @keyframes ovc-in { from { opacity: 0; transform: translateY(4px) scale(.98); } }
-@keyframes ovc-listen { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--live-red, #ef4444) 18%, transparent); } }
+@keyframes ovc-listen { 0%, 100% { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--live-red, #ef4444) 55%, transparent); } 50% { box-shadow: inset 0 0 0 4px color-mix(in srgb, var(--live-red, #ef4444) 30%, transparent); } }
+@keyframes ovc-deny { 20%, 60% { translate: -3px 0; } 40%, 80% { translate: 3px 0; } }
 html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data-ov-motion=off] .ovc-mic { animation: none; }
 .ovc-set { width: min(460px, calc(100vw - 24px)); max-height: min(640px, calc(100vh - 32px)); padding: 0; border: 1px solid var(--ovt-line, rgba(148, 163, 184, .2)); border-radius: 20px; background: var(--bg-card, #131c2e); color: var(--text-primary, #e6edf7); box-shadow: 0 30px 80px rgba(0, 0, 0, .5); }
 .ovc-set::backdrop { background: rgba(2, 6, 14, .55); }
@@ -198,6 +203,9 @@ html[data-theme-mode=light] .ovc-v2 .ovt-c-tools .ovt-btn { background: linear-g
 .ovc-v2 .ovt-send:disabled { opacity: 1; filter: saturate(.25) brightness(.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.14); cursor: default; }
 .ovc-v2 .ovt-send--round { width: 40px; min-width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; }
 .ovc-v2 .ovt-send--round svg { display: block; width: 18px; height: 18px; margin: 0; }
+/* 4.249.0: a site's own button padding (Chat's 0 16px) never pushes the arrow off centre; the round buttons are one size. */
+.ovt-composer.ovc-v2 button.ovt-send--round, .ovt-composer.ovc-v2 .ovt-c-tools > .ovt-btn { padding: 0; box-sizing: border-box; }
+.ovt-composer.ovc-v2 .ovt-c-tools { align-items: center; }
 .ovc-v2[data-preset="chat"] .ovt-c-row { margin-top: 0; }   /* one line: the buttons sit in its middle, not 2 px low */
 html[data-ov-motion=off] .ovc-v2 .ovt-send::after { display: none; } html[data-ov-motion=off] .ovc-v2 :is(.ovt-send, .ovt-btn, .ovt-send svg) { transition: none; translate: none; }
 .ovc-cam { padding: 0; border: 0; border-radius: 22px; width: min(560px, 96vw); max-height: 94vh; overflow: hidden; background: #05070c; color: #fff; display: flex; flex-direction: column; }
@@ -468,6 +476,14 @@ html[data-ov-motion=reduced] .ovc-tray { animation-name: ovc-fade-calm; }
 html[data-ov-motion=off] .ovc-tray { animation: none; transition: none; }
 .ovc textarea::placeholder, .ovt-composer textarea::placeholder { transition: opacity .25s ease; }
 .ovc textarea.ovc-ph-swap::placeholder, .ovt-composer textarea.ovc-ph-swap::placeholder { opacity: 0; }
+/* 4.249.0: a new example rises into place. */
+.ovc textarea.ovc-ph-in::placeholder, .ovt-composer textarea.ovc-ph-in::placeholder { animation: ovc-ph-rise .38s cubic-bezier(.2, .8, .2, 1); }
+@keyframes ovc-ph-rise { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } }
+html[data-ov-motion=off] .ovt-composer textarea::placeholder { animation: none; transition: none; }
+/* 4.249.0 (the owner: "the inner text field doesn't need to be highlighted … the double outlines"): the box takes the
+   focus ring; the words inside it never draw their own (ov-forms gives every textarea one). */
+.ovt-composer textarea, .ovt-composer textarea:focus, .ovt-composer textarea:focus-visible, .ovc textarea:focus, .ovc textarea:focus-visible { outline: none !important; box-shadow: none !important; border-color: transparent !important; background: transparent; }
+.ovt-composer.ovc-v2:focus-within { border-color: color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 60%, var(--ovt-line, var(--border, rgba(148,163,184,.18)))); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 16%, transparent); }
 .ovc-v2 .ovt-send--round { background: linear-gradient(150deg, color-mix(in srgb, var(--accent, #3b82f6) 85%, #fff), var(--accent-strong, var(--accent, #2563eb))); color: var(--on-accent-strong, #fff);
   box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); transition: transform .2s cubic-bezier(.3, 1.4, .4, 1), opacity .2s, box-shadow .2s; }
 .ovc-v2 .ovt-send--round svg { width: 20px; height: 20px; stroke-width: 2.4; transition: transform .18s cubic-bezier(.3, 1.4, .4, 1); }
@@ -1242,7 +1258,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                     if (motion() === 'off' || text.value || document.activeElement === text) return;
                     k = (k + 1) % ex.length;
                     text.classList.add('ovc-ph-swap');
-                    setTimeout(() => { text.placeholder = String(ex[k]).slice(0, 80); text.classList.remove('ovc-ph-swap'); }, motion() === 'reduced' ? 120 : 260);
+                    setTimeout(() => { text.placeholder = String(ex[k]).slice(0, 80); text.classList.remove('ovc-ph-swap'); text.classList.add('ovc-ph-in'); setTimeout(() => text.classList.remove('ovc-ph-in'), 420); }, motion() === 'reduced' ? 120 : 260);
                 }, motion() === 'reduced' ? 8000 : 4200);
             }
         }
@@ -1261,7 +1277,12 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 const pad = head && !/\s$/.test(head) ? ' ' : '';
                 rec.onresult = (ev) => { let s = ''; for (let i = 0; i < ev.results.length; i++) s += ev.results[i][0].transcript; text.value = head + pad + s + tail; text.setSelectionRange((head + pad + s).length, (head + pad + s).length); fire(); };
                 rec.onend = () => { rec = null; mic.setAttribute('aria-pressed', 'false'); mic.title = 'Speak'; text.focus(); };
-                rec.onerror = (ev) => { if (ev.error === 'not-allowed') say('The microphone is blocked for this site.'); };
+                rec.onerror = (ev) => {
+                    if (ev.error !== 'not-allowed' && ev.error !== 'service-not-allowed') return;
+                    say('The microphone is blocked for this site: allow it from the lock or tune icon beside the address, then try again.');
+                    mic.classList.remove('is-denied'); void mic.offsetWidth; mic.classList.add('is-denied'); mic.title = 'The microphone is blocked for this site';
+                    setTimeout(() => { if (mic) mic.classList.remove('is-denied'); }, 2400);
+                };
                 try { rec.start(); mic.setAttribute('aria-pressed', 'true'); mic.title = 'Stop listening'; } catch { rec = null; }
             });
             tools.insertBefore(mic, tools.firstChild);
@@ -1331,7 +1352,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     // A tool is a module: OpenVibeComposer.tool(id, { label, path, accept? | run(ctx, button, form) }) adds or replaces
     // one for every box; a preset or a site names the ones it shows. Mods (mod()) still add their own buttons.
     const EXAMPLES = {
-        agent: ['Ask for anything', 'Find a live stream about cooking', 'Start a 10-minute timer', 'Summarize today’s Rundown', 'Write a title for my stream', 'What did people post today?'],
+        agent: ['Ask for anything', 'Find a live stream about cooking', 'Start a 10-minute timer', 'Summarize today’s Rundown', 'Write a title for my stream', 'What did people post today?', 'Find me a deal on a 4090', 'Make a goal bar for my stream', 'Remind me to stretch every 2 hours'],
+        chat: ['Write a message', 'Say hi 👋', 'Share a link or a picture', 'Ask the room something', '@vibe can answer here too'],
+        comment: ['Write a reply…', 'Add to the conversation', 'Ask a question', 'Share what you think'],
         post: ["What's new?", 'Share a photo from today', 'Ask your followers a question', 'Post a clip you made'],
     };
     const PRESET = {
@@ -1638,7 +1661,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
         ta.name = o.name || 'text'; ta.rows = p.rows; ta.maxLength = o.maxLength || p.max;
         ta.placeholder = o.placeholder || (name === 'post' ? "What's new?" : name === 'agent' ? 'Ask for anything' : name === 'comment' ? 'Write a reply' : 'Write a message');
         ta.setAttribute('aria-label', o.label || ta.placeholder);
-        { const ex = Array.isArray(o.examples) ? o.examples : (o.placeholder ? null : EXAMPLES[name]); if (ex && ex.length > 1) form.dataset.ovcExamples = JSON.stringify(ex.slice(0, 8)); }
+        // 4.249.0 (the owner, 11-14: "scroll through different examples people type … more animated"): a box with its own
+        // first line keeps it first, then turns through the preset's examples.
+        { const base = Array.isArray(o.examples) ? o.examples : EXAMPLES[name]; const ex = base ? (o.placeholder && !Array.isArray(o.examples) ? [o.placeholder, ...base.slice(1)] : base) : null; if (ex && ex.length > 1) form.dataset.ovcExamples = JSON.stringify(ex.slice(0, 8)); }
         ta.setAttribute('data-ovt-text', '');
         if (o.required !== false) ta.required = true;
         const row = el('div', 'ovt-c-row'), tools = el('div', 'ovt-c-tools'), chips = el('div', 'ovc-chips');

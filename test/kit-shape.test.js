@@ -20,7 +20,7 @@ assert.match(kit, /--ov-elev-2: [^;]+;/);
 assert.match(kit, /--ov-elev-3: [^;]+;/);
 assert.ok(kit.includes('--ovk-radius: var(--ov-radius-2);') && kit.includes('--ovk-radius-sm: var(--ov-radius-1);'), 'the kit\'s own radius names follow the tokens');
 assert.doesNotMatch(kit, /border-radius: (8|10|12|14|18|20)px/, 'no corner of the kit is a literal any more (pills and circles stay)');
-assert.ok(kit.includes('box-shadow: var(--ov-elev-3);') && kit.includes('box-shadow: var(--ov-elev-2);') && kit.includes('box-shadow: var(--ov-elev-1);'), 'the kit\'s shadows are the elevation tokens');
+assert.ok(kit.includes('box-shadow: var(--ov-elev-3);') && kit.includes('box-shadow: var(--ov-elev-2);') && /box-shadow: var\(--ov-elev-1\)[;,]/.test(kit), 'the kit\'s shadows are the elevation tokens');
 assert.match(kit, /:is\(\[data-theme=paper\][^{]*\) \{\s*--ov-radius-1: 4px; --ov-radius-2: 6px; --ov-radius-3: 10px;/, 'Paper is square');
 assert.match(kit, /:is\(\[data-theme=neon-tokyo\][^{]*\) \{\s*--ov-radius-1: 14px; --ov-radius-2: 20px; --ov-radius-3: 28px;/, 'Neon is round');
 assert.match(kit, /--ov-elev-3: 0 0 0 1px color-mix\(in srgb, var\(--ovk-accent\)/, 'and Neon\'s raised things glow in its accent');

@@ -4,10 +4,26 @@
 .ovc-thread { margin: 24px 0; }
 .ovv-panel > .ovc-thread { margin: 0; }
 .ovc-head, .ovc-comment header, .ovc-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.ovc-head { justify-content: space-between; min-height: 40px; margin-bottom: 8px; }
-.ovc-head h2 { margin: 0; font-size: 1.125rem; }
-.ovc-signin, .ovc-none { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 0; }
-.ovc-none { margin-top: 12px; opacity: .75; }
+.ovc-head { min-height: 40px; margin-bottom: 10px; }
+.ovc-head h2 { display: inline-flex; align-items: center; gap: 8px; margin: 0 auto 0 0; font-size: 1.125rem; }
+.ovc-count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 7px; box-sizing: border-box; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent, #3b82f6) 18%, transparent); color: var(--accent, #3b82f6); font-size: .78rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+/* 4.249.0: the discussion's own page, an icon button at the head's end (its words for screen readers and a tooltip). */
+.ovc-open { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; color: var(--text-secondary, #96a7c2); text-decoration: none;
+  transition: background-color .15s ease, color .15s ease, transform .12s ease; }
+.ovc-open > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ovc-open > i { font-size: 18px; }
+.ovc-open:hover, .ovc-open:focus-visible { background: color-mix(in srgb, currentColor 12%, transparent); color: var(--text-primary, #e6edf7); outline: 0; }
+.ovc-open:focus-visible { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
+.ovc-open:active { transform: scale(.94); }
+.ovc-signin, .ovc-none { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 12px; margin: 0; }
+.ovc-none { margin-top: 14px; color: var(--text-secondary, #96a7c2); }
+.ovc-none-mark { display: inline-grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%;
+  background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); color: var(--accent, #3b82f6); font-size: 17px; }
+/* The composer's quiet line (its files, "Sending…") sits under the box in the flow here: the chat dock hangs it below
+   the box with room made for it, which over a comment list put it on top of the next line (the owner, 11-14). */
+.ovc-thread .ovt-composer > .ovt-c-note { position: static; margin: 8px 6px 0; text-align: left; font-size: 12px; line-height: 1.4; }
+.ovc-thread [data-ovc-composer-slot] + :is(.ovc-list, .ovc-none) { margin-top: 14px; }
 .ovc-comment { padding: 12px 0; border-bottom: 1px solid var(--border, #5555); }
 .ovc-comment header img { border-radius: 50%; object-fit: cover; }
 .ovc-comment time { font-size: .875em; opacity: .8; }
@@ -27,7 +43,4 @@
 .ovc-order { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: color-mix(in srgb, currentColor 8%, transparent); }
 .ovc-order a { min-height: 36px; padding: 4px 14px; border: 0; border-radius: 999px; font-size: .875rem; }
 .ovc-order .is-active { font-weight: 700; background: color-mix(in srgb, currentColor 16%, transparent); }
-.ovc-community { margin: 12px 0 0; font-size: .875em; }
-.ovc-community a { color: inherit; opacity: .8; text-decoration: none; }
-.ovc-community a::after { content: ' \2192'; }
-.ovc-community a:hover, .ovc-community a:focus-visible { opacity: 1; text-decoration: underline; }
+html[data-ov-motion="off"] .ovc-open { transition: none; } html[data-ov-motion="off"] .ovc-open:active { transform: none; }

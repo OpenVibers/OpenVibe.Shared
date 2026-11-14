@@ -53,7 +53,7 @@ const server = http.createServer((req, res) => {
         for (const r of rows) {
             assert.ok(r.h >= 56, `a switch row is 56 px (${r.h})`);
             assert.strictEqual(r.icon, '36x36', 'the icon tile is 36 px');
-            assert.strictEqual(r.switch, '44x26', 'the switch is 44 px wide');
+            assert.strictEqual(r.switch, '46x26', 'the switch is 46 px wide (4.249.0: the 3D switch)');
             assert.strictEqual(r.type, 'checkbox', 'the switch is the checkbox');
             assert.strictEqual(r.role, 'switch', 'spoken as a switch');
         }

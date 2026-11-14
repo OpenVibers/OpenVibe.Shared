@@ -7,9 +7,11 @@
 //     shim below; a real toolbar can update the visible viewport before the layout one, which is where a bar at
 //     bottom: 0 is left behind);
 //   • the page scrolls up and down through four positions and the toolbar opens and closes;
-//   • the app bar's bottom edge stays on the visible viewport's bottom (within 1 px), the small player stays 8 px
-//     above the bar, and they do not overlap (4.220.0: the Dock's pill is gone, the menu holds its places; no pill
-//     may come back);
+//   • 4.249.0 (the owner, 11-14: the bottom "becomes real buggy … the offset from the bottom improperly"): a toolbar
+//     never moves the app bar; it stays at bottom: 0 of the layout viewport (within 1 px), which the browser keeps on
+//     the visible bottom itself. Only a keyboard (a focused field, more than 80 px) lifts it, checked at the end;
+//   • the small player stays 8 px above the bar, and they do not overlap (4.220.0: the Dock's pill is gone, the
+//     menu holds its places; no pill may come back);
 //   • the gaps do not jump by more than 1 px between samples.
 // Skipped (exit 0) without Chrome or with OV_SKIP_BROWSER=1.
 const assert = require('node:assert/strict');
@@ -97,7 +99,7 @@ const MEASURE = `(() => {
         visibleBottom: px(visibleBottom), innerHeight, lift: px(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ovb-lift')) || 0),
         bar, mini, pill: !!pill,
         gaps: {
-            bar: bar && px(visibleBottom - bar.b),
+            bar: bar && px(innerHeight - bar.b), barVisible: bar && px(visibleBottom - bar.b),
             mini: (bar && mini) ? px(bar.t - mini.b) : null,
         },
         overlap: { barMini: area(bar, mini) },
@@ -142,15 +144,24 @@ const SCROLLS = [0, 900, 1800, 500];
                     samples.push({ ...(await page.evaluate(MEASURE)), y: 900, toolbar: 'slide', i: 'slide' });
                 }
 
+                // A keyboard: a focused field and 300 px less to see lifts the bar onto the visible bottom.
+                await page.evaluate("(() => { const i = document.createElement('input'); i.id = 'kb-field'; i.style.cssText = 'position:fixed;top:8px;left:8px'; document.body.append(i); i.focus(); })()");
+                await page.evaluate(`__ovvv.set(${height - 300}); scrollTo(0, 0); window.dispatchEvent(new Event('resize')); 0`);
+                await wait(200);
+                const kb = await page.evaluate(MEASURE);
+                await page.evaluate("document.getElementById('kb-field').remove()");
+                await page.evaluate(`__ovvv.set(${height}); window.dispatchEvent(new Event('resize')); 0`);
+                await wait(150);
                 const failures = [];
                 const check = (ok, text) => { if (!ok) failures.push(text); };
+                check(Math.abs(kb.lift - 300) <= 1, `keyboard: the bottom things lift ${kb.lift}px for a 300 px keyboard (the bar itself steps aside while typing)`);
                 for (const m of samples) {
                     const at = `${m.y}px/${m.toolbar}`;
                     check(!!m.bar, `${at}: the app bar is on the page`);
                     check(!!m.mini, `${at}: the small player is on the page`);
                     check(!m.pill, `${at}: no Dock pill (the menu holds its places)`);
                     if (!m.bar || !m.mini) continue;
-                    check(Math.abs(m.gaps.bar) <= 1, `${at}: the app bar's bottom is ${m.gaps.bar}px from the visible bottom`);
+                    check(Math.abs(m.gaps.bar) <= 1 && m.lift === 0, `${at}: the app bar's bottom is ${m.gaps.bar}px from the layout bottom (lift ${m.lift}px; a toolbar never lifts it)`);
                     check(Math.abs(m.overlap.barMini) === 0, `${at}: the bar and the small player overlap by ${m.overlap.barMini}px²`);
                     check(Math.abs(m.gaps.mini - 8) <= 1, `${at}: the small player sits ${m.gaps.mini}px above the bar (8)`);
                 }

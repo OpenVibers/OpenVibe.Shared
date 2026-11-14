@@ -22,6 +22,10 @@ for (const cls of ['ovdk-run', 'ovdk-run-ic', 'ovdk-run-sub', 'ovdk-overview', '
     assert.ok(runs.includes(cls), `the Agents tab has a ${cls}`);
 }
 assert.ok(vibe.includes('ovdk-vibe-list'), 'the Vibe tab has a list');
+// 4.249.0: each Vibe chat wears its persona (OpenVibe.Chat docs/vibe-personas.md): a picture, or its glyph on its hue.
+assert.ok(vibe.includes("personaFace(h('span', 'ovdk-vibe-site'), c.persona)"), 'a list row wears its chat\'s persona');
+assert.ok(vibe.includes('personaFace(mark, got.chat.persona)'), 'the open chat wears it too');
+assert.ok(/\^https:/.test(vibe) && vibe.includes("setAttribute('data-ov-icon', name)"), 'only an https picture, else a registry glyph');
 
 // ── the row says what the run was about ─────────────────────────────────────
 assert.ok(runs.includes('it.subject && it.subject.title'), 'the row is titled by its subject');

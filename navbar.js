@@ -636,7 +636,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '38d7cab3b420', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '89f2b938b3ae', 'dock.js': '5f29e88f48dc', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'aebc7358ae27', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '7b0c89b39ac8', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': '60b6e6de9f97', 'ov-composer.js': 'c29a98f058e6', 'items.js': 'a38f01f90c40', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': 'fc63238d9c65', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '6d4ad32686f3', 'dock.js': '24c7ba228a17', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'b4ea676217e8', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '7b31e71de917', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'cd41e39b63aa', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'bb4682195d1a', 'ov-composer.js': '794eb277bb24', 'items.js': 'a38f01f90c40', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1113,7 +1113,9 @@
     // 4.248.0 (the owner, 11-14): the bar is the little input again, its dot on the left and a typed line in it (the
     // spark that sat beside the dot read as two dots, and its pink is gone: every colour is the theme's); three tabs
     // under it, the first lit.
-    const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="3.6"/>'
+    // 4.249.0 (the owner, 11-14: "too round compared to how it is in the actual menu"): the bar's corner is the menu field's
+    // ratio (16 px on a 52 px field, about .31), the same as the three tiles under it.
+    const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="2.2"/>'
         + '<circle class="ovmb-dot" cx="6.9" cy="7.9" r="1.5"/><path class="ovmb-words" d="M10 7.9h7.2"/>'
         + '<path class="ovmb-spark" d="M17.2 7.9h0"/>'
         + '<rect class="ovmb-app ovmb-a0" x="3" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a1" x="9.4" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a2" x="15.8" y="14.7" width="5.2" height="5" rx="1.6"/>'

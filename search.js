@@ -358,8 +358,10 @@ html[data-ov-motion=off] .ovs-tab span > .ovs-tabdot, html[data-ov-motion=off] .
 @media (hover: hover) { .ovs-grid.is-mini .ovs-tile:hover { background: transparent; } .ovs-grid.is-mini .ovs-tile:hover .ovs-ic { transform: translateY(-3px) scale(1.04); box-shadow: inset 0 0 0 1px hsl(var(--ovs-h, 215) 75% 70% / .5), 0 12px 26px -8px hsl(var(--ovs-h, 215) 75% 45% / .6); } }
 html[data-ov-motion=off] .ovs-grid.is-mini .ovs-ic { transition: none; }
 /* Each section of sites wears its glyph. */
-.ovs-group-ic { order: -1; flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; background: color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovs-group-ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+/* 4.249.0 (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and minimalist"): a glyph stands
+   alone; a tile or disk is kept only where it means something (an app's icon, a face, a status, a button). */
+.ovs-group-ic { order: -1; flex: none; display: grid; place-items: center; width: 22px; height: 22px; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovs-group-ic svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
 /* Names in the brand face (openvibe.design rule: a place's or an app's name in OV Brand 800; words you read in the UI
    face): the site list, the tabs, Vibe's switch. */
 .ovs-grid.is-mini .ovs-tile b, .ovs-starttabs .ovs-tab { font-family: 'OV Brand', Nunito, Inter, -apple-system, BlinkMacSystemFont, sans-serif; font-weight: 800; letter-spacing: .005em; }
@@ -631,7 +633,7 @@ html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(1
 html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(3) { --dx: -2px; --dy: 2px; } html[data-ov-motion=reduced] .ovs-attach.is-bloom .ovs-plus-p circle:nth-child(4) { --dx: 2px; --dy: 2px; }
 html[data-ov-motion=reduced] :is(.ovs-plus-x, .ovs-plus-x path) { transition-timing-function: ease-out; }
 html[data-ov-motion=off] :is(.ovs-plus-x, .ovs-plus-x path, .ovs-plus-p circle) { transition: none; animation: none !important; }
-.ovs-send { color: var(--on-accent, #fff); background: var(--accent, #3b82f6); box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent); animation: ovs-send-in .22s cubic-bezier(.3, 1.4, .4, 1); }
+.ovs-send { color: #fff; background: linear-gradient(160deg, color-mix(in srgb, var(--accent, #3b82f6) 72%, #fff), var(--accent, #3b82f6) 50%, color-mix(in srgb, var(--accent, #3b82f6) 78%, #000)); box-shadow: inset 0 1px 0 rgba(255,255,255,.38), inset 0 -2px 0 rgba(0,0,0,.22), 0 8px 18px -8px color-mix(in srgb, var(--accent, #3b82f6) 85%, transparent); animation: ovs-send-in .22s cubic-bezier(.3, 1.4, .4, 1); }
 @media (hover: hover) { .ovs-send:hover { color: var(--on-accent, #fff); background: var(--accent-hover, color-mix(in oklab, var(--accent, #3b82f6) 85%, #fff)); } }
 @keyframes ovs-send-in { from { transform: scale(.5); opacity: 0; } }
 .ovs-mic.is-on { color: #fff; background: var(--live-red, #ef4444); animation: ovs-mic 1.2s ease-in-out infinite; }
@@ -1797,7 +1799,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         try { const b0 = basis(); if (b0.mineSite) siteId = b0.mineSite.icon || b0.mineSite.id; } catch { /* the sites load later */ }
         // One row of places (4.194.0): this site, the feed, your messages, AI (Vibe and your agents), you. Messages and
         // AI are the Dock's; they are in this row, between Feed and You, where the bar can open the Dock for this person.
-        const doors = typeof ctx.dock === 'function' ? [['chats', ctx.service === 'chat' ? 'Messages' : 'Chat'], ['vibe', 'Vibe']] : [];
+        // 4.249.0 (the owner on openvibe.chat: "Rename as chat and combine"): the door is Chat everywhere (your friends and
+        // conversations); on openvibe.chat the site's own tab is its Rooms (servers, rooms, Global chat), so no two say Chat.
+        const doors = typeof ctx.dock === 'function' ? [['chats', 'Chat'], ['vibe', 'Vibe']] : [];
         const row = [TABS[0], TABS[1], ...doors.map(([id, label]) => [id, label, true]), TABS[2]];
         tabsEl.classList.toggle('has-doors', doors.length > 0);
         for (const [id, label, isDoor] of row) {
@@ -1824,7 +1828,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 const on = document.createElement('i'); on.className = 'ovs-tab-on'; on.setAttribute('aria-hidden', 'true'); ic.appendChild(on);
             } else if (TAB_SVG[id]) ic.innerHTML = TAB_SVG[id];
             if (ic.firstChild) b.appendChild(ic);
-            const t = document.createElement('span'); t.textContent = id === 'here' ? here() : label; b.appendChild(t);
+            const t = document.createElement('span'); t.textContent = id === 'here' ? (ctx.service === 'chat' && doors.length ? 'Rooms' : here()) : label; b.appendChild(t);
             // 4.237.0 (the owner, 11-13): the live dot after the word, a count on the icon's corner, never a third line.
             if (id === 'feed' && live) { const d = document.createElement('i'); d.className = 'ovs-tabdot'; d.setAttribute('aria-label', 'live now'); t.appendChild(d); }
             else if (id === 'feed' && fresh) { const n = document.createElement('b'); n.className = 'ovs-tabnew'; n.textContent = fresh > 9 ? '9+' : String(fresh); n.setAttribute('aria-label', `${fresh} new since you last looked`); (b.querySelector('.ovs-tab-ic') || b).appendChild(n); }
@@ -1851,7 +1855,12 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const b0 = basis();
             const mineSite = b0.mineSite;
             if (!mineSite) return [];
-            return b0.ranked.filter((x) => x.group === mineSite.group && x.id !== mineSite.id && x.name).slice(0, 6).map((x) => ({ label: x.name, icon: x.icon || x.id }));
+            // 4.249.0 (the owner, 11-14: "keep that roll … not randomized, but connected sites … stuff people go to from"):
+            // the sites this person goes to most, then (for a new person) the rest of this site's section.
+            const others = b0.ranked.filter((x) => x.id !== mineSite.id && x.name);
+            const used = others.filter((x) => useOf(x.id) > 0);
+            const pool = used.length >= 2 ? used : others.filter((x) => x.group === mineSite.group);
+            return pool.slice(0, 6).map((x) => ({ label: x.name, icon: x.icon || x.id }));
         } catch { return []; }
     }
     function rollStop() {
@@ -1864,6 +1873,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         b.classList.remove('is-rolling');
     }
     function rollHere() {
+        // The roll stays (the owner, 11-14: "keep that randomized roll, I like that"); a site can turn it off with
+        // data-ov-roll="off" on <html>. It starts well after the menu has opened, so the opening itself never flickers.
+        if (document.documentElement.getAttribute('data-ov-roll') === 'off') return;
         if (document.documentElement.getAttribute('data-ov-motion') === 'off') return;
         const b = tabsEl && tabsEl.querySelector('.ovs-tab[data-tab="here"]');
         const steps = rollSteps();
@@ -2192,6 +2204,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     }
 
     function render(q) {
+        // The field's buttons follow its words on every render (4.249.0; the owner, 11-14: typed, closed, reopened: "empty …
+        // lit up"): a clear that set the value by script left Send showing.
+        try { syncTools(); } catch { /* the menu is being built */ }
         q = String(q || '').trim();
         el.classList.toggle('ovs-typing', !!q);
         if (door === 'chats' && canDoor()) { try { root.OpenVibeDock.filterChats(q); } catch { /* */ } return; }
@@ -2566,6 +2581,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         } else document.documentElement.style.overflow = 'hidden';
         input.placeholder = askHint();
         input.value = opts.q || '';
+        try { syncTools(); } catch { /* */ }
         paintGhost();
         render(input.value);
         if (flyFrom && !input.value) requestAnimationFrame(flyIn);
