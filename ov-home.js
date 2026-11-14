@@ -2074,6 +2074,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             // A report says its sentence beside its number (statOf); a member card says it here.
             const what = kind === 'member' ? String(c.text || '').slice(0, 60) : kind === 'report' ? '' : KIND_WORD[kind] || '';
             meta.append(siteIcon(c.site || 'ov', 18), document.createTextNode(` ${[what, when(c.at)].filter(Boolean).join(' · ')}`));
+            // The site's live line ("79 new deals today") lands here once the feed has it (siteLines, plan §AB.46).
+            if (SITE_ID.test(String(c.site || ''))) meta.setAttribute('data-ovfd-site', String(c.site));
         }
         who.append(meta);
         head.append(face, who);
@@ -2237,6 +2239,42 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const line = h('div', 'ovfd-day'); line.setAttribute('role', 'separator'); line.append(h('span', '', label));
         return line;
     }
+    /**
+     * Each site's live line (4.252.0, plan §AB.46; the owner: "needs more metrics"): Network's GET /api/frame/feed/sites
+     * ({ sites: { deals: { line: '79 new deals today', url }, live: { line: '3 live now', url } } }), read once per page
+     * and kept five minutes; a site's own card (no person behind it) says it under its name. No answer: no line.
+     */
+    const SITE_ID = /^[a-z][a-z0-9-]{0,30}$/;
+    let siteLinesAsk = null;
+    function siteLines(o) {
+        if (siteLinesAsk) return siteLinesAsk;
+        const fb = String(o.frameBase || '');
+        const url = `${/^https:\/\/[^/]+\/api\/frame\/?$/.test(fb) ? fb.replace(/\/+$/, '') : FRAME}/feed/sites`;
+        siteLinesAsk = (async () => {
+            try { const c = JSON.parse(sessionStorage.getItem('ovfd-sites') || 'null'); if (c && Date.now() - c.at < 5 * 60000 && c.sites) return c.sites; } catch { /* */ }
+            try {
+                const r = await fetch(url, { credentials: 'omit', headers: { Accept: 'application/json' } });
+                const j = r.ok ? await r.json() : null;
+                const sites = {};
+                for (const [k, v] of Object.entries((j && j.sites) || {})) {
+                    if (SITE_ID.test(k) && v && typeof v.line === 'string' && v.line.trim()) sites[k] = { line: v.line.replace(/\s+/g, ' ').trim().slice(0, 40) };
+                }
+                try { sessionStorage.setItem('ovfd-sites', JSON.stringify({ at: Date.now(), sites })); } catch { /* */ }
+                return sites;
+            } catch { return {}; }
+        })();
+        return siteLinesAsk;
+    }
+    function wearSiteLines(scope, o) {
+        if (o.siteLines === false) return;
+        siteLines(o).then((sites) => {
+            scope.querySelectorAll('[data-ovfd-site]:not([data-ovfd-lined])').forEach((m) => {
+                m.setAttribute('data-ovfd-lined', '');
+                const s = sites[m.getAttribute('data-ovfd-site')];
+                if (s) m.append(h('span', 'ovfd-line', s.line));
+            });
+        });
+    }
     function feed(el, o) {
         styles(); feedStyles();
         el.classList.add('ovh', 'ovfd');
@@ -2255,7 +2293,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
         const seen = seenCounter(o, el);
         const add = (x, card) => { if (!card) return; list.append(card); seen.watch(card, x && x.id); };
         // Names wear what their people wear (OpenVibe.Inventory through items.js, where the page has it).
-        const decorate = () => { try { if (root.OpenVibeItems && typeof root.OpenVibeItems.decorate === 'function') root.OpenVibeItems.decorate(list); } catch { /* names stay plain */ } };
+        const decorate = () => { wearSiteLines(list, o); try { if (root.OpenVibeItems && typeof root.OpenVibeItems.decorate === 'function') root.OpenVibeItems.decorate(list); } catch { /* names stay plain */ } };
         let query = '', searchSeq = 0;
         const loaded = [];
         const feedBase = `${o.frameBase || FRAME}/feed`;
@@ -2436,6 +2474,9 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-who{min-width:0;display:grid}
 .ovfd-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ovfd-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
+.ovfd-line{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding:1px 7px;border-radius:999px;font-weight:600;font-size:11.5px;color:var(--accent,#5b8cff);background:color-mix(in srgb,var(--accent,#5b8cff) 12%,transparent);white-space:nowrap}
+.ovfd-line::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
+.ovfd-who small[data-ovfd-site]{flex-wrap:wrap;row-gap:3px}
 .ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
 .ovfd-card.is-on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--live,#ef4444) 45%,transparent);background:color-mix(in srgb,var(--live,#ef4444) 7%,transparent)}
 @keyframes ovfd-onair{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--live,#ef4444) 25%,transparent)}}

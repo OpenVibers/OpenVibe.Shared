@@ -6,7 +6,8 @@
 //   - a photo whose picture does not load folds its frame away;
 //   - a group's rows without a picture (or with a broken one) show the site's small mark, never an empty square;
 //   - faces in a run of streamers whose pictures do not load become first letters;
-//   - the views beacon goes to the Network (it went to '/api/v1/api/v1/feed/views' on such a proxy: a 404).
+//   - the views beacon goes to the Network (it went to '/api/v1/api/v1/feed/views' on such a proxy: a 404);
+//   - a site's own card wears the site's live line from Network's /api/frame/feed/sites ("14 new jobs today").
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -41,6 +42,7 @@ const server = http.createServer((req, res) => {
     window.fetch = (url) => { const u = String(url);
       if (u.includes('/feed/examples')) return J({ examples: [] });
       if (u.startsWith('/api/v1/feed?')) return J({ items: ${JSON.stringify(items)}, next_cursor: null });
+      if (u === 'https://openvibe.network/api/frame/feed/sites') return J({ sites: { work: { line: '14 new jobs today', url: 'https://openvibe.work/jobs' }, live: { line: '1 live now', url: 'https://openvibe.live/' }, 'bad site!': { line: 'x' } } });
       return J({}, false);
     };
     </script><script src="/ov-home.js"></script><script>
@@ -74,6 +76,9 @@ const server = http.createServer((req, res) => {
             'a card\'s face whose picture does not load becomes its first letter');
         assert.strictEqual(await page.evaluate(`[...document.querySelectorAll('.ovfd-list img')].filter((i) => i.complete && i.naturalWidth === 0 && getComputedStyle(i).visibility !== 'hidden' && getComputedStyle(i).display !== 'none' && i.offsetParent).length`), 0,
             'no broken picture is left showing');
+        // A site's own card wears the site's live line (plan §AB.46); a person's card does not.
+        assert.ok(await wait(`(document.querySelector('[data-ovfd-site="work"] .ovfd-line') || {}).textContent === '14 new jobs today'`), 'a site\'s card says what is new there');
+        assert.strictEqual(await page.evaluate(`document.querySelectorAll('.ovfd-line').length`), 1, 'only the site\'s own card wears it');
         // The views beacon: the cards were on screen for a second; hiding the page sends them.
         await new Promise((ok) => setTimeout(ok, 1400));
         await page.evaluate(`Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true }); document.dispatchEvent(new Event('visibilitychange'))`);

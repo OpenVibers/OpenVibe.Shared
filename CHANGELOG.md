@@ -14,6 +14,11 @@ not load leaves no empty mark (items.js).
 (Community's /pulse) it went to `/api/v1/api/v1/feed/views`, a 404; anything but Network's own frame address now sends
 to `https://openvibe.network/api/v1/feed/views`. Test: `test/feed-pictures-chrome.test.js`.
 
+**A site's card says what is new there** (plan §AB.46; the owner: "needs more metrics"). A site's own card (Deals, Work,
+News…: no person behind it) wears the site's live line under its name, "1,240 new jobs today", "3 live now", from
+Network's `GET /api/frame/feed/sites` (read once a page, kept five minutes; no answer, no line; `o.siteLines: false` turns
+it off).
+
 **Recent searches follow you** (plan §AB.34; the owner: "search history … across all sites"). Signed in, each search run
 from the menu is kept on the account (Network's history, kind `search`; needs OpenVibe.Network's `search` kind and
 `DELETE /api/history/type/:type`) and read back on every site, first, before this browser's own list. The menu's first
