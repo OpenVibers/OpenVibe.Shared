@@ -8,6 +8,11 @@ through the sites people go to next from this one (the Frame's `next`, from the 
 person goes to most, and only for a site with no flows yet through its own section. Test:
 `test/menu-roll-flows-chrome.test.js`.
 
+**Every page in the menu wears its own glyph** (plan §AA.38). A page row uses the site's own icon (`links[].icon`) when
+it names one, else one read from the page's name ("Jobs" a briefcase, "Live tours" a broadcast, "Watchlists" an eye,
+"Albums" pictures, "Dashboard" a gauge), else the arrow; of the 129 pages the sites list today, 45 named no icon and
+all but one now have one. Test: `test/menu-page-glyphs-chrome.test.js`.
+
 ## 4.252.0 — 2026-11-14
 
 **No broken pictures in the feed** (plan §AB.43; the owner: "lots of broken and missing icons and images"). A video,
