@@ -424,7 +424,7 @@ const GROUPS = {
         ['surf', 'Surf maps and the web', 'https://openvibe.surf/'],
         ['fun', 'Something to do', 'https://openvibe.fun/'],
         ['meme', 'Memes with receipts', 'https://openvibe.meme/'],
-        ['casino', 'Odds shown, chips free', 'https://openvibe.casino/'],
+        ['casino', 'Odds shown, play chips only', 'https://openvibe.casino/'],
         ['inventory', 'Your items', 'https://openvibe.my/inventory'],
     ],
     read: [

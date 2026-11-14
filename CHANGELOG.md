@@ -6,6 +6,9 @@
 OpenVibe" and the default line: Shoes, Actor and Connect lost "Part of OpenVibe" and their own sentence. The heading
 and lede pass through again; without them the list keeps its defaults. Test: `test/showcase.test.js`.
 
+Casino's line in the network reads "Odds shown, play chips only": "chips free" was a pricing claim on every page
+that shows the network (Tips' copy rule caught it).
+
 ## 4.256.0 — 2026-11-14
 
 **One account. 61 sites.** (plan §AA.37). `showcase.network({ service })` is the whole network on every site's home:
