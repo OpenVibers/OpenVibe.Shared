@@ -101,6 +101,7 @@
     })());
 
     const NETWORK_URL = 'https://openvibe.network';
+    const STATS_URL = 'https://openvibe.report/stats';   // every site's numbers, open to all
     const REPORT_URL = 'https://openvibe.help/tickets/new';
     const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -665,8 +666,8 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
                 : '<a class="ovf-pulse-quiet" href="https://openvibe.live/">Nobody live right now · go live</a>');
         }
         if (p.watching > 0) bits.push(`<span>${fmtN(p.watching)} watching</span>`);
-        if (p.sites > 0) bits.push(`<a href="${NETWORK_URL}/#network">${fmtN(p.sites)} sites, one account</a>`);
-        if (p.views_7d > 0) bits.push(`<span>${fmtN(p.views_7d)} page views this week</span>`);
+        if (p.sites > 0) bits.push(`<a href="${NETWORK_URL}/sites">${fmtN(p.sites)} sites, one account</a>`);
+        if (p.views_7d > 0) bits.push(`<a href="${STATS_URL}">${fmtN(p.views_7d)} page views this week</a>`);
         return bits.join('<span class="ovf-sep" aria-hidden="true">·</span>');
     }
     /** A number from the read, or null; the read is ours but nothing on a page trusts its input. */
@@ -749,8 +750,10 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         }
         o.counts.forEach((c) => tiles.push(row(c)));
         o.items.forEach((i) => tiles.push(row(i)));
-        if (o.sites > 0) tiles.push(tile(`${NETWORK_URL}/#network`, '', `${icon('sites')}<b>${fmtN(o.sites)}</b><span>sites, one account</span>`));
-        if (o.views_7d > 0) tiles.push(tile('', '', `${icon('chart')}<b>${fmtN(o.views_7d)}</b><span>page views this week</span>`));
+        // 4.249.0 (the owner, 11-14: "the view count should go to the analytics … on .report, and the number of sites
+        // should go to .network"): every count opens the page that has all of it.
+        if (o.sites > 0) tiles.push(tile(`${NETWORK_URL}/sites`, '', `${icon('sites')}<b>${fmtN(o.sites)}</b><span>sites, one account</span>`));
+        if (o.views_7d > 0) tiles.push(tile(STATS_URL, '', `${icon('chart')}<b>${fmtN(o.views_7d)}</b><span>page views this week</span>`));
         const more = o.counts.length || o.items.length;
         return `<div class="ovf-now">${who}${tiles.length ? `<div class="ovf-tiles${more ? ' ovf-online-actions' : ''}">${tiles.join('')}</div>` : ''}</div>`;
     }

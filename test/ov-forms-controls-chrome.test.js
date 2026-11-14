@@ -40,8 +40,8 @@ const server = http.createServer((req, res) => {
         assert.ok(/transform/.test(await cs('off', 'transitionProperty', '::before')), 'the check scales in');
         assert.equal(await cs('r', 'appearance'), 'none', 'a radio is drawn');
         assert.equal(await cs('r', 'borderTopLeftRadius'), '50%');
-        assert.equal(await cs('sw', 'width'), '42px', 'a switch stays a switch');
-        assert.equal(await cs('sw', 'transform', '::before'), 'none', 'a switch has no check mark');
+        assert.equal(await cs('sw', 'width'), '46px', 'a switch stays a switch (4.249.0: 46 px, the 3D switch)');
+        assert.equal(await cs('sw', 'width', '::before'), '20px', 'a switch has no check mark: its ::before is the 20 px thumb (4.249.0)');
         assert.equal(await cs('mine', 'width'), '30px', 'a site\'s own rule wins');
         assert.notEqual(await cs('native', 'appearance'), 'none', 'data-ov-native keeps the browser\'s box');
         // 4.248.0: the press is `scale` (never `transform`, which a site may position a button with).

@@ -209,32 +209,44 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"], input[type="range"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
     outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px;
 }
+/* The switch (4.249.0, the owner, 11-14: "these toggles need to be made consistent and polished … the 3D kind of effect …
+   an animation"): a recessed track and a raised thumb, lit from above like the composer's buttons. The thumb springs
+   across (a little past, then back), stretches while held, and the track blooms once when it turns on. min-* sizes
+   keep its shape when a page gives the box a smaller width (a lone 18 px checkbox made a dot). kit.css's .ovk-switch is
+   drawn the same. */
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *)) {
-    -webkit-appearance: none; appearance: none; box-sizing: border-box; flex: none; vertical-align: middle;
-    width: 42px; height: 24px; margin: 0; border: 0; border-radius: 999px; cursor: pointer;
-    background-color: color-mix(in srgb, CanvasText 26%, transparent);
-    background-image: radial-gradient(circle, #fff 0 8.5px, transparent 9px);
-    background-repeat: no-repeat; background-size: 20px 20px; background-position: 2px 50%;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, CanvasText 10%, transparent);
-    transition: background-color .18s ease, background-position .2s cubic-bezier(.3, .8, .3, 1);
+    -webkit-appearance: none; appearance: none; box-sizing: border-box; flex: none; position: relative; vertical-align: middle;
+    width: 46px; height: 26px; min-width: 46px; min-height: 26px; max-height: 26px; margin: 0; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(to bottom, color-mix(in srgb, CanvasText 30%, transparent), color-mix(in srgb, CanvasText 20%, transparent));
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .38), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 1px 0 rgba(255, 255, 255, .05);
+    transition: background-color .2s ease, box-shadow .25s ease;
+}
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *))::before {
+    content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 999px;
+    background: radial-gradient(circle at 38% 28%, #fff 0 30%, #eef2f8 58%, #cfd7e3 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .38), 0 1px 1px rgba(0, 0, 0, .22), inset 0 -1.5px 1px rgba(0, 0, 0, .1), inset 0 1px 0 #fff;
+    transition: transform .34s cubic-bezier(.34, 1.56, .64, 1), width .16s ease;
 }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *)) {
-    background-color: var(--accent, #3b82f6); background-position: calc(100% - 2px) 50%;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, #000 12%, transparent), 0 0 14px color-mix(in srgb, var(--accent, #3b82f6) 38%, transparent);
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--accent, #3b82f6) 78%, #000), var(--accent, #3b82f6));
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .3), inset 0 -1px 0 rgba(255, 255, 255, .14), 0 0 14px color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent);
+    animation: ov-switch-on .5s ease-out;
 }
-:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):hover {
-    background-color: color-mix(in srgb, CanvasText 34%, transparent);
-}
-:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *, :disabled)):hover {
-    background-color: color-mix(in srgb, var(--accent, #3b82f6) 88%, #fff);
-}
-:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active {
-    transform: none; background-image: radial-gradient(ellipse 13px 8.5px, #fff 0 92%, transparent 100%); background-size: 26px 20px;
-}
-:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active { background-position: calc(100% - 2px) 50%; }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *))::before { transform: translateX(20px); }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):hover::before { box-shadow: 0 3px 7px rgba(0, 0, 0, .4), 0 1px 1px rgba(0, 0, 0, .22), inset 0 -1.5px 1px rgba(0, 0, 0, .1), inset 0 1px 0 #fff; }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active::before { width: 26px; }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]:checked):where(:not([data-ov-native], [data-ov-native] *, :disabled)):active::before { transform: translateX(14px); }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
-    outline: none; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent);
+    outline: 2px solid var(--accent, #3b82f6); outline-offset: 3px;
 }
+:where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *)):disabled { opacity: .5; cursor: not-allowed; }
+@keyframes ov-switch-on {
+    0% { box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .3), 0 0 0 0 color-mix(in srgb, var(--accent, #3b82f6) 55%, transparent); }
+    100% { box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .3), inset 0 -1px 0 rgba(255, 255, 255, .14), 0 0 14px color-mix(in srgb, var(--accent, #3b82f6) 40%, transparent), 0 0 0 9px transparent; }
+}
+:where(html[data-theme-mode="light"]:not([data-ov-forms="off"])) :where(input[type="checkbox"][role="switch"]):where(:not([data-ov-native], [data-ov-native] *, :checked)) { background: linear-gradient(to bottom, #c9d2de, #dbe2ec); }
+html[data-ov-motion="off"] :where(input[type="checkbox"][role="switch"]), html[data-ov-motion="off"] :where(input[type="checkbox"][role="switch"])::before { animation: none; transition: none; }
+html[data-ov-motion="calm"] :where(input[type="checkbox"][role="switch"])::before { transition-timing-function: ease; transition-duration: .3s; }
 /* Motion follows the person: Calm takes its time, Off moves nothing (the state still changes). */
 html[data-ov-motion="calm"] :where(input[type="checkbox"], input[type="radio"], button, .btn)::before { transition-duration: .32s; }
 html[data-ov-motion="off"] :where(input[type="checkbox"], input[type="radio"], button, input[type="button"], input[type="submit"], .btn, [role="button"], input, textarea, select),
