@@ -515,10 +515,17 @@
 .ovf-split-l b{color:var(--text-primary,#f1f4fb);font-variant-numeric:tabular-nums}.ovf-split-l small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted,#8b93ad)}
 .ovf-who .ovf-c0{background:var(--accent,#60a5fa)}.ovf-who .ovf-c1{background:var(--success-text,#34d399)}.ovf-who .ovf-c2{background:var(--warning-text,#fbbf24)}.ovf-who .ovf-c3{background:#a78bfa}.ovf-who .ovf-c4{background:#f472b6}.ovf-who .ovf-c5{background:#22d3ee}.ovf-who .ovf-c6{background:#fb923c}.ovf-who .ovf-c7{background:#94a3b8}.ovf-who .ovf-c8{background:#64748b}
 /* Open, the box is a column: the people one per line, the tiles stacked (11-14: "start stacking vertically"). */
-.ovf-who[open] .ovf-who-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))}
-.ovf-who[open] .ovf-who-list a{display:flex;border-radius:12px}
-.ovf-now:has(>.ovf-who[open])>.ovf-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));margin:6px 0 0;padding:0;overflow:visible}
-.ovf-now:has(>.ovf-who[open])>.ovf-tiles>.ovf-tile{border-radius:12px;white-space:normal}
+/* 4.249.0 (the owner, 11-14: "compact … condensed on mobile … better on desktop"): open, the people stay chips that wrap
+   (a name and its site, no full-width rows), the sites split into two tight columns, the tiles a dense grid. */
+.ovf-who[open] .ovf-who-list{gap:5px}
+.ovf-who[open] .ovf-who-list a{min-height:32px;padding:2px 10px 2px 3px}
+.ovf-who[open] .ovf-who-list img,.ovf-who[open] .ovf-who-list i{width:24px;height:24px}
+.ovf-who[open] .ovf-split-l{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px;margin-top:6px}
+.ovf-who[open] .ovf-split-l a,.ovf-who[open] .ovf-split-l li>span{min-height:26px;padding:1px 6px;font-size:12.5px}
+.ovf-who[open] .ovf-split-l small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovf-now:has(>.ovf-who[open])>.ovf-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),1fr));gap:5px;margin:4px 0 0;padding:0;overflow:visible}
+.ovf-now:has(>.ovf-who[open])>.ovf-tiles>.ovf-tile{border-radius:10px;white-space:normal;min-height:38px;padding-block:4px}
+@media (min-width:900px){.ovf-who[open] .ovf-split-l{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .ovf-tiles{display:flex;gap:6px;margin:0 -14px;padding:0 14px 2px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
 .ovf-tiles::-webkit-scrollbar{display:none}
 .ovf-tile{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:36px;box-sizing:border-box;padding:0 12px 0 10px;border-radius:999px;white-space:nowrap;font-weight:500!important;color:var(--text-secondary,#b6bdd2);background:color-mix(in srgb,var(--text-primary,#f1f4fb) 5%,transparent);transition:background-color .15s,transform .12s}
