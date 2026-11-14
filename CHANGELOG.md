@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.253.0 — 2026-11-14
+
+**The site tab's roll goes where people go next** (plan §AB.33; the owner: "keep that randomized roll, I like that …
+not randomized, but connected sites … stuff people go to from"). The menu's first tab rolls its name and glyph first
+through the sites people go to next from this one (the Frame's `next`, from the network's own flows), then the sites this
+person goes to most, and only for a site with no flows yet through its own section. Test:
+`test/menu-roll-flows-chrome.test.js`.
+
 ## 4.252.0 — 2026-11-14
 
 **No broken pictures in the feed** (plan §AB.43; the owner: "lots of broken and missing icons and images"). A video,

@@ -1890,11 +1890,15 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             const b0 = basis();
             const mineSite = b0.mineSite;
             if (!mineSite) return [];
-            // 4.249.0 (the owner, 11-14: "keep that roll … not randomized, but connected sites … stuff people go to from"):
-            // the sites this person goes to most, then (for a new person) the rest of this site's section.
+            // The owner, 11-14: "keep that roll … not randomized, but connected sites … stuff people go to from". 4.253.0:
+            // first the sites people go to next from this one (the Frame's `next`, from the network's own flows), then
+            // the sites this person goes to most, then (for a new person on a site with no flows yet) its section.
             const others = b0.ranked.filter((x) => x.id !== mineSite.id && x.name);
-            const used = others.filter((x) => useOf(x.id) > 0);
-            const pool = used.length >= 2 ? used : others.filter((x) => x.group === mineSite.group);
+            const byId = new Map(others.map((x) => [x.id, x]));
+            const f = ctx.frame;
+            const flows = (f && f.next && Array.isArray(f.next[mineSite.id]) ? f.next[mineSite.id] : []).map((id) => byId.get(id)).filter(Boolean);
+            const used = others.filter((x) => useOf(x.id) > 0 && !flows.includes(x));
+            const pool = flows.length + used.length >= 2 ? flows.concat(used) : others.filter((x) => x.group === mineSite.group);
             return pool.slice(0, 6).map((x) => ({ label: x.name, icon: x.icon || x.id }));
         } catch { return []; }
     }
