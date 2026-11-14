@@ -1724,7 +1724,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             // Dock's Vibe, Agents and Code panels are no longer lent here.
             actions: { base: net }, starters: VIBE_STARTERS, agent: true,
             // Above the list: Now (timers, what is on) and the live view of an agent at work, from the Dock's agent top.
-            top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
+            // 4.248.0 (the owner, 11-14: "Your agent's idle? You don't even need that"): no Now / Needs you / timeline above
+            // Vibe; what needs you comes as a card in the conversation, the rest is History.
             onPlace: (p) => { if (p.filter) runFilter = p.filter; },
         };
         const go = (R) => {

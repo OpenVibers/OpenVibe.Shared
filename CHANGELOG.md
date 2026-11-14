@@ -51,6 +51,14 @@ same card with room between, unread a tint and a dot at the right, a ⋯ menu (M
 Notification settings) instead of the bare X, and up to three buttons a notice brings in `rich_content.actions`
 ([{ label, url, style: primary|danger }], https only: Approve and Deny on an approval, Watch on a live notice).
 
+**Vibe is a conversation** (ov-run.js and the menu; the owner, 11-14: "you see how it says now your agent's idle? You
+don't even need that … more like a conversation view … move this history … to a history button in the corner … the tabs
+… need to be above the actor. And the actor … a fixed thing that's on top, kind of like how Muse is"): All, Chats, Tasks
+and Code on top, your agent fixed under them (face, state, today's spend, History and Pause), and All opens today's
+conversation with it in place, with "Message Vibe" below. History lists every conversation, task and code run; pressed
+again, it is back to the conversation. The menu no longer lends the Dock's Now / Needs you / timeline above Vibe.
+The footer no longer names a live streamer twice (their row says LIVE; the channel tile goes).
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.

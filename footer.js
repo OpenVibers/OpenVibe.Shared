@@ -742,7 +742,10 @@ html[data-ov-motion=off] :where(.ovf) :where(a,button):active{scale:none;opacity
         const live = o.live;
         if (live && live.channels > 0) {
             tiles.push(tile('https://openvibe.live/', ' is-live', `<span class="ovf-dot" aria-hidden="true"></span><b>${fmtN(live.channels)}</b><span>live now</span>${live.watching > 0 ? `<small>${fmtN(live.watching)} watching</small>` : ''}`));
-            live.first.forEach((c) => tiles.push(tile(c.url, ' is-channel', `<span>${esc(c.name)}</span>`)));   // a channel is nobody: no effect to wear
+            // A channel whose streamer is in the list already says so on their own row (LIVE, red ring): not twice
+            // (11-14, the owner: "it shows Maticus twice").
+            const named = new Set(o.people.filter((p) => p.live && p.liveUrl).map((p) => p.liveUrl.toLowerCase()));
+            live.first.filter((c) => !named.has(String(c.url).toLowerCase())).forEach((c) => tiles.push(tile(c.url, ' is-channel', `<span>${esc(c.name)}</span>`)));   // a channel is nobody: no effect to wear
         }
         o.counts.forEach((c) => tiles.push(row(c)));
         o.items.forEach((i) => tiles.push(row(i)));
