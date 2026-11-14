@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.254.0 — 2026-11-14
+
+**A code grid is never wider than the phone** (plan §AB.49). `.sc-code`'s columns were at least 320 px and, on a phone,
+one `1fr` column, which grows to whatever is inside: openvibe.zone put its part bar of eight tabs in one and the page
+scrolled sideways to 613 px. The columns are now `min(320px, 100%)` wide at least and the phone's one column is
+`minmax(0, 1fr)`, so long code scrolls inside its own box. Test: `test/showcase-code-phone-chrome.test.js`.
+
 ## 4.253.0 — 2026-11-14
 
 **The site tab's roll goes where people go next** (plan §AB.33; the owner: "keep that randomized roll, I like that …
