@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.251.0 — 2026-11-14
+
+**Notifications like a phone's, finished** (plan §AB.31, §AB.52). An agent's notice wears the agent's face: its picture
+(`rich_content.agent.avatar_url`), else its glyph on its own hue (`rich_content.agent { name, hue, glyph }`, which Actor
+sends). With Unread the default view, "Mark all read" empties the list, so it says "Clear all".
+
 ## 4.250.0 — 2026-11-14
 
 **The messenger, full-page** (plan §AB.8/47; the owner: "the same conversation system everywhere … capable of
