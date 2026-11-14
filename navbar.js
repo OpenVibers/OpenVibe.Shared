@@ -323,7 +323,8 @@
             .ovmb-dot { fill: currentColor; }
             .ovmb-spark { fill: var(--ovo-b, #e879f9); }
             .ovmb-words { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: .55; }
-            .ovmb-app { fill: currentColor; opacity: .42; }
+            .ovmb-app { fill: currentColor; opacity: .5; }
+            .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-words) { display: none; }
             .ovmb-lit { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
             .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-words, .ovmb-spark, .ovmb-app, .ovmb-lit) { transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.2,1.3,.3,1), fill .3s, stroke-width .3s, opacity .25s; }
             .ovmb-a0 { transition-delay: .03s; } .ovmb-a1 { transition-delay: .06s; } .ovmb-a2 { transition-delay: .09s; }
@@ -345,9 +346,10 @@
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-bar, .ovmb.is-x .ovmb-bar { transform: translateY(4.1px) rotate(45deg) scale(.92, .38); fill: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb :is(.ovmb-dot, .ovmb-words, .ovmb-spark), .ovmb.is-x :is(.ovmb-dot, .ovmb-words, .ovmb-spark) { transform: scale(0); opacity: 0; }
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-app, .ovmb.is-x .ovmb-app { fill: var(--ovo-a, var(--accent-light, #60a5fa)); opacity: 1; }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.12, .55); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(0, -5.2px) rotate(-45deg) scale(1.12, .55); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: translate(-2.4px, -9.2px) rotate(-45deg) scale(1.12, .55); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(4.8px, 4.8px) rotate(45deg) scale(2.15, .3); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(-4.8px, 4.8px) rotate(-45deg) scale(2.15, .3); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: scale(0); opacity: 0; }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-lit, .ovmb.is-x .ovmb-lit { transform: translate(4.8px, 4.8px) rotate(45deg) scale(2.15, .3); }
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-lit, .ovmb.is-x .ovmb-lit { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.12, .55); opacity: 0; }
             /* A close mark that arrives already made (the Dock's sheet) forms from the button it came from. */
             .ovmb.is-forming :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
@@ -406,8 +408,20 @@
             :hover > .ovsi .ovsi-a { animation: none; opacity: 1; }
             html[data-ov-motion=off] .ovsi :is(.ovsi-p, .ovsi-a) { animation: none; }
             .ovsi-o { opacity: 0; stroke-dasharray: 30 39; }
-            .is-going .ovsi-o { opacity: 1; animation: ovsi-go 1s linear infinite; }
-            .is-going .ovsi-p { opacity: .55; }
+            /* 4.248.0 (the owner, 11-14: "the spinning circle should be on the outer rim … animated better"): signing in, a
+               comet of light runs around the button's rim (not inside its glyph), the glyph breathing within. */
+            .openvibe-navbar-login { position: relative; }
+            .openvibe-navbar-login.is-going::before { content: ''; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
+                background: conic-gradient(from 0deg, transparent 0 52%, color-mix(in srgb, var(--accent-light, #93c5fd) 40%, transparent) 70%, var(--accent-light, #93c5fd) 92%, #fff 100%);
+                -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px));
+                animation: ovsi-rim .85s linear infinite; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent)); }
+            .is-going .ovsi-o { display: none; }
+            .is-going .ovsi-p { opacity: .85; animation: ovsi-breathe 1.1s ease-in-out infinite; transform-origin: 12px 12px; }
+            @keyframes ovsi-rim { to { transform: rotate(1turn); } }
+            @keyframes ovsi-breathe { 50% { opacity: .5; transform: scale(.9); } }
+            html[data-ov-motion=reduced] .openvibe-navbar-login.is-going::before { animation-duration: 1.6s; }
+            html[data-ov-motion=off] .openvibe-navbar-login.is-going::before { animation: none; background: color-mix(in srgb, var(--accent-light, #93c5fd) 70%, transparent); }
+            html[data-ov-motion=off] .is-going .ovsi-p { animation: none; }
             @keyframes ovsi-p { 0%, 62%, 100% { opacity: 1; transform: none; } 70%, 92% { opacity: 0; transform: translateX(4px); } }
             @keyframes ovsi-a { 0%, 62%, 100% { opacity: 0; transform: translateX(-5px); } 70%, 92% { opacity: 1; transform: none; } }
             @keyframes ovsi-go { to { stroke-dashoffset: -69; } }
@@ -1098,11 +1112,13 @@
     // the same place, the one that closes it (rule opens-it-closes-it). One drawing for the bar, the menu's sheet and
     // the Dock's (root.OpenVibeOrb); its styles are above (.ovmb). Class names kept from M57 (.ovmb-bar, .ovmb-dot for
     // the face, .ovmb-app .ovmb-a0..2 for the tabs) so every caller and test still finds its parts.
-    const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="3.6"/>'
-        + '<circle class="ovmb-dot" cx="6.9" cy="7.9" r="1.5"/><path class="ovmb-words" d="M10 7.9h3.4"/>'
-        + '<path class="ovmb-spark" d="M16.6 5.75l.62 1.53 1.53.62-1.53.62-.62 1.53-.62-1.53-1.53-.62 1.53-.62z"/>'
-        + '<rect class="ovmb-app ovmb-a0" x="3" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a1" x="9.4" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a2" x="15.8" y="14.7" width="5.2" height="5" rx="1.6"/>'
-        + '<rect class="ovmb-lit" x="3" y="14.7" width="5.2" height="5" rx="1.6"/>';
+    // 4.248.0 (the owner, 11-14: "improve, redo" the mark, which read as a game controller): a launcher, four tiles in a
+    // square, the first lit (this site), the fourth Vibe's spark. Open, the first two tiles stretch into the close mark.
+    // The M57 class names stay (.ovmb-bar, .ovmb-dot and .ovmb-words are kept, empty, for callers that look for them).
+    const ORB_PARTS = '<rect class="ovmb-bar" x="12" y="12" width="0" height="0"/><circle class="ovmb-dot" cx="12" cy="12" r="0"/><path class="ovmb-words" d="M12 12h0"/>'
+        + '<rect class="ovmb-app ovmb-a0" x="3.6" y="3.6" width="7.2" height="7.2" rx="2.4"/><rect class="ovmb-app ovmb-a1" x="13.2" y="3.6" width="7.2" height="7.2" rx="2.4"/><rect class="ovmb-app ovmb-a2" x="3.6" y="13.2" width="7.2" height="7.2" rx="2.4"/>'
+        + '<rect class="ovmb-lit" x="3.6" y="3.6" width="7.2" height="7.2" rx="2.4"/>'
+        + '<path class="ovmb-spark" d="M16.8 12.6l1.05 2.55 2.55 1.05-2.55 1.05-1.05 2.55-1.05-2.55-2.55-1.05 2.55-1.05z"/>';
     function orbSVG(size = 22, open = false) {
         return `<svg class="ovmb${open ? ' is-x' : ''}" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${ORB_PARTS}</svg>`;
     }
@@ -3068,6 +3084,51 @@
         _wallet: { loadWallet, walletOrder, syncWalletChips, loadWalletChips, configure: (c) => { Object.assign(_config, c); _walletLoaded = false; } },
         _defaults: { linksFor },
     };
+
+    // ── Rows that scroll sideways say so (4.248.0; the owner, 11-14: "it waits a sec and then … does a little animation
+    // so that it's apparent that it can scroll"). Every OpenVibe page: a row wider than its box (a rail, chips, tabs,
+    // pills, a strip, or anything marked data-ov-peek), the first time most of it is on screen, waits, then peeks a
+    // little way and back. Once per row per page; never while a finger or the pointer is on it; Calm peeks less, Off
+    // not at all; data-ov-peek="off" opts a row out. Design rule: a row that scrolls sideways shows it (a peek and a fade).
+    function startPeeks() {
+        if (typeof document === 'undefined' || typeof IntersectionObserver !== 'function' || root.__ovPeeks) return;
+        root.__ovPeeks = true;
+        const seen = new WeakSet();
+        const motion = () => document.documentElement.getAttribute('data-ov-motion') || '';
+        const wide = (el) => { try { if (el.scrollWidth - el.clientWidth < 24 || el.scrollLeft > 4) return false; const o = getComputedStyle(el).overflowX; return o === 'auto' || o === 'scroll'; } catch { return false; } };
+        const io = new IntersectionObserver((entries) => {
+            for (const e of entries) {
+                if (!e.isIntersecting || e.intersectionRatio < 0.6) continue;
+                const el = e.target; io.unobserve(el);
+                if (motion() === 'off' || !wide(el)) continue;
+                let touched = false; const stop = () => { touched = true; };
+                el.addEventListener('pointerdown', stop, { once: true, passive: true }); el.addEventListener('wheel', stop, { once: true, passive: true });
+                setTimeout(() => {
+                    if (touched || !el.isConnected || el.scrollLeft > 4 || el.matches(':hover')) return;
+                    const far = Math.min(motion() === 'reduced' ? 22 : 56, el.scrollWidth - el.clientWidth);
+                    try { el.scrollTo({ left: far, behavior: 'smooth' }); } catch { el.scrollLeft = far; return; }
+                    setTimeout(() => { if (!touched && Math.abs(el.scrollLeft - far) < 6) { try { el.scrollTo({ left: 0, behavior: 'smooth' }); } catch { el.scrollLeft = 0; } } }, 520);
+                }, 700);
+            }
+        }, { threshold: [0.6] });
+        const SEL = '[data-ov-peek]:not([data-ov-peek="off"]), [class*="rail"], [class*="chips"], [class*="tabs"], [class*="pills"], [class*="strip"], [class*="carousel"], [class*="scroller"]';
+        let queued = false;
+        const scan = () => {
+            queued = false;
+            let n = 0;
+            document.querySelectorAll(SEL).forEach((el) => {
+                if (n > 60 || seen.has(el) || el.getAttribute('data-ov-peek') === 'off' || el.closest('.openvibe-navbar, .ovs-panel, [role=dialog]')) return;
+                seen.add(el); n++;
+                if (wide(el)) io.observe(el);
+            });
+        };
+        const later = () => { if (queued) return; queued = true; (root.requestIdleCallback || ((f) => setTimeout(f, 300)))(scan, { timeout: 1500 }); };
+        later();
+        if (typeof MutationObserver === 'function' && document.body) new MutationObserver(later).observe(document.body, { childList: true, subtree: true });
+    }
+    if (typeof document !== 'undefined' && typeof window !== 'undefined' && !(typeof module !== 'undefined' && module.exports)) {
+        if (document.readyState === 'complete') setTimeout(startPeeks, 1200); else window.addEventListener('load', () => setTimeout(startPeeks, 1200), { once: true });
+    }
 
     if (typeof module !== 'undefined' && module.exports) module.exports = OpenVibeNavbar;
     else {

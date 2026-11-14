@@ -73,6 +73,13 @@ other site had them signed in): a round trip that once found no session there (t
 stops the next one when the person arrives from another OpenVibe site; a sign-out (the site's own 'guest' cookie)
 still does. Once per tab per 10 minutes, as before.
 
+**The bar** (navbar.js; the owner, 11-14): the menu button is redrawn as a launcher, four tiles with this site's lit
+and Vibe's spark as the fourth (it read as a game controller), its two first tiles stretching into the close mark when
+the menu opens; signing in, a comet of light runs around the Sign in button's rim instead of a ring inside its glyph;
+and on every page a row that scrolls sideways (a rail, chips, tabs, pills, a strip, or `data-ov-peek`) peeks a little
+way and back the first time it is on screen, so it is plain that it scrolls (once per row; never under a finger;
+Calm less, Off never; `data-ov-peek="off"` opts out).
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.
