@@ -1040,7 +1040,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             if (g.as === 'card') {
                 const body = document.createElement('div'); body.className = 'ovs-cardbody';
                 try {
-                    g.card.render(body, { close, here: here(), user: ctx.user || null, signedIn: !!(ctx.token && ctx.user && !ctx.user.is_anon) });
+                    g.card.render(body, { close, here: here(), user: ctx.user || null, signedIn: !!(ctx.user && !ctx.user.is_anon) });
                 } catch { return; }
                 if (!body.childNodes.length) return;
                 if (g.title) { const h = document.createElement('li'); h.className = 'ovs-group'; h.setAttribute('role', 'presentation'); h.setAttribute('data-sec', g.section); h.textContent = g.title; listEl.appendChild(h); }
@@ -1713,7 +1713,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         try { return root.OpenVibeDock && root.OpenVibeDock.mountInto ? root.OpenVibeDock.mountInto(slot, how) : null; } catch { return null; }
     }
     function mountRuns() {
-        const me = ctx.token && ctx.user && !ctx.user.is_anon ? ctx.user : null;
+        const me = ctx.user && !ctx.user.is_anon ? ctx.user : null;
         // Runs and the Action Center are the person's Network places, like the Dock's (navbar.js passes its base).
         const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
         const D = () => root.OpenVibeDock;
@@ -2073,14 +2073,16 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // With the home screen, Notifications is one of You's tabs (4.223.0); without it, the section stays at the top.
         if (root.OpenVibeNotifications && ctx.token && !H) groups.push({ title: 'Notifications', as: 'notifications', items: [] });
         // §Z.2 (4.247.0): a guest sees first what signing in adds, with the bar's own Sign in link.
-        if (!(ctx.token && ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' });
+        // Signed in is the person the bar shows, not a token: a site that signs in by its own session cookie (Download) has
+        // no token in the page, and the menu said "Sign in to make OpenVibe yours" under their avatar (11-14).
+        if (!(ctx.user && !ctx.user.is_anon)) groups.push({ as: 'signin', items: [], section: 'signin' });
         if (H) {
             groups.push({ as: 'home', items: [], section: 'home' });
             // Signed out, Display stays at the foot (a signed-in person has it beside their name, in ov-home).
-            if (!(ctx.token && ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
+            if (!(ctx.user && !ctx.user.is_anon) && typeof ctx.display === 'function') groups.push({ title: '', as: 'display', items: [], section: 'display' });
             return groups;
         }
-        if (ctx.token && ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
+        if (ctx.user && !ctx.user.is_anon) groups.push({ title: 'Your workspace', as: 'apps', items: youItems(), section: 'you' });
         const yours = mine && mine.services.some((x) => x.count > 0);
         // Without their own history, developer services are not places to visit: they come up here once used.
         const dockPool = yours ? ranked : ranked.filter((x) => x.group !== 'build' || useOf(x.id));
@@ -2124,7 +2126,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
     function homeOpts() {
         const { all, ranked, f } = basis();
         const apps = ranked.map((x) => ({ id: x.id, title: x.name, url: x.url, site: x.icon || x.id, group: x.group })).filter((x) => x.url);
-        const yours = ctx.token && ctx.user && !ctx.user.is_anon ? youItems().filter((y) => y.title !== 'Agents').map((y) => ({ id: `you:${slugOf(y.title)}`, title: y.title, url: y.url, site: y.site, group: 'you' })) : [];
+        const yours = ctx.user && !ctx.user.is_anon ? youItems().filter((y) => y.title !== 'Agents').map((y) => ({ id: `you:${slugOf(y.title)}`, title: y.title, url: y.url, site: y.site, group: 'you' })) : [];
         const tools = catalog ? catalog.tools.map((t) => [toolUse(t), t]).sort((a, b) => b[0] - a[0]).map(([, t]) => ({ id: `tool:${slugOf(t.name)}`, title: t.name, url: t.go || t.url, site: t.icon || 'tools' })) : [];
         const seen = new Set(), recentIds = [];
         for (const h of (mine ? mine.items : [])) {

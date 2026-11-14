@@ -34,6 +34,10 @@ top … a fixed tab system … icons … like our main menu area … so the layo
 rows in a side column on a computer, a row of icon tabs that stays under the bar on a phone, counts as badges, an
 extra part (a meter) on the computer only.
 
+**Signed in is the person the bar shows** (the owner, 11-14, on openvibe.download: the menu said "Sign in to make
+OpenVibe yours" under their own avatar): the guest card, the workspace and the menu's "me" follow the signed-in person,
+not a token; a site that signs in by its own session cookie has no token in the page.
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.
