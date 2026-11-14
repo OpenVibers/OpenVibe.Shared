@@ -33,7 +33,9 @@
  * Suggestions come through OpenVibe.Network's GET /api/frame/suggest (OpenVibe.Search, kept 30 s): every site's
  * Content-Security-Policy lets the navbar reach openvibe.network. History is GET /api/history (the person's own token,
  * read once a panel opening, kept two minutes). Text is always set with textContent; links are https or same-site paths
- * only. Recent searches live in localStorage (ov_search_recent, eight at most) and can be cleared from the panel.
+ * only. Recent searches (4.252.0) are kept on the account when signed in (Network's history, kind `search`: the same on
+ * every site) and in localStorage (ov_search_recent, eight at most) for this browser; the first tab shows them under the
+ * site's pages, and Clear empties both.
  */
 (function (root) {
     'use strict';
@@ -114,10 +116,38 @@
         } catch { return ''; }
     }
     const hostOf = (u) => { try { return new URL(u).hostname; } catch { return ''; } };
+    /**
+     * Recent searches (4.252.0, plan §AB.34: "search history … across all sites"): signed in, they are kept on the account
+     * (Network's history, kind `search`) and the same on every site; this browser's own list (localStorage, per site) is
+     * kept beside them for anonymous use. Clear empties both.
+     */
+    const signedIn = () => !!(ctx && ctx.token && ctx.user && !ctx.user.is_anon);
+    const historyApi = (path) => `${(ctx && ctx.apiBase) || 'https://openvibe.network'}/api/history${path || ''}`;
+    const sameText = (a, b) => String(a).toLowerCase() === String(b).toLowerCase();
     const recent = {
-        get() { try { return (JSON.parse(localStorage.getItem(RECENT_KEY) || '[]') || []).filter((x) => typeof x === 'string').slice(0, 8); } catch { return []; } },
-        add(q) { try { const list = [q, ...recent.get().filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 8); localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch { /* private mode */ } },
-        clear() { try { localStorage.removeItem(RECENT_KEY); } catch { /* */ } },
+        local() { try { return (JSON.parse(localStorage.getItem(RECENT_KEY) || '[]') || []).filter((x) => typeof x === 'string').slice(0, 8); } catch { return []; } },
+        get() {
+            const out = [];
+            for (const x of [...((mine && Array.isArray(mine.searches)) ? mine.searches : []), ...recent.local()]) if (!out.some((y) => sameText(x, y))) out.push(x);
+            return out.slice(0, 8);
+        },
+        add(q) {
+            try { const list = [q, ...recent.local().filter((x) => !sameText(x, q))].slice(0, 8); localStorage.setItem(RECENT_KEY, JSON.stringify(list)); } catch { /* private mode */ }
+            if (!signedIn()) return;
+            if (mine && Array.isArray(mine.searches)) mine.searches = [q, ...mine.searches.filter((x) => !sameText(x, q))].slice(0, 8);
+            try { sessionStorage.removeItem(historyKey()); } catch { /* */ }
+            try {
+                fetch(historyApi(), { method: 'POST', credentials: 'omit', keepalive: true, headers: { Authorization: `Bearer ${ctx.token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'search', service: 'search', title: String(q).slice(0, 200), url: `${API}/?q=${encodeURIComponent(String(q).slice(0, 200))}` }) }).catch(() => {});
+            } catch { /* kept in this browser only */ }
+        },
+        clear() {
+            try { localStorage.removeItem(RECENT_KEY); } catch { /* */ }
+            if (!signedIn()) return;
+            if (mine) mine.searches = [];
+            try { sessionStorage.removeItem(historyKey()); } catch { /* */ }
+            try { fetch(historyApi('/type/search'), { method: 'DELETE', credentials: 'omit', headers: { Authorization: `Bearer ${ctx.token}` } }).catch(() => {}); } catch { /* */ }
+        },
     };
 
     async function suggest(q, { owner = null, limit = 8, signal, url = SUGGEST } = {}) {
@@ -157,16 +187,21 @@
     const useOf = (id) => { const s = mine && mine.services.find((x) => x.service === id); return s ? s.count : 0; };
 
     /** The person's history: one request per opening, kept two minutes (signed in only; anonymous sessions keep none). */
+    function historyKey() { return `ov_hist3:${(ctx && ctx.user && (ctx.user.id || ctx.user.username)) || ''}`; }
     async function loadHistory() {
-        if (!ctx.token || !ctx.user || ctx.user.is_anon) return null;
-        const key = `ov_hist2:${ctx.user.id || ctx.user.username || ''}`;
+        if (!signedIn()) return null;
+        const key = historyKey();
         try { const c = JSON.parse(sessionStorage.getItem(key) || 'null'); if (c && Date.now() - c.at < 120000) return c.data; } catch { /* */ }
         try {
-            const r = await fetch(`${ctx.apiBase || 'https://openvibe.network'}/api/history?limit=60`, { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' });
+            const auth = { headers: { Authorization: `Bearer ${ctx.token}` }, credentials: 'omit' };
+            // The places, and the account's own recent searches (4.252.0), side by side.
+            const [r, s] = await Promise.all([fetch(historyApi('?limit=60'), auth), fetch(historyApi('?type=search&limit=8'), auth).catch(() => null)]);
             if (!r.ok) return null;
             const j = await r.json();
+            const sj = s && s.ok ? await s.json().catch(() => null) : null;
             const data = {
-                items: (j.items || []).map((h) => ({ title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title),
+                searches: ((sj && sj.items) || []).filter((h) => h && h.type === 'search').map((h) => String(h.title || '').replace(/\s+/g, ' ').trim().slice(0, 200)).filter(Boolean).slice(0, 8),
+                items: (j.items || []).filter((h) => h.type !== 'search').map((h) => ({ title: String(h.title || '').slice(0, 160), url: safeUrl(h.url), site: h.service_label || siteOf(h.url), service: h.service, at: utcOf(h.updated_at) })).filter((h) => h.url && h.title),
                 services: (j.services || []).map((s) => ({ service: String(s.service || ''), count: Number(s.count) || 0 })),
             };
             try { sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), data })); } catch { /* */ }
@@ -1970,6 +2005,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         });
         if (best >= 0) pages[best].here = true;
         if (pages.length) groups.push({ title: `Pages on ${here()}`, as: 'links', items: pages, section: 'here' });
+        // Your recent searches (4.252.0, plan §AB.34): the account's on every site, then this browser's; Clear empties both.
+        const searches = recent.get();
+        if (searches.length) groups.push({ title: 'Recent searches', as: 'chips', clear: true, items: searches.map((x) => ({ title: x, url: `${API}/?q=${encodeURIComponent(x)}`, icon: 'clock', kind: 'recent' })), section: 'recent' });
         const fgroups = f && f.groups && f.groups.length ? f.groups.slice() : [{ id: '', name: 'OpenVibe' }];
         if (mineSite) fgroups.sort((a, b) => (b.id === mineSite.group) - (a.id === mineSite.group));
         const inGroup = (x, g) => !g.id || x.group === g.id || (!fgroups.some((y) => y.id === x.group) && g === fgroups[fgroups.length - 1]);

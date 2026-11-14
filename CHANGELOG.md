@@ -14,6 +14,12 @@ not load leaves no empty mark (items.js).
 (Community's /pulse) it went to `/api/v1/api/v1/feed/views`, a 404; anything but Network's own frame address now sends
 to `https://openvibe.network/api/v1/feed/views`. Test: `test/feed-pictures-chrome.test.js`.
 
+**Recent searches follow you** (plan §AB.34; the owner: "search history … across all sites"). Signed in, each search run
+from the menu is kept on the account (Network's history, kind `search`; needs OpenVibe.Network's `search` kind and
+`DELETE /api/history/type/:type`) and read back on every site, first, before this browser's own list. The menu's first
+tab shows them as chips under the site's pages, and Clear empties both. Signed out, only this browser keeps them. Test:
+`test/search-recent-account-chrome.test.js`.
+
 ## 4.251.0 — 2026-11-14
 
 **Notifications like a phone's, finished** (plan §AB.31, §AB.52). An agent's notice wears the agent's face: its picture
