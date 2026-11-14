@@ -518,7 +518,8 @@
                 state.runs = state.runs.concat(extra).sort((x, y) => needs(y) - needs(x) || String(y.updated_at || '').localeCompare(String(x.updated_at || '')));
             }
             // All, for your agent, is the conversation (Muse, dots): today's chat opens in place; History shows the list.
-            if (o.agent && state.filter === 'all' && !how.history && !how.stay) {
+            // Anything waiting on you (an approval, a question) keeps the list first, where it can be answered in place.
+            if (o.agent && state.filter === 'all' && !how.history && !how.stay && !state.runs.some(needsPerson)) {
                 const last = latestChat(state.runs);
                 if (last) { open(last.ref || last.id, last, { home: true }); return; }
             }

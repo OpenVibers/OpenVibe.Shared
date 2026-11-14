@@ -226,7 +226,7 @@
 .ovs-fly-part--count { width: auto !important; height: auto !important; }
 .ovs-fly-count { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #ef4444; color: #fff; font: 800 11px/1 system-ui, sans-serif; }
 .ovs-panel { position: absolute; left: 50%; top: 8vh; width: min(720px, calc(100vw - 32px)); max-height: 80vh; transform: translateX(-50%); display: flex; flex-direction: column; border-radius: 18px; border: 1px solid var(--border, rgba(255,255,255,.12)); background: var(--bg-secondary, #121826); box-shadow: 0 30px 80px rgba(0,0,0,.55); overflow: hidden; }
-.ovs-bar { display: flex; align-items: center; gap: 10px; margin: 10px 10px 6px; padding: 0 6px 0 14px; border-radius: 999px; background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); transition: box-shadow .2s, background .2s; }
+.ovs-bar { display: flex; align-items: center; gap: 10px; margin: 10px 10px 6px; padding: 0 6px 0 14px; border-radius: calc(var(--ov-radius-2, 14px) + 2px); background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)); transition: box-shadow .2s, background .2s; }
 .ovs-bar:focus-within { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent), 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent); }
 /* A site's own focus ring (the orange box on openvibe.download, 10-29) never draws on the field: the pill shows focus. */
 .ovs .ovs-input, .ovs .ovs-input:focus, .ovs .ovs-input:focus-visible { outline: none !important; box-shadow: none !important; border: 0 !important; background: transparent !important; }
@@ -672,7 +672,14 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
   @keyframes ovs-orb-in { from { opacity: 0; transform: scale(.45) rotate(-90deg); } }
   @keyframes ovs-orb-out { to { opacity: 0; transform: scale(.5) rotate(90deg); } }
   .ovs.ovs-anchored .ovs-orb svg { display: block; overflow: visible; width: 24px; height: 24px; }
-  .ovs.ovs-anchored .ovs-orb.is-x { background: var(--bg-secondary, #121826); box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 14%, transparent), 0 8px 22px -8px rgba(0, 0, 0, .7); }
+  .ovs.ovs-anchored .ovs-orb.is-x { background: var(--bg-primary, rgba(0,0,0,.25)); box-shadow: inset 0 0 0 1px var(--border, rgba(255,255,255,.12)), 0 8px 22px -10px rgba(0, 0, 0, .7); }
+  /* 4.248.0 (the owner, 11-14: "the top thing … needs to be less round … make everything more consistent"): the field and
+     its close share the kit's radius scale (--ov-radius-2 + 2, the tabs' own), so the close is a rounded square beside it. */
+  .ovs.ovs-anchored .ovs-orb.is-x { border-radius: calc(var(--ov-radius-2, 14px) + 2px); }
+  .ovs.ovs-anchored .ovs-orb.is-x::after { border-radius: inherit; }
+  /* 4.248.0: as tall as the search field beside it, centred on it (placeOrb measures both). */
+  .ovs.ovs-anchored .ovs-orb.is-x { width: var(--orb-size, 48px); height: var(--orb-size, 48px); transition: transform .42s cubic-bezier(.2, 1.1, .3, 1), background-color .3s, box-shadow .3s, top .25s ease, left .25s ease; }
+  .ovs.ovs-anchored .ovs-orb.is-x:hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 55%, var(--border, rgba(255,255,255,.12))), 0 8px 22px -10px rgba(0, 0, 0, .7); }
   .ovs.ovs-anchored .ovs-orb.is-x::before { display: none; }
   .ovs.ovs-anchored .ovs-orb { width: 48px; height: 48px; }
   .ovs.ovs-anchored .ovs-orb:focus { outline: none; }
@@ -1724,8 +1731,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             // Dock's Vibe, Agents and Code panels are no longer lent here.
             actions: { base: net }, starters: VIBE_STARTERS, agent: true,
             // Above the list: Now (timers, what is on) and the live view of an agent at work, from the Dock's agent top.
-            // 4.248.0 (the owner, 11-14: "Your agent's idle? You don't even need that"): no Now / Needs you / timeline above
-            // Vibe; what needs you comes as a card in the conversation, the rest is History.
+            // Above the list: what is happening now (a timer, an agent at work, what needs you), quiet otherwise (4.248.0: no
+            // idle line, no "Nothing needs you", no timeline folds; the owner, 11-14).
+            top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
             onPlace: (p) => { if (p.filter) runFilter = p.filter; },
         };
         const go = (R) => {
@@ -2540,6 +2548,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
                 const bar = el.querySelector('.ovs-bar'), br = bar ? bar.getBoundingClientRect() : null;
                 const tx = br ? br.right + 6 + 24 : innerWidth - 24, ty = br ? br.top + br.height / 2 : 28;
                 orbEl.style.setProperty('--orb-x', `${Math.round(tx - 24)}px`); orbEl.style.setProperty('--orb-y', `${Math.round(ty - 24)}px`);
+                settleOrb();
                 if (home) { orbEl.style.setProperty('--orb-dx', `${Math.round(home.cx - tx)}px`); orbEl.style.setProperty('--orb-dy', `${Math.round(home.cy - ty)}px`); }
                 // The button has flown to its tab, or no menu button is on screen: the close turns in at the pill.
                 if (flyFrom || !home) orbEl.classList.add('is-x', 'is-pop');
@@ -2603,6 +2612,27 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
             return { cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
         }
         return null;
+    }
+    /** The close sits beside the search field, centred on it and as tall as it (4.248.0; the owner, 11-14: "the close
+     *  button's offset … more consistent with the search input"). Measured again once the sheet has slid in and when the
+     *  window changes, never only at the first frame (the field was still moving then). */
+    let orbWatch = null;
+    function placeOrb() {
+        if (!orbEl || !el || !el.classList.contains('is-open') || !phoneSheet()) return;
+        const bar = el.querySelector('.ovs-bar'); if (!bar) return;
+        const r = bar.getBoundingClientRect(); if (!r.height) return;
+        const size = Math.max(44, Math.min(56, Math.round(r.height)));
+        orbEl.style.setProperty('--orb-size', `${size}px`);
+        orbEl.style.setProperty('--orb-x', `${Math.round(Math.min(innerWidth - size - 4, r.right + 8))}px`);
+        orbEl.style.setProperty('--orb-y', `${Math.round(r.top + (r.height - size) / 2)}px`);
+    }
+    function settleOrb() {
+        [140, 360, 700].forEach((t) => setTimeout(placeOrb, t));
+        if (!orbWatch && typeof window !== 'undefined') {
+            orbWatch = () => requestAnimationFrame(placeOrb);
+            window.addEventListener('resize', orbWatch, { passive: true });
+            if (window.visualViewport) window.visualViewport.addEventListener('resize', orbWatch, { passive: true });
+        }
     }
     function close({ navigating = false } = {}) {
         // The tab flies back into the bar button that opened it (not when a link was followed: the page is going).

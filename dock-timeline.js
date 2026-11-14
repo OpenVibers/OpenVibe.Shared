@@ -135,6 +135,11 @@
         const chips = el(doc, 'div', 'ovdt-chips');
         const list = el(doc, 'div', 'ovdt-list');
         wrap.append(nowHead, nowBox, needsHead, needsBox, chips, list);
+        // 4.248.0, quiet (the menu's Vibe; the owner, 11-14: "Your agent's idle? You don't even need that"): only what is
+        // happening shows (a timer, an agent at work, something that needs you); no idle line, no "Nothing needs you",
+        // no timeline folds (those are History's). The Dock's own Agents panel keeps everything.
+        const quiet = !!opts.quiet;
+        if (quiet) { wrap.classList.add('is-quiet'); chips.hidden = true; list.hidden = true; }
         container.appendChild(wrap);
 
         async function api(path, options = {}) {
@@ -166,7 +171,9 @@
 
         function renderNow(now) {
             nowBox.textContent = '';
+            nowHead.hidden = false;
             if (!now) {
+                if (quiet) { nowHead.hidden = true; return; }
                 nowBox.appendChild(el(doc, 'div', 'ovdt-card ovdt-empty', 'Your agent is idle. Ask it something in Talk.'));
                 return;
             }
@@ -216,7 +223,9 @@
 
         function renderNeeds(needs) {
             needsBox.textContent = '';
+            needsHead.hidden = false;
             if (!needs.length) {
+                if (quiet) { needsHead.hidden = true; return; }
                 needsBox.appendChild(el(doc, 'div', 'ovdt-empty', 'Nothing needs you.'));
                 return;
             }

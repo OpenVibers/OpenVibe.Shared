@@ -321,10 +321,9 @@
             .ovmb { display: block; overflow: visible; transition: filter .3s; }
             .ovmb-bar { fill: transparent; stroke: currentColor; stroke-width: 1.7; }
             .ovmb-dot { fill: currentColor; }
-            .ovmb-spark { fill: var(--ovo-b, #e879f9); }
-            .ovmb-words { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; opacity: .55; }
-            .ovmb-app { fill: currentColor; opacity: .5; }
-            .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-words) { display: none; }
+            .ovmb-spark { fill: none; stroke: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
+            .ovmb-words { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; opacity: .6; }
+            .ovmb-app { fill: currentColor; opacity: .42; }
             .ovmb-lit { fill: var(--ovo-a, var(--accent-light, #60a5fa)); }
             .ovmb :is(.ovmb-bar, .ovmb-dot, .ovmb-words, .ovmb-spark, .ovmb-app, .ovmb-lit) { transform-box: fill-box; transform-origin: center; transition: transform .5s cubic-bezier(.2,1.3,.3,1), fill .3s, stroke-width .3s, opacity .25s; }
             .ovmb-a0 { transition-delay: .03s; } .ovmb-a1 { transition-delay: .06s; } .ovmb-a2 { transition-delay: .09s; }
@@ -346,10 +345,9 @@
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-bar, .ovmb.is-x .ovmb-bar { transform: translateY(4.1px) rotate(45deg) scale(.92, .38); fill: var(--ovo-a, var(--accent-light, #60a5fa)); stroke-width: 0; }
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb :is(.ovmb-dot, .ovmb-words, .ovmb-spark), .ovmb.is-x :is(.ovmb-dot, .ovmb-words, .ovmb-spark) { transform: scale(0); opacity: 0; }
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-app, .ovmb.is-x .ovmb-app { fill: var(--ovo-a, var(--accent-light, #60a5fa)); opacity: 1; }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(4.8px, 4.8px) rotate(45deg) scale(2.15, .3); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(-4.8px, 4.8px) rotate(-45deg) scale(2.15, .3); }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: scale(0); opacity: 0; }
-            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-lit, .ovmb.is-x .ovmb-lit { transform: translate(4.8px, 4.8px) rotate(45deg) scale(2.15, .3); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a0, .ovmb.is-x .ovmb-a0 { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.12, .55); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a1, .ovmb.is-x .ovmb-a1 { transform: translate(0, -5.2px) rotate(-45deg) scale(1.12, .55); }
+            :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-a2, .ovmb.is-x .ovmb-a2 { transform: translate(-2.4px, -9.2px) rotate(-45deg) scale(1.12, .55); }
             :is(.ovnav-orb[aria-expanded="true"], .ovs-orb.is-x) .ovmb .ovmb-lit, .ovmb.is-x .ovmb-lit { transform: translate(2.4px, -1.2px) rotate(-45deg) scale(1.12, .55); opacity: 0; }
             /* A close mark that arrives already made (the Dock's sheet) forms from the button it came from. */
             .ovmb.is-forming :is(.ovmb-bar, .ovmb-app) { animation: ovmb-form .5s cubic-bezier(.2,1.3,.3,1) both; }
@@ -638,7 +636,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '38d7cab3b420', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '2472384f0f55', 'dock.js': '875df625289f', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '89dbba9b3f3e', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '44c58a83b5bb', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'aba8f80afab5', 'ov-composer.js': 'c29a98f058e6', 'items.js': 'a38f01f90c40', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': '2eb9e2604c3e', 'ov-forms.css': '38d7cab3b420', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '89f2b938b3ae', 'dock.js': '5f29e88f48dc', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '89dbba9b3f3e', 'history.js': 'f9fb9e096c65', 'bottom.js': '1671b6949137', 'appbar.js': 'b2a16f53eae0', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '8701ebc6f8a3', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '44c58a83b5bb', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': '60b6e6de9f97', 'ov-composer.js': 'c29a98f058e6', 'items.js': 'a38f01f90c40', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1112,13 +1110,14 @@
     // the same place, the one that closes it (rule opens-it-closes-it). One drawing for the bar, the menu's sheet and
     // the Dock's (root.OpenVibeOrb); its styles are above (.ovmb). Class names kept from M57 (.ovmb-bar, .ovmb-dot for
     // the face, .ovmb-app .ovmb-a0..2 for the tabs) so every caller and test still finds its parts.
-    // 4.248.0 (the owner, 11-14: "improve, redo" the mark, which read as a game controller): a launcher, four tiles in a
-    // square, the first lit (this site), the fourth Vibe's spark. Open, the first two tiles stretch into the close mark.
-    // The M57 class names stay (.ovmb-bar, .ovmb-dot and .ovmb-words are kept, empty, for callers that look for them).
-    const ORB_PARTS = '<rect class="ovmb-bar" x="12" y="12" width="0" height="0"/><circle class="ovmb-dot" cx="12" cy="12" r="0"/><path class="ovmb-words" d="M12 12h0"/>'
-        + '<rect class="ovmb-app ovmb-a0" x="3.6" y="3.6" width="7.2" height="7.2" rx="2.4"/><rect class="ovmb-app ovmb-a1" x="13.2" y="3.6" width="7.2" height="7.2" rx="2.4"/><rect class="ovmb-app ovmb-a2" x="3.6" y="13.2" width="7.2" height="7.2" rx="2.4"/>'
-        + '<rect class="ovmb-lit" x="3.6" y="3.6" width="7.2" height="7.2" rx="2.4"/>'
-        + '<path class="ovmb-spark" d="M16.8 12.6l1.05 2.55 2.55 1.05-2.55 1.05-1.05 2.55-1.05-2.55-2.55-1.05 2.55-1.05z"/>';
+    // 4.248.0 (the owner, 11-14): the bar is the little input again, its dot on the left and a typed line in it (the
+    // spark that sat beside the dot read as two dots, and its pink is gone: every colour is the theme's); three tabs
+    // under it, the first lit.
+    const ORB_PARTS = '<rect class="ovmb-bar" x="3.2" y="4.3" width="17.6" height="7.2" rx="3.6"/>'
+        + '<circle class="ovmb-dot" cx="6.9" cy="7.9" r="1.5"/><path class="ovmb-words" d="M10 7.9h7.2"/>'
+        + '<path class="ovmb-spark" d="M17.2 7.9h0"/>'
+        + '<rect class="ovmb-app ovmb-a0" x="3" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a1" x="9.4" y="14.7" width="5.2" height="5" rx="1.6"/><rect class="ovmb-app ovmb-a2" x="15.8" y="14.7" width="5.2" height="5" rx="1.6"/>'
+        + '<rect class="ovmb-lit" x="3" y="14.7" width="5.2" height="5" rx="1.6"/>';
     function orbSVG(size = 22, open = false) {
         return `<svg class="ovmb${open ? ' is-x' : ''}" viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${ORB_PARTS}</svg>`;
     }

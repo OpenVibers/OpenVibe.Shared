@@ -180,5 +180,5 @@
     .ov-places > a > em, .ov-places > button > em { position: absolute; top: 4px; right: 6px; margin: 0; font-size: .66rem; padding: 0 6px; }
     .ov-places-extra { display: none; }
 }
-@media (prefers-reduced-motion: reduce) { .ov-places > a, .ov-places > button { transition: none; } }
+html[data-ov-motion=off] :is(.ov-places > a, .ov-places > button) { transition: none; }
 
