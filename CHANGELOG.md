@@ -27,6 +27,14 @@ already drew, so its entrance never replays. A link on this site under the point
 so the next page is already there when it is pressed. The bar and the app bar keep their view-transition names
 (kit.css, soft.js), so a same-site page change cross-fades under a bar that stays put.
 
+**Comments open in the menu** (plan §AA.21; the owner: "it shouldn't bring you to a new page … seamless, like Facebook
+or Twitter … but you can also go to the actual forum post … icon buttons … replies"). A feed card's Comment opens its
+thread in a sheet over the menu (a bottom sheet on a phone, a panel on a computer): the comments with their replies,
+Like and Reply as icon buttons, a reply box (Enter sends), and the forum post one press away. It reads and writes
+through the Frame (`/api/frame/comments/*`, Network #947 → Community's comment threads) with the person's token; what
+people wrote is text. A card Community takes no comments for, or no answer: the post's page, as before; a modified
+click still opens a new tab.
+
 ## 4.249.0 — 2026-11-14
 
 **Glyphs stand alone** (the owner, 11-14: "they don't have that tacky like circle design anymore … modern and

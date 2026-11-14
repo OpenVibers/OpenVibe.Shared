@@ -1866,11 +1866,138 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
     }
     const KIND_WORD = { post: 'Post', pic: 'A picture', clip: 'Clip', video: 'Video', live: 'Live', meme: 'Meme', deal: 'Deals', work: 'Jobs', report: 'Report', game: 'Game', wiki: 'Wiki', news: 'News', poll: 'Poll' };
     /** Under a post, a picture, a clip or a video: reply (with the count), likes, and share. Never inside the card's link. */
-    function actsOf(c, url) {
+    /** 4.250.0 (plan §AA.21; the owner: "it shouldn't bring you to a new page … seamless, like Facebook or Twitter … but
+     *  you can also go to the actual forum post … icon buttons … replies"): a card's Comment opens its thread in a sheet
+     *  over the menu, read and answered through the Frame (POST /api/frame/comments/resolve, GET …/threads/:id, POST
+     *  …/threads/:id/comments, …/:id/votes → Community's comment threads). What people wrote is text, never markup. A card
+     *  Community takes no comments for, or no answer: the post's own page, as before. */
+    function cardRef(c) {
+        const m = /^f:([a-z][a-z0-9-]{0,39}):([a-z][a-z0-9_-]{0,39}):([A-Za-z0-9._:~-]{1,160})$/.exec(String((c && c.id) || ''));
+        return m ? { service: m[1], type: m[2], id: m[3] } : null;
+    }
+    function commentSheet(c, url, o, onCount) {
+        const ref = cardRef(c);
+        if (!ref || typeof fetch !== 'function') return false;
+        feedStyles();
+        const base = `${o.frameBase || FRAME}/comments`;
+        const auth = () => (signedIn(o) ? { Authorization: `Bearer ${o.token}` } : {});
+        const old = document.querySelector('.ovfd-sheet-wrap'); if (old) old.remove();
+        const wrap = h('div', 'ovfd-sheet-wrap');
+        const scrim = h('div', 'ovfd-sheet-scrim');
+        const sheet = h('section', 'ovfd-sheet'); sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-modal', 'true'); sheet.setAttribute('aria-label', 'Comments');
+        const head = h('div', 'ovfd-sheet-h');
+        const title = h('b', 'ovfd-sheet-t', String(c.title || 'Comments').replace(/\s+/g, ' ').slice(0, 140));
+        const open = h('a', 'ovfd-sheet-ib'); open.href = url; open.setAttribute('aria-label', 'Open the post'); open.title = 'Open the post'; open.append(glyph('out'));
+        const x = h('button', 'ovfd-sheet-ib'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.title = 'Close'; x.append(glyph('x'));
+        head.append(title, open, x);
+        const list = h('div', 'ovfd-sheet-list'); list.setAttribute('aria-live', 'polite');
+        list.append(h('p', 'ovh-note', 'Loading the comments…'));
+        const form = h('form', 'ovfd-sheet-f');
+        const to = h('p', 'ovfd-sheet-to'); to.hidden = true;
+        const box = h('textarea'); box.rows = 1; box.maxLength = 10000; box.setAttribute('aria-label', 'Your reply');
+        box.placeholder = signedIn(o) ? 'Write a reply' : 'Sign in to reply'; box.disabled = !signedIn(o);
+        const send = h('button', 'ovfd-sheet-send'); send.type = 'submit'; send.setAttribute('aria-label', 'Send'); send.title = 'Send'; send.append(glyph('go')); send.disabled = true;
+        const err = h('p', 'ovfd-sheet-err'); err.hidden = true;
+        const field = h('div', 'ovfd-sheet-field'); field.append(box, send);
+        form.append(to, field, err);
+        sheet.append(head, list, form); wrap.append(scrim, sheet); document.body.append(wrap);
+        requestAnimationFrame(() => wrap.classList.add('is-in'));
+        const esc = (e) => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); close(); } };
+        const close = () => { document.removeEventListener('keydown', esc, true); wrap.classList.remove('is-in'); wrap.classList.add('is-leaving'); setTimeout(() => wrap.remove(), 200); };
+        document.addEventListener('keydown', esc, true); scrim.addEventListener('click', close); x.addEventListener('click', close);
+        box.addEventListener('input', () => { send.disabled = !box.value.trim(); box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 160)}px`; });
+        box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!send.disabled) form.requestSubmit ? form.requestSubmit() : form.dispatchEvent(new Event('submit', { cancelable: true })); } });
+        let thread = null, parent = null, total = 0;
+        const replyTo = (m) => { parent = m; to.hidden = false; to.textContent = ''; const name = String(m.display_name || 'them').slice(0, 60); to.append(h('span', '', `Replying to ${name}`)); const un = h('button', 'ovfd-sheet-un', 'Cancel'); un.type = 'button'; un.addEventListener('click', () => { parent = null; to.hidden = true; }); to.append(un); box.focus(); };
+        function row(m, nested) {
+            const li = h('article', `ovfd-cm${nested ? ' is-reply' : ''}`);
+            const face = h('span', 'ovfd-cm-face');
+            const av = m.author && typeof m.author.avatar_url === 'string' && /^https:\/\//.test(m.author.avatar_url) ? m.author.avatar_url : '';
+            const name = String(m.display_name || (m.author && (m.author.display_name || m.author.username)) || 'Someone').slice(0, 60);
+            if (av) { const img = h('img'); img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.src = av; img.onerror = () => { img.remove(); face.textContent = name.charAt(0).toUpperCase(); }; face.append(img); }
+            else face.textContent = name.charAt(0).toUpperCase();
+            const body = h('div', 'ovfd-cm-b');
+            const top = h('div', 'ovfd-cm-top'); top.append(h('b', '', name), h('small', '', ago(m.created_at)));
+            const text = h('p', 'ovfd-cm-t', m.deleted ? 'Deleted' : String(m.message || '').slice(0, 10000));
+            if (m.deleted) text.classList.add('is-gone');
+            const acts = h('div', 'ovfd-cm-acts');
+            if (!m.deleted) {
+                const like = h('button', `ovfd-cm-a${m.my_vote === 1 ? ' is-on' : ''}`); like.type = 'button';
+                const score = Math.max(0, Number(m.upvotes != null ? m.upvotes : m.score) || 0);
+                like.append(glyph('heart'), h('span', '', score ? count(score) : 'Like')); like.setAttribute('aria-pressed', String(m.my_vote === 1)); like.setAttribute('aria-label', 'Like');
+                like.disabled = !signedIn(o);
+                like.addEventListener('click', async () => {
+                    const on = like.getAttribute('aria-pressed') !== 'true';
+                    like.setAttribute('aria-pressed', String(on)); like.classList.toggle('is-on', on);
+                    const n = Math.max(0, (Number(String(like.lastChild.textContent).replace(/\D/g, '')) || 0) + (on ? 1 : -1));
+                    like.lastChild.textContent = n ? count(n) : 'Like';
+                    try { await fetch(`${base}/${encodeURIComponent(m.id)}/votes`, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...auth() }, body: JSON.stringify({ value: on ? 1 : 0 }) }); } catch { /* stays as shown */ }
+                });
+                acts.append(like);
+                if (!nested && signedIn(o)) { const rp = h('button', 'ovfd-cm-a'); rp.type = 'button'; rp.append(glyph('reply'), h('span', '', 'Reply')); rp.addEventListener('click', () => replyTo(m)); acts.append(rp); }
+            }
+            body.append(top, text, acts);
+            li.append(face, body);
+            const wrapRow = h('div', 'ovfd-cm-wrap'); wrapRow.__id = m.id; wrapRow.append(li);
+            if (Array.isArray(m.replies) && m.replies.length) { const rs = h('div', 'ovfd-cm-replies'); m.replies.forEach((r) => rs.append(row(r, true))); wrapRow.append(rs); }
+            return wrapRow;
+        }
+        const fallback = () => { wrap.remove(); document.removeEventListener('keydown', esc, true); try { location.assign(`${url}#comments`); } catch { /* */ } };
+        (async () => {
+            try {
+                const r = await fetch(`${base}/resolve`, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...auth() }, body: JSON.stringify({ ref }) });
+                if (!r.ok) return fallback();
+                thread = await r.json();
+                if (!thread || !/^cth_/.test(String(thread.id || ''))) return fallback();
+                const t = await fetch(`${base}/threads/${encodeURIComponent(thread.id)}?sort=old&limit=50`, { credentials: 'omit', headers: { Accept: 'application/json', ...auth() } });
+                if (!t.ok) return fallback();
+                const d = await t.json();
+                const items = Array.isArray(d.comments) ? d.comments : [];
+                total = Number(d.thread && d.thread.comment_count) || items.length;
+                list.textContent = '';
+                if (!items.length) list.append(h('p', 'ovh-note ovfd-sheet-none', 'No comments yet. Say the first thing.'));
+                items.forEach((m) => list.append(row(m)));
+                const forum = d.thread && typeof d.thread.forum_url === 'string' && /^\/forum\//.test(d.thread.forum_url) ? `https://openvibe.community${d.thread.forum_url}` : '';
+                if (forum) { open.href = forum; open.setAttribute('aria-label', 'Open the forum post'); open.title = 'Open the forum post'; }
+                if (signedIn(o)) box.focus({ preventScroll: true });
+            } catch { fallback(); }
+        })();
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = box.value.trim();
+            if (!message || !thread) return;
+            send.disabled = true; box.disabled = true; err.hidden = true;
+            try {
+                const r = await fetch(`${base}/threads/${encodeURIComponent(thread.id)}/comments`, { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...auth() },
+                    body: JSON.stringify({ message, ...(parent ? { parent_id: parent.id } : {}) }) });
+                const j = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(j.detail || j.error || 'That did not send');
+                const none = list.querySelector('.ovfd-sheet-none'); if (none) none.remove();
+                const mine = { display_name: (o.user && (o.user.display_name || o.user.username)) || 'You', author: o.user ? { avatar_url: o.user.avatar_url } : null, created_at: new Date().toISOString(), my_vote: 0, upvotes: 0, ...j, message: j.message || message };
+                if (parent) {
+                    const at = [...list.querySelectorAll('.ovfd-cm-wrap')].find((w) => w.__id === parent.id);
+                    let rs = at && at.querySelector(':scope > .ovfd-cm-replies');
+                    if (at && !rs) { rs = h('div', 'ovfd-cm-replies'); at.append(rs); }
+                    (rs || list).append(row(mine, !!rs));
+                } else list.append(row(mine));
+                box.value = ''; box.style.height = ''; parent = null; to.hidden = true;
+                total += 1; if (typeof onCount === 'function') onCount(total);
+                list.scrollTop = list.scrollHeight;
+            } catch (x2) { err.hidden = false; err.textContent = (x2 && x2.message) || 'That did not send. Try again.'; }
+            box.disabled = !signedIn(o); send.disabled = !box.value.trim();
+            box.focus();
+        });
+        return true;
+    }
+    function actsOf(c, url, o = {}) {
         const n = c.counts || {};
         const row = h('div', 'ovfd-acts');
         const reply = h('a', 'ovfd-act-b'); reply.href = `${url}#comments`; reply.append(glyph('reply'), h('span', '', Number(n.comments) > 0 ? count(n.comments) : 'Comment'));
         reply.setAttribute('aria-label', Number(n.comments) > 0 ? `${num(n.comments)} comments` : 'Comment');
+        reply.addEventListener('click', (e) => {
+            if (e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;   // a new tab, as asked
+            if (commentSheet(c, url, o, (total) => { reply.lastChild.textContent = count(total); reply.setAttribute('aria-label', `${num(total)} comments`); })) e.preventDefault();
+        });
         row.append(reply);
         if (Number(n.likes) > 0) { const lk = h('span', 'ovfd-act-b is-static'); lk.append(glyph('heart'), h('span', '', count(n.likes))); lk.setAttribute('aria-label', `${num(n.likes)} likes`); row.append(lk); }
         const sh = h('button', 'ovfd-act-b'); sh.type = 'button'; sh.append(glyph('share'), h('span', '', 'Share'));
@@ -1967,7 +2094,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             if (people) { const row = h('span', 'ovfd-counts'); row.append(people); a.append(row); }
             else if (counts && Number((c.counts || {}).views) > 0) { const row = h('span', 'ovfd-counts'); const v = counts.querySelector('[aria-label$="views"], [aria-label$="watched"]'); if (v) { row.append(v); a.append(row); } }
             const post = h('article', `ovfd-post ovfd-k-${kind.replace(/[^a-z]/g, '')}`);
-            post.append(a, actsOf(c, url));
+            post.append(a, actsOf(c, url, o));
             return post;
         }
         if (people || counts) { const row = counts || h('span', 'ovfd-counts'); if (people) row.prepend(people); a.append(row); }
@@ -2222,6 +2349,39 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-chip{flex:none;min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--border,rgba(255,255,255,.12));background:transparent;color:var(--text-secondary,#a8b3c4);font:inherit;font-size:13.5px;font-weight:650;cursor:pointer}
 .ovfd-chip[aria-selected=true]{background:var(--text-primary,#e8ecf3);color:var(--bg-primary,#0b1220);border-color:transparent}
 .ovfd-list{display:grid;gap:10px;padding:4px 0}
+.ovfd-sheet-wrap{position:fixed;inset:0;z-index:10060;display:flex;align-items:flex-end;justify-content:center}
+.ovfd-sheet-scrim{position:absolute;inset:0;background:rgba(4,8,16,.55);opacity:0;transition:opacity .2s}
+.ovfd-sheet-wrap.is-in .ovfd-sheet-scrim{opacity:1}
+.ovfd-sheet{position:relative;display:flex;flex-direction:column;width:min(100%,600px);max-height:min(86dvh,780px);box-sizing:border-box;border-radius:20px 20px 0 0;background:var(--bg-secondary,#141a24);color:var(--text-primary,#e8ecf3);box-shadow:0 -12px 40px rgba(0,0,0,.4);transform:translateY(calc(24px * var(--ov-move,1)));opacity:0;transition:transform .24s cubic-bezier(.2,.9,.3,1),opacity .2s;padding-bottom:env(safe-area-inset-bottom,0px)}
+.ovfd-sheet-wrap.is-in .ovfd-sheet{transform:none;opacity:1}
+@media (min-width:700px){.ovfd-sheet-wrap{align-items:center}.ovfd-sheet{border-radius:20px;max-height:min(80dvh,760px)}}
+.ovfd-sheet-h{display:flex;align-items:center;gap:6px;padding:12px 10px 10px 18px;border-bottom:1px solid var(--border,rgba(255,255,255,.08))}
+.ovfd-sheet-t{flex:1 1 auto;min-width:0;font-size:15px;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ovfd-sheet-ib{all:unset;box-sizing:border-box;display:grid;place-items:center;width:44px;height:44px;border-radius:12px;cursor:pointer;color:var(--text-secondary,#a8b3c4)}
+.ovfd-sheet-ib:hover,.ovfd-sheet-ib:focus-visible{color:var(--text-primary,#e8ecf3);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}
+.ovfd-sheet-ib svg{width:20px;height:20px}
+.ovfd-sheet-list{flex:1 1 auto;min-height:120px;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px;display:flex;flex-direction:column;gap:12px}
+.ovfd-cm{display:flex;gap:10px;align-items:flex-start}
+.ovfd-cm-face{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;overflow:hidden;font-weight:800;font-size:15px;background:color-mix(in srgb,var(--accent,#3b82f6) 22%,var(--bg-tertiary,#1d2533))}
+.ovfd-cm.is-reply .ovfd-cm-face{width:28px;height:28px;font-size:12px}
+.ovfd-cm-face img{width:100%;height:100%;object-fit:cover;display:block}
+.ovfd-cm-b{min-width:0;flex:1 1 auto}
+.ovfd-cm-top{display:flex;align-items:baseline;gap:8px}.ovfd-cm-top b{font-size:14px}.ovfd-cm-top small{font-size:12px;color:var(--text-muted,#8a96a8)}
+.ovfd-cm-t{margin:2px 0 0;font-size:14.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}.ovfd-cm-t.is-gone{font-style:italic;color:var(--text-muted,#8a96a8)}
+.ovfd-cm-acts{display:flex;gap:4px;margin-top:2px}
+.ovfd-cm-a{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;gap:5px;min-height:32px;padding:0 8px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:650;color:var(--text-secondary,#a8b3c4)}
+.ovfd-cm-a svg{width:16px;height:16px}.ovfd-cm-a:hover{background:color-mix(in srgb,var(--text-primary,#e8ecf3) 7%,transparent)}
+.ovfd-cm-a.is-on{color:#f472b6}.ovfd-cm-a[disabled]{cursor:default;opacity:.7}
+.ovfd-cm-replies{display:flex;flex-direction:column;gap:10px;margin:8px 0 0 46px}
+.ovfd-sheet-f{display:flex;flex-direction:column;gap:6px;padding:10px 12px 12px;border-top:1px solid var(--border,rgba(255,255,255,.08))}
+.ovfd-sheet-field{display:flex;align-items:flex-end;gap:8px;padding:6px 6px 6px 14px;border-radius:22px;background:var(--bg-tertiary,#1d2533);border:1px solid var(--border,rgba(255,255,255,.1))}
+.ovfd-sheet-field:focus-within{border-color:color-mix(in srgb,var(--accent,#3b82f6) 60%,transparent)}
+.ovfd-sheet-field textarea{flex:1 1 auto;min-width:0;resize:none;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:15px;line-height:1.4;padding:7px 0;max-height:160px}
+.ovfd-sheet-send{all:unset;box-sizing:border-box;flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;cursor:pointer;color:#fff;background:var(--accent,#3b82f6)}
+.ovfd-sheet-send[disabled]{opacity:.45;cursor:default}.ovfd-sheet-send svg{width:18px;height:18px}
+.ovfd-sheet-to{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;color:var(--text-secondary,#a8b3c4)}
+.ovfd-sheet-un{all:unset;cursor:pointer;font-weight:700;color:var(--accent-light,#60a5fa)}
+.ovfd-sheet-err{margin:0;font-size:13px;color:#f87171}
 @media (min-width:861px){.ovfd{max-width:720px;margin-inline:auto}}
 .ovfd-stat{display:grid;grid-template-columns:auto 1fr;align-items:baseline;column-gap:10px;row-gap:2px;padding:4px 2px}
 .ovfd-stat-n{font-family:'OV Brand',Nunito,Inter,sans-serif;font-size:34px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.01em}

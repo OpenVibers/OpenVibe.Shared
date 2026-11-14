@@ -58,6 +58,9 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
         ], next_cursor: null }); }
       const kinds = kind ? [kind] : ['live', 'clip', 'pic', 'post', 'update'];
       return J({ items: Array.from({ length: 12 }, (_, i) => mk(i, kinds[i % kinds.length])), next_cursor: page === 1 ? 'c2' : null }); }
+    if (s === 'https://openvibe.network/api/frame/comments/resolve') { window.__resolved = JSON.parse(o.body).ref; return J({ id: 'cth_AbCdEfGhIjKlMnOpQrStUv', comment_count: 2 }); }
+    if (s.startsWith('https://openvibe.network/api/frame/comments/threads/cth_AbCdEfGhIjKlMnOpQrStUv')) return J({ thread: { id: 'cth_AbCdEfGhIjKlMnOpQrStUv', comment_count: 2, forum_url: '/forum/pastes/item-7' },
+      comments: [{ id: 1, display_name: 'Ada', message: '<img src=x onerror="window.pwned=1"> so good', created_at: new Date(Date.now() - 60e3).toISOString(), upvotes: 3, my_vote: 0, replies: [{ id: 2, display_name: 'Bo', message: 'agreed', created_at: new Date().toISOString(), upvotes: 0 }] }], next_cursor: null });
     if (s.startsWith('https://openvibe.network/api/frame/wall')) return J(Object.assign({}, ${JSON.stringify(PULSE)}, s.includes('after=c2') ? { items: [{ title: 'An older post', url: 'https://openvibe.community/p/0', occurred_at: new Date(Date.now() - 86400e3).toISOString(), ref: { service: 'community' } }], next_cursor: null } : {}, ${signed ? "{ viewer: { can_post: true } }" : '{}'}));
     if (s.startsWith('https://openvibe.actor/api/v1/me/actor')) return J({ id: 'act_1', name: 'Juniper', enabled: true, status: 'working', now: { current_step: 'Reading job posts' }, asks: [] });
     if (s.startsWith('https://')) return J({}, false, 404);
@@ -99,6 +102,20 @@ const server = http.createServer((req, res) => {
         const beacon = await p.evaluate(`JSON.parse(window.__beacons.find((b) => b.u.endsWith('/api/v1/feed/views')).t)`);
         assert.ok(beacon.ids.length >= 1 && beacon.ids.length <= 20 && beacon.ids.every((id) => /^f:video:/.test(id)) && new Set(beacon.ids).size === beacon.ids.length, `card ids, each once (${beacon.ids})`);
         assert.ok(/^[A-Za-z0-9_-]{8,64}$/.test(beacon.session), 'with the page session');
+        // 4.250.0 (§AA.21): Comment opens the thread in a sheet over the menu, never a new page; what people wrote is text.
+        await p.evaluate("document.querySelector('.ovfd-post .ovfd-acts .ovfd-act-b').click(), true");
+        assert.ok(await until(p, "document.querySelectorAll('.ovfd-sheet .ovfd-cm').length === 2"), 'the comments and their reply, in a sheet');
+        const sheet = await p.evaluate(`({ url: location.pathname, ref: window.__resolved, text: document.querySelector('.ovfd-sheet .ovfd-cm-t').textContent, pwned: !!window.pwned,
+            forum: document.querySelector('.ovfd-sheet-h a').href, reply: document.querySelector('.ovfd-sheet textarea').disabled, wide: document.documentElement.scrollWidth })`);
+        assert.strictEqual(sheet.url, '/', 'no new page');
+        assert.ok(sheet.ref && sheet.ref.service === 'video' && /^post|clip|pic|live|update$/.test(sheet.ref.type), `the card's own ref (${JSON.stringify(sheet.ref)})`);
+        assert.ok(/^<img/.test(sheet.text) && !sheet.pwned, 'what people wrote is text');
+        assert.strictEqual(sheet.forum, 'https://openvibe.community/forum/pastes/item-7', 'and the forum post is one press away');
+        assert.strictEqual(sheet.reply, true, 'signed out: the box says sign in');
+        assert.ok(sheet.wide <= 390, 'nothing off the screen');
+        await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })), true");
+        assert.ok(await until(p, "!document.querySelector('.ovfd-sheet-wrap')"), 'Escape closes it');
+        assert.ok(await p.evaluate("!!document.querySelector('.ovs.is-open')"), 'and the menu stays');
         const first = await p.evaluate(`({ chips: [...document.querySelectorAll('.ovfd-chip')].map((b) => b.textContent), selected: (document.querySelector('.ovfd-chip[aria-selected=true]') || {}).textContent,
             kinds: [...new Set([...document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a')].map((a) => a.className))], live: !!document.querySelector('.ovfd-livechip'), media: document.querySelectorAll('.ovfd-media img').length,
             bolds: document.querySelectorAll('.ovfd-list b b').length, posts: [...document.querySelectorAll('.ovfd-k-post .ovfd-title')].map((b) => b.textContent)[0],
