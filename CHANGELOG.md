@@ -1,5 +1,30 @@
 # Changelog
 
+## 4.252.0 — 2026-11-14
+
+**No broken pictures in the feed** (plan §AB.43; the owner: "lots of broken and missing icons and images"). A video,
+clip or live card whose picture is missing or does not load keeps its frame and shows the site's own mark on a soft
+field of the site's colour; a live card on air without a picture yet gets the same frame, so "LIVE" and "4 watching"
+have their place. A photo whose picture does not load folds its frame away. A group's rows (new jobs, new deals)
+without a picture show the site's small mark, never an empty square. Every face (the run of streamers who went live,
+your own box, an agent's) that does not load becomes the name's first letter, and a name's Workshop badge that does
+not load leaves no empty mark (items.js).
+
+**The feed's views beacon reaches the Network from a site's own feed proxy.** Mounted with `frameBase: '/api/v1'`
+(Community's /pulse) it went to `/api/v1/api/v1/feed/views`, a 404; anything but Network's own frame address now sends
+to `https://openvibe.network/api/v1/feed/views`. Test: `test/feed-pictures-chrome.test.js`.
+
+**A site's card says what is new there** (plan §AB.46; the owner: "needs more metrics"). A site's own card (Deals, Work,
+News…: no person behind it) wears the site's live line under its name, "1,240 new jobs today", "3 live now", from
+Network's `GET /api/frame/feed/sites` (read once a page, kept five minutes; no answer, no line; `o.siteLines: false` turns
+it off).
+
+**Recent searches follow you** (plan §AB.34; the owner: "search history … across all sites"). Signed in, each search run
+from the menu is kept on the account (Network's history, kind `search`; needs OpenVibe.Network's `search` kind and
+`DELETE /api/history/type/:type`) and read back on every site, first, before this browser's own list. The menu's first
+tab shows them as chips under the site's pages, and Clear empties both. Signed out, only this browser keeps them. Test:
+`test/search-recent-account-chrome.test.js`.
+
 ## 4.251.0 — 2026-11-14
 
 **Notifications like a phone's, finished** (plan §AB.31, §AB.52). An agent's notice wears the agent's face: its picture

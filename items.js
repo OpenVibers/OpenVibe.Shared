@@ -130,6 +130,7 @@
             b.width = 16; b.height = 16;
             b.setAttribute('loading', 'lazy');
             b.setAttribute('aria-hidden', 'true');
+            b.onerror = () => b.remove();
             el.parentNode.insertBefore(b, el);
         }
 
