@@ -1969,6 +1969,11 @@
     let _authInFlight = null;
     let _hintPainted = false, _hintSettled = false;
 
+    /** The hint the site's own server set (a sign-out writes 'guest' here), as opposed to one this script kept. */
+    function cookieHint() {
+        const m = (typeof document !== 'undefined' ? document.cookie : '').match(/(?:^|;\s*)ov_sso_hint=([^;]*)/);
+        return m ? m[1] : null;
+    }
     function ssoHint() {
         const m = (typeof document !== 'undefined' ? document.cookie : '').match(/(?:^|;\s*)ov_sso_hint=([^;]*)/);
         if (m) return m[1];
@@ -2021,7 +2026,12 @@
      */
     function maybeSilentLogin() {
         if (!_config.silentLogin || typeof location === 'undefined') return false;
-        if (ssoHint() === 'guest') return false;
+        // A sign-out here (the 'guest' cookie) is final. A round trip that once found no session (the 'guest' kept in
+        // storage: a visit before signing in) is not: arriving from another OpenVibe site, where the person may well be
+        // signed in now, earns one quiet round trip (11-14, the owner: openvibe.tours showed Sign in though every other
+        // site had them signed in). The 10-minute limit below still holds.
+        if (cookieHint() === 'guest') return false;
+        if (ssoHint() === 'guest' && !fromOpenVibe()) return false;
         if (/bot|crawl|spider|slurp|headless/i.test(navigator.userAgent || '')) return false;
         if (/[?&]sso=none\b/.test(location.search)) return false;
         try {

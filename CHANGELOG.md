@@ -68,6 +68,11 @@ nudged; Post, Reply and the round send are their own lit buttons with a shine th
 feel and the arrow lifting; nothing to send is a dim disk (not an outline); a one-line box centres its buttons. Motion
 Off keeps them still.
 
+**Signed in on one site, signed in on the next** (navbar.js; the owner, 11-14: openvibe.tours showed Sign in though every
+other site had them signed in): a round trip that once found no session there (the 'guest' this script keeps) no longer
+stops the next one when the person arrives from another OpenVibe site; a sign-out (the site's own 'guest' cookie)
+still does. Once per tab per 10 minutes, as before.
+
 **The menu's close** (the owner, 11-14): closing no longer moves the page (the browser restores no scroll for the
 menu's own Back, and focus returns without scrolling); the close button folds home into the menu button, and a tab
 flies back into the button that opened it only while the menu still shows that tab.

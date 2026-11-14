@@ -472,6 +472,17 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.strictEqual(calls.filter(c => c.navigation).length, 0, 'guest hint: no silent navigation');
     }
 
+    {
+        // 11-14: a round trip that once found no session (the 'guest' kept in storage) does not stop the next one when the
+        // person arrives from another OpenVibe site (openvibe.tours stayed signed out).
+        const { navbar, calls } = loadNavbar({
+            hostname: 'openvibe.tours', storage: { ov_sso_hint: 'guest' }, referrer: 'https://openvibe.network/',
+            fetch: async () => jsonResponse(401, {}),
+        });
+        navbar.init({ service: 'tours', sessionUrl: '/auth/me', fedcm: false, silentLogin: '/auth/login?silent=1&next={url}' });
+        await navbar.refreshAuth();
+        assert.strictEqual(calls.filter(c => c.navigation).length, 1, 'stored guest + an OpenVibe referrer: one silent round trip');
+    }
     console.log('navbar-auth: all tests passed');
 })().catch((err) => {
     console.error(err);
