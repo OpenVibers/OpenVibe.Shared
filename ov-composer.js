@@ -203,6 +203,9 @@ html[data-theme-mode=light] .ovc-v2 .ovt-c-tools .ovt-btn { background: linear-g
 .ovc-v2 .ovt-send:disabled { opacity: 1; filter: saturate(.25) brightness(.72); box-shadow: inset 0 1px 0 rgba(255,255,255,.14); cursor: default; }
 .ovc-v2 .ovt-send--round { width: 40px; min-width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; }
 .ovc-v2 .ovt-send--round svg { display: block; width: 18px; height: 18px; margin: 0; }
+/* 4.249.0: a site's own button padding (Chat's 0 16px) never pushes the arrow off centre; the round buttons are one size. */
+.ovt-composer.ovc-v2 button.ovt-send--round, .ovt-composer.ovc-v2 .ovt-c-tools > .ovt-btn { padding: 0; box-sizing: border-box; }
+.ovt-composer.ovc-v2 .ovt-c-tools { align-items: center; }
 .ovc-v2[data-preset="chat"] .ovt-c-row { margin-top: 0; }   /* one line: the buttons sit in its middle, not 2 px low */
 html[data-ov-motion=off] .ovc-v2 .ovt-send::after { display: none; } html[data-ov-motion=off] .ovc-v2 :is(.ovt-send, .ovt-btn, .ovt-send svg) { transition: none; translate: none; }
 .ovc-cam { padding: 0; border: 0; border-radius: 22px; width: min(560px, 96vw); max-height: 94vh; overflow: hidden; background: #05070c; color: #fff; display: flex; flex-direction: column; }
