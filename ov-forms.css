@@ -365,8 +365,9 @@ html[data-ov-motion="off"] :where(input[type="file"])::file-selector-button { tr
 .ov-field .ov-sel { min-height: 44px; padding-inline-start: 12px; }
 .ov-input::placeholder, .ov-field :is(input, textarea)::placeholder { color: var(--text-muted, color-mix(in srgb, CanvasText 45%, Canvas)); opacity: 1; }
 .ov-input:hover, .ov-field :is(input, textarea):hover { border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, var(--border, color-mix(in srgb, CanvasText 20%, transparent))); }
+/* The same ring as every text field (4.274.0): the accent border and a soft outline on it, never a box-shadow halo. */
 .ov-input:focus-visible, .ov-field :is(input, textarea):focus-visible, .ov-input:focus, .ov-field :is(input, textarea):focus {
-    outline: none; border-color: var(--accent, #3b82f6); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 30%, transparent);
+    border-color: var(--accent, #3b82f6); outline: 3px solid color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); outline-offset: 0; box-shadow: none;
 }
 .ov-input[aria-invalid="true"], .ov-field :is(input, textarea)[aria-invalid="true"], .ov-input:user-invalid, .ov-field :is(input, textarea):user-invalid {
     border-color: var(--danger, #ef4444);

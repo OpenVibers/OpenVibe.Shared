@@ -87,8 +87,8 @@ const h = require('../browser-harness');
     // Judging a route from what the browser saw.
     const base = { width: 1280, status: 200, errors: [], overflow: false, offenders: [], duplicateScripts: [], canonical: ['https://a.example/p'], text: 'Only With JS' };
     const nojs = { status: 200, textChars: 500, canonical: ['https://a.example/p'], jsonld: [JSON.stringify({ '@type': 'Article', headline: 'The Title' })], text: 'the title and more' };
-    let r = h.checkRoute(h.normalizeRoutes(['/p'])[0], { url: 'https://a.example/p', widths: [{ ...base, width: 390 }, base], nojs, axe: { violations: [], critical: 0, serious: 0, moderate: 0, minor: 0 } }, { minText: 200 });
-    assert.deepStrictEqual(r.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass', text: 'pass' });
+    let r = h.checkRoute(h.normalizeRoutes(['/p'])[0], { url: 'https://a.example/p', widths: [{ ...base, width: 390 }, base], nojs, axe: { violations: [], critical: 0, serious: 0, moderate: 0, minor: 0 }, rings: { fields: 3, doubles: [] } }, { minText: 200 });
+    assert.deepStrictEqual(r.checks, { status: 'pass', errors: 'pass', overflow: 'pass', scripts: 'pass', rings: 'pass', nojs: 'pass', canonical: 'pass', jsonld: 'pass', axe: 'pass', text: 'pass' });
     assert.strictEqual(r.ok, true);
     // text: words a template or a double escape left in the page warn, and the route still passes.
     r = h.checkRoute(h.normalizeRoutes(['/p'])[0], { url: 'https://a.example/p', widths: [{ ...base, text: 'Answered in 38 ms [object Object] and covers . The end' }], nojs, axe: { skipped: true } }, { minText: 200 });
@@ -101,8 +101,10 @@ const h = require('../browser-harness');
         widths: [{ ...base, width: 390, status: 500, errors: [{ source: 'exception', text: 'TypeError: x', url: '' }, { source: 'network', text: 'Failed to load resource', url: 'https://t.example/beacon' }], overflow: true, duplicateScripts: [{ url: 'https://a.example/app.js', count: 2 }] }, { ...base, canonical: ['https://a.example/other'] }],
         nojs: { ...nojs, textChars: 20, canonical: ['https://other.example/p'], jsonld: [JSON.stringify({ '@type': 'Article', headline: 'Only With JS' }), JSON.stringify({ '@type': 'Person', name: 'Nobody' })] },
         axe: { violations: [{ id: 'color-contrast', impact: 'serious', help: 'contrast', nodes: 2, targets: ['a'] }], critical: 0, serious: 1, moderate: 0, minor: 0 },
+        rings: { fields: 2, doubles: [{ field: 'input#q[type=search]', why: ['focused: its border and an outline apart from it'] }] },
     }, { minText: 200, ignoreErrors: [/beacon/] });
-    assert.deepStrictEqual(r.checks, { status: 'fail', errors: 'fail', overflow: 'fail', scripts: 'fail', nojs: 'fail', canonical: 'warn', jsonld: 'fail', axe: 'fail', text: 'pass' });
+    assert.deepStrictEqual(r.checks, { status: 'fail', errors: 'fail', overflow: 'fail', scripts: 'fail', rings: 'fail', nojs: 'fail', canonical: 'warn', jsonld: 'fail', axe: 'fail', text: 'pass' });
+    assert.match(h.format({ base: 'https://a.example', ok: false, routes: [{ ...r, path: '/p' }] }), /rings: input#q\[type=search\]: focused: its border and an outline apart from it/);
     assert.deepStrictEqual(r.errors, ['exception: TypeError: x'], 'ignoreErrors matches the URL too');
     assert.ok(/points to https:\/\/other\.example; JavaScript changes it/.test(r.canonical.note));
     assert.deepStrictEqual(r.jsonld.entities.map((e) => e.found), ['js', null]);
@@ -127,7 +129,7 @@ const h = require('../browser-harness');
     r = h.checkRoute(h.normalizeRoutes([{ path: '/api/x', status: 404 }])[0], { path: '/api/x', url: 'https://a.example/api/x',
         widths: [{ ...base, status: 404, contentType: 'application/problem+json', errors: [{ source: 'network', text: 'favicon 404', url: 'https://a.example/favicon.ico' }] }],
         nojs: null, axe: { violations: [{ id: 'document-title', impact: 'serious' }], critical: 0, serious: 1, moderate: 0, minor: 0 } }, { minText: 200 });
-    assert.deepStrictEqual(r.checks, { status: 'pass', errors: 'skip', overflow: 'skip', scripts: 'skip', nojs: 'skip', canonical: 'skip', jsonld: 'skip', axe: 'skip', text: 'skip' });
+    assert.deepStrictEqual(r.checks, { status: 'pass', errors: 'skip', overflow: 'skip', scripts: 'skip', rings: 'skip', nojs: 'skip', canonical: 'skip', jsonld: 'skip', axe: 'skip', text: 'skip' });
     assert.strictEqual(r.contentType, 'application/problem+json');
     assert.ok(h.format({ base: 'https://a.example', routes: [r], ok: true }).includes('/api/x: pass (application/problem+json: only the status is checked)'));
     // Moderate axe findings are reported, not failed.

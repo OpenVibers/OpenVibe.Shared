@@ -636,7 +636,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '963920435f1e', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '67f7fe2d86b3', 'dock.js': '39cb8179034c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'a915e5fab8eb', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c58f990574e6', 'nav-slots.js': 'c4890d9e86ea', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e9515fa14ab5', 'ov-composer.js': '28f138acd5b6', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '901604e7d267', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '67f7fe2d86b3', 'dock.js': '39cb8179034c', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': 'a915e5fab8eb', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': 'c58f990574e6', 'nav-slots.js': 'c4890d9e86ea', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': '7696263c078e', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'e9515fa14ab5', 'ov-composer.js': '28f138acd5b6', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -806,6 +806,77 @@
             sc.onload = () => { if (root.OVShare) root.OVShare.open(root.OVShare.fromButton(b)); };
             document.head.appendChild(sc);
         } catch { /* */ }
+    }
+    // One ring per field (4.274.0; design rule one-ring-per-field; the owner, 11-15: "make sure that input double border
+    // shit is fixed for all element types"). Each field people type in or pick from is measured once it is drawn, at
+    // rest: inside a box that draws a ring (a pill, a search bar, a composer, a chip), the box's ring is the only one, so
+    // a field with a border of its own there is marked inner (its border goes clear) and a bare one bare (no focus ring
+    // of its own), and the box ([data-ov-fieldbox]) takes the accent while it holds the focus. Anywhere else a field
+    // keeps its own ring, and its focus outline sits on its border, never apart from it (a site's outline-offset of 2 px
+    // drew a second ring around 15 sites' search boxes). The same measure is openvibe-shared/field-rings, which the
+    // browser check runs as its `rings` check.
+    const RING_FIELD = 'input:not([type=checkbox],[type=radio],[type=range],[type=file],[type=color],[type=hidden],[type=button],[type=submit],[type=reset],[type=image]),textarea,select,.ov-sel,[contenteditable=""],[contenteditable="true"]';
+    const RING_CSS = ':where(html:not([data-ov-forms="off"])) [data-ov-field="inner"]{border-color:transparent!important}'
+        + ':where(html:not([data-ov-forms="off"])) :is([data-ov-field="inner"],[data-ov-field="bare"]):focus-visible{outline:none!important;box-shadow:none!important}'
+        + ':where(html:not([data-ov-forms="off"])) [data-ov-fieldbox]:focus-within{border-color:var(--accent,#3b82f6)}'
+        + ':where(html:not([data-ov-forms="off"])) [data-ov-field="own"]:focus-visible{outline-offset:0!important}';
+    function ringAlpha(c) {
+        if (!c || c === 'transparent') return 0;
+        const m = String(c).match(/rgba?\(([^)]+)\)/);
+        if (!m) return 1;
+        const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+        return p.length >= 4 ? p[3] : 1;
+    }
+    function ringEdged(cs) {
+        return ['Top', 'Right', 'Bottom', 'Left'].every((s) => parseFloat(cs['border' + s + 'Width']) > 0 && cs['border' + s + 'Style'] !== 'none' && cs['border' + s + 'Style'] !== 'hidden' && ringAlpha(cs['border' + s + 'Color']) > 0.06);
+    }
+    function ringShadow(cs) {
+        const s = cs.boxShadow;
+        if (!s || s === 'none') return false;
+        return s.split(/,(?![^(]*\))/).some((part) => {
+            if (/inset/.test(part)) return false;
+            if (ringAlpha((part.match(/rgba?\([^)]+\)|#[0-9a-f]{3,8}/i) || [''])[0]) <= 0.06) return false;
+            const n = part.replace(/rgba?\([^)]+\)|#[0-9a-f]{3,8}/gi, '').trim().split(/\s+/).map(parseFloat).filter((x) => !isNaN(x));
+            return (n[3] || 0) > 0 && Math.abs(n[0] || 0) < 1 && Math.abs(n[1] || 0) < 1 && (n[2] || 0) <= (n[3] || 0) * 2 + 1;
+        });
+    }
+    /** The box that hugs a field (each side within 10 px, or a row it fills at least half of) and draws a ring. */
+    function ringBox(el, f) {
+        const lim = [10, 10, 10, /^inline/.test(getComputedStyle(el).display) ? 16 : 10];   // a field on a text line sits on its baseline
+        let a = el.parentElement;
+        for (let i = 0; a && i < 4 && a !== document.body; i++, a = a.parentElement) {
+            const b = a.getBoundingClientRect();
+            const g = [f.left - b.left, f.top - b.top, b.right - f.right, b.bottom - f.bottom];
+            if (g.some((x) => x < -1)) return null;
+            if (g.some((x, k) => x > lim[k]) && !(g[1] <= 10 && g[3] <= lim[3] && b.height <= f.height + 26 && f.width >= b.width * 0.5)) return null;
+            const cs = getComputedStyle(a);
+            if (ringEdged(cs) || ringShadow(cs)) return a;
+        }
+        return null;
+    }
+    function markRing(el) {
+        if (el.hasAttribute('data-ov-field') || (el.closest && el.closest('[data-ov-native]'))) return;
+        const f = el.getBoundingClientRect();
+        if (f.width < 8 || f.height < 8) return;   // not drawn yet: measured when it is
+        const box = ringBox(el, f);
+        el.setAttribute('data-ov-field', box ? (ringEdged(getComputedStyle(el)) ? 'inner' : 'bare') : 'own');
+        if (box) box.setAttribute('data-ov-fieldbox', '');
+    }
+    function markRings() {
+        const all = document.querySelectorAll(RING_FIELD);
+        for (let i = 0; i < all.length && i < 300; i++) if (!all[i].hasAttribute('data-ov-field')) markRing(all[i]);
+    }
+    let ringWatch = null;
+    function watchRings() {
+        if (ringWatch || typeof getComputedStyle !== 'function' || !document.documentElement || !document.querySelectorAll || document.documentElement.getAttribute('data-ov-forms') === 'off' || typeof MutationObserver !== 'function' || !document.body || !document.head) return;
+        if (!document.getElementById('ov-one-ring')) {
+            try { const st = document.createElement('style'); st.id = 'ov-one-ring'; st.textContent = RING_CSS; document.head.appendChild(st); } catch { /* */ }
+        }
+        markRings();
+        let soon = 0;
+        ringWatch = new MutationObserver(() => { if (soon) return; soon = setTimeout(() => { soon = 0; markRings(); }, 300); });
+        ringWatch.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'open', 'class'] });
+        document.addEventListener('focusin', (e) => { const t = e.target; if (t && t.matches && t.matches(RING_FIELD)) markRing(t); }, true);
     }
     function watchForms() {
         if (formWatch || !document.querySelector || typeof MutationObserver !== 'function' || !document.body) return;
@@ -2423,7 +2494,7 @@
         }
         // The network's own icons in place of Font Awesome's (ov-glyphs.js, L32) on a page that uses Font Awesome: now,
         // or the first time the page's own script adds one (L54 K4: a page with no icon at first pays nothing).
-        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) watchForms();
+        if (_config.glyphs !== false) watchGlyphs(); watchLabels(); watchScrollers(); if (_config.forms !== false) { watchForms(); watchRings(); }
         if (!root.__ovShareClick) { root.__ovShareClick = true; document.addEventListener('click', shareClick); }
         watchOverlays(); warmLinks();
         nav.innerHTML = `

@@ -28,6 +28,7 @@
     "./brand": "./brand.js",
     "./bottom": "./bottom.js",
     "./browser-harness": "./browser-harness.js",
+    "./field-rings": "./field-rings.js",
     "./builtin-themes": "./builtin-themes.js",
     "./cache-policy": "./cache-policy.js",
     "./config": "./config.js",
