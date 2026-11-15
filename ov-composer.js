@@ -181,6 +181,7 @@ html[data-ov-motion=off] .ovc-file, html[data-ov-motion=off] .ovc-pop, html[data
 .ovc-chip svg { flex: none; width: 15px; height: 15px; }
 .ovc-chip-v { overflow: hidden; text-overflow: ellipsis; }
 .ovc-chip select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: inherit; }
+.ovc-chip--picker select { pointer-events: none; }
 .ovc-chip:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--ovt-accent, var(--accent, #3b82f6)) 30%, transparent); }
 .ovc-ring { flex: none; width: 26px; height: 26px; margin: 0 4px; }
 .ovc-ring circle { fill: none; stroke-width: 3; }
@@ -562,7 +563,7 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     const mods = [];
     // 4.202.0: your settings open in the one window (ov-window.js: a sheet on a phone, swiped down to close), loaded
     // from beside this file; without it, a plain <dialog>.
-    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415' };
+    const COMPOSER_REV = { 'ov-window.js': '55f98e14ef27', 'ov-capture.js': '6bdc48bfd415', 'ov-picker.js': 'b368e01d8505' };
     const selfSrc = (document.currentScript && document.currentScript.src) || '';
     function needWindow() {
         return new Promise((ok) => {
@@ -574,6 +575,23 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             sc.onload = () => ok(root.OVWindow || null); sc.onerror = () => ok(null);
             document.head.appendChild(sc);
         });
+    }
+    // 4.264.0 (plan §AD.8 step 4; the owner: "the drop downs … not custom animations"): every choice in the box opens
+    // OpenVibePicker (ov-picker.js), loaded from beside this file when a box mounts; until it has loaded, the browser's
+    // own list still works.
+    let pickerAsked = null;
+    function needPicker() {
+        if (root.OpenVibePicker) return Promise.resolve(root.OpenVibePicker);
+        if (pickerAsked) return pickerAsked;
+        pickerAsked = new Promise((ok) => {
+            const m = /^(https?:\/\/[^?#]*\/)ov-composer(?:\.[0-9a-f]{6,})?\.js(?:[?#]|$)/.exec(selfSrc);
+            if (!m) return ok(null);
+            const sc = document.createElement('script');
+            sc.src = m[1] + 'ov-picker.js' + (COMPOSER_REV['ov-picker.js'] ? '?v=' + COMPOSER_REV['ov-picker.js'] : '');
+            sc.onload = () => ok(root.OpenVibePicker || null); sc.onerror = () => ok(null);
+            document.head.appendChild(sc);
+        });
+        return pickerAsked;
     }
     // 4.217.0: the camera button opens the shared capture core (ov-capture.js, OVCapture), loaded from beside this file.
     function needCapture() {
@@ -1764,6 +1782,21 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             sel.addEventListener('change', () => { paint(); if (typeof spec.onChange === 'function') spec.onChange(sel.value); });
             paint();
             c.append(v, sel);
+            // 4.264.0: the pill opens OpenVibePicker (search past eight, sheet on a phone, popover by the pill); the select
+            // stays for the form and screen readers, and is the list until the picker has loaded.
+            const pick = () => {
+                const P = root.OpenVibePicker;
+                if (!P) return false;
+                P.open({
+                    anchor: c, title: spec.label || 'Choose', search: 'auto', value: sel.value,
+                    rows: [...sel.options].map((op) => ({ id: op.value, name: op.textContent, line: op.dataset.line || '', disabled: op.disabled })),
+                    onPick: (row) => { sel.value = row.id; sel.dispatchEvent(new Event('change', { bubbles: true })); },
+                });
+                return true;
+            };
+            needPicker().then((P) => { if (P) c.classList.add('ovc-chip--picker'); });
+            c.addEventListener('click', (e) => { if (root.OpenVibePicker && pick()) e.preventDefault(); });
+            sel.addEventListener('keydown', (e) => { if (['Enter', ' ', 'ArrowDown'].includes(e.key) && pick()) e.preventDefault(); });
             return c;
         };
         const aud = chip(o.audience, IC.globe), md = chip(o.mode, IC.spark);
@@ -1862,7 +1895,15 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             } catch { /* the short list stands */ }
             return runOpts || fallbackRun();
         };
-        const pickSheet = (title, rows, isOn, onPick) => sheet(title, (b, close) => {
+        // 4.264.0: OpenVibePicker when it has loaded (the same rows, a search past eight, a popover by its chip on a
+        // computer); the box's own sheet otherwise.
+        let pickAnchor = null;   // the chip that opened the choice: the picker's popover sits by it
+        const pickSheet = (title, rows, isOn, onPick, anchor = null) => (root.OpenVibePicker ? root.OpenVibePicker.open({
+            anchor: anchor || pickAnchor, title, search: 'auto',
+            rows: rows.map((row, i) => ({ id: String(row.id ?? row.value ?? i), name: row.name, line: row.line || '', disabled: !!row.disabled, icon: row.glyph || row.icon || '' })),
+            value: (() => { const on = rows.find((row) => isOn(row)); return on ? String(on.id ?? on.value ?? rows.indexOf(on)) : null; })(),
+            onPick: (picked) => { const row = rows.find((r, i) => String(r.id ?? r.value ?? i) === String(picked.id)); if (row) { onPick(row); ta.focus(); } },
+        }) : sheet(title, (b, close) => {
             const list = el('div', 'ovc-models');
             rows.forEach((row) => {
                 const r = el('div', 'ovc-model');
@@ -1875,13 +1916,13 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
                 r.append(btn); list.append(r);
             });
             b.append(list);
-        });
-        agentChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Agent', opts.agents || [], (x) => x.id === runPick.agent, (x) => { runPick.agent = x.id; if (runPick.where === 'openvibe' && coding(opts)) runPick.where = 'auto'; saveRun(); }); });
+        }));
+        agentChip.addEventListener('click', async () => { pickAnchor = agentChip; const opts = await loadRun(); pickSheet('Agent', opts.agents || [], (x) => x.id === runPick.agent, (x) => { runPick.agent = x.id; if (runPick.where === 'openvibe' && coding(opts)) runPick.where = 'auto'; saveRun(); }); });
         // Coding (Codes or a coding harness) never runs on OpenVibe's own server (the owner, 11-15): its sheet leaves
         // OpenVibe out, and Auto means a shared node or your computer.
         const coding = (opts) => { const a = (opts.agents || []).find((x) => x.id === runPick.agent); return runPick.agent === 'codes' || !!(a && (a.kind === 'harness' || a.kind === 'codes')); };
         const placesFor = (opts) => (coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []));
-        whereChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Runs on', placesFor(opts), (x) => placeKey(x) === runPick.where, (x) => { runPick.where = placeKey(x); saveRun(); }); });
+        whereChip.addEventListener('click', async () => { pickAnchor = whereChip; const opts = await loadRun(); pickSheet('Runs on', placesFor(opts), (x) => placeKey(x) === runPick.where, (x) => { runPick.where = placeKey(x); saveRun(); }); });
         runModelChip.addEventListener('click', () => openModels());
         warmChoices(frame, askTask);
         // A page's own choices lead the line (4.260.0; Codes' "Works on"): { id, icon, label, value, options: [{ value,
@@ -1892,11 +1933,11 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             let value = spec.value;
             const c = runChip(IC[spec.icon] || IC.repo || IC.spark, spec.label || 'Option');
             const paint = () => { const list = optionsOf(spec); const it = list.find((x) => String(x.value) === String(value)) || list[0]; c.querySelector('.ovc-chip-v').textContent = it ? it.name : ''; c.setAttribute('aria-label', `${spec.label || 'Option'}: ${it ? it.name : ''}. Change it`); };
-            c.addEventListener('click', () => pickSheet(spec.label || 'Option', optionsOf(spec).map((x) => ({ ...x, name: x.name, line: x.line })), (x) => String(x.value) === String(value), (x) => { value = x.value; paint(); if (typeof spec.onPick === 'function') spec.onPick(x.value); }));
+            c.addEventListener('click', () => (pickAnchor = c) && pickSheet(spec.label || 'Option', optionsOf(spec).map((x) => ({ ...x, name: x.name, line: x.line })), (x) => String(x.value) === String(value), (x) => { value = x.value; paint(); if (typeof spec.onPick === 'function') spec.onPick(x.value); }));
             paint();
             return c;
         });
-        if (runOn) { runChips.append(...extraChips, agentChip, runModelChip, whereChip); paintRun(); loadRun().then(paintRun); }
+        if (runOn) { runChips.append(...extraChips, agentChip, runModelChip, whereChip); paintRun(); loadRun().then(paintRun); needPicker(); }
         const runValue = () => {
             if (!runOn) return null;
             const opts = runOpts || o.runOptions || fallbackRun();

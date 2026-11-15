@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.264.0 — 2026-11-15
+
+**OpenVibePicker: one animated picker for every choice** (`ov-picker.js`, plan §AD.8 step 4). The owner: "the drop
+downs … not custom animations". It opens as a sheet that rises from the bottom on a phone and a popover by its chip on a
+computer. A row has an icon (an OpenVibe glyph, or the row's initial when there is none), its name and a line, a badge,
+and a check that springs in. Rows can sit in sections, and a search appears past eight rows. Arrows and Enter pick,
+typing finds, Escape closes back to the chip, and a sheet follows a finger down. Several can be chosen at once with
+Done. Motion follows `data-ov-motion`; colours are theme tokens.
+- `OpenVibePicker.open({ anchor, title, rows | sections, value, multi, search, onPick, onClose })`.
+- `OpenVibePicker.enhance(select)` draws a native `<select>` as a pill that opens the picker. The select stays for the
+  form, its label and screen readers. `select[data-ov-picker]` is enhanced on load.
+
+**The composer's choices use it.** An option chip (who sees it, the agent's mode, a site's chips; Codes' conductor
+model, now hundreds of models) opens the picker instead of the browser's own list, by a press or by Enter, Space or
+Arrow-down. The Agent and Runs on sheets open it by their chip. `ov-picker.js` loads from beside the composer when a box
+mounts; until it has loaded, the browser's list still works. Sites serve it (`files.js`).
+
+Test: `test/ov-picker-chrome.test.js`.
+
 ## 4.263.0 — 2026-11-15
 
 **The menu's Chat tab, in four segments.** The owner, 11-15: "segments Messages · Friends · Global · Servers; Friends
