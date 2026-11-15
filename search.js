@@ -434,13 +434,6 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 .ovs-acts { display: flex; flex: none; gap: 2px; }
 .ovs-acts:empty, .ovs-door-host .ovdk-bar { display: none; }
 /* 4.260.0: Actor | Codes over the Vibe door, a slim segmented switch; the body under it is the view. */
-.ovs-vibe-switch { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 2px 10px 6px; padding: 3px; border-radius: 12px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); }
-.ovs-vibe-sw { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 36px; border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--text-secondary, #a8b3c4); -webkit-tap-highlight-color: transparent; }
-.ovs-vibe-sw svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.ovs-vibe-sw[aria-selected="true"] { color: var(--text-primary, #e6edf7); background: var(--bg-secondary, #121826); box-shadow: 0 1px 2px rgba(0, 0, 0, .3), inset 0 0 0 1px color-mix(in srgb, var(--accent, #3b82f6) 35%, transparent); }
-.ovs-vibe-sw[data-mode="codes"][aria-selected="true"] svg { color: hsl(262 88% 72%); }
-.ovs-vibe-sw[data-mode="actor"][aria-selected="true"] svg { color: var(--accent-light, var(--accent, #60a5fa)); }
-.ovs-vibe-sw:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 1px; }
 .ovs-vibe-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .ovs-vibe-body > * { flex: 1 1 auto; min-height: 0; }
 /* One UI (4.220.0; the owner, 11-12: "part of the one UI instead of having two different areas"): inside the menu a place has
@@ -1779,11 +1772,10 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         // A list's actions and an open conversation's (+ for a new chat, ↗ to open it in Chat): one head, the menu's (4.220.0).
         if (door === 'vibe') {
             // 4.260.0 (the owner, 11-15: an open icon "to Actor … see all the features and how to use it"): the field's ↗
-            // opens Actor's own site (Codes' in the Codes view), as Chat's opens openvibe.chat.
-            const codes = vibeMode === 'codes';
+            // opens Actor's own site, as Chat's opens openvibe.chat.
             const a = document.createElement('a'); a.className = 'ovs-act'; a.target = '_blank'; a.rel = 'noopener';
-            a.href = codes ? 'https://openvibe.codes/' : 'https://openvibe.actor/chat';
-            const label = codes ? 'Open OpenVibe.Codes' : 'Open OpenVibe.Actor'; a.setAttribute('aria-label', label); a.title = label;
+            a.href = 'https://openvibe.actor/chat';
+            const label = 'Open OpenVibe.Actor'; a.setAttribute('aria-label', label); a.title = label;
             a.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.8h6.3v6.3M20.2 3.8l-9.4 9.4M18.2 14.2v4.2a2.1 2.1 0 0 1-2.1 2.1H5.6a2.1 2.1 0 0 1-2.1-2.1V7.9a2.1 2.1 0 0 1 2.1-2.1h4.2"/></svg>';
             actsEl.appendChild(a);
             return;
@@ -1814,18 +1806,18 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         openDoor(id === 'chats' ? 'chats' : 'vibe');
         return door != null;
     }
-    /** Vibe's runs (ov-run.js, loaded beside the navbar by its hash the first time Vibe opens). */
-    let runLoading = null;
-    function runLib() {
-        if (root.OpenVibeRun) return Promise.resolve(root.OpenVibeRun);
-        if (runLoading || typeof ctx.sibling !== 'function') return runLoading || Promise.reject(new Error('no sibling'));
-        runLoading = new Promise((resolve, reject) => {
-            const sc = document.createElement('script'); sc.src = ctx.sibling('ov-run.js'); sc.async = true;
-            sc.onload = () => (root.OpenVibeRun ? resolve(root.OpenVibeRun) : reject(new Error('ov-run.js')));
-            sc.onerror = () => { runLoading = null; sc.remove(); reject(new Error('ov-run.js')); };
+    /** Vibe's sessions (ov-session.js, 4.266.0; loaded beside the navbar by its hash the first time Vibe opens). */
+    let sessionLoading = null;
+    function sessionLib() {
+        if (root.OpenVibeSession) return Promise.resolve(root.OpenVibeSession);
+        if (sessionLoading || typeof ctx.sibling !== 'function') return sessionLoading || Promise.reject(new Error('no sibling'));
+        sessionLoading = new Promise((resolve, reject) => {
+            const sc = document.createElement('script'); sc.src = ctx.sibling('ov-session.js'); sc.async = true;
+            sc.onload = () => (root.OpenVibeSession ? resolve(root.OpenVibeSession) : reject(new Error('ov-session.js')));
+            sc.onerror = () => { sessionLoading = null; sc.remove(); reject(new Error('ov-session.js')); };
             document.head.appendChild(sc);
         });
-        return runLoading;
+        return sessionLoading;
     }
     // What Vibe can do, to tap (they were the Dock's Vibe starters).
     const VIBE_STARTERS = [
@@ -1845,88 +1837,30 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const me = ctx.user && !ctx.user.is_anon ? ctx.user : null;
         // Runs and the Action Center are the person's Network places, like the Dock's (navbar.js passes its base).
         const net = ctx.runsBase || ctx.apiBase || 'https://openvibe.network';
-        const D = () => root.OpenVibeDock;
+        // 4.266.0 (plan §AD.8; the owner, 11-15 night: "the layout sucks … a complete rethink and redesign … way smarter,
+        // intelligent type system sessions, kind of like Claude Code … but make it way better"): Vibe is the one session
+        // surface (ov-session.js). No Actor | Codes switch: who works on it is the session's (Auto, @codes, the chip).
+        // Your Actor heads the sessions, the Action Center's work is answered there, and what is happening now (a timer,
+        // an agent at work) is lent above them by the Dock.
         const opts = {
-            base: `${net}/api/frame`, token: () => ctx.token, me, sibling: ctx.sibling, filter: runFilter,
-            // 4.240.0 (the owner, 11-13: "it's just like filters … your actor is just your agent"): one view. Your agent
-            // heads the list, Chats, Tasks and Code are filters over the same runs, and one box starts everything; the
-            // Dock's Vibe, Agents and Code panels are no longer lent here.
-            actions: { base: net }, starters: VIBE_STARTERS, agent: true,
-            // Above the list: Now (timers, what is on) and the live view of an agent at work, from the Dock's agent top.
-            // Above the list: what is happening now (a timer, an agent at work, what needs you), quiet otherwise (4.248.0: no
-            // idle line, no "Nothing needs you", no timeline folds; the owner, 11-14).
+            base: `${net}/api/frame`, token: () => ctx.token, me, sibling: ctx.sibling,
+            actor: true, actions: { base: net }, starters: VIBE_STARTERS,
+            title: 'Vibe', placeholder: 'Ask anything, or describe what to build',
             top: (slot) => lend(slot, { tab: 'agent', part: 'live' }),
-            onPlace: (p) => { if (p.filter) runFilter = p.filter; },
         };
-        // 4.260.0, two ways over one run engine (the owner, 11-15: "add the codes UI to the vibe tab, so you can switch
-        // between codes and the Actor style … Codes … one of the options in an Actor tab … your little bot"): Actor, the
-        // messenger of your agents; Codes, the coding harness (projects, threads, what changed). A switch on top, kept.
         doorHost.textContent = '';
-        const sw = vibeSwitch();
         const body = document.createElement('div'); body.className = 'ovs-vibe-body';
-        doorHost.append(sw, body);
-        const wait = document.createElement('p'); wait.className = 'ovs-door-wait'; wait.textContent = vibeMode === 'codes' ? 'Opening Codes…' : 'Opening Vibe…'; body.append(wait);
-        const failed = () => { if (door === 'vibe' && wait.isConnected) wait.textContent = `${vibeMode === 'codes' ? 'Codes' : 'Vibe'} did not load. Check your connection and open it again.`; };
-        if (vibeMode === 'codes') {
-            Promise.all([runLib(), harnessLib(), runOptions(net)]).then(([, H, ro]) => {
-                if (door !== 'vibe' || runView || !body.isConnected) return;
-                body.textContent = '';
-                const agents = (ro.agents || []).filter((a) => a.kind === 'harness').map((a) => ({ id: a.id, name: a.name }));
-                const places = (ro.places || []).filter((p) => p.kind !== 'auto' && !p.disabled).map((p) => ({ kind: p.kind, ...(p.id ? { id: p.id } : {}), name: p.name }));
-                const h = H.page(body, { ...opts, agent: false, starters: null, top: null, agents, places, link: (run) => run && run.url });
-                runView = { list: () => {}, prefill: (t) => h.prefill(t), destroy: () => h.destroy(), codes: h };
-                if (pendingAsk != null) { h.prefill(pendingAsk); pendingAsk = null; }
-            }, failed);
-            return;
-        }
-        const go = (R) => {
+        doorHost.append(body);
+        const wait = document.createElement('p'); wait.className = 'ovs-door-wait'; wait.textContent = 'Opening Vibe…'; body.append(wait);
+        const failed = () => { if (door === 'vibe' && wait.isConnected) wait.textContent = 'Vibe did not load. Check your connection and open it again.'; };
+        const go = (S) => {
             if (door !== 'vibe' || runView || !body.isConnected) return;
-            body.textContent = ''; runView = R.mount(body, opts);
+            body.textContent = ''; runView = S.mount(body, opts);
+            if (runFilter !== 'all') { runView.list(); runFilter = 'all'; }
             if (pendingAsk != null) { runView.prefill(pendingAsk); pendingAsk = null; }
         };
-        if (root.OpenVibeRun) { go(root.OpenVibeRun); return; }
-        runLib().then(go, failed);
-    }
-    let vibeMode = 'actor';
-    try { vibeMode = localStorage.getItem('ovs-vibe-mode') === 'codes' ? 'codes' : 'actor'; } catch { /* private mode */ }
-    /** Actor | Codes over the Vibe door: a two-way switch, kept on this device; a press remounts the door its way. */
-    function vibeSwitch() {
-        const wrap = document.createElement('div'); wrap.className = 'ovs-vibe-switch'; wrap.setAttribute('role', 'tablist'); wrap.setAttribute('aria-label', 'Your agents');
-        for (const [id, word, d] of [['actor', 'Actor', '<path d="M7.5 8.5h9a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 5 16v-5a2.5 2.5 0 0 1 2.5-2.5zM12 8.5V5.2M9.6 13.2h.01M14.4 13.2h.01"/>'], ['codes', 'Codes', '<path d="M8.5 7.5 4 12l4.5 4.5M15.5 7.5 20 12l-4.5 4.5M13.6 5.5l-3.2 13"/>']]) {
-            const b = document.createElement('button'); b.type = 'button'; b.className = 'ovs-vibe-sw'; b.setAttribute('role', 'tab'); b.dataset.mode = id;
-            b.setAttribute('aria-selected', String(vibeMode === id)); b.tabIndex = vibeMode === id ? 0 : -1;
-            b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg><span></span>`; b.querySelector('span').textContent = word;
-            b.addEventListener('click', () => {
-                if (vibeMode === id) return;
-                vibeMode = id; try { localStorage.setItem('ovs-vibe-mode', id); } catch { /* private mode */ }
-                if (runView) { try { runView.destroy(); } catch { /* */ } runView = null; }
-                mountRuns(); mirrorActs();
-            });
-            wrap.append(b);
-        }
-        return wrap;
-    }
-    let harnessLoading = null;
-    function harnessLib() {
-        if (root.OpenVibeHarness) return Promise.resolve(root.OpenVibeHarness);
-        if (harnessLoading || typeof ctx.sibling !== 'function') return harnessLoading || Promise.reject(new Error('no sibling'));
-        harnessLoading = new Promise((resolve, reject) => {
-            const sc = document.createElement('script'); sc.src = ctx.sibling('ov-harness.js'); sc.async = true;
-            sc.onload = () => (root.OpenVibeHarness ? resolve(root.OpenVibeHarness) : reject(new Error('ov-harness.js')));
-            sc.onerror = () => { harnessLoading = null; sc.remove(); reject(new Error('ov-harness.js')); };
-            document.head.appendChild(sc);
-        });
-        return harnessLoading;
-    }
-    /** Who and where a run can go (the Frame's /run-options, the composer's lists), kept for the menu's life. */
-    let runOptionsJob = null;
-    function runOptions(net) {
-        if (runOptionsJob) return runOptionsJob;
-        runOptionsJob = Promise.resolve(typeof ctx.token === 'function' ? ctx.token() : ctx.token)
-            .then((t) => fetch(`${net}/api/frame/run-options`, { credentials: 'omit', headers: { Accept: 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) } }))
-            .then((r) => (r.ok ? r.json() : { agents: [], places: [] }))
-            .catch(() => ({ agents: [], places: [] }));
-        return runOptionsJob;
+        if (root.OpenVibeSession) { go(root.OpenVibeSession); return; }
+        sessionLib().then(go, failed);
     }
     /** Show a place in the menu: Messages (the Dock's), or Vibe (your runs). */
     function openDoor(id) {
@@ -1936,7 +1870,8 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         listEl.hidden = true; doorEl.hidden = false; el.classList.add('ovs-in-door');
         el.classList.toggle('ovs-in-vibe', id === 'vibe');
         if (id === 'vibe') {
-            if (runView) runView.list(runFilter); else mountRuns();
+            if (!runView) mountRuns();
+            else if (runFilter !== 'all') { runView.list(); runFilter = 'all'; }   // a place by name (the Agents): the sessions
         } else {
             try { if (!doorMount) doorMount = root.OpenVibeDock.mountInto(doorHost, { tab: 'chats' }); else doorMount.show('chats'); }
             catch { leaveDoor(); try { ctx.dock(id); } catch { /* the Dock is optional */ } return; }

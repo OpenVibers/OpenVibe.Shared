@@ -5,7 +5,8 @@
 // as a card that opens the diff, the answered approval, a helper that opens in place and Back, the plan above the box,
 // the words streaming in); a session that asks first, answered in place; the drawer of sessions; a new session from one
 // box with an @-mention, a slash command and the one context chip; words said while it works wait as queued; a computer
-// gets the sessions as a column. No sideways scroll at 390 px.
+// gets the sessions as a column. 4.266.0: your Actor heads the sessions (Pause), and the Action Center's work is answered
+// from the list. No sideways scroll at 390 px.
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -45,7 +46,7 @@ const steps = {
     ],
     'chat:c_3': [{ seq: 1, kind: 'message', from: 'person', text: 'A good first synth?' }, { seq: 2, kind: 'message', from: 'agent', text: 'One with a good filter.' }],
 };
-const said = { starts: [], messages: [], approvals: [] };
+const said = { starts: [], messages: [], approvals: [], actor: [], actions: [] };
 const json = (res, code, body) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
 const read = (req) => new Promise((ok) => { let b = ''; req.on('data', (c) => { b += c; }); req.on('end', () => { try { ok(JSON.parse(b || '{}')); } catch { ok({}); } }); });
 const page = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -56,6 +57,7 @@ window.__events = [];
 const q = new URLSearchParams(location.search);
 window.__s = OpenVibeSession.mount(document.getElementById('host'), { base: location.origin + '/api/frame', token: 'signed-in-test', sibling: (f) => '/' + f,
   ...(q.get('open') ? { open: q.get('open') } : {}),
+  ...(q.get('actor') ? { actor: true, actions: { base: location.origin } } : {}),
   works: [{ value: 'ada/site', name: 'ada/site', line: 'On OpenVibe.Git' }], starters: [['code', 'Build me a landing page']],
   onEvent: (t, d) => window.__events.push(t) });
 </script></body></html>`;
@@ -67,6 +69,10 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/frame/run-options') return json(res, 200, { agents: [{ id: 'auto', name: 'Auto', kind: 'auto' }, { id: 'actor', name: 'Actor', kind: 'actor' }, { id: 'codes', name: 'Codes', kind: 'codes' }, { id: 'claude-code', name: 'Claude Code', kind: 'harness' }, { id: 'codex', name: 'Codex', kind: 'harness' }], places: [{ kind: 'auto', name: 'Auto' }, { kind: 'openvibe', name: 'OpenVibe' }, { kind: 'machine', id: 'dev_1', name: 'Studio PC' }] });
     if (p === '/api/frame/choices') return json(res, 200, { groups: [{ id: 'openvibe', title: 'OpenVibe', rows: [{ model: 'anthropic/claude-opus-5-5', name: 'Opus 5.5', maker: 'Anthropic', price: { in: 15, out: 75 } }, { model: 'glm/glm-4.7-flash', name: 'GLM-4.7-Flash', free: true }] }] });
     if (p === '/api/frame/runs' && req.method === 'GET') return json(res, 200, { runs, partial: [] });
+    if (p === '/api/frame/actor') return json(res, 200, { id: 'agt_1', name: 'Juniper', status: said.actor.length % 2 ? 'paused' : 'working', now: { current_step: 'Reviewing a pull request', cost_today: 0.41 }, caps: { usd: 5 } });
+    if (/^\/api\/frame\/actor\/(pause|resume)$/.test(p) && req.method === 'POST') { said.actor.push(p.split('/').pop()); return json(res, 200, { ok: true }); }
+    if (p === '/api/v1/me/actions') return json(res, 200, { buckets: { waiting: [{ id: 'a1', service: 'codes', kind: 'approval', title: 'Deploy the band page?', summary: 'Codes asks before it deploys', actions: ['approve', 'decline'], href: 'https://openvibe.codes/t/a1' }], running: [] } });
+    if (/^\/api\/v1\/me\/actions\/codes\/a1\/(approve|decline)$/.test(p) && req.method === 'POST') { said.actions.push(p.split('/').pop()); return json(res, 200, { ok: true }); }
     if (p === '/api/frame/runs' && req.method === 'POST') {
         const body = await read(req); said.starts.push(body);
         const run = { ref: 'codes:tsk_new', kind: 'code', title: body.text, status: 'running', created_at: new Date().toISOString(), agent: { id: body.agent || 'codes', name: 'Claude Code' }, model: body.model || null };
@@ -192,13 +198,29 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         assert.strictEqual(said.messages.length, 0, 'queued while it works');
         assert.ok((await p.evaluate('window.__events')).includes('session.started'));
 
+        // ── 4.266.0: your Actor heads the sessions; the Action Center's work is answered from the list ──
+        const a = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });
+        await a.goto(`${base}?actor=1`, { maxMs: 8000 });
+        await until(a, "!!document.querySelector('.ovse-hello-face.is-actor .ovse-face')");
+        await a.evaluate("document.querySelector('.ovse-menu').click()");
+        await until(a, "!document.querySelector('.ovse-actor').hidden && !!document.querySelector('.ovse-li.has-acts')");
+        assert.deepStrictEqual(await a.evaluate("[document.querySelector('.ovse-actor-top b').textContent, document.querySelector('.ovse-actor-t small').textContent]"), ['Juniper', 'Working · Reviewing a pull request · $0.41 of $5.00 today']);
+        await a.evaluate("document.querySelector('.ovse-actor-go').click()");
+        await until(a, "document.querySelector('.ovse-actor-go').getAttribute('aria-label') === 'Resume Juniper'");
+        assert.deepStrictEqual(said.actor, ['pause'], 'Pause');
+        assert.strictEqual(await a.evaluate("document.querySelector('.ovse-li.has-acts .ovse-row b').textContent"), 'Deploy the band page?', 'the Action Center\'s work, under Needs you');
+        await a.evaluate("document.querySelector('.ovse-li.has-acts .ovse-b.is-primary').click()");
+        await until(a, "(document.querySelector('.ovse-li.has-acts .ovse-row-acts') || {}).textContent === 'Approved'");
+        assert.deepStrictEqual(said.actions, ['approve'], 'approved from the list');
+        assert.strictEqual(await a.evaluate("[...document.querySelectorAll('.ovse-runs [role=listitem] > button.ovse-row')].length"), 5, 'each row a list item holding its button (the Action Center\'s, three sessions, the one started above)');
+
         // ── a computer: the sessions are a column ──
         const w = await h.openPage(browser, await browser.newContext(), { width: 1280, height: 820 });
         await w.goto(`${base}?open=chat:c_3`, { maxMs: 8000 });
         await until(w, "document.querySelector('.ovse').classList.contains('is-wide') && document.querySelectorAll('.ovse-row:not(.is-ghost)').length >= 3");
         const col = await w.evaluate("(() => { const d = document.querySelector('.ovse-drawer').getBoundingClientRect(), m = document.querySelector('.ovse-main').getBoundingClientRect(); return { d: Math.round(d.width), side: m.left >= d.right - 1 }; })()");
         assert.deepStrictEqual(col, { d: 300, side: true }, 'a 300 px column beside the session');
-        console.log('ov-session-chrome: a coding session (grouped tools, changed files and the diff, a helper and Back, the plan, streaming), an approval answered in place, the drawer, a new session with @ and the one chip, queued words, the column on a computer');
+        console.log('ov-session-chrome: a coding session (grouped tools, changed files and the diff, a helper and Back, the plan, streaming), an approval answered in place, the drawer, a new session with @ and the one chip, queued words, the column on a computer; your Actor and the Action Center in the list');
     } finally {
         await browser.close();
         server.close();
