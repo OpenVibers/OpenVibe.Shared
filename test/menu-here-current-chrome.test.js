@@ -36,7 +36,9 @@ const server = http.createServer((req, res) => {
     }
     // Network's own links (4.261.0): its home named "Network" and Link with an icon the menu's set does not have.
     const NET = [{ label: 'Network', href: '/' }, { label: 'Link', href: 'https://openvibe.link/', icon: 'fa-desktop' }, { label: 'Wallet', href: '/wallet' }];
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE_OF(u.searchParams.has('net') ? NET : u.searchParams.has('nohome') ? LINKS.filter((l) => l.href !== '/') : LINKS));
+    // Live's own links (4.262.0): icons the menu's set does not have (fa-film, fa-comment) and one nobody knows.
+    const LIVE = [{ label: 'Home', href: '/', icon: 'fa-house' }, { label: 'Content', href: '/content', icon: 'fa-film' }, { label: 'Chat', href: '/chat', icon: 'fa-comment' }, { label: 'Zzq', href: '/zzq', icon: 'fa-nothing-like-this' }];
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE_OF(u.searchParams.has('live') ? LIVE : u.searchParams.has('net') ? NET : u.searchParams.has('nohome') ? LINKS.filter((l) => l.href !== '/') : LINKS));
 });
 const HERE = `[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.classList.contains('is-here') || a.getAttribute('aria-current')).map((a) => a.textContent + ':' + a.getAttribute('aria-current'))`;
 
@@ -85,6 +87,11 @@ const HERE = `[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) 
         const net = marks.find(([n]) => n === 'Network'), link = marks.find(([n]) => n === 'Link'), wallet = marks.find(([n]) => n === 'Wallet');
         assert.ok(net && link && wallet, JSON.stringify(marks.map(([n]) => n)));
         assert.ok(net[1] && link[1] && net[1] !== link[1] && link[1] !== wallet[1], 'Network, Link and Wallet each draw their own icon');
+        await visit(p, '/content?live=1');
+        const live = await p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].map((a) => [a.textContent, (a.querySelector('svg') || {}).innerHTML || ''])`);
+        const arrow = (live.find(([n]) => n === 'Home') || [])[1];
+        assert.ok(['Content', 'Chat', 'Zzq'].every((n) => { const row = live.find(([m]) => m === n); return row && row[1] && row[1] !== arrow; }) && new Set(live.map(([, d]) => d)).size === live.length,
+            `Content (fa-film), Chat (fa-comment) and an unknown icon each draw an icon of their own, never the arrow (${JSON.stringify(live.map(([n, d]) => [n, d.slice(0, 40)]))})`);
 
         // On a computer the menu is a search: the field is focused.
         const d = await h.openPage(browser, context, { width: 1280, height: 900, block: blocked });

@@ -1,5 +1,29 @@
 # Changelog
 
+## 4.262.0 — 2026-11-15
+
+**Recent searches drop under the field.** The owner, 11-15: recent searches are "not a section on the site tab", they
+belong "under the field when it is focused". The menu's tabs no longer carry a Recent searches section. Focus the empty
+field and your recent searches drop under it: the account's first, then this browser's. Each row is 44 px, rises in
+turn, and a press fills the field and searches. Clear empties both, and the list redraws when the account's searches
+arrive after the field was focused. Test: `test/search-recent-account-chrome.test.js`.
+
+**Every page row draws its own icon.** The shot of "Pages on Live": Content (`fa-film`) and Chat (`fa-comment`) still
+wore the arrow. Two causes, both fixed in `search.js`:
+- The bar's `navIcon` answers a name it cannot draw with a bare Font Awesome `<i>`. The menu took that as a drawing and
+  stopped looking; it now goes on to the next name.
+- About a hundred icon names the sites pass now map to the nearest icon the menu has (`fa-film` → `fa-photo-film`,
+  `fa-comment` → `fa-comments`, `fa-calendar-days` → `fa-clock`, `fa-sliders` → `fa-gear` …).
+A name nobody knows gets a page icon, never the arrow. Test: `test/menu-here-current-chrome.test.js`.
+
+**A run you just started has the Back pill too.** The owner: "back buttons easier to see". An open run already had the
+Back pill; the view while a run starts had a bare 40 px icon. It now has the same pill.
+
+**The same alerts page is asked for once.** If two requests for the same alerts page overlap, they share one fetch,
+and each caller gets its own copy of the list. Looking into "the first page fetched 3x" found three different
+requests: the preview's three items, the full first page once, and the check for anything new. The test now pins
+that the full first page is asked for exactly once. Test: `test/notifications-auto-more-chrome.test.js`.
+
 ## 4.261.0 — 2026-11-15
 
 **The Model sheet opens at once, organized.** The owner, 11-15, on "Loading the models…": "massively optimized, cached

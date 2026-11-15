@@ -490,7 +490,8 @@
             state.view = 'thread'; state.run = null; state.steps = new Map();
             box.textContent = ''; box.className = 'ovr is-thread is-pending';
             const head = el('div', 'ovr-thead');
-            const back = el('button', 'ovr-ib'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.append(svg('back'));
+            // 4.262.0 (the owner: "back buttons easier to see"): the same Back pill as an open run's, from the first moment.
+            const back = el('button', 'ovr-ib ovr-back'); back.type = 'button'; back.setAttribute('aria-label', 'Back to your runs'); back.title = 'Your runs'; back.append(svg('back'), el('span', '', 'Back'));
             back.addEventListener('click', () => { if (typeof o.onBack === 'function') o.onBack(); else list(); });
             const who = el('div', 'ovr-who'); who.append(el('b', '', agentName()), el('small', '', 'Starting'));
             head.append(back, agentFace('s', 'working'), who);
