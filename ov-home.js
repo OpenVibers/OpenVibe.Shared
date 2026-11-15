@@ -2456,6 +2456,8 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
                 if (k === kind) return;
                 kind = k; cursor = null; done = false; busy = false; lastDay = '';
                 chips.querySelectorAll('.ovfd-chip').forEach((x) => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+                // 4.266.0: another kind starts at the top of the feed (its first page), wherever the person had scrolled.
+                try { const sc = el.closest('.ovs-list'); if (sc && sc.scrollTop > el.offsetTop) sc.scrollTop = el.offsetTop; if (el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: 'start' }); } catch { /* no scrolling here */ }
                 more(true);
             });
             chips.append(b);
@@ -2464,6 +2466,12 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
             io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) more(false); }, { root: el.closest('.ovs-list') || null, rootMargin: '600px 0px' });
             io.observe(sentinel);
         }
+        // 4.266.0: and whatever scrolls (the menu's list, or the page when the list grows instead), a scroll that brings
+        // the end within 600 px asks for the next page: the observer alone missed it where the list was not the
+        // scrolling box (menu-feed-v2-chrome on macOS runners).
+        const nearEnd = () => { const r = sentinel.getBoundingClientRect(); return r.top - (root.innerHeight || document.documentElement.clientHeight || 0) < 600; };
+        const onScroll = () => { if (!sentinel.isConnected) { document.removeEventListener('scroll', onScroll, true); return; } if (!busy && !done && nearEnd()) more(false); };
+        document.addEventListener('scroll', onScroll, { passive: true, capture: true });
         more(true);
         return { update() {}, search, get query() { return query; } };
     }

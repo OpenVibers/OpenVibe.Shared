@@ -31,6 +31,9 @@ comes into view or leaves it; a page that finished with the end still in view (a
 answer while the person kept scrolling) never asked for the next. After each page the end is observed afresh, which
 reports where it is now. This was `menu-feed-v2-chrome`'s flake on slow macOS runners; the test now holds the first
 page back on a tall screen and needs the second with no scroll.
+Whatever scrolls (the menu's list, or the page where the list grows instead) also asks for the next page once the end
+is within 600 px: the observer alone missed it where the list was not the scrolling box (macOS runners). A chip starts
+its kind at the top of the feed, its first page, wherever the person had scrolled.
 
 Tests: `dock-chrome` (the menu on Agents, the sessions and the Action Center answered in place, the agent at work above
 them, your Actor, a starter's session with its answer and chips, Ask your agent), `menu-places-chrome` (one surface, no
