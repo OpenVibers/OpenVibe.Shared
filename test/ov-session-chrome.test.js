@@ -101,6 +101,7 @@ const server = http.createServer(async (req, res) => {
         if (rest === '/messages' && req.method === 'POST') { const body = await read(req); said.messages.push(body); return json(res, 201, { seq: 99, kind: 'message', from: 'person', text: body.text }); }
         if (/^\/approvals\//.test(rest) && req.method === 'POST') { const body = await read(req); said.approvals.push([ref, rest, body.answer]); return json(res, 200, { ok: true }); }
         if (rest === '/stop') return json(res, 200, { ok: true });
+        if (rest === '/replay') { said.replays = (said.replays || []).concat([[ref, req.method]]); return req.method === 'DELETE' ? json(res, 200, { stopped: true }) : json(res, 200, { url: 'https://openvibe.codes/r/AbCdEfGhIjKlMnOpQrStUvWxYz012345', created_at: '2026-11-15T17:00:00.000Z' }); }
     }
     res.writeHead(404); res.end();
 });
@@ -158,6 +159,21 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         await p.evaluate("document.querySelector('.ovse-up').click()");
         await until(p, "document.querySelector('.ovse-title').textContent === 'Add a dark mode switch'");
         assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'no sideways scroll');
+        // ── ⋯ → Share a replay (plan §AD.8): a coding run's link anyone can read; then Stop sharing ──
+        await p.evaluate("navigator.clipboard.writeText = (t) => { window.__copied = t; return Promise.resolve(); }");
+        const menuRows = async () => p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row b, .ovse-mini-b')].map((b) => b.textContent.trim())");
+        await p.evaluate("document.querySelector('.ovse-more').click()");
+        await until(p, "!!document.querySelector('.ovp.is-in .ovp-row, .ovse-mini-b')");
+        assert.ok((await menuRows()).includes('Share a replay'), 'a coding run can be shared');
+        await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row, .ovse-mini-b')].find((r) => r.textContent.includes('Share a replay')).click()");
+        await until(p, "window.__copied === 'https://openvibe.codes/r/AbCdEfGhIjKlMnOpQrStUvWxYz012345'");
+        await until(p, "!document.querySelector('.ovp')");
+        await p.evaluate("document.querySelector('.ovse-more').click()");
+        await until(p, "!!document.querySelector('.ovp.is-in .ovp-row, .ovse-mini-b')");
+        assert.ok((await menuRows()).includes('Stop sharing the replay'), 'once shared, the menu offers to stop');
+        await p.evaluate("[...document.querySelectorAll('.ovp.is-in .ovp-row, .ovse-mini-b')].find((r) => r.textContent.includes('Stop sharing')).click()");
+        await until(p, "!document.querySelector('.ovp')");
+        assert.deepStrictEqual(said.replays, [['codes:tsk_1', 'POST'], ['codes:tsk_1', 'DELETE']]);
 
         // ── the drawer, and a session that asks first ──
         await p.evaluate("document.querySelector('.ovse-menu').click()");

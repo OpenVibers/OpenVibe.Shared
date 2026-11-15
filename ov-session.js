@@ -676,6 +676,12 @@
             if (r && (isLive(r) || r.status === 'waiting')) rows.push({ id: 'stop', name: 'Stop it', line: 'It stops after the step it is on', icon: 'stop' });
             if (r && httpsUrl(r.url)) { rows.push({ id: 'copy', name: 'Copy the link', line: 'Its own page, for you or anyone you share it with', icon: 'link' }); rows.push({ id: 'page', name: 'Open its own page', line: new URL(httpsUrl(r.url)).hostname, icon: 'open' }); }
             if (r && changed().length) rows.push({ id: 'changes', name: 'What it changed', line: `${changed().length} file(s)`, icon: 'file' });
+            // A coding run's replay (Codes' /r/<token>, plan §AD.8): anyone with the link reads it, no sign-in.
+            if (r && /^codes:/.test(String(state.ref || ''))) {
+                rows.push(state.replay
+                    ? { id: 'unshare', name: 'Stop sharing the replay', line: 'The link stops working; sharing again makes a new one', icon: 'link' }
+                    : { id: 'share', name: 'Share a replay', line: 'A link anyone can read, step by step, without signing in', icon: 'link' });
+            }
             rows.push({ id: 'new', name: 'New session', line: 'Start over with an empty box', icon: 'plus' });
             rows.push({ id: 'sessions', name: 'All your sessions', line: 'Search them, pick one up again', icon: 'chat' });
             const P = await need(o, 'ov-picker.js', 'OpenVibePicker');
@@ -684,6 +690,8 @@
                 else if (id === 'copy') { const url = httpsUrl(r.url); try { navigator.clipboard.writeText(url).then(() => flash('Link copied'), () => flash(url)); } catch { flash(url); } }
                 else if (id === 'page') root.open(httpsUrl(r.url), '_blank', 'noopener');
                 else if (id === 'changes') openChanges();
+                else if (id === 'share') shareReplay();
+                else if (id === 'unshare') stopReplay();
                 else if (id === 'new') blank();
                 else if (id === 'sessions') setDrawer(true);
             };
@@ -1242,6 +1250,20 @@
             const next = state.queue.shift();
             say(next.text, next.files).catch((err) => { next.node.classList.add('is-failed'); next.node.querySelector('.ovse-queued').textContent = (err && err.message) || 'That did not send'; state.queue.unshift(next); });
         }
+        async function shareReplay() {
+            if (!state.ref) return;
+            try {
+                const out = await api(`/runs/${encodeURIComponent(state.ref)}/replay`, { method: 'POST', body: '{}' });
+                state.replay = out.url;
+                try { await navigator.clipboard.writeText(out.url); flash('Replay link copied'); } catch { flash(out.url); }
+                emit('session.shared', { ref: state.ref, url: out.url });
+            } catch (err) { flash((err && err.message) || 'The replay link was not made'); }
+        }
+        async function stopReplay() {
+            if (!state.ref) return;
+            try { await api(`/runs/${encodeURIComponent(state.ref)}/replay`, { method: 'DELETE' }); state.replay = null; flash('Not shared any more'); }
+            catch (err) { flash((err && err.message) || 'It is still shared'); }
+        }
         async function stop() {
             if (!state.ref) return;
             try { await api(`/runs/${encodeURIComponent(state.ref)}/stop`, { method: 'POST', body: '{}' }); flash('Stopping'); }
@@ -1253,7 +1275,7 @@
         async function open(ref, known, how = {}) {
             clearStream();
             const gen = ++state.gen;
-            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false;
+            state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false; state.replay = null;
             // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
             state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
             wrap.classList.remove('is-blank');
