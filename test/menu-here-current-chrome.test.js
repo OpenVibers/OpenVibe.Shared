@@ -34,7 +34,9 @@ const server = http.createServer((req, res) => {
         if (!fs.existsSync(path.join(ROOT, m[1]))) { res.writeHead(404); return res.end(); }
         res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(ROOT, m[1])));
     }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE_OF(u.searchParams.has('nohome') ? LINKS.filter((l) => l.href !== '/') : LINKS));
+    // Network's own links (4.261.0): its home named "Network" and Link with an icon the menu's set does not have.
+    const NET = [{ label: 'Network', href: '/' }, { label: 'Link', href: 'https://openvibe.link/', icon: 'fa-desktop' }, { label: 'Wallet', href: '/wallet' }];
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE_OF(u.searchParams.has('net') ? NET : u.searchParams.has('nohome') ? LINKS.filter((l) => l.href !== '/') : LINKS));
 });
 const HERE = `[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.classList.contains('is-here') || a.getAttribute('aria-current')).map((a) => a.textContent + ':' + a.getAttribute('aria-current'))`;
 
@@ -75,6 +77,14 @@ const HERE = `[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) 
         assert.deepStrictEqual(await visit(p, '/messages?nohome=1'), ['Messages:page'], 'elsewhere Home is not marked');
         assert.strictEqual(await p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.textContent === 'Home').length`), 1, 'one Home');
         assert.strictEqual(await (async () => { await visit(p, '/'); return p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].filter((a) => a.textContent === 'Home').length`); })(), 0, 'a site that names its home gets no second one');
+
+        // Every page row wears an icon, never the arrow (4.261.0; the owner's shot of "Pages on Network": Network and Link
+        // had the chevron): Network its own, Link the nearest of fa-desktop.
+        await visit(p, '/wallet?net=1');
+        const marks = await p.evaluate(`[...document.querySelectorAll('.ovs-links .ovs-link')].map((a) => [a.textContent, (a.querySelector('svg') || {}).innerHTML || ''])`);
+        const net = marks.find(([n]) => n === 'Network'), link = marks.find(([n]) => n === 'Link'), wallet = marks.find(([n]) => n === 'Wallet');
+        assert.ok(net && link && wallet, JSON.stringify(marks.map(([n]) => n)));
+        assert.ok(net[1] && link[1] && net[1] !== link[1] && link[1] !== wallet[1], 'Network, Link and Wallet each draw their own icon');
 
         // On a computer the menu is a search: the field is focused.
         const d = await h.openPage(browser, context, { width: 1280, height: 900, block: blocked });

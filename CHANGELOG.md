@@ -28,6 +28,10 @@ over a soft halo and the title says "Ask Actor anything". Each thing to ask is a
 in a tinted tile and an arrow that slides in on hover. The cards rise in turn, a light passes over them now and then,
 and a press starts the run. The two links are quiet pills. Calm shortens every move; Off stops them.
 
+**Every page row wears an icon.** The owner's shot of "Pages on Network": Network and Link wore the arrow. A site's icon
+the menu's set does not have (Link's `fa-desktop`) is drawn by its nearest one (`fa-display`), else by its name's.
+Network has its own (`fa-circle-nodes`) and Link's name finds `fa-link`. Test: `test/menu-here-current-chrome.test.js`.
+
 **A run of deals, redone.** The owner: "improve … redo … views … total views".
 - A run of deals says how many saw it in all, over its rows, once: from `group.views` (feed.item@1 1.3.0, Contracts
   0.435.0), else the card's own count.
