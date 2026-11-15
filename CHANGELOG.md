@@ -1,5 +1,34 @@
 # Changelog
 
+## 4.274.0 — 2026-11-15
+
+**One ring per field on every site, and alerts that go on past the unread.**
+- **One ring per field** (design rule one-ring-per-field; the owner, 11-15: "make sure that input double border shit is
+  fixed for all element types"):
+  - A sweep of 60 sites (237 fields) found a second ring on 15 sites' search boxes and Codes' prompt: a copied focus
+    outline 2 px apart from the field's border.
+  - `navbar.js` now measures each field once it is drawn: every input type people type in, textarea, select, OpenVibe's
+    select and contenteditable.
+  - Inside a box that draws a ring (a pill, a search bar, a composer, a chip), the box's ring is the only one. A field
+    with its own border there is marked `inner` (its border goes clear) and a bare one `bare` (no focus ring of its
+    own); the box takes the accent on focus.
+  - Anywhere else a field keeps its ring, and the focus outline sits on its border, never apart.
+  - `ov-forms.css`: `.ov-input` and `.ov-field` ring like every field (an accent border and an outline on it), not a
+    box-shadow halo.
+  - `openvibe-shared/field-rings` is the measure. The browser harness runs it at the narrowest width as its new `rings`
+    check, so the hourly browser check fails a site that draws two rings around a field.
+- **Alerts go on past the unread** (the owner's phone, 11-15: "not loading"): the menu's alerts opened on the 11 unread
+  (Unread on by default, as asked 11-14) and the other 710 never came.
+  - Past the unread, the list goes on to the earlier ones under an Earlier line, a page at a time as you scroll
+    (`GET /api/notifications?read_only=1`, Network #1015).
+  - The status says both counts ("11 unread · 721 in all").
+  - With nothing unread, one short line says so and the earlier ones follow.
+- Tests:
+  - `one-ring-every-field-chrome` (12 input types, textarea, select, OpenVibe's select and contenteditable; plain, in
+    pills, a card, a composer, a chip, the kit, and drawn later). It fails without the guard.
+  - `notifications-earlier-chrome`.
+  - The harness tests know the `rings` check.
+
 ## 4.273.0 — 2026-11-15
 
 **Rename a session.**
