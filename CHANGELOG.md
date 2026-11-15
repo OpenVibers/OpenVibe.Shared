@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.272.0 — 2026-11-15
+
+**The price before it runs, and a coding run's replay from the session.**
+- **Session (`ov-session.js`), cost before a run** (plan §AD.6): with a model chosen on the context chip, the box says
+  what a typical message costs on it (`≈ $0.09 a message`: 2,000 tokens in and 800 out at the model's own price,
+  Exchange's estimate of a turn), or Free; the title gives the price per million and says long work takes more. Auto
+  says nothing (the router keeps to the person's budget); an open session's turns show what they really cost.
+- **Session, Share a replay** (plan §AD.8): a coding run's ⋯ menu offers Share a replay; the Frame
+  (`POST /api/frame/runs/:ref/replay`) asks Codes for the run's `/r/<token>` link, which is copied, and the menu then
+  offers Stop sharing. `session.shared` goes to the host.
+
 ## 4.271.0 — 2026-11-15
 
 **White text on the live red reads at 4.5:1.**
