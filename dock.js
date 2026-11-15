@@ -713,7 +713,7 @@
                 sug.textContent = ''; active = -1;
                 users.filter((u) => u && u.username && !known.has(String(u.username).toLowerCase())).slice(0, 6).forEach((u, k) => {
                     const li = h('li', 'ovdk-sug'); li.id = `${sug.id}-${k}`; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
-                    const body = h('span', 'ovdk-row-b'); body.append(h('b', '', String(u.display_name || u.username).slice(0, 60)), h('span', 'ovdk-row-p', `@${u.username}`));
+                    const body = h('span', 'ovdk-row-b'); body.append(setSubject(h('b', '', String(u.display_name || u.username).slice(0, 60)), u), h('span', 'ovdk-row-p', `@${u.username}`));
                     const plus = icon(G.personAdd); plus.classList.add('ovdk-row-go');
                     li.append(avatar(u, false), body, plus);
                     li.addEventListener('pointerdown', (e) => e.preventDefault());   // the field keeps the focus
