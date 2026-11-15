@@ -1,5 +1,19 @@
 # Changelog
 
+## 4.268.0 — 2026-11-15
+
+**A host page's rules stay out of the session, and four contrast fixes the browser check found.**
+- **Session (`ov-session.js`).** A host page's rules for bare `section`, `header`, `aside` and `form` no longer move
+  the drawer, the thread column, its head or the box: openvibe.design's `.ds section` margin pushed the thread 40 px
+  down inside its frame, and any site's bare-element rules would do the same to the menu's Vibe tab. The Chrome test
+  mounts it under a hostile host stylesheet.
+- **The feed (`ov-home.js`).** A price and a level drawn in the light theme's colours on a dark page: the light rules
+  answered `prefers-color-scheme: light` while the site's own theme was dark (`data-theme="dark"`), 3.2:1. They now
+  step aside for a dark theme. The "line" chip mixes the accent toward the text colour (4.15:1, under the 4.5:1 needed; now about 6:1).
+- **The composer (`ov-composer.js`).** The model tags' light colours step aside for a dark theme the same way.
+- **The footer (`footer.js`).** A tile's small line uses the secondary text colour (4.06:1 on a highlighted tile;
+  now about 6:1).
+
 ## 4.267.0 — 2026-11-15
 
 **Files in the Chat tab's messages** (plan §AD.8 step 5: "DMs with files in the Chat tab"; no "open the site" needed).

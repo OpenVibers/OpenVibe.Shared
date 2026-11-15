@@ -2550,7 +2550,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-who{min-width:0;display:grid}
 .ovfd-who b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ovfd-who small{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted,#93a0b4)}
-.ovfd-line{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding:1px 7px;border-radius:999px;font-weight:600;font-size:11.5px;color:var(--accent,#5b8cff);background:color-mix(in srgb,var(--accent,#5b8cff) 12%,transparent);white-space:nowrap}
+.ovfd-line{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding:1px 7px;border-radius:999px;font-weight:600;font-size:11.5px;color:color-mix(in srgb,var(--accent,#5b8cff) 70%,var(--text-primary,#e6edf7));background:color-mix(in srgb,var(--accent,#5b8cff) 12%,transparent);white-space:nowrap}
 .ovfd-line::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
 .ovfd-who small[data-ovfd-site]{flex-wrap:wrap;row-gap:3px}
 .ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
@@ -2662,7 +2662,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-price small{min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted,#93a0b4)}
 .ovfd-group.is-deals .ovfd-group-more{justify-self:start;padding:4px 2px;font-size:13px;font-weight:700;color:var(--accent-light,#93c5fd)}
 @media (min-width:900px){.ovfd-group.is-deals{grid-template-columns:repeat(2,minmax(0,1fr))}.ovfd-group.is-deals .ovfd-group-more{grid-column:1/-1}}
-@media (prefers-color-scheme:light){.ovfd-lvl{color:#92400e}.ovfd-price b,.ovfd-price em{color:#15803d}.ovfd-group-ph.is-deal{color:#a16207}}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]) .ovfd-lvl{color:#92400e}:root:not([data-theme=dark]) .ovfd-price b,:root:not([data-theme=dark]) .ovfd-price em{color:#15803d}:root:not([data-theme=dark]) .ovfd-group-ph.is-deal{color:#a16207}}
 /* 4.261.0, a run of deals (the owner, 11-15: "improve … redo … views … total views"): the total views over the run, each
    row a product tile, its price, its store and its views, rising in turn; one full-width press to all of them. */
 .ovfd-group-sum{display:inline-flex;align-items:center;gap:6px;justify-self:start;margin:0 0 2px;padding:4px 10px;border-radius:999px;font-size:12.5px;color:var(--text-secondary,#a8b3c4);background:color-mix(in srgb,var(--text-primary,#e8ecf3) 6%,transparent)}
