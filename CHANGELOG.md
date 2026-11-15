@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.269.0 — 2026-11-15
+
+**One focus ring on every text field, and page transitions that run.**
+- **Forms (`ov-forms.css`).** A text field's focus ring is its accent border and a soft 3 px outline, never a
+  box-shadow. Every component makes its inner field bare (border 0, outline none) inside its own bordered pill, but the
+  old 4 px box-shadow halo still drew a second rounded ring inside the pill: the menu's search, the search field, the
+  session's search (the owner, 11-15, on a phone: "a double border instead of just being no border on the inner
+  one"). A bare inner field now draws none; a plain field still shows a clear ring.
+- **Navbar (`kit.css`).** One element carries `view-transition-name: ov-navbar`: a navbar inside its mount was a second
+  one, and the browser skipped the whole cross-document transition on the duplicate (every site's navigation logged
+  "Unexpected duplicate view-transition-name: ov-navbar").
+
 ## 4.268.0 — 2026-11-15
 
 **One clean search field, a host page's rules stay out of the session, and four contrast fixes the browser check found.**
