@@ -224,7 +224,7 @@ html[data-ov-motion=off] .ovh-head-t { animation: none; }
 .ovh-card small > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovh-card.is-live { background: color-mix(in srgb, var(--live, #ef4444) 9%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--live, #ef4444) 40%, transparent); }
 .ovh-card.is-live .ovh-ic { animation: ovh-onair 2.4s ease-in-out infinite; }
-.ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: var(--live, #ef4444); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
+.ovh-live { flex: none; padding: 2px 6px; border-radius: 6px; background: color-mix(in srgb, var(--live, #ef4444), #000 20%); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .05em; line-height: 1.2; }
 @media (hover: hover) { .ovh-card:hover { background: var(--bg-hover, rgba(255,255,255,.08)); } }
 @media (min-width: 861px) { .ovh-card { width: 232px; } }
 .ovh-use { margin: 0 4px 8px; padding: 12px 12px 4px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e8ecf3) 4%, transparent); }
@@ -2553,7 +2553,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-line{display:inline-flex;align-items:center;gap:4px;margin-left:2px;padding:1px 7px;border-radius:999px;font-weight:600;font-size:11.5px;color:color-mix(in srgb,var(--accent,#5b8cff) 70%,var(--text-primary,#e6edf7));background:color-mix(in srgb,var(--accent,#5b8cff) 12%,transparent);white-space:nowrap}
 .ovfd-line::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.8}
 .ovfd-who small[data-ovfd-site]{flex-wrap:wrap;row-gap:3px}
-.ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:var(--live,#ef4444);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
+.ovfd-livechip{margin-left:auto;padding:2px 8px;border-radius:6px;background:color-mix(in srgb,var(--live,#ef4444),#000 20%);color:#fff;font-size:11px;font-weight:800;letter-spacing:.06em;animation:ovfd-onair 2.4s ease-in-out infinite}
 .ovfd-card.is-on{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--live,#ef4444) 45%,transparent);background:color-mix(in srgb,var(--live,#ef4444) 7%,transparent)}
 @keyframes ovfd-onair{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--live,#ef4444) 25%,transparent)}}
 .ovfd-faces{display:flex;flex:none}.ovfd-faces .ovfd-face{width:30px;height:30px;box-shadow:0 0 0 2px var(--bg-secondary,#141a24)}.ovfd-faces .ovfd-face+.ovfd-face{margin-left:-9px}
@@ -2585,7 +2585,7 @@ html[data-ov-motion=off] .ovh-tab.has-new .ovh-tab-g > svg { animation: none; }
 .ovfd-tile-num b{font-size:15px;font-weight:800;letter-spacing:-.02em}
 .ovfd-tile-num svg.ovfd-gl{position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;padding:2px;border-radius:50%;background:var(--bg-secondary,#141a24);color:hsl(152 70% 70%)}
 .ovfd-tile-date{grid-template-rows:auto 1fr;place-items:stretch;overflow:hidden;background:color-mix(in srgb,var(--text-primary,#e8ecf3) 8%,transparent);text-align:center}
-.ovfd-tile-date small{display:block;padding:1px 0;background:var(--live,#ef4444);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.ovfd-tile-date small{display:block;padding:1px 0;background:color-mix(in srgb,var(--live,#ef4444),#000 20%);color:#fff;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .ovfd-tile-date b{display:grid;place-items:center;font-size:16px;font-weight:800;line-height:1}
 .ovfd-tile-wrap{position:relative}
 .ovfd-tile-wrap .ovfd-face{width:40px;height:40px}

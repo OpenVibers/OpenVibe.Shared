@@ -28,7 +28,7 @@
 .ovu-name { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
 .ovu-handle { margin: 0; color: var(--text-secondary, #a8b3c4); font-size: 14px; }
 .ovu-state { margin: 0 16px; font-size: 13px; color: var(--text-muted, #8b98ad); }
-.ovu-live { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin: 0 16px; border-radius: 12px; background: var(--live-red, #ef4444); color: #fff; font-weight: 750; text-decoration: none; }
+.ovu-live { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; margin: 0 16px; border-radius: 12px; background: color-mix(in srgb, var(--live-red, #ef4444), #000 20%); color: #fff; font-weight: 750; text-decoration: none; }
 .ovu-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: ovu-beat 1.4s ease-in-out infinite; }
 .ovu-live small { font-weight: 600; opacity: .85; }
 .ovu-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 16px; padding: 0; list-style: none; }

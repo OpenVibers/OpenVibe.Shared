@@ -512,7 +512,7 @@ html[data-ov-motion=off] .ovs-panel::before { animation: none; }
 /* 4.201.0's look: Notifications' head in You; the Timer under Vibe; the Dock's actions in You. */
 .ovs-nhead { display: flex; align-items: center; gap: 8px; padding: 10px 14px 6px; }
 .ovs-nhead b { font-size: 13px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #a8b3c4); }
-.ovs-nhead-n { padding: 2px 8px; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font-size: 11.5px; font-weight: 750; }
+.ovs-nhead-n { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--live-red, #ef4444), #000 20%); color: #fff; font-size: 11.5px; font-weight: 750; }
 .ovs-nhead-n[hidden], .ovs-nhead-more[hidden] { display: none; }
 .ovs-nhead-more { margin-left: auto; min-height: 32px; padding: 0 10px; border: 0; border-radius: 9px; background: none; color: var(--accent-light, var(--accent, #60a5fa)); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
 .ovs-nhead-more:hover, .ovs-nhead-more:focus-visible { background: color-mix(in srgb, var(--accent, #3b82f6) 14%, transparent); }

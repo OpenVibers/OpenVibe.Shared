@@ -392,7 +392,7 @@
             }
             .openvibe-navbar-avatar:hover { border-color: var(--accent, #3b82f6); }
             .openvibe-navbar .ovnav-avatar-wrap { position: relative; display: inline-flex; flex: none; }
-            .openvibe-navbar .ovnav-avatar-count { position: absolute; top: -5px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #e5484d); color: #fff; font-family: inherit; font-size: 10px; font-weight: 700; line-height: 1; }
+            .openvibe-navbar .ovnav-avatar-count { position: absolute; top: -5px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; border-radius: 999px; background: color-mix(in srgb, var(--live-red, #e5484d), #000 20%); color: #fff; font-family: inherit; font-size: 10px; font-weight: 700; line-height: 1; }
             .openvibe-navbar .ovnav-avatar-count[hidden] { display: none; }
 
             /* Sign in: a filled circle where the person's picture will be; a figure and an arrow coming in take turns. */

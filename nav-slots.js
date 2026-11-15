@@ -11,7 +11,7 @@
 .openvibe-navbar .ovnav-slot:active { transform: scale(.9); }
 .openvibe-navbar .ovnav-slot[aria-expanded="true"], .openvibe-navbar .ovnav-slot[aria-pressed="true"] { color: var(--accent-light, #60a5fa); background: var(--accent-glow, rgba(59,130,246,.14)); }
 .openvibe-navbar .ovnav-slot svg { width: 21px; height: 21px; }
-.openvibe-navbar .ovnav-slot b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: var(--live-red, #ef4444); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
+.openvibe-navbar .ovnav-slot b { position: absolute; top: -1px; right: -3px; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: color-mix(in srgb, var(--live-red, #ef4444), #000 20%); color: #fff; font: 700 10px/16px Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px var(--bg-secondary, #111826); }
 .openvibe-navbar .ovnav-slot b:empty { display: none; }
 .openvibe-navbar .ovnav-lead { margin-left: -2px; animation: ovnav-slot-in .22s cubic-bezier(.2, .9, .3, 1) both; }
 @keyframes ovnav-slot-in { from { opacity: 0; transform: translateX(-6px); } }

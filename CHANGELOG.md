@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.271.0 — 2026-11-15
+
+**White text on the live red reads at 4.5:1.**
+- **Badges, counts and LIVE chips** (`ov-home.js` feed chip and tile date, `navbar.js` and `notification-ui.js` counts,
+  `nav-slots.js`, `ov-user.js`, `search.js`): white text sat on the plain live red, 3.8:1 for #ef4444 (axe on
+  Community's feed in the browser check, 11-15). The red under white text is a fifth darker
+  (`color-mix(in srgb, var(--live-red, #ef4444), #000 20%)`), about 5.4:1. Dots and borders keep the bright red.
+  `test/live-ink-contrast.test.js` fails on any new white-on-live-red rule.
+
 ## 4.270.0 — 2026-11-15
 
 **A model changed mid-session is the one that answers.**
