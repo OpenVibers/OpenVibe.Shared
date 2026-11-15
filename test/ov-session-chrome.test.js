@@ -242,6 +242,17 @@ const pause = (ms) => new Promise((ok) => setTimeout(ok, ms));
         assert.strictEqual(await tp.evaluate("document.querySelector('.ovse-top').hidden"), true, 'an empty lent panel is hidden');
         await tp.evaluate("window.__lent.textContent = 'Timer · 4:59'");
         await until(tp, "document.querySelector('.ovse-top').hidden === false");
+        // A model changed on the chip mid-session goes with the next words, once (plan §AD.8.3; Actor #531, Network #1001).
+        const ms = await h.openPage(browser, await browser.newContext(), { width: 390, height: 844 });
+        await ms.goto(`${base}?open=none`, { maxMs: 8000 });
+        await ms.evaluate("localStorage.setItem('ov:composer:run', JSON.stringify({ model: { id: 'anthropic/claude-opus-5-5', source: 'openvibe', name: 'Opus 5.5' } }))");
+        await ms.goto(`${base}?open=chat:c_3`, { maxMs: 8000 });
+        await until(ms, "[...document.querySelectorAll('.ovse-say')].some((s) => s.textContent === 'One with a good filter.')");
+        const before = said.messages.length;
+        const send = async (words) => { await typeIn(ms, words); await ms.evaluate("document.querySelector('.ovse-compose form') ? document.querySelector('.ovse-compose form').requestSubmit() : document.querySelector('.ovse-compose textarea').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))"); };
+        await send('Something cheaper?');
+        for (let i = 0; i < 60 && said.messages.length < before + 1; i++) await pause(50);
+        assert.deepStrictEqual(said.messages[before].model, { id: 'anthropic/claude-opus-5-5', source: 'openvibe', name: 'Opus 5.5' }, 'the changed model goes with the words');
         console.log('ov-session-chrome: a coding session (grouped tools, changed files and the diff, a helper and Back, the plan, streaming), an approval answered in place, the drawer, a new session with @ and the one chip, queued words, the column on a computer; your Actor and the Action Center in the list');
     } finally {
         await browser.close();
