@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.270.0 — 2026-11-15
+
+**A model changed mid-session is the one that answers.**
+- **Session (`ov-session.js`).** A model picked on the session's context chip after the first message goes with the
+  next words (`model { id, source, name }`, sent once when it changes). Before, only the first message carried it, so
+  a swap mid-session was ignored. Actor (#531) runs the turn on it and keeps it; a Codes task carries on with it
+  (Network #1003).
+
 ## 4.269.0 — 2026-11-15
 
 **One focus ring on every text field, and page transitions that run.**
