@@ -32,6 +32,11 @@ and a press starts the run. The two links are quiet pills. Calm shortens every m
 the menu's set does not have (Link's `fa-desktop`) is drawn by its nearest one (`fa-display`), else by its name's.
 Network has its own (`fa-circle-nodes`) and Link's name finds `fa-link`. Test: `test/menu-here-current-chrome.test.js`.
 
+**The computer picker waits for your sign-in.** The owner's shot of openvibe.actor/you: "Sign in to choose a computer"
+while signed in. The picker asked the bar for its token as it loaded, before the bar had signed the person in, and
+said "Sign in" for good. Now it waits for the bar's sign-in (its `openvibe-navbar-auth` event, then a few short tries)
+and only then lists the computers. Test: `test/machines-chrome.test.js`.
+
 **A run of deals, redone.** The owner: "improve … redo … views … total views".
 - A run of deals says how many saw it in all, over its rows, once: from `group.views` (feed.item@1 1.3.0, Contracts
   0.435.0), else the card's own count.
