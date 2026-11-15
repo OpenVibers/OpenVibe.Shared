@@ -57,7 +57,8 @@ const page = (signed) => `<!doctype html><html lang="en"><head><meta charset="ut
           { id: 'w', kind: 'wiki', url: 'https://openvibe.wiki/openvibe/japanese-old-guy', title: 'Wiki: openvibe / japanese-old-guy', text: '', at: y.toISOString(), site: 'wiki', site_name: 'Wiki', actor: { name: '2fat', avatar: '' }, media: null, counts: {} },
         ], next_cursor: null }); }
       const kinds = kind ? [kind] : ['live', 'clip', 'pic', 'post', 'update'];
-      return J({ items: Array.from({ length: 12 }, (_, i) => mk(i, kinds[i % kinds.length])), next_cursor: page === 1 ? 'c2' : null }); }
+      const pageOut = J({ items: Array.from({ length: 12 }, (_, i) => mk(i, kinds[i % kinds.length])), next_cursor: page === 1 ? 'c2' : null });
+      return page === 1 && window.__slowFirst ? new Promise((r) => setTimeout(() => r(pageOut), window.__slowFirst)) : pageOut; }
     if (s === 'https://openvibe.network/api/frame/comments/resolve') { window.__resolved = JSON.parse(o.body).ref; return J({ id: 'cth_AbCdEfGhIjKlMnOpQrStUv', comment_count: 2 }); }
     if (s.startsWith('https://openvibe.network/api/frame/comments/threads/cth_AbCdEfGhIjKlMnOpQrStUv')) return J({ thread: { id: 'cth_AbCdEfGhIjKlMnOpQrStUv', comment_count: 2, forum_url: '/forum/pastes/item-7' },
       comments: [{ id: 1, display_name: 'Ada', message: '<img src=x onerror="window.pwned=1"> so good', created_at: new Date(Date.now() - 60e3).toISOString(), upvotes: 3, my_vote: 0, replies: [{ id: 2, display_name: 'Bo', message: 'agreed', created_at: new Date().toISOString(), upvotes: 0 }] }], next_cursor: null });
@@ -139,7 +140,8 @@ const server = http.createServer((req, res) => {
         assert.ok(first.scroll <= 390, 'no sideways scroll');
         // Scrolled to the end, and kept there while the next page comes (a slow macOS runner missed a single scroll's
         // intersection: #542 and #544 on 11-14), as a person keeps scrolling.
-        assert.ok(await until(p, `(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight;
+        // 4.266.0: the end is brought into view by whatever scrolls (the list or the page), as a person's scroll does.
+        assert.ok(await until(p, `(() => { const l = document.querySelector('.ovs-list'); l.scrollTop = l.scrollHeight; const m = document.querySelector('.ovfd-more'); if (m) m.scrollIntoView({ block: 'end' });
             return document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24; })()`, 12000), 'the next page loads as the end comes near');
         assert.ok(await until(p, `!!document.querySelector('.ovfd-caught')`), 'the end says so');
         await p.evaluate(`[...document.querySelectorAll('.ovfd-chip')].find((b) => b.textContent === 'Clips').click(), true`);
@@ -170,6 +172,18 @@ const server = http.createServer((req, res) => {
         assert.strictEqual(kinds.voted, '41 voted', 'and for a poll');
         assert.match(kinds.about, /about Maticus/, `the Rundown is about its actor (${kinds.about})`);
         if (process.env.OV_CAPTURE_FEED) { await p.evaluate(`document.querySelector('.ovfd-k-report').scrollIntoView({ block: 'start' }), true`); await new Promise((r) => setTimeout(r, 400)); const shot = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(process.env.OV_CAPTURE_FEED, Buffer.from(shot.data, 'base64')); }
+        // 4.266.0: a first page that leaves the end in view loads the next one with no scrolling at all (an observer
+        // speaks only on a change; the end never moved, so the next page never came).
+        {
+            const tall = await h.openPage(browser, await browser.newContext(), { width: 390, height: 4000, block: ['*openvibe.tools*', '*jsdelivr*', '*openvibe.media*'] });
+            await tall.goto(`${base}/`, { maxMs: 6000 });
+            assert.ok(await until(tall, `!!document.getElementById('openvibe-burger')`), 'the navbar is up (tall)');
+            await tall.evaluate(`document.getElementById('openvibe-burger').click(), true`);
+            assert.ok(await until(tall, `!!document.querySelector('.ovs.is-open [data-tab="feed"]')`), 'the menu opened (tall)');
+            // The first page answers slowly: the observer's first word comes while it loads (and is ignored then).
+            await tall.evaluate(`window.__slowFirst = 1200, document.querySelector('.ovs [data-tab="feed"]').click(), true`);
+            assert.ok(await until(tall, `document.querySelectorAll('.ovfd-list > a, .ovfd-list > .ovfd-post > a').length >= 24`, 12000), 'the end in view at once: the next page comes with no scroll');
+        }
         console.log('menu-feed-v2-chrome: chips, cards by kind, text only, the next page, caught up, a chip by kind, the stream alone, activity rows and day lines ok');
     } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((e) => { console.error(e); process.exit(1); });

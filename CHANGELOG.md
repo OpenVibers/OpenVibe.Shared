@@ -1,5 +1,45 @@
 # Changelog
 
+## 4.266.0 — 2026-11-15
+
+**The menu's Vibe is the one session surface** (plan §AD.8; the owner, 11-15 night: "the layout sucks … a complete
+rethink and redesign"). The Vibe door mounts OpenVibeSession (`ov-session.js`) in place of ov-run's list and the Actor |
+Codes switch: who works on it is the session's (Auto, `@codes`, the context chip), never a switch on top. It opens on a
+new session, one box with your Actor's face and the starters. The sessions button (or a swipe from the edge) shows the
+rest: your Actor, the Action Center's work and every session. The Agents place (`door('agent')`, the menu button when
+something needs you) opens on the sessions. Typing in the menu's field still starts a session, and Ask your agent still
+waits in the box. `ov-run.js` and `ov-harness.js` stay for the pages that mount them (Actor's /chat until it moves).
+
+OpenVibeSession grows what the door needed:
+- `actor: true`: your Actor heads the sessions, with its face, what it is doing, today's spend of its cap, and Pause or
+  Resume (the Frame's `/actor`). It greets a new session with its face. A press starts a session with it.
+- `actions: { base }`: the Action Center's waiting and running work from every product (Network
+  `GET /api/v1/me/actions`) joins the sessions under Needs you and Working, as long as no session already shows it.
+  Approve and Not now answer it from the list, and so does any session that asks before it goes on.
+- `top(slot)`: something of the host's above the sessions (the Dock lends the agent at work: its screen, its step,
+  Pause, Curtain, End).
+- `s.start(words)` and `s.list()`; a `results` card (what a quick action did, as chips); the menu starters' glyphs.
+- Each session row is a list item that holds its button (the button had the `listitem` role, which hid it as a button).
+
+**One system for a `<select>`.** Every select on every site is already OVForms' (`ov-forms.js`: a sheet on a phone, a
+menu on a computer, search, groups, badges). Where OVForms is on the page, `OpenVibePicker.enhance(select)` (4.264.0)
+hands the select to it and draws nothing of its own. OpenVibePicker is for choices that are not a select: the
+composer's chips, a session's context chip and its menu.
+
+**The feed's next page comes even when the end never moved** (`ov-home.js`). An observer speaks only when the end
+comes into view or leaves it; a page that finished with the end still in view (a short page on a tall screen, a slow
+answer while the person kept scrolling) never asked for the next. After each page the end is observed afresh, which
+reports where it is now. This was `menu-feed-v2-chrome`'s flake on slow macOS runners; the test now holds the first
+page back on a tall screen and needs the second with no scroll.
+Whatever scrolls (the menu's list, or the page where the list grows instead) also asks for the next page once the end
+is within 600 px: the observer alone missed it where the list was not the scrolling box (macOS runners). A chip starts
+its kind at the top of the feed, its first page, wherever the person had scrolled.
+
+Tests: `dock-chrome` (the menu on Agents, the sessions and the Action Center answered in place, the agent at work above
+them, your Actor, a starter's session with its answer and chips, Ask your agent), `menu-places-chrome` (one surface, no
+switch, one mount at a time), `menu-home-screen-chrome`, `ov-session-chrome` (your Actor's Pause, an Action Center item
+approved from the list).
+
 ## 4.265.0 — 2026-11-15
 
 **OpenVibeSession: one session surface for every agent** (`ov-session.js`, plan §AD.8). The owner: "a complete rethink

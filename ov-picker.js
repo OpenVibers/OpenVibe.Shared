@@ -10,6 +10,9 @@
  *   OpenVibePicker.enhance(select, opts?) → the pill that stands for a native <select>; the select stays (hidden,
  *     data-ov-native) so forms, labels and screen readers keep working; a pick sets its value and fires change.
  *   OpenVibePicker.enhanceAll(root) — every select[data-ov-picker] under root.
+ *   4.266.0: a <select> is OVForms' (ov-forms.js: every select on every site, since 4.109): where OVForms is on the
+ *   page, enhance() hands the select to it and draws nothing of its own, so a select never has two systems. The picker
+ *   is for choices that are not a select (the composer's chips, a session's context chip and its menu).
  *
  * Motion follows html[data-ov-motion]: Calm moves less (--ov-move), Off does not move. Colours are theme tokens only.
  */
@@ -242,6 +245,7 @@ select[data-ov-native] { position: absolute !important; width: 1px !important; h
 
     /** A native <select> drawn as a pill that opens the picker; the select keeps the value, its label and its form. */
     function enhance(select, opts = {}) {
+        if (root.OVForms && typeof root.OVForms.enhance === 'function') { select.removeAttribute('data-ov-picker'); try { root.OVForms.enhance(select.parentNode || doc); } catch { /* the select stays */ } return null; }
         if (!select || select.tagName !== 'SELECT' || select.__ovPicker) return select && select.__ovPicker;
         styles();
         const pill = el('button', 'ovp-pill'); pill.type = 'button'; pill.setAttribute('aria-haspopup', 'listbox'); pill.setAttribute('aria-expanded', 'false');

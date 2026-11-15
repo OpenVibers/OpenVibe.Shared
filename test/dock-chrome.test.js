@@ -335,24 +335,24 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             const st = await until(p, STATUS, 'the status');
             assert.deepStrictEqual([st.tone, st.label], ['waiting', '1 needs you'], 'what needs you comes first');
             await p.evaluate(MENU_BUTTON);
-            // 4.240.0 (one agent): the menu opens on Vibe with Tasks chosen, one list where what needs you comes first; no
-            // Dock panel is lent into it.
-            // 4.249.0 (a messenger of agents): your agents' faces on top, then one list where what needs you comes first.
-            const place = await until(p, `(() => { const s = document.querySelector('.ovs.is-open .ovs-door-host .ovr-people .ovr-person'); const rows = [...document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)')]; return s && rows.length >= 3 ? { filters: document.querySelectorAll('.ovs-door-host .ovr-filter').length, needs: rows.map((r) => r.classList.contains('is-needs')), lent: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovr-pane .ovdk') } : null; })()`, 'the menu, open on your agent\'s conversations');
-            assert.deepStrictEqual([place.filters, place.needs[0], place.lent], [0, true, false], 'no filters, what needs you first, and no Dock panel lent');
+            // 4.266.0 (plan §AD.8): the menu opens on Vibe, the one session surface (ov-session.js), with its sessions
+            // showing: your Actor on top, then what needs you first; no Dock panel is lent into it.
+            const place = await until(p, `(() => { const s = document.querySelector('.ovs.is-open .ovs-door-host .ovse.is-drawer .ovse-actor:not([hidden]) .ovse-actor-who'); const rows = [...document.querySelectorAll('.ovs-door-host .ovse-row:not(.is-ghost)')]; return s && rows.length >= 3 ? { groups: [...document.querySelectorAll('.ovs-door-host .ovse-group')].map((g) => g.textContent), needs: rows.map((r) => r.classList.contains('is-needs')), lent: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovse-runs .ovdk') } : null; })()`, 'the menu, open on your sessions');
+            assert.deepStrictEqual([place.groups[0], place.needs[0], place.lent], ['Needs you', true, false], 'what needs you first, and no Dock panel lent');
             assert.strictEqual(await p.evaluate(NO_FLOATING), true, 'inside the menu, nothing floating');
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'its answer buttons');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-li.has-acts .ovse-b.is-primary')", 'its answer buttons');
             decided.length = 0;
-            await p.evaluate("document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary').click()");
-            await until(p, "(document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-row-acts') || {}).textContent === 'Approved'", 'approved in place');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovse-li.has-acts .ovse-b.is-primary').click()");
+            await until(p, "(document.querySelector('.ovs-door-host .ovse-li.has-acts .ovse-row-acts') || {}).textContent === 'Approved'", 'approved in place');
             assert.deepStrictEqual(decided, ['actor:apr_1:approve'], 'the approval goes to the Network for that item');
             await p.evaluate("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))");
             await until(p, "!document.querySelector('.ovs.is-open')", 'Escape closes the menu');
             await p.close();
         }
 
-        // ── 4.240.0: the menu's Vibe is one agent: one list (ov-run.js) with All · Chats · Tasks · Code as filters over it,
-        // runs from the Frame and the Action Center's work together, your agent at the top; no Dock panel lent. ──
+        // ── 4.266.0: the menu's Vibe is the one session surface (ov-session.js): a new session first (one box, the
+        // starters), and behind the sessions button the Frame's sessions and the Action Center's work in one list, your
+        // Actor on top; no switch, no filters, no Dock panel lent. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 } };
             agentView = null;
@@ -362,20 +362,23 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.evaluate(MENU_BUTTON);
             await until(p, "!!document.querySelector('.ovs.is-open .ovs-starttabs [data-dock=\"vibe\"]')", 'the Vibe place');
             await p.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-            await until(p, "document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length === 4", 'the run and the Action Center\'s three');
-            const all = await p.evaluate(`({ filters: [...document.querySelectorAll('.ovs-door-host .ovr-filter')].map((b) => b.textContent + (b.getAttribute('aria-selected') === 'true' ? '*' : '')),
-                titles: [...document.querySelectorAll('.ovs-door-host .ovr-row-top b')].map((b) => b.textContent), sw: !!document.querySelector('.ovs-door-sw, [data-part]'),
-                top: !!document.querySelector('.ovs-door-host .ovr-people .ovr-person'), runsList: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovdk .ovdk-actor, .ovs-door-host .ovr-pane .ovdk'),
-                starters: document.querySelectorAll('.ovs-door-host .ovr-starters:not([hidden]) .ovr-starter').length, wide: document.documentElement.scrollWidth > innerWidth })`);
-            assert.deepStrictEqual(all.filters, [], '4.249.0: no filters over your agent\'s conversations');
-            assert.deepStrictEqual(all.titles, ['Send the weekly digest?', 'Fix the flaky upload test', 'Compare three VPS offers', 'Patch notes for 4.162'], 'what needs you first, then newest (the work a minute ago, the chat four): a run and the Action Center\'s work in one list');
-            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.starters, all.wide], [false, true, false, 0, false], 'no switch; your agents\' faces above, no Dock list or Actor card; no starters over conversations; nothing off the screen');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse.is-blank .ovse-hello') && document.querySelectorAll('.ovs-door-host .ovse-starter').length === 6", 'a new session first');
+            if (process.env.OV_CAPTURE_VIBE) { await wait(700); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-new-390.png'), Buffer.from(r.data, 'base64')); }
+            await p.evaluate("document.querySelector('.ovs-door-host .ovse-menu').click()");
+            await until(p, "document.querySelectorAll('.ovs-door-host .ovse-row:not(.is-ghost)').length === 4", 'the session and the Action Center\'s three');
+            const all = await p.evaluate(`({ groups: [...document.querySelectorAll('.ovs-door-host .ovse-group')].map((g) => g.textContent),
+                titles: [...document.querySelectorAll('.ovs-door-host .ovse-row-top b')].map((b) => b.textContent), sw: !!document.querySelector('.ovs-vibe-switch, .ovs-door-sw, [data-part]'),
+                top: !!document.querySelector('.ovs-door-host .ovse-actor:not([hidden]) .ovse-actor-who'), runsList: !!document.querySelector('.ovs-door-host .ovdk .ovac-item, .ovs-door-host .ovdk .ovdk-actor, .ovs-door-host .ovse-runs .ovdk'),
+                wide: document.documentElement.scrollWidth > innerWidth })`);
+            assert.deepStrictEqual(all.groups, ['Needs you', 'Working', 'Today'], 'what needs you, what is working, then the day');
+            assert.deepStrictEqual(all.titles, ['Send the weekly digest?', 'Fix the flaky upload test', 'Compare three VPS offers', 'Patch notes for 4.162'], 'a session and the Action Center\'s work in one list');
+            assert.deepStrictEqual([all.sw, all.top, all.runsList, all.wide], [false, true, false, false], 'no switch; your Actor on top, no Dock list; nothing off the screen');
             if (process.env.OV_CAPTURE_VIBE) { await wait(500); const r = await p.send('Page.captureScreenshot', { format: 'png' }); fs.writeFileSync(path.join(process.env.OV_CAPTURE_VIBE, 'vibe-all-390.png'), Buffer.from(r.data, 'base64')); }
             // Approve in place, through the Action Center.
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary')", 'its answers');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-li.has-acts .ovse-b.is-primary')", 'its answers');
             decided.length = 0;
-            await p.evaluate("document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-btn.is-primary').click()");
-            await until(p, "(document.querySelector('.ovs-door-host .ovr-rows li.has-acts .ovr-row-acts') || {}).textContent === 'Approved'", 'approved in place from All');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovse-li.has-acts .ovse-b.is-primary').click()");
+            await until(p, "(document.querySelector('.ovs-door-host .ovse-li.has-acts .ovse-row-acts') || {}).textContent === 'Approved'", 'approved in place from the sessions');
             assert.deepStrictEqual(decided, ['actor:apr_1:approve'], 'through the Action Center');
             await p.close();
         }
@@ -494,8 +497,8 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.goto(`${base}/page`, { maxMs: 8000 });
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('agent'));
-            // 4.240.0: the agent at work shows above your one list in the menu's Vibe (Tasks chosen).
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-top .ovdk-agent')", 'the Agents place');
+            // 4.266.0: the agent at work shows above your sessions in the menu's Vibe (the Agents place opens them).
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-top .ovdk-agent')", 'the Agents place');
             // The stream: Live's embed, the task, the numbers.
             const src = await until(p, "document.querySelector('.ovda iframe') && document.querySelector('.ovda iframe').getAttribute('src')", 'the embed');
             assert.strictEqual(src, view().embed_url, 'the embed Codes answered, with the ticket in its address');
@@ -521,16 +524,16 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             assert.deepStrictEqual(controls, ['curtain', 'pause', 'mute', 'end'], 'Pause, Mute and End reached Codes, which puts them to Live');
             await eventually(async () => assert.strictEqual(await p.evaluate("!!document.querySelector('.ovda iframe')"), false, 'no player once it has ended'));
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda-meta').textContent"), 'Ended · worked 12 min'));
-            await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3"), 'the one list is untouched under the stream'));
+            await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs-door-host .ovse-row:not(.is-ghost)').length >= 3"), 'the sessions are untouched under the stream'));
             // No stream at all: the view hides itself and the tab is just the list.
             agentView = null;
             await p.goto(`${base}/page`, { maxMs: 8000 });
             await until(p, "!!window.OpenVibeDock", 'the panels again');
             await p.evaluate(OPEN('agent'));
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-top .ovdk-agent') && document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3", 'the Agents place again');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-top .ovdk-agent') && document.querySelectorAll('.ovs-door-host .ovse-row:not(.is-ghost)').length >= 3", 'the Agents place again');
             await wait(400);
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovda').classList.contains('on')"), false, 'nothing to show, and nowhere to show it'));
-            await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)').length >= 3"), 'the list alone'));
+            await eventually(async () => assert.ok(await p.evaluate("document.querySelectorAll('.ovs-door-host .ovse-row:not(.is-ghost)').length >= 3"), 'the sessions alone'));
             await p.close();
         }
 
@@ -542,14 +545,14 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             const st = await until(p, STATUS, 'the status at 320');
             assert.strictEqual(st.tone, 'running');
             await p.evaluate(OPEN('agent'));
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-rows .ovr-row:not(.is-ghost)')", 'the menu on Agents at 320');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-row:not(.is-ghost)')", 'the menu on Agents at 320');
             await eventually(async () => assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 320, 'no sideways scroll'));
             await p.close();
         }
         }
         if (PART === 1) { console.log('dock-chrome (1 of 2): no pill and no floating Dock, the status on the menu button, Agents in the menu, Chats, Send to, the agent view, 320 px clean'); return; }
-        // ── 4.240.0, one agent: your agent heads the menu's Vibe; a starter starts a conversation at once (your words, the
-        //    typing), the Frame's run carries Vibe's answer and what it did. The Dock's own Vibe panel is not used. ──
+        // ── 4.266.0: your Actor heads the sessions; a starter starts a session at once (your words, it working), the
+        //    Frame's run carries the answer and what it did. The Dock's own Vibe panel is not used. ──
         {
             scenario = { counts: { running: 0, waiting: 0, unread: 0 }, state: { ...defaultState() } };
             asked.length = 0;
@@ -558,23 +561,22 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('vibe'));
             await until(p, "document.querySelector('.ovs.is-open [data-dock=\"vibe\"]') && document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected') === 'true'", 'the menu on Vibe');
-            await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-people .ovr-person'); return !!a && /Juniper/.test(a.innerText); })()", 'your agent at the top');
-            await p.evaluate("document.querySelector('.ovs-door-host .ovr-people .ovr-person').click()");
-            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-sheet'); return a && /today/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), name: (a.querySelector('.ovr-sheet-name') || {}).value, go: !!a.querySelector('button.ovr-sheet-btn') } : null; })()", 'its card');
-            // 4.260.0: the name is a box you can rename it in, so it is the box's value, not text.
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-hello-face.is-actor .ovse-face')", 'your Actor greets a new session');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovse-menu').click()");
+            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovse-actor:not([hidden])'); return a && /today/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), name: (a.querySelector('.ovse-actor-top b') || {}).textContent, go: (a.querySelector('.ovse-actor-go') || { getAttribute() { return null; } }).getAttribute('aria-label') } : null; })()", 'its card');
             assert.strictEqual(me.name, 'Juniper', 'its name');
             assert.match(me.text, /Ready · \$0\.12 of \$1\.00 today/, 'its state and today\'s spend');
-            assert.ok(me.go, 'and Pause on its card');
-            await p.evaluate("document.querySelector('.ovs-door-host .ovr-sheet-x').click()");
-            await until(p, "document.querySelectorAll('.ovs-door-host .ovr-starter').length === 6 && [...document.querySelectorAll('.ovs-door-host .ovr-starter')].every((b) => b.querySelector('svg'))", 'the starters, each with its glyph');
-            await p.evaluate("document.querySelector('.ovs-door-host .ovr-starter').click()");
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-thread .ovr-step.is-you')", 'my words at once');
+            assert.strictEqual(me.go, 'Pause Juniper', 'and Pause on its card');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovse-dclose').click()");
+            await until(p, "document.querySelectorAll('.ovs-door-host .ovse-starter').length === 6 && [...document.querySelectorAll('.ovs-door-host .ovse-starter')].every((b) => b.querySelector('svg'))", 'the starters, each with its glyph');
+            await p.evaluate("document.querySelector('.ovs-door-host .ovse-starter').click()");
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-thread .ovse-me')", 'my words at once');
             assert.strictEqual(asked[0].message, 'Remind me to stretch every 2 hours');
             assert.strictEqual(asked[0].kind, null, 'no kind: the Frame places the words');
-            const answer = await until(p, "(() => { const m = document.querySelector('.ovs-door-host .ovr-step.is-agent'); return m ? m.innerText : null; })()", 'the answer in place');
+            const answer = await until(p, "(() => { const m = document.querySelector('.ovs-door-host .ovse-say'); return m ? m.innerText : null; })()", 'the answer in place');
             assert.match(answer, /Reminder set: Stretch, every 2 hours/);
-            await until(p, "!!document.querySelector('.ovs-door-host .ovr-chip') && !document.querySelector('.ovs-door-host .ovr-typing')", 'what it did as a chip, and the typing gone');
-            assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovs-door-host .ovr-step.is-you')].length"), 1, 'my words once, not twice');
+            await until(p, "!!document.querySelector('.ovs-door-host .ovse-say .ovse-chip') && !document.querySelector('.ovs-door-host .ovse-working')", 'what it did as a chip, and the working line gone');
+            assert.strictEqual(await p.evaluate("[...document.querySelectorAll('.ovs-door-host .ovse-me')].length"), 1, 'my words once, not twice');
             assert.strictEqual(await p.evaluate('document.documentElement.scrollWidth'), 390, 'nothing off the screen');
             await p.close();
         }
@@ -603,7 +605,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, "!!window.OpenVibeDock", 'the panels');
             await p.evaluate(OPEN('vibe'));
-            await until(p, "!!document.querySelector('.ovs.is-open .ovs-door-host .ovr-compose textarea')", 'the menu on Vibe');
+            await until(p, "!!document.querySelector('.ovs.is-open .ovs-door-host .ovse-compose textarea')", 'the menu on Vibe');
             // 4.223.0: the timer is in the box's + (every composer's), not a button of Vibe's own.
             await p.evaluate("(document.querySelector('.ovs .ovdk-vibe-new') || { click() {} }).click()");
             await until(p, "!!document.querySelector('.ovs .ovc-more')", 'the box and its +');
@@ -672,7 +674,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.evaluate("(() => { const b = document.createElement('button'); b.type = 'button'; b.id = 'ask'; b.setAttribute('data-ov-ask', 'About this stream: night walk in Asakusa. '); document.body.appendChild(b); b.click(); })()");
             await until(p, "!!document.querySelector('.ovs.is-open')", 'the menu opens');
             // 4.240.0: the question waits in the one box of the menu's Vibe (your agent), unsent.
-            const box = await until(p, "(() => { const t = document.querySelector('.ovs-door-host .ovr-compose textarea'); return t && t.value ? { value: t.value } : null; })()", 'the question in the box');
+            const box = await until(p, "(() => { const t = document.querySelector('.ovs-door-host .ovse-compose textarea'); return t && t.value ? { value: t.value } : null; })()", 'the question in the box');
             assert.strictEqual(box.value, 'About this stream: night walk in Asakusa. ', 'the page question, as given');
             await eventually(async () => assert.strictEqual(await p.evaluate("document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected')"), 'true', 'on Vibe'));
             await wait(400);

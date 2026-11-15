@@ -79,10 +79,11 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
             // own head, and become the chosen place; Feed and closing hand the panel back.
             // 4.220.0: on every screen (a computer opened a floating Dock; the owner, 11-12: "one unified UI").
             // 4.224.0: Vibe is one list of runs (ov-run.js) with its own filters: no Chat · Code · Agents switch.
+            // 4.266.0: Vibe is the one session surface (ov-session.js), your Actor on top: no Actor | Codes switch.
             await page.evaluate(`window.went = null; window.log = []; window.OpenVibeDock = { filterChats(q) { window.filtered = q; }, mountInto(host, o) { window.log.push('mount:' + o.tab); host.innerHTML = '<div class="stub"></div>';
                 return { show(t) { window.log.push('show:' + t); }, destroy() { window.log.push('destroy'); host.innerHTML = ''; } }; } };
-                window.OpenVibeRun = { mount(host, o) { window.log.push('runs:' + o.filter + (o.base.endsWith('/api/frame') ? '' : ' wrong base')); host.innerHTML = '<div class="ovr runstub"></div>';
-                    return { list(f) { window.log.push('list:' + f); }, start(t) { window.asked = t; return Promise.resolve({}); }, destroy() { window.log.push('runs-destroy'); host.innerHTML = ''; } }; } }`);
+                window.OpenVibeSession = { mount(host, o) { window.log.push('session' + (o.base.endsWith('/api/frame') ? '' : ' wrong base') + (o.actor && o.actions ? ':actor' : '')); host.innerHTML = '<div class="ovse runstub"></div>';
+                    return { list() { window.log.push('list'); }, start(t) { window.asked = t; return Promise.resolve({}); }, prefill(t) { window.asked = t; }, destroy() { window.log.push('runs-destroy'); host.innerHTML = ''; } }; } }`);
             await page.evaluate(OPEN(true)); await wait(350);
             const inside = async () => page.evaluate(`({ door: !!document.querySelector('.ovs.ovs-in-door'), list: !document.querySelector('.ovs-list').hidden, stub: !!document.querySelector('.ovs-door-host .stub'),
                 runs: !!document.querySelector('.ovs-door-host .runstub'), sw: !!document.querySelector('.ovs-door-sw, .ovs-door-top, [data-part]'),
@@ -107,35 +108,24 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await eventually(async () => assert.deepEqual(await inside(), { door: false, list: true, stub: false, runs: false, sw: false, chosen: 'Feed' }, `${name}: Feed hands the panel back`));
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
-                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:all', 'runs-destroy', 'mount:chats', 'destroy', 'runs:all', 'runs-destroy'], `${name}: one mount at a time, handed back on Messages, on Feed and on close`));
-                // 4.260.0 (the owner, 11-15: "switch between codes and the Actor style"): Actor | Codes over the Vibe door. Codes
-                // mounts the coding-harness layout on the same Frame; the field's ↗ follows (Actor's site, Codes' site); kept.
-                await page.evaluate(`window.OpenVibeHarness = { page(host, o) { window.log.push('codes:' + (o.base.endsWith('/api/frame') ? 'ok' : 'wrong base')); host.innerHTML = '<div class="codestub"></div>';
-                    return { prefill(t) { window.asked = 'codes:' + t; }, destroy() { window.log.push('codes-destroy'); host.innerHTML = ''; } }; } }`);
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['session:actor', 'runs-destroy', 'mount:chats', 'destroy', 'session:actor', 'runs-destroy'], `${name}: one mount at a time, handed back on Messages, on Feed and on close`));
+                // 4.266.0 (plan §AD.8): no Actor | Codes switch over the Vibe door; who works on it is the session's. The
+                // field's ↗ opens Actor's own site.
                 await page.evaluate(OPEN(true));
                 await until(`!!document.querySelector('.ovs-starttabs [data-dock="vibe"]')`);
                 await page.evaluate(`window.log = []; document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
-                const sw = async () => page.evaluate(`({ tabs: [...document.querySelectorAll('.ovs-vibe-switch .ovs-vibe-sw')].map((b) => b.dataset.mode + ':' + b.getAttribute('aria-selected')),
-                    runs: !!document.querySelector('.ovs-door-host .runstub'), codes: !!document.querySelector('.ovs-door-host .codestub'), open: (document.querySelector('.ovs-acts a.ovs-act') || {}).href || null })`);
-                await eventually(async () => assert.deepEqual(await sw(), { tabs: ['actor:true', 'codes:false'], runs: true, codes: false, open: 'https://openvibe.actor/chat' }, `${name}: Actor first, its ↗ to openvibe.actor`));
-                await page.evaluate(`document.querySelector('.ovs-vibe-switch [data-mode="codes"]').click()`);
-                await eventually(async () => assert.deepEqual(await sw(), { tabs: ['actor:false', 'codes:true'], runs: false, codes: true, open: 'https://openvibe.codes/' }, `${name}: Codes: the harness layout, its ↗ to openvibe.codes`));
-                assert.equal(await page.evaluate(`localStorage.getItem('ovs-vibe-mode')`), 'codes', `${name}: the choice is kept`);
-                await page.evaluate(`document.querySelector('.ovs-vibe-switch [data-mode="actor"]').click()`);
-                await eventually(async () => assert.deepEqual((await sw()).tabs, ['actor:true', 'codes:false'], `${name}: back to Actor`));
-                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:all', 'runs-destroy', 'codes:ok', 'codes-destroy', 'runs:all'], `${name}: one view at a time`));
-                await page.evaluate(`localStorage.removeItem('ovs-vibe-mode'); delete window.OpenVibeHarness`);
+                await eventually(async () => assert.deepEqual(await page.evaluate(`({ sw: !!document.querySelector('.ovs-vibe-switch, .ovs-vibe-sw'), session: !!document.querySelector('.ovs-door-host .runstub'), open: (document.querySelector('.ovs-acts a.ovs-act') || {}).href || null })`), { sw: false, session: true, open: 'https://openvibe.actor/chat' }, `${name}: one surface, no switch; its ↗ to openvibe.actor`));
                 await page.evaluate('OpenVibeSearch.close()');
                 await until(`!document.querySelector('.ovs.is-open')`);
-                // A place asked for by name (the Dock's open({ tab: 'code' }), the composer's timer): Vibe on that list.
+                // A place asked for by name (the Dock's open({ tab: 'code' }), the composer's timer): Vibe with its sessions open.
                 await page.evaluate(OPEN(true)); await wait(300);
                 await page.evaluate(`window.log = []; OpenVibeSearch.door('code')`); await wait(80);
-                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:code'], `${name}: door('code') opens Vibe on Code`));
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['session:actor', 'list'], `${name}: door('code') opens Vibe on its sessions`));
                 await page.evaluate(`OpenVibeSearch.door('agent')`); await wait(80);
-                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:code', 'list:task'], `${name}: door('agent') moves the open Vibe to Tasks`));
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['session:actor', 'list', 'list'], `${name}: door('agent') opens the sessions of the open Vibe`));
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
             }
-            await page.evaluate('delete window.OpenVibeDock; delete window.OpenVibeRun');
+            await page.evaluate('delete window.OpenVibeDock; delete window.OpenVibeSession');
             // Opened from a button: the sheet grows out of that button's centre, wherever the sheet itself was placed.
             if (width > 900) {
                 await page.evaluate(OPEN(true).replace("frame: {},", `frame: {}, anchor: { top: 52, left: ${width - 150}, cx: ${width - 130}, cy: 26 },`));

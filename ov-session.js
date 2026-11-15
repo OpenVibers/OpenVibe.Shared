@@ -1,5 +1,5 @@
 /**
- * ov-session.js (openvibe-shared 4.265.0): one session surface for every agent (plan §AD.8). The owner, 11-15 night:
+ * ov-session.js (openvibe-shared 4.265.0; 4.266.0 your Actor, the Action Center, the menu's Vibe): one session surface for every agent (plan §AD.8). The owner, 11-15 night:
  * "the layout sucks … a complete rethink and redesign … more modular, shared, SDK API enabled, and way smarter,
  * intelligent type system sessions, kind of like Claude Code or any other harnesses, but make it way better"; "you
  * shouldn't have to swap to a different site".
@@ -20,8 +20,13 @@
  *     starters: [[glyph, words], …],                 // things to ask, under a new session's hello
  *     title: 'Vibe', line: 'Ask anything …',         // a new session's hello
  *     onEvent: (type, data) => {},                   // session.opened | started | step | approval | ended | blank
+ *     actor: true,                                   // 4.266.0: your Actor heads the sessions (face, state, today's
+ *                                                    // spend, Pause or Resume; the Frame's /actor) and greets a new one
+ *     actions: { base: 'https://openvibe.network' }, // 4.266.0: the Action Center's waiting and running work from every
+ *                                                    // product in the list, approved or declined there
+ *     top: (slot) => ({ destroy }),                  // 4.266.0: something of the host's above the sessions
  *   });
- *   s.open(ref); s.blank(); s.prefill(words); s.drawer(true|false); s.refresh(); s.destroy();
+ *   s.open(ref); s.blank(); s.start(words); s.prefill(words); s.drawer(true|false); s.list(); s.refresh(); s.destroy();
  *   OpenVibeSession.card(type, (data, step, ctx) => Node)   a rich card for a step's ui.type
  *
  * The layout, phone first:
@@ -74,6 +79,13 @@
         made: '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9Z"/>',
         clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
         send: '<path d="M12 19.5V5M5.8 11.2L12 5l6.2 6.2"/>',
+        pause: '<path d="M9 6v12M15 6v12"/>',
+        live: '<circle cx="12" cy="11.8" r="2"/><path d="M8.6 8.4a4.9 4.9 0 0 0 0 7.1M15.4 8.4a4.9 4.9 0 0 1 0 7.1M6.3 6.1a8.1 8.1 0 0 0 0 11.9M17.7 6.1a8.1 8.1 0 0 1 0 11.9"/>',
+        timer: '<path d="M12 4.5a8.2 8.2 0 1 1 0 16.4 8.2 8.2 0 0 1 0-16.4zM12 8.6v4.2l2.7 1.7M9.6 2.6h4.8"/>',
+        bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 1.5h-15ZM10 20.5a2.2 2.2 0 0 0 4 0"/>',
+        calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+        phone: '<path d="M6.5 3.8h3l1.5 4-2 1.3a10.5 10.5 0 0 0 5.9 5.9l1.3-2 4 1.5v3a1.8 1.8 0 0 1-2 1.8A15.5 15.5 0 0 1 4.7 5.8a1.8 1.8 0 0 1 1.8-2Z"/>',
+        play: '<path d="M8 5.5v13l10.5-6.5z"/>',
     };
     const svg = (name, cls) => {
         const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -261,6 +273,15 @@
         const t = el('span'); t.append(el('b', '', data.title || url), el('small', '', data.site || new URL(url).hostname)); a.append(t);
         return a;
     });
+    // What a quick action did (a timer set, a reminder made, undone), as chips.
+    card('results', (data) => {
+        const row = el('div', 'ovse-chips');
+        for (const r of (Array.isArray(data.results) ? data.results : []).slice(0, 12)) {
+            const c = el('span', `ovse-chip${r.undone ? ' is-undone' : ''}`); c.append(svg(r.kind === 'timer' ? 'timer' : r.kind === 'reminder' ? 'bell' : 'check'), el('span', '', r.label || r.text || r.kind || 'Done'));
+            row.append(c);
+        }
+        return row;
+    });
     card('code', (data) => { const pre = el('pre', 'ovse-pre'); pre.append(el('code', '', String(data.code || data.text || '').slice(0, 40000))); return pre; });
     card('table', (data) => {
         const wrap = el('div', 'ovse-table'); const t = el('table');
@@ -370,7 +391,9 @@
         dHead.append(el('b', '', 'Sessions'), dNew, dClose);
         const find = el('label', 'ovse-find'); const findIn = el('input'); findIn.type = 'search'; findIn.placeholder = 'Search sessions'; findIn.setAttribute('aria-label', 'Search sessions'); find.append(svg('search'), findIn);
         const runsBox = el('div', 'ovse-runs'); runsBox.setAttribute('role', 'list');
-        drawer.append(dHead, find, runsBox);
+        const actorSlot = el('div', 'ovse-actor'); actorSlot.hidden = true;
+        const topSlot = el('div', 'ovse-top'); topSlot.hidden = true;
+        drawer.append(dHead, actorSlot, topSlot, find, runsBox);
 
         const main = el('section', 'ovse-main');
         const head = el('header', 'ovse-head');
@@ -453,6 +476,11 @@
                 if (gen !== state.listGen) return;
                 state.runs = Array.isArray(d.runs) ? d.runs : []; state.partial = Array.isArray(d.partial) ? d.partial : [];
                 paintRuns();
+                if (o.actions && !state.q) {
+                    const more = await actionRows(state.runs);
+                    if (gen !== state.listGen || !more.length) return;
+                    state.runs = [...more, ...state.runs]; paintRuns();
+                }
             } catch (err) {
                 if (gen !== state.listGen) return;
                 runsBox.textContent = '';
@@ -476,9 +504,67 @@
             }
             if (state.partial.length) runsBox.append(el('p', 'ovse-note', `Some sessions did not load: ${state.partial.slice(0, 3).join(', ')}.`));
         }
+        /** 4.266.0: the Action Center's work (Network GET /api/v1/me/actions) that no session here already shows. */
+        const SERVICE = { actor: 'Actor', codes: 'Codes', ai: 'OpenVibe AI', run: 'OpenVibe Run', bot: 'OpenVibe.Bot', chat: 'Chat', network: 'OpenVibe' };
+        async function actionRows(runs) {
+            const actionsBase = String(o.actions.base || '').replace(/\/+$/, '');
+            if (!actionsBase) return [];
+            try {
+                const r = await fetch(`${actionsBase}/api/v1/me/actions`, { headers: { Accept: 'application/json', ...headers() }, credentials: 'omit' });
+                if (!r.ok) return [];
+                const doc = await r.json();
+                const shown = new Set(runs.map((x) => x.ref));
+                runs.forEach((x) => { if (x.waiting && x.waiting.approval) shown.add(`approval:${x.waiting.approval}`); });
+                const out = [];
+                for (const bucket of ['waiting', 'running']) {
+                    for (const it of (doc && doc.buckets && Array.isArray(doc.buckets[bucket]) ? doc.buckets[bucket] : []).slice(0, 30)) {
+                        if (!it || typeof it.id !== 'string' || shown.has(`${it.service}:${it.id}`) || (it.kind === 'approval' && shown.has(`approval:${it.id}`))) continue;
+                        out.push({
+                            action: it, ref: `action:${it.service}:${it.id}`, kind: it.kind === 'code_task' ? 'code' : 'task', title: it.title, url: it.href,
+                            status: bucket === 'waiting' ? 'waiting' : 'running', updated_at: it.updated_at,
+                            waiting: bucket === 'waiting' ? { for: 'approval' } : null,
+                            doing: bucket === 'running' ? { text: it.step || it.summary || 'Working' } : null,
+                            preview: it.summary ? { text: it.summary } : null,
+                            agent: { id: String(it.service), name: it.agent || SERVICE[it.service] || 'OpenVibe', glyph: it.kind === 'code_task' ? 'code' : 'robot' },
+                        });
+                    }
+                }
+                return out;
+            } catch { return []; }
+        }
+        /** A row that asks before it goes on is answered from the list: Approve, Not now. */
+        function answerRow(r) {
+            const it = r.action; const w = r.waiting;
+            if (it ? !(needsYou(r) && Array.isArray(it.actions) && it.actions.includes('approve')) : !(needsYou(r) && w.for === 'approval' && w.approval && /^[A-Za-z0-9._~-]{1,160}$/.test(String(w.approval)))) return null;
+            const box = el('div', 'ovse-row-acts');
+            const say = (text, err) => { box.textContent = ''; box.append(el('p', `ovse-note${err ? ' is-err' : ''}`, text)); };
+            [['approve', 'Approve', true], ['decline', 'Not now', false]].forEach(([id, label, primary]) => {
+                const b = el('button', primary ? 'ovse-b is-primary' : 'ovse-b', label); b.type = 'button';
+                b.setAttribute('aria-label', `${label}: ${titleOf(r)}`);
+                b.addEventListener('click', async () => {
+                    [...box.querySelectorAll('button')].forEach((x) => { x.disabled = true; });
+                    try {
+                        if (it) {
+                            const res = await fetch(`${String(o.actions.base).replace(/\/+$/, '')}/api/v1/me/actions/${encodeURIComponent(it.service)}/${encodeURIComponent(it.id)}/${id}`, { method: 'POST', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: '{}' });
+                            if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.detail || j.error || j.title || `That did not go through (${res.status})`); }
+                        } else await api(`/runs/${encodeURIComponent(r.ref || r.id)}/approvals/${encodeURIComponent(w.approval)}`, { method: 'POST', body: JSON.stringify({ answer: id }) });
+                        say(id === 'approve' ? 'Approved' : 'Declined');
+                        emit('session.approval', { ref: r.ref, answer: id });
+                    } catch (err) { [...box.querySelectorAll('button')].forEach((x) => { x.disabled = false; }); box.append(el('p', 'ovse-note is-err', err.message)); }
+                });
+                box.append(b);
+            });
+            return box;
+        }
         function runRow(r, i) {
+            const li = el('div', 'ovse-li'); li.setAttribute('role', 'listitem');
+            li.append(runButton(r, i));
+            const acts = answerRow(r); if (acts) { li.classList.add('has-acts'); li.append(acts); }
+            return li;
+        }
+        function runButton(r, i) {
             const ref = r.ref || r.id;
-            const b = el('button', `ovse-row${ref === state.ref ? ' is-on' : ''}${needsYou(r) ? ' is-needs' : ''}${isLive(r) ? ' is-live' : ''}`); b.type = 'button'; b.setAttribute('role', 'listitem');
+            const b = el('button', `ovse-row${ref === state.ref ? ' is-on' : ''}${needsYou(r) ? ' is-needs' : ''}${isLive(r) ? ' is-live' : ''}`); b.type = 'button';
             b.style.setProperty('--i', String(Math.min(i, 12)));
             const t = el('span', 'ovse-row-t');
             const top = el('span', 'ovse-row-top'); top.append(el('b', '', titleOf(r)), el('small', '', ago(r.updated_at || r.created_at)));
@@ -486,9 +572,61 @@
             t.append(top, el('small', 'ovse-row-l', String(line || '').slice(0, 140)));
             b.append(face(r, 's'), t);
             if (isLive(r)) b.append(el('i', 'ovse-pulse'));
+            // Work from the Action Center opens on its own page; a session opens here.
+            if (r.action) { b.addEventListener('click', () => { const url = httpsUrl(r.url); if (url) root.open(url, '_blank', 'noopener'); }); return b; }
             b.addEventListener('click', () => { state.stack = []; open(ref, r); if (!wide) setDrawer(false); });
             return b;
         }
+
+        // ── your Actor (4.266.0): its face, what it is doing, today's spend, Pause or Resume ──
+        let actor = null, actorAt = 0;
+        const actorName = () => { const n = String((actor && actor.name) || '').trim(); return (!n || /^(my actor|vibe)$/i.test(n) ? 'Actor' : n).slice(0, 40); };
+        const actorState = () => { const a = actor; if (!a) return 'resting'; if (a.status === 'paused' || a.enabled === false) return 'paused'; if (Array.isArray(a.asks) && a.asks.length) return 'asks'; return a.status === 'working' ? 'working' : 'resting'; };
+        async function loadActor() {
+            if (!o.actor || !tokenOf()) return null;
+            if (actorAt && Date.now() - actorAt < 20000) return actor;
+            try { const r = await fetch(`${base}/actor`, { credentials: 'omit', headers: { Accept: 'application/json', ...headers() } }); actor = r.ok ? await r.json() : null; } catch { actor = null; }
+            actorAt = Date.now();
+            return actor;
+        }
+        function actorFace(size) {
+            const f = el('span', `ovse-face is-${size} ovse-me-face is-${actorState()}`);
+            const pic = actor && actor.avatar && httpsUrl(actor.avatar.url);
+            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); return f; }
+            const hue = actor && actor.avatar && actor.avatar.blob && Number.isInteger(actor.avatar.blob.hue) ? actor.avatar.blob.hue : hueOf(actorName());
+            f.style.setProperty('--ovse-h', String(hue));
+            f.append(el('b', 'ovse-face-l', actorName().charAt(0).toUpperCase()));
+            return f;
+        }
+        const ACTOR_WORD = { working: 'Working', asks: 'Asks you something', resting: 'Ready', paused: 'Paused' };
+        function paintActor() {
+            actorSlot.textContent = '';
+            if (!o.actor || !actor) { actorSlot.hidden = true; return; }
+            actorSlot.hidden = false;
+            const st = actorState();
+            const now = actor.now || {};
+            const cap = actor.caps && Number(actor.caps.usd) > 0 ? ` of $${Number(actor.caps.usd).toFixed(2)}` : '';
+            const step = st === 'working' ? String(now.current_step || '').slice(0, 100) : st === 'asks' ? String((actor.asks[0] && actor.asks[0].text) || '').slice(0, 100) : '';
+            const who = el('button', `ovse-actor-who is-${st}`); who.type = 'button';
+            who.setAttribute('aria-label', `${actorName()}, your agent: ${ACTOR_WORD[st]}. Start a session with it`);
+            const t = el('span', 'ovse-actor-t');
+            const top = el('span', 'ovse-actor-top'); top.append(el('b', '', actorName()), el('i', '', 'your agent'));
+            t.append(top, el('small', '', [ACTOR_WORD[st], step, `$${(Number(now.cost_today) || 0).toFixed(2)}${cap} today`].filter(Boolean).join(' · ')));
+            who.append(actorFace('m'), t);
+            who.addEventListener('click', () => { pick.agent = 'actor'; savePick(); blank(); if (!wide) setDrawer(false); });
+            actorSlot.append(who);
+            if (actor.id) {
+                const paused = st === 'paused';
+                const go = btn(`ovse-ib ovse-actor-go${paused ? ' is-main' : ''}`, paused ? `Resume ${actorName()}` : `Pause ${actorName()}`, paused ? 'play' : 'pause');
+                go.addEventListener('click', async () => {
+                    go.disabled = true;
+                    try { const r = await fetch(`${base}/actor/${paused ? 'resume' : 'pause'}`, { method: 'POST', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: '{}' }); if (r.ok) { actorAt = 0; await loadActor(); } } catch { /* it stays as it was */ }
+                    paintActor();
+                });
+                actorSlot.append(go);
+            }
+        }
+        if (typeof o.top === 'function') { try { const t = o.top(topSlot); if (t) { topSlot.hidden = false; state.topMount = t; } } catch { /* the host's */ } }
 
         // ── the head ──
         function paintHead() {
@@ -1148,6 +1286,7 @@
             thread.textContent = '';
             const hi = el('div', 'ovse-hello');
             const big = el('span', 'ovse-hello-face'); big.append(svg('spark'));
+            if (o.actor) loadActor().then(() => { if (!actor || !big.isConnected) return; big.textContent = ''; big.classList.add('is-actor'); big.append(actorFace('xl')); });
             hi.append(big, el('b', 'ovse-hello-t', o.helloTitle || 'What should we do?'), el('p', 'ovse-hello-l', o.line || 'Type anything. It answers, searches, makes things and writes code, on the right agent for it. / for commands, @ to pick who works on it.'));
             thread.append(hi);
             if (Array.isArray(o.starters) && o.starters.length) {
@@ -1178,13 +1317,15 @@
         }
 
         if (o.open) open(o.open); else blank();
+        if (o.actor) loadActor().then(paintActor);
         if (wide && !collapsed) loadRuns();
         need(o, 'ov-picker.js', 'OpenVibePicker');
         return {
-            open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: loadRuns,
+            open: (ref) => { state.stack = []; return open(ref); }, blank, prefill, refresh: () => { loadRuns(); if (o.actor) { actorAt = 0; loadActor().then(paintActor); } },
+            start: (text) => start(String(text || '')), list: () => setDrawer(true),
             drawer: (v) => setDrawer(v === undefined ? true : !!v),
             get state() { return { ref: state.ref, run: state.run, steps: state.steps.size, wide, drawer: wide ? !collapsed : state.drawer }; },
-            destroy() { clearStream(); state.gen++; if (ro) ro.disconnect(); host.textContent = ''; },
+            destroy() { clearStream(); state.gen++; if (ro) ro.disconnect(); if (state.topMount && typeof state.topMount.destroy === 'function') { try { state.topMount.destroy(); } catch { /* */ } } host.textContent = ''; },
         };
     }
 
@@ -1234,6 +1375,25 @@
 .ovse-row-top small, .ovse-row-l { color: var(--ovse-mute); font-size: 12.5px; }
 .ovse-row-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ovse-row.is-needs .ovse-row-l { color: var(--warning, #f5a524); }
+.ovse-li { display: grid; }
+.ovse-li.has-acts { margin: 2px 0 6px; border-radius: 16px; background: color-mix(in srgb, var(--warning, #f5a524) 8%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning, #f5a524) 40%, transparent); }
+.ovse-li.has-acts > .ovse-row:hover { background: transparent; }
+.ovse-row-acts { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 10px 10px 54px; }
+.ovse-row-acts .ovse-b { min-height: 36px; padding: 0 14px; font-size: 13.5px; } .ovse-row-acts .ovse-note { margin: 0; }
+.ovse-actor { display: flex; align-items: center; gap: 6px; margin: 2px 10px 8px; padding: 6px; border-radius: 16px; background: var(--ovse-card); border: 1px solid var(--ovse-line); }
+.ovse-actor-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 4px; border: 0; border-radius: 12px; background: transparent; text-align: left; cursor: pointer; }
+.ovse-actor-who:hover { background: color-mix(in srgb, var(--ovse-fg) 6%, transparent); }
+.ovse-actor-t { flex: 1; min-width: 0; display: grid; }
+.ovse-actor-top { display: flex; align-items: baseline; gap: 6px; } .ovse-actor-top i { font-style: normal; font-size: 11.5px; color: var(--ovse-mute); }
+.ovse-actor-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ovse-mute); font-size: 12.5px; }
+.ovse-actor-who.is-working .ovse-actor-t small { color: var(--ovse-acc2); } .ovse-actor-who.is-asks .ovse-actor-t small { color: var(--warning, #f5a524); }
+.ovse-actor-go.is-main { background: var(--ovse-acc); color: var(--on-accent, #fff); }
+.ovse-top:empty { display: none; }
+.ovse-face-l { font-size: 15px; font-weight: 800; }
+.ovse-face.is-xl { width: 60px; height: 60px; border-radius: 22px; } .ovse-face.is-xl .ovse-face-l { font-size: 26px; }
+.ovse-me-face.is-working { box-shadow: 0 0 0 2px var(--ovse-bg), 0 0 0 4px var(--ovse-acc2); animation: ovse-ring 1.8s ease-in-out infinite; }
+@keyframes ovse-ring { 50% { box-shadow: 0 0 0 2px var(--ovse-bg), 0 0 0 4px color-mix(in srgb, var(--ovse-acc2) 35%, transparent); } }
+.ovse-hello-face.is-actor { background: none; box-shadow: none; width: auto; height: auto; }
 
 /* faces */
 .ovse-face { --ovse-h: 215; display: inline-grid; place-items: center; flex: none; border-radius: 30%; background: linear-gradient(140deg, hsl(var(--ovse-h) 70% 56%), hsl(calc(var(--ovse-h) + 40) 72% 44%)); color: #fff; overflow: hidden; }
@@ -1281,6 +1441,7 @@
 .ovse-thumb { width: 120px; height: 90px; object-fit: cover; border-radius: 12px; border: 1px solid var(--ovse-line); }
 .ovse-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 10px; background: var(--ovse-card); border: 1px solid var(--ovse-line); color: var(--ovse-dim); font-size: 12.5px; text-decoration: none; }
 .ovse-chip .ovse-g { width: 14px; height: 14px; }
+.ovse-chips { display: flex; flex-wrap: wrap; gap: 6px; } .ovse-chip.is-undone { opacity: .6; text-decoration: line-through; }
 .ovse-card { margin-top: 8px; }
 .ovse-linkcard { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 14px; border: 1px solid var(--ovse-line); background: var(--ovse-card); color: inherit; text-decoration: none; }
 .ovse-linkcard img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; }

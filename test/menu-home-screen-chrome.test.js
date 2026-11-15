@@ -371,8 +371,8 @@ const server = http.createServer((req, res) => {
         assert.ok(await until(s, `!!document.querySelector('.ovs-door-host .ovdk')`), 'the panel is inside the menu');
         assert.strictEqual(await s.evaluate(`[...document.querySelectorAll('.ovdk')].every((d) => !!d.closest('.ovs-door-host')) && !document.querySelector('#ovdk-pill, .ovdk-pill')`), true, 'no floating Dock and no pill');
         await s.evaluate(`window.OpenVibeDock.open({ tab: 'agent' }), true`);
-        // 4.224.0: Vibe is one list of runs (ov-run.js, loaded beside the navbar); an agent's place is its Tasks filter.
-        assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true' && !!document.querySelector('.ovs-door-host .ovr-people')`), 'open({ tab: agent }) moves the open menu to Vibe, your agents on top');
+        // 4.266.0: Vibe is the one session surface (ov-session.js, loaded beside the navbar); an agent's place opens its sessions.
+        assert.ok(await until(s, `document.querySelector('.ovs [data-dock="vibe"]').getAttribute('aria-selected') === 'true' && !!document.querySelector('.ovs-door-host .ovse.is-drawer')`), 'open({ tab: agent }) moves the open menu to Vibe, its sessions open');
         await s.evaluate(`window.OpenVibeDock.close(), true`);
         assert.ok(await until(s, `!document.querySelector('.ovs.is-open')`), 'close() closes the menu');
         await s.close();
