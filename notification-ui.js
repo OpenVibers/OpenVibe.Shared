@@ -1349,8 +1349,8 @@
         v.lastDay = lastDay;
         if (!append) list.innerHTML = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
         if (!v.items.length && !append && earlierNext(view || v)) {
-            list.insertAdjacentHTML('beforeend', `<p class="ovn-caught">${svg(ICON.read)}<span>You're all caught up</span></p>`);
-            moreMark(view || v, list);
+            list.insertAdjacentHTML('beforeend', `<p class="ovn-caught">${svg(ICON.read)}<span>You're all caught up</span></p><div class="openvibe-nv-more"><span class="spinner"></span></div>`);
+            Promise.resolve().then(() => loadMore(view || v));   // right after the first page's load settles
         } else if (!v.items.length) {
             const [t0, s0] = TAB_EMPTY[v.tab] || TAB_EMPTY.all;
             const acLink = v.tab === 'agents' ? `<button type="button" class="ovn-ac-link" data-act="ac">${svg(GLYPH.spark)}<span>Everything your agents are doing: running, waiting for you, done</span></button>` : '';
@@ -1449,6 +1449,7 @@
             // Re-render only the tail to keep the scroll position.
             const old = v.root.querySelector('.openvibe-nv-more'); if (old) old.remove();
             const list = v.root.querySelector('[data-role="list"]');
+            if (earlier && !v.items.length && !v.earlier.hasMore) { v.earlier = null; renderItems(v); return; }
             if (earlier && fresh.length && !v.earlier.started) {
                 v.earlier.started = true; v.lastDay = null;
                 if (list) list.insertAdjacentHTML('beforeend', '<div class="openvibe-nv-earlier" role="separator">Earlier</div>');
