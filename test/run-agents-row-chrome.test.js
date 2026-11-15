@@ -35,6 +35,8 @@ const server = http.createServer((req, res) => {
     const json = (status, body) => { res.writeHead(status, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
     if (u.pathname === '/api/frame/actor') return json(200, { id: 'act_1', name: 'My Actor', enabled: true, status: 'idle', now: {}, asks: [] });
     if (u.pathname === '/api/frame/runs') return json(200, { runs: RUNS, next: null });
+    if (u.pathname === '/api/frame/runs/chat:c_1') return json(200, RUNS[0]);
+    if (u.pathname === '/api/frame/runs/chat:c_1/steps') return json(200, { steps: [], next: null });
     json(404, { error: 'No such thing' });
 });
 (async () => {
@@ -58,6 +60,15 @@ const server = http.createServer((req, res) => {
         await p.evaluate("document.querySelectorAll('.ovr-people .ovr-person')[1].click(), true");
         await until(p, "document.querySelectorAll('.ovr-rows .ovr-row').length === 0 && document.querySelectorAll('.ovr-people .ovr-person')[1].getAttribute('aria-pressed') === 'true'", 'only Codes\' conversations');
         assert.equal(await p.evaluate('document.documentElement.scrollWidth'), 390, 'nothing runs off a phone');
-        console.log('run-agents-row-chrome: Actor, Codes always with its face, made agents, old names folded into Actor, the Codes filter');
+        // Opened, a conversation of yours keeps your Actor's face in its head (4.260.0; the owner, 11-15: "it has the
+        // actor icon, but then it shows vibe icon when you click on it").
+        await p.goto(`${base}/`, { maxMs: 6000 });
+        await until(p, "document.querySelectorAll('.ovr-rows .ovr-row').length === 5", 'the conversations again');
+        await p.evaluate("document.querySelector('.ovr-rows .ovr-row').click(), true");
+        const headFace = await until(p, `(() => { const f = document.querySelector('.ovr-thead .ovr-face'); return f ? { me: f.classList.contains('ovr-me'), h: f.style.getPropertyValue('--ovr-h') } : null; })()`, 'the open conversation\'s head');
+        const listFace = await p.evaluate(`(() => { const f = document.querySelector('.ovr-people .ovr-person .ovr-face'); return f.style.getPropertyValue('--ovr-h'); })()`).catch(() => null);
+        assert.equal(headFace.me, true, 'your Actor\'s face, not Vibe\'s');
+        if (listFace) assert.equal(headFace.h, listFace, 'the same colour as in the list');
+        console.log('run-agents-row-chrome: Actor, Codes always with its face, made agents, old names folded into Actor, the Codes filter, your face in an open conversation');
     } finally { await browser.close(); server.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

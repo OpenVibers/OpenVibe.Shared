@@ -1,5 +1,47 @@
 # Changelog
 
+## 4.260.0 — 2026-11-15
+
+**Your chats never vanish behind "Sign in to Chat".** The owner, 11-15: "All my chat messages disappeared. What the
+heck?" A Network deploy came just as the menu's sign-in token ran out, so it could not be renewed, and Chat rightly
+refused the old one. The menu's Chat tab then said "Sign in to Chat to see your conversations" to someone signed in.
+Now a refused token is renewed once and the request asked again. The navbar's `renewToken()` (also
+`OpenVibeNavbar.renewToken()`) is shared by every caller at that moment: the tools gateway first on its hosts, then
+the Network's grace refresh. The Dock's `renew` option takes it. Test: `test/dock-signin-chrome.test.js`.
+The deeper cause, fixed too: Network slides a session, so it accepts an expired token within its grace and returns a
+new one in `X-OV-Token`. The bar never kept it, so on openvibe.network it went on sending the expired token, Network
+went on accepting it, and every other site refused it. The bar now keeps the renewed token (`test/navbar-auth.test.js`).
+
+**An open conversation keeps your Actor's face.** The owner, 11-15, on openvibe.chat/vibe: "it has the actor icon, but
+then it shows vibe icon when you click on it". The list drew a conversation of yours with your Actor's face; its open
+thread drew the answering product's own (Chat's lime Vibe). The thread's head now uses the same face as the list for
+every run of yours, the picture or the drawn shape you chose included. Test: `test/run-agents-row-chrome.test.js`.
+
+**The + opens on a phone with the keyboard up.** The owner: the + "sometimes doesn't open on mobile, especially with
+the keyboard open … it stays looking pressed". A tap took the focus from the text, the keyboard folded, the box moved
+under the finger and the click landed nowhere. A touch on the + keeps the focus in the text, so nothing moves. Test:
+`test/composer-plus-chrome.test.js`.
+
+**Vibe in the menu: your Actor or Codes, one press apart.** The Vibe door has a switch, Actor | Codes (remembered per
+browser). Actor is the conversations with your agent. Codes is the coding view, the same one as openvibe.codes.
+The ↗ beside it opens either site.
+
+**Codes' new task: say anything about code.** The owner: "type anything … it's code related, so it'll code shit or
+give you a space or … analyze GitHubs, or clone shit". A new task starts on **Anything**: no project to pick first, and
+Codes' make mode works out what the words ask for. The picker rows over the box are gone. What it works on, the
+agent, the model and where it runs are the box's own chips, and the box takes coding examples. The "Works on" list
+is read when it opens, so projects that load later are in it. Coding never runs on OpenVibe's own server (the owner:
+"always … on the node or the user's own computer"). OpenVibe is no longer a place for a coding agent, Auto means a
+shared node or your computer, and picking a coding agent while OpenVibe was the place moves it to Auto. The view
+scrolls in its column with the box held at its foot; it was cut off and could not scroll on a phone. Tests:
+`test/ov-harness.test.js`, `test/menu-places-chrome.test.js`.
+
+**Your Actor, at home in the menu.** An empty conversation list opens on a welcome: your Actor's face, what it can
+start on as cards, and links to openvibe.actor and your page. Faces show a badge while their agent works. A face you
+drew (shape and colour) is the face everywhere. Your Actor's card edits its name and face in place: shape and colour
+pickers, then Save, through Network's `PATCH /api/frame/actor`. Pause and Resume sit beside them. The box floats at
+the foot of the view.
+
 ## 4.259.0 — 2026-11-15
 
 **The menu's Vibe: your Actor, and Codes beside it.** The owner, 11-15, crossing out "My Actor · Vibe · Vibe · Codes ·

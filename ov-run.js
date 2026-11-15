@@ -59,6 +59,7 @@
     const G = {
         back: '<path d="M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3"/>',
         open: '<path d="M7 17L17 7M9 7h8v8"/>',
+        gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/>',
         send: '<path d="M12 19.5V5M5.8 11.2L12 5l6.2 6.2"/>',
         plus: '<path d="M12 5v14M5 12h14"/>',
         pause: '<path d="M9 6v12M15 6v12"/>',
@@ -361,7 +362,10 @@
             const f = el('span', `ovr-face is-${size} ovr-me is-${st || agentState()}`);
             f.style.setProperty('--ovr-h', String(hueOf(agentName())));
             const pic = agent && agent.avatar && httpsUrl(agent.avatar.url);
-            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); } else blob(f, 'vibe:' + agentName());
+            const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) && SHAPES.includes(agent.avatar.blob.shape) ? agent.avatar.blob : null;
+            if (pic) { const i = el('img'); i.src = pic; i.alt = ''; f.append(i); }
+            else if (drawn) { f.style.setProperty('--ovr-h', String(drawn.hue)); blob(f, 'vibe:' + agentName()); f.dataset.shape = drawn.shape; }
+            else blob(f, 'vibe:' + agentName());
             return f;
         }
         async function loadAgent() {
@@ -445,7 +449,7 @@
             const real = () => {
                 try {
                     // The composer notes a failed send itself and keeps the words.
-                    root.OpenVibeComposer.mount(slot, { preset: 'agent', placeholder, label: placeholder, examples: o.examples, user: o.me, noDraft: true,
+                    root.OpenVibeComposer.mount(slot, { preset: 'agent', placeholder, label: placeholder, examples: o.examples, user: o.me, noDraft: true, ...(o.composer && typeof o.composer === 'object' ? o.composer : {}),
                         onSubmit: (v) => onSend({ text: v.text, files: v.files, mode: v.mode, run: v.run }) });
                 } catch { slot.textContent = ''; plain(); }
             };
@@ -511,10 +515,15 @@
                 b.setAttribute('aria-label', label); b.setAttribute('aria-pressed', String(!!on));
                 b.append(faceEl, el('span', 'ovr-person-n', name)); b.addEventListener('click', onClick); return b;
             };
-            strip.append(chip(agentFace('l'), agentName(), `${agentName()}, your agent: ${AGENT_WORD[agentState()]}`, () => profile(), false));
+            // 4.260.0 (the owner, 11-15, on "Run (3)": "move"): how many runs work now, as a badge on the face that runs them.
+            const working = (r) => r && (r.status === 'running' || r.status === 'planning');
+            const badge = (face, n) => { if (n > 0) { const b = el('i', 'ovr-person-badge', n > 9 ? '9+' : String(n)); b.setAttribute('aria-hidden', 'true'); face.append(b); } return face; };
+            const mineBusy = state.runs.filter((r) => working(r) && isYours(r, agentName())).length;
+            const codesBusyN = state.runs.filter((r) => working(r) && isCodes(r)).length;
+            strip.append(chip(badge(agentFace('l'), mineBusy), agentName(), `${agentName()}, your agent: ${AGENT_WORD[agentState()]}${mineBusy ? `, ${mineBusy} working` : ''}`, () => profile(), false));
             // Codes is always beside it (4.259.0): the coding agent, whether or not you have a code run yet.
             const codesBusy = state.runs.some((r) => isCodes(r) && r.status === 'running');
-            strip.append(chip(coderFace('l', codesBusy ? { status: 'running', doing: { text: 'Working' } } : null), 'Codes', 'Codes, the coding agent: only its conversations', () => { state.only = state.only === 'codes' ? null : 'codes'; list('all', { history: true }); }, state.only === 'codes'));
+            strip.append(chip(badge(coderFace('l', codesBusy ? { status: 'running', doing: { text: 'Working' } } : null), codesBusyN), 'Codes', `Codes, the coding agent: only its conversations${codesBusyN ? `, ${codesBusyN} working` : ''}`, () => { state.only = state.only === 'codes' ? null : 'codes'; list('all', { history: true }); }, state.only === 'codes'));
             const seen = new Set();
             for (const r of state.runs) {
                 const a = r && r.agent; if (!a || !a.id || seen.has(a.id) || isCodes(r) || isYours(r, agentName())) continue;
@@ -527,7 +536,9 @@
             const pf = el('span', 'ovr-face is-l ovr-face-new'); pf.append(svg('plus')); plus.append(pf, el('span', 'ovr-person-n', 'New'));
             strip.append(plus);
         }
-        /** Your agent's card: what it is doing, today's spend, Pause or Resume, and where to change it. */
+        /** Your agent's card (4.260.0; the owner, 11-15: editing your Actor "should be integrated in the menu itself", and
+         *  "improve the design of this"): its face and name, changed here (a name, a shape and a hue: PATCH the Frame's
+         *  /actor), what it is doing and today's spend, Pause or Resume, and Actor's site for its rules and what it does. */
         function profile() {
             const old = box.querySelector('.ovr-sheet'); if (old) { old.remove(); return; }
             const st = agentState();
@@ -536,8 +547,55 @@
             close.addEventListener('click', () => sheet.remove());
             const now = (agent && agent.now) || {};
             const cap = agent && agent.caps && Number(agent.caps.usd) > 0 ? ` of ${money(agent.caps.usd)}` : '';
-            const top = el('div', 'ovr-sheet-top'); top.append(agentFace('xl', st), el('b', 'ovr-sheet-n', agentName()), el('span', 'ovr-sheet-s', [AGENT_WORD[st], agent ? `${money(now.cost_today)}${cap} today` : ''].filter(Boolean).join(' · ')));
+            const drawn = agent && agent.avatar && agent.avatar.blob && Number.isInteger(agent.avatar.blob.hue) ? agent.avatar.blob : null;
+            const pick = { name: agentName(), hue: drawn ? drawn.hue : hueOf(agentName()), shape: drawn && SHAPES.includes(drawn.shape) ? drawn.shape : SHAPES[Math.abs(hueOf('vibe:' + agentName()) * 7) % SHAPES.length] };
+            const faceSlot = el('div', 'ovr-sheet-face');
+            const drawFace = () => {
+                faceSlot.textContent = '';
+                const f = el('span', `ovr-face is-xl ovr-me is-${st}`); f.style.setProperty('--ovr-h', String(pick.hue)); blob(f, 'vibe:' + pick.name); f.dataset.shape = pick.shape;
+                faceSlot.append(f);
+            };
+            drawFace();
+            const nameIn = el('input', 'ovr-sheet-name'); nameIn.type = 'text'; nameIn.value = pick.name; nameIn.maxLength = 80; nameIn.setAttribute('aria-label', 'Your agent\'s name'); nameIn.spellcheck = false;
+            const sub = el('span', 'ovr-sheet-s', [AGENT_WORD[st], agent ? `${money(now.cost_today)}${cap} today` : ''].filter(Boolean).join(' · '));
+            const top = el('div', 'ovr-sheet-top'); top.append(faceSlot, nameIn, sub);
+            // The face: a shape and a hue, tried here as you press them.
+            const shapes = el('div', 'ovr-pick'); shapes.setAttribute('role', 'radiogroup'); shapes.setAttribute('aria-label', 'Shape');
+            const hues = el('div', 'ovr-pick'); hues.setAttribute('role', 'radiogroup'); hues.setAttribute('aria-label', 'Colour');
+            const paintPick = () => {
+                shapes.querySelectorAll('[data-shape]').forEach((b) => { b.setAttribute('aria-checked', String(b.dataset.shape === pick.shape)); b.style.setProperty('--ovr-h', String(pick.hue)); });
+                hues.querySelectorAll('[data-hue]').forEach((b) => b.setAttribute('aria-checked', String(Number(b.dataset.hue) === pick.hue)));
+            };
+            SHAPES.forEach((sh) => {
+                const b = el('button', 'ovr-pick-shape'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.shape = sh; b.setAttribute('aria-label', sh);
+                const f = el('span', 'ovr-face is-s'); blob(f, sh); f.dataset.shape = sh; b.append(f);
+                b.addEventListener('click', () => { pick.shape = sh; drawFace(); paintPick(); dirty(); });
+                shapes.append(b);
+            });
+            [215, 258, 285, 320, 345, 12, 32, 48, 145, 175].forEach((hue) => {
+                const b = el('button', 'ovr-pick-hue'); b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset.hue = String(hue); b.setAttribute('aria-label', `Colour ${hue}`);
+                b.style.setProperty('--ovr-h', String(hue));
+                b.addEventListener('click', () => { pick.hue = hue; drawFace(); paintPick(); dirty(); });
+                hues.append(b);
+            });
+            paintPick();
+            const note = el('p', 'ovr-sheet-note'); note.setAttribute('role', 'status');
+            const save = el('button', 'ovr-sheet-btn is-save'); save.type = 'button'; save.append(svg('check'), el('span', '', 'Save')); save.hidden = true;
+            function dirty() { save.hidden = !(nameIn.value.trim() && (nameIn.value.trim() !== agentName() || !drawn || drawn.hue !== pick.hue || drawn.shape !== pick.shape)); }
+            nameIn.addEventListener('input', () => { pick.name = nameIn.value.trim() || agentName(); dirty(); });
+            nameIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); if (!save.hidden) save.click(); } });
+            save.addEventListener('click', async () => {
+                save.disabled = true; note.textContent = 'Saving…';
+                try {
+                    const r = await fetch(`${base}/actor`, { method: 'PATCH', credentials: 'omit', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...headers() }, body: JSON.stringify({ name: nameIn.value.trim().slice(0, 80), avatar: { blob: { hue: pick.hue, shape: pick.shape } } }) });
+                    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.detail || j.error || 'That did not save.'); }
+                    agentAt = 0; await loadAgent();
+                    sheet.remove();
+                    const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
+                } catch (err) { note.textContent = (err && err.message) || 'That did not save.'; save.disabled = false; }
+            });
             const acts = el('div', 'ovr-sheet-acts');
+            acts.append(save);
             if (agent && agent.id) {
                 const paused = st === 'paused';
                 const go = el('button', 'ovr-sheet-btn'); go.type = 'button'; go.append(svg(paused ? 'play' : 'pause'), el('span', '', paused ? 'Resume' : 'Pause'));
@@ -549,10 +607,13 @@
                 });
                 acts.append(go);
             }
-            const edit = el('a', 'ovr-sheet-btn'); edit.href = 'https://openvibe.actor/me'; edit.target = '_blank'; edit.rel = 'noopener'; edit.append(svg('pencil'), el('span', '', 'Name, face and rules'));
-            acts.append(edit);
-            sheet.append(close, top, acts);
+            const links = el('div', 'ovr-sheet-links');
+            const link = (href, words, ic) => { const a = el('a', 'ovr-sheet-link'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.append(svg(ic), el('span', '', words), svg('open')); return a; };
+            links.append(link('https://openvibe.actor/you', 'Rules, money and computer', 'gear'), link('https://openvibe.actor/', 'What Actor can do', 'spark'));
+            const face = el('div', 'ovr-sheet-sec'); face.append(el('b', 'ovr-sheet-h', 'Face'), shapes, hues);
+            sheet.append(close, top, face, acts, note, links);
             box.append(sheet);
+            nameIn.addEventListener('focus', () => nameIn.select(), { once: true });
         }
         function homeHead(where) {
             const wrap = el('div', 'ovr-home');
@@ -667,14 +728,18 @@
             rows.textContent = ''; rows.removeAttribute('aria-busy');
             if (o.agent) {
                 const strip = box.querySelector('.ovr-people'); if (strip) paintPeople(strip);
-                const st0 = box.querySelector('.ovr-starters'); if (st0) st0.hidden = state.runs.length > 0;
+                const st0 = box.querySelector('.ovr-starters'); if (st0) st0.hidden = state.runs.length > 0 || (state.filter === 'all' && !state.only);
                 if (state.only === 'codes') state.runs = state.runs.filter((r) => isCodes(r));
                 else if (state.only) state.runs = state.runs.filter((r) => r.agent && r.agent.id === state.only);
             }
             // 4.242.0: how many are working right now (a coding agent's "2 running tasks"), above the rows.
             { const busy = state.runs.filter((r) => r.status === 'running' || r.status === 'planning').length; let pill = box.querySelector('.ovr-busy');
               if (busy) { if (!pill) { pill = el('p', 'ovr-busy'); rows.before(pill); } pill.textContent = ''; pill.append(el('i', 'ovr-pulse'), el('span', '', `${busy} working now`)); } else if (pill) pill.remove(); }
-            if (!state.runs.length) foot.append(empty('Nothing here yet', state.filter === 'code' ? 'Say what to build below: a page, a fix, controls for your stream. Your agent hands it to Codes.' : o.agent ? `Ask ${agentName()} anything below. It answers, sets timers and reminders, and hands coding and computer work on.` : 'Ask anything below. Chats, tasks and code you start show up here.'));
+            // 4.260.0 (the owner, 11-15, on "Nothing here yet": "redesign … a link to openvibe.actor so you can see all the
+            // features and how to use it"): your agent's list starts with a welcome: its face, what it does, the starters as
+            // cards, and Actor's own site for the rest. Other lists keep their line.
+            if (!state.runs.length && o.agent && state.filter === 'all' && !state.only) foot.append(welcome());
+            else if (!state.runs.length) foot.append(empty('Nothing here yet', state.filter === 'code' ? 'Say what to build below: a page, a fix, controls for your stream. Your agent hands it to Codes.' : o.agent ? `Ask ${agentName()} anything below. It answers, sets timers and reminders, and hands coding and computer work on.` : 'Ask anything below. Chats, tasks and code you start show up here.'));
             state.runs.forEach((r, i) => { const li = el('li'); li.append(row(r, i)); const acts = answerRow(r); if (acts) { li.classList.add('has-acts'); li.append(acts); } rows.append(li); });
             if (Array.isArray(out.partial) && out.partial.length) foot.append(el('p', 'ovr-note', `Some of your runs did not load (${out.partial.join(', ')}).`));
         }
@@ -723,6 +788,32 @@
             });
             return box2;
         }
+        /** Your agent's first screen (4.260.0): its face and name, one line of what it does, the starters as cards that
+         *  start a run, and two links to Actor's site (what it can do, its settings). */
+        function welcome() {
+            const w = el('div', 'ovr-welcome');
+            const face = agentFace('xl');
+            const hi = el('b', 'ovr-welcome-n', `${agentName()} is ready`);
+            const line = el('p', 'ovr-welcome-s', 'Ask anything. It answers, searches the web and OpenVibe, sets timers and reminders, makes things, and hands code to Codes.');
+            w.append(face, hi, line);
+            const starters = Array.isArray(o.starters) ? o.starters.slice(0, 6) : [];
+            if (starters.length) {
+                const grid = el('div', 'ovr-welcome-cards'); grid.setAttribute('role', 'list');
+                starters.forEach((x) => {
+                    const [ic, words] = Array.isArray(x) ? x : ['spark', String(x)];
+                    const b = el('button', 'ovr-welcome-card'); b.type = 'button'; b.setAttribute('role', 'listitem');
+                    b.append(svg(G[ic] ? ic : 'spark'), el('span', '', words));
+                    b.addEventListener('click', async () => { b.disabled = true; try { await start(words); } catch { b.disabled = false; } });
+                    grid.append(b);
+                });
+                w.append(grid);
+            }
+            const links = el('div', 'ovr-welcome-links');
+            const link = (href, words) => { const a = el('a', 'ovr-welcome-a'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.append(el('span', '', words), svg('open')); return a; };
+            links.append(link('https://openvibe.actor/', 'What Actor can do'), link('https://openvibe.actor/you', 'Its settings and rules'));
+            w.append(links);
+            return w;
+        }
         function empty(title, sub) { const e = el('div', 'ovr-empty'); e.append(svg('spark')); const w = el('div'); w.append(el('b', '', title), el('span', '', sub)); e.append(w); return e; }
 
         // ── the thread ──
@@ -746,7 +837,11 @@
             if (how.home && o.agent) { homeHead(box); box.append(thread); } else box.append(head, thread);
             const paintHead = (r) => {
                 state.run = r;
-                faceSlot.textContent = ''; faceSlot.append(face(r, 's'));
+                // The same face the list showed (4.260.0; the owner, 11-15: "it has the actor icon, but then it shows vibe
+                // icon when you click on it"): your Actor's own face for a run of yours, whatever product answered it.
+                const mineHead = o.agent && isYours(r, agentName());
+                faceSlot.textContent = ''; faceSlot.append(mineHead ? agentFace('s', r.status === 'running' ? 'working' : undefined) : face(r, 's'));
+                if (mineHead && !agent) loadAgent().then(() => { if (state.run === r && faceSlot.isConnected) { faceSlot.textContent = ''; faceSlot.append(agentFace('s', r.status === 'running' ? 'working' : undefined)); } });
                 title.textContent = titleOf(r) || 'Run';
                 sub.textContent = [KIND_WORD[r.kind] || 'Task', statusLine(r)].filter(Boolean).join(' · ');
                 const url = httpsUrl(r.url); away.hidden = !url; if (url) away.href = url;
@@ -1096,6 +1191,47 @@ html[data-ov-motion="off"] .ovr-coder-cursor, html[data-ov-motion="off"] .ovr-co
 .ovr-sheet > .ovr-sheet-x { position: absolute; top: 10px; right: 10px; margin: 0; }
 .ovr-sheet-top { display: grid; justify-items: center; gap: 6px; text-align: center; }
 .ovr-sheet-n { font-size: 20px; }
+/* 4.260.0, the card's editing: the name is a field, the face a shape and a hue, the links Actor's site. */
+.ovr-sheet-name { all: unset; box-sizing: border-box; width: min(100%, 260px); padding: 6px 10px; border-radius: 10px; text-align: center; font-size: 21px; font-weight: 800; color: var(--text-primary, #e6edf7); border: 1px dashed transparent; }
+.ovr-sheet-name:hover { border-color: color-mix(in srgb, var(--text-primary, #e6edf7) 22%, transparent); }
+.ovr-sheet-name:focus { border-style: solid; border-color: var(--accent, #3b82f6); background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); }
+.ovr-sheet-face { display: grid; place-items: center; }
+.ovr-sheet-sec { display: grid; gap: 8px; justify-items: center; width: min(100%, 340px); padding: 12px; border-radius: 16px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 4%, transparent); }
+.ovr-sheet-h { justify-self: start; font-size: 11.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted, #7f8ea3); }
+.ovr-pick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.ovr-pick-shape, .ovr-pick-hue { all: unset; box-sizing: border-box; cursor: pointer; display: grid; place-items: center; border-radius: 14px; -webkit-tap-highlight-color: transparent; }
+.ovr-pick-shape { width: 48px; height: 48px; }
+.ovr-pick-shape[aria-checked="true"] { box-shadow: 0 0 0 2px var(--accent, #3b82f6); }
+.ovr-pick-hue { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(150deg, hsl(var(--ovr-h) 85% 66%), hsl(var(--ovr-h) 75% 46%)); }
+.ovr-pick-hue[aria-checked="true"] { box-shadow: 0 0 0 2px var(--bg-card, #131c2e), 0 0 0 4px var(--text-primary, #e6edf7); }
+.ovr-pick-shape:focus-visible, .ovr-pick-hue:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovr-sheet-btn.is-save { background: var(--accent-strong, var(--accent, #3b82f6)); color: var(--on-accent-strong, #fff); }
+.ovr-sheet-note { margin: 0; min-height: 1em; font-size: 13px; color: var(--text-secondary, #96a7c2); }
+.ovr-sheet-note:empty { display: none; }
+.ovr-sheet-links { display: grid; gap: 4px; width: min(100%, 320px); }
+.ovr-sheet-link { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 12px; color: var(--text-secondary, #a8b3c4); text-decoration: none; font-size: 14px; font-weight: 650; }
+.ovr-sheet-link > span { flex: 1; }
+.ovr-sheet-link svg { width: 18px; height: 18px; }
+.ovr-sheet-link:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); color: var(--text-primary, #e6edf7); }
+/* 4.260.0, the welcome: your agent's face, what it does, the starters as cards, Actor's site. */
+.ovr-welcome { display: grid; justify-items: center; gap: 10px; padding: 18px 6px 10px; text-align: center; }
+.ovr-welcome-n { font-size: 19px; font-weight: 800; }
+.ovr-welcome-s { margin: 0; max-width: 34ch; font-size: 14px; line-height: 1.5; color: var(--text-secondary, #96a7c2); }
+.ovr-welcome-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 8px; width: 100%; margin-top: 4px; }
+.ovr-welcome-card { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 12px; border-radius: 14px; cursor: pointer; text-align: start; font-size: 13.5px; font-weight: 600; line-height: 1.3; color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 5%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); transition: background-color .15s, transform .12s; }
+.ovr-welcome-card svg { flex: none; width: 20px; height: 20px; color: var(--accent-light, var(--accent, #60a5fa)); }
+.ovr-welcome-card:hover { background: color-mix(in srgb, var(--accent, #3b82f6) 12%, transparent); }
+.ovr-welcome-card:active { transform: scale(.98); }
+.ovr-welcome-card:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+.ovr-welcome-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 2px; }
+.ovr-welcome-a { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; font-size: 13px; font-weight: 650; color: var(--accent-light, var(--accent, #60a5fa)); text-decoration: none; }
+.ovr-welcome-a svg { width: 15px; height: 15px; }
+.ovr-welcome-a:hover span { text-decoration: underline; }
+/* 4.260.0: how many work now, as a badge on the face that runs them (was the "Run (3)" chip). */
+.ovr-person .ovr-face { position: relative; }
+.ovr-person-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: var(--accent-strong, var(--accent, #3b82f6)); box-shadow: 0 0 0 2px var(--bg-card, #131c2e); }
+/* 4.260.0 (the owner, 11-15: "fixed float"): the box floats over the end of the list, which scrolls under it. */
+.ovr.is-list > .ovr-compose { position: sticky; bottom: 0; z-index: 5; padding-top: 10px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--bg-card, var(--bg-secondary, #121826)) 14px); }
 .ovr-sheet-s { font-size: 13.5px; color: var(--text-secondary, #96a7c2); }
 .ovr-sheet-acts { display: grid; gap: 8px; width: min(100%, 320px); }
 .ovr-sheet-btn { all: unset; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; border-radius: 14px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); color: var(--text-primary, #e6edf7); font-weight: 650; cursor: pointer; text-decoration: none; transition: background-color .15s ease, transform .12s ease; }

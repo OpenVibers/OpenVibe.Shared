@@ -87,7 +87,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '57e566614edf', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'dock-vibe.js': 'c54f63293192', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -398,11 +398,17 @@
     const wearNames = (scope) => { try { const OV = root.OV || (root.window && root.window.OV); if (OV && typeof OV.names === 'function') OV.names(scope); } catch { /* names stay plain */ } };
     const icon = (path) => { const s = h('span', 'ovdk-i'); s.innerHTML = svg(path); return s; };
     const toChat = (href) => { const a = h('a', 'ovdk-ib ovdk-away'); a.href = href; a.target = '_blank'; a.rel = 'noopener'; a.title = 'Open in Chat'; a.setAttribute('aria-label', 'Open in Chat'); a.setAttribute('data-ov-tip', 'Open in Chat'); a.innerHTML = svg('<path d="M13.5 5.5h5v5M18.5 5.5l-7.5 7.5M17 13.5v4a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 5 17.5v-9A1.5 1.5 0 0 1 6.5 7h4"/>'); return a; };
-    async function chatCall(path, init = {}) {
+    async function chatCall(path, init = {}, renewed = false) {
         const t = await tokenOf();
         const headers = { accept: 'application/json', ...(init.body ? { 'content-type': init.type || 'application/json' } : {}), ...(t ? { authorization: `Bearer ${t}` } : {}) };
         const { type: _type, ...rest } = init;
         return fetch(chatBase() + path, { ...rest, headers, credentials: 'omit' }).then(async (r) => {
+            // 4.260.0: a refused token is renewed once and asked again (the owner, 11-15: "All my chat messages
+            // disappeared": the token ran out during a Network deploy and the tab said "Sign in to Chat").
+            if (r.status === 401 && !renewed && t && typeof o.renew === 'function') {
+                const fresh = await Promise.resolve(o.renew()).catch(() => null);
+                if (fresh && fresh !== t) return chatCall(path, init, true);
+            }
             const b = await r.json().catch(() => ({}));
             if (!r.ok) { const e = new Error(b.error || `HTTP ${r.status}`); e.status = r.status; e.code = b.code || null; throw e; }
             return b;

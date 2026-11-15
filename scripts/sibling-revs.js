@@ -18,6 +18,8 @@ const FILES = ['ov-mark.js', 'ov-glyphs.js', 'ov-brand.woff2', 'ov-look.js', 'ov
     'ov-wallet.js', 'ov-wallet.css',
     // 4.189.0: the balances pill's icons and effects.
     'purse.js',
+    // 4.260.0: the Vibe door's Codes view (the coding-harness layout) loads from the menu.
+    'ov-harness.js',
     // 4.191.0: the one dropdown (the site's name opens its pages).
     'ov-drop.js',
     // 4.193.0: the one tooltip (Sign in, the menu button, short labels).

@@ -37,6 +37,15 @@ const server = http.createServer((req, res) => {
 <script>window.__calls=0; OpenVibeDock.mount({ token: async () => { window.__calls++; return 'tok_async'; }, apiBase: location.origin, chatBase: location.origin, scopes: ['dock','activity','chat.read'], me: 'ada', sibling: (n) => '/' + n });</script>
 </body></html>`);
         }
+        if (u.pathname === '/page2') {
+            res.writeHead(200, { 'content-type': 'text/html' });
+            return res.end(`<!doctype html><html><head><meta charset="utf-8"><title>Dock</title></head><body><main>page</main>
+<script src="/ov-mark.js"></script><script src="/dock.js"></script>
+<script>window.__tok='tok_old'; window.__renewed=0; OpenVibeDock.mount({ token: () => window.__tok, renew: async () => { window.__renewed++; window.__tok = 'tok_new'; return 'tok_new'; }, apiBase: location.origin, chatBase: location.origin, scopes: ['dock','activity','chat.read'], me: 'ada', sibling: (n) => '/' + n });</script>
+</body></html>`);
+        }
+        // A token that ran out (4.260.0): Chat refuses it, as it did during the Network deploy of 11-15.
+        if (req.headers.authorization === 'Bearer tok_old' && u.pathname.startsWith('/api/dm/')) { res.writeHead(401, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ error: 'Invalid or expired token' })); }
         if (u.pathname === '/api/v1/me/dock') {
             seenAuth.push(req.headers.authorization);
             if (req.method === 'PUT') { Object.assign(state, JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')); }
@@ -92,6 +101,13 @@ async function until(p, expr, what, ms = 6000) {
         assert.match(await p.evaluate("document.querySelector('.ovdk [data-panel=chats]').innerText"), /Reading only/);
         assert.ok((await p.evaluate('window.__calls')) >= 3, 'the async token was resolved for each panel');
         assert.ok(seenAuth.every((a) => a === 'Bearer tok_async'), JSON.stringify([...new Set(seenAuth)]));
+        // A refused token is renewed once and the list asked again: never "Sign in to Chat" for a session that can renew
+        // (4.260.0; the owner, 11-15: "All my chat messages disappeared").
+        await p.goto(`${base}/page2`, { maxMs: 5000 });
+        await p.evaluate("(() => { const host = document.createElement('div'); host.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column'; document.body.append(host); window.__dock = OpenVibeDock.mountInto(host, { tab: 'chats' }); })()");
+        await until(p, "document.querySelectorAll('.ovdk .ovdk-chat').length === 1", 'the chat list after the token was renewed');
+        assert.ok(!/Sign in to Chat/.test(await p.evaluate("document.querySelector('.ovdk [data-panel=chats]').innerText")), 'no "Sign in to Chat"');
+        assert.ok((await p.evaluate('window.__renewed')) >= 1, 'the token was renewed');
         console.log('dock signin chrome: all checks passed');
     } finally {
         await p.close();

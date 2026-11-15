@@ -560,8 +560,10 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await until(p, "document.querySelector('.ovs.is-open [data-dock=\"vibe\"]') && document.querySelector('.ovs [data-dock=\"vibe\"]').getAttribute('aria-selected') === 'true'", 'the menu on Vibe');
             await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-people .ovr-person'); return !!a && /Juniper/.test(a.innerText); })()", 'your agent at the top');
             await p.evaluate("document.querySelector('.ovs-door-host .ovr-people .ovr-person').click()");
-            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-sheet'); return a && /today/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), go: !!a.querySelector('button.ovr-sheet-btn') } : null; })()", 'its card');
-            assert.match(me.text, /Juniper Ready · \$0\.12 of \$1\.00 today/, 'its name, its state and today\'s spend');
+            const me = await until(p, "(() => { const a = document.querySelector('.ovs-door-host .ovr-sheet'); return a && /today/.test(a.innerText) ? { text: a.innerText.replace(/\\s+/g, ' '), name: (a.querySelector('.ovr-sheet-name') || {}).value, go: !!a.querySelector('button.ovr-sheet-btn') } : null; })()", 'its card');
+            // 4.260.0: the name is a box you can rename it in, so it is the box's value, not text.
+            assert.strictEqual(me.name, 'Juniper', 'its name');
+            assert.match(me.text, /Ready · \$0\.12 of \$1\.00 today/, 'its state and today\'s spend');
             assert.ok(me.go, 'and Pause on its card');
             await p.evaluate("document.querySelector('.ovs-door-host .ovr-sheet-x').click()");
             await until(p, "document.querySelectorAll('.ovs-door-host .ovr-starter').length === 6 && [...document.querySelectorAll('.ovs-door-host .ovr-starter')].every((b) => b.querySelector('svg'))", 'the starters, each with its glyph');

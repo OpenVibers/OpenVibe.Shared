@@ -278,6 +278,28 @@ const USER = { id: 7, username: 'vibe', display_name: 'Vibe', avatar_url: null, 
         assert.ok(global.document.cookie.includes('domain=.openvibe.tools'));
     }
 
+    // ── 8b. Expired token on the Network → kept renewed (4.260.0) ─
+    // Network slides an expired session (within its grace) and answers the new token in X-OV-Token; the bar must keep
+    // it, or every other site refuses the old one (the owner, 11-15: "Still see no chat messages").
+    {
+        const { navbar, storage } = loadNavbar({
+            hostname: 'openvibe.network',
+            storage: { ov_token: 'expired-jwt' },
+            fetch: async (url, init) => {
+                if (url === 'https://openvibe.network/api/auth/me') {
+                    const r = jsonResponse(200, { user: USER });
+                    r.headers = { get: (k) => (String(k).toLowerCase() === 'x-ov-token' && init.headers.Authorization === 'Bearer expired-jwt' ? 'renewed-jwt-0123456789' : null) };
+                    return r;
+                }
+                return jsonResponse(404, {});
+            },
+        });
+        navbar.init({ service: 'network', apiBase: 'https://openvibe.network' });
+        const user = await navbar.refreshAuth();
+        assert.strictEqual(user.username, 'vibe');
+        assert.strictEqual(storage.getItem('ov_token'), 'renewed-jwt-0123456789', 'the renewed token replaces the expired one');
+    }
+
     // ── 9. Token dead beyond recovery → signed out ───────────
     {
         const { navbar } = loadNavbar({

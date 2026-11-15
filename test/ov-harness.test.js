@@ -54,12 +54,20 @@ const tick = () => new Promise((r) => setImmediate(r));
     assert.strictEqual(host.querySelectorAll('img').length, 0, 'a title is text, never markup');
     assert.ok(host.textContent.includes('Dark mode <img src=x onerror=alert(1)>'));
 
-    // A new task: the engine mounted blank on a code start; the head picks what it works on, the recent repos included.
+    // A new task (4.260.0; the owner, 11-15: "type anything … code related"): the engine mounts blank on a code start
+    // with no project (Codes' make mode works it out); what it works on is the box's first chip, Anything first, then
+    // the projects, the recent repos included; no selects in the head.
     assert.strictEqual(mounts[0].o.blank, true);
-    assert.deepStrictEqual(mounts[0].o.start, { kind: 'code', target: 'new' });
+    assert.deepStrictEqual(mounts[0].o.start, { kind: 'code' });
     assert.strictEqual(mounts[0].o.filter, 'code');
-    const options = [...host.querySelectorAll('.ovhr-head select option')].map((x) => x.textContent);
-    assert.deepStrictEqual(options, ['octocat/hello', 'New projects', 'octocat/other', 'OpenVibe']);
+    assert.strictEqual(host.querySelectorAll('.ovhr-head select').length, 0, 'no picker rows');
+    const works = mounts[0].o.composer.runChips[0];
+    // Read when the chip opens: the projects of the runs loaded since, then the recent repos, then OpenVibe and new.
+    assert.deepStrictEqual(works.options().map((x) => x.name), ['Anything', 'octocat/hello', 'New projects', 'octocat/other', 'OpenVibe']);
+    assert.match(mounts[0].o.blankTitle, /What should Codes do/);
+    assert.ok(mounts[0].o.examples.every((e) => !/live stream/i.test(e)), 'coding examples only');
+    works.onPick('repo:octocat/hello');
+    assert.deepStrictEqual(mounts[mounts.length - 1].o.start, { kind: 'code', target: { repo: 'octocat/hello' } }, 'a project picked rides the start');
     host.querySelectorAll('.ovhr-proj-add')[0].click();
     const fresh = mounts[mounts.length - 1];
     assert.deepStrictEqual(fresh.o.start, { kind: 'code', target: { repo: 'octocat/hello' } }, 'the project\'s + starts a task there');
@@ -99,14 +107,13 @@ const tick = () => new Promise((r) => setImmediate(r));
     const h2 = H.page(host, { token: 'tok', agents: [{ id: 'claude-code', name: 'Claude Code' }, { id: 'gemini-cli', name: 'Gemini CLI', available: false }],
         models: [{ id: 'deepseek-chat', name: 'DeepSeek' }], places: [{ kind: 'openvibe', name: 'OpenVibe' }, { kind: 'machine', id: 'dev_1', name: 'My laptop', online: true }] });
     for (let i = 0; i < 5; i++) await tick();
-    const sel = (name) => host.querySelector(`.ovhr-head select[name="${name}"]`);
-    const choose = (name, value) => { const sl = sel(name); for (const x of sl.options) { if (x.value === value) x.setAttribute('selected', ''); else x.removeAttribute('selected'); } sl.dispatchEvent(new window.Event('change')); };
-    assert.deepStrictEqual([...sel('agent').options].map((x) => [x.value, x.textContent, !!x.disabled]), [['auto', 'Auto', false], ['claude-code', 'Claude Code', false], ['gemini-cli', 'Gemini CLI (not set up)', true]]);
-    choose('agent', 'claude-code');
-    choose('model', 'deepseek-chat');
-    choose('where', 'machine:dev_1');
-    assert.deepStrictEqual(mounts[mounts.length - 1].o.start, { kind: 'code', target: 'new', agent: 'claude-code', model: { id: 'deepseek-chat' }, where: { kind: 'machine', id: 'dev_1' } }, 'the choices ride the start');
-    assert.strictEqual(sel('where').value, 'machine:dev_1', 'and stay chosen');
+    // 4.260.0: the agent, the model and where it runs are the box's chips (the composer's run line), fed the page's
+    // lists; coding never runs on OpenVibe's own server (the owner, 11-15), so OpenVibe is not a place here.
+    const ro = mounts[mounts.length - 1].o.composer.runOptions;
+    assert.deepStrictEqual(ro.agents.map((x) => [x.id, !!x.disabled]), [['auto', false], ['claude-code', false], ['gemini-cli', true]]);
+    assert.deepStrictEqual(ro.places.map((x) => x.kind + (x.id ? ':' + x.id : '')), ['auto', 'machine:dev_1'], 'a shared node or your computer, never OpenVibe\'s server');
+    assert.match(ro.places[0].line, /shared node or your own computer/);
+    assert.strictEqual(mounts[mounts.length - 1].o.composer.ask.task, 'code');
     const [, boardBtn] = host.querySelectorAll('.ovhr-views button');
     boardBtn.click();
     assert.ok(host.querySelector('.ovhr').classList.contains('is-board'));
