@@ -689,8 +689,9 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
 @media (max-width: 640px) {
   .ovs.ovs-anchored .ovs-x { display: none; }
   /* 4.260.0 (the owner, 11-15: "the close button is offset which causes wasted space"): the field and its close share
-     the tabs' gutter (12 px) and one 8 px gap; placeOrb sets the room the close takes (--ovs-orb-room: its size + 8). */
-  .ovs.ovs-anchored .ovs-bar { margin-left: 12px; margin-right: calc(12px + var(--ovs-orb-room, 56px)); }
+     the tabs' gutter (10 px) and one 6 px gap; placeOrb sets the room the close takes (--ovs-orb-room: its size + 6). */
+  .ovs.ovs-anchored .ovs-bar { margin-left: 10px; margin-right: calc(10px + var(--ovs-orb-room, 54px)); gap: 6px; }
+  .ovs.ovs-anchored .ovs-tabs { padding-left: 10px; padding-right: 10px; }
   .ovs.ovs-anchored .ovs-orb { position: fixed; z-index: 3; left: var(--orb-x, calc(100vw - 52px)); top: var(--orb-y, 12px); width: 44px; height: 44px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
     background: color-mix(in srgb, var(--accent, #3b82f6) 16%, var(--bg-primary, #0b0f19)); color: var(--text-primary, #e6edf7); -webkit-tap-highlight-color: transparent;
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-light, #60a5fa) 35%, transparent), 0 6px 18px -6px color-mix(in srgb, var(--accent, #3b82f6) 70%, transparent);
@@ -2713,7 +2714,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         const r = bar.getBoundingClientRect(); if (!r.height) return;
         const size = Math.max(44, Math.min(56, Math.round(r.height)));
         orbEl.style.setProperty('--orb-size', `${size}px`);
-        el.style.setProperty('--ovs-orb-room', `${size + 8}px`);
+        el.style.setProperty('--ovs-orb-room', `${size + 6}px`);
         // Its right edge is the tabs' (their padding in from the sheet's edge), so the row lines up with the rows under it.
         const tabs = el.querySelector('.ovs-tabs');
         let right = innerWidth - 12;

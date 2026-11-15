@@ -1,5 +1,73 @@
 # Changelog
 
+## 4.259.0 — 2026-11-15
+
+**The menu's Vibe: your Actor, and Codes beside it.** The owner, 11-15, crossing out "My Actor · Vibe · Vibe · Codes ·
+Agent": "the actor is what the actual agent … should be. Like the default, and then there was also codes". The
+agents' row is your agent first, called Actor until you name it ("My Actor" and "Vibe" read Actor), then **Codes,
+always**, with a face of its own: a terminal whose prompt and cursor are its eyes (the cursor blinks, faster while it
+works). Agents you made follow. Vibe (the chatbot's old name), "My Actor" and runs with no agent name are your
+Actor's, never faces of their own, and a conversation still titled "Vibe" says Actor. A press on Codes shows only its
+conversations. The row no longer bleeds 4 px past its box (a phone scrolled sideways on a full-width page). Test:
+`test/run-agents-row-chrome.test.js`.
+
+**No "Run (3)" over the conversations.** The quiet activity strip (the menu's Vibe) hid its mode chips with the
+`hidden` attribute, and the chips' own `display:flex` beat it. Quiet now draws no chips and no list at all. Test:
+`test/dock-timeline.test.js`.
+
+**A sideways scroller never scrolls up and down.** The composer's mic and + row (`overflow-x: auto`) also scrolled
+vertically, because CSS turns a visible `overflow-y` into `auto` beside it: the row was 40 px with 42 px inside, so
+a swipe slid the buttons half out of view (the owner: "update openvibe.design so this doesn't happen ever again").
+Every one of the library's 52 sideways scrollers now states its vertical axis: `hidden` for rows of controls, `auto`
+for code and tables a site may cap in height. `test/scroll-axis.test.js` fails any new rule that leaves it out;
+openvibe.design/rules carries the rule.
+
+**Every card in the feed shows its views.** The eye showed only above 0, so new and rolling cards (the reports, an
+hour of deals) had none: now every card and every activity line shows its views, 0 included (a live card shows who
+watched). A card the person saw says one more in place, and a run's card (`g:`) is counted too (Network counts it as
+`feed:group:<run>`). Test: `test/menu-feed-v2-chrome.test.js`.
+
+**A conversation in the Chat tab reads in order, with days and times.** Chat answers the latest page of a DM newest
+first, and the Dock drew it as it came: upside down. The thread is now oldest first, with a day line (Today,
+Yesterday, the weekday, then the date) and the time at the head of each sender's run (a new run after ten quiet
+minutes). Test: `test/dock-chrome.test.js`.
+
+**The slider, the file button and the checkbox, drawn like the switch.** The owner, on openvibe.design's forms page:
+"customize … update the checkbox and make all that look better". A slider is the switch's recessed track, filled with
+the accent up to the switch's raised thumb, which grows a halo on hover and swells while held (ov-forms.js keeps
+`--ov-fill` in step; Firefox fills it itself). A file input's button is the raised pill the other controls are made
+of. A checkbox is set into the page when off and lit from above when on, with a bloom as it turns on; a radio's dot is
+raised and glows. Motion follows the person's setting.
+
+**Alerts: lighter, iconed, and they load as you scroll.** The owner, 11-15: "more minimalist … more icons … make
+those fixed on top so that there's more space … auto-load more as you scroll down … sorted by … which one has the most
+notifications … make the little badges red". In the menu each tab carries its icon and the tabs are ordered All, then
+the most unread, then the default order; an unread count is red. Clear all and the inbox moved from the foot to a slim
+bar under the tabs (how many, Clear all, Inbox), and the tabs and the bar stay at the top while the list scrolls. The
+next page loads as the end of the list comes near, one page at a time (Load more stays only where
+IntersectionObserver is missing). Rows are lighter: unread is a tint and a dot (no bar down the side), an icon tile
+per kind, at most three tags then "+N". History and the wall in the menu press their own Show more as it comes near.
+Tests: `test/notifications-auto-more-chrome.test.js`, `test/menu-home-screen-chrome.test.js`.
+
+**The menu's close lines up.** The close beside the search field sat 4 px from the screen's edge while the tabs kept a
+12 px gutter. On a phone the field, its close and the tabs now share one 10 px gutter, with one 6 px gap before the
+close, centred on one line; the field's own gaps are 6 px, so its words still show whole beside your stack
+(`test/menu-close-chrome.test.js`).
+
+**Back is easy to see.** In a conversation (the Chat tab) and in a run (Vibe), Back is a pill in the accent with its
+word: "‹ Chats", "‹ Back".
+
+**A chat's and an agent's box is one line, and an agent's box says how it runs.** The owner: the buttons "fixed on
+top of the composer so you can type through it … better use of space", and "you need to be able to choose your
+harness … configure your model … choose a node … the shared node or your own". The words sit between the tools and
+the send on one line that grows (no row and no divider of their own; 57 px empty, was about 110); a post and a reply
+keep their row. An agent's box (the menu's Vibe, Actor, Codes) has a line of three chips: the agent (Auto, your
+Actor, Codes, a coding harness), the model (the Frame's /choices: OpenVibe, your keys, your computers, your plans) and
+where it runs (Auto, OpenVibe, your computers through Link, a computer shared with you, a Codes runner), listed by the
+Frame's GET /api/frame/run-options with a short list until it answers. The choice is kept on the device and goes with
+the run (`agents.run-start@1` agent, model, where); `run: false` turns the line off and `runOptions` hands a page's
+own lists. Test: `test/composer-v2-chrome.test.js`.
+
 ## 4.258.0 — 2026-11-15
 
 **The harness picks its agent, its model and where it runs, and shows a Board.** The owner, 11-15: Codes "should
