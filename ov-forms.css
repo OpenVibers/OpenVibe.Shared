@@ -216,7 +216,10 @@ html.ov-sel-locked, html.ov-sel-locked body { overflow: hidden; overscroll-behav
     transition: border-color .15s ease, box-shadow .2s ease, background-color .15s ease;
 }
 :where(html:not([data-ov-forms="off"])) :where(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"], [type="button"], [type="submit"], [type="reset"]), textarea, select):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
-    outline: 2px solid var(--accent, #3b82f6); outline-offset: 0; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #3b82f6) 22%, transparent);
+    /* The ring is the field's own border and outline, never a box-shadow: a component that made its inner field bare
+       (border 0, outline none, inside its own bordered box) draws one ring, not a second rounded one inside it (11-15,
+       the owner on a phone: "a double border instead of just being no border on the inner one"). */
+    border-color: var(--accent, #3b82f6); outline: 3px solid color-mix(in srgb, var(--accent, #3b82f6) 32%, transparent); outline-offset: 0;
 }
 :where(html:not([data-ov-forms="off"])) :where(input[type="checkbox"], input[type="radio"], input[type="range"]):where(:not([data-ov-native], [data-ov-native] *)):focus-visible {
     outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px;
