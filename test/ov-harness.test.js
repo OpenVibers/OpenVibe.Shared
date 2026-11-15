@@ -93,5 +93,29 @@ const tick = () => new Promise((r) => setImmediate(r));
 
     h.destroy();
     assert.strictEqual(host.children.length, 0);
+
+    // 4.258.0: the start's own choices, and the Board.
+    mounts.length = 0;
+    const h2 = H.page(host, { token: 'tok', agents: [{ id: 'claude-code', name: 'Claude Code' }, { id: 'gemini-cli', name: 'Gemini CLI', available: false }],
+        models: [{ id: 'deepseek-chat', name: 'DeepSeek' }], places: [{ kind: 'openvibe', name: 'OpenVibe' }, { kind: 'machine', id: 'dev_1', name: 'My laptop', online: true }] });
+    for (let i = 0; i < 5; i++) await tick();
+    const sel = (name) => host.querySelector(`.ovhr-head select[name="${name}"]`);
+    const choose = (name, value) => { const sl = sel(name); for (const x of sl.options) { if (x.value === value) x.setAttribute('selected', ''); else x.removeAttribute('selected'); } sl.dispatchEvent(new window.Event('change')); };
+    assert.deepStrictEqual([...sel('agent').options].map((x) => [x.value, x.textContent, !!x.disabled]), [['auto', 'Auto', false], ['claude-code', 'Claude Code', false], ['gemini-cli', 'Gemini CLI (not set up)', true]]);
+    choose('agent', 'claude-code');
+    choose('model', 'deepseek-chat');
+    choose('where', 'machine:dev_1');
+    assert.deepStrictEqual(mounts[mounts.length - 1].o.start, { kind: 'code', target: 'new', agent: 'claude-code', model: { id: 'deepseek-chat' }, where: { kind: 'machine', id: 'dev_1' } }, 'the choices ride the start');
+    assert.strictEqual(sel('where').value, 'machine:dev_1', 'and stay chosen');
+    const [, boardBtn] = host.querySelectorAll('.ovhr-views button');
+    boardBtn.click();
+    assert.ok(host.querySelector('.ovhr').classList.contains('is-board'));
+    const cols = [...host.querySelectorAll('.ovhr-col')].map((c) => [c.dataset.status, c.querySelectorAll('.ovhr-card').length]);
+    assert.deepStrictEqual(cols, [['planning', 0], ['running', 1], ['waiting', 0], ['done', 1], ['failed', 1]], 'every code run in its column; the chat is not one');
+    host.querySelector('.ovhr-col[data-status="done"] .ovhr-card').click();
+    for (let i = 0; i < 5; i++) await tick();
+    assert.ok(!host.querySelector('.ovhr').classList.contains('is-board'), 'a card opens its thread');
+    assert.strictEqual(mounts[mounts.length - 1].o.open, 'codes:t2');
+    h2.destroy();
     console.log('ov-harness: all checks passed');
 })().catch((e) => { console.error(e); process.exit(1); });
