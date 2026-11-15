@@ -1,5 +1,14 @@
 # Changelog
 
+
+## 4.276.0 — 2026-11-15
+
+**Sticky things follow a phone's navbar** (the owner's openvibe.exchange/search screenshot, 11-15).
+- On a phone, `navbar.js` slides the bar away while you scroll down. A sticky `.ovk-head` used to keep stopping 52 px
+  down, leaving a see-through strip above it with the page showing through.
+- `kit.css` now sets `--ovk-top` to 0 while the bar is away (`html:has(.openvibe-navbar.ovnav-hide)`), so the head
+  rides at the very top, and moves back under the bar when it returns. The head's `top` follows the bar's own slide.
+- Test: `kit-top-navbar-chrome`.
 ## 4.275.0 — 2026-11-15
 
 **The menu's Chat tab: Friends offer names, Global and Servers built in** (the owner's phone, 11-15, on openvibe.actor:

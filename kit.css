@@ -54,6 +54,10 @@
     --ovk-bottom: var(--ovb-dock, var(--ovnav-appbar-h, 0px));   /* the app bar (and a small player above it) on phones, measured by bottom.js */
     --ovk-font: var(--ov-font, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif);
 }
+/* A phone's navbar slides away while reading down (navbar.js, ovnav-hide): sticky things follow it to the very top
+   instead of keeping its height as a see-through strip with the page showing through (the owner's /search screenshot,
+   11-15). */
+html:has(.openvibe-navbar.ovnav-hide) { --ovk-top: 0px; }
 
 /* Motion feels, as ov-fx.js sets them: the calm looks are slower and never overshoot, the loud ones quicker; the
  * person's Reduced motion, or a device that asks for less, stops every token-timed transition. */
@@ -212,7 +216,7 @@ html[data-ov-motion=off] .ovk-btn--primary, html[data-ov-motion=off] .ovk-btn--p
 .ovk-dot { display: inline-grid; place-items: center; flex: none; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--ovk-fill); color: var(--ovk-on-fill); font-size: .72rem; font-weight: 800; }
 
 /* ── The head: back, title and one line, icon actions; its tabs under it; sticky under the navbar ── */
-.ovk-head { position: sticky; top: var(--ovk-top); z-index: 40; margin: 0 -16px 12px; padding: 6px 16px 0; background: color-mix(in srgb, var(--ovk-bg) 88%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid transparent; transition: border-color .2s, box-shadow .2s; }
+.ovk-head { position: sticky; top: var(--ovk-top); z-index: 40; margin: 0 -16px 12px; padding: 6px 16px 0; background: color-mix(in srgb, var(--ovk-bg) 88%, transparent); -webkit-backdrop-filter: saturate(1.4) blur(14px); backdrop-filter: saturate(1.4) blur(14px); border-bottom: 1px solid transparent; transition: top .32s cubic-bezier(.2,.7,.2,1), border-color .2s, box-shadow .2s; }
 .ovk-scrolled .ovk-head { border-bottom-color: var(--ovk-line); box-shadow: var(--ov-elev-2); }
 .ovk-head--static { position: static; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
 .ovk-head-row { display: flex; align-items: center; gap: 6px; min-height: 48px; padding-bottom: 6px; }
