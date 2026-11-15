@@ -1192,7 +1192,7 @@
             state.pending = false;
             if (gen !== state.gen) return true;
             emit('session.started', { ref: run.ref || run.id, run });
-            open(run.ref || run.id, run, { said: text });
+            open(run.ref || run.id, run, { said: text, modelSent: pick.model ? pick.model.id : null });
             loadRuns();
             return true;
         }
@@ -1205,7 +1205,10 @@
                 return true;
             }
             const attachments = files && files.length ? await uploadFiles(files) : [];
-            const step = await api(`/runs/${encodeURIComponent(state.ref)}/messages`, { method: 'POST', body: JSON.stringify({ text, ...(attachments.length ? { attachments } : {}) }) });
+            // A model changed on the chip mid-session goes with the words, and the conversation stays on it after.
+            const swap = pick.model && pick.model.id !== state.modelSent ? { model: { id: pick.model.id, source: pick.model.source || 'openvibe', name: pick.model.name } } : {};
+            const step = await api(`/runs/${encodeURIComponent(state.ref)}/messages`, { method: 'POST', body: JSON.stringify({ text, ...(attachments.length ? { attachments } : {}), ...swap }) });
+            if (swap.model) state.modelSent = swap.model.id;
             if (step && Number.isInteger(step.seq)) state.steps.set(step.seq, step);
             if (state.run && !isLive(state.run)) state.run = { ...state.run, status: 'running' };
             schedule();
@@ -1229,6 +1232,8 @@
             clearStream();
             const gen = ++state.gen;
             state.ref = ref; state.run = known || null; state.steps = new Map(); state.queue = []; state.open = new Set(); state.pending = false;
+            // The model this session last asked for: a message carries the chip's model only when it changed (plan §AD.8.3).
+            state.modelSent = how.modelSent !== undefined ? how.modelSent : (known && known.model && known.model.id) || null;
             wrap.classList.remove('is-blank');
             if (how.said) { state.steps.set(-1, { seq: -1, kind: 'message', from: 'person', text: how.said }); state.pending = true; }
             paint(); paintCtx();
