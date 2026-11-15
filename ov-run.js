@@ -1472,6 +1472,7 @@ html[data-ov-motion=off] .ovr-row, html[data-ov-motion=off] .ovr-step, html[data
         const newer = () => { main.blank(); show(true); };
         return { list, main, blank: newer, destroy() { try { list.destroy(); } catch { /* */ } try { main.destroy(); } catch { /* */ } host.textContent = ''; } };
     }
-    root.OpenVibeRun = { mount, page, card, version: 1 };
+    // 4.265.0: ov-session.js reads the same cards (a site's own, registered here, show in a session too).
+    root.OpenVibeRun = { mount, page, card, cardFor: (type) => CARDS.get(type) || null, version: 1 };
     if (typeof module !== 'undefined' && module.exports) module.exports = root.OpenVibeRun;
 })(typeof window !== 'undefined' ? window : globalThis);
