@@ -10,6 +10,8 @@ const root = path.join(__dirname, '..');
 const server = http.createServer((req, res) => {
   if (req.url === '/machines.js') { res.writeHead(200, { 'content-type': 'application/javascript' }); return res.end(fs.readFileSync(path.join(root, 'machines.js'))); }
   if (req.url.startsWith('/api/v1/machines')) { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ machines: [{ id: 'dev_1', principal_id: 'lnk_01J8Z4N0A1B2C3D4E5F6G7H8J0', name: 'Studio', kind: 'onboard', system: 'Linux', online: true, roles: ['ai.host'] }] })); }
+  // The bar signs in a moment after the page (4.261.0: openvibe.actor/you said "Sign in to choose a computer" while signed in).
+  if (req.url === '/late') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(`<!doctype html><meta charset="utf-8"><form><div data-ov-machines data-needs="models" data-name="machine" data-api-base="http://127.0.0.1:${server.address().port}"></div></form><script>window.OpenVibeNavbar={session:{token:null}};setTimeout(function(){window.OpenVibeNavbar.session.token='late';document.dispatchEvent(new CustomEvent('openvibe-navbar-auth',{detail:{}}));},700);</script><script src="/machines.js"></script>`); }
   res.writeHead(200, { 'content-type': 'text/html' }); res.end(`<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/kit.css"><form><div data-ov-machines data-needs="models" data-name="machine" data-principal-name="principal" data-auto-label="Auto" data-value="dev_old" data-api-base="http://127.0.0.1:${server.address().port}"></div></form><script>window.OpenVibeNavbar={session:{token:"fixture"}}</script><script src="/machines.js"></script>`);
 });
 (async () => {
@@ -27,6 +29,12 @@ const server = http.createServer((req, res) => {
     await page.evaluate(`document.querySelector('input[type=radio][value="dev_1"]').click()`);
     assert.equal(await page.evaluate(`document.querySelector('input[type=hidden][name=machine]').value`), 'dev_1');
     assert.equal(await page.evaluate(`document.querySelector('input[type=hidden][name=principal]').value`), 'lnk_01J8Z4N0A1B2C3D4E5F6G7H8J0');
+    // Signed in a moment late: the picker waits for the bar, then lists the computers; never "Sign in" for a person.
+    const late = await h.openPage(browser, await browser.newContext(), { width: 390, height: 700 });
+    await late.goto(`http://127.0.0.1:${server.address().port}/late`, { maxMs: 5000 });
+    const untilLate = async (expr) => { const end = Date.now() + 5000; while (Date.now() < end) { const v = await late.evaluate(expr); if (v) return v; await new Promise((r) => setTimeout(r, 50)); } return false; };
+    assert.ok(await untilLate(`Array.from(document.querySelectorAll('.ovk-row strong')).some((n) => n.textContent === 'Studio')`), 'the computers, once the bar signed in');
+    assert.ok(!(await late.evaluate(`document.body.textContent.includes('Sign in to choose a computer')`)), 'no "Sign in" for a person signed in late');
     console.log('machines-chrome: ok');
   } finally { await browser.close(); server.close(); fs.rmSync(tmpDir, { recursive: true, force: true }); }
 })().catch((err) => { console.error(err); process.exit(1); });

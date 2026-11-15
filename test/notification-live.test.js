@@ -518,7 +518,8 @@ const created = (subject, over = {}) => ({
     // 31 KB (4.260.0, 2026-11-15): icons on the tabs, the slim bar pinned under them (Clear all, Inbox) instead of the foot,
     // pages that load themselves as the end comes near, lighter rows and capped chips (the owner: "more minimalist … more
     // icons … make those fixed on top … auto-load more as you scroll"; 30.52 KB measured).
-    assert.ok(size('notification-ui.js') <= 31 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 31 KB`);
+    // 32 KB (4.261.0, 2026-11-15): Unread a disk, an arrow at each end of the tabs, the count on the line under a notice.
+    assert.ok(size('notification-ui.js') <= 32 * 1024, `notification-ui.js is ${(size('notification-ui.js') / 1024).toFixed(2)} KB brotli, budget 32 KB`);
 
     console.log('notification live: all checks passed');
 })().catch((err) => { console.error(err); process.exit(1); });

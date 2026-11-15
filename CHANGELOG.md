@@ -1,5 +1,50 @@
 # Changelog
 
+## 4.261.0 — 2026-11-15
+
+**The Model sheet opens at once, organized.** The owner, 11-15, on "Loading the models…": "massively optimized, cached
+… local cache and server cache", then "better organization and more features … different and better". The list is
+kept on the device for a day and shown the moment the sheet opens. The network's answer replaces it when it comes,
+and is asked for ahead of time when the box appears (Network #984 serves it from its own cache, chat models only).
+The sheet has:
+- a search over the model, the lab and its features;
+- filters: Free, Fast, Vision, Tools, Your keys, Your computers;
+- a sort: Best, Cheapest, Fastest;
+- Recommended and your recent picks first, then your keys and your computers, then each lab (Google, NVIDIA, Meta …)
+  with its count, never the host it runs on (that is "via OpenRouter" on the line). The recommended model is listed
+  once.
+
+Each row has a mark in its lab's colour, a short name ("Gemma 4 31B", not "Google: Gemma 4 31B (free)") and tags for
+Free, Fast, Vision, Tools and its context ("262K"). The price reads in and out per million. Rows rise in turn. Test:
+`test/composer-verbs-chrome.test.js`.
+
+**Alerts: the tabs get the room.** The owner, on a phone shot: Unread "no label", the tabs "add right arrow". Unread is
+a 44 px disk with its dot (the word is its name), so more tabs show. An arrow at each end of the tabs that has more
+slides them (a fade marks the edge). The ×29 count of a repeated notice moved to the line under it, as a pill (it
+wrapped under a long title). Counts, day labels and times are 12 px, and the tabs and the bar's buttons 44 px tall.
+
+**Vibe's welcome, reworked and alive.** The owner: "redo rework", and on the things to ask, "Animate". The face floats
+over a soft halo and the title says "Ask Actor anything". Each thing to ask is a card in its own colour, with its glyph
+in a tinted tile and an arrow that slides in on hover. The cards rise in turn, a light passes over them now and then,
+and a press starts the run. The two links are quiet pills. Calm shortens every move; Off stops them.
+
+**Every page row wears an icon.** The owner's shot of "Pages on Network": Network and Link wore the arrow. A site's icon
+the menu's set does not have (Link's `fa-desktop`) is drawn by its nearest one (`fa-display`), else by its name's.
+Network has its own (`fa-circle-nodes`) and Link's name finds `fa-link`. Test: `test/menu-here-current-chrome.test.js`.
+
+**The computer picker waits for your sign-in.** The owner's shot of openvibe.actor/you: "Sign in to choose a computer"
+while signed in. The picker asked the bar for its token as it loaded, before the bar had signed the person in, and
+said "Sign in" for good. Now it waits for the bar's sign-in (its `openvibe-navbar-auth` event, then a few short tries)
+and only then lists the computers. Test: `test/machines-chrome.test.js`.
+
+**A run of deals, redone.** The owner: "improve … redo … views … total views".
+- A run of deals says how many saw it in all, over its rows, once: from `group.views` (feed.item@1 1.3.0, Contracts
+  0.435.0), else the card's own count.
+- Each row shows its views beside its price, store and discount.
+- Pictures are 56 px tiles on white, so products read cleanly.
+- "See all 146 deals" is one full-width press with an arrow.
+- The head no longer says "Deals · Deals": the kind's word goes when it is the site's own name.
+
 ## 4.260.0 — 2026-11-15
 
 **Your chats never vanish behind "Sign in to Chat".** The owner, 11-15: "All my chat messages disappeared. What the

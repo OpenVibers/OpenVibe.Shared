@@ -133,9 +133,24 @@
         host.dispatchEvent(new CustomEvent('change', { bubbles: true, detail: { id: selected, machine: chosen || null } }));
       }));
     }
+    let waited = false;
     async function load() {
       const token = options.getToken ? await options.getToken() : sessionToken();
-      if (!token) { state = 'signed-out'; paint(); return; }
+      // 4.261.0 (the owner's shot of openvibe.actor/you: "Sign in to choose a computer" while signed in): the bar resolves
+      // the person a moment after the page, so a picker that asked first waits for it (its auth event, then a few
+      // tries) before saying "Sign in".
+      if (!token) {
+        if (!waited) {
+          waited = true; state = 'loading'; paint();
+          const again = () => { document.removeEventListener('openvibe-navbar-auth', again); clearTimeout(timer); load(); };
+          document.addEventListener('openvibe-navbar-auth', again);
+          let tries = 0;
+          const poll = () => { if (sessionToken() || ++tries > 16) again(); else timer = setTimeout(poll, 250); };
+          let timer = setTimeout(poll, 250);
+          return;
+        }
+        state = 'signed-out'; paint(); return;
+      }
       state = 'loading'; paint();
       try {
         const api = options.apiBase || host.getAttribute('data-api-base') || 'https://openvibe.network';

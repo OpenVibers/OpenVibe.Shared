@@ -58,6 +58,7 @@
     // ── glyphs (the registry's drawings, openvibe-shared/glyphs.js; 24-unit strokes) ──
     const G = {
         back: '<path d="M20.8 12H4M10.3 5.7l-6.3 6.3l6.3 6.3"/>',
+        go: '<path d="M3.2 12H20M13.7 5.7l6.3 6.3l-6.3 6.3"/>',
         open: '<path d="M7 17L17 7M9 7h8v8"/>',
         gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M6 18l1.6-1.6M16.4 7.6 18 6"/>',
         send: '<path d="M12 19.5V5M5.8 11.2L12 5l6.2 6.2"/>',
@@ -792,17 +793,22 @@
          *  start a run, and two links to Actor's site (what it can do, its settings). */
         function welcome() {
             const w = el('div', 'ovr-welcome');
-            const face = agentFace('xl');
-            const hi = el('b', 'ovr-welcome-n', `${agentName()} is ready`);
-            const line = el('p', 'ovr-welcome-s', 'Ask anything. It answers, searches the web and OpenVibe, sets timers and reminders, makes things, and hands code to Codes.');
-            w.append(face, hi, line);
+            const stage = el('div', 'ovr-welcome-stage'); stage.setAttribute('aria-hidden', 'true');
+            stage.append(el('i', 'ovr-welcome-halo'), agentFace('xl'));
+            const hi = el('b', 'ovr-welcome-n', `Ask ${agentName()} anything`);
+            const line = el('p', 'ovr-welcome-s', 'It answers, looks things up on OpenVibe and the web, sets timers and reminders, makes things, and hands code to Codes.');
+            w.append(stage, hi, line);
             const starters = Array.isArray(o.starters) ? o.starters.slice(0, 6) : [];
             if (starters.length) {
                 const grid = el('div', 'ovr-welcome-cards'); grid.setAttribute('role', 'list');
-                starters.forEach((x) => {
+                starters.forEach((x, i) => {
                     const [ic, words] = Array.isArray(x) ? x : ['spark', String(x)];
                     const b = el('button', 'ovr-welcome-card'); b.type = 'button'; b.setAttribute('role', 'listitem');
-                    b.append(svg(G[ic] ? ic : 'spark'), el('span', '', words));
+                    b.style.setProperty('--i', String(i));
+                    b.style.setProperty('--ovr-h', String((hueOf(String(words)) % 360 + 360) % 360));
+                    const ico = el('span', 'ovr-welcome-ic'); ico.append(svg(G[ic] ? ic : 'spark'));
+                    b.append(ico, el('span', 'ovr-welcome-w', words), el('i', 'ovr-welcome-go'));
+                    b.querySelector('.ovr-welcome-go').append(svg('go'));
                     b.addEventListener('click', async () => { b.disabled = true; try { await start(words); } catch { b.disabled = false; } });
                     grid.append(b);
                 });
@@ -1215,6 +1221,16 @@ html[data-ov-motion="off"] .ovr-coder-cursor, html[data-ov-motion="off"] .ovr-co
 .ovr-sheet-link:hover { background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); color: var(--text-primary, #e6edf7); }
 /* 4.260.0, the welcome: your agent's face, what it does, the starters as cards, Actor's site. */
 .ovr-welcome { display: grid; justify-items: center; gap: 10px; padding: 18px 6px 10px; text-align: center; }
+/* 4.261.0, the welcome reworked (the owner, 11-15: "redo rework", the things to ask "Animate"). */
+.ovr-welcome-stage { position: relative; display: grid; place-items: center; width: 132px; height: 132px; margin-bottom: 2px; }
+.ovr-welcome-stage > .ovr-face { position: relative; z-index: 1; animation: ovr-float 5.5s ease-in-out infinite; }
+.ovr-welcome-halo { position: absolute; inset: 6px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, hsl(var(--ovr-h, 300) 85% 60%) 45%, transparent), transparent);
+  filter: blur(6px); animation: ovr-halo 5.5s ease-in-out infinite; }
+@keyframes ovr-float { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(calc(-7px * var(--ov-move, 1))) rotate(calc(-2deg * var(--ov-move, 1))); } }
+@keyframes ovr-halo { 0%, 100% { opacity: .55; transform: scale(.92); } 50% { opacity: .95; transform: scale(1.06); } }
+.ovr-welcome-n { animation: ovr-rise .5s cubic-bezier(.2, .8, .2, 1) both; }
+.ovr-welcome-s { animation: ovr-rise .5s .06s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes ovr-rise { from { opacity: 0; transform: translateY(calc(10px * var(--ov-move, 1))); } }
 .ovr-welcome-n { font-size: 19px; font-weight: 800; }
 .ovr-welcome-s { margin: 0; max-width: 34ch; font-size: 14px; line-height: 1.5; color: var(--text-secondary, #96a7c2); }
 .ovr-welcome-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 8px; width: 100%; margin-top: 4px; }
@@ -1227,6 +1243,34 @@ html[data-ov-motion="off"] .ovr-coder-cursor, html[data-ov-motion="off"] .ovr-co
 .ovr-welcome-a { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; font-size: 13px; font-weight: 650; color: var(--accent-light, var(--accent, #60a5fa)); text-decoration: none; }
 .ovr-welcome-a svg { width: 15px; height: 15px; }
 .ovr-welcome-a:hover span { text-decoration: underline; }
+/* The things to ask, alive: each rises in turn, wears its own colour, and a light passes over them now and then. */
+.ovr-welcome-cards { grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr)); gap: 10px; margin-top: 8px; }
+.ovr-welcome-card { position: relative; overflow: hidden; min-height: 60px; padding: 12px 12px 12px 10px; border-radius: 16px; isolation: isolate;
+  background: linear-gradient(135deg, color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 14%, var(--bg-secondary, #141a24)), color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 4%, var(--bg-secondary, #141a24)));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 22%, transparent);
+  animation: ovr-card-in .55s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.12s + var(--i, 0) * 70ms);
+  transition: transform .18s cubic-bezier(.3, 1.4, .4, 1), box-shadow .2s; }
+.ovr-welcome-card::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, #fff 9%, transparent) 50%, transparent 65%); transform: translateX(-120%);
+  animation: ovr-card-shine 7s ease-in-out infinite; animation-delay: calc(1.4s + var(--i, 0) * .35s); }
+@keyframes ovr-card-in { from { opacity: 0; transform: translateY(calc(14px * var(--ov-move, 1))) scale(.97); } }
+@keyframes ovr-card-shine { 0%, 72% { transform: translateX(-120%); } 88%, 100% { transform: translateX(120%); } }
+.ovr-welcome-ic { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; color: hsl(var(--ovr-h, 215) 85% 72%);
+  background: color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 20%, transparent); }
+.ovr-welcome-ic svg { width: 18px; height: 18px; color: inherit; }
+.ovr-welcome-w { flex: 1; min-width: 0; }
+.ovr-welcome-go { display: grid; place-items: center; flex: none; width: 22px; height: 22px; opacity: 0; transform: translateX(calc(-6px * var(--ov-move, 1))); transition: opacity .18s, transform .22s cubic-bezier(.2, .8, .2, 1); color: hsl(var(--ovr-h, 215) 85% 72%); }
+.ovr-welcome-go svg { width: 16px; height: 16px; }
+.ovr-welcome-card:hover { transform: translateY(calc(-2px * var(--ov-move, 1))); box-shadow: inset 0 0 0 1px color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 45%, transparent), 0 10px 24px -14px hsl(var(--ovr-h, 215) 80% 40%); background: linear-gradient(135deg, color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 20%, var(--bg-secondary, #141a24)), color-mix(in srgb, hsl(var(--ovr-h, 215) 80% 60%) 6%, var(--bg-secondary, #141a24))); }
+.ovr-welcome-card:hover .ovr-welcome-go, .ovr-welcome-card:focus-visible .ovr-welcome-go { opacity: 1; transform: none; }
+.ovr-welcome-card:active { transform: scale(.97); }
+.ovr-welcome-card[disabled] { opacity: .6; }
+.ovr-welcome-links { gap: 8px; margin-top: 8px; }
+.ovr-welcome-a { min-height: 44px; padding: 0 16px; border-radius: 999px; background: color-mix(in srgb, var(--text-primary, #e6edf7) 6%, transparent); color: var(--text-secondary, #96a7c2); font-weight: 650; }
+.ovr-welcome-a:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 10%, transparent); }
+.ovr-welcome-a:hover span { text-decoration: none; }
+html[data-ov-motion=off] .ovr-welcome-stage > .ovr-face, html[data-ov-motion=off] .ovr-welcome-halo, html[data-ov-motion=off] .ovr-welcome-card, html[data-ov-motion=off] .ovr-welcome-card::after,
+html[data-ov-motion=off] .ovr-welcome-n, html[data-ov-motion=off] .ovr-welcome-s { animation: none; }
 /* 4.260.0: how many work now, as a badge on the face that runs them (was the "Run (3)" chip). */
 .ovr-person .ovr-face { position: relative; }
 .ovr-person-badge { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; display: grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 800; color: #fff; background: var(--accent-strong, var(--accent, #3b82f6)); box-shadow: 0 0 0 2px var(--bg-card, #131c2e); }

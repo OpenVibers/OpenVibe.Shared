@@ -442,6 +442,39 @@
             html.ovn-sheet-open, html.ovn-sheet-open body { overflow: hidden; }
             @media (max-height: 520px) { .openvibe-notif-item .msg { -webkit-line-clamp: 1; } }
             html[data-ov-motion=off] .openvibe-toast.removing{opacity: 0}html[data-ov-motion=off] .openvibe-toast-progress{display: none}
+            /* 4.261.0 (the owner, 11-15, on a phone shot: Unread "no label", the tabs "add right arrow"): Unread is a 44 px disk
+               with its dot (the word is its name), so the tabs get the room; an arrow at the end that has more slides them. */
+            .openvibe-notif-dock .openvibe-nv-unread { width: 44px !important; height: 44px !important; padding: 0 !important; gap: 0; justify-content: center; place-items: center; border-radius: 50% !important; }
+            .openvibe-notif-dock .openvibe-nv-unread .ovn-dot { margin: 0; width: 12px; height: 12px; }
+            .openvibe-notif-dock .openvibe-nv-find .openvibe-nv-search:not(.is-open) { width: 44px; height: 44px; }
+            .openvibe-notif-dock .openvibe-nv-search:not(.is-open) input { width: 44px; }
+            .ovn-unread-w { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+            .openvibe-nv:not(.openvibe-notif-dock) .ovn-unread-w, .openvibe-notif-inbox .ovn-unread-w { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+            .ovn-tabs-wrap { position: relative; flex: 1 1 0; min-width: 0; order: 0; display: flex; }
+            .ovn-tabs-wrap > .openvibe-nv-tabs { flex: 1 1 auto; min-width: 0; }
+            .openvibe-nv-tabs.is-back.is-more { -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
+            .openvibe-nv-tabs.is-back:not(.is-more) { -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px); mask-image: linear-gradient(90deg, transparent, #000 36px); }
+            .ovn-tabs-go { position: absolute; top: 50%; z-index: 2; display: grid; place-items: center; width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+              color: var(--text-primary, #ececf1); background: color-mix(in srgb, var(--bg-secondary, #141a24) 88%, var(--text-primary, #ececf1));
+              box-shadow: 0 4px 14px -4px rgba(0, 0, 0, .6), inset 0 0 0 1px var(--border, rgba(255, 255, 255, .12)); transition: transform .18s cubic-bezier(.2, .8, .2, 1), opacity .18s;
+              animation: ovn-go-in .24s cubic-bezier(.2, .8, .2, 1); }
+            .ovn-tabs-go[hidden] { display: none; }
+            .ovn-tabs-go::after { content: ''; position: absolute; inset: -7px; }
+            .ovn-tabs-go svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+            .ovn-tabs-go.is-r { right: 2px; }
+            .ovn-tabs-go.is-l { left: 2px; }
+            .ovn-tabs-go.is-l svg { transform: scaleX(-1); }
+            .ovn-tabs-go:hover { transform: scale(1.08); }
+            .ovn-tabs-go:active { transform: scale(.94); }
+            .ovn-tabs-go:focus-visible { outline: 2px solid var(--accent, #3b82f6); outline-offset: 2px; }
+            @keyframes ovn-go-in { from { opacity: 0; transform: translateX(calc(6px * var(--ov-move, 1))) scale(.9); } }
+            html[data-ov-motion=off] .ovn-tabs-go { animation: none; transition: none; }
+            /* The repeat count rides the line under the notice (it wrapped under a long title); the small text reaches 12 px. */
+            .openvibe-notif-item .meta .count { order: -1; margin: 0; padding: 1px 8px; border-radius: 999px; font-weight: 750; color: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 55%, var(--text-primary, #ececf1)); background: color-mix(in srgb, var(--ovn-tone, var(--accent, #3b82f6)) 16%, transparent); }
+            .openvibe-nv-tabs .n { font-size: 12px; min-width: 20px; }
+            .openvibe-nv-day, .openvibe-notif-dock .openvibe-nv-day { font-size: 12px; }
+            .openvibe-notif-item .meta, .openvibe-notif-item .title .count, .openvibe-notif-item .meta .count { font-size: 12px; }
+            .openvibe-notif-dock .openvibe-nv-tabs button, .openvibe-notif-dock .ovn-bar-b { min-height: 44px; }
         `;
         document.head.appendChild(style);
     }
@@ -1047,11 +1080,11 @@
             <div class="openvibe-nv-tools">
                 <div class="openvibe-nv-find">
                     <div class="openvibe-nv-search">${svg(ICON.search)}<input type="search" placeholder="Search notifications" aria-label="Search notifications" autocomplete="off" spellcheck="false"><button type="button" class="clear" aria-label="Clear search">&times;</button></div>
-                    <button type="button" class="openvibe-nv-unread" aria-pressed="${v.unread ? 'true' : 'false'}" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span>Unread</button>
+                    <button type="button" class="openvibe-nv-unread" aria-pressed="${v.unread ? 'true' : 'false'}" aria-label="Unread only" title="Show only unread notices"><span class="ovn-dot" aria-hidden="true"></span><span class="ovn-unread-w">Unread</span></button>
                 </div>
-                <div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
+                <div class="ovn-tabs-wrap"><div class="openvibe-nv-tabs" role="tablist" aria-label="Notifications">
                     ${TABS.map(([id, label]) => `<button type="button" role="tab" data-tab="${id}" aria-selected="${id === 'all'}" tabindex="${id === 'all' ? '0' : '-1'}"><svg class="ovn-tab-ic" viewBox="0 0 24 24" aria-hidden="true">${GLYPH[TAB_GLYPH[id]] || GLYPH.bell}</svg>${esc(label)}<span class="n" data-n="${id}"></span></button>`).join('')}
-                </div>
+                </div><button type="button" class="ovn-tabs-go is-l" aria-label="Earlier tabs" hidden>${svg(ICON.go)}</button><button type="button" class="ovn-tabs-go is-r" aria-label="More tabs" hidden>${svg(ICON.go)}</button></div>
                 ${mode === 'dock' ? `<div class="openvibe-nv-bar"><span data-role="status"></span><button type="button" class="ovn-bar-b" data-act="read-all-foot" title="Mark every notification read">${svg(ICON.checkAll)}<span>Clear all</span></button><a class="ovn-bar-b is-go" href="${esc(inboxUrl())}" title="Open the full inbox">${svg(ICON.open)}<span>Inbox</span></a></div>` : ''}
             </div>
             <div class="openvibe-nv-list" data-role="list" role="tabpanel" aria-label="All"></div>
@@ -1089,7 +1122,19 @@
         // More filters past the edge: a fade says the row scrolls (4.150.0; "System" was cut off with no sign of more).
         if (tabRow && !tabRow.__more) {
             tabRow.__more = true;
-            const more = () => tabRow.classList.toggle('is-more', tabRow.scrollWidth - tabRow.clientWidth - tabRow.scrollLeft > 4);
+            // 4.261.0 (the owner, 11-15: "add right arrow"): an arrow at each end that has more, and a press slides the row.
+            const wrap = tabRow.parentElement && tabRow.parentElement.classList.contains('ovn-tabs-wrap') ? tabRow.parentElement : null;
+            const goL = wrap && wrap.querySelector('.ovn-tabs-go.is-l'), goR = wrap && wrap.querySelector('.ovn-tabs-go.is-r');
+            const more = () => {
+                const right = tabRow.scrollWidth - tabRow.clientWidth - tabRow.scrollLeft > 4;
+                tabRow.classList.toggle('is-more', right);
+                tabRow.classList.toggle('is-back', tabRow.scrollLeft > 4);
+                if (goR) goR.hidden = !right;
+                if (goL) goL.hidden = !(tabRow.scrollLeft > 4);
+            };
+            const slide = (dir) => { try { tabRow.scrollBy({ left: dir * Math.max(120, tabRow.clientWidth * 0.7), behavior: 'smooth' }); } catch { tabRow.scrollLeft += dir * 160; } };
+            if (goR) goR.addEventListener('click', () => slide(1));
+            if (goL) goL.addEventListener('click', () => slide(-1));
             tabRow.addEventListener('scroll', more, { passive: true });
             if (typeof ResizeObserver === 'function') new ResizeObserver(more).observe(tabRow);
             setTimeout(more, 0);
@@ -1282,12 +1327,12 @@
                     ${unread ? '<span class="ovn-sr">Unread. </span>' : ''}
                     ${glyphHtml(n, p)}
                     <div class="content">
-                        <div class="title"><span class="t">${esc(p.title)}</span>${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}</div>
+                        <div class="title"><span class="t">${esc(p.title)}</span></div>
                         ${p.message ? `<div class="msg">${esc(p.message)}</div>` : ''}
                         ${chipsHtml({ ...p, chips })}
                         ${cmd ? `<button type="button" class="copy" data-row="copy" data-cmd="${esc(cmd)}">Copy fix command</button>` : ''}
                         ${actsHtml(n)}
-                        <div class="meta"><span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
+                        <div class="meta">${ids.length > 1 ? `<span class="count" title="${ids.length} times">×${ids.length}</span>` : ''}<span title="${esc(parseDate(n.created_at)?.toLocaleString() || '')}">${when}</span>${label}</div>
                     ${p.url ? `<span class="ovn-go" aria-hidden="true">${svg(ICON.go)}</span>` : ''}
                     <div class="ovn-menu" role="menu" hidden>${unread ? '<button type="button" role="menuitem" data-row="read">' + svg(ICON.read) + '<span>Mark as read</span></button>' : ''}<button type="button" role="menuitem" data-row="dismiss">${svg(ICON.trash)}<span>Remove this notice</span></button><button type="button" role="menuitem" data-row="settings">${svg(ICON.gear)}<span>Notification settings</span></button></div>
                     </div>

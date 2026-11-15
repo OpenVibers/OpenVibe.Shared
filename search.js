@@ -2071,7 +2071,7 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
      */
     /** A page's glyph from its name, for sites that name none (4.253.0): the first rule that fits, most specific first. */
     const PAGE_GLYPHS = [
-        [/^(home|start|front page)$/i, 'fa-house'], [/search|\bfind\b/i, 'fa-magnifying-glass'], [/clip/i, 'fa-scissors'],
+        [/^(home|start|front page)$/i, 'fa-house'], [/^network$|openvibe network/i, 'fa-circle-nodes'], [/^link$|openvibe link/i, 'fa-link'], [/search|\bfind\b/i, 'fa-magnifying-glass'], [/clip/i, 'fa-scissors'],
         [/watchlist/i, 'fa-eye'], [/camera/i, 'fa-camera'], [/album/i, 'fa-images'], [/dashboard/i, 'fa-gauge'], [/receipt/i, 'fa-receipt'],
         [/\blive\b|stream|broadcast/i, 'fa-tower-broadcast'], [/video|\bwatch\b|recording/i, 'fa-video'], [/flight/i, 'fa-plane'],
         [/\btrips?\b|\bstays?\b|travel/i, 'fa-suitcase'], [/filing|document/i, 'fa-file-lines'], [/\bsources?\b|\blinks?\b/i, 'fa-link'],
@@ -2104,8 +2104,19 @@ html[data-ov-motion=off] .ovs-youpanel { animation: none; }
         for (const c of cards) groups.push({ title: c.title || '', as: 'card', card: c, section: `card:${c.id}`, items: [] });
         // Every page row wears its own glyph (4.253.0, plan §AA.38): the site's own (links[].icon), else one read from
         // its name ("Jobs" a briefcase, "Live tours" a broadcast), else the arrow.
-        const pageIcon = (l) => l.icon || pageGlyphOf(l.label);
-        const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: pageIcon(l) && typeof ctx.navIcon === 'function' ? ctx.navIcon(pageIcon(l)) : '', kind: 'page' })).filter((x) => x.url);
+        // 4.261.0 (the owner's shot of "Pages on Network": Network and Link wore the arrow): a site's icon the menu's set
+        // does not have (fa-desktop, fa-laptop) is drawn by its nearest one, else the name's, so no row falls to the arrow.
+        const NEAR = { 'fa-desktop': 'fa-display', 'fa-laptop': 'fa-display', 'fa-computer': 'fa-display', 'fa-mobile': 'fa-display', 'fa-network': 'fa-circle-nodes', 'fa-sitemap': 'fa-diagram-project' };
+        const drawnOf = (l) => {
+            if (typeof ctx.navIcon !== 'function') return '';
+            for (const name of [l.icon, NEAR[l.icon], pageGlyphOf(l.label), /^\/?$/.test(String(l.href || '').replace(/^https?:\/\/[^/]+/, '')) ? 'fa-house' : '']) {
+                if (!name) continue;
+                const d = ctx.navIcon(name);
+                if (d) return d;
+            }
+            return '';
+        };
+        const pages = (ctx.links || []).filter((l) => l && l.label && typeof l.href === 'string' && !l.hidden).map((l) => ({ title: l.label, url: safeUrl(l.href), icon: 'go', drawn: drawnOf(l), kind: 'page' })).filter((x) => x.url);
         // A site's links that never name its home get one first, so the home page has a place of its own in the menu
         // and wears the highlight there too (owner 11-09, on openvibe.exchange: "shouldn't there be a link to home that's
         // highlighted").

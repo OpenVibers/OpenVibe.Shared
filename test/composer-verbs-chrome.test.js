@@ -84,10 +84,15 @@ window.chatBox = C.mount(document.getElementById('b'), { preset: 'chat', id: 'c1
         // The Model sheet: Auto, then the Frame's groups with prices and an Exchange link; find; pick.
         await page.evaluate(`document.querySelector('#p1 .ovc-ask-chips .ovc-chip--btn').click()`);
         assert.ok(await until(`document.querySelectorAll('dialog.ovc-sheet .ovc-model').length >= 4`), 'the models are listed');
-        const sheet = await page.evaluate(`(() => { const d = document.querySelector('dialog.ovc-sheet'); return { heads: [...d.querySelectorAll('h3')].map((x) => x.textContent), first: d.querySelector('.ovc-model b').textContent, price: [...d.querySelectorAll('.ovc-model small')].map((x) => x.textContent)[1], rec: !!d.querySelector('.ovc-model-rec'), link: d.querySelector('.ovc-model-x').href, width: Math.round(d.getBoundingClientRect().width) }; })()`);
-        assert.deepEqual(sheet.heads, ['OpenVibe', 'Your keys'], 'groups with rows only');
+        const sheet = await page.evaluate(`(() => { const d = document.querySelector('dialog.ovc-sheet'); return { heads: [...d.querySelectorAll('h3')].map((x) => x.firstChild.textContent), first: d.querySelector('.ovc-model b').textContent, price: [...d.querySelectorAll('.ovc-model small')].map((x) => x.textContent)[1], rec: !!d.querySelector('.ovc-model-rec'), link: d.querySelector('.ovc-model-x').href, width: Math.round(d.getBoundingClientRect().width) }; })()`);
+        // 4.261.0 (the owner, 11-15: "better organization and more features"): Recommended, your keys, then each lab with
+        // its count (the recommended model once), filters and a sort, a price in and out per million.
+        assert.deepEqual(sheet.heads, ['Recommended', 'Your keys', 'Qwen'], 'Recommended, your keys, then the labs');
         assert.match(sheet.first, /^Auto/);
-        assert.match(sheet.price, /\$0\.27 \/ M/, 'a price per million');
+        assert.match(sheet.price, /\$0\.27 in · \$1\.1 out/, 'a price per million, in and out');
+        assert.ok(await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-mchip')].map((c) => c.textContent).join(',').startsWith('All,Free')`), 'filters');
+        assert.equal(await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-msort-b')].map((c) => c.textContent).join(',')`), 'Best,Cheapest,Fastest', 'a sort');
+        assert.ok(await page.evaluate(`!!localStorage.getItem([...Object.keys(localStorage)].find((k) => k.startsWith('ov:composer:choices:chat')) || 'x')`), 'the list is kept on the device');
         assert.ok(sheet.rec, 'the recommended model is marked');
         assert.match(sheet.link, /openvibe\.exchange\/models\//, 'each OpenVibe model opens on Exchange');
         assert.equal(sheet.width, 390, 'the whole width on a phone');
