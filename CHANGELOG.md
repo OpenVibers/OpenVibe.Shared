@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.278.0 — 2026-11-15
+
+**Trending as chips on focus** (plan §AD.13 (1): "Focus shows the trending chips").
+- Focus on an empty search box opens the trending list under it as chips: up to six, headed "Trending" (or "Try"
+  while the list is the site's own pages, before enough people search). A chip fills the box and searches (the
+  form's submit, or Enter for a box without a form), so it is counted like any search.
+- The chips pop in under the box and come in one after another; Calm shortens the moves and Off stills them. They
+  are 40 px tall (44 px on touch), follow the box as the page scrolls, and stay inside the screen on a phone.
+- Arrow Down moves from the box into the chips, the arrows move between them, and Escape closes them and returns to
+  the box. Typing closes them; clearing the box opens them again.
+- A box with suggestions of its own (a datalist, `aria-autocomplete`, a combobox) or `data-ov-trending-chips="off"`
+  gets no chips.
+
 ## 4.277.0 — 2026-11-15
 
 **Every search box shows what is trending** (the owner, 11-15: "it scrolls thru what's trending with a cool
