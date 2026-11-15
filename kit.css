@@ -557,6 +557,9 @@ html[data-ov-motion=off] .ovk-switch, html[data-ov-motion=off] .ovk-switch::afte
 @view-transition { navigation: auto; }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
 #navbar-mount, .openvibe-navbar { view-transition-name: ov-navbar; }
+/* One element carries a name: a navbar inside its mount would be a second ov-navbar, and the browser skips the whole
+   transition on a duplicate name ("Unexpected duplicate view-transition-name: ov-navbar", every site's navigation, 11-15). */
+#navbar-mount .openvibe-navbar { view-transition-name: none; }
 .ovnav-appbar { view-transition-name: ov-appbar; }
 
 /* Content labels (L1): quiet chips beside a title, the adult one in the warning colour. They say what a thing carries;
