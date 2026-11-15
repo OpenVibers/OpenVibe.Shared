@@ -11,8 +11,11 @@
  *     repos: ['owner/name', …],            // the person's recent repositories, offered for a new task
  *     open: 'codes:tsk_…',                 // a run to open first
  *     link: (run) => url,                  // a run's own full page (default: run.url)
+ *     agents: [{ id, name, available }],   // 4.258.0: the harnesses a new task may name (auto first, always)
+ *     models: [{ id, name }],              //          the models it may name
+ *     places: [{ kind, id?, name }],       //          where it may run (agents.run-start@1 WHERE: openvibe, machine…)
  *   });
- *   h.open(ref); h.blank(target?); h.prefill(words); h.refresh(); h.destroy();
+ *   h.open(ref); h.blank(target?); h.prefill(words); h.board(); h.refresh(); h.destroy();
  *
  * A computer: three columns (the changes column from 1180 px). A phone: Projects · Task · Changes as tabs, one at a
  * time; opening a thread shows Task. Everything a run says is set as text, never markup.
@@ -97,6 +100,18 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
 .ovhr-outs a { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.1)); color: inherit; text-decoration: none; font-size: 13.5px; overflow-wrap: anywhere; }
 .ovhr-outs span:only-child { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1px dashed var(--border, rgba(255,255,255,.1)); font-size: 13.5px; overflow-wrap: anywhere; }
 .ovhr-outs a.is-pr { border-color: color-mix(in srgb, var(--accent, #3b82f6) 50%, transparent); }
+.ovhr-views { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--bg-card, rgba(255,255,255,.03)); border: 1px solid var(--border, rgba(255,255,255,.08)); }
+.ovhr-views button { flex: 1; min-height: 32px; border: 0; border-radius: 8px; background: none; color: var(--text-secondary, #a8b3c4); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.ovhr-views button[aria-pressed="true"] { background: var(--bg-hover, rgba(255,255,255,.08)); color: var(--text-primary, #e8edf5); }
+.ovhr-board { display: none; flex: 1; min-height: 0; overflow: auto; padding: 12px; gap: 12px; grid-auto-flow: column; grid-auto-columns: minmax(176px, 1fr); align-items: start; }
+.ovhr.is-board .ovhr-board { display: grid; } .ovhr.is-board .ovhr-thread, .ovhr.is-board .ovhr-head { display: none; }
+.ovhr-col { display: grid; gap: 8px; align-content: start; min-height: 120px; padding: 10px; border-radius: 14px; background: var(--bg-card, rgba(255,255,255,.03)); border: 1px solid var(--border, rgba(255,255,255,.08)); }
+.ovhr-col h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 2px; font-size: 13px; font-weight: 700; color: var(--text-secondary, #a8b3c4); }
+.ovhr-col h3 span:last-child { margin-left: auto; color: var(--text-muted, #8b93a3); font-weight: 600; }
+.ovhr-card { display: grid; gap: 4px; width: 100%; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border, rgba(255,255,255,.08)); background: var(--bg-primary, #0b0f17); color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.ovhr-card:hover { border-color: color-mix(in srgb, var(--accent, #3b82f6) 45%, transparent); }
+.ovhr-card b { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+.ovhr-card small { color: var(--text-muted, #8b93a3); font-size: 12px; overflow-wrap: anywhere; }
 .ovhr-tabs { display: none; }
 @media (max-width: 899px) {
   .ovhr, .ovhr.has-run { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
@@ -106,6 +121,8 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
   .ovhr-side, .ovhr-main, .ovhr-panel { display: none; border: 0; }
   .ovhr[data-tab="projects"] .ovhr-side, .ovhr[data-tab="task"] .ovhr-main, .ovhr[data-tab="changes"] .ovhr-panel { display: flex; flex-direction: column; }
   .ovhr[data-tab="changes"] .ovhr-panel { display: block; }
+  .ovhr-board { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: minmax(0, 1fr); align-content: start; }
+  .ovhr-col { min-height: 0; }
 }`;
         document.head.appendChild(st);
     }
@@ -148,8 +165,18 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         const q = el('input');
         q.type = 'search'; q.placeholder = 'Find a thread'; q.setAttribute('aria-label', 'Find a thread');
         find.append(svg(I.search), q);
-        q.addEventListener('input', () => drawProjects());
-        top.append(newBtn, find);
+        q.addEventListener('input', () => { drawProjects(); if (mode === 'board') drawBoard(); });
+        // 4.258.0: List (projects and threads) or Board (every run by where it stands, after Vibe Kanban).
+        const views = el('div', 'ovhr-views');
+        views.setAttribute('role', 'group'); views.setAttribute('aria-label', 'Show');
+        const viewBtn = {};
+        for (const [id, words] of [['list', 'List'], ['board', 'Board']]) {
+            const b = el('button', null, words);
+            b.type = 'button'; b.setAttribute('aria-pressed', String(id === 'list'));
+            b.addEventListener('click', () => setView(id));
+            viewBtn[id] = b; views.append(b);
+        }
+        top.append(newBtn, views, find);
         const projects = el('div', 'ovhr-projects');
         side.append(top, projects);
 
@@ -158,7 +185,9 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         main.setAttribute('aria-label', 'Task');
         const head = el('div', 'ovhr-head');
         const threadHost = el('div', 'ovhr-thread');
-        main.append(head, threadHost);
+        const boardHost = el('div', 'ovhr-board');
+        boardHost.setAttribute('aria-label', 'Board');
+        main.append(head, threadHost, boardHost);
 
         // The changes column.
         const panel = el('aside', 'ovhr-panel');
@@ -171,6 +200,8 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         let openRef = String(o.open || '');
         let openRun = null;
         let target = o.target || 'new';
+        let pick = { agent: 'auto', model: 'auto', where: 'auto' };
+        let mode = 'list';
         let view = null;
         let timer = null;
         let destroyed = false;
@@ -222,6 +253,62 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
             }
         }
 
+        const COLUMNS = [['planning', 'Starting'], ['running', 'Working'], ['waiting', 'Needs you'], ['done', 'Done'], ['failed', 'Failed or stopped']];
+        function drawBoard() {
+            boardHost.textContent = '';
+            const needle = q.value.trim().toLowerCase();
+            for (const [status, words] of COLUMNS) {
+                const rows = runs.filter((r) => (status === 'failed' ? r.status === 'failed' || r.status === 'stopped' : r.status === status)
+                    && (!needle || `${r.title || ''} ${projectOf(r).name}`.toLowerCase().includes(needle)));
+                const col = el('section', 'ovhr-col');
+                col.dataset.status = status;
+                const h = el('h3');
+                h.append(el('span', `ovhr-dot is-${(STATUS[status] || ['', 'off'])[1]}`), el('span', null, words), el('span', null, String(rows.length)));
+                col.append(h);
+                for (const r of rows) {
+                    const c = el('button', 'ovhr-card');
+                    c.type = 'button'; c.dataset.ref = String(r.ref || r.id || '');
+                    c.append(el('b', null, r.title || 'A coding task'), el('small', null, [projectOf(r).name, r.agent && (r.agent.name || r.agent.harness), ago(r.updated_at || r.created_at)].filter(Boolean).join(' · ')));
+                    c.addEventListener('click', () => { setView('list'); open(c.dataset.ref); });
+                    col.append(c);
+                }
+                boardHost.append(col);
+            }
+        }
+        function setView(v) {
+            mode = v === 'board' ? 'board' : 'list';
+            wrap.classList.toggle('is-board', mode === 'board');
+            for (const [k, b] of Object.entries(viewBtn)) b.setAttribute('aria-pressed', String(k === mode));
+            if (mode === 'board') { drawBoard(); show('task'); }
+        }
+
+        /** The start's own choices (agents.run-start@1 AGENT, MODEL and WHERE), from what the host offers. */
+        function startFields() {
+            const out = {};
+            if (pick.agent !== 'auto') out.agent = pick.agent;
+            if (pick.model !== 'auto') out.model = { id: pick.model };
+            if (pick.where !== 'auto') { const pl = (o.places || []).find((x) => placeKey(x) === pick.where); if (pl) out.where = pl.id ? { kind: pl.kind, id: pl.id } : { kind: pl.kind }; }
+            return out;
+        }
+        const placeKey = (pl) => `${pl.kind}${pl.id ? `:${pl.id}` : ''}`;
+        function picker(label, name, items, current, onPick) {
+            const wrapLabel = el('label', 'ovhr-chip');
+            wrapLabel.append(el('span', null, label));
+            const sel = el('select');
+            sel.name = name;
+            sel.setAttribute('aria-label', label);
+            for (const it of items) {
+                const opt = el('option', null, it.name);
+                opt.value = it.value;
+                if (it.disabled) opt.disabled = true;
+                if (it.value === current) opt.selected = true;
+                sel.append(opt);
+            }
+            sel.addEventListener('change', () => onPick(sel.value));
+            wrapLabel.append(sel);
+            return wrapLabel;
+        }
+
         function drawHead() {
             head.textContent = '';
             if (openRun) {
@@ -237,16 +324,26 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
             // A new task: what it works on.
             const label = el('label', 'ovhr-chip');
             label.append(svg(I.repo), el('span', null, 'Works on'));
-            const pick = el('select');
-            pick.setAttribute('aria-label', 'What the new task works on');
+            const pick_ = el('select');
+            pick_.setAttribute('aria-label', 'What the new task works on');
             for (const p of knownProjects()) {
                 const opt = el('option', null, p.name);
                 opt.value = p.key;
                 if (projectOf({ target }).key === p.key) opt.selected = true;
-                pick.append(opt);
+                pick_.append(opt);
             }
-            pick.addEventListener('change', () => { const p = knownProjects().find((x) => x.key === pick.value); if (p) blank(p.target); });
-            head.append(label, pick);
+            pick_.addEventListener('change', () => { const p = knownProjects().find((x) => x.key === pick_.value); if (p) blank(p.target); });
+            head.append(label, pick_);
+            // 4.258.0: which agent, which model, where it runs (auto: Codes routes it).
+            if (Array.isArray(o.agents) && o.agents.length) {
+                head.append(picker('Agent', 'agent', [{ value: 'auto', name: 'Auto' }, ...o.agents.map((a) => ({ value: String(a.id), name: `${a.name || a.id}${a.available === false ? ' (not set up)' : ''}`, disabled: a.available === false }))], pick.agent, (v) => { pick.agent = v; blank(); }));
+            }
+            if (Array.isArray(o.models) && o.models.length) {
+                head.append(picker('Model', 'model', [{ value: 'auto', name: 'Auto' }, ...o.models.map((m) => ({ value: String(m.id), name: m.name || m.id }))], pick.model, (v) => { pick.model = v; blank(); }));
+            }
+            if (Array.isArray(o.places) && o.places.length) {
+                head.append(picker('Runs on', 'where', [{ value: 'auto', name: 'Auto' }, ...o.places.map((pl) => ({ value: placeKey(pl), name: `${pl.name || pl.kind}${pl.online === false ? ' (offline)' : ''}` }))], pick.where, (v) => { pick.where = v; blank(); }));
+            }
         }
 
         function drawPanel() {
@@ -285,7 +382,7 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
             if (view) { try { view.destroy(); } catch { /* */ } }
             const p = projectOf({ target });
             const where = p.key === 'new' ? null : p.name;
-            view = root.OpenVibeRun.mount(threadHost, { ...o, ...opts, filter: 'code', start: { kind: 'code', target, ...(o.start && o.start.context ? { context: o.start.context } : {}) },
+            view = root.OpenVibeRun.mount(threadHost, { ...o, ...opts, filter: 'code', start: { kind: 'code', target, ...startFields(), ...(o.start && o.start.context ? { context: o.start.context } : {}) },
                 // A coding start, not a chat: what the task works on, and what happens to it.
                 blankIcon: 'code',
                 blankTitle: p.key === 'new' ? 'A new project' : p.key === 'openvibe' ? 'Improve OpenVibe' : `New task in ${where}`,
@@ -312,6 +409,7 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
                 runs = (Array.isArray(out.runs) ? out.runs : []).filter((r) => !r.kind || r.kind === 'code');
             } catch { /* keep what is shown */ }
             if (openRef) await loadOpen(); else { drawProjects(); drawHead(); drawPanel(); }
+            if (mode === 'board') drawBoard();
             schedule();
         }
         function schedule() {
@@ -342,6 +440,7 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
             /** Words waiting in the box, unsent (a ?prompt= link). */
             prefill(text) { if (view && typeof view.prefill === 'function') view.prefill(String(text || '')); },
             get target() { return target; },
+            board() { setView('board'); },
             destroy() { destroyed = true; clearTimeout(timer); if (view) { try { view.destroy(); } catch { /* */ } } host.textContent = ''; },
         };
     }

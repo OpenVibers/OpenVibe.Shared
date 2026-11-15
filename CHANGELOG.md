@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.258.0 — 2026-11-15
+
+**The harness picks its agent, its model and where it runs, and shows a Board.** The owner, 11-15: Codes "should
+combine all coding harnesses into one … a way better T3 Code … interconnected with Link and shared nodes". A new task's
+head offers Agent (auto, or any harness the host lists; one that is not set up is shown and disabled), Model and Runs
+on (OpenVibe, or one of the person's machines through Link): they ride the start as agents.run-start@1's AGENT, MODEL
+and WHERE. The sidebar switches List and Board: every code run in its column (Starting, Working, Needs you, Done,
+Failed or stopped; after Vibe Kanban), cards open their thread; the columns stack on a phone. `ov-harness.js` options
+`agents`, `models`, `places`; `h.board()`. Test: `test/ov-harness.test.js`.
+
 ## 4.257.0 — 2026-11-15
 
 **The coding-harness layout (`ov-harness.js`, `OpenVibeHarness.page`).** The owner, 11-15: the messenger (agents,
