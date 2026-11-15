@@ -1,5 +1,26 @@
 # Changelog
 
+## 4.275.0 — 2026-11-15
+
+**The menu's Chat tab: Friends offer names, Global and Servers built in** (the owner's phone, 11-15, on openvibe.actor:
+Friends "auto fill", "icon", "improve"; Global "did not load … improve"; Servers "built in", "down").
+- **Friends** (`dock.js`):
+  - Names are offered as you type, from Chat's people search. Someone who is already a friend, or whom you already
+    asked, is not offered. Arrows, Enter and Escape work, and the field keeps the focus.
+  - Add is a person-plus icon button.
+  - With no friends yet, the list shows the people you already talk to, each one press from a friend.
+- **Global:**
+  - The room itself, newest at the bottom. New lines arrive every 5 s while it is open and visible
+    (`after_id`).
+  - A box to say something (`POST /api/chat/send`, as the person).
+  - A failed load offers Try again; openvibe.chat is a quiet link in the head.
+- **Servers:**
+  - Yours, then a box to start one right here (it joins your list).
+  - The public ones listed below, joined with one press, with a filter past eight.
+- Chat #611 lets every OpenVibe site use these paths with its Bearer; before it, Chat refused them for the origin.
+- Test: `dock-chat-segments-chrome` (names as you type, Add an icon, saying something in Global, joining and starting
+  a server).
+
 ## 4.274.0 — 2026-11-15
 
 **One ring per field on every site, and alerts that go on past the unread.**
