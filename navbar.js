@@ -636,7 +636,7 @@
      * serves its own pinned copy at /shared/ gets its own), else the network's copy.
      */
     // The files loaded from beside this one, by content (scripts/sibling-revs.js): a release changes their URLs.
-    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '48859d8b4437', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': 'd8406aab325a', 'dock.js': '4058387865f2', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '4b5d3df1747f', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '8d6856d2dc0e', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': 'f801f657d35f', 'ov-composer.js': '4db76b99d3c7', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
+    const SIBLING_REV = { 'ov-mark.js': 'f490466f57df', 'ov-glyphs.js': '5fa4615e0c7a', 'ov-brand.woff2': '3b4e6a8a5878', 'ov-look.js': 'd44fe4443e56', 'ov-fx.js': '947820d69097', 'ov-labels.js': 'd40f7ca14bc4', 'ov-forms.js': 'df32b583f0b8', 'ov-forms.css': '48859d8b4437', 'ov-share.js': '0a397ea380cc', 'ov-share.css': 'd609a71f611a', 'search.js': '4fb5e8519340', 'dock.js': 'eb487cbff945', 'presence.js': '5f195d41f8c5', 'panels.js': 'd90bfe987d81', 'surfaces.js': '3e6f2784c85f', 'notification-ui.js': '4b5d3df1747f', 'history.js': 'f9fb9e096c65', 'bottom.js': 'a8399664642e', 'appbar.js': '1fc1df4b3e28', 'release-watch.js': '25f02a3f0684', 'ov-icons.js': '073d6cc55244', 'sso-client.js': 'f574ac3331a5', 'overlay.js': '2bc56b3cf726', 'ov-home.js': '8d6856d2dc0e', 'nav-slots.js': '7b11e6916732', 'ov-wallet.js': 'f1a2d6774087', 'ov-wallet.css': '4923c808c9ad', 'purse.js': '9d3fea0dae02', 'ov-harness.js': 'dbc3e5bc803d', 'ov-drop.js': '445689a5eb80', 'ov-tip.js': '1d918e7de69d', 'ov-arrange.js': 'f2e7c61e0934', 'soft.js': '98ab9b8080b1', 'ov-run.js': '3158651d1698', 'ov-composer.js': 'ad5eafa79d9f', 'items.js': '9f0ba1844c20', 'items.css': 'e917ec14cd4d' };
     const siblingV = (name) => `${sibling(name)}${SIBLING_REV[name] ? `?v=${SIBLING_REV[name]}` : ''}`;
 
     // ov-tip.js loads at the first hover over a tooltip's owner.
@@ -1464,7 +1464,7 @@
     // ── The menu's Chat and Vibe (dock.js's panels; 4.220.0: no floating Dock). For a signed-in person dock.js reads their
     // state (a Network without the route is not asked again for a day) and paints its status on the menu button.
     const dockBase = () => String(_config.dockApiBase || 'https://openvibe.network').replace(/\/+$/, '');
-    const dockOpts = () => ({ token: () => _config.token, apiBase: dockBase(), chatBase: _config.dockChatBase, agentBase: _config.dockAgentBase, me: _config.user && _config.user.username, sibling,
+    const dockOpts = () => ({ token: () => _config.token, renew: () => renewToken(), apiBase: dockBase(), chatBase: _config.dockChatBase, agentBase: _config.dockAgentBase, me: _config.user && _config.user.username, sibling,
         status: (s) => { _menuStatus = s || null; }, openMenu: (id) => openMenuOn(id), closeMenu: () => { if (root.OpenVibeSearch && menuOpen()) root.OpenVibeSearch.close(); } });
     let _menuStatus = null;
     /** The menu on one of its places ('chats', 'vibe', 'code', 'agent'): opened there, or moved there if it is open. */
@@ -1902,7 +1902,12 @@
             });
             if (res.ok) {
                 const data = await res.json();
-                return { ok: true, user: (data && (data.user || data)) || null };
+                // Network slides a session: a token past its expiry (within the grace) is accepted and renewed, and the
+                // new one comes back in X-OV-Token. Keep it (4.260.0; the owner, 11-15: "Still see no chat messages":
+                // the bar kept the expired token, Network kept accepting it, and every other site refused it).
+                let renewed = null;
+                try { renewed = res.headers.get('X-OV-Token'); } catch { renewed = null; }
+                return { ok: true, user: (data && (data.user || data)) || null, renewed: renewed && renewed !== token && /^[A-Za-z0-9._-]{20,8192}$/.test(renewed) ? renewed : null };
             }
             return { ok: false, unauthorized: res.status === 401 || res.status === 403 };
         } catch {
@@ -1942,6 +1947,27 @@
     }
 
     /**
+     * A product refused the token (4.260.0; the owner, 11-15: "All my chat messages disappeared": a Network deploy came
+     * as the menu's token ran out, and Chat refused the old one): one renewal for everyone asking at once, the tools
+     * gateway first on its hosts, then the Network's grace refresh. → the new token, or null (signed out for real).
+     */
+    let renewing = null;
+    async function renewToken() {
+        if (renewing) return renewing;
+        renewing = (async () => {
+            const old = _config.token;
+            if (!old) return null;
+            let n = onToolsDomain() ? await gatewayRefresh() : null;
+            if (!n || !n.token) n = await networkRefresh(old);
+            if (!n || !n.token) return null;
+            persistToken(n.token);
+            _config.token = n.token;
+            return n.token;
+        })();
+        try { return await renewing; } finally { setTimeout(() => { renewing = null; }, 4000); }
+    }
+
+    /**
      * Resolve the signed-in user from the shared SSO state.
      * With a token: validate it against the Network. If it is rejected, make
      * ONE refresh attempt (same-origin gateway refresh first on tools hosts,
@@ -1952,6 +1978,7 @@
         const token = resolveToken();
         if (token) {
             const me = await fetchMe(token);
+            if (me.ok && me.user && me.renewed) { persistToken(me.renewed); return { user: me.user, token: me.renewed }; }
             if (me.ok && me.user) return { user: me.user, token };
             if (me.unauthorized) {
                 if (onToolsDomain()) {
@@ -3054,6 +3081,8 @@
         set activity(_v) { /* island.js binds itself; nothing to store */ },
 
         setToken(token) { _config.token = token; },
+        /** A product refused the token: renew it once (shared by every caller at that moment). → the new token or null. */
+        renewToken() { return renewToken(); },
         /** Who is signed in and the token for Network (read only): for the files loaded beside the navbar (ov-labels.js). */
         get session() { return { user: _config.user || null, token: _config.token || null, apiBase: _config.apiBase }; },
 

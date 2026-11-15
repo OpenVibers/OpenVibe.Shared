@@ -48,6 +48,9 @@
         const t = run && run.target;
         if (t && typeof t === 'object' && t.repo) return { key: `repo:${String(t.repo).replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\.git$/, '')}`, name: String(t.repo).replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\.git$/, ''), target: { repo: t.repo }, icon: 'repo' };
         if (t === 'openvibe') return { key: 'openvibe', name: 'OpenVibe', target: 'openvibe', icon: 'ov' };
+        // 4.260.0 (the owner, 11-15: "type anything … it's code related, so it'll code shit or give you a space or …
+        // analyze GitHubs, or clone shit"): no project first; Codes' make mode works out what the words ask for.
+        if (t === 'anything') return { key: 'anything', name: 'Anything', target: 'anything', icon: 'spark' };
         return { key: 'new', name: 'New projects', target: 'new', icon: 'spark' };
     };
 
@@ -91,6 +94,11 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
 .ovhr-head select { min-height: 32px; max-width: 100%; border-radius: 10px; border: 1px solid var(--border, rgba(255,255,255,.1)); background: var(--bg-card, rgba(255,255,255,.03)); color: var(--text-primary, #e8edf5); font: inherit; padding: 0 8px; }
 .ovhr-head a { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--accent-light, #93c5fd); text-decoration: none; min-height: 32px; }
 .ovhr-thread { flex: 1; min-height: 0; }
+/* 4.260.0 (the owner, 11-15: the box "cut off … and unscrollable" on a phone): the view scrolls in its column and the box
+   stays at its foot, over what scrolls; a head with nothing in it takes no room. */
+.ovhr-head:empty { display: none; }
+.ovhr-thread > .ovr { overflow-y: auto; overflow-x: hidden; }
+.ovhr-thread > .ovr > .ovr-compose { position: sticky; bottom: 0; z-index: 5; padding-top: 10px; padding-bottom: max(6px, env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--bg-primary, #0b0f17) 14px); }
 .ovhr-panel { display: none; min-height: 0; overflow: auto; padding: 14px; border-left: 1px solid var(--border, rgba(255,255,255,.08)); }
 @media (min-width: 1180px) { .ovhr.has-run .ovhr-panel { display: block; } }
 .ovhr-panel h3 { margin: 4px 0 10px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary, #a8b3c4); }
@@ -199,7 +207,7 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
         let runs = [];
         let openRef = String(o.open || '');
         let openRun = null;
-        let target = o.target || 'new';
+        let target = o.target || 'anything';
         let pick = { agent: 'auto', model: 'auto', where: 'auto' };
         let mode = 'list';
         let view = null;
@@ -211,7 +219,7 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
             for (const r of runs) { const p = projectOf(r); if (!seen.has(p.key)) seen.set(p.key, p); }
             for (const repo of o.repos || []) { const p = projectOf({ target: { repo } }); if (!seen.has(p.key)) seen.set(p.key, p); }
             for (const p of [projectOf({ target: 'openvibe' }), projectOf({ target: 'new' })]) if (!seen.has(p.key)) seen.set(p.key, p);
-            return [...seen.values()];
+            return [projectOf({ target: 'anything' }), ...seen.values()];
         }
 
         function drawProjects() {
@@ -321,29 +329,8 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
                 if (url && /^https?:\/\//.test(String(url))) { const a = el('a'); a.href = url; a.append(svg(I.open), el('span', null, 'Full page')); head.append(a); }
                 return;
             }
-            // A new task: what it works on.
-            const label = el('label', 'ovhr-chip');
-            label.append(svg(I.repo), el('span', null, 'Works on'));
-            const pick_ = el('select');
-            pick_.setAttribute('aria-label', 'What the new task works on');
-            for (const p of knownProjects()) {
-                const opt = el('option', null, p.name);
-                opt.value = p.key;
-                if (projectOf({ target }).key === p.key) opt.selected = true;
-                pick_.append(opt);
-            }
-            pick_.addEventListener('change', () => { const p = knownProjects().find((x) => x.key === pick_.value); if (p) blank(p.target); });
-            head.append(label, pick_);
-            // 4.258.0: which agent, which model, where it runs (auto: Codes routes it).
-            if (Array.isArray(o.agents) && o.agents.length) {
-                head.append(picker('Agent', 'agent', [{ value: 'auto', name: 'Auto' }, ...o.agents.map((a) => ({ value: String(a.id), name: `${a.name || a.id}${a.available === false ? ' (not set up)' : ''}`, disabled: a.available === false }))], pick.agent, (v) => { pick.agent = v; blank(); }));
-            }
-            if (Array.isArray(o.models) && o.models.length) {
-                head.append(picker('Model', 'model', [{ value: 'auto', name: 'Auto' }, ...o.models.map((m) => ({ value: String(m.id), name: m.name || m.id }))], pick.model, (v) => { pick.model = v; blank(); }));
-            }
-            if (Array.isArray(o.places) && o.places.length) {
-                head.append(picker('Runs on', 'where', [{ value: 'auto', name: 'Auto' }, ...o.places.map((pl) => ({ value: placeKey(pl), name: `${pl.name || pl.kind}${pl.online === false ? ' (offline)' : ''}` }))], pick.where, (v) => { pick.where = v; blank(); }));
-            }
+            // A new task (4.260.0): what it works on, the agent, the model and where it runs are the box's own chips (the
+            // owner, 11-15: "reorganize this … icon buttons and better custom drop down"); the head is empty and folds away.
         }
 
         function drawPanel() {
@@ -382,14 +369,34 @@ html:not([data-ov-motion="off"]) .ovhr-dot.is-run { animation: ovhr-pulse 1.6s e
             if (view) { try { view.destroy(); } catch { /* */ } }
             const p = projectOf({ target });
             const where = p.key === 'new' ? null : p.name;
-            view = root.OpenVibeRun.mount(threadHost, { ...o, ...opts, filter: 'code', start: { kind: 'code', target, ...startFields(), ...(o.start && o.start.context ? { context: o.start.context } : {}) },
+            const any = p.key === 'anything';
+            view = root.OpenVibeRun.mount(threadHost, { ...o, ...opts, filter: 'code', start: { kind: 'code', ...(any ? {} : { target }), ...startFields(), ...(o.start && o.start.context ? { context: o.start.context } : {}) },
                 // A coding start, not a chat: what the task works on, and what happens to it.
                 blankIcon: 'code',
-                blankTitle: p.key === 'new' ? 'A new project' : p.key === 'openvibe' ? 'Improve OpenVibe' : `New task in ${where}`,
-                blankLine: p.key === 'new' ? 'Say what to build. An agent makes it in a project of its own, and you can open it, change it and ship it.'
+                blankTitle: any ? 'What should Codes do?' : p.key === 'new' ? 'A new project' : p.key === 'openvibe' ? 'Improve OpenVibe' : `New task in ${where}`,
+                blankLine: any ? 'Anything with code: fix or change a repository (name it in your words), build something new, look into a GitHub project, or bring it to OpenVibe.Git. Codes works out the rest.'
+                    : p.key === 'new' ? 'Say what to build. An agent makes it in a project of its own, and you can open it, change it and ship it.'
                     : 'Say what to build or fix. Codes picks the agent that fits it, works on its own branch and opens a pull request when it is done.',
-                placeholder: p.key === 'new' ? 'What should it build?' : 'Describe the change, the bug or what to build',
-                starters: o.starters || (p.key === 'new' ? [['code', 'A one-page site for my stream'], ['code', 'A small browser game'], ['code', 'A goal bar overlay']]
+                placeholder: any ? 'Ask Codes anything about code' : p.key === 'new' ? 'What should it build?' : 'Describe the change, the bug or what to build',
+                // 4.260.0 (the owner, 11-15: the box said "Find a live stream about cooking" on Codes): coding examples only.
+                examples: any ? ['Ask Codes anything about code', 'Fix the failing tests in octocat/hello-world', 'Explain how vercel/next.js renders a page', 'Clone my repo to OpenVibe.Git', 'A one-page site for my stream']
+                    : p.key === 'new' ? ['What should it build?', 'A one-page site for my stream', 'A small browser game', 'A goal bar overlay for OBS']
+                    : ['Describe the change, the bug or what to build', 'Fix the failing login test', 'Add a dark mode toggle', 'Make the home page load faster', 'Write tests for the date parser'],
+                // 4.260.0 (the owner: "reorganize this … icon buttons and better custom drop down"): what it works on, the
+                // agent, the model and where it runs are the box's own chips, each a sheet, instead of rows of selects.
+                composer: {
+                    ask: { task: 'code' },
+                    runOptions: {
+                        agents: [{ id: 'auto', name: 'Auto', line: 'Codes picks the agent that fits' }, ...(Array.isArray(o.agents) ? o.agents : []).map((a) => ({ id: String(a.id), name: a.name || a.id, line: a.available === false ? 'Not set up on your account' : 'A coding agent', disabled: a.available === false }))],
+                        // Coding never runs on OpenVibe's own server (the owner, 11-15: "always … on the node or the user's own
+                        // computer or link setup … The main server shouldn't be used"): a shared node or your computer.
+                        places: [{ kind: 'auto', name: 'Auto', line: 'A shared node or your own computer' },
+                            ...(Array.isArray(o.places) ? o.places : []).filter((pl) => pl && pl.kind !== 'openvibe' && pl.kind !== 'auto').map((pl) => ({ kind: pl.kind, ...(pl.id ? { id: pl.id } : {}), name: pl.name || pl.kind, line: pl.kind === 'machine' ? `Your computer${pl.online === false ? ' · offline' : ''}` : '', disabled: pl.online === false }))],
+                    },
+                    runChips: [{ id: 'project', icon: 'repo', label: 'Works on', value: p.key, options: () => knownProjects().map((x) => ({ value: x.key, name: x.name, line: x.key === 'new' ? 'Something new, in a project of its own' : x.key === 'openvibe' ? 'One of OpenVibe\'s own sites' : 'Your repository' })), onPick: (v) => { const x = knownProjects().find((y) => y.key === v); if (x) blank(x.target); } }],
+                },
+                starters: o.starters || (any ? [['code', 'Fix the failing tests in my repo'], ['search', 'Explain how a GitHub project works'], ['repo', 'Clone my repo to OpenVibe.Git'], ['spark', 'A one-page site for my stream']]
+                    : p.key === 'new' ? [['code', 'A one-page site for my stream'], ['code', 'A small browser game'], ['code', 'A goal bar overlay']]
                     : [['code', 'Fix the failing tests'], ['code', 'Add a dark mode'], ['code', 'Write a README']]),
                 onPlace: (p) => { if (p && p.ref && p.ref !== openRef) { openRef = String(p.ref); loadOpen(); } try { if (typeof o.onPlace === 'function') o.onPlace(p); } catch { /* */ } },
                 onBack: () => blank() });

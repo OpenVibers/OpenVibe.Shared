@@ -138,12 +138,18 @@ window.reply = C.mount(document.getElementById('d'), { preset: 'comment', id: 'r
         await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].find((b) => b.querySelector('.ovc-model-t b').textContent === 'Codes').click(), true`);
         await page.evaluate(`document.querySelector('#g1 .ovc-run-c[data-what="Runs on"]').click(), true`);
         for (let i = 0; i < 40 && !(await page.evaluate(`!!document.querySelector('dialog.ovc-sheet .ovc-model-b')`)); i++) await new Promise((r) => setTimeout(r, 50));
-        await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].find((b) => b.querySelector('.ovc-model-t b').textContent === 'OpenVibe').click(), true`);
-        assert.deepEqual(await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-run .ovc-chip-v')].map((c) => c.textContent)`), ['Codes', 'Auto model', 'OpenVibe'], 'the chips say what was picked');
+        // 4.260.0 (the owner, 11-15: coding "always … on the node or the user's own computer … The main server shouldn't be
+        // used"): a coding agent's Runs on never lists OpenVibe; Auto there means a shared node or your computer.
+        const placesNow = await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].map((b) => b.querySelector('.ovc-model-t b').textContent)`);
+        assert.ok(!placesNow.includes('OpenVibe'), `no OpenVibe place for Codes (${placesNow})`);
+        assert.match(await page.evaluate(`document.querySelector('dialog.ovc-sheet').textContent`), /shared node or your own computer/);
+        await page.evaluate(`[...document.querySelectorAll('dialog.ovc-sheet .ovc-model-b')].find((b) => b.querySelector('.ovc-model-t b').textContent === 'Auto').click(), true`);
+        assert.equal(await page.evaluate(`[...document.querySelectorAll('#g1 .ovc-run .ovc-chip-v')].map((c) => c.textContent)[0]`), 'Codes', 'the chip says what was picked');
         await page.evaluate(`(() => { const t = agent.text; t.value = 'fix the overlay'; t.dispatchEvent(new Event('input', { bubbles: true })); document.querySelector('#g1 [data-ovt-send]').click(); })()`);
         for (let i = 0; i < 40 && (await page.evaluate(`window.runs.length`)) < 2; i++) await new Promise((r) => setTimeout(r, 50));
-        assert.deepEqual(await page.evaluate(`window.runs[1]`), { agent: 'codes', where: { kind: 'openvibe', name: 'OpenVibe' } }, 'Codes, on OpenVibe');
-        assert.deepEqual(await page.evaluate(`JSON.parse(localStorage.getItem('ov:composer:run'))`), { agent: 'codes', where: 'openvibe' }, 'kept for the next box');
+        assert.deepEqual(await page.evaluate(`window.runs[1].agent`), 'codes', 'Codes');
+        assert.ok(!(await page.evaluate(`window.runs[1].where && window.runs[1].where.kind === 'openvibe'`)), 'never on OpenVibe');
+        assert.equal(await page.evaluate(`JSON.parse(localStorage.getItem('ov:composer:run')).agent`), 'codes', 'kept for the next box');
         await page.evaluate(`localStorage.removeItem('ov:composer:run'), true`);
 
         // Editing your message in the box (openvibe.design rule 138): a bar says so, the send is Save, Enter saves

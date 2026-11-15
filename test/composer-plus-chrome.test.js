@@ -55,6 +55,14 @@ HTMLInputElement.prototype.click = function () {
         assert.deepEqual(row.filter((l) => /Photos|Files|Camera/.test(l)), [], `no photo, file or camera button in the row (${row})`);
         assert.ok(await page.evaluate(`document.querySelectorAll('#p1 input[type=file]').length >= 1`), 'the file inputs stay in the form');
 
+        // A touch on the + keeps the focus in the text (4.260.0; the owner, 11-15: on a phone with the keyboard up the +
+        // "sometimes doesn't open … it stays looking pressed": the keyboard folded and the box moved under the finger).
+        const kept = await page.evaluate(`(() => { const ta = document.querySelector('#p1 textarea, #p1 input[type=text]'); if (!ta) return 'no field'; ta.focus();
+            const ev = new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true, cancelable: true }); document.querySelector('#p1 .ovc-more').dispatchEvent(ev);
+            return { prevented: ev.defaultPrevented, focused: document.activeElement === ta }; })()`);
+        assert.deepEqual(kept, { prevented: true, focused: true }, 'the text keeps the focus, so the keyboard stays and nothing moves');
+        await page.evaluate(`document.activeElement && document.activeElement.blur()`);
+
         // At 390 px the + is a sheet from the bottom: tiles, then rows, a site's own tool among them.
         await page.evaluate(`document.querySelector('#p1 .ovc-more').click()`);
         const sheet = await until(`(() => { const d = document.querySelector('dialog.ovc-add[open]'); return d ? { tiles: [...d.querySelectorAll('.ovc-add-tile')].map((t) => t.dataset.tool), rows: [...d.querySelectorAll('.ovc-add-row')].map((r) => r.dataset.tool), title: d.querySelector('.ovc-add-h b').textContent } : null; })()`);

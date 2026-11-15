@@ -1267,6 +1267,10 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             more.type = 'button'; more.setAttribute('aria-label', 'Add: camera, photos, files and more'); more.title = 'Add';
             more.setAttribute('aria-haspopup', 'dialog'); more.setAttribute('aria-expanded', 'false');
             more.addEventListener('click', openSheet);
+            // 4.260.0 (the owner, 11-15: the + "sometimes doesn't open on mobile, especially with the keyboard open … it
+            // stays looking pressed"): a tap took the focus from the text, the keyboard folded, the box moved under the
+            // finger and the click landed nowhere. A touch on the + keeps the focus where it is, so nothing moves.
+            more.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') e.preventDefault(); });
             const lead = tools.querySelector(':scope > .ovdk-mic');   // a page's own mic stays first
             tools.insertBefore(more, lead ? lead.nextSibling : tools.firstChild);
             document.addEventListener('pointerdown', (e) => { if (sheet && !sheet.contains(e.target) && !more.contains(e.target)) closeSheet(); });
@@ -1834,10 +1838,26 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
             });
             b.append(list);
         });
-        agentChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Agent', opts.agents || [], (x) => x.id === runPick.agent, (x) => { runPick.agent = x.id; saveRun(); }); });
-        whereChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Runs on', opts.places || [], (x) => placeKey(x) === runPick.where, (x) => { runPick.where = placeKey(x); saveRun(); }); });
+        agentChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Agent', opts.agents || [], (x) => x.id === runPick.agent, (x) => { runPick.agent = x.id; if (runPick.where === 'openvibe' && coding(opts)) runPick.where = 'auto'; saveRun(); }); });
+        // Coding (Codes or a coding harness) never runs on OpenVibe's own server (the owner, 11-15): its sheet leaves
+        // OpenVibe out, and Auto means a shared node or your computer.
+        const coding = (opts) => { const a = (opts.agents || []).find((x) => x.id === runPick.agent); return runPick.agent === 'codes' || !!(a && (a.kind === 'harness' || a.kind === 'codes')); };
+        const placesFor = (opts) => (coding(opts) ? (opts.places || []).filter((x) => x.kind !== 'openvibe').map((x) => (x.kind === 'auto' ? { ...x, line: 'A shared node or your own computer' } : x)) : (opts.places || []));
+        whereChip.addEventListener('click', async () => { const opts = await loadRun(); pickSheet('Runs on', placesFor(opts), (x) => placeKey(x) === runPick.where, (x) => { runPick.where = placeKey(x); saveRun(); }); });
         runModelChip.addEventListener('click', () => openModels());
-        if (runOn) { runChips.append(agentChip, runModelChip, whereChip); paintRun(); loadRun().then(paintRun); }
+        // A page's own choices lead the line (4.260.0; Codes' "Works on"): { id, icon, label, value, options: [{ value,
+        // name, line, disabled }], onPick(value) }, each a chip that opens the same sheet as the others.
+        // options may be a list or a function (read when the sheet opens: a page's list can grow after the box mounts).
+        const optionsOf = (spec) => { try { const v = typeof spec.options === 'function' ? spec.options() : spec.options; return Array.isArray(v) ? v : []; } catch { return []; } };
+        const extraChips = (Array.isArray(o.runChips) ? o.runChips : []).filter((c) => c && optionsOf(c).length).map((spec) => {
+            let value = spec.value;
+            const c = runChip(IC[spec.icon] || IC.repo || IC.spark, spec.label || 'Option');
+            const paint = () => { const list = optionsOf(spec); const it = list.find((x) => String(x.value) === String(value)) || list[0]; c.querySelector('.ovc-chip-v').textContent = it ? it.name : ''; c.setAttribute('aria-label', `${spec.label || 'Option'}: ${it ? it.name : ''}. Change it`); };
+            c.addEventListener('click', () => pickSheet(spec.label || 'Option', optionsOf(spec).map((x) => ({ ...x, name: x.name, line: x.line })), (x) => String(x.value) === String(value), (x) => { value = x.value; paint(); if (typeof spec.onPick === 'function') spec.onPick(x.value); }));
+            paint();
+            return c;
+        });
+        if (runOn) { runChips.append(...extraChips, agentChip, runModelChip, whereChip); paintRun(); loadRun().then(paintRun); }
         const runValue = () => {
             if (!runOn) return null;
             const opts = runOpts || o.runOptions || fallbackRun();

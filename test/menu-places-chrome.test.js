@@ -108,6 +108,25 @@ const ROW = `Array.from(document.querySelectorAll('.ovs-starttabs .ovs-tab')).ma
                 await page.evaluate(`document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`); await wait(80);
                 await page.evaluate('OpenVibeSearch.close()'); await wait(300);
                 await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:all', 'runs-destroy', 'mount:chats', 'destroy', 'runs:all', 'runs-destroy'], `${name}: one mount at a time, handed back on Messages, on Feed and on close`));
+                // 4.260.0 (the owner, 11-15: "switch between codes and the Actor style"): Actor | Codes over the Vibe door. Codes
+                // mounts the coding-harness layout on the same Frame; the field's ↗ follows (Actor's site, Codes' site); kept.
+                await page.evaluate(`window.OpenVibeHarness = { page(host, o) { window.log.push('codes:' + (o.base.endsWith('/api/frame') ? 'ok' : 'wrong base')); host.innerHTML = '<div class="codestub"></div>';
+                    return { prefill(t) { window.asked = 'codes:' + t; }, destroy() { window.log.push('codes-destroy'); host.innerHTML = ''; } }; } }`);
+                await page.evaluate(OPEN(true));
+                await until(`!!document.querySelector('.ovs-starttabs [data-dock="vibe"]')`);
+                await page.evaluate(`window.log = []; document.querySelector('.ovs-starttabs [data-dock="vibe"]').click()`);
+                const sw = async () => page.evaluate(`({ tabs: [...document.querySelectorAll('.ovs-vibe-switch .ovs-vibe-sw')].map((b) => b.dataset.mode + ':' + b.getAttribute('aria-selected')),
+                    runs: !!document.querySelector('.ovs-door-host .runstub'), codes: !!document.querySelector('.ovs-door-host .codestub'), open: (document.querySelector('.ovs-acts a.ovs-act') || {}).href || null })`);
+                await eventually(async () => assert.deepEqual(await sw(), { tabs: ['actor:true', 'codes:false'], runs: true, codes: false, open: 'https://openvibe.actor/chat' }, `${name}: Actor first, its ↗ to openvibe.actor`));
+                await page.evaluate(`document.querySelector('.ovs-vibe-switch [data-mode="codes"]').click()`);
+                await eventually(async () => assert.deepEqual(await sw(), { tabs: ['actor:false', 'codes:true'], runs: false, codes: true, open: 'https://openvibe.codes/' }, `${name}: Codes: the harness layout, its ↗ to openvibe.codes`));
+                assert.equal(await page.evaluate(`localStorage.getItem('ovs-vibe-mode')`), 'codes', `${name}: the choice is kept`);
+                await page.evaluate(`document.querySelector('.ovs-vibe-switch [data-mode="actor"]').click()`);
+                await eventually(async () => assert.deepEqual((await sw()).tabs, ['actor:true', 'codes:false'], `${name}: back to Actor`));
+                await eventually(async () => assert.deepEqual(await page.evaluate('window.log'), ['runs:all', 'runs-destroy', 'codes:ok', 'codes-destroy', 'runs:all'], `${name}: one view at a time`));
+                await page.evaluate(`localStorage.removeItem('ovs-vibe-mode'); delete window.OpenVibeHarness`);
+                await page.evaluate('OpenVibeSearch.close()');
+                await until(`!document.querySelector('.ovs.is-open')`);
                 // A place asked for by name (the Dock's open({ tab: 'code' }), the composer's timer): Vibe on that list.
                 await page.evaluate(OPEN(true)); await wait(300);
                 await page.evaluate(`window.log = []; OpenVibeSearch.door('code')`); await wait(80);
