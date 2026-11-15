@@ -1,5 +1,35 @@
 # Changelog
 
+## 4.265.0 — 2026-11-15
+
+**OpenVibeSession: one session surface for every agent** (`ov-session.js`, plan §AD.8). The owner: "a complete rethink
+and redesign … way smarter, intelligent type system sessions, kind of like Claude Code or any other harnesses, but make
+it way better". Every agent (your Actor, Codes, a coding harness, an agent you made) is a session over the Frame's Run
+API. There is no Actor | Codes switch: who works on it is a property of the session, Auto places the words, and
+`@codes`, `@actor` or a harness's name pins it.
+- **The head:** the sessions button, the agent's face, the title and live status ("Working · 2:14 · $0.03"), the files
+  it changed, and ⋯ (stop, copy the link, its own page, a new session, all sessions).
+- **The thread:** your words on the right and the agent's full width, streaming in place. Thinking is folded ("Thought
+  for 8 s"). The tools it used in a row are one block ("Read 4 files, searched once, ran 2 commands") that opens to
+  each, with what it is running now. The files it changed are a card (+/− per file) that opens the diff in a sheet;
+  edits alone are only the card. Approvals are answered in place. A helper (a child session) opens in place, with Back.
+  A marker shows where earlier turns were summarized, and a card shows what it made (a pull request, a space, a file).
+- **The plan:** the agent's live checklist above the box ("Plan · 3 of 7" and the step it is on), opening to every
+  item (TodoWrite, update_plan, or a step's `ui.type: plan`).
+- **The box:** the network's composer, with one context chip (Agent · Model · Runs on · Works on) that opens one
+  OpenVibePicker, every model in Exchange's directory searchable. `/` offers commands (/new /agent /model /where /repo
+  /stop /sessions /help) and `@` the agents. Words said while it works wait as queued and go at its next turn. An open
+  session says how it runs (agent · model · computer · repository).
+- **Sessions:** a drawer on a phone (the button, or a swipe from the edge) and a 300 px column on a computer: search,
+  needs-you first, working, today, earlier.
+- `OpenVibeSession.mount(host, { base, token, me, sibling, open, agent, works, starters, onEvent })` →
+  `{ open, blank, prefill, drawer, refresh, destroy }`; events `session.opened | started | step | approval | ended |
+  blank`. `OpenVibeSession.card(type, render)` adds a rich card; `OpenVibeRun.cardFor(type)` lets a session show a
+  site's own cards.
+
+Sites serve it (`files.js`). The menu's Vibe and Actor's /chat move onto it next; Codes' home first.
+Test: `test/ov-session-chrome.test.js`.
+
 ## 4.264.0 — 2026-11-15
 
 **OpenVibePicker: one animated picker for every choice** (`ov-picker.js`, plan §AD.8 step 4). The owner: "the drop
