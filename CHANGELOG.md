@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.267.0 — 2026-11-15
+
+**Files in the Chat tab's messages** (plan §AD.8 step 5: "DMs with files in the Chat tab"; no "open the site" needed).
+A direct message in the menu sends and shows files:
+- **Sending.** The paperclip beside the box picks up to four files: a picture, a video, a sound, a PDF or a text. Each
+  goes to OpenVibe.Media as it is picked (the composer's own upload, `ov-composer.js` loaded beside the Dock the first
+  time). It shows as a chip with its progress and can be taken off with ×. The files go with the message by their ids
+  (`attachments`, Chat's DM API), and a file alone is a message.
+- **Showing.** A message's files are drawn under its words from Chat's references, Media addresses only: a picture
+  (opens full size), a video and a sound that play in place, and a file with its size that opens in a new tab. A
+  message with files and no words shows only the files.
+- `OpenVibeComposer.uploadToMedia(file, onProgress, signal)` → `{ id, attachment }`: the composer's Media upload, for a
+  box that is not the composer.
+
+Dock budget 24400 bytes brotli (24033 with this; budgets may grow). Test: `dock-chrome` (two files picked, uploaded,
+sent with no words by their ids; the picture and the file in the thread; the box cleared).
+
 ## 4.266.0 — 2026-11-15
 
 **The menu's Vibe is the one session surface** (plan §AD.8; the owner, 11-15 night: "the layout sucks … a complete

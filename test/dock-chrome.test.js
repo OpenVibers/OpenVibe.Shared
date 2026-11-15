@@ -93,7 +93,7 @@ const NOTES = [
 
 // The stand-in's state for the scenario under way.
 let scenario = {};
-const puts = [], decided = [], said = [], reads = [], started = [];
+const puts = [], decided = [], said = [], saidFiles = [], reads = [], started = [];
 // K-D3: the agent view Codes' API answers (dock-agent.js) and the controls the Dock pressed.
 let agentView = null;
 const controls = [];
@@ -185,7 +185,7 @@ const server = http.createServer((req, res) => {
         if (dm && dm[2] === 'read') { reads.push(dm[1]); return json(200, { ok: true }); }
         const dmEdit = /^\/api\/dm\/conversations\/(\d+)\/messages\/(\d+)$/.exec(u.pathname);
         if (dmEdit && req.method === 'PATCH') { const text = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').message; return json(200, { message: { id: Number(dmEdit[2]), message: text, card: null, edited_at: new Date().toISOString() } }); }
-        if (dm && req.method === 'POST') { said.push(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}').message); return json(201, { message: { id: 900 + said.length } }); }
+        if (dm && req.method === 'POST') { const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); said.push(b.message); saidFiles.push(b.attachments || []); return json(201, { message: { id: 900 + said.length } }); }
         if (dm) {
             const after = Number(u.searchParams.get('after')) || 0;
             // A known OpenVibe link's card, as Chat's link cards put it on a message (4.147.0, dock-card.js); and one that
@@ -193,7 +193,9 @@ const server = http.createServer((req, res) => {
             const card = { kind: 'video', url: 'https://openvibe.video/v/42', title: 'The studio tour', line: '12:04 · Kai Moreno', image: 'https://openvibe.media/t/abc?w=320', action: { label: 'Watch together', href: 'https://openvibe.party/new?media=https%3A%2F%2Fopenvibe.video%2Fv%2F42' } };
             const bad = { kind: 'video', url: 'javascript:alert(1)', title: '<img src=x>', line: 'x', image: 'https://evil.example/p.png', action: { label: 'Go', href: 'javascript:alert(2)' } };
             const all = [{ id: 101, username: 'kai', display_name: 'Kai Moreno', message: 'see the shots?', card, created_at: iso(240e3) }, { id: 102, username: 'ada', display_name: 'Ada', message: '<b>on it</b>', card: bad, created_at: iso(120e3) }]
-                .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0) })));
+                .concat(said.map((m, i) => ({ id: 901 + i, username: 'ada', display_name: 'Ada', message: m, created_at: iso(0),
+                    // 4.267.0: what Chat keeps of the files (rooms/attachments.js publicReference): a picture and a file.
+                    attachments: (saidFiles[i] || []).map((id, k) => (k === 0 ? { id, kind: 'image', name: 'shot.png', media_type: 'image/png', size: 1200, url: `https://openvibe.media/a/${id}`, width: 4, height: 3 } : { id, kind: 'file', name: 'notes.txt', media_type: 'text/plain', size: 2048, url: `https://openvibe.media/a/${id}` })) })));
             // Chat answers the first page newest first (getMessagesPage: ORDER BY m.id DESC), and a page after an id
             // oldest first: the thread puts both in order (4.259.0).
             return json(200, { messages: after ? all.filter((m) => m.id > after) : all.slice().reverse() });
@@ -386,7 +388,7 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
         // ── Chats (K-D2): the list, a thread in place, Enter sends, read, remembered; a phone keeps the sheet open. ──
         {
             scenario = { counts: { running: 1, waiting: 0, unread: 0 } };
-            puts.length = 0; said.length = 0; reads.length = 0;
+            puts.length = 0; said.length = 0; saidFiles.length = 0; reads.length = 0;
             const p = await fresh(390, 780);
             await p.goto(`${base}/page`, { maxMs: 5000 });
             await until(p, "!!window.OpenVibeDock", 'the panels');
@@ -423,6 +425,18 @@ const NO_FLOATING = "!document.querySelector('#ovdk-pill, .ovdk-pill') && [...do
             await p.evaluate("(() => { const b = document.querySelector('.ovdk-send textarea'); b.value = 'Looks good'; b.dispatchEvent(new Event('input')); b.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })); })()");
             await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 3", 'the sent message in the thread');
             assert.deepStrictEqual(said, ['Looks good'], 'Enter sends it to Chat');
+            // 4.267.0 (plan §AD.8 step 5): files. The paperclip picks them, each goes to Media as it is picked (the composer's
+            // own upload; a stand-in here), and a file alone is a message; the thread draws a picture and a file to open.
+            await p.evaluate(`(() => { window.OpenVibeComposer = Object.assign(window.OpenVibeComposer || {}, { uploadToMedia: (file, onProgress) => new Promise((ok) => { onProgress(0.5); setTimeout(() => ok({ id: file.type === 'image/png' ? 'att_01JD0000000000000000000001' : 'att_01JD0000000000000000000002' }), 150); }) });
+                const input = document.querySelector('.ovdk-send input[type=file]'); const dt = new DataTransfer();
+                dt.items.add(new File(['png'], 'shot.png', { type: 'image/png' })); dt.items.add(new File(['words'], 'notes.txt', { type: 'text/plain' }));
+                input.files = dt.files; input.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+            await until(p, "document.querySelectorAll('.ovdk-pending .ovdk-chip:not(.is-up)').length === 2 && !document.querySelector('.ovdk-pending').hidden", 'the two files, uploaded, as chips');
+            await p.evaluate("document.querySelector('.ovdk-send').requestSubmit()");
+            await until(p, "document.querySelectorAll('.ovdk .ovdk-msg').length === 4", 'the files sent as a message of their own');
+            assert.deepStrictEqual([said[1], saidFiles[1]], ['', ['att_01JD0000000000000000000001', 'att_01JD0000000000000000000002']], 'no words, the two files by their ids');
+            const drawn = await until(p, "(() => { const m = [...document.querySelectorAll('.ovdk .ovdk-msg')].pop(); const img = m.querySelector('.ovdk-files .ovdk-pic img'); const f = m.querySelector('.ovdk-files .ovdk-fileref'); return img && f ? { img: img.getAttribute('src'), alt: img.alt, file: f.getAttribute('href'), name: f.querySelector('.ovdk-fileref-n').textContent, size: f.querySelector('small').textContent, words: m.querySelector('.ovdk-text').hidden, chips: document.querySelectorAll('.ovdk-pending .ovdk-chip').length } : null; })()", 'the picture and the file in the thread');
+            assert.deepStrictEqual(drawn, { img: 'https://openvibe.media/a/att_01JD0000000000000000000001', alt: 'shot.png', file: 'https://openvibe.media/a/att_01JD0000000000000000000002', name: 'notes.txt', size: '2 KB', words: true, chips: 0 }, 'a picture, a file with its size, no empty words, and the box cleared');
             assert.ok(reads.includes('11'), 'the thread is marked read as it is shown');
             await eventually(async () => assert.ok(puts.some((b) => b.chat === '11'), `the open chat is the Dock's state (${JSON.stringify(puts)})`));
             await p.evaluate("document.querySelector('.ovdk-back').click()");

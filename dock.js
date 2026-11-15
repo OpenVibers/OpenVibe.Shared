@@ -19,6 +19,7 @@
 
     const svg = (p) => `<svg viewBox="0 0 24 24" aria-hidden="true">${p}</svg>`;
     const G = {
+        clip: '<path d="M19.5 11.3l-7.6 7.6a4.9 4.9 0 0 1-6.9-6.9l7.9-7.9a3.3 3.3 0 0 1 4.6 4.6l-7.9 7.9a1.6 1.6 0 0 1-2.3-2.3l7.3-7.3"/>',
         people: '<circle cx="9" cy="8.5" r="3.3"/><path d="M3.2 19.5c.7-3.4 3-5.3 5.8-5.3s5.1 1.9 5.8 5.3"/><circle cx="17.2" cy="9.4" r="2.6"/><path d="M16 14.4c2.4.2 4.2 1.8 4.8 5"/>',
         server: '<rect x="4" y="4" width="7" height="7" rx="2.2"/><rect x="13" y="4" width="7" height="7" rx="2.2"/><rect x="4" y="13" width="7" height="7" rx="2.2"/><rect x="13" y="13" width="7" height="7" rx="2.2"/>',
         globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.6 5.4 3.6 8.5s-1.2 5.9-3.6 8.5c-2.4-2.6-3.6-5.4-3.6-8.5s1.2-5.9 3.6-8.5z"/>',
@@ -89,7 +90,7 @@
     }
 
     // Each sibling's content hash (scripts/sibling-revs.js writes it), so a release gives each a new URL.
-    const DOCK_REV = { 'dock-vibe.js': '06866cb76f06', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
+    const DOCK_REV = { 'dock-vibe.js': '7ba78b9dd49b', 'dock-code.js': 'ff5ce01c6933', 'dock-mount.js': 'fb07dccadb8c', 'dock-runs.js': '57b9d87fd71e', 'ai-marks-client.js': 'f4a880a9f206', 'action-center.js': 'c3f2db0f3fb3', 'dock-timeline.js': 'c2f16c16d470', 'dock-actor.js': 'aa013b999817', 'dock-agent.js': '8787080a04d3', 'dock-timer.js': '460d68aa8321', 'dock-share.js': 'e83b2e27b3ef', 'dock-card.js': '2643c20b0016', 'dock-chat-edits.js': '6cf8c6b6daa5' };
     function load(src, test) {
         return new Promise((ok) => {
             if (test()) return ok(true);
@@ -275,6 +276,23 @@
                 border: 1px solid var(--border-light, var(--border, rgba(255,255,255,.14))); background: var(--bg-primary, #12141b); }
             .ovdk-send:focus-within { border-color: var(--accent, #3b82f6); }
             .ovdk-send textarea { flex: 1; min-width: 0; box-sizing: border-box; min-height: 36px; max-height: 140px; padding: 8px 0; resize: none; border: 0; outline: none; background: transparent; color: var(--text-primary, #ececf1); font: inherit; font-size: 14px; line-height: 1.4; }
+            .ovdk-attach { width: 40px; height: 40px; flex: none; border: 0; border-radius: 12px; background: transparent; color: var(--text-secondary, #a8b3c4); cursor: pointer; display: grid; place-items: center; margin-left: -8px; }
+            .ovdk-attach:hover { color: var(--text-primary, #e6edf7); background: color-mix(in srgb, var(--text-primary, #e6edf7) 8%, transparent); }
+            .ovdk-attach svg { width: 20px; height: 20px; }
+            .ovdk-pending { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 10px; }
+            .ovdk-chip { position: relative; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 34px; padding: 0 4px 0 10px; border-radius: 10px; overflow: hidden; background: var(--bg-card, rgba(255,255,255,.05)); border: 1px solid var(--border, rgba(255,255,255,.1)); font-size: 13px; }
+            .ovdk-chip > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+            .ovdk-chip > i { position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--accent, #3b82f6); transition: width .2s; }
+            .ovdk-chip:not(.is-up) > i { display: none; } .ovdk-chip.is-bad { border-color: var(--danger, #ef4444); }
+            .ovdk-chip > button { width: 28px; height: 28px; border: 0; background: transparent; color: inherit; cursor: pointer; display: grid; place-items: center; }
+            .ovdk-chip > button svg { width: 14px; height: 14px; }
+            .ovdk-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; max-width: 100%; }
+            .ovdk-pic img { display: block; max-width: min(240px, 100%); height: auto; max-height: 240px; border-radius: 12px; object-fit: cover; }
+            .ovdk-vid { display: block; width: min(280px, 100%); max-height: 220px; border-radius: 12px; background: #000; }
+            .ovdk-aud { width: min(280px, 100%); }
+            .ovdk-fileref { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 36px; padding: 0 10px; border-radius: 10px; background: var(--bg-card, rgba(255,255,255,.05)); color: inherit; text-decoration: none; font-size: 13px; }
+            .ovdk-fileref .ovdk-fileref-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ovdk-fileref small { color: var(--text-muted, #93a0b4); }
+            .ovdk-fileref svg { width: 16px; height: 16px; flex: none; }
             .ovdk-go { width: 44px; height: 44px; flex: none; border: 0; border-radius: 12px; cursor: pointer; display: grid; place-items: center;
                 color: var(--on-accent-strong, var(--on-accent, #fff)); background: var(--accent-strong, var(--accent, #3472d8)); }
             .ovdk-go:disabled { opacity: .55; cursor: default; }
@@ -776,6 +794,33 @@
     const sameDay = (a, b) => { const x = new Date(a), y = new Date(b); return x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth() && x.getDate() === y.getDate(); };
     /** One sender's run of messages: a new one starts with another sender, or after ten quiet minutes. */
     const sameRun = (m, prev) => !!prev && prev.username === m.username && sentAt(m) - sentAt(prev) < 10 * 60000 && sameDay(sentAt(m), sentAt(prev));
+    const MEDIA = /^https:\/\/openvibe\.media\//;
+    const size = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : n >= 1024 ? `${Math.round(n / 1024)} KB` : `${n} B`);
+    function filesOf(m) {
+        const list = (Array.isArray(m.attachments) ? m.attachments : []).filter((a) => a && MEDIA.test(String(a.url || ''))).slice(0, 4);
+        if (!list.length) return null;
+        const box = h('span', 'ovdk-files');
+        for (const a of list) {
+            const play = a.playback && a.playback.ready && MEDIA.test(String(a.playback.url || '')) ? a.playback.url : a.url;
+            if (a.kind === 'image') {
+                const link = h('a', 'ovdk-pic'); link.href = a.url; link.target = '_blank'; link.rel = 'noopener';
+                const img = h('img'); img.src = a.url; img.alt = a.name || 'A picture'; img.loading = 'lazy'; img.decoding = 'async';
+                if (a.width && a.height) { img.width = a.width; img.height = a.height; }
+                link.append(img); box.append(link);
+            } else if (a.kind === 'video') {
+                const v = h('video', 'ovdk-vid'); v.controls = true; v.preload = 'none'; v.playsInline = true; v.src = play;
+                if (a.poster && MEDIA.test(a.poster)) v.poster = a.poster;
+                v.setAttribute('aria-label', a.name || 'A video'); box.append(v);
+            } else if (a.kind === 'audio') {
+                const s = h('audio', 'ovdk-aud'); s.controls = true; s.preload = 'none'; s.src = play; s.setAttribute('aria-label', a.name || 'A sound'); box.append(s);
+            } else {
+                const f = h('a', 'ovdk-fileref'); f.href = a.url; f.target = '_blank'; f.rel = 'noopener';
+                f.append(icon(G.clip), h('span', 'ovdk-fileref-n', a.name || 'A file'), h('small', '', size(Number(a.size) || 0)));
+                box.append(f);
+            }
+        }
+        return box;
+    }
     function bubble(m, prev) {
         const mine = m.username === me();
         const cont = sameRun(m, prev);
@@ -796,6 +841,10 @@
         const words = h('span', 'ovdk-text', String(m.message || ''));
         if (m.edited_at) words.append(editedMark(m.edited_at));
         li.append(words);
+        // 4.267.0 (plan §AD.8 step 5: DMs with files in the Chat tab): the files a message carries, drawn from
+        // Chat's references (Media addresses only): a picture, a video or a sound that plays here, a file to open.
+        const files = filesOf(m);
+        if (files) { li.append(files); if (!String(m.message || '').trim()) words.hidden = true; }
         if (mine && canWriteChat()) {
             const acts = h('span', 'ovdk-acts');
             const edit = h('button', 'ovdk-act ovdk-edit'); edit.type = 'button'; edit.setAttribute('aria-label', 'Edit message'); edit.setAttribute('data-ov-tip', 'Edit'); edit.append(icon(G.pencil));
@@ -831,7 +880,35 @@
         const box = h('textarea'); box.rows = 1; box.maxLength = 4000; box.placeholder = 'Message'; box.setAttribute('aria-label', 'Message');
         const go = h('button', 'ovdk-go'); go.type = 'submit'; go.setAttribute('aria-label', 'Send'); go.append(icon(G.send));
         const err = h('p', 'ovdk-err'); err.hidden = true;
-        form.append(box, go);
+        // 4.267.0: files. Each goes to Media as it is picked (the composer's own upload, loaded beside the Dock the
+        // first time), shows as a chip with its progress, and goes with the message by its id; a file alone is a message.
+        const attach = h('button', 'ovdk-attach'); attach.type = 'button'; attach.setAttribute('aria-label', 'Attach a picture, a video, a sound or a file'); attach.setAttribute('data-ov-tip', 'Attach'); attach.append(icon(G.clip));
+        const picker = h('input'); picker.type = 'file'; picker.multiple = true; picker.hidden = true; picker.accept = 'image/*,video/*,audio/*,application/pdf,text/*';
+        const pending = h('div', 'ovdk-pending'); pending.hidden = true;
+        const sent = [];   // { chip, id?, job }
+        const ready = () => sent.filter((x) => x.id).map((x) => x.id);
+        const paintPending = () => { pending.hidden = !sent.length; };
+        attach.addEventListener('click', () => picker.click());
+        picker.addEventListener('change', async () => {
+            const picked = [...(picker.files || [])].slice(0, Math.max(0, 4 - sent.length));
+            picker.value = '';
+            if (!picked.length) return;
+            let C = root.OpenVibeComposer;
+            if (!C || !C.uploadToMedia) C = await new Promise((ok) => { const sc = document.createElement('script'); sc.src = sibling('ov-composer.js'); sc.onload = () => ok(root.OpenVibeComposer || null); sc.onerror = () => ok(null); document.head.appendChild(sc); });
+            if (!C || !C.uploadToMedia) { err.textContent = 'Files cannot be attached right now. Try again in a moment.'; err.hidden = false; return; }
+            for (const file of picked) {
+                const chip = h('span', 'ovdk-chip is-up'); const prog = h('i'); const x = h('button'); x.type = 'button'; x.setAttribute('aria-label', `Remove ${file.name}`); x.append(icon(G.close));
+                chip.append(h('span', '', file.name || 'file'), prog, x);
+                const item = { chip };
+                const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+                x.addEventListener('click', () => { if (ctl) ctl.abort(); sent.splice(sent.indexOf(item), 1); chip.remove(); paintPending(); });
+                sent.push(item); pending.append(chip); paintPending();
+                item.job = C.uploadToMedia(file, (p) => { prog.style.width = `${Math.round(p * 100)}%`; }, ctl && ctl.signal)
+                    .then((r) => { item.id = r.id; chip.classList.remove('is-up'); })
+                    .catch((e) => { if (e && e.cancelled) return; chip.classList.remove('is-up'); chip.classList.add('is-bad'); chip.title = (e && e.message) || 'It did not upload'; });
+            }
+        });
+        form.append(attach, picker, box, go);
         panel.append(head, scroll, err);
         // Editing one of mine: the box holds its words, a slim bar over it says so, Escape or × lets go.
         const bar = h('div', 'ovdk-edit-bar'); bar.hidden = true;
@@ -866,7 +943,7 @@
             if (!was) li.classList.add('is-acting');
         });
         if (canWriteChat()) {
-            panel.append(bar, form);
+            panel.append(bar, pending, form);
             const fit = () => { box.style.height = 'auto'; box.style.height = `${Math.min(box.scrollHeight, 140)}px`; };
             box.addEventListener('input', fit);
             if (draft && root.OpenVibeDockShare) root.OpenVibeDockShare.ready({ draft, h, panel, form, box, fit });
@@ -877,7 +954,9 @@
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const text = box.value.trim();
-                if (!text || chats.busy) return;
+                if (sent.length && !editing) await Promise.all(sent.map((x) => x.job).filter(Boolean)).catch(() => {});
+                const ids = editing ? [] : ready();
+                if ((!text && !ids.length) || chats.busy) return;
                 if (editing) {
                     const ed = editing;
                     if (text === ed.was.trim()) { stopEditing(); return; }
@@ -894,8 +973,9 @@
                 }
                 chats.busy = true; go.disabled = true; err.hidden = true;
                 try {
-                    await chatCall(`/api/dm/conversations/${encodeURIComponent(chats.open)}/messages`, { method: 'POST', body: JSON.stringify({ message: text }) });
+                    await chatCall(`/api/dm/conversations/${encodeURIComponent(chats.open)}/messages`, { method: 'POST', body: JSON.stringify({ message: text, ...(ids.length ? { attachments: ids } : {}) }) });
                     box.value = ''; fit();
+                    sent.splice(0).forEach((x) => x.chip.remove()); paintPending();
                     await pull(list, scroll);
                 } catch (x) {
                     err.textContent = x.status === 429 ? 'Slow down a little, then send it again.' : x.status === 403 ? 'You can’t send messages in this conversation.' : 'That did not send. Try again.';

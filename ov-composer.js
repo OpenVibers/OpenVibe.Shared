@@ -2388,7 +2388,9 @@ html[data-ov-motion=off] .ovc-v2 .ovt-send--round, html[data-ov-motion=off] .ovc
     }
     function scan(scope) { (scope || document).querySelectorAll('[data-ovt-composer], [data-ovc]').forEach((f) => enhance(f)); }
 
-    root.OpenVibeComposer = { enhance, mount, tool, mod, scan, configure, presets: () => Object.keys(PRESET), tools: () => Object.keys(TOOL), settings: openSettings, get prefs() { return Object.assign({}, prefs); }, setPrefs };
+    // 4.267.0: a file to Media's composer attachments as the signed-in person (the menu's DMs send their files this way):
+    // uploadToMedia(file, onProgress, signal) → { id: 'att_…', attachment }.
+    root.OpenVibeComposer = { uploadToMedia: (file, onProgress, signal) => mediaUpload(file, onProgress, signal), enhance, mount, tool, mod, scan, configure, presets: () => Object.keys(PRESET), tools: () => Object.keys(TOOL), settings: openSettings, get prefs() { return Object.assign({}, prefs); }, setPrefs };
     if (typeof module === 'object' && module.exports) module.exports = { enhance, mount, tool, mod, scan, configure };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => scan(), { once: true }); else scan();
     document.addEventListener('ov:boost:load', () => { live.forEach((c) => { if (!c.form.isConnected) c.destroy(); }); scan(); });
